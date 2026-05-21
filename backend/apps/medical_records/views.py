@@ -391,6 +391,7 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
 
         next_vaccine = (
             VaccineRecord.objects
+            .for_organization(request.user.organization)
             .filter(pet=mr.pet, next_due_date__gte=date.today())
             .order_by('next_due_date')
             .first()
