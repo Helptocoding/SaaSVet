@@ -63,7 +63,7 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
             org
         ).select_related('owner', 'pet', 'appointment')
 
-        owner_id = self.request.query_params.get('owner')
+        owner_lookup = self.request.query_params.get('owner')
 
         invoice_status = self.request.query_params.get('status', '').strip()
         invoice_type = self.request.query_params.get('invoice_type', '').strip()
@@ -73,8 +73,11 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
         paid_from = parse_date(self.request.query_params.get('paid_from', ''))
         paid_to = parse_date(self.request.query_params.get('paid_to', ''))
 
-        if owner_id:
-            queryset = queryset.filter(owner_id=owner_id)
+        if owner_lookup:
+            # Día 6 Fase 3: resolver Owner por public_id antes del filtro
+            from apps.patients.models import Owner
+            owner = resolve_public_id(Owner.objects.for_organization(org), owner_lookup)
+            queryset = queryset.filter(owner=owner)
         # pet_id removed — no longer exposed as standalone param
         if invoice_status:
             if invoice_status not in VALID_INVOICE_STATUSES:

@@ -531,12 +531,14 @@ El estado no se almacena en DB. Se calcula como propiedad:
 
 ### Endpoints
 
-| Metodo   | URL                          | Descripcion                              |
-|----------|------------------------------|------------------------------------------|
-| `GET`    | `/api/vaccines/`             | Listar vacunas (filtrar por `?pet=<id>`) |
-| `POST`   | `/api/vaccines/`             | Registrar vacuna                         |
-| `GET`    | `/api/vaccines/<id>/`        | Detalle                                  |
-| `PATCH`  | `/api/vaccines/<id>/`        | Editar                                   |
+| Metodo   | URL                                | Descripcion                                |
+|----------|------------------------------------|--------------------------------------------|
+| `GET`    | `/api/vaccines/`                   | Listar vacunas (filtrar por `?pet=<uuid>`) |
+| `POST`   | `/api/vaccines/`                   | Registrar vacuna                           |
+| `GET`    | `/api/vaccines/<public_id>/`       | Detalle                                    |
+| `PATCH`  | `/api/vaccines/<public_id>/`       | Editar                                     |
+
+**Día 6 (ADR p18):** `VaccineRecord` promovido a modelo público — heredó `PublicIdMixin`. URLs ahora usan `<str:pk>` con UUID v4. Pre-Día-6 usaba `<int:pk>` (enumeration cross-org). Filter `?pet=` resuelve via `resolve_public_id`.
 
 **DELETE removido en PR-4B / ADR p16**: el registro vacunal es documento legal (NOM-007/046) — bloquear borrado directo es consistente con la motivacion del flip `VaccineRecord.pet` → PROTECT. `DELETE /api/vaccines/<id>/` ahora responde **405**. Para anular un registro creado por error, usar `PATCH` (campo `notes`); soft-delete real es deuda Fase 2 A5.
 

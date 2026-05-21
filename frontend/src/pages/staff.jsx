@@ -185,7 +185,7 @@ const Staff = () => {
                                         <td>
                                             <button
                                                 className="btn btn-danger btn-sm"
-                                                onClick={() => handleDeactivate(member.id)}
+                                                onClick={() => handleDeactivate(member.public_id)}
                                                 title="Desactivar"
                                             >
                                                 <Icon.Trash s={14} />

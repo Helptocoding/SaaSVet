@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERD — Biblioteca</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0f14;--bg2:#141720;--bg3:#1a1e28;--border:#2a2f3e;--border2:#3a4155;--accent:#e8c547;--accent2:#4d9fff;--text:#e8eaf0;--text2:#8c90a0;--text3:#555a6e;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;}
+  header{padding:24px 32px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+  .htag{font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;font-family:'Space Mono',monospace;}
+  header h1{font-size:24px;font-weight:800;}
+  header h1 span{color:var(--accent);}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .li{display:flex;align-items:center;gap:6px;font-size:10px;font-family:'Space Mono',monospace;color:var(--text2);}
+  .l-ent{width:13px;height:13px;border:1.5px solid var(--text2);background:var(--bg3);}
+  .l-rel{width:13px;height:13px;background:var(--bg2);border:1.5px solid var(--accent);transform:rotate(45deg);}
+  .l-pk{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--accent);background:var(--bg);}
+  .l-at{width:12px;height:12px;border-radius:50%;border:1px solid var(--border2);background:var(--bg);}
+  .filters{padding:12px 32px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .fl{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-right:4px;}
+  .fb{font-family:'Space Mono',monospace;font-size:10px;padding:4px 11px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.05em;}
+  .fb:hover{border-color:var(--border2);color:var(--text);}
+  .fb.active{color:var(--bg);font-weight:700;}
+  .fb[data-s="all"].active{background:var(--text2);border-color:var(--text2);}
+  .fb[data-s="catalogo"].active{background:#e8c547;border-color:#e8c547;}
+  .fb[data-s="ejemplar"].active{background:#6bd6a0;border-color:#6bd6a0;}
+  .fb[data-s="prestamo"].active{background:#f06a50;border-color:#f06a50;}
+  .canvas-wrap{overflow:auto;padding:48px 48px 80px;}
+  #erd{position:relative;}
+  #svg-lines{position:absolute;top:0;left:0;pointer-events:none;z-index:0;overflow:visible;}
+  .ent-wrap{position:absolute;z-index:2;}
+  .ent-box{background:var(--bg3);border:1.5px solid var(--border2);padding:10px 20px;text-align:center;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative;min-width:150px;}
+  .ent-box:hover{border-color:#5a6080;}
+  .ent-dot{position:absolute;top:7px;right:7px;width:5px;height:5px;border-radius:50%;}
+  .ent-name{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--text);}
+  .rel-wrap{position:absolute;z-index:2;width:100px;height:48px;cursor:pointer;}
+  .rel-bg{position:absolute;inset:0;background:var(--bg2);border:1.5px solid var(--accent);transform:rotate(45deg) scale(.68);border-radius:2px;transition:background .15s;}
+  .rel-wrap:hover .rel-bg{background:rgba(232,197,71,.08);}
+  .rel-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:var(--accent);z-index:1;text-align:center;line-height:1.2;padding:0 10px;}
+  .attr-pill{position:absolute;z-index:2;padding:4px 11px;border-radius:50px;border:1px solid var(--border2);background:var(--bg);font-family:'Space Mono',monospace;font-size:9px;color:var(--text2);white-space:nowrap;transition:opacity .2s;}
+  .attr-pill.pk{border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .card{position:absolute;z-index:5;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--accent2);background:var(--bg);padding:0 3px;pointer-events:none;}
+  .dim{opacity:.07!important;}
+  #panel{position:fixed;right:-340px;top:0;bottom:0;width:320px;background:var(--bg2);border-left:1px solid var(--border2);z-index:100;padding:28px 22px;overflow-y:auto;transition:right .3s cubic-bezier(.4,0,.2,1);}
+  #panel.open{right:0;}
+  #panel h2{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:4px;}
+  .p-type{font-size:10px;font-family:'Space Mono',monospace;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px;}
+  .p-sec{margin-bottom:18px;}
+  .p-sec h3{font-size:10px;font-family:'Space Mono',monospace;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:5px;}
+  .p-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(42,47,62,.4);}
+  .p-row:last-child{border:none;}
+  .badge{font-size:8px;font-family:'Space Mono',monospace;padding:2px 5px;border-radius:2px;flex-shrink:0;}
+  .b-pk{background:rgba(232,197,71,.15);color:var(--accent);border:1px solid rgba(232,197,71,.3);}
+  .b-fk{background:rgba(77,159,255,.15);color:var(--accent2);border:1px solid rgba(77,159,255,.3);}
+  .b-at{background:rgba(140,144,160,.08);color:var(--text2);border:1px solid var(--border);}
+  .p-aname{font-family:'Space Mono',monospace;font-size:10px;color:var(--text);}
+  .r-row{padding:6px 0;border-bottom:1px solid rgba(42,47,62,.4);font-size:10px;}
+  .r-row:last-child{border:none;}
+  .r-ent{color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;}
+  .r-card{color:var(--accent2);font-family:'Space Mono',monospace;font-size:9px;}
+  .r-desc{color:var(--text2);margin-top:2px;font-size:10px;}
+  .sup-b{display:inline-block;font-size:8px;font-family:'Space Mono',monospace;background:rgba(232,197,71,.1);border:1px solid rgba(232,197,71,.2);color:var(--accent);padding:1px 5px;border-radius:2px;margin-right:4px;}
+  .sup-t{color:var(--text2);font-size:10px;line-height:1.6;}
+  #close-btn{position:absolute;top:14px;right:14px;background:none;border:1px solid var(--border);color:var(--text2);width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;transition:border-color .15s;}
+  #close-btn:hover{border-color:var(--text);color:var(--text);}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="htag">Diagrama Entidad-Relación · Notación Chen</div>
+    <h1>Sistema de <span>Biblioteca</span></h1>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="l-ent"></div>Entidad</div>
+    <div class="li"><div class="l-rel"></div>Relación</div>
+    <div class="li"><div class="l-pk"></div>Clave PK</div>
+    <div class="li"><div class="l-at"></div>Atributo</div>
+    <div class="li" style="margin-left:8px;color:#4d9fff">1/N = cardinalidad</div>
+    <div class="li" style="color:#8c90a0">· Clic en entidad para detalles</div>
+  </div>
+</header>
+<div class="filters">
+  <span class="fl">sección:</span>
+  <button class="fb active" data-s="all">Todo</button>
+  <button class="fb" data-s="catalogo"  style="border-color:#e8c547">Catálogo</button>
+  <button class="fb" data-s="ejemplar"  style="border-color:#6bd6a0">Ejemplares</button>
+  <button class="fb" data-s="prestamo"  style="border-color:#f06a50">Préstamos</button>
+</div>
+<div class="canvas-wrap"><div id="erd"></div></div>
+<div id="panel"><button id="close-btn">×</button><div id="panel-content"></div></div>
+
+<script>
+const EW=155,EH=40,RW=100,RH=48;
+
+const ENTITIES={
+  CATEGORIA: {l:'CATEGORIA', weak:0, s:'catalogo',  x:100,  y:60,   c:'#e8c547'},
+  AUTOR:     {l:'AUTOR',     weak:0, s:'catalogo',  x:760,  y:60,   c:'#e8c547'},
+  LIBRO:     {l:'LIBRO',     weak:0, s:'catalogo',  x:430,  y:60,   c:'#e8c547'},
+  EJEMPLAR:  {l:'EJEMPLAR',  weak:0, s:'ejemplar',  x:430,  y:300,  c:'#6bd6a0'},
+  SOCIO:     {l:'SOCIO',     weak:0, s:'prestamo',  x:760,  y:300,  c:'#f06a50'},
+  PRESTAMO:  {l:'PRESTAMO',  weak:0, s:'prestamo',  x:430,  y:540,  c:'#f06a50'},
+};
+
+const ATTRS={
+  CATEGORIA:[
+    {n:'id_categoria', pk:1, dx:-210, dy:-25},
+    {n:'nombre',       pk:0, dx:-195, dy: 25},
+    {n:'descripcion',  pk:0, dx: 205, dy:-25},
+  ],
+  AUTOR:[
+    {n:'id_autor',     pk:1, dx:-200, dy:-30},
+    {n:'nombre',       pk:0, dx:-190, dy: 20},
+    {n:'apellidos',    pk:0, dx:-200, dy: 65},
+    {n:'nacionalidad', pk:0, dx: 210, dy:-30},
+  ],
+  LIBRO:[
+    {n:'id_libro',          pk:1, dx:-200, dy:-50},
+    {n:'id_categoria (FK)', pk:0, dx:-220, dy: -5},
+    {n:'id_autor (FK)',     pk:0, dx:-205, dy: 40},
+    {n:'titulo',            pk:0, dx: 195, dy:-50},
+    {n:'isbn',              pk:0, dx: 185, dy: -5},
+    {n:'anio_publicacion',  pk:0, dx: 215, dy: 40},
+    {n:'editorial',         pk:0, dx: 200, dy: 85},
+  ],
+  EJEMPLAR:[
+    {n:'id_ejemplar',   pk:1, dx:-210, dy:-30},
+    {n:'id_libro (FK)', pk:0, dx:-205, dy: 20},
+    {n:'num_ejemplar',  pk:0, dx:-210, dy: 65},
+    {n:'estado',        pk:0, dx: 195, dy:-30},
+  ],
+  SOCIO:[
+    {n:'id_socio',   pk:1, dx:-195, dy:-40},
+    {n:'num_socio',  pk:0, dx:-190, dy:  5},
+    {n:'nombre',     pk:0, dx:-185, dy: 50},
+    {n:'apellidos',  pk:0, dx:-195, dy: 95},
+    {n:'direccion',  pk:0, dx: 200, dy:-40},
+    {n:'telefono',   pk:0, dx: 195, dy:  5},
+  ],
+  PRESTAMO:[
+    {n:'id_prestamo',        pk:1, dx:-215, dy:-50},
+    {n:'id_socio (FK)',      pk:0, dx:-205, dy:  -5},
+    {n:'id_ejemplar (FK)',   pk:0, dx:-215, dy:  40},
+    {n:'fecha_inicio',       pk:0, dx: 205, dy:-50},
+    {n:'fecha_limite',       pk:0, dx: 205, dy: -5},
+    {n:'fecha_devolucion',   pk:0, dx: 220, dy:  40},
+    {n:'con_retraso',        pk:0, dx: 205, dy:  85},
+  ],
+};
+
+const RELATIONS=[
+  {id:'R_CLASIFICA', l:'clasifica', x:235,  y:48,  s:'catalogo'},
+  {id:'R_ESCRIBE',   l:'escribe',   x:680,  y:48,  s:'catalogo'},
+  {id:'R_TIENE',     l:'tiene',     x:430,  y:188, s:'ejemplar'},
+  {id:'R_SOLICITA',  l:'solicita',  x:680,  y:418, s:'prestamo'},
+  {id:'R_PRESTADO',  l:'prestado',  x:430,  y:418, s:'prestamo'},
+];
+
+const CONNS=[
+  ['CATEGORIA', 'R_CLASIFICA', '1', '',  1],
+  ['R_CLASIFICA','LIBRO',      '', 'N',  1],
+  ['AUTOR',     'R_ESCRIBE',   '1', '',  1],
+  ['R_ESCRIBE', 'LIBRO',       '', 'N',  1],
+  ['LIBRO',     'R_TIENE',     '1', '',  1],
+  ['R_TIENE',   'EJEMPLAR',    '', 'N',  1],
+  ['SOCIO',     'R_SOLICITA',  '1', '',  1],
+  ['R_SOLICITA','PRESTAMO',    '', 'N',  1],
+  ['EJEMPLAR',  'R_PRESTADO',  '1', '',  1],
+  ['R_PRESTADO','PRESTAMO',    '', 'N',  1],
+];
+
+const DETAIL={
+  CATEGORIA:{
+    rels:[{e:'LIBRO',c:'1:N',d:'Una categoría agrupa varios libros'}],
+    sups:['S4: Cada libro pertenece a una sola categoría.','S4: Se mantienen categorías aunque no tengan libros asignados.'],
+  },
+  AUTOR:{
+    rels:[{e:'LIBRO',c:'1:N',d:'Un autor puede haber escrito varios libros'}],
+    sups:['S5: Por simplificación, cada libro tiene un único autor registrado.'],
+  },
+  LIBRO:{
+    rels:[
+      {e:'CATEGORIA',c:'N:1',d:'Cada libro pertenece a una categoría'},
+      {e:'AUTOR',    c:'N:1',d:'Cada libro tiene un autor registrado'},
+      {e:'EJEMPLAR', c:'1:N',d:'Un libro puede tener varios ejemplares físicos'},
+    ],
+    sups:['S1: Un libro puede tener varios ejemplares físicos.','S6: Se guarda título, ISBN, año de publicación y editorial.'],
+  },
+  EJEMPLAR:{
+    rels:[
+      {e:'LIBRO',   c:'N:1',d:'Cada ejemplar pertenece a un único libro'},
+      {e:'PRESTAMO',c:'1:N',d:'Un ejemplar puede haber sido prestado varias veces'},
+    ],
+    sups:['S1: Cada ejemplar pertenece a un único libro.','S2: No puede haber dos préstamos activos del mismo ejemplar.'],
+  },
+  SOCIO:{
+    rels:[{e:'PRESTAMO',c:'1:N',d:'Un socio puede tener varios préstamos activos e históricos'}],
+    sups:['S2: Un socio puede tener varios préstamos activos al mismo tiempo.','S6: Se guarda num_socio, nombre, apellidos, dirección y teléfono.'],
+  },
+  PRESTAMO:{
+    rels:[
+      {e:'SOCIO',   c:'N:1',d:'Cada préstamo pertenece a un socio'},
+      {e:'EJEMPLAR',c:'N:1',d:'Cada préstamo es de un ejemplar concreto'},
+    ],
+    sups:['S2: No puede haber dos préstamos activos del mismo ejemplar.','S3: Se guarda historial completo incluyendo préstamos devueltos.','S7: Tiene fecha_inicio, fecha_limite y fecha_devolucion. Si hay retraso se marca con_retraso=true.'],
+  },
+};
+
+// ── RENDER ────────────────────────────────────────────────
+const erd=document.getElementById('erd');
+let maxX=0,maxY=0;
+Object.values(ENTITIES).forEach(e=>{maxX=Math.max(maxX,e.x+EW+280);maxY=Math.max(maxY,e.y+EH+200);});
+erd.style.width=maxX+'px';erd.style.height=maxY+'px';erd.style.position='relative';
+
+const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+svg.id='svg-lines';svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+erd.appendChild(svg);
+
+const nodePos={};
+function regE(id,e){nodePos[id]={x:e.x,y:e.y,w:EW,h:EH,cx:e.x+EW/2,cy:e.y+EH/2};}
+function regR(r){nodePos[r.id]={x:r.x,y:r.y,w:RW,h:RH,cx:r.x+RW/2,cy:r.y+RH/2};}
+
+Object.entries(ENTITIES).forEach(([id,e])=>{
+  regE(id,e);
+  const wrap=document.createElement('div');
+  wrap.className='ent-wrap';wrap.id='ew-'+id;
+  wrap.dataset.s=e.s;wrap.style.left=e.x+'px';wrap.style.top=e.y+'px';
+  const box=document.createElement('div');
+  box.className='ent-box';box.style.width=EW+'px';
+  box.innerHTML=`<div class="ent-dot" style="background:${e.c}"></div><div class="ent-name">${e.l}</div>`;
+  box.addEventListener('click',()=>openPanel(id,e));
+  wrap.appendChild(box);erd.appendChild(wrap);
+  const ac=e.x+EW/2,ay=e.y+EH/2;
+  (ATTRS[id]||[]).forEach(a=>{
+    const pill=document.createElement('div');
+    pill.className='attr-pill'+(a.pk?' pk':'');
+    pill.dataset.s=e.s;pill.dataset.eid=id;pill.textContent=a.n;
+    pill.style.left=(ac+a.dx)+'px';pill.style.top=(ay+a.dy)+'px';
+    pill.style.transform='translate(-50%,-50%)';
+    erd.appendChild(pill);
+  });
+});
+
+RELATIONS.forEach(r=>{
+  regR(r);
+  const wrap=document.createElement('div');
+  wrap.className='rel-wrap';wrap.id='rw-'+r.id;
+  wrap.dataset.s=r.s;wrap.style.left=r.x+'px';wrap.style.top=r.y+'px';
+  wrap.innerHTML=`<div class="rel-bg"></div><div class="rel-txt">${r.l}</div>`;
+  erd.appendChild(wrap);
+});
+
+function drawLines(){
+  svg.innerHTML='';
+  svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+  document.querySelectorAll('.attr-pill').forEach(pill=>{
+    const eid=pill.dataset.eid,np=nodePos[eid];if(!np)return;
+    const pr=pill.getBoundingClientRect(),er=erd.getBoundingClientRect();
+    const px=pr.left-er.left+pr.width/2,py=pr.top-er.top+pr.height/2;
+    mkLine(px,py,np.cx,np.cy,false,'attr',eid,'');
+  });
+  CONNS.forEach(([f,t,cF,cT,bold])=>{
+    const fp=nodePos[f],tp=nodePos[t];if(!fp||!tp)return;
+    mkLine(fp.cx,fp.cy,tp.cx,tp.cy,bold,f+'-'+t,f,t);
+    const dx=tp.cx-fp.cx,dy=tp.cy-fp.cy,len=Math.sqrt(dx*dx+dy*dy)||1;
+    const nx=-dy/len*16,ny=dx/len*16;
+    if(cF)addCard(fp.cx+dx*.22+nx,fp.cy+dy*.22+ny,cF,f,t);
+    if(cT)addCard(fp.cx+dx*.78+nx,fp.cy+dy*.78+ny,cT,f,t);
+  });
+}
+
+function mkLine(x1,y1,x2,y2,bold,cls,fid,tid){
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('stroke',bold?'#4a5068':'#2e3446');l.setAttribute('stroke-width',bold?'1.5':'1');
+  l.setAttribute('fill','none');l.dataset.cls=cls;l.dataset.fid=fid||'';l.dataset.tid=tid||'';
+  svg.appendChild(l);
+}
+function addCard(x,y,txt,fid,tid){
+  const d=document.createElement('div');
+  d.className='card';d.style.left=x+'px';d.style.top=y+'px';
+  d.style.transform='translate(-50%,-50%)';d.textContent=txt;
+  d.dataset.fid=fid;d.dataset.tid=tid;erd.appendChild(d);
+}
+
+setTimeout(drawLines,80);
+window.addEventListener('resize',drawLines);
+
+const panel=document.getElementById('panel'),pcont=document.getElementById('panel-content');
+
+function openPanel(id,e){
+  const d=DETAIL[id]||{},attrs=ATTRS[id]||[];
+  let html=`<h2>${e.l}</h2><div class="p-type">Entidad · ${e.s}</div>`;
+  html+=`<div class="p-sec"><h3>Atributos</h3>`;
+  attrs.forEach(a=>{
+    const bc=a.pk?'b-pk':a.n.includes('FK')?'b-fk':'b-at';
+    const bl=a.pk?'PK':a.n.includes('FK')?'FK':'ATR';
+    html+=`<div class="p-row"><span class="badge ${bc}">${bl}</span><span class="p-aname">${a.n.replace(' (FK)','')}</span></div>`;
+  });
+  html+=`</div>`;
+  if(d.rels){
+    html+=`<div class="p-sec"><h3>Relaciones</h3>`;
+    d.rels.forEach(r=>{html+=`<div class="r-row"><div><span class="r-ent">${r.e}</span> <span class="r-card">[${r.c}]</span></div><div class="r-desc">${r.d}</div></div>`;});
+    html+=`</div>`;
+  }
+  if(d.sups){
+    html+=`<div class="p-sec"><h3>Supuestos</h3>`;
+    d.sups.forEach(s=>{const p=s.split(':');html+=`<div style="margin-bottom:7px"><span class="sup-b">${p[0]}</span><span class="sup-t">${p.slice(1).join(':')}</span></div>`;});
+    html+=`</div>`;
+  }
+  pcont.innerHTML=html;panel.classList.add('open');highlight(id);
+}
+
+function highlight(id){
+  const related=new Set([id]);
+  CONNS.forEach(([f,t])=>{if(f===id||t===id){related.add(f);related.add(t);}});
+  document.querySelectorAll('.ent-wrap,.rel-wrap').forEach(n=>{n.classList.toggle('dim',!related.has(n.id.replace('ew-','').replace('rw-','')));});
+  document.querySelectorAll('.attr-pill').forEach(p=>p.classList.toggle('dim',p.dataset.eid!==id));
+  svg.querySelectorAll('line').forEach(l=>{
+    const conn=l.dataset.fid===id||l.dataset.tid===id;
+    if(conn){l.setAttribute('stroke','#4d9fff');l.setAttribute('stroke-width','2');l.setAttribute('opacity','1');}
+    else l.setAttribute('opacity','0.06');
+  });
+  document.querySelectorAll('.card').forEach(c=>{c.style.opacity=(c.dataset.fid===id||c.dataset.tid===id)?'1':'0.06';});
+}
+
+function resetHL(){
+  document.querySelectorAll('.ent-wrap,.rel-wrap').forEach(n=>n.classList.remove('dim'));
+  document.querySelectorAll('.attr-pill').forEach(p=>p.classList.remove('dim'));
+  svg.querySelectorAll('line').forEach(l=>{
+    const b=parseFloat(l.getAttribute('stroke-width'))>=1.5;
+    l.setAttribute('stroke',b?'#4a5068':'#2e3446');l.setAttribute('stroke-width',b?'1.5':'1');l.setAttribute('opacity','1');
+  });
+  document.querySelectorAll('.card').forEach(c=>c.style.opacity='1');
+}
+
+document.getElementById('close-btn').addEventListener('click',()=>{panel.classList.remove('open');resetHL();});
+
+document.querySelectorAll('.fb').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const sec=btn.dataset.s;
+    panel.classList.remove('open');resetHL();
+    const allSecs=Object.fromEntries(Object.entries(ENTITIES).map(([id,e])=>[id,e.s]));
+    const relSecs=Object.fromEntries(RELATIONS.map(r=>[r.id,r.s]));
+    document.querySelectorAll('.ent-wrap,.rel-wrap').forEach(n=>{
+      const show=sec==='all'||n.dataset.s===sec;
+      n.style.opacity=show?'1':'0.06';n.style.pointerEvents=show?'':'none';
+    });
+    document.querySelectorAll('.attr-pill').forEach(p=>{p.style.opacity=(sec==='all'||p.dataset.s===sec)?'1':'0.03';});
+    svg.querySelectorAll('line').forEach(l=>{
+      const fs=allSecs[l.dataset.fid]||relSecs[l.dataset.fid]||'';
+      const ts=allSecs[l.dataset.tid]||relSecs[l.dataset.tid]||'';
+      l.setAttribute('opacity',(sec==='all'||fs===sec||ts===sec)?'1':'0.04');
+    });
+    document.querySelectorAll('.card').forEach(c=>{
+      const fs=allSecs[c.dataset.fid]||relSecs[c.dataset.fid]||'';
+      const ts=allSecs[c.dataset.tid]||relSecs[c.dataset.tid]||'';
+      c.style.opacity=(sec==='all'||fs===sec||ts===sec)?'1':'0.04';
+    });
+  });
+});
+</script>
+</body>
+</html>

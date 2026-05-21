@@ -4,10 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
 
-from apps.core.permissions import RolePermission, make_permission, build_permissions_list
-from apps.organizations.models import Organization
+from apps.core.permissions import make_permission, build_permissions_list
+from apps.core.views import resolve_public_id
 from apps.users.serializers import UserSerializer, CreateEmployeeSerializer
 
 User = get_user_model()
@@ -20,6 +19,7 @@ class MeView(APIView):
 
     def get(self, request):
         user = request.user
+        org = user.organization
         return Response({
             "id": user.id,
             "username": user.username,
@@ -28,26 +28,15 @@ class MeView(APIView):
             "last_name": user.last_name,
             "role": user.role,
             "specialty": user.specialty,
-            "organization": user.organization.id if user.organization else None,
-            "organization_name": user.organization.name if user.organization else None,
-            "organization_timezone": user.organization.timezone if user.organization else "America/Mexico_City",
+            # Día 6 Fase 4: emite organization (id PK, retrocompat) +
+            # organization_public_id (UUID, nuevo). Frontend nuevo debe
+            # consumir organization_public_id para deep links.
+            "organization": org.id if org else None,
+            "organization_public_id": str(org.public_id) if org else None,
+            "organization_name": org.name if org else None,
+            "organization_timezone": org.timezone if org else "America/Mexico_City",
             "permissions": build_permissions_list(request.user),
         })
-
-
-class CreateEmployeeView(APIView):
-    """Crear empleado (alias legacy — usar StaffCreateView)."""
-    permission_classes = [make_permission("staff.create")]
-
-    def post(self, request):
-        serializer = CreateEmployeeSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(
-                UserSerializer(user).data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StaffListView(APIView):
@@ -90,10 +79,14 @@ class StaffDeactivateView(APIView):
     permission_classes = [make_permission("staff.destroy")]
 
     def delete(self, request, pk):
-        user = get_object_or_404(
-            User,
-            pk=pk,
-            organization=request.user.organization
+        # Día 6 Fase 5 (Issue #38): lookup por public_id (UUID).
+        # Antes <int:pk> permitía enumeration de usuarios cross-org.
+        user = resolve_public_id(
+            User.objects.filter(
+                organization=request.user.organization,
+                is_active=True,
+            ),
+            pk,
         )
         user.is_active = False
         user.save()

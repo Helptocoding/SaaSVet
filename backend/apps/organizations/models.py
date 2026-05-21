@@ -1,10 +1,21 @@
 from decimal import Decimal
+from uuid import uuid4
+
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from zoneinfo import available_timezones
 
 class Organization(models.Model):
+    # Día 6 Fase 4: public_id para superficies externas (ADR p18).
+    # Organization se promueve a modelo público porque /me/ y embeds en
+    # responses exponen el FK organization.
+    public_id = models.UUIDField(
+        default=uuid4,
+        editable=False,
+        unique=True,
+        db_index=True,
+    )
     name = models.CharField(max_length=255)
     timezone = models.CharField(max_length=64, default='America/Mexico_City')
     timezone_updated_at = models.DateTimeField(null=True, blank=True)

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from apps.organizations.models import Organization
@@ -11,6 +13,15 @@ class User(AbstractUser):
         ('ASSISTANT', 'Asistente'),
     )
 
+    # Día 6 Fase 5 (Issue #38): public_id para superficies externas.
+    # /staff/<uuid>/deactivate/, /me response embedding, etc. PK secuencial
+    # permitía enumeration cross-org de usuarios.
+    public_id = models.UUIDField(
+        default=uuid4,
+        editable=False,
+        unique=True,
+        db_index=True,
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,

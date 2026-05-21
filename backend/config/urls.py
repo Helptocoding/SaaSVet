@@ -98,7 +98,7 @@ urlpatterns = [
     path('api/me/', MeView.as_view()),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
     path('api/staff/create/', StaffCreateView.as_view(), name='staff-create'),
-    path('api/staff/<int:pk>/', StaffDeactivateView.as_view(), name='staff-deactivate'),
+    path('api/staff/<str:pk>/', StaffDeactivateView.as_view(), name='staff-deactivate'),
     path('api/', include('apps.medical_records.urls')),
     path('api/', include('apps.inventory.urls')),
     path('api/', include('apps.billing.urls')),

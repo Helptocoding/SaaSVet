@@ -315,7 +315,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
                 <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => onEdit(pet)}>
                     <Icon.Edit s={13} /> Editar
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => onDelete(pet.id)}>
+                <button className="btn btn-danger btn-sm" onClick={() => onDelete(pet.public_id)}>
                     <Icon.Trash s={13} />
                 </button>
             </div>
@@ -577,7 +577,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                     <button
                         className="btn btn-primary btn-md"
                         style={{ flex: 1 }}
-                        onClick={() => { onClose(); navigate(`/pets/${pet.id}`); }}
+                        onClick={() => { onClose(); navigate(`/pets/${pet.public_id}`); }}
                     >
                         Ver ficha completa
                         <Icon.ChevronRight s={14} />
@@ -705,8 +705,8 @@ const Pets = () => {
         setPanelAppts([]);
         try {
             const [records, appts] = await Promise.all([
-                getMedicalRecords(token, { pet: pet.id }),
-                getAppointments(token, { pet: pet.id }).catch(() => []),
+                getMedicalRecords(token, { pet: pet.public_id }),
+                getAppointments(token, { pet: pet.public_id }).catch(() => []),
             ]);
             setPanelRecords(Array.isArray(records) ? records : (records.results || []));
             setPanelAppts(Array.isArray(appts) ? appts : (appts.results || []));
@@ -738,7 +738,7 @@ const Pets = () => {
         if (!form.owner.phone || form.owner.phone.length !== 10) { toast.error("El teléfono debe tener exactamente 10 dígitos"); return; }
         const payload = { ...form, birth_date: form.birth_date || null };
         try {
-            const p = editing ? updatePet(token, editing.id, payload) : createPet(token, payload);
+            const p = editing ? updatePet(token, editing.public_id, payload) : createPet(token, payload);
             await p;
             toast.success('Mascota guardada correctamente');
             setForm(EMPTY_FORM);
@@ -779,7 +779,7 @@ const Pets = () => {
                 success: 'Mascota eliminada',
                 error: 'Error al eliminar la mascota'
             });
-            if (selectedPet?.id === id) closePanel();
+            if (selectedPet?.public_id === id) closePanel();
             loadAll();
         } catch (err) {
             // Manejado por toast
@@ -1013,7 +1013,7 @@ const Pets = () => {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(272px, 1fr))", gap: "14px" }}>
                     {filtered.map(pet => (
                         <PetCard
-                            key={pet.id}
+                            key={pet.public_id}
                             pet={pet}
                             onSelect={() => openPanel(pet)}
                             onEdit={handleEdit}
@@ -1040,7 +1040,7 @@ const Pets = () => {
                             {filtered.map((pet) => {
                                 const accent = speciesAccent(pet);
                                 return (
-                                    <tr key={pet.id} style={{ cursor: "pointer" }} onClick={() => openPanel(pet)}>
+                                    <tr key={pet.public_id} style={{ cursor: "pointer" }} onClick={() => openPanel(pet)}>
                                         <td>
                                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                 <div style={{
@@ -1075,7 +1075,7 @@ const Pets = () => {
                                                 <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(pet)}>
                                                     <Icon.Edit s={13} /> Editar
                                                 </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(pet.id)}>
+                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(pet.public_id)}>
                                                     <Icon.Trash s={13} />
                                                 </button>
                                             </div>

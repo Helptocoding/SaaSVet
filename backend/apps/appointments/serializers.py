@@ -11,22 +11,54 @@ from .models import Appointment, AppointmentStatusChange
 class AppointmentSerializer(serializers.ModelSerializer):
     pet_name = serializers.CharField(source='pet.name', read_only=True)
     pet_is_generic = serializers.BooleanField(source='pet.is_generic', read_only=True)
+    # Día 6 B2: pet_public_id para deep links sin PK
+    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True)
     owner_id = serializers.IntegerField(source='pet.owner_id', read_only=True)
+    owner_public_id = serializers.UUIDField(source='pet.owner.public_id', read_only=True)
     owner_name = serializers.CharField(source='pet.owner.name', read_only=True)
     veterinarian_name = serializers.CharField(source='veterinarian.get_full_name', read_only=True)
+    veterinarian_public_id = serializers.UUIDField(source='veterinarian.public_id', read_only=True, allow_null=True)
     medical_record_ids = serializers.ReadOnlyField()
+    medical_record_public_ids = serializers.SerializerMethodField()
     invoice_id = serializers.ReadOnlyField()
+    invoice_public_id = serializers.SerializerMethodField()
+
+    def get_medical_record_public_ids(self, obj):
+        # obj.medical_record_ids es property; equivalente UUID list.
+        from apps.medical_records.models import MedicalRecord
+        ids = obj.medical_record_ids or []
+        if not ids:
+            return []
+        return [
+            str(uid) for uid in MedicalRecord.objects.filter(pk__in=ids).values_list('public_id', flat=True)
+        ]
+
+    def get_invoice_public_id(self, obj):
+        invoice_id = obj.invoice_id
+        if not invoice_id:
+            return None
+        from apps.billing.models import Invoice
+        invoice = Invoice.objects.filter(pk=invoice_id).only('public_id').first()
+        return str(invoice.public_id) if invoice else None
 
     class Meta:
         model = Appointment
         fields = [
-            'id', 'public_id', 'pet', 'pet_name', 'pet_is_generic', 'owner_id', 'owner_name',
-            'veterinarian', 'veterinarian_name',
+            'id', 'public_id',
+            'pet', 'pet_name', 'pet_public_id', 'pet_is_generic',
+            'owner_id', 'owner_public_id', 'owner_name',
+            'veterinarian', 'veterinarian_name', 'veterinarian_public_id',
             'date', 'start_time', 'end_time', 'reason', 'notes',
             'status', 'cancellation_reason',
-            'medical_record_ids', 'invoice_id',
+            'medical_record_ids', 'medical_record_public_ids',
+            'invoice_id', 'invoice_public_id',
         ]
-        read_only_fields = ['id', 'public_id', 'pet_is_generic', 'owner_id', 'owner_name', 'medical_record_ids', 'invoice_id']
+        read_only_fields = [
+            'id', 'public_id', 'pet_public_id', 'owner_public_id', 'veterinarian_public_id',
+            'pet_is_generic', 'owner_id', 'owner_name',
+            'medical_record_ids', 'medical_record_public_ids',
+            'invoice_id', 'invoice_public_id',
+        ]
 
     def validate_pet(self, value):
         request = self.context.get('request')

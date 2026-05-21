@@ -19,12 +19,16 @@ class PrescriptionListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
     resource_name = "prescription"
 
     def get_queryset(self):
-        queryset = Prescription.objects.for_organization(
-            self.request.user.organization
-        ).select_related('pet', 'veterinarian', 'medical_record')
-        pet_id = self.request.query_params.get('pet')
-        if pet_id:
-            queryset = queryset.filter(pet_id=pet_id)
+        org = self.request.user.organization
+        queryset = Prescription.objects.for_organization(org).select_related(
+            'pet', 'veterinarian', 'medical_record'
+        )
+        pet_lookup = self.request.query_params.get('pet')
+        if pet_lookup:
+            # Día 6 Fase 3: resolver Pet por public_id antes del filtro
+            from apps.patients.models import Pet
+            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
+            queryset = queryset.filter(pet=pet)
         return queryset
 
     def perform_create(self, serializer):
@@ -55,9 +59,15 @@ class PrescriptionByPetView(TenantQueryMixin, generics.ListAPIView):
     resource_name = "prescription"
 
     def get_queryset(self):
+        # Día 6 Fase 1: resolver Pet por public_id antes del filtro
+        from apps.patients.models import Pet
+        pet = resolve_public_id(
+            Pet.objects.for_organization(self.request.user.organization),
+            self.kwargs['pet_public_id'],
+        )
         return Prescription.objects.for_organization(
             self.request.user.organization
-        ).filter(pet_id=self.kwargs['pet_id'])
+        ).filter(pet=pet)
 
 
 class PrescriptionItemCreateView(generics.CreateAPIView):
@@ -66,10 +76,10 @@ class PrescriptionItemCreateView(generics.CreateAPIView):
     resource_name = "prescription"
 
     def perform_create(self, serializer):
-        prescription = get_object_or_404(
-            Prescription,
-            pk=self.kwargs['prescription_pk'],
-            organization=self.request.user.organization,
+        # Día 6 Fase 1: parent es UUID público (<str:prescription_pk>)
+        prescription = resolve_public_id(
+            Prescription.objects.for_organization(self.request.user.organization),
+            self.kwargs['prescription_pk'],
         )
         serializer.save(prescription=prescription)
 
@@ -79,10 +89,10 @@ class PrescriptionItemDeleteView(generics.DestroyAPIView):
     resource_name = "prescription"
 
     def get_object(self):
-        prescription = get_object_or_404(
-            Prescription,
-            pk=self.kwargs['prescription_pk'],
-            organization=self.request.user.organization,
+        # Día 6 Fase 1: parent es UUID público, item child es PK interno
+        prescription = resolve_public_id(
+            Prescription.objects.for_organization(self.request.user.organization),
+            self.kwargs['prescription_pk'],
         )
         return get_object_or_404(
             PrescriptionItem,

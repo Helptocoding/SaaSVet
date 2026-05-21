@@ -111,7 +111,7 @@ Authorization: Bearer <token ADMIN>
 
 No elimina el usuario, marca `is_active = False`.
 
-## Endpoints de Organization (PR-4B / ADR p16)
+## Endpoints de Organization (PR-4B / ADR p16, p18)
 
 ### Singleton — recomendado
 
@@ -122,6 +122,8 @@ Authorization: Bearer <token ADMIN>
 ```
 
 Devuelve/actualiza la organizacion del usuario autenticado sin exponer el PK en la URL. Forma canonica desde PR-4B.
+
+**Día 6 (ADR p18):** `Organization` ahora tiene campo `public_id` (UUID v4). El response de `/me/` expone tanto `id` (PK, retrocompat pre-beta) como `public_id` (UUID). Frontend nuevo debe consumir `public_id` o `organization_public_id` desde `MeView`. Cleanup post-beta: ticket `POST-BETA-001`.
 
 ### Legacy — deprecado
 

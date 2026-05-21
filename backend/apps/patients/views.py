@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.core.permissions import HybridPermission
-from apps.core.views import TenantQueryMixin, PublicIdLookupMixin
+from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
 
 from .models import Pet, Owner
 from .serializers import PetSerializer, OwnerSerializer
@@ -12,20 +12,23 @@ from .serializers import PetSerializer, OwnerSerializer
 class PetViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
     """
     Pacientes (mascotas). basename='patient' → permisos patient.*
-    Soporta ?search=<nombre> y ?owner=<id> (combinables). Límite 20 cuando se filtra.
+    Soporta ?search=<nombre> y ?owner=<public_id> (combinables). Límite 20 cuando se filtra.
     """
     serializer_class = PetSerializer
     permission_classes = [HybridPermission]
 
     def get_queryset(self):
-        qs = Pet.objects.for_organization(self.request.user.organization)
+        org = self.request.user.organization
+        qs = Pet.objects.for_organization(org)
         search = self.request.query_params.get("search", "").strip()
-        owner_id = self.request.query_params.get("owner", "").strip()
+        owner_lookup = self.request.query_params.get("owner", "").strip()
         if search:
             qs = qs.filter(name__icontains=search)
-        if owner_id:
-            qs = qs.filter(owner_id=owner_id)
-        if search or owner_id:
+        if owner_lookup:
+            # Día 6 Fase 3: resolver Owner por public_id antes del filtro
+            owner = resolve_public_id(Owner.objects.for_organization(org), owner_lookup)
+            qs = qs.filter(owner=owner)
+        if search or owner_lookup:
             qs = qs[:20]
         return qs
 

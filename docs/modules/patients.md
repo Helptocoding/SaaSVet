@@ -10,6 +10,7 @@ Es el punto de entrada a todos los flujos clinicos del sistema.
 ### Owner (Propietario)
 
 Campos:
+- `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre del propietario
 - `phone` — telefono de contacto (10 digitos, solo Mexico)
 - `is_generic` — marca al propietario sintetico "Publico General" creado por organizacion
@@ -23,6 +24,7 @@ Reglas de negocio:
 ### Pet (Mascota)
 
 Campos:
+- `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre de la mascota
 - `species` — especie (valor de `SPECIES_CHOICES`)
 - `breed` — raza (texto libre, opcional)

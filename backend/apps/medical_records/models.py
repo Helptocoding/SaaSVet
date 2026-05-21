@@ -118,7 +118,7 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
         ]
 
 
-class VaccineRecord(OrganizationalModel):
+class VaccineRecord(PublicIdMixin, OrganizationalModel):
     STATUS_CURRENT = 'current'
     STATUS_OVERDUE = 'overdue'
     STATUS_NO_SCHEDULED = 'no_scheduled'

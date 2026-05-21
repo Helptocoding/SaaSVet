@@ -189,12 +189,18 @@ class StockMovementListView(TenantQueryMixin, generics.ListAPIView):
             .for_organization(self.request.user.organization)
             .select_related('presentation__product', 'created_by')
         )
-        product_id = self.request.query_params.get('product')
-        if product_id:
-            queryset = queryset.filter(presentation__product_id=product_id)
-        presentation_id = self.request.query_params.get('presentation')
-        if presentation_id:
-            queryset = queryset.filter(presentation_id=presentation_id)
+        org = self.request.user.organization
+        product_lookup = self.request.query_params.get('product')
+        if product_lookup:
+            # Día 6 Fase 3: resolver Product por public_id antes del filtro
+            product = resolve_public_id(Product.objects.for_organization(org), product_lookup)
+            queryset = queryset.filter(presentation__product=product)
+        presentation_lookup = self.request.query_params.get('presentation')
+        if presentation_lookup:
+            presentation = resolve_public_id(
+                Presentation.objects.for_organization(org), presentation_lookup
+            )
+            queryset = queryset.filter(presentation=presentation)
         return queryset
 
 

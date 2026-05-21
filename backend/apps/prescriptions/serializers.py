@@ -82,16 +82,25 @@ class PrescriptionItemSerializer(serializers.ModelSerializer):
 class PrescriptionSerializer(serializers.ModelSerializer):
     items = PrescriptionItemSerializer(many=True)
     pet_name = serializers.CharField(source='pet.name', read_only=True)
+    # Día 6 B1: pet_public_id para frontend evitar PK en query params
+    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True)
+    medical_record_public_id = serializers.UUIDField(
+        source='medical_record.public_id', read_only=True, allow_null=True
+    )
     veterinarian_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Prescription
         fields = [
-            'id', 'public_id', 'medical_record', 'veterinarian', 'veterinarian_name',
-            'pet', 'pet_name', 'notes', 'items',
+            'id', 'public_id', 'medical_record', 'medical_record_public_id',
+            'veterinarian', 'veterinarian_name',
+            'pet', 'pet_name', 'pet_public_id', 'notes', 'items',
             'created_at', 'updated_at',
         ]
-        read_only_fields = ['id', 'public_id', 'veterinarian', 'created_at', 'updated_at']
+        read_only_fields = [
+            'id', 'public_id', 'pet_public_id', 'medical_record_public_id',
+            'veterinarian', 'created_at', 'updated_at',
+        ]
 
     def get_veterinarian_name(self, obj):
         return f"{obj.veterinarian.first_name} {obj.veterinarian.last_name}".strip()

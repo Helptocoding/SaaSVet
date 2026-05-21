@@ -17,6 +17,30 @@ class TenantQueryMixin:
             raise PermissionDenied("User has no organization assigned")
 
 
+def _resolve_or_404(queryset, lookup):
+    """
+    Día 6 ADR p18: helper privado compartido por PublicIdLookupMixin y
+    resolve_public_id para evitar divergencia. Sin API pública nueva — esto
+    es solo deduplicación interna.
+
+    Lógica:
+      - UUID válido → queryset.get(public_id=uuid)
+      - String numérico + ALLOW_LEGACY_ID_LOOKUP=True → fallback PK entero
+        (DEPRECATED: remove after 2026-06-19 — see Issue #18 / ADR p18)
+      - Otro string → NotFound (404)
+    """
+    try:
+        uuid_val = _uuid_module.UUID(str(lookup))
+        return queryset.get(public_id=uuid_val)
+    except (ValueError, TypeError):
+        # DEPRECATED branch: remove after 2026-06-19 (Día 6 cleanup ticket)
+        if str(lookup).isdigit() and getattr(settings, 'ALLOW_LEGACY_ID_LOOKUP', False):
+            return get_object_or_404(queryset, pk=lookup)
+        raise NotFound()
+    except queryset.model.DoesNotExist:
+        raise NotFound()
+
+
 class PublicIdLookupMixin:
     """
     Mixin para ViewSets y CBVs que usan public_id (UUID) como lookup en URLs.
@@ -24,6 +48,7 @@ class PublicIdLookupMixin:
     Comportamiento:
       - UUID válido → busca por public_id dentro del queryset del tenant
       - String numérico + ALLOW_LEGACY_ID_LOOKUP=True → fallback a pk entero (transición)
+        DEPRECATED: remove after 2026-06-19 — see Issue #18 / ADR p18
       - Cualquier otro string → 404 inmediato (sin fallback)
 
     Para ViewSets (router): set lookup_field = 'public_id', el router genera
@@ -41,18 +66,7 @@ class PublicIdLookupMixin:
         queryset = self.filter_queryset(self.get_queryset())
         url_kwarg = getattr(self, 'lookup_url_kwarg', None) or self.lookup_field
         lookup = self.kwargs.get(url_kwarg, '')
-
-        try:
-            uuid_val = _uuid_module.UUID(str(lookup))
-            obj = queryset.get(public_id=uuid_val)
-        except (ValueError, TypeError):
-            if str(lookup).isdigit() and getattr(settings, 'ALLOW_LEGACY_ID_LOOKUP', False):
-                obj = get_object_or_404(queryset, pk=lookup)
-            else:
-                raise NotFound()
-        except queryset.model.DoesNotExist:
-            raise NotFound()
-
+        obj = _resolve_or_404(queryset, lookup)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -67,14 +81,7 @@ def resolve_public_id(queryset, lookup):
     Comportamiento:
       - UUID válido → busca por public_id en el queryset
       - String numérico + ALLOW_LEGACY_ID_LOOKUP → fallback a pk entero
+        DEPRECATED: remove after 2026-06-19 — see Issue #18 / ADR p18
       - Otro string → NotFound (404)
     """
-    try:
-        uuid_val = _uuid_module.UUID(str(lookup))
-        return queryset.get(public_id=uuid_val)
-    except (ValueError, TypeError):
-        if str(lookup).isdigit() and getattr(settings, 'ALLOW_LEGACY_ID_LOOKUP', False):
-            return get_object_or_404(queryset, pk=lookup)
-        raise NotFound()
-    except queryset.model.DoesNotExist:
-        raise NotFound()
+    return _resolve_or_404(queryset, lookup)

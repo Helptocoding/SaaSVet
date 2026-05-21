@@ -18,8 +18,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+        # Día 6 Fase 5: expone public_id para que frontend construya
+        # URLs /staff/<uuid>/. id se conserva pre-beta.
+        fields = ['id', 'public_id', 'username', 'email', 'first_name', 'last_name',
                   'role', 'specialty', 'is_active', 'organization', 'organization_name']
+        read_only_fields = ['id', 'public_id']
 
 
 class CreateEmployeeSerializer(serializers.ModelSerializer):
@@ -33,7 +36,11 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
         default='ASSISTANT'
     )
     specialty = serializers.CharField(required=False, allow_blank=True, default='')
-    organization_id = serializers.IntegerField(required=False)
+    # Día 6 Fase 4 (Issue #40): organization_id NO writable.
+    # ADR p18: organization siempre se deriva de request.user.organization (JWT).
+    # Aceptarlo en body permite que un ADMIN cree usuarios en otra org →
+    # privilege escalation cross-tenant. read_only es el guard correcto.
+    organization_id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
@@ -74,12 +81,10 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La contraseña debe contener al menos un número.")
         return value
 
-    def validate_organization_id(self, value):
-        if value and not Organization.objects.filter(id=value).exists():
-            raise serializers.ValidationError("La organización no existe")
-        return value
-
     def create(self, validated_data):
+        # Día 6 Fase 4: organization_id es read_only — extra-safety pop por si
+        # algún caller histórico envía el campo (DRF ignora read_only en input,
+        # pero el .pop() documenta que jamás se debe consumir de body).
         validated_data.pop('organization_id', None)
 
         request = self.context.get('request')

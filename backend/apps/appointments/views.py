@@ -47,18 +47,30 @@ class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         org = self.request.user.organization
         queryset = Appointment.objects.for_organization(org).select_related('pet__owner', 'veterinarian')
 
-        veterinarian_id = self.request.query_params.get('veterinarian')
+        veterinarian_lookup = self.request.query_params.get('veterinarian')
         date = self.request.query_params.get('date')
-        pet_id = self.request.query_params.get('pet')
+        pet_lookup = self.request.query_params.get('pet')
 
-        if veterinarian_id:
-            queryset = queryset.filter(veterinarian_id=veterinarian_id)
+        if veterinarian_lookup:
+            # Día 6 M1: User tiene public_id (Fase 5). Resolver via
+            # resolve_public_id sobre queryset filtrado por org. User no es
+            # OrganizationalModel → filter manual en lugar de for_organization().
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            vet = resolve_public_id(
+                User.objects.filter(organization=org, is_active=True),
+                veterinarian_lookup,
+            )
+            queryset = queryset.filter(veterinarian=vet)
         if date:
             parsed = parse_date(date)
             if parsed:
                 queryset = filter_by_local_day(queryset, 'start_datetime', org, parsed)
-        if pet_id:
-            queryset = queryset.filter(pet_id=pet_id)
+        if pet_lookup:
+            # Día 6 Fase 3: resolver Pet por public_id antes del filtro (anexo seguridad)
+            from apps.patients.models import Pet
+            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
+            queryset = queryset.filter(pet=pet)
 
         return queryset.order_by('start_datetime', 'id')
 

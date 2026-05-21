@@ -209,7 +209,7 @@ const PrescriptionCard = ({ rx, downloadingId, canCreate, onView, onDownload, on
                 {canCreate && (
                     <button
                         className="btn btn-danger btn-sm"
-                        onClick={() => onDelete(rx.id)}
+                        onClick={() => onDelete(rx.public_id)}
                         title="Eliminar receta"
                     >
                         <Icon.Trash s={13} />
@@ -300,7 +300,7 @@ const Prescriptions = () => {
 
     const handleFormSubmit = async (payload) => {
         if (editing) {
-            await updatePrescription(editing.id, payload);
+            await updatePrescription(editing.public_id, payload);
             toast.success("Receta actualizada");
         } else {
             await createPrescription(payload);
@@ -312,7 +312,7 @@ const Prescriptions = () => {
 
     const handleView = async (rx) => {
         try {
-            const data = await getPrescription(rx.id);
+            const data = await getPrescription(rx.public_id);
             setViewing(data); setShowDetail(true);
         } catch { toast.error("Error al cargar la receta"); }
     };
@@ -404,7 +404,7 @@ const Prescriptions = () => {
                     style={{ width: "auto", height: "38px" }}
                 >
                     <option value="">Todas las mascotas</option>
-                    {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {pets.map(p => <option key={p.public_id} value={p.public_id}>{p.name}</option>)}
                 </select>
                 {(search || selectedPet) && (
                     <button

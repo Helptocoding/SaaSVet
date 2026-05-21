@@ -46,9 +46,9 @@ const OperationalFeed = ({ openRecords }) => {
         <>
           {list.slice(0, 5).map((r) => (
             <button
-              key={r.id || r.public_id}
+              key={r.public_id}
               className="records-item"
-              onClick={() => navigate(`/medical-records?record=${r.public_id || r.id}`)}
+              onClick={() => navigate(`/medical-records?record=${r.public_id}`)}
             >
               <div className="records-item-left">
                 <span className="records-item-pet" title={r.pet_name}>

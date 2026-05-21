@@ -59,7 +59,7 @@ const PetDetail = () => {
 
     const handleViewRecord = async (record) => {
         try {
-            const data = await getMedicalRecord(token, record.id);
+            const data = await getMedicalRecord(token, record.public_id);
             setViewingRecord(data);
             setShowRecordDetail(true);
         } catch (err) {
@@ -114,13 +114,13 @@ const PetDetail = () => {
                     <div style={{ display: "flex", gap: "8px" }}>
                         <button
                             className="btn btn-primary btn-md"
-                            onClick={() => navigate(`/medical-records?pet=${pet.id}`)}
+                            onClick={() => navigate(`/medical-records?pet=${pet.public_id}`)}
                         >
                             + Nueva Consulta
                         </button>
                         <button
                             className="btn btn-secondary btn-md"
-                            onClick={() => navigate(`/appointments?pet=${pet.id}`)}
+                            onClick={() => navigate(`/appointments?pet=${pet.public_id}`)}
                         >
                             + Nueva Cita
                         </button>
@@ -188,7 +188,7 @@ const PetDetail = () => {
                             <button
                                 className="btn btn-primary btn-md"
                                 style={{ marginTop: "14px" }}
-                                onClick={() => navigate(`/medical-records?pet=${pet.id}`)}
+                                onClick={() => navigate(`/medical-records?pet=${pet.public_id}`)}
                             >
                                 Registrar primera consulta
                             </button>
@@ -310,14 +310,14 @@ const PetDetail = () => {
                             {viewingRecord.prescription_id ? (
                                 <button
                                     className="btn btn-purple btn-md"
-                                    onClick={() => { setShowRecordDetail(false); navigate(`/prescriptions?pet=${pet.id}`); }}
+                                    onClick={() => { setShowRecordDetail(false); navigate(`/prescriptions?pet=${pet.public_id}`); }}
                                 >
                                     Ver Receta
                                 </button>
                             ) : canCreate && viewingRecord.status !== "closed" ? (
                                 <button
                                     className="btn btn-purple btn-md"
-                                    onClick={() => { setShowRecordDetail(false); navigate(`/medical-records?pet=${pet.id}`); }}
+                                    onClick={() => { setShowRecordDetail(false); navigate(`/medical-records?pet=${pet.public_id}`); }}
                                 >
                                     Abrir en Historial Clínico
                                 </button>

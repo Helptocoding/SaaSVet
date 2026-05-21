@@ -260,7 +260,7 @@ const Inventory = () => {
                  return;
              }
              if (editing) {
-                 await updateProduct(editing.public_id || editing.id, payload);
+                 await updateProduct(editing.public_id, payload);
              } else {
                  await createProduct(payload);
              }
@@ -295,7 +295,7 @@ const Inventory = () => {
         }
         setSaving(true);
         try {
-            await toast.promise(adjustStock(adjustingProduct.public_id || adjustingProduct.id, { ...adjustForm, quantity: parseFloat(adjustForm.quantity) }), {
+            await toast.promise(adjustStock(adjustingProduct.public_id, { ...adjustForm, quantity: parseFloat(adjustForm.quantity) }), {
                 loading: 'Ajustando stock...',
                 success: 'Stock ajustado correctamente',
                 error: (err) => apiError(err, "Error al ajustar")
@@ -597,7 +597,7 @@ const Inventory = () => {
                                                 <div className={s.actCell}>
                                                     <button className={`${s.ab} ${s.abAj}`} onClick={e => openAdjust(product, e)} title="Ajustar stock"><Icon.Package s={14} /></button>
                                                     <button className={`${s.ab} ${s.abEd}`} onClick={e => openEdit(product, e)} title="Editar"><Icon.Edit s={14} /></button>
-                                                    <button className={`${s.ab} ${s.abDl}`} onClick={e => { e.stopPropagation(); handleDelete(product.public_id || product.id); }} title="Eliminar"><Icon.Trash s={14} /></button>
+                                                    <button className={`${s.ab} ${s.abDl}`} onClick={e => { e.stopPropagation(); handleDelete(product.public_id); }} title="Eliminar"><Icon.Trash s={14} /></button>
                                                 </div>
                                             </td>
                                         )}

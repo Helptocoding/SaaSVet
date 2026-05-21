@@ -87,8 +87,9 @@ class MedicalRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
     resource_name = "medicalrecord"
 
     def get_queryset(self):
-        pet_id = self.request.query_params.get('pet')
-        queryset = MedicalRecord.objects.for_organization(self.request.user.organization).select_related(
+        org = self.request.user.organization
+        pet_lookup = self.request.query_params.get('pet')
+        queryset = MedicalRecord.objects.for_organization(org).select_related(
             'pet', 'veterinarian', 'appointment', 'prescription'
         ).prefetch_related(
             'products_used__presentation__product',
@@ -97,8 +98,11 @@ class MedicalRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
             'vital_signs',
         )
 
-        if pet_id:
-            queryset = queryset.filter(pet_id=pet_id)
+        if pet_lookup:
+            # Día 6 Fase 3: resolver Pet por public_id antes del filtro
+            from apps.patients.models import Pet
+            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
+            queryset = queryset.filter(pet=pet)
 
         return queryset.order_by('-created_at')
 
@@ -168,10 +172,16 @@ class MedicalRecordByPetView(TenantQueryMixin, generics.ListAPIView):
     resource_name = "medicalrecord"
 
     def get_queryset(self):
-        pet_id = self.kwargs.get('pet_id')
+        # Día 6 Fase 1: resolver Pet por public_id ANTES del filtro
+        # (anexo seguridad — evita enumeration por PK secuencial)
+        from apps.patients.models import Pet
+        pet = resolve_public_id(
+            Pet.objects.for_organization(self.request.user.organization),
+            self.kwargs['pet_public_id'],
+        )
         return MedicalRecord.objects.for_organization(
             self.request.user.organization
-        ).filter(pet_id=pet_id).select_related(
+        ).filter(pet=pet).select_related(
             'pet', 'veterinarian', 'appointment', 'prescription'
         ).prefetch_related(
             'products_used__presentation__product',
@@ -503,12 +513,16 @@ class VaccineRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
     resource_name = "vaccinerecord"
 
     def get_queryset(self):
-        qs = VaccineRecord.objects.for_organization(
-            self.request.user.organization
-        ).select_related('pet', 'applied_by', 'medical_record')
-        pet_id = self.request.query_params.get('pet')
-        if pet_id:
-            qs = qs.filter(pet_id=pet_id)
+        org = self.request.user.organization
+        qs = VaccineRecord.objects.for_organization(org).select_related(
+            'pet', 'applied_by', 'medical_record'
+        )
+        pet_lookup = self.request.query_params.get('pet')
+        if pet_lookup:
+            # Día 6 Fase 3: resolver Pet por public_id antes del filtro
+            from apps.patients.models import Pet
+            pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
+            qs = qs.filter(pet=pet)
         return qs
 
     def perform_create(self, serializer):
@@ -518,15 +532,19 @@ class VaccineRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
         )
 
 
-class VaccineRecordDetailView(TenantQueryMixin, generics.RetrieveUpdateAPIView):
+class VaccineRecordDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.RetrieveUpdateAPIView):
     """PR-4B / ADR p16: DELETE removido por consistencia con la motivación
     NOM-007/NOM-046 que justificó VaccineRecord.pet PROTECT. Permitir borrar
     el registro vacunal directamente contradice "vacuna es documento legal
     retenido 5 años". Para anular un registro creado por error, usar PATCH
-    (campo notes / status) — soft-delete real es deuda A5 (Fase 2)."""
+    (campo notes / status) — soft-delete real es deuda A5 (Fase 2).
+
+    Día 6 Fase 5: lookup ahora por public_id (UUID) — antes <int:pk> exponía
+    enumeration cross-org via probe 404 vs 200."""
     serializer_class = VaccineRecordSerializer
     permission_classes = [HybridPermission]
     resource_name = "vaccinerecord"
+    lookup_url_kwarg = 'pk'
     http_method_names = ['get', 'patch', 'head', 'options']
 
     def get_queryset(self):

@@ -178,15 +178,23 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 class InvoiceSerializer(serializers.ModelSerializer):
     items = InvoiceItemSerializer(many=True, read_only=True)
     pet_name = serializers.CharField(source='pet.name', read_only=True)
+    # Día 6 B1: public_id de FKs embebidos para evitar PK en deep links
+    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True, allow_null=True)
     owner_name = serializers.CharField(source='owner.name', read_only=True)
+    owner_public_id = serializers.UUIDField(source='owner.public_id', read_only=True, allow_null=True)
+    appointment_public_id = serializers.UUIDField(source='appointment.public_id', read_only=True, allow_null=True)
+    medical_record_public_id = serializers.UUIDField(source='medical_record.public_id', read_only=True, allow_null=True)
     created_by_name = serializers.SerializerMethodField()
     prescription_suggestions = serializers.SerializerMethodField()
 
     class Meta:
         model = Invoice
         fields = [
-            'id', 'public_id', 'invoice_type', 'appointment', 'medical_record',
-            'owner', 'owner_name', 'pet', 'pet_name',
+            'id', 'public_id', 'invoice_type',
+            'appointment', 'appointment_public_id',
+            'medical_record', 'medical_record_public_id',
+            'owner', 'owner_public_id', 'owner_name',
+            'pet', 'pet_public_id', 'pet_name',
             'status', 'payment_method', 'tax_rate',
             'subtotal', 'tax_amount', 'total',
             'notes', 'created_by', 'created_by_name',
@@ -194,7 +202,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'items', 'prescription_suggestions',
         ]
         read_only_fields = [
-            'id', 'public_id', 'subtotal', 'tax_amount', 'total',
+            'id', 'public_id', 'pet_public_id', 'owner_public_id',
+            'appointment_public_id', 'medical_record_public_id',
+            'subtotal', 'tax_amount', 'total',
             'created_by', 'paid_at', 'created_at', 'updated_at',
             'tax_rate',
         ]

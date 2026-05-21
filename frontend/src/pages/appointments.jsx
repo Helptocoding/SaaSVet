@@ -196,7 +196,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
         if (!historyOpen && history.length === 0) {
             setLoadingHist(true);
             try {
-                const data = await getAppointmentHistory(appt.id);
+                const data = await getAppointmentHistory(appt.public_id);
                 setHistory(data);
             } catch {
                 // silenciar — historial no crítico
@@ -211,7 +211,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
         if (!newPetItem) { toast.error("Selecciona una mascota"); return; }
         setSavingAssign(true);
         try {
-            const updated = await assignPatient(appt.id, newPetItem.id);
+            const updated = await assignPatient(appt.public_id, newPetItem.id);
             onRefresh(updated);
             setAssigningPatient(false);
             setNewPetItem(null);
@@ -363,20 +363,20 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                 <button className="btn btn-info btn-md" style={{flex:1}}
                                     onClick={()=>onEdit(appt)}>Editar</button>
                                 <button className="btn btn-purple btn-md" style={{flex:1}}
-                                    onClick={()=>onStatusChange(appt.id,"confirmed")}>Confirmar</button>
+                                    onClick={()=>onStatusChange(appt.public_id,"confirmed")}>Confirmar</button>
                                 <button className="btn btn-md" style={{flex:1,background:"#f59e0b",borderColor:"#f59e0b",color:"#fff"}}
-                                    onClick={()=>onStatusChange(appt.id,"in_progress")}>Iniciar</button>
+                                    onClick={()=>onStatusChange(appt.public_id,"in_progress")}>Iniciar</button>
                             </div>
                             <div style={{display:"flex",gap:"6px",width:"100%"}}>
                                 <button className="btn btn-secondary btn-md" style={{flex:1}}
                                     onClick={async ()=>{
                                         if(await confirm({ message:"¿Marcar como no presentado?", confirmText:"No se presentó" }))
-                                            onStatusChange(appt.id,"no_show");
+                                            onStatusChange(appt.public_id,"no_show");
                                     }}>No se presentó</button>
                                 <button className="btn btn-danger btn-md" style={{flex:1}}
                                     onClick={async ()=>{
                                         if(await confirm({ message:"¿Cancelar esta cita?", confirmText:"Cancelar cita", dangerMode:true }))
-                                            onStatusChange(appt.id,"canceled");
+                                            onStatusChange(appt.public_id,"canceled");
                                     }}>Cancelar</button>
                             </div>
                         </>
@@ -386,17 +386,17 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     {appt.status === "confirmed" && canEdit && (
                         <>
                             <button className="btn btn-md btn-md" style={{width:"100%",background:"#f59e0b",borderColor:"#f59e0b",color:"#fff"}}
-                                onClick={()=>onStatusChange(appt.id,"in_progress")}>Iniciar consulta</button>
+                                onClick={()=>onStatusChange(appt.public_id,"in_progress")}>Iniciar consulta</button>
                             <div style={{display:"flex",gap:"6px",width:"100%"}}>
                                 <button className="btn btn-secondary btn-md" style={{flex:1}}
                                     onClick={async ()=>{
                                         if(await confirm({ message:"¿Marcar como no presentado?", confirmText:"No se presentó" }))
-                                            onStatusChange(appt.id,"no_show");
+                                            onStatusChange(appt.public_id,"no_show");
                                     }}>No se presentó</button>
                                 <button className="btn btn-danger btn-md" style={{flex:1}}
                                     onClick={async ()=>{
                                         if(await confirm({ message:"¿Cancelar esta cita?", confirmText:"Cancelar cita", dangerMode:true }))
-                                            onStatusChange(appt.id,"canceled");
+                                            onStatusChange(appt.public_id,"canceled");
                                     }}>Cancelar</button>
                             </div>
                         </>
@@ -412,12 +412,12 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                         message: "La cita se marcará como completada. Después podrás crear o abrir la consulta médica y continuar con el flujo clínico y de cobro.",
                                         confirmText: "Completar consulta",
                                     });
-                                    if (ok) onStatusChange(appt.id,"done");
+                                    if (ok) onStatusChange(appt.public_id,"done");
                                 }}>Completar consulta</button>
                             <button className="btn btn-danger btn-md" style={{flex:1}}
                                 onClick={async ()=>{
                                     if(await confirm({ message:"¿Cancelar esta consulta en progreso?", confirmText:"Cancelar", dangerMode:true }))
-                                        onStatusChange(appt.id,"canceled");
+                                        onStatusChange(appt.public_id,"canceled");
                                 }}>Cancelar</button>
                         </div>
                     )}
@@ -425,14 +425,14 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     {/* done → medical record / invoice */}
                     {appt.status === "done" && (
                         <>
-                            {appt.medical_record_ids?.length > 0 ? (
+                            {appt.medical_record_public_ids?.length > 0 ? (
                                 <button className="btn btn-purple btn-md" style={{width:"100%"}}
-                                    onClick={()=>{onClose(); navigate(`/medical-records?record=${appt.medical_record_ids[0]}`); }}>
+                                    onClick={()=>{onClose(); navigate(`/medical-records?record=${appt.medical_record_public_ids[0]}`); }}>
                                     Ver Consulta
                                 </button>
                             ) : canEdit && (
                                 <button className="btn btn-purple btn-md" style={{width:"100%"}}
-                                    onClick={()=>{onClose(); navigate(`/medical-records?pet=${petId}&appointment=${appt.id}`); }}>
+                                    onClick={()=>{onClose(); navigate(`/medical-records?pet=${petId}&appointment=${appt.public_id}`); }}>
                                     + Crear Consulta Médica
                                 </button>
                             )}
@@ -449,7 +449,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     {/* canceled → reschedule (if date still valid) or new appt */}
                     {canReschedule && canEdit && (
                         <button className="btn btn-info btn-md" style={{width:"100%"}}
-                            onClick={()=>onStatusChange(appt.id,"scheduled")}>Reprogramar</button>
+                            onClick={()=>onStatusChange(appt.public_id,"scheduled")}>Reprogramar</button>
                     )}
                     {showNewAppt && canEdit && (
                         <button className="btn btn-info btn-md" style={{width:"100%"}}
@@ -1005,9 +1005,12 @@ const Appointments = () => {
     };
 
     const handleFormSave = async ({ petId, vetId, reason, notes, start_time, end_time }) => {
+        // ADR p18: body FK fields siguen PK entero (PrimaryKeyRelatedField).
+        // SearchSelect entrega `item.id` = PK consistente. Sin parseInt para
+        // fail-fast si alguna vez se cambia el contrato (NaN explícito).
         await createAppointment(token, {
-            pet:          parseInt(petId),
-            veterinarian: parseInt(vetId),
+            pet:          petId,
+            veterinarian: vetId,
             date:         toDateStr(selectedSlot.date),
             start_time, end_time, reason, notes,
             status: "scheduled",
@@ -1068,7 +1071,7 @@ const Appointments = () => {
     };
 
     const handleEditSave = async (form) => {
-        await updateAppointment(token, editingAppt.id, {
+        await updateAppointment(token, editingAppt.public_id, {
             pet:          editingAppt.pet,
             veterinarian: parseInt(form.veterinarian),
             date:         form.date,
@@ -1339,7 +1342,7 @@ const Appointments = () => {
                     appt={viewAppt}
                     petName={viewAppt.pet_name || "—"}
                     vetName={getVetName(viewAppt.veterinarian) || viewAppt.veterinarian_name}
-                    petId={viewAppt.pet}
+                    petId={viewAppt.pet_public_id}
                     onClose={()=>setViewAppt(null)}
                     onStatusChange={handleStatusChange}
                     onEdit={appt=>{ setEditingAppt(appt); setViewAppt(null); }}

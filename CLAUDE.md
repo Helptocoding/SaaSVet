@@ -180,14 +180,74 @@ with transaction.atomic():
     existing = Appointment.objects.filter(...).first()
 ```
 
-### IDs en URLs
-Los modelos expuestos públicamente usan `public_id` (UUID) en URLs, NO el PK entero.
-Modelos con `public_id`: `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Invoice`, `Prescription`, `Product`, `Presentation`, `Service`.
-Modelos SIN `public_id` (internos): `InvoiceItem`, `StockMovement`, `MedicalRecordProduct`, `MedicalRecordService`, `InvoiceAuditLog`, `Permission`, `Role`, `UserRole`.
+### IDs en URLs (ADR p18 — Día 6)
+
+Modelos expuestos públicamente usan `public_id` (UUID) en URLs, NO el PK entero.
+
+**Modelos con `public_id`:** `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Invoice`, `Prescription`, `Product`, `Presentation`, `Service`, `VaccineRecord`, `User`, `Organization`.
+
+**Modelos SIN `public_id` (internos):** `InvoiceItem`, `StockMovement`, `MedicalRecordProduct`, `MedicalRecordService`, `InvoiceAuditLog`, `AppointmentStatusChange`, `VitalSigns`, `Permission`, `Role`, `UserRole`.
+
+**Trigger de promoción futura:** caso de uso navegable / compartible standalone documentado. Nunca por estética.
 
 Cuando un ViewSet tiene sub-recursos anidados (ej. `/invoices/<invoice_pk>/items/`), el `invoice_pk` debe ser `<str:>` y resolverse con `resolve_public_id()`, no con `get_object_or_404(..., pk=...)`.
 
 **Regla**: todos los parámetros de URL que referencian modelos con `public_id` deben ser `<str:>`, nunca `<int:>`. Usar `<int:>` expone el PK secuencial interno y rompe la resolución UUID.
+
+### Convenciones de IDs por capa (ADR p18)
+
+| Capa | Convención |
+|---|---|
+| Backend Python / DB / JSON | `public_id` (snake_case, UUID v4) |
+| Frontend JS variables / params | `publicId` (camelCase) |
+| URLs / deep links | UUID v4 raw, sin prefijo |
+| React keys | `obj.public_id` preferente; `obj.id` solo si array no sale del componente |
+| FK body fields (POST/PATCH) | PK entero (`PrimaryKeyRelatedField`) |
+
+### Query params de modelos públicos (Fase 3 BLOCKER)
+
+Todo `?<modelo_publico>=<value>` resuelve vía `resolve_public_id(Model.objects.for_organization(org), value)` antes de filtrar. **Prohibido** `qs.filter(<modelo>_id=raw_value)` — bypasea tenant scope.
+
+```python
+pet_lookup = request.query_params.get('pet')
+if pet_lookup:
+    pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
+    qs = qs.filter(pet=pet)
+```
+
+Cross-tenant retorna 404 (no `[]`). Cubierto por `apps.core.tests.test_url_audit`.
+
+### Anti-patterns prohibidos (ADR p18)
+
+1. `editing.public_id || editing.id` (frontend) — dual-lookup spaghetti. Grep gate CI bloqueante.
+2. `try uuid except pk` ad-hoc en views — usar `resolve_public_id`.
+3. Helpers genéricos tipo `resolve_anything()`, `SmartIdField`, `IdentityService` — YAGNI.
+4. Query param dual-aceptación PK + UUID — cortar limpio con flag.
+5. `PrimaryKeyRelatedField` con UUID en body — rompe contrato DRF.
+
+### Deuda diferida a post-beta (D2, D5)
+
+Documentada en `docs/day6/POST-BETA-DEBT.md`. NO bloqueante para beta:
+
+- **D2**: `MeView` response mantiene `organization` (PK) + `organization_public_id` (UUID) ambos. Cleanup `POST-BETA-001` (sprint S1-S3 post-launch).
+- **D5**: Serializers de modelos públicos exponen `id` (PK) + `public_id` (UUID) ambos. Cleanup `POST-BETA-002` (sprint S1-S4 post-launch). Requiere observability fase para detectar consumers de `id` antes de eliminar.
+
+Frontend nuevo DEBE consumir `public_id` / `<resource>_public_id` para todo lo que cruza HTTP. `id` queda solo por retrocompat.
+
+### List views anidadas bajo `<str:pk>` UUID parent (ADR-09 reforzado)
+
+DEBEN declarar `required_permission` por método HTTP en `initial()`:
+
+```python
+def initial(self, request, *args, **kwargs):
+    if request.method == 'GET':
+        self.required_permission = 'medicalrecord.vitals.list'
+    else:
+        self.required_permission = 'medicalrecord.vitals.create'
+    super().initial(request, *args, **kwargs)
+```
+
+Sin esto, `_method_to_action` infiere `retrieve` por presencia de `pk` en kwargs y rompe RBAC silenciosamente.
 
 ### Máquina de estados — Invoice
 Los estados válidos son: `draft → confirmed → paid` y `draft/confirmed → cancelled`.

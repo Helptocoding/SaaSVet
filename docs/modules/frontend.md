@@ -118,7 +118,7 @@ Implementación pragmática en CI:
 - El script `scripts/check-handle-errors.sh` detecta archivos con `catch(` en `frontend/src` y filtra aquellos que no importan `handleFormError`.
 - Mejoras futuras: pasar a análisis AST para evitar falsos positivos (recomendado a mediano plazo).
 
-### IDs en llamadas a la API
+### IDs en llamadas a la API (ADR p18 — Día 6)
 
 Los modelos con `public_id` exponen UUID en las URLs del backend. Usar siempre `item.public_id` en las llamadas, nunca `item.id`:
 
@@ -131,9 +131,61 @@ confirmInvoice(selectedInvoice.public_id)
 getInvoice(invoice.id)
 ```
 
-Modelos con `public_id` en el frontend: `Invoice`, `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Prescription`, `Product`, `Presentation`, `Service`.
+**Modelos con `public_id` en el frontend (12):** `Invoice`, `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Prescription`, `Product`, `Presentation`, `Service`, **`VaccineRecord`** (Día 6), **`User`** (Día 6), **`Organization`** (Día 6).
 
-El campo `id` (entero) puede usarse para display (ej. "Cobro #123") pero no como argumento de URL en la API.
+El campo `id` (entero) puede usarse para display (ej. "Cobro #123") y para React keys locales pero **no** como argumento de URL en la API.
+
+### FKs embebidos — usar `*_public_id`
+
+Los serializers backend exponen `<fk>_public_id` para FKs a modelos públicos. Frontend debe consumirlo para deep links y query params:
+
+```javascript
+// MedicalRecord embebido: pet_public_id disponible
+navigate(`/medical-records?pet=${record.pet_public_id}`);   // ✓
+navigate(`/medical-records?pet=${record.pet}`);             // ✗ es PK
+
+// Appointment embebido: medical_record_public_ids array UUID
+navigate(`/medical-records?record=${appt.medical_record_public_ids[0]}`);
+```
+
+Lista de FKs embebidos disponibles (incompleta — ver serializers backend):
+- `MedicalRecordSerializer`: `pet_public_id`, `appointment_public_id`, `prescription_public_id`, `invoice_public_id`
+- `AppointmentSerializer`: `pet_public_id`, `owner_public_id`, `veterinarian_public_id`, `medical_record_public_ids`, `invoice_public_id`
+- `InvoiceSerializer`: `pet_public_id`, `owner_public_id`, `appointment_public_id`, `medical_record_public_id`
+- `PrescriptionSerializer`: `pet_public_id`, `medical_record_public_id`
+- `VaccineRecordSerializer`: `pet_public_id`, `applied_by_public_id`, `medical_record_public_id`
+- `MeView` response: `organization_public_id`
+
+### Body FK fields — siguen PK entero
+
+ADR p18 distingue claramente:
+
+- **URL paths y query params** → `public_id` (UUID).
+- **Body FK fields** (POST/PATCH JSON) → PK entero (`PrimaryKeyRelatedField`).
+
+```javascript
+// Correcto: body field con PK
+await createAppointment(token, {
+  pet: petItem.id,             // ← PK (SearchSelect)
+  veterinarian: vetId,         // ← PK
+});
+
+// Correcto: deep link / URL con UUID
+navigate(`/pets/${pet.public_id}`);
+```
+
+PatientSearchSelect entrega `item.id` = PK consistente. NO usar `parseInt(petId)` (fail-fast vía NaN si contrato cambia).
+
+### Anti-patterns prohibidos (grep gate CI bloqueante)
+
+```bash
+! grep -rnE "\.public_id\s*\|\|\s*\w+\.id" frontend/src/
+```
+
+Patrones cero matches:
+1. `editing.public_id || editing.id` — dual-lookup spaghetti.
+2. `navigate(`/foo/${x.id}`)` para modelo público — debe usar `${x.public_id}`.
+3. `?pet=${x.id}` con `x.id` = PK — debe ser `x.public_id`.
 
 ### Refetch despues de mutaciones
 

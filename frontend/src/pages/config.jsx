@@ -89,7 +89,7 @@ const Config = () => {
         setSaving(true);
         try {
             if (editingService) {
-                await updateService(editingService.id, form);
+                await updateService(editingService.public_id, form);
             } else {
                 await createService(form);
             }
@@ -244,7 +244,7 @@ const Config = () => {
                                     {canManage && (
                                         <div style={{ display: "flex", gap: "6px" }}>
                                             <button className="btn btn-secondary btn-sm" onClick={() => openEdit(svc)} title="Editar"><Icon.Edit s={14} /></button>
-                                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(svc.id)} title="Eliminar"><Icon.Trash s={14} /></button>
+                                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(svc.public_id)} title="Eliminar"><Icon.Trash s={14} /></button>
                                         </div>
                                     )}
                                 </div>

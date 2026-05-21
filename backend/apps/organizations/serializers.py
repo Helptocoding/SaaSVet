@@ -8,8 +8,10 @@ from .models import Organization, OrganizationTimezoneAudit, OrganizationSetting
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'timezone', 'timezone_updated_at', 'created_at']
-        read_only_fields = ['timezone_updated_at', 'created_at']
+        # Día 6 Fase 4: expone public_id junto a id (id se conserva pre-beta
+        # para no romper contrato; cleanup post-beta).
+        fields = ['id', 'public_id', 'name', 'timezone', 'timezone_updated_at', 'created_at']
+        read_only_fields = ['id', 'public_id', 'timezone_updated_at', 'created_at']
 
     def validate_timezone(self, value):
         if value not in available_timezones():

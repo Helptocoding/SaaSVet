@@ -78,7 +78,7 @@ const MedicalRecords = () => {
 
   useEffect(() => {
     if (!selectedPet || pets.length === 0) return;
-    if (!pets.some(p => String(p.id) === String(selectedPet))) setSelectedPet("");
+    if (!pets.some(p => String(p.public_id) === String(selectedPet))) setSelectedPet("");
   }, [selectedPet, pets]);
 
   useEffect(() => {
@@ -95,7 +95,8 @@ const MedicalRecords = () => {
       getMedicalRecord(token, recordParam).then((r) => {
         if (r?.public_id) {
           setExpandedId(r.public_id);
-          if (r.pet) setSelectedPet(String(r.pet));
+          // Día 6 B1: pet_public_id viene del serializer del MR
+          if (r.pet_public_id) setSelectedPet(String(r.pet_public_id));
         }
       }).catch(() => {});
     }
@@ -118,7 +119,11 @@ const MedicalRecords = () => {
       const allData = await getMedicalRecords(token, { page_size: 9999 });
       const allList = normalizeList(allData);
       const counts = {};
-      allList.forEach(r => { counts[r.pet] = (counts[r.pet] || 0) + 1; });
+      // Día 6 B1: keyear por pet_public_id (UUID) alineado con PetSidebar
+      allList.forEach(r => {
+        const key = r.pet_public_id;
+        if (key) counts[key] = (counts[key] || 0) + 1;
+      });
       setPetCounts(counts);
     } catch {}
 
@@ -158,7 +163,7 @@ const MedicalRecords = () => {
     );
   }, [filteredByType, historySearch]);
 
-  const petInfo = selectedPet ? pets.find(p => String(p.id) === String(selectedPet)) : null;
+  const petInfo = selectedPet ? pets.find(p => String(p.public_id) === String(selectedPet)) : null;
 
   const handleSelectPet = (petId) => {
     setSelectedPet(String(petId));
@@ -380,7 +385,6 @@ const MedicalRecords = () => {
                         onCloseRecord={handleCloseRecord}
                         onEdit={(record) => {
                           setEditingRecord(record);
-                          setActiveRecordId(record.public_id);
                           setShowStepper(true);
                         }}
                         onDelete={handleDelete}

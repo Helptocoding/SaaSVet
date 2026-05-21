@@ -33,7 +33,7 @@ const PetSidebar = ({
         );
     }, [pets, petSearch]);
 
-    const activePet = selectedPet ? pets.find(p => String(p.id) === String(selectedPet)) : null;
+    const activePet = selectedPet ? pets.find(p => String(p.public_id) === String(selectedPet)) : null;
 
     if (collapsed) {
         return (
@@ -100,12 +100,12 @@ const PetSidebar = ({
                     <p className={styles.sidebarEmpty}>Sin resultados</p>
                 ) : filteredPets.map(pet => {
                     const sp = (pet.species || "").toLowerCase();
-                    const isActive = String(pet.id) === String(selectedPet);
+                    const isActive = String(pet.public_id) === String(selectedPet);
                     return (
                         <button
-                            key={pet.id}
+                            key={pet.public_id}
                             className={`${styles.petListItem}${isActive ? ` ${styles.petListItemActive}` : ""}`}
-                            onClick={() => onSelectPet(String(pet.id))}
+                            onClick={() => onSelectPet(String(pet.public_id))}
                         >
                             <div className={styles.petListIcon} style={{ background: getSpeciesBg(sp) }}>
                                 {SPECIES_DOG.test(sp) ? <Icon.Dog size={15} /> :
@@ -118,8 +118,8 @@ const PetSidebar = ({
                                     {[pet.species, pet.breed].filter(Boolean).join(" · ") || "—"}
                                 </div>
                             </div>
-                            {petCounts[pet.id] > 0 && (
-                                <span className={styles.petListBadge}>{petCounts[pet.id]}</span>
+                            {petCounts[pet.public_id] > 0 && (
+                                <span className={styles.petListBadge}>{petCounts[pet.public_id]}</span>
                             )}
                         </button>
                     );

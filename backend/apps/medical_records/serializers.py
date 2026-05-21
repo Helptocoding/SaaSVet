@@ -117,12 +117,18 @@ class VitalSignsSerializer(serializers.ModelSerializer):
 
 class MedicalRecordSerializer(serializers.ModelSerializer):
     pet_name = serializers.CharField(source='pet.name', read_only=True)
+    # Día 6 B1: pet_public_id expuesto para que frontend reciba UUID en lugar
+    # de PK al embedder MR. Evita filtrado ?pet=<pk> en query params.
+    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True)
     veterinarian_name = serializers.SerializerMethodField()
     appointment_date = serializers.SerializerMethodField()
+    appointment_public_id = serializers.UUIDField(source='appointment.public_id', read_only=True, allow_null=True)
     products_used = serializers.SerializerMethodField()
     prescription_id = serializers.ReadOnlyField()
+    prescription_public_id = serializers.UUIDField(source='prescription.public_id', read_only=True, allow_null=True)
     prescription_summary = serializers.SerializerMethodField()
     invoice_id = serializers.ReadOnlyField()
+    invoice_public_id = serializers.SerializerMethodField()
     status = serializers.CharField(read_only=True)
     closed_at = serializers.DateTimeField(read_only=True)
     closed_by = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -130,6 +136,13 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     can_close = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
     latest_vitals = serializers.SerializerMethodField()
+
+    def get_invoice_public_id(self, obj):
+        # invoice_id es ReadOnlyField sobre property o cached value; resolver
+        # public_id requiere instance lookup. Evita N+1 si el caller hace
+        # select_related('invoice').
+        invoice = getattr(obj, 'invoice', None)
+        return str(invoice.public_id) if invoice else None
 
     force_weight = serializers.BooleanField(write_only=True, required=False, default=False)
 
@@ -148,16 +161,23 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalRecord
         fields = [
-            'id', 'public_id', 'pet', 'pet_name', 'veterinarian', 'veterinarian_name',
-            'appointment', 'appointment_date', 'consultation_type',
+            'id', 'public_id',
+            'pet', 'pet_name', 'pet_public_id',
+            'veterinarian', 'veterinarian_name',
+            'appointment', 'appointment_public_id', 'appointment_date',
+            'consultation_type',
             'diagnosis', 'treatment', 'notes', 'weight', 'force_weight', 'created_at', 'updated_at',
-            'products_used', 'prescription_id', 'prescription_summary', 'invoice_id',
+            'products_used',
+            'prescription_id', 'prescription_public_id', 'prescription_summary',
+            'invoice_id', 'invoice_public_id',
             'latest_vitals',
             'status', 'closed_at', 'closed_by',
             'can_modify_charges', 'can_close', 'can_delete',
         ]
         read_only_fields = [
-            'id', 'public_id', 'created_at', 'updated_at', 'prescription_id', 'invoice_id',
+            'id', 'public_id', 'pet_public_id', 'appointment_public_id',
+            'prescription_public_id', 'invoice_public_id',
+            'created_at', 'updated_at', 'prescription_id', 'invoice_id',
             'status', 'closed_at', 'closed_by',
             'organization',
         ]
@@ -315,15 +335,31 @@ class MedicalRecordServiceSerializer(serializers.ModelSerializer):
 class VaccineRecordSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
     applied_by_name = serializers.SerializerMethodField()
+    # Día 6 Fase 5: VaccineRecord promovido a modelo público (anexo seguridad).
+    # Expone public_id y FK embeds en formato UUID para deep links.
+    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True)
+    applied_by_public_id = serializers.UUIDField(
+        source='applied_by.public_id', read_only=True, allow_null=True
+    )
+    medical_record_public_id = serializers.UUIDField(
+        source='medical_record.public_id', read_only=True, allow_null=True
+    )
 
     class Meta:
         model = VaccineRecord
         fields = [
-            'id', 'pet', 'vaccine_name', 'application_date', 'next_due_date',
-            'applied_by', 'applied_by_name', 'notes', 'medical_record', 'status',
-            'created_at',
+            'id', 'public_id',
+            'pet', 'pet_public_id',
+            'vaccine_name', 'application_date', 'next_due_date',
+            'applied_by', 'applied_by_public_id', 'applied_by_name',
+            'notes',
+            'medical_record', 'medical_record_public_id',
+            'status', 'created_at',
         ]
-        read_only_fields = ['id', 'status', 'created_at']
+        read_only_fields = [
+            'id', 'public_id', 'pet_public_id', 'applied_by_public_id',
+            'medical_record_public_id', 'status', 'created_at',
+        ]
 
     def get_applied_by_name(self, obj):
         if obj.applied_by:
