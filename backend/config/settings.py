@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'apps.prescriptions.apps.PrescriptionsConfig',
     'apps.analytics.apps.AnalyticsConfig',
     'apps.dashboard.apps.DashboardConfig',
+    'apps.platform.apps.PlatformConfig',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +118,10 @@ REST_FRAMEWORK = {
         'login': '5/15min',
         'login_by_user': '5/15min',
         'vitals': '60/hour',
+        # Platform-wide provisioning — operación cara + privilegiada.
+        # ScopedRateThrottle por actor (ADMIN_SAAS) en PlatformOrgCreateView.
+        # Hardening fase 2: agregar IPRateThrottle dedicado + alerting Sentry.
+        'platform_org_create': '20/hour',
     },
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
 }

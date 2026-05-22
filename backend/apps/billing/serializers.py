@@ -114,38 +114,42 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Un ítem es o un servicio o una presentación de inventario, no ambos."
             )
-        if not service and not presentation:
+        # Día 6 audit: "must have one" solo aplica a CREATE (sin instance).
+        # PATCH parcial (ej. `{"quantity": "2"}`) deja service/presentation en
+        # None dentro de validated_data, pero self.instance ya los tiene
+        # asignados. Sin este gate, todo PATCH parcial fallaba con 400.
+        if not self.instance and not service and not presentation:
             raise serializers.ValidationError(
                 "Debe especificar 'service' o 'presentation'."
             )
 
-        # Validación multitenant de service (NUEVO)
+        # Día 6 audit F11: tenant validation canonical (ADR-13). Antes
+        # comparaba contra invoice.organization_id (correcto pero sin log
+        # estructurado). _validate_same_org valida contra request.user.org
+        # y emite TENANT_VALIDATION_REJECTED uniforme con InvoiceSerializer.
+        # Invariante: invoice.organization == request.user.organization
+        # (garantizado por _get_invoice via for_organization()).
+        invoice = self.context.get('invoice')
+        if invoice is None:
+            raise RuntimeError(
+                "InvoiceItemSerializer requiere 'invoice' en su contexto."
+            )
+        request = self.context.get('request')
+        assert request is not None, (
+            "InvoiceItemSerializer requiere 'request' en su context. "
+            "Si lo invocas fuera de una view DRF (shell, mgmt command), "
+            "pasa context={'request': fake_request} con user.organization seteado."
+        )
+
         if service:
-            invoice = self.context.get('invoice')
-            if invoice is None:
-                raise RuntimeError(
-                    "InvoiceItemSerializer requiere 'invoice' en su contexto."
-                )
-            if service.organization_id != invoice.organization_id:
-                raise serializers.ValidationError(
-                    "El servicio no pertenece a la organización de la factura."
-                )
+            _validate_same_org(service, request, 'service', 'InvoiceItemSerializer')
             if not self.instance and InvoiceItem.objects.filter(invoice=invoice, service=service).exists():
                 raise serializers.ValidationError(
                     "Este servicio ya está incluido en la factura."
                 )
 
-        # Validación de organización (presentation — ya existía)
         if presentation:
-            invoice = self.context.get('invoice')
-            if invoice is None:
-                raise RuntimeError(
-                    "InvoiceItemSerializer requiere 'invoice' en su contexto."
-                )
-            if presentation.organization_id != invoice.organization_id:
-                raise serializers.ValidationError(
-                    "La presentación no pertenece a la organización de la factura."
-                )
+            _validate_same_org(presentation, request, 'presentation', 'InvoiceItemSerializer')
             if presentation.stock <= 0:
                 raise serializers.ValidationError(
                     f"'{presentation.product.name}' no tiene stock disponible."

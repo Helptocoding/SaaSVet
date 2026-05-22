@@ -88,6 +88,12 @@ class StaffDeactivateView(APIView):
             ),
             pk,
         )
+        # Día 6 audit F13: bloquear self-deactivation. Sin este guard, un
+        # ADMIN que se desactiva queda fuera de su propia cuenta (lockout)
+        # y la única recuperación es Django superuser shell — operativamente
+        # costoso. La superficie con UUID lo hace trivial vía UI.
+        if user.pk == request.user.pk:
+            raise ValidationError("No puedes desactivar tu propia cuenta.")
         user.is_active = False
         user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)

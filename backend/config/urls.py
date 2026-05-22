@@ -108,4 +108,7 @@ urlpatterns = [
     path('api/v1/dashboard/operations/series/', operations_series),
     path('api/v1/dashboard/financial/series/', financial_series),
     path('api/v1/dashboard/summary/', dashboard_summary),
+    # Cross-tenant SaaS platform operations (ADR-16 / 2026-05-22).
+    # Routes inside require IsPlatformOperator — distinct from /api/ tenant scope.
+    path('api/platform/', include('apps.platform.urls')),
 ]

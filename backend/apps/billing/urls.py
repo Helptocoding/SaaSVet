@@ -24,5 +24,5 @@ urlpatterns = [
     path('billing/invoices/<str:pk>/cancel/', cancel_invoice),
     path('billing/invoices/<str:pk>/pdf/', invoice_pdf),
     path('billing/invoices/<str:invoice_pk>/items/', InvoiceItemCreateView.as_view()),
-    path('billing/invoices/<str:invoice_pk>/items/<str:pk>/', InvoiceItemDetailView.as_view()),
+    path('billing/invoices/<str:invoice_pk>/items/<int:pk>/', InvoiceItemDetailView.as_view()),
 ]

@@ -225,9 +225,15 @@ def _get_last_weight(pet):
     """
     Historial global del paciente: último peso entre VitalSigns y MedicalRecord.
     Prioriza VitalSigns (más granular). Ordenado por recorded_at (momento clínico).
+
+    Día 6 audit F15: defense-in-depth — for_organization(pet.organization)
+    antes del filter. Caller debe pasar pet ya tenant-validated; el guard
+    explícito previene drift si futuro caller reusa esta helper sin scoping.
     """
+    org = pet.organization
     last_vital = (
         VitalSigns.objects
+        .for_organization(org)
         .filter(medical_record__pet=pet, weight__isnull=False)
         .order_by('-recorded_at', '-created_at')
         .first()
@@ -236,6 +242,7 @@ def _get_last_weight(pet):
         return last_vital.weight
     last_mr = (
         MedicalRecord.objects
+        .for_organization(org)
         .filter(pet=pet, weight__isnull=False)
         .order_by('-created_at')
         .first()

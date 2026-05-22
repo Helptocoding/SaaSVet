@@ -232,6 +232,27 @@ class InvoiceItemDetailView(BillingOrganizationMixin, generics.RetrieveUpdateDes
     permission_classes = [HybridPermission]
     resource_name = "invoice"
 
+    def initial(self, request, *args, **kwargs):
+        # Día 6 audit F14: `invoice.update` no existe en PERMISSION_CODES
+        # (decisión semántica: invoice no tiene estado "update" abstracto —
+        # cambios son via state machine confirm/pay/cancel + edición de items
+        # en draft). Sin esta declaración explícita, _method_to_action infiere
+        # 'update' por PATCH y exige 'invoice.update' inexistente → 403 silente
+        # para VET/ASSISTANT.
+        #
+        # Mapping declarado:
+        #   GET    → invoice.retrieve   (lectura del ítem)
+        #   PATCH  → invoice.create     (edición de ítems es parte del armado
+        #                                del cobro en draft — VET ya tiene)
+        #   DELETE → invoice.destroy    (eliminar ítems del draft)
+        if request.method == 'GET':
+            self.required_permission = 'invoice.retrieve'
+        elif request.method in ('PUT', 'PATCH'):
+            self.required_permission = 'invoice.create'
+        elif request.method == 'DELETE':
+            self.required_permission = 'invoice.destroy'
+        return super().initial(request, *args, **kwargs)
+
     def _get_invoice(self):
         return resolve_public_id(
             Invoice.objects.for_organization(self.request.user.organization),
