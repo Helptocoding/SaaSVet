@@ -82,6 +82,9 @@ INSTALLED_APPS = [
     'apps.analytics.apps.AnalyticsConfig',
     'apps.dashboard.apps.DashboardConfig',
     'apps.platform.apps.PlatformConfig',
+    # ADR p20: requerida para JWT refresh-token rotation + blacklist al
+    # cambiar password. Infraestructura crítica del auth lifecycle.
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -107,6 +110,11 @@ REST_FRAMEWORK = {
     # declaran permission_classes=[AllowAny] explícito en config/urls.py.
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+        # ADR p21: gate global — bloquea endpoints fuera de whitelist
+        # cuando el user.password_must_change=True. Sin esto, un cliente
+        # curl/Postman puede ignorar el redirect del frontend y usar la
+        # app con su temp password indefinidamente.
+        'apps.core.permissions.MustChangePasswordGate',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
@@ -122,13 +130,33 @@ REST_FRAMEWORK = {
         # ScopedRateThrottle por actor (ADMIN_SAAS) en PlatformOrgCreateView.
         # Hardening fase 2: agregar IPRateThrottle dedicado + alerting Sentry.
         'platform_org_create': '20/hour',
+        # ADR p20: self-service password change. Throttle modesto para
+        # disuadir brute-force del current_password — el endpoint requiere
+        # IsAuthenticated, así que el attacker ya tiene credentials válidas.
+        'change_password': '10/hour',
+        # ADR p21: admin reset de password de staff. Limitar abuse
+        # interno — un ADMIN comprometido no puede resetear masivamente.
+        'staff_password_reset': '5/hour',
     },
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    # ADR p20 (2026-05-22): TTL reducido de 30 → 15 min. Justificación:
+    # - Password change invalida refresh tokens al instante, pero los access
+    #   tokens existentes son stateless y siguen válidos hasta su exp natural.
+    # - Una ventana de 30 min de exposición post-cambio es excesiva ahora que
+    #   refresh rotation + blacklist están activos. 15 min reduce la superficie
+    #   sin penalizar UX (refresh transparente cada 10 min en authContext).
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    # ADR p20: rotation + blacklist habilitados para credential lifecycle.
+    # Cada /token/refresh/ emite un nuevo refresh y el viejo queda en blacklist.
+    # Esto permite que el endpoint POST /api/users/change-password/ invalide
+    # selectivamente todos los refresh tokens del usuario (excepto el recién
+    # emitido) al cambiar contraseña.
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 # IDs públicos — apagar cuando el frontend esté actualizado a public_id:

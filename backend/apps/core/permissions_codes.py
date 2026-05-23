@@ -80,6 +80,8 @@ PERMISSION_CODES = [
     "staff.list",
     "staff.create",
     "staff.destroy",
+    # ADR p21: admin reset de password de staff. Solo ADMIN de la org.
+    "staff.reset_password",
 
     # Organización
     "organization.list",

@@ -143,5 +143,12 @@ class OrganizationSettingsView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         org = self.request.user.organization
+        # Guard: usuarios sin tenant (ej. ADMIN_SAAS sin org de plataforma
+        # asignada) no pueden materializar OrganizationSettings — la FK es
+        # NOT NULL. Sin este guard, get_or_create(organization=None) revienta
+        # con IntegrityError 500 en lugar de un 404 razonable.
+        if org is None:
+            from django.http import Http404
+            raise Http404("Usuario sin organización asignada.")
         settings, _ = OrganizationSettings.objects.get_or_create(organization=org)
         return settings

@@ -24,7 +24,9 @@ from apps.users.views import (
     MeView,
     StaffListView,
     StaffCreateView,
-    StaffDeactivateView
+    StaffDeactivateView,
+    StaffResetPasswordView,
+    ChangeMyPasswordView,
 )
 from rest_framework.routers import DefaultRouter
 from apps.patients.views import PetViewSet, OwnerViewSet
@@ -65,6 +67,51 @@ class ThrottledTokenObtainPairView(TokenObtainPairView):
                     "username": sanitize_text(raw_username, max_length=100),
                 }
             )
+            return response
+
+        # ADR p21: temp-password lifecycle gates that need a successful
+        # authentication to evaluate. We run them AFTER super().post()
+        # because they require resolving the user, which the parent
+        # class did for us during password validation.
+        if response.status_code == 200:
+            from django.contrib.auth import get_user_model
+            from apps.users.services import is_temp_password_expired
+
+            User = get_user_model()
+            raw_username = (request.data or {}).get('username', '')
+            try:
+                user = User.objects.get(username=raw_username)
+            except User.DoesNotExist:
+                # Race: user deleted between auth and our re-fetch. Let
+                # the response stand — the next request will 401 naturally.
+                return response
+
+            if is_temp_password_expired(user):
+                _login_logger.warning(
+                    "TEMP_PASSWORD_EXPIRED",
+                    extra={
+                        "event": "TEMP_PASSWORD_EXPIRED",
+                        "user_id": user.pk,
+                        "username": user.username,
+                        "issued_at": user.password_temp_issued_at.isoformat()
+                            if user.password_temp_issued_at else None,
+                    },
+                )
+                from rest_framework.response import Response
+                return Response(
+                    {
+                        "code": "temp_password_expired",
+                        "detail": "Contraseña temporal expirada. Solicita un nuevo reset al administrador.",
+                    },
+                    status=403,
+                )
+
+            # Tag the response with the must_change flag so the frontend
+            # can force-redirect to /change-password without an extra
+            # round-trip to /me/.
+            if user.password_must_change:
+                response.data['must_change_password'] = True
+
         return response
 
 
@@ -99,6 +146,14 @@ urlpatterns = [
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
     path('api/staff/create/', StaffCreateView.as_view(), name='staff-create'),
     path('api/staff/<str:pk>/', StaffDeactivateView.as_view(), name='staff-deactivate'),
+    # ADR p21: admin-initiated password reset for staff member.
+    path('api/staff/<str:pk>/reset-password/', StaffResetPasswordView.as_view(),
+         name='staff-reset-password'),
+    # ADR p20: credential self-change. Explicit action endpoint — NOT a
+    # field PATCH on /staff/<id>/, which would bypass token invalidation,
+    # validate_password, and audit logging.
+    path('api/users/change-password/', ChangeMyPasswordView.as_view(),
+         name='change-password'),
     path('api/', include('apps.medical_records.urls')),
     path('api/', include('apps.inventory.urls')),
     path('api/', include('apps.billing.urls')),

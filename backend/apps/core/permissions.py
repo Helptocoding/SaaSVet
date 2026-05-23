@@ -311,6 +311,27 @@ class HybridPermission(BasePermission):
         if not request.user.is_authenticated:
             return False
 
+        # ADR p21: must_change_password gate (embedded here because DRF
+        # ignores ``DEFAULT_PERMISSION_CLASSES`` once a view declares its
+        # own ``permission_classes`` — and ~every view in the project
+        # does. Embedding in HybridPermission propagates to every view
+        # that uses it (directly or via ``make_permission``).
+        if getattr(request.user, 'password_must_change', False):
+            path = request.path
+            allowed = any(
+                path == w or path.startswith(w)
+                for w in _MUST_CHANGE_WHITELIST
+            )
+            if not allowed:
+                rbac_logger.warning("MUST_CHANGE_PASSWORD_BLOCKED", extra={
+                    "event": "MUST_CHANGE_PASSWORD_BLOCKED",
+                    "actor_id": request.user.pk,
+                    "actor_username": request.user.username,
+                    "path": path,
+                    "method": request.method,
+                })
+                return False
+
         if request.user.is_superuser:
             return True
 
@@ -395,3 +416,64 @@ def make_permission(code: str) -> type:
 
     SpecificPermission.__name__ = f"Permission_{code.replace('.', '_')}"
     return SpecificPermission
+
+
+# ---------------------------------------------------------------------------
+# Credential-lifecycle gate (ADR p21)
+# ---------------------------------------------------------------------------
+
+# URL paths the user is allowed to reach while `password_must_change=True`.
+# Everything else returns 403 with a structured payload that the frontend
+# uses to force-redirect to the change-password screen.
+#
+# Whitelist rationale:
+#   /api/users/change-password/  — the exit door
+#   /api/me/                     — frontend needs current user data to render
+#   /api/token/refresh/          — keep token refresh alive while changing
+#   /api/token/                  — login itself
+#   /api/auth/                   — any future auth flows (forgot-password, etc.)
+_MUST_CHANGE_WHITELIST = (
+    '/api/users/change-password/',
+    '/api/me/',
+    '/api/token/refresh/',
+    '/api/token/',
+)
+
+
+class MustChangePasswordGate(BasePermission):
+    """
+    Blocks every endpoint outside the whitelist when the authenticated
+    user has ``password_must_change=True``. Pair with ``IsAuthenticated``
+    in ``DEFAULT_PERMISSION_CLASSES`` so unauthenticated requests still
+    fall through normally.
+
+    Returning 403 here (rather than the alternative of allowing access
+    and trusting the frontend redirect) is critical — a curl/Postman
+    client can ignore frontend logic entirely. The gate is the
+    authoritative enforcement point.
+    """
+
+    message = "Cambia tu contraseña antes de continuar."
+
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return True  # IsAuthenticated handles unauth — not our concern
+        if not getattr(user, 'password_must_change', False):
+            return True
+
+        # Allow listed paths through so the user can actually exit the
+        # must-change state.
+        path = request.path
+        for whitelisted in _MUST_CHANGE_WHITELIST:
+            if path == whitelisted or path.startswith(whitelisted):
+                return True
+
+        rbac_logger.warning("MUST_CHANGE_PASSWORD_BLOCKED", extra={
+            "event": "MUST_CHANGE_PASSWORD_BLOCKED",
+            "actor_id": user.pk,
+            "actor_username": user.username,
+            "path": path,
+            "method": request.method,
+        })
+        return False

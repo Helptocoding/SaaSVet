@@ -1,13 +1,22 @@
+import uuid
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
+from apps.core.network import get_client_ip, get_user_agent
 from apps.core.permissions import make_permission, build_permissions_list
 from apps.core.views import resolve_public_id
-from apps.users.serializers import UserSerializer, CreateEmployeeSerializer
+from apps.users.serializers import (
+    UserSerializer,
+    CreateEmployeeSerializer,
+    ChangePasswordSerializer,
+)
+from apps.users.services import change_password, reset_password_for_staff
 
 User = get_user_model()
 
@@ -36,6 +45,9 @@ class MeView(APIView):
             "organization_name": org.name if org else None,
             "organization_timezone": org.timezone if org else "America/Mexico_City",
             "permissions": build_permissions_list(request.user),
+            # ADR p21: credential lifecycle. Frontend reads this to
+            # force-redirect to /change-password while True.
+            "must_change_password": bool(getattr(user, 'password_must_change', False)),
         })
 
 
@@ -97,3 +109,110 @@ class StaffDeactivateView(APIView):
         user.is_active = False
         user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ChangeMyPasswordView(APIView):
+    """
+    Self-service password change.
+
+    POST /api/users/change-password/
+
+    Body: ``current_password``, ``new_password``, ``confirm_password``.
+
+    On success, returns 200 with a fresh ``access`` + ``refresh`` token
+    pair. The client must replace its stored tokens (use the central
+    auth manager — never write to localStorage from form components).
+
+    Throttle scope ``change_password`` (10/hour by user) deters
+    brute-force of ``current_password``. See ADR p20 for full design
+    notes including JWT lifecycle and access-token behavior.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'change_password'
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request_id = (
+            request.META.get('HTTP_X_REQUEST_ID')
+            or str(uuid.uuid4())
+        )
+
+        result = change_password(
+            actor=request.user,
+            request=request,
+            current_password=serializer.validated_data['current_password'],
+            new_password=serializer.validated_data['new_password'],
+            request_id=request_id,
+            client_ip=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        return Response({
+            "detail": "Contraseña actualizada.",
+            "request_id": result.request_id,
+            "duration_ms": result.duration_ms,
+            "access": result.access,
+            "refresh": result.refresh,
+        }, status=status.HTTP_200_OK)
+
+
+class StaffResetPasswordView(APIView):
+    """
+    Admin-initiated password reset for a staff member of the same
+    organization (ADR p21).
+
+    POST /api/staff/<public_id>/reset-password/
+
+    Generates a cryptographically random temporary password, applies it
+    to the target user, flips ``password_must_change=True`` with a
+    24-hour validity window, blacklists every refresh token the target
+    held, and returns the temp password ONCE in the response. The temp
+    password is never persisted to logs.
+
+    Authorisation (defence in depth — service re-checks):
+      - Caller has ``staff.reset_password`` permission (ADMIN only —
+        VET / ASSISTANT lack it via PERMISSIONS dict).
+      - Caller and target share the same organization.
+      - Caller is not the target (self-reset uses change-password).
+      - Target is not ``ADMIN_SAAS`` (no clinic admin can affect
+        platform operators).
+    """
+
+    permission_classes = [make_permission('staff.reset_password')]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'staff_password_reset'
+
+    def post(self, request, pk):
+        target = resolve_public_id(
+            User.objects.filter(
+                organization=request.user.organization,
+                is_active=True,
+            ),
+            pk,
+        )
+
+        request_id = (
+            request.META.get('HTTP_X_REQUEST_ID')
+            or str(uuid.uuid4())
+        )
+
+        result = reset_password_for_staff(
+            admin=request.user,
+            target_user=target,
+            request_id=request_id,
+            client_ip=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        return Response({
+            "detail": "Contraseña temporal generada.",
+            "request_id": result.request_id,
+            "duration_ms": result.duration_ms,
+            "temp_password": result.temp_password,
+            "expires_in_seconds": result.expires_in_seconds,
+            "must_change_on_first_login": True,
+        }, status=status.HTTP_201_CREATED)

@@ -9,6 +9,12 @@ logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
+
+# Min length para self-change (ADR p20). Distinto del floor=12 de
+# ``apps/platform/serializers.py:ProvisionOrgSerializer.admin_password``,
+# que aplica solo a admins iniciales SaaS por su privilegio amplificado.
+SELF_CHANGE_MIN_PASSWORD_LENGTH = 8
+
 USERNAME_REGEX = re.compile(r"^[A-Za-z0-9_.\-]+$")
 NAME_REGEX = re.compile(r"^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$")
 
@@ -121,3 +127,30 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
                 "ejecuta seed_permissions",
                 user.role, organization.id, user.id,
             )
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Input contract for ``POST /api/users/change-password/``.
+
+    Field-level checks here are intentionally minimal: empty strings,
+    length floor, confirm match. The full Django validator stack
+    (``validate_password``) runs inside the service so it has access to
+    the user for similarity checks. The service is also responsible for
+    rejecting ``new == current``.
+    """
+
+    current_password = serializers.CharField(write_only=True, max_length=128)
+    new_password = serializers.CharField(
+        write_only=True,
+        max_length=128,
+        min_length=SELF_CHANGE_MIN_PASSWORD_LENGTH,
+    )
+    confirm_password = serializers.CharField(write_only=True, max_length=128)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({
+                "confirm_password": "Las contraseñas no coinciden.",
+            })
+        return attrs

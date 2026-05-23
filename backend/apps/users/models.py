@@ -32,6 +32,18 @@ class User(AbstractUser):
     specialty = models.CharField(max_length=100, blank=True, default='')
     is_active = models.BooleanField(default=True)
 
+    # ADR p21: credential lifecycle — forced password change.
+    # Multiple use cases (onboarding, admin reset, security policy
+    # incidents, compromised credentials, first-login enforcement). The
+    # `MustChangePasswordGate` permission blocks every endpoint except
+    # the whitelist while this flag is True.
+    password_must_change = models.BooleanField(default=False)
+
+    # Set by `services.reset_password_for_staff` when an admin issues a
+    # temporary password. Read by the login view to reject expired temps
+    # (24h window). Cleared by `services.change_password` on success.
+    password_temp_issued_at = models.DateTimeField(null=True, blank=True)
+
     class Meta(AbstractUser.Meta):
         indexes = [
             models.Index(fields=["organization", "role", "is_active"]),
