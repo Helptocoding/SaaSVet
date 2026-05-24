@@ -1,0 +1,35 @@
+# Capa 1 (DEPLOY_VPS_PLAN.md): keep build context lean.
+# node_modules is the biggest offender (~238MB) — letting it into the
+# context not only bloats the build but pnpm will reinstall over it.
+
+node_modules/
+dist/
+.vite/
+
+# Secrets — only the example survives into context.
+.env
+.env.*
+!.env.example
+
+# Repo metadata
+.git
+.gitignore
+.gitattributes
+
+# Local QA harness, smoke tests, lockfile from old agents
+__smoke__/
+skills-lock.json
+
+# Docs / IDE
+*.md
+docs/
+.claude/
+.idea/
+.vscode/
+
+# Vercel relic — VPS deploy ignores it.
+vercel.json
+
+# Build/test/lint caches
+coverage/
+.eslintcache
