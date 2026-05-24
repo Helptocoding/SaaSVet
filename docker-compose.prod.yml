@@ -1,0 +1,144 @@
+# Capa 2 (DEPLOY_VPS_PLAN.md): production-grade compose stack.
+#
+# Boundaries:
+#   - postgres + backend + frontend live on an internal bridge network.
+#   - Only :80/:443 should ever be published — Capa 3 introduces Caddy and
+#     removes the temporary frontend/backend host ports added here for
+#     smoke testing.
+#   - postgres has NO `ports:` block. Reachable only through the internal
+#     network from `backend` and `release`.
+#
+# Lifecycle:
+#   1. postgres comes up first; healthcheck waits for pg_isready.
+#   2. release one-shot runs migrate + collectstatic + seed_permissions,
+#      writes static assets into the `static_files` named volume, exits 0.
+#   3. backend (gunicorn) starts ONLY after release exits successfully.
+#   4. frontend (nginx + dist bundle) starts independently.
+#
+# Idempotency: release is `restart: "no"` and depends on
+# `service_completed_successfully`. Re-running `docker compose up -d`
+# only re-runs release if its image/source changed.
+
+name: vet
+
+x-backend-build: &backend-build
+  context: ./backend
+  dockerfile: Dockerfile
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # Capa 4 will switch this to a bind-mount on the VPS
+      # (`/var/lib/vet/pgdata:/var/lib/postgresql/data`) so backups + restores
+      # touch a known host path. Named volume during local dev for portability.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+    networks: [internal]
+    # NO ports: — accessed only via the internal network.
+
+  release:
+    build: *backend-build
+    image: vet-backend:capa1
+    env_file: .env.prod
+    command: ["/app/scripts/release.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+    restart: "no"
+    volumes:
+      - static_files:/app/staticfiles
+
+  backend:
+    build: *backend-build
+    image: vet-backend:capa1
+    restart: unless-stopped
+    env_file: .env.prod
+    command:
+      - gunicorn
+      - config.wsgi:application
+      - --bind=0.0.0.0:8000
+      - --workers=${GUNICORN_WORKERS:-3}
+      - --threads=${GUNICORN_THREADS:-2}
+      - --timeout=${GUNICORN_TIMEOUT:-60}
+      - --max-requests=1000
+      - --max-requests-jitter=100
+      - --access-logfile=-
+      - --error-logfile=-
+      - --log-level=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      release:
+        condition: service_completed_successfully
+    healthcheck:
+      # Stdlib only — keeps the runtime image free of curl-as-dep noise.
+      # ALLOWED_HOSTS must include `localhost` (.env.prod.example documents).
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - |
+          import urllib.request, sys
+          try:
+              r = urllib.request.urlopen('http://localhost:8000/api/healthz/', timeout=3)
+              sys.exit(0 if r.status == 200 else 1)
+          except Exception:
+              sys.exit(1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - static_files:/app/staticfiles
+    # TEMP — Capa 3 removes this. Caddy on :443 will proxy to backend:8000
+    # over the internal network. Kept for smoke during Capa 2 only.
+    ports:
+      - "127.0.0.1:8001:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    networks: [internal]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    image: vet-frontend:capa1
+    restart: unless-stopped
+    networks: [internal]
+    # TEMP — same as backend; Capa 3 removes this and Caddy proxies / to here.
+    ports:
+      - "127.0.0.1:8002:80"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+  static_files:

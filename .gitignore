@@ -3,6 +3,13 @@
 # Credenciales — NUNCA subir
 backend/.env
 *.env
+# .env.prod / .env.prod.local / etc. NO match con `*.env` (ese glob solo cubre
+# nombres TERMINADOS en .env). Capa 2 introduce .env.prod en raíz — bloqueado
+# aquí. Plantilla `*.example` se sigue versionando.
+.env.prod
+.env.prod.*
+!.env.prod.example
+!.env.example
 
 # Logs
 backend/logs/*.log
