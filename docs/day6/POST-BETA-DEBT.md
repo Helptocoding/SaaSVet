@@ -150,6 +150,63 @@ Backend ya emite `medical_record_public_ids` (UUID array, Día 6 B2). Eliminar l
 
 ---
 
+## POST-BETA-005 — Idempotency key en `POST /api/platform/organizations/`
+
+**Archivo:** `backend/apps/platform/views.py:PlatformOrgCreateView`.
+
+**Estado actual:** El endpoint NO acepta header `X-Idempotency-Key`. Cada
+POST es tratado como request nuevo. Las validaciones pre-DB de duplicados
+(`username`, `email`, `org name` case-insensitive) mitigan el caso común
+de retry post-success, pero no son una solución completa.
+
+**Por qué se difiere:**
+- Validaciones pre-DB cubren ~95% de duplicate-create scenarios (retry
+  después de timeout, doble click en UI, refresh accidental).
+- Operación con throttle bajo (`20/hour`) — blast radius limitado.
+- Beta-launch tiene volumen bajo de provisioning — el riesgo de duplicados
+  generados por retry es estadísticamente bajo durante los primeros sprints.
+- Implementación completa requiere: storage de `(idempotency_key, response)`
+  con TTL, decisión sobre scope (per-actor vs global), invalidation policy.
+  Diseño merece su propio ADR.
+
+**Por qué será importante post-beta:**
+- Retries de timeouts (nginx/Cloudflare default ~60s puede cortar antes
+  del completion de provisioning + signal cascade).
+- Mobile clients con conexión inestable que reintentan automáticamente.
+- Webhook-driven provisioning desde billing SaaS (Stripe/etc.) que reintenta
+  hasta recibir 2xx.
+- Customer support tooling con doble-click humano.
+
+**Diseño tentativo post-beta:**
+- Header opcional `X-Idempotency-Key: <uuid v4>` (cliente provee).
+- Storage: tabla `platform_idempotency_records(key, actor_id, response_body,
+  status_code, created_at)` con TTL 24h.
+- En POST con key presente:
+  1. SELECT FOR UPDATE en `(key, actor_id)` — si existe y completed, devolver
+     response_body cached con status original.
+  2. Si existe y en-progress (created_at < 30s ago), retornar 409 Conflict
+     con `Retry-After`.
+  3. Si no existe, INSERT in-progress + proceder con provisioning normal +
+     UPDATE con response final.
+- Mantener provisión actual sin key (idempotency es opt-in).
+
+**Ticket:** `POST-BETA-005 — Idempotency-Key support para platform provisioning`.
+
+**Sprint estimado:** S2-S4 post-launch (depende de volumen de retries
+observados en Sentry/logs de prod).
+
+**Pasos cuando se ejecute:**
+1. ADR formal: scope (per-actor vs global), TTL, conflict semantics.
+2. Migration: `platform_idempotency_records` con index UNIQUE en
+   `(key, actor_id)`.
+3. Middleware o decorator que envuelve la view.
+4. Tests: replay request con key reutilizada devuelve mismo response
+   sin side-effects nuevos.
+5. Documentar header en OpenAPI / runbook.
+6. Métricas: cantidad de hits cached vs misses (visibilidad del valor).
+
+---
+
 ## Resumen — checklist post-beta
 
 - [ ] `POST-CUTOVER-001` (2026-06-19): eliminar `ALLOW_LEGACY_ID_LOOKUP` branch.
@@ -157,6 +214,7 @@ Backend ya emite `medical_record_public_ids` (UUID array, Día 6 B2). Eliminar l
 - [ ] `POST-BETA-002` (sprint S1-S4): eliminar `id` de serializers de response (D5).
 - [ ] `POST-BETA-003`: cleanup `PetSerializer.owner_id` PK redundant.
 - [ ] `POST-BETA-004`: cleanup `AppointmentSerializer.medical_record_ids` PK array.
+- [ ] `POST-BETA-005` (sprint S2-S4): `X-Idempotency-Key` en `POST /api/platform/organizations/`.
 
 Cada ticket requiere:
 - Observability fase obligatoria antes del cleanup.

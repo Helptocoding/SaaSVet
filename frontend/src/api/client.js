@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getItem, clearTokens } from "../auth/tokenStorage";
 
 const rawBase = import.meta.env.VITE_API_URL;
 if (!rawBase) {
@@ -10,20 +11,23 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("access_token");
+    const token = getItem("access_token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
 
+const isLoginAttempt = (config) => {
+    const url = config?.url || "";
+    return url.endsWith("token/") || url.endsWith("token");
+};
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            localStorage.removeItem("user");
+        if (error.response?.status === 401 && !isLoginAttempt(error.config)) {
+            clearTokens();
             window.location.href = "/login";
         } else if (error.response?.status >= 500) {
             alert("Error del servidor. Intenta más tarde.");

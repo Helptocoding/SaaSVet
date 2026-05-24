@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import { getItem, setTokens, setAccessToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
 
 const AuthContext = createContext();
 
@@ -28,9 +29,7 @@ export const AuthProvider = ({ children }) => {
             clearTimeout(refreshTimerRef.current);
             refreshTimerRef.current = null;
         }
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user");
+        clearTokens();
         setToken(null);
         setUser(null);
         setPermissions(new Set());
@@ -47,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         const delay = Math.max(exp - Date.now() - REFRESH_BEFORE_EXPIRY_MS, 0);
 
         refreshTimerRef.current = setTimeout(async () => {
-            const storedRefresh = localStorage.getItem("refresh_token");
+            const storedRefresh = getItem("refresh_token");
             if (!storedRefresh) {
                 logout();
                 return;
@@ -60,15 +59,24 @@ export const AuthProvider = ({ children }) => {
                     body: JSON.stringify({ refresh: storedRefresh }),
                 });
 
+                // Guard against zombie revival: if the user logged out while
+                // this fetch was in flight, drop the response. Without this
+                // check, a late 200 would re-seed tokens and restore the
+                // session the user just terminated.
+                if (isLoggingOut()) {
+                    return;
+                }
+
                 if (res.ok) {
                     const data = await res.json();
-                    localStorage.setItem("access_token", data.access);
+                    setAccessToken(data.access);
                     setToken(data.access);
                     scheduleTokenRefresh(data.access);
                 } else {
                     logout();
                 }
             } catch (err) {
+                if (isLoggingOut()) return;
                 console.error("[Auth] Token refresh failed", err);
                 logout();
             }
@@ -76,21 +84,21 @@ export const AuthProvider = ({ children }) => {
     }, [logout]);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem("access_token");
-        const storedUser = localStorage.getItem("user");
+        const storedToken = getItem("access_token");
+        const storedUser = getItem("user");
 
         if (storedToken) {
             setToken(storedToken);
             scheduleTokenRefresh(storedToken);
 
-            // Refresh user data from server to avoid stale org/role data in localStorage
+            // Refresh user data from server to avoid stale org/role data in storage
             fetch(`${API_BASE}me/`, {
                 headers: { Authorization: `Bearer ${storedToken}` },
             })
                 .then(res => res.ok ? res.json() : null)
                 .then(data => {
                     if (data) {
-                        localStorage.setItem("user", JSON.stringify(data));
+                        storeUser(data);
                         setUser(data);
                         setPermissions(Object.freeze(new Set(data.permissions || [])));
                     } else if (storedUser) {
@@ -123,15 +131,14 @@ export const AuthProvider = ({ children }) => {
         };
     }, [scheduleTokenRefresh]);
 
-    const login = (accessToken, refreshToken) => {
-        localStorage.setItem("access_token", accessToken);
-        localStorage.setItem("refresh_token", refreshToken);
+    const login = (accessToken, refreshToken, remember = true) => {
+        setTokens({ access: accessToken, refresh: refreshToken, remember });
         setToken(accessToken);
         scheduleTokenRefresh(accessToken);
     };
 
     const setUserData = (userData) => {
-        localStorage.setItem("user", JSON.stringify(userData));
+        storeUser(userData);
         setUser(userData);
         setPermissions(Object.freeze(new Set(userData.permissions || [])));
     };

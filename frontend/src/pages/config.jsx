@@ -5,6 +5,7 @@ import { getOrgSettings, updateOrgSettings } from "../api/organizations";
 import { apiError } from "../utils/apiError";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import ChangePasswordForm from "../components/ChangePasswordForm";
 import { toast } from "sonner";
 
 const EMPTY_SERVICE = { name: "", description: "", base_price: "", is_active: true };
@@ -50,12 +51,24 @@ const Config = () => {
     const [savingToggle, setSavingToggle] = useState(null);
     const [saving, setSaving] = useState(false);
 
+    // ADMIN_SAAS no pertenece a una clínica — los endpoints tenant-scoped
+    // (services, orgSettings) responden 404 / 400 si user.organization es null.
+    // Skip fetches y mostrar solo "Mi cuenta" para él.
+    const isPlatformOperator = user?.role === "ADMIN_SAAS";
+    const hasOrg = !!user?.organization;
+    const showTenantSections = !isPlatformOperator && hasOrg;
+
     useEffect(() => {
-        if (token) {
-            loadServices();
-            getOrgSettings().then(setOrgSettings).catch(err => console.error('[Config] OrgSettings error:', err?.response?.status, err?.response?.data));
+        if (!token) return;
+        if (!showTenantSections) {
+            setLoading(false);
+            return;
         }
-    }, [token]);
+        loadServices();
+        getOrgSettings()
+            .then(setOrgSettings)
+            .catch(err => console.error('[Config] OrgSettings error:', err?.response?.status, err?.response?.data));
+    }, [token, showTenantSections]);
 
     const loadServices = async () => {
         setLoading(true);
@@ -150,8 +163,29 @@ const Config = () => {
                 </div>
             </div>
 
+            {/* Mi cuenta — Cambiar contraseña */}
+            <div className="card" style={{ marginBottom: "20px" }}>
+                <div style={{ marginBottom: "14px" }}>
+                    <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Mi cuenta</p>
+                    <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
+                        Cambia tu contraseña. Disponible para todos los usuarios autenticados.
+                    </p>
+                </div>
+                <ChangePasswordForm />
+            </div>
+
+            {/* Secciones tenant-scoped — ocultas para ADMIN_SAAS sin clínica. */}
+            {!showTenantSections && (
+                <div className="card" style={{ marginBottom: "20px" }}>
+                    <p style={{ fontSize: "12.5px", color: "var(--c-text-3)" }}>
+                        Las configuraciones de flujo clínico y catálogo de servicios
+                        están disponibles solo para administradores de una clínica.
+                    </p>
+                </div>
+            )}
+
             {/* Flujo Clínico */}
-            {orgSettings !== null && (
+            {showTenantSections && orgSettings !== null && (
                 <div className="card" style={{ marginBottom: "20px" }}>
                     <div style={{ marginBottom: "18px" }}>
                         <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Flujo Clínico</p>
@@ -190,7 +224,8 @@ const Config = () => {
                 </div>
             )}
 
-            {/* Catálogo de Servicios */}
+            {/* Catálogo de Servicios — tenant-scoped */}
+            {showTenantSections && (
             <div className="card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
                     <div>
@@ -253,6 +288,7 @@ const Config = () => {
                     </div>
                 )}
             </div>
+            )}
 
             {/* Modal */}
             {showModal && (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
@@ -67,6 +67,8 @@ const fmtCur = (n, locale = navigator.language) =>
         maximumFractionDigits: 0,
     });
 
+const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+
 // ── Category icon ─────────────────────────────────────────
 const ICON_COLOR = { medication: "#3b82f6", food: "#0d9488", accessory: "#7c3aed", other: "#94a3b8" };
 const CATEGORY_ICON = { medication: Icon.Pill, food: Icon.ShoppingBag, accessory: Icon.Package, other: Icon.Box };
@@ -129,6 +131,11 @@ const Inventory = () => {
     const [adjustForm, setAdjustForm] = useState(EMPTY_ADJUST);
 
     const [saving, setSaving] = useState(false);
+    const [animatedTotalVal, setAnimatedTotalVal] = useState(0);
+    const [isTotalValAnimating, setIsTotalValAnimating] = useState(false);
+    const totalValFrameRef = useRef(null);
+    const displayedTotalValRef = useRef(0);
+    const hasAnimatedTotalValRef = useRef(false);
 
     useEffect(() => { if (token) loadAll(); }, [token]);
 
@@ -178,6 +185,90 @@ const Inventory = () => {
             return aOut - bOut;
         });
     }, [products]);
+
+    useEffect(() => {
+        const nextValue = Math.round(metrics.totalVal);
+
+        if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") {
+            displayedTotalValRef.current = nextValue;
+            hasAnimatedTotalValRef.current = true;
+            setIsTotalValAnimating(false);
+            setAnimatedTotalVal(nextValue);
+            return undefined;
+        }
+
+        const media = typeof window.matchMedia === "function"
+            ? window.matchMedia("(prefers-reduced-motion: reduce)")
+            : null;
+
+        if (media?.matches) {
+            displayedTotalValRef.current = nextValue;
+            hasAnimatedTotalValRef.current = true;
+            setIsTotalValAnimating(false);
+            setAnimatedTotalVal(nextValue);
+            return undefined;
+        }
+
+        const isFirstLift = !hasAnimatedTotalValRef.current && nextValue > 0 && displayedTotalValRef.current === 0;
+        const startValue = isFirstLift
+            ? Math.max(Math.round(nextValue * 0.82), nextValue - 250000)
+            : displayedTotalValRef.current;
+        const delta = nextValue - startValue;
+
+        if (delta === 0) {
+            displayedTotalValRef.current = nextValue;
+            hasAnimatedTotalValRef.current = true;
+            setIsTotalValAnimating(false);
+            setAnimatedTotalVal(nextValue);
+            return undefined;
+        }
+
+        const duration = isFirstLift ? 680 : 460;
+        const startedAt = performance.now();
+
+        displayedTotalValRef.current = startValue;
+        setAnimatedTotalVal(startValue);
+        setIsTotalValAnimating(true);
+
+        const tick = (now) => {
+            const progress = Math.min((now - startedAt) / duration, 1);
+            const eased = easeOutExpo(progress);
+            const currentValue = Math.round(startValue + (delta * eased));
+            displayedTotalValRef.current = currentValue;
+            setAnimatedTotalVal(currentValue);
+            if (progress < 1) {
+                totalValFrameRef.current = window.requestAnimationFrame(tick);
+            } else {
+                displayedTotalValRef.current = nextValue;
+                hasAnimatedTotalValRef.current = true;
+                totalValFrameRef.current = null;
+                setAnimatedTotalVal(nextValue);
+                setIsTotalValAnimating(false);
+            }
+        };
+
+        if (totalValFrameRef.current) {
+            window.cancelAnimationFrame(totalValFrameRef.current);
+        }
+
+        totalValFrameRef.current = window.requestAnimationFrame(tick);
+
+        return () => {
+            if (totalValFrameRef.current) {
+                window.cancelAnimationFrame(totalValFrameRef.current);
+                totalValFrameRef.current = null;
+            }
+            setIsTotalValAnimating(false);
+        };
+    }, [metrics.totalVal]);
+
+    const insights = useMemo(() => ([
+        { label: "Total", value: metrics.total },
+        { label: "Medicamentos", value: metrics.medications },
+        { label: "Bajo stock", value: metrics.lowStock, tone: metrics.lowStock > 0 ? "warning" : "default" },
+        { label: "Sin stock", value: metrics.outOfStock, tone: metrics.outOfStock > 0 ? "danger" : "default" },
+        { label: "Valor stock", value: `$${fmtCur(animatedTotalVal)}`, tone: "value" },
+    ]), [animatedTotalVal, metrics]);
 
     // ── Sort handler ──────────────────────────────────────
     const handleSort = (col) => {
@@ -373,46 +464,25 @@ const Inventory = () => {
                 )}
             </div>
 
-            {/* ── Stats ── */}
-            <div className={s.stats}>
-                <div className={`${s.sc} ${s.scG}`}>
-                    <div className={`${s.scIco} ${s.scIcoG}`}>
-                        <Icon.Package s={13} c="var(--c-primary-dark)" />
-                    </div>
-                    <div className={s.scVal}>{metrics.total}</div>
-                    <div className={s.scLbl}>Total productos</div>
+            {/* ── Linear insights ── */}
+            <section className={s.stats} aria-label="Resumen de inventario">
+                <div className={s.statsIntro}>
+                    <span className={s.statsEyebrow}>Linear Insights</span>
                 </div>
-                <div className={`${s.sc} ${s.scB}`}>
-                    <div className={`${s.scIco} ${s.scIcoB}`}>
-                        <Icon.Syringe s={13} c="#3b82f6" />
-                    </div>
-                    <div className={s.scVal}>{metrics.medications}</div>
-                    <div className={s.scLbl}>Medicamentos</div>
+                <div className={s.statsStrip}>
+                    {insights.map((item, index) => (
+                        <div
+                            key={item.label}
+                            className={`${s.statBlock} ${index === insights.length - 1 ? s.statBlockLast : ""}`}
+                        >
+                            <div className={`${s.statValue} ${item.tone ? s[`statValue${item.tone.charAt(0).toUpperCase()}${item.tone.slice(1)}`] : ""} ${item.tone === "value" && isTotalValAnimating ? s.statValueCounting : ""}`}>
+                                {item.value}
+                            </div>
+                            <div className={s.statLabel}>{item.label}</div>
+                        </div>
+                    ))}
                 </div>
-                <div className={`${s.sc} ${s.scA}`}>
-                    <div className={`${s.scIco} ${s.scIcoA}`}>
-                        <Icon.AlertTriangle s={13} c="#f59e0b" />
-                    </div>
-                    <div className={`${s.scVal} ${metrics.lowStock > 0 ? s.scValAm : ""}`}>{metrics.lowStock}</div>
-                    <div className={s.scLbl}>Stock bajo</div>
-                </div>
-                <div className={`${s.sc} ${s.scR}`}>
-                    <div className={`${s.scIco} ${s.scIcoR}`}>
-                        <Icon.Clock s={13} c="#ef4444" />
-                    </div>
-                    <div className={`${s.scVal} ${metrics.outOfStock > 0 ? s.scValRe : ""}`}>{metrics.outOfStock}</div>
-                    <div className={s.scLbl}>Sin stock</div>
-                </div>
-                <div className={`${s.sc} ${s.scV}`}>
-                    <div className={`${s.scIco} ${s.scIcoV}`}>
-                        <Icon.TrendUp s={13} c="#7c3aed" />
-                    </div>
-                    <div className={s.scVal} style={{ fontSize: "18px" }}>
-                        ${fmtCur(metrics.totalVal)}
-                    </div>
-                    <div className={s.scLbl}>Valor en stock</div>
-                </div>
-            </div>
+            </section>
 
             {/* ── Alert bar ── */}
             {!alertDismissed && alertProducts.length > 0 && (

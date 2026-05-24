@@ -17,6 +17,10 @@ const ADMIN_ITEMS = [
     { path: "/config", label: "Configuración", icon: Icon.Settings },
 ];
 
+const PLATFORM_ITEMS = [
+    { path: "/platform/organizations/new", label: "Crear clínica", icon: Icon.Building },
+];
+
 const ROLE_LABELS = {
     ADMIN: "Administrador",
     VET: "Veterinario",
@@ -31,6 +35,7 @@ const Sidebar = ({ onLogout }) => {
     if (initializing) return null;
 
     const isAdmin = user?.role === "ADMIN" || user?.role === "ADMIN_SAAS";
+    const isPlatformOperator = user?.role === "ADMIN_SAAS";
 
     const isActive = (path) =>
         path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -116,6 +121,16 @@ const Sidebar = ({ onLogout }) => {
                             Admin
                         </div>
                         {ADMIN_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
+                    </>
+                )}
+
+                {/* Platform items — sólo ADMIN_SAAS */}
+                {isPlatformOperator && (
+                    <>
+                        <div style={{ margin: "14px 4px 6px", fontSize: "10px", fontWeight: "600", color: "rgba(248,113,113,0.7)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                            Plataforma
+                        </div>
+                        {PLATFORM_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
                     </>
                 )}
             </nav>

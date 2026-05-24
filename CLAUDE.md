@@ -379,6 +379,114 @@ PR-4A Día 4. `_create_default_superuser` reescrito con predicado `_is_platform_
 **ADR-15 — Cascade lockdown + Organization singleton + ProtectedError handler bounded + audit_orphan_fks (2026-05-17)**
 PR-4B Día 4. 5 FKs `CASCADE → PROTECT`: `User.organization`, `Pet.owner`, `MedicalRecord.pet`, `VaccineRecord.pet`, `Prescription.pet`. `OrganizationViewSet` (ModelViewSet) reemplazado por `OrganizationMeView` (`/me/` singleton) + `OrganizationLegacyView` (`/<pk>/` con validación + headers RFC 8594 Deprecation/Sunset/Link + fail-safe 410 Gone automático post-Sunset 2026-08-17 via `_EndpointSunsetException` en `initial()`). Handler `ProtectedError` con `isinstance()` exacto + probe `[:6]` via `islice` (set no subscriptable) + hard cap 1000 + shape consistente `protected_count: int` + `protected_count_truncated: bool` + sample dict `{type, id, public_id}` (no `str(obj)` — PII leak + N+1) → 409 Conflict. `audit_orphan_fks` mgmt command: schema_version "1.0.0", exit codes 0/1/2, dual output JSON/log, catch-all 32 targets via introspección de `OrganizationalModel`, `all_objects` (no `objects`) para evitar falsos positivos por soft-delete. DELETE bloqueado en `VaccineRecordDetailView`/`PrescriptionDetailView`/`OrganizationAdmin`/`CustomUserAdmin` por consistencia con motivación NOM. Status 409 (no 400) — semántica REST por sobre conveniencia frontend. Ver ADR `2026-05-17-p16`.
 
+**ADR-16 — `apps/platform/` namespace separado + provision_organization service autoritativo (2026-05-22)**
+Nueva app `apps/platform/` para SaaS cross-tenant operations (org provisioning, lifecycle, soporte futuro). NO mezclar con `apps/organizations/` (tenant-scoped settings). Boundary: `platform → organizations/users/core` permitido; el inverso NO. Endpoint `POST /api/platform/organizations/` provee creación de tenant + admin inicial sin Django admin. Componentes:
+- `IsPlatformOperator` permission (predicado: `is_superuser + is_staff + role='ADMIN_SAAS'`) — distinto semánticamente de `_is_platform_superuser` (bootstrap) para evitar drift cuando agreguen impersonation/billing/support.
+- `provision_organization(actor, validated_data, request_id)` service en `services/provision_organization.py` con `@transaction.atomic`. Orquesta: `Organization.create()` (dispara `initialize_organization` signal → `OrganizationSettings` + `Owner`/`Pet` genéricos + Roles RBAC) → `User.create_user(role='ADMIN', is_staff=False, is_superuser=False)` (dispara `assign_rbac_role_on_create` signal con `get_or_create` SIN `assigned_by`) → `UserRole.objects.update_or_create(defaults={'assigned_by': actor})` para backfill del audit field que el signal no captura.
+- Post-condition assert antes de retornar: `UserRole.objects.filter(user=admin, role__organization=org, role__name='ADMIN', assigned_by=actor).exists()`. Si falla → `RuntimeError` + rollback completo.
+- View `PlatformOrgCreateView` delgada — solo extrae `X-Request-ID` header (o genera uuid4), valida con `ProvisionOrgSerializer`, delega a service, format response. Password JAMÁS en response.
+- Password floor `min_length=12` para admins iniciales SaaS (justified por privilegio + acceso clínico/financiero).
+- Privilege escalation guards: payload NO puede inyectar `role=ADMIN_SAAS`, `is_superuser`, `is_staff` (forzados server-side).
+- IntegrityError race (post-validación) → `ValidationError` 400.
+- Throttle scope `platform_org_create` = `20/hour` por actor (`ScopedRateThrottle`).
+- Logs estructurados (`logger='platform.events'`): `PLATFORM_ORG_PROVISIONED`/`PLATFORM_ORG_PROVISION_RACE`/`PLATFORM_ORG_PROVISION_POSTCOND_FAILED`/`PLATFORM_ORG_PROVISION_RBAC_MISSING`/`PLATFORM_ACCESS_DENIED` con `request_id`, `actor_email`, `actor_role`, `duration_ms`, `org_public_id`, `admin_user_public_id`.
+- Idempotency key diferida a `POST-BETA-005` (validaciones pre-DB de duplicados mitigan ~95% pre-beta).
+- Tests: 48 tests across `test_provision_service.py` (service + atomicity + rollback con `Organization.objects.count()` invariant), `test_view_auth.py` (matrix permission), `test_view_validation.py` (escalation guards + duplicates + password floor + sanitization), `test_view_integration.py` (E2E login + permisos + throttle).
+- Test runner gotcha (Windows + Python 3.13): stdlib `platform` collisión con `apps.platform` en discovery. Ejecutar test modules con full module path (`apps.platform.tests.test_X`), NO `apps.platform`.
+
+**ADR-17 — Credential lifecycle: self-service password change + JWT rotation/blacklist (2026-05-22)**
+Cierre del gap operativo post-ADR p19 (org admin provisionado no podía cambiar password sin shell). Tres flujos credential separados conceptualmente: self-change (✅ p20), admin-reset (diferido), forgot-password (diferido). NO mezclar — permisos, audit y riesgos distintos.
+
+Endpoint `POST /api/users/change-password/` con `IsAuthenticated` (todos los roles). Service `apps/users/services.py:change_password` autoritativo `@transaction.atomic` — orden estricto: verify current → `validate_password(new, user=actor)` → reject same → **snapshot OutstandingToken IDs antes de mintear** → `set_password` + `update_session_auth_hash` → mint nuevo refresh+access → blacklist solo snapshotteados (preserva el nuevo).
+
+Cambios sistémicos:
+- `rest_framework_simplejwt.token_blacklist` agregada a INSTALLED_APPS. Migraciones aplicadas. 2 tablas + 6 índices (incluye user_id index crítico para queries del service).
+- `SIMPLE_JWT`: `ROTATE_REFRESH_TOKENS=True`, `BLACKLIST_AFTER_ROTATION=True`. Cada `/token/refresh/` rota + blacklistea viejo. `ACCESS_TOKEN_LIFETIME` reducido 30→15 min para acotar ventana de exposición post-cambio.
+- `apps/core/network.py` nuevo módulo dedicado (NO `utils.py` — cementerio arquitectónico). Aloja `get_client_ip` (XFF chain → REMOTE_ADDR fallback) y `get_user_agent` (truncado a 255 chars).
+- Throttle scope `change_password = 10/hour` por user.
+
+JWT lifecycle behavior (documentar en soporte):
+- Refresh tokens viejos: invalidados al instante.
+- Access tokens viejos: siguen válidos hasta exp natural (15 min) — JWT stateless design, NO bug. Mitigaciones: TTL reducido + frontend AuthProvider hace refresh transparente 5 min antes de exp, falla con viejo refresh → trigger logout limpio.
+
+Logger `users.events`: `USER_PASSWORD_CHANGED` (INFO) + `USER_PASSWORD_CHANGE_FAILED` (WARNING). Fields incluyen `request_id`, `actor_id`, `actor_username`, `organization_id`, `client_ip`, `user_agent`, `duration_ms`, `blacklisted_refresh_count`.
+
+Frontend: `ChangePasswordForm` reusable + integración en `pages/config.jsx` "Mi cuenta". Reemplazo de tokens vía `useAuth().login(access, refresh)` central — JAMÁS `localStorage.setItem` disperso en componentes.
+
+Anti-patterns explícitamente bloqueados: `PATCH /api/staff/<id>/{password:...}` (bypassa validate_password + token invalidation + audit). Verificado en T26: ningún serializer expone `password` writable en update path. Solo paths permitidos: `CreateEmployeeSerializer` create, `ProvisionOrgSerializer`, `change_password` service, `_create_default_superuser` bootstrap, `createsuperuser` CLI, Django admin escape hatch.
+
+Cleanup operacional CRÍTICO: `python manage.py flushexpiredtokens` cron diario obligatorio en Railway scheduler post-deploy. Sin esto las tablas `outstandingtoken` + `blacklistedtoken` crecen lineales. Documentado en `docs/runbooks/password-change.md`.
+
+`min_length=8` en self-change (NO 12). Floor 12 es exclusivo de `apps/platform/serializers.py:ProvisionOrgSerializer` (admins SaaS iniciales con privilegio amplificado).
+
+Tests: 22 tests en `apps/users/tests/test_change_password.py`. Cobertura crítica: JWT lifecycle (old refresh blacklisted, new refresh valid, multi-user isolation, multiple sessions blacklisted), atomicity (rollback en falla de blacklist), throttle, logging estructurado. Ver ADR `2026-05-22-p20`.
+
+Lo que NO incluye p20 (diferido): admin reset, forgot password, MFA, password history, email verification, force-change post-provisioning.
+
+**ADR-18 — Admin password reset + MustChangePasswordGate global (2026-05-22)**
+Cierre del gap de p20: usuario que olvida su contraseña. Endpoint `POST /api/staff/<public_id>/reset-password/` solo ADMIN de la misma org. Server genera temp password vía `secrets.token_urlsafe(16)` (~22 chars URL-safe). Set `password_must_change=True` + `password_temp_issued_at=now()`. Revoca TODOS los refresh tokens del target (diferente de change_password que preserva sesión del caller — el target NO está en el loop).
+
+Tres flujos credential SEPARADOS conceptualmente: self-change (✅ p20), admin-reset (✅ p21), forgot-password vía email (❌ Phase 2 POST-BETA, requiere SMTP), TOTP 2FA (❌ Phase 3).
+
+Modelo User extendido con 2 fields nuevos (justifica espacio en DB porque sirve futuro a onboarding, security policies, compromised credentials):
+- `password_must_change` (BooleanField default=False).
+- `password_temp_issued_at` (DateTimeField nullable).
+
+Authorization (defence in depth — view + service):
+- admin.role == 'ADMIN' (no VET/ASSISTANT, sin permiso 'staff.reset_password').
+- target != admin (self-reset usa change-password).
+- target.role != 'ADMIN_SAAS' (clinic admin no puede afectar platform).
+- target.organization == admin.organization (cross-tenant → 404).
+
+**MustChangePasswordGate** — permission GLOBAL en `apps/core/permissions.py`, aplicada en `DEFAULT_PERMISSION_CLASSES` después de `IsAuthenticated`. Cuando `user.password_must_change=True`, bloquea TODOS los endpoints excepto whitelist hardcoded: `/api/users/change-password/`, `/api/me/`, `/api/token/refresh/`, `/api/token/`. Crítico: enforcement server-side (un cliente curl que ignore redirect frontend choca contra el gate). 403 con `code='must_change_password'`.
+
+Login `ThrottledTokenObtainPairView` extendida: post-200 verifica `is_temp_password_expired(user)` (helper en services.py, compara `password_temp_issued_at + TEMP_PASSWORD_VALIDITY` vs now). Si expiró → 403 con `code='temp_password_expired'` + log `TEMP_PASSWORD_EXPIRED`. Si no expiró pero must_change=True → tag response.data con `must_change_password=True` para que frontend redirija sin extra round-trip.
+
+`change_password` service actualizado: limpia `password_must_change=False` y `password_temp_issued_at=None` al cambio exitoso (update_fields incluye los 3 campos). Sin esto, el user cambia password pero queda atrapado en el gate.
+
+Ventanas: temp password válida 24h (concesión a UX clínica veterinaria — NIST sugiere 1h, mitigado por revocación de sesiones + must_change gate). Sin deadline post-login adicional — gate ya enforce el cambio antes de operación útil.
+
+Throttle `staff_password_reset = 5/hour` por actor — mitigación insider abuse (ADMIN comprometido no puede resetear masivamente).
+
+Audit log `ADMIN_PASSWORD_RESET_ISSUED` (INFO) con `actor_id`, `target_user_id`, `target_role`, `organization_id`, `revoked_refresh_count`. **Temp password JAMÁS en log** (test escanea todos los log records buscando el literal).
+
+Permission code nuevo: `'staff.reset_password'` en PERMISSION_CODES. ADMIN tiene wildcard `*.*` → cubierto automático. VET/ASSISTANT NO lo tienen.
+
+Frontend: botón "Resetear" en staff.jsx row (Icon.Refresh, solo visible para ADMIN, excluye row de ADMIN_SAAS). Modal display temp password con warning amarillo "Anota o copia ahora" + copy-to-clipboard. Página dedicada `/change-password` (separada de /config) para forced redirect. `MustChangePasswordGate` component frontend mirror del backend — wrappea todas las rutas excepto /change-password, /login. Login form detecta `must_change_password` en response y redirige.
+
+Anti-patterns documentados:
+- ❌ Admin escribe temp password manualmente (humanos eligen débiles — usar secrets.token_urlsafe).
+- ❌ Loggear temp password en plain text.
+- ❌ Admin resetea ADMIN_SAAS o cross-tenant.
+- ❌ Self-reset por admin (usar forgot-password Phase 2 o ADMIN_SAAS escala).
+- ❌ Confiar solo en frontend redirect (gate server-side autoritativo).
+
+Tests: 25 tests en `apps/users/tests/test_reset_password.py`. Cobertura: matrix permissions (7), service behavior + temp password generation + no-log-leak (7), lifecycle login→change→done (5), gate enforcement (4), throttle (1). Ver ADR `2026-05-22-p21`.
+
+Lo que NO incluye p21 (diferido): forgot-password email recovery, TOTP 2FA, notification al target post-reset, MFA en reset, password history.
+
+**Gotcha CORS (afecta p19/p20/p21):** todos los endpoints que reciben `X-Request-ID` requieren que `'x-request-id'` esté en `config/settings.py:CORS_ALLOW_HEADERS`. Sin esto, el browser hace OPTIONS preflight 200 pero rechaza el POST silenciosamente — el endpoint queda inaccesible desde el frontend (curl sigue funcionando). Síntoma diagnóstico: en Network DevTools se ve OPTIONS sin POST después. Documentado en `docs/runbooks/password-change.md` § "Infrastructure gotchas". Reglar para futuros headers custom: si el frontend introduce un nuevo header (`X-Idempotency-Key`, etc.), actualizar `CORS_ALLOW_HEADERS` simultáneamente.
+
+**ADR-19 — Frontend token storage centralizado + "Recordarme" + race logout/refresh (2026-05-24)**
+Tres fixes acoplados en frontend auth. (1) **Bug login reload**: response interceptor 401 en `api/client.js` hacía `window.location.href = "/login"` antes de mostrar el toast de error con credenciales malas. Fix: helper `isLoginAttempt(config)` bypassa redirect cuando `url` termina en `token/` (login). `token/refresh/` sigue cayendo en redirect (sesión expirada legítima). (2) **"Recordarme" funcional**: nuevo módulo `frontend/src/auth/tokenStorage.js` centraliza acceso a auth storage. `remember=true` → `localStorage` (persistente). `remember=false` → `sessionStorage` (per-tab, muere al cerrar). (3) **Race logout/refresh**: refresh callback en `authContext.jsx` chequea `isLoggingOut()` antes de aplicar token; previene revival de sesión recién terminada cuando la fetch de refresh resuelve después del logout.
+
+Invariantes documentados en docstring del módulo:
+- Tokens válidos NUNCA coexisten en `localStorage` y `sessionStorage`. `setTokens()` enforce wipe del other store.
+- Read priority: `sessionStorage > localStorage` (sesión temporal de tab gana sobre persistente vieja).
+- Source of truth = presencia del token, NO el `PERSIST_FLAG` (metadata only).
+- `clearTokens()` levanta flag `loggingOut`; `setTokens()` lo limpia. Futuro `refreshPromise` singleton debe ser nulleado dentro de `clearTokens()`.
+
+Anti-patterns prohibidos:
+- ❌ `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de `auth/tokenStorage.js` — rompe invariante. Grep gate sugerido post-beta vía ESLint custom rule.
+- ❌ Leer `PERSIST_FLAG` como autoridad de routing — solo metadata.
+- ❌ Bypass de `isLoggingOut()` en callbacks async que mutan auth state.
+
+Backlog post-beta (no bloquea v1): CSP headers (`script-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`), ESLint rule custom para enforce del módulo, `storage` event listener para cross-tab logout sync, AbortController + `refreshPromise = null` cuando se agregue interceptor on-demand de refresh.
+
+Auditoría XSS paralela (grep en `frontend/src`): 0 `dangerouslySetInnerHTML`, 0 `eval(`, 0 `new Function`, 0 `setTimeout(string)`. 5 `innerHTML` en `VanillaDateRangePicker.js` — todos con templates estáticos + SVG constantes, sin interpolación de user input. Superficie DOM-XSS actual = 0.
+
+Ver ADR `2026-05-24-p22` y `docs/modules/frontend.md` § Auth storage.
+
 ---
 
 ## Reglas analytics (no negociables)
@@ -424,8 +532,16 @@ python manage.py test \
   apps.prescriptions.tests.test_multitenancy \
   apps.users.tests.test_bootstrap \
   apps.organizations.tests.test_views \
-  apps.patients.tests.test_pet_delete
+  apps.patients.tests.test_pet_delete \
+  apps.platform.tests.test_provision_service \
+  apps.platform.tests.test_view_auth \
+  apps.platform.tests.test_view_validation \
+  apps.platform.tests.test_view_integration \
+  apps.users.tests.test_change_password \
+  apps.users.tests.test_reset_password
 ```
+
+**Importante para `apps.platform.tests`**: NO usar `python manage.py test apps.platform` (sin sufijo). El stdlib `platform` colisiona con `apps.platform` en el unittest discovery loader de Python 3.13 + Windows (`TypeError: _path_normpath: path should be string, bytes or os.PathLike, not NoneType`). Listar siempre los 4 módulos completos.
 El `test_e2e.py` en la raíz de `backend/` requiere servidor corriendo — no se incluye en la suite normal.
 
 **Comandos útiles**:

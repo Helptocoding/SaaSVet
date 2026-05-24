@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getStaff, createStaff, deactivateStaff } from "../api/staff";
+import { getStaff, createStaff, deactivateStaff, resetStaffPassword } from "../api/staff";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -40,6 +40,9 @@ const Staff = () => {
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
+    // Temp password modal state — surfaced once after successful reset.
+    const [resetResult, setResetResult] = useState(null);
+    const [resetCopied, setResetCopied] = useState(false);
 
     useEffect(() => {
         if (!initializing && user) {
@@ -122,6 +125,48 @@ const Staff = () => {
         setShowModal(false);
     };
 
+    const handleResetPassword = async (member) => {
+        const ok = await confirm({
+            title: "Resetear contraseña",
+            message: `Se generará una contraseña temporal para ${member.first_name} ${member.last_name}. Sus sesiones activas serán cerradas y deberá cambiarla en su próximo login. La contraseña se mostrará una sola vez.`,
+            confirmText: "Resetear contraseña",
+            dangerMode: true,
+        });
+        if (!ok) return;
+        try {
+            const data = await resetStaffPassword(member.public_id);
+            setResetResult({ ...data, target: member });
+            setResetCopied(false);
+        } catch (err) {
+            const code = err?.response?.status;
+            if (code === 429) {
+                toast.error("Límite de 5 resets por hora alcanzado.");
+            } else if (code === 403) {
+                toast.error("No tienes permiso para resetear esta cuenta.");
+            } else {
+                toast.error("Error al resetear la contraseña.");
+            }
+        }
+    };
+
+    const copyResetCredentials = async () => {
+        if (!resetResult) return;
+        const lines = [
+            `Usuario: ${resetResult.target.username}`,
+            `Contraseña temporal: ${resetResult.temp_password}`,
+            `Válida por: 24 horas`,
+            `Importante: debe cambiar la contraseña al iniciar sesión.`,
+        ];
+        try {
+            await navigator.clipboard.writeText(lines.join("\n"));
+            setResetCopied(true);
+            toast.success("Credenciales copiadas.");
+            setTimeout(() => setResetCopied(false), 2500);
+        } catch {
+            toast.error("No se pudo copiar. Selecciona y copia manualmente.");
+        }
+    };
+
     if (loading) {
         return (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
@@ -183,19 +228,99 @@ const Staff = () => {
                                     <td style={{ color: "var(--c-text-3)" }}>{member.specialty || "—"}</td>
                                     {isAdmin && (
                                         <td>
-                                            <button
-                                                className="btn btn-danger btn-sm"
-                                                onClick={() => handleDeactivate(member.public_id)}
-                                                title="Desactivar"
-                                            >
-                                                <Icon.Trash s={14} />
-                                            </button>
+                                            <div style={{ display: "flex", gap: "6px" }}>
+                                                {member.role !== "ADMIN_SAAS" && (
+                                                    <button
+                                                        className="btn btn-secondary btn-sm"
+                                                        onClick={() => handleResetPassword(member)}
+                                                        title="Resetear contraseña"
+                                                    >
+                                                        <Icon.Refresh s={14} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => handleDeactivate(member.public_id)}
+                                                    title="Desactivar"
+                                                >
+                                                    <Icon.Trash s={14} />
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* Modal Temp Password — display once, never persisted */}
+            {resetResult && (
+                <div className="modal-overlay">
+                    <div className="modal modal-sm">
+                        <div className="modal-header">
+                            <h3>Contraseña temporal generada</h3>
+                        </div>
+                        <div className="modal-body">
+                            <div style={{
+                                background: "rgba(251,191,36,0.10)",
+                                border: "1px solid rgba(251,191,36,0.30)",
+                                borderRadius: "6px",
+                                padding: "10px 12px",
+                                marginBottom: "14px",
+                                fontSize: "12.5px",
+                                color: "#fbbf24",
+                            }}>
+                                <strong>⚠ Anota o copia ahora.</strong> Esta contraseña no se vuelve a mostrar. Si la pierdes, deberás resetear de nuevo.
+                            </div>
+
+                            <dl style={{ display: "grid", gridTemplateColumns: "max-content 1fr", gap: "8px 14px", margin: 0 }}>
+                                <dt style={{ fontSize: "11.5px", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: "500" }}>
+                                    Usuario
+                                </dt>
+                                <dd style={{ margin: 0, fontSize: "13px", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                                    {resetResult.target.username}
+                                </dd>
+
+                                <dt style={{ fontSize: "11.5px", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: "500" }}>
+                                    Contraseña
+                                </dt>
+                                <dd style={{ margin: 0, fontSize: "13px", color: "#fbbf24", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontWeight: "600", wordBreak: "break-all" }}>
+                                    {resetResult.temp_password}
+                                </dd>
+
+                                <dt style={{ fontSize: "11.5px", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: "500" }}>
+                                    Válida
+                                </dt>
+                                <dd style={{ margin: 0, fontSize: "12.5px", color: "var(--c-text-2)" }}>
+                                    24 horas para iniciar sesión
+                                </dd>
+                            </dl>
+
+                            <p style={{ fontSize: "11.5px", color: "var(--c-text-3)", marginTop: "14px" }}>
+                                El usuario deberá cambiar esta contraseña al iniciar sesión.
+                                Envíasela por canal seguro (NO Slack / WhatsApp / SMS).
+                            </p>
+
+                            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary btn-md"
+                                    onClick={copyResetCredentials}
+                                >
+                                    {resetCopied ? "Copiado ✓" : "Copiar credenciales"}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary btn-md"
+                                    onClick={() => setResetResult(null)}
+                                >
+                                    Listo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 

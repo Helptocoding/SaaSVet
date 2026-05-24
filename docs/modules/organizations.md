@@ -39,16 +39,52 @@ Eventos emitidos por el bootstrap:
 
 ### Flujo para crear una clinica nueva
 
+**Recomendado (post ADR p19, 2026-05-22):** usar el endpoint API
+`POST /api/platform/organizations/`. Detalles paso-a-paso en el runbook
+[`docs/runbooks/platform-org-provisioning.md`](../runbooks/platform-org-provisioning.md)
+y especificación técnica en [`docs/modules/platform.md`](platform.md).
+
+Resumen del flujo API:
+
+```bash
+# 1. Login como ADMIN_SAAS
+curl -X POST https://tu-backend.railway.app/api/token/ \
+  -d '{"username":"<ADMIN_SAAS>","password":"<pwd>"}' \
+  -H "Content-Type: application/json"
+
+# 2. Provisionar org + admin inicial (atomico en una sola llamada)
+curl -X POST https://tu-backend.railway.app/api/platform/organizations/ \
+  -H "Authorization: Bearer <access token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Clinica X",
+    "timezone": "America/Mexico_City",
+    "tax_rate": "0.1600",
+    "admin_username": "clinicax_admin",
+    "admin_email": "admin@clinicax.mx",
+    "admin_password": "TempPass-Strong-2026!",
+    "admin_first_name": "Nombre",
+    "admin_last_name": "Apellido"
+  }'
+```
+
+Ventajas del flujo API vs Django admin manual:
+- Atomico — Org + admin + RBAC en una sola transaccion.
+- Audit log estructurado (`PLATFORM_ORG_PROVISIONED` con `actor_id`, `request_id`).
+- Tests automatizados que cubren todo el ciclo.
+- Throttle `20/hour` previene abuse.
+- `seed_permissions` se ejecuta automaticamente vía signal (no requiere paso manual).
+- Password floor de 12 caracteres + Django validators.
+- Guards anti privilege-escalation (payload no puede inyectar `role=ADMIN_SAAS`, `is_superuser`, `is_staff`).
+
+**Legacy (Django admin):** El flujo manual via `/admin/` sigue funcionando para casos excepcionales (recuperacion de incidentes, debugging). Pasos:
+
 1. Ir a `https://tu-backend.railway.app/admin/` con las credenciales del ADMIN_SAAS
-2. **Organizations** → `+ Add` → completar:
-   - `name`: nombre de la clinica
-   - `timezone`: zona horaria (default `America/Mexico_City`)
-   - `tax_rate`: `0.0000` sin IVA, `0.1600` para IVA 16%
-3. **Users** → `+ Add` → completar:
-   - `username`, `email`, `password`
-   - `organization`: la clinica recien creada
-   - `role`: `ADMIN`
-4. Ejecutar `seed_permissions` para la nueva org (ver abajo)
+2. **Organizations** → `+ Add` → completar `name`, `timezone`, `tax_rate`
+3. **Users** → `+ Add` → completar `username`, `email`, `password`, `organization`, `role='ADMIN'`
+4. Si el signal `_seed_roles_for_org` no corrio (raro), ejecutar `seed_permissions` manualmente
+
+El signal `organizations.signals.initialize_organization` corre en post_save de Organization y crea automaticamente: `OrganizationSettings`, `Owner('Publico General')`, `Pet('Paciente Anonimo')`, y Roles RBAC (ADMIN/VET/ASSISTANT). El admin user es asignado a su UserRole RBAC por el signal `users.signals.assign_rbac_role_on_create`.
 
 ### Ejecutar seed_permissions en Railway
 
@@ -60,7 +96,7 @@ python manage.py seed_permissions
 
 O simplemente hacer redeploy — el Procfile lo ejecuta automaticamente antes de iniciar el servidor.
 
-Si `seed_permissions` no se ejecuta, todos los endpoints de la org nueva retornan `403`.
+Si `seed_permissions` no se ejecuta, todos los endpoints de la org nueva retornan `403`. El endpoint `POST /api/platform/organizations/` NO depende de esto (corre el seed por org via signal).
 
 ## Como el ADMIN de una clinica gestiona su equipo
 

@@ -251,6 +251,11 @@ CORS_ALLOW_HEADERS = [
     'accept', 'accept-encoding', 'authorization', 'content-type',
     'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
     'baggage', 'sentry-trace',
+    # ADR p19/p20/p21: correlation id que el frontend inyecta en
+    # operaciones sensibles (provision org, change password, reset
+    # password). Sin esto, el preflight CORS no permite el header y
+    # el POST nunca llega a salir del browser.
+    'x-request-id',
 ]
 
 # Fail-fast solo en producción — previene deploys silenciosos con CORS vacío

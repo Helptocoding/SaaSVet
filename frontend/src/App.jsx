@@ -15,7 +15,10 @@ import Billing from "./pages/billing";
 import Prescriptions from "./pages/prescriptions";
 import Analytics from "./pages/analytics";
 import Config from "./pages/config";
+import CreateOrganization from "./pages/platform/createOrganization";
+import ChangePassword from "./pages/changePassword";
 import NotFound from "./pages/notFound";
+import { Navigate, useLocation } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
 import FeedbackButton from "./components/FeedbackButton";
 import { ConfirmProvider } from "./components/ConfirmDialog";
@@ -33,6 +36,17 @@ const LoadingScreen = () => (
   </div>
 );
 
+function MustChangePasswordGate({ children }) {
+  // Frontend mirror of the backend ``MustChangePasswordGate`` permission.
+  // The backend is the authoritative gate — this only handles UX.
+  const { user } = useAuth();
+  const location = useLocation();
+  if (user?.must_change_password && location.pathname !== "/change-password") {
+    return <Navigate to="/change-password" replace />;
+  }
+  return children;
+}
+
 function AppContent() {
   const { initializing, user } = useAuth();
 
@@ -41,6 +55,20 @@ function AppContent() {
   }
 
   const wrap = (Component) => (
+    <PrivateRoute>
+      <MustChangePasswordGate>
+        <Layout>
+          <ErrorBoundary>
+            <Component />
+          </ErrorBoundary>
+        </Layout>
+      </MustChangePasswordGate>
+    </PrivateRoute>
+  );
+
+  // /change-password is reachable even while must_change_password=true,
+  // so it does NOT go through MustChangePasswordGate.
+  const wrapNoGate = (Component) => (
     <PrivateRoute>
       <Layout>
         <ErrorBoundary>
@@ -59,12 +87,14 @@ function AppContent() {
         <Route path="/pets/:id" element={wrap(PetDetail)} />
         <Route path="/staff" element={wrap(Staff)} />
         <Route path="/appointments" element={wrap(Appointments)} />
-        <Route path="/medical-records" element={<PrivateRoute><ErrorBoundary><MedicalRecords /></ErrorBoundary></PrivateRoute>} />
+        <Route path="/medical-records" element={<PrivateRoute><MustChangePasswordGate><ErrorBoundary><MedicalRecords /></ErrorBoundary></MustChangePasswordGate></PrivateRoute>} />
         <Route path="/inventory" element={wrap(Inventory)} />
         <Route path="/billing" element={wrap(Billing)} />
         <Route path="/prescriptions" element={wrap(Prescriptions)} />
         <Route path="/analytics" element={wrap(Analytics)} />
         <Route path="/config" element={wrap(Config)} />
+        <Route path="/platform/organizations/new" element={wrap(CreateOrganization)} />
+        <Route path="/change-password" element={wrapNoGate(ChangePassword)} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {user && <FeedbackButton />}

@@ -19,12 +19,24 @@ export function useLoginForm() {
         try {
             const data = await loginRequest(username, password);
             const userData = await getMe(data.access);
-            login(data.access, data.refresh);
+            login(data.access, data.refresh, remember);
             setUserData(userData);
-            navigate("/");
+            // Backend tags response with must_change_password if a temp
+            // password reset is in effect — the MustChangePasswordGate
+            // component will redirect on next render. Sending the user
+            // to /change-password explicitly avoids a flash of "/" first.
+            if (data.must_change_password || userData?.must_change_password) {
+                navigate("/change-password");
+            } else {
+                navigate("/");
+            }
         } catch (err) {
-            if (err.response?.status === 401) {
+            const code = err.response?.status;
+            const errCode = err.response?.data?.code;
+            if (code === 401) {
                 toast.error("Usuario o contraseña incorrectos.");
+            } else if (code === 403 && errCode === "temp_password_expired") {
+                toast.error("Tu contraseña temporal expiró. Pídele a tu administrador un nuevo reset.");
             } else {
                 toast.error("Error de conexión. Verifica tu internet e intenta de nuevo.");
             }
