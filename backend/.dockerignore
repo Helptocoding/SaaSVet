@@ -1,0 +1,45 @@
+# Capa 1 (DEPLOY_VPS_PLAN.md): keep build context lean + prevent secrets
+# from leaking into the image. Order matters: explicit re-include with `!`
+# below for files we DO want copied even when their parent is excluded.
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets — never copy real .env, only the example.
+.env
+.env.*
+!.env.example
+
+# Local runtime artifacts
+logs/*.log
+staticfiles/
+
+# Repo metadata
+.git
+.gitignore
+.gitattributes
+
+# Test harness with hardcoded creds (already in root .gitignore)
+test_e2e.py
+
+# Docs / IDE / agent junk — useless inside the image.
+*.md
+docs/
+.claude/
+.idea/
+.vscode/
+
+# Lockfile from old setup is irrelevant inside backend context
+skills-lock.json
