@@ -265,6 +265,12 @@ if ENVIRONMENT == 'production' and not CORS_ALLOWED_ORIGINS:
         "Define la variable de entorno en Railway antes de arrancar en producción."
     )
 
+# Capa 0: en container production el logger 'file' escribe a un path ephemeral
+# (/app/logs/django.log) que se pierde al restart. stdout es el canal canónico
+# (Docker / Caddy lo captura). En dev/staging mantenemos el archivo para
+# debugging local sin tail de docker logs.
+_LOG_HANDLERS = ['console'] if ENVIRONMENT == 'production' else ['console', 'file']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -301,12 +307,12 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': _LOG_HANDLERS,
             'level': 'ERROR',
             'propagate': False,
         },
         'apps': {
-            'handlers': ['console', 'file'],
+            'handlers': _LOG_HANDLERS,
             'level': 'WARNING',
             'propagate': False,
         },
@@ -329,7 +335,7 @@ LOGGING = {
         },
         # Ciclo de vida consultas (cerrar, idempotencia) — mismo destino que consola
         'medical_records.events': {
-            'handlers': ['console', 'file'],
+            'handlers': _LOG_HANDLERS,
             'level': 'INFO',
             'propagate': False,
         },

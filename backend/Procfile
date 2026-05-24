@@ -1,4 +1,17 @@
-web: python manage.py collectstatic --noinput && python manage.py migrate --no-input && python manage.py seed_permissions && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+# Capa 0 refactor (DEPLOY_VPS_PLAN.md): web ya NO ejecuta migrate/collectstatic/
+# seed_permissions inline. Esos pasos son `release` — one-shot antes de que
+# arranquen los workers. Razón: con múltiples workers/instances, encadenar
+# migraciones en cada boot es race condition (varios `migrate` simultáneos
+# contra la misma DB) y degrada el time-to-ready.
+#
+# Plataformas:
+#   - Docker Compose (VPS):  servicio `release` con condition: service_completed_successfully
+#                            corre `/app/scripts/release.sh` antes de levantar `backend`.
+#   - Railway / Heroku:      el comando `release` se ejecuta una vez por deploy
+#                            (lifecycle nativo). El comando `web` solo arranca gunicorn.
+release: ./scripts/release.sh
+web: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-60} --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --log-level info
+
 # Analytics nightly snapshot. Idempotent + per-org advisory locked, so safe
 # even if Railway double-fires. Per-org failures isolated; non-zero exit
 # code on any org failure (wire alerting on this).
@@ -9,3 +22,6 @@ nightly_snapshots: python manage.py build_daily_metrics
 # anchor corruption surfaces. Exit 1 = unresolved provenance, exit 2 =
 # invariant violation (P1).
 nightly_anchor_audit: python manage.py audit_anchor_integrity --json
+# JWT blacklist + outstanding token cleanup. ADR p20 — sin esto las
+# tablas crecen lineales con cada login/refresh/change-password.
+nightly_flush_jwt: python manage.py flushexpiredtokens

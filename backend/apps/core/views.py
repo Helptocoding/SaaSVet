@@ -1,7 +1,12 @@
 import uuid as _uuid_module
 
 from django.conf import settings
+from django.db import connections
+from django.db.utils import OperationalError
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from rest_framework.exceptions import NotFound, PermissionDenied
 
 
@@ -85,3 +90,34 @@ def resolve_public_id(queryset, lookup):
       - Otro string → NotFound (404)
     """
     return _resolve_or_404(queryset, lookup)
+
+
+# ---------------------------------------------------------------------------
+# Health endpoints (Capa 0 — DEPLOY_VPS_PLAN.md)
+#
+# Plain Django views (no DRF) for two reasons:
+#   1. Bypass DEFAULT_PERMISSION_CLASSES (IsAuthenticated + MustChangePasswordGate)
+#      without per-view AllowAny boilerplate.
+#   2. Lower overhead — docker healthcheck hits these every 30s.
+#
+# Both are exempted from CSRF (GET only; no state mutation). They DO honor
+# ALLOWED_HOSTS — Docker compose healthcheck uses Host: localhost, so
+# `localhost` MUST be present in ALLOWED_HOSTS in production .env.
+# ---------------------------------------------------------------------------
+
+@csrf_exempt
+@require_GET
+def healthz(request):
+    """Liveness probe — process is up. Never touches DB."""
+    return JsonResponse({"status": "ok"})
+
+
+@csrf_exempt
+@require_GET
+def readyz(request):
+    """Readiness probe — DB reachable. 503 if not."""
+    try:
+        connections['default'].cursor().execute('SELECT 1')
+    except OperationalError:
+        return JsonResponse({"status": "db_down"}, status=503)
+    return JsonResponse({"status": "ready"})
