@@ -107,15 +107,13 @@ services:
       start_period: 30s
     volumes:
       - static_files:/app/staticfiles
-    # TEMP — Capa 3 removes this. Caddy on :443 will proxy to backend:8000
-    # over the internal network. Kept for smoke during Capa 2 only.
-    ports:
-      - "127.0.0.1:8001:8000"
     deploy:
       resources:
         limits:
           memory: 768M
     networks: [internal]
+    # Capa 3: NO host port mapping. Caddy proxies /api/* → backend:8000
+    # over the internal network. Backend is unreachable from outside.
 
   frontend:
     build:
@@ -127,9 +125,40 @@ services:
     image: vet-frontend:capa1
     restart: unless-stopped
     networks: [internal]
-    # TEMP — same as backend; Capa 3 removes this and Caddy proxies / to here.
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    # Capa 3: NO host port mapping. Caddy proxies / → frontend:80.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
     ports:
-      - "127.0.0.1:8002:80"
+      # The ONLY ports exposed to the world. Everything else is internal.
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 (QUIC)
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@${DOMAIN}}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data     # ACME account + issued certs (PERSIST or you re-issue every restart and hit LE rate limits)
+      - caddy_config:/config
+      - static_files:/srv/static:ro  # Django collectstatic output, RO
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/api/healthz/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks: [internal]
     deploy:
       resources:
         limits:
@@ -142,3 +171,5 @@ networks:
 volumes:
   pgdata:
   static_files:
+  caddy_data:
+  caddy_config:

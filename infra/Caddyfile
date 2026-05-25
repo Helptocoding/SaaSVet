@@ -1,0 +1,147 @@
+# Capa 3 (DEPLOY_VPS_PLAN.md): public-facing reverse proxy.
+#
+# Caddy responsibilities:
+#   - Terminate TLS (ACME auto-issuance via Let's Encrypt for real domains;
+#     internal self-signed CA when DOMAIN=localhost for smoke).
+#   - Route requests:
+#       /api/*            → backend:8000 (gunicorn)
+#       /static/*         → static_files volume (Django admin + DRF assets)
+#       /admin/*          → backend:8000 (with optional IP allow-list)
+#       /                 → frontend:80 (nginx serving the SPA bundle)
+#   - Inject security headers (HSTS, X-Frame-Options, Referrer-Policy,
+#     Permissions-Policy, CSP) on every response.
+#   - Compress responses (gzip + zstd).
+#   - Emit access logs as JSON to stdout (Docker captures).
+#
+# DO NOT add other proxies inside the bundle (no nginx layer 2). Caddy is
+# the single entrypoint. The frontend image's nginx serves only the SPA on
+# the internal network — Caddy proxies to it directly.
+
+{
+	# ACME contact. Replace with a real email for cert expiry alerts.
+	email {$ACME_EMAIL}
+
+	# Access log goes to stdout in JSON; admin endpoint disabled (security).
+	admin off
+}
+
+{$DOMAIN} {
+
+	# -----------------------------------------------------------------------
+	# Compression — applied to text/*, json, javascript, etc. by default.
+	# -----------------------------------------------------------------------
+	encode zstd gzip
+
+	# -----------------------------------------------------------------------
+	# Security headers — applied to every response, BEFORE handlers run.
+	# Browser only enforces HSTS on TLS responses; safe to send always.
+	# -----------------------------------------------------------------------
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+		# Cross-origin isolation defaults. Sentry replay/Stripe SDKs may
+		# need to relax COEP — revisit when integrating.
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+
+		# CSP — strict baseline. Adjust only with concrete justification.
+		#   - 'self' covers SPA bundle + API on same origin.
+		#   - Google Fonts kept (already used by index.html).
+		#   - Sentry connect-src whitelist covers ingest endpoint.
+		#   - data: img-src allows inline favicons / generated avatars.
+		#   - 'unsafe-inline' on style-src is required by Google Fonts'
+		#     injected <style> blocks; mitigated by absence of script
+		#     'unsafe-inline'.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.ingest.us.sentry.io https://*.ingest.sentry.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+		# Hide upstream identity.
+		-Server
+		-X-Powered-By
+	}
+
+	# -----------------------------------------------------------------------
+	# Healthcheck (no auth, no logs) — UptimeRobot / healthchecks.io target.
+	# Keep this BEFORE the catch-all so it short-circuits.
+	# -----------------------------------------------------------------------
+	@health path /api/healthz /api/healthz/ /api/readyz /api/readyz/
+	handle @health {
+		reverse_proxy backend:8000
+	}
+
+	# -----------------------------------------------------------------------
+	# Django admin — Capa 8 / HIGH H4.
+	# Uncomment + populate `admin_allowed_ips` to lock /admin/* to your
+	# office/VPN IPs. With it commented, /admin/* is reachable from any IP
+	# (Django session auth still required — but visibility = attack surface).
+	# -----------------------------------------------------------------------
+	# @admin_allowed_ips {
+	# 	remote_ip 203.0.113.42/32 198.51.100.0/24
+	# }
+	# @admin path /admin/* /admin
+	# handle @admin {
+	# 	@blocked not remote_ip 203.0.113.42/32 198.51.100.0/24
+	# 	handle @blocked {
+	# 		respond "Not Found" 404
+	# 	}
+	# 	reverse_proxy backend:8000
+	# }
+
+	# -----------------------------------------------------------------------
+	# Static Django assets (admin CSS, DRF browsable API) — served directly
+	# from the shared static_files volume. Avoids backend round-trip.
+	# -----------------------------------------------------------------------
+	handle_path /static/* {
+		root * /srv/static
+		file_server {
+			precompressed gzip
+		}
+		header Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	# -----------------------------------------------------------------------
+	# API — gunicorn. Forward original client IP / proto / host so Django's
+	# logging + ALLOWED_HOSTS + SECURE_PROXY_SSL_HEADER (if enabled) work.
+	# -----------------------------------------------------------------------
+	handle /api/* {
+		reverse_proxy backend:8000 {
+			header_up X-Forwarded-For   {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host  {host}
+			header_up X-Real-IP         {remote_host}
+
+			# Caddy default transport timeouts are sane; tighten only if
+			# you observe slow upstreams. transport http { read_timeout 60s }
+		}
+	}
+
+	# Admin (no IP gate — see commented block above for hardening).
+	handle /admin* {
+		reverse_proxy backend:8000 {
+			header_up X-Forwarded-For   {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host  {host}
+		}
+	}
+
+	# -----------------------------------------------------------------------
+	# Catch-all → SPA bundle served by the frontend nginx container.
+	# The frontend image already handles SPA fallback (try_files → index.html).
+	# -----------------------------------------------------------------------
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	# -----------------------------------------------------------------------
+	# Logging — JSON to stdout (Docker captures). Healthz noise can be
+	# filtered downstream (`docker logs caddy | grep -v healthz`) or via a
+	# log matcher when you wire shipping.
+	# -----------------------------------------------------------------------
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
