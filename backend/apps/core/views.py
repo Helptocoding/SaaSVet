@@ -6,7 +6,7 @@ from django.db.utils import OperationalError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_safe
 from rest_framework.exceptions import NotFound, PermissionDenied
 
 
@@ -106,14 +106,14 @@ def resolve_public_id(queryset, lookup):
 # ---------------------------------------------------------------------------
 
 @csrf_exempt
-@require_GET
+@require_safe
 def healthz(request):
     """Liveness probe — process is up. Never touches DB."""
     return JsonResponse({"status": "ok"})
 
 
 @csrf_exempt
-@require_GET
+@require_safe
 def readyz(request):
     """Readiness probe — DB reachable. 503 if not."""
     try:

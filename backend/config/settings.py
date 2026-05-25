@@ -45,6 +45,25 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:
 # En desarrollo local:   ENVIRONMENT=dev (sin SSL redirect)
 # ---------------------------------------------------------------------------
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+# Capa 3: probes corren DENTRO del container contra http://localhost:8000.
+# Con SECURE_SSL_REDIRECT=True Django responde 301 → https, lo cual el
+# healthcheck interpreta como "unhealthy". Exempt explícito para healthz/
+# readyz. Caddy aún recibe los probes externos por HTTPS — solo se
+# saltea el redirect cuando llegan por loopback interno.
+SECURE_REDIRECT_EXEMPT = [r'^api/healthz/$', r'^api/readyz/$']
+# Capa 3 (DEPLOY_VPS_PLAN.md): Caddy terminates TLS and forwards to gunicorn
+# over HTTP on the internal docker network. Without this header, Django sees
+# `request.is_secure() == False` even on HTTPS traffic, which:
+#   - makes SECURE_SSL_REDIRECT loop (Django → 301 https → Caddy → backend
+#     http → Django → 301 https → ...).
+#   - emits HSTS / Secure cookies inconsistently.
+# Only safe BEHIND a trusted reverse proxy that strips any client-supplied
+# X-Forwarded-Proto before setting its own. Caddy's `reverse_proxy header_up`
+# does exactly that — it overrides, not appends.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Trust X-Forwarded-Host so request.get_host() returns the public domain
+# instead of the internal container hostname. Same trust requirement as above.
+USE_X_FORWARDED_HOST = True
 # HSTS: activar en Railway con SECURE_HSTS_SECONDS=31536000
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
