@@ -218,7 +218,15 @@ DATABASES = {
                 name=config('PGDATABASE', default='veterinaria_saas'),
             )
         ),
-        conn_max_age=600,
+        # Capa 4 (HIGH H5): cada gunicorn worker mantiene una conexión
+        # persistente por `conn_max_age` segundos. Sin pgbouncer:
+        #   max_connections totales ≈ N_workers × N_replicas × 1
+        # Postgres `max_connections` default = 100. Con 3 workers en este
+        # host queda holgado. 60s = balance entre evitar handshake por
+        # request y soltar conexiones idle antes de saturar el pool.
+        # Anterior valor 600s era Railway-era (autoscale + dyno restarts
+        # frecuentes lo justificaban). En VPS único bajalo a 60s.
+        conn_max_age=config('DB_CONN_MAX_AGE', default=60, cast=int),
     )
 }
 
