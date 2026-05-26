@@ -171,6 +171,17 @@ class InvoiceConcurrencyTests(TransactionTestCase):
         self.assertEqual(MedicalRecordProduct.objects.filter(medical_record=self.medical_record).count(), 1)
         self.assertEqual(MedicalRecordService.objects.filter(medical_record=self.medical_record).count(), 1)
 
+        # Blindaje C2 (lost-update Invoice.total): los counts arriba pasarían
+        # incluso con un total corrupto. Verificar el VALOR garantiza que ambos
+        # recalculate_totals (producto + servicio) serializaron bajo el lock de
+        # la Invoice y ninguno pisó al otro.
+        #   servicio 250.00 + presentación 100.00 = subtotal 350.00
+        #   IVA 16% = 56.00 → total 406.00
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.subtotal, Decimal('350.00'))
+        self.assertEqual(invoice.tax_amount, Decimal('56.00'))
+        self.assertEqual(invoice.total, Decimal('406.00'))
+
     def test_medical_record_product_create_integrity_error_does_not_decrement_stock(self):
         from django.db import transaction
         with transaction.atomic():

@@ -1,9 +1,12 @@
+import logging
 from decimal import Decimal
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import connection, models
 from django.db.models import Q
 from apps.core.models import OrganizationalModel, PublicIdMixin
 from apps.billing.money import discount_amount, invoice_totals, line_subtotal, money
+
+logger = logging.getLogger(__name__)
 
 
 class Service(PublicIdMixin, OrganizationalModel):
@@ -250,10 +253,35 @@ class InvoiceItem(OrganizationalModel):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    def _warn_if_not_atomic(self, op):
+        # Guard de observabilidad (NO bloqueante). Toda mutación concurrente de
+        # InvoiceItem debe correr dentro de transaction.atomic() con la Invoice
+        # lockeada (select_for_update) para que recalculate_totals no sufra
+        # lost-update — ver "Orden global de locks" en CLAUDE.md.
+        #
+        # Es WARNING y no assert (a diferencia de MedicalRecordProduct.save):
+        # InvoiceItem.save() no toma lock interno, solo recalcula vía un UPDATE
+        # atómico único. Un create puntual en autocommit (admin, shell, seeds,
+        # setUp de TransactionTestCase) es seguro y legítimo; un assert duro los
+        # rompería. El warning solo señala mutaciones fuera de atomic para que
+        # monitoring detecte un caller concurrente nuevo que rompa el contrato.
+        if not connection.in_atomic_block:
+            logger.warning(
+                "INVOICEITEM_MUTATION_OUTSIDE_ATOMIC",
+                extra={
+                    'event': 'INVOICEITEM_MUTATION_OUTSIDE_ATOMIC',
+                    'op': op,
+                    'invoice_id': self.invoice_id,
+                    'invoice_item_pk': self.pk,
+                },
+            )
+
     def save(self, *args, **kwargs):
         # Hereda organization del invoice — sin query extra
         if self.invoice_id and not self.organization_id:
             self.organization_id = self.invoice.organization_id
+
+        self._warn_if_not_atomic('save')
 
         gross = money(self.quantity * self.unit_price)
         disc = discount_amount(gross, self.discount_type, self.discount_value)
@@ -263,6 +291,7 @@ class InvoiceItem(OrganizationalModel):
         self.invoice.recalculate_totals()
 
     def delete(self, *args, **kwargs):
+        self._warn_if_not_atomic('delete')
         invoice = self.invoice
         super().delete(*args, **kwargs)
         invoice.recalculate_totals()
