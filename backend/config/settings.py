@@ -101,6 +101,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',  # GinIndex + gin_trgm_ops para búsqueda por nombre
     'corsheaders',
     'rest_framework',
     'apps.core',

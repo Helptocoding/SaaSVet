@@ -1,3 +1,4 @@
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.core.exceptions import ValidationError
 from django.db import models
 from apps.core.models import OrganizationalModel, PublicIdMixin
@@ -11,6 +12,11 @@ class Owner(PublicIdMixin, OrganizationalModel):
     is_generic = models.BooleanField(default=False)
 
     class Meta:
+        indexes = [
+            # Búsqueda de owners por nombre usa name__icontains (patients/views.py).
+            # GIN trigram acelera substring match; sin él = seq scan por org.
+            GinIndex(OpClass('name', name='gin_trgm_ops'), name='owner_name_trgm'),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=['organization'],
@@ -50,6 +56,8 @@ class Pet(PublicIdMixin, OrganizationalModel):
     class Meta:
         indexes = [
             models.Index(fields=["organization", "owner"]),
+            # Búsqueda de mascotas por nombre usa name__icontains (patients/views.py).
+            GinIndex(OpClass('name', name='gin_trgm_ops'), name='pet_name_trgm'),
         ]
         constraints = [
             models.UniqueConstraint(
