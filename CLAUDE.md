@@ -1,243 +1,167 @@
-# VeterinariaSaaS — Reglas para Claude Code
+# VeterinariaSaaS - Reglas para Claude Code
 
-## Stack
-- Backend: Django 6 + DRF + SimpleJWT — deploy en Railway (branch `main`)
+## Stack actual
+- Backend: Django 6 + DRF + SimpleJWT
 - Frontend: React 19 + Vite (JavaScript, no TypeScript)
 - DB: PostgreSQL multitenant
+- Deploy objetivo: Docker / VPS
 - Branch activa de desarrollo: `develop`
 
-## Setup inicial (DB vacía)
+## Proposito de este archivo
+Este archivo contiene reglas operativas cortas para trabajar en el repo.
 
-### 1. Migraciones y permisos
-```bash
-python manage.py migrate
-python manage.py seed_permissions   # crea Permission + Roles por org (idempotente)
-```
-
-### 2. Primera organización + ADMIN
-No hay endpoint de registro público. El primer admin se crea vía Django admin:
-1. `python manage.py createsuperuser` → usuario ADMIN_SAAS de la plataforma
-2. Ir a `/admin/` → crear **Organization** (`name`, `timezone`, `tax_rate`)
-3. Crear **User** vinculado a esa org con `role=ADMIN`
-4. `python manage.py seed_permissions` nuevamente → genera Roles RBAC para la org
-
-### 3. El ADMIN crea staff vía API
-```
-POST /api/staff/create/
-Authorization: Bearer <token ADMIN>
-
-{
-  "username": "dra.garcia",
-  "email": "garcia@clinica.com",
-  "password": "Clave1234!",
-  "first_name": "Laura",
-  "last_name": "García",
-  "role": "VET",       # VET | ASSISTANT | ADMIN
-  "specialty": "Cirugía"
-}
-```
-`StaffCreateView` asigna `UserRole` RBAC automáticamente al crear el usuario.
-
-### Mínimo requerido por organización
-| Campo | Obligatorio | Notas |
-|-------|-------------|-------|
-| `Organization.name` | ✅ | |
-| `Organization.timezone` | ✅ | default `America/Mexico_City` |
-| `Organization.tax_rate` | ✅ | `0.0000` sin IVA, `0.1600` para 16% |
-| Un usuario con `role=ADMIN` | ✅ | |
-| `seed_permissions` ejecutado | ✅ | Sin esto todos los endpoints retornan 403 |
-| `OrganizationSettings` | ❌ | Se crea automáticamente con defaults |
+La documentacion larga vive en:
+- `docs/decisions/` - ADRs y decisiones historicas
+- `docs/modules/` - contratos y acoplamientos por modulo
+- `docs/runbooks/` - operacion, testing y soporte
+- `DEPLOY_VPS_PLAN.md` - plan de despliegue Docker/VPS
 
 ---
 
-## Reglas de seguridad (no negociables)
+## Reglas backend no negociables
 
-### Sanitización de inputs
-Todos los campos de texto libre pasan por `sanitize_text()` de `apps/core/sanitize.py`:
+### Sanitizacion de texto libre
+Todos los campos de texto libre pasan por `sanitize_text()` de `apps/core/sanitize.py`.
+
+Patron obligatorio:
 ```python
-from apps.core.sanitize import sanitize_text
-data['diagnosis'] = sanitize_text(data.get('diagnosis') or '', max_length=400)
-```
-Siempre usar `value or ''` — nunca pasar `None` directamente a `sanitize_text`.
-
-Límites por campo:
-- `diagnosis`, `treatment` → `max_length=400`
-- `notes` → `max_length=5000`
-- `vaccine_name`, `reason` → `max_length=255`
-- `motivo`, `cancellation_reason`, `batch_number` → `max_length=100`
-
-FBVs que reciben campos de texto libre deben sanitizar directamente (no delegan al serializer):
-```python
-# update_status → cancellation_reason se sanitiza en la FBV, no en AppointmentSerializer
-cancellation_reason = sanitize_text(request.data.get('cancellation_reason') or '', max_length=100)
+clean = sanitize_text(value or '', max_length=255)
 ```
 
-### Aislamiento multitenant
-Todas las queries de negocio DEBEN usar `for_organization()`:
+Reglas:
+- Nunca pasar `None` directo; siempre `value or ''`
+- Validar campos obligatorios despues de sanitizar
+- FBVs con texto libre sanitizan en la view, no delegan ciegamente al serializer
+
+Limites frecuentes:
+- `diagnosis`, `treatment` -> `max_length=400`
+- `notes` -> `max_length=5000`
+- `vaccine_name`, `reason` -> `max_length=255`
+- `motivo`, `cancellation_reason`, `batch_number` -> `max_length=100`
+
+### Multitenancy
+Toda query de negocio debe usar `for_organization()`.
+
+Correcto:
 ```python
 obj = Model.objects.for_organization(request.user.organization)
 ```
-Nunca usar `Model.objects.filter(pk=pk)` sin filtro de organización.
 
-### Validación de FKs en serializers
-Todo serializer que reciba una FK de otro modelo debe validar el tenant:
+Incorrecto:
+```python
+Model.objects.filter(pk=pk)
+```
+
+### Validacion tenant de FKs en serializers
+Todo serializer que reciba FKs de modelos organizacionales debe validar tenant.
+
+Patron:
 ```python
 def validate_pet(self, pet):
     if pet and pet.organization != self.context['request'].user.organization:
-        raise ValidationError('Acceso inválido.')
+        raise ValidationError('Acceso invalido.')
     return pet
 ```
-Notar el `if pet and ...` — los campos opcionales pueden llegar como `None`.
-Aplica en: `AppointmentSerializer`, `MedicalRecordSerializer`, `InvoiceSerializer`,
-`PrescriptionSerializer`, `VaccineRecordSerializer`, `MedicalRecordProductSerializer`.
 
-Validaciones de stock en serializers sin lock son **no-autoritativas** — son pre-checks de UX.
-La validación autoritativa siempre va en la view con `select_for_update()`. No duplicar la
-misma validación con lock y sin lock para el mismo campo numérico (produce doble error en race).
+### Serializer checklist minimo
+Todo serializer nuevo debe cumplir:
+- `CharField` / `TextField` libre -> `sanitize_text()` con `max_length`
+- campo obligatorio -> no vacio despues de sanitizar
+- precio -> `> 0`
+- stock / cantidad -> `>= 0` o `> 0` segun dominio
+- FK de otro modulo -> validacion tenant
 
-### Operaciones críticas en transacciones
-Toda operación que involucre stock + factura debe estar en `transaction.atomic()`.
-Reglas de concurrencia:
-- `select_for_update()` requiere `.first()` / `.exists()` / iteración para que el lock llegue a la DB — un queryset sin evaluar no genera SQL
-- Envolver TODA la cadena dentro del `with transaction.atomic()`, incluyendo el `save()` que internamente llama otros métodos
-- `@transaction.atomic` en services recibe objetos ya cargados — siempre re-fetch con lock al inicio del service
+---
 
+## Concurrencia, stock y facturacion
+
+### Transacciones
+Toda operacion que toque stock + factura debe vivir dentro de `transaction.atomic()`.
+
+Reglas:
+- `select_for_update()` solo bloquea cuando el queryset se evalua (`.get()`, `.first()`, `.exists()`, iteracion)
+- si un service recibe un objeto ya cargado, debe re-fetch con lock al inicio
+- el lock debe cubrir toda la cadena, incluyendo helpers y `save()` internos
+
+Patron:
 ```python
 with transaction.atomic():
-    locked = Model.objects.select_for_update().filter(...).first()  # evalúa el lock
-    # operación dependiente del lock
+    locked = Model.objects.select_for_update().filter(...).first()
 ```
 
-**Patrón correcto para services que reciben objeto pre-cargado:**
-```python
-@transaction.atomic
-def confirm_invoice(invoice, user):
-    # re-fetch con lock + tenant filter (defense-in-depth, ADR p13)
-    invoice = Invoice.objects.for_organization(invoice.organization)\
-        .select_for_update().get(pk=invoice.pk)
-    if invoice.status != 'draft':
-        raise ValidationError(...)
+### Mutaciones numericas contables
+Las mutaciones de `InvoiceItem.quantity` deben usar `F()` via `.update()`, nunca `item.quantity += delta; item.save()`.
+
+Helper canonico:
+- `apps.billing.services.apply_invoice_item_quantity_delta(item, delta)`
+
+### Contratos criticos
+- `apply_stock_movement()` no adquiere su propio lock; el caller debe poseer `select_for_update()` sobre `presentation`
+- `MedicalRecordProduct.save()` / `.delete()` exigen `transaction.atomic()`
+- `bulk_create` siempre asigna `organization` explicitamente
+- deletes que revierten stock deben envolver lock + `atomic()` antes de `super().delete()`
+- en operaciones idempotentes tipo walk-in, lockear una fila estable que siempre exista
+
+### Orden global de locks (canonico)
+Todo flujo que adquiera multiples locks DEBE seguir este orden, para evitar deadlocks ABBA:
+
+```
+MedicalRecord -> Invoice -> Presentation -> InvoiceItem
 ```
 
-**Mutación de campos numéricos contables — F() obligatorio (ADR p13):**
-TODA mutación de `InvoiceItem.quantity` (y por extensión, cualquier campo numérico contable
-de InvoiceItem) DEBE usar `F('field') ± delta` vía `.update()`, **incluso cuando el caller
-posee `select_for_update()`**. Prohibido `item.quantity += delta; item.save()`.
+Reglas:
+- Dentro de un mismo tipo, lockear por PK ascendente (`_lock_presentations` ordena los IDs).
+- Toda mutacion de `InvoiceItem` (create / save / delete / quantity-delta) debe correr con la Invoice ya lockeada (`select_for_update`) dentro del mismo `atomic()`. Garantiza que `recalculate_totals` no sufra lost-update. `InvoiceItem.save/delete` loguea `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` (warn) si se llama fuera de `atomic()`.
+- Verificado por la suite real `apps.billing.tests.test_invoice_concurrency` (Postgres + threads). No reordenar locks sin volver a correrla.
 
-Razones: consistencia con `apply_stock_movement` para `Presentation.stock` + defense-in-depth
-contra bugs futuros que pierdan el lock + single round-trip a la DB.
+### Validacion de stock
+Las validaciones de stock en serializers son solo pre-check UX. La validacion autoritativa vive en la view/service con lock.
 
-Helper único: `apps.billing.services.apply_invoice_item_quantity_delta(item, delta)`.
+---
 
-```python
-# Incremento (item ya lockeado)
-apply_invoice_item_quantity_delta(item, +quantity)
+## IDs publicos y URLs
 
-# Decremento — proyección previa para decidir delete vs update
-projected = item.quantity - decrement_amount
-if projected <= 0:
-    item.delete()
-else:
-    apply_invoice_item_quantity_delta(item, -decrement_amount)
-```
+### Regla general
+Modelos expuestos publicamente usan `public_id` (UUID) en URLs, no PK entero.
 
-**Contrato de lock en `apply_stock_movement` (ADR p13):**
-La función NO acquire su propio lock — usa `refresh_from_db()` (sin lock) para el stock-check.
-El caller DEBE poseer `select_for_update()` sobre `presentation` antes de invocarla. Lista
-canónica de callers válidos en el docstring de la función.
+Modelos con `public_id`:
+- `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Invoice`, `Prescription`, `Product`, `Presentation`, `Service`, `VaccineRecord`, `User`, `Organization`
 
-**Fail-fast en `MedicalRecordProduct.save()`/.delete() (ADR p13):**
-Ambos métodos abren con `assert connection.in_atomic_block`. Si el caller no abrió
-`transaction.atomic()`, levantan `AssertionError`. Warning log adicional si `save()` se
-invoca sin `locked_presentation`.
+Modelos internos sin `public_id`:
+- `InvoiceItem`, `StockMovement`, `MedicalRecordProduct`, `MedicalRecordService`, `InvoiceAuditLog`, `AppointmentStatusChange`, `VitalSigns`, `Permission`, `Role`, `UserRole`
 
-**bulk_create siempre debe asignar `organization` explícitamente:**
-`bulk_create` bypasea `save()` y el TenantManager — la organización nunca se asigna automáticamente.
-```python
-# INCORRECTO — organization queda NULL
-presentations.append(Presentation(product=product, **item))
-# CORRECTO
-presentations.append(Presentation(product=product, organization=organization, **item))
-```
+### Reglas de implementacion
+- parametros URL de modelos publicos: siempre `<str:>`
+- resolver IDs con `resolve_public_id()`, no con `pk=` directo
+- query params de modelos publicos tambien resuelven via `resolve_public_id(Model.objects.for_organization(org), raw)`
+- cross-tenant debe dar `404`, no `[]`
 
-**Override de `delete()` en modelos que mueven stock:**
-Envolver en `atomic()` + lock previo, incluyendo el `super().delete()`. Sin esto, el cascade
-puede revertir stock en múltiples llamadas no atómicas.
-```python
-def delete(self, *args, **kwargs):
-    with transaction.atomic():
-        fresh = Presentation.objects.select_for_update().get(pk=self.presentation_id)
-        apply_stock_movement(presentation=fresh, movement_type='in', ...)
-        super().delete(*args, **kwargs)
-```
+### Convencion por capa
+- backend / JSON: `public_id`
+- frontend JS: `publicId`
+- URLs: UUID raw
+- FK en body `POST/PATCH`: PK entero (`PrimaryKeyRelatedField`)
 
-**Lock en walk-in / operaciones de creación idempotente:**
-Lockear una fila que SIEMPRE existe (ej. el User veterinario), no un queryset que puede estar vacío.
-Un queryset vacío no genera ningún lock en la DB.
-```python
-with transaction.atomic():
-    User.objects.select_for_update().get(pk=vet.pk)  # fila estable, siempre existe
-    existing = Appointment.objects.filter(...).first()
-```
+### Anti-patterns prohibidos
+- `editing.public_id || editing.id`
+- `try uuid except pk` ad-hoc en views
+- helpers genericos tipo `resolve_anything()`
+- dual-lookup PK + UUID sin flag de migracion
+- `PrimaryKeyRelatedField` esperando UUID en body
 
-### IDs en URLs (ADR p18 — Día 6)
+---
 
-Modelos expuestos públicamente usan `public_id` (UUID) en URLs, NO el PK entero.
+## RBAC y permisos
+- Todos los endpoints usan `HybridPermission` o `make_permission()`
+- Nunca usar `RolePermission` directamente
+- Nunca verificar `user.role == 'ADMIN'` directo en views o permissions locales
+- Si agregas nuevos codigos a `PERMISSION_CODES`, debes correr `seed_permissions` en el siguiente deploy
+- `billing` usa `cancelled`; `appointments` usa `canceled` - no mezclar
 
-**Modelos con `public_id`:** `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Invoice`, `Prescription`, `Product`, `Presentation`, `Service`, `VaccineRecord`, `User`, `Organization`.
+### Gotcha de vistas anidadas
+En list views anidadas bajo `<str:pk>` del padre, declarar `required_permission` por metodo en `initial()` para evitar que `HybridPermission` infiera `retrieve` por error.
 
-**Modelos SIN `public_id` (internos):** `InvoiceItem`, `StockMovement`, `MedicalRecordProduct`, `MedicalRecordService`, `InvoiceAuditLog`, `AppointmentStatusChange`, `VitalSigns`, `Permission`, `Role`, `UserRole`.
-
-**Trigger de promoción futura:** caso de uso navegable / compartible standalone documentado. Nunca por estética.
-
-Cuando un ViewSet tiene sub-recursos anidados (ej. `/invoices/<invoice_pk>/items/`), el `invoice_pk` debe ser `<str:>` y resolverse con `resolve_public_id()`, no con `get_object_or_404(..., pk=...)`.
-
-**Regla**: todos los parámetros de URL que referencian modelos con `public_id` deben ser `<str:>`, nunca `<int:>`. Usar `<int:>` expone el PK secuencial interno y rompe la resolución UUID.
-
-### Convenciones de IDs por capa (ADR p18)
-
-| Capa | Convención |
-|---|---|
-| Backend Python / DB / JSON | `public_id` (snake_case, UUID v4) |
-| Frontend JS variables / params | `publicId` (camelCase) |
-| URLs / deep links | UUID v4 raw, sin prefijo |
-| React keys | `obj.public_id` preferente; `obj.id` solo si array no sale del componente |
-| FK body fields (POST/PATCH) | PK entero (`PrimaryKeyRelatedField`) |
-
-### Query params de modelos públicos (Fase 3 BLOCKER)
-
-Todo `?<modelo_publico>=<value>` resuelve vía `resolve_public_id(Model.objects.for_organization(org), value)` antes de filtrar. **Prohibido** `qs.filter(<modelo>_id=raw_value)` — bypasea tenant scope.
-
-```python
-pet_lookup = request.query_params.get('pet')
-if pet_lookup:
-    pet = resolve_public_id(Pet.objects.for_organization(org), pet_lookup)
-    qs = qs.filter(pet=pet)
-```
-
-Cross-tenant retorna 404 (no `[]`). Cubierto por `apps.core.tests.test_url_audit`.
-
-### Anti-patterns prohibidos (ADR p18)
-
-1. `editing.public_id || editing.id` (frontend) — dual-lookup spaghetti. Grep gate CI bloqueante.
-2. `try uuid except pk` ad-hoc en views — usar `resolve_public_id`.
-3. Helpers genéricos tipo `resolve_anything()`, `SmartIdField`, `IdentityService` — YAGNI.
-4. Query param dual-aceptación PK + UUID — cortar limpio con flag.
-5. `PrimaryKeyRelatedField` con UUID en body — rompe contrato DRF.
-
-### Deuda diferida a post-beta (D2, D5)
-
-Documentada en `docs/day6/POST-BETA-DEBT.md`. NO bloqueante para beta:
-
-- **D2**: `MeView` response mantiene `organization` (PK) + `organization_public_id` (UUID) ambos. Cleanup `POST-BETA-001` (sprint S1-S3 post-launch).
-- **D5**: Serializers de modelos públicos exponen `id` (PK) + `public_id` (UUID) ambos. Cleanup `POST-BETA-002` (sprint S1-S4 post-launch). Requiere observability fase para detectar consumers de `id` antes de eliminar.
-
-Frontend nuevo DEBE consumir `public_id` / `<resource>_public_id` para todo lo que cruza HTTP. `id` queda solo por retrocompat.
-
-### List views anidadas bajo `<str:pk>` UUID parent (ADR-09 reforzado)
-
-DEBEN declarar `required_permission` por método HTTP en `initial()`:
-
+Ejemplo:
 ```python
 def initial(self, request, *args, **kwargs):
     if request.method == 'GET':
@@ -247,313 +171,76 @@ def initial(self, request, *args, **kwargs):
     super().initial(request, *args, **kwargs)
 ```
 
-Sin esto, `_method_to_action` infiere `retrieve` por presencia de `pk` en kwargs y rompe RBAC silenciosamente.
+---
 
-### Máquina de estados — Invoice
-Los estados válidos son: `draft → confirmed → paid` y `draft/confirmed → cancelled`.
-- Solo facturas en `draft` pueden editarse (PATCH sobre cualquier otro estado → 400)
-- `confirm_invoice`: requiere al menos un ítem activo
-- `pay_invoice`: requiere estado `confirmed` + `payment_method`
-- El `total` siempre se recalcula en backend — `total`, `subtotal`, `tax_amount`, `tax_rate` son `read_only` en el serializer
+## Facturacion y estados
+- Invoice: `draft -> confirmed -> paid`
+- Cancelacion permitida desde `draft` o `confirmed`
+- Solo `draft` es editable
+- `confirm_invoice` requiere al menos un item activo
+- `pay_invoice` requiere estado `confirmed` + `payment_method`
+- `total`, `subtotal`, `tax_amount`, `tax_rate` se recalculan en backend y son `read_only`
 
-### Manejo de errores
-El exception handler global `apps/core/exceptions.py` mapea todos los errores a mensajes en español.
-Nunca exponer mensajes del ORM directamente al frontend.
-Los errores 500 incluyen `request_id` para correlación en Railway logs.
-`IntegrityError` de la DB NO está capturado por el handler — validar duplicados en el serializer antes de llegar a la DB.
+Flujo canonico de sync de invoice:
+1. `billing.signals.create_draft_invoice_on_done`
+2. `medical_records.views._sync_invoice_item`
+3. `inventory.views._sync_invoice_item`
 
-### Checklist obligatorio por serializer
-
-Todo serializer nuevo debe cumplir estas reglas antes de merge:
-
-- `CharField` / `TextField` libre → `sanitize_text()` con `max_length` explícito
-- Campo obligatorio → validar no vacío **después** de `sanitize_text` (puede colapsar HTML a `""`)
-- `DecimalField` de precio → `validate > 0`
-- `DecimalField` de stock/cantidad → `validate >= 0` (o `> 0` según dominio)
-- FK de otro módulo → validación de tenant (`if obj.organization != request.user.organization`)
-
-```python
-# Patrón correcto para campo de texto obligatorio:
-def validate_name(self, value):
-    clean = sanitize_text(value or '', max_length=255)
-    if not clean.strip():
-        raise serializers.ValidationError("El campo es obligatorio.")
-    return clean
-```
+Si la invoice aun no existe, usar `get_or_create_invoice_for_medical_record()` de `apps.billing.services`.
 
 ---
 
-## RBAC
-- Todos los endpoints usan `HybridPermission` o `make_permission()`
-- Nunca usar `RolePermission` directamente en views
-- Nunca verificar `user.role == 'ADMIN'` directamente en views ni permission classes locales
-- Gate Fase 4: `RBAC_FALLBACK_ALLOWED` ausente en logs por 7 días → listo para cortar `User.role`
-- Al agregar nuevos códigos a `PERMISSION_CODES`, ejecutar `seed_permissions` en el siguiente deploy para persistirlos en DB
-- Naming: billing usa `'cancelled'` (doble L), appointments usa `'canceled'` (una L) — no mezclar al filtrar por status entre módulos
-- Nuevos códigos (2026-05-04): `medicalrecord.vitals.create`, `medicalrecord.vitals.list`, `medicalrecord.summary.retrieve` — VET recibe los 3, ASSISTANT solo `vitals.list` + `summary.retrieve`
+## Frontend auth y seguridad
+- No tocar tokens fuera de `frontend/src/auth/tokenStorage.js`
+- No usar `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de ese modulo
+- No crear update paths alternos para password que bypassen `change_password` / reset flows oficiales
+- Respetar `MustChangePasswordGate` backend y frontend
+- Si frontend agrega headers custom (`X-Request-ID`, futuros idempotency keys, etc.), actualizar `CORS_ALLOW_HEADERS`
 
 ---
 
-## Arquitectura de módulos
+## Analytics no negociable
+Cuando toques `billing`, `medical_records`, `appointments` o `analytics`, validar:
 
-### Mapa de dependencias
-
-| Módulo | Acoplamiento | Dependencias salientes |
-|--------|-------------|----------------------|
-| `core` | Estable | 0 — infraestructura pura |
-| `patients` | Estable | core |
-| `prescriptions` | Estable | core (`sanitize_text`, string FKs) |
-| `users` | Estable | core, organizations |
-| `dashboard` | Estable | core, analytics (read endpoints v1) |
-| `organizations` | Bajo | core, patients (signal bootstrap, ocurre 1 vez) |
-| `appointments` | Moderado | core, organizations, users, patients, medical_records (late) |
-| `inventory` | Moderado-alto | core, medical_records, prescriptions |
-| `medical_records` | Alto | core, users, patients, appointments, inventory, prescriptions, billing. Incluye `VitalSigns` (append-only, historial de signos vitales). |
-| `billing` | Alto | core, organizations, users, patients, appointments, medical_records, inventory |
-| `analytics` | Lectura-derivada | core, billing, medical_records, appointments. Solo lee de los demás; nunca muta sus modelos. Snapshots agregados nightly + read endpoints. |
-
-**Triángulo de alto riesgo**: `medical_records ↔ billing ↔ inventory`. Cualquier feature que expanda la consulta clínica (labs, vitales) o el ciclo de facturación (descuentos, reembolsos) aterriza aquí.
-
-### Flujo de sincronización Invoice (3 puntos, no duplicados)
-
-1. **`billing.signals.create_draft_invoice_on_done`** — crea la Invoice `draft` cuando una cita pasa a `'done'` o cuando se crea un `MedicalRecord` sin cita. Controlado por toggle `SETTING_AUTO_INVOICE_ON_DONE`.
-2. **`medical_records.views._sync_invoice_item`** — crea/actualiza `InvoiceItem` de servicio al agregar un `MedicalRecordService`.
-3. **`inventory.views._sync_invoice_item`** — crea/actualiza `InvoiceItem` de producto al agregar un `MedicalRecordProduct`.
-
-El punto 1 debe ejecutarse antes que 2 y 3. Si la Invoice aún no existe, `get_or_create_invoice_for_medical_record()` (`billing/services.py`) la crea on-demand.
-
-### Acoplamiento oculto (no visible en imports)
-
-| Contrato implícito | Riesgo si falla |
-|-------------------|-----------------|
-| `organizations.signals` garantiza `Owner` genérico por org con teléfono válido → `billing.services` lo accede sin guard | `create_invoice` walk-in rompe |
-| `MedicalRecord.Status.CLOSED` es gate de autorización en `inventory.views`, `medical_records.policies` y `medical_records.views` | Los 3 usan la constante enum — riesgo bajo; un cambio de nombre falla en import, no silenciosamente |
-| Toggles de `OrganizationSettings` definidos como constantes en `organizations/utils.py` | Siempre importar `SETTING_AUTO_MEDICAL_RECORD` / `SETTING_AUTO_INVOICE_ON_DONE` — nunca string literals |
-| `MedicalRecord.ConsultationType.SURGERY` es el gate de la validación de `treatment` obligatorio en `close_medical_record` | Si se renombra el choice, la validación deja de aplicarse silenciosamente |
-| `_get_last_weight(pet)` busca en `VitalSigns` primero y en `MedicalRecord` segundo — ambas fuentes deben coexistir hasta migración v2 | Si se elimina `MedicalRecord.weight` antes de migrar, el fallback queda huérfano |
-
-### Decisiones de arquitectura
-
-**ADR-01 — No refactor de módulos en v1 (2026-05-03)**
-El acoplamiento moderado-alto concentrado en el triángulo es sostenible para v1. Los flujos críticos, las transacciones y los locks están correctamente implementados. Mover modelos o rediseñar flujos en este punto introduce más riesgo que el que elimina. Los fixes se aplican quirúrgicamente.
-
-**ADR-02 — `_get_cached_permissions` como función standalone en core (2026-05-03)**
-`HybridPermission._get_db_permissions()` y `medical_records/policies._permission_codes()` duplicaban la misma consulta DB y clave de cache (`user._cached_permissions`). Se extrajo a `_get_cached_permissions(user)` module-level en `core/permissions.py`. Ambas delegan a ella. Si la lógica de cache evoluciona, lo hace en un único lugar.
-
-**ADR-03 — Constantes para claves de OrganizationSettings (2026-05-03)**
-Los string literals `'auto_create_medical_record'` y `'auto_create_invoice_on_done'` estaban dispersos en 3 archivos (`organizations/utils.py`, `appointments/views.py`, `billing/signals.py`). Un typo causa que el toggle se ignore silenciosamente. Constantes: `SETTING_AUTO_MEDICAL_RECORD` y `SETTING_AUTO_INVOICE_ON_DONE` en `organizations/utils.py`.
-
-**ADR-04 — Audit log completo en pay_invoice (2026-05-03)**
-`confirm_invoice` y `cancel_invoice` escriben a `InvoiceAuditLog` vía `_log_status_change()`. `pay_invoice` no lo hacía. Se añadió capturando `previous_status = invoice.status` antes de la mutación — no hardcodeado `'confirmed'` — para ser correcto frente a flujos futuros donde el estado previo pueda variar.
-
-**ADR-05 — Sanitización en serializers de prescripciones (2026-05-03)**
-`PrescriptionItemSerializer.validate_dose` verificaba vacío pero no sanitizaba. El bug silencioso: `sanitize_text("<script>alert(1)</script>")` colapsa a `""`, que pasaba la validación anterior y devolvía 200 con string vacío en DB. Patrón correcto: sanitizar primero, luego verificar vacío. Se aplicó en `dose` (obligatorio), `duration`, `instructions` (opcionales) y `notes` de `PrescriptionSerializer`. Mismos validators replicados en `PrescriptionItemWriteSerializer`.
-
-**ADR-06 — Validación robusta en ServiceSerializer (2026-05-03)**
-`ServiceSerializer.validate_name` solo hacía `.strip().title()` sin sanitización ni regex. `base_price` aceptaba 0 y negativos sin validación. Se reemplazó con `sanitize_text()` + `SERVICE_NAME_REGEX` (equivalente al de inventory para consistencia entre módulos — caracteres explícitos, no `re.UNICODE`). Se agregaron `validate_base_price` (`> 0`, alineado con `Presentation.sale_price__gt=0`) y `validate_description`. Se añadió `CheckConstraint(base_price__gt=0, name='service_base_price_positive')` en `Service.Meta` como defensa final a nivel DB (migración `0014`).
-
-**ADR-07 — Recetas como visor clínico, no punto de creación (2026-05-03)**
-La página `/prescriptions` tenía botones "Nueva Receta" y "Editar" que contradecían el flujo clínico: las recetas son documentos que emergen de una consulta, no se crean de forma standalone. Se eliminaron ambos botones. La página es ahora un visor histórico (listado + PDF). Se agregó banner informativo con link al historial clínico. El flujo legítimo desde historial (URL params `?medical_record=X&pet=Y`) se preserva. Se agregó "Recetas" al sidebar (`Icon.Pill`) después de "Historial Clínico".
-
-**ADR-08 — Dos gates de autorización en medical_records (2026-05-04)**
-`assert_can_modify_charges` es para operaciones de facturación (productos/servicios): valida org + status + ownership del VET. `assert_can_modify_medical_record` es para datos clínicos puros (vitales): valida org + status. Semánticamente distintos — no mezclar. Los vitales no son cargos de factura; no deben pasar por el gate de billing.
-
-**ADR-09 — `HybridPermission._method_to_action` infiere `retrieve` cuando hay `pk` en kwargs (2026-05-04)**
-Para vistas de lista anidadas bajo una URL con `<pk>` (ej. `/medical-records/<pk>/vitals/`), `HybridPermission` ve el `pk` del padre y mapea GET a `retrieve` en lugar de `list`. Solución: declarar `required_permission` explícitamente en `initial()` según el método HTTP. No confiar en la inferencia automática para sub-recursos anidados.
-
-**ADR-10 — `for_organization()` siempre primero en la cadena de queryset (2026-05-04)**
-`select_related()` y `prefetch_related()` devuelven un `QuerySet` estándar de Django que no tiene el método `for_organization()` del `TenantManager`. La cadena correcta siempre es `Model.objects.for_organization(org).select_related(...).prefetch_related(...)`. Orden inverso genera `AttributeError` en runtime.
-
-**ADR-11 — Analytics anchor authority + provenance (2026-05-09)**
-Cada timestamp usado por analytics (`Invoice.paid_at` / `confirmed_at` / `cancelled_at`, `MedicalRecord.closed_at`, `Appointment.walk_in`) tiene: (a) columna `editable=False`, (b) único writer autoritativo en `services.py`, (c) CHECK constraint DB que enforces `status='X' ⇒ anchor IS NOT NULL`, (d) campo `*_source` con choices `service|audit_log|fallback|unresolved|legacy`. Bypass paths cerrados: admin status readonly, `pay_invoice` movido de view a service, DELETE appointment ahora crea `AppointmentStatusChange`, `MedicalRecord.save()` rechaza `closed` sin `closed_at`. Backfill no-naive: política estricta `audit_log → before_paid → created_at solo si status calza → unresolved`. NUNCA inventar timestamps. Ver ADR `2026-05-09-p9` y `docs/dashboard-metrics-contract.md`.
-
-**ADR-12 — Snapshots analytics minimal v1 + read endpoints JSON-first (2026-05-09)**
-App nueva `apps/analytics/` con `DailyOrgMetrics` (7 KPIs minimales) + `DashboardSnapshotAudit`. Reglas: (a) `is_bucket_frozen()` único helper para freeze decisions, (b) `apply_snapshot()` idempotente — 3 runs producen mismos números/state/`built_at`, (c) today NUNCA snapshotteado — siempre live, (d) per-org PG advisory lock en mgmt command para Railway double-fire safety, (e) per-org failure isolation (un org fallido no aborta otros, exit 2 si alguno falló), (f) `lifecycle_state='corrupt'` rows persistidas pero filtradas en read endpoints (visibles solo en `/analytics-health/`). Read endpoints (`/api/v1/dashboard/operations/series/`, `/api/v1/dashboard/financial/series/`) tagean cada datapoint con `source` ∈ `snapshot|live` y `lifecycle_state`. Hard cap 365 días. Ver ADR `2026-05-09-p10` y `docs/modules/analytics.md`.
-
-**ADR-13 — Tenant validators en serializers (2026-05-16)**
-Día 3 P0 #8-9. `InvoiceSerializer` valida 4 FKs (`owner`, `pet`, `appointment`, `medical_record`) contra `request.user.organization`. `PrescriptionItemSerializer`/`WriteSerializer` valida `product` (con chequeo `requires_prescription` DESPUÉS del tenant — no exponer atributo de producto cross-org). Helper local `_validate_same_org` por archivo (no se promueve a `apps/core/` hasta Fase 2 post-beta). Logger separado `apps.tenant_validation` emite `TENANT_VALIDATION_REJECTED` (WARNING) — distinto a `TENANT_MISMATCH_DETECTED` (ERROR) de `HybridPermission.has_object_permission`. Fix 4: `InvoiceSerializer.validate()` resuelve `owner`/`pet` con fallback a `instance` para soportar PATCH parcial. Ver ADR `2026-05-16-p14`.
-
-**ADR-14 — Privilege escalation guard en superuser bootstrap + DRF default permissions (2026-05-17)**
-PR-4A Día 4. `_create_default_superuser` reescrito con predicado `_is_platform_superuser` (requiere `is_superuser=True AND is_staff=True AND role='ADMIN_SAAS' AND email coincide case-insensitive cuando se provee`). TOCTOU race retry vía `IntegrityError` + reclasificación. `create_superuser()` idiomático (no `create_user(is_superuser=True)`). `REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] = ('rest_framework.permissions.IsAuthenticated',)` — vistas nuevas heredan auth por default. `PublicTokenRefreshView` con throttle dedicado. Eventos: `SUPERUSER_BOOTSTRAP_CREATED/SKIPPED/RACE_RESOLVED/INCOMPLETE_ENV`. Ver ADR `2026-05-17-p15`.
-
-**ADR-15 — Cascade lockdown + Organization singleton + ProtectedError handler bounded + audit_orphan_fks (2026-05-17)**
-PR-4B Día 4. 5 FKs `CASCADE → PROTECT`: `User.organization`, `Pet.owner`, `MedicalRecord.pet`, `VaccineRecord.pet`, `Prescription.pet`. `OrganizationViewSet` (ModelViewSet) reemplazado por `OrganizationMeView` (`/me/` singleton) + `OrganizationLegacyView` (`/<pk>/` con validación + headers RFC 8594 Deprecation/Sunset/Link + fail-safe 410 Gone automático post-Sunset 2026-08-17 via `_EndpointSunsetException` en `initial()`). Handler `ProtectedError` con `isinstance()` exacto + probe `[:6]` via `islice` (set no subscriptable) + hard cap 1000 + shape consistente `protected_count: int` + `protected_count_truncated: bool` + sample dict `{type, id, public_id}` (no `str(obj)` — PII leak + N+1) → 409 Conflict. `audit_orphan_fks` mgmt command: schema_version "1.0.0", exit codes 0/1/2, dual output JSON/log, catch-all 32 targets via introspección de `OrganizationalModel`, `all_objects` (no `objects`) para evitar falsos positivos por soft-delete. DELETE bloqueado en `VaccineRecordDetailView`/`PrescriptionDetailView`/`OrganizationAdmin`/`CustomUserAdmin` por consistencia con motivación NOM. Status 409 (no 400) — semántica REST por sobre conveniencia frontend. Ver ADR `2026-05-17-p16`.
-
-**ADR-16 — `apps/platform/` namespace separado + provision_organization service autoritativo (2026-05-22)**
-Nueva app `apps/platform/` para SaaS cross-tenant operations (org provisioning, lifecycle, soporte futuro). NO mezclar con `apps/organizations/` (tenant-scoped settings). Boundary: `platform → organizations/users/core` permitido; el inverso NO. Endpoint `POST /api/platform/organizations/` provee creación de tenant + admin inicial sin Django admin. Componentes:
-- `IsPlatformOperator` permission (predicado: `is_superuser + is_staff + role='ADMIN_SAAS'`) — distinto semánticamente de `_is_platform_superuser` (bootstrap) para evitar drift cuando agreguen impersonation/billing/support.
-- `provision_organization(actor, validated_data, request_id)` service en `services/provision_organization.py` con `@transaction.atomic`. Orquesta: `Organization.create()` (dispara `initialize_organization` signal → `OrganizationSettings` + `Owner`/`Pet` genéricos + Roles RBAC) → `User.create_user(role='ADMIN', is_staff=False, is_superuser=False)` (dispara `assign_rbac_role_on_create` signal con `get_or_create` SIN `assigned_by`) → `UserRole.objects.update_or_create(defaults={'assigned_by': actor})` para backfill del audit field que el signal no captura.
-- Post-condition assert antes de retornar: `UserRole.objects.filter(user=admin, role__organization=org, role__name='ADMIN', assigned_by=actor).exists()`. Si falla → `RuntimeError` + rollback completo.
-- View `PlatformOrgCreateView` delgada — solo extrae `X-Request-ID` header (o genera uuid4), valida con `ProvisionOrgSerializer`, delega a service, format response. Password JAMÁS en response.
-- Password floor `min_length=12` para admins iniciales SaaS (justified por privilegio + acceso clínico/financiero).
-- Privilege escalation guards: payload NO puede inyectar `role=ADMIN_SAAS`, `is_superuser`, `is_staff` (forzados server-side).
-- IntegrityError race (post-validación) → `ValidationError` 400.
-- Throttle scope `platform_org_create` = `20/hour` por actor (`ScopedRateThrottle`).
-- Logs estructurados (`logger='platform.events'`): `PLATFORM_ORG_PROVISIONED`/`PLATFORM_ORG_PROVISION_RACE`/`PLATFORM_ORG_PROVISION_POSTCOND_FAILED`/`PLATFORM_ORG_PROVISION_RBAC_MISSING`/`PLATFORM_ACCESS_DENIED` con `request_id`, `actor_email`, `actor_role`, `duration_ms`, `org_public_id`, `admin_user_public_id`.
-- Idempotency key diferida a `POST-BETA-005` (validaciones pre-DB de duplicados mitigan ~95% pre-beta).
-- Tests: 48 tests across `test_provision_service.py` (service + atomicity + rollback con `Organization.objects.count()` invariant), `test_view_auth.py` (matrix permission), `test_view_validation.py` (escalation guards + duplicates + password floor + sanitization), `test_view_integration.py` (E2E login + permisos + throttle).
-- Test runner gotcha (Windows + Python 3.13): stdlib `platform` collisión con `apps.platform` en discovery. Ejecutar test modules con full module path (`apps.platform.tests.test_X`), NO `apps.platform`.
-
-**ADR-17 — Credential lifecycle: self-service password change + JWT rotation/blacklist (2026-05-22)**
-Cierre del gap operativo post-ADR p19 (org admin provisionado no podía cambiar password sin shell). Tres flujos credential separados conceptualmente: self-change (✅ p20), admin-reset (diferido), forgot-password (diferido). NO mezclar — permisos, audit y riesgos distintos.
-
-Endpoint `POST /api/users/change-password/` con `IsAuthenticated` (todos los roles). Service `apps/users/services.py:change_password` autoritativo `@transaction.atomic` — orden estricto: verify current → `validate_password(new, user=actor)` → reject same → **snapshot OutstandingToken IDs antes de mintear** → `set_password` + `update_session_auth_hash` → mint nuevo refresh+access → blacklist solo snapshotteados (preserva el nuevo).
-
-Cambios sistémicos:
-- `rest_framework_simplejwt.token_blacklist` agregada a INSTALLED_APPS. Migraciones aplicadas. 2 tablas + 6 índices (incluye user_id index crítico para queries del service).
-- `SIMPLE_JWT`: `ROTATE_REFRESH_TOKENS=True`, `BLACKLIST_AFTER_ROTATION=True`. Cada `/token/refresh/` rota + blacklistea viejo. `ACCESS_TOKEN_LIFETIME` reducido 30→15 min para acotar ventana de exposición post-cambio.
-- `apps/core/network.py` nuevo módulo dedicado (NO `utils.py` — cementerio arquitectónico). Aloja `get_client_ip` (XFF chain → REMOTE_ADDR fallback) y `get_user_agent` (truncado a 255 chars).
-- Throttle scope `change_password = 10/hour` por user.
-
-JWT lifecycle behavior (documentar en soporte):
-- Refresh tokens viejos: invalidados al instante.
-- Access tokens viejos: siguen válidos hasta exp natural (15 min) — JWT stateless design, NO bug. Mitigaciones: TTL reducido + frontend AuthProvider hace refresh transparente 5 min antes de exp, falla con viejo refresh → trigger logout limpio.
-
-Logger `users.events`: `USER_PASSWORD_CHANGED` (INFO) + `USER_PASSWORD_CHANGE_FAILED` (WARNING). Fields incluyen `request_id`, `actor_id`, `actor_username`, `organization_id`, `client_ip`, `user_agent`, `duration_ms`, `blacklisted_refresh_count`.
-
-Frontend: `ChangePasswordForm` reusable + integración en `pages/config.jsx` "Mi cuenta". Reemplazo de tokens vía `useAuth().login(access, refresh)` central — JAMÁS `localStorage.setItem` disperso en componentes.
-
-Anti-patterns explícitamente bloqueados: `PATCH /api/staff/<id>/{password:...}` (bypassa validate_password + token invalidation + audit). Verificado en T26: ningún serializer expone `password` writable en update path. Solo paths permitidos: `CreateEmployeeSerializer` create, `ProvisionOrgSerializer`, `change_password` service, `_create_default_superuser` bootstrap, `createsuperuser` CLI, Django admin escape hatch.
-
-Cleanup operacional CRÍTICO: `python manage.py flushexpiredtokens` cron diario obligatorio en Railway scheduler post-deploy. Sin esto las tablas `outstandingtoken` + `blacklistedtoken` crecen lineales. Documentado en `docs/runbooks/password-change.md`.
-
-`min_length=8` en self-change (NO 12). Floor 12 es exclusivo de `apps/platform/serializers.py:ProvisionOrgSerializer` (admins SaaS iniciales con privilegio amplificado).
-
-Tests: 22 tests en `apps/users/tests/test_change_password.py`. Cobertura crítica: JWT lifecycle (old refresh blacklisted, new refresh valid, multi-user isolation, multiple sessions blacklisted), atomicity (rollback en falla de blacklist), throttle, logging estructurado. Ver ADR `2026-05-22-p20`.
-
-Lo que NO incluye p20 (diferido): admin reset, forgot password, MFA, password history, email verification, force-change post-provisioning.
-
-**ADR-18 — Admin password reset + MustChangePasswordGate global (2026-05-22)**
-Cierre del gap de p20: usuario que olvida su contraseña. Endpoint `POST /api/staff/<public_id>/reset-password/` solo ADMIN de la misma org. Server genera temp password vía `secrets.token_urlsafe(16)` (~22 chars URL-safe). Set `password_must_change=True` + `password_temp_issued_at=now()`. Revoca TODOS los refresh tokens del target (diferente de change_password que preserva sesión del caller — el target NO está en el loop).
-
-Tres flujos credential SEPARADOS conceptualmente: self-change (✅ p20), admin-reset (✅ p21), forgot-password vía email (❌ Phase 2 POST-BETA, requiere SMTP), TOTP 2FA (❌ Phase 3).
-
-Modelo User extendido con 2 fields nuevos (justifica espacio en DB porque sirve futuro a onboarding, security policies, compromised credentials):
-- `password_must_change` (BooleanField default=False).
-- `password_temp_issued_at` (DateTimeField nullable).
-
-Authorization (defence in depth — view + service):
-- admin.role == 'ADMIN' (no VET/ASSISTANT, sin permiso 'staff.reset_password').
-- target != admin (self-reset usa change-password).
-- target.role != 'ADMIN_SAAS' (clinic admin no puede afectar platform).
-- target.organization == admin.organization (cross-tenant → 404).
-
-**MustChangePasswordGate** — permission GLOBAL en `apps/core/permissions.py`, aplicada en `DEFAULT_PERMISSION_CLASSES` después de `IsAuthenticated`. Cuando `user.password_must_change=True`, bloquea TODOS los endpoints excepto whitelist hardcoded: `/api/users/change-password/`, `/api/me/`, `/api/token/refresh/`, `/api/token/`. Crítico: enforcement server-side (un cliente curl que ignore redirect frontend choca contra el gate). 403 con `code='must_change_password'`.
-
-Login `ThrottledTokenObtainPairView` extendida: post-200 verifica `is_temp_password_expired(user)` (helper en services.py, compara `password_temp_issued_at + TEMP_PASSWORD_VALIDITY` vs now). Si expiró → 403 con `code='temp_password_expired'` + log `TEMP_PASSWORD_EXPIRED`. Si no expiró pero must_change=True → tag response.data con `must_change_password=True` para que frontend redirija sin extra round-trip.
-
-`change_password` service actualizado: limpia `password_must_change=False` y `password_temp_issued_at=None` al cambio exitoso (update_fields incluye los 3 campos). Sin esto, el user cambia password pero queda atrapado en el gate.
-
-Ventanas: temp password válida 24h (concesión a UX clínica veterinaria — NIST sugiere 1h, mitigado por revocación de sesiones + must_change gate). Sin deadline post-login adicional — gate ya enforce el cambio antes de operación útil.
-
-Throttle `staff_password_reset = 5/hour` por actor — mitigación insider abuse (ADMIN comprometido no puede resetear masivamente).
-
-Audit log `ADMIN_PASSWORD_RESET_ISSUED` (INFO) con `actor_id`, `target_user_id`, `target_role`, `organization_id`, `revoked_refresh_count`. **Temp password JAMÁS en log** (test escanea todos los log records buscando el literal).
-
-Permission code nuevo: `'staff.reset_password'` en PERMISSION_CODES. ADMIN tiene wildcard `*.*` → cubierto automático. VET/ASSISTANT NO lo tienen.
-
-Frontend: botón "Resetear" en staff.jsx row (Icon.Refresh, solo visible para ADMIN, excluye row de ADMIN_SAAS). Modal display temp password con warning amarillo "Anota o copia ahora" + copy-to-clipboard. Página dedicada `/change-password` (separada de /config) para forced redirect. `MustChangePasswordGate` component frontend mirror del backend — wrappea todas las rutas excepto /change-password, /login. Login form detecta `must_change_password` en response y redirige.
-
-Anti-patterns documentados:
-- ❌ Admin escribe temp password manualmente (humanos eligen débiles — usar secrets.token_urlsafe).
-- ❌ Loggear temp password en plain text.
-- ❌ Admin resetea ADMIN_SAAS o cross-tenant.
-- ❌ Self-reset por admin (usar forgot-password Phase 2 o ADMIN_SAAS escala).
-- ❌ Confiar solo en frontend redirect (gate server-side autoritativo).
-
-Tests: 25 tests en `apps/users/tests/test_reset_password.py`. Cobertura: matrix permissions (7), service behavior + temp password generation + no-log-leak (7), lifecycle login→change→done (5), gate enforcement (4), throttle (1). Ver ADR `2026-05-22-p21`.
-
-Lo que NO incluye p21 (diferido): forgot-password email recovery, TOTP 2FA, notification al target post-reset, MFA en reset, password history.
-
-**Gotcha CORS (afecta p19/p20/p21):** todos los endpoints que reciben `X-Request-ID` requieren que `'x-request-id'` esté en `config/settings.py:CORS_ALLOW_HEADERS`. Sin esto, el browser hace OPTIONS preflight 200 pero rechaza el POST silenciosamente — el endpoint queda inaccesible desde el frontend (curl sigue funcionando). Síntoma diagnóstico: en Network DevTools se ve OPTIONS sin POST después. Documentado en `docs/runbooks/password-change.md` § "Infrastructure gotchas". Reglar para futuros headers custom: si el frontend introduce un nuevo header (`X-Idempotency-Key`, etc.), actualizar `CORS_ALLOW_HEADERS` simultáneamente.
-
-**ADR-19 — Frontend token storage centralizado + "Recordarme" + race logout/refresh (2026-05-24)**
-Tres fixes acoplados en frontend auth. (1) **Bug login reload**: response interceptor 401 en `api/client.js` hacía `window.location.href = "/login"` antes de mostrar el toast de error con credenciales malas. Fix: helper `isLoginAttempt(config)` bypassa redirect cuando `url` termina en `token/` (login). `token/refresh/` sigue cayendo en redirect (sesión expirada legítima). (2) **"Recordarme" funcional**: nuevo módulo `frontend/src/auth/tokenStorage.js` centraliza acceso a auth storage. `remember=true` → `localStorage` (persistente). `remember=false` → `sessionStorage` (per-tab, muere al cerrar). (3) **Race logout/refresh**: refresh callback en `authContext.jsx` chequea `isLoggingOut()` antes de aplicar token; previene revival de sesión recién terminada cuando la fetch de refresh resuelve después del logout.
-
-Invariantes documentados en docstring del módulo:
-- Tokens válidos NUNCA coexisten en `localStorage` y `sessionStorage`. `setTokens()` enforce wipe del other store.
-- Read priority: `sessionStorage > localStorage` (sesión temporal de tab gana sobre persistente vieja).
-- Source of truth = presencia del token, NO el `PERSIST_FLAG` (metadata only).
-- `clearTokens()` levanta flag `loggingOut`; `setTokens()` lo limpia. Futuro `refreshPromise` singleton debe ser nulleado dentro de `clearTokens()`.
-
-Anti-patterns prohibidos:
-- ❌ `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de `auth/tokenStorage.js` — rompe invariante. Grep gate sugerido post-beta vía ESLint custom rule.
-- ❌ Leer `PERSIST_FLAG` como autoridad de routing — solo metadata.
-- ❌ Bypass de `isLoggingOut()` en callbacks async que mutan auth state.
-
-Backlog post-beta (no bloquea v1): CSP headers (`script-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`), ESLint rule custom para enforce del módulo, `storage` event listener para cross-tab logout sync, AbortController + `refreshPromise = null` cuando se agregue interceptor on-demand de refresh.
-
-Auditoría XSS paralela (grep en `frontend/src`): 0 `dangerouslySetInnerHTML`, 0 `eval(`, 0 `new Function`, 0 `setTimeout(string)`. 5 `innerHTML` en `VanillaDateRangePicker.js` — todos con templates estáticos + SVG constantes, sin interpolación de user input. Superficie DOM-XSS actual = 0.
-
-Ver ADR `2026-05-24-p22` y `docs/modules/frontend.md` § Auth storage.
+1. writers de anchors solo en `services.py`
+2. escritura nueva usa provenance `'service'`
+3. `build_daily_metrics` sigue siendo idempotente
+4. today nunca se snapshottea
+5. dashboard siempre devuelve `source` y `lifecycle_state`
+6. no usar `cache.clear()` masivo en signals
+7. CHECK constraints analiticos son contrato
+8. si cambia semantica de KPI, bumpear `METRICS_SCHEMA_VERSION`
 
 ---
 
-## Reglas analytics (no negociables)
-
-Validar PR contra esto cuando toque billing/medical_records/appointments/analytics:
-
-1. **Anchor writers solo en `services.py`**. PR que escriba `invoice.status='paid'` directo es bug. Buscar con `grep -rn "\.status\s*=\s*['\"]paid"` antes de mergear.
-2. **Provenance siempre `'service'` en escritura nueva**. Solo `audit_log`/`fallback`/`legacy`/`unresolved` en migraciones de backfill, NUNCA en código de runtime.
-3. **`build_daily_metrics` debe quedar idempotente**. Si agregas KPIs, corre 3x y verifica que `built_at` no avanza al 2do/3er run.
-4. **Today nunca snapshot**. Si necesitas refresh de today, pega el read endpoint (compute live).
-5. **`source` y `lifecycle_state` en TODA respuesta de dashboard**. Frontend que ignore estos campos es bug.
-6. **No `cache.clear()` masivo en signals**. Rompe tenants vecinos. Usar `cache.delete_many` con keys prefijadas por `org_id`.
-7. **CHECK constraints son contrato**. No agregar `NOT VALID` a constraints analíticos. No droppear sin ADR.
-8. **Bumpear `METRICS_SCHEMA_VERSION`** cuando cambies definición semántica de un KPI. Requiere dual-write 30 días (contract §4.7).
+## Gotchas importantes del repo
+- `for_organization()` debe ir primero en la cadena del queryset; `select_related()` / `prefetch_related()` antes rompen el manager custom
+- `apps.platform` en Windows + Python 3.13: no correr `python manage.py test apps.platform`; usar modulos completos `apps.platform.tests.test_X`
+- errores 500 incluyen `request_id`; no exponer mensajes crudos del ORM al frontend
+- `IntegrityError` no esta normalizado por el exception handler global; validar duplicados antes de llegar a DB
 
 ---
 
-## Tests
-Suite completa: 294 tests en `backend/apps/` (1 skip esperado en `test_audit_orphan_fks` — dangling FK via SQL bloqueado por Postgres hard FK)
+## Comandos de referencia rapida
+
+Setup minimo:
 ```bash
-python manage.py test \
-  apps.core.tests.test_security \
-  apps.core.tests.test_sanitize \
-  apps.core.tests.test_throttling \
-  apps.core.tests.test_invoices \
-  apps.core.tests.test_default_permissions \
-  apps.core.tests.test_cascade_lockdown \
-  apps.core.tests.test_exception_handler \
-  apps.core.tests.test_audit_orphan_fks \
-  apps.medical_records.tests.test_close \
-  apps.medical_records.tests.test_vitals \
-  apps.billing.tests.test_money \
-  apps.billing.tests.test_invoice_state_machine \
-  apps.billing.tests.test_invoice_multitenancy \
-  apps.billing.tests.test_event_authority \
-  apps.billing.tests.test_anchor_completeness \
-  apps.appointments.tests.test_walkin \
-  apps.dashboard.tests.test_analytics_health \
-  apps.dashboard.tests.test_series_endpoints \
-  apps.analytics.tests.test_snapshot_v1 \
-  apps.analytics.tests.test_build_command \
-  apps.analytics.tests.test_cron_safety \
-  apps.prescriptions.tests.test_multitenancy \
-  apps.users.tests.test_bootstrap \
-  apps.organizations.tests.test_views \
-  apps.patients.tests.test_pet_delete \
-  apps.platform.tests.test_provision_service \
-  apps.platform.tests.test_view_auth \
-  apps.platform.tests.test_view_validation \
-  apps.platform.tests.test_view_integration \
-  apps.users.tests.test_change_password \
-  apps.users.tests.test_reset_password
+python manage.py migrate
+python manage.py seed_permissions
 ```
 
-**Importante para `apps.platform.tests`**: NO usar `python manage.py test apps.platform` (sin sufijo). El stdlib `platform` colisiona con `apps.platform` en el unittest discovery loader de Python 3.13 + Windows (`TypeError: _path_normpath: path should be string, bytes or os.PathLike, not NoneType`). Listar siempre los 4 módulos completos.
-El `test_e2e.py` en la raíz de `backend/` requiere servidor corriendo — no se incluye en la suite normal.
+Comandos utiles:
+```bash
+python manage.py audit_anchor_integrity
+python manage.py build_daily_metrics
+python manage.py flushexpiredtokens
+```
 
-**Comandos útiles**:
-- `python manage.py audit_anchor_integrity` — valida invariantes de anchors antes de snapshots / post-deploy / post-import. Exit 0/1/2 para CI.
-- `python manage.py build_daily_metrics` — nightly snapshot. Idempotente + per-org advisory locked. Default: yesterday por org-local TZ.
-
----
-
-## Variables de entorno clave (Railway)
-- `ENVIRONMENT=production` — activa fail-fast de CORS y otros guards
-- `CORS_ALLOWED_ORIGINS=https://tu-frontend.railway.app`
-- `SECURE_SSL_REDIRECT=True`
-- `SECURE_HSTS_SECONDS=31536000`
-- `ALLOW_LEGACY_ID_LOOKUP=False` — desactivar cuando frontend use `public_id`
-- `SENTRY_DSN` — error tracking
+Para suites completas, bootstrap detallado, password flows y deploy Docker/VPS, ver:
+- `docs/runbooks/password-change.md`
+- `docs/runbooks/platform-org-provisioning.md`
+- `docs/runbooks/audit_orphan_fks.md`
+- `docs/modules/frontend.md`
+- `docs/modules/analytics.md`
+- `DEPLOY_VPS_PLAN.md`
+- `docs/decisions/`
