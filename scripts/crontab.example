@@ -1,0 +1,71 @@
+# Capa 6 (DEPLOY_VPS_PLAN.md): crontab template para el VPS.
+#
+# Install:
+#   crontab scripts/crontab.example
+#
+# Edit paths primero si tu install difiere de /opt/vet/app.
+# Validar sintaxis antes de instalar:
+#   crontab -T scripts/crontab.example   (algunos sistemas)
+#   o:  cat scripts/crontab.example | crontab -l ; echo $?
+#
+# Verificar tras install:
+#   crontab -l                            # debe imprimir estas líneas
+#   sudo grep CRON /var/log/syslog        # ver disparos (Ubuntu)
+#
+# IMPORTANTE: corre como user `deploy` (NO como root). crontab -e como
+# user `deploy` después de SSH al VPS:
+#   ssh deploy@<vps>
+#   crontab scripts/crontab.example
+#
+# Horarios en UTC (el host está en UTC tras vps-hardening.md §9).
+# Hora local México (GMT-6) = UTC - 6. Ej: 03:00 UTC = 21:00 anterior MX.
+# Backups arrancan ANTES de la actividad típica del día siguiente.
+
+# ---------------------------------------------------------------------------
+# Vars compartidas para todos los jobs.
+# ---------------------------------------------------------------------------
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+COMPOSE_DIR=/opt/vet/app
+ENV_FILE=/opt/vet/app/.env.prod
+COMPOSE_FILE=/opt/vet/app/docker-compose.prod.yml
+BACKUP_DIR=/var/backups/vet
+# Opcional offsite:
+#   RCLONE_REMOTE=b2:vet-backups/
+# Opcional deadman switch (Healthchecks.io):
+#   HEALTHCHECK_URL=https://hc-ping.com/<uuid>
+
+# m h dom mon dow command
+
+# ---------------------------------------------------------------------------
+# 03:00 UTC diario — Postgres dump + retention 14d + (opcional) offsite + ping.
+# Exit code: 0 OK | 1 precondición | 2 dump corrupto | 3 pg_dump falló.
+# Si exit != 0, MAILTO (definir arriba) envía stderr.
+# ---------------------------------------------------------------------------
+0 3 * * *   /opt/vet/app/scripts/pg-backup.sh >> /var/log/vet-backup.log 2>&1
+
+# ---------------------------------------------------------------------------
+# 04:00 UTC diario — JWT cleanup (ADR p20). Sin esto las tablas
+# token_blacklist_outstandingtoken + token_blacklist_blacklistedtoken
+# crecen lineales con cada login / refresh / change-password.
+# ---------------------------------------------------------------------------
+0 4 * * *   cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py flushexpiredtokens >> /var/log/vet-cron.log 2>&1
+
+# ---------------------------------------------------------------------------
+# 06:30 UTC diario — Analytics snapshot ayer (ADR p10).
+# Idempotente + per-org advisory lock. Failures per-org aislados, exit 2
+# si CUALQUIER org falla — wire alerta en exit != 0.
+# 06:30 UTC = 00:30 MX = cubre cierre del día calendario anterior MX.
+# ---------------------------------------------------------------------------
+30 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py build_daily_metrics >> /var/log/vet-cron.log 2>&1
+
+# ---------------------------------------------------------------------------
+# 06:35 UTC diario — Anchor integrity audit (corre DESPUÉS del snapshot).
+# Exit 0 OK | 1 unresolved provenance | 2 invariant violation (P1, page on this).
+# ---------------------------------------------------------------------------
+35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
+
+# ---------------------------------------------------------------------------
+# Semanal — logs systemd journal cap a 14 días (evita crecimiento sin tope).
+# ---------------------------------------------------------------------------
+0 5 * * 0   sudo journalctl --vacuum-time=14d >> /var/log/vet-cron.log 2>&1
