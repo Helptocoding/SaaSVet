@@ -2,7 +2,8 @@ import logging
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import connection, models
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.utils import timezone
 from apps.core.models import OrganizationalModel, PublicIdMixin
 from apps.billing.money import discount_amount, invoice_totals, line_subtotal, money
 
@@ -147,18 +148,21 @@ class Invoice(PublicIdMixin, OrganizationalModel):
         # ⚠️ all_objects: bypasses tenant filter — necesario porque este método
         # puede correr desde InvoiceItem.save() cuando el contexto ya fue limpiado
         # (ej. señales post_save). Do NOT replace with objects.
-        raw_subtotal = sum(
-            (
-                item.subtotal
-                for item in InvoiceItem.all_objects.filter(invoice=self, is_active=True)
-            ),
-            Decimal('0.00')
-        )
+        # Suma vía agregado SQL: no itera ni instancia filas en Python. recalc
+        # se llama una vez por InvoiceItem.save(); evita O(n) objetos por llamada.
+        raw_subtotal = (
+            InvoiceItem.all_objects
+            .filter(invoice=self, is_active=True)
+            .aggregate(s=Sum('subtotal'))['s']
+        ) or Decimal('0.00')
         subtotal, tax_amount, total = invoice_totals(raw_subtotal, self.tax_rate)
+        # updated_at explícito: .update() bypasea auto_now y dejaría el timestamp
+        # stale tras editar ítems de un draft.
         Invoice.all_objects.filter(pk=self.pk).update(
             subtotal=subtotal,
             tax_amount=tax_amount,
             total=total,
+            updated_at=timezone.now(),
         )
 
     class Meta:
