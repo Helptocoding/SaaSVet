@@ -21,8 +21,13 @@ class Appointment(PublicIdMixin, OrganizationalModel):
     date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    start_datetime = models.DateTimeField(null=True, blank=True, db_index=True)
-    end_datetime = models.DateTimeField(null=True, blank=True, db_index=True)
+    # Sin db_index lone (Capa 2): el composite (organization, start_datetime,
+    # status) cubre listing/analytics org-scoped; la deteccion de conflictos se
+    # apoya en el indice FK de veterinarian_id + filtro residual sobre pocas
+    # filas/vet. Si conflict-detection profilea lento, usar un composite
+    # (organization, veterinarian, start_datetime), no indices lone globales.
+    start_datetime = models.DateTimeField(null=True, blank=True)
+    end_datetime = models.DateTimeField(null=True, blank=True)
     timezone_at_creation = models.CharField(max_length=64, default='UTC')
 
     reason = models.CharField(max_length=255)

@@ -11,7 +11,10 @@ class Product(PublicIdMixin, OrganizationalModel):
     ]
 
     name = models.CharField(max_length=255)
-    internal_code = models.CharField(max_length=100, db_index=True)
+    # Sin db_index: unique_together(organization, internal_code) ya crea el
+    # índice compuesto que sirve toda query org-scoped. Un índice lone sobre
+    # internal_code solo serviría búsquedas cross-org (no existen).
+    internal_code = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     requires_prescription = models.BooleanField(default=False)
@@ -63,10 +66,10 @@ class Presentation(PublicIdMixin, OrganizationalModel):
     class Meta:
         ordering = ['product__name', 'name']
         unique_together = [('product', 'name')]
-        indexes = [
-            models.Index(fields=['product']),
-            models.Index(fields=['stock']),
-        ]
+        # Índices removidos (Capa 2): Index(['product']) era redundante con el
+        # índice implícito de la FK product; Index(['stock']) era global (no
+        # tenant-scoped) y de bajo valor (is_low_stock compara columna-vs-columna,
+        # no usa el índice). Si stock__gt se vuelve hot, usar (organization, stock).
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(stock__gte=0),
