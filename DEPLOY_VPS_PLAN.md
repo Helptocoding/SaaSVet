@@ -86,6 +86,16 @@ python manage.py seed_permissions
 echo "[release] done"
 ```
 
+> **Requisito de DB — extensión `pg_trgm`.** La migración `patients/0012`
+> corre `CREATE EXTENSION IF NOT EXISTS pg_trgm` (índices GIN trigram para
+> búsqueda de Owner/Pet por nombre). `CREATE EXTENSION` requiere privilegio.
+> En el `docker-compose.prod.yml` de este plan el rol `vet` es el `POSTGRES_USER`
+> del contenedor → es superuser del cluster, así que `migrate` lo crea solo.
+> Si en el futuro el rol de la app se de-privilegia (best practice), pre-crear
+> la extensión UNA vez como superuser antes del release:
+> `psql -U <super> -d veterinaria -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'`
+> Sin la extensión, `migrate` falla en esa migración.
+
 ---
 
 ## Capa 1 — Containerización (imágenes)
@@ -720,6 +730,11 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod build
 # 9.4 Arranca SOLO postgres y espera healthy
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d postgres
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps   # esperar (healthy)
+
+# 9.4b (solo si el rol de la app NO es superuser) pre-crear extension pg_trgm.
+# Con el rol `vet` por defecto (POSTGRES_USER) es innecesario — es superuser.
+# docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres \
+#   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'
 
 # 9.5 Corre release one-shot (migrate + collectstatic + seed_permissions)
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm release
