@@ -66,6 +66,13 @@ BACKUP_DIR=/var/backups/vet
 35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
 
 # ---------------------------------------------------------------------------
+# Cada hora (minuto 15) — disk usage alert. Si /, /var/lib/docker o
+# /var/backups/vet exceden 80%, POST a webhook. Exporta ALERT_WEBHOOK
+# arriba o inline. Sin webhook configurado solo loguea (no alerta).
+# ---------------------------------------------------------------------------
+15 * * * *  ALERT_THRESHOLD=80 /opt/vet/app/scripts/disk-alert.sh >> /var/log/vet-cron.log 2>&1
+
+# ---------------------------------------------------------------------------
 # Semanal — logs systemd journal cap a 14 días (evita crecimiento sin tope).
 # ---------------------------------------------------------------------------
 0 5 * * 0   sudo journalctl --vacuum-time=14d >> /var/log/vet-cron.log 2>&1

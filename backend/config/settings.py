@@ -27,7 +27,21 @@ if _SENTRY_DSN:
         dsn=_SENTRY_DSN,
         integrations=[DjangoIntegration()],
         send_default_pii=False,
-        traces_sample_rate=0.2,
+        # Capa 7: traces_sample_rate env-driven. 0.05 = 5% en prod, default
+        # razonable para mantener cuota Sentry sana sin perder visibilidad.
+        # Dev/staging puede subir a 1.0 para debugging. Antes era 0.2
+        # hardcodeado — caro en prod a escala.
+        traces_sample_rate=config('SENTRY_TRACES_SAMPLE_RATE', default=0.05, cast=float),
+        # Tag de environment — distingue events prod / staging / dev en
+        # Sentry UI. Sin esto, todos los issues caen en la misma bolsa.
+        environment=config('ENVIRONMENT', default='dev'),
+        # Release tag opcional para vincular issues con deploys. Sentry
+        # crea un nuevo "release" cuando ve un valor desconocido, y agrupa
+        # issues por release para detectar regresiones. Setear a:
+        #   - SHA git corto del deploy (`git rev-parse --short HEAD`)
+        #   - Build number CI
+        #   - vacío en dev (sentry_sdk omite el tag si vacío)
+        release=config('SENTRY_RELEASE', default='') or None,
     )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
