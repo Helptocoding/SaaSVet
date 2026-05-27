@@ -126,6 +126,19 @@ python manage.py audit_anchor_integrity --org=12 --verbose
 python manage.py audit_anchor_integrity --json
 ```
 
+## Mgmt command: `prune_dashboard_snapshot_audit`
+
+`DashboardSnapshotAudit` es append-only de uso debug; crece sin límite (orgs × días × eventos). Este comando purga por retención (default 180d) con borrado físico (`all_objects`) en lotes — sin locks largos.
+
+```
+python manage.py prune_dashboard_snapshot_audit            # >180d, ejecuta
+python manage.py prune_dashboard_snapshot_audit --days=90
+python manage.py prune_dashboard_snapshot_audit --dry-run  # solo cuenta
+python manage.py prune_dashboard_snapshot_audit --org=12
+```
+
+Exit: 0 ok, 2 error de uso. Wireable a cron. `DailyOrgMetrics` NO se purga (es dato analítico, no debug).
+
 ## Read endpoints (Capa 5)
 
 ```

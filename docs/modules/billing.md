@@ -169,7 +169,10 @@ InvoiceItem.save() → self.invoice.recalculate_totals()
 ```
 
 `recalculate_totals()` usa `all_objects` (bypass de tenant filter) porque puede correr desde signals.
+Suma los subtotales vía agregado SQL (`aggregate(Sum('subtotal'))`), no iterando/instanciando filas en Python — recalc se llama una vez por `InvoiceItem.save()`, evita O(n) objetos por llamada. El `.update()` setea `updated_at` explícito (auto_now no aplica en `queryset.update()`).
 Los campos `subtotal`, `tax_amount` y `total` son `read_only` en el serializer — el cliente no puede enviar estos valores.
+
+`InvoiceItem.save()/.delete()` emiten warn `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` si corren fuera de `transaction.atomic()` (observabilidad, no bloqueante). Toda mutación concurrente de ítems debe sostener `select_for_update()` sobre la Invoice — verificado por `test_invoice_concurrency` (assert del valor del total, no solo del count).
 
 ## Concurrencia y atomicidad
 

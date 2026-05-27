@@ -94,6 +94,10 @@ El frontend usa `?is_generic=false` en el buscador de propietarios para excluir 
 | Editar         | `patient.update`   |
 | Eliminar       | `patient.destroy`  |
 
+## Indices de busqueda
+
+`Owner.name` y `Pet.name` tienen índice GIN trigram (`gin_trgm_ops`, extensión `pg_trgm`) desde Capa 2 (2026-05-26), para que la búsqueda `name__icontains` no haga seq scan por org. Requiere `django.contrib.postgres` en INSTALLED_APPS y la extensión `pg_trgm` en la DB (ver `DEPLOY_VPS_PLAN.md`). `phone` no se indexa (no hay búsqueda por teléfono).
+
 ## Aislamiento multitenant
 
 Toda query sobre `Pet` y `Owner` esta limitada a `request.user.organization`.

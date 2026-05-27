@@ -32,7 +32,7 @@ Campos:
 
 Constraints:
 - `unique_together = [('product', 'name')]` — no puede haber dos variantes con el mismo nombre para el mismo producto
-- indices en `product` y `stock` para optimizar queries de alertas y autocomplete
+- sin índices lone en `product` ni `stock` (removidos en Capa 2, 2026-05-26): `product` ya tiene índice implícito de la FK; el índice global de `stock` era de bajo valor (no tenant-scoped y `is_low_stock` compara columna-vs-columna). Si `stock__gt` se vuelve hot, usar un compuesto `(organization, stock)`, no un índice global.
 
 Propiedad derivada:
 - `is_low_stock` — `True` si `stock <= min_stock`
@@ -143,6 +143,14 @@ Una presentacion solo puede eliminarse si cumple todas las condiciones:
 4. No existe en `MedicalRecordProduct`
 
 La validacion y el delete se ejecutan dentro de `transaction.atomic()` con `select_for_update()` para evitar que un movimiento concurrente pase despues del check.
+
+## Reconciliacion de stock (mgmt command)
+
+`python manage.py audit_stock_integrity [--org N] [--verbose] [--json]`
+
+Reconcilia `Presentation.stock` contra el ledger de `StockMovement`. Detecta drift (escritura directa a `stock` que saltó `apply_stock_movement`). Solo lectura, sin locks; wireable a cron.
+
+Modelo: `adjustment` es reset absoluto → reconcilia desde el último `adjustment`: `expected = ultimo_adjustment.quantity + Σ(in posteriores) − Σ(out posteriores)`. Presentaciones sin ningún `adjustment` no tienen baseline en el ledger (el stock de apertura no se registra como movimiento — ver data migration `0005`) → se reportan como `no_baseline` (informativo, NO drift). Exit: 0 sin drift, 1 drift detectado, 2 error.
 
 ## Alertas de stock bajo
 
