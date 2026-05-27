@@ -1,7 +1,11 @@
 # Contexto actual del proyecto (VeterinariaSaaS)
 
-Fecha de corte: 2026-05-16
+Fecha de corte: 2026-05-26
 Fuente: estado real del repositorio (backend + frontend).
+
+> **Notas de desfase conocidas (2026-05-26):**
+> - **Deploy:** el proyecto migró de Railway/Vercel a **Docker/VPS** (branch `develop`, sprints "Capa 1-8" de hardening VPS). Las secciones 2 y 9 abajo aún describen Railway/Vercel — ver `DEPLOY_VPS_PLAN.md` y `DEPLOY_VPS_STATUS.md` para el estado real de deploy. Backfill de esas secciones pendiente.
+> - **Changelog (sección 10):** el detalle en prosa llega hasta ADR p16. Los ADR p17–p22 existen y están implementados (ver índice de ADRs §11, completo); su prosa-changelog no se backfilleó. La sesión de auditoría 2026-05-26 (p23/p24) sí está documentada abajo.
 
 ---
 
@@ -20,6 +24,8 @@ El proyecto está en fase de hardening avanzado. La base multitenant, autenticac
 - **Sprint analytics 2026-05-09 (ADR p9 + p10)**: contrato analítico v0.3 + auditoría de schema (catálogo de "analytics lies") + Capa 1 hardening (anchors writers en services, CHECK constraints, admin status readonly, DELETE bypass cerrado, MR save() guard) + Capa 2 anchor completeness (`Invoice.confirmed_at`/`cancelled_at`, `Appointment.walk_in`, provenance fields con 5 sources, backfill no-naive) + Capa 3 indexes (11 índices compuestos + EXPLAIN validation) + Capa 4 snapshots (`apps/analytics/`, `DailyOrgMetrics`, `apply_snapshot` idempotente, `is_bucket_frozen` único helper, advisory lock per-org en cron) + Capa 5 read endpoints JSON-first (`/api/v1/dashboard/operations/series/`, `/financial/series/`, cada datapoint tagged con `source`+`lifecycle_state`). 159 tests pasando, 0 regresiones.
 - **Sprint concurrencia 2026-05-16 (ADR p12)**: orden global de locks `MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct` + `cancel_invoice()` con lock de Invoice + Presentations + `get_or_create_invoice_for_medical_record()` atómico + MR lockeado + `InvoiceDetailView.update()` bajo lock + `MedicalRecordProduct.save()` con parámetros `locked_presentation`/`previous_quantity` para evitar re-lock redundante + walk-in dedup con `pet=pet` + `walk_in=True`. Tests de concurrencia: 14 OK. Regresión amplia: 90 OK.
 - **Sprint Día 3 hardening 2026-05-16 (ADR p14)**: tenant validators P0 #8-9 en `InvoiceSerializer` (4 FKs) + `PrescriptionItemSerializer`/`WriteSerializer` (incluye chequeo `requires_prescription` después de tenant); helper local `_validate_same_org` con logger separado `apps.tenant_validation` evento `TENANT_VALIDATION_REJECTED`; Fix 4 PATCH partial con fallback a `instance` para owner/pet. 14 tests billing + 7 prescriptions.
+- **Sprints posteriores (ADR p17–p22, ver índice §11):** analytics correctness Día 5 (p17), `public_id` en superficies externas (p18), tenant provisioning vía `apps/platform/` (p19), credential lifecycle self-service (p20), admin password reset + must-change gate (p21), frontend token storage + "Recordarme" (p22). Luego pivot de deploy a Docker/VPS (Capa 1-8 hardening).
+- **Auditoría arquitectónica + remediación 2026-05-26 (ADR p23 + p24):** auditoría profunda (modelado, concurrencia, multitenancy, escalabilidad, índices, analytics). Los 2 "críticos" iniciales (C1 deadlock ABBA, C2 lost-update `Invoice.total`) **descartados con tests concurrentes reales** — el código ya enforza orden de locks + Invoice lockeada en mutaciones de ítems. Remediación por capas: blindajes de integridad (assert de total, guard `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC`, `recalculate_totals` vía `Sum()`, comando `audit_stock_integrity`), quick wins (drop de índices muertos, trigram GIN en Owner/Pet.name, comando `prune_dashboard_snapshot_audit`), y 2 ratchets de seguridad anti-regresión (tenant-leak + contención `id`/`public_id`). RLS DB-side diferido a post-beta (ADR p23). Detalle: `docs/audit-remediation-2026-05-26.md`.
 - **Sprint Día 4 hardening 2026-05-17 (ADR p15 + p16)**: PR-4A cerro Issues #12 + #13 (privilege escalation guard `_create_default_superuser` con predicado `is_platform_superuser` + TOCTOU race retry + email case-insensitive; `REST_FRAMEWORK.DEFAULT_PERMISSION_CLASSES = IsAuthenticated`; `PublicTokenRefreshView` con throttle). PR-4B cerro Issues #10 + #11 + entregables operacionales (OrganizationViewSet → singleton `/me/` + legacy `/<pk>/` con 410 Gone post-Sunset 2026-08-17; 5 FKs CASCADE→PROTECT — User.org, Pet.owner, MR.pet, VR.pet, Prescription.pet; handler ProtectedError bounded 409 con shape consistente; `audit_orphan_fks` mgmt command versioned con catch-all 32 targets via introspección; DELETE bloqueado en VaccineRecord/Prescription/Admin Org/Admin User). 294 tests pasando.
 
 ---
@@ -708,6 +714,40 @@ else:
 
 **Próximo**: dark-launch 7 días en staging → merge a main → monitor `DEPRECATED_ENDPOINT_HIT` rate → 2026-08-17 fail-safe 410 Gone automático activo.
 
+### Fixes aplicados 2026-05-26 (auditoría arquitectónica — remediación capas 0-3 — ADR p23 + p24)
+
+Doc completo: `docs/audit-remediation-2026-05-26.md`. 12 commits en `develop` (sin push).
+
+**Capa 0 — Verificación (los "críticos" descartados):**
+- **C1 (deadlock ABBA Invoice↔Presentation): NO existe.** Orden global consistente `MedicalRecord → Invoice → Presentation → InvoiceItem`; `_lock_presentations` ordena por PK. Suite `test_invoice_concurrency` (7 tests, Postgres+threads) verde sin deadlock.
+- **C2 (lost-update `Invoice.total`): NO existe.** Toda mutación de `InvoiceItem` corre con `select_for_update()` sobre la Invoice en todo el `atomic()`. Las concurrentes serializan en el row-lock.
+- Drift de stock verificado: `audit_stock_integrity` → 0 drift; 63 presentaciones `no_baseline` (data migration `0005` sin movimiento de apertura — esperado).
+
+**Capa 1 — Integridad:**
+- Assert del valor del `total` (no solo count) en `test_invoice_concurrency`.
+- Guard warn-only `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` en `InvoiceItem.save/.delete` (no assert duro: rompería creates autocommit legítimos en admin/shell/seeds).
+- `recalculate_totals()` vía `aggregate(Sum())` (evita O(n) objetos por llamada) + `updated_at` explícito en el `.update()`.
+- Comando `audit_stock_integrity` (reconcilia `Presentation.stock` vs ledger `StockMovement` desde último `adjustment`; read-only; exit 0/1/2).
+- Orden global de locks documentado en `CLAUDE.md`.
+
+**Capa 2 — Quick wins de índices/retención:**
+- Drop de índices muertos: `Presentation.product/stock`, `Appointment.start/end_datetime` lone, `Product.internal_code` lone (verificado no load-bearing).
+- Índices GIN trigram (`pg_trgm`) en `Owner.name` y `Pet.name` (búsqueda `icontains`). `django.contrib.postgres` añadido a INSTALLED_APPS. Requisito `pg_trgm` documentado en `DEPLOY_VPS_PLAN.md`.
+- Comando `prune_dashboard_snapshot_audit` (retención, borrado físico en lotes).
+- Saltado deliberado: índice `InvoiceAuditLog.created_at` (N chico por invoice).
+
+**Capa 3 — Seguridad estructural (do-now):**
+- **Ratchet AST anti-leak** (`apps/core/tests/test_tenant_scoping_audit.py`): escanea `<Model>.objects.<read>` sin `for_organization`; baseline 21; nuevo no-baselineado falla.
+- **Ratchet de contención `id`/`public_id`** (`test_public_id_dual_exposure_audit.py`, ADR p24): baseline 12 serializers; nuevo con `id`+`public_id` falla. Regla en `CLAUDE.md`.
+- **RLS DB-side diferido a post-beta** (ADR p23, Propuesto): footguns documentados (rol `vet` superuser ignora RLS → split de roles; PgBouncer+conn persistente leakea GUC sin `SET LOCAL`); bloqueado por `org_id` en InvoiceAuditLog (Capa 4).
+
+**Pendiente (con rationale en `docs/audit-remediation-2026-05-26.md`):** Capa 3 RLS (post-beta); Capa 4 escala (particionado append-only, `org_id` en InvoiceAuditLog, PgBouncer, SET_NULL/PROTECT en Invoice→MR/appointment) — requiere ADR; Capa 5 largo plazo (read-replica, late-arrival hard-reject, warehouse, peso v2, sharding).
+
+**Documentación nueva/actualizada:**
+- `docs/audit-remediation-2026-05-26.md` (estado completo).
+- `docs/decisions/2026-05-26-p23-rls-tenant-isolation.md`, `...-p24-id-public-id-dual-exposure-containment.md`.
+- Updates en `CLAUDE.md` (orden de locks + anti-pattern serializer `id`+`public_id`), `docs/modules/` (inventory, billing, patients, analytics), `DEPLOY_VPS_PLAN.md` (pg_trgm).
+
 ---
 
 ## 11) Índice de ADRs (decisiones de arquitectura)
@@ -735,3 +775,11 @@ else:
 | `2026-05-16-p14-tenant-validators-day3.md` | 05-16 | Día 3 — tenant validators P0 #8-9 + Fix 4 PATCH partial + plan Fase 2 mixin | Implementado |
 | `2026-05-17-p15-day4-cascade-lockdown.md` | 05-17 | Día 4 — PR-4A: privilege escalation guard + default IsAuthenticated. PR-4B (cascade + ProtectedError handler) pendiente | Implementado (PR-4A merged) |
 | `2026-05-17-p16-pr4b-cascade-and-singleton.md` | 05-17 | Día 4 — PR-4B: Organization singleton (`/me/` + legacy 410 Gone) + 5 FKs CASCADE→PROTECT + ProtectedError handler bounded + audit_orphan_fks versioned | Implementado (dark-launch 7 días) |
+| `2026-05-17-p17-analytics-correctness-day5.md` | 05-17 | Día 5 — Analytics correctness remediation (registries estáticos, `now` policy, late-arrival observability) | Implementado |
+| `2026-05-20-p18-ids-en-superficies-externas.md` | 05-20 | Día 6 — `public_id` (UUID) en superficies externas | Implementado |
+| `2026-05-22-p19-platform-org-provisioning.md` | 05-22 | Tenant provisioning vía API (`apps/platform/`) | Implementado |
+| `2026-05-22-p20-credential-lifecycle-self-change.md` | 05-22 | Credential lifecycle: self-service password change | Implementado |
+| `2026-05-22-p21-admin-password-reset.md` | 05-22 | Admin-initiated password reset + must-change gate | Implementado |
+| `2026-05-22-p22-frontend-token-storage-remember-me.md` | 05-22 | Frontend token storage + "Recordarme" + logout/refresh race | Implementado |
+| `2026-05-26-p23-rls-tenant-isolation.md` | 05-26 | RLS para aislamiento multitenant DB-side | **Propuesto** (diferido post-beta) |
+| `2026-05-26-p24-id-public-id-dual-exposure-containment.md` | 05-26 | Contención de deuda `id`/`public_id` (ratchet, no remoción) | Aceptado |
