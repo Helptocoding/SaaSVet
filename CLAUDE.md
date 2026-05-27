@@ -148,6 +148,10 @@ Modelos internos sin `public_id`:
 - helpers genericos tipo `resolve_anything()`
 - dual-lookup PK + UUID sin flag de migracion
 - `PrimaryKeyRelatedField` esperando UUID en body
+- **serializer nuevo de modelo con `public_id` exponiendo `id` en `Meta.fields`** —
+  exponer solo `public_id`. Los ~12 legacy estan baselineados; un nuevo serializer
+  con `id`+`public_id` falla `apps.core.tests.test_public_id_dual_exposure_audit`
+  (ADR p24, contencion de deuda hibrida)
 
 ---
 
