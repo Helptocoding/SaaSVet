@@ -48,6 +48,37 @@ export const directPayInvoice = (id, { paymentLines, paymentMethod, idempotencyK
     api.post(`billing/invoices/${id}/direct-pay/`, _payBody({ paymentLines, paymentMethod }), _idemConfig(idempotencyKey))
         .then(r => r.data);
 
+// ADR p29: devolución (nota de crédito + reembolso) sobre factura pagada.
+// creditLines = [{ invoice_item: <PK>, quantity, amount, disposition }],
+// refundLines = [{ method, amount }]; refund_sum debe igualar Σ credit amounts.
+// idempotencyKey opcional (X-Idempotency-Key, anti doble-reembolso).
+export const refundInvoice = (
+    id,
+    { creditLines, refundLines, reasonCode, reasonNotes = "", idempotencyKey } = {},
+) =>
+    api.post(
+        `billing/invoices/${id}/refund/`,
+        {
+            credit_lines: creditLines,
+            refund_lines: refundLines,
+            reason_code: reasonCode,
+            reason_notes: reasonNotes,
+        },
+        _idemConfig(idempotencyKey),
+    ).then(r => r.data);
+
+// ADR p29: contra-asiento de una nota de crédito (revertir devolución emitida
+// por error). Append-only — no edita ni borra.
+export const reverseCreditNote = (
+    publicId,
+    { reasonCode = "", reasonNotes = "", idempotencyKey } = {},
+) =>
+    api.post(
+        `billing/credit-notes/${publicId}/reverse/`,
+        { reason_code: reasonCode, reason_notes: reasonNotes },
+        _idemConfig(idempotencyKey),
+    ).then(r => r.data);
+
 // Ítems de factura
 export const addInvoiceItem = (invoiceId, data) =>
     api.post(`billing/invoices/${invoiceId}/items/`, data).then(r => r.data);

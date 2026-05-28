@@ -4,7 +4,7 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
 import {
     getInvoices, getInvoice, createInvoice, confirmInvoice, payInvoice, directPayInvoice,
-    addInvoiceItem, getServices, downloadInvoicePDF,
+    addInvoiceItem, getServices, downloadInvoicePDF, refundInvoice, reverseCreditNote,
 } from "../api/billing";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { getPresentations } from "../api/inventory";
@@ -33,6 +33,19 @@ const DOT_COLOR = {
     paid: "var(--c-success-text)",
     cancelled: "var(--c-danger-text)",
 };
+
+// ADR p29: causas de devolución (deben coincidir con CREDIT_NOTE_REASON_CODES del backend).
+const REASON_CODES = [
+    { value: "customer_return", label: "Devolución del cliente" },
+    { value: "damaged_product", label: "Producto dañado" },
+    { value: "expired_product", label: "Producto caducado" },
+    { value: "duplicate_charge", label: "Cargo duplicado" },
+    { value: "pricing_error", label: "Error de precio" },
+    { value: "goodwill", label: "Cortesía" },
+    { value: "clinical_cancellation", label: "Cancelación clínica" },
+    { value: "other", label: "Otro" },
+];
+const REASON_LABELS = Object.fromEntries(REASON_CODES.map(r => [r.value, r.label]));
 
 // ADR p27: clave de idempotencia por intento de cobro (anti doble-cobro en
 // reintento de red). Se reusa mientras el modal de pago siga abierto.
@@ -104,6 +117,200 @@ const PaymentLinesEditor = ({ total, allowPartial, lines, setLines, disabled }) 
     );
 };
 
+/* ── RefundModal — devolución (nota de crédito + reembolso), ADR p29 ── */
+const RefundModal = ({ invoice, onClose, onDone }) => {
+    // Una fila por concepto de la factura. Por defecto: todo seleccionado, monto
+    // y cantidad completos, reingreso a stock. El backend valida límites reales
+    // (over-refund por devoluciones previas) y responde con mensaje claro.
+    const [rows, setRows] = useState(() =>
+        (invoice.items || []).map(it => ({
+            id: it.id,
+            description: it.description,
+            maxQty: Number(it.quantity),
+            maxAmount: Number(it.subtotal),
+            hasPresentation: !!it.presentation,
+            selected: true,
+            quantity: String(it.quantity),
+            amount: Number(it.subtotal).toFixed(2),
+            disposition: "restock",
+        }))
+    );
+    const [refundLines, setRefundLines] = useState(
+        () => [{ method: "cash", amount: Number(invoice.total).toFixed(2) }]
+    );
+    const [reasonCode, setReasonCode] = useState("customer_return");
+    const [reasonNotes, setReasonNotes] = useState("");
+    const [idemKey] = useState(newIdempotencyKey);
+    const [submitting, setSubmitting] = useState(false);
+
+    const setRow = (id, patch) => setRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
+
+    const selectedRows = rows.filter(r => r.selected);
+    const refundTotal = Number(
+        selectedRows.reduce((a, r) => a + (Number(r.amount) || 0), 0).toFixed(2)
+    );
+
+    const creditValid = selectedRows.length > 0 && selectedRows.every(r =>
+        Number(r.quantity) > 0 && Number(r.quantity) <= r.maxQty + 1e-9 &&
+        Number(r.amount) >= 0 && Number(r.amount) <= r.maxAmount + 1e-9
+    );
+    const refundValid = paymentLinesValid(refundLines, refundTotal, false);
+    const canSubmit = creditValid && refundValid && refundTotal > 0 && !!reasonCode && !submitting;
+
+    const matchRefundToTotal = () =>
+        setRefundLines([{ method: refundLines[0]?.method || "cash", amount: refundTotal.toFixed(2) }]);
+
+    const submit = async () => {
+        const creditLines = selectedRows.map(r => ({
+            invoice_item: r.id,
+            quantity: Number(r.quantity).toFixed(2),
+            amount: Number(r.amount).toFixed(2),
+            // Para servicios (sin presentación) el restock es no-op en backend.
+            disposition: r.hasPresentation ? r.disposition : "restock",
+        }));
+        const rLines = refundLines
+            .filter(l => Number(l.amount) > 0)
+            .map(l => ({ method: l.method, amount: Number(l.amount).toFixed(2) }));
+        setSubmitting(true);
+        try {
+            await toast.promise(
+                refundInvoice(invoice.public_id, {
+                    creditLines, refundLines: rLines,
+                    reasonCode, reasonNotes, idempotencyKey: idemKey,
+                }),
+                {
+                    loading: "Procesando devolución...",
+                    success: "Devolución emitida",
+                    error: (err) => apiError(err, "Error al procesar la devolución"),
+                }
+            );
+            onDone();
+        } catch {
+            // toast.promise ya mostró el error; el modal queda abierto para corregir
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={submitting ? undefined : onClose}>
+            <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+                <div className="modal-header">
+                    <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>
+                        Devolución — Cobro #{invoice.id}
+                    </h3>
+                    <button className="modal-close" onClick={onClose} disabled={submitting}><Icon.X s={14} /></button>
+                </div>
+                <div className="modal-body" style={{ overflowY: "auto" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                        Conceptos a devolver
+                    </p>
+                    <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
+                        <thead>
+                            <tr>
+                                <th style={{ width: "28px" }}></th>
+                                <th>Descripción</th>
+                                <th style={{ width: "70px" }}>Cant.</th>
+                                <th style={{ width: "100px", textAlign: "right" }}>Monto</th>
+                                <th style={{ width: "130px" }}>Destino</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map(r => (
+                                <tr key={r.id} style={{ opacity: r.selected ? 1 : 0.45 }}>
+                                    <td>
+                                        <input
+                                            type="checkbox" checked={r.selected} disabled={submitting}
+                                            onChange={e => setRow(r.id, { selected: e.target.checked })}
+                                        />
+                                    </td>
+                                    <td>{r.description}</td>
+                                    <td>
+                                        <input
+                                            type="number" className="input"
+                                            style={{ width: "60px", height: "30px", textAlign: "right" }}
+                                            min="0" max={r.maxQty} step="1"
+                                            value={r.quantity} disabled={!r.selected || submitting}
+                                            onChange={e => setRow(r.id, { quantity: e.target.value })}
+                                        />
+                                    </td>
+                                    <td style={{ textAlign: "right" }}>
+                                        <input
+                                            type="number" className="input"
+                                            style={{ width: "90px", height: "30px", textAlign: "right" }}
+                                            min="0" max={r.maxAmount} step="0.01"
+                                            value={r.amount} disabled={!r.selected || submitting}
+                                            onChange={e => setRow(r.id, { amount: e.target.value })}
+                                        />
+                                    </td>
+                                    <td>
+                                        {r.hasPresentation ? (
+                                            <select
+                                                className="input" style={{ height: "30px" }}
+                                                value={r.disposition} disabled={!r.selected || submitting}
+                                                onChange={e => setRow(r.id, { disposition: e.target.value })}
+                                            >
+                                                <option value="restock">Reingresa a stock</option>
+                                                <option value="discard">Descartar</option>
+                                            </select>
+                                        ) : (
+                                            <span style={{ fontSize: "11px", color: "var(--c-text-4)" }}>—</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "14px 0 8px" }}>
+                        <label style={{ fontSize: "12px", fontWeight: 500, color: "var(--c-text-3)" }}>
+                            Reembolso (debe igualar ${refundTotal.toFixed(2)})
+                        </label>
+                        <button className="btn btn-ghost btn-xs" onClick={matchRefundToTotal} disabled={submitting || refundTotal <= 0}>
+                            Igualar al total
+                        </button>
+                    </div>
+                    <PaymentLinesEditor
+                        total={refundTotal}
+                        allowPartial={false}
+                        lines={refundLines}
+                        setLines={setRefundLines}
+                        disabled={submitting}
+                    />
+
+                    <label style={{ fontSize: "12px", fontWeight: 500, color: "var(--c-text-3)", display: "block", margin: "14px 0 6px" }}>
+                        Causa de la devolución
+                    </label>
+                    <select
+                        className="input" style={{ height: "34px", width: "100%" }}
+                        value={reasonCode} disabled={submitting}
+                        onChange={e => setReasonCode(e.target.value)}
+                    >
+                        {REASON_CODES.map(rc => <option key={rc.value} value={rc.value}>{rc.label}</option>)}
+                    </select>
+                    <textarea
+                        className="input" rows={2} placeholder="Notas (opcional)"
+                        style={{ width: "100%", marginTop: "8px", resize: "vertical" }}
+                        value={reasonNotes} disabled={submitting}
+                        onChange={e => setReasonNotes(e.target.value)}
+                    />
+                </div>
+                <div className="modal-footer">
+                    <button className="btn btn-secondary btn-sm" onClick={onClose} disabled={submitting}>Cancelar</button>
+                    <button
+                        className="btn btn-danger btn-sm"
+                        onClick={submit}
+                        disabled={!canSubmit}
+                        title={!creditValid ? "Revisa cantidades/montos" : !refundValid ? "El reembolso debe igualar el total a devolver" : ""}
+                    >
+                        {submitting ? <Icon.Loader s={14} /> : "Emitir devolución"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Billing = () => {
     const { token, initializing, can } = useAuth();
     const confirm = useConfirm();
@@ -129,6 +336,8 @@ const Billing = () => {
     const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
 
     const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [reversingCnId, setReversingCnId] = useState(null);
 
     const loadInvoices = async (currentFilters) => {
         const requestId = ++requestIdRef.current;
@@ -207,6 +416,7 @@ const Billing = () => {
         setShowDetailModal(false);
         setSelectedInvoice(null);
         setShowPayModal(false);
+        setShowRefundModal(false);
     };
 
     const handleDownloadInvoicePDF = async (publicId) => {
@@ -264,6 +474,40 @@ const Billing = () => {
         } finally {
             setPaying(false);
         }
+    };
+
+    // ADR p29: refresca el detalle (incluye credit_notes) + la lista tras una
+    // devolución o su reverso.
+    const refreshSelectedInvoice = async () => {
+        try {
+            const detail = await getInvoice(selectedInvoice.public_id);
+            setSelectedInvoice(detail);
+        } catch { /* conserva el detalle actual */ }
+        loadInvoices(filters);
+    };
+
+    const onRefundDone = async () => {
+        setShowRefundModal(false);
+        await refreshSelectedInvoice();
+    };
+
+    const handleReverseCreditNote = async (cn) => {
+        const ok = await confirm({
+            title: "Revertir devolución",
+            message: `Se revertirá la nota de crédito por $${Number(cn.total_refunded).toFixed(2)} con un contra-asiento (el registro no se borra). ¿Continuar?`,
+            confirmText: "Revertir",
+            dangerMode: true,
+        });
+        if (!ok) return;
+        setReversingCnId(cn.public_id);
+        try {
+            await toast.promise(
+                reverseCreditNote(cn.public_id, { idempotencyKey: newIdempotencyKey() }),
+                { loading: "Revirtiendo...", success: "Devolución revertida", error: (err) => apiError(err, "Error") }
+            );
+            await refreshSelectedInvoice();
+        } catch { /* toast.promise ya mostró el error */ }
+        finally { setReversingCnId(null); }
     };
 
     const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "numeric" }) : "—";
@@ -416,6 +660,31 @@ const Billing = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {selectedInvoice.credit_notes?.length > 0 && (
+                                <div style={{ marginTop: "16px" }}>
+                                    <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                        Devoluciones
+                                    </p>
+                                    {selectedInvoice.credit_notes.map(cn => (
+                                        <div key={cn.public_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "8px 10px", border: "1px solid var(--c-border)", borderRadius: "6px", marginBottom: "6px" }}>
+                                            <div>
+                                                <div style={{ fontSize: "13px", color: "var(--c-text)" }}>
+                                                    ${formatCurrency(cn.total_refunded)} · {REASON_LABELS[cn.reason_code] || cn.reason_code}
+                                                    {cn.reversed && <span style={{ marginLeft: "6px", fontSize: "11px", color: "var(--c-danger-text)" }}>(revertida)</span>}
+                                                </div>
+                                                {cn.reason_notes && <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{cn.reason_notes}</div>}
+                                                <div style={{ fontSize: "11px", color: "var(--c-text-4)" }}>{formatDate(cn.issued_at)}</div>
+                                            </div>
+                                            {can("billing.refund") && !cn.reversed && (
+                                                <button className="btn btn-secondary btn-xs" onClick={() => handleReverseCreditNote(cn)} disabled={reversingCnId === cn.public_id}>
+                                                    {reversingCnId === cn.public_id ? <Icon.Loader s={12} /> : "Revertir"}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
@@ -429,6 +698,9 @@ const Billing = () => {
                                 )}
                                 {selectedInvoice.status === "confirmed" && (
                                     <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal}>Registrar Pago</button>
+                                )}
+                                {selectedInvoice.status === "paid" && can("billing.refund") && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setShowRefundModal(true)}>Devolver</button>
                                 )}
                                 <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={closeDetailModal}>Cerrar</button>
                             </div>
@@ -470,6 +742,15 @@ const Billing = () => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Refund Modal (ADR p29) */}
+                    {showRefundModal && (
+                        <RefundModal
+                            invoice={selectedInvoice}
+                            onClose={() => setShowRefundModal(false)}
+                            onDone={onRefundDone}
+                        />
                     )}
                 </div>
             )}

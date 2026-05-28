@@ -137,7 +137,16 @@ class InvoiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.
     lookup_url_kwarg = 'pk'
 
     def get_queryset(self):
-        return Invoice.objects.for_organization(self.request.user.organization)
+        # ADR p29: prefetch de notas de crédito + reembolsos + reversals para que
+        # InvoiceSerializer.get_credit_notes (flag `with_credit_notes`) no haga N+1.
+        return Invoice.objects.for_organization(
+            self.request.user.organization
+        ).prefetch_related('credit_notes__refund_payments__reversals')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['with_credit_notes'] = True
+        return context
 
     def update(self, request, *args, **kwargs):
         with transaction.atomic():

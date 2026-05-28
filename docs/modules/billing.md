@@ -202,7 +202,7 @@ Semántica (contrato §8):
 - `paid_at` se setea cuando `remaining_balance` llega a 0 (writer único en
   `services.py`, sin cambio respecto a ADR p9).
 - Los refunds **no** entran en `remaining_balance` (operan post-pago vía nota de
-  crédito, ADR p29 — no implementado aún).
+  crédito, ADR p29).
 
 Pagos split y parciales:
 - `pay_invoice` / `pay_direct_sale` aceptan `payment_lines=[{method, amount[, reference]}]`
@@ -265,6 +265,26 @@ Endpoints (RBAC `billing.refund`, solo ADMIN por default):
 
 Analytics: `revenue_paid` (gross) NO cambia; el dashboard financiero expone además
 `revenue_paid_net = gross + Σ MetricAdjustment` (dual-expose, sin flip — ver `analytics.md`).
+
+### Frontend
+
+`InvoiceSerializer` expone `credit_notes` **solo en el detalle** (flag de context
+`with_credit_notes` en `InvoiceDetailView` + prefetch `credit_notes__refund_payments__reversals`)
+para no incurrir N+1 en la lista. Cada NC trae `{public_id, total_refunded,
+reason_code, reason_notes, issued_at, reversed}` (`reversed` = todos sus
+`RefundPayment` tienen contra-asiento).
+
+UI en `pages/billing.jsx` (`RefundModal`, gateada por `can('billing.refund')`):
+- Botón **Devolver** en el detalle de una factura `paid`.
+- Por concepto: cantidad/monto a devolver + destino (`restock|discard`, solo para
+  presentaciones de inventario). Total a devolver = Σ montos seleccionados.
+- Editor de reembolso (`PaymentLinesEditor`, exacto) que debe igualar el total.
+- `reason_code` (debe coincidir con `CREDIT_NOTE_REASON_CODES`) + notas.
+- `X-Idempotency-Key` por intento (anti doble-reembolso en reintento de red).
+- Las NC emitidas se listan en el detalle con acción **Revertir** (contra-asiento;
+  no se borran). El backend valida over-refund y responde con mensaje claro.
+
+API: `refundInvoice` / `reverseCreditNote` en `api/billing.js`.
 
 ## Calculo de totales
 

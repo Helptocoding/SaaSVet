@@ -195,6 +195,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
     # = total − amount_paid (contrato §8.1). Decimals como string (sin float drift).
     amount_paid = serializers.SerializerMethodField()
     remaining_balance = serializers.SerializerMethodField()
+    # ADR p29: notas de crédito de la factura. Solo en detalle (flag de context
+    # `with_credit_notes`) para no incurrir N+1 en la lista. La UI las usa para
+    # mostrar las devoluciones y ofrecer "revertir".
+    credit_notes = serializers.SerializerMethodField()
 
     class Meta:
         model = Invoice
@@ -209,13 +213,13 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'amount_paid', 'remaining_balance',
             'notes', 'created_by', 'created_by_name',
             'paid_at', 'created_at', 'updated_at',
-            'items', 'prescription_suggestions',
+            'items', 'prescription_suggestions', 'credit_notes',
         ]
         read_only_fields = [
             'id', 'public_id', 'pet_public_id', 'owner_public_id',
             'appointment_public_id', 'medical_record_public_id',
             'subtotal', 'tax_amount', 'total',
-            'amount_paid', 'remaining_balance',
+            'amount_paid', 'remaining_balance', 'credit_notes',
             'created_by', 'paid_at', 'created_at', 'updated_at',
             'tax_rate',
         ]
@@ -238,6 +242,27 @@ class InvoiceSerializer(serializers.ModelSerializer):
         if obj.created_by:
             return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
         return ''
+
+    def get_credit_notes(self, obj):
+        # Gateado por context: la lista NO lo pide → [] (sin N+1). El detalle
+        # (InvoiceDetailView) setea `with_credit_notes` y prefetch.
+        if not self.context.get('with_credit_notes'):
+            return []
+        out = []
+        for cn in obj.credit_notes.all():
+            rps = list(cn.refund_payments.all())
+            # Una NC está revertida si todos sus reembolsos tienen contra-asiento
+            # (reverse_credit_note revierte todos los pendientes de una vez).
+            is_reversed = bool(rps) and all(list(rp.reversals.all()) for rp in rps)
+            out.append({
+                'public_id': str(cn.public_id),
+                'total_refunded': str(cn.total_refunded),
+                'reason_code': cn.reason_code,
+                'reason_notes': cn.reason_notes,
+                'issued_at': cn.issued_at,
+                'reversed': is_reversed,
+            })
+        return out
 
     def validate_notes(self, value):
         from apps.core.sanitize import sanitize_text
