@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import logging
@@ -503,6 +503,231 @@ def pay_direct_sale(invoice, user, payment_method=None, *, payment_lines=None, i
         invoice, user, lines, require_full=True,
         idempotency_key=idempotency_key, cash_session=cash_session,
     )
+
+
+# ---------------------------------------------------------------------------
+# Devoluciones / notas de crédito (ADR p29 — Sprint B)
+# ---------------------------------------------------------------------------
+
+def _write_metric_adjustment(organization, date_local, metric_name, delta, *, reason='', source_invoice=None):
+    """
+    Registra un MetricAdjustment append-only (dual-window §2.8). NO toca snapshots
+    frozen — el neto se computa en read-time. delta firmado (− para refund).
+    """
+    from apps.analytics.models import MetricAdjustment
+    MetricAdjustment.objects.create(
+        organization=organization,
+        date=date_local,
+        metric_name=metric_name,
+        delta=delta,
+        reason=(reason or '')[:255],
+        source_invoice=source_invoice,
+    )
+
+
+@transaction.atomic
+def process_refund(invoice, user, *, credit_lines, refund_lines, reason_code,
+                   reason_notes='', idempotency_key=None):
+    """
+    Emite nota de crédito + reembolso sobre una factura PAGADA (ADR p29).
+
+    NO reabre la factura (permanece `paid`, contrato §8.2). Registra un
+    MetricAdjustment negativo en `revenue_paid` del día del reembolso (dual-window
+    §2.8) — los snapshots frozen no se tocan. Restock por línea según disposition.
+
+    Orden de locks: CashSession → Invoice → Presentation → CreditNote/items/refund.
+    """
+    from apps.core.datetime_utils import org_today_local
+    from apps.core.sanitize import sanitize_text
+    from .models import (
+        CreditNote, CreditNoteItem, RefundPayment, CREDIT_NOTE_REASON_CODES,
+    )
+
+    if reason_code not in CREDIT_NOTE_REASON_CODES:
+        raise ValidationError("Causa de devolución (reason_code) inválida.")
+    if not credit_lines:
+        raise ValidationError("Se requiere al menos una línea a devolver.")
+
+    # CashSession a la cabeza del orden de locks (igual que el pago).
+    cash_session = _resolve_cash_session_for_payment(user, invoice.organization)
+    invoice = Invoice.objects.for_organization(
+        invoice.organization
+    ).select_for_update().get(pk=invoice.pk)
+
+    if invoice.status != 'paid':
+        raise ValidationError("Solo se pueden reembolsar facturas pagadas.")
+
+    # Idempotencia (contrato §9): refund ya procesado → no-op.
+    if idempotency_key and RefundPayment.all_objects.filter(
+        organization_id=invoice.organization_id, idempotency_key=f"{idempotency_key}:0",
+    ).exists():
+        logger.info("IDEMPOTENT_REFUND_DEDUPED", extra={
+            'event': 'IDEMPOTENT_REFUND_DEDUPED', 'invoice_id': invoice.pk,
+            'idempotency_key': idempotency_key,
+        })
+        return (
+            CreditNote.objects.for_organization(invoice.organization)
+            .filter(original_invoice=invoice).order_by('-id').first()
+        )
+
+    items_by_pk = {it.pk: it for it in InvoiceItem.all_objects.filter(invoice=invoice)}
+    normalized = []
+    total_refunded = Decimal('0.00')
+    for raw in credit_lines:
+        item = items_by_pk.get(raw.get('invoice_item'))
+        if item is None:
+            raise ValidationError("Ítem de factura inválido para esta factura.")
+        try:
+            qty = money(Decimal(str(raw.get('quantity'))))
+            amt = money(Decimal(str(raw.get('amount'))))
+        except Exception:
+            raise ValidationError("Cantidad o monto inválido en la línea de devolución.")
+        disposition = raw.get('disposition', 'restock')
+        if disposition not in ('restock', 'discard'):
+            raise ValidationError("disposition inválido (restock|discard).")
+        if qty <= 0 or amt < 0:
+            raise ValidationError("Cantidad debe ser > 0 y monto >= 0.")
+        prior = CreditNoteItem.all_objects.filter(invoice_item=item).aggregate(
+            q=Sum('quantity'), a=Sum('amount'),
+        )
+        prior_q = prior['q'] or Decimal('0.00')
+        prior_a = prior['a'] or Decimal('0.00')
+        if qty > (item.quantity - prior_q):
+            raise ValidationError(f"Cantidad a devolver excede lo disponible en '{item.description}'.")
+        if amt > (item.subtotal - prior_a):
+            raise ValidationError(f"Monto a devolver excede el de la línea '{item.description}'.")
+        normalized.append((item, qty, amt, disposition))
+        total_refunded += amt
+
+    # Cómo se devuelve el dinero — debe igualar exactamente el total a devolver.
+    rlines = _validate_payment_lines(refund_lines)
+    refund_sum = sum((l['amount'] for l in rlines), Decimal('0.00'))
+    if refund_sum != total_refunded:
+        raise ValidationError(
+            f"El reembolso ({refund_sum}) debe igualar el total a devolver ({total_refunded})."
+        )
+
+    now = timezone.now()
+    credit_note = CreditNote(
+        organization=invoice.organization, original_invoice=invoice, status='issued',
+        created_by=user, issued_at=now, issued_at_source='service',
+        total_refunded=total_refunded, reason_code=reason_code,
+        reason_notes=sanitize_text(reason_notes or '', max_length=5000),
+    )
+    credit_note.save()
+
+    restock_pres_ids = [
+        item.presentation_id for item, _, _, disp in normalized
+        if item.presentation_id and disp == 'restock'
+    ]
+    locked = _lock_presentations(restock_pres_ids)
+    for item, qty, amt, disposition in normalized:
+        CreditNoteItem(
+            organization=invoice.organization, credit_note=credit_note,
+            invoice_item=item, quantity=qty, amount=amt, disposition=disposition,
+        ).save()
+        if disposition == 'restock' and item.presentation_id:
+            apply_stock_movement(
+                presentation=locked[item.presentation_id], quantity=qty,
+                movement_type='in', organization=invoice.organization,
+                reason=f'Devolución — NC #{credit_note.pk}', created_by=user, invoice=invoice,
+            )
+
+    for i, line in enumerate(rlines):
+        key = f"{idempotency_key}:{i}" if idempotency_key else None
+        RefundPayment(
+            organization=invoice.organization, credit_note=credit_note,
+            amount=line['amount'], method=line['method'], occurred_at=now,
+            actor=user, provenance='service', reference=line['reference'],
+            idempotency_key=key, cash_session=cash_session,
+        ).save()
+
+    # Dual-window: revenue_paid -= total_refunded en el día del reembolso. Los
+    # snapshots frozen NO se reescriben (read-time net = gross + Σ adjustments).
+    _write_metric_adjustment(
+        invoice.organization, org_today_local(invoice.organization, now=now),
+        'revenue_paid', -total_refunded,
+        reason=f'refund:{reason_code}', source_invoice=invoice,
+    )
+
+    logger.info("REFUND_PROCESSED", extra={
+        'event': 'REFUND_PROCESSED', 'credit_note_id': credit_note.pk,
+        'invoice_id': invoice.pk, 'organization_id': invoice.organization_id,
+        'total_refunded': str(total_refunded), 'reason_code': reason_code,
+        'actor_id': getattr(user, 'pk', None),
+    })
+    return credit_note
+
+
+@transaction.atomic
+def reverse_credit_note(credit_note, user, *, reason_code='', reason_notes='', idempotency_key=None):
+    """
+    Contra-asiento de una nota de crédito emitida por error (ADR p29, contrato §6).
+
+    NO edita ni borra: emite un `RefundReversal` por cada `RefundPayment` de la
+    nota (≤1 por refund, garantizado por unique en `reverses`). Registra un
+    MetricAdjustment POSITIVO que cancela el negativo del refund. El refund en
+    efectivo revertido suma a `expected_cash` de la caja abierta (vía el término
+    de cierre, ADR p28).
+    """
+    from apps.core.datetime_utils import org_today_local
+    from apps.core.sanitize import sanitize_text
+    from .models import CreditNote, RefundPayment, RefundReversal
+
+    cash_session = _resolve_cash_session_for_payment(user, credit_note.organization)
+    credit_note = CreditNote.objects.for_organization(
+        credit_note.organization
+    ).select_for_update().get(pk=credit_note.pk)
+
+    refund_payments = list(RefundPayment.all_objects.filter(credit_note=credit_note))
+    if not refund_payments:
+        raise ValidationError("La nota de crédito no tiene reembolsos que revertir.")
+
+    already = set(
+        RefundReversal.all_objects.filter(reverses__in=refund_payments)
+        .values_list('reverses_id', flat=True)
+    )
+    pending = [rp for rp in refund_payments if rp.pk not in already]
+    if not pending:
+        raise ValidationError("Esta nota de crédito ya fue revertida.")
+
+    # Idempotencia: si ya se registró este reverso (misma key), no-op.
+    if idempotency_key and RefundReversal.all_objects.filter(
+        organization_id=credit_note.organization_id, idempotency_key=f"{idempotency_key}:0",
+    ).exists():
+        logger.info("IDEMPOTENT_REVERSAL_DEDUPED", extra={
+            'event': 'IDEMPOTENT_REVERSAL_DEDUPED', 'credit_note_id': credit_note.pk,
+            'idempotency_key': idempotency_key,
+        })
+        return credit_note
+
+    now = timezone.now()
+    notes_clean = sanitize_text(reason_notes or '', max_length=5000)
+    total_reversed = Decimal('0.00')
+    for i, rp in enumerate(pending):
+        key = f"{idempotency_key}:{i}" if idempotency_key else None
+        RefundReversal(
+            organization=credit_note.organization, reverses=rp,
+            amount=rp.amount, method=rp.method, occurred_at=now, actor=user,
+            cash_session=cash_session, provenance='service',
+            reason_code=reason_code or '', reason_notes=notes_clean,
+            idempotency_key=key,
+        ).save()
+        total_reversed += rp.amount
+
+    # Cancela el ajuste negativo del refund: +total_reversed en el día del reverso.
+    _write_metric_adjustment(
+        credit_note.organization, org_today_local(credit_note.organization, now=now),
+        'revenue_paid', total_reversed,
+        reason=f'refund_reversal:{reason_code or "correction"}',
+        source_invoice=credit_note.original_invoice,
+    )
+    logger.info("REFUND_REVERSED", extra={
+        'event': 'REFUND_REVERSED', 'credit_note_id': credit_note.pk,
+        'organization_id': credit_note.organization_id,
+        'total_reversed': str(total_reversed), 'actor_id': getattr(user, 'pk', None),
+    })
+    return credit_note
 
 
 # ---------------------------------------------------------------------------

@@ -413,7 +413,39 @@ def _build_series(org, from_date, to_date, fields, include_today, *, now=None):
             'metrics': {f: live[f] for f in fields},
         }
 
+    # ADR p29 — dual-expose: agrega revenue_paid_net = gross + Σ MetricAdjustment.
+    # Aditivo; el gross (revenue_paid) NO cambia. Los charts migran a net tras la
+    # ventana de validación (kill-switch = seguir usando gross).
+    if 'revenue_paid' in fields:
+        _apply_revenue_net(org, from_date, to_date, series, today_payload)
+
     return series, today_payload
+
+
+def _apply_revenue_net(org, from_date, to_date, series, today_payload):
+    """
+    Dual-window net of refunds (dashboard-metrics-contract §2.8, ADR p29).
+    revenue_paid_net(day) = revenue_paid_gross(day) + Σ(MetricAdjustment.delta).
+    Los snapshots frozen NO se reescriben — el ajuste vive en el día del evento.
+    """
+    from apps.analytics.models import MetricAdjustment
+
+    rows = (
+        MetricAdjustment.objects.for_organization(org)
+        .filter(date__gte=from_date, date__lte=to_date, metric_name='revenue_paid')
+        .values('date').annotate(total=Sum('delta'))
+    )
+    adj_by_date = {r['date']: (r['total'] or Decimal('0.00')) for r in rows}
+
+    def _net(dp):
+        gross = dp['metrics'].get('revenue_paid') or Decimal('0.00')
+        delta = adj_by_date.get(dp['bucket_date'], Decimal('0.00'))
+        dp['metrics']['revenue_paid_net'] = Decimal(gross) + delta
+
+    for dp in series:
+        _net(dp)
+    if today_payload:
+        _net(today_payload)
 
 
 def _serialize_value(v):

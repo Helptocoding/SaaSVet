@@ -16,7 +16,7 @@ from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
 
 from .models import Service, Invoice, InvoiceItem
-from .serializers import ServiceSerializer, InvoiceSerializer, InvoiceItemSerializer
+from .serializers import ServiceSerializer, InvoiceSerializer, InvoiceItemSerializer, CreditNoteSerializer
 from .permissions import CanConfirmInvoice, CanPayInvoice, CanCancelInvoice
 
 VALID_INVOICE_TYPES = {choice[0] for choice in Invoice.INVOICE_TYPE_CHOICES}
@@ -389,6 +389,53 @@ def direct_pay_invoice(request, pk):
     except DjValidationError as e:
         return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
     return Response(InvoiceSerializer(invoice).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("billing.refund")])
+def refund_invoice(request, pk):
+    """ADR p29: emite nota de crédito + reembolso sobre una factura pagada."""
+    from apps.billing.services import process_refund
+
+    invoice = resolve_public_id(
+        Invoice.objects.for_organization(request.user.organization), pk
+    )
+    idempotency_key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        credit_note = process_refund(
+            invoice, user=request.user,
+            credit_lines=request.data.get('credit_lines') or [],
+            refund_lines=request.data.get('refund_lines') or [],
+            reason_code=request.data.get('reason_code', ''),
+            reason_notes=request.data.get('reason_notes', ''),
+            idempotency_key=idempotency_key,
+        )
+    except DjValidationError as e:
+        return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(CreditNoteSerializer(credit_note).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("billing.refund")])
+def reverse_credit_note(request, pk):
+    """ADR p29: contra-asiento de una nota de crédito (revertir devolución)."""
+    from apps.billing.services import reverse_credit_note as reverse_service
+    from .models import CreditNote
+
+    credit_note = resolve_public_id(
+        CreditNote.objects.for_organization(request.user.organization), pk
+    )
+    idempotency_key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        credit_note = reverse_service(
+            credit_note, user=request.user,
+            reason_code=request.data.get('reason_code', ''),
+            reason_notes=request.data.get('reason_notes', ''),
+            idempotency_key=idempotency_key,
+        )
+    except DjValidationError as e:
+        return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(CreditNoteSerializer(credit_note).data)
 
 
 @api_view(['PATCH'])

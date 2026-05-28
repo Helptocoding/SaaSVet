@@ -486,3 +486,172 @@ class ExternalPrescriptionAttestation(PublicIdMixin, OrganizationalModel):
                 name='rxattestation_quantity_positive',
             ),
         ]
+
+
+# Causa tipificada de una nota de crédito (ADR p29). Constante app-level (estilo
+# SPECIES_CHOICES): sin `choices=` en el campo → agregar un código no requiere
+# migración, pero la lista es estable/queryable para conciliación/SAT/fraude.
+CREDIT_NOTE_REASON_CODES = [
+    'customer_return', 'damaged_product', 'expired_product', 'duplicate_charge',
+    'pricing_error', 'goodwill', 'clinical_cancellation', 'other',
+]
+
+
+class CreditNote(PublicIdMixin, OrganizationalModel):
+    """
+    Nota de crédito (devolución post-pago) — ADR p29. Documento legal append-only.
+
+    NO reabre la factura original (permanece `paid`, contrato §8.2). El neto de
+    revenue se computa en read-time vía `analytics.MetricAdjustment`, jamás
+    editando la factura. `issued_at` es anchor (provenance + CHECK, patrón ADR p9).
+    """
+    STATUS_CHOICES = (('issued', 'Emitida'),)
+
+    original_invoice = models.ForeignKey(
+        Invoice, on_delete=models.PROTECT, related_name='credit_notes',
+    )
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='issued')
+    created_by = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='credit_notes_created',
+    )
+    issued_at = models.DateTimeField(null=True, blank=True, editable=False)
+    issued_at_source = models.CharField(
+        max_length=24, choices=Invoice.ANCHOR_SOURCE_CHOICES,
+        default='service', editable=False,
+    )
+    total_refunded = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    reason_code = models.CharField(max_length=40)
+    reason_notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"CreditNote #{self.pk} ← inv {self.original_invoice_id}"
+
+    class Meta:
+        ordering = ['-issued_at', '-id']
+        indexes = [models.Index(fields=['organization', 'original_invoice'])]
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(status='issued') | models.Q(issued_at__isnull=False),
+                name='creditnote_issued_requires_issued_at',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(total_refunded__gte=0),
+                name='creditnote_total_refunded_non_negative',
+            ),
+        ]
+
+
+class CreditNoteItem(OrganizationalModel):
+    """Línea devuelta de una nota de crédito. Interna (PK-only)."""
+    DISPOSITION_CHOICES = (
+        ('restock', 'Reingresa a stock'),
+        ('discard', 'Descartado (abierto/usado)'),
+    )
+
+    credit_note = models.ForeignKey(CreditNote, on_delete=models.CASCADE, related_name='items')
+    invoice_item = models.ForeignKey(
+        InvoiceItem, on_delete=models.PROTECT, related_name='credit_note_items',
+    )
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    disposition = models.CharField(max_length=16, choices=DISPOSITION_CHOICES, default='restock')
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='creditnoteitem_quantity_positive',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name='creditnoteitem_amount_non_negative',
+            ),
+        ]
+
+
+class RefundPayment(OrganizationalModel):
+    """
+    Evento financiero: dinero devuelto al cliente (signo − inflow→outflow).
+    Append-only. Campos canónicos del contrato §2 (mismos nombres que Payment).
+    """
+    credit_note = models.ForeignKey(CreditNote, on_delete=models.PROTECT, related_name='refund_payments')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    method = models.CharField(max_length=20, choices=Payment.METHOD_CHOICES)
+    occurred_at = models.DateTimeField()
+    actor = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='refunds_made',
+    )
+    cash_session = models.ForeignKey(
+        'cash.CashSession', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='refund_payments',
+    )
+    reference = models.CharField(max_length=100, blank=True)
+    idempotency_key = models.CharField(max_length=64, null=True, blank=True)
+    provenance = models.CharField(max_length=20, choices=Payment.PROVENANCE_CHOICES, default='service')
+
+    def __str__(self):
+        return f"RefundPayment #{self.pk} — {self.amount} ({self.method})"
+
+    class Meta:
+        ordering = ['occurred_at', 'id']
+        indexes = [models.Index(fields=['organization', 'credit_note'])]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0),
+                name='refundpayment_amount_positive',
+            ),
+            models.UniqueConstraint(
+                fields=['organization', 'idempotency_key'],
+                condition=models.Q(idempotency_key__isnull=False),
+                name='refundpayment_unique_idempotency_key_per_org',
+            ),
+        ]
+
+
+class RefundReversal(OrganizationalModel):
+    """
+    Contra-asiento de un `RefundPayment` emitido por error (contrato §6).
+    Append-only — NO es void/edit. Invariante: ≤1 reversal por refund; un reversal
+    no es reversible (la corrección es un nuevo RefundPayment).
+    """
+    reverses = models.ForeignKey(RefundPayment, on_delete=models.PROTECT, related_name='reversals')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    method = models.CharField(max_length=20, choices=Payment.METHOD_CHOICES)
+    occurred_at = models.DateTimeField()
+    actor = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='refund_reversals_made',
+    )
+    cash_session = models.ForeignKey(
+        'cash.CashSession', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='refund_reversals',
+    )
+    reference = models.CharField(max_length=100, blank=True)
+    idempotency_key = models.CharField(max_length=64, null=True, blank=True)
+    provenance = models.CharField(max_length=20, choices=Payment.PROVENANCE_CHOICES, default='service')
+    reason_code = models.CharField(max_length=40, blank=True)
+    reason_notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"RefundReversal #{self.pk} ↺ refund {self.reverses_id}"
+
+    class Meta:
+        ordering = ['occurred_at', 'id']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0),
+                name='refundreversal_amount_positive',
+            ),
+            # ≤1 reversal por refund (contrato §6).
+            models.UniqueConstraint(
+                fields=['reverses'],
+                name='refundreversal_one_per_refund',
+            ),
+            models.UniqueConstraint(
+                fields=['organization', 'idempotency_key'],
+                condition=models.Q(idempotency_key__isnull=False),
+                name='refundreversal_unique_idempotency_key_per_org',
+            ),
+        ]

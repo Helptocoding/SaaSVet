@@ -233,6 +233,39 @@ Enforcement:
 Migración: `0019_payment` + backfill legacy (1 Payment `legacy` por factura `paid`
 con `total>0`, `actor=NULL`, `occurred_at=paid_at`).
 
+## Devoluciones / notas de crédito (ADR p29 — Sprint B)
+
+`cancelar` ≠ `devolver`. Cancel es pre-pago (draft/confirmed). Una factura **paid**
+no se cancela; su dinero se devuelve vía **nota de crédito** (la factura permanece
+`paid`, contrato §8.2 — no reabre, no muta `paid_at`).
+
+Modelos (append-only): `CreditNote` (público, anchor `issued_at`+CHECK, `reason_code`
+tipificado), `CreditNoteItem` (referencia al `InvoiceItem` original; `disposition`
+`restock|discard`), `RefundPayment` (signo −, campos canónicos contrato §2),
+`RefundReversal` (contra-asiento, ≤1 por refund).
+
+Service `process_refund(invoice, user, credit_lines, refund_lines, reason_code, ...)`:
+- Solo facturas `paid`. Valida cantidades/montos contra lo ya devuelto (no over-refund).
+- `Σ refund_lines == Σ credit_lines` (el dinero devuelto iguala el crédito).
+- `disposition=restock` → `apply_stock_movement('in')` bajo lock; `discard` → sin stock.
+- Escribe `MetricAdjustment` negativo en `revenue_paid` del **día del reembolso**
+  (dual-window §2.8 — snapshots frozen intactos). Idempotente (`X-Idempotency-Key`).
+- Lock order: `CashSession → Invoice → Presentation → CreditNote/items/refund`.
+
+Service `reverse_credit_note(credit_note, user, reason_code, ...)`: contra-asiento de
+una NC emitida por error. Emite `RefundReversal` por cada `RefundPayment` (≤1 c/u) +
+`MetricAdjustment` positivo que cancela el negativo. No es void/edit (contrato §6).
+
+Caja: refund/reversal en efectivo entran al cierre Z de la **sesión abierta actual**
+(refund resta, reversal suma — ver `cash.md`). Una sesión cerrada no cambia.
+
+Endpoints (RBAC `billing.refund`, solo ADMIN por default):
+- `POST /api/billing/invoices/<uuid>/refund/`
+- `POST /api/billing/credit-notes/<uuid>/reverse/`
+
+Analytics: `revenue_paid` (gross) NO cambia; el dashboard financiero expone además
+`revenue_paid_net = gross + Σ MetricAdjustment` (dual-expose, sin flip — ver `analytics.md`).
+
 ## Calculo de totales
 
 El total se calcula siempre en backend. El flujo es:

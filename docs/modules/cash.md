@@ -55,8 +55,8 @@ Writers autoritativos. **Solo importar de aqui** desde fuera del modulo.
 ### Calculo del Z
 
 ```
-expected_cash = opening_float + Σ(Payment.amount where method='cash' and cash_session=S)
-              [ − Σ(RefundPayment cash en S)   ← lo agrega ADR p29 ]
+expected_cash = opening_float + Σ(Payment cash en S)
+              − Σ(RefundPayment cash en S) + Σ(RefundReversal cash en S)   # ADR p29 (Sprint B, report_schema_version=2)
 card_total / transfer_total = informativos (NO entran al conteo de efectivo)
 difference = counted_cash − expected_cash
 ```
@@ -122,4 +122,3 @@ Logger `cash.events` (JSON stdout): `CASH_SESSION_OPENED`, `CASH_SESSION_CLOSED`
 - Caja por Register/Terminal (multi-recepcionista) — `DD-004`. Reportes ya se
   llavean por `CashSession.public_id`, no por user.
 - Tabla `CashSessionSnapshot` materializada (grado fiscal/export) — `DD-003`.
-- Termino de refunds en efectivo en el Z — ADR p29.

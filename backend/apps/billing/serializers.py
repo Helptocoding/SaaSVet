@@ -2,7 +2,7 @@ import logging
 import re
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Service, Invoice, InvoiceItem
+from .models import Service, Invoice, InvoiceItem, CreditNote
 from .money import discount_amount, money
 from apps.core.sanitize import sanitize_text
 
@@ -335,3 +335,25 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 'unit_price': str(pres.sale_price),
             })
         return suggestions
+
+
+class CreditNoteSerializer(serializers.ModelSerializer):
+    """Solo lectura. Expone `public_id` (ADR p24) y la factura origen por public_id."""
+    original_invoice_public_id = serializers.UUIDField(
+        source='original_invoice.public_id', read_only=True,
+    )
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CreditNote
+        fields = [
+            'public_id', 'status', 'original_invoice_public_id',
+            'reason_code', 'reason_notes', 'total_refunded',
+            'issued_at', 'created_by_name', 'created_at',
+        ]
+        read_only_fields = fields
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.username
+        return ''

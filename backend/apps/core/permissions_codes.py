@@ -44,6 +44,8 @@ PERMISSION_CODES = [
     "invoice.cancel",
     # Dispensar producto con receta en venta directa (ADR p26 — boundary alto-trust)
     "billing.rx_dispense",
+    # Emitir nota de crédito / devolución (ADR p29 — alto-trust; solo ADMIN por default)
+    "billing.refund",
 
     # Servicios (catálogo de facturación — Configuración)
     "service.list",

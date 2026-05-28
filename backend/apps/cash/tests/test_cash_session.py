@@ -76,7 +76,7 @@ class CashSessionTests(TestCase):
         self.assertEqual(closed.counted_cash, Decimal("590.00"))
         self.assertEqual(closed.difference, Decimal("-10.00"))
         self.assertIsNotNone(closed.closed_at)
-        self.assertEqual(closed.closed_snapshot['report_schema_version'], 1)
+        self.assertEqual(closed.closed_snapshot['report_schema_version'], 2)
         self.assertEqual(closed.closed_snapshot['operations'], 1)
 
     def test_card_payment_not_counted_in_cash(self):

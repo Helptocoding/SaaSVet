@@ -142,3 +142,36 @@ class DashboardSnapshotAudit(OrganizationalModel):
             models.Index(fields=['organization', 'snapshot_date', '-created_at'],
                          name='idx_dsa_org_date_created'),
         ]
+
+
+class MetricAdjustment(OrganizationalModel):
+    """
+    Ajuste append-only a una métrica diaria, FUERA de los snapshots (dual-window,
+    dashboard-metrics-contract §2.8). Un reverso (refund / refund-reversal) que
+    cae en un día ya frozen NO reescribe el snapshot: registra un delta firmado
+    aquí, en el día del evento.
+
+        revenue_paid_net(day) = revenue_paid_gross(day) + Σ(delta where metric='revenue_paid')
+
+    Append-only: sin edición ni borrado. `created_at` (heredado) = momento del
+    registro; `date` = día org-local al que aplica el ajuste (ADR p29).
+    """
+    date = models.DateField(db_index=True)
+    metric_name = models.CharField(max_length=64)   # 'revenue_paid' | 'tax_collected' | ...
+    delta = models.DecimalField(max_digits=14, decimal_places=2)  # firmado (− para refund)
+    reason = models.CharField(max_length=255, blank=True)
+    # Factura original que originó el ajuste (auditoría). FK string → billing.
+    source_invoice = models.ForeignKey(
+        'billing.Invoice', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='metric_adjustments',
+    )
+
+    def __str__(self):
+        return f"MetricAdjustment {self.metric_name} {self.delta:+} @ {self.date}"
+
+    class Meta:
+        ordering = ['-date', '-id']
+        indexes = [
+            models.Index(fields=['organization', 'date', 'metric_name'],
+                         name='idx_metricadj_org_date_name'),
+        ]

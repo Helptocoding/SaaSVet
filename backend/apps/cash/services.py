@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 _cash_events = logging.getLogger('cash.events')
 
 # Versión del shape del Z congelado (closed_snapshot). Bump al cambiar la
-# semántica de un campo del reporte (DD-003). Sprint A: sin línea de refunds.
-REPORT_SCHEMA_VERSION = 1
+# semántica de un campo del reporte (DD-003). v1=Sprint A (sin refunds);
+# v2=Sprint B (ADR p29: cash_refunds/cash_reversals en el cuadre de efectivo).
+REPORT_SCHEMA_VERSION = 2
 ZERO = Decimal('0.00')
 
 
@@ -73,7 +74,8 @@ def close_cash_session(session, user, counted_cash, notes='', force=False):
     Un pago en vuelo que intente usar esta sesión bloqueará en el lock; al
     reanudar verá status != 'open' y será rechazado (ningún pago tras el conteo).
     """
-    from apps.billing.models import Payment  # import local: evita ciclo billing↔cash
+    # import local: evita ciclo billing↔cash
+    from apps.billing.models import Payment, RefundPayment, RefundReversal
 
     session = (
         CashSession.objects.for_organization(session.organization)
@@ -88,28 +90,35 @@ def close_cash_session(session, user, counted_cash, notes='', force=False):
     if counted_cash < 0:
         raise ValidationError("El efectivo contado no puede ser negativo.")
 
+    _dec = DecimalField(max_digits=14, decimal_places=2)
+
+    def _sum_cash(model):
+        return model.all_objects.filter(cash_session=session, method='cash').aggregate(
+            t=Coalesce(Sum('amount'), Value(ZERO), output_field=_dec))['t']
+
     # Totales por método (Σ Payment del turno). card/transfer son informativos
-    # (no entran al conteo de efectivo). El término de refunds en efectivo lo
-    # agrega ADR p29 (hoy = 0).
+    # (no entran al conteo de efectivo).
     by_method = {
         row['method']: row['total']
         for row in (
             Payment.all_objects.filter(cash_session=session)
             .values('method')
-            .annotate(total=Coalesce(
-                Sum('amount'), Value(ZERO),
-                output_field=DecimalField(max_digits=14, decimal_places=2),
-            ))
+            .annotate(total=Coalesce(Sum('amount'), Value(ZERO), output_field=_dec))
         )
     }
     cash_in = by_method.get('cash', ZERO)
-    expected = session.opening_float + cash_in
+    # ADR p29: refunds en efectivo restan; reversals (contra-asiento) suman.
+    cash_refunds = _sum_cash(RefundPayment)
+    cash_reversals = _sum_cash(RefundReversal)
+    expected = session.opening_float + cash_in - cash_refunds + cash_reversals
     difference = counted_cash - expected
     op_count = Payment.all_objects.filter(cash_session=session).count()
 
     snapshot = {
         'opening_float': str(session.opening_float),
         'totals_by_method': {k: str(v) for k, v in by_method.items()},
+        'cash_refunds': str(cash_refunds),
+        'cash_reversals': str(cash_reversals),
         'cash_expected': str(expected),
         'cash_counted': str(counted_cash),
         'difference': str(difference),

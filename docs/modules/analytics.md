@@ -215,6 +215,32 @@ nightly_anchor_audit: python manage.py audit_anchor_integrity --json
 Schedule via Railway Cron service. Recomendacion: 06:00 UTC daily
 (cubre Mexico GMT-6/-7/-8 yesterday end-of-day).
 
+## Net of refunds — dual-expose (ADR p29 — Sprint B)
+
+Modelo `MetricAdjustment` (append-only): ajuste firmado a una métrica diaria FUERA
+de los snapshots (dual-window, contract §2.8). Un refund/reversal escribe un delta
+en `revenue_paid` del día del evento — **los snapshots frozen NO se reescriben**.
+
+```
+revenue_paid_net(day) = revenue_paid_gross(day) + Σ(MetricAdjustment.delta where metric='revenue_paid')
+```
+
+Dual-expose (sin flip — decisión de PO):
+- El dashboard financiero (`financial_series`) sigue exponiendo `revenue_paid` (gross,
+  legacy, sin cambio) y agrega `revenue_paid_net` como campo nuevo
+  (`dashboard/views.py::_apply_revenue_net`).
+- Los charts existentes siguen en gross; `net` se valida en paralelo durante la
+  ventana dual. **Kill-switch** = no flipear (gross sigue siendo el default).
+- **NO** se bumpea `METRICS_SCHEMA_VERSION` todavía (no se redefine `revenue_paid`,
+  se agrega un campo). El bump + flip de charts viene tras la validación + PO sign-off.
+- Invariante CI: `revenue_paid_net == revenue_paid + Σ adjustments` (test
+  `apps.dashboard.tests.test_revenue_net`). Cualquier otra diferencia = bug.
+- `gross` permanece queryable/auditable para siempre (reconciliación histórica),
+  incluso post-flip.
+
+Writers de `MetricAdjustment`: solo `billing/services.py` (`process_refund`,
+`reverse_credit_note`). `tax_collected` net se difiere (no es KPI de snapshot v1).
+
 ## Reglas para extender
 
 Agregar un KPI al snapshot row:
