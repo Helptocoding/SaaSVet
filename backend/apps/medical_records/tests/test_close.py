@@ -300,8 +300,8 @@ class CloseMedicalRecordTests(APITestCase):
         self.assertEqual(r.data["treatment"], "")
         self.assertEqual(r.data["status"], "open")
 
-    def test_create_sin_diagnosis_retorna_400(self):
-        """CREATE sin diagnóstico sigue siendo rechazado."""
+    def test_create_sin_diagnosis_retorna_201_borrador(self):
+        """CREATE sin diagnóstico ahora permite creación de borrador — el cierre valida diagnóstico."""
         owner = Owner.objects.create(name="OD", phone="4", organization=self.org_a)
         pet = Pet.objects.create(name="PD", species="dog", owner=owner, organization=self.org_a)
         self.client.force_authenticate(self.vet_a)
@@ -311,8 +311,14 @@ class CloseMedicalRecordTests(APITestCase):
             "diagnosis": "",
             "treatment": "t",
         }, format="json")
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("diagnosis", r.data["errors"])
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(r.data["status"], "open")
+        self.assertEqual(r.data["diagnosis"], "")
+        # Verificar que cerrar sin diagnóstico SÍ es rechazado
+        mr_public_id = r.data["public_id"]
+        r2 = self.client.post(f"/api/medical-records/{mr_public_id}/close/", {}, format="json")
+        self.assertEqual(r2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("diagnosis", str(r2.data))
 
     # ── PATCH parcial (stepper) ────────────────────────────────────────────────
 

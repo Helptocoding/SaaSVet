@@ -200,11 +200,9 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({field: f'Máximo {limit} caracteres.'})
                 data[field] = sanitize_text(data[field], max_length=limit)
 
-        # En creación el diagnóstico es obligatorio. El tratamiento se valida al cerrar.
-        # La auto-creación desde update_status usa get_or_create directamente (no este serializer).
-        if not self.instance:
-            if not data.get('diagnosis', '').strip():
-                raise serializers.ValidationError({'diagnosis': 'El diagnóstico es obligatorio.'})
+        # El diagnóstico se valida al cerrar la consulta (close_medical_record),
+        # no al crear. Esto permite pre-crear registros desde el flujo "Atender ahora"
+        # y llenarlos progresivamente en el stepper.
 
         # Validación de cambio brusco de peso (solo en actualizaciones con peso informado)
         if weight and self.instance:

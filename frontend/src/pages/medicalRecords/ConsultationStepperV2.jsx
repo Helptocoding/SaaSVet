@@ -16,6 +16,7 @@ import {
   removeMedicalRecordProduct,
   getMedicalRecordProducts,
 } from "../../api/inventory";
+import { getServices } from "../../api/billing";
 import { createPrescription, updatePrescription } from "../../api/prescriptions";
 import {
   getMedicalRecordServices,
@@ -35,8 +36,7 @@ const CONSULTATION_TYPES = [
 const STEPS = [
   { id: 1, label: "Paciente y diagnóstico" },
   { id: 2, label: "Tratamiento y receta" },
-  { id: 3, label: "Productos e insumos" },
-  { id: 4, label: "Facturación" },
+  { id: 3, label: "Insumos y cargos" },
 ];
 
 const FIELD_TO_STEP = {
@@ -208,15 +208,12 @@ export default function ConsultationStepperV2({
   useEffect(() => {
     const loadServices = async () => {
       try {
-        const res = await fetch('/api/billing/services/?active=true', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
+        const data = await getServices({ active: "true" });
         setAvailableServices(Array.isArray(data) ? data : (data?.results || []));
       } catch { }
     };
     loadServices();
-  }, [token]);
+  }, []);
 
   // Search logic for SearchSelect
   const handleProductSearch = async (q) => {
@@ -340,7 +337,7 @@ export default function ConsultationStepperV2({
 
       // Éxito: limpiar errores y avanzar
       setFormErrors({});
-      if (fromStep < 4) {
+      if (fromStep < 3) {
         setStep(fromStep + 1);
       } else {
         handleFinalize(resultPublicId);
@@ -376,7 +373,7 @@ export default function ConsultationStepperV2({
 
   const handleFinalize = async (id) => {
     const targetId = id || recordRef.publicId;
-    if (!targetId) return;
+    if (!targetId || closed) return;
 
     // Anti-stale check final
     const isOk = await checkNotStale();
@@ -385,6 +382,7 @@ export default function ConsultationStepperV2({
     setSaving(true);
     try {
       await closeMedicalRecord(token, targetId);
+      setClosed(true);
       toast.success("Consulta finalizada exitosamente");
       onComplete?.(recordRef.id);
 
@@ -397,9 +395,8 @@ export default function ConsultationStepperV2({
       } catch {
         // Silencioso — la factura se puede buscar después en billing
       }
-
-      setClosed(true);
     } catch (err) {
+      setClosed(false);
       toast.error(apiError(err, "Error al finalizar"));
     } finally {
       setSaving(false);
@@ -476,7 +473,7 @@ export default function ConsultationStepperV2({
 
   const handleAddService = async () => {
     if (!serviceLine.service) return;
-    const selected = availableServices.find(s => s.id === serviceLine.service);
+    const selected = availableServices.find(s => s.id === serviceLine.service?.id);
     if (!selected) return;
 
     // Validar unicidad
@@ -518,6 +515,14 @@ export default function ConsultationStepperV2({
     }
   };
 
+  const handleServiceSearch = async (q) => {
+    const lower = q.trim().toLowerCase();
+    const filtered = !lower
+      ? availableServices
+      : availableServices.filter((s) => s.name?.toLowerCase().includes(lower));
+    return filtered.slice(0, 8).map((s) => ({ id: s.id, label: s.name }));
+  };
+
   // Totales desde summary (backend) en lugar de hardcodeo
   const totalBilling = useMemo(() => {
     if (summary?.totals) {
@@ -530,8 +535,14 @@ export default function ConsultationStepperV2({
     }
     // Fallback a cálculo local si no hay summary
     const prodsTotal = addedProducts.reduce((sum, p) => sum + (Number(p.unit_price) * Number(p.quantity)), 0);
-    return { subtotal: prodsTotal, tax: 0, total: prodsTotal, status: 'draft' };
-  }, [summary, addedProducts]);
+    const servicesTotal = addedServices.reduce((sum, s) => sum + (Number(s.price) * Number(s.quantity)), 0);
+    const subtotal = prodsTotal + servicesTotal;
+    return { subtotal, tax: 0, total: subtotal, status: 'draft' };
+  }, [summary, addedProducts, addedServices]);
+
+  const billingStatusLabel = totalBilling.total > 0
+    ? (totalBilling.status === "draft" ? "Borrador" : "Pendiente de cobro")
+    : "Sin cargos";
 
   return (
     <div className={styles.fullPageContainer}>
@@ -545,9 +556,11 @@ export default function ConsultationStepperV2({
               <button className="btn btn-secondary btn-sm" onClick={() => onClose()}>
                 Cerrar
               </button>
-              <button className={`${styles.btnFinalizar} btn btn-sm`} onClick={() => handleFinalize()}>
-                <Icon.Check s={14} /> Finalizar
-              </button>
+              {!closed && (
+                <button className={`${styles.btnFinalizar} btn btn-sm`} onClick={() => handleFinalize()} disabled={saving}>
+                  <Icon.Check s={14} /> Finalizar y enviar a Cobros
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -659,6 +672,9 @@ export default function ConsultationStepperV2({
                 <div className={styles.sectionHeader}>
                   <h2 className={styles.sectionTitle}>Receta médica (Medicamentos)</h2>
                 </div>
+                <p className={styles.helperText}>
+                  La receta no descuenta inventario ni genera cobro. El cliente decide en recepción si lleva los productos.
+                </p>
 
                 <div style={{ background: '#f9f9f9', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 60px 80px', gap: '8px', alignItems: 'end' }}>
@@ -721,240 +737,204 @@ export default function ConsultationStepperV2({
           {step === 3 && (
             <div className="fade-in">
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Productos e Insumos consumidos</h2>
-                <p style={{ fontSize: '12px', color: '#888', marginLeft: 'auto' }}>Estos productos se descargarán del inventario</p>
+                <h2 className={styles.sectionTitle}>Insumos utilizados y servicios</h2>
               </div>
+              <p className={styles.helperText}>
+                Registra solo lo usado durante la consulta. Esto se descuenta del inventario y se refleja en Cobros.
+              </p>
 
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ flex: 1 }}>
-                  <SearchSelect
-                    placeholder="Buscar producto..."
-                    value={productLine.product}
-                    onChange={item => setProductLine(prev => ({ ...prev, product: item }))}
-                    onSearch={handleProductSearch}
-                  />
-                </div>
-                <div style={{ width: '80px' }}>
-                  <input
-                    type="number"
-                    className={styles.textarea}
-                    style={{ height: '38px', padding: '0 10px' }}
-                    value={productLine.quantity}
-                    onChange={e => setProductLine(prev => ({ ...prev, quantity: e.target.value }))}
-                    min="1"
-                  />
-                </div>
-                <button
-                  className="btn btn-primary btn-md"
-                  onClick={handleAddProduct}
-                  disabled={!productLine.product}
-                >
-                  Agregar
-                </button>
-              </div>
-
-              <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left' }}>Producto</th>
-                      <th>Cant.</th>
-                      <th>P. Unit</th>
-                      <th>Subtotal</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {addedProducts.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                          No hay productos registrados en esta consulta.
-                        </td>
-                      </tr>
-                    ) : addedProducts.map(p => (
-                      <tr key={p.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{p.product_name}</div>
-                          <div style={{ fontSize: '11px', color: '#888' }}>{p.presentation_name}</div>
-                        </td>
-                        <td style={{ textAlign: 'center' }}>{p.quantity}</td>
-                        <td style={{ textAlign: 'center' }}>${Number(p.unit_price).toFixed(2)}</td>
-                        <td style={{ textAlign: 'center' }}>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button
-                            className="btn btn-ghost btn-xs"
-                            style={{ color: '#ef4444' }}
-                            onClick={() => handleRemoveProduct(p.id)}
-                          >
-                            <Icon.Trash s={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={styles.sectionHeader} style={{ marginTop: '32px' }}>
-                <h2 className={styles.sectionTitle}>Servicios profesionales</h2>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ flex: 1 }}>
-                  <SearchSelect
-                    placeholder="Buscar servicio..."
-                    value={serviceLine.service}
-                    onChange={item => setServiceLine(prev => ({ ...prev, service: item }))}
-                    onSearch={async (q) => {
-                      const lower = q.trim().toLowerCase();
-                      if (!lower) return availableServices.slice(0, 8).map(s => ({ id: s.id, label: s.name }));
-                      return availableServices
-                        .filter(s => s.name?.toLowerCase().includes(lower))
-                        .slice(0, 8)
-                        .map(s => ({ id: s.id, label: s.name }));
-                    }}
-                  />
-                </div>
-                <div style={{ width: '80px' }}>
-                  <input
-                    type="number"
-                    className={styles.textarea}
-                    style={{ height: '38px', padding: '0 10px' }}
-                    value={serviceLine.quantity}
-                    onChange={e => setServiceLine(prev => ({ ...prev, quantity: e.target.value }))}
-                    min="1"
-                  />
-                </div>
-                <button
-                  className="btn btn-primary btn-md"
-                  onClick={handleAddService}
-                  disabled={!serviceLine.service}
-                >
-                  Agregar
-                </button>
-              </div>
-
-              <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left' }}>Servicio</th>
-                      <th>Cant.</th>
-                      <th>P. Unit</th>
-                      <th>Subtotal</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {addedServices.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                          No hay servicios registrados en esta consulta.
-                        </td>
-                      </tr>
-                    ) : addedServices.map(s => (
-                      <tr key={s.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{s.name}</div>
-                        </td>
-                        <td style={{ textAlign: 'center' }}>{s.quantity}</td>
-                        <td style={{ textAlign: 'center' }}>${Number(s.price).toFixed(2)}</td>
-                        <td style={{ textAlign: 'center' }}>${(Number(s.price) * Number(s.quantity)).toFixed(2)}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button
-                            className="btn btn-ghost btn-xs"
-                            style={{ color: '#ef4444' }}
-                            onClick={() => handleRemoveService(s.id)}
-                          >
-                            <Icon.Trash s={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && !closed && (
-            <div className="fade-in">
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Resumen y Facturación</h2>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+              <div className={styles.stepThreeLayout}>
                 <div>
-                  <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px' }}>Resumen Clínico</h3>
-                  <div className={styles.resumenCard}>
-                    <div className={styles.expandedSection}>
-                      <div className={styles.expandedLabel}>Diagnóstico</div>
-                      <div className={styles.expandedText}>{draft.diagnosis || <span style={{ color: "var(--c-text-3)", fontStyle: "italic" }}>Sin diagnóstico</span>}</div>
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                    <div style={{ flex: 1 }}>
+                      <SearchSelect
+                        placeholder="Buscar producto..."
+                        value={productLine.product}
+                        onChange={item => setProductLine(prev => ({ ...prev, product: item }))}
+                        onSearch={handleProductSearch}
+                      />
                     </div>
-                    <div className={styles.expandedSection} style={{ marginTop: '12px' }}>
-                      <div className={styles.expandedLabel}>Tratamiento</div>
-                      <div className={styles.expandedText}>{draft.treatment || <span style={{ color: "var(--c-text-3)", fontStyle: "italic" }}>Sin indicaciones</span>}</div>
+                    <div style={{ width: '80px' }}>
+                      <input
+                        type="number"
+                        className={styles.textarea}
+                        style={{ height: '38px', padding: '0 10px' }}
+                        value={productLine.quantity}
+                        onChange={e => setProductLine(prev => ({ ...prev, quantity: e.target.value }))}
+                        min="1"
+                      />
                     </div>
-                    <div className={styles.expandedSection} style={{ marginTop: '12px' }}>
-                      <div className={styles.expandedLabel}>Medicamentos Recetados</div>
-                      <div className={styles.expandedText}>
-                        {prescriptionDraft.items.length === 0 ? "Sin medicamentos" : `${prescriptionDraft.items.length} items`}
-                      </div>
+                    <button
+                      className="btn btn-primary btn-md"
+                      onClick={handleAddProduct}
+                      disabled={!productLine.product}
+                    >
+                      Agregar
+                    </button>
+                  </div>
+
+                  <div className={styles.tableContainer}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left' }}>Producto</th>
+                          <th>Cant.</th>
+                          <th>P. Unit</th>
+                          <th>Subtotal</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {addedProducts.length === 0 ? (
+                          <tr>
+                            <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                              No hay insumos registrados en esta consulta.
+                            </td>
+                          </tr>
+                        ) : addedProducts.map(p => (
+                          <tr key={p.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{p.product_name}</div>
+                              <div style={{ fontSize: '11px', color: '#888' }}>{p.presentation_name}</div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>{p.quantity}</td>
+                            <td style={{ textAlign: 'center' }}>${Number(p.unit_price).toFixed(2)}</td>
+                            <td style={{ textAlign: 'center' }}>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</td>
+                            <td style={{ textAlign: 'right' }}>
+                              <button
+                                className="btn btn-ghost btn-xs"
+                                style={{ color: '#ef4444' }}
+                                onClick={() => handleRemoveProduct(p.id)}
+                              >
+                                <Icon.Trash s={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className={styles.sectionHeader} style={{ marginTop: '32px' }}>
+                    <h2 className={styles.sectionTitle}>Servicios profesionales</h2>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                    <div style={{ flex: 1 }}>
+                      <SearchSelect
+                        placeholder="Buscar servicio..."
+                        value={serviceLine.service}
+                        onChange={item => setServiceLine(prev => ({ ...prev, service: item }))}
+                        onSearch={handleServiceSearch}
+                      />
                     </div>
-                    <div className={styles.expandedSection} style={{ marginTop: '12px' }}>
-                      <div className={styles.expandedLabel}>Servicios</div>
-                      <div className={styles.expandedText}>
-                        {addedServices.length === 0 ? "Sin servicios" : `${addedServices.length} servicios`}
-                      </div>
+                    <div style={{ width: '80px' }}>
+                      <input
+                        type="number"
+                        className={styles.textarea}
+                        style={{ height: '38px', padding: '0 10px' }}
+                        value={serviceLine.quantity}
+                        onChange={e => setServiceLine(prev => ({ ...prev, quantity: e.target.value }))}
+                        min="1"
+                      />
                     </div>
+                    <button
+                      className="btn btn-primary btn-md"
+                      onClick={handleAddService}
+                      disabled={!serviceLine.service}
+                    >
+                      Agregar
+                    </button>
+                  </div>
+
+                  <div className={styles.tableContainer}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left' }}>Servicio</th>
+                          <th>Cant.</th>
+                          <th>P. Unit</th>
+                          <th>Subtotal</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {addedServices.length === 0 ? (
+                          <tr>
+                            <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                              No hay servicios registrados en esta consulta.
+                            </td>
+                          </tr>
+                        ) : addedServices.map(s => (
+                          <tr key={s.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{s.name}</div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>{s.quantity}</td>
+                            <td style={{ textAlign: 'center' }}>${Number(s.price).toFixed(2)}</td>
+                            <td style={{ textAlign: 'center' }}>${(Number(s.price) * Number(s.quantity)).toFixed(2)}</td>
+                            <td style={{ textAlign: 'right' }}>
+                              <button
+                                className="btn btn-ghost btn-xs"
+                                style={{ color: '#ef4444' }}
+                                onClick={() => handleRemoveService(s.id)}
+                              >
+                                <Icon.Trash s={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <div>
-                  <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px' }}>Facturación</h3>
-                  <div className={styles.resumenCard} style={{ background: '#f8f9fa' }}>
-                    {summary?.totals ? (
-                      <>
+                <aside className={styles.chargePanel}>
+                  <div className={styles.chargePanelHeader}>
+                    <h3 className={styles.chargePanelTitle}>Cargos de esta consulta</h3>
+                    <span className="badge badge-info">{billingStatusLabel}</span>
+                  </div>
+
+                  {addedProducts.length === 0 && addedServices.length === 0 ? (
+                    <p className={styles.chargePanelEmpty}>Aún no hay cargos agregados</p>
+                  ) : (
+                    <>
+                      <div className={styles.chargeLines}>
+                        {addedProducts.map((p) => (
+                          <div key={`prod-${p.id}`} className={styles.resumenRow}>
+                            <span>{p.product_name} x{p.quantity}</span>
+                            <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                          </div>
+                        ))}
+                        {addedServices.map((s) => (
+                          <div key={`srv-${s.id}`} className={styles.resumenRow}>
+                            <span>{s.name} x{s.quantity}</span>
+                            <span>${(Number(s.price) * Number(s.quantity)).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className={styles.resumenCard} style={{ background: '#f8f9fa' }}>
                         <div className={styles.resumenRow}>
                           <span>Subtotal</span>
-                          <span>${Number(summary.totals.subtotal).toFixed(2)}</span>
+                          <span>${Number(totalBilling.subtotal).toFixed(2)}</span>
                         </div>
                         <div className={styles.resumenRow}>
                           <span>Impuesto</span>
-                          <span>${Number(summary.totals.tax_amount).toFixed(2)}</span>
+                          <span>${Number(totalBilling.tax).toFixed(2)}</span>
                         </div>
                         <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`} style={{ fontSize: '18px', marginTop: '16px', borderTop: '2px solid #ddd' }}>
-                          <span>TOTAL A PAGAR</span>
-                          <span>${Number(summary.totals.total).toFixed(2)}</span>
+                          <span>TOTAL</span>
+                          <span>${Number(totalBilling.total).toFixed(2)}</span>
                         </div>
-                        <div style={{ marginTop: '8px' }}>
-                          <span className="badge badge-info">
-                            {summary.totals.status === 'draft' ? 'Borrador' :
-                              summary.totals.status === 'confirmed' ? 'Confirmada' :
-                                summary.totals.status === 'paid' ? 'Pagada' : 'Cancelada'}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: '11px', color: '#888', marginTop: '20px' }}>
-                          * Al finalizar, se generará una cuenta por cobrar para el tutor.
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <div className={styles.resumenRow}>
-                          <span>Productos e insumos</span>
-                          <span>${totalBilling.subtotal.toFixed(2)}</span>
-                        </div>
-                        <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`} style={{ fontSize: '18px', marginTop: '16px', borderTop: '2px solid #ddd' }}>
-                          <span>TOTAL ESTIMADO</span>
-                          <span>${totalBilling.total.toFixed(2)}</span>
-                        </div>
-                        <p style={{ fontSize: '11px', color: '#888', marginTop: '20px' }}>
-                          * Los totales se calcularán al finalizar.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
+                      </div>
+                    </>
+                  )}
+
+                  <p className={styles.helperText} style={{ marginBottom: 0 }}>
+                    Al finalizar, estos cargos se enviarán a Cobros como borrador.
+                  </p>
+                </aside>
               </div>
             </div>
           )}
@@ -965,12 +945,12 @@ export default function ConsultationStepperV2({
                 <Icon.Check s={48} style={{ color: "#22c55e" }} />
               </div>
               <h2 style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", marginBottom: "8px" }}>
-                Consulta cerrada
+                Consulta finalizada y enviada a Cobros
               </h2>
               {completionInvoicePublicId && summary?.totals ? (
                 <>
                   <p style={{ fontSize: "14px", color: "var(--c-text-2)", marginBottom: "24px" }}>
-                    Se generó un borrador de factura por{" "}
+                    Se generó un borrador de cobro por{" "}
                     <strong>${Number(summary.totals.total).toFixed(2)}</strong>
                   </p>
                   <div className={styles.resumenCard} style={{ maxWidth: "380px", margin: "0 auto 24px", textAlign: "left" }}>
@@ -999,7 +979,7 @@ export default function ConsultationStepperV2({
                         onClose?.();
                         navigate(`/billing?invoice=${completionInvoicePublicId}`);
                       }}>
-                      <Icon.Download s={14} /> Ver factura
+                      <Icon.Download s={14} /> Ir a Cobros
                     </button>
                     <button className="btn btn-secondary btn-md" onClick={() => onClose?.()}>
                       Cerrar
@@ -1039,7 +1019,7 @@ export default function ConsultationStepperV2({
                   onClick={() => handleSave(step)}
                   disabled={saving}
                 >
-                  {step === 4 ? 'Finalizar Consulta' : 'Siguiente'} <Icon.ChevronRight s={16} />
+                  {step === 3 ? 'Finalizar y enviar a Cobros' : 'Siguiente'} <Icon.ChevronRight s={16} />
                 </button>
               </div>
             </>
@@ -1087,6 +1067,7 @@ export default function ConsultationStepperV2({
                     type="number"
                     className={`${styles.vitalValue} ${formErrors[v.f] ? styles.fieldError : ''}`}
                     value={draft[v.f]}
+                    disabled={closed}
                     onChange={e => {
                       setDraft(d => ({ ...d, [v.f]: e.target.value }));
                       if (formErrors[v.f]) setFormErrors(prev => ({ ...prev, [v.f]: undefined }));
