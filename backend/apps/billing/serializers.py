@@ -190,6 +190,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
     medical_record_public_id = serializers.UUIDField(source='medical_record.public_id', read_only=True, allow_null=True)
     created_by_name = serializers.SerializerMethodField()
     prescription_suggestions = serializers.SerializerMethodField()
+    # ADR p27: ledger de pagos. amount_paid = Σ(Payment.amount); remaining_balance
+    # = total − amount_paid (contrato §8.1). Decimals como string (sin float drift).
+    amount_paid = serializers.SerializerMethodField()
+    remaining_balance = serializers.SerializerMethodField()
 
     class Meta:
         model = Invoice
@@ -201,6 +205,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'pet', 'pet_public_id', 'pet_name',
             'status', 'payment_method', 'tax_rate',
             'subtotal', 'tax_amount', 'total',
+            'amount_paid', 'remaining_balance',
             'notes', 'created_by', 'created_by_name',
             'paid_at', 'created_at', 'updated_at',
             'items', 'prescription_suggestions',
@@ -209,9 +214,24 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'id', 'public_id', 'pet_public_id', 'owner_public_id',
             'appointment_public_id', 'medical_record_public_id',
             'subtotal', 'tax_amount', 'total',
+            'amount_paid', 'remaining_balance',
             'created_by', 'paid_at', 'created_at', 'updated_at',
             'tax_rate',
         ]
+
+    def _paid_amount(self, obj):
+        # Prefiere la anotación `_paid_sum` (list view) para evitar N+1; si no
+        # está disponible (detail / post-save), cae a la propiedad (1 query).
+        paid = getattr(obj, '_paid_sum', None)
+        if paid is None:
+            return obj.total - obj.remaining_balance
+        return paid
+
+    def get_amount_paid(self, obj):
+        return str(self._paid_amount(obj))
+
+    def get_remaining_balance(self, obj):
+        return str(obj.total - self._paid_amount(obj))
 
     def get_created_by_name(self, obj):
         if obj.created_by:
@@ -245,17 +265,47 @@ class InvoiceSerializer(serializers.ModelSerializer):
         return _validate_same_org(mr, self._get_request(), 'medical_record', 'InvoiceSerializer')
 
     def validate(self, data):
-        # Resolver owner y pet considerando partial PATCH: los campos ausentes
-        # heredan del instance actual. CREATE no tiene instance → fallback None.
-        # Fix 4 (ADR p14): permite PATCH minimalistas tipo {"notes": "x"} sin
-        # forzar al cliente a re-enviar pet/owner en cada PATCH.
+        # Resolver owner/pet/invoice_type considerando partial PATCH: los campos
+        # ausentes heredan del instance actual. CREATE no tiene instance →
+        # fallback None / default del modelo. Fix 4 (ADR p14): permite PATCH
+        # minimalistas tipo {"notes": "x"} sin re-enviar pet/owner.
         owner = data.get('owner', getattr(self.instance, 'owner', None))
         pet = data.get('pet', getattr(self.instance, 'pet', None))
+        invoice_type = data.get(
+            'invoice_type',
+            getattr(self.instance, 'invoice_type', None) or 'consultation',
+        )
+
+        # Owner genérico fuerza venta directa (ADR generic-client-direct-sale).
         if owner and getattr(owner, 'is_generic', False):
-            # Generic owner: force direct_sale, pet is optional
             data['invoice_type'] = 'direct_sale'
-        elif pet is None and not (owner and getattr(owner, 'is_generic', False)):
-            raise serializers.ValidationError({'pet': 'La mascota es requerida para ventas con cliente registrado.'})
+            invoice_type = 'direct_sale'
+
+        # Requisito de pet por tipo (ADR p25):
+        #   - consultation: pet obligatorio (el acto clínico requiere paciente).
+        #   - direct_sale:  pet OPCIONAL, con o sin cliente registrado.
+        # El mensaje conserva la subcadena "mascota es requerida" que asertan
+        # los tests de regresión.
+        if invoice_type == 'consultation' and pet is None:
+            raise serializers.ValidationError(
+                {'pet': 'La mascota es requerida para una factura de consulta.'}
+            )
+
+        # Guard de integridad (ADR p25): cuando el payload SETEA una mascota,
+        # ésta debe pertenecer al propietario resuelto. NO es constraint de
+        # modelo — mismo patrón que el owner_id guard de appointments. Acotado a
+        # `'pet' in data` para no re-validar PATCH que solo tocan owner (no
+        # rompe `test_patch_owner_same_org_preserves_existing_pet`).
+        if 'pet' in data and pet is not None and owner is not None:
+            if getattr(pet, 'is_generic', False) and not getattr(owner, 'is_generic', False):
+                raise serializers.ValidationError(
+                    {'pet': 'No se puede asignar el paciente genérico a un cliente registrado.'}
+                )
+            if pet.owner_id != owner.pk:
+                raise serializers.ValidationError(
+                    {'pet': 'La mascota no pertenece al propietario seleccionado.'}
+                )
+
         return data
 
     def get_prescription_suggestions(self, obj):

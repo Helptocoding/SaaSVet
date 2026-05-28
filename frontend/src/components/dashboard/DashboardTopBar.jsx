@@ -79,9 +79,6 @@ export default function DashboardTopBar({ summary, revenueToday, revenueSpark, r
     <div className="dtop-wrap">
       <div className="phead dtop-phead">
         <div>
-          <span className="ptag">
-            <span /> Operación · En vivo
-          </span>
           <h1 className="ptitle">{getGreeting()}, {firstName}</h1>
           <p className="psub">{dateLabel} · {user?.organization_name || "Sistema"}</p>
         </div>

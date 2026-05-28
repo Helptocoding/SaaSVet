@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiError } from "../../utils/apiError";
 import { useConfirm } from "../../components/ConfirmDialog";
+import api from "../../api/client";
 import {
   getMedicalRecords, createMedicalRecord, getMedicalRecord,
   deleteMedicalRecord, closeMedicalRecord,
@@ -11,6 +12,7 @@ import { createPrescription, downloadPrescriptionPDF } from "../../api/prescript
 import { extractFilename, triggerDownload } from "../../utils/downloadBlob";
 import { getPets } from "../../api/pets";
 import { getProducts } from "../../api/inventory";
+import { updateAppointmentStatus } from "../../api/appointments";
 import { useAuth } from "../../auth/authContext";
 import { Icon } from "../../components/icons";
 import { toast } from "sonner";
@@ -89,6 +91,16 @@ const MedicalRecords = () => {
       setSelectedPet(petParam);
       if (appointmentParam) {
         setShowStepper(true);
+        // Auto-sanación: si el appointment no está en in_progress, transicionarlo
+        if (token) {
+          api.get(`appointments/${appointmentParam}/`).then((r) => {
+            if (r.data && r.data.status !== "in_progress" && r.data.status !== "done") {
+              updateAppointmentStatus(token, appointmentParam, "in_progress")
+                .then(() => window.dispatchEvent(new Event("dashboard:refresh")))
+                .catch(() => {});
+            }
+          }).catch(() => {});
+        }
       }
     }
     if (recordParam && token) {

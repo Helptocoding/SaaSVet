@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "../../components/icons";
 import { toast } from "sonner";
 import { apiError } from "../../utils/apiError";
@@ -71,6 +72,7 @@ export default function ConsultationStepperV2({
   initialRecord = null,
 }) {
   const { token, user } = useAuth();
+  const navigate = useNavigate();
   const isEditing = initialRecord && initialRecord.id;
 
   // Referencia centralizada para IDs (evita desincronización)
@@ -138,6 +140,8 @@ export default function ConsultationStepperV2({
   const [addedProducts, setAddedProducts] = useState([]);
   const [productLine, setProductLine] = useState({ product: null, quantity: "1" });
   const [saving, setSaving] = useState(false);
+  const [closed, setClosed] = useState(false);
+  const [completionInvoicePublicId, setCompletionInvoicePublicId] = useState(null);
   const [forceWeight, setForceWeight] = useState(false);
 
   // Servicios de consulta
@@ -383,7 +387,18 @@ export default function ConsultationStepperV2({
       await closeMedicalRecord(token, targetId);
       toast.success("Consulta finalizada exitosamente");
       onComplete?.(recordRef.id);
-      onClose?.();
+
+      // Buscar factura vinculada
+      try {
+        const updated = await getMedicalRecord(token, targetId);
+        if (updated.invoice_public_id) {
+          setCompletionInvoicePublicId(updated.invoice_public_id);
+        }
+      } catch {
+        // Silencioso — la factura se puede buscar después en billing
+      }
+
+      setClosed(true);
     } catch (err) {
       toast.error(apiError(err, "Error al finalizar"));
     } finally {
@@ -862,7 +877,7 @@ export default function ConsultationStepperV2({
             </div>
           )}
 
-          {step === 4 && (
+          {step === 4 && !closed && (
             <div className="fade-in">
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Resumen y Facturación</h2>
@@ -943,22 +958,92 @@ export default function ConsultationStepperV2({
               </div>
             </div>
           )}
+
+          {closed && (
+            <div className="fade-in" style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: "40px", marginBottom: "16px" }}>
+                <Icon.Check s={48} style={{ color: "#22c55e" }} />
+              </div>
+              <h2 style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", marginBottom: "8px" }}>
+                Consulta cerrada
+              </h2>
+              {completionInvoicePublicId && summary?.totals ? (
+                <>
+                  <p style={{ fontSize: "14px", color: "var(--c-text-2)", marginBottom: "24px" }}>
+                    Se generó un borrador de factura por{" "}
+                    <strong>${Number(summary.totals.total).toFixed(2)}</strong>
+                  </p>
+                  <div className={styles.resumenCard} style={{ maxWidth: "380px", margin: "0 auto 24px", textAlign: "left" }}>
+                    {addedProducts.map((p, i) => (
+                      <div key={`cp-${i}`} className={styles.resumenRow} style={{ fontSize: "12px" }}>
+                        <span style={{ color: "var(--c-text-2)" }}>{p.product_name} — {p.quantity}x</span>
+                        <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {addedServices.map((s, i) => (
+                      <div key={`cs-${i}`} className={styles.resumenRow} style={{ fontSize: "12px" }}>
+                        <span style={{ color: "var(--c-text-2)" }}>{s.name} — {s.quantity}x</span>
+                        <span>${(Number(s.price) * Number(s.quantity)).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`} style={{ borderTop: "1px solid var(--c-border)", marginTop: "8px", paddingTop: "8px" }}>
+                      <span>Total</span>
+                      <span>${Number(summary.totals.total).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                    <button
+                      className="btn btn-primary btn-md"
+                      style={{ background: "#059669", borderColor: "#059669", color: "#fff" }}
+                      onClick={() => {
+                        onClose?.();
+                        navigate(`/billing?invoice=${completionInvoicePublicId}`);
+                      }}>
+                      <Icon.Download s={14} /> Ver factura
+                    </button>
+                    <button className="btn btn-secondary btn-md" onClick={() => onClose?.()}>
+                      Cerrar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: "14px", color: "var(--c-text-2)", marginBottom: "24px" }}>
+                    Se ha cerrado la consulta correctamente.
+                  </p>
+                  <button className="btn btn-secondary btn-md" onClick={() => onClose?.()}>
+                    Cerrar
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
-          <button className="btn btn-secondary btn-md" disabled={step === 1} onClick={() => setStep(s => s - 1)}>
-            <Icon.ChevronLeft s={16} /> Anterior
-          </button>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              className="btn btn-primary btn-md"
-              style={{ background: '#1a4434' }}
-              onClick={() => handleSave(step)}
-              disabled={saving}
-            >
-              {step === 4 ? 'Finalizar Consulta' : 'Siguiente'} <Icon.ChevronRight s={16} />
-            </button>
-          </div>
+          {closed ? (
+            <div style={{ display: "flex", gap: "12px", width: "100%", justifyContent: "center" }}>
+              <button className="btn btn-secondary btn-md" onClick={() => onClose?.()}>
+                Cerrar
+              </button>
+            </div>
+          ) : (
+            <>
+              <button className="btn btn-secondary btn-md" disabled={step === 1} onClick={() => setStep(s => s - 1)}>
+                <Icon.ChevronLeft s={16} /> Anterior
+              </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  className="btn btn-primary btn-md"
+                  style={{ background: '#1a4434' }}
+                  onClick={() => handleSave(step)}
+                  disabled={saving}
+                >
+                  {step === 4 ? 'Finalizar Consulta' : 'Siguiente'} <Icon.ChevronRight s={16} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

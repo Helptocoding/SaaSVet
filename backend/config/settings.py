@@ -298,6 +298,9 @@ CORS_ALLOW_HEADERS = [
     # password). Sin esto, el preflight CORS no permite el header y
     # el POST nunca llega a salir del browser.
     'x-request-id',
+    # ADR p27: clave de idempotencia que el frontend inyecta en cobros/pagos
+    # para que un reintento de red no doble-registre un Payment.
+    'x-idempotency-key',
 ]
 
 # Fail-fast solo en producción — previene deploys silenciosos con CORS vacío

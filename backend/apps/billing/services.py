@@ -10,10 +10,12 @@ logger = logging.getLogger(__name__)
 # Logger dedicado para que monitoring stack consuma estos eventos sin ruido.
 _analytics_events = logging.getLogger('analytics.events')
 
+from decimal import Decimal
+
 from apps.inventory.services import apply_stock_movement
 from apps.inventory.models import Presentation
 from apps.billing.money import money, discount_amount, line_subtotal
-from .models import Invoice, InvoiceAuditLog, InvoiceItem
+from .models import Invoice, InvoiceAuditLog, InvoiceItem, Payment
 
 
 VALID_PAYMENT_METHODS = {'cash', 'card', 'transfer', 'other'}
@@ -179,25 +181,77 @@ def _confirm_locked_invoice(invoice, user):
                           'financial_cash', 'confirm_invoice')
 
 
-def _pay_locked_invoice(invoice, user, payment_method):
+# ---------------------------------------------------------------------------
+# Payment ledger (ADR p27 / docs/financial-event-model-contract.md)
+# ---------------------------------------------------------------------------
+
+def _validate_payment_lines(raw_lines):
     """
-    Marca una factura YA lockeada como pagada.
-    Authoritative writer del anchor `paid_at`.
+    Normaliza y valida líneas de pago → [{method, amount (Decimal>0), reference}].
+    Levanta ValidationError early (antes de tocar stock o estado).
     """
-    if payment_method not in VALID_PAYMENT_METHODS:
-        raise ValidationError(
-            f'Método de pago inválido. Opciones: {sorted(VALID_PAYMENT_METHODS)}'
-        )
-    if invoice.status == 'paid':
-        raise ValidationError('La factura ya fue pagada.')
-    if invoice.status != 'confirmed':
-        raise ValidationError(
-            'Solo se pueden pagar facturas confirmadas. Confirma la factura primero.'
-        )
+    if not raw_lines:
+        raise ValidationError("Se requiere al menos una línea de pago.")
+    out = []
+    for raw in raw_lines:
+        method = raw.get('method')
+        if method not in VALID_PAYMENT_METHODS:
+            raise ValidationError(
+                f'Método de pago inválido. Opciones: {sorted(VALID_PAYMENT_METHODS)}'
+            )
+        try:
+            amount = money(Decimal(str(raw.get('amount'))))
+        except Exception:
+            raise ValidationError("Monto de pago inválido.")
+        if amount <= 0:
+            raise ValidationError("El monto de cada pago debe ser mayor a cero.")
+        out.append({
+            'method': method,
+            'amount': amount,
+            'reference': (raw.get('reference') or '')[:100],
+        })
+    return out
+
+
+def _legacy_single_line(payment_method, amount):
+    """Compat (ADR p27): traduce un `payment_method` único a una sola línea."""
+    if payment_method is None:
+        raise ValidationError("Se requiere payment_method o payment_lines.")
+    return [{'method': payment_method, 'amount': amount}]
+
+
+def _is_payment_replay(invoice, idempotency_key):
+    """Idempotencia (contrato §9): True si esta operación ya registró pagos."""
+    if not idempotency_key:
+        return False
+    return Payment.all_objects.filter(
+        organization_id=invoice.organization_id,
+        idempotency_key=f"{idempotency_key}:0",
+    ).exists()
+
+
+def _log_idempotent_dedupe(invoice, idempotency_key):
+    logger.info("IDEMPOTENT_PAYMENT_DEDUPED", extra={
+        'event': 'IDEMPOTENT_PAYMENT_DEDUPED',
+        'invoice_id': invoice.pk,
+        'organization_id': invoice.organization_id,
+        'idempotency_key': idempotency_key,
+    })
+
+
+def _mark_invoice_paid(invoice, user, now):
+    """
+    Writer del anchor `paid_at`. Transiciona confirmed → paid cuando la cobranza
+    queda saldada (remaining_balance == 0). `payment_method` legacy/derivado:
+    método único si todos los pagos coinciden, si no NULL (deprecado, DD-009).
+    """
     previous_status = invoice.status
+    methods = set(
+        Payment.all_objects.filter(invoice=invoice).values_list('method', flat=True)
+    )
     invoice.status = 'paid'
-    invoice.payment_method = payment_method
-    invoice.paid_at = timezone.now()
+    invoice.payment_method = next(iter(methods)) if len(methods) == 1 else None
+    invoice.paid_at = now
     invoice.paid_at_source = 'service'
     invoice.save(update_fields=[
         'status', 'payment_method', 'paid_at', 'paid_at_source', 'updated_at',
@@ -205,6 +259,50 @@ def _pay_locked_invoice(invoice, user, payment_method):
     _log_status_change(invoice, previous=previous_status, new='paid', user=user)
     _warn_if_late_arrival(invoice, 'paid_at', invoice.paid_at,
                           'financial_cash', 'pay_invoice')
+
+
+def _pay_locked_invoice(invoice, user, lines, *, require_full, idempotency_key=None):
+    """
+    Registra Payment(s) append-only sobre una invoice YA lockeada y confirmada;
+    si la cobranza queda saldada la transiciona a `paid` (writer de `paid_at`).
+
+    `lines` ya viene normalizado por _validate_payment_lines. La idempotencia
+    (replay) y la validación de estado las maneja el caller público.
+
+    require_full=True  (venta directa / pago de un paso): exige cubrir el saldo
+                       exacto.
+    require_full=False (consulta): permite pago parcial → queda `confirmed`.
+
+    Ver docs/financial-event-model-contract.md §8 (remaining_balance, paid_at).
+    """
+    total_in = sum((l['amount'] for l in lines), Decimal('0.00'))
+    remaining = invoice.remaining_balance
+    if total_in > remaining:
+        raise ValidationError(
+            f"El pago ({total_in}) excede el saldo pendiente ({remaining})."
+        )
+    if require_full and total_in != remaining:
+        raise ValidationError(
+            f"El pago debe cubrir el saldo exacto de la venta ({remaining})."
+        )
+
+    now = timezone.now()
+    for i, line in enumerate(lines):
+        key = f"{idempotency_key}:{i}" if idempotency_key else None
+        Payment(
+            organization=invoice.organization,
+            invoice=invoice,
+            amount=line['amount'],
+            method=line['method'],
+            occurred_at=now,
+            actor=user,
+            provenance='service',
+            reference=line.get('reference', ''),
+            idempotency_key=key,
+        ).save()
+
+    if invoice.remaining_balance <= Decimal('0.00'):
+        _mark_invoice_paid(invoice, user, now)
     return invoice
 
 
@@ -231,6 +329,14 @@ def cancel_invoice(invoice, user, notes=''):
         raise ValidationError("Las facturas pagadas no se pueden cancelar directamente.")
     if invoice.status == 'cancelled':
         raise ValidationError("La factura ya está cancelada.")
+    # ADR p27: una factura confirmed con pagos parciales registrados no se
+    # cancela en seco (dejaría dinero sin devolver). La devolución va por nota
+    # de crédito (ADR p29). Las facturas paid ya están bloqueadas arriba.
+    if Payment.all_objects.filter(invoice=invoice).exists():
+        raise ValidationError(
+            "No se puede cancelar una factura con pagos registrados. "
+            "Emite una devolución (nota de crédito)."
+        )
 
     previous_status = invoice.status
 
@@ -273,21 +379,39 @@ def cancel_invoice(invoice, user, notes=''):
 
 
 @transaction.atomic
-def pay_invoice(invoice, user, payment_method):
+def pay_invoice(invoice, user, payment_method=None, *, payment_lines=None, idempotency_key=None):
     """
-    Marca una factura como pagada. Authoritative writer del anchor `paid_at`.
+    Registra el pago de una factura confirmada. Authoritative writer del anchor
+    `paid_at` (solo cuando remaining_balance llega a 0).
 
-    Llamado por billing/views.py::pay_invoice y por cualquier flujo futuro
-    (webhook de pasarela de pagos, conciliación batch, mgmt commands).
-    No editar `paid_at` desde otro lugar — el contrato analítico depende de
-    que este sea el único writer.
+    Soporta pago único (legacy `payment_method`), split y parcial (`payment_lines`
+    = [{'method','amount'[,'reference']}, ...]). Idempotente vía `idempotency_key`
+    (contrato §9). Un pago parcial deja la factura en `confirmed`.
+
+    Llamado por billing/views.py::pay_invoice y por flujos futuros. No editar
+    `paid_at` desde otro lugar — el contrato analítico depende de un único writer.
+    Ver docs/financial-event-model-contract.md §8.
     """
-    if payment_method not in VALID_PAYMENT_METHODS:
-        raise ValidationError(
-            f'Método de pago inválido. Opciones: {sorted(VALID_PAYMENT_METHODS)}'
-        )
     invoice = Invoice.objects.for_organization(invoice.organization).select_for_update().get(pk=invoice.pk)
-    return _pay_locked_invoice(invoice, user, payment_method)
+
+    if _is_payment_replay(invoice, idempotency_key):
+        _log_idempotent_dedupe(invoice, idempotency_key)
+        return invoice
+
+    if invoice.status == 'paid':
+        raise ValidationError('La factura ya fue pagada.')
+    if invoice.status != 'confirmed':
+        raise ValidationError(
+            'Solo se pueden pagar facturas confirmadas. Confirma la factura primero.'
+        )
+
+    raw = payment_lines if payment_lines else _legacy_single_line(
+        payment_method, invoice.remaining_balance
+    )
+    lines = _validate_payment_lines(raw)
+    return _pay_locked_invoice(
+        invoice, user, lines, require_full=False, idempotency_key=idempotency_key
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -295,7 +419,7 @@ def pay_invoice(invoice, user, payment_method):
 # ---------------------------------------------------------------------------
 
 @transaction.atomic
-def pay_direct_sale(invoice, user, payment_method):
+def pay_direct_sale(invoice, user, payment_method=None, *, payment_lines=None, idempotency_key=None):
     """
     Paga una venta directa confirmando y cobrando en una sola transacción.
 
@@ -309,13 +433,16 @@ def pay_direct_sale(invoice, user, payment_method):
     Ver docs/dashboard-metrics-contract.md §3.1.2 (revenue_accrual).
 
     Un solo select_for_update() — sin re-locks internos.
-    """
-    if payment_method not in VALID_PAYMENT_METHODS:
-        raise ValidationError(
-            f'Método de pago inválido. Opciones: {sorted(VALID_PAYMENT_METHODS)}'
-        )
 
+    Soporta pago único (legacy `payment_method`) o split (`payment_lines`). El
+    pago DEBE cubrir el total exacto (sin parciales en venta directa).
+    Idempotente vía `idempotency_key`. Ver financial-event-model-contract.md §8.
+    """
     invoice = Invoice.objects.for_organization(invoice.organization).select_for_update().get(pk=invoice.pk)
+
+    if _is_payment_replay(invoice, idempotency_key):
+        _log_idempotent_dedupe(invoice, idempotency_key)
+        return invoice
 
     if invoice.invoice_type != 'direct_sale':
         raise ValidationError(
@@ -328,12 +455,18 @@ def pay_direct_sale(invoice, user, payment_method):
             'Solo se pueden cobrar directamente facturas en borrador.'
         )
 
-    # TODO (v2): direct_sale con liquidación instantánea eventualmente necesitará
-    # un mecanismo de refund/void distinto de cancel_invoice(). Este último solo
-    # aplica a confirmed (no a paid). Ver ADR pendiente sobre refunds.
+    # Validar método/monto early (antes de tocar stock en _confirm). El monto
+    # del legacy single line se fija al total (= remaining en un draft sin pagos).
+    raw = payment_lines if payment_lines else _legacy_single_line(
+        payment_method, invoice.remaining_balance
+    )
+    lines = _validate_payment_lines(raw)
 
+    # Refunds (devolución de venta directa pagada) → ADR p29, no cancel_invoice.
     _confirm_locked_invoice(invoice, user)
-    return _pay_locked_invoice(invoice, user, payment_method)
+    return _pay_locked_invoice(
+        invoice, user, lines, require_full=True, idempotency_key=idempotency_key
+    )
 
 
 # ---------------------------------------------------------------------------

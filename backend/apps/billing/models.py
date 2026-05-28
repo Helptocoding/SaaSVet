@@ -165,6 +165,18 @@ class Invoice(PublicIdMixin, OrganizationalModel):
             updated_at=timezone.now(),
         )
 
+    @property
+    def remaining_balance(self):
+        """
+        Saldo de cobranza (financial-event-model-contract §8.1):
+            remaining_balance = total − Σ(Payment.amount)
+        Invariante financiero real: status='paid' ⟺ remaining_balance == 0.
+        Los refunds NO entran aquí (§8.2) — operan post-liquidación vía nota de
+        crédito y no reabren la cobranza. Propiedad computada en v1 (DD-001).
+        """
+        paid = self.payments.aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
+        return self.total - paid
+
     class Meta:
         ordering = ['-created_at']
         indexes = [
@@ -344,3 +356,76 @@ class InvoiceAuditLog(models.Model):
 
     class Meta:
         ordering = ['created_at']
+
+
+class Payment(OrganizationalModel):
+    """
+    Evento financiero append-only: dinero recibido del cliente (signo +inflow).
+
+    Contrato: docs/financial-event-model-contract.md
+      §2 campos canónicos · §3 invariantes · §5 signo · §7 fully_allocated (v1).
+    ADR p27. Modelo INTERNO (PK-only): NO expone public_id (ADR p18/p24).
+
+    Append-only: sin PATCH/DELETE. `amount` y `occurred_at` inmutables tras
+    la creación. Las correcciones son contra-asientos (RefundPayment /
+    RefundReversal, ADR p29), nunca mutaciones.
+
+    NOTA: el campo `cash_session` (FK a cash.CashSession) lo agrega ADR p28.
+    """
+    METHOD_CHOICES = (
+        ('cash', 'Efectivo'),
+        ('card', 'Tarjeta'),
+        ('transfer', 'Transferencia'),
+        ('other', 'Otro'),
+    )
+    PROVENANCE_CHOICES = (
+        ('service', 'Service writer'),
+        ('legacy', 'Backfilled desde Invoice.payment_method'),
+    )
+
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.PROTECT,
+        related_name='payments',
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    method = models.CharField(max_length=20, choices=METHOD_CHOICES)
+    # Momento financiero real — NO created_at/paid_at. En backfill = Invoice.paid_at.
+    occurred_at = models.DateTimeField()
+    # Responsable del movimiento — server-side (request.user). SET_NULL: los
+    # usuarios se desactivan, no se borran. NULL en backfill legacy.
+    actor = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payments_made',
+    )
+    reference = models.CharField(max_length=100, blank=True)
+    idempotency_key = models.CharField(max_length=64, null=True, blank=True)
+    provenance = models.CharField(
+        max_length=20, choices=PROVENANCE_CHOICES, default='service',
+    )
+    # organization, created_at, updated_at, created_by, updated_by, is_active
+    # heredados de OrganizationalModel.
+
+    def __str__(self):
+        return f"Payment #{self.pk} — {self.amount} ({self.method})"
+
+    class Meta:
+        ordering = ['occurred_at', 'id']
+        indexes = [
+            models.Index(fields=['organization', 'invoice']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0),
+                name='payment_amount_positive',
+            ),
+            # Idempotencia (contrato §9): único por org cuando hay key.
+            models.UniqueConstraint(
+                fields=['organization', 'idempotency_key'],
+                condition=models.Q(idempotency_key__isnull=False),
+                name='payment_unique_idempotency_key_per_org',
+            ),
+        ]

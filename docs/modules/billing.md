@@ -91,6 +91,18 @@ Para ventas a personas sin mascota registrada se usa el propietario generico.
 
 Ver ADR `2026-04-28-generic-client-direct-sale.md`.
 
+**Cliente real en venta directa (ADR p25):** desde p25, una `direct_sale` puede
+asociarse a un `owner` registrado y, opcionalmente, a un `pet` de ese owner. El
+genérico sigue siendo el default (venta rápida anónima). Reglas:
+- `direct_sale`: `pet` **opcional** (con owner real o genérico).
+- `consultation`: `pet` **obligatorio** (sin cambio).
+- Si se envía `pet`, debe pertenecer al `owner` (guard de integridad, solo cuando
+  `pet` está en el payload — no rompe PATCH que solo cambian owner).
+- El paciente genérico no puede asignarse a un owner real.
+- Sin cambio de schema ni migración (`Invoice.pet` ya era nullable). Sin impacto
+  analytics. El frontend manda `invoice_type='direct_sale'` explícito al elegir
+  owner real (si no, el default `consultation` exigiría pet).
+
 Flujo en frontend:
 1. Boton "+ Cobro" abre el modal de venta directa (tambien via atajo **F11** o **Shift+F11**)
 2. El propietario generico se asigna automaticamente (no se muestra al usuario)
@@ -159,6 +171,50 @@ pay_direct_sale(invoice, user, pm)       # @transaction.atomic + select_for_upda
 
 Esto reduce 3 locks (wrapper confirm + wrapper pay + cada uno internamente)
 a 1 solo lock, eliminando riesgo de deadlocks y queries innecesarias.
+
+## Ledger de pagos (ADR p27)
+
+Desde ADR p27, los pagos viven en un modelo append-only `Payment` (interno,
+PK-only). Una factura tiene 0..N pagos. Contrato completo de campos/invariantes:
+`docs/financial-event-model-contract.md`.
+
+Semántica (contrato §8):
+- `remaining_balance = total − Σ(Payment.amount)` (propiedad computada).
+- `Invoice.status='paid' ⟺ remaining_balance == 0`. El estado es **proyección**
+  del ledger, no un flag arbitrario.
+- `paid_at` se setea cuando `remaining_balance` llega a 0 (writer único en
+  `services.py`, sin cambio respecto a ADR p9).
+- Los refunds **no** entran en `remaining_balance` (operan post-pago vía nota de
+  crédito, ADR p29 — no implementado aún).
+
+Pagos split y parciales:
+- `pay_invoice` / `pay_direct_sale` aceptan `payment_lines=[{method, amount[, reference]}]`
+  **o** el legacy `payment_method` (una sola línea por el saldo).
+- **Venta directa** (`direct_sale`): el pago debe cubrir el **total exacto**
+  (sin parciales). Split permitido (efectivo+tarjeta en una operación).
+- **Consulta** (`consultation`): permite **pago parcial** — la factura queda en
+  `confirmed` hasta que `remaining_balance` llega a 0; ahí pasa a `paid`.
+- `invoice.payment_method` queda como legacy/derivado: método único si todos los
+  pagos coinciden, `NULL` si es mixto. Drop futuro = `DD-009`.
+
+Idempotencia (contrato §9):
+- Header `X-Idempotency-Key` (en `CORS_ALLOW_HEADERS`). El service dedupea por
+  `(organization, idempotency_key)`; un reintento devuelve el mismo resultado sin
+  doble-registrar. Log `IDEMPOTENT_PAYMENT_DEDUPED`.
+
+Cancelación con pagos:
+- `cancel_invoice` **rechaza** una factura con pagos registrados (dejaría dinero
+  sin devolver). La devolución va por nota de crédito (ADR p29). Las facturas
+  `paid` siguen bloqueadas para cancelación directa.
+
+Enforcement:
+- `python manage.py audit_payment_ledger_integrity [--org N] [--verbose] [--json]`
+  (exit 0/1/2): asserta `paid ⇒ remaining==0`, `confirmed ⇒ remaining>0`,
+  `draft|cancelled ⇒ sin pagos`. Hermano de `audit_anchor_integrity` /
+  `audit_stock_integrity`. Wireable a cron.
+
+Migración: `0019_payment` + backfill legacy (1 Payment `legacy` por factura `paid`
+con `total>0`, `actor=NULL`, `occurred_at=paid_at`).
 
 ## Calculo de totales
 
@@ -327,10 +383,14 @@ pet = data.get('pet', getattr(self.instance, 'pet', None))
 
 Antes de Día 3, PATCH minimalistas como `{"notes": "x"}` retornaban 400 "La mascota es requerida" aunque la invoice tuviera `pet` cargado.
 
-**Comportamiento preservado:**
-- CREATE sin `pet` y con `owner` no-generic → sigue siendo 400.
+**Comportamiento preservado / actualizado (ADR p25):**
+- CREATE `consultation` sin `pet` → **400** (el acto clínico exige paciente).
+- CREATE `direct_sale` sin `pet` → **201** (ADR p25; mascota opcional). Antes era
+  400 para owner no-genérico.
 - CREATE con `owner` generic → sigue forzando `direct_sale`.
-- PATCH `{"pet": null}` explícito → 400 (presencia explícita del valor).
+- CREATE `direct_sale` con `pet` cuyo owner ≠ owner de la factura → **400** (guard
+  de integridad p25, solo cuando `pet` está en el payload).
+- PATCH `{"pet": null}` explícito sobre `consultation` → 400.
 - PATCH `{"notes": "x"}` sobre invoice con pet → 200 (Fix 4).
 
 ## Validacion de stock en serializer

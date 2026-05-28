@@ -310,6 +310,64 @@ class InvoiceSerializerCrossTenantTests(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_201_CREATED, msg=r.data)
         self.assertEqual(r.data['invoice_type'], 'direct_sale')
 
+    # --- ADR p25: owner/pet real en venta directa -----------------------------
+
+    def test_direct_sale_real_owner_without_pet_succeeds(self):
+        # p25: venta directa a cliente registrado SIN mascota específica.
+        r = self.client.post('/api/billing/invoices/', {
+            'owner': self.owner_a.pk,
+            'invoice_type': 'direct_sale',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, msg=r.data)
+        self.assertEqual(r.data['invoice_type'], 'direct_sale')
+        self.assertIsNone(r.data['pet'])
+        self.assertEqual(r.data['owner'], self.owner_a.pk)
+
+    def test_direct_sale_real_owner_with_matching_pet_succeeds(self):
+        r = self.client.post('/api/billing/invoices/', {
+            'owner': self.owner_a.pk,
+            'pet': self.pet_a.pk,
+            'invoice_type': 'direct_sale',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, msg=r.data)
+        self.assertEqual(r.data['pet'], self.pet_a.pk)
+
+    def test_direct_sale_pet_of_other_owner_same_org_returns_400(self):
+        # p25 integrity guard: la mascota enviada debe pertenecer al owner.
+        other_owner = Owner.objects.create(
+            name="Otro A", phone="5551119999", organization=self.org_a
+        )
+        other_pet = Pet.objects.create(
+            name="Otra Mascota", species="dog", owner=other_owner, organization=self.org_a
+        )
+        r = self.client.post('/api/billing/invoices/', {
+            'owner': self.owner_a.pk,
+            'pet': other_pet.pk,
+            'invoice_type': 'direct_sale',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('pet', r.data['errors'])
+        self.assertIn('no pertenece al propietario', str(r.data['errors']['pet']))
+
+    def test_direct_sale_generic_pet_on_real_owner_returns_400(self):
+        # p25: no degradar — el paciente genérico no se asigna a un cliente real.
+        from apps.patients.models import Owner as _Owner, Pet as _Pet
+        generic_owner, _ = _Owner.objects.get_or_create(
+            organization=self.org_a, is_generic=True,
+            defaults={'name': 'Genérico', 'phone': '5550000000'},
+        )
+        generic_pet, _ = _Pet.objects.get_or_create(
+            organization=self.org_a, is_generic=True,
+            defaults={'name': 'Paciente Anónimo', 'owner': generic_owner, 'species': 'dog'},
+        )
+        r = self.client.post('/api/billing/invoices/', {
+            'owner': self.owner_a.pk,
+            'pet': generic_pet.pk,
+            'invoice_type': 'direct_sale',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('pet', r.data['errors'])
+
 
 class VaccineRecordMultitenancyTests(APITestCase):
 

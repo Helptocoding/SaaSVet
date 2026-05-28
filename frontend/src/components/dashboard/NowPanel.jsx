@@ -37,9 +37,6 @@ export default function NowPanel({ summary }) {
     <div className="dsp">
       <div className="dsp-head">
         <h3 className="dsp-title">Ahora</h3>
-        <span className="dsp-live">
-          <span className="dsp-live-dot" /> En vivo
-        </span>
       </div>
 
       <ul className="dsp-rows">

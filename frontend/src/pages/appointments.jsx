@@ -14,6 +14,7 @@ import SearchSelect from "../components/SearchSelect";
 import QuickPatientForm from "../components/QuickPatientForm";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import { createMedicalRecord } from "../api/medicalRecords";
 import api from "../api/client";
 
 import { apiError } from "../utils/apiError";
@@ -180,7 +181,7 @@ function localTodayStr() {
 }
 
 // ── Detail Modal ───────────────────────────────────────────────────────────────
-function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, onEdit, onNewFromAppt, navigate, canEdit, showHistory, onRefresh }) {
+function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, onAttendNow, onEdit, onNewFromAppt, navigate, canEdit, showHistory, onRefresh }) {
     const confirm = useConfirm();
     const [history,          setHistory]          = useState([]);
     const [historyOpen,      setHistoryOpen]      = useState(false);
@@ -188,6 +189,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
     const [assigningPatient, setAssigningPatient] = useState(false);
     const [newPetItem,       setNewPetItem]       = useState(null);
     const [savingAssign,     setSavingAssign]     = useState(false);
+    const [attending,        setAttending]        = useState(false);
 
     const canReschedule = appt.status === "canceled" && appt.date >= localTodayStr();
     const showNewAppt   = (appt.status === "canceled" && appt.date < localTodayStr()) || appt.status === "no_show";
@@ -356,70 +358,72 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                 </div>
                 <div className="modal-footer" style={{flexDirection:"column",gap:"8px"}}>
 
-                    {/* scheduled → confirm / start / no_show / cancel */}
-                    {appt.status === "scheduled" && canEdit && (
+                    {/* scheduled / confirmed → Atender ahora */}
+                    {(appt.status === "scheduled" || appt.status === "confirmed") && canEdit && (
                         <>
-                            <div style={{display:"flex",gap:"6px",width:"100%"}}>
-                                <button className="btn btn-info btn-md" style={{flex:1}}
-                                    onClick={()=>onEdit(appt)}>Editar</button>
-                                <button className="btn btn-purple btn-md" style={{flex:1}}
-                                    onClick={()=>onStatusChange(appt.public_id,"confirmed")}>Confirmar</button>
-                                <button className="btn btn-md" style={{flex:1,background:"#f59e0b",borderColor:"#f59e0b",color:"#fff"}}
-                                    onClick={()=>onStatusChange(appt.public_id,"in_progress")}>Iniciar</button>
-                            </div>
-                            <div style={{display:"flex",gap:"6px",width:"100%"}}>
-                                <button className="btn btn-secondary btn-md" style={{flex:1}}
-                                    onClick={async ()=>{
-                                        if(await confirm({ message:"¿Marcar como no presentado?", confirmText:"No se presentó" }))
-                                            onStatusChange(appt.public_id,"no_show");
+                            <button
+                                className="btn btn-primary btn-lg"
+                                style={{ width: "100%", background: "#f59e0b", borderColor: "#f59e0b", color: "#fff", fontWeight: 700, fontSize: "14px" }}
+                                disabled={attending}
+                                onClick={async () => {
+                                    setAttending(true);
+                                    try { await onAttendNow?.(appt); } finally { setAttending(false); }
+                                }}>
+                                ▶ Atender ahora
+                            </button>
+                            {appt.status === "scheduled" && (
+                                <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                                    <button className="btn btn-info btn-md" style={{ flex: 1 }}
+                                        onClick={() => onEdit(appt)}>Editar</button>
+                                    <button className="btn btn-purple btn-md" style={{ flex: 1 }}
+                                        onClick={() => onStatusChange(appt.public_id, "confirmed")}>Confirmar</button>
+                                </div>
+                            )}
+                            <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                                <button className="btn btn-secondary btn-md" style={{ flex: 1 }}
+                                    onClick={async () => {
+                                        if (await confirm({ message: "¿Marcar como no presentado?", confirmText: "No se presentó" }))
+                                            onStatusChange(appt.public_id, "no_show");
                                     }}>No se presentó</button>
-                                <button className="btn btn-danger btn-md" style={{flex:1}}
-                                    onClick={async ()=>{
-                                        if(await confirm({ message:"¿Cancelar esta cita?", confirmText:"Cancelar cita", dangerMode:true }))
-                                            onStatusChange(appt.public_id,"canceled");
+                                <button className="btn btn-danger btn-md" style={{ flex: 1 }}
+                                    onClick={async () => {
+                                        if (await confirm({ message: "¿Cancelar esta cita?", confirmText: "Cancelar cita", dangerMode: true }))
+                                            onStatusChange(appt.public_id, "canceled");
                                     }}>Cancelar</button>
                             </div>
                         </>
                     )}
 
-                    {/* confirmed → start / no_show / cancel */}
-                    {appt.status === "confirmed" && canEdit && (
-                        <>
-                            <button className="btn btn-md btn-md" style={{width:"100%",background:"#f59e0b",borderColor:"#f59e0b",color:"#fff"}}
-                                onClick={()=>onStatusChange(appt.public_id,"in_progress")}>Iniciar consulta</button>
-                            <div style={{display:"flex",gap:"6px",width:"100%"}}>
-                                <button className="btn btn-secondary btn-md" style={{flex:1}}
-                                    onClick={async ()=>{
-                                        if(await confirm({ message:"¿Marcar como no presentado?", confirmText:"No se presentó" }))
-                                            onStatusChange(appt.public_id,"no_show");
-                                    }}>No se presentó</button>
-                                <button className="btn btn-danger btn-md" style={{flex:1}}
-                                    onClick={async ()=>{
-                                        if(await confirm({ message:"¿Cancelar esta cita?", confirmText:"Cancelar cita", dangerMode:true }))
-                                            onStatusChange(appt.public_id,"canceled");
-                                    }}>Cancelar</button>
-                            </div>
-                        </>
-                    )}
-
-                    {/* in_progress → done / cancel */}
+                    {/* in_progress → continuar / completar / cancelar */}
                     {appt.status === "in_progress" && canEdit && (
-                        <div style={{display:"flex",gap:"6px",width:"100%"}}>
-                            <button className="btn btn-md" style={{flex:2,background:"#22c55e",borderColor:"#22c55e",color:"#fff"}}
-                                onClick={async ()=>{
-                                    const ok = await confirm({
-                                        title: "Finalizar atención",
-                                        message: "La cita se marcará como completada. Después podrás crear o abrir la consulta médica y continuar con el flujo clínico y de cobro.",
-                                        confirmText: "Completar consulta",
-                                    });
-                                    if (ok) onStatusChange(appt.public_id,"done");
-                                }}>Completar consulta</button>
-                            <button className="btn btn-danger btn-md" style={{flex:1}}
-                                onClick={async ()=>{
-                                    if(await confirm({ message:"¿Cancelar esta consulta en progreso?", confirmText:"Cancelar", dangerMode:true }))
-                                        onStatusChange(appt.public_id,"canceled");
-                                }}>Cancelar</button>
-                        </div>
+                        <>
+                            <button
+                                className="btn btn-primary btn-lg"
+                                style={{ width: "100%", background: "#f59e0b", borderColor: "#f59e0b", color: "#fff", fontWeight: 700, fontSize: "14px" }}
+                                disabled={attending}
+                                onClick={async () => {
+                                    setAttending(true);
+                                    try { await onAttendNow?.(appt); } finally { setAttending(false); }
+                                }}>
+                                Continuar consulta
+                            </button>
+                            <div style={{display:"flex",gap:"6px",width:"100%"}}>
+                                <button className="btn btn-md" style={{flex:2,background:"#22c55e",borderColor:"#22c55e",color:"#fff"}}
+                                    onClick={async ()=>{
+                                        const ok = await confirm({
+                                            title: "Finalizar atención",
+                                            message: "La cita se marcará como completada. Después podrás crear o abrir la consulta médica y continuar con el flujo clínico y de cobro.",
+                                            confirmText: "Completar consulta",
+                                        });
+                                        if (ok) onStatusChange(appt.public_id,"done");
+                                    }}>Completar consulta</button>
+                                <button className="btn btn-danger btn-md" style={{flex:1}}
+                                    onClick={async ()=>{
+                                        if(await confirm({ message:"¿Cancelar esta consulta en progreso?", confirmText:"Cancelar", dangerMode:true }))
+                                            onStatusChange(appt.public_id,"canceled");
+                                    }}>Cancelar</button>
+                            </div>
+                        </>
                     )}
 
                     {/* done → medical record / invoice */}
@@ -1053,6 +1057,75 @@ const Appointments = () => {
         });
     };
 
+    const handleAttendNow = async (appt) => {
+        let current = appt;
+        if (current.status === "in_progress") {
+            const petParam = current.pet_public_id;
+            const recordParam = current.medical_record_public_ids?.length > 0
+                ? appt.medical_record_public_ids[0] : null;
+            setViewAppt(null);
+            const qs = recordParam
+                ? `record=${recordParam}`
+                : `pet=${petParam}&appointment=${current.public_id}`;
+            navigate(`/medical-records?${qs}`);
+            return;
+        }
+
+        try {
+            const r = await api.get(`appointments/${current.public_id}/`);
+            current = r.data;
+        } catch {
+            toast.error("No se pudo verificar el estado de la cita");
+            return;
+        }
+
+        if (current.status === "in_progress") {
+            toast.info(`Esta consulta ya fue iniciada por ${current.veterinarian_name || "otro veterinario"}.`, {
+                action: { label: "Continuar", onClick: () => {
+                    const petParam = current.pet_public_id;
+                    const recId = current.medical_record_public_ids?.length > 0
+                        ? current.medical_record_public_ids[0] : null;
+                    setViewAppt(null);
+                    const qs = recId
+                        ? `record=${recId}`
+                        : `pet=${petParam}&appointment=${current.public_id}`;
+                    navigate(`/medical-records?${qs}`);
+                }},
+                cancel: { label: "Cancelar" },
+                duration: 8000,
+            });
+            return;
+        }
+
+        if (current.status !== "scheduled" && current.status !== "confirmed") {
+            toast.error("Esta cita ya no está disponible para atender");
+            return;
+        }
+
+        let record;
+        try {
+            record = await createMedicalRecord(token, {
+                pet: current.pet,
+                appointment: current.id,
+                consultation_type: "general",
+            });
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo iniciar la consulta. ¿Reintentar?"));
+            return;
+        }
+
+        try {
+            await updateAppointmentStatus(token, current.public_id, "in_progress");
+            window.dispatchEvent(new Event("dashboard:refresh"));
+            loadAppointments();
+        } catch {
+            toast.info("Hubo un problema menor al abrir la cita, pero puedes continuar normalmente.");
+        }
+
+        setViewAppt(null);
+        navigate(`/medical-records?pet=${current.pet_public_id}&appointment=${current.public_id}&record=${record.public_id}`);
+    };
+
     const refreshAppointment = (updatedAppt) => {
         setAppointments(prev => prev.map(a => a.id === updatedAppt.id ? updatedAppt : a));
         setViewAppt(updatedAppt);
@@ -1345,6 +1418,7 @@ const Appointments = () => {
                     petId={viewAppt.pet_public_id}
                     onClose={()=>setViewAppt(null)}
                     onStatusChange={handleStatusChange}
+                    onAttendNow={handleAttendNow}
                     onEdit={appt=>{ setEditingAppt(appt); setViewAppt(null); }}
                     onNewFromAppt={appt=>{ setViewAppt(null); handleNewFromAppt(appt); }}
                     navigate={navigate}

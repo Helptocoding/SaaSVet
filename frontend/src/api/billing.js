@@ -29,11 +29,24 @@ export const updateInvoice = (id, data) =>
 export const confirmInvoice = (id) =>
     api.patch(`billing/invoices/${id}/confirm/`).then(r => r.data);
 
-export const payInvoice = (id, paymentMethod) =>
-    api.patch(`billing/invoices/${id}/pay/`, { payment_method: paymentMethod }).then(r => r.data);
+// ADR p27: pago único (legacy `paymentMethod`), split o parcial (`paymentLines`
+// = [{ method, amount }]), con `idempotencyKey` opcional (anti doble-cobro en
+// reintento de red — header X-Idempotency-Key).
+const _payBody = ({ paymentLines, paymentMethod }) =>
+    paymentLines && paymentLines.length
+        ? { payment_lines: paymentLines }
+        : { payment_method: paymentMethod };
 
-export const directPayInvoice = (id, paymentMethod) =>
-    api.post(`billing/invoices/${id}/direct-pay/`, { payment_method: paymentMethod }).then(r => r.data);
+const _idemConfig = (idempotencyKey) =>
+    idempotencyKey ? { headers: { "X-Idempotency-Key": idempotencyKey } } : {};
+
+export const payInvoice = (id, { paymentLines, paymentMethod, idempotencyKey } = {}) =>
+    api.patch(`billing/invoices/${id}/pay/`, _payBody({ paymentLines, paymentMethod }), _idemConfig(idempotencyKey))
+        .then(r => r.data);
+
+export const directPayInvoice = (id, { paymentLines, paymentMethod, idempotencyKey } = {}) =>
+    api.post(`billing/invoices/${id}/direct-pay/`, _payBody({ paymentLines, paymentMethod }), _idemConfig(idempotencyKey))
+        .then(r => r.data);
 
 // Ítems de factura
 export const addInvoiceItem = (invoiceId, data) =>

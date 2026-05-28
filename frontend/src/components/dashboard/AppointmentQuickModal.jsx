@@ -1,0 +1,220 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useAuth } from "../../auth/authContext";
+import { createMedicalRecord } from "../../api/medicalRecords";
+import { updateAppointmentStatus } from "../../api/appointments";
+import { Icon } from "../icons";
+import { apiError } from "../../utils/apiError";
+import api from "../../api/client";
+
+const S_LABEL = {
+  scheduled: "Programada",
+  confirmed: "Confirmada",
+  in_progress: "En consulta",
+  done: "Completada",
+  canceled: "Cancelada",
+  no_show: "No se presentó",
+};
+
+const S_BADGE = {
+  scheduled: "badge-info",
+  confirmed: "badge-purple",
+  in_progress: "badge-warning",
+  done: "badge-success",
+  canceled: "badge-danger",
+  no_show: "badge-secondary",
+};
+
+export default function AppointmentQuickModal({ publicId, onClose }) {
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [appt, setAppt] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [attending, setAttending] = useState(false);
+
+  useEffect(() => {
+    api
+      .get(`appointments/${publicId}/`)
+      .then((r) => setAppt(r.data))
+      .catch(() => toast.error("No se pudo cargar la cita"))
+      .finally(() => setLoading(false));
+  }, [publicId]);
+
+  const handleAttendNow = async () => {
+    if (!appt) return;
+    setAttending(true);
+
+    if (appt.status === "done" || appt.status === "canceled" || appt.status === "no_show") {
+      toast.error("Esta cita ya no está disponible para atender");
+      setAttending(false);
+      return;
+    }
+
+    if (appt.status === "in_progress") {
+      const petId = appt.pet_public_id;
+      const recId =
+        appt.medical_record_public_ids?.length > 0
+          ? appt.medical_record_public_ids[0]
+          : null;
+      onClose();
+      const qs = recId
+        ? `record=${recId}`
+        : `pet=${petId}&appointment=${appt.public_id}`;
+      navigate(`/medical-records?${qs}`);
+      setAttending(false);
+      return;
+    }
+
+    try {
+      const record = await createMedicalRecord(token, {
+        pet: appt.pet,
+        appointment: appt.id,
+        consultation_type: "general",
+      });
+      try {
+        await updateAppointmentStatus(token, appt.public_id, "in_progress");
+        window.dispatchEvent(new Event("dashboard:refresh"));
+      } catch {
+        toast.info("Hubo un problema menor al abrir la cita, pero puedes continuar normalmente.");
+      }
+      onClose();
+      navigate(
+        `/medical-records?pet=${appt.pet_public_id}&appointment=${appt.public_id}&record=${record.public_id}`
+      );
+    } catch (err) {
+      toast.error(apiError(err, "No se pudo iniciar la consulta. ¿Reintentar?"));
+    } finally {
+      setAttending(false);
+    }
+  };
+
+  const handleViewDetails = () => {
+    onClose();
+    navigate(`/appointments?appointment=${publicId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal modal-sm" onClick={(e) => e.stopPropagation()} style={{ padding: "24px" }}>
+          <p style={{ color: "var(--c-text-3)", fontSize: "13px", textAlign: "center" }}>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!appt) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal modal-sm" onClick={(e) => e.stopPropagation()} style={{ padding: "24px" }}>
+          <p style={{ color: "var(--c-text-3)", fontSize: "13px", textAlign: "center" }}>Cita no encontrada.</p>
+          <button className="btn btn-secondary btn-md" style={{ marginTop: "12px", width: "100%" }} onClick={onClose}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const isActive = appt.status === "scheduled" || appt.status === "confirmed";
+  const isInProgress = appt.status === "in_progress";
+  const isTerminal = appt.status === "done" || appt.status === "canceled" || appt.status === "no_show";
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div>
+            <h3 style={{ marginBottom: "4px", fontSize: "15px" }}>
+              <Icon.Paw s={14} /> {appt.pet_name || "Paciente"}
+            </h3>
+            <span className={`badge ${S_BADGE[appt.status] || "badge-default"}`}>
+              {S_LABEL[appt.status] || appt.status}
+            </span>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            <Icon.X s={14} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <div
+            style={{
+              display: "grid",
+              gap: "8px",
+              marginBottom: isInProgress ? "12px" : "0",
+            }}
+          >
+            {[
+              ["Dueño", appt.owner_name || "—"],
+              ["Hora", appt.start_time?.slice(0, 5) || "—"],
+              ["Motivo", appt.reason || "—"],
+              ["Veterinario", appt.veterinarian_name || "—"],
+            ].map(([k, v]) => (
+              <div
+                key={k}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontSize: "12.5px",
+                  padding: "6px 0",
+                  borderBottom: "1px solid var(--c-subtle)",
+                }}
+              >
+                <span style={{ color: "var(--c-text-3)", fontWeight: 600 }}>{k}</span>
+                <span style={{ color: "var(--c-text)", fontWeight: 500 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+
+          {isInProgress && (
+            <div
+              style={{
+                padding: "10px 12px",
+                background: "#fffbeb",
+                border: "1px solid #fbbf24",
+                borderRadius: "var(--r-md)",
+                fontSize: "12.5px",
+                color: "#92400e",
+                marginBottom: "12px",
+                textAlign: "center",
+              }}
+            >
+              Esta consulta ya fue iniciada por {appt.veterinarian_name || "otro veterinario"}.
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer" style={{ flexDirection: "column", gap: "8px" }}>
+          {!isTerminal && (
+            <button
+              className="btn btn-primary btn-lg"
+              style={{
+                width: "100%",
+                background: isInProgress ? "var(--c-primary)" : "#f59e0b",
+                borderColor: isInProgress ? "var(--c-primary)" : "#f59e0b",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: "14px",
+              }}
+              disabled={attending}
+              onClick={handleAttendNow}
+            >
+              {isInProgress ? "Continuar consulta" : "▶ Atender ahora"}
+            </button>
+          )}
+
+          <button
+            className="btn btn-secondary btn-md"
+            style={{ width: "100%" }}
+            onClick={handleViewDetails}
+          >
+            Ver más detalles
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

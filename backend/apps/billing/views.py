@@ -2,8 +2,12 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError as DjValidationError
 from django.db import transaction
+from django.db.models import DecimalField, Sum, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
 
@@ -61,7 +65,14 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
         org = self.request.user.organization
         queryset = Invoice.objects.for_organization(
             org
-        ).select_related('owner', 'pet', 'appointment')
+        ).select_related('owner', 'pet', 'appointment').annotate(
+            # ADR p27: Σ pagos por factura para remaining_balance sin N+1.
+            _paid_sum=Coalesce(
+                Sum('payments__amount'),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
+        )
 
         owner_lookup = self.request.query_params.get('owner')
 
@@ -160,18 +171,25 @@ def confirm_invoice(request, pk):
 def pay_invoice(request, pk):
     from apps.billing.services import pay_invoice as pay_invoice_service
 
+    payment_lines = request.data.get('payment_lines')
     payment_method = request.data.get('payment_method')
-    if not payment_method:
+    if not payment_lines and not payment_method:
         return Response(
-            {'error': 'Se requiere el campo payment_method'},
+            {'error': 'Se requiere payment_lines o payment_method'},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    idempotency_key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
 
     invoice = resolve_public_id(
         Invoice.objects.for_organization(request.user.organization), pk
     )
     try:
-        invoice = pay_invoice_service(invoice, user=request.user, payment_method=payment_method)
+        invoice = pay_invoice_service(
+            invoice, user=request.user,
+            payment_method=payment_method,
+            payment_lines=payment_lines,
+            idempotency_key=idempotency_key,
+        )
     except DjValidationError as e:
         return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
     return Response(InvoiceSerializer(invoice).data)
@@ -307,18 +325,25 @@ def direct_pay_invoice(request, pk):
     """Paga una venta directa: confirma + cobra atómicamente (draft → paid en un paso)."""
     from apps.billing.services import pay_direct_sale
 
+    payment_lines = request.data.get('payment_lines')
     payment_method = request.data.get('payment_method')
-    if not payment_method:
+    if not payment_lines and not payment_method:
         return Response(
-            {'error': 'Se requiere el campo payment_method'},
+            {'error': 'Se requiere payment_lines o payment_method'},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    idempotency_key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
 
     invoice = resolve_public_id(
         Invoice.objects.for_organization(request.user.organization), pk
     )
     try:
-        invoice = pay_direct_sale(invoice, user=request.user, payment_method=payment_method)
+        invoice = pay_direct_sale(
+            invoice, user=request.user,
+            payment_method=payment_method,
+            payment_lines=payment_lines,
+            idempotency_key=idempotency_key,
+        )
     except DjValidationError as e:
         return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
     return Response(InvoiceSerializer(invoice).data)

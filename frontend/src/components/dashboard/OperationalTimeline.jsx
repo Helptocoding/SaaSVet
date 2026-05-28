@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import AppointmentQuickModal from "./AppointmentQuickModal";
 
 const STATUS_LABELS = {
   scheduled:   "Programada",
@@ -49,8 +49,8 @@ function nowPct() {
 }
 
 export default function OperationalTimeline({ slots }) {
-  const navigate = useNavigate();
   const [now, setNow] = useState(nowPct);
+  const [clickedApptId, setClickedApptId] = useState(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(nowPct()), 60_000);
@@ -102,7 +102,13 @@ export default function OperationalTimeline({ slots }) {
           {now != null && (
             <div className="dtl-now" style={{ left: `${now}%` }} aria-label="Hora actual">
               <span className="dtl-now-lbl">Ahora</span>
-            </div>
+      {clickedApptId && (
+        <AppointmentQuickModal
+          publicId={clickedApptId}
+          onClose={() => setClickedApptId(null)}
+        />
+      )}
+    </div>
           )}
 
           {filled.map((s, i) => {
@@ -113,7 +119,7 @@ export default function OperationalTimeline({ slots }) {
                 key={i}
                 className={`dtl-dot ${STATUS_DOT[appt.status] || ""}`}
                 style={{ left: `${pct}%` }}
-                onClick={() => navigate("/appointments")}
+                onClick={() => setClickedApptId(appt.public_id)}
                 aria-label={`${s.time} — ${appt.pet_name || "Cita"}`}
               >
                 <span className="dtl-dot-pin" />
@@ -154,7 +160,7 @@ export default function OperationalTimeline({ slots }) {
               </thead>
               <tbody>
                 {upcoming.map((s, i) => (
-                  <tr key={i} onClick={() => navigate("/appointments")} style={{ cursor: "pointer" }}>
+                    <tr key={i} onClick={() => setClickedApptId(s.appointment.public_id)} style={{ cursor: "pointer" }}>
                     <td><strong>{s.time}</strong></td>
                     <td>{s.appointment.walk_in && "● "}{s.appointment.pet_name || "Paciente"}</td>
                     <td style={{ color: "var(--c-text-3)" }}>{s.appointment.reason || "—"}</td>

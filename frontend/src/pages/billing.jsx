@@ -8,7 +8,7 @@ import {
 } from "../api/billing";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { getPresentations } from "../api/inventory";
-import { getOwners } from "../api/pets";
+import { getOwners, getPets } from "../api/pets";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
@@ -33,6 +33,76 @@ const DOT_COLOR = {
     cancelled: "var(--c-danger-text)",
 };
 
+// ADR p27: clave de idempotencia por intento de cobro (anti doble-cobro en
+// reintento de red). Se reusa mientras el modal de pago siga abierto.
+const newIdempotencyKey = () =>
+    (typeof crypto !== "undefined" && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `idem-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+// Valida líneas de pago contra el total. allowPartial=false exige cubrir exacto.
+const paymentLinesValid = (lines, total, allowPartial) => {
+    if (lines.some(l => Number(l.amount) < 0)) return false;
+    const positive = lines.map(l => Number(l.amount)).filter(n => n > 0);
+    if (positive.length === 0) return false;
+    const sum = Number(positive.reduce((a, n) => a + n, 0).toFixed(2));
+    const t = Number(Number(total).toFixed(2));
+    if (sum > t) return false;
+    if (!allowPartial && sum !== t) return false;
+    return true;
+};
+
+/* ── PaymentLinesEditor — pago único, split o parcial (ADR p27) ── */
+const PaymentLinesEditor = ({ total, allowPartial, lines, setLines, disabled }) => {
+    const sum = Number(lines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
+    const remaining = Number((Number(total) - sum).toFixed(2));
+    const setLine = (i, patch) => setLines(prev => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
+    const addLine = () => setLines(prev => [...prev, { method: "card", amount: remaining > 0 ? remaining.toFixed(2) : "" }]);
+    const removeLine = (i) => setLines(prev => prev.filter((_, idx) => idx !== i));
+    return (
+        <div>
+            {lines.map((l, i) => (
+                <div key={i} style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center" }}>
+                    <select
+                        className="input" style={{ flex: 1, height: "34px" }}
+                        value={l.method} disabled={disabled}
+                        onChange={e => setLine(i, { method: e.target.value })}
+                    >
+                        {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </select>
+                    <input
+                        type="number" className="input"
+                        style={{ width: "110px", height: "34px", textAlign: "right" }}
+                        min="0" step="0.01" placeholder="0.00" value={l.amount} disabled={disabled}
+                        onChange={e => setLine(i, { amount: e.target.value })}
+                    />
+                    <button
+                        className={s.actionBtn} onClick={() => removeLine(i)}
+                        disabled={disabled || lines.length <= 1}
+                        style={{ visibility: lines.length > 1 ? "visible" : "hidden" }}
+                    >
+                        <Icon.Trash s={13} />
+                    </button>
+                </div>
+            ))}
+            <button className="btn btn-ghost btn-xs" onClick={addLine} disabled={disabled}>+ Otro método</button>
+            <div style={{ marginTop: "10px", fontSize: "12px", display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "var(--c-text-3)" }}>
+                    Total ${Number(total).toFixed(2)} · Ingresado ${sum.toFixed(2)}
+                </span>
+                <span style={{ fontWeight: 600, color: remaining === 0 ? "var(--c-success-text)" : remaining < 0 ? "var(--c-danger-text)" : "var(--c-text-3)" }}>
+                    {remaining > 0 ? `Falta $${remaining.toFixed(2)}` : remaining < 0 ? `Excede $${Math.abs(remaining).toFixed(2)}` : (allowPartial ? "Pago completo" : "Exacto")}
+                </span>
+            </div>
+            {allowPartial && remaining > 0 && sum > 0 && (
+                <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
+                    Pago parcial: la factura quedará confirmada con saldo pendiente.
+                </p>
+            )}
+        </div>
+    );
+};
+
 const Billing = () => {
     const { token, initializing, can } = useAuth();
     const confirm = useConfirm();
@@ -52,7 +122,9 @@ const Billing = () => {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showPayModal, setShowPayModal] = useState(false);
-    const [payMethod, setPayMethod] = useState("cash");
+    const [payLines, setPayLines] = useState([{ method: "cash", amount: "" }]);
+    const [payIdemKey, setPayIdemKey] = useState(null);
+    const [paying, setPaying] = useState(false);
     const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
 
     const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
@@ -96,6 +168,16 @@ const Billing = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [can, showNewInvoiceModal, showDetailModal]);
+
+    useEffect(() => {
+        const invoiceParam = searchParams.get("invoice");
+        if (invoiceParam && token && !loading) {
+            getInvoice(invoiceParam).then((detail) => {
+                setSelectedInvoice(detail);
+                setShowDetailModal(true);
+            }).catch(() => {});
+        }
+    }, [token, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const updateFilter = (key, value) => {
         const next = { ...filters, [key]: value };
@@ -148,29 +230,38 @@ const Billing = () => {
         }
     };
 
-    const handlePay = async () => {
-        try {
-            const updated = await toast.promise(payInvoice(selectedInvoice.public_id, payMethod), {
-                loading: 'Registrando...', success: 'Pagada', error: (err) => apiError(err, "Error")
-            });
-            setSelectedInvoice(updated);
-            setShowPayModal(false);
-            loadInvoices(filters);
-        } catch {
-            // toast.promise ya muestra el error
-        }
+    const openPayModal = () => {
+        const direct = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
+        const target = direct ? Number(selectedInvoice.total) : Number(selectedInvoice.remaining_balance);
+        setPayLines([{ method: "cash", amount: target > 0 ? target.toFixed(2) : "" }]);
+        setPayIdemKey(newIdempotencyKey());
+        setShowPayModal(true);
     };
 
-    const handleDirectPay = async () => {
+    // ADR p27: arma payment_lines y cobra/registra con idempotency key. Venta
+    // directa exige total exacto; consulta confirmada admite parcial.
+    const submitPayment = async () => {
+        const direct = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
+        const paymentLines = payLines
+            .filter(l => Number(l.amount) > 0)
+            .map(l => ({ method: l.method, amount: Number(l.amount).toFixed(2) }));
+        const call = direct
+            ? directPayInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey })
+            : payInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey });
+        setPaying(true);
         try {
-            const updated = await toast.promise(directPayInvoice(selectedInvoice.public_id, payMethod), {
-                loading: 'Cobrando...', success: 'Cobrada', error: (err) => apiError(err, "Error")
+            const updated = await toast.promise(call, {
+                loading: direct ? 'Cobrando...' : 'Registrando...',
+                success: direct ? 'Cobrada' : 'Pago registrado',
+                error: (err) => apiError(err, "Error"),
             });
             setSelectedInvoice(updated);
             setShowPayModal(false);
             loadInvoices(filters);
         } catch {
-            // toast.promise ya muestra el error
+            // toast.promise ya muestra el error; el modal queda abierto para reintentar
+        } finally {
+            setPaying(false);
         }
     };
 
@@ -180,6 +271,12 @@ const Billing = () => {
     if (initializing || loading) return <div style={{ display: "flex", justifyContent: "center", padding: "100px", color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</div>;
 
     const isDirectSaleDraft = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
+    // ADR p27: objetivo de cobro. Venta directa = total exacto; consulta
+    // confirmada = saldo pendiente (admite parcial).
+    const payTarget = selectedInvoice
+        ? Number(isDirectSaleDraft ? selectedInvoice.total : selectedInvoice.remaining_balance)
+        : 0;
+    const payAllowPartial = !isDirectSaleDraft;
 
     return (
         <div className={s.billingContainer}>
@@ -320,7 +417,7 @@ const Billing = () => {
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
                                 {isDirectSaleDraft && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={() => { setPayMethod("cash"); setShowPayModal(true); }}>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal}>
                                         Cobrar
                                     </button>
                                 )}
@@ -328,7 +425,7 @@ const Billing = () => {
                                     <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleConfirm}>Confirmar</button>
                                 )}
                                 {selectedInvoice.status === "confirmed" && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={() => setShowPayModal(true)}>Registrar Pago</button>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal}>Registrar Pago</button>
                                 )}
                                 <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={closeDetailModal}>Cerrar</button>
                             </div>
@@ -341,39 +438,31 @@ const Billing = () => {
                             <div className="modal" style={{ maxWidth: "360px" }}>
                                 <div className="modal-header">
                                     <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>
-                                        {isDirectSaleDraft ? "Cobrar venta directa" : "Método de pago"}
+                                        {isDirectSaleDraft ? "Cobrar venta directa" : "Registrar pago"}
                                     </h3>
-                                    <button className="modal-close" onClick={() => setShowPayModal(false)}><Icon.X s={14} /></button>
+                                    <button className="modal-close" onClick={() => setShowPayModal(false)} disabled={paying}><Icon.X s={14} /></button>
                                 </div>
                                 <div className="modal-body">
-                                    <div style={{ marginBottom: "16px" }}>
-                                        <label style={{ fontSize: "12px", fontWeight: 500, color: "var(--c-text-3)", display: "block", marginBottom: "8px" }}>
-                                            Método
-                                        </label>
-                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                                            {PAYMENT_METHODS.map(m => (
-                                                <button
-                                                    key={m.value}
-                                                    className={`btn ${payMethod === m.value ? "btn-primary" : "btn-secondary"} btn-sm`}
-                                                    onClick={() => setPayMethod(m.value)}
-                                                >
-                                                    {m.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: "12px", color: "var(--c-text-3)" }}>
-                                        Total: <strong style={{ color: "var(--c-text)" }}>${formatCurrency(selectedInvoice.total)}</strong>
-                                    </p>
+                                    <label style={{ fontSize: "12px", fontWeight: 500, color: "var(--c-text-3)", display: "block", marginBottom: "8px" }}>
+                                        Método{payLines.length > 1 ? "s" : ""} de pago
+                                    </label>
+                                    <PaymentLinesEditor
+                                        total={payTarget}
+                                        allowPartial={payAllowPartial}
+                                        lines={payLines}
+                                        setLines={setPayLines}
+                                        disabled={paying}
+                                    />
                                 </div>
                                 <div className="modal-footer">
-                                    <button className="btn btn-secondary btn-sm" onClick={() => setShowPayModal(false)}>Cancelar</button>
+                                    <button className="btn btn-secondary btn-sm" onClick={() => setShowPayModal(false)} disabled={paying}>Cancelar</button>
                                     <button
                                         className="btn btn-primary btn-sm"
                                         style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
-                                        onClick={isDirectSaleDraft ? handleDirectPay : handlePay}
+                                        onClick={submitPayment}
+                                        disabled={paying || !paymentLinesValid(payLines, payTarget, payAllowPartial)}
                                     >
-                                        {isDirectSaleDraft ? "Cobrar" : "Registrar Pago"}
+                                        {paying ? <Icon.Loader s={14} /> : (isDirectSaleDraft ? "Cobrar" : "Registrar Pago")}
                                     </button>
                                 </div>
                             </div>
@@ -402,6 +491,9 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
     const [serviceLine, setServiceLine] = useState({ service: null, quantity: "1" });
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [processing, setProcessing] = useState(false);
+    // ADR p25: cliente opcional. owner=null → "Público General" (genérico).
+    // owner lleva public_id (para filtrar pets vía ?owner=) e id (PK, body).
+    const [customer, setCustomer] = useState({ owner: null, pet: null });
     const [presentationCache, setPresentationCache] = useState([]);
     const [serviceCache, setServiceCache] = useState([]);
 
@@ -425,6 +517,28 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
             if (!ok) return;
         }
         onClose();
+    };
+
+    const handleOwnerSearch = async (q) => {
+        const data = await getOwners({ search: q, is_generic: "false" })
+            .then(d => Array.isArray(d) ? d : d?.results || [])
+            .catch(() => []);
+        return data.slice(0, 8).map(o => ({
+            id: o.id,
+            public_id: o.public_id,
+            label: o.phone ? `${o.name} — ${o.phone}` : o.name,
+        }));
+    };
+
+    const handlePetSearch = async (q) => {
+        if (!customer.owner) return [];
+        const data = await getPets({ owner: customer.owner.public_id, search: q })
+            .then(d => Array.isArray(d) ? d : d?.results || [])
+            .catch(() => []);
+        return data
+            .filter(p => !p.is_generic)
+            .slice(0, 8)
+            .map(p => ({ id: p.id, label: p.name }));
     };
 
     const handleProductSearch = async (q) => {
@@ -521,20 +635,26 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
             toast.error("Agrega al menos un ítem.");
             return;
         }
-        if (!genericOwner) {
+        if (!customer.owner && !genericOwner) {
             toast.error("No se encontró el propietario genérico. Verifica la configuración.");
             return;
         }
         setProcessing(true);
         try {
-            const invoice = await createInvoice({ owner: genericOwner.id });
+            // ADR p25: owner real elegido, o genérico por default. invoice_type
+            // explícito 'direct_sale' para que un owner real no caiga en el
+            // default 'consultation' (que exigiría pet).
+            const ownerId = customer.owner ? customer.owner.id : genericOwner.id;
+            const payload = { owner: ownerId, invoice_type: "direct_sale" };
+            if (customer.pet) payload.pet = customer.pet.id;
+            const invoice = await createInvoice(payload);
             for (const item of items) {
                 const payload = item.type === "product"
                     ? { presentation: item.id, quantity: String(item.quantity) }
                     : { service: item.id, quantity: String(item.quantity) };
                 await addInvoiceItem(invoice.public_id, payload);
             }
-            await directPayInvoice(invoice.public_id, paymentMethod);
+            await directPayInvoice(invoice.public_id, { paymentMethod });
             toast.success("Venta directa cobrada");
             onPaid();
         } catch (err) {
@@ -557,6 +677,30 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
 
                 {/* Step 1: Add items */}
                 <div className="modal-body" style={{ flex: 1, overflow: "auto" }}>
+                    {/* Cliente (ADR p25) — opcional; default "Público General" */}
+                    <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                        <div style={{ flex: "1 1 260px" }}>
+                            <label style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", display: "block", marginBottom: "4px", textTransform: "uppercase" }}>Cliente</label>
+                            <SearchSelect
+                                placeholder="Público General (buscar cliente…)"
+                                value={customer.owner}
+                                onChange={item => setCustomer({ owner: item, pet: null })}
+                                onSearch={handleOwnerSearch}
+                            />
+                        </div>
+                        {customer.owner && (
+                            <div style={{ flex: "1 1 260px" }}>
+                                <label style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", display: "block", marginBottom: "4px", textTransform: "uppercase" }}>Mascota (opcional)</label>
+                                <SearchSelect
+                                    placeholder="Buscar mascota del cliente…"
+                                    value={customer.pet}
+                                    onChange={item => setCustomer(prev => ({ ...prev, pet: item }))}
+                                    onSearch={handlePetSearch}
+                                />
+                            </div>
+                        )}
+                    </div>
+
                     <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                         {/* Product */}
                         <div style={{ flex: "1 1 300px" }}>
@@ -696,7 +840,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                             className="btn btn-primary btn-sm"
                             style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff", minWidth: "100px" }}
                             onClick={handleCobrar}
-                            disabled={items.length === 0 || processing || !genericOwner}
+                            disabled={items.length === 0 || processing || (!customer.owner && !genericOwner)}
                         >
                             {processing ? <Icon.Loader s={14} /> : "Cobrar"}
                         </button>

@@ -374,18 +374,6 @@
 .dsp { display: flex; flex-direction: column; gap: 12px; }
 .dsp-head { display: flex; align-items: center; gap: 8px; }
 .dsp-title { font-size: 13.5px; font-weight: 700; color: var(--c-text); flex: 1; }
-.dsp-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--c-success-text);
-  background: var(--c-success-bg);
-  padding: 2px 8px;
-  border-radius: var(--r-full);
-}
-
 .dsp-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .dsp-row {
   display: grid;
@@ -397,6 +385,46 @@
   transition: all 150ms ease;
 }
 .dsp-row:hover { background: var(--c-hover); }
+
+.dsp-row-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-3);
+}
+.dsp-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+.dsp-row-lbl {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--c-text);
+  line-height: 1.3;
+}
+.dsp-row-meta {
+  font-size: 11.5px;
+  color: var(--c-text-3);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dsp-row-num {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+  justify-self: end;
+}
+.dsp-row-num-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-3);
+  justify-self: end;
+}
 
 /* ── Backlog ────────────────────────────────────────────── */
 .dsp-empty {
