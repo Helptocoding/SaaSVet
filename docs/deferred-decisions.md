@@ -36,6 +36,7 @@ El mapa consolidado vive aquí; los ADRs deciden, justifican y apuntan.
 | **DD-007** | Contra-entry **generalizado** en el ledger unificado | Deferred | Junto con DD-002 (ledger unificado) | ADR p29 | Contrato §6 — `RefundReversal` ya es counter-event con `reverses` FK; cadena DAG; ≤1 reversal |
 | **DD-008** | `revenue_paid` **cash-basis por pago** (Σ pagos/día) en vez de por factura completa | Deferred | Contabilidad exige reconocer parciales el día en que entran | dashboard-metrics-contract | Contrato §8.4 — hoy `paid_at` se setea al completar la factura; cambio = `METRICS_SCHEMA_VERSION` bump + dual-write 30d |
 | **DD-009** | Drop de la columna `Invoice.payment_method` | Deferred | Post-beta, tras estabilizar el ledger de `Payment` | ADR p27 | Sprint A: `payment_method` queda como legacy/derivado, no se dropea |
+| **DD-010** | Pago **split** en la venta rápida F11 (`NewInvoiceModal`) | Deferred | Cuando se necesite split en el flujo de caja rápido | ADR p27 | Backend ya soporta `payment_lines` en direct-pay; el split aquí requiere conocer el total con IVA **antes** de crear la factura (timing) sin reintroducir draft huérfanos (ADR p11). El split sí está en el modal de detalle. Solución futura: paso de revisión post-creación o cálculo de total client-side espejando `money.invoice_totals` |
 
 ---
 

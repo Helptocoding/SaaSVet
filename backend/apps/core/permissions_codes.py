@@ -42,6 +42,8 @@ PERMISSION_CODES = [
     "invoice.confirm",
     "invoice.pay",
     "invoice.cancel",
+    # Dispensar producto con receta en venta directa (ADR p26 — boundary alto-trust)
+    "billing.rx_dispense",
 
     # Servicios (catálogo de facturación — Configuración)
     "service.list",
@@ -93,6 +95,12 @@ PERMISSION_CODES = [
     "dashboard.view",
     "dashboard.financial.view",
     "dashboard.summary",
+
+    # Caja — turno / cierre Z (ADR p28)
+    "cashsession.list",
+    "cashsession.retrieve",
+    "cashsession.open",
+    "cashsession.close",
 ]
 
 # ---------------------------------------------------------------------------
@@ -124,10 +132,14 @@ PERMISSIONS = {
         "inventory.list", "inventory.retrieve",
         "invoice.list", "invoice.retrieve", "invoice.create",
         "invoice.destroy", "invoice.confirm", "invoice.pay", "invoice.cancel",
+        "billing.rx_dispense",
         "service.list", "service.retrieve",
         "staff.list",
         "dashboard.view",
         "dashboard.summary",
+        # Caja (ADR p28)
+        "cashsession.list", "cashsession.retrieve",
+        "cashsession.open", "cashsession.close",
     ],
 
     # Asistente / Recepcionista
@@ -148,5 +160,8 @@ PERMISSIONS = {
         "staff.list",
         "dashboard.view",
         "dashboard.summary",
+        # Caja (ADR p28)
+        "cashsession.list", "cashsession.retrieve",
+        "cashsession.open", "cashsession.close",
     ],
 }

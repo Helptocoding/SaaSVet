@@ -36,6 +36,11 @@ const FLOW_TOGGLES = [
         label: "Mostrar historial de cambios de estado en citas",
         description: "Muestra un registro de cada cambio de estado en el detalle de la cita.",
     },
+    {
+        key: "require_open_cash_session",
+        label: "Requerir caja abierta para cobrar",
+        description: "Obliga a tener un turno de caja abierto para registrar cobros y pagos. Los cobros se vinculan al turno para el corte Z.",
+    },
 ];
 
 const Config = () => {

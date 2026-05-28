@@ -154,10 +154,11 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"'{presentation.product.name}' no tiene stock disponible."
                 )
-            if presentation.product.requires_prescription and invoice.invoice_type == 'direct_sale':
-                raise serializers.ValidationError(
-                    f"'{presentation.product.name}' requiere receta médica y no puede venderse directamente."
-                )
+            # ADR p26: la venta de un producto `requires_prescription` en una
+            # venta directa YA NO se bloquea aquí. El gate autoritativo (atestación
+            # de receta externa + permiso billing.rx_dispense) vive en
+            # InvoiceItemCreateView.perform_create, que crea el registro legal
+            # append-only en el mismo atomic bajo lock de la Invoice.
 
         # Validación de descuento (NUEVO)
         if discount_value is not None and discount_value < 0:

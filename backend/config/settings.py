@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     'apps.medical_records',
     'apps.inventory.apps.InventoryConfig',
     'apps.billing.apps.BillingConfig',
+    'apps.cash.apps.CashConfig',
     'apps.prescriptions.apps.PrescriptionsConfig',
     'apps.analytics.apps.AnalyticsConfig',
     'apps.dashboard.apps.DashboardConfig',

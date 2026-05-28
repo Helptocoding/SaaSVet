@@ -14,6 +14,7 @@ import { Icon } from "../components/icons";
 import { toast } from "sonner";
 import SearchSelect from "../components/SearchSelect";
 import DateRangePicker from "../components/DateRangePicker";
+import CajaBar from "../components/CajaBar";
 import s from "./billing.module.css";
 
 const FILTER_KEYS = ["status", "invoice_type", "created_from", "created_to", "paid_from", "paid_to"];
@@ -284,6 +285,8 @@ const Billing = () => {
                 <h1 className={s.mainTitle}>Cobros</h1>
             </div>
 
+            <CajaBar />
+
             <div className={s.filterBar}>
                 <div className={s.filterItem}>
                     <Icon.Filter s={12} c="var(--c-text-4)" />
@@ -487,7 +490,7 @@ const Billing = () => {
 /* ── NewInvoiceModal Component ── */
 const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
     const [items, setItems] = useState([]);
-    const [presentationLine, setPresentationLine] = useState({ presentation: null, quantity: "1" });
+    const [presentationLine, setPresentationLine] = useState({ presentation: null, quantity: "1", rxAttested: false, prescriberName: "", prescriptionFolio: "" });
     const [serviceLine, setServiceLine] = useState({ service: null, quantity: "1" });
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [processing, setProcessing] = useState(false);
@@ -551,7 +554,8 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
             : source;
         return filtered.slice(0, 8).map(p => ({
             id: p.id,
-            label: `${p.product_name} — ${p.name} ($${Number(p.sale_price).toFixed(2)})`,
+            label: `${p.product_name} — ${p.name} ($${Number(p.sale_price).toFixed(2)})${p.requires_prescription ? " · Rx" : ""}`,
+            requires_prescription: !!p.requires_prescription,
         }));
     };
 
@@ -578,6 +582,12 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
             toast.error(`Stock insuficiente (${pres.stock} disponible).`);
             return;
         }
+        // ADR p26: producto con receta exige atestación (cliente presentó receta + médico).
+        const needsRx = !!pres.requires_prescription;
+        if (needsRx && (!presentationLine.rxAttested || !presentationLine.prescriberName.trim())) {
+            toast.error("Este producto requiere receta: confirma que el cliente la presentó e indica el médico.");
+            return;
+        }
         const existing = items.find(i => i.type === "product" && i.id === pres.id);
         if (existing) {
             const newQty = existing.quantity + qty;
@@ -596,9 +606,12 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                 name: `${pres.product_name} — ${pres.name}`,
                 quantity: qty,
                 unit_price: pres.sale_price,
+                requires_prescription: needsRx,
+                prescriberName: needsRx ? presentationLine.prescriberName.trim() : "",
+                prescriptionFolio: needsRx ? presentationLine.prescriptionFolio.trim() : "",
             }]);
         }
-        setPresentationLine({ presentation: null, quantity: "1" });
+        setPresentationLine({ presentation: null, quantity: "1", rxAttested: false, prescriberName: "", prescriptionFolio: "" });
     };
 
     const addServiceItem = () => {
@@ -649,9 +662,18 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
             if (customer.pet) payload.pet = customer.pet.id;
             const invoice = await createInvoice(payload);
             for (const item of items) {
-                const payload = item.type === "product"
-                    ? { presentation: item.id, quantity: String(item.quantity) }
-                    : { service: item.id, quantity: String(item.quantity) };
+                let payload;
+                if (item.type === "product") {
+                    payload = { presentation: item.id, quantity: String(item.quantity) };
+                    if (item.requires_prescription) {
+                        // ADR p26: atestación de receta externa.
+                        payload.rx_attested = true;
+                        payload.prescriber_name = item.prescriberName;
+                        payload.prescription_folio = item.prescriptionFolio || "";
+                    }
+                } else {
+                    payload = { service: item.id, quantity: String(item.quantity) };
+                }
                 await addInvoiceItem(invoice.public_id, payload);
             }
             await directPayInvoice(invoice.public_id, { paymentMethod });
@@ -726,6 +748,35 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                                     <Icon.Plus s={14} />
                                 </button>
                             </div>
+                            {/* ADR p26: atestación de receta externa para productos Rx */}
+                            {presentationLine.presentation?.requires_prescription && (
+                                <div style={{ marginTop: "8px", padding: "8px 10px", border: "1px solid var(--c-border)", borderRadius: "6px", background: "rgba(245,158,11,0.07)" }}>
+                                    <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--c-text)", cursor: "pointer" }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={presentationLine.rxAttested}
+                                            onChange={e => setPresentationLine(prev => ({ ...prev, rxAttested: e.target.checked }))}
+                                        />
+                                        El cliente presentó receta médica válida
+                                    </label>
+                                    {presentationLine.rxAttested && (
+                                        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                                            <input
+                                                type="text" className="input" style={{ flex: 2 }}
+                                                placeholder="Médico que emitió la receta"
+                                                value={presentationLine.prescriberName}
+                                                onChange={e => setPresentationLine(prev => ({ ...prev, prescriberName: e.target.value }))}
+                                            />
+                                            <input
+                                                type="text" className="input" style={{ flex: 1 }}
+                                                placeholder="Folio (opcional)"
+                                                value={presentationLine.prescriptionFolio}
+                                                onChange={e => setPresentationLine(prev => ({ ...prev, prescriptionFolio: e.target.value }))}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Service */}

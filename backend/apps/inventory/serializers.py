@@ -35,14 +35,17 @@ class PresentationSerializer(serializers.ModelSerializer):
     is_low_stock = serializers.BooleanField(read_only=True)
     base_unit_display = serializers.CharField(source='get_base_unit_display', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
+    # ADR p26: el front necesita saber si el producto exige receta para pedir
+    # la atestación en la venta directa.
+    requires_prescription = serializers.BooleanField(source='product.requires_prescription', read_only=True)
 
     class Meta:
         model = Presentation
         fields = [
             'id', 'public_id', 'product', 'name', 'product_name', 'base_unit', 'base_unit_display', 'quantity',
-            'sale_price', 'stock', 'min_stock', 'is_low_stock',
+            'sale_price', 'stock', 'min_stock', 'is_low_stock', 'requires_prescription',
         ]
-        read_only_fields = ['id', 'public_id', 'product', 'product_name']
+        read_only_fields = ['id', 'public_id', 'product', 'product_name', 'requires_prescription']
 
     def validate_sale_price(self, value):
         if value <= 0:

@@ -239,6 +239,33 @@ def _log_idempotent_dedupe(invoice, idempotency_key):
     })
 
 
+def _resolve_cash_session_for_payment(user, organization):
+    """
+    ADR p28: si `require_open_cash_session` está activo, devuelve la sesión
+    abierta del usuario LOCKEADA. CashSession es la CABEZA del orden global de
+    locks → se adquiere ANTES de lockear la Invoice (sin ABBA: close lockea solo
+    la sesión). Toggle apagado → None (caja opcional, comportamiento por default).
+
+    Si está activo y no hay sesión abierta (o se cerró mientras tanto) → rechaza.
+    Garantiza que ningún pago se cuele después del cierre Z.
+    """
+    from apps.organizations.utils import get_org_setting
+    if not get_org_setting(organization, 'require_open_cash_session'):
+        return None
+    from apps.cash.models import CashSession
+    session = (
+        CashSession.objects.for_organization(organization)
+        .select_for_update()
+        .filter(status='open', opened_by=user)
+        .first()
+    )
+    if session is None:
+        raise ValidationError(
+            "No hay una caja abierta. Abre un turno de caja para registrar el cobro."
+        )
+    return session
+
+
 def _mark_invoice_paid(invoice, user, now):
     """
     Writer del anchor `paid_at`. Transiciona confirmed → paid cuando la cobranza
@@ -261,7 +288,7 @@ def _mark_invoice_paid(invoice, user, now):
                           'financial_cash', 'pay_invoice')
 
 
-def _pay_locked_invoice(invoice, user, lines, *, require_full, idempotency_key=None):
+def _pay_locked_invoice(invoice, user, lines, *, require_full, idempotency_key=None, cash_session=None):
     """
     Registra Payment(s) append-only sobre una invoice YA lockeada y confirmada;
     si la cobranza queda saldada la transiciona a `paid` (writer de `paid_at`).
@@ -299,6 +326,7 @@ def _pay_locked_invoice(invoice, user, lines, *, require_full, idempotency_key=N
             provenance='service',
             reference=line.get('reference', ''),
             idempotency_key=key,
+            cash_session=cash_session,
         ).save()
 
     if invoice.remaining_balance <= Decimal('0.00'):
@@ -392,6 +420,9 @@ def pay_invoice(invoice, user, payment_method=None, *, payment_lines=None, idemp
     `paid_at` desde otro lugar — el contrato analítico depende de un único writer.
     Ver docs/financial-event-model-contract.md §8.
     """
+    # CashSession es la CABEZA del orden de locks (ADR p28): adquirir antes que Invoice.
+    cash_session = _resolve_cash_session_for_payment(user, invoice.organization)
+
     invoice = Invoice.objects.for_organization(invoice.organization).select_for_update().get(pk=invoice.pk)
 
     if _is_payment_replay(invoice, idempotency_key):
@@ -410,7 +441,8 @@ def pay_invoice(invoice, user, payment_method=None, *, payment_lines=None, idemp
     )
     lines = _validate_payment_lines(raw)
     return _pay_locked_invoice(
-        invoice, user, lines, require_full=False, idempotency_key=idempotency_key
+        invoice, user, lines, require_full=False,
+        idempotency_key=idempotency_key, cash_session=cash_session,
     )
 
 
@@ -438,6 +470,9 @@ def pay_direct_sale(invoice, user, payment_method=None, *, payment_lines=None, i
     pago DEBE cubrir el total exacto (sin parciales en venta directa).
     Idempotente vía `idempotency_key`. Ver financial-event-model-contract.md §8.
     """
+    # CashSession es la CABEZA del orden de locks (ADR p28): antes que Invoice.
+    cash_session = _resolve_cash_session_for_payment(user, invoice.organization)
+
     invoice = Invoice.objects.for_organization(invoice.organization).select_for_update().get(pk=invoice.pk)
 
     if _is_payment_replay(invoice, idempotency_key):
@@ -465,7 +500,8 @@ def pay_direct_sale(invoice, user, payment_method=None, *, payment_lines=None, i
     # Refunds (devolución de venta directa pagada) → ADR p29, no cancel_invoice.
     _confirm_locked_invoice(invoice, user)
     return _pay_locked_invoice(
-        invoice, user, lines, require_full=True, idempotency_key=idempotency_key
+        invoice, user, lines, require_full=True,
+        idempotency_key=idempotency_key, cash_session=cash_session,
     )
 
 

@@ -406,6 +406,15 @@ class Payment(OrganizationalModel):
     provenance = models.CharField(
         max_length=20, choices=PROVENANCE_CHOICES, default='service',
     )
+    # ADR p28: turno de caja. String ref → dependencia unidireccional billing→cash
+    # sin ciclo de import. PROTECT: no se borra una sesión con pagos. Nullable:
+    # NULL cuando require_open_cash_session está apagado (default).
+    cash_session = models.ForeignKey(
+        'cash.CashSession',
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name='payments',
+    )
     # organization, created_at, updated_at, created_by, updated_by, is_active
     # heredados de OrganizationalModel.
 
@@ -427,5 +436,53 @@ class Payment(OrganizationalModel):
                 fields=['organization', 'idempotency_key'],
                 condition=models.Q(idempotency_key__isnull=False),
                 name='payment_unique_idempotency_key_per_org',
+            ),
+        ]
+
+
+class ExternalPrescriptionAttestation(PublicIdMixin, OrganizationalModel):
+    """
+    Atestación de receta externa para dispensar un producto `requires_prescription`
+    en una venta directa (ADR p26). Registro legal append-only — sin PATCH/DELETE.
+
+    NO reemplaza la receta clínica interna (`prescriptions.Prescription`, OneToOne a
+    consulta). Esto es un evento de retail: el cliente presentó una receta externa
+    válida. Mantenerlos separados evita basura clínica (contamina prescriptions_issued).
+
+    Retención: documento regulatorio (NOM medicamentos controlados) — sin borrado.
+    `prescriber_name` es PII de tercero (LFPDPPP): base lícita = obligación de
+    dispensación; retención acotada a esa obligación. Archival/WORM futuro = DD-005.
+    """
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.PROTECT, related_name='rx_attestations',
+    )
+    presentation = models.ForeignKey(
+        'inventory.Presentation', on_delete=models.PROTECT,
+        related_name='rx_attestations',
+    )
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    # Responsable de autorizar la dispensación — server-side (request.user).
+    attested_by = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='rx_attestations',
+    )
+    attested_at = models.DateTimeField(auto_now_add=True)  # momento de la atestación
+    prescriber_name = models.CharField(max_length=255)
+    prescription_folio = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    # organization, created_at, updated_at, ... heredados de OrganizationalModel.
+
+    def __str__(self):
+        return f"RxAttestation #{self.pk} — inv {self.invoice_id}"
+
+    class Meta:
+        ordering = ['-attested_at', '-id']
+        indexes = [
+            models.Index(fields=['organization', 'invoice']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='rxattestation_quantity_positive',
             ),
         ]

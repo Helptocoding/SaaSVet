@@ -162,6 +162,7 @@ urlpatterns = [
     path('api/', include('apps.medical_records.urls')),
     path('api/', include('apps.inventory.urls')),
     path('api/', include('apps.billing.urls')),
+    path('api/', include('apps.cash.urls')),
     path('api/', include('apps.prescriptions.urls')),
     path('api/dashboard/stats/', dashboard_stats),
     path('api/internal/analytics-health/', analytics_health),

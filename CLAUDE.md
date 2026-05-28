@@ -106,10 +106,11 @@ Helper canonico:
 Todo flujo que adquiera multiples locks DEBE seguir este orden, para evitar deadlocks ABBA:
 
 ```
-MedicalRecord -> Invoice -> Presentation -> InvoiceItem
+CashSession -> MedicalRecord -> Invoice -> Presentation -> InvoiceItem
 ```
 
 Reglas:
+- `CashSession` es la CABEZA (ADR p28). El flujo de pago la lockea ANTES de Invoice cuando `require_open_cash_session` esta activo (`_resolve_cash_session_for_payment`). `cash.services.close_cash_session` lockea SOLO `CashSession` (nunca Invoice) -> no hay par {Invoice, CashSession} en orden inverso -> sin ABBA.
 - Dentro de un mismo tipo, lockear por PK ascendente (`_lock_presentations` ordena los IDs).
 - Toda mutacion de `InvoiceItem` (create / save / delete / quantity-delta) debe correr con la Invoice ya lockeada (`select_for_update`) dentro del mismo `atomic()`. Garantiza que `recalculate_totals` no sufra lost-update. `InvoiceItem.save/delete` loguea `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` (warn) si se llama fuera de `atomic()`.
 - Verificado por la suite real `apps.billing.tests.test_invoice_concurrency` (Postgres + threads). No reordenar locks sin volver a correrla.

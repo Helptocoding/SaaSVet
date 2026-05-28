@@ -47,4 +47,5 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
             'require_confirmation_before_start',
             'allow_anonymous_walkin',
             'show_status_change_history',
+            'require_open_cash_session',
         ]

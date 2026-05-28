@@ -7,6 +7,7 @@ DEFAULT_ORG_SETTINGS = {
     'require_confirmation_before_start': False,
     'allow_anonymous_walkin': False,
     'show_status_change_history': True,
+    'require_open_cash_session': False,
 }
 
 

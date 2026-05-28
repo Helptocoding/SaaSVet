@@ -13,7 +13,7 @@ Campos:
 - `internal_code` — codigo interno unico por organizacion (auto-generado si no se envia)
 - `description` — descripcion opcional
 - `category` — choices: `medication`, `food`, `accessory`, `other`
-- `requires_prescription` — si `True`, el producto no puede venderse directamente; requiere receta activa
+- `requires_prescription` — si `True`, el producto exige receta. En consulta se agrega vía `MedicalRecordProduct` con receta activa. En venta directa (ADR p26) se puede vender con **atestación de receta externa** (`billing.rx_dispense` + `ExternalPrescriptionAttestation`); el gate vive en `billing` (`InvoiceItemCreateView`), no en el serializer de inventario. Expuesto en `PresentationSerializer` para el frontend.
 - `is_active` — soft delete
 
 ### Presentation

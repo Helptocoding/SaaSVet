@@ -103,6 +103,23 @@ genérico sigue siendo el default (venta rápida anónima). Reglas:
   analytics. El frontend manda `invoice_type='direct_sale'` explícito al elegir
   owner real (si no, el default `consultation` exigiría pet).
 
+### Receta externa en venta directa (ADR p26)
+
+Un producto `requires_prescription` ahora **sí** puede venderse en una
+`direct_sale`, mediante atestación explícita de receta externa. El gate vive en
+`InvoiceItemCreateView.perform_create` (NO en el serializer):
+- Exige permiso `billing.rx_dispense` (ADMIN + VET) — si falta → **403**.
+- Exige atestación en el body al agregar el item: `rx_attested=true` +
+  `prescriber_name`. Si falta → **400** `code='prescription_required'`.
+- Crea un `ExternalPrescriptionAttestation` (append-only, modelo legal) en el
+  mismo `atomic()` bajo lock de la Invoice, luego el `InvoiceItem`.
+- La atestación **sobrevive** cancelación/refund (registro legal). NO se reutiliza
+  `Prescription` (clínico) — evita basura clínica. Retención NOM + LFPDPPP (DD-005).
+
+El frontend (`NewInvoiceModal`) muestra un panel de atestación (checkbox "cliente
+presentó receta" + médico + folio) cuando el producto tiene `requires_prescription`
+(expuesto por `PresentationSerializer`), y manda los campos con `addInvoiceItem`.
+
 Flujo en frontend:
 1. Boton "+ Cobro" abre el modal de venta directa (tambien via atajo **F11** o **Shift+F11**)
 2. El propietario generico se asigna automaticamente (no se muestra al usuario)

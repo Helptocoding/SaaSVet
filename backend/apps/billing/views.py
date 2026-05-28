@@ -1,6 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
 from decimal import Decimal
 
@@ -21,6 +21,14 @@ from .permissions import CanConfirmInvoice, CanPayInvoice, CanCancelInvoice
 
 VALID_INVOICE_TYPES = {choice[0] for choice in Invoice.INVOICE_TYPE_CHOICES}
 VALID_INVOICE_STATUSES = {choice[0] for choice in Invoice.STATUS_CHOICES}
+
+
+class PrescriptionRequired(APIException):
+    """ADR p26: falta atestación de receta para un producto requires_prescription.
+    `default_code` propaga a `{code: 'prescription_required'}` vía el handler global."""
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = 'prescription_required'
+    default_detail = 'Se requiere atestación de receta para este producto.'
 
 
 class BillingOrganizationMixin(TenantQueryMixin):
@@ -240,9 +248,43 @@ class InvoiceItemCreateView(BillingOrganizationMixin, generics.CreateAPIView):
                         f"Stock insuficiente para '{locked_pres.product.name}': "
                         f"disponible {locked_pres.stock}, solicitado {data.get('quantity', 1)}."
                     )
+                # ADR p26: venta de producto con receta en venta directa exige
+                # atestación de receta externa (registro legal append-only) +
+                # permiso billing.rx_dispense. Creada en el mismo atomic, bajo
+                # el lock de la Invoice.
+                if locked_pres.product.requires_prescription and invoice.invoice_type == 'direct_sale':
+                    self._attest_external_prescription(invoice, locked_pres, data.get('quantity', 1))
                 unit_price = locked_pres.sale_price
                 description = str(locked_pres)
                 serializer.save(invoice=invoice, unit_price=unit_price, description=description)
+
+    def _attest_external_prescription(self, invoice, locked_pres, quantity):
+        """ADR p26: gate + registro de atestación de receta externa."""
+        from apps.core.permissions import user_has_permission
+        from apps.core.sanitize import sanitize_text
+        from rest_framework.exceptions import PermissionDenied
+        from .models import ExternalPrescriptionAttestation
+
+        if not user_has_permission(self.request.user, 'billing.rx_dispense'):
+            raise PermissionDenied('No tienes permiso para dispensar productos con receta.')
+
+        attested = self.request.data.get('rx_attested')
+        prescriber = sanitize_text(self.request.data.get('prescriber_name') or '', max_length=255)
+        if not attested or not prescriber:
+            raise PrescriptionRequired(detail=(
+                f"'{locked_pres.product.name}' requiere receta. Confirma que el cliente "
+                f"presentó una receta médica válida e indica el médico que la emitió."
+            ))
+        ExternalPrescriptionAttestation.objects.create(
+            organization=invoice.organization,
+            invoice=invoice,
+            presentation=locked_pres,
+            quantity=quantity,
+            attested_by=self.request.user,
+            prescriber_name=prescriber,
+            prescription_folio=sanitize_text(self.request.data.get('prescription_folio') or '', max_length=100),
+            notes=sanitize_text(self.request.data.get('rx_notes') or '', max_length=5000),
+        )
 
 
 class InvoiceItemDetailView(BillingOrganizationMixin, generics.RetrieveUpdateDestroyAPIView):

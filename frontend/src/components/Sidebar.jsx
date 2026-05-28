@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { path: "/prescriptions", label: "Recetas", icon: Icon.Pill },
     { path: "/inventory", label: "Inventario", icon: Icon.Package },
     { path: "/billing", label: "Cobros", icon: Icon.Receipt },
+    { path: "/cash", label: "Caja", icon: Icon.Wallet },
 ];
 
 const ADMIN_ITEMS = [

@@ -48,6 +48,9 @@ class OrganizationSettings(models.Model):
     require_confirmation_before_start = models.BooleanField(default=False)
     allow_anonymous_walkin = models.BooleanField(default=False)
     show_status_change_history = models.BooleanField(default=True)
+    # ADR p28: exige una caja abierta para cobrar/pagar. Default False →
+    # comportamiento actual intacto (caja opcional).
+    require_open_cash_session = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Settings — {self.organization.name}"
