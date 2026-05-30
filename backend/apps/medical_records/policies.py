@@ -57,6 +57,12 @@ def can_close_medical_record(user, medical_record) -> bool:
     if medical_record.organization_id != user.organization_id:
         return False
 
+    # Una consulta ya cerrada no se vuelve a finalizar. close_medical_record es
+    # idempotente en la view, pero este flag refleja "acción disponible": sin el
+    # guard el botón "Finalizar" del Timeline persiste tras cerrar.
+    if medical_record.status == medical_record.Status.CLOSED:
+        return False
+
     role_names = _role_names(user)
     if "ADMIN_SAAS" in role_names or "ADMIN" in role_names:
         return True

@@ -1,5 +1,7 @@
 # Modulo: Organizaciones y usuarios
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 Gestiona las clinicas (tenants), sus usuarios y la configuracion operativa de cada una.
@@ -199,8 +201,10 @@ Toggles disponibles:
 | `require_confirmation_before_start`| `false` | La cita debe confirmarse antes de iniciar                     |
 | `allow_anonymous_walkin`           | `false` | Permite walk-in sin mascota registrada                        |
 | `show_status_change_history`       | `true`  | Muestra historial de cambios de estado en citas               |
+| `require_open_cash_session`        | `false` | Si `True`, `pay_invoice` / `pay_direct_sale` exigen una caja abierta del actor; el `Payment` se ata a esa sesion (ADR p28). |
 
 Ver ADR `2026-04-28-organization-settings-toggles.md` para el racional de cada toggle.
+Ver ADR `2026-05-27-p28-cash-session-cierre-z.md` para el toggle de caja.
 
 ## RBAC — como funciona
 

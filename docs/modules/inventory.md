@@ -1,5 +1,7 @@
 # Modulo: Inventario
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 El modulo gestiona el catalogo de productos, sus presentaciones (variantes), el stock y los movimientos de inventario.
@@ -13,7 +15,7 @@ Campos:
 - `internal_code` — codigo interno unico por organizacion (auto-generado si no se envia)
 - `description` — descripcion opcional
 - `category` — choices: `medication`, `food`, `accessory`, `other`
-- `requires_prescription` — si `True`, el producto exige receta. En consulta se agrega vía `MedicalRecordProduct` con receta activa. En venta directa (ADR p26) se puede vender con **atestación de receta externa** (`billing.rx_dispense` + `ExternalPrescriptionAttestation`); el gate vive en `billing` (`InvoiceItemCreateView`), no en el serializer de inventario. Expuesto en `PresentationSerializer` para el frontend.
+- `requires_prescription` — si `True`, el producto exige receta. En consulta se agrega vía `MedicalRecordProduct` con receta activa. En venta directa (ADR p26) se puede vender con **atestación de receta externa** (`billing.rx_dispense` + `ExternalPrescriptionAttestation`); el gate vive en `billing` (`InvoiceItemCreateView`), no en el serializer de inventario. Al **dispensar una receta interna** (ADR p30, `POST billing/prescriptions/<uuid>/dispense/`) los productos que el cliente decide llevar se agregan como `InvoiceItem` a la **misma factura de consulta** (no se crea una venta directa aparte), marcados con `InvoiceItem.dispensed_from_prescription_item`. La `Prescription` interna ES el respaldo legal: NO se crea `ExternalPrescriptionAttestation`, pero sí se exige `billing.rx_dispense`. El stock se descuenta al **confirmar** esa factura de consulta, por la ruta única `_confirm_locked_invoice` (que en una consulta solo liquida los ítems dispensados; los insumos sincronizados desde `MedicalRecordProduct` ya descontaron al consumirse). Expuesto en `PresentationSerializer` para el frontend.
 - `is_active` — soft delete
 
 ### Presentation

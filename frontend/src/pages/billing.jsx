@@ -5,6 +5,7 @@ import { apiError } from "../utils/apiError";
 import {
     getInvoices, getInvoice, createInvoice, confirmInvoice, payInvoice, directPayInvoice,
     addInvoiceItem, getServices, downloadInvoicePDF, refundInvoice, reverseCreditNote,
+    dispensePrescription,
 } from "../api/billing";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { getPresentations } from "../api/inventory";
@@ -54,22 +55,28 @@ const newIdempotencyKey = () =>
         ? crypto.randomUUID()
         : `idem-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-// Valida líneas de pago contra el total. allowPartial=false exige cubrir exacto.
-const paymentLinesValid = (lines, total, allowPartial) => {
+// Valida líneas de pago contra el total.
+//  - allowPartial=true  → admite pagar menos (no se usa para cobros nuevos: ADR p30
+//    rev exige total exacto siempre). Se conserva para casos futuros / refund parcial.
+//  - allowChange=true   → admite efectivo recibido MAYOR al total; el excedente es
+//    cambio, no se registra. Aplica a TODO cobro (ADR p30 rev).
+//  - ambos false        → exige monto exacto (refund).
+const paymentLinesValid = (lines, total, allowPartial, allowChange = false) => {
     if (lines.some(l => Number(l.amount) < 0)) return false;
     const positive = lines.map(l => Number(l.amount)).filter(n => n > 0);
     if (positive.length === 0) return false;
     const sum = Number(positive.reduce((a, n) => a + n, 0).toFixed(2));
     const t = Number(Number(total).toFixed(2));
-    if (sum > t) return false;
+    if (sum > t) return allowChange;          // sobrepago solo válido si se da cambio
     if (!allowPartial && sum !== t) return false;
     return true;
 };
 
-/* ── PaymentLinesEditor — pago único, split o parcial (ADR p27) ── */
-const PaymentLinesEditor = ({ total, allowPartial, lines, setLines, disabled }) => {
+/* ── PaymentLinesEditor — pago único o split, total exacto (ADR p30 rev) ── */
+const PaymentLinesEditor = ({ total, allowPartial, allowChange = false, lines, setLines, disabled }) => {
     const sum = Number(lines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
     const remaining = Number((Number(total) - sum).toFixed(2));
+    const change = remaining < 0 ? Math.abs(remaining) : 0;
     const setLine = (i, patch) => setLines(prev => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
     const addLine = () => setLines(prev => [...prev, { method: "card", amount: remaining > 0 ? remaining.toFixed(2) : "" }]);
     const removeLine = (i) => setLines(prev => prev.filter((_, idx) => idx !== i));
@@ -104,10 +111,19 @@ const PaymentLinesEditor = ({ total, allowPartial, lines, setLines, disabled }) 
                 <span style={{ color: "var(--c-text-3)" }}>
                     Total ${Number(total).toFixed(2)} · Ingresado ${sum.toFixed(2)}
                 </span>
-                <span style={{ fontWeight: 600, color: remaining === 0 ? "var(--c-success-text)" : remaining < 0 ? "var(--c-danger-text)" : "var(--c-text-3)" }}>
-                    {remaining > 0 ? `Falta $${remaining.toFixed(2)}` : remaining < 0 ? `Excede $${Math.abs(remaining).toFixed(2)}` : (allowPartial ? "Pago completo" : "Exacto")}
+                <span style={{ fontWeight: 600, color: remaining === 0 ? "var(--c-success-text)" : (remaining < 0 ? (allowChange ? "var(--c-success-text)" : "var(--c-danger-text)") : "var(--c-text-3)") }}>
+                    {remaining > 0
+                        ? `Falta $${remaining.toFixed(2)}`
+                        : remaining < 0
+                            ? (allowChange ? `Cambio $${change.toFixed(2)}` : `Excede $${change.toFixed(2)}`)
+                            : (allowPartial ? "Pago completo" : "Exacto")}
                 </span>
             </div>
+            {allowChange && change > 0 && (
+                <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
+                    Se cobra el total ${Number(total).toFixed(2)}; el cambio ${change.toFixed(2)} no se registra.
+                </p>
+            )}
             {allowPartial && remaining > 0 && sum > 0 && (
                 <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
                     Pago parcial: la factura quedará confirmada con saldo pendiente.
@@ -311,6 +327,129 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
     );
 };
 
+/* ── PrescriptionDispensePanel — dispensar receta interna (ADR p30) ── */
+const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
+    const suggestions = invoice.prescription_suggestions || [];
+    const [rows, setRows] = useState(() =>
+        suggestions.map(s => ({
+            key: s.prescription_item_id,
+            productName: s.product_name,
+            dose: s.dose,
+            presentations: s.presentations || [],
+            // Por defecto seleccionado solo si hay presentación vendible.
+            selected: (s.presentations || []).length > 0,
+            presentationId: (s.presentations || [])[0]?.id ? String(s.presentations[0].id) : "",
+            quantity: s.suggested_quantity || "1",
+        }))
+    );
+    const [submitting, setSubmitting] = useState(false);
+    const setRow = (key, patch) => setRows(prev => prev.map(r => r.key === key ? { ...r, ...patch } : r));
+
+    const selected = rows.filter(r => r.selected && r.presentationId && Number(r.quantity) > 0);
+    const canSubmit = selected.length > 0 && !submitting;
+
+    const submit = async () => {
+        const lines = selected.map(r => ({
+            presentation: Number(r.presentationId),
+            quantity: Number(r.quantity),
+            prescription_item: r.key,
+        }));
+        setSubmitting(true);
+        // sonner v2: toast.promise NO resuelve a la data — await la promesa real
+        // para obtener la factura de consulta actualizada.
+        const req = dispensePrescription(invoice.prescription_public_id, { lines });
+        toast.promise(req, {
+            loading: "Agregando al cobro...",
+            success: "Productos agregados al cobro",
+            error: (err) => apiError(err, "Error al dispensar la receta"),
+        });
+        try {
+            const updated = await req;
+            onDispensed(updated);
+        } catch {
+            // toast.promise ya mostró el error
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Solo se dispensa mientras el cobro está en borrador (los ítems se agregan
+    // a esta factura antes de confirmar). Confirmada/pagada → sin panel.
+    if (!invoice.prescription_public_id || suggestions.length === 0 || invoice.status !== "draft") return null;
+
+    return (
+        <div style={{ marginTop: "20px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Receta — dispensar
+            </p>
+            <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginBottom: "10px" }}>
+                El cliente decide qué llevar. Lo seleccionado se agrega a este mismo cobro y descuenta stock al confirmarlo; lo demás no toca inventario.
+            </p>
+            <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
+                <thead>
+                    <tr>
+                        <th style={{ width: "28px" }}></th>
+                        <th>Medicamento</th>
+                        <th style={{ width: "180px" }}>Presentación</th>
+                        <th style={{ width: "70px" }}>Cant.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map(r => {
+                        const noPres = r.presentations.length === 0;
+                        return (
+                            <tr key={r.key} style={{ opacity: r.selected ? 1 : 0.45 }}>
+                                <td>
+                                    <input
+                                        type="checkbox" checked={r.selected}
+                                        disabled={submitting || noPres}
+                                        onChange={e => setRow(r.key, { selected: e.target.checked })}
+                                    />
+                                </td>
+                                <td>
+                                    <div>{r.productName}</div>
+                                    {r.dose && <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{r.dose}</div>}
+                                </td>
+                                <td>
+                                    {noPres ? (
+                                        <span style={{ fontSize: "11px", color: "var(--c-danger-text)" }}>Sin presentación de venta</span>
+                                    ) : (
+                                        <select
+                                            className="input" style={{ height: "30px" }}
+                                            value={r.presentationId} disabled={!r.selected || submitting}
+                                            onChange={e => setRow(r.key, { presentationId: e.target.value })}
+                                        >
+                                            {r.presentations.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.name} — ${Number(p.sale_price).toFixed(2)} (stock {p.stock})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </td>
+                                <td>
+                                    <input
+                                        type="number" className="input"
+                                        style={{ width: "60px", height: "30px", textAlign: "right" }}
+                                        min="1" step="1"
+                                        value={r.quantity} disabled={!r.selected || submitting || noPres}
+                                        onChange={e => setRow(r.key, { quantity: e.target.value })}
+                                    />
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+                <button className="btn btn-primary btn-sm" onClick={submit} disabled={!canSubmit}>
+                    {submitting ? <Icon.Loader s={14} /> : "Agregar al cobro"}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const Billing = () => {
     const { token, initializing, can } = useAuth();
     const confirm = useConfirm();
@@ -430,10 +569,14 @@ const Billing = () => {
     };
 
     const handleConfirm = async () => {
+        // sonner v2: toast.promise NO resuelve a la data — hay que await la
+        // promesa real para obtener la factura actualizada.
+        const req = confirmInvoice(selectedInvoice.public_id);
+        toast.promise(req, {
+            loading: 'Confirmando...', success: 'Confirmada', error: (err) => apiError(err, "Error")
+        });
         try {
-            const updated = await toast.promise(confirmInvoice(selectedInvoice.public_id), {
-                loading: 'Confirmando...', success: 'Confirmada', error: (err) => apiError(err, "Error")
-            });
+            const updated = await req;
             setSelectedInvoice(updated);
             loadInvoices(filters);
         } catch {
@@ -449,23 +592,30 @@ const Billing = () => {
         setShowPayModal(true);
     };
 
-    // ADR p27: arma payment_lines y cobra/registra con idempotency key. Venta
-    // directa exige total exacto; consulta confirmada admite parcial.
+    // ADR p30 (rev): toda factura exige total exacto — sin parcial. Si recibe
+    // efectivo > total, se registra SOLO el total (el excedente es cambio para
+    // el cliente, no se persiste). Aplica a venta directa Y a consulta.
     const submitPayment = async () => {
         const direct = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
-        const paymentLines = payLines
-            .filter(l => Number(l.amount) > 0)
-            .map(l => ({ method: l.method, amount: Number(l.amount).toFixed(2) }));
+        const target = Number(Number(direct ? selectedInvoice.total : selectedInvoice.remaining_balance).toFixed(2));
+        const sum = Number(payLines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
+        const paymentLines = (sum > target)
+            ? [{ method: payLines[0].method, amount: target.toFixed(2) }]
+            : payLines
+                .filter(l => Number(l.amount) > 0)
+                .map(l => ({ method: l.method, amount: Number(l.amount).toFixed(2) }));
         const call = direct
             ? directPayInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey })
             : payInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey });
         setPaying(true);
+        // sonner v2: toast.promise NO resuelve a la data — await la promesa real.
+        toast.promise(call, {
+            loading: direct ? 'Cobrando...' : 'Registrando...',
+            success: direct ? 'Cobrada' : 'Pago registrado',
+            error: (err) => apiError(err, "Error"),
+        });
         try {
-            const updated = await toast.promise(call, {
-                loading: direct ? 'Cobrando...' : 'Registrando...',
-                success: direct ? 'Cobrada' : 'Pago registrado',
-                error: (err) => apiError(err, "Error"),
-            });
+            const updated = await call;
             setSelectedInvoice(updated);
             setShowPayModal(false);
             loadInvoices(filters);
@@ -489,6 +639,14 @@ const Billing = () => {
     const onRefundDone = async () => {
         setShowRefundModal(false);
         await refreshSelectedInvoice();
+    };
+
+    // ADR p30: los productos dispensados se agregan a ESTA misma factura de
+    // consulta. Refresca el detalle abierto (muestra las nuevas líneas) y la
+    // lista (totales). No se abre otra factura.
+    const handleDispensed = async () => {
+        await refreshSelectedInvoice();
+        await loadInvoices(filters);
     };
 
     const handleReverseCreditNote = async (cn) => {
@@ -516,12 +674,14 @@ const Billing = () => {
     if (initializing || loading) return <div style={{ display: "flex", justifyContent: "center", padding: "100px", color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</div>;
 
     const isDirectSaleDraft = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
-    // ADR p27: objetivo de cobro. Venta directa = total exacto; consulta
-    // confirmada = saldo pendiente (admite parcial).
+    // ADR p30 (rev): toda factura exige total exacto — sin parcial. Venta
+    // directa cobra `total`; consulta confirmada cobra `remaining_balance`
+    // (igual al total mientras no haya pagos previos). `allowChange` aplica
+    // siempre: efectivo recibido > total muestra cambio (no se persiste).
     const payTarget = selectedInvoice
         ? Number(isDirectSaleDraft ? selectedInvoice.total : selectedInvoice.remaining_balance)
         : 0;
-    const payAllowPartial = !isDirectSaleDraft;
+    const payAllowPartial = false;
 
     return (
         <div className={s.billingContainer}>
@@ -643,7 +803,14 @@ const Billing = () => {
                                 <tbody>
                                     {selectedInvoice.items.map(item => (
                                         <tr key={item.id}>
-                                            <td>{item.description}</td>
+                                            <td>
+                                                {item.description}
+                                                {item.dispensed && (
+                                                    <span style={{ marginLeft: "6px", fontSize: "10px", fontWeight: 600, color: "var(--c-accent-text, var(--c-text-3))", border: "1px solid var(--c-border)", borderRadius: "4px", padding: "1px 5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                                        Para llevar
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td>{item.quantity}</td>
                                             <td style={{ textAlign: "right" }}>${formatCurrency(item.subtotal)}</td>
                                         </tr>
@@ -685,6 +852,12 @@ const Billing = () => {
                                     ))}
                                 </div>
                             )}
+
+                            <PrescriptionDispensePanel
+                                key={selectedInvoice.public_id}
+                                invoice={selectedInvoice}
+                                onDispensed={handleDispensed}
+                            />
                         </div>
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
@@ -724,6 +897,7 @@ const Billing = () => {
                                     <PaymentLinesEditor
                                         total={payTarget}
                                         allowPartial={payAllowPartial}
+                                        allowChange={true}
                                         lines={payLines}
                                         setLines={setPayLines}
                                         disabled={paying}
@@ -735,7 +909,7 @@ const Billing = () => {
                                         className="btn btn-primary btn-sm"
                                         style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }}
                                         onClick={submitPayment}
-                                        disabled={paying || !paymentLinesValid(payLines, payTarget, payAllowPartial)}
+                                        disabled={paying || !paymentLinesValid(payLines, payTarget, payAllowPartial, true)}
                                     >
                                         {paying ? <Icon.Loader s={14} /> : (isDirectSaleDraft ? "Cobrar" : "Registrar Pago")}
                                     </button>

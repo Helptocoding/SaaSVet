@@ -1,7 +1,10 @@
 # ADR p27: Payment model — pagos split y parciales; `Invoice.status` como proyección del ledger
 
 **Fecha**: 2026-05-27
-**Estado**: Aceptado (diseño) — implementación Sprint A, sin código aún
+**Estado**: Aceptado (diseño) — implementación Sprint A. **Parcial superado por ADR p30
+§7 (rev 2026-05-29):** v1+ no admite pago parcial en ningún caso. El resto del ADR
+(Payment append-only, split de métodos, idempotencia, `Invoice.status` como proyección)
+sigue vigente.
 **Documentos relacionados**:
 - `docs/financial-event-model-contract.md` (v1.0 frozen) — **autoridad de vocabulario/semántica/invariantes**
 - `docs/deferred-decisions.md` — `DD-001`, `DD-002`, `DD-006`, `DD-008`, `DD-009`

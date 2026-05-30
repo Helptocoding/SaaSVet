@@ -79,6 +79,14 @@ export const reverseCreditNote = (
         _idemConfig(idempotencyKey),
     ).then(r => r.data);
 
+// ADR p30: dispensar receta interna agregando sus productos a la MISMA factura
+// de consulta (no crea factura aparte). lines = [{ presentation: <pk>,
+// quantity: <num>, prescription_item: <pk> }] con lo que el cliente decide
+// llevar. Devuelve la factura de consulta (draft) con las líneas agregadas.
+export const dispensePrescription = (prescriptionPublicId, { lines } = {}) =>
+    api.post(`billing/prescriptions/${prescriptionPublicId}/dispense/`, { lines })
+        .then(r => r.data);
+
 // Ítems de factura
 export const addInvoiceItem = (invoiceId, data) =>
     api.post(`billing/invoices/${invoiceId}/items/`, data).then(r => r.data);

@@ -189,6 +189,11 @@ remaining_balance(invoice) = invoice.total − Σ(Payment.amount aplicado a la f
 - `Invoice.status = 'confirmed' (cobrable, no liquidada)  ⟹  remaining_balance > 0`
 - **Pagos parciales** (consultation) bajan `remaining_balance`; la factura permanece
   `confirmed` hasta llegar a 0, momento en que el service la transiciona a `paid`.
+  **Revisión 2026-05-29 (ADR p30 §7):** v1+ ya **NO admite** parciales — toda factura
+  exige total exacto (`require_full=True` en `pay_invoice` y `pay_direct_sale`). Esta
+  línea se conserva como descripción del invariante computable; la regla `Σ ≤ remaining`
+  sigue válida en `remaining_balance`, pero el writer (`_pay_locked_invoice`) rechaza
+  `Σ < remaining`. Si en el futuro se reabre el parcial, el invariante no cambia.
 - v1: `remaining_balance` es **propiedad computada**, no columna almacenada. Almacenarla
   reintroduce el lost-update que se cerró en la auditoría (C2) y exigiría F()/recompute bajo
   lock como `recalculate_totals`. Columna almacenada = `DD-001` (solo si el perf lo pide).

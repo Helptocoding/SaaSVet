@@ -1,5 +1,7 @@
 # Modulo: Citas
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 El modulo de citas es el punto de entrada al ciclo clinico completo.

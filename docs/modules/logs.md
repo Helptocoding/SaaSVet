@@ -1,5 +1,7 @@
 # Modulo: Logs y eventos del sistema
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Descripcion general
 
 El sistema emite eventos estructurados en formato JSON al stdout (visible en Railway como logs del servidor).
@@ -12,6 +14,10 @@ Hay varios grupos de eventos segun su origen:
 - `apps.tenant_validation` — rechazos de tenant en serializers (PR Dia 3 / ADR p14)
 - `core.deprecation` — uso de endpoints deprecados (PR-4B / ADR p16)
 - `core.audit_orphan_fks` — mgmt command de integridad referencial (PR-4B)
+- `billing.events` — pagos, idempotencia, mutaciones de InvoiceItem (Sprint A / ADR p27, p29)
+- `cash.events` — turnos de caja, cierre Z (Sprint A / ADR p28)
+- `platform.events` — provisioning cross-tenant (ADR p19)
+- `analytics.events` — late arrivals, build de snapshots, anchor governance (ADR p17)
 
 ---
 
@@ -203,6 +209,164 @@ Accion requerida: ninguna.
 
 ---
 
+---
+
+## Eventos de billing (`billing.events`)
+
+### `IDEMPOTENT_PAYMENT_DEDUPED` · INFO
+
+Un reintento de pago con el mismo `X-Idempotency-Key` fue detectado y se devolvio el resultado previo sin doble-registrar. Contrato de idempotencia (ADR p27, contract §9).
+
+Campos: `event`, `request_id`, `idempotency_key`, `organization_id`.
+
+Accion requerida: ninguna. Si frecuente para mismo `idempotency_key`, revisar retry logic del frontend.
+
+---
+
+### `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` · WARNING
+
+Un `InvoiceItem.save()` o `.delete()` corrio fuera de `transaction.atomic()`. Observabilidad de la regla CLAUDE: toda mutacion concurrente de items debe sostener `select_for_update()` sobre la Invoice.
+
+Campos: `event`, `item_id`, `invoice_id`, `caller`.
+
+Accion requerida: localizar el caller y envolver en `atomic()` + lock de Invoice.
+
+---
+
+## Eventos de caja (`cash.events`)
+
+ADR p28 (`2026-05-27-p28-cash-session-cierre-z.md`).
+
+### `CASH_SESSION_OPENED` · INFO
+
+Un usuario abrio su turno de caja.
+
+Campos: `event`, `session_id`, `organization_id`, `opened_by`, `opening_float`.
+
+---
+
+### `CASH_SESSION_CLOSED` · INFO
+
+Cierre Z normal. Incluye `difference` para reconciliacion.
+
+Campos: `event`, `session_id`, `organization_id`, `closed_by`, `expected_cash`, `counted_cash`, `difference`.
+
+Accion requerida: si `|difference|` excede umbral operativo, investigar.
+
+---
+
+### `CASH_SESSION_FORCE_CLOSED` · WARNING
+
+Cierre administrativo (`force=True`). Usado cuando un cajero no puede cerrar su propio turno.
+
+Campos: `event`, `session_id`, `organization_id`, `closed_by`, `actor_id`, `difference`.
+
+Accion requerida: investigar el motivo del cierre forzado.
+
+---
+
+## Eventos de platform (`platform.events`)
+
+ADR p19 (`2026-05-22-p19-platform-org-provisioning.md`).
+
+### `PLATFORM_ORG_PROVISIONED` · INFO
+
+Provisioning exitoso de organizacion nueva.
+
+Campos: `event`, `request_id`, `actor_id`, `actor_username`, `actor_email`, `actor_role`, `org_id`, `org_public_id`, `org_name`, `admin_user_id`, `admin_user_public_id`, `admin_username`, `duration_ms`.
+
+---
+
+### `PLATFORM_ORG_PROVISION_RACE` · WARNING
+
+`IntegrityError` post-validacion (race condition entre 2 ADMIN_SAAS provisionando la misma org simultaneamente).
+
+Accion requerida: ninguna si esporadico; investigar si frecuente.
+
+---
+
+### `PLATFORM_ORG_PROVISION_RBAC_MISSING` · CRITICAL
+
+Role `ADMIN` ausente tras correr el signal post-Organization-create. Bug en el seed de RBAC.
+
+Accion requerida: investigar de inmediato. Revisar `seed_permissions` y los signals de `organizations`.
+
+---
+
+### `PLATFORM_ORG_PROVISION_POSTCOND_FAILED` · CRITICAL
+
+Post-condicion `UserRole` no satisfecha despues del provisioning. Indica corrupcion del flujo atomic.
+
+Accion requerida: investigar y rollback manual si aplica.
+
+---
+
+### `PLATFORM_ACCESS_DENIED` · WARNING
+
+`IsPlatformOperator` rechazo un request al endpoint `/api/platform/`. Usuario no es ADMIN_SAAS legitimo.
+
+Campos: `event`, `request_id`, `actor_id`, `actor_username`, `actor_email`, `actor_role`.
+
+Accion requerida: si aparece en bursts desde misma IP, investigar (posible escalation attempt).
+
+---
+
+## Eventos de analytics (`analytics.events`)
+
+ADR p9, p17 (`2026-05-09-p9-analytics-anchor-authority.md`, `2026-05-17-p17-analytics-correctness-day5.md`).
+
+### `ANCHOR_LATE_ARRIVAL` · WARNING
+
+Un anchor (`paid_at`, `confirmed_at`, `cancelled_at`, `closed_at`) cayo en un bucket ya frozen (threshold T+2 dias para clase `clinical`/`financial`). Warn-only en Dia 5; hard reject planificado para Dia 7+.
+
+Campos: `event='ANCHOR_LATE_ARRIVAL'`, `anchor_field`, `anchor_value_iso`, `bucket_date_local_iso`, `frozen_threshold_days`, `age_days`, `organization_id`, `writer`, `metric_class`.
+
+Accion requerida: si frecuente, revisar latencia operativa (consultas que se cierran dias despues, pagos retroactivos).
+
+---
+
+### `DASH_BUILD_RUN_STARTED` / `DASH_BUILD_RUN_COMPLETED` · INFO
+
+Ciclo de vida del mgmt command `build_daily_metrics` (cron nightly).
+
+Campos: `event`, `run_id`, `orgs_processed`, `orgs_locked_busy`, `orgs_failed`, `snapshots_built`, `snapshots_skipped_today`, `duration_seconds`.
+
+---
+
+### `DASH_BUILD_ORG_STARTED` / `DASH_BUILD_ORG_COMPLETED` / `DASH_BUILD_ORG_FAILED` · INFO/ERROR
+
+Per-org isolation del build. Un org fallido no aborta otros.
+
+Campos: `event`, `run_id`, `organization_id`, `duration_ms` (en COMPLETED), `error_class`+`stacktrace` (en FAILED).
+
+Accion requerida: investigar cualquier `ORG_FAILED`.
+
+---
+
+### `DASH_BUILD_LOCK_BUSY` · WARNING
+
+PG advisory lock contendido. Otro proceso esta construyendo metrics para esa org. Org saltada en esta corrida.
+
+Campos: `event`, `run_id`, `organization_id`.
+
+Accion requerida: ninguna si esporadico (deploy multi-worker). Investigar si persistente.
+
+---
+
+### `DASH_SNAPSHOT_BUILT` / `DASH_SNAPSHOT_NO_CHANGE` · INFO
+
+Resultado del `apply_snapshot` por (org, date). `NO_CHANGE` confirma idempotencia.
+
+---
+
+### `DASH_SNAPSHOT_CORRUPT` · ERROR
+
+Snapshot con `excluded_anchor_missing > 0`. Persistido como `lifecycle_state='corrupt'`, filtrado en view layer.
+
+Accion requerida: investigar `audit_anchor_integrity` para encontrar el modelo con anchor faltante.
+
+---
+
 ## Regla practica para monitorear en Railway
 
 Filtrar el stdout por nombre de evento:
@@ -218,5 +382,12 @@ Filtrar el stdout por nombre de evento:
 | `AUDIT_ORPHAN_FKS_TARGET_ORPHANS` | Nunca | Integridad referencial rota — seguir runbook |
 | `RBAC_ALLOWED_DB` | La mayoria de requests | Estado normal |
 | `MEDICAL_RECORD_DELETED` | Bajo, ocasional | Normal — registro vacio eliminado por error |
+| `PLATFORM_ORG_PROVISION_*` (CRITICAL) | Nunca | Bug en seed RBAC o atomic flow — investigar de inmediato |
+| `PLATFORM_ACCESS_DENIED` | Nunca para ADMIN_SAAS legitimo | Posible escalation attempt si bursts |
+| `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` | Nunca | Caller bypaseo lock de Invoice — localizar y envolver en atomic() |
+| `CASH_SESSION_FORCE_CLOSED` | Bajo | Cierre administrativo — investigar motivo |
+| `ANCHOR_LATE_ARRIVAL` | Bajo | Anchor en bucket frozen; warn-only Dia 5 |
+| `DASH_SNAPSHOT_CORRUPT` | Nunca | excluded_anchor_missing > 0 — correr audit_anchor_integrity |
+| `IDEMPOTENT_PAYMENT_DEDUPED` | Bajo | Retry de cobro funcionando como debe |
 
 El `request_id` presente en todos los eventos de `rbac.events` permite agrupar multiples eventos del mismo request HTTP para reconstruir que paso exactamente en una solicitud especifica.

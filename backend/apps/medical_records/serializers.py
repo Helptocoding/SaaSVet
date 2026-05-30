@@ -129,6 +129,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     prescription_summary = serializers.SerializerMethodField()
     invoice_id = serializers.ReadOnlyField()
     invoice_public_id = serializers.SerializerMethodField()
+    invoice_status = serializers.SerializerMethodField()
     status = serializers.CharField(read_only=True)
     closed_at = serializers.DateTimeField(read_only=True)
     closed_by = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -143,6 +144,13 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         # select_related('invoice').
         invoice = getattr(obj, 'invoice', None)
         return str(invoice.public_id) if invoice else None
+
+    def get_invoice_status(self, obj):
+        # Estado de la factura vinculada (draft/confirmed/paid/cancelled) para
+        # que el Timeline muestre el badge "Cobro". None si la consulta aún no
+        # tiene factura (clínica sin cargos antes de cerrar).
+        invoice = getattr(obj, 'invoice', None)
+        return invoice.status if invoice else None
 
     force_weight = serializers.BooleanField(write_only=True, required=False, default=False)
 
@@ -169,14 +177,14 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'diagnosis', 'treatment', 'notes', 'weight', 'force_weight', 'created_at', 'updated_at',
             'products_used',
             'prescription_id', 'prescription_public_id', 'prescription_summary',
-            'invoice_id', 'invoice_public_id',
+            'invoice_id', 'invoice_public_id', 'invoice_status',
             'latest_vitals',
             'status', 'closed_at', 'closed_by',
             'can_modify_charges', 'can_close', 'can_delete',
         ]
         read_only_fields = [
             'id', 'public_id', 'pet_public_id', 'appointment_public_id',
-            'prescription_public_id', 'invoice_public_id',
+            'prescription_public_id', 'invoice_public_id', 'invoice_status',
             'created_at', 'updated_at', 'prescription_id', 'invoice_id',
             'status', 'closed_at', 'closed_by',
             'organization',

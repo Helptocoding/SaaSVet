@@ -1,5 +1,7 @@
 # Modulo: Mascotas y Propietarios
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 El modulo gestiona propietarios y sus mascotas.

@@ -1,5 +1,7 @@
 # Modulo: Frontend
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Stack
 
 - React 19 + Vite (JavaScript, sin TypeScript)
@@ -311,6 +313,20 @@ Configurado en `App.jsx`:
 
 Usar `toast.promise` para operaciones asincronas con feedback de progreso.
 Usar `toast.error(apiError(err, fallback))` en catch blocks.
+
+**Gotcha (sonner v2): `toast.promise(p)` NO resuelve a la data de `p`.** Devuelve un
+objeto interno del toast, no el valor de la promesa. Nunca hacer
+`const data = await toast.promise(req, {...})` y usar `data` — quedará sin las
+propiedades reales (causó crash `selectedInvoice.items.map` y un `getInvoice(undefined)`
+→ 404 en Cobros). Patrón correcto: disparar el toast y await la promesa original:
+```jsx
+const req = miApiCall();           // la promesa real
+toast.promise(req, { loading, success, error });
+const data = await req;            // <- await la promesa, no el retorno de toast.promise
+usar(data);
+```
+Si solo se necesita feedback (sin usar la data), `await toast.promise(...)` sin
+capturar el retorno es aceptable.
 
 ## Rutas
 

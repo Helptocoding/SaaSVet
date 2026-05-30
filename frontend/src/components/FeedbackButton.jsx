@@ -29,6 +29,11 @@ const FeedbackButton = () => {
             return;
         }
 
+        if (!DISCORD_WEBHOOK_URL) {
+            toast.error("El soporte no está configurado (falta VITE_DISCORD_WEBHOOK_URL).");
+            return;
+        }
+
         setSending(true);
         try {
             const formData = new FormData();

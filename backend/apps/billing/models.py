@@ -246,6 +246,26 @@ class InvoiceItem(OrganizationalModel):
     # TODO (v2):
     # Hacer 'presentation' obligatorio a nivel DB (null=False)
     # cuando todos los flujos, seeds y frontend estén completamente migrados.
+
+    # ADR p30: ítem agregado al cobro de la consulta al dispensar un producto de
+    # la receta interna que el cliente decide llevar. NO se crea una factura
+    # aparte: la línea va en la MISMA factura de consulta. Doble función:
+    #   1) Provenance: qué línea de receta (PrescriptionItem) surtió esta línea.
+    #   2) Discriminador del descuento de stock: en una factura `consultation`,
+    #      los ítems sincronizados desde MedicalRecordProduct YA descontaron stock
+    #      al consumirse en consulta; estos ítems dispensados NO. La única ruta de
+    #      descuento (_confirm_locked_invoice) usa este FK para saber qué ítems de
+    #      una consulta liquidan stock al confirmar. En `direct_sale` se ignora
+    #      (todos los ítems liquidan). La Prescription interna es el respaldo legal
+    #      del producto requires_prescription (no se exige atestación externa,
+    #      ADR p26); el permiso billing.rx_dispense se valida en la view.
+    dispensed_from_prescription_item = models.ForeignKey(
+        'prescriptions.PrescriptionItem',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='dispensed_invoice_items',
+    )
     DISCOUNT_TYPE_CHOICES = (
         ('percentage', 'Porcentaje'),
         ('fixed', 'Monto fijo'),

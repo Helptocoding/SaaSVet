@@ -1,5 +1,7 @@
 # Modulo: Historial clinico
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 El modulo de historial clinico registra el acto medico realizado sobre una mascota y conserva la trazabilidad minima necesaria para auditoria clinica.
@@ -24,7 +26,7 @@ Una consulta medica puede incluir:
 
 La consulta se crea en estado `open` con `consultation_type = general` por defecto.
 
-**Facturación lazy**: La factura NO se crea automáticamente al crear la consulta. Se crea de forma lazy al agregar el primer cargo (servicio o producto) vía `_sync_invoice_item` → `get_or_create_invoice_for_medical_record()`.
+**Facturación lazy**: La factura NO se crea al crear la consulta. Se crea de forma lazy al agregar el primer cargo (servicio o producto) vía `_sync_invoice_item` → `get_or_create_invoice_for_medical_record()`, **o** al cerrar la consulta (ADR p30 — `close_medical_record` la garantiza, ver §Cierre).
 
 Si la consulta tiene cita asociada y la clínica activa explícitamente el toggle `auto_create_invoice_on_done`, la factura se puede crear al marcar la cita como `done` (ver `docs/modules/appointments.md`). El default actual es `False`.
 
@@ -54,6 +56,10 @@ Al cerrar via `close_medical_record` view (POST `/api/medical-records/<uuid>/clo
 - `closed_at` se setea con `timezone.now()` en el mismo `transaction.atomic()`
 - `closed_at_source = 'service'` (provenance — ver ADR `2026-05-09-p9`)
 - `closed_by` registra al user
+- **garantiza la factura (ADR p30)**: llama `get_or_create_invoice_for_medical_record()`
+  dentro del mismo `atomic()` (MR ya lockeado → Invoice, orden canónico). Finalizar
+  **siempre** deja la consulta en Cobros, aunque sea una factura `draft` $0. Supera
+  la creación lazy de ADR p7 en este camino.
 
 `closed_at` es `editable=False`. Defenses:
 1. **Model `save()` guard**: si `status='closed' AND closed_at is None` →
@@ -105,16 +111,21 @@ La receta medica es un documento clinico independiente de la factura.
 
 Reglas de negocio:
 - la receta contiene los medicamentos que el veterinario indica clinicamente
-- la factura contiene lo que el cliente decide llevar y pagar
-- los productos de la receta NO se agregan automaticamente a la factura
-- la factura expone `prescription_suggestions`: lista de productos recetados disponibles para que recepcion agregue individualmente segun lo que el cliente confirme
+- la receta por si sola NO descuenta stock ni crea items financieros
 - una consulta `closed` no admite receta nueva ni modificacion de receta existente
 
-Flujo en cobros:
-- la factura en draft muestra los servicios e insumos de la consulta como items automaticos
-- los productos recetados aparecen como sugerencias opcionales con boton "Agregar" individual
-- recepcion agrega solo los que el cliente decide llevar
-- la receta por si sola NO descuenta stock ni crea items financieros
+Flujo en cobros (dispensación, ADR p30 — ver `docs/modules/billing.md`):
+- la factura de consulta (draft) muestra los servicios e insumos usados como items
+  automaticos (esos SÍ se cobran y ya descontaron stock al consumirse)
+- los recetados NO se agregan automáticamente — se exponen como
+  `prescription_suggestions` en el detalle del cobro, con la presentación de venta a
+  elegir por recepción
+- recepción dispensa lo que el cliente decide llevar vía
+  `POST /api/billing/prescriptions/<uuid>/dispense/`, que **agrega esos productos como
+  items a la MISMA factura de consulta** (marcados con
+  `InvoiceItem.dispensed_from_prescription_item`); no se crea una factura aparte. El
+  stock se descuenta al **confirmar** la factura, por la ruta única de descuento (en
+  una consulta solo liquida los ítems dispensados). "Quitar" = no incluir (no-op)
 
 Regla de frontend:
 - la creacion de receta se inicia desde `Historial clinico`

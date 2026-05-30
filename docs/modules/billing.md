@@ -1,5 +1,7 @@
 # Modulo: Cobros
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 El modulo de cobros gestiona las facturas generadas por consultas y ventas directas.
@@ -70,7 +72,9 @@ La factura se puede crear de dos formas:
 
 2. **Creación lazy al agregar cargos**: cuando se agrega el primer servicio o producto a una consulta walk-in (sin cita) o a una consulta creada manualmente desde una cita ya completada, se crea una factura `draft` vinculada a la consulta vía `get_or_create_invoice_for_medical_record()`. **No hay señal ni toggle** — es creación automática por demanda.
 
-**Nota**: La creación automática via señal para consultas walk-in fue eliminada (ADR `2026-05-05-p7-lazy-invoice-creation.md`) para evitar facturas vacías acumuladas. Para citas normales, la señal sigue existiendo pero queda desactivada por default a nivel de organización.
+3. **Garantizada al cerrar la consulta (ADR p30)**: `close_medical_record` llama `get_or_create_invoice_for_medical_record()` dentro de su `atomic()` (MR ya lockeado → Invoice; orden canónico). Así, finalizar **siempre** deja la consulta en Cobros, aunque no tenga cargos (factura `draft` $0). **Supera la creación lazy de ADR p7 en el camino de cierre**: ese camino deja de ser puramente lazy.
+
+**Nota**: La creación automática via señal para consultas walk-in fue eliminada (ADR `2026-05-05-p7-lazy-invoice-creation.md`) para evitar facturas vacías acumuladas. ADR p30 la reintroduce **solo en el cierre** (decisión de producto: la consulta finalizada debe verse en Cobros). Para citas normales, la señal `auto_create_invoice_on_done` sigue existiendo pero queda desactivada por default a nivel de organización.
 
 Ambas creaciones son idempotentes (`get_or_create`).
 
@@ -204,13 +208,19 @@ Semántica (contrato §8):
 - Los refunds **no** entran en `remaining_balance` (operan post-pago vía nota de
   crédito, ADR p29).
 
-Pagos split y parciales:
+Pagos split y total exacto (ADR p30 rev, 2026-05-29 — supera el parcial de ADR p27):
 - `pay_invoice` / `pay_direct_sale` aceptan `payment_lines=[{method, amount[, reference]}]`
   **o** el legacy `payment_method` (una sola línea por el saldo).
-- **Venta directa** (`direct_sale`): el pago debe cubrir el **total exacto**
-  (sin parciales). Split permitido (efectivo+tarjeta en una operación).
-- **Consulta** (`consultation`): permite **pago parcial** — la factura queda en
-  `confirmed` hasta que `remaining_balance` llega a 0; ahí pasa a `paid`.
+- **Toda factura** (consulta y venta directa) exige el **total exacto**: la suma de
+  `payment_lines` debe igualar `remaining_balance`. **Sin parciales bajo ningún motivo.**
+  Split sigue válido (efectivo+tarjeta sumando el total). Backend: ambos paths corren
+  con `require_full=True`.
+- **Cambio en efectivo (universal)**: el frontend admite que el efectivo recibido
+  **supere** el total; muestra el cambio (`recibido − total`) y registra **solo el total**
+  (`payment_lines` capeado). El cambio es UI: **no se persiste** (no es `Payment`, no
+  afecta `remaining_balance` ni caja). Aplica a todo cobro (venta directa y consulta,
+  incluida la consulta con dispensación). Frontend: `allowChange={true}` siempre,
+  `payAllowPartial = false` siempre; `submitPayment` capea en cualquier sobrepago.
 - `invoice.payment_method` queda como legacy/derivado: método único si todos los
   pagos coinciden, `NULL` si es mixto. Drop futuro = `DD-009`.
 
@@ -488,17 +498,43 @@ Reglas:
 - el nombre se normaliza a `title case` al guardar
 - un servicio en uso en una `MedicalRecordService` esta protegido con PROTECT (no puede eliminarse)
 
-## Sugerencias de receta
+## Sugerencias de receta y dispensación (ADR p30)
 
-Una factura en `draft` con consulta asociada expone `prescription_suggestions`:
-lista de productos recetados disponibles para que recepcion agregue individualmente.
+Ver ADR `2026-04-26-receta-no-es-factura.md` y `2026-05-28-p30-receta-dispensacion-venta-directa.md`.
 
-Ver ADR `2026-04-26-receta-no-es-factura.md`.
+Reglas base (sin cambio):
+- una receta médica NO descuenta stock por sí misma
+- una sugerencia NO implica venta automática
+- recepción decide qué dispensa según lo que el cliente efectivamente lleva
 
-Importante:
-- una receta medica NO descuenta stock por si misma
-- una sugerencia de receta NO implica venta automatica
-- recepcion decide que agregar a la factura segun lo que el cliente efectivamente lleva
+**Exposición (`InvoiceSerializer`, solo en detalle vía flag `with_prescription_suggestions`
+— `InvoiceDetailView`, NO en la lista para evitar N+1):**
+- `prescription_public_id` — receta de la consulta vinculada (para dispensar).
+- `prescription_suggestions` — por ítem recetado: `prescription_item_id`, `product_name`,
+  `dose`, `suggested_quantity` y `presentations[]` (`id`, `name`, `sale_price`, `stock`).
+  Recepción **elige** la presentación de venta (Product puede tener varias).
+- `InvoiceItem.dispensed` (bool) — `True` si la línea es un producto dispensado de la
+  receta (la UI la etiqueta "para llevar").
+
+**Dispensación = líneas en la MISMA factura de consulta (no se crea factura aparte):**
+lo que el cliente decide llevar se agrega como `InvoiceItem` a la factura `consultation`,
+marcado con `InvoiceItem.dispensed_from_prescription_item`. Ese FK es el **discriminador
+de la ruta única de stock**: al **confirmar** la consulta, `_confirm_locked_invoice`
+(vía `_items_settling_stock`) descuenta SOLO los ítems dispensados; los insumos
+sincronizados desde `MedicalRecordProduct` ya descontaron al consumirse. No hay segunda
+función de stock.
+- Endpoint `POST /api/billing/prescriptions/<uuid>/dispense/`, body
+  `{lines:[{presentation, quantity, prescription_item}]}` (recepción elige; "quitar" =
+  no incluir, no-op). Devuelve la factura de consulta actualizada (200).
+- Service `billing.services.dispense_prescription_into_invoice`: resuelve la factura de
+  consulta (debe estar `draft`), agrega/acumula cantidades por presentación
+  (`unique_together(invoice, presentation)`), **no mueve stock** — eso ocurre al confirmar.
+  Si la presentación ya existe como insumo (sin FK), rechaza (recepción ajusta a mano).
+- Producto `requires_prescription`: la receta interna ES el respaldo legal → NO
+  crea `ExternalPrescriptionAttestation` (ADR p26, que cubre venta SIN receta
+  previa). Gate de permiso `billing.rx_dispense` en la view.
+- Frontend: panel "Receta — dispensar" en el detalle del cobro (`PrescriptionDispensePanel`),
+  solo visible mientras la factura está en `draft`; al dispensar refresca esa misma factura.
 
 ## Frontend — IDs en llamadas a la API
 
@@ -529,6 +565,7 @@ Los IDs de invoice e items usan `<uuid>` (public_id), no el PK entero.
 | `POST`   | `/api/billing/invoices/<uuid>/pay/`          | Registrar pago (requiere confirmed) |
 | `POST`   | `/api/billing/invoices/<uuid>/direct-pay/`   | Cobrar venta directa (draft → paid atómico) |
 | `POST`   | `/api/billing/invoices/<uuid>/cancel/`       | Cancelar (no aplica a paid)       |
+| `POST`   | `/api/billing/prescriptions/<uuid>/dispense/`| Dispensar receta → agrega ítems a la factura de consulta (ADR p30) |
 | `POST`   | `/api/billing/invoices/<uuid>/items/`        | Agregar item                      |
 | `PATCH`  | `/api/billing/invoices/<uuid>/items/<id>/`   | Editar item (solo draft)          |
 | `DELETE` | `/api/billing/invoices/<uuid>/items/<id>/`   | Eliminar item (solo draft)        |
@@ -546,6 +583,12 @@ Los IDs de invoice e items usan `<uuid>` (public_id), no el PK entero.
 - `status=<estado>` — por estado
 - `paid_on=YYYY-MM-DD` — facturas pagadas ese dia (ajustado a timezone de la org)
 - `created_on=YYYY-MM-DD` — facturas creadas ese dia (ajustado a timezone de la org)
+
+**Orden**: la lista ordena por `-created_at` (más reciente primero) vía
+`.order_by('-created_at')` **explícito** en el queryset. Es obligatorio: el
+`.annotate(Sum('payments__amount'))` del ledger (ADR p27) descarta el
+`Meta.ordering` del modelo (`query.order_by` queda vacío → orden de heap del DB).
+No quitar el `order_by` sin reemplazo.
 
 ## Audit log
 

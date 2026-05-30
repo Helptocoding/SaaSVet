@@ -1,5 +1,7 @@
 # Modulo: Platform (cross-tenant SaaS operations)
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 ## Objetivo
 
 Aloja la infraestructura de operaciones de plataforma (SaaS-wide) que **no

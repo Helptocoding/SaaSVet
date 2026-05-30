@@ -77,6 +77,10 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     description = serializers.CharField(read_only=True)
     discount_amount = serializers.SerializerMethodField()
+    # ADR p30: True si la línea es un producto dispensado de la receta interna
+    # (agregado al cobro de la consulta). La UI lo usa para distinguir "para
+    # llevar" de los insumos consumidos en la consulta.
+    dispensed = serializers.SerializerMethodField()
 
     class Meta:
         model = InvoiceItem
@@ -85,14 +89,17 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             'presentation', 'presentation_name', 'description',
             'quantity', 'unit_price',
             'discount_type', 'discount_value', 'discount_amount',
-            'subtotal',
+            'subtotal', 'dispensed',
         ]
-        read_only_fields = ['id', 'subtotal', 'invoice']
+        read_only_fields = ['id', 'subtotal', 'invoice', 'dispensed']
 
     def get_presentation_name(self, obj):
         if obj.presentation:
             return str(obj.presentation)   # "Producto — Presentación"
         return None
+
+    def get_dispensed(self, obj):
+        return obj.dispensed_from_prescription_item_id is not None
 
     def get_discount_amount(self, obj):
         gross = money(obj.quantity * obj.unit_price)
@@ -189,6 +196,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
     owner_public_id = serializers.UUIDField(source='owner.public_id', read_only=True, allow_null=True)
     appointment_public_id = serializers.UUIDField(source='appointment.public_id', read_only=True, allow_null=True)
     medical_record_public_id = serializers.UUIDField(source='medical_record.public_id', read_only=True, allow_null=True)
+    # ADR p30: receta de la consulta vinculada — recepción dispensa sus ítems
+    # AGREGÁNDOLOS a esta misma factura de consulta (no se crea factura aparte).
+    prescription_public_id = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
     prescription_suggestions = serializers.SerializerMethodField()
     # ADR p27: ledger de pagos. amount_paid = Σ(Payment.amount); remaining_balance
@@ -206,6 +216,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'id', 'public_id', 'invoice_type',
             'appointment', 'appointment_public_id',
             'medical_record', 'medical_record_public_id',
+            'prescription_public_id',
             'owner', 'owner_public_id', 'owner_name',
             'pet', 'pet_public_id', 'pet_name',
             'status', 'payment_method', 'tax_rate',
@@ -218,6 +229,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'public_id', 'pet_public_id', 'owner_public_id',
             'appointment_public_id', 'medical_record_public_id',
+            'prescription_public_id',
             'subtotal', 'tax_amount', 'total',
             'amount_paid', 'remaining_balance', 'credit_notes',
             'created_by', 'paid_at', 'created_at', 'updated_at',
@@ -334,30 +346,53 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
         return data
 
+    def _linked_prescription(self, obj):
+        """Receta de la consulta vinculada (OneToOne MedicalRecord.prescription)."""
+        if not obj.medical_record_id:
+            return None
+        try:
+            return obj.medical_record.prescription
+        except Exception:
+            return None
+
+    def get_prescription_public_id(self, obj):
+        # Gateado a detalle: solo se usa para dispensar (panel de Cobros). En la
+        # lista evita N+1 (obj.medical_record.prescription por cada factura).
+        if not self.context.get('with_prescription_suggestions'):
+            return None
+        rx = self._linked_prescription(obj)
+        return str(rx.public_id) if rx else None
+
     def get_prescription_suggestions(self, obj):
         """
-        Productos recetados disponibles para agregar a la factura.
-        Solo se expone cuando la factura está en borrador y tiene una consulta con receta.
+        ADR p30: medicamentos de la receta para que recepción los dispense
+        agregándolos a ESTA MISMA factura de consulta (no se crea factura
+        aparte). Cada ítem trae las presentaciones disponibles para que
+        recepción ELIJA formato y precio (Product puede tener varias). Gateado a
+        detalle vía context para no incurrir N+1 en la lista.
         """
-        if obj.status != 'draft' or not obj.medical_record_id:
+        if not self.context.get('with_prescription_suggestions'):
             return []
-        try:
-            rx = obj.medical_record.prescription
-        except Exception:
+        rx = self._linked_prescription(obj)
+        if rx is None:
             return []
         suggestions = []
         for item in rx.items.select_related('product').prefetch_related('product__presentations').all():
-            pres = item.product.presentations.first()
-            if not pres:
-                continue
+            presentations = [
+                {
+                    'id': p.id,
+                    'name': str(p),
+                    'sale_price': str(p.sale_price),
+                    'stock': str(p.stock),
+                }
+                for p in item.product.presentations.all()
+            ]
             suggestions.append({
                 'prescription_item_id': item.id,
                 'product_name': item.product.name,
-                'presentation_id': pres.id,
-                'presentation_name': str(pres),
                 'dose': item.dose,
                 'suggested_quantity': str(item.quantity),
-                'unit_price': str(pres.sale_price),
+                'presentations': presentations,
             })
         return suggestions
 

@@ -1,9 +1,10 @@
 """
 Tests del ledger de pagos (ADR p27 / docs/financial-event-model-contract.md §8).
 
-Cubre: Payment append-only, split, pago parcial, idempotencia (replay sin
-doble-cobro), overpago rechazado, venta directa exige total exacto, cancelación
-con pagos bloqueada, y el comando audit_payment_ledger_integrity.
+Cubre: Payment append-only, split, idempotencia (replay sin doble-cobro),
+overpago rechazado, **toda factura exige total exacto** (revisión ADR p30
+2026-05-29 — supera el parcial de ADR p27 en consulta), cancelación con pagos
+bloqueada, y el comando audit_payment_ledger_integrity.
 """
 from decimal import Decimal
 from io import StringIO
@@ -104,17 +105,28 @@ class PaymentLedgerTests(TestCase):
         self.assertEqual(inv.status, 'draft')  # rollback atómico
         self.assertEqual(Payment.all_objects.filter(invoice=inv).count(), 0)
 
-    # --- pago parcial (consulta) ----------------------------------------------
+    # --- consulta: parcial RECHAZADO (revisión ADR p30, 2026-05-29) -----------
 
-    def test_partial_payment_keeps_confirmed_then_completes(self):
+    def test_consultation_rejects_partial_payment(self):
+        """Toda factura exige total exacto — no se admite parcial bajo ningún
+        motivo. Supera la regla original de ADR p27 (parcial en consulta)."""
         inv = self._confirmed_consultation()  # total 100, confirmed
-        pay_invoice(inv, user=self.user, payment_lines=[{'method': 'cash', 'amount': '40.00'}])
+        with self.assertRaises(ValidationError):
+            pay_invoice(inv, user=self.user, payment_lines=[{'method': 'cash', 'amount': '40.00'}])
         inv.refresh_from_db()
         self.assertEqual(inv.status, 'confirmed')
-        self.assertEqual(inv.remaining_balance, Decimal('60.00'))
+        self.assertEqual(inv.remaining_balance, Decimal('100.00'))
         self.assertIsNone(inv.paid_at)
+        self.assertEqual(Payment.all_objects.filter(invoice=inv).count(), 0)
 
-        pay_invoice(inv, user=self.user, payment_lines=[{'method': 'card', 'amount': '60.00'}])
+    def test_consultation_full_payment_split_ok(self):
+        """Split que suma el total exacto sigue válido (efectivo+tarjeta en un
+        solo registro de cobro)."""
+        inv = self._confirmed_consultation()  # total 100
+        pay_invoice(inv, user=self.user, payment_lines=[
+            {'method': 'cash', 'amount': '40.00'},
+            {'method': 'card', 'amount': '60.00'},
+        ])
         inv.refresh_from_db()
         self.assertEqual(inv.status, 'paid')
         self.assertEqual(inv.remaining_balance, Decimal('0.00'))
@@ -149,12 +161,15 @@ class PaymentLedgerTests(TestCase):
     # --- cancelación con pagos ------------------------------------------------
 
     def test_cancel_with_payments_blocked(self):
-        inv = self._confirmed_consultation()
-        pay_invoice(inv, user=self.user, payment_lines=[{'method': 'cash', 'amount': '40.00'}])
+        # Con la regla "no parcial" (ADR p30 rev), el único camino para que una
+        # factura confirmada tenga pagos es pagarla completa → queda `paid`.
+        # cancel_invoice rechaza ambos: status `paid` y existencia de pagos.
+        inv = self._confirmed_consultation()  # total 100
+        pay_invoice(inv, user=self.user, payment_lines=[{'method': 'cash', 'amount': '100.00'}])
         with self.assertRaises(ValidationError):
             cancel_invoice(inv, user=self.user)
         inv.refresh_from_db()
-        self.assertEqual(inv.status, 'confirmed')  # no cancelada
+        self.assertEqual(inv.status, 'paid')  # paid, no cancelada
 
     # --- comando de auditoría -------------------------------------------------
 

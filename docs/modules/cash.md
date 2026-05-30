@@ -1,5 +1,7 @@
 # Modulo: Caja (turno / cierre Z)
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 App: `apps/cash/`. ADR `2026-05-27-p28-cash-session-cierre-z.md`.
 
 ## Objetivo

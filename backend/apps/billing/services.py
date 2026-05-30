@@ -74,6 +74,29 @@ def _lock_presentations(presentation_ids):
     }
 
 
+def _items_settling_stock(invoice, items):
+    """
+    Ítems de la factura que LIQUIDAN stock en la ruta de confirmación/cancelación
+    (ADR p30). Ruta ÚNICA de descuento — la usan _confirm_locked_invoice
+    (descuenta 'out') y cancel_invoice (revierte 'in'). No existe una segunda
+    función que mueva stock por ítem.
+
+      - direct_sale: todo ítem con presentación.
+      - consultation: SOLO ítems dispensados de una receta interna
+        (dispensed_from_prescription_item). Los demás ítems con presentación
+        (sincronizados desde MedicalRecordProduct) YA movieron stock al
+        consumirse en la consulta; volver a moverlos aquí sería doble descuento.
+        Los servicios no tienen presentación → nunca mueven stock.
+
+    Devuelve una lista materializada con presentation__product ya cargado (para
+    el mensaje de stock insuficiente sin N+1).
+    """
+    qs = items.select_related('presentation__product')
+    if invoice.invoice_type == 'direct_sale':
+        return [i for i in qs if i.presentation_id]
+    return [i for i in qs if i.presentation_id and i.dispensed_from_prescription_item_id]
+
+
 # ---------------------------------------------------------------------------
 # Funciones internas — asumen invoice YA lockeada con select_for_update().
 # Sin @transaction.atomic propio; el caller maneja la transacción.
@@ -117,7 +140,11 @@ def _warn_if_late_arrival(invoice, anchor_field, anchor_value, metric_class, wri
 def _confirm_locked_invoice(invoice, user):
     """
     Confirma una factura que YA está lockeada con select_for_update().
-    Solo direct_sale descuenta stock.
+
+    Descuenta stock de los ítems que LIQUIDAN inventario al confirmar
+    (`_items_settling_stock`): toda venta directa, y en una consulta solo los
+    ítems dispensados de receta (los insumos sincronizados desde
+    MedicalRecordProduct ya descontaron al consumirse). Ruta ÚNICA (ADR p30).
     Orden estricto: validar → validar stock → descontar → cambiar estado.
     """
     if invoice.status != 'draft':
@@ -128,23 +155,20 @@ def _confirm_locked_invoice(invoice, user):
     if not active_items.exists():
         raise ValidationError("No se puede confirmar una factura sin ítems.")
 
-    if invoice.invoice_type == 'direct_sale':
-        items_with_presentation = [
-            item for item in active_items.select_related('presentation__product')
-            if item.presentation_id
-        ]
+    items_to_settle = _items_settling_stock(invoice, active_items)
 
-        for item in active_items:
+    if items_to_settle:
+        for item in items_to_settle:
             if item.quantity <= 0:
                 raise ValidationError(
                     f"Cantidad inválida en ítem '{item.description}'."
                 )
 
-        presentation_ids = [i.presentation_id for i in items_with_presentation]
+        presentation_ids = [i.presentation_id for i in items_to_settle]
         locked = _lock_presentations(presentation_ids)
 
         errors = []
-        for item in items_with_presentation:
+        for item in items_to_settle:
             p = locked[item.presentation_id]
             if p.stock < item.quantity:
                 errors.append(
@@ -153,14 +177,19 @@ def _confirm_locked_invoice(invoice, user):
         if errors:
             raise ValidationError(errors)
 
-        for item in items_with_presentation:
+        is_direct = invoice.invoice_type == 'direct_sale'
+        reason = (
+            f'Venta directa — Factura #{invoice.pk}' if is_direct
+            else f'Dispensación de receta — Factura #{invoice.pk}'
+        )
+        for item in items_to_settle:
             try:
                 apply_stock_movement(
                     presentation=locked[item.presentation_id],
                     quantity=item.quantity,
                     movement_type='out',
                     organization=invoice.organization,
-                    reason=f'Venta directa — Factura #{invoice.pk}',
+                    reason=reason,
                     created_by=user,
                     invoice=invoice,
                 )
@@ -368,17 +397,20 @@ def cancel_invoice(invoice, user, notes=''):
 
     previous_status = invoice.status
 
-    if previous_status == 'confirmed' and invoice.invoice_type == 'direct_sale':
-        items = list(
-            InvoiceItem.all_objects
-            .filter(invoice=invoice, is_active=True)
-            .select_related('presentation__product')
+    # Revierte SOLO los ítems que descontaron stock al confirmar (misma ruta que
+    # _confirm_locked_invoice via _items_settling_stock): venta directa completa,
+    # o ítems dispensados de receta en una consulta. Los insumos de consulta
+    # (MedicalRecordProduct) se revierten al borrar el MRP, no aquí (ADR p30).
+    if previous_status == 'confirmed':
+        items_to_revert = _items_settling_stock(
+            invoice,
+            InvoiceItem.all_objects.filter(invoice=invoice, is_active=True),
         )
-        locked_presentations = _lock_presentations(
-            item.presentation_id for item in items if item.presentation_id
-        )
-        for item in items:
-            if item.presentation_id:
+        if items_to_revert:
+            locked_presentations = _lock_presentations(
+                item.presentation_id for item in items_to_revert
+            )
+            for item in items_to_revert:
                 try:
                     apply_stock_movement(
                         presentation=locked_presentations[item.presentation_id],
@@ -410,11 +442,14 @@ def cancel_invoice(invoice, user, notes=''):
 def pay_invoice(invoice, user, payment_method=None, *, payment_lines=None, idempotency_key=None):
     """
     Registra el pago de una factura confirmada. Authoritative writer del anchor
-    `paid_at` (solo cuando remaining_balance llega a 0).
+    `paid_at` (siempre cuando se cobra, porque el pago saldea el total).
 
-    Soporta pago único (legacy `payment_method`), split y parcial (`payment_lines`
-    = [{'method','amount'[,'reference']}, ...]). Idempotente vía `idempotency_key`
-    (contrato §9). Un pago parcial deja la factura en `confirmed`.
+    Soporta pago único (legacy `payment_method`) y split (`payment_lines` =
+    [{'method','amount'[,'reference']}, ...]). Idempotente vía `idempotency_key`
+    (contrato §9). **No admite pago parcial** (revisión ADR p30, 2026-05-29): la
+    suma de líneas debe igualar el saldo exacto. Supera la regla original de ADR
+    p27 que admitía parcial en consulta — decisión de producto: una factura se
+    cobra completa.
 
     Llamado por billing/views.py::pay_invoice y por flujos futuros. No editar
     `paid_at` desde otro lugar — el contrato analítico depende de un único writer.
@@ -441,7 +476,7 @@ def pay_invoice(invoice, user, payment_method=None, *, payment_lines=None, idemp
     )
     lines = _validate_payment_lines(raw)
     return _pay_locked_invoice(
-        invoice, user, lines, require_full=False,
+        invoice, user, lines, require_full=True,
         idempotency_key=idempotency_key, cash_session=cash_session,
     )
 
@@ -786,4 +821,130 @@ def get_or_create_invoice_for_medical_record(medical_record):
             'tax_rate': org.tax_rate,
         }
     )
+    return Invoice.objects.for_organization(org).select_for_update().get(pk=invoice.pk)
+
+
+@transaction.atomic
+def dispense_prescription_into_invoice(prescription, lines, user):
+    """
+    ADR p30: agrega a la MISMA factura de consulta los productos de la receta
+    interna que el cliente decide llevar. NO crea una factura aparte.
+
+    Cada línea se inserta como `InvoiceItem` con `dispensed_from_prescription_item`
+    seteado. Ese FK es el discriminador de la ruta única de descuento: al
+    confirmar la factura de consulta, `_confirm_locked_invoice` descuenta stock
+    SOLO de los ítems dispensados (los insumos sincronizados desde
+    MedicalRecordProduct ya descontaron al consumirse). No hay una segunda
+    función de stock. Por eso aquí NO se mueve inventario: solo se arman las
+    líneas en el draft. El pre-check de stock es best-effort (autoritativo al
+    confirmar bajo lock).
+
+    La `prescription` interna es el respaldo legal de los productos
+    requires_prescription, por lo que NO se crea ExternalPrescriptionAttestation
+    (ADR p26, que cubre la venta SIN receta previa). El permiso
+    billing.rx_dispense lo valida la view antes de llamar a este servicio.
+
+    Args:
+        prescription: Prescription resuelta y tenant-validada por el caller.
+        lines: lista de {'presentation_id': int, 'quantity': Decimal-like,
+            'prescription_item_id': int|None}. Líneas con la misma presentación
+            se agregan (unique_together(invoice, presentation)).
+        user: actor (created_by).
+
+    Returns:
+        La Invoice de consulta (draft) con las líneas dispensadas agregadas.
+
+    Raises:
+        ValidationError: sin líneas, cantidad no positiva, presentación o ítem de
+            receta inválidos, factura no editable, stock insuficiente (pre-check),
+            o la presentación ya está en la factura como ítem NO dispensado.
+    """
+    org = prescription.organization
+
+    if not prescription.medical_record_id:
+        raise ValidationError("La receta no está ligada a una consulta.")
+
+    # Mapas de la receta para resolver/validar el ítem origen de cada línea.
+    rx_items = {}
+    rx_item_by_product = {}
+    for it in prescription.items.all():
+        rx_items[it.id] = it
+        rx_item_by_product.setdefault(it.product_id, it)
+
+    # Resolver la factura de consulta (lockea MedicalRecord -> Invoice, orden
+    # canónico). Es la fuente única de la factura de la consulta (ADR p30 / p7).
+    from apps.medical_records.models import MedicalRecord
+    mr = MedicalRecord.objects.for_organization(org).get(pk=prescription.medical_record_id)
+    invoice = get_or_create_invoice_for_medical_record(mr)  # ya viene lockeada
+
+    if invoice.status != 'draft':
+        raise ValidationError(
+            "Solo se puede dispensar mientras el cobro está en borrador. "
+            "Esta factura ya fue confirmada o pagada."
+        )
+
+    # Agregar cantidad por presentación; recordar el ítem de receta resuelto.
+    aggregated = {}   # pres_id -> {'qty': Decimal, 'rx_item': PrescriptionItem}
+    for line in lines:
+        qty = Decimal(str(line['quantity']))
+        if qty <= 0:
+            raise ValidationError("La cantidad a dispensar debe ser mayor a 0.")
+        pres_id = line['presentation_id']
+        entry = aggregated.setdefault(pres_id, {'qty': Decimal('0'), 'rx_item_id': line.get('prescription_item_id')})
+        entry['qty'] += qty
+
+    if not aggregated:
+        raise ValidationError("Selecciona al menos un producto a dispensar.")
+
+    locked = _lock_presentations(list(aggregated.keys()))
+    for pres_id, entry in aggregated.items():
+        pres = locked.get(pres_id)
+        if pres is None or pres.organization_id != org.id:
+            raise ValidationError("Presentación fuera de tu organización.")
+
+        # Resolver el ítem de receta (provenance + discriminador de stock).
+        rx_item_id = entry['rx_item_id']
+        rx_item = rx_items.get(rx_item_id) if rx_item_id is not None else rx_item_by_product.get(pres.product_id)
+        if rx_item is None:
+            raise ValidationError(
+                f"'{pres.product.name}' no corresponde a un ítem de esta receta."
+            )
+        if rx_item.product_id != pres.product_id:
+            raise ValidationError(
+                "La presentación elegida no corresponde al producto recetado."
+            )
+
+        qty = entry['qty']
+        if pres.stock < qty:
+            raise ValidationError(
+                f"Stock insuficiente para '{pres.product.name}': "
+                f"disponible {pres.stock}, solicitado {qty}."
+            )
+
+        # unique_together(invoice, presentation): si ya existe la línea, agregar
+        # cantidad SOLO si es un ítem dispensado; si es un insumo de consulta
+        # (sin FK) o un servicio, no mezclar — recepción lo ajusta en el cobro.
+        existing = (
+            InvoiceItem.all_objects.select_for_update()
+            .filter(invoice=invoice, presentation=pres)
+            .first()
+        )
+        if existing is not None:
+            if existing.dispensed_from_prescription_item_id is None:
+                raise ValidationError(
+                    f"'{pres.product.name}' ya está en este cobro como insumo de la "
+                    f"consulta; ajusta su cantidad directamente en la factura."
+                )
+            apply_invoice_item_quantity_delta(existing, qty)
+        else:
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                presentation=pres,
+                description=str(pres),
+                quantity=qty,
+                unit_price=pres.sale_price,
+                organization=org,
+                dispensed_from_prescription_item=rx_item,
+            )
+
     return Invoice.objects.for_organization(org).select_for_update().get(pk=invoice.pk)

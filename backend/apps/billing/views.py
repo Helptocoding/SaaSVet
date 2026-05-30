@@ -73,7 +73,9 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
         org = self.request.user.organization
         queryset = Invoice.objects.for_organization(
             org
-        ).select_related('owner', 'pet', 'appointment').annotate(
+        ).select_related(
+            'owner', 'pet', 'appointment'
+        ).annotate(
             # ADR p27: Σ pagos por factura para remaining_balance sin N+1.
             _paid_sum=Coalesce(
                 Sum('payments__amount'),
@@ -119,7 +121,10 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
         queryset = filter_by_local_range(queryset, 'created_at', org, created_from, created_to)
         queryset = filter_by_local_range(queryset, 'paid_at', org, paid_from, paid_to)
 
-        return queryset
+        # annotate(Sum(...)) descarta el Meta.ordering del modelo (queda
+        # query.order_by=() → orden de heap del DB). Reimponer explícitamente
+        # para que Cobros liste de más reciente a más viejo.
+        return queryset.order_by('-created_at')
 
     def perform_create(self, serializer):
         org = self.request.user.organization
@@ -139,13 +144,18 @@ class InvoiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.
     def get_queryset(self):
         # ADR p29: prefetch de notas de crédito + reembolsos + reversals para que
         # InvoiceSerializer.get_credit_notes (flag `with_credit_notes`) no haga N+1.
+        # ADR p30: prefetch de la receta vinculada (suggestions de dispensación).
         return Invoice.objects.for_organization(
             self.request.user.organization
-        ).prefetch_related('credit_notes__refund_payments__reversals')
+        ).prefetch_related(
+            'credit_notes__refund_payments__reversals',
+            'medical_record__prescription__items__product__presentations',
+        )
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['with_credit_notes'] = True
+        context['with_prescription_suggestions'] = True
         return context
 
     def update(self, request, *args, **kwargs):
@@ -210,6 +220,79 @@ def pay_invoice(request, pk):
     except DjValidationError as e:
         return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
     return Response(InvoiceSerializer(invoice).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.create')])
+def dispense_prescription(request, pk):
+    """
+    ADR p30: agrega a la MISMA factura de consulta los productos de la receta
+    interna que el cliente decide llevar (no crea una factura aparte). Recepción
+    elige presentación + cantidad por ítem; "quitar" = no incluir la línea
+    (no-op, sin persistencia). El stock se descuenta al CONFIRMAR la factura de
+    consulta (ruta única `_confirm_locked_invoice`), no al dispensar.
+
+    Body: { "lines": [ { "presentation": <pk>, "quantity": <num>,
+                         "prescription_item": <pk|null> }, ... ] }
+    """
+    from apps.prescriptions.models import Prescription
+    from apps.inventory.models import Presentation
+    from apps.core.permissions import user_has_permission
+    from apps.billing.services import dispense_prescription_into_invoice
+
+    prescription = resolve_public_id(
+        Prescription.objects.for_organization(request.user.organization), pk
+    )
+
+    raw_lines = request.data.get('lines')
+    if not isinstance(raw_lines, list) or not raw_lines:
+        raise ValidationError({'lines': 'Envía al menos una línea a dispensar.'})
+
+    org_id = request.user.organization_id
+    normalized = []
+    requires_rx = False
+    for raw in raw_lines:
+        pres_pk = raw.get('presentation')
+        if pres_pk is None:
+            raise ValidationError({'lines': 'Cada línea requiere "presentation".'})
+        # Cross-tenant → 404 (no [], CLAUDE.md). select_related para el gate rx.
+        pres = get_object_or_404(
+            Presentation.objects.select_related('product'),
+            pk=pres_pk, organization_id=org_id,
+        )
+        try:
+            qty = Decimal(str(raw.get('quantity')))
+        except Exception:
+            raise ValidationError({'lines': 'Cantidad inválida.'})
+        if qty <= 0:
+            raise ValidationError({'lines': 'La cantidad debe ser mayor a 0.'})
+        if pres.product.requires_prescription:
+            requires_rx = True
+        normalized.append({
+            'presentation_id': pres.pk,
+            'quantity': qty,
+            'prescription_item_id': raw.get('prescription_item'),
+        })
+
+    # Dispensar un producto requires_prescription contra la receta interna exige
+    # el mismo permiso que la dispensación con receta externa (ADR p26/p30). La
+    # Prescription interna es el respaldo legal — no se crea atestación externa.
+    if requires_rx and not user_has_permission(request.user, 'billing.rx_dispense'):
+        from rest_framework.exceptions import PermissionDenied
+        raise PermissionDenied('No tienes permiso para dispensar productos con receta.')
+
+    try:
+        invoice = dispense_prescription_into_invoice(prescription, normalized, request.user)
+    except DjValidationError as e:
+        return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(
+        InvoiceSerializer(
+            invoice,
+            context={'request': request, 'with_prescription_suggestions': True},
+        ).data,
+        status=status.HTTP_200_OK,
+    )
 
 
 class InvoiceItemCreateView(BillingOrganizationMixin, generics.CreateAPIView):

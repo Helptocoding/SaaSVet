@@ -102,13 +102,7 @@ export default function OperationalTimeline({ slots }) {
           {now != null && (
             <div className="dtl-now" style={{ left: `${now}%` }} aria-label="Hora actual">
               <span className="dtl-now-lbl">Ahora</span>
-      {clickedApptId && (
-        <AppointmentQuickModal
-          publicId={clickedApptId}
-          onClose={() => setClickedApptId(null)}
-        />
-      )}
-    </div>
+            </div>
           )}
 
           {filled.map((s, i) => {
@@ -176,6 +170,13 @@ export default function OperationalTimeline({ slots }) {
             </table>
           </div>
         </div>
+      )}
+
+      {clickedApptId && (
+        <AppointmentQuickModal
+          publicId={clickedApptId}
+          onClose={() => setClickedApptId(null)}
+        />
       )}
     </div>
   );

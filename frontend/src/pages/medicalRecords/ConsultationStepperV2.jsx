@@ -140,7 +140,9 @@ export default function ConsultationStepperV2({
   const [addedProducts, setAddedProducts] = useState([]);
   const [productLine, setProductLine] = useState({ product: null, quantity: "1" });
   const [saving, setSaving] = useState(false);
-  const [closed, setClosed] = useState(false);
+  // Derivar de initialRecord: abrir una consulta ya cerrada no debe mostrar
+  // el botón "Finalizar" ni inputs editables.
+  const [closed, setClosed] = useState(() => initialRecord?.status === "closed");
   const [completionInvoicePublicId, setCompletionInvoicePublicId] = useState(null);
   const [forceWeight, setForceWeight] = useState(false);
 
@@ -548,16 +550,22 @@ export default function ConsultationStepperV2({
     <div className={styles.fullPageContainer}>
       <div className={styles.mainWorkArea}>
         <div className={styles.header}>
+          <div className={styles.breadcrumbs}>
+            <span>Historial Clínico</span> / <span>{isEditing ? "Editar consulta" : "Nueva consulta"}</span>
+          </div>
           <div className={styles.titleGroup}>
-            <div className={styles.breadcrumbs}>
-              <span>VetCare</span> / <span>Historial Clínico</span>
+            <div>
+              <h1 className={styles.titleMain}>{isEditing ? "Editar consulta" : "Nueva consulta"}</h1>
+              <div className={styles.subtitle}>
+                {pet?.name || "—"} · {pet?.species || "—"}
+              </div>
             </div>
             <div className={styles.headerActions}>
               <button className="btn btn-secondary btn-sm" onClick={() => onClose()}>
                 Cerrar
               </button>
               {!closed && (
-                <button className={`${styles.btnFinalizar} btn btn-sm`} onClick={() => handleFinalize()} disabled={saving}>
+                <button className={`${styles.btnFinalizar} btn btn-sm`} onClick={() => handleSave(3)} disabled={saving}>
                   <Icon.Check s={14} /> Finalizar y enviar a Cobros
                 </button>
               )}
@@ -676,8 +684,8 @@ export default function ConsultationStepperV2({
                   La receta no descuenta inventario ni genera cobro. El cliente decide en recepción si lleva los productos.
                 </p>
 
-                <div style={{ background: '#f9f9f9', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 60px 80px', gap: '8px', alignItems: 'end' }}>
+                <div className={styles.recipeForm}>
+                  <div className={styles.recipeFormGrid}>
                     <div>
                       <label className={styles.inputLabel}>Medicamento</label>
                       <SearchSelect
@@ -689,15 +697,15 @@ export default function ConsultationStepperV2({
                     </div>
                     <div>
                       <label className={styles.inputLabel}>Dosis</label>
-                      <input className={styles.textarea} style={{ height: '38px', padding: '0 8px' }} placeholder="50mg c/12h" value={recipeLine.dose} onChange={e => setRecipeLine(p => ({ ...p, dose: e.target.value }))} />
+                      <input className={`${styles.textarea} ${styles.miniInput}`} placeholder="50mg c/12h" value={recipeLine.dose} onChange={e => setRecipeLine(p => ({ ...p, dose: e.target.value }))} />
                     </div>
                     <div>
                       <label className={styles.inputLabel}>Duración</label>
-                      <input className={styles.textarea} style={{ height: '38px', padding: '0 8px' }} placeholder="7 días" value={recipeLine.duration} onChange={e => setRecipeLine(p => ({ ...p, duration: e.target.value }))} />
+                      <input className={`${styles.textarea} ${styles.miniInput}`} placeholder="7 días" value={recipeLine.duration} onChange={e => setRecipeLine(p => ({ ...p, duration: e.target.value }))} />
                     </div>
                     <div>
                       <label className={styles.inputLabel}>Cant.</label>
-                      <input type="number" className={styles.textarea} style={{ height: '38px', padding: '0 8px' }} value={recipeLine.quantity} onChange={e => setRecipeLine(p => ({ ...p, quantity: e.target.value }))} />
+                      <input type="number" className={`${styles.textarea} ${styles.miniInput}`} value={recipeLine.quantity} onChange={e => setRecipeLine(p => ({ ...p, quantity: e.target.value }))} />
                     </div>
                     <button className="btn btn-primary btn-md" style={{ height: '38px' }} onClick={handleAddRecipeItem} disabled={!recipeLine.product}>
                       +
@@ -707,13 +715,13 @@ export default function ConsultationStepperV2({
 
                 <div className={styles.recipeList}>
                   {prescriptionDraft.items.length === 0 ? (
-                    <p style={{ color: '#999', fontSize: '13px', fontStyle: 'italic', padding: '10px' }}>No hay medicamentos en la receta</p>
+                    <p className={styles.recipeEmpty}>No hay medicamentos en la receta</p>
                   ) : prescriptionDraft.items.map((item, idx) => (
                     <div key={idx} className={styles.recipeItem}>
                       <Icon.Pill s={16} className={styles.recipeIcon} />
                       <div className={styles.recipeName}>{item.product_name || productMap[item.product_id || item.product]?.name}</div>
                       <div className={styles.recipeDetails}>{item.dose} · {item.duration} · {item.quantity} unidades</div>
-                      <button className="btn btn-ghost btn-xs" style={{ color: '#ef4444' }} onClick={() => handleRemoveRecipeItem(idx)}>
+                      <button className={`btn btn-ghost btn-xs ${styles.iconBtnDanger}`} onClick={() => handleRemoveRecipeItem(idx)}>
                         <Icon.Trash s={14} />
                       </button>
                     </div>
@@ -745,8 +753,8 @@ export default function ConsultationStepperV2({
 
               <div className={styles.stepThreeLayout}>
                 <div>
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                    <div style={{ flex: 1 }}>
+                  <div className={styles.addRow}>
+                    <div className={styles.addRowSearch}>
                       <SearchSelect
                         placeholder="Buscar producto..."
                         value={productLine.product}
@@ -754,11 +762,10 @@ export default function ConsultationStepperV2({
                         onSearch={handleProductSearch}
                       />
                     </div>
-                    <div style={{ width: '80px' }}>
+                    <div className={styles.addRowQty}>
                       <input
                         type="number"
-                        className={styles.textarea}
-                        style={{ height: '38px', padding: '0 10px' }}
+                        className={`${styles.textarea} ${styles.miniInput}`}
                         value={productLine.quantity}
                         onChange={e => setProductLine(prev => ({ ...prev, quantity: e.target.value }))}
                         min="1"
@@ -787,23 +794,22 @@ export default function ConsultationStepperV2({
                       <tbody>
                         {addedProducts.length === 0 ? (
                           <tr>
-                            <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                            <td colSpan="5" className={styles.tableEmpty}>
                               No hay insumos registrados en esta consulta.
                             </td>
                           </tr>
                         ) : addedProducts.map(p => (
                           <tr key={p.id}>
                             <td>
-                              <div style={{ fontWeight: 600 }}>{p.product_name}</div>
-                              <div style={{ fontSize: '11px', color: '#888' }}>{p.presentation_name}</div>
+                              <div className={styles.cellName}>{p.product_name}</div>
+                              <div className={styles.cellSub}>{p.presentation_name}</div>
                             </td>
                             <td style={{ textAlign: 'center' }}>{p.quantity}</td>
                             <td style={{ textAlign: 'center' }}>${Number(p.unit_price).toFixed(2)}</td>
                             <td style={{ textAlign: 'center' }}>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</td>
                             <td style={{ textAlign: 'right' }}>
                               <button
-                                className="btn btn-ghost btn-xs"
-                                style={{ color: '#ef4444' }}
+                                className={`btn btn-ghost btn-xs ${styles.iconBtnDanger}`}
                                 onClick={() => handleRemoveProduct(p.id)}
                               >
                                 <Icon.Trash s={14} />
@@ -815,12 +821,12 @@ export default function ConsultationStepperV2({
                     </table>
                   </div>
 
-                  <div className={styles.sectionHeader} style={{ marginTop: '32px' }}>
+                  <div className={styles.sectionHeader} style={{ marginTop: '36px' }}>
                     <h2 className={styles.sectionTitle}>Servicios profesionales</h2>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                    <div style={{ flex: 1 }}>
+                  <div className={styles.addRow}>
+                    <div className={styles.addRowSearch}>
                       <SearchSelect
                         placeholder="Buscar servicio..."
                         value={serviceLine.service}
@@ -828,11 +834,10 @@ export default function ConsultationStepperV2({
                         onSearch={handleServiceSearch}
                       />
                     </div>
-                    <div style={{ width: '80px' }}>
+                    <div className={styles.addRowQty}>
                       <input
                         type="number"
-                        className={styles.textarea}
-                        style={{ height: '38px', padding: '0 10px' }}
+                        className={`${styles.textarea} ${styles.miniInput}`}
                         value={serviceLine.quantity}
                         onChange={e => setServiceLine(prev => ({ ...prev, quantity: e.target.value }))}
                         min="1"
@@ -861,22 +866,21 @@ export default function ConsultationStepperV2({
                       <tbody>
                         {addedServices.length === 0 ? (
                           <tr>
-                            <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                            <td colSpan="5" className={styles.tableEmpty}>
                               No hay servicios registrados en esta consulta.
                             </td>
                           </tr>
                         ) : addedServices.map(s => (
                           <tr key={s.id}>
                             <td>
-                              <div style={{ fontWeight: 600 }}>{s.name}</div>
+                              <div className={styles.cellName}>{s.name}</div>
                             </td>
                             <td style={{ textAlign: 'center' }}>{s.quantity}</td>
                             <td style={{ textAlign: 'center' }}>${Number(s.price).toFixed(2)}</td>
                             <td style={{ textAlign: 'center' }}>${(Number(s.price) * Number(s.quantity)).toFixed(2)}</td>
                             <td style={{ textAlign: 'right' }}>
                               <button
-                                className="btn btn-ghost btn-xs"
-                                style={{ color: '#ef4444' }}
+                                className={`btn btn-ghost btn-xs ${styles.iconBtnDanger}`}
                                 onClick={() => handleRemoveService(s.id)}
                               >
                                 <Icon.Trash s={14} />
@@ -914,7 +918,7 @@ export default function ConsultationStepperV2({
                         ))}
                       </div>
 
-                      <div className={styles.resumenCard} style={{ background: '#f8f9fa' }}>
+                      <div className={`${styles.resumenCard} ${styles.summaryBox}`}>
                         <div className={styles.resumenRow}>
                           <span>Subtotal</span>
                           <span>${Number(totalBilling.subtotal).toFixed(2)}</span>
@@ -923,7 +927,7 @@ export default function ConsultationStepperV2({
                           <span>Impuesto</span>
                           <span>${Number(totalBilling.tax).toFixed(2)}</span>
                         </div>
-                        <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`} style={{ fontSize: '18px', marginTop: '16px', borderTop: '2px solid #ddd' }}>
+                        <div className={`${styles.resumenRow} ${styles.totalRow}`}>
                           <span>TOTAL</span>
                           <span>${Number(totalBilling.total).toFixed(2)}</span>
                         </div>
@@ -940,41 +944,40 @@ export default function ConsultationStepperV2({
           )}
 
           {closed && (
-            <div className="fade-in" style={{ textAlign: "center", padding: "40px 0" }}>
-              <div style={{ fontSize: "40px", marginBottom: "16px" }}>
-                <Icon.Check s={48} style={{ color: "#22c55e" }} />
+            <div className={`fade-in ${styles.doneWrap}`}>
+              <div className={styles.doneIcon}>
+                <Icon.Check s={32} />
               </div>
-              <h2 style={{ fontSize: "20px", fontWeight: 700, color: "var(--c-text)", marginBottom: "8px" }}>
+              <h2 className={styles.doneTitle}>
                 Consulta finalizada y enviada a Cobros
               </h2>
               {completionInvoicePublicId && summary?.totals ? (
                 <>
-                  <p style={{ fontSize: "14px", color: "var(--c-text-2)", marginBottom: "24px" }}>
+                  <p className={styles.doneText}>
                     Se generó un borrador de cobro por{" "}
                     <strong>${Number(summary.totals.total).toFixed(2)}</strong>
                   </p>
                   <div className={styles.resumenCard} style={{ maxWidth: "380px", margin: "0 auto 24px", textAlign: "left" }}>
                     {addedProducts.map((p, i) => (
-                      <div key={`cp-${i}`} className={styles.resumenRow} style={{ fontSize: "12px" }}>
-                        <span style={{ color: "var(--c-text-2)" }}>{p.product_name} — {p.quantity}x</span>
+                      <div key={`cp-${i}`} className={styles.resumenRow}>
+                        <span>{p.product_name} — {p.quantity}x</span>
                         <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
                       </div>
                     ))}
                     {addedServices.map((s, i) => (
-                      <div key={`cs-${i}`} className={styles.resumenRow} style={{ fontSize: "12px" }}>
-                        <span style={{ color: "var(--c-text-2)" }}>{s.name} — {s.quantity}x</span>
+                      <div key={`cs-${i}`} className={styles.resumenRow}>
+                        <span>{s.name} — {s.quantity}x</span>
                         <span>${(Number(s.price) * Number(s.quantity)).toFixed(2)}</span>
                       </div>
                     ))}
-                    <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`} style={{ borderTop: "1px solid var(--c-border)", marginTop: "8px", paddingTop: "8px" }}>
+                    <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`}>
                       <span>Total</span>
                       <span>${Number(summary.totals.total).toFixed(2)}</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                  <div className={styles.doneActions}>
                     <button
-                      className="btn btn-primary btn-md"
-                      style={{ background: "#059669", borderColor: "#059669", color: "#fff" }}
+                      className={`${styles.btnFinalizar} btn btn-md`}
                       onClick={() => {
                         onClose?.();
                         navigate(`/billing?invoice=${completionInvoicePublicId}`);
@@ -988,7 +991,7 @@ export default function ConsultationStepperV2({
                 </>
               ) : (
                 <>
-                  <p style={{ fontSize: "14px", color: "var(--c-text-2)", marginBottom: "24px" }}>
+                  <p className={styles.doneText}>
                     Se ha cerrado la consulta correctamente.
                   </p>
                   <button className="btn btn-secondary btn-md" onClick={() => onClose?.()}>
@@ -1015,7 +1018,6 @@ export default function ConsultationStepperV2({
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   className="btn btn-primary btn-md"
-                  style={{ background: '#1a4434' }}
                   onClick={() => handleSave(step)}
                   disabled={saving}
                 >
@@ -1033,7 +1035,7 @@ export default function ConsultationStepperV2({
             <div className={styles.patientMainInfo}>
               <div className={styles.avatar}>{(pet?.name?.[0] || 'P').toUpperCase()}</div>
               <div>
-                <div style={{ fontSize: '11px', color: '#aaa', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '2px' }}>Paciente</div>
+                <div className={styles.eyebrow} style={{ marginBottom: '2px' }}>Paciente</div>
                 <h4 className={styles.patientName}>{pet?.name || "—"}</h4>
                 <div className={styles.patientMeta}>{pet?.species || "—"} · {pet?.breed || "—"}</div>
               </div>
@@ -1052,7 +1054,7 @@ export default function ConsultationStepperV2({
         </section>
 
         <section className={styles.sidebarSection}>
-          <div style={{ fontSize: '11px', color: '#aaa', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '10px' }}>Signos Vitales</div>
+          <div className={styles.eyebrow}>Signos Vitales</div>
           <div className={styles.vitalsGrid}>
             {[
               { f: 'weight', l: 'Peso', u: 'kg', icon: <Icon.ArrowUp s={10} /> },
@@ -1087,19 +1089,19 @@ export default function ConsultationStepperV2({
         </section>
 
         <section className={styles.sidebarSection} style={{ marginTop: 'auto' }}>
-          <div style={{ fontSize: '11px', color: '#aaa', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '10px' }}>Resumen</div>
+          <div className={styles.eyebrow}>Resumen</div>
           <div className={styles.resumenCard}>
             <div className={styles.resumenRow}>
               <span>Tipo</span>
-              <span className="badge badge-success" style={{ textTransform: 'uppercase', fontSize: '10px' }}>{draft.consultation_type}</span>
+              <span className="badge badge-success" style={{ textTransform: 'capitalize' }}>{draft.consultation_type}</span>
             </div>
             <div className={styles.resumenRow}>
               <span>Productos</span>
-              <span style={{ fontWeight: '600' }}>{addedProducts.length} ítems</span>
+              <span style={{ fontWeight: 600, color: 'var(--c-text)' }}>{addedProducts.length} ítems</span>
             </div>
             <div className={styles.resumenRow}>
               <span>Servicios</span>
-              <span style={{ fontWeight: '600' }}>{addedServices.length}</span>
+              <span style={{ fontWeight: 600, color: 'var(--c-text)' }}>{addedServices.length}</span>
             </div>
             <div className={`${styles.resumenRow} ${styles.subtotalHighlight}`}>
               <span>Subtotal</span>

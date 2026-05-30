@@ -1,5 +1,7 @@
 # Modulo: Analytics
 
+> **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
+
 App: `apps/analytics/`. Construye y sirve snapshots agregados nightly.
 Capa 4 + Capa 5 del sprint analítico (ADR `2026-05-09-p10`).
 

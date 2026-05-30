@@ -490,6 +490,15 @@ def close_medical_record(request, pk):
             'status', 'closed_at', 'closed_at_source', 'closed_by',
         ])
 
+        # ADR p30: finalizar SIEMPRE deja la consulta en Cobros, aunque no tenga
+        # cargos (supera la creación lazy de ADR p7 en el camino de cierre). La
+        # factura draft es la cabecera donde recepción cobra insumos/servicios y
+        # decide dispensar la receta. El MR ya está lockeado (select_for_update
+        # arriba); el helper lockea la Invoice respetando el orden canónico
+        # MedicalRecord -> Invoice.
+        from apps.billing.services import get_or_create_invoice_for_medical_record
+        get_or_create_invoice_for_medical_record(medical_record)
+
         # Late-arrival observability (ADR p17 Día 5, warn-only).
         # Call lives inside the active transaction so the log only emits
         # if commit succeeds (a rollback unwinds before the helper runs).

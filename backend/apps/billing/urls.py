@@ -11,6 +11,7 @@ from .views import (
     refund_invoice,
     reverse_credit_note,
     invoice_pdf,
+    dispense_prescription,
     InvoiceItemCreateView,
     InvoiceItemDetailView,
 )
@@ -26,6 +27,7 @@ urlpatterns = [
     path('billing/invoices/<str:pk>/cancel/', cancel_invoice),
     path('billing/invoices/<str:pk>/refund/', refund_invoice),
     path('billing/credit-notes/<str:pk>/reverse/', reverse_credit_note),
+    path('billing/prescriptions/<str:pk>/dispense/', dispense_prescription),
     path('billing/invoices/<str:pk>/pdf/', invoice_pdf),
     path('billing/invoices/<str:invoice_pk>/items/', InvoiceItemCreateView.as_view()),
     path('billing/invoices/<str:invoice_pk>/items/<int:pk>/', InvoiceItemDetailView.as_view()),
