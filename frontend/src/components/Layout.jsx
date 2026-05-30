@@ -10,7 +10,7 @@ const PAGE_TITLES = {
     "/appointments":   "Citas",
     "/medical-records":"Historial Clínico",
     "/inventory":      "Inventario",
-    "/billing":        "Facturación",
+    "/billing":        "Cobros",
     "/staff":          "Equipo",
     "/config":         "Configuración",
     "/prescriptions":  "Recetas",
