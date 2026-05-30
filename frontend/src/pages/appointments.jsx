@@ -675,7 +675,7 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                     background:"var(--c-primary-light)",color:"var(--c-primary-dark)",
                     borderRadius:"var(--r-md)",padding:"7px 10px",fontSize:"12px",fontWeight:"500",
                     marginBottom:"12px",display:"flex",justifyContent:"space-between",alignItems:"center",
-                    border:"1px solid #99f6e4",
+                    border:"1px solid var(--sage-400)",
                 }}>
                     <span>{slot.label}</span>
                     <button onClick={onClear} style={{background:"none",border:"none",
@@ -1275,7 +1275,7 @@ const Appointments = () => {
                                                 borderLeft:"1px solid var(--c-border)",
                                                 minHeight:"56px", position:"relative",
                                                 cursor: canCreate?"pointer":"default",
-                                                background: isToday?"rgba(45,212,191,0.03)":"transparent",
+                                                background: isToday?"rgba(26,68,52,0.03)":"transparent",
                                                 transition:"background 0.12s",
                                             }}
                                         >
@@ -1388,7 +1388,7 @@ const Appointments = () => {
 
                     {/* Stats */}
                     <div style={{
-                        background:"var(--c-primary-light)", border:"1px solid #99f6e4",
+                        background:"var(--c-primary-light)", border:"1px solid var(--sage-400)",
                         borderRadius:"var(--r-xl)", padding:"14px 18px",
                         display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px",
                     }}>

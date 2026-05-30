@@ -305,8 +305,8 @@ const SuccessCard = ({ result, onCreateAnother }) => {
 
     return (
         <div style={{
-            border: "1px solid rgba(45,212,191,0.35)",
-            background: "rgba(45,212,191,0.06)",
+            border: "1px solid rgba(26,68,52,0.35)",
+            background: "rgba(26,68,52,0.06)",
             borderRadius: "10px",
             padding: "18px 20px",
             marginBottom: "20px",

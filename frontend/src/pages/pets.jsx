@@ -74,7 +74,7 @@ const speciesAccent = (pet) => isCanino(pet)
     ? { bg: "#dbeafe", icon: "#3b82f6", border: "#bfdbfe", text: "#1d4ed8" }
     : isFelino(pet)
     ? { bg: "#fce7f3", icon: "#ec4899", border: "#fbcfe8", text: "#be185d" }
-    : { bg: "var(--c-primary-light)", icon: "var(--c-primary-dark)", border: "#99f6e4", text: "var(--c-primary-dark)" };
+    : { bg: "var(--c-primary-light)", icon: "var(--c-primary-dark)", border: "var(--sage-400)", text: "var(--c-primary-dark)" };
 
 // ─── Birth Date Picker ────────────────────────────────────────────────────────
 function BirthDatePicker({ value, onChange }) {

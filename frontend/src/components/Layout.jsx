@@ -64,10 +64,10 @@ const Layout = ({ children }) => {
                             <div style={{
                                 width: "30px", height: "30px",
                                 borderRadius: "50%",
-                                background: "linear-gradient(135deg, var(--c-primary-light), #99f6e4)",
+                                background: "linear-gradient(135deg, var(--c-primary-light), var(--sage-400))",
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 fontSize: "12px", fontWeight: "700", color: "var(--c-primary-dark)",
-                                border: "1.5px solid #99f6e4",
+                                border: "1.5px solid var(--sage-400)",
                             }}>
                                 {(user?.first_name?.[0] || user?.username?.[0] || "U").toUpperCase()}
                             </div>
