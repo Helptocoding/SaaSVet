@@ -204,6 +204,17 @@ Si la invoice aun no existe, usar `get_or_create_invoice_for_medical_record()` d
 
 ---
 
+## Frontend Design System
+- **Fuente unica de verdad visual: `frontend/design-system.md`.** Toda UI nueva o modificada se ajusta a esos contratos.
+- Cero hex crudo en `.css`/`.jsx`: usar tokens de `frontend/src/styles/tokens.css` (`var(--c-*)`, `var(--r-*)`, `var(--shadow-*)`).
+- Reutilizar clases globales de `global.css`: boton `.btn`, card `.card`, input `.input`, tabla `.table`, badge `.badge`, modal `.modal`. No reimplementar.
+- H1 de pagina: `.page-title` (20px/700). Un solo tamano de titulo; no inventar por modulo.
+- Prohibido teal legacy `rgba(45,212,191,*)` / `#99f6e4`. La marca es verde bosque `--c-primary`.
+- `style={{}}` solo para valores dinamicos (posicion, ancho %, color de dato), nunca para color/spacing/radio/sombra fijos.
+- Para desviarte de un contrato, edita primero `frontend/design-system.md` documentando la excepcion.
+
+---
+
 ## Analytics no negociable
 Cuando toques `billing`, `medical_records`, `appointments` o `analytics`, validar:
 
