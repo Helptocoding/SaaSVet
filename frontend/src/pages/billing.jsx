@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
 import {
@@ -10,6 +10,8 @@ import {
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { getPresentations } from "../api/inventory";
 import { getOwners, getPets } from "../api/pets";
+import { getCurrentSession } from "../api/cash";
+import { getOrgSettings } from "../api/organizations";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
@@ -478,6 +480,10 @@ const Billing = () => {
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [reversingCnId, setReversingCnId] = useState(null);
 
+    // Caja (ADR p28): turno actual + si la org exige caja abierta para cobrar.
+    const [cashSession, setCashSession] = useState(undefined); // undefined=cargando | null=cerrada | obj=abierta
+    const [requireCash, setRequireCash] = useState(false);
+
     const loadInvoices = async (currentFilters) => {
         const requestId = ++requestIdRef.current;
         try {
@@ -490,12 +496,23 @@ const Billing = () => {
         }
     };
 
+    // Caja: turno actual + flag de la org. Silencioso: si falla, asume cerrada.
+    const loadCashStatus = async () => {
+        const [settings, current] = await Promise.all([
+            getOrgSettings().catch(() => null),
+            getCurrentSession().catch(() => null),
+        ]);
+        setRequireCash(!!settings?.require_open_cash_session);
+        setCashSession(current && current.public_id ? current : null);
+    };
+
     const loadAll = async () => {
         setLoading(requestIdRef.current === 0);
         try {
             const owners = await getOwners({ is_generic: "true" });
             setGenericOwner((Array.isArray(owners) ? owners : owners?.results || [])[0] || null);
             await loadInvoices(filters);
+            loadCashStatus();
         } catch {
             // Silencioso — loadInvoices maneja su error
         } finally { setLoading(false); }
@@ -682,6 +699,8 @@ const Billing = () => {
         ? Number(isDirectSaleDraft ? selectedInvoice.total : selectedInvoice.remaining_balance)
         : 0;
     const payAllowPartial = false;
+    // Solo bloquea si la org exige caja Y sabemos que está cerrada (no en carga).
+    const cashBlocked = requireCash && cashSession === null;
 
     return (
         <div className={s.billingContainer}>
@@ -689,7 +708,19 @@ const Billing = () => {
                 <h1 className={s.mainTitle}>Cobros</h1>
             </div>
 
-            <CajaBar />
+            {cashBlocked && (
+                <div className="form-alert form-alert-warning" style={{ alignItems: "center" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Icon.AlertTriangle s={16} />
+                        <span><strong>No hay una caja abierta.</strong> Debes abrir una caja para registrar pagos.</span>
+                    </span>
+                    <Link to="/cash" className="btn btn-primary btn-sm" style={{ textDecoration: "none", flexShrink: 0 }}>
+                        Abrir caja
+                    </Link>
+                </div>
+            )}
+
+            <CajaBar onChange={loadCashStatus} />
 
             <div className={s.filterBar}>
                 <div className={s.filterItem}>
@@ -862,7 +893,7 @@ const Billing = () => {
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
                                 {isDirectSaleDraft && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal}>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>
                                         Cobrar
                                     </button>
                                 )}
@@ -870,7 +901,7 @@ const Billing = () => {
                                     <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleConfirm}>Confirmar</button>
                                 )}
                                 {selectedInvoice.status === "confirmed" && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal}>Registrar Pago</button>
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>Registrar Pago</button>
                                 )}
                                 {selectedInvoice.status === "paid" && can("billing.refund") && (
                                     <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setShowRefundModal(true)}>Devolver</button>
