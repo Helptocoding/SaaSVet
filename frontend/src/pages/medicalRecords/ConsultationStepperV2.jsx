@@ -678,10 +678,11 @@ export default function ConsultationStepperV2({
 
               <div className={styles.recipeSection}>
                 <div className={styles.sectionHeader}>
-                  <h2 className={styles.sectionTitle}>Receta médica (Medicamentos)</h2>
+                  <h2 className={styles.sectionTitle}>Medicamentos recetados</h2>
+                  <span className="badge badge-info" style={{ flexShrink: 0 }}>No se cobra</span>
                 </div>
                 <p className={styles.helperText}>
-                  La receta no descuenta inventario ni genera cobro. El cliente decide en recepción si lleva los productos.
+                  Estos medicamentos NO se cobran ni descuentan stock. Solo representan la indicación médica. Recepción decidirá posteriormente cuáles desea comprar el cliente.
                 </p>
 
                 <div className={styles.recipeForm}>
@@ -720,6 +721,7 @@ export default function ConsultationStepperV2({
                     <div key={idx} className={styles.recipeItem}>
                       <Icon.Pill s={16} className={styles.recipeIcon} />
                       <div className={styles.recipeName}>{item.product_name || productMap[item.product_id || item.product]?.name}</div>
+                      <span className="badge badge-info" style={{ flexShrink: 0 }}>Recetado</span>
                       <div className={styles.recipeDetails}>{item.dose} · {item.duration} · {item.quantity} unidades</div>
                       <button className={`btn btn-ghost btn-xs ${styles.iconBtnDanger}`} onClick={() => handleRemoveRecipeItem(idx)}>
                         <Icon.Trash s={14} />
@@ -745,10 +747,11 @@ export default function ConsultationStepperV2({
           {step === 3 && (
             <div className="fade-in">
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Insumos utilizados y servicios</h2>
+                <h2 className={styles.sectionTitle}>Insumos y servicios utilizados</h2>
+                <span className="badge badge-warning" style={{ flexShrink: 0 }}>Se cobrará</span>
               </div>
               <p className={styles.helperText}>
-                Registra solo lo usado durante la consulta. Esto se descuenta del inventario y se refleja en Cobros.
+                Todo lo agregado aquí se cobrará al cliente y descontará inventario. Utiliza esta sección únicamente para productos ya consumidos durante la atención.
               </p>
 
               <div className={styles.stepThreeLayout}>
@@ -895,10 +898,31 @@ export default function ConsultationStepperV2({
 
                 <aside className={styles.chargePanel}>
                   <div className={styles.chargePanelHeader}>
-                    <h3 className={styles.chargePanelTitle}>Cargos de esta consulta</h3>
+                    <h3 className={styles.chargePanelTitle}>Resumen de consulta</h3>
                     <span className="badge badge-info">{billingStatusLabel}</span>
                   </div>
 
+                  {prescriptionDraft.items.length > 0 && (
+                    <div>
+                      <p className={styles.eyebrow} style={{ marginBottom: 6 }}>
+                        Medicamentos recetados ({prescriptionDraft.items.length})
+                      </p>
+                      <div className={styles.chargeLines}>
+                        {prescriptionDraft.items.map((item, idx) => (
+                          <div key={`rx-sum-${idx}`} className={styles.resumenRow}>
+                            <span>{item.product_name || productMap[item.product_id || item.product]?.name}</span>
+                            <span className="badge badge-info">Recetado</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className={styles.chargePanelEmpty} style={{ margin: "4px 0 0" }}>
+                        No generan cobro
+                      </p>
+                      <hr className="divider" style={{ margin: "12px 0" }} />
+                    </div>
+                  )}
+
+                  <p className={styles.eyebrow} style={{ marginBottom: 6 }}>Cargos generados</p>
                   {addedProducts.length === 0 && addedServices.length === 0 ? (
                     <p className={styles.chargePanelEmpty}>Aún no hay cargos agregados</p>
                   ) : (
