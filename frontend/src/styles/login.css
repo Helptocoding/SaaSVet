@@ -6,8 +6,8 @@
   overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  font-family: var(--font-sans);
-  background: var(--bg-card);
+  font-family: var(--font-body);
+  background: var(--c-surface);
 }
 
 @media (max-width: 880px) {
@@ -20,8 +20,8 @@
 
 /* === 2. PANELES PRINCIPALES === */
 .login-page .login-left {
-  background: var(--bg-canvas);
-  border-right: 1px solid var(--border-soft);
+  background: var(--c-bg);
+  border-right: 1px solid var(--c-border);
   padding: 56px 64px;
   /* Padding Desktop Estándar */
   display: flex;
@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-card);
+  background: var(--c-surface);
 }
 
 @media (max-width: 1024px) {
@@ -75,10 +75,11 @@
 }
 
 .login-page .brand-name {
+  font-family: var(--font-display);
   font-size: 28px;
   /* Tamaño consistente con el peso visual del logo */
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--c-primary-dark);
   letter-spacing: -0.03em;
   line-height: 1;
 }
@@ -92,7 +93,7 @@
 }
 
 .login-page .eyebrow {
-  color: var(--accent);
+  color: var(--c-accent);
   font-weight: 700;
   font-size: 13px;
   /* Subimos un punto para legibilidad */
@@ -103,13 +104,19 @@
 }
 
 .login-page .headline {
+  font-family: var(--font-display);
   font-size: 44px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.03em;
-  color: var(--text-primary);
+  color: var(--c-primary-dark);
   margin-bottom: 24px;
   /* Spacing 2 */
+}
+
+.login-page .headline em {
+  font-style: italic;
+  color: var(--c-accent);
 }
 
 .login-page .hero-sub {
@@ -143,7 +150,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--c-accent);
 }
 
 /* === 5. FORMULARIO (DERECHA) === */
@@ -153,10 +160,11 @@
 }
 
 .login-page .login-title {
+  font-family: var(--font-display);
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--text-primary);
+  color: var(--c-primary-dark);
   margin-bottom: 8px;
 }
 
@@ -186,16 +194,16 @@
   width: 100%;
   height: 44px;
   padding: 0 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--c-border);
   border-radius: var(--radius-md);
-  font: 500 15px var(--font-sans);
+  font: 500 15px var(--font-body);
   outline: none;
   transition: all .15s;
 }
 
 .login-page .field-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-ring);
 }
 
 .login-page .form-meta {
@@ -207,26 +215,39 @@
 
 .login-page .forgot-password {
   font-size: 13px;
-  color: var(--accent);
+  color: var(--c-accent);
   font-weight: 600;
   text-decoration: none;
+}
+
+.login-page .forgot-password:hover {
+  color: var(--c-accent-hover);
 }
 
 .login-page .btn-primary {
   width: 100%;
   height: 44px;
-  background: var(--text-primary);
+  background: var(--c-primary);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
-  font: 600 15px var(--font-sans);
+  font: 600 15px var(--font-body);
   cursor: pointer;
   margin-top: 28px;
-  transition: opacity .15s;
+  transition: background .15s, box-shadow .15s;
 }
 
-.login-page .btn-primary:hover {
-  opacity: 0.9;
+.login-page .btn-primary:hover:not(:disabled) {
+  background: var(--c-primary-hover);
+}
+
+.login-page .btn-primary:focus-visible {
+  box-shadow: 0 0 0 3px var(--c-primary-ring);
+}
+
+.login-page .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .login-page .or {
@@ -256,9 +277,15 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  font: 500 15px var(--font-sans);
+  font: 500 15px var(--font-body);
   color: var(--text-body);
   cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.login-page .btn-google:hover {
+  background: var(--c-subtle);
+  border-color: var(--c-border-2);
 }
 
 .login-page .login-signup-link {
@@ -269,9 +296,13 @@
 }
 
 .login-page .login-signup-link a {
-  color: var(--accent);
+  color: var(--c-accent);
   font-weight: 600;
   text-decoration: none;
+}
+
+.login-page .login-signup-link a:hover {
+  color: var(--c-accent-hover);
 }
 
 /* === 6. MISCELÁNEOS === */
@@ -285,6 +316,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-canvas);
+  background: var(--c-bg);
   color: var(--text-soft);
 }
