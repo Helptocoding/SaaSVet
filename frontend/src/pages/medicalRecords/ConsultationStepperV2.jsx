@@ -90,6 +90,14 @@ export default function ConsultationStepperV2({
   }, [initialRecord, isEditing]);
 
   const [step, setStep] = useState(1);
+  const mainWorkAreaRef = useRef(null);
+  const contentAreaRef = useRef(null);
+
+  // Al cambiar de paso, vuelve arriba: evita avanzar sin ver campos del inicio.
+  useEffect(() => {
+    contentAreaRef.current?.scrollTo?.({ top: 0 });
+    mainWorkAreaRef.current?.scrollTo?.({ top: 0 });
+  }, [step]);
   const [prescriptionId, setPrescriptionId] = useState(initialRecord?.prescription_id || null);
 
   // Guardar updated_at inicial para anti-stale check
@@ -548,7 +556,7 @@ export default function ConsultationStepperV2({
 
   return (
     <div className={styles.fullPageContainer}>
-      <div className={styles.mainWorkArea}>
+      <div className={styles.mainWorkArea} ref={mainWorkAreaRef}>
         <div className={styles.header}>
           <div className={styles.breadcrumbs}>
             <span>Historial Clínico</span> / <span>{isEditing ? "Editar consulta" : "Nueva consulta"}</span>
@@ -564,7 +572,7 @@ export default function ConsultationStepperV2({
               <button className="btn btn-secondary btn-sm" onClick={() => onClose()}>
                 Cerrar
               </button>
-              {!closed && (
+              {!closed && step === 3 && (
                 <button className={`${styles.btnFinalizar} btn btn-sm`} onClick={() => handleSave(3)} disabled={saving}>
                   <Icon.Check s={14} /> Finalizar y enviar a Cobros
                 </button>
@@ -593,7 +601,7 @@ export default function ConsultationStepperV2({
           </div>
         </div>
 
-        <div className={styles.contentArea}>
+        <div className={styles.contentArea} ref={contentAreaRef}>
           {step === 1 && (
             <div className="fade-in">
               <div className={styles.sectionHeader}>
