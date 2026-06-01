@@ -319,17 +319,40 @@ export default function ConsultationStepperV2({
       }
 
       // 3. Handle Prescription solo si cambió (hash comparison)
+      // Auto-incluye un medicamento tipeado pero no agregado con "+" para que no
+      // se pierda al avanzar (causa raiz de recetas vacias -> sin sugerencia en Cobros).
+      let rxItems = prescriptionDraft.items;
+      if (recipeLine.product) {
+        const selectedRx = productMap[recipeLine.product.id];
+        if (selectedRx) {
+          if (!recipeLine.dose?.trim()) {
+            toast.error("Indica la dosis del medicamento antes de continuar.");
+            return;
+          }
+          rxItems = [...prescriptionDraft.items, {
+            product: selectedRx.id,
+            product_id: selectedRx.id,
+            product_name: selectedRx.name,
+            quantity: recipeLine.quantity,
+            dose: recipeLine.dose,
+            duration: recipeLine.duration,
+          }];
+          setPrescriptionDraft(prev => ({ ...prev, items: rxItems }));
+          setRecipeLine({ product: null, dose: "", duration: "", quantity: "1" });
+        }
+      }
+
       const currentPrescriptionHash = JSON.stringify({
-        items: prescriptionDraft.items.map(i => `${i.product}-${i.quantity}-${i.dose}`),
+        items: rxItems.map(i => `${i.product}-${i.quantity}-${i.dose}`),
         notes: prescriptionDraft.notes,
       });
 
-      if (prescriptionDraft.items.length > 0 && currentPrescriptionHash !== lastPrescriptionHash.current) {
+      if (rxItems.length > 0 && currentPrescriptionHash !== lastPrescriptionHash.current) {
         const pPayload = {
           pet: pet.id,
           medical_record: resultId, // FK usa id entero
           notes: prescriptionDraft.notes,
-          items: prescriptionDraft.items.map(it => ({
+          items: rxItems.map(it => ({
             product: it.product_id || it.product,
             quantity: it.quantity,
             dose: it.dose,
