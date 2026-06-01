@@ -382,10 +382,10 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
     return (
         <div style={{ marginTop: "20px" }}>
             <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Receta — dispensar
+                Medicamentos recetados (opcionales)
             </p>
             <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginBottom: "10px" }}>
-                El cliente decide qué llevar. Lo seleccionado se agrega a este mismo cobro y descuenta stock al confirmarlo; lo demás no toca inventario.
+                Los siguientes medicamentos fueron recetados por el veterinario. Solo agrega los que el cliente decida comprar; lo demás no toca inventario.
             </p>
             <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
                 <thead>
