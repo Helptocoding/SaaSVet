@@ -785,11 +785,18 @@ export default function ConsultationStepperV2({
                 <span className="badge badge-warning" style={{ flexShrink: 0 }}>Se cobrará</span>
               </div>
               <p className={styles.helperText}>
-                Todo lo agregado aquí se cobrará al cliente y descontará inventario. Utiliza esta sección únicamente para productos ya consumidos durante la atención.
+                Registra los productos usados en esta atención. <strong>Insumo</strong> descuenta inventario sin cobrar al cliente (gasas, jeringas). <strong>Cobrar</strong> descuenta inventario y genera cargo en la factura.
               </p>
 
               <div className={styles.stepThreeLayout}>
                 <div>
+                  {(() => {
+                    const selProd = productLine.product ? productMap[productLine.product.id] : null;
+                    const selUnit = selProd?.presentation?.base_unit_display
+                      || selProd?.presentation?.base_unit
+                      || selProd?.base_unit
+                      || null;
+                    return (
                   <div className={styles.addRow}>
                     <div className={styles.addRowSearch}>
                       <SearchSelect
@@ -806,6 +813,8 @@ export default function ConsultationStepperV2({
                         value={productLine.quantity}
                         onChange={e => setProductLine(prev => ({ ...prev, quantity: e.target.value }))}
                         min="1"
+                        title={selUnit ? `Cantidad en ${selUnit}` : 'Cantidad'}
+                        placeholder={selUnit ? `cant. ${selUnit}` : '1'}
                       />
                     </div>
                     <div className={styles.costToggle}>
@@ -832,6 +841,8 @@ export default function ConsultationStepperV2({
                       Agregar
                     </button>
                   </div>
+                    );
+                  })()}
 
                   <div className={styles.tableContainer}>
                     <table className={styles.table}>
