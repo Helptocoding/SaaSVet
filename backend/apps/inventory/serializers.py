@@ -85,7 +85,7 @@ class PresentationCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Presentation
-        fields = ['id', 'name', 'base_unit', 'quantity', 'sale_price', 'stock', 'min_stock']
+        fields = ['id', 'name', 'base_unit', 'quantity', 'conversion_factor', 'sale_price', 'stock', 'min_stock']
         read_only_fields = ['id']
 
     def validate_sale_price(self, value):
@@ -206,6 +206,19 @@ class ProductSerializer(serializers.ModelSerializer):
             pres.full_clean()
             Presentation.objects.bulk_create([pres])
 
+            # ADR p31: poblar Product.stock_quantity desde el stock inicial.
+            # bulk_create omite signals, por eso se hace aquí explícitamente.
+            from decimal import Decimal as _D
+            cf = _D(str(data.get('conversion_factor') or 1))
+            initial_stock = _D(str(data.get('stock') or 0)) * cf
+            min_stock_base = _D(str(data.get('min_stock') or 0)) * cf
+            Product.all_objects.filter(pk=product.pk).update(
+                base_unit=data.get('base_unit', ''),
+                stock_quantity=initial_stock,
+                min_stock=min_stock_base,
+            )
+            product.refresh_from_db()
+
         return product
 
     @transaction.atomic
@@ -240,6 +253,16 @@ class ProductSerializer(serializers.ModelSerializer):
             for attr, value in update_data.items():
                 setattr(first_pres, attr, value)
             first_pres.save()
+
+            # ADR p31: sincronizar base_unit y min_stock en Product cuando cambia la presentación.
+            # stock_quantity NO se toca aquí — lo gestiona apply_stock_movement.
+            from decimal import Decimal as _D
+            cf = _D(str(first_pres.conversion_factor or 1))
+            min_base = _D(str(first_pres.min_stock or 0)) * cf
+            Product.all_objects.filter(pk=instance.pk).update(
+                base_unit=first_pres.base_unit or '',
+                min_stock=min_base,
+            )
         return instance
 
 

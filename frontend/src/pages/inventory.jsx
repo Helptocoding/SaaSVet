@@ -27,7 +27,7 @@ const CATEGORY_UNITS = {
 const EMPTY_PRODUCT = {
     name: "", internal_code: "", description: "",
     category: "other", requires_prescription: false,
-    base_unit: "unit", sale_price: "", stock: "", min_stock: "",
+    base_unit: "unit", conversion_factor: 1, sale_price: "", stock: "", min_stock: "",
 };
 const EMPTY_ADJUST = { movement_type: "in", quantity: 1, reason: "" };
 
@@ -40,7 +40,8 @@ const buildProductPayload = (formData) => ({
     requires_prescription: formData.requires_prescription,
     presentation_input: {
         base_unit: formData.base_unit,
-        quantity: 1,
+        quantity: Number(formData.conversion_factor) || 1,
+        conversion_factor: Number(formData.conversion_factor) || 1,
         sale_price: formData.sale_price,
         stock: formData.stock,
         min_stock: formData.min_stock,
@@ -51,9 +52,10 @@ const buildProductPayload = (formData) => ({
 // R1: siempre acceder via pres = product.presentation || {}
 // R2: parseFloat con fallback para strings del API ("100.00")
 const stockStatus = (product) => {
+    // ADR p31: fuente autoritativa = product.stock_quantity; fallback a pres.stock (legacy)
     const pres = product.presentation || {};
-    const stock = parseFloat(pres.stock ?? 0) || 0;
-    const min = parseFloat(pres.min_stock ?? 0) || 0;
+    const stock = parseFloat(product.stock_quantity ?? pres.stock ?? 0) || 0;
+    const min = parseFloat(product.min_stock ?? pres.min_stock ?? 0) || 0;
     if (stock <= 0) return { pct: 0, state: "crit", label: "Agotado" };
     if (min > 0 && stock < min) return { pct: Math.min((stock / min) * 100, 100), state: "low", label: "Stock bajo" };
     const top = min > 0 ? min * 3 : 100;
@@ -166,12 +168,15 @@ const Inventory = () => {
         return {
             total: active.length,
             medications: active.filter(p => p.category === "medication").length,
-            // R11: confiar en is_low_stock del backend, no duplicar lógica
+            // ADR p31: is_low_stock ahora se deriva de product.stock_quantity
             lowStock: active.filter(p => p.presentation?.is_low_stock).length,
-            outOfStock: active.filter(p => parseFloat((p.presentation || {}).stock ?? 0) <= 0).length,
+            outOfStock: active.filter(p => parseFloat(p.stock_quantity ?? (p.presentation || {}).stock ?? 0) <= 0).length,
             totalVal: active.reduce((acc, p) => {
                 const pres = p.presentation || {};
-                return acc + (parseFloat(pres.sale_price ?? 0) || 0) * (parseFloat(pres.stock ?? 0) || 0);
+                const sqty = parseFloat(p.stock_quantity ?? pres.stock ?? 0) || 0;
+                const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
+                // Valor en stock = precio_unidad × stock_qty; precio_unidad = sale_price / conversion_factor
+                return acc + (parseFloat(pres.sale_price ?? 0) || 0) / cf * sqty;
             }, 0),
         };
     }, [products]);
@@ -322,7 +327,9 @@ const Inventory = () => {
     const filteredTotalVal = useMemo(() =>
         filteredProducts.reduce((acc, p) => {
             const pres = p.presentation || {};
-            return acc + (parseFloat(pres.sale_price ?? 0) || 0) * (parseFloat(pres.stock ?? 0) || 0);
+            const sqty = parseFloat(p.stock_quantity ?? pres.stock ?? 0) || 0;
+            const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
+            return acc + (parseFloat(pres.sale_price ?? 0) || 0) / cf * sqty;
         }, 0),
         [filteredProducts]
     );
@@ -331,10 +338,13 @@ const Inventory = () => {
     const previewStock = () => {
         if (!adjustingProduct || !adjustForm.quantity) return null;
         const qty = parseFloat(adjustForm.quantity) || 0;
-        const current = parseFloat((adjustingProduct.presentation || {}).stock ?? 0) || 0;
-        if (adjustForm.movement_type === "in") return current + qty;
-        if (adjustForm.movement_type === "out") return Math.max(current - qty, 0);
-        if (adjustForm.movement_type === "adjustment") return qty;
+        const pres = adjustingProduct.presentation || {};
+        const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
+        const qtyBase = qty * cf;
+        const current = parseFloat(adjustingProduct.stock_quantity ?? pres.stock ?? 0) || 0;
+        if (adjustForm.movement_type === "in") return current + qtyBase;
+        if (adjustForm.movement_type === "out") return Math.max(current - qtyBase, 0);
+        if (adjustForm.movement_type === "adjustment") return qtyBase;
         return null;
     };
 
@@ -411,6 +421,7 @@ const Inventory = () => {
             category: product.category || "other",
             requires_prescription: product.requires_prescription || false,
             base_unit: pres.base_unit || "unit",
+            conversion_factor: parseFloat(pres.conversion_factor ?? 1) || 1,
             sale_price: pres.sale_price || "",
             stock: pres.stock || "",
             min_stock: pres.min_stock || "",
@@ -573,13 +584,16 @@ const Inventory = () => {
                         </thead>
                         <tbody>
                             {filteredProducts.map(product => {
-                                // R1: acceso defensivo a presentation
+                                // ADR p31: stock en product.stock_quantity (base_units)
                                 const pres = product.presentation || {};
-                                const stockVal = parseFloat(pres.stock ?? 0) || 0;
+                                const stockVal = parseFloat(product.stock_quantity ?? pres.stock ?? 0) || 0;
                                 const salePrice = parseFloat(pres.sale_price ?? 0) || 0;
-                                // R3: base_unit_display solo para mostrar
-                                const unitDisplay = pres.base_unit_display || pres.base_unit || "ud.";
-                                const val = salePrice * stockVal;
+                                const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
+                                // base_unit en Product (ADR p31) o fallback a Presentation
+                                const unitDisplay = product.base_unit
+                                    ? (product.base_unit_display || product.base_unit)
+                                    : (pres.base_unit_display || pres.base_unit || "ud.");
+                                const val = (salePrice / cf) * stockVal;
                                 const st = stockStatus(product);
                                 return (
                                     <tr key={product.id}>
@@ -804,7 +818,24 @@ const Inventory = () => {
                                         </select>
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">STOCK ACTUAL</label>
+                                        <label className="form-label">UNIADES POR PAQUETE</label>
+                                        <input
+                                            type="number" step="1" min="1"
+                                            className="input"
+                                            value={form.conversion_factor}
+                                            onChange={e => {
+                                                const v = parseInt(e.target.value, 10);
+                                                if (!v || v < 1) return;
+                                                setForm({ ...form, conversion_factor: v });
+                                            }}
+                                            placeholder="1"
+                                        />
+                                        <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
+                                            Si vendes en cajas: pon cuántas {form.base_unit || "unidades"} trae. Ej: Caja 100 → 100.
+                                        </p>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">STOCK INICIAL (en {form.base_unit || "unidades"})</label>
                                         <input
                                             type="number" step="1" min="0"
                                             className={`input${formErrors["presentation_input.stock"] ? " input-error" : ""}`}
@@ -921,8 +952,10 @@ const Inventory = () => {
                             {/* R1 + R3 en el modal de ajuste */}
                             {(() => {
                                 const adjPres = adjustingProduct.presentation || {};
-                                const adjStock = parseFloat(adjPres.stock ?? 0) || 0;
-                                const adjUnit = adjPres.base_unit_display || adjPres.base_unit || "";
+                                // ADR p31: mostrar stock_quantity (base_units)
+                                const adjStock = parseFloat(adjustingProduct.stock_quantity ?? adjPres.stock ?? 0) || 0;
+                                const adjUnit = adjustingProduct.base_unit || adjPres.base_unit_display || adjPres.base_unit || "";
+                                const adjCf = parseFloat(adjPres.conversion_factor ?? 1) || 1;
                                 const preview = previewStock();
                                 return (
                                     <div style={{
@@ -999,7 +1032,9 @@ const Inventory = () => {
 
                             <div className="form-group">
                                 <label className="form-label">
-                                    {adjustForm.movement_type === "adjustment" ? "NUEVO STOCK *" : "CANTIDAD *"}
+                                    {adjustForm.movement_type === "adjustment"
+                                        ? `NUEVO STOCK (en ${adjUnit || "unidades"}) *`
+                                        : `CANTIDAD (en ${adjCf > 1 ? `paquetes → ${adjUnit}` : adjUnit || "unidades"}) *`}
                                 </label>
                                 <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                                     <button
@@ -1019,6 +1054,11 @@ const Inventory = () => {
                                         onClick={() => setAdjustForm(f => ({ ...f, quantity: parseFloat(f.quantity) + 1 }))}
                                     >+</button>
                                 </div>
+                                {adjCf > 1 && adjustForm.quantity > 0 && (
+                                    <p style={{ fontSize: "11.5px", color: "var(--c-text-3)", marginTop: "5px" }}>
+                                        {parseFloat(adjustForm.quantity)} paquete{parseFloat(adjustForm.quantity) !== 1 ? "s" : ""} = {parseFloat(adjustForm.quantity) * adjCf} {adjUnit}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="form-group" style={{ marginBottom: 0 }}>
