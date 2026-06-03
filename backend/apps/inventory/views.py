@@ -218,6 +218,31 @@ def unit_choices(request):
     ])
 
 
+@api_view(['GET'])
+@permission_classes([make_permission("inventory.list")])
+def presentation_by_barcode(request):
+    """Lookup de presentación por código de barras (para POS scanner).
+
+    GET /api/inventory/presentations/barcode/?barcode={code}
+    Tenant-scoped. Cross-tenant → 404.
+    """
+    barcode = request.query_params.get('barcode', '').strip()
+    if not barcode:
+        return Response({'error': 'Parámetro barcode requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    presentation = (
+        Presentation.objects
+        .for_organization(request.user.organization)
+        .select_related('product')
+        .filter(barcode=barcode)
+        .first()
+    )
+    if presentation is None:
+        return Response({'error': 'Presentación no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(PresentationSerializer(presentation).data)
+
+
 class PresentationListView(TenantQueryMixin, generics.ListAPIView):
     serializer_class = PresentationSerializer
     permission_classes = [HybridPermission]

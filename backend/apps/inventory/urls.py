@@ -6,6 +6,7 @@ from .views import (
     adjust_stock,
     adjust_presentation_stock,
     unit_choices,
+    presentation_by_barcode,
     StockMovementListView,
     PresentationListView,
     PresentationCreateView,
@@ -25,6 +26,7 @@ urlpatterns = [
     path('inventory/presentations/<str:pk>/adjust/', adjust_presentation_stock),
     path('inventory/movements/', StockMovementListView.as_view()),
     path('inventory/units/', unit_choices),
+    path('inventory/presentations/barcode/', presentation_by_barcode),
     path(
         'medical-records/<str:medical_record_pk>/products/',
         MedicalRecordProductListCreateView.as_view(),
