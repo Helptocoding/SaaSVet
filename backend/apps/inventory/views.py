@@ -340,12 +340,22 @@ class MedicalRecordProductListCreateView(TenantQueryMixin, generics.ListCreateAP
             self._assert_can_modify(medical_record)
             presentation = serializer.validated_data['presentation']
             quantity = serializer.validated_data['quantity']
+            cost_behavior = serializer.validated_data.get('cost_behavior', 'charge')
             if presentation.organization_id != self.request.user.organization_id:
                 raise ValidationError({'presentation': 'Presentación fuera de tu organización'})
             invoice = get_or_create_invoice_for_medical_record(medical_record)
             locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
 
-            if invoice.status == 'draft':
+            mrp = MedicalRecordProduct.objects.select_for_update().filter(
+                medical_record=medical_record,
+                presentation=locked_pres,
+            ).first()
+
+            # cost_behavior es inmutable tras la creación; al incrementar cantidad
+            # se usa el valor del MRP existente, no el del request.
+            effective_cost_behavior = mrp.cost_behavior if mrp is not None else cost_behavior
+
+            if invoice.status == 'draft' and effective_cost_behavior == 'charge':
                 item = (
                     InvoiceItem.objects
                     .select_for_update()
@@ -364,11 +374,6 @@ class MedicalRecordProductListCreateView(TenantQueryMixin, generics.ListCreateAP
                 else:
                     apply_invoice_item_quantity_delta(item, quantity)
 
-            mrp = MedicalRecordProduct.objects.select_for_update().filter(
-                medical_record=medical_record,
-                presentation=locked_pres,
-            ).first()
-
             if mrp is not None:
                 previous_quantity = mrp.quantity
                 mrp.quantity = previous_quantity + quantity
@@ -378,6 +383,7 @@ class MedicalRecordProductListCreateView(TenantQueryMixin, generics.ListCreateAP
                     medical_record=medical_record,
                     presentation=locked_pres,
                     quantity=quantity,
+                    cost_behavior=cost_behavior,
                 )
                 mrp.save(locked_presentation=locked_pres)
 

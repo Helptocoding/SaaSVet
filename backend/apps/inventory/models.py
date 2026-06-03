@@ -135,7 +135,16 @@ class MedicalRecordProduct(OrganizationalModel):
     """
     Productos consumidos durante una consulta médica.
     El stock se ajusta automáticamente via save() y delete().
+
+    cost_behavior='charge'   → descuenta stock + crea InvoiceItem (default)
+    cost_behavior='included' → descuenta stock + NO crea InvoiceItem
+                               (insumo incluido en costo del servicio)
     """
+    COST_BEHAVIOR_CHOICES = [
+        ('charge', 'Cobrar al cliente'),
+        ('included', 'Incluido en costo de servicio'),
+    ]
+
     medical_record = models.ForeignKey(
         'medical_records.MedicalRecord',
         on_delete=models.CASCADE,
@@ -147,6 +156,11 @@ class MedicalRecordProduct(OrganizationalModel):
         related_name='medical_record_usages',
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_behavior = models.CharField(
+        max_length=20,
+        choices=COST_BEHAVIOR_CHOICES,
+        default='charge',
+    )
 
     class Meta:
         unique_together = [['medical_record', 'presentation']]

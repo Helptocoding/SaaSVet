@@ -270,7 +270,7 @@ class MedicalRecordProductSerializer(serializers.ModelSerializer):
         model = MedicalRecordProduct
         fields = [
             'id', 'presentation', 'product_name', 'presentation_name',
-            'base_unit', 'base_unit_display', 'quantity',
+            'base_unit', 'base_unit_display', 'quantity', 'cost_behavior',
         ]
         validators = []
 
