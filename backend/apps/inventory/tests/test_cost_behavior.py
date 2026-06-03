@@ -77,13 +77,22 @@ class CostBehaviorSetupMixin:
         )
         self.presentation = Presentation.objects.create(
             product=self.product,
-            name='Caja 100',
+            name='Unidad',
             base_unit='piece',
-            quantity=Decimal('100'),
-            sale_price=Decimal('300.00'),
+            quantity=Decimal('1'),
+            conversion_factor=Decimal('1'),
+            sale_price=Decimal('5.00'),
             stock=Decimal('500'),
             organization=self.org,
         )
+        # ADR p31: Product.stock_quantity = stock real en base_units
+        # Presentation.conversion_factor=1 → 1 presentación = 1 pieza
+        # stock_quantity = 500 piezas
+        Product.objects.filter(pk=self.product.pk).update(
+            base_unit='piece',
+            stock_quantity=Decimal('500'),
+        )
+        self.product.refresh_from_db()
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin)
 
@@ -111,16 +120,18 @@ class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
         ).first()
         self.assertIsNotNone(item)
         self.assertEqual(item.quantity, Decimal('2'))
-        self.assertEqual(item.unit_price, Decimal('300.00'))
+        self.assertEqual(item.unit_price, Decimal('5.00'))
 
     def test_charge_deducts_stock(self):
-        self.client.post(self._mrp_url(), {
+        resp = self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '3',
             'cost_behavior': 'charge',
         })
-        self.presentation.refresh_from_db()
-        self.assertEqual(self.presentation.stock, Decimal('497'))
+        self.assertEqual(resp.status_code, 201, resp.data)
+        # ADR p31: 3 presentaciones × conv_factor=1 = 3 piezas descontadas
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, Decimal('497'))
 
     def test_default_is_charge(self):
         # sin enviar cost_behavior → 'charge'
@@ -160,6 +171,7 @@ class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
         self.assertIsNone(item)
 
     def test_charge_delete_reverts_stock(self):
+        initial = self.product.stock_quantity
         self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '5',
@@ -171,8 +183,8 @@ class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
 
         self.client.delete(self._mrp_delete_url(mrp_id))
 
-        self.presentation.refresh_from_db()
-        self.assertEqual(self.presentation.stock, Decimal('500'))
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, initial)
 
 
 class CostBehaviorIncludedTests(CostBehaviorSetupMixin, TestCase):
@@ -194,13 +206,15 @@ class CostBehaviorIncludedTests(CostBehaviorSetupMixin, TestCase):
             self.assertIsNone(item)
 
     def test_included_deducts_stock(self):
-        self.client.post(self._mrp_url(), {
+        resp = self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '10',
             'cost_behavior': 'included',
         })
-        self.presentation.refresh_from_db()
-        self.assertEqual(self.presentation.stock, Decimal('490'))
+        self.assertEqual(resp.status_code, 201, resp.data)
+        # 10 presentaciones × conv_factor=1 = 10 piezas descontadas
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, Decimal('490'))
 
     def test_included_serializer_exposes_cost_behavior(self):
         resp = self.client.post(self._mrp_url(), {
@@ -211,6 +225,7 @@ class CostBehaviorIncludedTests(CostBehaviorSetupMixin, TestCase):
         self.assertEqual(resp.data['cost_behavior'], 'included')
 
     def test_included_delete_reverts_stock_no_invoice_item(self):
+        initial = self.product.stock_quantity
         self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '7',
@@ -222,8 +237,8 @@ class CostBehaviorIncludedTests(CostBehaviorSetupMixin, TestCase):
 
         self.client.delete(self._mrp_delete_url(mrp_id))
 
-        self.presentation.refresh_from_db()
-        self.assertEqual(self.presentation.stock, Decimal('500'))
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, initial)
 
         invoice = Invoice.objects.filter(medical_record=self.medical_record).first()
         if invoice:
@@ -300,8 +315,9 @@ class CostBehaviorImmutabilityTests(CostBehaviorSetupMixin, TestCase):
             'presentation': self.presentation.pk,
             'quantity': '6',
         })
-        self.presentation.refresh_from_db()
-        self.assertEqual(self.presentation.stock, Decimal('490'))
+        # (4+6) presentaciones × conv_factor=1 = 10 piezas
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, Decimal('490'))
 
 
 class CostBehaviorValidationTests(CostBehaviorSetupMixin, TestCase):

@@ -92,6 +92,11 @@ class InvoiceConcurrencyTests(TransactionTestCase):
             min_stock=Decimal('1.00'),
             organization=self.org,
         )
+        # ADR p31: stock_quantity en Product es la fuente autoritativa.
+        Product.objects.filter(pk=self.product.pk).update(
+            base_unit='bottle',
+            stock_quantity=Decimal('10.00'),
+        )
 
     def _run_parallel_requests(self, calls):
         barrier = threading.Barrier(len(calls))

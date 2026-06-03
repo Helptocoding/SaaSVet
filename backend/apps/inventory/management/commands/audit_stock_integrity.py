@@ -1,50 +1,28 @@
 """
-audit_stock_integrity — reconcilia Presentation.stock contra el ledger de StockMovement.
+audit_stock_integrity — reconcilia stock contra el ledger de StockMovement.
 
-Detecta drift: stock que divergio del ledger de movimientos. El caso que importa
-es una escritura directa a Presentation.stock que salto apply_stock_movement (el
-unico writer autorizado, ver apps/inventory/services.py).
+ADR p31: el algoritmo opera ahora a nivel de Product (base_units). Los
+movimientos legacy (quantity_unit='presentation') se ignoran en el cálculo
+nuevo; el baseline de cada producto es el último StockMovement(adjustment,
+quantity_unit='base') creado por la migration 0018.
 
-Modelo de reconciliacion
--------------------------
-'adjustment' es un RESET ABSOLUTO: fija stock = quantity. Por eso la
-reconciliacion parte del ULTIMO adjustment de cada presentacion:
+Modelo de reconciliacion (modo Product, ADR p31)
+-------------------------------------------------
+  baseline = último StockMovement(adjustment, quantity_unit='base') para ese Product.
+  expected = baseline.quantity
+           + SUM('in', quantity_unit='base', pk > baseline.pk)
+           - SUM('out', quantity_unit='base', pk > baseline.pk)
+  compare expected vs Product.stock_quantity
 
-    expected = ultimo_adjustment.quantity
-             + SUM(movimientos 'in'  posteriores)
-             - SUM(movimientos 'out' posteriores)
-
-Los movimientos "posteriores" son los de PK mayor al del ultimo adjustment
-(StockMovement es append-only y PK es serial). No puede haber otro 'adjustment'
-posterior por definicion (seria el ultimo). Comparacion final: expected vs stock.
-
-Limitacion de cobertura (honesta)
----------------------------------
-Crear una Presentation NO emite un movimiento de apertura: el stock inicial se
-fija directo en el campo (apps/inventory/views.py). Una presentacion SIN ningun
-'adjustment' no tiene baseline en el ledger -> su stock NO es verificable por
-replay. Se reporta como 'no_baseline' (informativo), NO como drift, para no
-generar falsos positivos masivos. Para cobertura total, registrar el stock de
-apertura como un movimiento al crear la presentacion.
-
-Seguridad de produccion
-------------------------
-- Solo lectura. Sin select_for_update, sin transaction.atomic, sin locks.
-- Dos queries pequenas por presentacion, ambas acotadas a la particion de una
-  presentacion (no scans de tabla completa). Itera con .iterator() para no
-  cargar todo en memoria.
-- Scope opcional por --org para fan-out por tenant en cron.
+Modo legacy (Presentation)
+--------------------------
+Se mantiene el algoritmo original para productos sin baseline en base_units,
+reportados como 'no_baseline_product' (informativo, no drift).
 
 Exit codes:
-  0  sin drift (presentaciones reconciliables coinciden; 'no_baseline' es informativo)
-  1  drift detectado (al menos una presentacion reconciliable no coincide)
+  0  sin drift
+  1  drift detectado
   2  error interno
-
-Usage:
-  python manage.py audit_stock_integrity
-  python manage.py audit_stock_integrity --org=12
-  python manage.py audit_stock_integrity --verbose      # detalle de cada drift
-  python manage.py audit_stock_integrity --json         # machine-readable (cron/monitoring)
 """
 import json
 import sys
@@ -58,24 +36,24 @@ SAMPLE_SIZE = 20
 
 
 class Command(BaseCommand):
-    help = "Reconcilia Presentation.stock contra el ledger de StockMovement (drift detection)."
+    help = "Reconcilia Product.stock_quantity contra el ledger de StockMovement (ADR p31)."
 
     def add_arguments(self, parser):
         parser.add_argument('--org', type=int, default=None,
                             help="Restringe a una organizacion id.")
         parser.add_argument('--verbose', action='store_true',
-                            help="Imprime detalle de cada presentacion con drift (sin cap de sample).")
+                            help="Imprime detalle de cada producto con drift.")
         parser.add_argument('--json', action='store_true',
                             help="Emite un unico objeto JSON en vez de salida humana.")
 
     def handle(self, *args, **options):
-        from apps.inventory.models import Presentation, StockMovement
+        from apps.inventory.models import Product, StockMovement
 
         org_filter = Q(organization_id=options['org']) if options['org'] else Q()
 
-        presentations = (
-            Presentation.all_objects.filter(org_filter)
-            .values('pk', 'organization_id', 'stock')
+        products = (
+            Product.all_objects.filter(org_filter)
+            .values('pk', 'organization_id', 'stock_quantity', 'name')
             .order_by('pk')
         )
 
@@ -85,26 +63,34 @@ class Command(BaseCommand):
         drift_count = 0
         drift_sample = []
 
-        for p in presentations.iterator(chunk_size=500):
+        for p in products.iterator(chunk_size=500):
             checked += 1
 
+            # Baseline: último adjustment en base_units para este producto
             last_adj = (
                 StockMovement.all_objects
-                .filter(presentation_id=p['pk'], movement_type='adjustment')
+                .filter(
+                    product_id=p['pk'],
+                    movement_type='adjustment',
+                    quantity_unit='base',
+                )
                 .order_by('-pk')
                 .values('pk', 'quantity')
                 .first()
             )
+
             if last_adj is None:
-                # Sin adjustment no hay baseline en el ledger: el stock de
-                # apertura no se registra como movimiento. No verificable.
                 no_baseline += 1
                 continue
 
             net = Decimal('0')
             after = (
                 StockMovement.all_objects
-                .filter(presentation_id=p['pk'], pk__gt=last_adj['pk'])
+                .filter(
+                    product_id=p['pk'],
+                    pk__gt=last_adj['pk'],
+                    quantity_unit='base',
+                )
                 .values('movement_type')
                 .annotate(total=Sum('quantity'))
             )
@@ -113,27 +99,27 @@ class Command(BaseCommand):
                     net += row['total']
                 elif row['movement_type'] == 'out':
                     net -= row['total']
-                # 'adjustment' posterior imposible: last_adj es el de mayor PK.
 
             expected = last_adj['quantity'] + net
             reconciled += 1
 
-            if expected != p['stock']:
+            if expected != p['stock_quantity']:
                 drift_count += 1
                 if options['verbose'] or len(drift_sample) < SAMPLE_SIZE:
                     drift_sample.append({
-                        'presentation_id': p['pk'],
+                        'product_id': p['pk'],
+                        'product_name': p['name'],
                         'organization_id': p['organization_id'],
-                        'stock_actual': str(p['stock']),
+                        'stock_actual': str(p['stock_quantity']),
                         'stock_esperado': str(expected),
-                        'diff': str(p['stock'] - expected),
+                        'diff': str(p['stock_quantity'] - expected),
                         'baseline_adjustment_pk': last_adj['pk'],
                     })
 
         exit_code = 1 if drift_count > 0 else 0
 
         report = {
-            'checked_presentations': checked,
+            'checked_products': checked,
             'reconciled': reconciled,
             'no_baseline': no_baseline,
             'drift_count': drift_count,
@@ -149,25 +135,26 @@ class Command(BaseCommand):
         sys.exit(exit_code)
 
     def _print_human(self, report):
-        self.stdout.write(self.style.MIGRATE_HEADING("Stock integrity audit"))
+        self.stdout.write(self.style.MIGRATE_HEADING("Stock integrity audit (ADR p31)"))
         self.stdout.write("")
-        self.stdout.write(f"  Presentaciones revisadas : {report['checked_presentations']}")
-        self.stdout.write(f"  Reconciliadas (con baseline): {report['reconciled']}")
+        self.stdout.write(f"  Productos revisados      : {report['checked_products']}")
+        self.stdout.write(f"  Reconciliados (baseline) : {report['reconciled']}")
         self.stdout.write(self.style.WARNING(
-            f"  Sin baseline (no verificable): {report['no_baseline']}"
+            f"  Sin baseline base_units  : {report['no_baseline']}"
         ) if report['no_baseline'] else
-            f"  Sin baseline (no verificable): 0")
+            f"  Sin baseline base_units  : 0")
         self.stdout.write("")
 
         if report['drift_count'] == 0:
-            self.stdout.write(self.style.SUCCESS("  OK Sin drift en presentaciones reconciliables."))
+            self.stdout.write(self.style.SUCCESS("  OK Sin drift en productos reconciliables."))
         else:
             self.stdout.write(self.style.ERROR(
-                f"  X DRIFT: {report['drift_count']} presentaciones divergen del ledger"
+                f"  X DRIFT: {report['drift_count']} productos divergen del ledger"
             ))
             for row in report['drift_sample']:
                 self.stdout.write(
-                    f"      - pres={row['presentation_id']} org={row['organization_id']} "
+                    f"      - product={row['product_id']} ({row['product_name']}) "
+                    f"org={row['organization_id']} "
                     f"actual={row['stock_actual']} esperado={row['stock_esperado']} "
                     f"diff={row['diff']} (baseline adj pk={row['baseline_adjustment_pk']})"
                 )

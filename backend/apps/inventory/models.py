@@ -10,6 +10,22 @@ class Product(PublicIdMixin, OrganizationalModel):
         ('other', 'Otro'),
     ]
 
+    # ADR p31 — unidades base compartidas por todas las presentaciones
+    BASE_UNIT_CHOICES = [
+        ('tablet', 'Tableta'),
+        ('capsule', 'Cápsula'),
+        ('ml', 'ml'),
+        ('vial', 'Vial'),
+        ('ampoule', 'Ampolleta'),
+        ('piece', 'Pieza'),
+        ('bag', 'Bolsa'),
+        ('bottle', 'Frasco'),
+        ('tube', 'Tubo'),
+        ('kg', 'kg'),
+        ('g', 'g'),
+        ('unit', 'Unidad'),
+    ]
+
     name = models.CharField(max_length=255)
     # Sin db_index: unique_together(organization, internal_code) ya crea el
     # índice compuesto que sirve toda query org-scoped. Un índice lone sobre
@@ -20,12 +36,29 @@ class Product(PublicIdMixin, OrganizationalModel):
     requires_prescription = models.BooleanField(default=False)
     # is_active, created_at, updated_at heredados de OrganizationalModel
 
+    # ADR p31: stock real en unidades base (poblado por migration 0018)
+    base_unit = models.CharField(
+        max_length=20, choices=BASE_UNIT_CHOICES, blank=True, default='',
+    )
+    stock_quantity = models.DecimalField(
+        max_digits=14, decimal_places=4, default=0,
+    )
+    min_stock = models.DecimalField(
+        max_digits=14, decimal_places=4, default=0,
+    )
+
     def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['name']
         unique_together = [['organization', 'internal_code']]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(stock_quantity__gte=0),
+                name='product_stock_quantity_non_negative',
+            ),
+        ]
 
 
 class Presentation(PublicIdMixin, OrganizationalModel):
@@ -56,9 +89,19 @@ class Presentation(PublicIdMixin, OrganizationalModel):
     stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     min_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    # ADR p31: formato comercial — conversion_factor = cuántas base_units por paquete
+    # (semánticamente equivale a 'quantity'; se mantienen ambos durante transición)
+    conversion_factor = models.DecimalField(
+        max_digits=10, decimal_places=4, default=1,
+    )
+    barcode = models.CharField(max_length=100, blank=True, default='')
+    purchase_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+    )
+
     @property
     def is_low_stock(self):
-        return self.stock <= self.min_stock
+        return self.product.stock_quantity <= self.product.min_stock
 
     def __str__(self):
         return f"{self.product.name} — {self.name}"
@@ -89,13 +132,31 @@ class StockMovement(OrganizationalModel):
         ('adjustment', 'Ajuste'),
     ]
 
+    QUANTITY_UNIT_CHOICES = [
+        ('presentation', 'Unidades de presentación (legacy)'),
+        ('base', 'Unidades base (ADR p31)'),
+    ]
+
     presentation = models.ForeignKey(
         Presentation,
         on_delete=models.CASCADE,
         related_name='movements',
     )
+    # ADR p31: product FK para movimientos en base_units
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='stock_movements',
+        null=True,
+        blank=True,
+    )
     movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.DecimalField(max_digits=14, decimal_places=4)
+    quantity_unit = models.CharField(
+        max_length=20,
+        choices=QUANTITY_UNIT_CHOICES,
+        default='presentation',
+    )
     reason = models.CharField(max_length=255, blank=True)
     medical_record = models.ForeignKey(
         'medical_records.MedicalRecord',
@@ -164,6 +225,12 @@ class MedicalRecordProduct(OrganizationalModel):
 
     class Meta:
         unique_together = [['medical_record', 'presentation']]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(cost_behavior__in=['charge', 'included']),
+                name='medicalrecordproduct_cost_behavior_valid',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         # Hereda organization del medical_record — sin query extra
@@ -204,12 +271,13 @@ class MedicalRecordProduct(OrganizationalModel):
 
             super().save(*args, **kwargs)
 
+            cf = self.presentation.conversion_factor or 1
             if self.pk and previous_quantity is not None:
                 diff = self.quantity - previous_quantity
                 if diff != 0:
                     apply_stock_movement(
                         presentation=self.presentation,
-                        quantity=abs(diff),
+                        quantity=abs(diff) * cf,
                         movement_type='out' if diff > 0 else 'in',
                         organization=self.medical_record.organization,
                         reason='Ajuste por edición de consulta médica',
@@ -218,7 +286,7 @@ class MedicalRecordProduct(OrganizationalModel):
             elif previous_quantity is None:
                 apply_stock_movement(
                     presentation=self.presentation,
-                    quantity=self.quantity,
+                    quantity=self.quantity * cf,
                     movement_type='out',
                     organization=self.medical_record.organization,
                     reason='Consumido en consulta médica',
@@ -235,9 +303,10 @@ class MedicalRecordProduct(OrganizationalModel):
         )
         with transaction.atomic():
             fresh = locked_presentation or Presentation.objects.select_for_update().get(pk=self.presentation_id)
+            cf = fresh.conversion_factor or 1
             apply_stock_movement(
                 presentation=fresh,
-                quantity=self.quantity,
+                quantity=self.quantity * cf,
                 movement_type='in',
                 organization=self.medical_record.organization,
                 reason='Reversión por eliminación de producto en consulta',

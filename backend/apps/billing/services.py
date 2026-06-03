@@ -74,6 +74,11 @@ def _lock_presentations(presentation_ids):
     }
 
 
+def _qty_base(item):
+    """Convierte cantidad de InvoiceItem (presentaciones) a base_units (ADR p31)."""
+    return item.quantity * (item.presentation.conversion_factor or 1)
+
+
 def _items_settling_stock(invoice, items):
     """
     Ítems de la factura que LIQUIDAN stock en la ruta de confirmación/cancelación
@@ -164,15 +169,16 @@ def _confirm_locked_invoice(invoice, user):
                     f"Cantidad inválida en ítem '{item.description}'."
                 )
 
-        presentation_ids = [i.presentation_id for i in items_to_settle]
-        locked = _lock_presentations(presentation_ids)
-
+        # ADR p31: validación pre-check contra Product.stock_quantity (en base_units).
+        # La validación autoritativa ocurre dentro de apply_stock_movement (con lock).
         errors = []
         for item in items_to_settle:
-            p = locked[item.presentation_id]
-            if p.stock < item.quantity:
+            qty_base = _qty_base(item)
+            product = item.presentation.product
+            if product.stock_quantity < qty_base:
                 errors.append(
-                    f"'{p.product.name}': disponible {p.stock}, requerido {item.quantity}."
+                    f"'{product.name}': disponible {product.stock_quantity} "
+                    f"{product.base_unit}, requerido {qty_base}."
                 )
         if errors:
             raise ValidationError(errors)
@@ -185,8 +191,8 @@ def _confirm_locked_invoice(invoice, user):
         for item in items_to_settle:
             try:
                 apply_stock_movement(
-                    presentation=locked[item.presentation_id],
-                    quantity=item.quantity,
+                    presentation=item.presentation,
+                    quantity=_qty_base(item),
                     movement_type='out',
                     organization=invoice.organization,
                     reason=reason,
@@ -407,14 +413,11 @@ def cancel_invoice(invoice, user, notes=''):
             InvoiceItem.all_objects.filter(invoice=invoice, is_active=True),
         )
         if items_to_revert:
-            locked_presentations = _lock_presentations(
-                item.presentation_id for item in items_to_revert
-            )
             for item in items_to_revert:
                 try:
                     apply_stock_movement(
-                        presentation=locked_presentations[item.presentation_id],
-                        quantity=item.quantity,
+                        presentation=item.presentation,
+                        quantity=_qty_base(item),
                         movement_type='in',
                         organization=invoice.organization,
                         reason=f'Reversión por cancelación — Factura #{invoice.pk}',
@@ -651,19 +654,16 @@ def process_refund(invoice, user, *, credit_lines, refund_lines, reason_code,
     )
     credit_note.save()
 
-    restock_pres_ids = [
-        item.presentation_id for item, _, _, disp in normalized
-        if item.presentation_id and disp == 'restock'
-    ]
-    locked = _lock_presentations(restock_pres_ids)
     for item, qty, amt, disposition in normalized:
         CreditNoteItem(
             organization=invoice.organization, credit_note=credit_note,
             invoice_item=item, quantity=qty, amount=amt, disposition=disposition,
         ).save()
         if disposition == 'restock' and item.presentation_id:
+            # ADR p31: qty está en presentaciones; convertir a base_units para stock.
+            qty_base = qty * (item.presentation.conversion_factor or 1)
             apply_stock_movement(
-                presentation=locked[item.presentation_id], quantity=qty,
+                presentation=item.presentation, quantity=qty_base,
                 movement_type='in', organization=invoice.organization,
                 reason=f'Devolución — NC #{credit_note.pk}', created_by=user, invoice=invoice,
             )

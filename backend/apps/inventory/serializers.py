@@ -35,17 +35,26 @@ class PresentationSerializer(serializers.ModelSerializer):
     is_low_stock = serializers.BooleanField(read_only=True)
     base_unit_display = serializers.CharField(source='get_base_unit_display', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
-    # ADR p26: el front necesita saber si el producto exige receta para pedir
-    # la atestación en la venta directa.
     requires_prescription = serializers.BooleanField(source='product.requires_prescription', read_only=True)
+    # ADR p31: stock real en unidades base (desde Product)
+    stock_quantity = serializers.DecimalField(
+        source='product.stock_quantity', max_digits=14, decimal_places=4, read_only=True,
+    )
+    product_base_unit = serializers.CharField(source='product.base_unit', read_only=True)
 
     class Meta:
         model = Presentation
         fields = [
-            'id', 'public_id', 'product', 'name', 'product_name', 'base_unit', 'base_unit_display', 'quantity',
-            'sale_price', 'stock', 'min_stock', 'is_low_stock', 'requires_prescription',
+            'id', 'public_id', 'product', 'name', 'product_name',
+            'base_unit', 'base_unit_display', 'quantity', 'conversion_factor',
+            'sale_price', 'purchase_price', 'stock', 'min_stock', 'is_low_stock',
+            'stock_quantity', 'product_base_unit',
+            'barcode', 'requires_prescription',
         ]
-        read_only_fields = ['id', 'public_id', 'product', 'product_name', 'requires_prescription']
+        read_only_fields = [
+            'id', 'public_id', 'product', 'product_name', 'requires_prescription',
+            'stock_quantity', 'product_base_unit',
+        ]
 
     def validate_sale_price(self, value):
         if value <= 0:
@@ -112,10 +121,12 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'public_id', 'name', 'internal_code', 'description',
             'category', 'requires_prescription', 'is_active',
+            # ADR p31: stock real en unidades base
+            'base_unit', 'stock_quantity', 'min_stock',
             'presentations', 'presentation', 'presentation_input',
             'created_at', 'updated_at',
         ]
-        read_only_fields = ['id', 'public_id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'public_id', 'stock_quantity', 'created_at', 'updated_at']
 
     def get_presentation(self, obj):
         first = obj.presentations.first() if hasattr(obj, '_prefetched_objects_cache') else obj.presentations.first()

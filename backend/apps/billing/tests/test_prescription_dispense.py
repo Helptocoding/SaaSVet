@@ -65,6 +65,10 @@ class PrescriptionDispenseTests(APITestCase):
             product=cls.prod_rx, name="Frasco", base_unit="bottle",
             stock=Decimal("10"), sale_price=Decimal("90.00"), organization=cls.org,
         )
+        # ADR p31: Product.stock_quantity es fuente autoritativa (conv_factor=1 → stock_qty=pres.stock)
+        Product.objects.filter(pk=cls.prod_insumo.pk).update(base_unit='vial', stock_quantity=Decimal('10'))
+        Product.objects.filter(pk=cls.prod_take.pk).update(base_unit='unit', stock_quantity=Decimal('10'))
+        Product.objects.filter(pk=cls.prod_rx.pk).update(base_unit='bottle', stock_quantity=Decimal('10'))
 
     def setUp(self):
         # Cada test parte de una consulta + receta frescas (estado mutable).

@@ -1,9 +1,13 @@
 import logging
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.db.models import F
 from django.core.exceptions import ValidationError
 
-from .models import Presentation, StockMovement
+from .models import Presentation, Product, StockMovement
+
+# Precisión máxima para base_units en StockMovement (decimal_places=4)
+_QTY_PRECISION = Decimal('0.0001')
 
 logger = logging.getLogger(__name__)
 
@@ -19,68 +23,100 @@ def apply_stock_movement(
     invoice=None,
 ):
     """
-    Único punto de entrada para todos los cambios de stock.
-    Nadie debe actualizar Presentation.stock directamente fuera de esta función.
+    Único punto de entrada para todos los cambios de stock (ADR p31).
 
     ⚠️ CONTRATO DE LOCK (CRÍTICO):
-    El caller DEBE poseer `select_for_update()` sobre `presentation` antes de
-    llamar a esta función. La verificación de stock usa `refresh_from_db()`
-    (sin lock); sin lock externo, dos transacciones concurrentes pueden pasar
-    la validación simultáneamente y dejar stock negativo. Auditoría Día 1-2
-    confirmó que romper este contrato es la regresión más probable.
+    El caller DEBE llamar dentro de transaction.atomic(). Esta función adquiere
+    su propio select_for_update() sobre Product internamente. El orden de locks
+    del caller debe ser: CashSession → MedicalRecord → Invoice → (esta función).
+    No pre-lockear Product antes de llamar a esta función — el lock se adquiere
+    aquí para garantizar el orden correcto.
 
-    Callers actuales que cumplen el contrato:
-      - billing/services.py::_confirm_locked_invoice (via _lock_presentations)
-      - billing/services.py::cancel_invoice (via _lock_presentations)
+    Callers que cumplen el contrato:
+      - billing/services.py::_confirm_locked_invoice
+      - billing/services.py::cancel_invoice
+      - billing/services.py::process_refund
       - inventory/views.py::adjust_stock, adjust_presentation_stock
-      - inventory/views.py::MedicalRecordProductListCreateView.perform_create
       - inventory/models.py::MedicalRecordProduct.save / .delete
 
-    Lanza ValidationError si un movimiento 'out' dejaría stock negativo.
+    `quantity` DEBE estar en unidades base (base_unit del Product).
+    Los callers son responsables de convertir:
+        quantity_base = quantity_presentations * presentation.conversion_factor
 
-    NOTA: usa Presentation.all_objects.filter(pk=...).update() intencionalmente.
-    Razón: update() garantiza atomicidad de la UPDATE final en stock.
-    Es seguro porque pk viene de un objeto ya validado y conocido por la llamada.
+    `presentation` se usa únicamente para contexto/audit trail y para el
+    dual-write de Presentation.stock (campo de compatibilidad durante la
+    transición a ADR p31).
+
+    Lanza ValidationError si un movimiento 'out' dejaría stock negativo.
     """
     org_id = getattr(organization, 'pk', organization)
     user_id = getattr(created_by, 'pk', None)
 
+    # Normalizar quantity a ≤4 decimal places (límite de StockMovement.quantity).
+    # Decimal arithmetic puede producir trailing zeros extra, e.g.
+    # Decimal('3.00') * Decimal('1.0000') = Decimal('3.000000') → 6 places → error.
+    quantity = Decimal(quantity).quantize(_QTY_PRECISION, rounding=ROUND_HALF_UP)
+
+    # Lock product: garantiza read-validate-update atómico sobre stock_quantity.
+    # ⚠️ Uses all_objects para bypass de filtros de tenant y soft-delete.
+    locked_product = Product.all_objects.select_for_update().get(
+        pk=presentation.product_id
+    )
+
     if movement_type == 'out':
-        presentation.refresh_from_db()
-        if presentation.stock < quantity:
+        if locked_product.stock_quantity < quantity:
             logger.warning(
-                "Stock insuficiente | organization_id=%s user_id=%s presentation=%s solicitado=%s disponible=%s",
-                org_id, user_id, presentation.pk, quantity, presentation.stock,
+                "Stock insuficiente | organization_id=%s user_id=%s product=%s "
+                "presentation=%s solicitado=%s disponible=%s",
+                org_id, user_id, locked_product.pk, presentation.pk,
+                quantity, locked_product.stock_quantity,
             )
             raise ValidationError(
-                f"Stock insuficiente para '{presentation.product.name}'. "
-                f"Disponible: {presentation.stock}, solicitado: {quantity}."
+                f"Stock insuficiente para '{locked_product.name}'. "
+                f"Disponible: {locked_product.stock_quantity} {locked_product.base_unit}, "
+                f"solicitado: {quantity}."
             )
-        # ⚠️ Uses all_objects intentionally to bypass tenant + soft delete filters.
-        # This is required for atomic stock updates using F() expressions.
-        # Do NOT replace with objects — will silently update 0 rows outside request context.
-        Presentation.all_objects.filter(pk=presentation.pk).update(stock=F('stock') - quantity)
+        Product.all_objects.filter(pk=locked_product.pk).update(
+            stock_quantity=F('stock_quantity') - quantity
+        )
+        # Dual-write: Presentation.stock en unidades de presentación (compatibilidad).
+        if presentation.conversion_factor:
+            Presentation.all_objects.filter(pk=presentation.pk).update(
+                stock=F('stock') - (quantity / presentation.conversion_factor)
+            )
 
     elif movement_type == 'in':
-        # ⚠️ Uses all_objects intentionally — see comment above.
-        Presentation.all_objects.filter(pk=presentation.pk).update(stock=F('stock') + quantity)
+        Product.all_objects.filter(pk=locked_product.pk).update(
+            stock_quantity=F('stock_quantity') + quantity
+        )
+        if presentation.conversion_factor:
+            Presentation.all_objects.filter(pk=presentation.pk).update(
+                stock=F('stock') + (quantity / presentation.conversion_factor)
+            )
 
     elif movement_type == 'adjustment':
-        # ⚠️ Uses all_objects intentionally — see comment above.
-        Presentation.all_objects.filter(pk=presentation.pk).update(stock=quantity)
+        Product.all_objects.filter(pk=locked_product.pk).update(
+            stock_quantity=quantity
+        )
+        if presentation.conversion_factor:
+            Presentation.all_objects.filter(pk=presentation.pk).update(
+                stock=quantity / presentation.conversion_factor
+            )
 
     else:
         logger.error(
-            "movement_type desconocido: %s | organization_id=%s user_id=%s presentation=%s",
-            movement_type, org_id, user_id, presentation.pk,
+            "movement_type desconocido: %s | organization_id=%s user_id=%s product=%s",
+            movement_type, org_id, user_id, locked_product.pk,
         )
         raise ValidationError(f"Tipo de movimiento inválido: {movement_type}")
 
     StockMovement.objects.create(
         presentation=presentation,
+        product=locked_product,
         organization=organization,
         movement_type=movement_type,
         quantity=quantity,
+        quantity_unit='base',
         reason=reason,
         created_by=created_by,
         medical_record=medical_record,
@@ -88,6 +124,8 @@ def apply_stock_movement(
     )
 
     logger.info(
-        "StockMovement | type=%s qty=%s presentation=%s organization_id=%s user_id=%s reason=%r",
-        movement_type, quantity, presentation.pk, org_id, user_id, reason,
+        "StockMovement | type=%s qty_base=%s product=%s presentation=%s "
+        "organization_id=%s user_id=%s reason=%r",
+        movement_type, quantity, locked_product.pk, presentation.pk,
+        org_id, user_id, reason,
     )

@@ -80,13 +80,13 @@ class ProductDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retrieve
 @api_view(['GET'])
 @permission_classes([make_permission("inventory.list")])
 def low_stock_products(request):
-    """Productos activos cuyo al menos una presentación tiene stock <= min_stock."""
+    """Productos activos con stock_quantity <= min_stock (ADR p31: stock a nivel Product)."""
     products = (
         Product.objects
         .filter(
             organization=request.user.organization,
             is_active=True,
-            presentations__stock__lte=F('presentations__min_stock'),
+            stock_quantity__lte=F('min_stock'),
         )
         .prefetch_related('presentations')
         .distinct()
@@ -125,9 +125,11 @@ def adjust_stock(request, pk):
     try:
         with transaction.atomic():
             locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
+            # ADR p31: convertir de unidades de presentación a base_units
+            quantity_base = quantity * (locked_pres.conversion_factor or 1)
             apply_stock_movement(
                 presentation=locked_pres,
-                quantity=quantity,
+                quantity=quantity_base,
                 movement_type=movement_type,
                 organization=request.user.organization,
                 reason=reason,
@@ -164,9 +166,11 @@ def adjust_presentation_stock(request, pk):
     try:
         with transaction.atomic():
             locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
+            # ADR p31: convertir de unidades de presentación a base_units
+            quantity_base = quantity * (locked_pres.conversion_factor or 1)
             apply_stock_movement(
                 presentation=locked_pres,
-                quantity=quantity,
+                quantity=quantity_base,
                 movement_type=movement_type,
                 organization=request.user.organization,
                 reason=reason,
@@ -362,6 +366,8 @@ class MedicalRecordProductListCreateView(TenantQueryMixin, generics.ListCreateAP
                     .filter(invoice=invoice, presentation=locked_pres, is_active=True)
                     .first()
                 )
+                # InvoiceItem.quantity en unidades de presentación (para billing).
+                # MRP.quantity también en presentaciones; unit_price = precio por presentación.
                 if item is None:
                     InvoiceItem.objects.create(
                         invoice=invoice,
