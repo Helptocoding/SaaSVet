@@ -1037,6 +1037,30 @@
   color: var(--c-text-2);
 }
 
+.txChipBadge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: var(--r-sm);
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+.txChipBadgeIncluido {
+  background: var(--c-subtle);
+  color: var(--c-text-3);
+  border: 1px solid var(--c-border);
+}
+
+.txChipBadgeCobrado {
+  background: color-mix(in srgb, var(--c-primary) 10%, transparent);
+  color: var(--c-primary);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 25%, transparent);
+}
+
 .txPrxList {
   display: flex;
   flex-direction: column;

@@ -146,7 +146,7 @@ export default function ConsultationStepperV2({
   const lastPrescriptionHash = useRef(null);
 
   const [addedProducts, setAddedProducts] = useState([]);
-  const [productLine, setProductLine] = useState({ product: null, quantity: "1" });
+  const [productLine, setProductLine] = useState({ product: null, quantity: "1", cost_behavior: "included" });
   const [saving, setSaving] = useState(false);
   // Derivar de initialRecord: abrir una consulta ya cerrada no debe mostrar
   // el botón "Finalizar" ni inputs editables.
@@ -191,6 +191,7 @@ export default function ConsultationStepperV2({
             presentation_name: p.presentation_name,
             quantity: p.quantity,
             unit_price: p.unit_price,
+            cost_behavior: p.cost_behavior || 'charge',
           }));
           setAddedProducts(normalized);
         } catch { }
@@ -475,6 +476,7 @@ export default function ConsultationStepperV2({
       const result = await addMedicalRecordProduct(recordRef.publicId, {
         presentation: selected.presentation.id,
         quantity: productLine.quantity,
+        cost_behavior: productLine.cost_behavior,
       });
       setAddedProducts(prev => [...prev, {
         id: result.id,
@@ -482,8 +484,9 @@ export default function ConsultationStepperV2({
         presentation_name: selected.presentation.name,
         quantity: result.quantity,
         unit_price: result.unit_price,
+        cost_behavior: result.cost_behavior || productLine.cost_behavior,
       }]);
-      setProductLine({ product: null, quantity: "1" });
+      setProductLine({ product: null, quantity: "1", cost_behavior: "included" });
       toast.success("Producto agregado");
       refreshSummary();
     } catch (err) {
@@ -567,7 +570,7 @@ export default function ConsultationStepperV2({
       };
     }
     // Fallback a cálculo local si no hay summary
-    const prodsTotal = addedProducts.reduce((sum, p) => sum + (Number(p.unit_price) * Number(p.quantity)), 0);
+    const prodsTotal = addedProducts.filter(p => p.cost_behavior !== 'included').reduce((sum, p) => sum + (Number(p.unit_price) * Number(p.quantity)), 0);
     const servicesTotal = addedServices.reduce((sum, s) => sum + (Number(s.price) * Number(s.quantity)), 0);
     const subtotal = prodsTotal + servicesTotal;
     return { subtotal, tax: 0, total: subtotal, status: 'draft' };
@@ -805,6 +808,22 @@ export default function ConsultationStepperV2({
                         min="1"
                       />
                     </div>
+                    <div className={styles.costToggle}>
+                      <button
+                        type="button"
+                        className={`${styles.costToggleBtn} ${productLine.cost_behavior === 'included' ? styles.costToggleBtnActive : ''}`}
+                        onClick={() => setProductLine(prev => ({ ...prev, cost_behavior: 'included' }))}
+                      >
+                        Insumo
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.costToggleBtn} ${productLine.cost_behavior === 'charge' ? styles.costToggleBtnActive : ''}`}
+                        onClick={() => setProductLine(prev => ({ ...prev, cost_behavior: 'charge' }))}
+                      >
+                        Cobrar
+                      </button>
+                    </div>
                     <button
                       className="btn btn-primary btn-md"
                       onClick={handleAddProduct}
@@ -820,16 +839,15 @@ export default function ConsultationStepperV2({
                         <tr>
                           <th style={{ textAlign: 'left' }}>Producto</th>
                           <th>Cant.</th>
-                          <th>P. Unit</th>
-                          <th>Subtotal</th>
+                          <th>Facturación</th>
                           <th></th>
                         </tr>
                       </thead>
                       <tbody>
                         {addedProducts.length === 0 ? (
                           <tr>
-                            <td colSpan="5" className={styles.tableEmpty}>
-                              No hay insumos registrados en esta consulta.
+                            <td colSpan="4" className={styles.tableEmpty}>
+                              No hay productos registrados en esta consulta.
                             </td>
                           </tr>
                         ) : addedProducts.map(p => (
@@ -839,8 +857,12 @@ export default function ConsultationStepperV2({
                               <div className={styles.cellSub}>{p.presentation_name}</div>
                             </td>
                             <td style={{ textAlign: 'center' }}>{p.quantity}</td>
-                            <td style={{ textAlign: 'center' }}>${Number(p.unit_price).toFixed(2)}</td>
-                            <td style={{ textAlign: 'center' }}>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              {p.cost_behavior === 'included'
+                                ? <span className={styles.badgeIncluido}>Insumo</span>
+                                : <span style={{ color: 'var(--c-text-2)', fontSize: 13 }}>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                              }
+                            </td>
                             <td style={{ textAlign: 'right' }}>
                               <button
                                 className={`btn btn-ghost btn-xs ${styles.iconBtnDanger}`}
@@ -962,7 +984,10 @@ export default function ConsultationStepperV2({
                         {addedProducts.map((p) => (
                           <div key={`prod-${p.id}`} className={styles.resumenRow}>
                             <span>{p.product_name} x{p.quantity}</span>
-                            <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                            {p.cost_behavior === 'included'
+                              ? <span style={{ color: 'var(--c-text-3)', fontSize: 11 }}>insumo</span>
+                              : <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                            }
                           </div>
                         ))}
                         {addedServices.map((s) => (
@@ -1016,7 +1041,10 @@ export default function ConsultationStepperV2({
                     {addedProducts.map((p, i) => (
                       <div key={`cp-${i}`} className={styles.resumenRow}>
                         <span>{p.product_name} — {p.quantity}x</span>
-                        <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                        {p.cost_behavior === 'included'
+                          ? <span style={{ color: 'var(--c-text-3)', fontSize: 11 }}>insumo</span>
+                          : <span>${(Number(p.unit_price) * Number(p.quantity)).toFixed(2)}</span>
+                        }
                       </div>
                     ))}
                     {addedServices.map((s, i) => (

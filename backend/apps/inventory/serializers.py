@@ -276,12 +276,15 @@ class MedicalRecordProductSerializer(serializers.ModelSerializer):
     base_unit_display = serializers.CharField(
         source='presentation.get_base_unit_display', read_only=True
     )
+    unit_price = serializers.DecimalField(
+        source='presentation.sale_price', max_digits=10, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = MedicalRecordProduct
         fields = [
             'id', 'presentation', 'product_name', 'presentation_name',
-            'base_unit', 'base_unit_display', 'quantity', 'cost_behavior',
+            'base_unit', 'base_unit_display', 'quantity', 'unit_price', 'cost_behavior',
         ]
         validators = []
 

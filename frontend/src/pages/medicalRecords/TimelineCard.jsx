@@ -191,6 +191,9 @@ const TimelineCard = ({
                     {record.products_used.map((p, i) => (
                       <span key={i} className={styles.txChip}>
                         {p.product_name} · {p.quantity} {p.base_unit_display || ""}
+                        <span className={`${styles.txChipBadge} ${p.cost_behavior === 'included' ? styles.txChipBadgeIncluido : styles.txChipBadgeCobrado}`}>
+                          {p.cost_behavior === 'included' ? 'insumo' : 'cobrado'}
+                        </span>
                       </span>
                     ))}
                   </div>
