@@ -511,7 +511,11 @@ Reglas base (sin cambio):
 — `InvoiceDetailView`, NO en la lista para evitar N+1):**
 - `prescription_public_id` — receta de la consulta vinculada (para dispensar).
 - `prescription_suggestions` — por ítem recetado: `prescription_item_id`, `product_name`,
-  `dose`, `suggested_quantity` y `presentations[]` (`id`, `name`, `sale_price`, `stock`).
+  `dose`, `prescribed_quantity` (= `suggested_quantity`, legacy), `dispensed_quantity`,
+  `remaining_quantity`, `base_unit` (display) y `presentations[]` (`id`, `name`,
+  `sale_price`, `stock`, `conversion_factor`). Las cantidades de receta están en
+  **unidades base** del producto (ADR p31); `dispensed_quantity` suma las líneas
+  activas de ESTA factura con FK de dispensación (`quantity × conversion_factor`).
   Recepción **elige** la presentación de venta (Product puede tener varias).
 - `InvoiceItem.dispensed` (bool) — `True` si la línea es un producto dispensado de la
   receta (la UI la etiqueta "para llevar").
@@ -530,6 +534,14 @@ función de stock.
   consulta (debe estar `draft`), agrega/acumula cantidades por presentación
   (`unique_together(invoice, presentation)`), **no mueve stock** — eso ocurre al confirmar.
   Si la presentación ya existe como insumo (sin FK), rechaza (recepción ajusta a mano).
+- **Tope clínico (`_enforce_prescribed_quantity_cap`)**: por ítem de receta,
+  `dispensado acumulado + solicitado ≤ PrescriptionItem.quantity`, comparado en
+  **unidades base** (`quantity × presentation.conversion_factor`, ADR p31). Aplica por
+  llamada y acumulado entre llamadas mientras la factura siga `draft`; agrega entre
+  presentaciones del mismo ítem. Exceder → 400 con amparado/dispensado/restante.
+  Eliminar una línea dispensada (hard delete del draft) libera el cupo. El cliente
+  puede llevar menos de lo recetado; nunca más. El frontend muestra restante y capea
+  el input (`máx N` por formato), pero la validación autoritativa es la del service.
 - Producto `requires_prescription`: la receta interna ES el respaldo legal → NO
   crea `ExternalPrescriptionAttestation` (ADR p26, que cubre venta SIN receta
   previa). Gate de permiso `billing.rx_dispense` en la view.
@@ -566,6 +578,7 @@ Los IDs de invoice e items usan `<uuid>` (public_id), no el PK entero.
 | `POST`   | `/api/billing/invoices/<uuid>/direct-pay/`   | Cobrar venta directa (draft → paid atómico) |
 | `POST`   | `/api/billing/invoices/<uuid>/cancel/`       | Cancelar (no aplica a paid)       |
 | `POST`   | `/api/billing/prescriptions/<uuid>/dispense/`| Dispensar receta → agrega ítems a la factura de consulta (ADR p30) |
+| `GET`    | `/api/billing/invoices/<uuid>/pdf/`          | PDF del cobro (todos los estados) |
 | `POST`   | `/api/billing/invoices/<uuid>/items/`        | Agregar item                      |
 | `PATCH`  | `/api/billing/invoices/<uuid>/items/<id>/`   | Editar item (solo draft)          |
 | `DELETE` | `/api/billing/invoices/<uuid>/items/<id>/`   | Eliminar item (solo draft)        |
@@ -575,6 +588,21 @@ Los IDs de invoice e items usan `<uuid>` (public_id), no el PK entero.
 | `DELETE` | `/api/billing/services/<uuid>/`              | Eliminar servicio                 |
 | `GET`    | `/api/organizations/settings/`               | Ver configuracion de flujo        |
 | `PATCH`  | `/api/organizations/settings/`               | Editar toggles de flujo (ADMIN)   |
+
+## PDF del cobro (ADR p36)
+
+`GET /api/billing/invoices/<uuid>/pdf/` — permiso `invoice.retrieve`, disponible en
+todos los estados (incluido `draft`). Generado con la capa compartida `apps/core/pdf/`
+(membrete, "Página N de M", tabla de ítems y bloque de totales con el tema del sistema).
+
+- **Watermark por estado**: `draft` → "BORRADOR", `cancelled` → "CANCELADO" (diagonal,
+  alpha bajo). Un borrador impreso no debe poder pasar por comprobante final. `confirmed`
+  y `paid` no llevan marca.
+- **Fechas** (creado/confirmado/pagado/cancelado) en timezone de la org.
+- **Nombre de descarga**: `factura_<id>_<mascota>_<YYYY-MM-DD>.pdf` (sin mascota →
+  `sin-mascota`). Depende de `CORS_EXPOSE_HEADERS=['content-disposition']`.
+- El restyle no agrega queries: el test N+1 del endpoint usa `assertNumQueries`
+  estricto — `get_theme_for_organization()` debe seguir sin tocar DB.
 
 ## Filtros disponibles (GET /api/billing/invoices/)
 

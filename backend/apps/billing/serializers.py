@@ -376,6 +376,21 @@ class InvoiceSerializer(serializers.ModelSerializer):
         rx = self._linked_prescription(obj)
         if rx is None:
             return []
+        # Acumulado ya dispensado por ítem de receta (unidades base): líneas
+        # activas de ESTA factura con FK de dispensación. Permite al frontend
+        # mostrar restante y al usuario no exceder lo recetado (el backend lo
+        # vuelve a validar de forma autoritativa al dispensar).
+        dispensed_base = {}
+        dispensed_items = (
+            obj.items
+            .filter(is_active=True, dispensed_from_prescription_item__isnull=False)
+            .select_related('presentation')
+        )
+        for inv_item in dispensed_items:
+            cf = inv_item.presentation.conversion_factor or Decimal('1')
+            key = inv_item.dispensed_from_prescription_item_id
+            dispensed_base[key] = dispensed_base.get(key, Decimal('0')) + inv_item.quantity * cf
+
         suggestions = []
         for item in rx.items.select_related('product').prefetch_related('product__presentations').all():
             presentations = [
@@ -384,14 +399,22 @@ class InvoiceSerializer(serializers.ModelSerializer):
                     'name': str(p),
                     'sale_price': str(p.sale_price),
                     'stock': str(p.stock),
+                    'conversion_factor': str(p.conversion_factor or Decimal('1')),
                 }
                 for p in item.product.presentations.all()
             ]
+            dispensed = dispensed_base.get(item.id, Decimal('0'))
+            remaining = max(item.quantity - dispensed, Decimal('0'))
             suggestions.append({
                 'prescription_item_id': item.id,
                 'product_name': item.product.name,
                 'dose': item.dose,
-                'suggested_quantity': str(item.quantity),
+                # Cantidades en unidades base del producto (ADR p31).
+                'suggested_quantity': str(item.quantity),  # legacy, = prescribed
+                'prescribed_quantity': str(item.quantity),
+                'dispensed_quantity': str(dispensed),
+                'remaining_quantity': str(remaining),
+                'base_unit': item.product.get_base_unit_display() or '',
                 'presentations': presentations,
             })
         return suggestions

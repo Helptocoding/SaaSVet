@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import logging
@@ -824,6 +824,71 @@ def get_or_create_invoice_for_medical_record(medical_record):
     return Invoice.objects.for_organization(org).select_for_update().get(pk=invoice.pk)
 
 
+def _fmt_base_qty(value):
+    """Formatea un Decimal sin ceros sobrantes para mensajes ('2.00' → '2')."""
+    return format(value.normalize(), 'f')
+
+
+def _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base):
+    """
+    Tope clínico de dispensación: por cada ítem de receta, lo ya dispensado en
+    la factura (líneas activas con FK `dispensed_from_prescription_item`, en
+    unidades base del producto) más lo solicitado no puede exceder
+    `PrescriptionItem.quantity`. La receta se captura en unidades base (el VET
+    receta por producto, ADR p31); cada línea dispensada pesa
+    `quantity × presentation.conversion_factor`. El cliente puede llevar menos
+    de lo recetado; nunca más — ni en una llamada ni acumulado entre llamadas
+    mientras la factura siga en draft.
+
+    Args:
+        invoice: factura de consulta ya lockeada por el caller (las líneas
+            dispensadas viven bajo ese lock; sin carrera entre dispensaciones).
+        rx_items: dict {PrescriptionItem.id: PrescriptionItem} de la receta.
+        requested_base: dict {PrescriptionItem.id: Decimal} con las unidades
+            base solicitadas en esta llamada.
+
+    Raises:
+        ValidationError: si algún ítem excede lo recetado (mensaje con
+            amparado / dispensado / restante).
+    """
+    if not requested_base:
+        return
+    already_rows = (
+        InvoiceItem.all_objects
+        .filter(
+            invoice=invoice,
+            is_active=True,
+            dispensed_from_prescription_item_id__in=requested_base.keys(),
+        )
+        .values('dispensed_from_prescription_item')
+        .annotate(
+            base=Sum(
+                ExpressionWrapper(
+                    F('quantity') * F('presentation__conversion_factor'),
+                    output_field=DecimalField(max_digits=24, decimal_places=6),
+                )
+            )
+        )
+    )
+    already_base = {
+        row['dispensed_from_prescription_item']: row['base'] or Decimal('0')
+        for row in already_rows
+    }
+    for rx_item_id, req_base in requested_base.items():
+        rx_item = rx_items[rx_item_id]
+        prescribed = rx_item.quantity
+        dispensed = already_base.get(rx_item_id, Decimal('0'))
+        if dispensed + req_base > prescribed:
+            remaining = max(prescribed - dispensed, Decimal('0'))
+            unit = rx_item.product.get_base_unit_display() or 'unidad(es)'
+            raise ValidationError(
+                f"'{rx_item.product.name}': la receta ampara "
+                f"{_fmt_base_qty(prescribed)} {unit} y ya se dispensaron "
+                f"{_fmt_base_qty(dispensed)}; puedes dispensar máximo "
+                f"{_fmt_base_qty(remaining)} más."
+            )
+
+
 @transaction.atomic
 def dispense_prescription_into_invoice(prescription, lines, user):
     """
@@ -865,6 +930,11 @@ def dispense_prescription_into_invoice(prescription, lines, user):
         raise ValidationError("La receta no está ligada a una consulta.")
 
     # Mapas de la receta para resolver/validar el ítem origen de cada línea.
+    # rx_item_by_product es fallback para líneas legacy SIN prescription_item:
+    # si la receta tuviera el MISMO producto en dos ítems, setdefault ata todo
+    # al primero — el tope de dispensación se carga a ese ítem (conservador:
+    # rechaza antes, nunca permite de más). El frontend siempre envía
+    # prescription_item explícito, donde esto no aplica.
     rx_items = {}
     rx_item_by_product = {}
     for it in prescription.items.all():
@@ -897,6 +967,9 @@ def dispense_prescription_into_invoice(prescription, lines, user):
         raise ValidationError("Selecciona al menos un producto a dispensar.")
 
     locked = _lock_presentations(list(aggregated.keys()))
+
+    # Fase 1 — resolver y validar cada línea (sin mutar nada todavía).
+    requested_base = {}   # rx_item.id -> unidades base solicitadas en esta llamada
     for pres_id, entry in aggregated.items():
         pres = locked.get(pres_id)
         if pres is None or pres.organization_id != org.id:
@@ -921,20 +994,35 @@ def dispense_prescription_into_invoice(prescription, lines, user):
                 f"disponible {pres.stock}, solicitado {qty}."
             )
 
-        # unique_together(invoice, presentation): si ya existe la línea, agregar
-        # cantidad SOLO si es un ítem dispensado; si es un insumo de consulta
-        # (sin FK) o un servicio, no mezclar — recepción lo ajusta en el cobro.
+        # unique_together(invoice, presentation): si ya existe la línea, solo se
+        # acumula sobre un ítem dispensado; un insumo de consulta (sin FK) o un
+        # servicio no se mezclan — recepción lo ajusta en el cobro.
         existing = (
             InvoiceItem.all_objects.select_for_update()
             .filter(invoice=invoice, presentation=pres)
             .first()
         )
+        if existing is not None and existing.dispensed_from_prescription_item_id is None:
+            raise ValidationError(
+                f"'{pres.product.name}' ya está en este cobro como insumo de la "
+                f"consulta; ajusta su cantidad directamente en la factura."
+            )
+
+        entry['pres'] = pres
+        entry['rx_item'] = rx_item
+        entry['existing'] = existing
+        cf = pres.conversion_factor or Decimal('1')
+        requested_base[rx_item.id] = requested_base.get(rx_item.id, Decimal('0')) + qty * cf
+
+    # Fase 2 — tope clínico: dispensado acumulado + solicitado ≤ recetado.
+    _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base)
+
+    # Fase 3 — mutar: crear o acumular las líneas dispensadas.
+    for entry in aggregated.values():
+        pres = entry['pres']
+        existing = entry['existing']
+        qty = entry['qty']
         if existing is not None:
-            if existing.dispensed_from_prescription_item_id is None:
-                raise ValidationError(
-                    f"'{pres.product.name}' ya está en este cobro como insumo de la "
-                    f"consulta; ajusta su cantidad directamente en la factura."
-                )
             apply_invoice_item_quantity_delta(existing, qty)
         else:
             InvoiceItem.objects.create(
@@ -944,7 +1032,7 @@ def dispense_prescription_into_invoice(prescription, lines, user):
                 quantity=qty,
                 unit_price=pres.sale_price,
                 organization=org,
-                dispensed_from_prescription_item=rx_item,
+                dispensed_from_prescription_item=entry['rx_item'],
             )
 
     return Invoice.objects.for_organization(org).select_for_update().get(pk=invoice.pk)

@@ -193,3 +193,179 @@ class PrescriptionDispenseTests(APITestCase):
         }])
         self.assertEqual(r.status_code, 400)
         self.assertIn('insumo', str(r.data).lower())
+
+
+class PrescriptionDispenseCapTests(APITestCase):
+    """
+    Tope clínico de dispensación: vendido por receta ≤ recetado.
+
+    PrescriptionItem.quantity está en unidades base del producto (ADR p31);
+    cada línea dispensada pesa quantity × presentation.conversion_factor. El
+    tope aplica por llamada y acumulado entre llamadas mientras la factura de
+    consulta siga en draft. Eliminar una línea dispensada libera el cupo.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.org = Organization.objects.create(name="Cap Org", timezone="UTC")
+        cls.admin = User.objects.create_user(
+            username="cap_admin", password="x", organization=cls.org, role="ADMIN",
+        )
+        cls.owner = Owner.objects.create(name="Cap Owner", phone="5551119001", organization=cls.org)
+        cls.pet = Pet.objects.create(name="Cap Pet", species="dog", owner=cls.owner, organization=cls.org)
+
+        cls.prod = Product.objects.create(
+            name="Amoxicilina", internal_code="CAP-1", category="medication", organization=cls.org,
+        )
+        # Dos formatos comerciales del mismo producto (ADR p31): pieza suelta y
+        # caja de 10. Stock holgado — aquí se prueba el tope de receta, no stock.
+        cls.pres_unit = Presentation.objects.create(
+            product=cls.prod, name="Pieza", base_unit="piece",
+            stock=Decimal("100"), sale_price=Decimal("10.00"),
+            conversion_factor=Decimal("1"), organization=cls.org,
+        )
+        cls.pres_box = Presentation.objects.create(
+            product=cls.prod, name="Caja 10", base_unit="unit",
+            stock=Decimal("100"), sale_price=Decimal("90.00"),
+            conversion_factor=Decimal("10"), organization=cls.org,
+        )
+        Product.objects.filter(pk=cls.prod.pk).update(
+            base_unit='piece', stock_quantity=Decimal('1000'),
+        )
+
+    def _new_rx(self, prescribed):
+        """Consulta + receta frescas con un ítem por `prescribed` unidades base."""
+        mr = MedicalRecord.objects.create(
+            pet=self.pet, veterinarian=self.admin, organization=self.org,
+            status=MedicalRecord.Status.OPEN,
+        )
+        rx = Prescription.objects.create(
+            medical_record=mr, pet=self.pet, veterinarian=self.admin, organization=self.org,
+        )
+        rx_item = PrescriptionItem.objects.create(
+            prescription=rx, product=self.prod, dose="1 c/8h",
+            quantity=Decimal(prescribed), organization=self.org,
+        )
+        return mr, rx, rx_item
+
+    def _dispense(self, rx, lines):
+        return self.client.post(
+            f'/api/billing/prescriptions/{rx.public_id}/dispense/',
+            {'lines': lines}, format='json',
+        )
+
+    def test_single_call_over_prescribed_rejected(self):
+        self.client.force_authenticate(self.admin)
+        _, rx, rx_item = self._new_rx("3")
+        r = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 4,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r.status_code, 400, msg=r.data)
+        self.assertIn('ampara', str(r.data).lower())
+        # Nada se creó (all-or-nothing).
+        self.assertEqual(InvoiceItem.all_objects.filter(dispensed_from_prescription_item=rx_item).count(), 0)
+
+    def test_exact_prescribed_quantity_allowed(self):
+        self.client.force_authenticate(self.admin)
+        _, rx, rx_item = self._new_rx("3")
+        r = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 3,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r.status_code, 200, msg=r.data)
+
+    def test_cumulative_dispense_capped_across_calls(self):
+        self.client.force_authenticate(self.admin)
+        _, rx, rx_item = self._new_rx("3")
+        r1 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 2,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r1.status_code, 200, msg=r1.data)
+        # 2 + 2 > 3 → rechazado; restante explícito en el mensaje.
+        r2 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 2,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r2.status_code, 400, msg=r2.data)
+        self.assertIn('ampara', str(r2.data).lower())
+        # 2 + 1 = 3 → permitido (acumula sobre la misma línea).
+        r3 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 1,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r3.status_code, 200, msg=r3.data)
+        item = InvoiceItem.all_objects.get(dispensed_from_prescription_item=rx_item)
+        self.assertEqual(item.quantity, Decimal("3"))
+
+    def test_conversion_factor_counts_in_base_units(self):
+        self.client.force_authenticate(self.admin)
+        _, rx, rx_item = self._new_rx("3")
+        # 1 caja = 10 unidades base > 3 recetadas → rechazado.
+        r = self._dispense(rx, [{
+            'presentation': self.pres_box.pk, 'quantity': 1,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r.status_code, 400, msg=r.data)
+        self.assertIn('ampara', str(r.data).lower())
+
+    def test_multi_presentation_lines_aggregate_per_rx_item(self):
+        self.client.force_authenticate(self.admin)
+        _, rx, rx_item = self._new_rx("12")
+        # 1 caja (10) + 3 piezas (3) = 13 > 12 → rechazado completo.
+        r = self._dispense(rx, [
+            {'presentation': self.pres_box.pk, 'quantity': 1, 'prescription_item': rx_item.pk},
+            {'presentation': self.pres_unit.pk, 'quantity': 3, 'prescription_item': rx_item.pk},
+        ])
+        self.assertEqual(r.status_code, 400, msg=r.data)
+        self.assertEqual(InvoiceItem.all_objects.filter(dispensed_from_prescription_item=rx_item).count(), 0)
+        # 1 caja (10) + 2 piezas (2) = 12 → permitido.
+        r2 = self._dispense(rx, [
+            {'presentation': self.pres_box.pk, 'quantity': 1, 'prescription_item': rx_item.pk},
+            {'presentation': self.pres_unit.pk, 'quantity': 2, 'prescription_item': rx_item.pk},
+        ])
+        self.assertEqual(r2.status_code, 200, msg=r2.data)
+
+    def test_deleting_dispensed_line_frees_cap(self):
+        self.client.force_authenticate(self.admin)
+        mr, rx, rx_item = self._new_rx("2")
+        r1 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 2,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r1.status_code, 200, msg=r1.data)
+        invoice = get_or_create_invoice_for_medical_record(mr)
+        item = InvoiceItem.all_objects.get(invoice=invoice, dispensed_from_prescription_item=rx_item)
+        rd = self.client.delete(f'/api/billing/invoices/{invoice.public_id}/items/{item.pk}/')
+        self.assertEqual(rd.status_code, 204, msg=rd.data)
+        # El cupo quedó libre: volver a dispensar lo recetado es válido.
+        r2 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 2,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r2.status_code, 200, msg=r2.data)
+
+    def test_suggestions_expose_prescribed_dispensed_remaining(self):
+        self.client.force_authenticate(self.admin)
+        mr, rx, rx_item = self._new_rx("3")
+        r1 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 1,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r1.status_code, 200, msg=r1.data)
+        invoice = get_or_create_invoice_for_medical_record(mr)
+        rg = self.client.get(f'/api/billing/invoices/{invoice.public_id}/')
+        self.assertEqual(rg.status_code, 200, msg=rg.data)
+        suggestions = rg.data['prescription_suggestions']
+        self.assertEqual(len(suggestions), 1)
+        s = suggestions[0]
+        self.assertEqual(Decimal(s['prescribed_quantity']), Decimal('3'))
+        self.assertEqual(Decimal(s['dispensed_quantity']), Decimal('1'))
+        self.assertEqual(Decimal(s['remaining_quantity']), Decimal('2'))
+        self.assertEqual(s['base_unit'], 'Pieza')
+        # Cada presentación expone su conversion_factor para que el frontend
+        # calcule el máximo por formato.
+        cfs = {p['name']: Decimal(p['conversion_factor']) for p in s['presentations']}
+        self.assertEqual(cfs['Amoxicilina — Pieza'], Decimal('1'))
+        self.assertEqual(cfs['Amoxicilina — Caja 10'], Decimal('10'))

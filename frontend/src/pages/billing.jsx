@@ -333,22 +333,49 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
 const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
     const suggestions = invoice.prescription_suggestions || [];
     const [rows, setRows] = useState(() =>
-        suggestions.map(s => ({
-            key: s.prescription_item_id,
-            productName: s.product_name,
-            dose: s.dose,
-            presentations: s.presentations || [],
-            // Por defecto seleccionado solo si hay presentación vendible.
-            selected: (s.presentations || []).length > 0,
-            presentationId: (s.presentations || [])[0]?.id ? String(s.presentations[0].id) : "",
-            quantity: s.suggested_quantity || "1",
-        }))
+        suggestions.map(s => {
+            const presentations = s.presentations || [];
+            // Cantidades de receta en unidades base del producto (ADR p31).
+            const remainingBase = Number(s.remaining_quantity ?? s.suggested_quantity) || 0;
+            const firstCf = Number(presentations[0]?.conversion_factor) || 1;
+            const firstMax = Math.floor(remainingBase / firstCf);
+            return {
+                key: s.prescription_item_id,
+                productName: s.product_name,
+                dose: s.dose,
+                baseUnit: s.base_unit || "",
+                prescribed: Number(s.prescribed_quantity ?? s.suggested_quantity) || 0,
+                dispensed: Number(s.dispensed_quantity) || 0,
+                remainingBase,
+                presentations,
+                // Por defecto seleccionado solo si hay presentación vendible y cupo.
+                selected: presentations.length > 0 && firstMax > 0,
+                presentationId: presentations[0]?.id ? String(presentations[0].id) : "",
+                quantity: firstMax > 0 ? "1" : "0",
+            };
+        })
     );
     const [submitting, setSubmitting] = useState(false);
     const setRow = (key, patch) => setRows(prev => prev.map(r => r.key === key ? { ...r, ...patch } : r));
 
-    const selected = rows.filter(r => r.selected && r.presentationId && Number(r.quantity) > 0);
-    const canSubmit = selected.length > 0 && !submitting;
+    // Tope clínico (espejo del backend): máximo en unidades de la presentación
+    // elegida = restante recetado (unidades base) / conversion_factor.
+    const maxQtyFor = (r, presentationId = r.presentationId) => {
+        const p = r.presentations.find(x => String(x.id) === String(presentationId));
+        if (!p) return 0;
+        const cfRaw = Number(p.conversion_factor);
+        const cf = cfRaw > 0 ? cfRaw : 1;   // fail-safe ante cf corrupto (NaN/0/negativo)
+        return Math.floor(r.remainingBase / cf);
+    };
+
+    const selected = rows.filter(r =>
+        r.selected && r.presentationId &&
+        Number(r.quantity) > 0 && Number(r.quantity) <= maxQtyFor(r)
+    );
+    const overCap = rows.some(r =>
+        r.selected && r.presentationId && Number(r.quantity) > maxQtyFor(r)
+    );
+    const canSubmit = selected.length > 0 && !overCap && !submitting;
 
     const submit = async () => {
         const lines = selected.map(r => ({
@@ -399,27 +426,45 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                 <tbody>
                     {rows.map(r => {
                         const noPres = r.presentations.length === 0;
+                        const exhausted = r.remainingBase <= 0;
+                        const max = maxQtyFor(r);
+                        const over = r.selected && Number(r.quantity) > max;
+                        const unitLabel = r.baseUnit ? ` ${r.baseUnit.toLowerCase()}` : "";
                         return (
                             <tr key={r.key} style={{ opacity: r.selected ? 1 : 0.45 }}>
                                 <td>
                                     <input
                                         type="checkbox" checked={r.selected}
-                                        disabled={submitting || noPres}
+                                        disabled={submitting || noPres || exhausted}
                                         onChange={e => setRow(r.key, { selected: e.target.checked })}
                                     />
                                 </td>
                                 <td>
                                     <div>{r.productName}</div>
                                     {r.dose && <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{r.dose}</div>}
+                                    <div style={{ fontSize: "11px", color: exhausted ? "var(--c-success-text)" : "var(--c-text-3)" }}>
+                                        {exhausted
+                                            ? "Dispensado por completo"
+                                            : `Recetado ${r.prescribed}${unitLabel}${r.dispensed > 0 ? ` · en cobro ${r.dispensed}` : ""} · restante ${r.remainingBase}`}
+                                    </div>
                                 </td>
                                 <td>
                                     {noPres ? (
                                         <span style={{ fontSize: "11px", color: "var(--c-danger-text)" }}>Sin presentación de venta</span>
+                                    ) : exhausted ? (
+                                        <span style={{ fontSize: "11px", color: "var(--c-text-4)" }}>—</span>
                                     ) : (
                                         <select
                                             className="input" style={{ height: "30px" }}
                                             value={r.presentationId} disabled={!r.selected || submitting}
-                                            onChange={e => setRow(r.key, { presentationId: e.target.value })}
+                                            onChange={e => {
+                                                const nextMax = maxQtyFor(r, e.target.value);
+                                                setRow(r.key, {
+                                                    presentationId: e.target.value,
+                                                    // Clamp al nuevo máximo del formato elegido.
+                                                    quantity: String(Math.min(Math.max(Number(r.quantity) || 1, 1), Math.max(nextMax, 0))),
+                                                });
+                                            }}
                                         >
                                             {r.presentations.map(p => (
                                                 <option key={p.id} value={p.id}>
@@ -432,11 +477,16 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                 <td>
                                     <input
                                         type="number" className="input"
-                                        style={{ width: "60px", height: "30px", textAlign: "right" }}
-                                        min="1" step="1"
-                                        value={r.quantity} disabled={!r.selected || submitting || noPres}
+                                        style={{ width: "60px", height: "30px", textAlign: "right", borderColor: over ? "var(--c-danger-text)" : undefined }}
+                                        min="1" max={max} step="1"
+                                        value={r.quantity} disabled={!r.selected || submitting || noPres || exhausted}
                                         onChange={e => setRow(r.key, { quantity: e.target.value })}
                                     />
+                                    {!noPres && !exhausted && (
+                                        <div style={{ fontSize: "10px", textAlign: "right", marginTop: "2px", color: over ? "var(--c-danger-text)" : "var(--c-text-4)" }}>
+                                            máx {max}
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         );
@@ -491,8 +541,8 @@ const Billing = () => {
             for (const key of FILTER_KEYS) if (currentFilters[key]) params[key] = currentFilters[key];
             const data = await getInvoices(params);
             if (requestId === requestIdRef.current) setInvoices(data);
-        } catch {
-            // Silencioso — el usuario ve lista vacía
+        } catch (err) {
+            if (requestId === requestIdRef.current) toast.error(apiError(err, "No se pudieron cargar los cobros"));
         }
     };
 
@@ -545,13 +595,18 @@ const Billing = () => {
         }
     }, [token, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const updateFilter = (key, value) => {
-        const next = { ...filters, [key]: value };
+    // Acepta un patch con varias claves a la vez: el DateRangePicker actualiza
+    // created_from y created_to juntos. Dos llamadas consecutivas a un setter
+    // de una sola clave leían `filters` stale y la segunda pisaba a la primera
+    // (se perdía created_from). Un solo setFilters por evento evita la carrera.
+    const updateFilters = (patch) => {
+        const next = { ...filters, ...patch };
         setFilters(next);
         const params = new URLSearchParams();
         for (const k of FILTER_KEYS) if (next[k]) params.set(k, next[k]);
         setSearchParams(params, { replace: true });
     };
+    const updateFilter = (key, value) => updateFilters({ [key]: value });
 
     const clearFilters = () => {
         const empty = {};
@@ -737,7 +792,7 @@ const Billing = () => {
                         {Object.entries(TYPE_LABELS).map(([v, l]) => (<option key={v} value={v}>{l}</option>))}
                     </select>
                 </div>
-                <DateRangePicker from={filters.created_from} to={filters.created_to} onChange={(f, t) => { updateFilter("created_from", f); updateFilter("created_to", t); }} placeholder="Creado" />
+                <DateRangePicker from={filters.created_from} to={filters.created_to} onChange={(f, t) => updateFilters({ created_from: f, created_to: t })} placeholder="Creado" />
                 <button className="btn btn-ghost btn-xs" onClick={clearFilters} style={{ color: "var(--c-text-4)" }}>Limpiar</button>
                 {can("invoice.create") && (
                     <button
