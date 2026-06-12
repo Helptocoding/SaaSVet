@@ -132,7 +132,12 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - Header: fondo `--ink`, th 11.5px/700 UPPERCASE #fff, padding `14px 16px`, letter-spacing 0.05em.
 - Body: td 13.5px `--c-text`, padding `12px 16px`, zebra `--c-subtle`/`--c-surface`, hover `--c-hover`.
 - Radio header `--r-lg`. Footer `.table-footer`.
+- **Columna ordenable:** componente compartido `components/SortHeader.jsx` (`th.th-sortable`
+  + `.th-inner` + `.sort-arrow` en `global.css`). No crear sorting por módulo.
+  (Inventario conserva su SortHeader local en module CSS — deuda contenida, migrar
+  junto con la unificación de su tabla, no piecemeal.)
 - 🚫 No crear `.tableCompact` ni tablas por módulo. Una sola tabla.
+  (`.tableCompact` de Cobros eliminado 2026-06-11 — migrado a `.table-wrap`/`.table`.)
 
 ### Badge — `.badge` + color
 - altura 20px, padding `0 8px`, font 11px/600, radio `--r-full`.

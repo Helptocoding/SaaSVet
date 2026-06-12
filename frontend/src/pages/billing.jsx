@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import SearchSelect from "../components/SearchSelect";
 import DateRangePicker from "../components/DateRangePicker";
 import CajaBar from "../components/CajaBar";
+import SortHeader from "../components/SortHeader";
 import s from "./billing.module.css";
 
 const FILTER_KEYS = ["status", "invoice_type", "created_from", "created_to", "paid_from", "paid_to"];
@@ -223,7 +224,7 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
                     <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         Conceptos a devolver
                     </p>
-                    <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
+                    <div className="table-wrap"><table className="table">
                         <thead>
                             <tr>
                                 <th style={{ width: "28px" }}></th>
@@ -278,7 +279,7 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </table></div>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "14px 0 8px" }}>
                         <label style={{ fontSize: "12px", fontWeight: 500, color: "var(--c-text-3)" }}>
@@ -414,7 +415,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
             <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginBottom: "10px" }}>
                 Los siguientes medicamentos fueron recetados por el veterinario. Solo agrega los que el cliente decida comprar; lo demás no toca inventario.
             </p>
-            <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
+            <div className="table-wrap"><table className="table">
                 <thead>
                     <tr>
                         <th style={{ width: "28px" }}></th>
@@ -492,7 +493,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                         );
                     })}
                 </tbody>
-            </table>
+            </table></div>
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
                 <button className="btn btn-primary btn-sm" onClick={submit} disabled={!canSubmit}>
                     {submitting ? <Icon.Loader s={14} /> : "Agregar al cobro"}
@@ -614,6 +615,34 @@ const Billing = () => {
         setFilters(empty);
         setSearchParams({}, { replace: true });
     };
+
+    // Sorting client-side (patrón compartido SortHeader; el backend lista
+    // -created_at por defecto y el listado no está paginado).
+    const [sortCol, setSortCol] = useState("created_at");
+    const [sortDir, setSortDir] = useState("desc");
+    const handleSort = (col) => {
+        if (sortCol === col) {
+            setSortDir(d => (d === "asc" ? "desc" : "asc"));
+        } else {
+            setSortCol(col);
+            setSortDir(col === "created_at" ? "desc" : "asc");
+        }
+    };
+    const sortedInvoices = useMemo(() => {
+        const list = [...invoices];
+        list.sort((a, b) => {
+            let va, vb;
+            if (sortCol === "created_at") {
+                va = a.created_at || ""; vb = b.created_at || "";   // ISO: orden lexicográfico = cronológico
+            } else if (sortCol === "total") {
+                va = Number(a.total) || 0; vb = Number(b.total) || 0;
+            } else return 0;
+            if (va < vb) return sortDir === "asc" ? -1 : 1;
+            if (va > vb) return sortDir === "asc" ? 1 : -1;
+            return 0;
+        });
+        return list;
+    }, [invoices, sortCol, sortDir]);
 
     const openInvoiceDetail = async (invoice) => {
         try {
@@ -757,10 +786,12 @@ const Billing = () => {
     // Solo bloquea si la org exige caja Y sabemos que está cerrada (no en carga).
     const cashBlocked = requireCash && cashSession === null;
 
+    const hasActiveFilters = FILTER_KEYS.some(k => filters[k]);
+
     return (
         <div className={s.billingContainer}>
-            <div className={s.pageHeader}>
-                <h1 className={s.mainTitle}>Cobros</h1>
+            <div className="page-header">
+                <h1 className="page-title">Cobros</h1>
             </div>
 
             {cashBlocked && (
@@ -778,22 +809,31 @@ const Billing = () => {
             <CajaBar onChange={loadCashStatus} />
 
             <div className={s.filterBar}>
-                <div className={s.filterItem}>
-                    <Icon.Filter s={12} c="var(--c-text-4)" />
-                    <select value={filters.status} onChange={e => updateFilter("status", e.target.value)}>
-                        <option value="">Estado</option>
-                        {Object.entries(STATUS_LABELS).map(([v, l]) => (<option key={v} value={v}>{l}</option>))}
-                    </select>
-                </div>
-                <div className={s.filterItem}>
-                    <Icon.Receipt s={12} c="var(--c-text-4)" />
-                    <select value={filters.invoice_type} onChange={e => updateFilter("invoice_type", e.target.value)}>
-                        <option value="">Tipo</option>
-                        {Object.entries(TYPE_LABELS).map(([v, l]) => (<option key={v} value={v}>{l}</option>))}
-                    </select>
-                </div>
+                <select
+                    className="select-input"
+                    style={{ width: "auto", height: "36px", fontSize: "13px" }}
+                    value={filters.status}
+                    onChange={e => updateFilter("status", e.target.value)}
+                >
+                    <option value="">Todos los estados</option>
+                    {Object.entries(STATUS_LABELS).map(([v, l]) => (<option key={v} value={v}>{l}</option>))}
+                </select>
+                <select
+                    className="select-input"
+                    style={{ width: "auto", height: "36px", fontSize: "13px" }}
+                    value={filters.invoice_type}
+                    onChange={e => updateFilter("invoice_type", e.target.value)}
+                >
+                    <option value="">Todos los tipos</option>
+                    {Object.entries(TYPE_LABELS).map(([v, l]) => (<option key={v} value={v}>{l}</option>))}
+                </select>
                 <DateRangePicker from={filters.created_from} to={filters.created_to} onChange={(f, t) => updateFilters({ created_from: f, created_to: t })} placeholder="Creado" />
-                <button className="btn btn-ghost btn-xs" onClick={clearFilters} style={{ color: "var(--c-text-4)" }}>Limpiar</button>
+                {hasActiveFilters && (
+                    <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
+                        <Icon.X s={12} />
+                        Limpiar
+                    </button>
+                )}
                 {can("invoice.create") && (
                     <button
                         className="btn btn-primary btn-sm"
@@ -813,42 +853,47 @@ const Billing = () => {
             </div>
 
             {invoices.length === 0 ? <div className="empty-state"><p className="empty-state-title">No hay cobros</p></div> : (
-                <table className={s.tableCompact}>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Paciente / Cliente</th>
-                            <th>Tipo</th>
-                            <th>Estado</th>
-                            <th>Fecha</th>
-                            <th style={{ textAlign: "right" }}>Total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {invoices.map(inv => (
-                            <tr key={inv.id}>
-                                <td style={{ color: "var(--c-text-3)" }}>#{inv.id}</td>
-                                <td>
-                                    <div style={{ color: "var(--c-text)" }}>{inv.pet_name}</div>
-                                    <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{inv.owner_name}</div>
-                                </td>
-                                <td style={{ fontSize: "12px" }}>{inv.invoice_type === "direct_sale" ? "Venta directa" : "Consulta"}</td>
-                                <td>
-                                    <div className={s.statusContainer}>
-                                        <span className={s.statusDot} style={{ background: DOT_COLOR[inv.status] }} />
-                                        {STATUS_LABELS[inv.status]}
-                                    </div>
-                                </td>
-                                <td style={{ color: "var(--c-text-3)" }}>{formatDate(inv.created_at)}</td>
-                                <td style={{ textAlign: "right", color: "var(--c-text)" }}>${formatCurrency(inv.total)}</td>
-                                <td style={{ textAlign: "right" }}>
-                                    <button className={s.actionBtn} onClick={() => openInvoiceDetail(inv)}><Icon.Eye s={14} /></button>
-                                </td>
+                <div className="table-wrap">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Paciente / Cliente</th>
+                                <th>Tipo</th>
+                                <th>Estado</th>
+                                <SortHeader col="created_at" label="Fecha" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+                                <SortHeader col="total" label="Total" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} align="right" />
+                                <th></th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {sortedInvoices.map(inv => (
+                                <tr key={inv.id}>
+                                    <td style={{ color: "var(--c-text-3)" }}>#{inv.id}</td>
+                                    <td>
+                                        <div>{inv.pet_name}</div>
+                                        <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{inv.owner_name}</div>
+                                    </td>
+                                    <td style={{ fontSize: "12px" }}>{inv.invoice_type === "direct_sale" ? "Venta directa" : "Consulta"}</td>
+                                    <td>
+                                        <div className={s.statusContainer}>
+                                            <span className={s.statusDot} style={{ background: DOT_COLOR[inv.status] }} />
+                                            {STATUS_LABELS[inv.status]}
+                                        </div>
+                                    </td>
+                                    <td style={{ color: "var(--c-text-3)" }}>{formatDate(inv.created_at)}</td>
+                                    <td style={{ textAlign: "right" }}>${formatCurrency(inv.total)}</td>
+                                    <td style={{ textAlign: "right" }}>
+                                        <button className={s.actionBtn} onClick={() => openInvoiceDetail(inv)}><Icon.Eye s={14} /></button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="table-footer">
+                        {sortedInvoices.length} cobro{sortedInvoices.length !== 1 ? "s" : ""}
+                    </div>
+                </div>
             )}
 
             {/* Detail Modal */}
@@ -857,7 +902,7 @@ const Billing = () => {
                     <div className="modal modal-lg">
                         <div className="modal-header">
                             <div>
-                                <h3 className={s.mainTitle} style={{ fontSize: "16px" }}>#{selectedInvoice.id}</h3>
+                                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--c-text)" }}>#{selectedInvoice.id}</h3>
                                 <div className={s.statusContainer} style={{ marginTop: "4px" }}>
                                     <span className={s.statusDot} style={{ background: DOT_COLOR[selectedInvoice.status] }} />
                                     {STATUS_LABELS[selectedInvoice.status]}
@@ -878,7 +923,7 @@ const Billing = () => {
                             </div>
 
                             <p style={{ fontSize: "11px", fontWeight: "500", color: "var(--c-text-3)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Conceptos</p>
-                            <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
+                            <div className="table-wrap"><table className="table">
                                 <thead>
                                     <tr>
                                         <th>Descripción</th>
@@ -902,7 +947,7 @@ const Billing = () => {
                                         </tr>
                                     ))}
                                 </tbody>
-                            </table>
+                            </table></div>
 
                             <div className={s.totalsSection}>
                                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1348,7 +1393,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                     </div>
 
                     {/* Items Table */}
-                    <table className={s.tableCompact} style={{ border: "1px solid var(--c-border)" }}>
+                    <div className="table-wrap"><table className="table">
                         <thead>
                             <tr>
                                 <th>Tipo</th>
@@ -1385,7 +1430,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </table></div>
 
                     {/* Total */}
                     {items.length > 0 && (

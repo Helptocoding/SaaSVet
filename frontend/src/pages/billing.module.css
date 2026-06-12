@@ -2,91 +2,17 @@
     padding: 0;
 }
 
-/* ── Ultra-Refined Table ── */
-.tableCompact {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-top: 8px;
-}
+/* Tabla y tipografía de página: clases globales (.table-wrap/.table,
+   .page-header/.page-title). El .tableCompact local se eliminó — anti-patrón
+   según design-system.md §6 ("una sola tabla"). */
 
-.tableCompact thead th {
-    padding: 14px 16px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-align: left;
-    border-bottom: none;
-    background: var(--ink);
-}
-
-.tableCompact thead th:first-child { border-top-left-radius: var(--r-md); }
-.tableCompact thead th:last-child { border-top-right-radius: var(--r-md); }
-
-.tableCompact tbody tr:nth-child(even) { background: var(--c-subtle); }
-.tableCompact tbody tr:nth-child(odd) { background: var(--c-surface); }
-
-.tableCompact tbody tr {
-    transition: background var(--t);
-    border-bottom: none;
-}
-
-.tableCompact tbody tr:hover {
-    background: var(--c-hover);
-}
-
-.tableCompact td {
-    padding: 14px 16px;
-    font-size: 13px;
-    color: var(--c-text-2);
-    vertical-align: middle;
-}
-
-/* ── Typography Consistency ── */
-.pageHeader {
-    margin-bottom: 32px;
-}
-
-.mainTitle {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--c-text);
-    margin: 0;
-}
-
-/* ── Minimalist Filters ── */
+/* ── Filters ── */
 .filterBar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 32px;
-}
-
-.filterItem {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    border-bottom: 1px solid transparent;
-    transition: border-color var(--t);
-}
-
-.filterItem:hover {
-    border-bottom-color: var(--c-border);
-}
-
-.filterItem select {
-    background: none;
-    border: none;
-    outline: none;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--c-text-2);
-    cursor: pointer;
-    padding-right: 8px;
+    gap: 12px;
+    margin-bottom: 24px;
 }
 
 /* ── Status Indicator (Clean) ── */
