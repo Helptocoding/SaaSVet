@@ -40,6 +40,11 @@ class RefundServiceTests(APITestCase):
             product=cls.product, name="Bolsa", base_unit="bag",
             stock=Decimal("10"), sale_price=Decimal("80.00"), organization=cls.org,
         )
+        # ADR p31: Product.stock_quantity es la fuente autoritativa
+        # (conv_factor=1 → stock_qty = pres.stock).
+        Product.objects.filter(pk=cls.product.pk).update(
+            base_unit='bag', stock_quantity=Decimal('10'),
+        )
 
     def _paid_invoice_with_product(self, qty="1"):
         inv = Invoice.objects.create(

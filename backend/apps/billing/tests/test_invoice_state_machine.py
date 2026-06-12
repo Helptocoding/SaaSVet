@@ -196,6 +196,11 @@ class LazyInvoiceCreationTests(APITestCase):
             sale_price=Decimal("50.00"),
             organization=self.org,
         )
+        # ADR p31: Product.stock_quantity es la fuente autoritativa
+        # (conv_factor=1 → stock_qty = pres.stock).
+        Product.objects.filter(pk=product.pk).update(
+            base_unit='unit', stock_quantity=Decimal('10'),
+        )
 
         # Agregar producto a la consulta
         r = self.client.post(f'/api/medical-records/{mr.public_id}/products/', {
@@ -306,6 +311,11 @@ class DirectPayInvoiceTests(APITestCase):
         cls.presentation = Presentation.objects.create(
             product=cls.product, name="Caja 10 und", base_unit="unit",
             stock=5, sale_price=Decimal("100.00"), organization=cls.org,
+        )
+        # ADR p31: Product.stock_quantity es la fuente autoritativa
+        # (conv_factor=1 → stock_qty = pres.stock).
+        Product.objects.filter(pk=cls.product.pk).update(
+            base_unit='unit', stock_quantity=Decimal('5'),
         )
 
     def _make_invoice(self, invoice_type='direct_sale'):

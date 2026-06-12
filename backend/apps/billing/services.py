@@ -829,7 +829,7 @@ def _fmt_base_qty(value):
     return format(value.normalize(), 'f')
 
 
-def _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base):
+def _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base, exclude_item_id=None):
     """
     Tope clínico de dispensación: por cada ítem de receta, lo ya dispensado en
     la factura (líneas activas con FK `dispensed_from_prescription_item`, en
@@ -846,6 +846,9 @@ def _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base):
         rx_items: dict {PrescriptionItem.id: PrescriptionItem} de la receta.
         requested_base: dict {PrescriptionItem.id: Decimal} con las unidades
             base solicitadas en esta llamada.
+        exclude_item_id: PK de un InvoiceItem a excluir del acumulado — para
+            editar la cantidad de una línea dispensada existente (PATCH), donde
+            la cantidad nueva reemplaza a la vieja en vez de sumarse.
 
     Raises:
         ValidationError: si algún ítem excede lo recetado (mensaje con
@@ -853,13 +856,18 @@ def _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base):
     """
     if not requested_base:
         return
-    already_rows = (
+    already_qs = (
         InvoiceItem.all_objects
         .filter(
             invoice=invoice,
             is_active=True,
             dispensed_from_prescription_item_id__in=requested_base.keys(),
         )
+    )
+    if exclude_item_id is not None:
+        already_qs = already_qs.exclude(pk=exclude_item_id)
+    already_rows = (
+        already_qs
         .values('dispensed_from_prescription_item')
         .annotate(
             base=Sum(
@@ -887,6 +895,33 @@ def _enforce_prescribed_quantity_cap(invoice, rx_items, requested_base):
                 f"{_fmt_base_qty(dispensed)}; puedes dispensar máximo "
                 f"{_fmt_base_qty(remaining)} más."
             )
+
+
+def enforce_dispensed_item_quantity_cap(invoice, item, new_quantity):
+    """
+    Cap de receta al EDITAR la cantidad de una línea dispensada (PATCH de
+    InvoiceItem). La cantidad nueva reemplaza a la vieja, por eso el acumulado
+    excluye al propio ítem. No-op si la línea no proviene de una receta.
+
+    El caller debe poseer los locks de Invoice e InvoiceItem y estar dentro de
+    transaction.atomic() (la view de edición ya lo garantiza).
+
+    Raises:
+        ValidationError: si la cantidad nueva excede lo recetado.
+    """
+    rx_item = item.dispensed_from_prescription_item
+    if rx_item is None:
+        return
+    if item.presentation_id:
+        cf = item.presentation.conversion_factor or Decimal('1')
+    else:
+        cf = Decimal('1')
+    _enforce_prescribed_quantity_cap(
+        invoice,
+        {rx_item.id: rx_item},
+        {rx_item.id: Decimal(new_quantity) * cf},
+        exclude_item_id=item.pk,
+    )
 
 
 @transaction.atomic

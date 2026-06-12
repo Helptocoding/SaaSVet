@@ -18,7 +18,7 @@ from decimal import Decimal
 
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem
+from apps.billing.models import Invoice, InvoiceItem, Service
 from apps.billing.services import get_or_create_invoice_for_medical_record
 from apps.inventory.models import Presentation, Product
 from apps.medical_records.models import MedicalRecord
@@ -232,6 +232,9 @@ class PrescriptionDispenseCapTests(APITestCase):
         Product.objects.filter(pk=cls.prod.pk).update(
             base_unit='piece', stock_quantity=Decimal('1000'),
         )
+        cls.svc = Service.objects.create(
+            name="Curación", base_price=Decimal("100.00"), organization=cls.org,
+        )
 
     def _new_rx(self, prescribed):
         """Consulta + receta frescas con un ítem por `prescribed` unidades base."""
@@ -369,3 +372,46 @@ class PrescriptionDispenseCapTests(APITestCase):
         cfs = {p['name']: Decimal(p['conversion_factor']) for p in s['presentations']}
         self.assertEqual(cfs['Amoxicilina — Pieza'], Decimal('1'))
         self.assertEqual(cfs['Amoxicilina — Caja 10'], Decimal('10'))
+
+    def test_patch_dispensed_item_quantity_respects_cap(self):
+        """Editar la cantidad de una línea dispensada no puede exceder lo recetado."""
+        self.client.force_authenticate(self.admin)
+        mr, rx, rx_item = self._new_rx("3")
+        r1 = self._dispense(rx, [{
+            'presentation': self.pres_unit.pk, 'quantity': 2,
+            'prescription_item': rx_item.pk,
+        }])
+        self.assertEqual(r1.status_code, 200, msg=r1.data)
+        invoice = get_or_create_invoice_for_medical_record(mr)
+        item = InvoiceItem.all_objects.get(invoice=invoice, dispensed_from_prescription_item=rx_item)
+        # 4 > 3 recetadas → 400 (la cantidad nueva reemplaza, no suma).
+        rp = self.client.patch(
+            f'/api/billing/invoices/{invoice.public_id}/items/{item.pk}/',
+            {'quantity': '4'}, format='json',
+        )
+        self.assertEqual(rp.status_code, 400, msg=rp.data)
+        self.assertIn('ampara', str(rp.data).lower())
+        # 3 = recetado exacto → permitido.
+        rp2 = self.client.patch(
+            f'/api/billing/invoices/{invoice.public_id}/items/{item.pk}/',
+            {'quantity': '3'}, format='json',
+        )
+        self.assertEqual(rp2.status_code, 200, msg=rp2.data)
+
+    def test_consultation_invoice_rejects_manual_presentation_item(self):
+        """En factura de consulta, productos solo por insumo o dispensación —
+        un ítem manual de presentación se cobraría sin liquidar stock."""
+        self.client.force_authenticate(self.admin)
+        mr, _, _ = self._new_rx("3")
+        invoice = get_or_create_invoice_for_medical_record(mr)
+        r = self.client.post(
+            f'/api/billing/invoices/{invoice.public_id}/items/',
+            {'presentation': self.pres_unit.pk, 'quantity': '1'}, format='json',
+        )
+        self.assertEqual(r.status_code, 400, msg=r.data)
+        # Servicios sí pueden agregarse manualmente al cobro de consulta.
+        r2 = self.client.post(
+            f'/api/billing/invoices/{invoice.public_id}/items/',
+            {'service': self.svc.pk, 'quantity': '1'}, format='json',
+        )
+        self.assertEqual(r2.status_code, 201, msg=r2.data)

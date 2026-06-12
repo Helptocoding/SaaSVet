@@ -329,6 +329,19 @@ class InvoiceItemCreateView(BillingOrganizationMixin, generics.CreateAPIView):
                 description = service.name
                 serializer.save(invoice=invoice, unit_price=unit_price, description=description)
             else:
+                # ADR p30: en una factura de consulta los productos entran solo
+                # por sus rutas únicas — insumos sincronizados desde la consulta
+                # (MedicalRecordProduct, ya descontaron stock) o dispensación de
+                # la receta (FK dispensed_from_prescription_item, descuenta al
+                # confirmar). Un ítem de presentación creado aquí no liquidaría
+                # stock al confirmar (_items_settling_stock lo ignora): se
+                # cobraría sin descontar inventario.
+                if invoice.invoice_type == 'consultation':
+                    raise ValidationError(
+                        'En un cobro de consulta los productos se agregan desde '
+                        'la consulta (insumos) o dispensando la receta; aquí solo '
+                        'se pueden agregar servicios.'
+                    )
                 locked_pres = InventoryPresentation.objects.select_for_update().filter(
                     pk=presentation.pk,
                     organization=self.request.user.organization,
@@ -434,6 +447,16 @@ class InvoiceItemDetailView(BillingOrganizationMixin, generics.RetrieveUpdateDes
             partial = kwargs.pop('partial', False)
             serializer = self.get_serializer(item, data=request.data, partial=partial)
             serializer.is_valid(raise_exception=True)
+            # Tope clínico: editar la cantidad de una línea dispensada no puede
+            # exceder lo recetado (mismo cap que el endpoint de dispensación —
+            # sin esto, un PATCH bypasearía la regla).
+            new_qty = serializer.validated_data.get('quantity')
+            if new_qty is not None and item.dispensed_from_prescription_item_id:
+                from apps.billing.services import enforce_dispensed_item_quantity_cap
+                try:
+                    enforce_dispensed_item_quantity_cap(invoice, item, new_qty)
+                except DjValidationError as e:
+                    return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
             self.perform_update(serializer)
             return Response(serializer.data)
 
