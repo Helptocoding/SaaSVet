@@ -2,7 +2,9 @@ import { useLoginForm } from "../hooks/useLoginForm";
 import { Field } from "./Field";
 import { PasswordField } from "./PasswordField";
 import { Checkbox } from "./Checkbox";
-import { GoogleIcon } from "./icons/GoogleIcon";
+import { MailIcon } from "./icons/MailIcon";
+import { LockIcon } from "./icons/LockIcon";
+import { ShieldIcon } from "./icons/ShieldIcon";
 
 export function LoginForm() {
   const {
@@ -16,17 +18,21 @@ export function LoginForm() {
     handleSubmit
   } = useLoginForm();
 
+  const disabled = loading || !username || !password;
+
   return (
-    <form className="login-form" onSubmit={handleSubmit}>
+    <form className="login-form" onSubmit={handleSubmit} noValidate>
       <div className="field-group">
         <Field
           id="username"
-          label="Usuario o Email"
+          label="Correo electrónico"
           value={username}
           onChange={setUsername}
-          placeholder="ej. veterinaria_central"
+          placeholder="correo@clinica.com"
           autoComplete="username"
           required
+          leadingIcon={<MailIcon size={18} />}
+          disabled={loading}
         />
 
         <PasswordField
@@ -34,28 +40,40 @@ export function LoginForm() {
           value={password}
           onChange={setPassword}
           required
+          disabled={loading}
+          leadingIcon={<LockIcon size={18} />}
+          labelAside={
+            <a
+              href="#"
+              className="forgot-password"
+              onClick={(e) => e.preventDefault()}
+              data-testid="forgot-password-link"
+            >
+              ¿Olvidaste tu contraseña?
+            </a>
+          }
         />
       </div>
 
       <div className="form-meta">
-        <Checkbox checked={remember} onChange={setRemember}>
+        <Checkbox checked={remember} onChange={setRemember} data-testid="remember-checkbox">
           Recordarme
         </Checkbox>
-        <a href="#" className="forgot-password" onClick={e => e.preventDefault()}>
-          ¿Olvidaste tu contraseña?
-        </a>
       </div>
 
-      <button type="submit" className="btn-primary" disabled={loading || !username || !password}>
-        {loading ? "Iniciando sesión..." : "Entrar al panel"}
+      <button
+        type="submit"
+        className="btn-primary"
+        disabled={disabled}
+        data-testid="login-submit-button"
+      >
+        {loading ? "Iniciando sesión…" : "Iniciar sesión"}
       </button>
 
-      <div className="or">o continúa con</div>
-
-      <button type="button" className="btn-google" onClick={() => alert('Próximamente')}>
-        <GoogleIcon />
-        Google
-      </button>
+      <div className="login-secure-note" data-testid="login-secure-note">
+        <ShieldIcon size={14} />
+        <span>Acceso seguro para clínicas registradas</span>
+      </div>
     </form>
   );
 }
