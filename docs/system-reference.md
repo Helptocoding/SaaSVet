@@ -30,6 +30,8 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | Cita walk-in con pet genérico no se puede vincular | La cita ya está en estado `done`. | Vincular al paciente real antes de cerrar la cita. |
 | Over-refund | La suma de líneas supera el monto ya devuelto disponible. | Revisar el detalle de las notas de crédito emitidas previamente. |
 | No se puede dispensar un producto que ya figura como insumo | `unique_together(invoice, presentation)`. | Ajustar manualmente la cantidad del insumo en la consulta. |
+| 400 al dispensar: "la receta ampara N…" | Tope clínico (ADR p37): dispensado acumulado + solicitado > recetado (en unidades base). | El mensaje trae amparado/dispensado/restante. Reducir cantidad o corregir la receta (consulta `open`). |
+| 400 al agregar producto en cobro de consulta | Ítem manual de presentación en factura `consultation` (no liquidaría stock, ADR p37). | Los productos entran por insumos de la consulta o dispensando la receta; aquí solo servicios. |
 | `closed_at` genera log `ANCHOR_LATE_ARRIVAL` | El cierre de consulta cayó en un bucket frozen (>T+2). | Es solo una advertencia (warn-only); revisar la latencia operativa. |
 | `RBAC_DENIED` recurrente para el mismo endpoint | El frontend está usando un endpoint que el rol no tiene permitido. | Revisar `can()` antes de mostrar el CTA correspondiente. |
 
@@ -72,6 +74,7 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 18. **Caja-efectivo ≠ revenue_paid**: los pagos con tarjeta o transferencia no entran en el conteo del cierre Z.
 19. **El administrador de una clínica no puede provisionar otras organizaciones** (no es `ADMIN_SAAS`; el payload no permite escalar privilegios).
 20. **`InvoiceItem.dispensed_from_prescription_item`** es el discriminador único para determinar qué ítems descuentan stock en una factura de consulta (no existe una segunda función de stock).
+21. **Dispensado ≤ recetado** (ADR p37): por ítem de receta, `Σ(quantity × conversion_factor)` de las líneas dispensadas activas de la factura no excede `PrescriptionItem.quantity` (unidades base). Cubre dispensación, edición de línea (PATCH) y bloquea ítems de presentación manuales en facturas `consultation`. El cliente puede llevar menos; nunca más.
 
 ---
 

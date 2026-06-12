@@ -28,11 +28,36 @@ src/
 │       ├── Timeline.jsx         — lista de consultas agrupadas por año/mes
 │       ├── TimelineCard.jsx     — card individual de consulta (expandible)
 │       ├── SidePanel.jsx        — panel derecho con summary (3 modos: live/patient/empty)
-│       ├── ConsultationStepper.jsx — stepper de 4 pasos (crear/editar consulta)
-│       └── *.module.css         — estilos modulares
+│       ├── ConsultationForm.jsx — pantalla "Nueva consulta" single-screen (container: estado + API + autosave)
+│       ├── ConsultationPatientBanner.jsx — banner de paciente + chips de vitales (mono)
+│       ├── EvaluationSection.jsx — sección Evaluación (tipo consulta + motivo + diagnóstico)
+│       ├── TreatmentSection.jsx  — sección Tratamiento + medicamentos recetados (no cobran)
+│       ├── ChargesSection.jsx    — sección Cargos (productos toggle Insumo|Cobrar + servicios + total MXN en vivo)
+│       ├── ConsultationFooter.jsx — footer con indicador de autosave + "Finalizar y enviar a Cobros"
+│       ├── VitalsModal.jsx       — modal de captura de signos vitales (mono)
+│       └── *.module.css         — estilos modulares (consultationForm.module.css)
 ├── routes/        — proteccion de rutas privadas
 └── utils/         — helpers (apiError, datetime)
 ```
+
+### Flujo "Atender ahora" → consulta ligada a la cita (ADR p34)
+
+`handleAttendNow` (`pages/appointments.jsx`) **NO** pre-crea el `MedicalRecord`. Solo
+transiciona la cita a `in_progress` y navega a la consulta pasando el **PK de la cita
+por router state** (`navigate(url, { state: { appointmentId } })`), no por la URL (el
+body FK usa PK entero, ADR p18; la URL solo lleva `public_id`).
+
+`medicalRecords/index.jsx` lee `location.state.appointmentId` y lo pasa al
+`ConsultationForm` como prop `appointmentId`. El stepper crea el **único** `MedicalRecord`
+(lazy, al primer autosave) incluyendo `appointment` en el payload → queda ligado a la cita.
+Al finalizar, `close_medical_record` completa la cita (`in_progress → done`, ADR p34).
+
+Reglas:
+- `appointmentId` se limpia (`null`) en "+ Nueva Consulta" manual, al editar desde el
+  Timeline y al cerrar el stepper. Consulta manual = MR sin cita.
+- **NO** reintroducir la pre-creación del MR en `handleAttendNow`: antes creaba un MR
+  ligado y el stepper creaba OTRO sin `appointment` → el segundo, al cerrarse, no
+  completaba la cita y el primero quedaba huérfano abierto (bug corregido en ADR p34).
 
 ## Reglas de UX (no negociables)
 
@@ -189,6 +214,27 @@ Patrones cero matches:
 2. `navigate(`/foo/${x.id}`)` para modelo público — debe usar `${x.public_id}`.
 3. `?pet=${x.id}` con `x.id` = PK — debe ser `x.public_id`.
 
+### Filtros con varias claves por evento — un solo setState
+
+Un handler que actualiza **varias** claves de filtro a la vez (ej. DateRangePicker
+→ `created_from` + `created_to`) debe hacerlo en UN solo `setState` con patch:
+
+```javascript
+// Correcto — un solo update por evento
+const updateFilters = (patch) => {
+    const next = { ...filters, ...patch };
+    setFilters(next);
+    /* sync de searchParams con `next` */
+};
+onChange={(f, t) => updateFilters({ created_from: f, created_to: t })}
+
+// Incorrecto — la 2a llamada lee `filters` stale y PISA a la 1a (React batchea)
+onChange={(f, t) => { updateFilter("created_from", f); updateFilter("created_to", t); }}
+```
+
+Bug real de Cobros (el rango de fechas nunca llegaba completo al request),
+corregido en `42836f3`. Aplica a cualquier página con filtros multi-clave.
+
 ### Refetch despues de mutaciones
 
 Despues de crear, editar o eliminar, siempre refrescar la lista local:
@@ -233,6 +279,23 @@ export const updateMedicalRecord = async (token, id, data) => {
   - **Bypassa redirect** si el request fallido es el endpoint de login (`url` termina en `token/`). Sin esto, credenciales malas disparaban full page reload antes de que el toast del login se renderizara. Helper local `isLoginAttempt(config)`. Ver ADR p22.
   - Para 401 en cualquier otro endpoint: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada legítima).
 - Interceptor response 500+: alert global "Error del servidor".
+
+### Descarga de PDFs (consulta / receta / cobro)
+
+Patrón único en `api/{medicalRecords,prescriptions,billing}.js` + `utils/downloadBlob.js`:
+
+```javascript
+const { blob, contentDisposition } = await downloadXxxPDF(publicId); // responseType: "blob"
+const filename = extractFilename(contentDisposition, "consulta.pdf"); // fallback genérico
+triggerDownload(blob, filename);
+```
+
+- El backend arma el nombre identificable (`tipo_id_mascota_YYYY-MM-DD.pdf`, ADR p36);
+  el fallback del frontend es solo red de seguridad.
+- **Dependencia de infra**: `extractFilename` solo funciona porque el backend expone
+  `CORS_EXPOSE_HEADERS=['content-disposition']`. Si las descargas vuelven a salir como
+  "consulta (1).pdf", revisar ese setting antes que este código.
+- Handler estándar: `downloadingId` state para deshabilitar el botón + `apiError` en catch.
 
 ### authContext.jsx
 
@@ -304,6 +367,65 @@ Form embebido para crear paciente anonimo dentro del flujo de citas walk-in o nu
 
 Formulario de receta reutilizable. Acepta `lockedPet` y `lockedMedicalRecord` para bloquear campos cuando viene desde el flujo de historial clinico.
 
+### SortHeader (orden de columnas en tabla global)
+
+`components/SortHeader.jsx` — encabezado ordenable para la tabla canon
+(`.table-wrap` + `.table`); estilos `th-sortable`/`th-inner`/`sort-arrow` en
+`global.css`. Accesible: `tabIndex`, Enter/Espacio y `aria-sort`. Props:
+`col`, `label`, `sortCol`, `sortDir`, `onSort`, `align`. Usado en Cobros
+(Fecha/Total, sort client-side en `useMemo`). **No crear sorting por módulo**
+(design-system.md §5). Deuda contenida: Inventario conserva su SortHeader local
+(module CSS) — migrar junto con la unificación de su tabla, no piecemeal.
+
+### CajaBar (estado del turno de caja) — ADR p28
+
+`components/CajaBar.jsx` — dos variantes:
+
+- `variant="full"` (default): fila completa — header de `/cash`.
+- `variant="compact"`: chip badge + acciones `btn-xs` — vive en el `page-header`
+  de `/billing` (la fila completa duplicaba la alerta de caja requerida).
+
+Props: `onSession(session|null)` notifica **cada** cambio de sesión conocido
+(carga inicial, abrir, cerrar) — el padre consume el estado sin duplicar el GET
+de sesión actual (Cobros ya NO llama `getCurrentSession` por su cuenta).
+`onChange` se conserva para refrescos post abrir/cerrar (lista de `/cash`).
+Ambas variantes comparten los modales de abrir/cerrar.
+
+### StatusBadge (estados de cita) — ADR p35
+
+`components/StatusBadge.jsx` + `utils/appointmentStatus.js` = **fuente única visual de estados de cita**. Antes los mapas `STATUS_LABELS`/`STATUS_BADGE` estaban duplicados por componente (timeline, modal, etc.). `appointmentStatus.js` exporta `APPT_STATUS_LABEL`, `APPT_STATUS_BADGE`, `statusLabel()`, `statusBadgeClass()`.
+
+```jsx
+<StatusBadge status={appt.status} />   // → <span class="badge badge-info">Programada</span>
+```
+
+Mapeo (no crear enums ni clases nuevas):
+
+| status | label | clase |
+|---|---|---|
+| `scheduled` | Programada | `badge-info` |
+| `confirmed` | Confirmada | `badge-purple` |
+| `in_progress` | En consulta | `badge-warning` |
+| `done` | Completada | `badge-success` |
+| `canceled` | Cancelada | `badge-danger` |
+| `no_show` | No se presentó | `badge-default` (unificado; antes el modal usaba `badge-secondary`) |
+
+Migrados a `StatusBadge`: `TodayAgendaList`, `AppointmentQuickModal`. NO migrados aún (deuda contenida, no piecemeal): `billing`, `cash`, `petDetail`, `appointments`, `AppointmentBreakdown`.
+
+### AppointmentQuickModal (acciones rápidas de cita) — ADR p35
+
+`components/dashboard/AppointmentQuickModal.jsx` = **única fuente de acciones rápidas de cita**. Consume el detalle (`GET appointments/<public_id>/`), reusa `useConfirm` para destructivas y dispara `dashboard:refresh` tras cada acción. Acciones por estado (reusan handlers existentes; sin duplicar permisos/estado/nav):
+
+| status | acciones |
+|---|---|
+| `scheduled` | Confirmar · ▶ Atender ahora · No asistió · Reprogramar · Cancelar |
+| `confirmed` | ▶ Atender ahora · No asistió · Reprogramar · Cancelar |
+| `in_progress` | Continuar consulta |
+| `done` | Ver expediente |
+| `canceled` / `no_show` | (solo) Ver más detalles |
+
+"Ver más detalles" siempre disponible. Cualquier lista de citas (agenda, citas por resolver) abre **este** modal — no crear modales nuevos ni acciones inline.
+
 ## Toaster
 
 Configurado en `App.jsx`:
@@ -328,11 +450,153 @@ usar(data);
 Si solo se necesita feedback (sin usar la data), `await toast.promise(...)` sin
 capturar el retorno es aceptable.
 
+## Inventario — wizard de alta de producto (ADR p33)
+
+`frontend/src/pages/inventory.jsx`  
+Tutorial y animación: `frontend/src/features/inventory/tutorial/`
+
+### Selector de modo
+
+Al abrir "Nuevo producto", se muestra una pantalla de selección antes del formulario:
+
+| Opción | `wizardMode` | `divides` | Descripción |
+|---|---|---|---|
+| Producto normal | `"simple"` | `false` | Shampoo, collar, alimento — una sola forma de venta |
+| Varias formas de venta | `"multi"` | `true` | Caja de jeringas → también vendo por pieza |
+
+`switchMode()` resetea todo el estado del wizard y vuelve al selector.
+
+### Estado del wizard
+
+```javascript
+// Producto
+wizardProduct = { name, internal_code, description, category, requires_prescription, min_stock }
+// Modo y stock
+wizardMode      // null | "simple" | "multi"
+divides         // false (simple) | true (multi)
+countQty        // stock inicial (string)
+countUnit       // unidad base ("piece", "ml", "kg"…)
+dividesCount    // cuántas partes tiene cada unidad — solo multi
+dividesUnit     // unidad de la parte — solo multi
+// Presentaciones
+salesPres = [{ _localId, publicId, name, conversion_factor, sale_price, purchase_price, barcode }]
+// UI
+showDetails     // boolean — accordion descripción/receta
+wizardEditing   // null = crear, product = editar
+showMultiAnim   // boolean — animación educativa modo multi
+```
+
+### Modo multi — auto-sync de salesPres[1]
+
+Al seleccionar modo multi, `salesPres` se inicializa con 2 entradas. Los campos de `salesPres[1]` se auto-rellenan mientras el usuario no los haya editado manualmente:
+
+- `salesPres[1].name` ← label de `countUnit` (ej. "Pieza")
+- `salesPres[1].conversion_factor` ← valor de `dividesCount`
+
+El tracking de edición manual usa `presSecondAutoRef = useRef({ nameEdited, cfEdited })` (ref, no state — no provoca re-renders). Una vez que el usuario edita un campo, el auto-sync para ese campo se desactiva.
+
+```javascript
+// En updateSalesPres:
+if (idx === 1 && field === "name") presSecondAutoRef.current.nameEdited = true;
+if (idx === 1 && field === "conversion_factor") presSecondAutoRef.current.cfEdited = true;
+```
+
+### Flujo de guardado
+
+1. `handleSubmit()` valida: `name` requerido, `sale_price > 0` por presentación, `dividesCount ≥ 1` si multi
+2. `handleWizardSave()` → `POST /inventory/products/` + `POST /inventory/products/<pk>/presentations/` para adicionales
+3. Producto siempre se crea con `stock: 0` — existencia inicial se registra vía Ajuste de inventario
+
+Para edición: "Guardar cambios" → `handleWizardSave()` directo.
+
+### Exit confirmation
+
+`requestCloseWizard()` usa `useConfirm` si hay datos sin guardar.
+
+### Tutorial interactivo
+
+`frontend/src/features/inventory/tutorial/`
+
+| Archivo | Rol |
+|---|---|
+| `productTourSteps.js` | 6 pasos del tour con `target` (selector CSS) + texto |
+| `useProductTour.js` | Hook — orquesta auto-llenado sincronizado con `waitForNext()` |
+| `ProductCreationTour.jsx` | Overlay: spotlight + popover posicionado fuera del modal |
+| `MultiPresentationAnimation.jsx` | Animación 5 escenas (Framer Motion) — explica modo multi |
+| `AnimationSvgs.jsx` | SVG components inline (fuente: `frontend/src/assets/svgs/`) |
+
+**Posicionamiento del popover:** `getPopoverPos` busca `.modal.modal-md` en el DOM y coloca el popover a su derecha (o izquierda si no hay espacio). El spotlight sigue apuntando al elemento dentro del formulario.
+
+**Gate de animación:** `localStorage.getItem("multi_presentation_animation_seen")` — se muestra una sola vez por dispositivo.
+
+### `api/inventory.js` — funciones disponibles
+
+```javascript
+getProducts()                              // lista con presentations[]
+createProduct(data)                        // data.presentation_input requerido
+updateProduct(publicId, data)              // PATCH — stock inmutable via esta ruta
+createPresentation(productPublicId, data)  // POST /products/<pk>/presentations/
+updatePresentation(presPublicId, data)     // PATCH /presentations/<pk>/
+adjustStock(productPublicId, data)         // POST /products/<pk>/adjust/
+getUnitChoices()                           // catálogo de unidades base
+```
+
+## Dashboard (composición y reglas)
+
+`frontend/src/pages/dashboard/index.jsx` + `frontend/src/components/dashboard/`
+
+### Fuentes de datos
+
+| Zona | Hook | Endpoint | Naturaleza |
+|---|---|---|---|
+| KPIs, sidebar (Ahora/backlog/stock) | `useDashboardSummary` | `GET /api/v1/dashboard/summary/` | Live, cache 30s, polling 30s |
+| **Agenda del día (`TodayAgendaList`)** | `useDayAppointments` | `GET /appointments/?date=YYYY-MM-DD` | Live, refetch al cambiar día + evento `dashboard:refresh` (ADR p35) |
+| Spark + Δ de ingresos (admin) | `useFinancialSeries` | `financial/series/` | Snapshot + hoy live |
+| Card "Analítica" | `useDashboardSeries` + `useFinancialSeries` | `operations/series/` + `financial/series/` | Snapshot + hoy live |
+| Card "Citas por resolver" | `useAppointmentsByStatus` | `GET /appointments/status-breakdown/?from=&to=` | Live, rango |
+
+`summary` solo expone datos **point-in-time de HOY**. No es fuente de reporting (ver `dashboard-metrics-contract.md`).
+
+> **Agenda ya NO consume `summary.timeline`** (ADR p35). Antes la "Agenda de hoy" era un timeline horizontal alimentado por `summary.timeline` (fijo a hoy). Ahora es una mini-agenda con navegación por día vía `appointments/?date=` — el día puede ser pasado/hoy/futuro. `summary.timeline` sigue existiendo en el payload (alias legacy `appointment` + `appointments[]` con `species`/`breed`) pero el dashboard ya no lo usa; `OperationalTimeline.jsx` quedó retirado (no montado, no borrado).
+
+### Composición
+
+Sidebar (orden = urgencia): **Ahora** → **Citas por resolver** → **Pendientes clínicos** → **Stock crítico**.
+
+Columna principal: **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+
+### Agenda del día (`TodayAgendaList`) — ADR p35
+
+Mini-agenda operativa con navegación por día. Patrón **appointment cards** (NO volver a timeline).
+
+- **Dueño de estado**: `TodayAgendaList` posee `selectedDate`, date strip, fetch por día, conteo y empty state. `index.jsx` solo compone (`<TodayAgendaList />` sin props).
+- **Fuente**: `useDayAppointments(isoDate)` → `getAppointments(token, { date })`. Sin endpoint nuevo. Maneja respuesta array o paginada (`results`).
+- **Date strip** (`AgendaDateStrip`): etiqueta mes/año arriba (contexto, no botón); flechas `←/→` navegan **semanas** (no meses) flanqueando 7 chips Lun→Dom. Día seleccionado resaltado (primary), hoy con punto. La ventana se reencuadra a la semana de la selección vía **remount** (`key={isoDate}` desde el padre) — sin `useEffect`+`setState` (evita `react-hooks/set-state-in-effect`). Navegar con flechas no cambia `selectedDate` → la ventana persiste independiente.
+- **Botón "Hoy"**: resetea `selectedDate` al día actual (deshabilitado si ya es hoy).
+- **Card**: avatar (inicial mascota) · `pet_name` (600) · `· owner_name` (muted) · `reason` (secundario) · `StatusBadge`. Máximo 2 líneas de texto — especie/raza/veterinario NO se muestran (viven en `AppointmentQuickModal`). Marcador `●` walk-in (requiere `walk_in` en el serializer, ADR p35).
+- **`isLate` (regla exacta)**: mostrar "Pendiente desde hace N min" **solo si** `selectedDate == hoy` **y** status `scheduled|confirmed` **y** `now > start_time`. Nunca para `done`/`canceled`/`no_show`. `isNow` (resaltado + tag "Ahora") solo si día==hoy y status `in_progress`.
+- **Acciones**: clic en card abre `AppointmentQuickModal` (única fuente de acciones; sin acciones inline, sin lógica de permisos en la lista). El modal dispara `dashboard:refresh` → la agenda refetcha.
+- **Edge cases**: sin citas → "No hay citas para este día"; pasado → históricas (sin chips ahora/atrasada); futuro → programadas. Scroll interno (`max-height`).
+- **TZ**: fechas construidas con `Date` local del browser; el backend filtra por día local de la org (`filter_by_local_day`). Posible desfase browser≠org tz — aceptado, consistente con `PendingFollowUp`.
+
+### Reglas no negociables (Fase 1 UX)
+
+- **Alert badge (`DashboardTopBar`)**: la barra superior señala **solo lo crítico** (= stock agotado, `stock_alerts.severity==='critical'`). Los avisos viven en sus cards, NO en la barra. Prohibido reintroducir un contador único que mezcle dominios ("N alertas").
+- **Pendientes clínicos (`ClinicalBacklog`)**: partición **mutuamente excluyente** sobre `backlog.open_total`:
+  - 🟢 Listas para cerrar = `open_total − without_diagnosis` (abiertas con diagnóstico) → "Continuar consulta".
+  - 🟡 Sin diagnóstico = `without_diagnosis` → "Completar expediente".
+  - **NO usar `needs_attention_count` en UI**: es subconjunto de `without_diagnosis` (open + >3h sin diagnóstico) y mostrarlo junto duplicaba el conteo visual. El backend lo sigue exponiendo; el frontend lo ignora.
+  - **Presentación = acordeón compacto (ADR p34)**: vista inicial solo muestra los dos encabezados de grupo con su conteo. Cada grupo es clickeable y despliega inline sus consultas (acordeón, un grupo abierto a la vez — consistente con los demás paneles laterales que expanden inline, no drawer). NO listar todos los registros expandidos por defecto.
+  - **Conteos vs filas**: los conteos de cabecera (`ready`, `noDiag`) salen de los agregados exactos (`open_total`, `without_diagnosis`); las filas listadas vienen de `backlog.open_records[]` (cap 50 del backend), particionadas por `has_diagnosis`. Si el conteo exacto supera lo listado, se muestra overflow ("+N más"). Cada fila navega **directo** al registro con `navigate(\`/medical-records?record=${public_id}\`)` — **solo `public_id`**, nunca PK.
+- **Citas por resolver (`PendingFollowUp`)**: citas con fecha pasada aún en `scheduled`/`confirmed` (nadie las cerró/canceló/marcó no-asistió). Query a `status-breakdown` rango `hoy-30d → ayer`; el límite de filas es **visual (5)**, no del query (una cita perdida hace semanas no debe desaparecer). Las acciones (Atender / No asistió / Reprogramar) reutilizan `AppointmentQuickModal` (no crear modal nuevo).
+- **Terminología analítica**: usar **"No asistieron"** (no "No-show") y **"Conversión de citas"** (no "Embudo"). Cada gráfica lleva título + descripción que solo nombra lo que realmente grafica (la de actividad no menciona canceladas porque no las plotea).
+
 ## Rutas
 
 | Ruta                | Pagina              | Acceso       |
 |---------------------|---------------------|--------------|
 | `/`                 | Dashboard           | Privada      |
+| `/analytics`        | Analítica           | Privada (Financiero solo ADMIN) |
 | `/login`            | Login               | Publica      |
 | `/pets`             | Mascotas            | Privada      |
 | `/pets/:id`         | Ficha mascota       | Privada      |

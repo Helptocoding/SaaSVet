@@ -606,6 +606,8 @@ Cada anchor tiene su `*_source` (`service`, `legacy`, etc.). Los CHECK constrain
 **Bloquea**
 - Duplicar presentación o servicio en la misma factura (unique constraints).
 - Agregar ítems a una factura en estado `confirmed`, `paid` o `cancelled` (solo `draft` es editable).
+- Agregar un ítem de **presentación** a una factura `consultation` → 400 (ADR p37): los productos solo entran como insumos de la consulta o dispensando la receta; un ítem manual se cobraría sin liquidar stock al confirmar. Servicios sí se permiten.
+- Editar la cantidad de una línea **dispensada** por encima de lo recetado → 400 (mismo tope clínico de la dispensación, ADR p37; la cantidad nueva reemplaza a la vieja).
 
 ---
 

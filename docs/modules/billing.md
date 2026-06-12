@@ -534,7 +534,7 @@ función de stock.
   consulta (debe estar `draft`), agrega/acumula cantidades por presentación
   (`unique_together(invoice, presentation)`), **no mueve stock** — eso ocurre al confirmar.
   Si la presentación ya existe como insumo (sin FK), rechaza (recepción ajusta a mano).
-- **Tope clínico (`_enforce_prescribed_quantity_cap`)**: por ítem de receta,
+- **Tope clínico (`_enforce_prescribed_quantity_cap`, ADR p37)**: por ítem de receta,
   `dispensado acumulado + solicitado ≤ PrescriptionItem.quantity`, comparado en
   **unidades base** (`quantity × presentation.conversion_factor`, ADR p31). Aplica por
   llamada y acumulado entre llamadas mientras la factura siga `draft`; agrega entre
@@ -542,6 +542,15 @@ función de stock.
   Eliminar una línea dispensada (hard delete del draft) libera el cupo. El cliente
   puede llevar menos de lo recetado; nunca más. El frontend muestra restante y capea
   el input (`máx N` por formato), pero la validación autoritativa es la del service.
+- **El cap cubre TODAS las rutas de mutación** (ADR p37):
+  - `dispense/` — la cantidad solicitada se **suma** al acumulado.
+  - `PATCH items/<pk>/` de una línea dispensada — la cantidad nueva **reemplaza** a la
+    vieja: `enforce_dispensed_item_quantity_cap` excluye al propio ítem del acumulado
+    (`exclude_item_id`). Sin esto, editar la línea bypaseaba el tope.
+  - `POST items/` en factura `consultation` **rechaza ítems de presentación** (400):
+    los productos solo entran por insumos (MedicalRecordProduct) o dispensación; un
+    ítem manual no liquidaría stock al confirmar (`_items_settling_stock` lo ignora)
+    → se cobraría sin descontar inventario. Servicios sí se permiten manualmente.
 - Producto `requires_prescription`: la receta interna ES el respaldo legal → NO
   crea `ExternalPrescriptionAttestation` (ADR p26, que cubre venta SIN receta
   previa). Gate de permiso `billing.rx_dispense` en la view.
@@ -562,6 +571,31 @@ confirmInvoice(invoice.id)
 ```
 
 El campo `invoice.id` (entero) puede mostrarse en la UI como numero de referencia ("Cobro #123") pero no debe usarse en URLs de API.
+
+## Frontend — página de Cobros (auditoría 2026-06-11, Fases 2-3)
+
+`frontend/src/pages/billing.jsx` quedó alineada al design system (ver
+`frontend/design-system.md`):
+
+- **Tabla**: clases globales `.table-wrap` + `.table` + `.table-footer` con conteo.
+  `.tableCompact` (anti-patrón §6) fue eliminado — no reintroducir tablas por módulo.
+- **Orden**: client-side por Fecha/Total con `components/SortHeader.jsx` (compartido;
+  el listado no está paginado y el backend ordena `-created_at` por defecto).
+- **Filtros**: selects `.select-input` canon; "Limpiar" solo visible con filtros
+  activos. **Regla**: un evento que actualiza varias claves de filtro (DateRangePicker
+  → `created_from` + `created_to`) usa UN solo setState con patch (`updateFilters({})`)
+  — dos llamadas consecutivas a un setter por clave leen estado stale y la segunda
+  pisa a la primera (bug corregido en `42836f3`).
+- **Feedback de fetch**: estado `fetching` (guard con `requestIdRef`) atenúa la tabla,
+  el footer muestra "Actualizando..." y el empty-state "Buscando cobros...". El catch
+  de `loadInvoices` no es silencioso (toast con `apiError`).
+- **Caja**: chip compacto en el page-header (`CajaBar variant="compact"`); la sesión
+  llega vía `onSession` — la página NO hace su propio `getCurrentSession`. La alerta
+  bloqueante (`require_open_cash_session` + caja cerrada) se conserva como aviso, sin
+  CTA duplicado.
+- **Panel de dispensación**: refleja el tope clínico (ADR p37) — "Recetado X · en
+  cobro Y · restante Z", `máx N` por formato elegido (`remaining / conversion_factor`),
+  filas agotadas deshabilitadas. La validación autoritativa es la del backend.
 
 ## Endpoints
 
