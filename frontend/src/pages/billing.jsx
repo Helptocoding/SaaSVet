@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
 import {
@@ -10,7 +10,6 @@ import {
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { getPresentations } from "../api/inventory";
 import { getOwners, getPets } from "../api/pets";
-import { getCurrentSession } from "../api/cash";
 import { getOrgSettings } from "../api/organizations";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -221,7 +220,7 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
                     <button className="modal-close" onClick={onClose} disabled={submitting}><Icon.X s={14} /></button>
                 </div>
                 <div className="modal-body" style={{ overflowY: "auto" }}>
-                    <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    <p className={s.eyebrow}>
                         Conceptos a devolver
                     </p>
                     <div className="table-wrap"><table className="table">
@@ -409,7 +408,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
 
     return (
         <div style={{ marginTop: "20px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <p className={s.eyebrow} style={{ marginBottom: "4px" }}>
                 Medicamentos recetados (opcionales)
             </p>
             <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginBottom: "10px" }}>
@@ -535,8 +534,12 @@ const Billing = () => {
     const [cashSession, setCashSession] = useState(undefined); // undefined=cargando | null=cerrada | obj=abierta
     const [requireCash, setRequireCash] = useState(false);
 
+    // Feedback de filtros: atenúa la tabla mientras hay un fetch en vuelo.
+    const [fetching, setFetching] = useState(false);
+
     const loadInvoices = async (currentFilters) => {
         const requestId = ++requestIdRef.current;
+        setFetching(true);
         try {
             const params = {};
             for (const key of FILTER_KEYS) if (currentFilters[key]) params[key] = currentFilters[key];
@@ -544,17 +547,16 @@ const Billing = () => {
             if (requestId === requestIdRef.current) setInvoices(data);
         } catch (err) {
             if (requestId === requestIdRef.current) toast.error(apiError(err, "No se pudieron cargar los cobros"));
+        } finally {
+            if (requestId === requestIdRef.current) setFetching(false);
         }
     };
 
-    // Caja: turno actual + flag de la org. Silencioso: si falla, asume cerrada.
-    const loadCashStatus = async () => {
-        const [settings, current] = await Promise.all([
-            getOrgSettings().catch(() => null),
-            getCurrentSession().catch(() => null),
-        ]);
+    // Caja: la sesión llega vía CajaBar (onSession) — sin GET duplicado.
+    // Aquí solo se carga el flag de la org. Silencioso: si falla, no bloquea.
+    const loadCashSettings = async () => {
+        const settings = await getOrgSettings().catch(() => null);
         setRequireCash(!!settings?.require_open_cash_session);
-        setCashSession(current && current.public_id ? current : null);
     };
 
     const loadAll = async () => {
@@ -563,7 +565,7 @@ const Billing = () => {
             const owners = await getOwners({ is_generic: "true" });
             setGenericOwner((Array.isArray(owners) ? owners : owners?.results || [])[0] || null);
             await loadInvoices(filters);
-            loadCashStatus();
+            loadCashSettings();
         } catch {
             // Silencioso — loadInvoices maneja su error
         } finally { setLoading(false); }
@@ -792,21 +794,19 @@ const Billing = () => {
         <div className={s.billingContainer}>
             <div className="page-header">
                 <h1 className="page-title">Cobros</h1>
+                {/* Chip de caja (Fase 3): estado + abrir/cerrar sin fila completa.
+                    onSession alimenta cashBlocked — único GET de sesión de la página. */}
+                <CajaBar variant="compact" onSession={setCashSession} />
             </div>
 
             {cashBlocked && (
                 <div className="form-alert form-alert-warning" style={{ alignItems: "center" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Icon.AlertTriangle s={16} />
-                        <span><strong>No hay una caja abierta.</strong> Debes abrir una caja para registrar pagos.</span>
+                        <span><strong>No hay una caja abierta.</strong> Debes abrir una caja para registrar pagos — usa "Abrir caja" aquí arriba.</span>
                     </span>
-                    <Link to="/cash" className="btn btn-primary btn-sm" style={{ textDecoration: "none", flexShrink: 0 }}>
-                        Abrir caja
-                    </Link>
                 </div>
             )}
-
-            <CajaBar onChange={loadCashStatus} />
 
             <div className={s.filterBar}>
                 <select
@@ -852,8 +852,12 @@ const Billing = () => {
                 )}
             </div>
 
-            {invoices.length === 0 ? <div className="empty-state"><p className="empty-state-title">No hay cobros</p></div> : (
-                <div className="table-wrap">
+            {invoices.length === 0 ? (
+                <div className="empty-state">
+                    <p className="empty-state-title">{fetching ? "Buscando cobros..." : "No hay cobros"}</p>
+                </div>
+            ) : (
+                <div className="table-wrap" style={{ opacity: fetching ? 0.6 : 1, transition: "opacity var(--t)" }}>
                     <table className="table">
                         <thead>
                             <tr>
@@ -891,7 +895,7 @@ const Billing = () => {
                         </tbody>
                     </table>
                     <div className="table-footer">
-                        {sortedInvoices.length} cobro{sortedInvoices.length !== 1 ? "s" : ""}
+                        {fetching ? "Actualizando..." : `${sortedInvoices.length} cobro${sortedInvoices.length !== 1 ? "s" : ""}`}
                     </div>
                 </div>
             )}
@@ -922,7 +926,7 @@ const Billing = () => {
                                 <div><p className={s.infoLabel}>Fecha</p><p className={s.infoValue}>{formatDate(selectedInvoice.created_at)}</p></div>
                             </div>
 
-                            <p style={{ fontSize: "11px", fontWeight: "500", color: "var(--c-text-3)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Conceptos</p>
+                            <p className={s.eyebrow}>Conceptos</p>
                             <div className="table-wrap"><table className="table">
                                 <thead>
                                     <tr>
@@ -961,7 +965,7 @@ const Billing = () => {
 
                             {selectedInvoice.credit_notes?.length > 0 && (
                                 <div style={{ marginTop: "16px" }}>
-                                    <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                    <p className={s.eyebrow} style={{ marginBottom: "8px" }}>
                                         Devoluciones
                                     </p>
                                     {selectedInvoice.credit_notes.map(cn => (
@@ -1288,7 +1292,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                     {/* Cliente (ADR p25) — opcional; default "Público General" */}
                     <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                         <div style={{ flex: "1 1 260px" }}>
-                            <label style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", display: "block", marginBottom: "4px", textTransform: "uppercase" }}>Cliente</label>
+                            <label className={s.fieldLabel}>Cliente</label>
                             <SearchSelect
                                 placeholder="Público General (buscar cliente…)"
                                 value={customer.owner}
@@ -1298,7 +1302,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                         </div>
                         {customer.owner && (
                             <div style={{ flex: "1 1 260px" }}>
-                                <label style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", display: "block", marginBottom: "4px", textTransform: "uppercase" }}>Mascota (opcional)</label>
+                                <label className={s.fieldLabel}>Mascota (opcional)</label>
                                 <SearchSelect
                                     placeholder="Buscar mascota del cliente…"
                                     value={customer.pet}
@@ -1312,7 +1316,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
                     <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                         {/* Product */}
                         <div style={{ flex: "1 1 300px" }}>
-                            <label style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", display: "block", marginBottom: "4px", textTransform: "uppercase" }}>Producto</label>
+                            <label className={s.fieldLabel}>Producto</label>
                             <div style={{ display: "flex", gap: "8px" }}>
                                 <div style={{ flex: 1 }}>
                                     <SearchSelect
@@ -1367,7 +1371,7 @@ const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
 
                         {/* Service */}
                         <div style={{ flex: "1 1 300px" }}>
-                            <label style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-text-3)", display: "block", marginBottom: "4px", textTransform: "uppercase" }}>Servicio</label>
+                            <label className={s.fieldLabel}>Servicio</label>
                             <div style={{ display: "flex", gap: "8px" }}>
                                 <div style={{ flex: 1 }}>
                                     <SearchSelect

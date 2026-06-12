@@ -15,6 +15,26 @@
     margin-bottom: 24px;
 }
 
+/* ── Labels uppercase de secciones y campos (modales) ── */
+.eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--c-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.fieldLabel {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+
 /* ── Status Indicator (Clean) ── */
 .statusContainer {
     display: flex;

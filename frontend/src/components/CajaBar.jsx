@@ -10,12 +10,20 @@ const money = (v) => `$${Number(v || 0).toFixed(2)}`;
 
 /**
  * Banner operativo de caja (ADR p28). Estado del turno + abrir/cerrar rápido +
- * acceso a /cash. Vive en /billing (compact) y como header de /cash.
+ * acceso a /cash.
+ *
+ * `variant`:
+ *  - "full" (default): fila completa — header de /cash.
+ *  - "compact": chip de estado + acción — vive en el page-header de /billing
+ *    (Fase 3 Cobros: la fila completa duplicaba la alerta de caja requerida).
  *
  * `onChange` se invoca tras abrir/cerrar para que el padre refresque (ej. lista
- * de sesiones en /cash). `showManageLink` muestra el enlace a /cash.
+ * de sesiones en /cash). `onSession(session|null)` notifica cada cambio de
+ * sesión conocido (carga inicial incluida) — permite al padre consumir el
+ * estado sin duplicar el GET de sesión actual. `showManageLink` muestra el
+ * enlace a /cash.
  */
-export default function CajaBar({ onChange, showManageLink = true }) {
+export default function CajaBar({ onChange, onSession, showManageLink = true, variant = "full" }) {
     const { can } = useAuth();
     const [session, setSession] = useState(undefined); // undefined=loading | null=cerrada | obj=abierta
     const [showOpen, setShowOpen] = useState(false);
@@ -24,16 +32,21 @@ export default function CajaBar({ onChange, showManageLink = true }) {
     const [countedCash, setCountedCash] = useState("");
     const [busy, setBusy] = useState(false);
 
+    const applySession = (value) => {
+        setSession(value);
+        if (value !== undefined) onSession?.(value);
+    };
+
     const load = async () => {
         try {
             const data = await getCurrentSession();
-            setSession(data && data.public_id ? data : null);
+            applySession(data && data.public_id ? data : null);
         } catch {
-            setSession(null);
+            applySession(null);
         }
     };
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount idiomático
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps -- solo al montar
 
     const canOpen = can("cashsession.open");
     const canClose = can("cashsession.close");
@@ -43,7 +56,7 @@ export default function CajaBar({ onChange, showManageLink = true }) {
         setBusy(true);
         try {
             const s = await openSession({ openingFloat });
-            setSession(s);
+            applySession(s);
             setShowOpen(false);
             setOpeningFloat("0.00");
             toast.success("Caja abierta");
@@ -60,7 +73,7 @@ export default function CajaBar({ onChange, showManageLink = true }) {
             const s = await closeSession(session.public_id, { countedCash });
             setShowClose(false);
             setCountedCash("");
-            setSession(null);
+            applySession(null);
             const diff = Number(s.difference);
             if (diff === 0) toast.success("Caja cerrada — cuadrada");
             else toast.warning(`Caja cerrada — diferencia ${money(diff)} (esperado ${money(s.expected_cash)}, contado ${money(s.counted_cash)})`);
@@ -73,33 +86,47 @@ export default function CajaBar({ onChange, showManageLink = true }) {
     if (session === undefined) return null; // loading silencioso
 
     const open = !!session;
+    const compact = variant === "compact";
 
     return (
-        <div style={{
-            display: "flex", alignItems: "center", gap: "12px",
-            padding: "8px 14px", borderRadius: "8px", marginBottom: "12px",
-            border: "1px solid var(--c-border)",
-            background: open ? "var(--c-success-bg, rgba(16,185,129,0.06))" : "var(--c-subtle, rgba(0,0,0,0.03))",
-        }}>
-            <Icon.Wallet s={16} c={open ? "var(--c-success-text)" : "var(--c-text-3)"} />
-            <div style={{ flex: 1, fontSize: "13px" }}>
-                {open ? (
-                    <span style={{ color: "var(--c-text)" }}>
-                        <strong>Caja abierta</strong>
-                        <span style={{ color: "var(--c-text-3)" }}> · fondo {money(session.opening_float)}{session.opened_by_name ? ` · ${session.opened_by_name}` : ""}</span>
-                    </span>
-                ) : (
-                    <span style={{ color: "var(--c-text-3)" }}>Caja cerrada</span>
-                )}
-            </div>
+        <div style={compact
+            ? { display: "inline-flex", alignItems: "center", gap: "8px" }
+            : {
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "8px 14px", borderRadius: "8px", marginBottom: "12px",
+                border: "1px solid var(--c-border)",
+                background: open ? "var(--c-success-bg, rgba(16,185,129,0.06))" : "var(--c-subtle, rgba(0,0,0,0.03))",
+            }}>
+            {compact ? (
+                <span
+                    className={`badge ${open ? "badge-success" : "badge-default"}`}
+                    title={open ? `Fondo ${money(session.opening_float)}${session.opened_by_name ? ` · ${session.opened_by_name}` : ""}` : "No hay turno de caja abierto"}
+                >
+                    ● Caja {open ? "abierta" : "cerrada"}
+                </span>
+            ) : (
+                <>
+                    <Icon.Wallet s={16} c={open ? "var(--c-success-text)" : "var(--c-text-3)"} />
+                    <div style={{ flex: 1, fontSize: "13px" }}>
+                        {open ? (
+                            <span style={{ color: "var(--c-text)" }}>
+                                <strong>Caja abierta</strong>
+                                <span style={{ color: "var(--c-text-3)" }}> · fondo {money(session.opening_float)}{session.opened_by_name ? ` · ${session.opened_by_name}` : ""}</span>
+                            </span>
+                        ) : (
+                            <span style={{ color: "var(--c-text-3)" }}>Caja cerrada</span>
+                        )}
+                    </div>
+                </>
+            )}
 
             {open && canClose && (
-                <button className="btn btn-sm" style={{ background: "var(--c-danger-text)", color: "#fff", borderColor: "var(--c-danger-text)" }} onClick={() => setShowClose(true)}>
-                    Cerrar caja (Z)
+                <button className={`btn ${compact ? "btn-xs" : "btn-sm"}`} style={{ background: "var(--c-danger-text)", color: "#fff", borderColor: "var(--c-danger-text)" }} onClick={() => setShowClose(true)}>
+                    {compact ? "Cerrar (Z)" : "Cerrar caja (Z)"}
                 </button>
             )}
             {!open && canOpen && (
-                <button className="btn btn-primary btn-sm" onClick={() => setShowOpen(true)}>
+                <button className={`btn btn-primary ${compact ? "btn-xs" : "btn-sm"}`} onClick={() => setShowOpen(true)}>
                     Abrir caja
                 </button>
             )}

@@ -262,14 +262,15 @@ export function initDateRangePicker(container, options = {}) {
         drFrom.setDate(now.getDate() - 1);
         drTo = new Date(drFrom);
         break;
-      case 'thisWeek':
+      case 'thisWeek': {
         drFrom = new Date(now);
         const day = drFrom.getDay();
         const diff = drFrom.getDate() - day + (day === 0 ? -6 : 1);
         drFrom.setDate(diff);
         drTo = new Date(now);
         break;
-      case 'lastWeek':
+      }
+      case 'lastWeek': {
         const lastWeekEnd = new Date(now);
         const lwDay = lastWeekEnd.getDay();
         lastWeekEnd.setDate(lastWeekEnd.getDate() - lwDay + (lwDay === 0 ? -6 : 1) - 1);
@@ -277,6 +278,7 @@ export function initDateRangePicker(container, options = {}) {
         drFrom.setDate(lastWeekEnd.getDate() - 6);
         drTo = new Date(lastWeekEnd);
         break;
+      }
       case 'thisMonth':
         drFrom = new Date(now.getFullYear(), now.getMonth(), 1);
         drTo = new Date(now);

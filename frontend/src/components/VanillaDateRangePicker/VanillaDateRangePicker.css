@@ -1,38 +1,42 @@
+/* Tokenizado (Fase 3 Cobros): cero hex crudo — design-system.md §0.2.
+   Paleta original era slate/blue/green genérica; mapeada a tokens de marca. */
+
 .vdrp-wrapper {
   position: relative;
   display: inline-block;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #111827;
+  font-family: var(--font-body);
+  color: var(--c-text);
 }
 
-/* Trigger Button */
+/* Trigger Button — alineado al canon de .input (borde 1.5px, focus ring) */
 .vdrp-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 0 12px;
+  height: 36px;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-size: 13px;
   cursor: pointer;
-  min-width: 260px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  min-width: 240px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--t2), box-shadow var(--t2);
 }
 
 .vdrp-trigger:hover {
-  border-color: #9ca3af;
+  border-color: var(--c-border-2);
 }
 
 .vdrp-trigger.active {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-ring);
 }
 
 .vdrp-trigger-icon {
   margin-right: 8px;
-  color: #6b7280;
+  color: var(--c-text-3);
   display: flex;
   align-items: center;
 }
@@ -43,7 +47,7 @@
 }
 
 .vdrp-trigger-text.placeholder {
-  color: #9ca3af;
+  color: var(--c-text-3);
 }
 
 .vdrp-trigger-clear {
@@ -52,14 +56,14 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
-  color: #9ca3af;
+  border-radius: var(--r-full);
+  color: var(--c-text-3);
   background: transparent;
   border: none;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s, background 0.2s;
+  transition: opacity var(--t2), background var(--t2);
 }
 
 .vdrp-trigger-clear.visible {
@@ -68,8 +72,8 @@
 }
 
 .vdrp-trigger-clear:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--c-subtle);
+  color: var(--c-text-2);
 }
 
 /* Popover */
@@ -77,15 +81,15 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-modal);
   display: none;
   z-index: 50;
   opacity: 0;
   transform: translateY(-10px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--t2), transform var(--t2);
 }
 
 .vdrp-popover.open {
@@ -105,7 +109,7 @@
 /* Presets */
 .vdrp-presets {
   width: 140px;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--c-border);
   padding: 12px 8px;
   display: flex;
   flex-direction: column;
@@ -117,20 +121,21 @@
   border: none;
   text-align: left;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--r-md);
   font-size: 13px;
-  color: #374151;
+  font-family: inherit;
+  color: var(--c-text-2);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--t), color var(--t);
 }
 
 .vdrp-preset-btn:hover {
-  background: #f3f4f6;
+  background: var(--c-subtle);
 }
 
 .vdrp-preset-btn.active {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--c-primary-light);
+  color: var(--c-primary-dark);
   font-weight: 500;
 }
 
@@ -160,16 +165,16 @@
   cursor: pointer;
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  transition: background 0.15s;
+  color: var(--c-text-3);
+  transition: background var(--t);
 }
 
 .vdrp-month-nav:hover {
-  background: #f3f4f6;
+  background: var(--c-subtle);
 }
 
 .vdrp-weekdays {
@@ -178,7 +183,7 @@
   text-align: center;
   font-size: 12px;
   font-weight: 500;
-  color: #9ca3af;
+  color: var(--c-text-3);
   margin-bottom: 8px;
 }
 
@@ -202,23 +207,24 @@
   height: 32px;
   border: none;
   background: transparent;
-  border-radius: 50%;
+  border-radius: var(--r-full);
   font-size: 13px;
-  color: #374151;
+  font-family: inherit;
+  color: var(--c-text-2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
-  transition: color 0.15s;
+  transition: color var(--t);
 }
 
 .vdrp-day-btn:hover {
-  background: #f3f4f6;
+  background: var(--c-hover);
 }
 
 .vdrp-day-btn:disabled {
-  color: #d1d5db;
+  color: var(--c-text-4);
   cursor: not-allowed;
   background: transparent !important;
 }
@@ -231,7 +237,7 @@
   bottom: 2px;
   left: 0;
   right: 0;
-  background: #dcfce7; /* Light green */
+  background: var(--c-primary-light);
   z-index: 1;
 }
 
@@ -248,21 +254,25 @@
   display: none;
 }
 
+.vdrp-day-cell.in-range .vdrp-day-btn {
+  color: var(--c-text);
+}
+
 .vdrp-day-cell.range-start .vdrp-day-btn,
 .vdrp-day-cell.range-end .vdrp-day-btn {
-  background: #22c55e; /* Solid green */
-  color: #ffffff;
+  background: var(--c-primary);
+  color: #fff;
   font-weight: 500;
 }
 
 .vdrp-day-cell.range-start .vdrp-day-btn:hover,
 .vdrp-day-cell.range-end .vdrp-day-btn:hover {
-  background: #16a34a;
+  background: var(--c-primary-hover);
 }
 
 /* Today indicator */
 .vdrp-day-cell.today:not(.range-start):not(.range-end) .vdrp-day-btn {
-  color: #2563eb;
+  color: var(--c-primary-dark);
   font-weight: 600;
 }
 .vdrp-day-cell.today:not(.range-start):not(.range-end)::after {
@@ -273,25 +283,25 @@
   transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  border-radius: 50%;
-  background: #2563eb;
+  border-radius: var(--r-full);
+  background: var(--c-primary-dark);
   z-index: 2;
 }
 
 /* Footer */
 .vdrp-footer {
   padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--c-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9fafb;
-  border-radius: 0 0 12px 12px;
+  background: var(--c-subtle);
+  border-radius: 0 0 var(--r-xl) var(--r-xl);
 }
 
 .vdrp-footer-text {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--c-text-3);
 }
 
 .vdrp-footer-actions {
@@ -301,28 +311,29 @@
 
 .vdrp-btn {
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--r-md);
   font-size: 13px;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   border: none;
-  transition: all 0.15s;
+  transition: background var(--t), color var(--t);
 }
 
 .vdrp-btn-cancel {
   background: transparent;
-  color: #4b5563;
+  color: var(--c-text-2);
 }
 
 .vdrp-btn-cancel:hover {
-  background: #e5e7eb;
+  background: var(--c-hover);
 }
 
 .vdrp-btn-apply {
-  background: #111827;
-  color: #ffffff;
+  background: var(--c-primary);
+  color: #fff;
 }
 
 .vdrp-btn-apply:hover {
-  background: #374151;
+  background: var(--c-primary-hover);
 }
