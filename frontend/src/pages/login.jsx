@@ -9,36 +9,41 @@ export default function Login() {
 
   if (initializing) {
     return (
-      <div className="login-loading">
-        Cargando...
+      <div className="login-loading" data-testid="login-loading">
+        Cargando…
       </div>
     );
   }
 
   return (
-    <div className="login-page">
-      <section className="login-left">
-        <Brand />
-        <div className="left-body">
-          <HeroPanel />
-        </div>
-        <div className="login-foot">
-          © 2026 SaaSly — Todos los derechos reservados.
+    <div className="login-page" data-testid="login-page">
+      <section className="login-left" aria-label="Bienvenida VetCare">
+        <div className="login-left-inner">
+          <Brand />
+          <div className="left-body">
+            <HeroPanel />
+          </div>
+          <div className="login-foot">
+            <div className="login-foot-roles">
+              <span>Administrador</span>
+              <span className="login-foot-dot" aria-hidden="true">·</span>
+              <span>Veterinario</span>
+              <span className="login-foot-dot" aria-hidden="true">·</span>
+              <span>Recepción</span>
+            </div>
+            <div className="login-foot-copy">© 2026 VetCare</div>
+          </div>
         </div>
       </section>
 
-      <section className="login-right">
+      <section className="login-right" aria-label="Formulario de inicio de sesión">
         <div className="login-card">
-          <h2 className="login-title">Iniciar sesión</h2>
+          <h2 className="login-title" data-testid="login-title">Bienvenido de nuevo</h2>
           <p className="login-subtitle">
-            Bienvenido de vuelta. Ingresa tus credenciales para acceder al sistema.
+            Inicia sesión para administrar tu clínica.
           </p>
 
           <LoginForm />
-
-          <div className="login-signup-link">
-            ¿No tienes una cuenta? <a href="#" onClick={e => e.preventDefault()}>Solicitar acceso</a>
-          </div>
         </div>
       </section>
     </div>
