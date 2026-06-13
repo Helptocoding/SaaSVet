@@ -1,5 +1,6 @@
 import re
 
+from django.core.cache import caches
 from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
 
 
@@ -43,8 +44,18 @@ class ExtendedRateThrottle(SimpleRateThrottle):
 
 
 class LoginRateThrottle(ExtendedRateThrottle, AnonRateThrottle):
-    """Limita intentos de login por IP. Tasa en DEFAULT_THROTTLE_RATES['login']."""
+    """Limita intentos de login por IP. Tasa en DEFAULT_THROTTLE_RATES['login'].
+
+    Usa la cache `throttle_login` (IGNORE_EXCEPTIONS=False, P1-1/ADR p41): si
+    Redis está caído el login FALLA CERRADO en vez de abrir una ventana de
+    brute-force sin límite. El resto de la API usa la cache `default`
+    (fail-open). Resuelto vía property para respetar @override_settings en tests.
+    """
     scope = 'login'
+
+    @property
+    def cache(self):
+        return caches['throttle_login']
 
 
 class LoginUserRateThrottle(ExtendedRateThrottle):
@@ -52,8 +63,14 @@ class LoginUserRateThrottle(ExtendedRateThrottle):
     Limita intentos de login por IP+username combinados.
     Si el body no tiene username, usa solo IP (no ignorar el request).
     Tasa en DEFAULT_THROTTLE_RATES['login_by_user'].
+
+    Fail-closed sobre la cache `throttle_login` — ver LoginRateThrottle.
     """
     scope = 'login_by_user'
+
+    @property
+    def cache(self):
+        return caches['throttle_login']
 
     def get_cache_key(self, request, view):
         ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))

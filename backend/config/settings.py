@@ -246,6 +246,114 @@ DATABASES = {
     )
 }
 
+# ---------------------------------------------------------------------------
+# Caches — Redis (P1-1, ADR p41)
+#
+# Redis exists here for exactly two reasons, and only these:
+#   1. Django cache backend → cross-worker dashboard summary cache.
+#   2. DRF throttle store    → login/brute-force counters shared across the N
+#      gunicorn workers. With the default LocMemCache each worker kept its own
+#      bucket, so a `5/15min` login limit became ~5×N before lockout, and a
+#      worker recycle (`--max-requests`) reset the counters mid-window.
+#
+# Redis holds NOTHING authoritative: no JWT (stateless), no sessions (DB), no
+# idempotency keys (DB), no financial/clinical data. Everything in Redis is
+# reconstructible — a full Redis wipe loses at most a 30s dashboard cache plus
+# in-flight throttle counters.
+#
+# Fail-open vs fail-closed (ADR p41):
+#   - `default`        IGNORE_EXCEPTIONS=True  → a Redis outage degrades
+#                       gracefully (dashboard recomputes from DB; general
+#                       throttles open). The throttles run on EVERY request, so
+#                       a hard Redis dependency here would mean a full API
+#                       outage on any blip. Availability wins.
+#   - `throttle_login` IGNORE_EXCEPTIONS=False → the login throttles fail
+#                       CLOSED: if the brute-force limiter can't reach Redis we
+#                       block logins (brief outage) rather than serve them
+#                       unthrottled. The one place we trade availability for
+#                       security. Replaces the Caddy IP-rate-limit backstop
+#                       (which would need a custom xcaddy build).
+#
+# REDIS_URL empty:
+#   - dev / staging  → LocMemCache fallback (no Redis needed locally).
+#   - production     → refuse to boot (same fail-fast as CORS below + backup
+#                       p40), UNLESS ALLOW_LOCAL_CACHE_EMERGENCY=True. That flag
+#                       is break-glass only: it falls back to per-worker
+#                       LocMemCache, which RE-WEAKENS the multi-worker throttle.
+#                       Max 24h, restore Redis ASAP (ADR p41).
+# ---------------------------------------------------------------------------
+REDIS_URL = config('REDIS_URL', default='')
+ALLOW_LOCAL_CACHE_EMERGENCY = config('ALLOW_LOCAL_CACHE_EMERGENCY', default=False, cast=bool)
+
+if REDIS_URL:
+    _REDIS_BASE = {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+    }
+    CACHES = {
+        'default': {
+            **_REDIS_BASE,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'IGNORE_EXCEPTIONS': True,
+                'CONNECTION_POOL_KWARGS': {'max_connections': 50},
+            },
+        },
+        'throttle_login': {
+            **_REDIS_BASE,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'IGNORE_EXCEPTIONS': False,
+                'CONNECTION_POOL_KWARGS': {'max_connections': 10},
+            },
+        },
+    }
+    # Swallowed Redis errors on `default` still surface in logs / Sentry.
+    DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
+    if ALLOW_LOCAL_CACHE_EMERGENCY:
+        # Foot-gun guard: REDIS_URL wins, so the break-glass flag is a no-op
+        # here. Tell the operator exactly what to do under incident pressure.
+        import sys
+        sys.stderr.write(
+            "[P1-1] ALLOW_LOCAL_CACHE_EMERGENCY=True ignorado: REDIS_URL está "
+            "definido (Redis tiene prioridad). Para forzar el fallback de "
+            "emergencia per-worker, vacía REDIS_URL.\n"
+        )
+elif ENVIRONMENT == 'production' and not ALLOW_LOCAL_CACHE_EMERGENCY:
+    raise RuntimeError(
+        "REDIS_URL no configurado en producción. El throttle de login depende de "
+        "una cache compartida entre workers; sin Redis la protección brute-force "
+        "se diluye ×N_workers. Define REDIS_URL, o establece "
+        "ALLOW_LOCAL_CACHE_EMERGENCY=True como break-glass temporal (máx 24h, "
+        "cache per-worker degradada — ADR p41)."
+    )
+else:
+    if ENVIRONMENT == 'production':
+        # Break-glass must be impossible to miss. warnings.warn alone is
+        # filtered to once-per-process and easily lost in a gunicorn boot;
+        # write to stderr too (--error-logfile=- → stdout → log shipping).
+        import sys
+        import warnings
+        _bg_msg = (
+            "ALLOW_LOCAL_CACHE_EMERGENCY activo: cache per-worker (LocMem) en "
+            "producción. El throttle de login vuelve a diluirse entre workers. "
+            "Break-glass temporal — restaurar Redis en <24h (ADR p41)."
+        )
+        warnings.warn(_bg_msg, RuntimeWarning)
+        sys.stderr.write("[P1-1][BREAK-GLASS] " + _bg_msg + "\n")
+    # Both aliases resolve to LocMem so the throttle code keeps working; in
+    # production break-glass this is per-worker (degraded, accepted).
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'vet-default',
+        },
+        'throttle_login': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'vet-throttle-login',
+        },
+    }
+
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 

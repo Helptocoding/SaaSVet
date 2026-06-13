@@ -52,11 +52,46 @@ services:
     networks: [internal]
     # NO ports: — accessed only via the internal network.
 
+  # P1-1 (ADR p41): shared cache + DRF throttle store across gunicorn workers.
+  # Ephemeral by design — holds ONLY a 30s dashboard cache + login throttle
+  # counters, nothing authoritative. No persistence, no volume: a restart loses
+  # at most that cache + in-flight counters (both reconstructed on next use).
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      # The official redis image does NOT auto-read this — auth is set by
+      # --requirepass below. It's here so the healthcheck (and any exec-in)
+      # can authenticate without baking the secret into the compose file.
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    command:
+      - sh
+      - -c
+      - "exec redis-server --save '' --appendonly no --maxmemory 256mb --maxmemory-policy noeviction --requirepass \"$$REDIS_PASSWORD\""
+    healthcheck:
+      # Authenticated PING: also proves requirepass is enforced (an
+      # unauthenticated PING returns NOAUTH and fails the grep).
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 320M
+    networks: [internal]
+    # NO ports: — internal network only, like postgres.
+
   release:
     build: *backend-build
     image: vet-backend:capa1
     env_file: .env.prod
     command: ["/app/scripts/release.sh"]
+    # Intentionally NOT depends_on redis: release runs migrate / collectstatic
+    # / seed_permissions, none of which touch the Django cache. Keep it that
+    # way — any release-time command that reads caches['throttle_login'] would
+    # fail-closed against a not-yet-ready Redis (P1-1 / ADR p41).
     depends_on:
       postgres:
         condition: service_healthy
@@ -84,6 +119,8 @@ services:
       - --log-level=info
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       release:
         condition: service_completed_successfully

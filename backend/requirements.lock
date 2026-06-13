@@ -21,9 +21,12 @@ django==6.0.5
     #   -r requirements.txt
     #   dj-database-url
     #   django-cors-headers
+    #   django-redis
     #   djangorestframework
     #   djangorestframework-simplejwt
 django-cors-headers==4.9.0
+    # via -r requirements.txt
+django-redis==7.0.0
     # via -r requirements.txt
 djangorestframework==3.17.1
     # via
@@ -47,6 +50,8 @@ pypdf==6.12.1
     # via -r requirements.txt
 python-decouple==3.8
     # via -r requirements.txt
+redis==8.0.0
+    # via django-redis
 reportlab==4.5.1
     # via -r requirements.txt
 sentry-sdk==2.60.0
