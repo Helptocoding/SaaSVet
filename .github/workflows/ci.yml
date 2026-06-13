@@ -1,0 +1,148 @@
+name: CI
+
+# P1-3 — Continuous Integration only (NOT CD). Protects develop/main by
+# running backend tests + migration checks, frontend build, and a secret scan
+# on every push/PR. No deploy, no Docker registry, no VPS, no coverage gates.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+# Least privilege: CI only reads the repo. It never writes or deploys.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref → faster feedback, fewer minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # BACKEND (required) — Postgres 16 service, migration drift check, full suite.
+  # Tests need NO Redis: ENVIRONMENT=dev falls back to LocMem cache (ADR p41).
+  # ---------------------------------------------------------------------------
+  backend:
+    name: backend (tests + migrations)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        # Wait for Postgres before the steps run (avoids flaky connect races).
+        options: >-
+          --health-cmd "pg_isready -U postgres -d test_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Dummy, NON-secret CI values. SECRET_KEY has no default in settings.py,
+      # so it must be provided or Django refuses to start.
+      SECRET_KEY: ci-not-a-real-secret
+      ENVIRONMENT: dev
+      DEBUG: "False"
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - name: Install dependencies (pinned lockfile)
+        run: pip install -r requirements.lock
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+      - name: Apply migrations
+        run: python manage.py migrate --no-input
+      - name: Run test suite (parallel)
+        run: python manage.py test --parallel
+
+  # ---------------------------------------------------------------------------
+  # FRONTEND (required) — build must pass; lint is advisory (warning).
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: frontend (build + lint + smoke)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      # pnpm must be installed before setup-node so its pnpm cache works.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Build (blocking)
+        run: pnpm run build
+      - name: Lint (warning)
+        continue-on-error: true
+        run: pnpm run lint
+      - name: Smoke - URL construction (blocking)
+        run: pnpm run smoke:urls
+
+  # ---------------------------------------------------------------------------
+  # SECURITY — gitleaks is BLOCKING (a prior accidental B2 credential exposure
+  # is why secrets must never enter the repo). Dependency audits are advisory.
+  # ---------------------------------------------------------------------------
+  security:
+    name: security (gitleaks blocking; audits warning)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # gitleaks needs full history to scan past commits
+      - name: gitleaks secret scan (BLOCKING)
+        env:
+          GITLEAKS_VERSION: 8.18.4
+        run: |
+          set -euo pipefail
+          curl -sSL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            -o /tmp/gitleaks.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          # --redact: never print secret values into the CI log.
+          /tmp/gitleaks detect \
+            --source . \
+            --config .gitleaks.toml \
+            --redact \
+            --no-banner \
+            --verbose \
+            --exit-code 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: pip-audit (warning)
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.lock
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: pnpm audit (warning)
+        continue-on-error: true
+        working-directory: frontend
+        # Full tree (not --prod): surface build/dev-dep advisories too. Advisory
+        # only — continue-on-error keeps it non-blocking.
+        run: pnpm audit

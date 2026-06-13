@@ -1,0 +1,16 @@
+# P1-3 — gitleaks config for the CI secret scan (.github/workflows/ci.yml).
+# Extends the full default ruleset; only adds an allowlist for files that
+# legitimately contain NO real secrets, so the BLOCKING gate never false-fails
+# on templates or generated lockfiles.
+title = "VetCare CI secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Templates and generated lockfiles (no real secrets)"
+paths = [
+  '''\.env\.prod\.example$''',
+  '''pnpm-lock\.yaml$''',
+  '''requirements\.lock$''',
+]
