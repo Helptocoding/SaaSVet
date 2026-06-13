@@ -33,6 +33,7 @@ contexto de trabajo ligero y preciso:
 | `cash` | Turno de caja (CashSession) y cierre Z. Reconciliación física del efectivo. |
 | `analytics` | Snapshots diarios + dashboards (operacional + financiero). Read-only sobre eventos. |
 | `logs` | Eventos estructurados JSON a stdout (RBAC, tenant, anchors, deprecation, integridad). |
+| `backup` | **Infra/ops (host-level, no es app Django)**: backup nightly cifrado offsite + restore + drill DR. ADR p40. Ver [`modules/backup.md`](modules/backup.md). |
 
 ### Dependencias funcionales
 
@@ -59,3 +60,4 @@ Reglas de boundary:
 - Dominios (`medical_records`, `billing`, `inventory`, `appointments`) NUNCA importan `platform`.
 - `cash` recibe FK de `billing.Payment` con string-ref → sin ciclo de import.
 - `analytics` lee anchors de `billing` / `medical_records` / `appointments`; NUNCA escribe.
+- `backup` (host-level, ADR p40) lee la DB vía `pg_dump` fuera de la app; nunca importa código de dominio. Offsite cifrado (age, zero-knowledge) + inmutable (B2 Object Lock).

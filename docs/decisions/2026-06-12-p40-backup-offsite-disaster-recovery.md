@@ -170,7 +170,9 @@ con copia dual offline + prueba de descifrado en cada restore drill.
 
 ## FASE 2 / FASE 3 (diferidas, NO en este ADR)
 
-- **FASE 2 (hardening)**: WAL archiving (pgBackRest/wal-g) → PITR; drill mensual
-  ya está. RPO → minutos.
-- **FASE 3 (escala)**: geo-redundancia (2º bucket/región) o DB managed con PITR
-  nativo cuando Postgres >70% CPU o >10 clínicas.
+Registradas en `docs/deferred-decisions.md` con su trigger de activación:
+
+- **FASE 2 (hardening) — [DD-011]**: WAL archiving (pgBackRest/wal-g) → PITR;
+  drill mensual ya está. RPO → minutos.
+- **FASE 3 (escala) — [DD-012]**: geo-redundancia (2º bucket/región) o DB managed
+  con PITR nativo cuando Postgres >70% CPU o >10 clínicas.

@@ -2,7 +2,7 @@
 
 Status: living document
 Owner: Backend / Architecture
-Last updated: 2026-05-27
+Last updated: 2026-06-13
 
 ---
 
@@ -37,6 +37,8 @@ El mapa consolidado vive aquí; los ADRs deciden, justifican y apuntan.
 | **DD-008** | `revenue_paid` **cash-basis por pago** (Σ pagos/día) en vez de por factura completa | Deferred | Contabilidad exige reconocer parciales el día en que entran | dashboard-metrics-contract | Contrato §8.4 — hoy `paid_at` se setea al completar la factura; cambio = `METRICS_SCHEMA_VERSION` bump + dual-write 30d |
 | **DD-009** | Drop de la columna `Invoice.payment_method` | Deferred | Post-beta, tras estabilizar el ledger de `Payment` | ADR p27 | Sprint A: `payment_method` queda como legacy/derivado, no se dropea |
 | **DD-010** | Pago **split** en la venta rápida F11 (`NewInvoiceModal`) | **Implemented (ADR p38, 2026-06-12)** | — | ADR p27, p38 | Resuelto con el POS `/pos` (checkout en 2 pasos server-driven): "Cobrar" crea el draft real y el pago se captura contra el total con IVA **del backend** — sin replicar `money.invoice_totals` client-side. Drafts intermedios se cancelan (auditable), no quedan huérfanos. El modal `NewInvoiceModal` fue eliminado |
+| **DD-011** | **WAL archiving / PITR** (pgBackRest o wal-g → B2) — FASE 2 de backup/DR | Deferred | RPO de 24h duele (pérdida de un día de ledger/clínico inaceptable) o requisito de recuperación a punto-en-el-tiempo / >10 clínicas | ADR p40 | FASE 1: `pg-backup.sh` ya hace `pg_dump -Fc` nightly + manifest + cifrado age + B2 Object Lock; el `archive_command` se añade **sin reescribir** el pipeline; el drill mensual ya existe. Baja RPO 24h → minutos |
+| **DD-012** | **Geo-redundancia / DB managed** (Neon/Supabase/Crunchy con PITR nativo, o standby self-hosted vía streaming replication) — FASE 3 de backup/DR | Deferred | Postgres >70% CPU sostenido, >10 clínicas, o requisito multi-región | ADR p40 | Backups portables (`pg_dump -Fc`) restaurables a cualquier cluster; `RUNBOOK-RESTORE.md` documenta el cutover; `conn_max_age` ya tuneado para VPS único. Cero lock-in al proveedor actual |
 
 ---
 
@@ -55,5 +57,6 @@ Una `DD` se cierra cuando se implementa:
 - `docs/financial-event-model-contract.md` — vocabulario/semántica/invariantes congelados.
 - `docs/dashboard-metrics-contract.md` — métricas, dual-window de reversos, schema version.
 - `docs/decisions/` — ADRs p25–p29 (financial event model, caja, refunds, attestation,
-  owner/pet en venta directa).
+  owner/pet en venta directa); ADR p40 (backup offsite & DR — DD-011/DD-012).
+- `docs/modules/backup.md` — subsistema backup/DR (FASE 1 implementada).
 - `docs/deuda/` — deuda técnica real (distinta de este registro).
