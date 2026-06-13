@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -18,6 +18,7 @@ import {
     updatePrescription,
 } from "../api/prescriptions";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
+import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
 
 const formatDate = (ds) =>
     new Date(ds).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
@@ -241,6 +242,10 @@ const Prescriptions = () => {
     const [formSeed, setFormSeed]             = useState({ medical_record: "", pet: "", notes: "", items: [] });
     const [downloadingId, setDownloadingId]   = useState(null);
     const [search, setSearch]                 = useState("");
+    const [view, setView]                     = useState("table");
+    const [filterSpecies, setFilterSpecies]   = useState("all");
+    const [filterSex, setFilterSex]           = useState("all");
+    const [filterAge, setFilterAge]           = useState("all");
 
     const canCreate = user?.role !== "ASSISTANT";
 
@@ -341,13 +346,31 @@ const Prescriptions = () => {
         finally { setDownloadingId(null); }
     };
 
+    // Join receta -> mascota por pet_public_id para reutilizar filtros de Mascotas
+    const petByPublicId = useMemo(() => {
+        const m = {};
+        pets.forEach(p => { m[p.public_id] = p; });
+        return m;
+    }, [pets]);
+
     const filtered = prescriptions.filter(rx => {
         const q = search.toLowerCase();
-        return !q ||
+        const matchSearch = !q ||
             rx.pet_name?.toLowerCase().includes(q) ||
             rx.veterinarian_name?.toLowerCase().includes(q) ||
             rx.items?.some(i => i.product_name?.toLowerCase().includes(q));
+
+        const pet = petByPublicId[rx.pet_public_id];
+        const matchSpecies = filterSpecies === "all" ||
+            (filterSpecies === "caninos" && pet && isCanino(pet)) ||
+            (filterSpecies === "felinos" && pet && isFelino(pet));
+        const matchSex = filterSex === "all" || (pet && pet.sex === filterSex);
+        const matchAge = filterAge === "all" || (pet && getAgeGroup(pet.birth_date) === filterAge);
+
+        return matchSearch && matchSpecies && matchSex && matchAge;
     });
+
+    const hasActiveFilters = search || selectedPet || filterSpecies !== "all" || filterSex !== "all" || filterAge !== "all";
 
     if (initializing || loading) {
         return (
@@ -401,15 +424,70 @@ const Prescriptions = () => {
                     className="select-input"
                     value={selectedPet}
                     onChange={e => setSelectedPet(e.target.value)}
-                    style={{ width: "auto", height: "38px" }}
+                    style={{ width: "auto", height: "36px", fontSize: "13px" }}
                 >
                     <option value="">Todas las mascotas</option>
                     {pets.map(p => <option key={p.public_id} value={p.public_id}>{p.name}</option>)}
                 </select>
-                {(search || selectedPet) && (
+
+                {/* Especie (reutilizado de Mascotas) */}
+                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                    {[
+                        { key: "all", label: "Todos" },
+                        { key: "caninos", label: "Caninos", icon: <Icon.Dog s={13} /> },
+                        { key: "felinos", label: "Felinos", icon: <Icon.Cat s={13} /> },
+                    ].map(({ key, label, icon }) => (
+                        <button
+                            key={key}
+                            onClick={() => setFilterSpecies(key)}
+                            style={{
+                                display: "inline-flex", alignItems: "center", gap: "5px",
+                                height: "28px", padding: "0 10px",
+                                borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
+                                fontSize: "12.5px", fontWeight: "600", fontFamily: "inherit",
+                                background: filterSpecies === key ? "var(--c-surface)" : "transparent",
+                                color: filterSpecies === key ? "var(--c-text)" : "var(--c-text-2)",
+                                boxShadow: filterSpecies === key ? "var(--shadow-xs)" : "none",
+                                transition: "all var(--t)",
+                            }}
+                        >
+                            {icon}
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Sexo (reutilizado de Mascotas) */}
+                <select
+                    className="select-input"
+                    value={filterSex}
+                    onChange={e => setFilterSex(e.target.value)}
+                    style={{ width: "auto", height: "36px", fontSize: "13px" }}
+                >
+                    <option value="all">Todos los sexos</option>
+                    <option value="male">Macho</option>
+                    <option value="female">Hembra</option>
+                    <option value="unknown">Sin especificar</option>
+                </select>
+
+                {/* Edad (reutilizado de Mascotas) */}
+                <select
+                    className="select-input"
+                    value={filterAge}
+                    onChange={e => setFilterAge(e.target.value)}
+                    style={{ width: "auto", height: "36px", fontSize: "13px" }}
+                >
+                    <option value="all">Todas las edades</option>
+                    <option value="cachorro">Cachorro (&lt;1 año)</option>
+                    <option value="joven">Joven (1–3 años)</option>
+                    <option value="adulto">Adulto (3–8 años)</option>
+                    <option value="senior">Senior (&gt;8 años)</option>
+                </select>
+
+                {hasActiveFilters && (
                     <button
                         className="btn btn-ghost btn-sm"
-                        onClick={() => { setSearch(""); setSelectedPet(""); }}
+                        onClick={() => { setSearch(""); setSelectedPet(""); setFilterSpecies("all"); setFilterSex("all"); setFilterAge("all"); }}
                     >
                         <Icon.X s={12} /> Limpiar
                     </button>
@@ -420,6 +498,27 @@ const Prescriptions = () => {
                         {filtered.length} de {prescriptions.length}
                     </p>
                 )}
+
+                {/* View toggle */}
+                <div style={{ display: "flex", gap: "3px", background: "var(--c-subtle)", padding: "3px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                    {[{ key: "table", I: Icon.Rows }, { key: "cards", I: Icon.Grid }].map(({ key, I }) => (
+                        <button
+                            key={key}
+                            onClick={() => setView(key)}
+                            style={{
+                                width: "30px", height: "28px",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
+                                background: view === key ? "var(--c-surface)" : "transparent",
+                                color: view === key ? "var(--c-text)" : "var(--c-text-3)",
+                                boxShadow: view === key ? "var(--shadow-xs)" : "none",
+                                transition: "all var(--t)",
+                            }}
+                        >
+                            <I s={15} />
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Lista */}
@@ -437,7 +536,7 @@ const Prescriptions = () => {
                         </p>
                     )}
                 </div>
-            ) : (
+            ) : view === "cards" ? (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "14px" }}>
                     {filtered.map(rx => (
                         <PrescriptionCard
@@ -450,6 +549,75 @@ const Prescriptions = () => {
                             onDelete={handleDelete}
                         />
                     ))}
+                </div>
+            ) : (
+                <div className="table-wrap">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Mascota</th>
+                                <th>Veterinario</th>
+                                <th>Medicamentos</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.map((rx) => (
+                                <tr key={rx.id} style={{ cursor: "pointer" }} onClick={() => handleView(rx)}>
+                                    <td style={{ whiteSpace: "nowrap", color: "var(--c-text-2)" }}>
+                                        {formatDate(rx.created_at)}
+                                    </td>
+                                    <td>
+                                        <span style={{ fontWeight: "600" }}>{rx.pet_name}</span>
+                                    </td>
+                                    <td style={{ color: "var(--c-text-2)" }}>
+                                        Dr. {rx.veterinarian_name}
+                                    </td>
+                                    <td>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                            <span className="badge badge-success" style={{ flexShrink: 0 }}>
+                                                <Icon.Pill s={11} />
+                                                {rx.items.length}
+                                            </span>
+                                            <span style={{ fontSize: "12.5px", color: "var(--c-text-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "320px" }}>
+                                                {rx.items.map(i => i.product_name).join(", ") || "—"}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td onClick={e => e.stopPropagation()}>
+                                        <div style={{ display: "flex", gap: "6px" }}>
+                                            <button className="btn btn-secondary btn-sm" onClick={() => handleView(rx)}>
+                                                <Icon.Eye s={13} /> Ver
+                                            </button>
+                                            <button
+                                                className="btn btn-primary btn-sm"
+                                                onClick={() => handleDownloadPDF(rx.public_id)}
+                                                disabled={downloadingId === rx.public_id}
+                                            >
+                                                {downloadingId === rx.public_id
+                                                    ? <><Icon.Loader s={13} /> …</>
+                                                    : <><Icon.Download s={13} /> PDF</>}
+                                            </button>
+                                            {canCreate && (
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => handleDelete(rx.public_id)}
+                                                    title="Eliminar receta"
+                                                >
+                                                    <Icon.Trash s={13} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="table-footer">
+                        {filtered.length} receta{filtered.length !== 1 ? "s" : ""}
+                        {filtered.length !== prescriptions.length && ` de ${prescriptions.length} total`}
+                    </div>
                 </div>
             )}
 

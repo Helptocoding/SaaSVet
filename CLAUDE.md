@@ -1,262 +1,156 @@
-# VeterinariaSaaS - Reglas para Claude Code
+# VetCare SaaS - Claude Rules
 
-## Stack actual
-- Backend: Django 6 + DRF + SimpleJWT
-- Frontend: React 19 + Vite (JavaScript, no TypeScript)
-- DB: PostgreSQL multitenant
-- Deploy objetivo: Docker / VPS
-- Branch activa de desarrollo: `develop`
+## Rol
 
-## Proposito de este archivo
-Este archivo contiene reglas operativas cortas para trabajar en el repo.
+Actúa como senior full-stack engineer trabajando en un SaaS veterinario multi-tenant en producción.
 
-La documentacion larga vive en:
-- `docs/decisions/` - ADRs y decisiones historicas
-- `docs/modules/` - contratos y acoplamientos por modulo
-- `docs/runbooks/` - operacion, testing y soporte
-- `DEPLOY_VPS_PLAN.md` - plan de despliegue Docker/VPS
+Prioridades en orden:
+
+1. Seguridad y aislamiento tenant
+2. Correctitud de negocio
+3. Consistencia con arquitectura existente
+4. UX simple y profesional
+5. Código mantenible
 
 ---
 
-## Reglas backend no negociables
+# Stack
 
-### Sanitizacion de texto libre
-Todos los campos de texto libre pasan por `sanitize_text()` de `apps/core/sanitize.py`.
+Backend:
+- Django
+- Django REST Framework
+- PostgreSQL
+- Arquitectura modular por apps
 
-Patron obligatorio:
-```python
-clean = sanitize_text(value or '', max_length=255)
-```
+Frontend:
+- React 19
+- Vite
+- CSS Modules
+- JavaScript
 
-Reglas:
-- Nunca pasar `None` directo; siempre `value or ''`
-- Validar campos obligatorios despues de sanitizar
-- FBVs con texto libre sanitizan en la view, no delegan ciegamente al serializer
+---
 
-Limites frecuentes:
-- `diagnosis`, `treatment` -> `max_length=400`
-- `notes` -> `max_length=5000`
-- `vaccine_name`, `reason` -> `max_length=255`
-- `motivo`, `cancellation_reason`, `batch_number` -> `max_length=100`
+# Antes de modificar código
 
-### Multitenancy
-Toda query de negocio debe usar `for_organization()`.
+OBLIGATORIO:
+
+1. Leer archivos existentes relacionados.
+2. Entender el flujo actual.
+3. Buscar documentación en `/docs`.
+4. No asumir comportamiento.
+5. No crear una segunda forma de resolver algo existente.
+
+---
+
+# Reglas de arquitectura
+
+## No duplicar lógica
+
+Antes de crear:
+
+- helper
+- hook
+- service
+- componente
+- validación
+
+buscar si ya existe.
+
+Extender antes de duplicar.
+
+---
+
+# Backend boundaries
+
+Los módulos tienen ownership.
+
+No cruzar dominios directamente.
+
+Ejemplos:
 
 Correcto:
-```python
-obj = Model.objects.for_organization(request.user.organization)
-```
+View → service → modelo
 
 Incorrecto:
-```python
-Model.objects.filter(pk=pk)
-```
+View → modificar estado crítico directamente
 
-### Validacion tenant de FKs en serializers
-Todo serializer que reciba FKs de modelos organizacionales debe validar tenant.
-
-Patron:
-```python
-def validate_pet(self, pet):
-    if pet and pet.organization != self.context['request'].user.organization:
-        raise ValidationError('Acceso invalido.')
-    return pet
-```
-
-### Serializer checklist minimo
-Todo serializer nuevo debe cumplir:
-- `CharField` / `TextField` libre -> `sanitize_text()` con `max_length`
-- campo obligatorio -> no vacio despues de sanitizar
-- precio -> `> 0`
-- stock / cantidad -> `>= 0` o `> 0` segun dominio
-- FK de otro modulo -> validacion tenant
+Los cambios con efectos secundarios deben vivir en services.
 
 ---
 
-## Concurrencia, stock y facturacion
+# Multi tenant
 
-### Transacciones
-Toda operacion que toque stock + factura debe vivir dentro de `transaction.atomic()`.
+Nunca confiar en IDs enviados por cliente.
 
-Reglas:
-- `select_for_update()` solo bloquea cuando el queryset se evalua (`.get()`, `.first()`, `.exists()`, iteracion)
-- si un service recibe un objeto ya cargado, debe re-fetch con lock al inicio
-- el lock debe cubrir toda la cadena, incluyendo helpers y `save()` internos
+Toda query debe estar limitada por organización.
 
-Patron:
-```python
-with transaction.atomic():
-    locked = Model.objects.select_for_update().filter(...).first()
-```
-
-### Mutaciones numericas contables
-Las mutaciones de `InvoiceItem.quantity` deben usar `F()` via `.update()`, nunca `item.quantity += delta; item.save()`.
-
-Helper canonico:
-- `apps.billing.services.apply_invoice_item_quantity_delta(item, delta)`
-
-### Contratos criticos
-- `apply_stock_movement()` no adquiere su propio lock; el caller debe poseer `select_for_update()` sobre `presentation`
-- `MedicalRecordProduct.save()` / `.delete()` exigen `transaction.atomic()`
-- `bulk_create` siempre asigna `organization` explicitamente
-- deletes que revierten stock deben envolver lock + `atomic()` antes de `super().delete()`
-- en operaciones idempotentes tipo walk-in, lockear una fila estable que siempre exista
-
-### Orden global de locks (canonico)
-Todo flujo que adquiera multiples locks DEBE seguir este orden, para evitar deadlocks ABBA:
-
-```
-CashSession -> MedicalRecord -> Invoice -> Presentation -> InvoiceItem
-```
-
-Reglas:
-- `CashSession` es la CABEZA (ADR p28). El flujo de pago la lockea ANTES de Invoice cuando `require_open_cash_session` esta activo (`_resolve_cash_session_for_payment`). `cash.services.close_cash_session` lockea SOLO `CashSession` (nunca Invoice) -> no hay par {Invoice, CashSession} en orden inverso -> sin ABBA.
-- Dentro de un mismo tipo, lockear por PK ascendente (`_lock_presentations` ordena los IDs).
-- Toda mutacion de `InvoiceItem` (create / save / delete / quantity-delta) debe correr con la Invoice ya lockeada (`select_for_update`) dentro del mismo `atomic()`. Garantiza que `recalculate_totals` no sufra lost-update. `InvoiceItem.save/delete` loguea `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` (warn) si se llama fuera de `atomic()`.
-- Verificado por la suite real `apps.billing.tests.test_invoice_concurrency` (Postgres + threads). No reordenar locks sin volver a correrla.
-
-### Validacion de stock
-Las validaciones de stock en serializers son solo pre-check UX. La validacion autoritativa vive en la view/service con lock.
+Prohibido exponer datos cross-tenant.
 
 ---
 
-## IDs publicos y URLs
+# Cambios grandes
 
-### Regla general
-Modelos expuestos publicamente usan `public_id` (UUID) en URLs, no PK entero.
+Antes de implementar:
 
-Modelos con `public_id`:
-- `Pet`, `Owner`, `Appointment`, `MedicalRecord`, `Invoice`, `Prescription`, `Product`, `Presentation`, `Service`, `VaccineRecord`, `User`, `Organization`
-
-Modelos internos sin `public_id`:
-- `InvoiceItem`, `StockMovement`, `MedicalRecordProduct`, `MedicalRecordService`, `InvoiceAuditLog`, `AppointmentStatusChange`, `VitalSigns`, `Permission`, `Role`, `UserRole`
-
-### Reglas de implementacion
-- parametros URL de modelos publicos: siempre `<str:>`
-- resolver IDs con `resolve_public_id()`, no con `pk=` directo
-- query params de modelos publicos tambien resuelven via `resolve_public_id(Model.objects.for_organization(org), raw)`
-- cross-tenant debe dar `404`, no `[]`
-
-### Convencion por capa
-- backend / JSON: `public_id`
-- frontend JS: `publicId`
-- URLs: UUID raw
-- FK en body `POST/PATCH`: PK entero (`PrimaryKeyRelatedField`)
-
-### Anti-patterns prohibidos
-- `editing.public_id || editing.id`
-- `try uuid except pk` ad-hoc en views
-- helpers genericos tipo `resolve_anything()`
-- dual-lookup PK + UUID sin flag de migracion
-- `PrimaryKeyRelatedField` esperando UUID en body
-- **serializer nuevo de modelo con `public_id` exponiendo `id` en `Meta.fields`** —
-  exponer solo `public_id`. Los ~12 legacy estan baselineados; un nuevo serializer
-  con `id`+`public_id` falla `apps.core.tests.test_public_id_dual_exposure_audit`
-  (ADR p24, contencion de deuda hibrida)
+- explicar impacto
+- mencionar archivos afectados
+- detectar riesgos
 
 ---
 
-## RBAC y permisos
-- Todos los endpoints usan `HybridPermission` o `make_permission()`
-- Nunca usar `RolePermission` directamente
-- Nunca verificar `user.role == 'ADMIN'` directo en views o permissions locales
-- Si agregas nuevos codigos a `PERMISSION_CODES`, debes correr `seed_permissions` en el siguiente deploy
-- `billing` usa `cancelled`; `appointments` usa `canceled` - no mezclar
+# Migraciones
 
-### Gotcha de vistas anidadas
-En list views anidadas bajo `<str:pk>` del padre, declarar `required_permission` por metodo en `initial()` para evitar que `HybridPermission` infiera `retrieve` por error.
+Antes de crear una migración:
 
-Ejemplo:
-```python
-def initial(self, request, *args, **kwargs):
-    if request.method == 'GET':
-        self.required_permission = 'medicalrecord.vitals.list'
-    else:
-        self.required_permission = 'medicalrecord.vitals.create'
-    super().initial(request, *args, **kwargs)
-```
+- explicar cambio de schema
+- validar compatibilidad con datos existentes
 
 ---
 
-## Facturacion y estados
-- Invoice: `draft -> confirmed -> paid`
-- Cancelacion permitida desde `draft` o `confirmed`
-- Solo `draft` es editable
-- `confirm_invoice` requiere al menos un item activo
-- `pay_invoice` requiere estado `confirmed` + `payment_method`
-- `total`, `subtotal`, `tax_amount`, `tax_rate` se recalculan en backend y son `read_only`
+# Testing
 
-Flujo canonico de sync de invoice:
-1. `billing.signals.create_draft_invoice_on_done`
-2. `medical_records.views._sync_invoice_item`
-3. `inventory.views._sync_invoice_item`
+Cambios en reglas de negocio requieren tests.
 
-Si la invoice aun no existe, usar `get_or_create_invoice_for_medical_record()` de `apps.billing.services`.
+No eliminar tests para hacer pasar la suite.
 
 ---
 
-## Frontend auth y seguridad
-- No tocar tokens fuera de `frontend/src/auth/tokenStorage.js`
-- No usar `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de ese modulo
-- No crear update paths alternos para password que bypassen `change_password` / reset flows oficiales
-- Respetar `MustChangePasswordGate` backend y frontend
-- Si frontend agrega headers custom (`X-Request-ID`, futuros idempotency keys, etc.), actualizar `CORS_ALLOW_HEADERS`
+# Estilo
 
----
+Preferir:
+- código explícito
+- funciones pequeñas
+- nombres descriptivos
 
-## Frontend Design System
-- **Fuente unica de verdad visual: `frontend/design-system.md`.** Toda UI nueva o modificada se ajusta a esos contratos.
-- Cero hex crudo en `.css`/`.jsx`: usar tokens de `frontend/src/styles/tokens.css` (`var(--c-*)`, `var(--r-*)`, `var(--shadow-*)`).
-- Reutilizar clases globales de `global.css`: boton `.btn`, card `.card`, input `.input`, tabla `.table`, badge `.badge`, modal `.modal`. No reimplementar.
-- H1 de pagina: `.page-title` (20px/700). Un solo tamano de titulo; no inventar por modulo.
-- Prohibido teal legacy `rgba(45,212,191,*)` / `#99f6e4`. La marca es verde bosque `--c-primary`.
-- `style={{}}` solo para valores dinamicos (posicion, ancho %, color de dato), nunca para color/spacing/radio/sombra fijos.
-- Para desviarte de un contrato, edita primero `frontend/design-system.md` documentando la excepcion.
+Evitar:
+- abstracciones prematuras
+- soluciones genéricas innecesarias
 
----
+# Context loading
 
-## Analytics no negociable
-Cuando toques `billing`, `medical_records`, `appointments` o `analytics`, validar:
+NO cargar @docs/ completo por defecto.
+Cargar solo el contexto mínimo necesario según el tipo de cambio:
 
-1. writers de anchors solo en `services.py`
-2. escritura nueva usa provenance `'service'`
-3. `build_daily_metrics` sigue siendo idempotente
-4. today nunca se snapshottea
-5. dashboard siempre devuelve `source` y `lifecycle_state`
-6. no usar `cache.clear()` masivo en signals
-7. CHECK constraints analiticos son contrato
-8. si cambia semantica de KPI, bumpear `METRICS_SCHEMA_VERSION`
+- Cambio en frontend (UI, componentes, CSS, UX):
+  @docs/modules/frontend.md
 
----
+- Cambio en backend (modelo, vista, servicio de un dominio):
+  @docs/modules/{module}.md
+  Identifica el módulo afectado (billing, inventory, appointments, etc.)
+  y carga solo ese archivo.
 
-## Gotchas importantes del repo
-- `for_organization()` debe ir primero en la cadena del queryset; `select_related()` / `prefetch_related()` antes rompen el manager custom
-- `apps.platform` en Windows + Python 3.13: no correr `python manage.py test apps.platform`; usar modulos completos `apps.platform.tests.test_X`
-- errores 500 incluyen `request_id`; no exponer mensajes crudos del ORM al frontend
-- `IntegrityError` no esta normalizado por el exception handler global; validar duplicados antes de llegar a DB
+- Cambio cross-módulo (afecta varios dominios, APIs compartidas):
+  @docs/system-operational-flow.md (índice + mapa de módulos)
+  Según necesidad, complementar con:
+    @docs/system-module-operations.md (acciones por módulo: precondiciones, efectos, bloqueos)
+    @docs/system-flows.md (recorridos extremo a extremo, flujos válidos/inválidos)
+    @docs/system-reference.md (errores comunes, dependencias críticas, invariantes)
 
----
+- Cambio arquitectónico (schema persistente, reglas críticas, seguridad):
+  @docs/decisions/ — solo los ADRs relevantes al cambio
 
-## Comandos de referencia rapida
+- Diagnóstico o bug:
+  Primero identifica el módulo afectado, luego carga el contexto mínimo.
 
-Setup minimo:
-```bash
-python manage.py migrate
-python manage.py seed_permissions
-```
-
-Comandos utiles:
-```bash
-python manage.py audit_anchor_integrity
-python manage.py build_daily_metrics
-python manage.py flushexpiredtokens
-```
-
-Para suites completas, bootstrap detallado, password flows y deploy Docker/VPS, ver:
-- `docs/runbooks/password-change.md`
-- `docs/runbooks/platform-org-provisioning.md`
-- `docs/runbooks/audit_orphan_fks.md`
-- `docs/modules/frontend.md`
-- `docs/modules/analytics.md`
-- `DEPLOY_VPS_PLAN.md`
-- `docs/decisions/`
+No cargar módulos no relacionados.
+El contexto sobrante reduce la calidad de las respuestas.

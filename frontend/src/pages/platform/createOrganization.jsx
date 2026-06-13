@@ -372,7 +372,7 @@ const Row = ({ label, value, mono, small, highlight }) => (
             margin: 0,
             fontSize: small ? "11.5px" : "13px",
             color: highlight ? "#fbbf24" : "var(--c-text-1)",
-            fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : "inherit",
+            fontFamily: mono ? "var(--font-mono)" : "inherit",
             wordBreak: "break-all",
             fontWeight: highlight ? "600" : "400",
         }}>

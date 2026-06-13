@@ -486,3 +486,377 @@
 /* ── Empty state ─────────────────────────────────────────── */
 .listEmpty { text-align: center; padding: 56px 24px; color: var(--c-text-3); }
 .listEmpty p { font-size: 13px; margin-top: 12px; }
+
+/* ── Wizard step indicator ───────────────────────────────── */
+.wizBar {
+  display: flex; align-items: center;
+  margin-bottom: 22px; padding-bottom: 18px;
+  border-bottom: 1px solid var(--c-border);
+}
+.wizDot {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--c-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--c-text-3);
+  flex-shrink: 0; transition: all .15s;
+}
+.wizDotOn { background: var(--c-primary); border-color: var(--c-primary); color: #fff; }
+.wizLine { flex: 1; height: 2px; background: var(--c-border); margin: 0 8px; }
+
+/* ── Sell mode toggle ─────────────────────────────────────── */
+.sellToggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.sellToggleBtn {
+  padding: 12px 14px; border-radius: var(--r-lg);
+  border: 2px solid var(--c-border);
+  background: var(--c-surface); cursor: pointer;
+  font-family: inherit; font-size: 13px;
+  color: var(--c-text-2); transition: all .15s; text-align: left;
+}
+.sellToggleBtn:hover:not(:disabled) { border-color: var(--c-border-2); color: var(--c-text); }
+.sellToggleBtnOn { border-color: var(--c-primary); background: var(--c-primary-light); color: var(--c-primary-dark); }
+
+/* ── Presentation card (multi mode) ─────────────────────── */
+.presCard {
+  border: 1.5px solid var(--c-border); border-radius: var(--r-lg);
+  padding: 14px 16px; margin-bottom: 12px; background: var(--c-subtle);
+}
+.presCardHead {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.presNum {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--c-text-3);
+}
+.presRemoveBtn {
+  font-size: 11px; color: var(--c-danger-text);
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  padding: 2px 7px; border-radius: 5px; transition: background .12s;
+}
+.presRemoveBtn:hover { background: var(--c-danger-bg); }
+.addPresBtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--r-lg);
+  border: 1.5px dashed var(--c-border);
+  background: none; color: var(--c-text-2);
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
+  font-family: inherit; transition: all .12s; margin-top: 4px;
+}
+.addPresBtn:hover {
+  border-color: var(--c-primary); color: var(--c-primary-dark);
+  background: var(--c-primary-light);
+}
+
+/* ── Unit chips (step 2) ─────────────────────────────────── */
+.unitChips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.unitChip {
+  padding: 5px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 500;
+  background: var(--c-surface); border: 1.5px solid var(--c-border);
+  color: var(--c-text-2); cursor: pointer; font-family: inherit; transition: all .12s;
+}
+.unitChip:hover { border-color: var(--c-border-2); color: var(--c-text); }
+.unitChipOn { background: var(--c-primary-light); border-color: var(--c-primary); color: var(--c-primary-dark); }
+
+/* ── Alert row (min stock natural language) ──────────────── */
+.alertRow {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--c-border);
+  font-size: 13px;
+}
+.alertRowLabel { color: var(--c-text-2); white-space: nowrap; }
+.alertRowInput { width: 72px !important; text-align: center; }
+.alertRowUnit { color: var(--c-text-2); white-space: nowrap; }
+
+/* ── Base presentation card highlight ────────────────────── */
+.presCardBase { border-color: rgba(26,68,52,.35); background: var(--c-primary-light); }
+
+/* ── Field error ─────────────────────────────────────────── */
+.fieldErr { color: var(--c-danger-text); font-size: 11.5px; margin-top: 4px; }
+
+/* ── Single form divider ────────────────────────────────── */
+.formDivider { height: 1px; background: var(--c-border); margin: 20px 0; }
+
+/* ── Details toggle ──────────────────────────────────────── */
+.detailsToggle {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  font-size: 12px; color: var(--c-text-3); padding: 4px 0; margin-top: 4px;
+  display: flex; align-items: center; gap: 4px; transition: color .1s;
+}
+.detailsToggle:hover { color: var(--c-text-2); }
+
+/* ── Package accordion ───────────────────────────────────── */
+.packageSection { margin-top: 16px; }
+.packageToggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--r-lg);
+  border: 1.5px dashed var(--c-border);
+  background: none; color: var(--c-text-2);
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
+  font-family: inherit; transition: all .12s;
+}
+.packageToggle:hover { border-color: var(--c-primary); color: var(--c-primary-dark); background: var(--c-primary-light); }
+.packageHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--c-border);
+}
+
+/* ── Summary modal ───────────────────────────────────────── */
+.summaryHead {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding-bottom: 18px; border-bottom: 1px solid var(--c-border);
+}
+.summaryProdName {
+  font-size: 16px; font-weight: 700; color: var(--c-text); line-height: 1.3;
+}
+.summaryMeta {
+  font-size: 11.5px; color: var(--c-text-3); font-weight: 500;
+}
+
+.summaryTable {
+  border: 1px solid var(--c-border); border-radius: var(--r-lg); overflow: hidden;
+}
+.summaryTableHead {
+  display: grid; grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
+  padding: 8px 14px; background: var(--ink);
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #fff; gap: 8px;
+}
+.summaryTableRow {
+  display: grid; grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
+  padding: 10px 14px; gap: 8px;
+  font-size: 13px; color: var(--c-text);
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  transition: background .1s;
+}
+.summaryTableRow:hover { background: var(--c-subtle); }
+
+.summaryNote {
+  margin-top: 16px; padding: 10px 14px;
+  background: var(--c-subtle); border: 1px solid var(--c-border);
+  border-radius: var(--r-lg); font-size: 12px; color: var(--c-text-3);
+}
+
+/* ── Inventory mode toggle (loose / package) ─────────────── */
+.invModeToggle {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; margin-bottom: 2px;
+}
+.invModeBtn {
+  padding: 9px 12px; border-radius: var(--r-lg);
+  border: 1.5px solid var(--c-border); background: var(--c-surface);
+  font-size: 13px; font-weight: 500; color: var(--c-text-2);
+  cursor: pointer; font-family: inherit; transition: all .12s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.invModeBtn:hover { border-color: var(--c-primary); color: var(--c-primary-dark); }
+.invModeBtnOn {
+  border-color: var(--c-primary); background: var(--c-primary-light);
+  color: var(--c-primary-dark); font-weight: 600;
+}
+
+/* ── Stock preview hint ──────────────────────────────────── */
+.stockPreview {
+  margin-top: 10px; padding: 8px 12px;
+  background: var(--c-primary-light); border: 1px solid rgba(26,68,52,.18);
+  border-radius: var(--r-lg); font-size: 13px; color: var(--c-primary-dark);
+}
+
+/* ── Tutorial button (page header) ──────────────────────── */
+.btnTutorial {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--r-lg);
+  border: 1.5px solid var(--c-border); background: var(--c-surface);
+  font-size: 13px; font-weight: 500; color: var(--c-text-2);
+  cursor: pointer; font-family: inherit; transition: all .12s;
+}
+.btnTutorial:hover {
+  border-color: var(--c-primary); color: var(--c-primary-dark);
+  background: var(--c-primary-light);
+}
+
+/* ── Tutorial guide card (wizard modal) ─────────────────── */
+.tutCard {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--c-primary-light);
+  border: 1.5px solid rgba(26,68,52,.28);
+  border-radius: var(--r-lg); padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.tutHeader {
+  display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;
+}
+.tutIconBig { font-size: 22px; line-height: 1; flex-shrink: 0; padding-top: 1px; }
+.tutTitle {
+  font-size: 14px; font-weight: 700; color: var(--c-primary-dark); line-height: 1.3;
+}
+.tutStepLabel {
+  font-size: 11px; color: rgba(26,68,52,.55); margin-top: 2px; font-weight: 500;
+}
+.tutSkipBtn {
+  flex-shrink: 0; background: none; border: none; cursor: pointer;
+  font-size: 11.5px; color: rgba(26,68,52,.5); padding: 2px 4px;
+  font-family: inherit;
+}
+.tutSkipBtn:hover { color: var(--c-primary-dark); }
+
+.tutBody {
+  font-size: 13px; color: var(--c-primary-dark); line-height: 1.65;
+  white-space: pre-wrap; margin-bottom: 14px;
+}
+
+.tutNav {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.tutDots { display: flex; align-items: center; gap: 5px; }
+.tutDot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(26,68,52,.22); transition: all .15s;
+}
+.tutDotOn  { background: var(--c-primary); transform: scale(1.2); }
+.tutDotDone { background: rgba(26,68,52,.45); }
+
+.tutNavBtns { display: flex; gap: 6px; }
+.tutNavBtn {
+  padding: 6px 12px; border-radius: var(--r-lg);
+  border: 1.5px solid rgba(26,68,52,.3); background: transparent;
+  font-size: 12.5px; font-weight: 500; color: var(--c-primary-dark);
+  cursor: pointer; font-family: inherit; transition: all .12s;
+}
+.tutNavBtn:hover { border-color: var(--c-primary); background: rgba(26,68,52,.06); }
+.tutNavBtnPrime {
+  background: var(--c-primary); border-color: var(--c-primary); color: #fff;
+}
+.tutNavBtnPrime:hover { background: var(--c-primary-dark); border-color: var(--c-primary-dark); }
+
+/* ── Mode selector ───────────────────────────────────────── */
+.modeSelectorTitle {
+  font-size: 13px; font-weight: 600; color: var(--c-text-2);
+  margin-bottom: 14px; text-align: center;
+}
+
+.modeCards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+}
+
+.modeCard {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 16px; border-radius: var(--r-xl);
+  border: 2px solid var(--c-border); background: var(--c-surface);
+  cursor: pointer; font-family: inherit; text-align: left;
+  transition: all .15s; gap: 5px; width: 100%;
+}
+.modeCard:hover {
+  border-color: var(--c-primary); background: var(--c-primary-light);
+  transform: translateY(-2px); box-shadow: var(--shadow-sm);
+}
+
+.modeCardIco {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: var(--c-subtle);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px; color: var(--c-text-3);
+  transition: all .15s;
+}
+.modeCard:hover .modeCardIco {
+  background: rgba(26,68,52,.12); color: var(--c-primary);
+}
+
+.modeCardTitle {
+  font-size: 13.5px; font-weight: 700; color: var(--c-text); line-height: 1.3;
+}
+
+.modeCardDesc {
+  font-size: 12px; color: var(--c-text-2); line-height: 1.4;
+}
+
+.modeCardEx {
+  font-size: 11px; color: var(--c-text-3); line-height: 1.4; margin-top: 1px;
+}
+
+.modeNote {
+  display: flex; align-items: flex-start; gap: 7px;
+  padding: 10px 12px; border-radius: var(--r-lg);
+  background: var(--c-subtle); border: 1px solid var(--c-border);
+  font-size: 11.5px; color: var(--c-text-3); line-height: 1.5;
+}
+
+/* ── Chosen mode header ──────────────────────────────────── */
+.modeChosen {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--c-border);
+}
+
+.modeChosenBadge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--c-primary-light); border: 1px solid rgba(26,68,52,.2);
+  font-size: 11.5px; font-weight: 600; color: var(--c-primary-dark);
+}
+
+.modeBackBtn {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  font-size: 11.5px; color: var(--c-text-3); padding: 3px 8px;
+  border-radius: 5px; transition: all .1s;
+}
+.modeBackBtn:hover { color: var(--c-primary-dark); background: var(--c-primary-light); }
+
+/* ── Stock entry modal (Entrada rápida) ──────────────────── */
+.seSearch {
+  display: flex; align-items: center; gap: 8px;
+  border: 1.5px solid var(--c-border); border-radius: var(--r-lg);
+  padding: 8px 10px; background: var(--c-surface); margin-bottom: 14px;
+}
+.seSearch:focus-within { border-color: var(--c-primary); }
+.seSearchInput {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 13px; color: var(--c-text); min-width: 0;
+}
+.seSearchInput::placeholder { color: var(--c-text-3); }
+
+.seNameList { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.seNameItem {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  padding: 8px 10px; border: 1px solid var(--c-border); border-radius: var(--r-lg);
+  background: var(--c-surface); cursor: pointer; font-family: inherit; transition: all .1s;
+}
+.seNameItem:hover { border-color: var(--c-primary); background: var(--c-primary-light); }
+.seNameItemName { display: block; font-size: 13px; font-weight: 600; color: var(--c-text); }
+.seNameItemCode { display: block; font-size: 11px; color: var(--c-text-3); margin-top: 1px; }
+
+.seNotFound {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  text-align: center; padding: 18px 12px;
+  border: 1px dashed var(--c-border); border-radius: var(--r-lg);
+  background: var(--c-subtle); color: var(--c-text-2); font-size: 13px;
+}
+.seNotFoundActions { display: flex; gap: 8px; margin-top: 4px; }
+
+.seCard {
+  border: 1px solid var(--c-border); border-radius: var(--r-lg);
+  padding: 14px; background: var(--c-surface); margin-top: 4px;
+}
+.seCardHead {
+  display: flex; gap: 12px; align-items: center;
+  padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--c-border);
+}
+.seFormatFixed { font-size: 12.5px; color: var(--c-text-2); margin-bottom: 12px; }
+
+.seStockRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--c-subtle); border-radius: var(--r-lg);
+  padding: 12px 14px; margin-bottom: 16px;
+}
+.seArrow { font-size: 20px; color: var(--c-text-3); flex-shrink: 0; }
+.seStockLbl {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--c-text-3); margin-bottom: 3px;
+}
+.seStockVal { font-size: 22px; font-weight: 800; color: var(--c-text); line-height: 1; }
+.seStockVal span { font-size: 12px; font-weight: 500; color: var(--c-text-2); }
+.seStockValNew { color: var(--c-primary-dark); }
+.seStockEquiv { font-size: 11.5px; color: var(--c-text-3); margin-top: 4px; }
+
+.seStepper { display: flex; align-items: center; gap: 7px; }
+

@@ -114,6 +114,11 @@ class MedicalRecordPdfTests(APITestCase):
         self.assertEqual(r['Content-Type'], 'application/pdf')
         self.assertIn('attachment', r['Content-Disposition'])
         self.assertIn(f'consulta_{rec.id}', r['Content-Disposition'])
+        # Nombre identificable: consulta_<id>_<mascota>_<fecha local>.pdf
+        self.assertRegex(
+            r['Content-Disposition'],
+            rf'consulta_{rec.id}_.+_\d{{4}}-\d{{2}}-\d{{2}}\.pdf',
+        )
         self.assertTrue(r.content.startswith(b'%PDF'))
 
     def test_empty_record_works(self):

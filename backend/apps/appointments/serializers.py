@@ -49,13 +49,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'owner_id', 'owner_public_id', 'owner_name',
             'veterinarian', 'veterinarian_name', 'veterinarian_public_id',
             'date', 'start_time', 'end_time', 'reason', 'notes',
-            'status', 'cancellation_reason',
+            'status', 'cancellation_reason', 'walk_in',
             'medical_record_ids', 'medical_record_public_ids',
             'invoice_id', 'invoice_public_id',
         ]
         read_only_fields = [
             'id', 'public_id', 'pet_public_id', 'owner_public_id', 'veterinarian_public_id',
-            'pet_is_generic', 'owner_id', 'owner_name',
+            'pet_is_generic', 'owner_id', 'owner_name', 'walk_in',
             'medical_record_ids', 'medical_record_public_ids',
             'invoice_id', 'invoice_public_id',
         ]

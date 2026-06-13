@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { apiError } from "../../utils/apiError";
 import { useConfirm } from "../../components/ConfirmDialog";
 import api from "../../api/client";
@@ -20,7 +20,7 @@ import PrescriptionForm from "../../components/prescriptions/PrescriptionForm";
 import PetSidebar from "./PetSidebar";
 import PatientHeader from "./PatientHeader";
 import Timeline from "./Timeline";
-import ConsultationStepperV2 from "./ConsultationStepperV2";
+import ConsultationForm from "./ConsultationForm";
 import styles from "./medicalRecords.module.css";
 import Layout from "../../components/Layout";
 
@@ -45,6 +45,7 @@ const MedicalRecords = () => {
   const { token, initializing, user } = useAuth();
   const confirm = useConfirm();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const [records,          setRecords]          = useState([]);
   const [pets,             setPets]             = useState([]);
@@ -70,6 +71,9 @@ const MedicalRecords = () => {
   const [showStepper,      setShowStepper]      = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [editingRecord,    setEditingRecord]    = useState(null);
+  // PK de la cita en el flujo "Atender ahora" — se pasa al stepper para que
+  // el MedicalRecord nuevo quede ligado a la cita (null en consultas manuales).
+  const [attendAppointmentId, setAttendAppointmentId] = useState(null);
   const [showPrescriptionModal,  setShowPrescriptionModal]  = useState(false);
   const [prescriptionTarget,     setPrescriptionTarget]     = useState(null);
   const [downloadingPrescriptionId, setDownloadingPrescriptionId] = useState(null);
@@ -90,6 +94,12 @@ const MedicalRecords = () => {
     if (petParam) {
       setSelectedPet(petParam);
       if (appointmentParam) {
+        // Flujo "Atender ahora": el stepper crea el MedicalRecord (lazy). Hay
+        // que ligarlo a la cita para que, al finalizar, la cita pase a done
+        // (complete_appointment_on_record_close). El PK de la cita llega por
+        // router state (no por URL: el body FK usa PK entero, ADR p18). Sin
+        // esto el MR se crea sin appointment y la cita queda en in_progress.
+        setAttendAppointmentId(location.state?.appointmentId ?? null);
         setShowStepper(true);
         // Auto-sanación: si el appointment no está en in_progress, transicionarlo
         if (token) {
@@ -112,7 +122,7 @@ const MedicalRecords = () => {
         }
       }).catch(() => {});
     }
-  }, [searchParams, token]);
+  }, [searchParams, token, location.state]);
 
   const loadAllData = async () => {
     setIsLoadingPets(true);
@@ -270,6 +280,7 @@ const MedicalRecords = () => {
   const handleStepperComplete = async () => {
     setShowStepper(false);
     setEditingRecord(null);
+    setAttendAppointmentId(null);
     await loadRecords();
     await loadAllData();
   };
@@ -277,6 +288,7 @@ const MedicalRecords = () => {
   const handleStepperClose = async () => {
     setShowStepper(false);
     setEditingRecord(null);
+    setAttendAppointmentId(null);
     await loadRecords();
     await loadAllData();
   };
@@ -287,6 +299,7 @@ const MedicalRecords = () => {
       return;
     }
     setEditingRecord(null);
+    setAttendAppointmentId(null);   // consulta manual: sin cita ligada
     setShowStepper(true);
     setSidebarCollapsed(true);
   };
@@ -303,29 +316,37 @@ const MedicalRecords = () => {
 
   const canCreate = user?.role !== "ASSISTANT";
 
+  // Modo consulta: el stepper se renderiza DENTRO de <Layout> (se conserva el navbar
+  // de la app y su header). Se oculta solo el PetSidebar (barra secundaria) durante la
+  // consulta para dar ancho a la captura clínica.
+  const inConsult = showStepper && selectedPet;
+
   return (
     <Layout>
       <div className={styles.pageLayout}>
-        <PetSidebar
-          pets={pets}
-          petCounts={petCounts}
-          selectedPet={selectedPet}
-          petSearch={petSearch}
-          onSelectPet={handleSelectPet}
-          onPetSearch={setPetSearch}
-          isLoadingPets={isLoadingPets}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(c => !c)}
-        />
+        {!inConsult && (
+          <PetSidebar
+            pets={pets}
+            petCounts={petCounts}
+            selectedPet={selectedPet}
+            petSearch={petSearch}
+            onSelectPet={handleSelectPet}
+            onPetSearch={setPetSearch}
+            isLoadingPets={isLoadingPets}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+          />
+        )}
 
-        {showStepper && selectedPet ? (
-          <ConsultationStepperV2
+        {inConsult ? (
+          <ConsultationForm
             pet={petInfo}
             products={products}
             productMap={productMap}
             onClose={handleStepperClose}
             onComplete={handleStepperComplete}
             initialRecord={editingRecord}
+            appointmentId={attendAppointmentId}
           />
         ) : (
             <main className={styles.mainContent}>
@@ -397,6 +418,7 @@ const MedicalRecords = () => {
                         onCloseRecord={handleCloseRecord}
                         onEdit={(record) => {
                           setEditingRecord(record);
+                          setAttendAppointmentId(null);
                           setShowStepper(true);
                         }}
                         onDelete={handleDelete}

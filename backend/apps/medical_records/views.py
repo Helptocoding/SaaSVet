@@ -499,6 +499,13 @@ def close_medical_record(request, pk):
         from apps.billing.services import get_or_create_invoice_for_medical_record
         get_or_create_invoice_for_medical_record(medical_record)
 
+        # Sincroniza la agenda: cerrar la consulta finaliza la cita vinculada
+        # (in_progress→done). Cross-domain vía service (no mutar Appointment
+        # directamente desde medical_records). No-op si no hay cita o si la
+        # cita no está en in_progress. NO toca Invoice/pagos.
+        from apps.appointments.services import complete_appointment_on_record_close
+        complete_appointment_on_record_close(medical_record.appointment, request.user)
+
         # Late-arrival observability (ADR p17 Día 5, warn-only).
         # Call lives inside the active transaction so the log only emits
         # if commit succeeds (a rollback unwinds before the helper runs).
@@ -567,29 +574,23 @@ _MR_STATUS_LABEL = dict(MedicalRecord.Status.choices)
 _MR_TYPE_LABEL = dict(MedicalRecord.ConsultationType.choices)
 
 
-def _mr_fmt_dt(value):
-    if not value:
-        return ""
-    try:
-        return value.strftime('%d/%m/%Y %H:%M')
-    except Exception:
-        return str(value)
-
-
 @api_view(['GET'])
 @permission_classes([make_permission("medicalrecord.retrieve")])
 def medical_record_pdf(request, pk):
     """Genera el resumen clínico del registro como archivo PDF."""
     from io import BytesIO
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
     from reportlab.lib.units import cm
-    from reportlab.lib import colors
-    from reportlab.platypus import (
-        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, LongTable,
-    )
+    from reportlab.platypus import Paragraph
+
     from django.http import HttpResponse
-    from apps.core.pdf_utils import safe_pdf_text, safe_filename_segment
+
+    from apps.core.datetime_utils import utc_to_local
+    from apps.core.pdf import (
+        CONTENT_WIDTH, build_styles, data_table, get_theme_for_organization,
+        info_card, numbered_item, pdf_filename, render_branded_pdf,
+        safe_pdf_text, section, title_block,
+    )
 
     record = resolve_public_id(
         MedicalRecord.objects
@@ -604,173 +605,155 @@ def medical_record_pdf(request, pk):
         pk,
     )
 
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=letter,
-        leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
-        title=f"Consulta #{record.id}",
-    )
-    styles = getSampleStyleSheet()
-    h_org = ParagraphStyle('h_org', parent=styles['Heading1'], fontSize=16, spaceAfter=4)
-    h_title = ParagraphStyle('h_title', parent=styles['Heading2'], fontSize=13, spaceAfter=2)
-    h_sub = ParagraphStyle('h_sub', parent=styles['Heading3'], fontSize=11, spaceBefore=10, spaceAfter=4)
-    body = styles['BodyText']
-    body_sm = ParagraphStyle('body_sm', parent=body, fontSize=9, leading=11)
+    org = record.organization
+    theme = get_theme_for_organization(org)
+    st = build_styles(theme)
 
-    flow = []
-    flow.append(Paragraph(safe_pdf_text(record.organization.name), h_org))
-    flow.append(Paragraph("RESUMEN DE CONSULTA", h_title))
-    flow.append(Paragraph(
+    def fmt_dt(value):
+        local = utc_to_local(org, value)
+        return local.strftime('%d/%m/%Y %H:%M') if local else ''
+
+    meta_lines = [
         f"Estado: <b>{_MR_STATUS_LABEL.get(record.status, record.status)}</b> "
         f"&nbsp;·&nbsp; Tipo: {_MR_TYPE_LABEL.get(record.consultation_type, record.consultation_type)}",
-        body_sm,
-    ))
-    flow.append(Paragraph(f"Fecha: {_mr_fmt_dt(record.created_at)}", body_sm))
+        f"Fecha: {fmt_dt(record.created_at)}",
+    ]
     if record.closed_at:
-        flow.append(Paragraph(f"Cerrada: {_mr_fmt_dt(record.closed_at)}", body_sm))
+        meta_lines.append(f"Cerrada: {fmt_dt(record.closed_at)}")
+
+    flow = []
+    flow += title_block(st, title=f"Consulta #{record.id}", meta_lines=meta_lines)
 
     if record.veterinarian_id:
         vet = record.veterinarian
         vet_name = f"{vet.first_name} {vet.last_name}".strip() or vet.username
         spec = f" &nbsp;·&nbsp; {safe_pdf_text(vet.specialty)}" if getattr(vet, 'specialty', '') else ""
-        flow.append(Paragraph("Veterinario", h_sub))
-        flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", body))
+        flow += section(st, theme, "Veterinario")
+        flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", st['body']))
 
-    flow.append(Paragraph("Paciente", h_sub))
     pet = record.pet
-    flow.append(Paragraph(
-        f"<b>Nombre:</b> {safe_pdf_text(pet.name)} "
-        f"&nbsp; <b>Especie:</b> {safe_pdf_text(pet.species)} "
-        f"&nbsp; <b>Raza:</b> {safe_pdf_text(pet.breed or '-')}",
-        body,
-    ))
+    flow += section(st, theme, "Paciente")
+    patient_pairs = [
+        ("Nombre", safe_pdf_text(pet.name)),
+        ("Especie", safe_pdf_text(pet.species)),
+        ("Raza", safe_pdf_text(pet.breed or '')),
+    ]
     if pet.owner_id:
-        flow.append(Paragraph(
-            f"<b>Dueño:</b> {safe_pdf_text(pet.owner.name)} "
-            f"&nbsp; <b>Teléfono:</b> {safe_pdf_text(pet.owner.phone)}",
-            body,
-        ))
+        patient_pairs += [
+            ("Dueño", safe_pdf_text(pet.owner.name)),
+            ("Teléfono", safe_pdf_text(pet.owner.phone)),
+        ]
+    flow += info_card(st, theme, patient_pairs, columns=3)
 
     if record.appointment_id and getattr(record.appointment, 'reason', ''):
-        flow.append(Paragraph("Motivo", h_sub))
-        flow.append(Paragraph(safe_pdf_text(record.appointment.reason), body))
+        flow += section(st, theme, "Motivo")
+        flow.append(Paragraph(safe_pdf_text(record.appointment.reason), st['body']))
 
     last_vital = None
     for v in record.vital_signs.all():
         if last_vital is None or (v.recorded_at and v.recorded_at > last_vital.recorded_at):
             last_vital = v
+    vital_pairs = []
     if last_vital:
-        parts = []
         if last_vital.weight is not None:
-            parts.append(f"<b>Peso:</b> {last_vital.weight} kg")
+            vital_pairs.append(("Peso", f"{last_vital.weight} kg"))
         if last_vital.temperature is not None:
-            parts.append(f"<b>T°:</b> {last_vital.temperature} °C")
+            vital_pairs.append(("Temperatura", f"{last_vital.temperature} °C"))
         if last_vital.heart_rate is not None:
-            parts.append(f"<b>FC:</b> {last_vital.heart_rate} lpm")
+            vital_pairs.append(("Frec. cardiaca", f"{last_vital.heart_rate} lpm"))
         if last_vital.respiratory_rate is not None:
-            parts.append(f"<b>FR:</b> {last_vital.respiratory_rate} rpm")
-        if parts:
-            flow.append(Paragraph("Signos vitales", h_sub))
-            flow.append(Paragraph(" &nbsp;·&nbsp; ".join(parts), body))
+            vital_pairs.append(("Frec. respiratoria", f"{last_vital.respiratory_rate} rpm"))
     elif record.weight is not None:
-        flow.append(Paragraph("Signos vitales", h_sub))
-        flow.append(Paragraph(f"<b>Peso:</b> {record.weight} kg", body))
+        vital_pairs.append(("Peso", f"{record.weight} kg"))
+    if vital_pairs:
+        flow += section(st, theme, "Signos vitales")
+        flow += info_card(st, theme, vital_pairs, columns=4)
 
     if record.diagnosis:
-        flow.append(Paragraph("Diagnóstico", h_sub))
+        flow += section(st, theme, "Diagnóstico")
         flow.append(Paragraph(
-            safe_pdf_text(record.diagnosis).replace('\n', '<br/>'), body,
+            safe_pdf_text(record.diagnosis).replace('\n', '<br/>'), st['body'],
         ))
 
     if record.treatment:
-        flow.append(Paragraph("Tratamiento", h_sub))
+        flow += section(st, theme, "Tratamiento")
         flow.append(Paragraph(
-            safe_pdf_text(record.treatment).replace('\n', '<br/>'), body,
+            safe_pdf_text(record.treatment).replace('\n', '<br/>'), st['body'],
         ))
 
     services = list(record.services_used.all())
     if services:
-        flow.append(Paragraph("Servicios aplicados", h_sub))
-        rows = [["Servicio", "Cantidad"]]
-        for s in services:
-            rows.append([
-                Paragraph(safe_pdf_text(s.service.name if s.service_id else "-"), body_sm),
-                f"{s.quantity:g}",
-            ])
-        t = LongTable(rows, colWidths=[12 * cm, 4.3 * cm], repeatRows=1)
-        t.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eeeeee')),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
-        ]))
-        flow.append(t)
+        flow += section(st, theme, "Servicios aplicados")
+        rows = [
+            [Paragraph(safe_pdf_text(s.service.name if s.service_id else "-"), st['cell']),
+             f"{s.quantity:g}"]
+            for s in services
+        ]
+        flow += data_table(
+            st, theme, ["Servicio", "Cantidad"], rows,
+            col_widths=[CONTENT_WIDTH - 4.3 * cm, 4.3 * cm], align_right=(1,),
+        )
 
     products = list(record.products_used.all())
     if products:
-        flow.append(Paragraph("Productos utilizados", h_sub))
-        rows = [["Producto", "Presentación", "Cantidad"]]
+        flow += section(st, theme, "Productos utilizados")
+        rows = []
         for p in products:
             pres = p.presentation
             prod_name = safe_pdf_text(pres.product.name if pres and pres.product_id else "-")
             pres_name = safe_pdf_text(pres.name if pres else "-")
             rows.append([
-                Paragraph(prod_name, body_sm),
-                Paragraph(pres_name, body_sm),
+                Paragraph(prod_name, st['cell']),
+                Paragraph(pres_name, st['cell']),
                 f"{p.quantity:g}",
             ])
-        t = LongTable(rows, colWidths=[7.5 * cm, 6 * cm, 2.8 * cm], repeatRows=1)
-        t.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eeeeee')),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-            ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
-        ]))
-        flow.append(t)
+        flow += data_table(
+            st, theme, ["Producto", "Presentación", "Cantidad"], rows,
+            col_widths=[CONTENT_WIDTH - 8.8 * cm, 6 * cm, 2.8 * cm], align_right=(2,),
+        )
 
     if record.notes:
-        flow.append(Paragraph("Notas", h_sub))
+        flow += section(st, theme, "Notas")
         flow.append(Paragraph(
-            safe_pdf_text(record.notes).replace('\n', '<br/>'), body,
+            safe_pdf_text(record.notes).replace('\n', '<br/>'), st['body'],
         ))
 
     prescription = getattr(record, 'prescription', None)
     if prescription:
-        flow.append(Paragraph("Receta", h_sub))
+        flow += section(st, theme, "Receta")
         for i, item in enumerate(prescription.items.all(), 1):
             first_pres = next(iter(item.product.presentations.all()), None)
             unit = first_pres.get_base_unit_display() if first_pres else ""
-            line = (
-                f"<b>{i}. {safe_pdf_text(item.product.name)}</b> — "
-                f"{item.quantity:g} {safe_pdf_text(unit)}".rstrip()
-            )
-            flow.append(Paragraph(line, body))
+            item_title = (
+                f"{safe_pdf_text(item.product.name)} — "
+                f"{item.quantity:g} {safe_pdf_text(unit)}"
+            ).rstrip()
             detail_parts = [f"Dosis: {safe_pdf_text(item.dose)}"]
             if item.duration:
                 detail_parts.append(f"Duración: {safe_pdf_text(item.duration)}")
             if item.instructions:
                 detail_parts.append(f"Instrucciones: {safe_pdf_text(item.instructions)}")
-            flow.append(Paragraph(" &nbsp;·&nbsp; ".join(detail_parts), body_sm))
+            flow += numbered_item(st, i, item_title, detail_parts)
         if prescription.notes:
             flow.append(Paragraph(
-                f"<i>Notas de receta:</i> {safe_pdf_text(prescription.notes)}",
-                body_sm,
+                f"Notas de receta: {safe_pdf_text(prescription.notes)}",
+                st['note_italic'],
             ))
 
-    doc.build(flow)
+    buffer = BytesIO()
+    render_branded_pdf(
+        buffer, flow,
+        organization=org,
+        doc_kicker="Resumen de consulta",
+        pdf_title=f"Consulta #{record.id}",
+    )
     buffer.seek(0)
 
-    pet_segment = safe_filename_segment(pet.name)
-    filename = f"consulta_{record.id}_{pet_segment}.pdf"
+    created_local = utc_to_local(org, record.created_at)
+    filename = pdf_filename(
+        'consulta', record.id, pet.name,
+        created_local.date() if created_local else None,
+    )
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response

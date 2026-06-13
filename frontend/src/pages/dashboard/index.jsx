@@ -4,8 +4,9 @@ import { useDashboardSummary } from "../../hooks/useDashboardSummary";
 import { useFinancialSeries } from "../../hooks/useFinancialSeries";
 import DashboardTopBar from "../../components/dashboard/DashboardTopBar";
 import KpiStrip from "../../components/dashboard/KpiStrip";
-import OperationalTimeline from "../../components/dashboard/OperationalTimeline";
+import TodayAgendaList from "../../components/dashboard/TodayAgendaList";
 import NowPanel from "../../components/dashboard/NowPanel";
+import PendingFollowUp from "../../components/dashboard/PendingFollowUp";
 import ClinicalBacklog from "../../components/dashboard/ClinicalBacklog";
 import StockAlerts from "../../components/dashboard/StockAlerts";
 import DashboardAnalytics from "../../components/dashboard/DashboardAnalytics";
@@ -160,11 +161,7 @@ const Dashboard = () => {
           <KpiStrip items={kpiItems} />
 
           <section className="card dash-timeline-card">
-            <div className="dash-section-head">
-              <h3 className="dash-section-title">Agenda de hoy</h3>
-              <span className="dash-section-meta">8:00 – 20:00</span>
-            </div>
-            <OperationalTimeline slots={data?.timeline} />
+            <TodayAgendaList />
           </section>
 
           <DashboardAnalytics />
@@ -172,6 +169,7 @@ const Dashboard = () => {
 
         <aside className="dash-side">
           <div className="card"><NowPanel summary={data} /></div>
+          <div className="card"><PendingFollowUp /></div>
           <div className="card"><ClinicalBacklog backlog={data?.backlog} /></div>
           <div className="card"><StockAlerts alerts={data?.stock_alerts} /></div>
         </aside>

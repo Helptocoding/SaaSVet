@@ -1,10 +1,8 @@
-import re
 from io import BytesIO
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
 
 from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
@@ -105,98 +103,99 @@ class PrescriptionItemDeleteView(generics.DestroyAPIView):
 @permission_classes([make_permission("prescription.retrieve")])
 def prescription_pdf(request, pk):
     """Genera y retorna la receta como archivo PDF."""
-    try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.units import cm
-    except ImportError:
-        return Response(
-            {'error': 'reportlab no está instalado. Ejecuta: pip install reportlab'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    from reportlab.platypus import Paragraph
+
+    from apps.core.datetime_utils import utc_to_local
+    from apps.core.pdf import (
+        build_styles, get_theme_for_organization, info_card, numbered_item,
+        pdf_filename, render_branded_pdf, safe_pdf_text, section,
+        signature_block, title_block,
+    )
 
     prescription = resolve_public_id(
-        Prescription.objects.for_organization(request.user.organization), pk
+        Prescription.objects
+            .for_organization(request.user.organization)
+            .select_related('pet__owner', 'veterinarian', 'organization'),
+        pk,
     )
 
-    buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
-    margin = 2.5 * cm
-    y = height - margin
-
-    def draw_line(text, font='Helvetica', size=11, offset=16):
-        nonlocal y
-        c.setFont(font, size)
-        c.drawString(margin, y, text)
-        y -= offset
-
-    def separator(offset=12):
-        nonlocal y
-        c.line(margin, y, width - margin, y)
-        y -= offset
-
-    draw_line(prescription.organization.name, font='Helvetica-Bold', size=16, offset=20)
-    draw_line('RECETA MÉDICA VETERINARIA', font='Helvetica-Bold', size=13, offset=14)
-    draw_line(
-        f"Fecha: {prescription.created_at.strftime('%d/%m/%Y')}",
-        size=10,
-        offset=18,
-    )
-    separator()
-
-    vet = prescription.veterinarian
-    vet_name = f"{vet.first_name} {vet.last_name}".strip() or vet.username
-    draw_line('Veterinario', font='Helvetica-Bold', size=11, offset=16)
-    draw_line(vet_name, offset=14)
-    if vet.specialty:
-        draw_line(f"Especialidad: {vet.specialty}", size=10, offset=18)
-    else:
-        y -= 6
-    separator()
+    theme = get_theme_for_organization(prescription.organization)
+    st = build_styles(theme)
 
     pet = prescription.pet
-    draw_line('Paciente', font='Helvetica-Bold', size=11, offset=16)
-    draw_line(f"Nombre: {pet.name}   Especie: {pet.species}   Raza: {pet.breed}", offset=14)
-    draw_line(f"Propietario: {pet.owner.name}   Teléfono: {pet.owner.phone}", size=10, offset=18)
-    separator()
+    vet = prescription.veterinarian
+    vet_name = ""
+    if vet:
+        vet_name = f"{vet.first_name} {vet.last_name}".strip() or vet.username
 
-    draw_line('Medicamentos', font='Helvetica-Bold', size=12, offset=18)
+    created_local = utc_to_local(prescription.organization, prescription.created_at)
+
+    flow = []
+    flow += title_block(
+        st,
+        title=f"Receta #{prescription.id}",
+        meta_lines=[f"Fecha: {created_local.strftime('%d/%m/%Y') if created_local else ''}"],
+    )
+
+    flow += section(st, theme, "Paciente")
+    patient_pairs = [
+        ("Nombre", safe_pdf_text(pet.name)),
+        ("Especie", safe_pdf_text(pet.species)),
+        ("Raza", safe_pdf_text(pet.breed or '')),
+    ]
+    if pet.owner_id:
+        patient_pairs += [
+            ("Propietario", safe_pdf_text(pet.owner.name)),
+            ("Teléfono", safe_pdf_text(pet.owner.phone)),
+        ]
+    flow += info_card(st, theme, patient_pairs, columns=3)
+
+    if vet:
+        spec = f" &nbsp;·&nbsp; {safe_pdf_text(vet.specialty)}" if vet.specialty else ""
+        flow += section(st, theme, "Veterinario")
+        flow.append(Paragraph(f"{safe_pdf_text(vet_name)}{spec}", st['body']))
+
+    flow += section(st, theme, "Medicamentos")
     items_qs = prescription.items.select_related('product').prefetch_related('product__presentations').all()
     for i, item in enumerate(items_qs, 1):
         first_pres = next(iter(item.product.presentations.all()), None)
         unit = first_pres.get_base_unit_display() if first_pres else ''
-        draw_line(
-            f"{i}. {item.product.name}  —  {item.quantity} {unit}".strip(),
-            font='Helvetica-Bold',
-            size=11,
-            offset=15,
-        )
-        draw_line(f"   Dosis: {item.dose}", size=10, offset=13)
+        item_title = (
+            f"{safe_pdf_text(item.product.name)} — "
+            f"{item.quantity:g} {safe_pdf_text(unit)}"
+        ).rstrip()
+        details = [f"Dosis: {safe_pdf_text(item.dose)}"]
         if item.duration:
-            draw_line(f"   Duración: {item.duration}", size=10, offset=13)
+            details.append(f"Duración: {safe_pdf_text(item.duration)}")
         if item.instructions:
-            draw_line(f"   Instrucciones: {item.instructions}", size=10, offset=13)
-        y -= 6
+            details.append(f"Instrucciones: {safe_pdf_text(item.instructions)}")
+        flow += numbered_item(st, i, item_title, details)
 
     if prescription.notes:
-        separator()
-        draw_line('Notas', font='Helvetica-Bold', size=11, offset=16)
-        draw_line(prescription.notes, size=10, offset=14)
+        flow += section(st, theme, "Notas")
+        flow.append(Paragraph(
+            safe_pdf_text(prescription.notes).replace('\n', '<br/>'), st['body'],
+        ))
 
-    y -= 30
-    c.line(margin, y, margin + 180, y)
-    y -= 14
-    draw_line(vet_name, size=10, offset=12)
-    if vet.specialty:
-        draw_line(vet.specialty, size=9, offset=12)
+    if vet:
+        flow += signature_block(
+            st, theme, safe_pdf_text(vet_name),
+            [safe_pdf_text(vet.specialty)] if vet.specialty else (),
+        )
 
-    c.save()
+    buffer = BytesIO()
+    render_branded_pdf(
+        buffer, flow,
+        organization=prescription.organization,
+        doc_kicker="Receta médica veterinaria",
+        pdf_title=f"Receta #{prescription.id}",
+    )
     buffer.seek(0)
 
-    response = HttpResponse(buffer.read(), content_type='application/pdf')
-    safe_name = re.sub(r'[^\w\s\-]', '', pet.name)[:50]
-    response['Content-Disposition'] = (
-        f'attachment; filename="receta_{prescription.id}_{safe_name}.pdf"'
+    filename = pdf_filename(
+        'receta', prescription.id, pet.name,
+        created_local.date() if created_local else None,
     )
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response

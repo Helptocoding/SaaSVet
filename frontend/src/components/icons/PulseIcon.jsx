@@ -1,4 +1,4 @@
-export function PulseIcon({ size = 22, color = "#0a1224" }) {
+export function PulseIcon({ size = 22, color = "#1a4434" }) {
   return (
     <svg
       width={size}

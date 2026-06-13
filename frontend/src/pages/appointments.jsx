@@ -14,7 +14,6 @@ import SearchSelect from "../components/SearchSelect";
 import QuickPatientForm from "../components/QuickPatientForm";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
-import { createMedicalRecord } from "../api/medicalRecords";
 import api from "../api/client";
 
 import { apiError } from "../utils/apiError";
@@ -1064,10 +1063,12 @@ const Appointments = () => {
             const recordParam = current.medical_record_public_ids?.length > 0
                 ? appt.medical_record_public_ids[0] : null;
             setViewAppt(null);
+            // Sin MR aún: el stepper lo creará ligado a la cita (appointmentId
+            // por router state). Con MR existente solo se navega al registro.
             const qs = recordParam
                 ? `record=${recordParam}`
                 : `pet=${petParam}&appointment=${current.public_id}`;
-            navigate(`/medical-records?${qs}`);
+            navigate(`/medical-records?${qs}`, recordParam ? undefined : { state: { appointmentId: current.id } });
             return;
         }
 
@@ -1089,7 +1090,7 @@ const Appointments = () => {
                     const qs = recId
                         ? `record=${recId}`
                         : `pet=${petParam}&appointment=${current.public_id}`;
-                    navigate(`/medical-records?${qs}`);
+                    navigate(`/medical-records?${qs}`, recId ? undefined : { state: { appointmentId: current.id } });
                 }},
                 cancel: { label: "Cancelar" },
                 duration: 8000,
@@ -1102,18 +1103,6 @@ const Appointments = () => {
             return;
         }
 
-        let record;
-        try {
-            record = await createMedicalRecord(token, {
-                pet: current.pet,
-                appointment: current.id,
-                consultation_type: "general",
-            });
-        } catch (err) {
-            toast.error(apiError(err, "No se pudo iniciar la consulta. ¿Reintentar?"));
-            return;
-        }
-
         try {
             await updateAppointmentStatus(token, current.public_id, "in_progress");
             window.dispatchEvent(new Event("dashboard:refresh"));
@@ -1123,7 +1112,14 @@ const Appointments = () => {
         }
 
         setViewAppt(null);
-        navigate(`/medical-records?pet=${current.pet_public_id}&appointment=${current.public_id}&record=${record.public_id}`);
+        // El MedicalRecord lo crea el stepper (lazy), ligado a esta cita vía
+        // router state (appointmentId = PK; el body FK usa PK entero, ADR p18).
+        // Antes se pre-creaba aquí un MR y el stepper creaba OTRO sin
+        // appointment: ese segundo MR, al cerrarse, no completaba la cita.
+        navigate(
+            `/medical-records?pet=${current.pet_public_id}&appointment=${current.public_id}`,
+            { state: { appointmentId: current.id } },
+        );
     };
 
     const refreshAppointment = (updatedAppt) => {

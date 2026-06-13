@@ -32,6 +32,8 @@ Las transiciones invalidas retornan `400` con mensaje explicito.
 
 `confirmed` es opcional. Las clinicas que no confirman citas pasan directamente de `scheduled` a `in_progress`.
 
+**Trigger automático `in_progress → done` (ADR p34):** además del botón manual "Completar consulta", cerrar la consulta médica vinculada (`close_medical_record`) completa la cita automáticamente. El cierre del expediente clínico ES el acto que termina la atención; el servicio `complete_appointment_on_record_close` aplica la transición dentro del mismo `transaction.atomic()` del cierre. Es idempotente y no-op si la cita no está en `in_progress` (ya `done`/`canceled`) o si la consulta no tiene cita asociada. `done` sigue siendo terminal y el pago sigue viviendo en facturación (`done` ≠ pagado).
+
 ## Flujos principales
 
 ### Cita normal
@@ -200,6 +202,10 @@ Campos:
 
 El modelo hereda de `OrganizationalModel` (multitenant). Ordenamiento por `-created_at`.
 
+La transición automática al cerrar la consulta (ADR p34) también crea su row:
+`from_status='in_progress'`, `to_status='done'`, `changed_by` = usuario que cerró la
+consulta, `reason='Auto-completada al cerrar la consulta médica'`.
+
 Endpoint: `GET /api/appointments/<id>/history/`
 
 La UI consume este endpoint de forma lazy (solo al expandir el panel "Historial de estados")
@@ -239,6 +245,11 @@ El walk-in tambien usa 30 minutos por defecto (comportamiento sin cambio).
   El campo `medical_record_ids` en la respuesta lista los IDs vinculados.
   La consulta clinica se crea desde `/medical-records?pet=<id>&appointment=<id>`.
   El frontend usa esta relacion para mostrar `+ Crear Consulta Médica` o `Ver Consulta` sin depender de estado local.
+  **Sincronización de ciclo de vida (ADR p34)**: cerrar la consulta vinculada completa la
+  cita (`in_progress → done`) vía `apps.appointments.services.complete_appointment_on_record_close`,
+  invocado por `close_medical_record` dentro de su `atomic()`. El acoplamiento es
+  cross-domain unidireccional (medical_records → appointments.services); no se muta
+  `Appointment` directamente desde medical_records.
 
 - **Facturacion**: una cita puede tener una `Invoice` asociada.
   El campo `invoice_id` en la respuesta expone el ID si existe.
@@ -246,9 +257,16 @@ El walk-in tambien usa 30 minutos por defecto (comportamiento sin cambio).
 
 ## UX al completar la cita
 
-La accion `Completar consulta` usa el modal compartido `ConfirmDialog` del sistema. No se usa `window.confirm`.
+Hay **dos caminos** para que una cita llegue a `done` (ADR p34):
 
-Comportamiento actual:
+1. **Vía cierre de consulta (camino esperado)**: cuando se atendió desde "Atender ahora"
+   y se abrió una consulta médica, al finalizarla (`close_medical_record`) la cita se
+   completa automáticamente. El usuario no necesita volver a Citas a marcarla manualmente.
+2. **Botón manual "Completar consulta"** (fallback): para citas sin consulta médica
+   (atención trivial, o `in_progress` que se cierra administrativamente). Usa el modal
+   compartido `ConfirmDialog` (no `window.confirm`).
+
+Comportamiento del botón manual:
 - antes de pasar a `done`, se muestra confirmacion explicita
 - al confirmar, el backend retorna la cita serializada actualizada
 - el modal de detalle permanece abierto
@@ -257,6 +275,10 @@ Comportamiento actual:
 Esto evita dos problemas:
 - errores accidentales al marcar `done`
 - CTAs stale que solo existan en memoria del frontend
+
+> El flujo "Atender ahora" ya **no** pre-crea un `MedicalRecord` duplicado. El stepper
+> crea el único MR ligado a la cita (PK por router state); ver `docs/modules/frontend.md`
+> §"Flujo Atender ahora" y ADR p34.
 
 ## Endpoints
 
@@ -317,6 +339,7 @@ Esto evita dos problemas:
   "notes": "",
   "status": "scheduled",
   "cancellation_reason": "",
+  "walk_in": false,
   "medical_record_ids": [],
   "invoice_id": null
 }
@@ -324,6 +347,12 @@ Esto evita dos problemas:
 
 `pet_is_generic` — indica si la mascota asignada es el paciente genérico.
 El frontend usa este campo para mostrar el banner de vinculación.
+
+`walk_in` (ADR p35) — `read_only`, expone el flag persistido del modelo
+(`editable=False`, ver §Walk-in). Lo consume la Agenda del dashboard
+(`TodayAgendaList`) para el marcador `●` walk-in. Solo lectura: el cliente no
+puede setearlo (el walk-in lo crea el endpoint `walk-in/`). Sin migración —
+campo ya existía en el modelo.
 
 ## Permisos RBAC
 

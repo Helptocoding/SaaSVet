@@ -7,9 +7,31 @@ import { useState } from "react";
 const TABS = [
   { key: "weekly",    label: "Semanal" },
   { key: "monthly",   label: "Mensual" },
-  { key: "financial", label: "Financiero", admin: true },
-  { key: "funnel",    label: "Embudo",     admin: true },
+  { key: "financial", label: "Financiero",        admin: true },
+  { key: "funnel",    label: "Conversión de citas", admin: true },
 ];
+
+// Título + descripción por gráfica. La descripción solo nombra lo que la
+// gráfica realmente representa (no menciona canceladas en la de actividad
+// porque ese chart no las grafica).
+const CHART_INFO = {
+  weekly: {
+    title: "Citas — últimos 7 días",
+    desc: "Comparación entre citas atendidas, clientes que no llegaron y total agendado.",
+  },
+  monthly: {
+    title: "Citas — últimos 30 días",
+    desc: "Comparación entre citas atendidas, clientes que no llegaron y total agendado.",
+  },
+  financial: {
+    title: "Ingresos diarios (MXN)",
+    desc: "Cobrado = dinero recibido. Devengado = servicio prestado aún sin cobrar.",
+  },
+  funnel: {
+    title: "Conversión de citas",
+    desc: "Cuántas citas agendadas terminan atendidas y documentadas.",
+  },
+};
 
 export default function DashboardAnalytics() {
   const { user }  = useAuth();
@@ -17,6 +39,7 @@ export default function DashboardAnalytics() {
   const [tab, setTab] = useState("weekly");
 
   const visibleTabs = TABS.filter((t) => !t.admin || isAdmin);
+  const info = CHART_INFO[tab];
 
   return (
     <div className="card dash-analytics-card">
@@ -34,6 +57,13 @@ export default function DashboardAnalytics() {
           ))}
         </div>
       </div>
+
+      {info && (
+        <div className="dash-chart-head">
+          <h4 className="dash-chart-title">{info.title}</h4>
+          <p className="dash-chart-desc">{info.desc}</p>
+        </div>
+      )}
 
       {tab === "weekly"    && <div className="dash-chart-section"><ActivityAreaChart rangeDays={7}  /></div>}
       {tab === "monthly"   && <div className="dash-chart-section"><ActivityAreaChart rangeDays={30} /></div>}

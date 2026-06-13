@@ -1,0 +1,17 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Icono de conexión">
+  <!-- Monocromático: hereda el color del padre vía currentColor -->
+  <g id="linkCircle">
+    <circle cx="50" cy="50" r="46"
+      fill="none" stroke="currentColor" stroke-width="2.5" opacity="0.25"/>
+  </g>
+
+  <g id="linkChain" stroke="currentColor" stroke-width="6"
+     stroke-linecap="round" fill="none">
+    <!-- eslabón izquierdo -->
+    <path id="linkLeft"  d="M44 38 L36 46 a11 11 0 0 0 0 16 l8 8"/>
+    <!-- eslabón derecho -->
+    <path id="linkRight" d="M56 62 L64 54 a11 11 0 0 0 0 -16 l-8 -8"/>
+    <!-- conector central -->
+    <line id="linkBar" x1="42" y1="58" x2="58" y2="42"/>
+  </g>
+</svg>

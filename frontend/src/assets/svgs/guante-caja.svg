@@ -1,0 +1,60 @@
+<svg viewBox="0 0 400 290" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Caja de guantes de látex">
+  <!-- ===== SOMBRA EN EL PISO ===== -->
+  <g id="packageShadow">
+    <ellipse cx="205" cy="250" rx="160" ry="15"
+      fill="var(--box-shadow, #3E6FA8)" opacity="0.16"/>
+  </g>
+
+  <!-- ===== CARA SUPERIOR (tapa) ===== -->
+  <g id="lid">
+    <polygon points="60,90 340,90 368,62 88,62"
+      fill="var(--box-top, #DCE8FA)"/>
+    <polygon points="60,90 340,90 368,62 88,62"
+      fill="var(--box-primary, #6E9BDC)" opacity="0.10"/>
+  </g>
+
+  <!-- ===== CARA LATERAL DERECHA ===== -->
+  <g id="boxSide">
+    <polygon points="340,90 368,62 368,202 340,230"
+      fill="var(--box-side, #B9CEEF)"/>
+  </g>
+
+  <!-- ===== CUERPO FRONTAL DE LA CAJA (alargado) ===== -->
+  <g id="boxBody">
+    <rect x="60" y="90" width="280" height="140" rx="6"
+      fill="var(--box-face, #F4F8FE)"/>
+    <rect x="60" y="90" width="280" height="140" rx="6"
+      fill="none" stroke="var(--box-line, #C9D8EF)" stroke-width="1.5"/>
+  </g>
+
+  <!-- ===== BANDA / HEADER DE MARCA (izquierda) ===== -->
+  <g id="brandBand">
+    <rect x="60" y="106" width="170" height="40"
+      fill="var(--box-primary, #6E9BDC)" opacity="0.92"/>
+    <!-- placeholder de texto "GUANTES DE LATEX DESECHABLES" -->
+    <rect id="text-brand" x="76" y="118" width="130" height="16" rx="3"
+      fill="#FFFFFF" opacity="0.16"/>
+  </g>
+
+  <!-- ===== GRÁFICO DE GUANTE EN LA CAJA (derecha) ===== -->
+  <g id="boxGloveGraphic" transform="translate(228.8 102.8) scale(0.35)">
+    <path id="boxGlove" fill="var(--box-glove, #6E9BDC)"
+      d="M 102,32 L 96,38 L 95,144 L 79,143 L 79,71 L 78,68 L 73,64 L 68,65 L 64,70 L 63,232 L 47,231 L 47,160 L 38,160 L 32,166 L 33,245 L 37,255 L 42,262 L 64,285 L 64,343 L 248,343 L 247,330 L 250,323 L 254,319 L 241,313 L 227,304 L 203,282 L 189,262 L 179,239 L 175,220 L 174,89 L 170,86 L 165,86 L 161,89 L 160,92 L 160,143 L 144,144 L 143,71 L 139,65 L 132,65 L 128,70 L 128,143 L 112,144 L 111,39 L 107,33 Z"/>
+  </g>
+
+  <!-- ===== BADGE DE TALLA "M" (abajo izquierda) ===== -->
+  <g id="sizeBadge">
+    <rect x="76" y="176" width="40" height="40" rx="8"
+      fill="var(--box-primary, #6E9BDC)"/>
+    <rect id="text-size" x="86" y="186" width="20" height="20" rx="3"
+      fill="#FFFFFF" opacity="0.18"/>
+  </g>
+
+  <!-- ===== DETALLES (placeholder "50 PIEZAS") ===== -->
+  <g id="details">
+    <rect id="text-count" x="126" y="190" width="96" height="14" rx="3"
+      fill="var(--box-line, #C9D8EF)" opacity="0.7"/>
+    <line x1="60" y1="90" x2="340" y2="90"
+      stroke="var(--box-line, #C9D8EF)" stroke-width="1.5"/>
+  </g>
+</svg>

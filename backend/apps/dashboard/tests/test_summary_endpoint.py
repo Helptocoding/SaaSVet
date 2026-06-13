@@ -111,10 +111,12 @@ class DashboardSummaryTests(APITestCase):
         cls.mr_stale.created_at = now - timedelta(hours=48)
         cls.mr_stale.save(update_fields=['created_at'])
 
-        # Low-stock product
+        # Low-stock product (ADR p31: stock real en Product.stock_quantity / min_stock).
         cls.product = Product.objects.create(
             name="Amoxicilina", category="medication",
             internal_code="PROD-TEST-001", organization=cls.org,
+            base_unit="tablet",
+            stock_quantity=Decimal("2"), min_stock=Decimal("5"),
         )
         cls.presentation = Presentation.objects.create(
             product=cls.product, name="Amoxicilina 50mg",
@@ -230,6 +232,23 @@ class DashboardSummaryTests(APITestCase):
         self.assertIn('time', slot)
         self.assertIn('appointment', slot)
 
+    def test_timeline_slot_exposes_appointments_list_and_species(self):
+        """TodayAgendaList contract: cada slot trae appointments[] (todas las
+        citas del bucket, no solo la primera) y cada cita incluye species/breed."""
+        self.client.force_authenticate(self.vet)
+        r = self.client.get(SUMMARY_URL)
+        filled = [s for s in r.data['timeline'] if s['appointment']]
+        self.assertGreaterEqual(len(filled), 1)
+        slot = filled[0]
+        self.assertIn('appointments', slot)
+        self.assertIsInstance(slot['appointments'], list)
+        self.assertGreaterEqual(len(slot['appointments']), 1)
+        # alias legacy == primera del array
+        self.assertEqual(slot['appointment'], slot['appointments'][0])
+        appt = slot['appointments'][0]
+        self.assertIn('species', appt)
+        self.assertIn('breed', appt)
+
     # ------------------------------------------------------------------
     # Backlog
     # ------------------------------------------------------------------
@@ -261,8 +280,38 @@ class DashboardSummaryTests(APITestCase):
         alerts = r.data['stock_alerts']
         self.assertEqual(len(alerts), 1)
         self.assertEqual(alerts[0]['product_name'], 'Amoxicilina')
-        self.assertEqual(alerts[0]['stock'], '2.00')
+        self.assertEqual(alerts[0]['stock'], '2.0000')
+        self.assertEqual(alerts[0]['min_stock'], '5.0000')
+        self.assertEqual(alerts[0]['unit'], 'Tableta')
         self.assertEqual(alerts[0]['severity'], 'warning')
+
+    def test_product_without_min_stock_not_alerted(self):
+        # ADR p31/p33: producto recién creado (stock 0, sin umbral) NO debe
+        # inundar la tarjeta. La alerta exige min_stock > 0.
+        Product.objects.create(
+            name="Sin umbral", category="other",
+            internal_code="PROD-NOMIN", organization=self.org,
+            base_unit="piece",
+            stock_quantity=Decimal("0"), min_stock=Decimal("0"),
+        )
+        self.client.force_authenticate(self.vet)
+        r = self.client.get(SUMMARY_URL)
+        names = [a['product_name'] for a in r.data['stock_alerts']]
+        self.assertNotIn("Sin umbral", names)
+        self.assertEqual(r.data['kpis']['low_stock_count'], 1)
+
+    def test_agotado_is_critical_severity(self):
+        Product.objects.create(
+            name="Agotado", category="medication",
+            internal_code="PROD-ZERO", organization=self.org,
+            base_unit="ml",
+            stock_quantity=Decimal("0"), min_stock=Decimal("3"),
+        )
+        self.client.force_authenticate(self.vet)
+        r = self.client.get(SUMMARY_URL)
+        agotado = next(a for a in r.data['stock_alerts'] if a['product_name'] == 'Agotado')
+        self.assertEqual(agotado['severity'], 'critical')
+        self.assertEqual(agotado['stock'], '0.0000')
 
     # ------------------------------------------------------------------
     # Cache

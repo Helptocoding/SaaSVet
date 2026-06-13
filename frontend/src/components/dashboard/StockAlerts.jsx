@@ -1,5 +1,30 @@
 import { useNavigate } from "react-router-dom";
 
+// Backend envía stock/min_stock como string decimal (e.g. "2.0000"). Mostrar
+// limpio: "2", "2.5". El stock es product-level en unidades base (ADR p31).
+const fmtQty = (v) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return v;
+  return n.toLocaleString("es-MX", { maximumFractionDigits: 2 });
+};
+
+function StockRow({ alert, isCritical }) {
+  return (
+    <li className={`dsp-item${isCritical ? " dsp-item-critical" : ""}`}>
+      <span className={`dsp-sev ${isCritical ? "dsp-sev-critical" : "dsp-sev-warning"}`} />
+      <div className="dsp-item-body">
+        <span className="dsp-item-name">{alert.product_name}</span>
+        <span className="dsp-item-meta">
+          {fmtQty(alert.stock)} {alert.unit || "u"} · mín {fmtQty(alert.min_stock)}
+        </span>
+      </div>
+      <span className={`badge ${isCritical ? "badge-danger" : "badge-warning"}`}>
+        {isCritical ? "Agotado" : "Bajo"}
+      </span>
+    </li>
+  );
+}
+
 export default function StockAlerts({ alerts }) {
   const navigate = useNavigate();
 
@@ -28,28 +53,10 @@ export default function StockAlerts({ alerts }) {
 
       <ul className="dsp-list">
         {critical.slice(0, 3).map((a, i) => (
-          <li key={`c-${i}`} className="dsp-item dsp-item-critical">
-            <span className="dsp-sev dsp-sev-critical" />
-            <div className="dsp-item-body">
-              <span className="dsp-item-name">{a.product_name}</span>
-              <span className="dsp-item-meta">
-                {a.presentation_name} · {a.stock} / mín {a.min_stock}
-              </span>
-            </div>
-            <span className="badge badge-danger">Agotado</span>
-          </li>
+          <StockRow key={`c-${i}`} alert={a} isCritical />
         ))}
         {warning.slice(0, 2).map((a, i) => (
-          <li key={`w-${i}`} className="dsp-item">
-            <span className="dsp-sev dsp-sev-warning" />
-            <div className="dsp-item-body">
-              <span className="dsp-item-name">{a.product_name}</span>
-              <span className="dsp-item-meta">
-                {a.presentation_name} · {a.stock} / mín {a.min_stock}
-              </span>
-            </div>
-            <span className="badge badge-warning">Bajo</span>
-          </li>
+          <StockRow key={`w-${i}`} alert={a} isCritical={false} />
         ))}
       </ul>
 

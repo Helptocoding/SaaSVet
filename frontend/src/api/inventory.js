@@ -18,6 +18,14 @@ export const deleteProduct = (id) =>
 export const adjustStock = (id, data) =>
     api.post(`inventory/products/${id}/adjust/`, data).then(r => r.data);
 
+// Ajuste a una presentación específica (respeta su conversion_factor).
+// Usado por la Entrada rápida de stock para soportar multi-presentación.
+export const adjustPresentationStock = (presentationPublicId, data) =>
+    api.post(`inventory/presentations/${presentationPublicId}/adjust/`, data).then(r => r.data);
+
+export const getPresentationByBarcode = (barcode) =>
+    api.get("inventory/presentations/barcode/", { params: { barcode } }).then(r => r.data);
+
 export const getMovements = (params = {}) =>
     api.get("inventory/movements/", { params }).then(r => r.data);
 
@@ -35,3 +43,9 @@ export const getUnitChoices = () =>
 
 export const getPresentations = (params = {}) =>
     api.get("inventory/presentations/", { params }).then(r => r.data);
+
+export const createPresentation = (productPublicId, data) =>
+    api.post(`inventory/products/${productPublicId}/presentations/`, data).then(r => r.data);
+
+export const updatePresentation = (presentationPublicId, data) =>
+    api.patch(`inventory/presentations/${presentationPublicId}/`, data).then(r => r.data);

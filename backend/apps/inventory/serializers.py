@@ -85,7 +85,10 @@ class PresentationCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Presentation
-        fields = ['id', 'name', 'base_unit', 'quantity', 'conversion_factor', 'sale_price', 'stock', 'min_stock']
+        fields = [
+            'id', 'name', 'base_unit', 'quantity', 'conversion_factor',
+            'sale_price', 'purchase_price', 'stock', 'min_stock', 'barcode',
+        ]
         read_only_fields = ['id']
 
     def validate_sale_price(self, value):

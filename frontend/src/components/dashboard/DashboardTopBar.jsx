@@ -67,9 +67,10 @@ export default function DashboardTopBar({ summary, revenueToday, revenueSpark, r
 
   const firstName  = user?.first_name || user?.username || "Equipo";
   const enCurso    = summary?.kpis?.in_progress_now ?? 0;
-  const stockCrit  = (summary?.stock_alerts || []).filter(a => a.severity === "critical").length;
-  const needsAttention = summary?.backlog?.needs_attention_count ?? 0;
-  const totalAlert     = stockCrit + needsAttention;
+  // La barra superior solo señala lo URGENTE (crítico). Los avisos viven en
+  // sus propias cards (Pendientes clínicos, Stock crítico, Citas por resolver).
+  // Crítico beta = stock agotado (severity 'critical').
+  const criticos   = (summary?.stock_alerts || []).filter(a => a.severity === "critical").length;
 
   const deltaLabel = revenueDelta != null
     ? `${revenueDelta >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(revenueDelta))}% vs ayer`
@@ -84,9 +85,9 @@ export default function DashboardTopBar({ summary, revenueToday, revenueSpark, r
         </div>
 
         <div className="pacts dtop-pacts">
-          {totalAlert > 0 && (
-            <span className="badge badge-warning dtop-alert-badge">
-              <Icon.AlertCircle s={12} /> {totalAlert} alerta{totalAlert > 1 ? "s" : ""}
+          {criticos > 0 && (
+            <span className="badge badge-danger dtop-alert-badge">
+              <Icon.AlertOctagon s={12} /> {criticos} crítico{criticos > 1 ? "s" : ""}
             </span>
           )}
           <button className="btn btn-primary btn-md" onClick={() => navigate("/appointments")}>

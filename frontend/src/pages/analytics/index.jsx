@@ -24,7 +24,7 @@ const FIN_SIDE = [
 ];
 const OPS_SIDE = [
     { key: "appointments_total", label: "Citas totales", caption: "Agendadas + walk-ins" },
-    { key: "appointments_no_show", label: "No-shows", caption: "Inasistencias del periodo" },
+    { key: "appointments_no_show", label: "No asistieron", caption: "Clientes que no llegaron" },
     { key: "medical_records_closed", label: "Consultas cerradas", caption: "Atenciones documentadas" },
 ];
 

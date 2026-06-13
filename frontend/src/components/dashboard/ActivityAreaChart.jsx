@@ -136,7 +136,7 @@ function ActivityAreaChart({ rangeDays = 7 }) {
           <span className="chart-dot chart-dot-primary" /> Completadas
         </span>
         <span className="chart-legend-item">
-          <span className="chart-dot chart-dot-muted" /> No-show
+          <span className="chart-dot chart-dot-muted" /> No asistieron
         </span>
         <span className="chart-legend-item">
           <span className="chart-dot chart-dot-line chart-dot-accent" /> Total
@@ -175,7 +175,7 @@ function ActivityAreaChart({ rangeDays = 7 }) {
             />
             <Bar
               dataKey="noShow"
-              name="No-show"
+              name="No asistieron"
               stackId="a"
               fill={colors.muted}
               radius={[3, 3, 0, 0]}

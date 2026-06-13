@@ -1,10 +1,13 @@
 """
 Tests de cierre de consultas médicas y bloqueo cuando status=closed.
 """
+import datetime
+
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from apps.appointments.models import Appointment, AppointmentStatusChange
 from apps.billing.models import Service
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
@@ -388,3 +391,90 @@ class CloseMedicalRecordTests(APITestCase):
         r = self.client.delete(self._detail_url(mr.pk))
         self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(MedicalRecord.objects.filter(pk=mr.pk).exists())
+
+
+class CloseSyncsAppointmentTests(APITestCase):
+    """Fase 1: cerrar la consulta finaliza la cita vinculada (in_progress→done)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.org = Organization.objects.create(name="Org Sync", timezone="UTC")
+        cls.vet = _make_user("vet_sync", cls.org, "VET")
+
+    def _make_appt(self, status_value):
+        owner = Owner.objects.create(name="OS", phone="55", organization=self.org)
+        pet = Pet.objects.create(name="PS", species="dog", owner=owner, organization=self.org)
+        appt = Appointment.objects.create(
+            pet=pet, veterinarian=self.vet, organization=self.org,
+            date=datetime.date.today(),
+            start_time=datetime.time(9, 0), end_time=datetime.time(10, 0),
+            reason="consulta", status=status_value,
+        )
+        mr = MedicalRecord.objects.create(
+            pet=pet, veterinarian=self.vet, organization=self.org,
+            appointment=appt, diagnosis="d", treatment="t",
+        )
+        return appt, mr
+
+    def _close_url(self, pk):
+        return f"/api/medical-records/{pk}/close/"
+
+    def _done_changes(self, appt):
+        return AppointmentStatusChange.objects.filter(appointment=appt, to_status="done")
+
+    # 1. cerrar MR con cita in_progress → MR closed + Appointment done
+    def test_close_marks_in_progress_appointment_done(self):
+        appt, mr = self._make_appt("in_progress")
+        self.client.force_authenticate(self.vet)
+        r = self.client.post(self._close_url(mr.pk))
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        mr.refresh_from_db()
+        appt.refresh_from_db()
+        self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
+        self.assertEqual(appt.status, "done")
+        change = self._done_changes(appt).first()
+        self.assertIsNotNone(change)
+        self.assertEqual(change.from_status, "in_progress")
+        self.assertEqual(change.changed_by, self.vet)
+
+    # 2. cerrar MR sin cita → no falla
+    def test_close_record_without_appointment_succeeds(self):
+        owner = Owner.objects.create(name="ONA", phone="56", organization=self.org)
+        pet = Pet.objects.create(name="PNA", species="cat", owner=owner, organization=self.org)
+        mr = MedicalRecord.objects.create(
+            pet=pet, veterinarian=self.vet, organization=self.org,
+            diagnosis="d", treatment="t",
+        )
+        self.client.force_authenticate(self.vet)
+        r = self.client.post(self._close_url(mr.pk))
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        mr.refresh_from_db()
+        self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
+
+    # 3. cerrar dos veces → no duplica la transición (idempotente)
+    #    El segundo POST no vuelve a disparar el service (la consulta ya está
+    #    cerrada), por lo que solo existe UNA transición a `done`. No se afirma
+    #    el status code del segundo POST: la idempotencia HTTP del endpoint de
+    #    cierre es un asunto pre-existente independiente de Fase 1.
+    def test_close_twice_does_not_duplicate_transition(self):
+        appt, mr = self._make_appt("in_progress")
+        self.client.force_authenticate(self.vet)
+        r1 = self.client.post(self._close_url(mr.pk))
+        self.client.post(self._close_url(mr.pk))
+        self.assertEqual(r1.status_code, status.HTTP_200_OK)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "done")
+        self.assertEqual(self._done_changes(appt).count(), 1)
+
+    # 4. cita ya done → no-op (no nueva transición)
+    def test_close_with_appointment_already_done_is_noop(self):
+        appt, mr = self._make_appt("done")
+        self.client.force_authenticate(self.vet)
+        r = self.client.post(self._close_url(mr.pk))
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        appt.refresh_from_db()
+        mr.refresh_from_db()
+        self.assertEqual(appt.status, "done")
+        self.assertEqual(mr.status, MedicalRecord.Status.CLOSED)
+        # No se creó AppointmentStatusChange (la cita ya estaba done sin pasar por el service)
+        self.assertEqual(self._done_changes(appt).count(), 0)

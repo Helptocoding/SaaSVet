@@ -279,14 +279,14 @@ const Staff = () => {
                                 <dt style={{ fontSize: "11.5px", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: "500" }}>
                                     Usuario
                                 </dt>
-                                <dd style={{ margin: 0, fontSize: "13px", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                                <dd style={{ margin: 0, fontSize: "13px", fontFamily: "var(--font-mono)" }}>
                                     {resetResult.target.username}
                                 </dd>
 
                                 <dt style={{ fontSize: "11.5px", color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: "500" }}>
                                     Contraseña
                                 </dt>
-                                <dd style={{ margin: 0, fontSize: "13px", color: "#fbbf24", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontWeight: "600", wordBreak: "break-all" }}>
+                                <dd style={{ margin: 0, fontSize: "13px", color: "#fbbf24", fontFamily: "var(--font-mono)", fontWeight: "600", wordBreak: "break-all" }}>
                                     {resetResult.temp_password}
                                 </dd>
 

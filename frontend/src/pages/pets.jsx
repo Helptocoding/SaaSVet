@@ -12,6 +12,7 @@ import { es } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
 import '../styles/day-picker.css';
 import handleFormError from "../utils/handleFormError";
+import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
@@ -22,11 +23,7 @@ const EMPTY_FORM = {
     owner: { name: "", phone: "" },
 };
 
-// ─── Species detection ────────────────────────────────────────────────────────
-const isCanino = (p) => /perro|canino|dog/i.test(p.species);
-const isFelino = (p) => /gato|felino|cat/i.test(p.species);
-
-// ─── Age utilities ────────────────────────────────────────────────────────────
+// ─── Age display (solo Mascotas) ────────────────────────────────────────────────
 const calcAge = (bd) => {
     if (!bd) return null;
     const ms = Date.now() - new Date(bd).getTime();
@@ -35,20 +32,6 @@ const calcAge = (bd) => {
     if (y >= 1) return `${y} año${y !== 1 ? "s" : ""}`;
     if (m >= 1) return `${m} mes${m !== 1 ? "es" : ""}`;
     return "< 1 mes";
-};
-
-const getAgeYears = (bd) => {
-    if (!bd) return null;
-    return (Date.now() - new Date(bd).getTime()) / (365.25 * 24 * 3600 * 1000);
-};
-
-const getAgeGroup = (bd) => {
-    const y = getAgeYears(bd);
-    if (y === null) return null;
-    if (y < 1) return "cachorro";
-    if (y < 3) return "joven";
-    if (y < 8) return "adulto";
-    return "senior";
 };
 
 // ─── Week range ───────────────────────────────────────────────────────────────

@@ -4,34 +4,20 @@ import { toast } from "sonner";
 import { useAuth } from "../../auth/authContext";
 import { createMedicalRecord } from "../../api/medicalRecords";
 import { updateAppointmentStatus } from "../../api/appointments";
+import { useConfirm } from "../ConfirmDialog";
 import { Icon } from "../icons";
+import StatusBadge from "../StatusBadge";
 import { apiError } from "../../utils/apiError";
 import api from "../../api/client";
-
-const S_LABEL = {
-  scheduled: "Programada",
-  confirmed: "Confirmada",
-  in_progress: "En consulta",
-  done: "Completada",
-  canceled: "Cancelada",
-  no_show: "No se presentó",
-};
-
-const S_BADGE = {
-  scheduled: "badge-info",
-  confirmed: "badge-purple",
-  in_progress: "badge-warning",
-  done: "badge-success",
-  canceled: "badge-danger",
-  no_show: "badge-secondary",
-};
 
 export default function AppointmentQuickModal({ publicId, onClose }) {
   const navigate = useNavigate();
   const { token } = useAuth();
+  const confirm = useConfirm();
   const [appt, setAppt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [attending, setAttending] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     api
@@ -94,6 +80,81 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
     navigate(`/appointments?appointment=${publicId}`);
   };
 
+  const handleNoShow = async () => {
+    if (!appt) return;
+    const ok = await confirm({
+      message: `¿Marcar la cita de ${appt.pet_name || "este paciente"} como "No se presentó"?`,
+      confirmText: "No asistió",
+      dangerMode: true,
+    });
+    if (!ok) return;
+    setUpdating(true);
+    try {
+      await updateAppointmentStatus(token, appt.public_id, "no_show");
+      window.dispatchEvent(new Event("dashboard:refresh"));
+      toast.success("Cita marcada como no asistió");
+      onClose();
+    } catch (err) {
+      toast.error(apiError(err, "No se pudo actualizar la cita"));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleReschedule = () => {
+    onClose();
+    navigate(`/appointments?appointment=${publicId}`);
+  };
+
+  const handleConfirm = async () => {
+    if (!appt) return;
+    setUpdating(true);
+    try {
+      await updateAppointmentStatus(token, appt.public_id, "confirmed");
+      window.dispatchEvent(new Event("dashboard:refresh"));
+      toast.success("Cita confirmada");
+      onClose();
+    } catch (err) {
+      toast.error(apiError(err, "No se pudo confirmar la cita"));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!appt) return;
+    const ok = await confirm({
+      message: `¿Cancelar la cita de ${appt.pet_name || "este paciente"}?`,
+      confirmText: "Cancelar cita",
+      dangerMode: true,
+    });
+    if (!ok) return;
+    setUpdating(true);
+    try {
+      await updateAppointmentStatus(token, appt.public_id, "canceled");
+      window.dispatchEvent(new Event("dashboard:refresh"));
+      toast.success("Cita cancelada");
+      onClose();
+    } catch (err) {
+      toast.error(apiError(err, "No se pudo cancelar la cita"));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleViewRecord = () => {
+    onClose();
+    const recId =
+      appt.medical_record_public_ids?.length > 0
+        ? appt.medical_record_public_ids[0]
+        : null;
+    navigate(
+      recId
+        ? `/medical-records?record=${recId}`
+        : `/medical-records?pet=${appt.pet_public_id}`
+    );
+  };
+
   if (loading) {
     return (
       <div className="modal-overlay" onClick={onClose}>
@@ -119,7 +180,6 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
 
   const isActive = appt.status === "scheduled" || appt.status === "confirmed";
   const isInProgress = appt.status === "in_progress";
-  const isTerminal = appt.status === "done" || appt.status === "canceled" || appt.status === "no_show";
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -129,9 +189,7 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
             <h3 style={{ marginBottom: "4px", fontSize: "15px" }}>
               <Icon.Paw s={14} /> {appt.pet_name || "Paciente"}
             </h3>
-            <span className={`badge ${S_BADGE[appt.status] || "badge-default"}`}>
-              {S_LABEL[appt.status] || appt.status}
-            </span>
+            <StatusBadge status={appt.status} />
           </div>
           <button className="modal-close" onClick={onClose}>
             <Icon.X s={14} />
@@ -188,26 +246,88 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
         </div>
 
         <div className="modal-footer" style={{ flexDirection: "column", gap: "8px" }}>
-          {!isTerminal && (
+          {isInProgress && (
             <button
               className="btn btn-primary btn-lg"
-              style={{
-                width: "100%",
-                background: isInProgress ? "var(--c-primary)" : "#f59e0b",
-                borderColor: isInProgress ? "var(--c-primary)" : "#f59e0b",
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: "14px",
-              }}
+              style={{ width: "100%", fontWeight: 700, fontSize: "14px" }}
               disabled={attending}
               onClick={handleAttendNow}
             >
-              {isInProgress ? "Continuar consulta" : "▶ Atender ahora"}
+              Continuar consulta
+            </button>
+          )}
+
+          {isActive && (
+            <>
+              <button
+                className="btn btn-primary btn-lg"
+                style={{
+                  width: "100%",
+                  background: "#f59e0b",
+                  borderColor: "#f59e0b",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                }}
+                disabled={attending}
+                onClick={handleAttendNow}
+              >
+                ▶ Atender ahora
+              </button>
+
+              {appt.status === "scheduled" && (
+                <button
+                  className="btn btn-secondary btn-md"
+                  style={{ width: "100%" }}
+                  disabled={updating || attending}
+                  onClick={handleConfirm}
+                >
+                  Confirmar cita
+                </button>
+              )}
+
+              <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+                <button
+                  className="btn btn-secondary btn-md"
+                  style={{ flex: 1 }}
+                  disabled={updating || attending}
+                  onClick={handleNoShow}
+                >
+                  No asistió
+                </button>
+                <button
+                  className="btn btn-secondary btn-md"
+                  style={{ flex: 1 }}
+                  disabled={updating || attending}
+                  onClick={handleReschedule}
+                >
+                  Reprogramar
+                </button>
+              </div>
+
+              <button
+                className="btn btn-ghost btn-md"
+                style={{ width: "100%", color: "var(--c-danger-text)" }}
+                disabled={updating || attending}
+                onClick={handleCancel}
+              >
+                Cancelar cita
+              </button>
+            </>
+          )}
+
+          {appt.status === "done" && (
+            <button
+              className="btn btn-primary btn-lg"
+              style={{ width: "100%", fontWeight: 700, fontSize: "14px" }}
+              onClick={handleViewRecord}
+            >
+              Ver expediente
             </button>
           )}
 
           <button
-            className="btn btn-secondary btn-md"
+            className="btn btn-ghost btn-md"
             style={{ width: "100%" }}
             onClick={handleViewDetails}
           >

@@ -60,6 +60,14 @@ Al cerrar via `close_medical_record` view (POST `/api/medical-records/<uuid>/clo
   dentro del mismo `atomic()` (MR ya lockeado → Invoice, orden canónico). Finalizar
   **siempre** deja la consulta en Cobros, aunque sea una factura `draft` $0. Supera
   la creación lazy de ADR p7 en este camino.
+- **completa la cita vinculada (ADR p34)**: llama
+  `apps.appointments.services.complete_appointment_on_record_close(medical_record.appointment, request.user)`
+  dentro del mismo `atomic()`. Transiciona la cita `in_progress → done` (cierre clínico
+  = fin de la atención operativa). Es idempotente y no-op si no hay cita asociada o si
+  la cita no está en `in_progress`. Usa un UPDATE condicional (gateado por
+  `status='in_progress'`), **sin** `select_for_update` sobre el Appointment, para no
+  introducir un orden de locks Appointment↔MR que choque con `assign_patient` (ABBA).
+  **NO toca Invoice ni pagos**: `done` significa "atención terminada", no "pagado".
 
 `closed_at` es `editable=False`. Defenses:
 1. **Model `save()` guard**: si `status='closed' AND closed_at is None` →
@@ -143,6 +151,30 @@ Validaciones backend:
 - **tenant validation (ADR p14 — Día 3):** `PrescriptionItemSerializer.validate_product` y `PrescriptionItemWriteSerializer.validate_product` rechazan productos de otra organización con `400 'Acceso inválido.'`. El endpoint `/items/` además exige `requires_prescription=True` **después** del tenant check (no revelar atributos de productos cross-org). Antes de Día 3 no había tenant check → leak en el PDF de receta. Helper local `_validate_same_org` emite `TENANT_VALIDATION_REJECTED` (WARNING). Migración a mixin centralizado planificada — ver [deuda A1](../deuda/fase2-prioridad-alta.md#a1).
 
 La ruta `/prescriptions` se conserva como visor secundario para consulta, reimpresion y mantenimiento historico, pero el flujo principal de prescripcion es desde historial clinico.
+
+## Documentos PDF (ADR p36)
+
+| Endpoint | Permiso | Documento |
+|---|---|---|
+| `GET /api/medical-records/<uuid>/pdf/` | `medicalrecord.retrieve` | Resumen de consulta |
+| `GET /api/prescriptions/<uuid>/pdf/` | `prescription.retrieve` | Receta médica |
+
+Ambos se generan con la capa compartida `apps/core/pdf/` (tema verde bosque, membrete
+por página, "Página N de M"). Reglas:
+
+- **Contenido**: el view del dominio arma los flowables (QUÉ); `core/pdf` solo aporta
+  presentación (CÓMO). No agregar queries dentro del tema — el N+1 guard del PDF de
+  consulta lo detecta.
+- **Receta pagina correctamente** (rewrite platypus, ADR p36). Antes usaba canvas crudo
+  sin salto de página: recetas largas perdían contenido. Test de regresión: 40 ítems →
+  2+ páginas con el último medicamento presente.
+- **Fechas** en timezone de la organización (`utc_to_local`), no UTC.
+- **Nombre de descarga**: `consulta_<id>_<mascota>_<YYYY-MM-DD>.pdf` /
+  `receta_<id>_<mascota>_<YYYY-MM-DD>.pdf` vía `pdf_filename()` (fecha local de
+  creación). Requiere `CORS_EXPOSE_HEADERS=['content-disposition']` en settings para
+  que el frontend pueda leer el nombre (test de contrato en core).
+- La receta incluye bloque de firma del veterinario (nombre + especialidad). La cédula
+  profesional llega en Fase 2 (`User.license_number`, pendiente).
 
 Distincion funcional importante:
 - receta medica: medicamentos prescritos para administracion posterior o entrega al cliente
@@ -338,6 +370,8 @@ Endpoint:
 Comportamiento:
 - si está abierta, se valida y se cierra
 - si ya estaba cerrada, responde `200` sin cambios (idempotente — no re-valida campos)
+- al cerrar, **garantiza la factura** (ADR p30) y **completa la cita vinculada** si está
+  en `in_progress` (ADR p34 — `in_progress → done`, idempotente, no toca Invoice/pagos)
 
 Validaciones en cierre (solo para consultas que no están ya cerradas):
 - `diagnosis` no puede estar vacío (todos los tipos)
@@ -479,6 +513,10 @@ La factura puede:
 Nada de eso define por si mismo el estado clinico de la consulta.
 
 El cierre de consulta no depende del pago de factura.
+
+El cierre **sí** completa la cita vinculada (`in_progress → done`, ADR p34), pero eso es
+estado **operativo de agenda**, no financiero: `done` ≠ pagado. El cobro sigue su propio
+flujo en facturación independientemente del cierre clínico.
 
 La relacion modelo es `Invoice.medical_record = OneToOneField` — una sola factura por consulta, constraint en DB.
 

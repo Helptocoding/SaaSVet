@@ -582,29 +582,23 @@ def _fmt_money(value):
         return "$0.00"
 
 
-def _fmt_dt(value):
-    if not value:
-        return ""
-    try:
-        return value.strftime('%d/%m/%Y %H:%M')
-    except Exception:
-        return str(value)
-
-
 @api_view(['GET'])
 @permission_classes([make_permission("invoice.retrieve")])
 def invoice_pdf(request, pk):
     """Genera el cobro como archivo PDF (todos los estados, incluido draft)."""
     from io import BytesIO
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
     from reportlab.lib.units import cm
-    from reportlab.lib import colors
-    from reportlab.platypus import (
-        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, LongTable,
-    )
+    from reportlab.platypus import Paragraph, Spacer
+
     from django.http import HttpResponse
-    from apps.core.pdf_utils import safe_pdf_text, safe_filename_segment
+
+    from apps.core.datetime_utils import utc_to_local
+    from apps.core.pdf import (
+        CONTENT_WIDTH, build_styles, data_table, get_theme_for_organization,
+        info_card, pdf_filename, render_branded_pdf, safe_pdf_text,
+        section, title_block, totals_table,
+    )
 
     invoice = resolve_public_id(
         Invoice.objects
@@ -614,114 +608,101 @@ def invoice_pdf(request, pk):
         pk,
     )
 
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=letter,
-        leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
-        title=f"Cobro #{invoice.id}",
-    )
-    styles = getSampleStyleSheet()
-    h_org = ParagraphStyle('h_org', parent=styles['Heading1'], fontSize=16, spaceAfter=4)
-    h_title = ParagraphStyle('h_title', parent=styles['Heading2'], fontSize=13, spaceAfter=2)
-    h_sub = ParagraphStyle('h_sub', parent=styles['Heading3'], fontSize=11, spaceBefore=10, spaceAfter=4)
-    body = styles['BodyText']
-    body_sm = ParagraphStyle('body_sm', parent=body, fontSize=9, leading=11)
+    org = invoice.organization
+    theme = get_theme_for_organization(org)
+    st = build_styles(theme)
 
-    flow = []
-    flow.append(Paragraph(safe_pdf_text(invoice.organization.name), h_org))
-    flow.append(Paragraph(f"COBRO #{invoice.id}", h_title))
-    flow.append(Paragraph(
+    def fmt_dt(value):
+        local = utc_to_local(org, value)
+        return local.strftime('%d/%m/%Y %H:%M') if local else ''
+
+    meta_lines = [
         f"Estado: <b>{_STATUS_LABEL.get(invoice.status, invoice.status)}</b> &nbsp;·&nbsp; "
         f"Tipo: {_TYPE_LABEL.get(invoice.invoice_type, invoice.invoice_type)}",
-        body_sm,
-    ))
-    flow.append(Paragraph(f"Creado: {_fmt_dt(invoice.created_at)}", body_sm))
+        f"Creado: {fmt_dt(invoice.created_at)}",
+    ]
     if invoice.confirmed_at:
-        flow.append(Paragraph(f"Confirmado: {_fmt_dt(invoice.confirmed_at)}", body_sm))
+        meta_lines.append(f"Confirmado: {fmt_dt(invoice.confirmed_at)}")
     if invoice.paid_at:
-        flow.append(Paragraph(f"Pagado: {_fmt_dt(invoice.paid_at)}", body_sm))
+        meta_lines.append(f"Pagado: {fmt_dt(invoice.paid_at)}")
     if invoice.cancelled_at:
-        flow.append(Paragraph(f"Cancelado: {_fmt_dt(invoice.cancelled_at)}", body_sm))
+        meta_lines.append(f"Cancelado: {fmt_dt(invoice.cancelled_at)}")
 
-    flow.append(Paragraph("Cliente", h_sub))
-    owner_name = safe_pdf_text(invoice.owner.name) if invoice.owner_id else ""
-    owner_phone = safe_pdf_text(invoice.owner.phone) if invoice.owner_id else ""
-    flow.append(Paragraph(f"<b>Dueño:</b> {owner_name} &nbsp; <b>Teléfono:</b> {owner_phone}", body))
+    flow = []
+    flow += title_block(st, title=f"Cobro #{invoice.id}", meta_lines=meta_lines)
+
+    flow += section(st, theme, "Cliente")
+    client_pairs = [
+        ("Dueño", safe_pdf_text(invoice.owner.name) if invoice.owner_id else ''),
+        ("Teléfono", safe_pdf_text(invoice.owner.phone) if invoice.owner_id else ''),
+    ]
     if invoice.pet_id:
         pet = invoice.pet
-        flow.append(Paragraph(
-            f"<b>Mascota:</b> {safe_pdf_text(pet.name)} "
-            f"&nbsp; <b>Especie:</b> {safe_pdf_text(pet.species)} "
-            f"&nbsp; <b>Raza:</b> {safe_pdf_text(pet.breed or '-')}",
-            body,
-        ))
+        client_pairs += [
+            ("Mascota", safe_pdf_text(pet.name)),
+            ("Especie", safe_pdf_text(pet.species)),
+            ("Raza", safe_pdf_text(pet.breed or '')),
+        ]
+    flow += info_card(st, theme, client_pairs, columns=3)
 
-    flow.append(Paragraph("Ítems", h_sub))
+    flow += section(st, theme, "Ítems")
     items = list(invoice.items.all())
-    header = ["Descripción", "Cant.", "P. unit.", "Subtotal"]
-    rows = [header]
+    rows = []
     if not items:
-        rows.append([Paragraph("<i>Sin ítems</i>", body_sm), "", "", ""])
+        rows.append([Paragraph("<i>Sin ítems</i>", st['cell']), "", "", ""])
     else:
         for it in items:
-            desc = safe_pdf_text(it.description)[:120]
             rows.append([
-                Paragraph(desc, body_sm),
+                Paragraph(safe_pdf_text(it.description)[:120], st['cell']),
                 f"{it.quantity:g}",
                 _fmt_money(it.unit_price),
                 _fmt_money(it.subtotal),
             ])
-    items_table = LongTable(
-        rows,
-        colWidths=[9.5 * cm, 1.8 * cm, 2.5 * cm, 2.5 * cm],
-        repeatRows=1,
+    flow += data_table(
+        st, theme,
+        ["Descripción", "Cant.", "P. unit.", "Subtotal"], rows,
+        col_widths=[CONTENT_WIDTH - 7.1 * cm, 2.0 * cm, 2.55 * cm, 2.55 * cm],
+        align_right=(1, 2, 3),
     )
-    items_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eeeeee')),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-    ]))
-    flow.append(items_table)
 
-    flow.append(Spacer(1, 0.4 * cm))
     tax_pct = float(invoice.tax_rate) * 100
-    totals = [
+    flow += totals_table(st, theme, [
         ["Subtotal", _fmt_money(invoice.subtotal)],
         [f"IVA ({tax_pct:.2f}%)", _fmt_money(invoice.tax_amount)],
         ["Total", _fmt_money(invoice.total)],
-    ]
-    totals_table = Table(totals, colWidths=[12 * cm, 4.3 * cm], hAlign='RIGHT')
-    totals_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('LINEABOVE', (0, -1), (-1, -1), 0.5, colors.black),
-        ('TOPPADDING', (0, -1), (-1, -1), 6),
-    ]))
-    flow.append(totals_table)
+    ])
 
     if invoice.status == 'paid' and invoice.payment_method:
         flow.append(Spacer(1, 0.4 * cm))
         flow.append(Paragraph(
             f"<b>Método de pago:</b> {_PAYMENT_LABEL.get(invoice.payment_method, invoice.payment_method)}",
-            body,
+            st['body'],
         ))
 
     if invoice.notes:
-        flow.append(Paragraph("Notas", h_sub))
-        flow.append(Paragraph(safe_pdf_text(invoice.notes).replace('\n', '<br/>'), body))
+        flow += section(st, theme, "Notas")
+        flow.append(Paragraph(safe_pdf_text(invoice.notes).replace('\n', '<br/>'), st['body']))
 
-    doc.build(flow)
+    # Marca de agua según estado: un draft impreso no debe poder pasar por
+    # comprobante final, y un cancelado debe distinguirse a simple vista.
+    watermark = {'draft': 'BORRADOR', 'cancelled': 'CANCELADO'}.get(invoice.status)
+
+    buffer = BytesIO()
+    render_branded_pdf(
+        buffer, flow,
+        organization=org,
+        doc_kicker="Cobro",
+        pdf_title=f"Cobro #{invoice.id}",
+        watermark=watermark,
+    )
     buffer.seek(0)
 
-    pet_segment = safe_filename_segment(invoice.pet.name) if invoice.pet_id else "sin-mascota"
-    filename = f"factura_{invoice.id}_{pet_segment}.pdf"
+    created_local = utc_to_local(org, invoice.created_at)
+    filename = pdf_filename(
+        'factura', invoice.id,
+        invoice.pet.name if invoice.pet_id else 'sin-mascota',
+        created_local.date() if created_local else None,
+    )
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response

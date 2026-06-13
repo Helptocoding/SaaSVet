@@ -304,6 +304,12 @@ CORS_ALLOW_HEADERS = [
     'x-idempotency-key',
 ]
 
+# Sin esto axios NO puede leer Content-Disposition cross-origin (CORS solo
+# expone los safelisted headers por defecto) → extractFilename() cae al
+# fallback genérico y toda descarga sale como "consulta.pdf", "consulta (1).pdf"
+# en lugar del nombre personalizado que arma el backend.
+CORS_EXPOSE_HEADERS = ['content-disposition']
+
 # Fail-fast solo en producción — previene deploys silenciosos con CORS vacío
 if ENVIRONMENT == 'production' and not CORS_ALLOWED_ORIGINS:
     raise RuntimeError(

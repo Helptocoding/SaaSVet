@@ -109,6 +109,11 @@ class InvoicePdfTests(APITestCase):
         self.assertIn('attachment', r['Content-Disposition'])
         self.assertIn('Firulais', r['Content-Disposition'])
         self.assertIn(f'factura_{inv.id}', r['Content-Disposition'])
+        # Nombre identificable: factura_<id>_<mascota>_<fecha local>.pdf
+        self.assertRegex(
+            r['Content-Disposition'],
+            rf'factura_{inv.id}_Firulais_\d{{4}}-\d{{2}}-\d{{2}}\.pdf',
+        )
         self.assertTrue(r.content.startswith(b'%PDF'))
 
     def test_works_for_all_statuses(self):
@@ -174,3 +179,22 @@ class InvoicePdfTests(APITestCase):
         self.assertIn(f"#{inv.id}", text)
         self.assertIn("Firulais", text)
         self.assertIn("Maria Lopez", text)
+
+    # --- Marca de agua por estado (Fase 1 rediseño documentos) -----------------
+
+    def test_draft_pdf_has_borrador_watermark(self):
+        inv = self._make_invoice('draft')
+        r = self.client.get(self._url(inv))
+        self.assertIn("BORRADOR", _extract_pdf_text(r.content))
+
+    def test_cancelled_pdf_has_cancelado_watermark(self):
+        inv = self._make_invoice('cancelled')
+        r = self.client.get(self._url(inv))
+        self.assertIn("CANCELADO", _extract_pdf_text(r.content))
+
+    def test_paid_pdf_has_no_watermark(self):
+        inv = self._make_invoice('paid')
+        r = self.client.get(self._url(inv))
+        text = _extract_pdf_text(r.content)
+        self.assertNotIn("BORRADOR", text)
+        self.assertNotIn("CANCELADO", text)

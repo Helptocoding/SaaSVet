@@ -245,22 +245,20 @@ def dashboard_stats(request):
         'veterinarian__first_name', 'veterinarian__last_name',
     )[:5]
 
+    # ADR p31: stock real en Product.stock_quantity (unidades base), no en Presentation.
     from django.db.models import F
     low_stock_qs = Product.objects.for_organization(org).filter(
-        presentations__stock__lte=F('presentations__min_stock'),
-    ).prefetch_related('presentations').distinct()
+        is_active=True, min_stock__gt=0, stock_quantity__lte=F('min_stock'),
+    ).order_by('stock_quantity')
     low_stock = []
     for p in low_stock_qs:
-        for pres in p.presentations.all():
-            if pres.stock <= pres.min_stock:
-                low_stock.append({
-                    'id': p.id,
-                    'name': p.name,
-                    'presentation_name': pres.name,
-                    'stock': str(pres.stock),
-                    'min_stock': str(pres.min_stock),
-                    'unit': pres.get_base_unit_display(),
-                })
+        low_stock.append({
+            'id': p.id,
+            'name': p.name,
+            'stock': str(p.stock_quantity),
+            'min_stock': str(p.min_stock),
+            'unit': p.get_base_unit_display(),
+        })
 
     recent_list = []
     for r in recent_records:
@@ -617,14 +615,17 @@ def dashboard_summary(request):
         .order_by('start_datetime')
     )
 
-    # ---- Query 2: Low stock count ----
-    from apps.inventory.models import Presentation
-    low_stock_presentations = list(
-        Presentation.objects
+    # ---- Query 2: Low stock (ADR p31) ----
+    # El stock real vive en Product.stock_quantity (unidades base). Presentation.stock
+    # quedó congelado tras la migración 0018 — leerlo daba 0 falsos. La alerta es
+    # por producto. Requiere min_stock > 0: sin umbral configurado no hay punto de
+    # reorden y un producto recién creado (stock 0, ADR p33) no debe inundar la tarjeta.
+    from apps.inventory.models import Product
+    low_stock_products = list(
+        Product.objects
         .for_organization(org)
-        .filter(stock__lte=F('min_stock'))
-        .select_related('product')
-        .order_by('stock')[:5]
+        .filter(is_active=True, min_stock__gt=0, stock_quantity__lte=F('min_stock'))
+        .order_by('stock_quantity')[:5]
     )
 
     # ---- Query 3: Backlog ----
@@ -681,7 +682,7 @@ def dashboard_summary(request):
             1 for a in appointments
             if a.status in ('scheduled', 'confirmed')
         ),
-        'low_stock_count': len(low_stock_presentations),
+        'low_stock_count': len(low_stock_products),
         'patients_today': len(
             set(a.pet_id for a in appointments if a.pet_id is not None)
         ),
@@ -704,16 +705,15 @@ def dashboard_summary(request):
         'open_records': open_records,
     }
 
-    # ---- Build Stock Alerts ----
+    # ---- Build Stock Alerts (por producto — stock product-level, ADR p31) ----
     stock_alerts = []
-    for pres in low_stock_presentations:
+    for p in low_stock_products:
         stock_alerts.append({
-            'product_name': pres.product.name,
-            'presentation_name': pres.name,
-            'stock': str(pres.stock),
-            'min_stock': str(pres.min_stock),
-            'unit': pres.get_base_unit_display(),
-            'severity': 'critical' if pres.stock == 0 else 'warning',
+            'product_name': p.name,
+            'stock': str(p.stock_quantity),
+            'min_stock': str(p.min_stock),
+            'unit': p.get_base_unit_display(),
+            'severity': 'critical' if p.stock_quantity == 0 else 'warning',
         })
 
     payload = {
@@ -738,6 +738,31 @@ def dashboard_summary(request):
 _DEFAULT_OPEN_TIME = dt_time(8, 0)
 _DEFAULT_CLOSE_TIME = dt_time(20, 0)
 _SLOT_MINUTES = 30
+
+
+def _serialize_timeline_appt(appt, tz):
+    """Single appointment payload for a timeline slot.
+
+    species/breed añadidos para la vista de lista (TodayAgendaList). Pet.species
+    es CharField libre y Pet.breed puede ser '' → se normaliza a None.
+    """
+    pet = appt.pet
+    return {
+        'time': appt.start_datetime.astimezone(tz).strftime('%H:%M'),
+        'public_id': str(appt.public_id) if getattr(appt, 'public_id', None) else str(appt.pk),
+        'pet_name': pet.name if pet else None,
+        'pet_is_generic': pet.is_generic if pet else False,
+        'species': pet.species if pet else None,
+        'breed': (pet.breed or None) if pet else None,
+        'owner_name': pet.owner.name if pet and pet.owner else None,
+        'veterinarian_name': (
+            f"{appt.veterinarian.first_name} {appt.veterinarian.last_name}".strip()
+            if appt.veterinarian else None
+        ),
+        'reason': appt.reason,
+        'status': appt.status,
+        'walk_in': getattr(appt, 'walk_in', False),
+    }
 
 
 def _build_timeline_slots(appointments, org):
@@ -782,27 +807,19 @@ def _build_timeline_slots(appointments, org):
         ]
 
         if slot_appts:
-            appt = slot_appts[0]
-            slot_data = {
-                'time': appt.start_datetime.astimezone(tz).strftime('%H:%M'),
-                'public_id': str(appt.public_id) if hasattr(appt, 'public_id') and appt.public_id else str(appt.pk),
-                'pet_name': appt.pet.name if appt.pet else None,
-                'pet_is_generic': appt.pet.is_generic if appt.pet else False,
-                'owner_name': appt.pet.owner.name if appt.pet and appt.pet.owner else None,
-                'veterinarian_name': (
-                    f"{appt.veterinarian.first_name} {appt.veterinarian.last_name}".strip()
-                    if appt.veterinarian else None
-                ),
-                'reason': appt.reason,
-                'status': appt.status,
-                'walk_in': getattr(appt, 'walk_in', False),
-            }
+            appts_data = [_serialize_timeline_appt(a, tz) for a in slot_appts]
+            # 'appointment' (singular) = primera cita: alias legacy para no romper
+            # consumidores previos. 'appointments' (plural) = todas las del bucket,
+            # evita pérdida de citas en la misma franja de 30 min (TodayAgendaList).
+            slot_data = appts_data[0]
         else:
+            appts_data = []
             slot_data = None
 
         slots.append({
             'time': slot_time.strftime('%H:%M'),
             'appointment': slot_data,
+            'appointments': appts_data,
         })
         cursor_minutes += _SLOT_MINUTES
 
