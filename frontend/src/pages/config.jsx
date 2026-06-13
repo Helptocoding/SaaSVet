@@ -3,6 +3,7 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { getServices, createService, updateService, deleteService } from "../api/billing";
 import { getOrgSettings, updateOrgSettings } from "../api/organizations";
 import { apiError } from "../utils/apiError";
+import { toList } from "../utils/toList";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import ChangePasswordForm from "../components/ChangePasswordForm";
@@ -79,7 +80,7 @@ const Config = () => {
         setLoading(true);
         try {
             const data = await getServices();
-            setServices(data);
+            setServices(toList(data));
         } catch (err) {
             console.log(err);
         } finally {

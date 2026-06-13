@@ -8,6 +8,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
+from apps.core.pagination import StockMovementCursorPagination
 from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
 from apps.medical_records.models import MedicalRecord
@@ -185,6 +186,11 @@ def adjust_presentation_stock(request, pk):
 class StockMovementListView(TenantQueryMixin, generics.ListAPIView):
     serializer_class = StockMovementSerializer
     permission_classes = [HybridPermission]
+    # P1-2: ledger append-only de alto volumen (50k+). Cursor en lugar de
+    # PageNumber → offset profundo no degrada y los inserts concurrentes no
+    # desplazan filas entre páginas. El orden lo fija la paginación
+    # (-created_at, -id), no el queryset.
+    pagination_class = StockMovementCursorPagination
     resource_name = "inventory"
 
     def get_queryset(self):

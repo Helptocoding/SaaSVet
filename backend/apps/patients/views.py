@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from apps.core.pagination import StandardResultsPagination
 from apps.core.permissions import HybridPermission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
 
@@ -54,9 +55,14 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
     """
     Propietarios. basename='owner' → permisos owner.*
     Soporta ?search=<nombre>. Límite 20 cuando se filtra.
+
+    P1-2: paginación PageNumber(25) en el listado completo. El path `?search`
+    (que alimenta SearchSelect con array plano [:20]) NO se pagina —
+    `paginate_queryset` devuelve None para preservar el contrato de dropdown.
     """
     serializer_class = OwnerSerializer
     permission_classes = [HybridPermission]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         qs = Owner.objects.for_organization(self.request.user.organization)
@@ -67,8 +73,18 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
         elif is_generic == "false":
             qs = qs.filter(is_generic=False)
         if search:
-            qs = qs.filter(name__icontains=search)[:20]
-        return qs
+            return qs.filter(name__icontains=search)[:20]
+        # Owner no declara Meta.ordering → orden de heap. Orden estable para
+        # paginación (name + id desempate).
+        return qs.order_by("name", "id")
+
+    def paginate_queryset(self, queryset):
+        # El path de búsqueda devuelve un array plano [:20] para los dropdowns
+        # (SearchSelect). No paginar ahí: un queryset ya sliced rompería el
+        # paginador y los consumidores `.then(ps => ps.map(...))` esperan array.
+        if self.request.query_params.get("search", "").strip():
+            return None
+        return super().paginate_queryset(queryset)
 
     def destroy(self, request, *args, **kwargs):
         # PR-4B D5: guard explícito antes de llegar al PROTECT-bound DB error.

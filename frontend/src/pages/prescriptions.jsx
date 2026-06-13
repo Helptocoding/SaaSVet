@@ -19,6 +19,7 @@ import {
 } from "../api/prescriptions";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
 import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
+import { toList } from "../utils/toList";
 
 const formatDate = (ds) =>
     new Date(ds).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
@@ -254,7 +255,7 @@ const Prescriptions = () => {
             const params = {};
             if (selectedPet) params.pet = selectedPet;
             const data = await getPrescriptions(params);
-            setPrescriptions(data);
+            setPrescriptions(toList(data));
         } catch { /* silencioso */ }
     }, [selectedPet]);
 

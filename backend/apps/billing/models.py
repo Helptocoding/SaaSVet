@@ -190,6 +190,11 @@ class Invoice(PublicIdMixin, OrganizationalModel):
                          name="idx_inv_org_status_conf"),
             models.Index(fields=["organization", "status", "cancelled_at"],
                          name="idx_inv_org_status_canc"),
+            # P1-2: listado paginado de Cobros ordena por (-created_at, -id)
+            # filtrando por org sin status. Sin este índice, PageNumber sobre
+            # 25k+ facturas haría sort en memoria.
+            models.Index(fields=["organization", "-created_at", "-id"],
+                         name="idx_invoice_org_created_id"),
         ]
         constraints = [
             models.CheckConstraint(

@@ -146,7 +146,9 @@ class TenantIsolationTests(SecurityTestCase):
         self.auth(self.vet_b)
         r = self.client.get("/api/owners/")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
-        ids = [item["id"] for item in r.data]
+        # P1-2: /api/owners/ sin search ahora pagina (PageNumber) → envelope.
+        items = r.data["results"] if isinstance(r.data, dict) else r.data
+        ids = [item["id"] for item in items]
         self.assertNotIn(self.owner_a.id, ids)
         self.assertIn(self.owner_b.id, ids)
 

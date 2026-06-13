@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
@@ -15,9 +15,11 @@ import { toast } from "sonner";
 import PaymentLinesEditor from "../components/PaymentLinesEditor";
 import { buildPaymentLines, paymentLinesValid } from "../utils/payments";
 import { newIdempotencyKey } from "../utils/idempotency";
+import { toList } from "../utils/toList";
 import DateRangePicker from "../components/DateRangePicker";
 import CajaBar from "../components/CajaBar";
 import SortHeader from "../components/SortHeader";
+import Pagination from "../components/Pagination";
 import s from "./billing.module.css";
 
 const FILTER_KEYS = ["status", "invoice_type", "created_from", "created_to", "paid_from", "paid_to"];
@@ -421,6 +423,24 @@ const Billing = () => {
 
     const [invoices, setInvoices] = useState([]);
 
+    // P1-2: paginación server-side (PageNumber 25) + ordering server-side.
+    const PAGE_SIZE = 25;
+    const [page, setPage] = useState(1);
+    const [invoiceCount, setInvoiceCount] = useState(0);
+    // Sort server-side: (sortCol, sortDir) → `?ordering`. Declarado aquí arriba
+    // porque los efectos de carga lo leen en su dependency array (evita TDZ).
+    const [sortCol, setSortCol] = useState("created_at");
+    const [sortDir, setSortDir] = useState("desc");
+    const handleSort = (col) => {
+        if (sortCol === col) {
+            setSortDir(d => (d === "asc" ? "desc" : "asc"));
+        } else {
+            setSortCol(col);
+            setSortDir(col === "created_at" ? "desc" : "asc");
+        }
+        setPage(1);  // cambiar orden vuelve a la primera página
+    };
+
     const [filters, setFilters] = useState(() => {
         const initial = {};
         for (const key of FILTER_KEYS) initial[key] = searchParams.get(key) || "";
@@ -445,14 +465,21 @@ const Billing = () => {
     // Feedback de filtros: atenúa la tabla mientras hay un fetch en vuelo.
     const [fetching, setFetching] = useState(false);
 
-    const loadInvoices = async (currentFilters) => {
+    const loadInvoices = async (currentFilters, pageArg = 1, ordering = "-created_at") => {
         const requestId = ++requestIdRef.current;
         setFetching(true);
         try {
             const params = {};
             for (const key of FILTER_KEYS) if (currentFilters[key]) params[key] = currentFilters[key];
+            params.page = pageArg;
+            params.ordering = ordering;
             const data = await getInvoices(params);
-            if (requestId === requestIdRef.current) setInvoices(data);
+            if (requestId === requestIdRef.current) {
+                setInvoices(toList(data));
+                // PageNumber expone `count` total; si el backend aún devolviera
+                // array plano (rollback), el conteo cae a la longitud local.
+                setInvoiceCount(Array.isArray(data) ? data.length : (data?.count ?? 0));
+            }
         } catch (err) {
             if (requestId === requestIdRef.current) toast.error(apiError(err, "No se pudieron cargar los cobros"));
         } finally {
@@ -479,9 +506,10 @@ const Billing = () => {
 
     useEffect(() => { if (token) { loadAll(); } }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
-        const timer = setTimeout(() => loadInvoices(filters), 300);
+        const ordering = (sortDir === "desc" ? "-" : "") + sortCol;
+        const timer = setTimeout(() => loadInvoices(filters, page, ordering), 300);
         return () => clearTimeout(timer);
-    }, [filters.status, filters.invoice_type, filters.created_from, filters.created_to, filters.paid_from, filters.paid_to]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [filters.status, filters.invoice_type, filters.created_from, filters.created_to, filters.paid_from, filters.paid_to, page, sortCol, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         // F11 = nueva venta → vive en el POS (pantalla dedicada).
@@ -512,6 +540,7 @@ const Billing = () => {
     const updateFilters = (patch) => {
         const next = { ...filters, ...patch };
         setFilters(next);
+        setPage(1);  // cambiar filtros vuelve a la primera página
         const params = new URLSearchParams();
         for (const k of FILTER_KEYS) if (next[k]) params.set(k, next[k]);
         setSearchParams(params, { replace: true });
@@ -522,36 +551,9 @@ const Billing = () => {
         const empty = {};
         for (const key of FILTER_KEYS) empty[key] = "";
         setFilters(empty);
+        setPage(1);
         setSearchParams({}, { replace: true });
     };
-
-    // Sorting client-side (patrón compartido SortHeader; el backend lista
-    // -created_at por defecto y el listado no está paginado).
-    const [sortCol, setSortCol] = useState("created_at");
-    const [sortDir, setSortDir] = useState("desc");
-    const handleSort = (col) => {
-        if (sortCol === col) {
-            setSortDir(d => (d === "asc" ? "desc" : "asc"));
-        } else {
-            setSortCol(col);
-            setSortDir(col === "created_at" ? "desc" : "asc");
-        }
-    };
-    const sortedInvoices = useMemo(() => {
-        const list = [...invoices];
-        list.sort((a, b) => {
-            let va, vb;
-            if (sortCol === "created_at") {
-                va = a.created_at || ""; vb = b.created_at || "";   // ISO: orden lexicográfico = cronológico
-            } else if (sortCol === "total") {
-                va = Number(a.total) || 0; vb = Number(b.total) || 0;
-            } else return 0;
-            if (va < vb) return sortDir === "asc" ? -1 : 1;
-            if (va > vb) return sortDir === "asc" ? 1 : -1;
-            return 0;
-        });
-        return list;
-    }, [invoices, sortCol, sortDir]);
 
     const openInvoiceDetail = async (invoice) => {
         try {
@@ -774,7 +776,7 @@ const Billing = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedInvoices.map(inv => (
+                            {invoices.map(inv => (
                                 <tr key={inv.id}>
                                     <td style={{ color: "var(--c-text-3)" }}>#{inv.id}</td>
                                     <td>
@@ -798,8 +800,15 @@ const Billing = () => {
                         </tbody>
                     </table>
                     <div className="table-footer">
-                        {fetching ? "Actualizando..." : `${sortedInvoices.length} cobro${sortedInvoices.length !== 1 ? "s" : ""}`}
+                        {fetching ? "Actualizando..." : `${invoiceCount} cobro${invoiceCount !== 1 ? "s" : ""}`}
                     </div>
+                    <Pagination
+                        page={page}
+                        count={invoiceCount}
+                        pageSize={PAGE_SIZE}
+                        onPage={setPage}
+                        fetching={fetching}
+                    />
                 </div>
             )}
 

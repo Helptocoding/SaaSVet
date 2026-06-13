@@ -15,6 +15,11 @@ class PrescriptionListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
     serializer_class = PrescriptionSerializer
     permission_classes = [HybridPermission]
     resource_name = "prescription"
+    # P1-2: NO se pagina. La página /prescriptions filtra client-side por
+    # especie/sexo/edad/texto sobre la lista completa (pages/prescriptions.jsx
+    # `filtered = prescriptions.filter(...)`); paginar rompería esos filtros
+    # (solo verían la página actual). Diferido junto con Pets/Appointments
+    # hasta tener filtros server-side (evita "cambios UX grandes" — ver P1-2).
 
     def get_queryset(self):
         org = self.request.user.organization

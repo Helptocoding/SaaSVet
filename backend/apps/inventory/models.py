@@ -189,6 +189,10 @@ class StockMovement(OrganizationalModel):
             # movements por presentation.
             models.Index(fields=['organization', 'presentation', '-created_at'],
                          name='idx_stockmov_org_pres_created'),
+            # P1-2: CursorPagination ordena por (-created_at, -id) filtrando
+            # por org. Cursor hace keyset scan → este índice lo sirve directo.
+            models.Index(fields=['organization', '-created_at', '-id'],
+                         name='idx_stockmov_org_created_id'),
         ]
 
 

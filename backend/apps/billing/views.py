@@ -12,6 +12,8 @@ from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
 
 from apps.core.datetime_utils import filter_by_local_day, filter_by_local_range
+from apps.core.filters import StableOrderingFilter
+from apps.core.pagination import StandardResultsPagination
 from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
 
@@ -68,6 +70,17 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
     serializer_class = InvoiceSerializer
     permission_classes = [HybridPermission]
     resource_name = "invoice"
+    # P1-2: documento de alto volumen (6k-25k/año). PageNumber(25) + ordering
+    # server-side. La tabla de Cobros movía el sort (Fecha/Total) en el cliente;
+    # con paginación eso ordenaría solo la página actual → se expone `?ordering`.
+    pagination_class = StandardResultsPagination
+    # StableOrderingFilter agrega `-id` a cualquier `?ordering` que no lo lleve:
+    # `total` empata entre muchas facturas (drafts en $0, ADR p30) → sin
+    # desempate, PageNumber saltaría/duplicaría filas entre páginas.
+    filter_backends = [StableOrderingFilter]
+    ordering_fields = ['created_at', 'total']
+    # Default ya estable (created_at puede colisionar en ventas de la misma tx).
+    ordering = ['-created_at', '-id']
 
     def get_queryset(self):
         org = self.request.user.organization
@@ -123,8 +136,9 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
 
         # annotate(Sum(...)) descarta el Meta.ordering del modelo (queda
         # query.order_by=() → orden de heap del DB). Reimponer explícitamente
-        # para que Cobros liste de más reciente a más viejo.
-        return queryset.order_by('-created_at')
+        # con tiebreaker `-id`. OrderingFilter lo sobrescribe cuando llega
+        # `?ordering`; sin parámetro, este orden = el default de `ordering`.
+        return queryset.order_by('-created_at', '-id')
 
     def perform_create(self, serializer):
         org = self.request.user.organization

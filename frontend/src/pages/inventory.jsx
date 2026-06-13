@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
+import { toList } from "../utils/toList";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, getUnitChoices, createPresentation, updatePresentation,
@@ -214,7 +215,7 @@ const Inventory = () => {
     const loadAll = async () => {
         setLoading(true);
         try {
-            setProducts(await getProducts());
+            setProducts(toList(await getProducts()));
         } catch (err) {
             console.error(err);
         } finally {
