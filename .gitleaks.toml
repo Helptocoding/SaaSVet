@@ -8,9 +8,18 @@ title = "VetCare CI secret scan"
 useDefault = true
 
 [allowlist]
-description = "Templates and generated lockfiles (no real secrets)"
+description = "Templates, generated lockfiles, and documented example secrets (no real secrets)"
 paths = [
   '''\.env\.prod\.example$''',
   '''pnpm-lock\.yaml$''',
   '''requirements\.lock$''',
+]
+# Surgical exemption for ONE documented example value: the illustrative
+# `temp_password` in the ADR p21 sample HTTP response
+# (docs/decisions/2026-05-22-p21-admin-password-reset.md). It is a made-up
+# example, never a real credential. Allowlisting the exact string keeps the
+# generic-api-key rule fully active for everything else — including any other
+# high-entropy value in that same file.
+regexes = [
+  '''K9p_RxA2zVtwQ1f8hQwa3Q''',
 ]
