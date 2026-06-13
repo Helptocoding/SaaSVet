@@ -22,11 +22,13 @@ urlpatterns = [
     path('inventory/products/<str:pk>/adjust/', adjust_stock),
     path('inventory/products/<str:product_pk>/presentations/', PresentationCreateView.as_view()),
     path('inventory/presentations/', PresentationListView.as_view()),
+    # barcode/ DEBE ir antes de <str:pk>/ — Django matchea en orden y el
+    # catch-all capturaba "barcode" como pk → 404 permanente del lookup.
+    path('inventory/presentations/barcode/', presentation_by_barcode),
     path('inventory/presentations/<str:pk>/', PresentationDetailView.as_view()),
     path('inventory/presentations/<str:pk>/adjust/', adjust_presentation_stock),
     path('inventory/movements/', StockMovementListView.as_view()),
     path('inventory/units/', unit_choices),
-    path('inventory/presentations/barcode/', presentation_by_barcode),
     path(
         'medical-records/<str:medical_record_pk>/products/',
         MedicalRecordProductListCreateView.as_view(),
