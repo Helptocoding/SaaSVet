@@ -48,6 +48,12 @@ export const directPayInvoice = (id, { paymentLines, paymentMethod, idempotencyK
     api.post(`billing/invoices/${id}/direct-pay/`, _payBody({ paymentLines, paymentMethod }), _idemConfig(idempotencyKey))
         .then(r => r.data);
 
+// Cancela una factura draft/confirmed sin pagos (POS: "Volver al carrito"
+// descarta el draft creado al cobrar). El backend revierte stock si estaba
+// confirmada y registra InvoiceAuditLog.
+export const cancelInvoice = (id, { notes = "" } = {}) =>
+    api.patch(`billing/invoices/${id}/cancel/`, { notes }).then(r => r.data);
+
 // ADR p29: devolución (nota de crédito + reembolso) sobre factura pagada.
 // creditLines = [{ invoice_item: <PK>, quantity, amount, disposition }],
 // refundLines = [{ method, amount }]; refund_sum debe igualar Σ credit amounts.

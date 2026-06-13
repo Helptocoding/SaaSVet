@@ -1,0 +1,155 @@
+/* Componentes del POS (ProductSearch / Cart / PaymentPanel / CustomerSelector).
+   Tokens globales únicamente — ver frontend/design-system.md. */
+
+/* ── ProductSearch ── */
+.searchWrap {
+    position: relative;
+    width: 100%;
+}
+
+.searchInput {
+    width: 100%;
+    box-sizing: border-box;
+    height: 44px;
+    font-size: 14px;
+}
+
+.dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.groupLabel {
+    padding: 8px 12px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.resultRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--c-text);
+}
+
+.resultRowActive {
+    background: var(--c-subtle);
+}
+
+.resultName {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resultMeta {
+    font-size: 12px;
+    color: var(--c-text-3);
+    flex-shrink: 0;
+}
+
+.resultPrice {
+    font-weight: 600;
+    color: var(--c-text);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.dropdownEmpty {
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--c-text-3);
+}
+
+/* ── Cart ── */
+.qtyInput {
+    width: 64px;
+    height: 30px;
+    text-align: center;
+}
+
+.rxCell {
+    padding: 8px 12px;
+    background: var(--c-warning-bg, var(--c-subtle));
+    border-left: 3px solid var(--c-warning-text);
+}
+
+.rxLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--c-text);
+    cursor: pointer;
+}
+
+.rxFields {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* ── PaymentPanel ── */
+.totalBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 16px;
+}
+
+.totalLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.totalAmount {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.totalHint {
+    font-size: 11px;
+    color: var(--c-text-3);
+}
+
+.totalsBreakdown {
+    margin-bottom: 12px;
+}
+
+.breakdownRow {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 13px;
+    color: var(--c-text-2);
+    font-variant-numeric: tabular-nums;
+}
+
+.chargeBtn {
+    width: 100%;
+    margin-top: 16px;
+}

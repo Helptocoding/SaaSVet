@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
 import { apiError } from "../utils/apiError";
 import {
-    getInvoices, getInvoice, createInvoice, confirmInvoice, payInvoice, directPayInvoice,
-    addInvoiceItem, getServices, downloadInvoicePDF, refundInvoice, reverseCreditNote,
+    getInvoices, getInvoice, confirmInvoice, payInvoice, directPayInvoice,
+    downloadInvoicePDF, refundInvoice, reverseCreditNote,
     dispensePrescription,
 } from "../api/billing";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
-import { getPresentations } from "../api/inventory";
-import { getOwners, getPets } from "../api/pets";
 import { getOrgSettings } from "../api/organizations";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
-import SearchSelect from "../components/SearchSelect";
+import PaymentLinesEditor from "../components/PaymentLinesEditor";
+import { buildPaymentLines, paymentLinesValid } from "../utils/payments";
+import { newIdempotencyKey } from "../utils/idempotency";
 import DateRangePicker from "../components/DateRangePicker";
 import CajaBar from "../components/CajaBar";
 import SortHeader from "../components/SortHeader";
@@ -23,12 +23,6 @@ import s from "./billing.module.css";
 const FILTER_KEYS = ["status", "invoice_type", "created_from", "created_to", "paid_from", "paid_to"];
 const STATUS_LABELS = { draft: "Borrador", confirmed: "Confirmada", paid: "Pagada", cancelled: "Cancelada" };
 const TYPE_LABELS = { consultation: "Consulta", direct_sale: "Venta directa" };
-const PAYMENT_METHODS = [
-    { value: "cash", label: "Efectivo" },
-    { value: "card", label: "Tarjeta" },
-    { value: "transfer", label: "Transferencia" },
-    { value: "other", label: "Otro" },
-];
 
 const DOT_COLOR = {
     draft: "var(--c-text-4)",
@@ -49,91 +43,6 @@ const REASON_CODES = [
     { value: "other", label: "Otro" },
 ];
 const REASON_LABELS = Object.fromEntries(REASON_CODES.map(r => [r.value, r.label]));
-
-// ADR p27: clave de idempotencia por intento de cobro (anti doble-cobro en
-// reintento de red). Se reusa mientras el modal de pago siga abierto.
-const newIdempotencyKey = () =>
-    (typeof crypto !== "undefined" && crypto.randomUUID)
-        ? crypto.randomUUID()
-        : `idem-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-// Valida líneas de pago contra el total.
-//  - allowPartial=true  → admite pagar menos (no se usa para cobros nuevos: ADR p30
-//    rev exige total exacto siempre). Se conserva para casos futuros / refund parcial.
-//  - allowChange=true   → admite efectivo recibido MAYOR al total; el excedente es
-//    cambio, no se registra. Aplica a TODO cobro (ADR p30 rev).
-//  - ambos false        → exige monto exacto (refund).
-const paymentLinesValid = (lines, total, allowPartial, allowChange = false) => {
-    if (lines.some(l => Number(l.amount) < 0)) return false;
-    const positive = lines.map(l => Number(l.amount)).filter(n => n > 0);
-    if (positive.length === 0) return false;
-    const sum = Number(positive.reduce((a, n) => a + n, 0).toFixed(2));
-    const t = Number(Number(total).toFixed(2));
-    if (sum > t) return allowChange;          // sobrepago solo válido si se da cambio
-    if (!allowPartial && sum !== t) return false;
-    return true;
-};
-
-/* ── PaymentLinesEditor — pago único o split, total exacto (ADR p30 rev) ── */
-const PaymentLinesEditor = ({ total, allowPartial, allowChange = false, lines, setLines, disabled }) => {
-    const sum = Number(lines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
-    const remaining = Number((Number(total) - sum).toFixed(2));
-    const change = remaining < 0 ? Math.abs(remaining) : 0;
-    const setLine = (i, patch) => setLines(prev => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
-    const addLine = () => setLines(prev => [...prev, { method: "card", amount: remaining > 0 ? remaining.toFixed(2) : "" }]);
-    const removeLine = (i) => setLines(prev => prev.filter((_, idx) => idx !== i));
-    return (
-        <div>
-            {lines.map((l, i) => (
-                <div key={i} style={{ display: "flex", gap: "6px", marginBottom: "6px", alignItems: "center" }}>
-                    <select
-                        className="input" style={{ flex: 1, height: "34px" }}
-                        value={l.method} disabled={disabled}
-                        onChange={e => setLine(i, { method: e.target.value })}
-                    >
-                        {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                    </select>
-                    <input
-                        type="number" className="input"
-                        style={{ width: "110px", height: "34px", textAlign: "right" }}
-                        min="0" step="0.01" placeholder="0.00" value={l.amount} disabled={disabled}
-                        onChange={e => setLine(i, { amount: e.target.value })}
-                    />
-                    <button
-                        className={s.actionBtn} onClick={() => removeLine(i)}
-                        disabled={disabled || lines.length <= 1}
-                        style={{ visibility: lines.length > 1 ? "visible" : "hidden" }}
-                    >
-                        <Icon.Trash s={13} />
-                    </button>
-                </div>
-            ))}
-            <button className="btn btn-ghost btn-xs" onClick={addLine} disabled={disabled}>+ Otro método</button>
-            <div style={{ marginTop: "10px", fontSize: "12px", display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "var(--c-text-3)" }}>
-                    Total ${Number(total).toFixed(2)} · Ingresado ${sum.toFixed(2)}
-                </span>
-                <span style={{ fontWeight: 600, color: remaining === 0 ? "var(--c-success-text)" : (remaining < 0 ? (allowChange ? "var(--c-success-text)" : "var(--c-danger-text)") : "var(--c-text-3)") }}>
-                    {remaining > 0
-                        ? `Falta $${remaining.toFixed(2)}`
-                        : remaining < 0
-                            ? (allowChange ? `Cambio $${change.toFixed(2)}` : `Excede $${change.toFixed(2)}`)
-                            : (allowPartial ? "Pago completo" : "Exacto")}
-                </span>
-            </div>
-            {allowChange && change > 0 && (
-                <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
-                    Se cobra el total ${Number(total).toFixed(2)}; el cambio ${change.toFixed(2)} no se registra.
-                </p>
-            )}
-            {allowPartial && remaining > 0 && sum > 0 && (
-                <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
-                    Pago parcial: la factura quedará confirmada con saldo pendiente.
-                </p>
-            )}
-        </div>
-    );
-};
 
 /* ── RefundModal — devolución (nota de crédito + reembolso), ADR p29 ── */
 const RefundModal = ({ invoice, onClose, onDone }) => {
@@ -505,12 +414,12 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
 const Billing = () => {
     const { token, initializing, can } = useAuth();
     const confirm = useConfirm();
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const requestIdRef = useRef(0);
 
     const [invoices, setInvoices] = useState([]);
-    const [genericOwner, setGenericOwner] = useState(null);
 
     const [filters, setFilters] = useState(() => {
         const initial = {};
@@ -526,7 +435,6 @@ const Billing = () => {
     const [paying, setPaying] = useState(false);
     const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
 
-    const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [reversingCnId, setReversingCnId] = useState(null);
 
@@ -562,8 +470,6 @@ const Billing = () => {
     const loadAll = async () => {
         setLoading(requestIdRef.current === 0);
         try {
-            const owners = await getOwners({ is_generic: "true" });
-            setGenericOwner((Array.isArray(owners) ? owners : owners?.results || [])[0] || null);
             await loadInvoices(filters);
             loadCashSettings();
         } catch {
@@ -578,15 +484,16 @@ const Billing = () => {
     }, [filters.status, filters.invoice_type, filters.created_from, filters.created_to, filters.paid_from, filters.paid_to]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
+        // F11 = nueva venta → vive en el POS (pantalla dedicada).
         const handleKeyDown = (e) => {
-            if (e.key === 'F11' && can("invoice.create") && !showNewInvoiceModal && !showDetailModal) {
+            if (e.key === 'F11' && can("invoice.create") && !showDetailModal) {
                 e.preventDefault();
-                setShowNewInvoiceModal(true);
+                navigate("/pos");
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [can, showNewInvoiceModal, showDetailModal]);
+    }, [can, showDetailModal, navigate]);
 
     useEffect(() => {
         const invoiceParam = searchParams.get("invoice");
@@ -700,13 +607,9 @@ const Billing = () => {
     // el cliente, no se persiste). Aplica a venta directa Y a consulta.
     const submitPayment = async () => {
         const direct = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
-        const target = Number(Number(direct ? selectedInvoice.total : selectedInvoice.remaining_balance).toFixed(2));
-        const sum = Number(payLines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
-        const paymentLines = (sum > target)
-            ? [{ method: payLines[0].method, amount: target.toFixed(2) }]
-            : payLines
-                .filter(l => Number(l.amount) > 0)
-                .map(l => ({ method: l.method, amount: Number(l.amount).toFixed(2) }));
+        const paymentLines = buildPaymentLines(
+            payLines, direct ? selectedInvoice.total : selectedInvoice.remaining_balance
+        );
         const call = direct
             ? directPayInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey })
             : payInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey });
@@ -838,8 +741,8 @@ const Billing = () => {
                     <button
                         className="btn btn-primary btn-sm"
                         style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}
-                        onClick={() => setShowNewInvoiceModal(true)}
-                        title="Atajo: F11"
+                        onClick={() => navigate("/pos")}
+                        title="Atajo: F11 — abre el Punto de Venta"
                     >
                         + Cobro
                         <kbd style={{
@@ -1064,430 +967,6 @@ const Billing = () => {
                 </div>
             )}
 
-            {/* New Invoice Modal (Venta Directa) */}
-            {showNewInvoiceModal && (
-                <NewInvoiceModal
-                    genericOwner={genericOwner}
-                    onClose={() => setShowNewInvoiceModal(false)}
-                    onPaid={() => { setShowNewInvoiceModal(false); loadInvoices(filters); }}
-                    confirm={confirm}
-                />
-            )}
-        </div>
-    );
-};
-
-/* ── NewInvoiceModal Component ── */
-const NewInvoiceModal = ({ genericOwner, onClose, onPaid, confirm }) => {
-    const [items, setItems] = useState([]);
-    const [presentationLine, setPresentationLine] = useState({ presentation: null, quantity: "1", rxAttested: false, prescriberName: "", prescriptionFolio: "" });
-    const [serviceLine, setServiceLine] = useState({ service: null, quantity: "1" });
-    const [paymentMethod, setPaymentMethod] = useState("cash");
-    const [processing, setProcessing] = useState(false);
-    // ADR p25: cliente opcional. owner=null → "Público General" (genérico).
-    // owner lleva public_id (para filtrar pets vía ?owner=) e id (PK, body).
-    const [customer, setCustomer] = useState({ owner: null, pet: null });
-    const [presentationCache, setPresentationCache] = useState([]);
-    const [serviceCache, setServiceCache] = useState([]);
-
-    useEffect(() => {
-        getPresentations({ active: "true" }).then(data => {
-            setPresentationCache(Array.isArray(data) ? data : data?.results || []);
-        }).catch(() => {});
-        getServices({ active: "true" }).then(data => {
-            setServiceCache(Array.isArray(data) ? data : data?.results || []);
-        }).catch(() => {});
-    }, []);
-
-    const handleClose = async () => {
-        if (items.length > 0) {
-            const ok = await confirm(
-                "¿Descartar este cobro?",
-                "Los ítems no se guardarán.",
-                "Descartar",
-                "Continuar editando"
-            );
-            if (!ok) return;
-        }
-        onClose();
-    };
-
-    const handleOwnerSearch = async (q) => {
-        const data = await getOwners({ search: q, is_generic: "false" })
-            .then(d => Array.isArray(d) ? d : d?.results || [])
-            .catch(() => []);
-        return data.slice(0, 8).map(o => ({
-            id: o.id,
-            public_id: o.public_id,
-            label: o.phone ? `${o.name} — ${o.phone}` : o.name,
-        }));
-    };
-
-    const handlePetSearch = async (q) => {
-        if (!customer.owner) return [];
-        const data = await getPets({ owner: customer.owner.public_id, search: q })
-            .then(d => Array.isArray(d) ? d : d?.results || [])
-            .catch(() => []);
-        return data
-            .filter(p => !p.is_generic)
-            .slice(0, 8)
-            .map(p => ({ id: p.id, label: p.name }));
-    };
-
-    const handleProductSearch = async (q) => {
-        const lower = q.trim().toLowerCase();
-        const source = lower
-            ? await getPresentations({ search: q }).then(d => Array.isArray(d) ? d : d?.results || []).catch(() => [])
-            : presentationCache;
-        const filtered = lower
-            ? source.filter(p => p.product_name?.toLowerCase().includes(lower) || p.name?.toLowerCase().includes(lower))
-            : source;
-        return filtered.slice(0, 8).map(p => ({
-            id: p.id,
-            label: `${p.product_name} — ${p.name} ($${Number(p.sale_price).toFixed(2)})${p.requires_prescription ? " · Rx" : ""}`,
-            requires_prescription: !!p.requires_prescription,
-        }));
-    };
-
-    const handleServiceSearch = async (q) => {
-        const lower = q.trim().toLowerCase();
-        const source = lower
-            ? await getServices({ active: "true", search: q }).then(d => Array.isArray(d) ? d : d?.results || []).catch(() => [])
-            : serviceCache;
-        const filtered = lower
-            ? source.filter(s => s.name?.toLowerCase().includes(lower))
-            : source;
-        return filtered.slice(0, 8).map(s => ({
-            id: s.id,
-            label: `${s.name} — $${Number(s.base_price).toFixed(2)}`,
-        }));
-    };
-
-    const addPresentationItem = () => {
-        if (!presentationLine.presentation) return;
-        const pres = presentationCache.find(p => p.id === presentationLine.presentation.id);
-        if (!pres) return;
-        const qty = Math.max(1, parseInt(presentationLine.quantity) || 1);
-        if (pres.stock < qty) {
-            toast.error(`Stock insuficiente (${pres.stock} disponible).`);
-            return;
-        }
-        // ADR p26: producto con receta exige atestación (cliente presentó receta + médico).
-        const needsRx = !!pres.requires_prescription;
-        if (needsRx && (!presentationLine.rxAttested || !presentationLine.prescriberName.trim())) {
-            toast.error("Este producto requiere receta: confirma que el cliente la presentó e indica el médico.");
-            return;
-        }
-        const existing = items.find(i => i.type === "product" && i.id === pres.id);
-        if (existing) {
-            const newQty = existing.quantity + qty;
-            if (pres.stock < newQty) {
-                toast.error(`Stock insuficiente (${pres.stock} disponible, ya tienes ${existing.quantity}).`);
-                return;
-            }
-            setItems(prev => prev.map(i => i.id === pres.id && i.type === "product"
-                ? { ...i, quantity: newQty }
-                : i
-            ));
-        } else {
-            setItems(prev => [...prev, {
-                type: "product",
-                id: pres.id,
-                name: `${pres.product_name} — ${pres.name}`,
-                quantity: qty,
-                unit_price: pres.sale_price,
-                requires_prescription: needsRx,
-                prescriberName: needsRx ? presentationLine.prescriberName.trim() : "",
-                prescriptionFolio: needsRx ? presentationLine.prescriptionFolio.trim() : "",
-            }]);
-        }
-        setPresentationLine({ presentation: null, quantity: "1", rxAttested: false, prescriberName: "", prescriptionFolio: "" });
-    };
-
-    const addServiceItem = () => {
-        if (!serviceLine.service) return;
-        const svc = serviceCache.find(s => s.id === serviceLine.service.id);
-        if (!svc) return;
-        const qty = Math.max(1, parseInt(serviceLine.quantity) || 1);
-        const existing = items.find(i => i.type === "service" && i.id === svc.id);
-        if (existing) {
-            setItems(prev => prev.map(i => i.id === svc.id && i.type === "service"
-                ? { ...i, quantity: existing.quantity + qty }
-                : i
-            ));
-        } else {
-            setItems(prev => [...prev, {
-                type: "service",
-                id: svc.id,
-                name: svc.name,
-                quantity: qty,
-                unit_price: svc.base_price,
-            }]);
-        }
-        setServiceLine({ service: null, quantity: "1" });
-    };
-
-    const removeItem = (idx) => {
-        setItems(prev => prev.filter((_, i) => i !== idx));
-    };
-
-    const subtotal = items.reduce((sum, i) => sum + i.quantity * Number(i.unit_price), 0);
-
-    const handleCobrar = async () => {
-        if (items.length === 0) {
-            toast.error("Agrega al menos un ítem.");
-            return;
-        }
-        if (!customer.owner && !genericOwner) {
-            toast.error("No se encontró el propietario genérico. Verifica la configuración.");
-            return;
-        }
-        setProcessing(true);
-        try {
-            // ADR p25: owner real elegido, o genérico por default. invoice_type
-            // explícito 'direct_sale' para que un owner real no caiga en el
-            // default 'consultation' (que exigiría pet).
-            const ownerId = customer.owner ? customer.owner.id : genericOwner.id;
-            const payload = { owner: ownerId, invoice_type: "direct_sale" };
-            if (customer.pet) payload.pet = customer.pet.id;
-            const invoice = await createInvoice(payload);
-            for (const item of items) {
-                let payload;
-                if (item.type === "product") {
-                    payload = { presentation: item.id, quantity: String(item.quantity) };
-                    if (item.requires_prescription) {
-                        // ADR p26: atestación de receta externa.
-                        payload.rx_attested = true;
-                        payload.prescriber_name = item.prescriberName;
-                        payload.prescription_folio = item.prescriptionFolio || "";
-                    }
-                } else {
-                    payload = { service: item.id, quantity: String(item.quantity) };
-                }
-                await addInvoiceItem(invoice.public_id, payload);
-            }
-            await directPayInvoice(invoice.public_id, { paymentMethod });
-            toast.success("Venta directa cobrada");
-            onPaid();
-        } catch (err) {
-            toast.error(apiError(err, "Error al procesar el cobro. Intenta de nuevo."));
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    return (
-        <div className="modal-overlay" onClick={handleClose}>
-            <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
-                <div className="modal-header" style={{ flexShrink: 0 }}>
-                    <div>
-                        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>Nuevo Cobro</h3>
-                        <span style={{ fontSize: "12px", color: "var(--c-text-3)" }}>Venta directa</span>
-                    </div>
-                    <button className="modal-close" onClick={handleClose}><Icon.X s={14} /></button>
-                </div>
-
-                {/* Step 1: Add items */}
-                <div className="modal-body" style={{ flex: 1, overflow: "auto" }}>
-                    {/* Cliente (ADR p25) — opcional; default "Público General" */}
-                    <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-                        <div style={{ flex: "1 1 260px" }}>
-                            <label className={s.fieldLabel}>Cliente</label>
-                            <SearchSelect
-                                placeholder="Público General (buscar cliente…)"
-                                value={customer.owner}
-                                onChange={item => setCustomer({ owner: item, pet: null })}
-                                onSearch={handleOwnerSearch}
-                            />
-                        </div>
-                        {customer.owner && (
-                            <div style={{ flex: "1 1 260px" }}>
-                                <label className={s.fieldLabel}>Mascota (opcional)</label>
-                                <SearchSelect
-                                    placeholder="Buscar mascota del cliente…"
-                                    value={customer.pet}
-                                    onChange={item => setCustomer(prev => ({ ...prev, pet: item }))}
-                                    onSearch={handlePetSearch}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-                        {/* Product */}
-                        <div style={{ flex: "1 1 300px" }}>
-                            <label className={s.fieldLabel}>Producto</label>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <div style={{ flex: 1 }}>
-                                    <SearchSelect
-                                        placeholder="Buscar producto..."
-                                        value={presentationLine.presentation}
-                                        onChange={item => setPresentationLine(prev => ({ ...prev, presentation: item }))}
-                                        onSearch={handleProductSearch}
-                                    />
-                                </div>
-                                <input
-                                    type="number"
-                                    className="input"
-                                    style={{ width: "70px", height: "38px", textAlign: "center" }}
-                                    value={presentationLine.quantity}
-                                    onChange={e => setPresentationLine(prev => ({ ...prev, quantity: e.target.value }))}
-                                    min="1"
-                                />
-                                <button className="btn btn-primary btn-sm" onClick={addPresentationItem} disabled={!presentationLine.presentation}>
-                                    <Icon.Plus s={14} />
-                                </button>
-                            </div>
-                            {/* ADR p26: atestación de receta externa para productos Rx */}
-                            {presentationLine.presentation?.requires_prescription && (
-                                <div style={{ marginTop: "8px", padding: "8px 10px", border: "1px solid var(--c-border)", borderRadius: "6px", background: "rgba(245,158,11,0.07)" }}>
-                                    <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--c-text)", cursor: "pointer" }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={presentationLine.rxAttested}
-                                            onChange={e => setPresentationLine(prev => ({ ...prev, rxAttested: e.target.checked }))}
-                                        />
-                                        El cliente presentó receta médica válida
-                                    </label>
-                                    {presentationLine.rxAttested && (
-                                        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                                            <input
-                                                type="text" className="input" style={{ flex: 2 }}
-                                                placeholder="Médico que emitió la receta"
-                                                value={presentationLine.prescriberName}
-                                                onChange={e => setPresentationLine(prev => ({ ...prev, prescriberName: e.target.value }))}
-                                            />
-                                            <input
-                                                type="text" className="input" style={{ flex: 1 }}
-                                                placeholder="Folio (opcional)"
-                                                value={presentationLine.prescriptionFolio}
-                                                onChange={e => setPresentationLine(prev => ({ ...prev, prescriptionFolio: e.target.value }))}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Service */}
-                        <div style={{ flex: "1 1 300px" }}>
-                            <label className={s.fieldLabel}>Servicio</label>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <div style={{ flex: 1 }}>
-                                    <SearchSelect
-                                        placeholder="Buscar servicio..."
-                                        value={serviceLine.service}
-                                        onChange={item => setServiceLine(prev => ({ ...prev, service: item }))}
-                                        onSearch={handleServiceSearch}
-                                    />
-                                </div>
-                                <input
-                                    type="number"
-                                    className="input"
-                                    style={{ width: "70px", height: "38px", textAlign: "center" }}
-                                    value={serviceLine.quantity}
-                                    onChange={e => setServiceLine(prev => ({ ...prev, quantity: e.target.value }))}
-                                    min="1"
-                                />
-                                <button className="btn btn-primary btn-sm" onClick={addServiceItem} disabled={!serviceLine.service}>
-                                    <Icon.Plus s={14} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Items Table */}
-                    <div className="table-wrap"><table className="table">
-                        <thead>
-                            <tr>
-                                <th>Tipo</th>
-                                <th>Concepto</th>
-                                <th>Cant.</th>
-                                <th style={{ textAlign: "right" }}>P. Unit</th>
-                                <th style={{ textAlign: "right" }}>Subtotal</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.length === 0 ? (
-                                <tr>
-                                    <td colSpan="6" style={{ textAlign: "center", padding: "24px", color: "var(--c-text-3)" }}>
-                                        Agrega productos o servicios para comenzar.
-                                    </td>
-                                </tr>
-                            ) : items.map((item, idx) => (
-                                <tr key={`${item.type}-${item.id}-${idx}`}>
-                                    <td style={{ fontSize: "11px", color: "var(--c-text-3)" }}>
-                                        {item.type === "product" ? <Icon.Package s={12} /> : <Icon.Stethoscope s={12} />}
-                                    </td>
-                                    <td style={{ fontWeight: 500 }}>{item.name}</td>
-                                    <td style={{ textAlign: "center" }}>{item.quantity}</td>
-                                    <td style={{ textAlign: "right" }}>${Number(item.unit_price).toFixed(2)}</td>
-                                    <td style={{ textAlign: "right", fontWeight: 500 }}>
-                                        ${(item.quantity * Number(item.unit_price)).toFixed(2)}
-                                    </td>
-                                    <td style={{ textAlign: "right" }}>
-                                        <button className={s.actionBtn} onClick={() => removeItem(idx)} disabled={processing}>
-                                            <Icon.Trash s={13} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table></div>
-
-                    {/* Total */}
-                    {items.length > 0 && (
-                        <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
-                            <div style={{ minWidth: "180px" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: "13px", color: "var(--c-text-2)" }}>
-                                    <span>Subtotal</span>
-                                    <span>${subtotal.toFixed(2)}</span>
-                                </div>
-                                {/* Note: IVA se calcula en backend con tax_rate de la org */}
-                                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0 4px", borderTop: "1px solid var(--c-subtle)", fontSize: "16px", fontWeight: 600, color: "var(--c-text)" }}>
-                                    <span>Total estimado</span>
-                                    <span>${subtotal.toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer: Payment method + Cobrar */}
-                <div className="modal-footer" style={{ flexShrink: 0, borderTop: "1px solid var(--c-border)", paddingTop: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
-                        <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: "11px", fontWeight: 500, color: "var(--c-text-3)", display: "block", marginBottom: "4px" }}>
-                                Método de pago
-                            </label>
-                            <div style={{ display: "flex", gap: "6px" }}>
-                                {PAYMENT_METHODS.map(m => (
-                                    <button
-                                        key={m.value}
-                                        className={`btn ${paymentMethod === m.value ? "btn-primary" : "btn-secondary"} btn-xs`}
-                                        onClick={() => setPaymentMethod(m.value)}
-                                        disabled={processing}
-                                    >
-                                        {m.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <button className="btn btn-secondary btn-sm" onClick={handleClose} disabled={processing}>
-                            Cancelar
-                        </button>
-                        <button
-                            className="btn btn-primary btn-sm"
-                            style={{ background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff", minWidth: "100px" }}
-                            onClick={handleCobrar}
-                            disabled={items.length === 0 || processing || (!customer.owner && !genericOwner)}
-                        >
-                            {processing ? <Icon.Loader s={14} /> : "Cobrar"}
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };

@@ -120,23 +120,29 @@ Un producto `requires_prescription` ahora **sí** puede venderse en una
 - La atestación **sobrevive** cancelación/refund (registro legal). NO se reutiliza
   `Prescription` (clínico) — evita basura clínica. Retención NOM + LFPDPPP (DD-005).
 
-El frontend (`NewInvoiceModal`) muestra un panel de atestación (checkbox "cliente
-presentó receta" + médico + folio) cuando el producto tiene `requires_prescription`
-(expuesto por `PresentationSerializer`), y manda los campos con `addInvoiceItem`.
+El frontend (POS — `components/pos/Cart.jsx`) muestra un panel de atestación
+(checkbox "cliente presentó receta" + médico + folio) cuando el producto tiene
+`requires_prescription` (expuesto por `PresentationSerializer`), y manda los
+campos con `addInvoiceItem`.
 
-Flujo en frontend:
-1. Boton "+ Cobro" abre el modal de venta directa (tambien via atajo **F11** o **Shift+F11**)
-2. El propietario generico se asigna automaticamente (no se muestra al usuario)
-3. El tipo de factura se fija a `direct_sale` via backend (serializer)
-4. Se agregan productos y/o servicios en estado local (sin backend hasta cobrar)
-5. Boton "Cobrar" ejecuta: `createInvoice → addItem × N → direct-pay` en una secuencia atómica
-6. Si el cobro falla, el modal permanece abierto y permite reintentar
-7. Si el usuario cierra sin cobrar, los items se descartan (sin facturas draft huerfanas)
+Flujo en frontend (ADR p38 — pantalla dedicada `/pos`, reemplaza al modal "Nuevo Cobro"):
+1. "+ Cobro" en `/billing` (o atajo **F11**) navega a `/pos`
+2. El propietario generico se asigna automaticamente (cliente real opcional, ADR p25)
+3. El frontend manda `invoice_type='direct_sale'` explicito
+4. Se agregan productos (escáner de barcode o búsqueda) y/o servicios en estado local
+5. "Cobrar" crea el draft real: `createInvoice → addItem × N → getInvoice` — el panel
+   pasa a modo pago con subtotal/IVA/total **del backend** (sin replicar `invoice_totals`)
+6. "Confirmar cobro" → `direct-pay` con `payment_lines` + `X-Idempotency-Key`
+   (mismo `PaymentLinesEditor` que Registrar Pago: split, total exacto, cambio)
+7. Si el pago falla, se conservan draft + idempotency key para reintentar (anti doble cobro)
+8. "Volver al carrito" / abandonar la página en modo pago → `cancelInvoice` del draft
+   (auditable vía `InvoiceAuditLog`; no quedan borradores huerfanos)
 
-**Control de acceso**: el boton "+ Cobro" y el atajo F11 usan `can("invoice.create")` —
-verifica el permiso real del usuario via la lista de permisos retornada por `/api/me/`,
-no compara `user.role`. Esto soporta roles dinamicos donde dos usuarios con el mismo
-nombre de rol pueden tener distintos permisos.
+**Control de acceso**: la página `/pos`, el boton "+ Cobro" y el atajo F11 usan
+`can("invoice.create")` — verifica el permiso real del usuario via la lista de permisos
+retornada por `/api/me/`, no compara `user.role`. Esto soporta roles dinamicos donde dos
+usuarios con el mismo nombre de rol pueden tener distintos permisos. El "Volver al
+carrito" usa `invoice.cancel` (presente en los 3 roles del sistema).
 
 ## Estados de la factura
 
@@ -663,8 +669,8 @@ Cada cambio de estado genera un `InvoiceAuditLog` con:
 
 | Atajo | Acción | Contexto |
 |-------|--------|----------|
-| `F11` | Abrir modal "+ Cobro" (venta directa) | Sin modales abiertos, si el usuario tiene `invoice.create` |
-| `Shift+F11` | Idéntico a F11 | Misma funcionalidad, sin distinción |
+| `F11` | Navegar al Punto de Venta (`/pos`, ADR p38) | En `/billing`, sin el detalle abierto, si el usuario tiene `invoice.create` |
+| `Shift+F11` | Idéntico a F11 (`e.key === 'F11'` no distingue Shift) | Misma funcionalidad |
 
-Ambos atajos bloquean el comportamiento nativo del navegador (fullscreen) via `preventDefault()`.
+El atajo bloquea el comportamiento nativo del navegador (fullscreen) via `preventDefault()`.
 El botón "+ Cobro" muestra un badge `F11` como recordatorio visual.

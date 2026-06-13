@@ -9,6 +9,7 @@ const NAV_ITEMS = [
     { path: "/medical-records", label: "Historial Clínico", icon: Icon.FileHeart },
     { path: "/prescriptions", label: "Recetas", icon: Icon.Pill },
     { path: "/inventory", label: "Inventario", icon: Icon.Package },
+    { path: "/pos", label: "Punto de Venta", icon: Icon.ShoppingBag },
     { path: "/billing", label: "Cobros", icon: Icon.Receipt },
     { path: "/cash", label: "Caja", icon: Icon.Wallet },
 ];

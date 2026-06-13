@@ -60,24 +60,29 @@ Analytics nocturno snapshotea:
    - appointments_done
 ```
 
-### Flujo B — Venta directa (mostrador / POS)
+### Flujo B — Venta directa (mostrador / POS, ADR p38)
 
 ```
-Recepción presiona "+ Cobro" (atajo F11)
+Recepción abre /pos (sidebar, o "+ Cobro" / F11 desde Cobros)
    ↓
-Modal: selecciona owner (genérico por defecto o real) + pet (opcional)
+Selecciona owner (genérico por defecto o real) + pet (opcional)
    ↓
-Agrega productos y/o servicios (estado local, sin enviar al backend todavía)
+Escanea códigos de barras (lookup exacto, qty incremental) o busca por nombre
+   → agrega productos y/o servicios al carrito (estado local)
    ↓ (si el producto tiene requires_prescription)
-Atestar receta externa (prescriber_name, rx_attested=true)
+Atestar receta externa en el carrito (prescriber_name, rx_attested=true)
    ↓
-Botón "Cobrar" → secuencia atómica:
+Botón "Cobrar" → crea la factura real:
    - createInvoice (direct_sale, draft)
    - addItem × N (crea ExternalPrescriptionAttestation si aplica)
-   - direct-pay (un solo lock):
-       * _confirm_locked_invoice → descuenta stock de TODOS los ítems con presentación + confirmed_at
-       * _pay_locked_invoice → registra Payment(s) + paid_at
-       * Si el toggle de caja está activo: asigna Payment.cash_session
+   - getInvoice → el panel muestra subtotal/IVA/total del backend
+   ↓
+Captura del pago (PaymentLinesEditor: split, total exacto, recibido → cambio)
+   ↓ ("Volver al carrito" / abandonar → cancelInvoice del draft, auditable)
+Botón "Confirmar cobro" → direct-pay (un solo lock, X-Idempotency-Key):
+   * _confirm_locked_invoice → descuenta stock de TODOS los ítems con presentación + confirmed_at
+   * _pay_locked_invoice → registra Payment(s) + paid_at
+   * Si el toggle de caja está activo: asigna Payment.cash_session
    ↓
 El frontend muestra el cambio en efectivo (solo UI) si el monto recibido > total
    ↓

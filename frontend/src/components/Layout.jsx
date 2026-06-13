@@ -11,6 +11,7 @@ const PAGE_TITLES = {
     "/medical-records":"Historial Clínico",
     "/inventory":      "Inventario",
     "/billing":        "Cobros",
+    "/pos":            "Punto de Venta",
     "/staff":          "Equipo",
     "/config":         "Configuración",
     "/prescriptions":  "Recetas",

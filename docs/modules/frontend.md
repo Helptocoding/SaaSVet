@@ -591,6 +591,51 @@ Mini-agenda operativa con navegación por día. Patrón **appointment cards** (N
 - **Citas por resolver (`PendingFollowUp`)**: citas con fecha pasada aún en `scheduled`/`confirmed` (nadie las cerró/canceló/marcó no-asistió). Query a `status-breakdown` rango `hoy-30d → ayer`; el límite de filas es **visual (5)**, no del query (una cita perdida hace semanas no debe desaparecer). Las acciones (Atender / No asistió / Reprogramar) reutilizan `AppointmentQuickModal` (no crear modal nuevo).
 - **Terminología analítica**: usar **"No asistieron"** (no "No-show") y **"Conversión de citas"** (no "Embudo"). Cada gráfica lleva título + descripción que solo nombra lo que realmente grafica (la de actividad no menciona canceladas porque no las plotea).
 
+## Punto de Venta (`/pos`)
+
+Pantalla dedicada de venta directa de mostrador. Reemplaza al modal "Nuevo Cobro"
+de `/billing` ("+ Cobro" y F11 ahora navegan a `/pos`). Cobros queda como listado
+de documentos.
+
+```
+pages/pos/
+├── index.jsx        — orquestador: modo cart|paying, checkout 2 pasos, caja
+└── pos.module.css   — layout (grid carrito | panel derecho sticky)
+components/pos/
+├── ProductSearch.jsx    — input único: escáner de código de barras + búsqueda
+├── Cart.jsx             — tabla de venta (qty inline, atestación Rx ADR p26)
+├── CustomerSelector.jsx — cliente opcional (ADR p25, genérico por default)
+└── PaymentPanel.jsx     — total + PaymentLinesEditor + CTA cobrar
+hooks/usePOSCart.js      — estado del carrito (solo UI)
+```
+
+**Checkout en 2 pasos, server-driven (sin matemática financiera en React):**
+
+1. Modo `cart`: se arma la venta en estado local. El panel muestra "Total
+   estimado" (subtotal sin IVA — el frontend NO replica `invoice_totals`).
+   "Cobrar" → `createInvoice(direct_sale)` + `addInvoiceItem ×N` + `getInvoice`.
+2. Modo `paying`: el panel muestra subtotal/IVA/**total reales del backend** y
+   reusa `PaymentLinesEditor` (mismo flujo que Registrar Pago de Cobros: split,
+   total exacto ADR p30 rev, cambio en efectivo no persistido). "Confirmar
+   cobro" → `direct-pay` atómico con `X-Idempotency-Key`.
+
+- "Volver al carrito" / abandonar la página en modo pago → `cancelInvoice` del
+  draft (auditable vía `InvoiceAuditLog`, no quedan borradores huérfanos).
+- Reintento tras fallo de pago: conserva draft + idemKey (anti doble cobro).
+- **Escáner USB** = teclado (escribe código + Enter): Enter intenta primero
+  `GET /inventory/presentations/barcode/?barcode=` (lookup exacto, agrega qty 1;
+  re-escaneo incrementa) y cae a la búsqueda por nombre (productos + servicios).
+- Guard de stock del carrito = pre-check visual; el backend valida bajo lock al
+  confirmar. Cero endpoints nuevos: el POS vive sobre la API existente.
+
+**Compartido (no duplicar por módulo):**
+
+- `components/PaymentLinesEditor.jsx` — editor de líneas de pago único
+  (extraído de `billing.jsx`; lo usan Registrar Pago, devoluciones y POS).
+- `utils/payments.js` — `PAYMENT_METHODS`, `paymentLinesValid()`,
+  `buildPaymentLines()` (regla de sobrepago/cambio ADR p30 rev, única fuente).
+- `utils/idempotency.js` — `newIdempotencyKey()`.
+
 ## Rutas
 
 | Ruta                | Pagina              | Acceso       |
@@ -603,7 +648,9 @@ Mini-agenda operativa con navegación por día. Patrón **appointment cards** (N
 | `/appointments`     | Citas               | Privada      |
 | `/medical-records`  | Historial clinico   | Privada      |
 | `/inventory`        | Inventario          | Privada      |
-| `/billing`          | Facturacion         | Privada      |
+| `/billing`          | Facturacion (listado de documentos) | Privada |
+| `/pos`              | Punto de Venta      | Privada      |
+| `/cash`             | Caja (turnos + Z)   | Privada      |
 | `/prescriptions`    | Recetas             | Privada      |
 | `/staff`            | Equipo              | Solo ADMIN   |
 | `/config`           | Configuracion       | Solo ADMIN   |
