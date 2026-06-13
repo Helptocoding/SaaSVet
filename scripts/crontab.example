@@ -30,17 +30,26 @@ COMPOSE_DIR=/opt/vet/app
 ENV_FILE=/opt/vet/app/.env.prod
 COMPOSE_FILE=/opt/vet/app/docker-compose.prod.yml
 BACKUP_DIR=/var/backups/vet
-# Opcional offsite:
-#   RCLONE_REMOTE=b2:vet-backups/
-# Opcional deadman switch (Healthchecks.io):
+# Offsite + cifrado (ADR p40). En producción RCLONE_REMOTE es OBLIGATORIO
+# (pg-backup.sh falla loud si está vacío). Estos pueden vivir aquí o en
+# .env.prod (.env.prod gana si los define en ambos lados).
+#   RCLONE_REMOTE=saaslyvet-prod-backups:saaslyvet-prod-backups
+#   BACKUP_ENCRYPTION_PUBLIC_KEY=age1...          # PUBLIC key (no es secreto)
+# Deadman switch (Healthchecks.io) — ping solo en éxito total:
 #   HEALTHCHECK_URL=https://hc-ping.com/<uuid>
+# La App Key de B2 NO va aquí: vive en ~/.config/rclone/rclone.conf (chmod 600).
+# La PRIVATE key de age NUNCA va al VPS (solo en restore real desde tu máquina).
 
 # m h dom mon dow command
 
 # ---------------------------------------------------------------------------
-# 03:00 UTC diario — Postgres dump + retention 14d + (opcional) offsite + ping.
-# Exit code: 0 OK | 1 precondición | 2 dump corrupto | 3 pg_dump falló.
-# Si exit != 0, MAILTO (definir arriba) envía stderr.
+# 03:00 UTC diario — pg_dump → validate (pg_restore --list) → sha256 + manifest
+# → age encrypt → rclone copy a B2 (daily/, y monthly/ el día 01) + retención
+# local 14d + deadman ping (ADR p40).
+# Exit: 0 OK | 1 precond | 2 dump corrupto | 3 pg_dump falló |
+#       4 validación falló | 5 cifrado/rclone no disponible | 6 offsite falló (prod).
+# Si exit != 0 el deadman NO se pinguea → Healthchecks.io alerta. Define MAILTO
+# arriba para recibir stderr también.
 # ---------------------------------------------------------------------------
 0 3 * * *   /opt/vet/app/scripts/pg-backup.sh >> /var/log/vet-backup.log 2>&1
 
@@ -71,6 +80,18 @@ BACKUP_DIR=/var/backups/vet
 # arriba o inline. Sin webhook configurado solo loguea (no alerta).
 # ---------------------------------------------------------------------------
 15 * * * *  ALERT_THRESHOLD=80 /opt/vet/app/scripts/disk-alert.sh >> /var/log/vet-cron.log 2>&1
+
+# ---------------------------------------------------------------------------
+# 03:30 UTC día 1 de cada mes — restore drill (ADR p40). Restaura el último
+# dump LOCAL a una DB descartable y corre audit_anchor_integrity +
+# audit_payment_ledger_integrity + checks multi-tenant. Prueba que el backup
+# es RECUPERABLE (el "0 errores" de 3-2-1-1-0). Usa el .dump plano local → NO
+# necesita la private key. Exit 0 = RESTORE VERIFIED.
+# La verificación del path cifrado/offsite (decrypt + download) se hace a mano
+# desde tu máquina con la private key:  BACKUP_DECRYPTION_KEY=... \
+#   scripts/restore-drill.sh --from-offsite
+# ---------------------------------------------------------------------------
+30 3 1 * *  /opt/vet/app/scripts/restore-drill.sh >> /var/log/vet-backup.log 2>&1
 
 # ---------------------------------------------------------------------------
 # Semanal — logs systemd journal cap a 14 días (evita crecimiento sin tope).

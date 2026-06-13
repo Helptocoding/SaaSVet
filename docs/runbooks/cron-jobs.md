@@ -15,8 +15,9 @@ Capa 6 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Tareas recurrentes que
 | 6.3 | `build_daily_metrics` | 06:30 daily | 00:30 mismo día | MEDIO — analytics dashboards |
 | 6.4 | `audit_anchor_integrity` | 06:35 daily | 00:35 mismo día | ALTO — invariantes contables |
 | 6.5 | `journalctl --vacuum-time=14d` | 05:00 domingos | 23:00 sábado | BAJO — housekeeping logs |
+| 6.6 | `restore-drill.sh` (ADR p40) | 03:30 día 1 de mes | 21:30 último día mes anterior | **CRÍTICO** — un backup sin restore probado no es backup |
 
-Total fenómenos diarios: 4 + 1 semanal. Carga insignificante.
+Total fenómenos diarios: 4 + 1 semanal + 1 mensual. Carga insignificante.
 
 ---
 
@@ -123,10 +124,51 @@ cd /opt/vet/app && docker compose -f docker-compose.prod.yml --env-file .env.pro
 ```
 
 Verificar exit codes:
-- `pg-backup.sh`: 0 = OK, 1 = precondición, 2 = dump corrupto, 3 = pg_dump falló.
+- `pg-backup.sh` (ADR p40): 0 = OK | 1 = precondición | 2 = dump corrupto |
+  3 = pg_dump falló | 4 = validación `pg_restore --list` falló | 5 = cifrado/rclone
+  no disponible | 6 = offsite mal configurado o falló (solo producción).
+- `restore-drill.sh` (ADR p40): 0 = RESTORE VERIFIED | 1 = precondición |
+  2 = restore falló | 3 = health check falló. Corre con el `.dump` plano local
+  (no necesita private key). Para probar el path cifrado/offsite:
+  `BACKUP_DECRYPTION_KEY=~/keys/age.key scripts/restore-drill.sh --from-offsite`.
 - `flushexpiredtokens`: 0 siempre (idempotente).
 - `build_daily_metrics`: 0 = OK, 2 = al menos 1 org falló (revisar logs).
 - `audit_anchor_integrity`: 0 = OK, 1 = unresolved provenance, 2 = invariant violation P1.
+
+---
+
+## 5.bis Restore drill — local (auto) vs offsite (manual). LEER (ADR p40)
+
+El drill tiene **dos niveles** y el cron automático solo cubre el primero:
+
+| Nivel | Qué prueba | Cómo | Cuándo |
+|---|---|---|---|
+| **Local (automático)** | `dump local → restore → auditorías` | cron mensual `restore-drill.sh` (usa el `.dump` plano local, sin private key) | día 1 de mes, desatendido |
+| **Offsite (MANUAL)** | `B2 → download → **decrypt** → restore → auditorías` | a mano con la age **private key** | **1 vez al mes, a mano** |
+
+> ⚠️ **El cron NO prueba la cadena de desastre real.** Restaurar el `.dump` plano
+> local demuestra que el dump y las auditorías sirven, pero **no** demuestra que
+> el `.age` en Backblaze se puede bajar y **descifrar**. Si la private key se
+> perdió, se corrompió, o el `.age` subió mal, solo te enteras el día del
+> desastre — demasiado tarde. Por eso esta prueba es manual y obligatoria.
+
+### Prueba offsite mensual (hazla tú, desde tu máquina con la private key)
+
+```bash
+# En tu máquina (NO el VPS), con la age private key montada temporalmente.
+# Requiere rclone configurado + acceso al postgres del stack (local o VPS).
+cd /opt/vet/app   # o el repo local
+
+BACKUP_DECRYPTION_KEY=/ruta/segura/age.key \
+RCLONE_REMOTE=saaslyvet-prod-backups:saaslyvet-prod-backups \
+  scripts/restore-drill.sh --from-offsite
+# → baja el último vet-*.dump.age de daily/, lo descifra con tu private key,
+#   restaura a una DB descartable, corre las auditorías → RESTORE VERIFIED.
+```
+
+Si esto NO termina en `RESTORE VERIFIED`, tienes un incidente de DR latente
+(key, cifrado o upload roto) — resuélvelo antes del siguiente backup. Anota la
+fecha del último drill offsite exitoso; si pasan >35 días, es deuda P0.
 
 ---
 
