@@ -140,6 +140,14 @@ const ZReport = ({ session }) => {
                     ))}
                 </>
             )}
+            {/* Movimientos manuales (snapshot v3, ADR p39) — Z's viejos no los traen */}
+            {(Number(snap.manual_in) > 0 || Number(snap.manual_out) > 0) && (
+                <>
+                    <div style={{ height: "1px", background: "var(--c-subtle)", margin: "8px 0" }} />
+                    {Number(snap.manual_in) > 0 && <Row label="Entradas manuales" value={`+${money(snap.manual_in)}`} />}
+                    {Number(snap.manual_out) > 0 && <Row label="Salidas manuales (retiros/gastos)" value={`−${money(snap.manual_out)}`} />}
+                </>
+            )}
             <div style={{ height: "1px", background: "var(--c-subtle)", margin: "8px 0" }} />
             <Row label="Efectivo esperado" value={money(session.expected_cash)} strong />
             <Row label="Efectivo contado" value={money(session.counted_cash)} />

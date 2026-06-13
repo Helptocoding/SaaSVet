@@ -76,7 +76,7 @@ class CashSessionTests(TestCase):
         self.assertEqual(closed.counted_cash, Decimal("590.00"))
         self.assertEqual(closed.difference, Decimal("-10.00"))
         self.assertIsNotNone(closed.closed_at)
-        self.assertEqual(closed.closed_snapshot['report_schema_version'], 2)
+        self.assertEqual(closed.closed_snapshot['report_schema_version'], 3)
         self.assertEqual(closed.closed_snapshot['operations'], 1)
 
     def test_card_payment_not_counted_in_cash(self):
@@ -128,13 +128,26 @@ class CashSessionTests(TestCase):
         self.assertEqual(p.cash_session_id, s.pk)
 
     def test_toggle_off_pay_without_session(self):
-        # default toggle off → cobro sin caja; Payment.cash_session NULL.
+        # default toggle off → cobro sin caja permitido; Payment.cash_session NULL.
         inv = self._draft_direct_sale()
         pay_direct_sale(inv, user=self.user, payment_method='cash')
         inv.refresh_from_db()
         self.assertEqual(inv.status, 'paid')
         p = Payment.all_objects.filter(invoice=inv).first()
         self.assertIsNone(p.cash_session_id)
+
+    def test_pay_attaches_session_even_when_toggle_off(self):
+        # ADR p39: asociación ≠ obligatoriedad. Con caja abierta el pago se
+        # asocia SIEMPRE, aunque el toggle esté apagado (antes quedaba NULL y
+        # el Z reportaba $0 ventas → diferencias falsas).
+        s = open_cash_session(self.user, opening_float=Decimal("0.00"))
+        inv = self._draft_direct_sale()
+        pay_direct_sale(inv, user=self.user, payment_method='cash')
+        p = Payment.all_objects.filter(invoice=inv).first()
+        self.assertEqual(p.cash_session_id, s.pk)
+        closed = close_cash_session(s, user=self.user, counted_cash=Decimal("100.00"))
+        self.assertEqual(closed.expected_cash, Decimal("100.00"))
+        self.assertEqual(closed.difference, Decimal("0.00"))
 
 
 class CashSessionAPITests(APITestCase):

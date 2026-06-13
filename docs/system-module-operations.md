@@ -580,7 +580,9 @@ Cada anchor tiene su `*_source` (`service`, `legacy`, etc.). Los CHECK constrain
 - `pet` **opcional** (ADR p25). Si se envía, debe pertenecer al `owner` indicado.
 
 **Resultado**
-- Se crea una `Invoice` en `draft` (en el modal del frontend; solo se persiste al momento de cobrar).
+- Se crea una `Invoice` en `draft`. En el POS (`/pos`, ADR p38) el carrito vive en
+  estado local y el draft real se crea al presionar "Cobrar" (paso 1 del checkout);
+  si la venta se edita o abandona antes de pagar, el draft se cancela (auditable).
 
 **Desbloquea**
 - Agregar ítems y cobrar de forma atómica mediante `direct-pay`.
@@ -760,9 +762,46 @@ open → closed (terminal)
 
 **Desbloquea**
 - Los cobros y refunds del actor cuando `require_open_cash_session=True`.
+- El registro de movimientos manuales del cajón (ADR p39).
 
 **Bloquea**
 - Abrir una segunda caja para el mismo usuario.
+
+---
+
+### Asociación de pagos al turno (ADR p39)
+
+**Asociación ≠ obligatoriedad.** Si el actor tiene caja abierta, todo
+`Payment`/`RefundPayment`/`RefundReversal` se asocia a esa sesión **siempre**,
+con o sin el toggle `require_open_cash_session`. El toggle solo decide si el
+cobro se **bloquea** cuando NO hay caja abierta (ON → 400; OFF → pago sin
+sesión). Antes del p39, con el toggle apagado el pago quedaba sin sesión aunque
+hubiera caja abierta → el Z reportaba $0 ventas (diferencia falsa).
+
+---
+
+### Acción: Registrar movimiento manual (`register_cash_movement`, ADR p39)
+
+**Requiere**
+- Permiso `cashmovement.create` (ADMIN, VET, ASSISTANT).
+- Caja abierta del actor (la operación lockea la `CashSession` — serializada
+  contra el cierre Z: ningún movimiento se cuela después del conteo).
+- `movement_type ∈ {deposit, withdrawal, expense}`, `amount > 0` (CHECK en DB),
+  `reason` obligatorio (sanitizado, máx. 255).
+
+**Resultado**
+- Se crea un `CashMovement` append-only (sin PATCH/DELETE; corrección =
+  contra-movimiento). `occurred_at` y `actor` son server-side.
+- `deposit` suma al efectivo esperado del cierre; `withdrawal` y `expense`
+  restan. Solo aplica a efectivo (es el cajón físico).
+
+**Bloquea**
+- Registrar sin caja abierta → 400.
+- Registrar sobre una caja ya cerrada (el lock lo garantiza).
+- Montos ≤ 0 o sin motivo.
+
+**Módulos involucrados**
+`cash`.
 
 ---
 
@@ -779,11 +818,13 @@ open → closed (terminal)
                 + Σ(Payment en efectivo dentro de la sesión)
                 − Σ(RefundPayment en efectivo dentro de la sesión)
                 + Σ(RefundReversal en efectivo dentro de la sesión)
+                + Σ(CashMovement deposit)                      ← ADR p39
+                − Σ(CashMovement withdrawal + expense)         ← ADR p39
   difference    = counted_cash − expected_cash
   ```
 - Los pagos con `card` y `transfer` se registran de forma informativa, pero **no** entran en el conteo de efectivo.
 - `closed_snapshot` es un JSON append-only que se congela al cerrar (no se reinterpreta nunca).
-- `report_schema_version` versiona la estructura (Sprint A v1; Sprint B agrega la línea de refunds → bump).
+- `report_schema_version` versiona la estructura (v1 Sprint A; v2 Sprint B refunds; v3 ADR p39 movimientos manuales — los Z viejos no se reinterpretan).
 - `closed_at` está protegido por un CHECK constraint.
 
 **Desbloquea**
@@ -872,7 +913,7 @@ Todos los eventos se emiten a stdout en formato JSON (capturados por Railway). A
 | `medical_records.events` | `MEDICAL_RECORD_CLOSED`, `OWNERSHIP_DENIED`, `CLOSED_DENIED`, `DELETED` | Ciclo de vida de consulta. |
 | `analytics.events` | `ANCHOR_LATE_ARRIVAL`, `DASH_BUILD_*`, `DASH_SNAPSHOT_*` | Late arrivals, build de snapshots. |
 | `billing.events` | `IDEMPOTENT_PAYMENT_DEDUPED`, `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` | Pagos dedup, mutaciones fuera de tx. |
-| `cash.events` | `CASH_SESSION_OPENED/CLOSED/FORCE_CLOSED` | Turnos de caja. |
+| `cash.events` | `CASH_SESSION_OPENED/CLOSED/FORCE_CLOSED`, `CASH_MOVEMENT_REGISTERED` | Turnos de caja y movimientos manuales. |
 | `core.deprecation` | `DEPRECATED_ENDPOINT_HIT` | Endpoints en sunset (RFC 8594). |
 | `core.audit_orphan_fks` | `AUDIT_ORPHAN_FKS_*` | Integridad referencial. |
 | `platform.events` | `PLATFORM_ORG_PROVISIONED`, `PLATFORM_ACCESS_DENIED` | Provisión de tenants. |
@@ -885,4 +926,5 @@ Todos los eventos se emiten a stdout en formato JSON (capturados por Railway). A
 - `VitalSigns`: append-only (es la auditoría por sí mismo).
 - `Payment` / `RefundPayment` / `RefundReversal` / `CreditNote`: append-only (son la auditoría).
 - `ExternalPrescriptionAttestation`: append-only.
+- `CashMovement`: append-only (ADR p39 — corrección = contra-movimiento).
 - `OrganizationTimezoneAudit`: cada cambio de timezone de la org.

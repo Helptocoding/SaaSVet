@@ -56,7 +56,7 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 
 1. **Multitenancy**: todo acceso cross-tenant retorna 404. Cada fila tiene `organization_id`. El sistema está preparado para RLS (ADR p23).
 2. **Anchors inmutables**: `paid_at`, `confirmed_at`, `cancelled_at`, `closed_at` y `closed_snapshot` no se reescriben nunca.
-3. **Append-only**: los siguientes modelos son de solo inserción: `Payment`, `RefundPayment`, `RefundReversal`, `CreditNote`, `VitalSigns`, `VaccineRecord`, `ExternalPrescriptionAttestation`, `InvoiceAuditLog`, `AppointmentStatusChange`, `MetricAdjustment`, `DashboardSnapshotAudit` y `OrganizationTimezoneAudit`.
+3. **Append-only**: los siguientes modelos son de solo inserción: `Payment`, `RefundPayment`, `RefundReversal`, `CreditNote`, `VitalSigns`, `VaccineRecord`, `ExternalPrescriptionAttestation`, `InvoiceAuditLog`, `AppointmentStatusChange`, `MetricAdjustment`, `DashboardSnapshotAudit`, `OrganizationTimezoneAudit` y `CashMovement` (ADR p39).
 4. **`amount > 0`** en todos los eventos financieros. El signo lo determina el tipo de evento, nunca un decimal negativo.
 5. **`Invoice.status='paid' ⟺ remaining_balance == 0`**. El estado es una proyección del ledger, no un flag arbitrario.
 6. **Los refunds no afectan `remaining_balance`**. La factura en `paid` es terminal.

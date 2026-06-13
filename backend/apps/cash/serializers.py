@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CashSession
+from .models import CashMovement, CashSession
 
 
 class CashSessionSerializer(serializers.ModelSerializer):
@@ -35,3 +35,27 @@ class CashSessionSerializer(serializers.ModelSerializer):
 
     def get_closed_by_name(self, obj):
         return self._full_name(obj.closed_by)
+
+
+class CashMovementSerializer(serializers.ModelSerializer):
+    """
+    Solo lectura (ADR p39): la escritura pasa por el view → service
+    (register_cash_movement); append-only, sin PATCH/DELETE.
+    """
+    actor_name = serializers.SerializerMethodField()
+    movement_type_display = serializers.CharField(
+        source='get_movement_type_display', read_only=True,
+    )
+
+    class Meta:
+        model = CashMovement
+        fields = [
+            'public_id', 'movement_type', 'movement_type_display',
+            'amount', 'reason', 'occurred_at', 'actor_name',
+        ]
+        read_only_fields = fields
+
+    def get_actor_name(self, obj):
+        if not obj.actor:
+            return ''
+        return f"{obj.actor.first_name} {obj.actor.last_name}".strip() or obj.actor.username

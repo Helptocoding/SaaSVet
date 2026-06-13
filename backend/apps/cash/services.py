@@ -14,16 +14,22 @@ from django.db.models import DecimalField, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from .models import CashSession
+from .models import CashMovement, CashSession
 
 logger = logging.getLogger(__name__)
 _cash_events = logging.getLogger('cash.events')
 
 # Versión del shape del Z congelado (closed_snapshot). Bump al cambiar la
 # semántica de un campo del reporte (DD-003). v1=Sprint A (sin refunds);
-# v2=Sprint B (ADR p29: cash_refunds/cash_reversals en el cuadre de efectivo).
-REPORT_SCHEMA_VERSION = 2
+# v2=Sprint B (ADR p29: cash_refunds/cash_reversals en el cuadre de efectivo);
+# v3=ADR p39 (manual_in/manual_out: movimientos manuales del cajón).
+REPORT_SCHEMA_VERSION = 3
 ZERO = Decimal('0.00')
+
+# Signo por tipo de movimiento (invariante #4: amount > 0 siempre).
+MOVEMENT_TYPES = {'deposit', 'withdrawal', 'expense'}
+_INFLOW_TYPES = {'deposit'}
+_OUTFLOW_TYPES = {'withdrawal', 'expense'}
 
 
 def get_open_session(user):
@@ -110,15 +116,34 @@ def close_cash_session(session, user, counted_cash, notes='', force=False):
     # ADR p29: refunds en efectivo restan; reversals (contra-asiento) suman.
     cash_refunds = _sum_cash(RefundPayment)
     cash_reversals = _sum_cash(RefundReversal)
-    expected = session.opening_float + cash_in - cash_refunds + cash_reversals
+    # ADR p39: movimientos manuales del cajón — entradas suman, retiros/gastos restan.
+    movements_by_type = {
+        row['movement_type']: row['total']
+        for row in (
+            CashMovement.all_objects.filter(cash_session=session)
+            .values('movement_type')
+            .annotate(total=Coalesce(Sum('amount'), Value(ZERO), output_field=_dec))
+        )
+    }
+    manual_in = sum((movements_by_type.get(t, ZERO) for t in _INFLOW_TYPES), ZERO)
+    manual_out = sum((movements_by_type.get(t, ZERO) for t in _OUTFLOW_TYPES), ZERO)
+    expected = (
+        session.opening_float + cash_in - cash_refunds + cash_reversals
+        + manual_in - manual_out
+    )
     difference = counted_cash - expected
     op_count = Payment.all_objects.filter(cash_session=session).count()
+    movements_count = CashMovement.all_objects.filter(cash_session=session).count()
 
     snapshot = {
         'opening_float': str(session.opening_float),
         'totals_by_method': {k: str(v) for k, v in by_method.items()},
         'cash_refunds': str(cash_refunds),
         'cash_reversals': str(cash_reversals),
+        'manual_in': str(manual_in),
+        'manual_out': str(manual_out),
+        'movements_by_type': {k: str(v) for k, v in movements_by_type.items()},
+        'movements_count': movements_count,
         'cash_expected': str(expected),
         'cash_counted': str(counted_cash),
         'difference': str(difference),
@@ -153,3 +178,60 @@ def close_cash_session(session, user, counted_cash, notes='', force=False):
         },
     )
     return session
+
+
+@transaction.atomic
+def register_cash_movement(user, movement_type, amount, reason):
+    """
+    Registra un movimiento manual del cajón (ADR p39) sobre la caja abierta
+    del actor. Writer único de CashMovement — append-only, corrección =
+    contra-movimiento.
+
+    Lockea la CashSession (cabeza del orden global): serializado contra el
+    cierre Z — si el cierre gana el lock, esta función ve status != 'open' y
+    rechaza (ningún movimiento se cuela después del conteo).
+    """
+    org = user.organization
+    if movement_type not in MOVEMENT_TYPES:
+        raise ValidationError("Tipo de movimiento inválido.")
+    try:
+        amount = Decimal(str(amount))
+    except Exception:
+        raise ValidationError("Monto inválido.")
+    if amount <= 0:
+        raise ValidationError("El monto debe ser mayor a 0.")
+    reason = (reason or '').strip()
+    if not reason:
+        raise ValidationError("El motivo es obligatorio.")
+
+    session = (
+        CashSession.objects.for_organization(org)
+        .select_for_update()
+        .filter(status='open', opened_by=user)
+        .first()
+    )
+    if session is None:
+        raise ValidationError(
+            "No hay una caja abierta. Abre un turno para registrar movimientos."
+        )
+
+    movement = CashMovement(
+        organization=org,
+        cash_session=session,
+        movement_type=movement_type,
+        amount=amount,
+        reason=reason,
+        occurred_at=timezone.now(),
+        actor=user,
+    )
+    movement.save()
+    _cash_events.info("CASH_MOVEMENT_REGISTERED", extra={
+        'event': 'CASH_MOVEMENT_REGISTERED',
+        'cash_movement_id': movement.pk,
+        'cash_session_id': session.pk,
+        'organization_id': org.pk,
+        'actor': getattr(user, 'pk', None),
+        'movement_type': movement_type,
+        'amount': str(amount),
+    })
+    return movement

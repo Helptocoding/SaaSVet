@@ -276,17 +276,17 @@ def _log_idempotent_dedupe(invoice, idempotency_key):
 
 def _resolve_cash_session_for_payment(user, organization):
     """
-    ADR p28: si `require_open_cash_session` está activo, devuelve la sesión
-    abierta del usuario LOCKEADA. CashSession es la CABEZA del orden global de
-    locks → se adquiere ANTES de lockear la Invoice (sin ABBA: close lockea solo
-    la sesión). Toggle apagado → None (caja opcional, comportamiento por default).
+    ADR p28 + p39: asociación ≠ obligatoriedad. Si el actor tiene caja abierta,
+    el pago se asocia SIEMPRE a esa sesión (con o sin toggle) — de lo contrario
+    el Z del turno reportaba $0 ventas y diferencias falsas cuando
+    `require_open_cash_session` estaba apagado. El toggle solo decide si se
+    BLOQUEA el cobro cuando NO hay caja abierta.
 
-    Si está activo y no hay sesión abierta (o se cerró mientras tanto) → rechaza.
-    Garantiza que ningún pago se cuele después del cierre Z.
+    CashSession es la CABEZA del orden global de locks → se adquiere ANTES de
+    lockear la Invoice (sin ABBA: close lockea solo la sesión). Un pago en vuelo
+    contra una sesión que se está cerrando bloquea en el lock y al reanudar ve
+    status != 'open' → ningún pago se cuela después del cierre Z.
     """
-    from apps.organizations.utils import get_org_setting
-    if not get_org_setting(organization, 'require_open_cash_session'):
-        return None
     from apps.cash.models import CashSession
     session = (
         CashSession.objects.for_organization(organization)
@@ -294,11 +294,14 @@ def _resolve_cash_session_for_payment(user, organization):
         .filter(status='open', opened_by=user)
         .first()
     )
-    if session is None:
+    if session is not None:
+        return session
+    from apps.organizations.utils import get_org_setting
+    if get_org_setting(organization, 'require_open_cash_session'):
         raise ValidationError(
             "No hay una caja abierta. Abre un turno de caja para registrar el cobro."
         )
-    return session
+    return None
 
 
 def _mark_invoice_paid(invoice, user, now):

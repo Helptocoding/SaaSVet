@@ -8,8 +8,8 @@ from apps.core.sanitize import sanitize_text
 from apps.core.views import TenantQueryMixin, resolve_public_id
 
 from . import services
-from .models import CashSession
-from .serializers import CashSessionSerializer
+from .models import CashMovement, CashSession
+from .serializers import CashMovementSerializer, CashSessionSerializer
 
 
 @api_view(['POST'])
@@ -73,3 +73,49 @@ class CashSessionListView(TenantQueryMixin, generics.ListAPIView):
         if st:
             qs = qs.filter(status=st)
         return qs
+
+
+class CashMovementListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
+    """
+    Movimientos manuales del cajón (ADR p39).
+
+    GET  ?session=<public_id> → movimientos de esa sesión;
+         sin parámetro → movimientos de la caja abierta del actor.
+    POST {movement_type, amount, reason} → registra sobre la caja abierta
+         del actor (view delgada: la regla vive en services).
+    """
+    serializer_class = CashMovementSerializer
+    permission_classes = [HybridPermission]
+    resource_name = "cashmovement"
+
+    def get_queryset(self):
+        org = self.request.user.organization
+        qs = (
+            CashMovement.objects.for_organization(org)
+            .select_related('actor')
+        )
+        session_lookup = self.request.query_params.get('session')
+        if session_lookup:
+            session = resolve_public_id(
+                CashSession.objects.for_organization(org), session_lookup
+            )
+            return qs.filter(cash_session=session)
+        return qs.filter(
+            cash_session__status='open',
+            cash_session__opened_by=self.request.user,
+        )
+
+    def create(self, request, *args, **kwargs):
+        reason = sanitize_text(request.data.get('reason') or '', max_length=255)
+        try:
+            movement = services.register_cash_movement(
+                request.user,
+                movement_type=request.data.get('movement_type'),
+                amount=request.data.get('amount'),
+                reason=reason,
+            )
+        except DjValidationError as e:
+            return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            CashMovementSerializer(movement).data, status=status.HTTP_201_CREATED
+        )

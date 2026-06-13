@@ -92,3 +92,52 @@ class CashSession(PublicIdMixin, OrganizationalModel):
                 name='cashsession_one_open_per_user',
             ),
         ]
+
+
+class CashMovement(PublicIdMixin, OrganizationalModel):
+    """
+    Movimiento manual de efectivo del cajón (ADR p39): entrada, retiro o gasto
+    dentro de un turno abierto. Sin esto, un retiro a banco a mitad de turno
+    producía un faltante falso en el cierre Z.
+
+    Append-only (invariante #3 del sistema): sin PATCH/DELETE; una corrección
+    se registra como contra-movimiento. `amount > 0` siempre — el signo lo da
+    `movement_type` (invariante #4). Solo efectivo por definición (es el cajón
+    físico); card/transfer no tienen movimientos manuales.
+
+    Writer único: cash/services.register_cash_movement (lock de CashSession,
+    cabeza del orden global → serializado contra el cierre Z; ningún movimiento
+    se cuela después del conteo).
+    """
+    TYPE_CHOICES = (
+        ('deposit', 'Entrada manual'),
+        ('withdrawal', 'Retiro de efectivo'),
+        ('expense', 'Gasto'),
+    )
+
+    cash_session = models.ForeignKey(
+        CashSession, on_delete=models.PROTECT, related_name='movements',
+    )
+    movement_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reason = models.CharField(max_length=255)
+    occurred_at = models.DateTimeField(editable=False)
+    actor = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='cash_movements',
+    )
+
+    def __str__(self):
+        return f"CashMovement #{self.pk} [{self.movement_type}] ${self.amount}"
+
+    class Meta:
+        ordering = ['-occurred_at', '-id']
+        indexes = [
+            models.Index(fields=['organization', 'cash_session']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0),
+                name='cashmovement_amount_positive',
+            ),
+        ]

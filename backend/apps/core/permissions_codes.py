@@ -103,6 +103,9 @@ PERMISSION_CODES = [
     "cashsession.retrieve",
     "cashsession.open",
     "cashsession.close",
+    # Caja — movimientos manuales: entrada / retiro / gasto (ADR p39)
+    "cashmovement.list",
+    "cashmovement.create",
 ]
 
 # ---------------------------------------------------------------------------
@@ -142,6 +145,8 @@ PERMISSIONS = {
         # Caja (ADR p28)
         "cashsession.list", "cashsession.retrieve",
         "cashsession.open", "cashsession.close",
+        # Movimientos manuales de caja (ADR p39)
+        "cashmovement.list", "cashmovement.create",
     ],
 
     # Asistente / Recepcionista
@@ -165,5 +170,7 @@ PERMISSIONS = {
         # Caja (ADR p28)
         "cashsession.list", "cashsession.retrieve",
         "cashsession.open", "cashsession.close",
+        # Movimientos manuales de caja (ADR p39)
+        "cashmovement.list", "cashmovement.create",
     ],
 }
