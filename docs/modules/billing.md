@@ -585,8 +585,14 @@ El campo `invoice.id` (entero) puede mostrarse en la UI como numero de referenci
 
 - **Tabla**: clases globales `.table-wrap` + `.table` + `.table-footer` con conteo.
   `.tableCompact` (anti-patrón §6) fue eliminado — no reintroducir tablas por módulo.
-- **Orden**: client-side por Fecha/Total con `components/SortHeader.jsx` (compartido;
-  el listado no está paginado y el backend ordena `-created_at` por defecto).
+- **Orden + paginación (ADR p42)**: el listado **está paginado** (PageNumber 25;
+  `GET /api/billing/invoices/` → `{count, next, previous, results}`, frontend
+  normaliza con `utils/toList.js`). El sort por Fecha/Total es **server-side**:
+  `components/SortHeader.jsx` actualiza `(sortCol, sortDir)` → `?ordering=created_at|total`
+  y refetcha (`page` se resetea a 1 al ordenar o filtrar). `StableOrderingFilter`
+  agrega tiebreaker `-id` (drafts $0 empatan en `total`). Paginador
+  `components/Pagination.jsx` bajo la tabla. Default del backend `-created_at, -id`,
+  servido por el índice `(organization, -created_at, -id)`.
 - **Filtros**: selects `.select-input` canon; "Limpiar" solo visible con filtros
   activos. **Regla**: un evento que actualiza varias claves de filtro (DateRangePicker
   → `created_from` + `created_to`) usa UN solo setState con patch (`updateFilters({})`)

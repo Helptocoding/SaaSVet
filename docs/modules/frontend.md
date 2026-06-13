@@ -280,6 +280,44 @@ export const updateMedicalRecord = async (token, id, data) => {
   - Para 401 en cualquier otro endpoint: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada legítima).
 - Interceptor response 500+: alert global "Error del servidor".
 
+### Paginación de listas (ADR p42)
+
+La paginación backend es **opt-in por endpoint** (NO global). Algunos listados
+devuelven array crudo `[...]`, otros el envelope DRF `{count, next, previous, results}`.
+
+**Regla**: todo consumidor de un endpoint de lista normaliza con
+`utils/toList.js`:
+
+```javascript
+import { toList } from "../utils/toList";
+const data = await getInvoices(params);
+setInvoices(toList(data));   // array y {results} ambos → array; null/undefined → []
+```
+
+`toList()` es idempotente sobre arrays → seguro aplicarlo aunque el endpoint aún
+no pagine (defensivo ante el rollout incremental).
+
+Endpoints **paginados** hoy (consumir `count`/`next` de la respuesta cruda si se
+necesita metadata):
+
+| Endpoint | api/ | Forma |
+|---|---|---|
+| `GET /billing/invoices/` | `getInvoices` | PageNumber 25 + `?ordering=created_at\|total` server-side |
+| `GET /inventory/movements/` | `getMovements` | Cursor (`next`/`previous`, **sin** `count`) |
+| `GET /owners/` (sin `search`) | `getOwners` | PageNumber 25 |
+
+**`?search` NO pagina** (Owners): `getOwners({search})` y los demás endpoints de
+búsqueda que alimentan `SearchSelect` siguen devolviendo array plano `[:20]`. Los
+dropdowns con `.then(ps => ps.map(...))` NO se rompen.
+
+Sin paginar (lista completa, filtro/KPI client-side — DD-013): Products,
+Prescriptions, Appointments, Pets. No asumir que pasarán a paginado sin antes
+mover sus filtros a server-side.
+
+**Paginador UI**: `components/Pagination.jsx` (Anterior/Siguiente). El sort de una
+tabla paginada va **server-side** vía `?ordering` (no client-side `useMemo`), o
+solo ordenaría la página actual.
+
 ### Descarga de PDFs (consulta / receta / cobro)
 
 Patrón único en `api/{medicalRecords,prescriptions,billing}.js` + `utils/downloadBlob.js`:
@@ -373,9 +411,19 @@ Formulario de receta reutilizable. Acepta `lockedPet` y `lockedMedicalRecord` pa
 (`.table-wrap` + `.table`); estilos `th-sortable`/`th-inner`/`sort-arrow` en
 `global.css`. Accesible: `tabIndex`, Enter/Espacio y `aria-sort`. Props:
 `col`, `label`, `sortCol`, `sortDir`, `onSort`, `align`. Usado en Cobros
-(Fecha/Total, sort client-side en `useMemo`). **No crear sorting por módulo**
+(Fecha/Total). **Desde ADR p42 el sort de Cobros es server-side**: `onSort`
+actualiza `(sortCol, sortDir)` → `?ordering` y refetcha (la tabla pagina; ordenar
+client-side solo ordenaría la página actual). **No crear sorting por módulo**
 (design-system.md §5). Deuda contenida: Inventario conserva su SortHeader local
 (module CSS) — migrar junto con la unificación de su tabla, no piecemeal.
+
+### Pagination (paginador Anterior/Siguiente) — ADR p42
+
+`components/Pagination.jsx` — paginador reusable para tablas paginadas
+server-side. Props: `page` (1-based), `count` (total del backend), `pageSize`
+(default 25), `onPage(nextPage)`, `fetching`. No se renderiza si
+`count <= pageSize`. **No crear paginadores por módulo.** Cobros lo monta bajo la
+tabla; al cambiar filtro o sort se resetea `page` a 1. Ver § Paginación de listas.
 
 ### CajaBar (estado del turno de caja) — ADR p28
 

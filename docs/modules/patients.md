@@ -86,6 +86,16 @@ El modelo mantiene `null=True` para no forzar migracion de datos historicos.
 El frontend usa `?is_generic=true` para obtener el propietario "Publico General" al cargar la vista de cobros.
 El frontend usa `?is_generic=false` en el buscador de propietarios para excluir el generico de los resultados.
 
+### Paginación (ADR p42)
+
+`OwnerViewSet` pagina el **listado completo** (PageNumber 25 → envelope
+`{count, next, previous, results}`). Pero el path **`?search` NO se pagina**:
+`paginate_queryset` devuelve `None` cuando hay `search` → respuesta array plano
+`[:20]`, preservando el contrato de los dropdowns `SearchSelect` (que hacen
+`.map()` directo). Orden de paginación: `name, id`. **`Pet` NO se pagina**
+(la página Pacientes filtra/agrega KPIs client-side sobre la lista completa —
+diferido en DD-013).
+
 ## Permisos RBAC
 
 | Accion         | Codigo             |

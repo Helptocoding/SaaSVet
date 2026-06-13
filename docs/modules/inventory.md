@@ -73,6 +73,12 @@ Ledger append-only de cada cambio de stock.
 - `quantity_unit` — `'base'` o `'presentation'`
 - FK opcionales a `MedicalRecord`, `Invoice`, `created_by`
 
+El listado `GET /api/inventory/movements/` está **paginado por cursor** (ADR p42):
+ledger append-only de alto volumen (50k+), donde el offset profundo degrada. Orden
+estable `(-created_at, -id)`, servido por el índice `(organization, -created_at, -id)`.
+Respuesta `{next, previous, results}` (cursor **no** expone `count`). El frontend
+normaliza con `utils/toList.js`.
+
 ### MedicalRecordProduct (ADR p32)
 
 Productos consumidos en consulta. Ver también `docs/modules/medical_records.md`.
@@ -211,7 +217,7 @@ No reemplaza el ajuste manual (`adjust_stock` / corrección, inventario físico)
 | `PATCH`  | `/api/inventory/presentations/<id>/`                | Editar presentación                       |
 | `DELETE` | `/api/inventory/presentations/<id>/`                | Eliminar (con checks)                     |
 | `POST`   | `/api/inventory/presentations/<id>/adjust/`         | Ajustar stock de presentación específica  |
-| `GET`    | `/api/inventory/movements/`                         | Historial de movimientos                  |
+| `GET`    | `/api/inventory/movements/`                         | Historial de movimientos (paginado cursor, ADR p42) |
 | `GET`    | `/api/inventory/units/`                             | Catálogo de unidades válidas              |
 
 ## `ProductSerializer` — notas
