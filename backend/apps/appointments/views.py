@@ -1,5 +1,5 @@
 import re
-from datetime import timedelta
+from datetime import time as dt_time, timedelta
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -391,7 +391,15 @@ def walk_in(request):
     today = now_local.date()
     start_time = now_local.time().replace(second=0, microsecond=0)
     end_local = now_local + timedelta(minutes=30)
-    end_time = end_local.time().replace(second=0, microsecond=0)
+    # Walk-in cerca de medianoche: si los 30 min nominales cruzan al día
+    # siguiente, end_time (00:0X) quedaría MENOR que start_time y violaría el
+    # CHECK appointment_end_after_start (500), además de un end_datetime ~24h
+    # antes del start. El schema es date + start/end del mismo día → se recorta
+    # al fin del día; la duración es nominal, la consulta real puede continuar.
+    if end_local.date() != today:
+        end_time = dt_time(23, 59, 59)
+    else:
+        end_time = end_local.time().replace(second=0, microsecond=0)
 
     start_utc = local_date_time_to_utc(org, today, start_time)
     end_utc = local_date_time_to_utc(org, today, end_time)

@@ -290,3 +290,51 @@ class WalkInRBACTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Appointment.objects.get(pk=response.data["id"]).walk_in)
+
+
+class WalkInMidnightTests(APITestCase):
+    """
+    Regresión: walk-in cuyos 30 min nominales cruzan medianoche.
+
+    Antes, end_time daba la vuelta al día siguiente (00:0X < start_time) y
+    violaba el CHECK appointment_end_after_start → 500 dependiente de la hora
+    (toda la suite de walk-in fallaba si corría después de las 23:30 hora
+    local de la org). El fix recorta end_time al fin del día (23:59:59).
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.org = Organization.objects.create(name="Clínica Midnight", timezone="UTC")
+        cls.roles = _seed_org_roles(cls.org)
+        cls.admin = _make_user("admin_midnight", cls.org, "ADMIN")
+        _assign_role(cls.admin, cls.roles["ADMIN"])
+        cls.owner = Owner.objects.create(
+            name="Owner Midnight", phone="5550001111", organization=cls.org,
+        )
+        cls.pet = Pet.objects.create(
+            name="Nochero", species="dog", owner=cls.owner, organization=cls.org,
+        )
+
+    def test_walkin_near_midnight_clamps_end_time(self):
+        from datetime import datetime, time as dt_time
+        from unittest.mock import patch
+        from zoneinfo import ZoneInfo
+
+        self.client.force_authenticate(user=self.admin)
+        near_midnight = datetime(2026, 6, 12, 23, 45, tzinfo=ZoneInfo("UTC"))
+        with patch("apps.appointments.views.org_now_local", return_value=near_midnight):
+            response = self.client.post("/api/appointments/walk-in/", {
+                "pet": self.pet.id,
+                "veterinarian": self.admin.id,
+                "reason": "Emergencia nocturna",
+            })
+
+        self.assertEqual(
+            response.status_code, status.HTTP_201_CREATED,
+            msg=f"unexpected response {response.status_code}: {response.data}",
+        )
+        appt = Appointment.objects.get(pk=response.data["id"])
+        self.assertEqual(appt.date.isoformat(), "2026-06-12")
+        self.assertEqual(appt.start_time, dt_time(23, 45))
+        self.assertEqual(appt.end_time, dt_time(23, 59, 59))
+        self.assertGreater(appt.end_datetime, appt.start_datetime)
