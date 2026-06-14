@@ -1,0 +1,56 @@
+/**
+ * inventory — lógica derivada pura de inventario (extraída de pages/inventory.jsx, P1-4 B3).
+ *
+ * Estado del stock, cantidad disponible, valor en $ y stock inicial del wizard.
+ * Funciones PURAS (sin React, sin side-effects) para poder testearlas y evitar que un
+ * cambio visual en la página rompa silenciosamente un cálculo financiero/operativo.
+ *
+ * IMPORTANTE — comportamiento congelado (no cambiar sin ADR):
+ *  - `stock_quantity` tiene prioridad sobre `presentation.stock`.
+ *  - valor = sale_price / conversion_factor × qty (el /cf normaliza a unidad base).
+ *  - "bajo stock" de `stockStatus` = regla frontend (min>0 && stock<min). NO es la misma
+ *    que `presentation.is_low_stock` (flag del backend) usada en otras métricas: son dos
+ *    definiciones distintas que conviven por diseño.
+ */
+
+// Cantidad de stock del producto en unidades base. stock_quantity > presentation.stock > 0.
+export const productStockQty = (product) => {
+    const pres = product.presentation || {};
+    return parseFloat(product.stock_quantity ?? pres.stock ?? 0) || 0;
+};
+
+// Valor monetario del stock: precio por unidad base (sale_price / cf) × cantidad.
+export const productStockValue = (product) => {
+    const pres = product.presentation || {};
+    const stock = productStockQty(product);
+    const salePrice = parseFloat(pres.sale_price ?? 0) || 0;
+    const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
+    return (salePrice / cf) * stock;
+};
+
+// Estado del stock para la UI: crítico (agotado), bajo (< mínimo) u ok (normal).
+// `pct` alimenta la mini-barra; `label` es el texto mostrado.
+export const stockStatus = (product) => {
+    const pres = product.presentation || {};
+    const stock = productStockQty(product);
+    const min = parseFloat(product.min_stock ?? pres.min_stock ?? 0) || 0;
+    if (stock <= 0) return { pct: 0, state: "crit", label: "Agotado" };
+    if (min > 0 && stock < min) return { pct: Math.min((stock / min) * 100, 100), state: "low", label: "Stock bajo" };
+    const top = min > 0 ? min * 3 : 100;
+    return { pct: Math.max(Math.min((stock / top) * 100, 100), 15), state: "ok", label: "Normal" };
+};
+
+// Stock inicial capturado en el wizard de alta:
+//  - divide (multi): countQty × dividesCount (ej. 5 cajas × 100 = 500 piezas)
+//  - simple: countQty
+export const computeInitialStock = (divides, countQty, dividesCount) => {
+    const qty = Number(countQty) || 0;
+    return divides ? qty * (Number(dividesCount) || 0) : qty;
+};
+
+// Redondeo entero para display (no afecta el valor persistido).
+export const fmt = (n) => Math.round(parseFloat(n ?? 0) || 0);
+
+// Formato de moneda sin decimales (MXN/locale del navegador por defecto).
+export const fmtCur = (n, locale = navigator.language) =>
+    (parseFloat(n ?? 0) || 0).toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });

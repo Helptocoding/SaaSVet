@@ -3,6 +3,7 @@ import { useConfirm } from "../components/useConfirm";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
 import { toList } from "../utils/toList";
+import { stockStatus, productStockQty, productStockValue, computeInitialStock, fmt, fmtCur } from "../utils/inventory";
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, getUnitChoices, createPresentation, updatePresentation,
@@ -106,19 +107,8 @@ const newSalesPres = (unitLabel = "Unidad") => ({
 });
 
 // ── Helpers ────────────────────────────────────────────────
-const stockStatus = (product) => {
-    const pres = product.presentation || {};
-    const stock = parseFloat(product.stock_quantity ?? pres.stock ?? 0) || 0;
-    const min = parseFloat(product.min_stock ?? pres.min_stock ?? 0) || 0;
-    if (stock <= 0) return { pct: 0, state: "crit", label: "Agotado" };
-    if (min > 0 && stock < min) return { pct: Math.min((stock / min) * 100, 100), state: "low", label: "Stock bajo" };
-    const top = min > 0 ? min * 3 : 100;
-    return { pct: Math.max(Math.min((stock / top) * 100, 100), 15), state: "ok", label: "Normal" };
-};
-
-const fmt = (n) => Math.round(parseFloat(n ?? 0) || 0);
-const fmtCur = (n, locale = navigator.language) =>
-    (parseFloat(n ?? 0) || 0).toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+// stockStatus / productStockQty / productStockValue / computeInitialStock / fmt / fmtCur
+// viven en utils/inventory.js (lógica pura, testeada — P1-4 B3).
 
 const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
@@ -233,12 +223,7 @@ const Inventory = () => {
             medications: active.filter(p => p.category === "medication").length,
             lowStock: active.filter(p => p.presentation?.is_low_stock).length,
             outOfStock: active.filter(p => parseFloat(p.stock_quantity ?? (p.presentation || {}).stock ?? 0) <= 0).length,
-            totalVal: active.reduce((acc, p) => {
-                const pres = p.presentation || {};
-                const sqty = parseFloat(p.stock_quantity ?? pres.stock ?? 0) || 0;
-                const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
-                return acc + (parseFloat(pres.sale_price ?? 0) || 0) / cf * sqty;
-            }, 0),
+            totalVal: active.reduce((acc, p) => acc + productStockValue(p), 0),
         };
     }, [products]);
 
@@ -417,12 +402,7 @@ const Inventory = () => {
     }, [products, filterCategory, searchText, stockFilter, sortCol, sortDir]);
 
     const filteredTotalVal = useMemo(() =>
-        filteredProducts.reduce((acc, p) => {
-            const pres = p.presentation || {};
-            const sqty = parseFloat(p.stock_quantity ?? pres.stock ?? 0) || 0;
-            const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
-            return acc + (parseFloat(pres.sale_price ?? 0) || 0) / cf * sqty;
-        }, 0),
+        filteredProducts.reduce((acc, p) => acc + productStockValue(p), 0),
         [filteredProducts]
     );
 
@@ -634,9 +614,7 @@ const Inventory = () => {
                     toast.success("Producto actualizado");
                 }
             } else {
-                const computedStock = divides
-                    ? (Number(countQty) || 0) * (Number(dividesCount) || 0)
-                    : (Number(countQty) || 0);
+                const computedStock = computeInitialStock(divides, countQty, dividesCount);
                 const stockInSp0Units = computedStock; // sp0cf is always 1
 
                 const created = await createProduct({
@@ -899,13 +877,12 @@ const Inventory = () => {
                         <tbody>
                             {filteredProducts.map(product => {
                                 const pres = product.presentation || {};
-                                const stockVal = parseFloat(product.stock_quantity ?? pres.stock ?? 0) || 0;
+                                const stockVal = productStockQty(product);
                                 const salePrice = parseFloat(pres.sale_price ?? 0) || 0;
-                                const cf = parseFloat(pres.conversion_factor ?? 1) || 1;
                                 const unitDisplay = product.base_unit
                                     ? (product.base_unit_display || product.base_unit)
                                     : (pres.base_unit_display || pres.base_unit || "ud.");
-                                const val = (salePrice / cf) * stockVal;
+                                const val = productStockValue(product);
                                 const st = stockStatus(product);
                                 const multiPres = (product.presentations?.length || 0) > 1;
                                 return (
@@ -1010,7 +987,7 @@ const Inventory = () => {
                 <div className={s.prodGrid}>
                     {filteredProducts.map(product => {
                         const pres = product.presentation || {};
-                        const stockVal = parseFloat(product.stock_quantity ?? pres.stock ?? 0) || 0;
+                        const stockVal = productStockQty(product);
                         const unitDisplay = product.base_unit || pres.base_unit_display || pres.base_unit || "ud.";
                         const st = stockStatus(product);
                         const multiPres = (product.presentations?.length || 0) > 1;
@@ -1066,9 +1043,9 @@ const Inventory = () => {
                     ? (STOCK_COUNTING_UNITS.find(u => u.backendUnit === (wizardEditing.base_unit || "piece"))?.label || wizardEditing.base_unit || "unidad")
                     : baseUnitLabel;
                 const baseUnitLabelForSales = wizardEditing ? editBaseUnitLabel : baseUnitLabel;
-                const computedStock = !wizardEditing && divides === true
-                    ? (Number(countQty) || 0) * (Number(dividesCount) || 0)
-                    : (!wizardEditing && divides === false ? Number(countQty) || 0 : 0);
+                const computedStock = (!wizardEditing && divides !== null)
+                    ? computeInitialStock(divides, countQty, dividesCount)
+                    : 0;
 
                 return (
                     <div className="modal-overlay">
