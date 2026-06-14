@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useConfirm } from "../components/ConfirmDialog";
+import { useConfirm } from "../components/useConfirm";
 import { apiError } from "../utils/apiError";
 import {
     getInvoices, getInvoice, confirmInvoice, payInvoice, directPayInvoice,

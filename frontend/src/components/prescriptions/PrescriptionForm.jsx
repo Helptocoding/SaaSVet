@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiError } from "../../utils/apiError";
-import handleFormError from "../../utils/handleFormError";
 import { getPets } from "../../api/pets";
 import { getPresentations } from "../../api/inventory";
 import { Icon } from "../icons";
@@ -28,7 +27,6 @@ const PrescriptionForm = ({
     title,
     initialValue,
     pets,
-    products,
     medicalRecordsForPet,
     lockedPet = false,
     lockedMedicalRecord = false,

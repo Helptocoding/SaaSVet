@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useConfirm } from "../components/ConfirmDialog";
+import { useConfirm } from "../components/useConfirm";
 import { apiError } from "../utils/apiError";
 import handleFormError from "../utils/handleFormError";
 import { toList } from "../utils/toList";

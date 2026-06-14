@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "../../auth/authContext";
 import { createMedicalRecord } from "../../api/medicalRecords";
 import { updateAppointmentStatus } from "../../api/appointments";
-import { useConfirm } from "../ConfirmDialog";
+import { useConfirm } from "../useConfirm";
 import { Icon } from "../icons";
 import StatusBadge from "../StatusBadge";
 import { apiError } from "../../utils/apiError";

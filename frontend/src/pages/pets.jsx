@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPets, createPet, updatePet, deletePet } from "../api/pets";
-import { useConfirm } from "../components/ConfirmDialog";
+import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
 import { getAppointments } from "../api/appointments";

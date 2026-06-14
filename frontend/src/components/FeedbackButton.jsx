@@ -101,7 +101,7 @@ const FeedbackButton = () => {
             } else {
                 throw new Error();
             }
-        } catch (err) {
+        } catch {
             toast.error("No se pudo enviar el reporte. Intenta más tarde.");
         } finally {
             setSending(false);

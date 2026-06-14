@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { apiError } from "../../utils/apiError";
-import { useConfirm } from "../../components/ConfirmDialog";
+import { useConfirm } from "../../components/useConfirm";
 import api from "../../api/client";
 import {
   getMedicalRecords, createMedicalRecord, getMedicalRecord,

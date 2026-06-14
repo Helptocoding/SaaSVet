@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getStaff, createStaff, deactivateStaff, resetStaffPassword } from "../api/staff";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
-import { useConfirm } from "../components/ConfirmDialog";
+import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import handleFormError from "../utils/handleFormError";
 

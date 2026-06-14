@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
-import { useConfirm } from "../components/ConfirmDialog";
+import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { Icon } from "../components/icons";
 import PrescriptionForm from "../components/prescriptions/PrescriptionForm";

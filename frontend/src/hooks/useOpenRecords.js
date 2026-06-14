@@ -16,7 +16,7 @@ export function useOpenRecords(limit = 5) {
       });
       const list = Array.isArray(data) ? data : data?.results || [];
       setRecords(list.slice(0, limit));
-    } catch (err) {
+    } catch {
       setError("No se pudieron cargar las consultas abiertas.");
     } finally {
       setLoading(false);

@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useRef, useCallback } from "react";
-
-const ConfirmContext = createContext(null);
+import { useState, useRef, useCallback } from "react";
+import { ConfirmContext } from "./useConfirm";
 
 // ── Visual dialog ──────────────────────────────────────────────────────────────
 function ConfirmDialog({ title, message, confirmText, dangerMode, onConfirm, onCancel }) {
@@ -71,11 +70,4 @@ export function ConfirmProvider({ children }) {
             )}
         </ConfirmContext.Provider>
     );
-}
-
-// ── Hook ───────────────────────────────────────────────────────────────────────
-// Uso: const confirm = useConfirm()
-//      const ok = await confirm({ message: "...", dangerMode: true })
-export function useConfirm() {
-    return useContext(ConfirmContext);
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useConfirm } from "../components/ConfirmDialog";
+import { useConfirm } from "../components/useConfirm";
 import { getServices, createService, updateService, deleteService } from "../api/billing";
 import { getOrgSettings, updateOrgSettings } from "../api/organizations";
 import { apiError } from "../utils/apiError";

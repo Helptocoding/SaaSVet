@@ -45,9 +45,6 @@ const slideVariants = {
 };
 const transition = { duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] };
 
-// Stagger helper
-const stagger = (i, base = 0.08) => ({ delay: i * base });
-
 // ── Scene 1 — Intro ────────────────────────────────────────
 function SceneIntro({ config }) {
     const { product } = config;

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../../auth/authContext";
-import { useConfirm } from "../../components/ConfirmDialog";
+import { useConfirm } from "../../components/useConfirm";
 import { apiError } from "../../utils/apiError";
 import { newIdempotencyKey } from "../../utils/idempotency";
 import { buildPaymentLines } from "../../utils/payments";
