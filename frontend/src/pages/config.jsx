@@ -132,7 +132,8 @@ const Config = () => {
                 error: 'No se puede eliminar: puede estar en uso en facturas'
             });
             loadServices();
-        } catch (err) {
+        } catch {
+            // el error ya lo muestra toast.promise
         }
     };
 

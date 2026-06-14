@@ -94,7 +94,7 @@ const Staff = () => {
             setForm(EMPTY_FORM);
             setShowModal(false);
             fetchStaff();
-        } catch (err) {
+        } catch {
             // Modal stays open — toast already shows the error
         } finally {
             setSaving(false);
@@ -116,7 +116,8 @@ const Staff = () => {
                 error: 'Error al desactivar usuario'
             });
             fetchStaff();
-        } catch (err) {
+        } catch {
+            // el error ya lo muestra toast.promise
         }
     };
 

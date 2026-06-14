@@ -147,7 +147,7 @@ const MedicalRecords = () => {
         if (key) counts[key] = (counts[key] || 0) + 1;
       });
       setPetCounts(counts);
-    } catch {}
+    } catch { /* carga best-effort; no bloquea la UI */ }
 
     setLoading(false);
   };
@@ -161,7 +161,7 @@ const MedicalRecords = () => {
       setRecords(list);
       setTotalPages(data.total_pages || 1);
       setTotalCount(data.count ?? list.length);
-    } catch {}
+    } catch { /* carga best-effort; no bloquea la UI */ }
   };
 
   const refreshAfterMutation = () => loadRecords();
@@ -209,7 +209,7 @@ const MedicalRecords = () => {
         success: 'Consulta finalizada',
         error: (err) => apiError(err, "No se pudo finalizar la consulta")
       });
-    } catch {}
+    } catch { /* el error ya lo muestra toast.promise */ }
   };
 
   const handleDelete = async (publicId) => {
@@ -223,7 +223,7 @@ const MedicalRecords = () => {
     try {
       const p = deleteMedicalRecord(token, publicId).then(() => loadRecords());
       await toast.promise(p, { loading: 'Eliminando...', success: 'Consulta eliminada', error: 'Error al eliminar' });
-    } catch {}
+    } catch { /* el error ya lo muestra toast.promise */ }
   };
 
   const handleDownloadPrescription = async (prescriptionPublicId) => {
@@ -274,7 +274,7 @@ const MedicalRecords = () => {
         closePrescriptionModal();
       });
       await toast.promise(p, { loading: 'Creando receta...', success: 'Receta creada', error: 'Error al crear receta' });
-    } catch {}
+    } catch { /* el error ya lo muestra toast.promise */ }
   };
 
   const handleStepperComplete = async () => {

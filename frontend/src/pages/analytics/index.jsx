@@ -222,7 +222,7 @@ const Toolbar = ({ scope, onScope, rangeId, onRange, isAdmin }) => (
     </div>
 );
 
-const HeroBlock = ({ isFinancial, heroKey, todayValue, todayMissing, sideMetrics, todayMetrics }) => {
+const HeroBlock = ({ isFinancial, todayValue, todayMissing, sideMetrics, todayMetrics }) => {
     const heroLabel = isFinancial ? "Ingreso del día (cobrado)" : "Citas completadas";
     const heroCaption = isFinancial
         ? "Cash-basis en vivo. Suma de facturas con status='paid' cuya marca paid_at cae en hoy en hora local de la organización."
@@ -414,7 +414,7 @@ const SeriesBlock = ({ isFinancial, heroKey, data, range }) => {
 
 /* ─── Lifecycle ledger (rich list of every datapoint) ─────────── */
 
-const Ledger = ({ isFinancial, sideMetrics, heroKey, series }) => {
+const Ledger = ({ isFinancial, heroKey, series }) => {
     const allRows = useMemo(() => {
         // Most-recent-first, paginate to last 14 for editorial focus.
         return [...series].reverse().slice(0, 14);

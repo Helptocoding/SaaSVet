@@ -494,7 +494,8 @@ function EditModal({ appt, staff, user, onClose, onSave }) {
                 success: 'Cita actualizada',
                 error: (err) => apiError(err, "Error al guardar")
             });
-        } catch (err) {
+        } catch {
+            // el error ya lo muestra toast.promise
         } finally { setSaving(false); }
     }
 
@@ -636,7 +637,8 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                 setPetItem(null); setReason(""); setNotes("");
                 setShowQuickPatient(false); setQuickPatient(EMPTY_QUICK);
                 if (user?.role !== "VET") setVetId("");
-            } catch (err) {
+            } catch {
+                // el error ya lo muestra toast.promise
             } finally {
                 setSaving(false);
             }
@@ -655,7 +657,8 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                 });
                 setPetItem(null); setReason(""); setNotes("");
                 if (user?.role !== "VET") setVetId("");
-            } catch (err) {
+            } catch {
+                // el error ya lo muestra toast.promise
             } finally {
                 setSaving(false);
             }
@@ -907,7 +910,6 @@ const Appointments = () => {
     const [viewAppt,     setViewAppt]     = useState(null);
     const [editingAppt,  setEditingAppt]  = useState(null);
     const [walkInOpen,   setWalkInOpen]   = useState(false);
-    const [newFromAppt,  setNewFromAppt]  = useState(null);
     const [filterVetId,  setFilterVetId]  = useState("");
     const [orgSettings,  setOrgSettings]  = useState(null);
 

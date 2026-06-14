@@ -704,7 +704,7 @@ const Inventory = () => {
                 error: (err) => err.response?.data?.detail || "No se puede eliminar: tiene movimientos asociados"
             });
             await loadAll();
-        } catch { }
+        } catch { /* el error ya lo muestra toast.promise */ }
     };
 
     const handleAdjust = async (e) => {
@@ -721,7 +721,7 @@ const Inventory = () => {
             });
             await loadAll();
             closeAdjustModal();
-        } catch { } finally {
+        } catch { /* el error ya lo muestra toast.promise */ } finally {
             setSaving(false);
         }
     };

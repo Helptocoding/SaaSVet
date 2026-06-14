@@ -84,6 +84,31 @@ def create_invoice(*, organization, owner, pet=None, invoice_type='consultation'
 
 ---
 
+## C3 — Fast refresh: separar `useAuth` de `authContext.jsx` (DX, no bloqueante)
+
+**Origen:** limpieza de warnings CI P1-3 (commit `chore(frontend): clean CI lint warnings` y `remove remaining safe lint warnings`). Diferido deliberadamente.
+
+**Warning:** `frontend/src/auth/authContext.jsx:184` → `react-refresh/only-export-components` ("Fast refresh only works when a file only exports components"). El archivo exporta `AuthProvider` (componente) **y** `useAuth` (hook) → rompe fast refresh para ese módulo en dev.
+
+**Mismo patrón ya resuelto en `ConfirmDialog`** (P1-3): se movió `ConfirmContext`+`useConfirm` a `components/useConfirm.js` y el archivo quedó exportando solo componentes. La separación de `authContext` es idéntica en mecánica:
+- Nuevo `auth/useAuth.js` con `AuthContext` + `useAuth`.
+- `authContext.jsx` importa `AuthContext`, exporta solo `AuthProvider`.
+- Repuntar imports de `useAuth` (**31 archivos**), API idéntica.
+
+**Por qué se difirió (no es bug):**
+- Es solo un warning de DX en dev (HMR), **no bloquea CI** (lint es `continue-on-error`) ni afecta el build de producción.
+- Toca el flujo auth/token (alto fan-out: 31 imports) → el churn excede el alcance de una limpieza post-CI ("no refactor grande").
+
+**Criterio de cierre (P1-4 frontend reliability):**
+- `auth/useAuth.js` creado (context + hook), `authContext.jsx` exporta solo `AuthProvider`.
+- 31 imports de `useAuth` repuntados; `App.jsx` sigue importando `AuthProvider` de `authContext`.
+- `pnpm build` verde, sin cambios de comportamiento del refresh de token.
+- Warning `react-refresh/only-export-components` en 0 (src).
+
+**Estimación:** 30–45 min (mecánico, 1 archivo nuevo + 31 import swaps + verificación).
+
+---
+
 ## Tracking
 
 Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre.

@@ -764,7 +764,7 @@ const Pets = () => {
             });
             if (selectedPet?.public_id === id) closePanel();
             loadAll();
-        } catch (err) {
+        } catch {
             // Manejado por toast
         }
     };
