@@ -106,6 +106,13 @@ PERMISSION_CODES = [
     # Caja — movimientos manuales: entrada / retiro / gasto (ADR p39)
     "cashmovement.list",
     "cashmovement.create",
+
+    # Importador CSV/Excel (migración de clínicas). v1: solo ADMIN (vía *.*).
+    # No se agregan a VET/ASSISTANT — migración de datos = operación sensible.
+    "import.list",
+    "import.retrieve",
+    "import.create",
+    "import.commit",
 ]
 
 # ---------------------------------------------------------------------------

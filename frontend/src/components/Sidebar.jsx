@@ -19,6 +19,12 @@ const ADMIN_ITEMS = [
     { path: "/config", label: "Configuración", icon: Icon.Settings },
 ];
 
+// Items de admin gated por capability (no por nombre de rol): el importador
+// requiere `import.create`. Ver authContext.can().
+const CAPABILITY_ITEMS = [
+    { path: "/imports", label: "Importar datos", icon: Icon.Upload, perm: "import.create" },
+];
+
 const PLATFORM_ITEMS = [
     { path: "/platform/organizations/new", label: "Crear clínica", icon: Icon.Building },
 ];
@@ -32,7 +38,7 @@ const ROLE_LABELS = {
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
-    const { user, initializing } = useAuth();
+    const { user, initializing, can } = useAuth();
 
     if (initializing) return null;
 
@@ -123,6 +129,9 @@ const Sidebar = ({ onLogout }) => {
                             Admin
                         </div>
                         {ADMIN_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
+                        {CAPABILITY_ITEMS
+                            .filter(item => can?.(item.perm))
+                            .map(item => <NavLink key={item.path} item={item} />)}
                     </>
                 )}
 

@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'apps.analytics.apps.AnalyticsConfig',
     'apps.dashboard.apps.DashboardConfig',
     'apps.platform.apps.PlatformConfig',
+    'apps.imports.apps.ImportsConfig',
     # ADR p20: requerida para JWT refresh-token rotation + blacklist al
     # cambiar password. Infraestructura crítica del auth lifecycle.
     'rest_framework_simplejwt.token_blacklist',
@@ -172,6 +173,10 @@ REST_FRAMEWORK = {
         # ADR p21: admin reset de password de staff. Limitar abuse
         # interno — un ADMIN comprometido no puede resetear masivamente.
         'staff_password_reset': '5/hour',
+        # Importador (migración de clínicas): operaciones caras (parseo + escritura
+        # masiva). Scoped por actor ADMIN. Upload más holgado que commit.
+        'import_upload': '30/hour',
+        'import_commit': '20/hour',
     },
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
 }

@@ -31,6 +31,7 @@ from apps.users.views import (
 )
 from rest_framework.routers import DefaultRouter
 from apps.patients.views import PetViewSet, OwnerViewSet
+from apps.imports.views import ImportJobViewSet
 from apps.organizations.views import (
     OrganizationMeView,
     OrganizationLegacyView,
@@ -129,6 +130,7 @@ class PublicTokenRefreshView(TokenRefreshView):
 router = DefaultRouter()
 router.register(r'pets', PetViewSet, basename='patient')
 router.register(r'owners', OwnerViewSet, basename='owner')
+router.register(r'imports', ImportJobViewSet, basename='import')
 # Nota PR-4B / ADR p16: `organizations` ya NO es ModelViewSet — list/create/
 # destroy no se exponen. Dos paths explícitos abajo: /me/ (singleton) y
 # /<int:pk>/ (legacy con validación + Sunset RFC 8594).

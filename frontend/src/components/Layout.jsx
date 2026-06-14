@@ -15,6 +15,7 @@ const PAGE_TITLES = {
     "/staff":          "Equipo",
     "/config":         "Configuración",
     "/prescriptions":  "Recetas",
+    "/imports":        "Importar datos",
 };
 
 const Layout = ({ children }) => {

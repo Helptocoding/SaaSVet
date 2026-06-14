@@ -1,0 +1,207 @@
+/* ── Importador CSV/Excel ─────────────────────────────────────
+   Estilos modulares de la página /imports. Usa tokens globales
+   (tokens.css) + reutiliza clases globales (.card, .btn, .table…)
+   donde existen; aquí solo lo específico del wizard.
+──────────────────────────────────────────────────────────────── */
+
+/* ── Stepper ────────────────────────────────────────────────── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--c-text-3);
+}
+.stepNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-border-2);
+  background: var(--c-surface);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.stepActive { color: var(--c-text); font-weight: 600; }
+.stepActive .stepNum {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+  color: #fff;
+}
+.stepDone .stepNum {
+  border-color: var(--c-success-border);
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+}
+.stepDone { color: var(--c-text-2); }
+.stepSep {
+  flex: 0 0 28px;
+  height: 1px;
+  background: var(--c-border);
+}
+
+/* ── Drop zone ──────────────────────────────────────────────── */
+.dropZone {
+  border: 2px dashed var(--c-border-2);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  padding: 44px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--t), background var(--t);
+}
+.dropZone:hover { border-color: var(--c-primary); background: var(--c-subtle); }
+.dropZoneOver {
+  border-color: var(--c-primary);
+  background: var(--c-primary-light);
+}
+.dropTitle { font-size: 15px; font-weight: 600; color: var(--c-text); margin-top: 12px; }
+.dropHint  { font-size: 12.5px; color: var(--c-text-3); margin-top: 6px; }
+
+.fileChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-subtle);
+}
+.fileName { font-size: 13px; font-weight: 600; color: var(--c-text); }
+.fileMeta { font-size: 12px; color: var(--c-text-3); }
+
+/* ── Mapping table ──────────────────────────────────────────── */
+.mapWrap {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.mapTable { width: 100%; border-collapse: separate; border-spacing: 0; }
+.mapTable thead tr { background: var(--ink); }
+.mapTable th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.mapTable td {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--c-text);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--c-border);
+}
+.mapTable tbody tr:last-child td { border-bottom: none; }
+.mapTable tbody tr:hover { background: var(--c-subtle); }
+
+.srcCol { font-weight: 600; color: var(--c-text); }
+.sampleVals {
+  font-size: 12px;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+.mapSelect { max-width: 320px; }
+
+/* ── Missing-required notice ────────────────────────────────── */
+.missingBox {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-warning-border);
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+  font-size: 13px;
+}
+.missingBox ul { margin: 6px 0 0; padding-left: 18px; }
+.missingBox li { margin-bottom: 2px; }
+
+/* ── Preview summary ────────────────────────────────────────── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.sumCard {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-xs);
+}
+.sumValue { font-size: 26px; font-weight: 700; line-height: 1; color: var(--c-text); font-family: var(--font-mono); }
+.sumLabel { font-size: 12px; color: var(--c-text-3); margin-top: 6px; }
+.sumValueDanger  { color: var(--c-danger-text); }
+.sumValueWarning { color: var(--c-warning-text); }
+.sumValueSuccess { color: var(--c-success-text); }
+
+.summaryLine {
+  font-size: 14px;
+  color: var(--c-text-2);
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+
+/* ── Issues table (errors / warnings) ───────────────────────── */
+.issuesTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 18px 0 8px;
+}
+.rowNum { font-family: var(--font-mono); color: var(--c-text-3); white-space: nowrap; }
+.fieldLabel { color: var(--c-text-2); }
+
+/* ── Footer actions ─────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.actionsRight { display: flex; gap: 8px; margin-left: auto; }
+
+/* ── Result hero ────────────────────────────────────────────── */
+.resultHero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.resultIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+  flex-shrink: 0;
+}
+.resultTitle { font-size: 18px; font-weight: 700; color: var(--c-text); }
+.resultSub   { font-size: 13px; color: var(--c-text-3); margin-top: 2px; }

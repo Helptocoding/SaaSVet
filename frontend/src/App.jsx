@@ -17,6 +17,7 @@ import Cash from "./pages/cash";
 import Prescriptions from "./pages/prescriptions";
 import Analytics from "./pages/analytics";
 import Config from "./pages/config";
+import Imports from "./pages/imports/index";
 import CreateOrganization from "./pages/platform/createOrganization";
 import ChangePassword from "./pages/changePassword";
 import NotFound from "./pages/notFound";
@@ -131,6 +132,7 @@ const router = createBrowserRouter([
       { path: "/prescriptions", element: wrap(Prescriptions) },
       { path: "/analytics", element: wrap(Analytics) },
       { path: "/config", element: wrap(Config) },
+      { path: "/imports", element: wrap(Imports) },
       { path: "/platform/organizations/new", element: wrap(CreateOrganization) },
       { path: "/change-password", element: wrapNoGate(ChangePassword) },
       { path: "*", element: <NotFound /> },

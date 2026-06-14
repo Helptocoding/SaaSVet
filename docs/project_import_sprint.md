@@ -1,0 +1,337 @@
+# Sprint: Importador CSV/Excel (migración de clínicas)
+
+**Fecha**: 2026-06-14
+**Estado**: PLAN — investigación cerrada, sin implementar.
+**Audiencia**: dev que implemente el importador, QA, PO.
+**Alcance**: permitir que una clínica nueva migre clientes + mascotas desde Excel/CSV
+sin captura manual. Pre-beta.
+
+> Modo de la sesión que generó esto: **investigación únicamente**. Este documento es
+> spec, no código. No crear modelos/migraciones/endpoints hasta aprobar Fase A.
+
+---
+
+## 0. Decisiones finales (cerradas con el PO)
+
+| # | Decisión | Elegido | Razón |
+|---|---|---|---|
+| D1 | Sesión de import | **`ImportJob` persistido** (filas en JSONField, sin binario) | Auditoría, no reenvía miles de filas, reanudable. Encaja con cultura audit-trail. |
+| D2 | Alcance v1 (Fase A) | **Clientes + Mascotas** (`entity_type=owner_pet`) | Las clínicas migran ambos juntos; un archivo trae dueño y mascota. |
+| D3 | Duplicados v1 | **Saltar + reportar** (`skip`); `update` diferido a Fase B | Cero riesgo de pisar datos buenos. |
+| D4 | Cliente sin teléfono | **Permitido** (no es error). Ver Ajuste #1. | Excels reales vienen incompletos; "sin tel = error" arruina la primera experiencia. |
+| D5 | Formatos en Fase A | **CSV + XLSX desde el inicio** (`openpyxl`). Ver Ajuste #2. | El usuario dice "te mando mi Excel", no "mi CSV". |
+| D6 | Nombre de archivo | **Guardar `original_filename`** en `ImportJob` (NO el binario). Ver Ajuste #3. | Trazabilidad: "¿cuál archivo subieron?". |
+| D7 | `legacy_id` | **SÍ — Fase A.** Campos en `Owner`/`Pet`. Ver §11. | El importador existe para migrar clínicas; meterlo después obliga a re-importar/actualizar miles de pacientes para recuperar los IDs viejos. UI lo muestra como "Número de expediente anterior", no como `legacy_id`. |
+
+---
+
+## Estado de implementación
+
+**Fase A IMPLEMENTADA 2026-06-14 (sin commit).** Backend 17 tests verdes + 18
+patients/appointments sin regresión; frontend 128 tests verdes (16 nuevos). Pasó
+code-review (1 BLOCKER + 2 HIGH + 2 MEDIUM corregidos).
+
+- Backend: app `apps/imports/` (ImportJob, parsers CSV+XLSX, normalization,
+  services validate/commit, ImportJobViewSet, router `imports`). `legacy_id` en
+  Owner+Pet (unique parcial per-org). `Owner.phone` → `blank=True`.
+  `import.{list,retrieve,create,commit}` (ADMIN only). `openpyxl` añadido.
+- Frontend: `pages/imports/` (wizard 4 pasos) + `api/imports.js` + ruta `/imports`
+  ADMIN-only + nav en Sidebar.
+- **Decisión tomada en implementación**: `OwnerSerializer.validate_phone` ahora
+  acepta teléfono vacío (coherente con phone opcional) → el alta/edición manual de
+  cliente en la UI ya NO exige teléfono. Si se prefiere mantenerlo obligatorio en
+  el alta manual, revertir solo ese serializer.
+- Review fixes: savepoints owner/pet separados (no huérfanos), `validate` predice
+  conflictos `legacy_id` (preview honesto), mensajes de error no filtran el nombre
+  del constraint, `check_mapping` rechaza dos columnas al mismo campo, dedup v1
+  restringido a `skip`.
+- Deuda v1 aceptada (LOW): fecha DD/MM asumida (warning si no parsea), CSV se
+  materializa en memoria (acotado por cap 5 MB), `validate`/`mapping` sin throttle
+  dedicado (ADMIN only).
+
+---
+
+## 1. Estado actual del proyecto
+
+**No existe infraestructura de import.** Confirmado por inspección:
+
+- Sin libs de parsing: `requirements.txt` solo trae `reportlab`/`pypdf` (PDFs). No `csv` config, no `openpyxl`, no `pandas`.
+- Sin `ImportJob`, sin `FileField`, sin `MEDIA_ROOT`/`MEDIA_URL`, sin `MultiPartParser` global.
+
+**Precedente reutilizable (el patrón ya está inventado):**
+
+| Pieza | Ubicación | Qué aporta |
+|---|---|---|
+| `create_with_patient` (FBV atómico) | `apps/appointments/views.py:270` | Plantilla exacta: `Owner.objects.get_or_create(org, phone)` + `Pet.create` en `transaction.atomic`, reusa serializers, rollback total si falla. |
+| `OwnerSerializer` / `PetSerializer` | `apps/patients/serializers.py` | Validación lista: `NAME_REGEX`, `PHONE_REGEX` (10 díg), `SPECIES_CHOICES`. |
+| `OrganizationalModel.save()` | `apps/core/models.py:168` | `full_clean()` centralizado + auditoría `created_by`. **`bulk_create` lo bypasea** (descartado, ver §7). |
+| Exception handler | `apps/core/exceptions.py` | Shape canónico `{code, message}` / `{code:'validation_error', errors:{}}`, meta vía prefijo `__`. |
+| Throttle scoped | `apps/core/throttling.py` + `settings.py` (`platform_org_create: 20/hour`) | Patrón para operación cara. |
+| RBAC | `apps/core/permissions_codes.py` | Códigos `resource.action`; `seed_permissions` corre en cada deploy. |
+| Partial `UniqueConstraint` | `apps/patients/models.py:21,63` | Precedente para uniques condicionales (usado por `legacy_id` §11). |
+
+**Campos / unicidad / relaciones (de modelos + serializers):**
+
+- **Owner**: `name` req (regex), `phone` req-en-serializer (10 díg). Dedup de facto = `(org, phone)` vía `get_or_create`. **NO existe `UniqueConstraint(org, phone)` en DB** (relevante §6/§7).
+- **Pet**: `name` req (regex), `species` req (∈ `SPECIES_CHOICES`, minúsculas), `owner` FK **PROTECT** req. `birth_date`: el **modelo permite `null`**, pero `PetSerializer.validate_birth_date` lo **exige** → discrepancia a relajar en el path de import.
+- **Product**: stock NO se setea por campo directo (ADR p31: `apply_stock_movement` bajo lock, unidades base, multi-presentación) → import de productos es Fase C, mínimo.
+
+---
+
+## 2. Arquitectura recomendada
+
+Síncrono, sin workers, con `ImportJob` como sesión persistida. Para clínicas
+pequeñas/medianas (cientos a ~2000 filas) no se justifica Celery ni storage externo.
+
+Flujo de 3 fases sobre un `ImportJob`:
+
+```
+POST /api/imports/                       (multipart: archivo + entity_type)
+   → parsea headers + filas → ImportJob.rows (JSONField)
+   → guarda ImportJob.original_filename
+   → auto-detecta mapping sugerido (heurística por alias, NO IA)
+   → { public_id, columns, sample_rows, suggested_mapping }
+   status: pending
+
+PATCH /api/imports/<public_id>/mapping/  (mapping confirmado por el usuario)
+
+POST  /api/imports/<public_id>/validate/ (DRY-RUN: valida fila×fila, NO escribe)
+   → { would_create, duplicates[], warnings[], errors:[{row, field, message}] }
+   status: validated
+
+POST  /api/imports/<public_id>/commit/   (escribe en transaction.atomic)
+   → { created, skipped, errors }
+   status: committed   (idempotente: re-commit → 409)
+```
+
+**Por qué `ImportJob` y no stateless:** evita reenviar miles de filas 3 veces, da
+auditoría, reanudable. **No se persiste el binario** — solo las filas parseadas en
+`JSONField` + el `original_filename`.
+
+**Parsing — interfaz de parser (clave para Ajuste #2):**
+
+```
+ParserBase.parse(file) -> (columns: list[str], rows: list[list])
+├── CSVParser     (csv stdlib; detecta separador , vs ; y encoding UTF-8/BOM/Latin-1)
+└── ExcelParser   (openpyxl, read_only=True; .xlsx)
+```
+
+Selección por extensión + content-type. Caps duros: tamaño ≤ 5 MB, filas ≤ 2000,
+columnas ≤ 50. Validar MIME antes de procesar.
+
+**Commit fila×fila (no `bulk_create`):** reusa `serializer.save()` → `full_clean()` →
+validación tenant. Más lento pero seguro; a cientos de filas es aceptable.
+
+---
+
+## 3. Modelos nuevos
+
+Uno: **`ImportJob`** (app nueva `apps/imports/`).
+
+```
+ImportJob(PublicIdMixin, OrganizationalModel)
+  entity_type       CharField  choices: owner_pet | owner | product
+  status            CharField  choices: pending | validated | committed | failed
+  original_filename CharField  # D6 — ej. "clientes_veterinaria_junio.xlsx" (NO el binario)
+  source_columns    JSONField  # headers crudos
+  rows              JSONField  # filas parseadas (cap 2000)
+  mapping           JSONField  # { "Dueño": "owner.name", "WhatsApp": "owner.phone" }
+  dedup_strategy    CharField  choices: skip (default) | update | create_anyway
+  result            JSONField  # { created, skipped, errors[] } tras commit
+  # organization (PROTECT), created_by (SET_NULL), created_at heredados
+```
+
+**Migración**: modelo nuevo, **cero impacto en datos existentes**, sin FK riesgosas.
+`JSONField` nativo Postgres. Sin backfill.
+
+---
+
+## 4. Endpoints
+
+| Método | Ruta | Permiso | Throttle |
+|---|---|---|---|
+| `POST` | `/api/imports/` | `import.create` | scoped `import_upload: 20/hour` |
+| `GET` | `/api/imports/` · `/api/imports/<public_id>/` | `import.list` · `import.retrieve` | default |
+| `PATCH` | `/api/imports/<public_id>/mapping/` | `import.create` | default |
+| `POST` | `/api/imports/<public_id>/validate/` | `import.create` | default |
+| `POST` | `/api/imports/<public_id>/commit/` | `import.commit` | scoped + `X-Idempotency-Key` |
+
+- `ViewSet` con `PublicIdLookupMixin` + `TenantQueryMixin` → lookup por `public_id`
+  dentro del queryset de la org (cross-org = 404 automático).
+- Códigos nuevos en `permissions_codes.py`: `import.create`, `import.list`,
+  `import.retrieve`, `import.commit`. **Solo `ADMIN` en v1.** `seed_permissions` corre en cada deploy.
+- `MultiPartParser` solo en el endpoint de upload (no global).
+
+---
+
+## 5. Cambios frontend
+
+Wizard nuevo, **ADMIN only**, en `/config` o ruta `/imports`. Referencia: `inventory.jsx`.
+
+```
+pages/imports/
+├── index.jsx        — stepper (estado + ImportJob public_id)
+├── UploadStep.jsx   — drag-drop archivo (.csv/.xlsx) + selector entity_type
+├── MappingStep.jsx  — tabla columna→campo (agrupado Cliente | Mascota) + preview filas
+├── PreviewStep.jsx  — dry-run: "X se crearán · Y duplicados · errores/warnings por fila"
+└── ResultStep.jsx   — creados/saltados/errores + link a ver registros
+api/imports.js       — uploadImport / setMapping / validateImport / commitImport
+```
+
+Reusar (no duplicar): `apiError`, `handleFormError`, `toast.promise`, `useConfirm`
+(commit = acción de peso), `Pagination` (preview grande). Cero matemática/validación de
+negocio en React — backend es la fuente de verdad.
+
+---
+
+## 6. Multi-tenant + Duplicados
+
+**Multi-tenant:**
+- `organization` SIEMPRE de `request.user.organization`, nunca del archivo/payload.
+- `ImportJob.objects.for_organization(org)`; commit fuerza `organization=org` en cada Owner/Pet.
+- Reusar serializers con `context={'request': request}` → validación tenant ya aplica.
+
+**Duplicados v1 = `skip` + reportar (D3 + Ajuste #1):**
+
+| Caso | Comportamiento |
+|---|---|
+| Owner con `phone` válido (10 díg) | Dedup por `(org, phone)`. Existe ⇒ se **reusa** (no se salta; se liga la mascota nueva), como `create_with_patient`. |
+| Owner **sin** `phone` | **Se importa** (no es error). `dedup_key = null`. Dedup solo por nombre normalizado dentro del MISMO archivo (Ajuste #1). |
+| Pet `(owner, normalize(name), species)` ya existe | Se **salta** esa fila + se reporta. Dedup por nombre **normalizado**, no string exacto: `"Max" == "MAX" == "max "`. Evita duplicar en re-imports y por mayúsculas del sistema viejo. |
+
+---
+
+## 7. Riesgos
+
+1. **Sin workers → archivo grande bloquea worker gunicorn.** Mitigación: caps duros (5 MB / 2000 filas), validar antes de procesar.
+2. **Owner dedup sin `UniqueConstraint(org, phone)` en DB.** App-level; race posible. En import de un solo actor el riesgo es bajo. Documentar; no agregar constraint en este sprint.
+3. **`birth_date`**: `PetSerializer` lo exige, modelo no. El path de import valida con regla propia relajada.
+4. **Productos = trampa de complejidad** (ADR p31): stock vía `apply_stock_movement`, multi-presentación, `internal_code` único. Stock inicial = ajuste, no set directo. → Fase C mínimo.
+5. **`bulk_create` bypasea `full_clean()`** → descartado; `save()` fila×fila.
+6. **CSV injection / HTML en celdas**: `bleach` (ya disponible) antes de persistir; prefijar celdas que empiezan con `= + - @` si se re-exporta.
+7. **Encoding/separador es-MX**: Excel mexicano exporta `;` y Latin-1 → detección robusta o el archivo se parsea como una sola columna.
+
+---
+
+## 8. Qué NO hacer en v1
+
+- Workers async / Celery / colas.
+- IA para detección de columnas (heurística por alias basta).
+- Import de productos con stock/multi-presentación completo (Fase C, mínimo).
+- Millones de filas / streaming / chunking.
+- Undo / rollback selectivo post-commit.
+- Merge "inteligente" de duplicados (solo `skip` v1; `update` Fase B).
+- Import de historiales médicos / facturas / citas (inmutables, FK complejas).
+- Múltiples archivos / ZIP / plantilla de mapping reutilizable.
+
+---
+
+## 9. Tests necesarios
+
+**Backend** (prioridad: lo que escribe datos / cruza tenant):
+- Parsing CSV (`;`, BOM, Latin-1, celdas vacías) + XLSX (openpyxl) + archivo corrupto → error limpio.
+- Auto-map alias ("Dueño"/"Cliente"→`owner.name`, "WhatsApp"/"Celular"→`owner.phone`, "Perro"→species).
+- `validate` (dry-run): **no escribe nada** (assert count DB sin cambios), errores/warnings por fila.
+- `commit`: atómico (rollback), dedup `skip`, owner con/sin phone, species normalizada,
+  pet dedup por `(owner, normalize(name), species)` (`"Max"=="MAX"`).
+- `legacy_id`: unicidad per-org cuando presente (dos `"123"` en la org → error; muchos
+  `""` → OK); cross-org mismo `legacy_id` permitido; importable + buscable.
+- Multi-tenant: job de otra org → 404; registros con `organization` correcta.
+- Permisos: no-ADMIN → 403. Límites: archivo > cap, > 2000 filas → 400. Idempotencia: doble commit → 409.
+
+**Frontend** (Vitest+RTL, gate CI bloqueante):
+- MappingStep: cambiar `<select>` actualiza mapping observable.
+- PreviewStep: render de duplicados/errores/warnings desde dry-run.
+- Gating por `can('import.commit')`.
+
+---
+
+## 10. Fases + esfuerzo
+
+| Fase | Contenido | Esfuerzo (1 dev) |
+|---|---|---|
+| **A** | `ImportJob` + parser CSV **+ XLSX** + 3 endpoints + `owner_pet` (owner dedup por phone, owner sin phone permitido, pet ligada, normalización species, dedup pet por nombre normalizado) + **`legacy_id` en Owner/Pet** + dedup `skip` + permisos ADMIN + wizard 4 pantallas + `original_filename` + tests | **~1.5–2 sem** |
+| **B** | Estrategia `update` + descarga de reporte de errores + dedup contra owners existentes sin phone (cross-archivo) | **~3–4 d** |
+| **C** | Productos mínimo (sin multi-presentación, stock vía ajuste) + historial de imports UI + mejoras auto-map | **~1 sem** |
+
+Total **~3 semanas**.
+
+---
+
+## Ajustes del PO sobre el plan original
+
+### Ajuste #1 — Cliente sin teléfono permitido (con cuidado)
+
+Plan original: "fila sin phone ⇒ error". **Rechazado.** Excels reales vienen
+incompletos (ej. `Juan Pérez | <vacío>`); "sin tel = error" produce 120/500 errores y
+mala primera experiencia.
+
+**Comportamiento v1:**
+- Con teléfono → dedup por `(org, phone)`.
+- Sin teléfono → **importar**, `dedup_key = null`.
+- Evitar duplicados internos por **nombre normalizado dentro del mismo archivo**:
+  `normalize(name)` = lower + trim + colapsar espacios + quitar acentos.
+  `"Juan Pérez" == "juan perez" == "JUAN PEREZ"` → agrupar/avisar (warning, no error).
+- **No** requiere DB constraint todavía — es comportamiento del importador.
+
+### Ajuste #2 — XLSX desde Fase A (no Fase B)
+
+Plan original: CSV en A, XLSX en B. **Cambiado.** El usuario promedio dice "te mando mi
+Excel", no sabe qué es CSV. `openpyxl` no agrega mucha complejidad si el parser ya es
+una interfaz (`ParserBase` → `CSVParser` | `ExcelParser`). Hacerlo ahora.
+Fase A: ✅ CSV ✅ XLSX.
+
+### Ajuste #3 — Guardar nombre original del archivo
+
+`ImportJob.original_filename` (CharField). **No** guardar el binario. Solo el nombre
+(ej. `clientes_veterinaria_junio.xlsx`) para responder "¿cuál archivo subieron?".
+
+---
+
+## 11. `legacy_id` — confirmado en Fase A (D7)
+
+**Decisión del PO: SÍ, desde Fase A.** Razón: el importador existe precisamente para
+migrar clínicas que vienen de otro software / Excel viejo / libretas digitalizadas. Esos
+sistemas traen su propio número de expediente:
+
+```
+Expediente | Paciente | Dueño
+00231      | Max      | Juan
+00232      | Luna     | Ana
+```
+
+Al migrar, la DB genera `Pet(id=99384, public_id=pet_8x71s, name="Max")` — correcto
+internamente, pero el veterinario pregunta *"búscame el expediente 231"*. Sin `legacy_id`
+ese vínculo se pierde. Meterlo **después** es peor: importas 5000 pacientes en Fase A y
+luego, para recuperar los IDs viejos, tienes que re-importar o actualizar todo. Se hace
+ahora.
+
+**Objetivo**: preservar el identificador antiguo. **NO** es PK, **NO** reemplaza
+`id`/`public_id`. Solo dato de referencia importable y buscable.
+
+**Campos**: `Owner.legacy_id`, `Pet.legacy_id`.
+
+**Requisitos**: opcional · único dentro de la organización cuando presente · importable
+desde Excel · visible/buscable si existe.
+
+**Impacto de schema (reportado ANTES de implementar, según regla de migraciones):**
+
+- **Cambio**: `legacy_id = CharField(max_length=64, blank=True, default="")` en `Owner` y
+  `Pet` (`apps/patients/models.py`). **`default=""`, NO `null=True`** (confirmado por PO).
+- **Unicidad condicional**: `UniqueConstraint(fields=['organization','legacy_id'],
+  condition=~Q(legacy_id=''), name='owner_legacy_id_unique_per_org')` (ídem Pet).
+  Permite muchos `legacy_id=""` coexistiendo (Max="" y Luna="" OK), pero bloquea dos
+  `legacy_id="123"` en la misma org. **Precedente directo**: `patients/models.py:21,63`
+  ya usa partial `UniqueConstraint` con `condition=Q(...)`.
+- **Migración**: columna con `default=""` (constante → fast en Postgres, sin reescritura) +
+  índice único parcial. Tablas pequeñas por tenant → bloqueo despreciable. Filas
+  existentes → `""` (compatibles).
+- **Serializers/Views**: `legacy_id` a `OwnerSerializer`/`PetSerializer` (read+write
+  opcional). Búsqueda: extender `?search` o `?legacy_id=` exacto (el índice único ya sirve
+  el lookup exacto; substring necesitaría índice propio — evaluar si hace falta).
+- **UI (ajuste del PO)**: **NUNCA** mostrar el label "legacy_id" — el usuario normal no
+  sabe qué es. Mostrar **"Número de expediente anterior"** (o "Código anterior").
+  Internamente el campo se llama `legacy_id`; es solo el label visible y el alias de
+  auto-mapping de columnas ("Expediente", "No. Cliente", "Código" → `*.legacy_id`).
+- **Riesgo**: bajo. Aditivo y compatible. Toca 2 modelos core (`patients`) → registrar
+  una mini-decisión (no ADR formal completo; calibración de governance del proyecto).
