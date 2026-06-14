@@ -252,6 +252,53 @@ def handle(self, *args, **options):
 
 ---
 
+## B7 — Sort "Valor en stock" en Inventario no coincide con el valor mostrado (bug UX)
+
+**Origen:** descubierto en P1-4 Fase B3 (extracción de `utils/inventory.js`, commit `5da196e`).
+
+**Archivo:** `frontend/src/pages/inventory.jsx` — comparador de sort, rama `sortCol === "value"` (líneas ~386-390).
+
+**Bug:** el comparador ordena por `sale_price × stock`, **sin** dividir entre `conversion_factor`, mientras la columna "Valor en stock" **muestra** `sale_price / conversion_factor × stock` (la función pura `productStockValue`). Para productos con `conversion_factor ≠ 1` el orden no corresponde al valor mostrado.
+
+```javascript
+// ACTUAL (incorrecto) — inventory.jsx :386-390
+va = (parseFloat(aP.sale_price ?? 0) || 0) * (parseFloat(aP.stock ?? 0) || 0);
+// MUESTRA en la columna — productStockValue
+(sale_price / conversion_factor) * stock
+```
+
+**Reproducción:**
+
+| Producto | sale_price (caja) | conversion_factor | stock (base) | Valor mostrado | Valor que ordena |
+|---|---|---|---|---|---|
+| A — Caja 100 pastillas | $500 | 100 | 200 | **$1,000** (`500/100×200`) | $100,000 (`500×200`) |
+| B — Pieza suelta | $50 | 1 | 200 | **$10,000** (`50/1×200`) | $10,000 |
+
+Orden real por valor: **B ($10k) > A ($1k)**. Orden que produce el sort: **A (100k) > B (10k)** → **invertido**. No hay pérdida de datos; el listado solo se ordena mal al hacer clic en el encabezado "Valor en stock".
+
+**Divergencia secundaria (mismo comparador):** las ramas `value` y `stock` usan solo `presentation.stock`, no `stock_quantity ?? presentation.stock` como el resto del módulo. Menor (afecta solo el criterio de orden), corregir en el mismo cambio.
+
+**Fix:** reusar la fuente única ya extraída — el comparador `value` debe ordenar por `productStockValue(a)` vs `productStockValue(b)`, y `stock` por `productStockQty(a)` vs `productStockQty(b)`.
+
+```javascript
+} else if (sortCol === "value") {
+    va = productStockValue(a); vb = productStockValue(b);
+} else if (sortCol === "stock") {
+    va = productStockQty(a); vb = productStockQty(b);
+}
+```
+
+**Por qué no se arregló en B3:** B3 era extracción *behavior-preserving*; tocar el comparador cambia el orden visible (comportamiento). Requiere su propio commit + test.
+
+**Criterio de cierre:**
+- Comparador `value` usa `productStockValue`; `stock` usa `productStockQty`.
+- Test (extraer un comparador puro o testear el orden resultante) que ancle: con A/B del ejemplo, ordenar por `value` asc → A antes que B.
+- Verificar visualmente que el orden del listado coincide con la columna mostrada.
+
+**Estimación:** 30 min (fix 2 líneas + test + verificación).
+
+---
+
 ## Tracking
 
 Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre.

@@ -758,6 +758,7 @@ blocking (Fase D).
 | `utils/mapFieldErrors.js` | `mapFieldErrors.test.js` | normalización DRF (incluye dual-key dotted+bare-root, consumido por wizard inventario) |
 | `utils/toList.js` | `toList.test.js` | normalización array \| paginado DRF |
 | `components/PaymentLinesEditor.jsx` | `PaymentLinesEditor.test.jsx` | interacción usuario→inputs→footer (Falta/Exacto/Cambio/Excede), split, agregar/quitar línea, float-drift `.toFixed(2)` |
+| `utils/inventory.js` | `inventory.test.js` | stock: `stockStatus` (agotado/bajo/normal), `productStockQty`, `productStockValue` (`sale_price/cf×qty`), `computeInitialStock`, `fmt`/`fmtCur` |
 
 ### Gotchas
 
@@ -770,8 +771,17 @@ blocking (Fase D).
 - Botón eliminar de `PaymentLinesEditor` con 1 sola línea: `visibility:hidden` →
   queda **fuera** del árbol de accesibilidad (no matchea `getAllByRole('button')`).
   Es el contrato: el usuario no puede borrar el único método de pago.
+- Inventario: el **valor en stock** se calcula `sale_price / conversion_factor × qty`
+  (`productStockValue`); el `/cf` normaliza el precio de la presentación a unidad base.
+  Conviven **dos** definiciones de "bajo stock": `stockStatus.low` (frontend, `min>0 &&
+  stock<min`) y `metrics.lowStock` (flag backend `is_low_stock`). No unificar sin ADR.
+- **Bug conocido (deuda fase 3 B7):** el sort de la columna "Valor en stock" ordena por
+  `sale_price × stock` **sin** `/cf` → no coincide con el valor mostrado para productos
+  con `conversion_factor ≠ 1`. Bug de UX (orden), sin pérdida de datos. Fix: usar
+  `productStockValue`/`productStockQty` en el comparador.
 
 ### Pendiente (siguientes fases)
 
-- B3: extraer la lógica de `computedStock` de `inventory.jsx` y testearla.
+- B7 (deuda fase 3): alinear el sort "Valor en stock" con `productStockValue` (fix + test).
+- C: extraer la lógica pura restante (billing sub-componentes, dedup sum/remaining).
 - D: triar los ~6 errores `react-hooks` (lint) para pasar lint a blocking.

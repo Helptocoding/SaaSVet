@@ -115,7 +115,13 @@ El riesgo está concentrado: 4 páginas + 2 utils cubren ~90% del peligro de din
   (vacío/cero/texto/negativo), float-drift `.toFixed(2)`, disabled. `payments.js` real.
 - Componente **sin tocar**; a11y gap (trash icon-only sin label) reportado → deuda fase 4.
 
-### Fase B3 (siguiente) — extraer la lógica de stock (`computedStock`) de `inventory.jsx` y testearla.
+### Fase B3 — extraer lógica de stock de `inventory.jsx` ✅ (commit `5da196e`)
+- `utils/inventory.js`: `stockStatus`, `productStockQty`, `productStockValue` (`sale_price/cf×qty`),
+  `computeInitialStock`, `fmt`, `fmtCur`. Rewire en metrics/filas/wizard, behavior-preserving.
+- 33 tests (normal/cero/negativo/bajo, null-API, valor con cf, div-by-zero, umbral `<` estricto).
+- **Bug UX descubierto** (no arreglado, extracción era behavior-preserving): el sort de
+  "Valor en stock" usa `sale_price × stock` sin `/cf` → no coincide con el valor mostrado.
+  Registrado en deuda fase 3 **B7** (fix: usar `productStockValue` en el comparador).
 
 ### Fase C — Refactor seguro (extraer lógica pura, sin tocar JSX/UX).
 
@@ -175,8 +181,8 @@ Cada flecha = PR independiente.
 - [x] `pnpm test` corre en local y CI como gate bloqueante. *(Fase A, `9ad376e`)*
 - [x] `utils/payments.js` + `utils/apiError.js` con tests verdes. *(Fase B1)*
 - [x] `PaymentLinesEditor` con test de "total exacto / cambio". *(Fase B2, `7c2773c`)*
-- [ ] Lógica de `computedStock` extraída y testeada. *(Fase B3, pendiente)*
-- [x] 0 tests rojos. *(79 verde)*
+- [x] Lógica de stock (`stockStatus`/`computeInitialStock`/valor) extraída y testeada. *(Fase B3, `5da196e`)*
+- [x] 0 tests rojos. *(112 verde)*
 
 **Deseable (no bloqueante):**
 - [ ] billing.jsx sub-componentes extraídos.
