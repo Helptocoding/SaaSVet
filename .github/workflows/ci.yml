@@ -114,18 +114,35 @@ jobs:
           GITLEAKS_VERSION: 8.18.4
         run: |
           set -euo pipefail
-          curl -sSL \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-            -o /tmp/gitleaks.tar.gz
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "Downloading gitleaks ${GITLEAKS_VERSION}: ${url}"
+          # -f: fail (non-zero) on HTTP errors instead of saving a 404 page;
+          # --retry: survive transient network/registry blips. Without -f a bad
+          # download would only surface later as an opaque tar/exec failure.
+          curl -fsSL --retry 3 --retry-delay 2 "$url" -o /tmp/gitleaks.tar.gz
           tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
-          # --redact: never print secret values into the CI log.
+          echo "Using gitleaks version: $(/tmp/gitleaks version)"
+          # --redact keeps secret VALUES out of the log AND the report, so the
+          # report is safe to print for diagnosis. Capture the exit code so a
+          # red gate is never left without a visible reason.
+          set +e
           /tmp/gitleaks detect \
             --source . \
             --config .gitleaks.toml \
             --redact \
             --no-banner \
             --verbose \
+            --report-format json \
+            --report-path /tmp/gitleaks-report.json \
             --exit-code 1
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ]; then
+            echo "::error::gitleaks failed (exit ${code}). Redacted report below (empty/absent => a gitleaks run error, not a finding):"
+            cat /tmp/gitleaks-report.json 2>/dev/null || echo "(no report file produced)"
+            exit "$code"
+          fi
+          echo "gitleaks: no leaks found."
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
