@@ -4,7 +4,7 @@ import { apiError } from "../../utils/apiError";
 import { useConfirm } from "../../components/useConfirm";
 import api from "../../api/client";
 import {
-  getMedicalRecords, createMedicalRecord, getMedicalRecord,
+  getMedicalRecords, getMedicalRecord,
   deleteMedicalRecord, closeMedicalRecord,
   downloadMedicalRecordPDF,
 } from "../../api/medicalRecords";

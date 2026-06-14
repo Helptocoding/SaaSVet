@@ -33,7 +33,7 @@ const getAge = (birthDate) => {
 
 const formatCurrency = (num) => {
   if (num == null) return "$0.00";
-  return `\$${Number(num).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `$${Number(num).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatDate = (ds) => {

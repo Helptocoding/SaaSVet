@@ -17,7 +17,7 @@ const TimelineCard = ({
   onClose, onEdit, onDelete,
   onCreatePrescription, onDownloadPrescription,
   onDownloadRecordPdf, downloadingRecordPdfId,
-  downloadingPrescriptionId, user, canCreate,
+  downloadingPrescriptionId, canCreate,
 }) => {
   const d        = new Date(record.latest_vitals?.recorded_at || record.created_at);
   const dateStr  = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -25,7 +25,6 @@ const TimelineCard = ({
   const isClosed = record.status === "closed";
   const hasPrx   = !!record.prescription_summary?.id;
   const vitals   = record.latest_vitals;
-  const userRole = user?.role;
   const canEdit  = record.can_modify_charges;
   const canClose = record.can_close;
   const canDel   = !!record.can_delete;

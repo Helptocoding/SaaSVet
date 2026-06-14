@@ -710,7 +710,7 @@ const Pets = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFormErrors({});
-        const nameRe = /^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ' \-]+$/;
+        const nameRe = /^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ' -]+$/;
         if (!form.name.trim()) { toast.error("El nombre es obligatorio"); return; }
         if (!nameRe.test(form.name.trim())) { toast.error("El nombre solo puede contener letras, números, espacios, acentos y guiones"); return; }
         if (!form.species) { toast.error("La especie es obligatoria"); return; }

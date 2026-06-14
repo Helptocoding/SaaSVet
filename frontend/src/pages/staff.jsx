@@ -4,7 +4,6 @@ import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
-import handleFormError from "../utils/handleFormError";
 
 const EMPTY_FORM = {
     username: "",
@@ -65,7 +64,7 @@ const Staff = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const usernameRe = /^[A-Za-z0-9_.\-]+$/;
+        const usernameRe = /^[A-Za-z0-9_.-]+$/;
         const nameRe = /^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/;
 
         if (!form.username.trim()) { toast.error("El nombre de usuario es obligatorio"); return; }

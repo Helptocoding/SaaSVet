@@ -574,7 +574,6 @@ const Inventory = () => {
             const countUnitData = STOCK_COUNTING_UNITS.find(u => u.key === countUnit) || { backendUnit: "unit", label: countUnit };
             const dividesUnitData = STOCK_COUNTING_UNITS.find(u => u.key === dividesUnit) || { backendUnit: "piece", label: dividesUnit };
             const baseUnit = divides ? dividesUnitData.backendUnit : countUnitData.backendUnit;
-            const buLabel = divides ? dividesUnitData.label : countUnitData.label;
             const sp0 = salesPres[0];
             const sp0cf = 1; // first pres always cf=1
             const sp0AutoName = divides ? (dividesUnitData.label || "Unidad") : (countUnitData.label || "Unidad");
@@ -1564,7 +1563,6 @@ const Inventory = () => {
                                 const adjPres = adjustingProduct.presentation || {};
                                 const adjStock = parseFloat(adjustingProduct.stock_quantity ?? adjPres.stock ?? 0) || 0;
                                 const adjUnit = adjustingProduct.base_unit || adjPres.base_unit_display || adjPres.base_unit || "";
-                                const adjCf = parseFloat(adjPres.conversion_factor ?? 1) || 1;
                                 const preview = previewStock();
                                 return (
                                     <div style={{
