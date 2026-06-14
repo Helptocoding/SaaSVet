@@ -22,7 +22,11 @@ describe("mapFieldErrors — normalización de errores DRF", () => {
     expect(result.field).toBe("Mensaje 1");
   });
 
-  it("debe mapear objetos anidados a claves dotted", () => {
+  it("debe mapear objetos anidados a clave dotted Y a clave plana de raíz libre", () => {
+    // Comportamiento real (load-bearing): cada error anidado se aplana a DOS claves
+    // cuando la raíz está libre — la dotted (presentation_input.sale_price) y la bare
+    // (sale_price). El wizard de inventario consume ambas como fallback
+    // (inventory.jsx: wizardErrors["presentation_input.sale_price"] || wizardErrors.sale_price).
     const input = {
       presentation_input: {
         sale_price: ["El precio debe ser mayor a 0."],
@@ -31,6 +35,8 @@ describe("mapFieldErrors — normalización de errores DRF", () => {
     };
     const result = mapFieldErrors(input);
     expect(result).toEqual({
+      sale_price: "El precio debe ser mayor a 0.",
+      stock: "El stock no puede ser negativo.",
       "presentation_input.sale_price": "El precio debe ser mayor a 0.",
       "presentation_input.stock": "El stock no puede ser negativo.",
     });
@@ -61,8 +67,9 @@ describe("mapFieldErrors — normalización de errores DRF", () => {
     };
     const result = mapFieldErrors(input);
     expect(result).toEqual({
-      stock: "Stock error at root", // Raíz se guarda primero
-      "presentation_input.stock": "Stock error at nested", // Nested se añade además
+      stock: "Stock error at root", // Colisión: la raíz NO se sobrescribe (gana el top-level)
+      "presentation_input.stock": "Stock error at nested", // Nested colisionado → solo dotted
+      sale_price: "Price error", // Sin colisión → también se escribe la clave plana
       "presentation_input.sale_price": "Price error",
     });
   });
@@ -109,6 +116,10 @@ describe("mapFieldErrors — normalización de errores DRF", () => {
     const result = mapFieldErrors(apiError);
     expect(result).toEqual({
       name: "El nombre del producto es requerido.",
+      // anidados: clave plana (raíz libre) + clave dotted — ambas consumidas por el wizard
+      sale_price: "El precio debe ser mayor a 0.",
+      stock: "El stock no puede ser negativo.",
+      min_stock: "El stock mínimo no puede ser negativo.",
       "presentation_input.sale_price": "El precio debe ser mayor a 0.",
       "presentation_input.stock": "El stock no puede ser negativo.",
       "presentation_input.min_stock": "El stock mínimo no puede ser negativo.",

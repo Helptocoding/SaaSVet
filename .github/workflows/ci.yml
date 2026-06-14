@@ -69,10 +69,10 @@ jobs:
         run: python manage.py test --parallel
 
   # ---------------------------------------------------------------------------
-  # FRONTEND (required) — build must pass; lint is advisory (warning).
+  # FRONTEND (required) — build + unit tests (Vitest) must pass; lint advisory.
   # ---------------------------------------------------------------------------
   frontend:
-    name: frontend (build + lint + smoke)
+    name: frontend (build + test + smoke)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -92,6 +92,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build (blocking)
         run: pnpm run build
+      - name: Unit tests — Vitest (blocking)
+        run: pnpm run test
       - name: Lint (warning)
         continue-on-error: true
         run: pnpm run lint
