@@ -34,7 +34,7 @@ export default function mapFieldErrors(data = {}) {
       const plainVal = Array.isArray(innerVal) ? innerVal[0] : String(innerVal);
 
       // Intenta escribir en root primero
-      if (!result.hasOwnProperty(innerKey)) {
+      if (!Object.prototype.hasOwnProperty.call(result, innerKey)) {
         // No existe en root → guarda aquí
         result[innerKey] = plainVal;
       } else {
@@ -44,7 +44,7 @@ export default function mapFieldErrors(data = {}) {
 
       // Siempre guarda la versión nested (presentation_input.sale_price)
       const nestedKey = `${key}.${innerKey}`;
-      if (!result.hasOwnProperty(nestedKey)) {
+      if (!Object.prototype.hasOwnProperty.call(result, nestedKey)) {
         result[nestedKey] = plainVal;
       }
     });

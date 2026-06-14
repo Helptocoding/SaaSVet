@@ -95,7 +95,7 @@ export function apiError(err, fallback = "Error inesperado") {
     }
 
     if (data.message) return String(data.message);
-    if (Array.isArray(data)) return String(data[0]) ?? fallback;
+    if (Array.isArray(data)) return data[0] != null ? String(data[0]) : fallback;
     const first = Object.values(data).flat()[0];
     return first ? String(first) : fallback;
 }
