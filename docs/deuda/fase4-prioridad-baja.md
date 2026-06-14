@@ -107,6 +107,81 @@ def create_invoice(*, organization, owner, pet=None, invoice_type='consultation'
 
 **Estimación:** 30–45 min (mecánico, 1 archivo nuevo + 31 import swaps + verificación).
 
+**Estado:** sigue diferido tras P1-4 Fase B2 (no se tocó `authContext`). Candidato natural a Fase C.
+
+---
+
+## C4 — `PaymentLinesEditor` duplica la matemática de pago de `utils/payments.js`
+
+**Origen:** detectado en auditoría P1-4 (riesgo #9 del plan) y confirmado al testear el componente en Fase B2 (`7c2773c`).
+
+**Problema:** `components/PaymentLinesEditor.jsx` recalcula `sum`/`remaining`/`change`
+**inline** (líneas 8-10) en vez de consumir `utils/payments.js`, que ya es la fuente
+única de la regla de dinero (ADR p30 rev). Dos copias de la misma matemática → drift
+posible si una se corrige y la otra no.
+
+```javascript
+// PaymentLinesEditor.jsx (inline, duplicado)
+const sum = Number(lines.reduce((a, l) => a + (Number(l.amount) || 0), 0).toFixed(2));
+const remaining = Number((Number(total) - sum).toFixed(2));
+```
+
+**Riesgo bajo (funciona, hay test):** el test `PaymentLinesEditor.test.jsx` incluye un
+caso de float-drift (`199.99 + 300.01 → "Exacto"`) que ancla la normalización `.toFixed(2)`
+actual. Refactor seguro porque el test atrapa regresiones.
+
+**Solución (Fase C):** extraer un helper en `utils/payments.js` (p.ej.
+`paymentSummary(lines, total) → { sum, remaining, change }`) y que tanto el componente
+como cualquier consumidor lo usen. Sin cambiar comportamiento (el test lo verifica).
+
+**Criterio de cierre:**
+- Una sola fuente para `sum`/`remaining`/`change` en `utils/payments.js`.
+- `PaymentLinesEditor` la consume; sin matemática inline.
+- `PaymentLinesEditor.test.jsx` + `payments.test.js` verdes sin cambios de assertions.
+
+**Estimación:** 30 min.
+
+---
+
+## C5 — `PaymentLinesEditor`: controles sin nombre accesible (a11y)
+
+**Origen:** P1-4 Fase B2 — reportado, **no** corregido (la fase prohibía tocar el componente).
+
+**Problema:** el botón eliminar línea es icon-only (`Icon.Trash`) sin `aria-label`; los
+`<select>` de método y los `<input>` de monto no tienen `<label>` asociado. Lectores de
+pantalla no anuncian la función de estos controles. El test los consulta por exclusión
+(filtrar el botón "+ Otro método") — funciona hoy pero es frágil si se agrega un tercer
+botón icon-only.
+
+**Solución (cuando se toque el componente):**
+- `aria-label="Quitar método"` en el botón trash.
+- `aria-label` / `<label>` en select de método e input de monto.
+- Migrar las queries del test a `getByRole('button', { name: /quitar/i })` etc. (cierra
+  la fragilidad de la query por exclusión, ver C4/Fase C).
+
+**Riesgo:** bajo (UX visual intacta; solo accesibilidad + robustez de test).
+
+**Estimación:** 20 min (junto con C4, mismo componente).
+
+---
+
+## C6 — Docstring desactualizado en `utils/mapFieldErrors.js`
+
+**Origen:** P1-4 Fase A — reconciliación de tests.
+
+**Problema:** el docstring solo describe la forma dotted (`presentation_input.sale_price`),
+pero la implementación real escribe **además** la clave plana de raíz (`sale_price`) cuando
+está libre. Ambas son load-bearing (el wizard de inventario las consume como fallback,
+`inventory.jsx:1404`). El comentario de la lógica de colisión sí lo describe; el docstring
+de cabecera no.
+
+**Solución:** corregir el docstring para reflejar el dual-key (dotted + plana). **No** tocar
+la implementación (comportamiento enviado a producción, cubierto por `mapFieldErrors.test.js`).
+
+**Riesgo:** nulo (solo comentario).
+
+**Estimación:** 5 min.
+
 ---
 
 ## Tracking

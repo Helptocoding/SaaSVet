@@ -10,6 +10,7 @@
 - Auth: Context propio (`src/auth/authContext.jsx`) con JWT + refresh automatico
 - HTTP: Axios con interceptores (`src/api/client.js`)
 - Confirmaciones: `useConfirm` hook (`src/components/ConfirmDialog.jsx`)
+- Testing: Vitest 4 + React Testing Library + jsdom (`pnpm test`, **gate CI bloqueante**) — ver § Testing
 
 ## Estructura de directorios
 
@@ -702,3 +703,75 @@ hooks/usePOSCart.js      — estado del carrito (solo UI)
 | `/prescriptions`    | Recetas             | Privada      |
 | `/staff`            | Equipo              | Solo ADMIN   |
 | `/config`           | Configuracion       | Solo ADMIN   |
+
+## Testing (Vitest + Testing Library) — P1-4
+
+> Plan completo y fases: [`docs/p1-4-frontend-reliability.md`](../p1-4-frontend-reliability.md).
+
+Red de seguridad de frontend. **No** se busca % de coverage — se protegen los
+flujos que mueven dinero/stock y la operación clínica.
+
+### Stack y config
+
+- `vitest` 4 + `@testing-library/react` + `@testing-library/jest-dom` + `jsdom`.
+- Config: bloque `test` en `vite.config.js` (`environment: 'jsdom'`, `globals: true`,
+  `setupFiles: ['./src/test/setup.js']`).
+- `src/test/setup.js` carga los matchers de jest-dom. **No** poner mocks globales ahí
+  (los mocks viven por archivo de test, aislamiento explícito).
+
+### Scripts
+
+```bash
+pnpm test         # vitest run (lo que corre el CI)
+pnpm test:watch   # vitest (desarrollo)
+```
+
+### CI (gate bloqueante)
+
+El job `frontend` corre `pnpm run test` como paso **bloqueante** (ADR/plan P1-4
+Fase A): `.github/workflows/ci.yml`. Un test rojo tumba el merge. `lint` sigue
+siendo advisory (`continue-on-error`); ver el plan para la condición de pasarlo a
+blocking (Fase D).
+
+### Convenciones (obligatorias)
+
+- Nombrar `*.test.js` (lógica pura) o `*.test.jsx` (componentes), junto al archivo
+  bajo prueba.
+- **Probar comportamiento observable**: roles ARIA, texto visible, valores de input,
+  callbacks. **Nunca** estado interno de React, nombres de variables ni detalles de
+  implementación.
+- **Cero snapshots** (no aportan, se rompen por ruido).
+- **Mocks mínimos**: solo side-effects globales inevitables (p.ej. `sonner.toast`).
+  **No** mockear lógica de negocio — `utils/payments.js` se usa real para probar la
+  integración con las reglas protegidas.
+- **Componentes controlados** (los que reciben `value`/`setX` del padre, p.ej.
+  `PaymentLinesEditor`): envolver en un host con `useState` que reproduzca el contrato
+  del padre, y observar el render resultante tras la interacción (`@testing-library/user-event`).
+
+### Cobertura actual
+
+| Archivo testeado | Test | Qué protege |
+|---|---|---|
+| `utils/payments.js` | `payments.test.js` | regla de dinero: total exacto, sobrepago/cambio no persistido, split, líneas vacías/negativas (ADR p30) |
+| `utils/apiError.js` | `apiError.test.js` | cadena de prioridad de mensajes 429→detail→error→errors[]→errors{}→message→fallback |
+| `utils/handleFormError.js` | `handleFormError.test.js` | ruteo de errores DRF a `setErrors` (campo) vs `toast` (global) |
+| `utils/mapFieldErrors.js` | `mapFieldErrors.test.js` | normalización DRF (incluye dual-key dotted+bare-root, consumido por wizard inventario) |
+| `utils/toList.js` | `toList.test.js` | normalización array \| paginado DRF |
+| `components/PaymentLinesEditor.jsx` | `PaymentLinesEditor.test.jsx` | interacción usuario→inputs→footer (Falta/Exacto/Cambio/Excede), split, agregar/quitar línea, float-drift `.toFixed(2)` |
+
+### Gotchas
+
+- `mapFieldErrors` aplana cada error anidado a **dos** claves (dotted
+  `presentation_input.sale_price` + plana `sale_price`); ambas load-bearing
+  (`inventory.jsx` las consume como fallback). El docstring de la función está
+  desactualizado (solo menciona la dotted) — ver deuda fase 4.
+- `PaymentLinesEditor` recalcula `sum`/`remaining`/`change` **inline**, duplicando la
+  matemática de `payments.js` (deuda fase 4). El test de float-drift ancla ese cálculo.
+- Botón eliminar de `PaymentLinesEditor` con 1 sola línea: `visibility:hidden` →
+  queda **fuera** del árbol de accesibilidad (no matchea `getAllByRole('button')`).
+  Es el contrato: el usuario no puede borrar el único método de pago.
+
+### Pendiente (siguientes fases)
+
+- B3: extraer la lógica de `computedStock` de `inventory.jsx` y testearla.
+- D: triar los ~6 errores `react-hooks` (lint) para pasar lint a blocking.

@@ -1,7 +1,7 @@
 # P1-4 — Frontend Reliability: Investigación + Plan Técnico
 
-**Fecha:** 2026-06-13
-**Estado:** vigente — Fase A + B1 en implementación
+**Fecha:** 2026-06-13 (act. 2026-06-14)
+**Estado:** Fase A + B1 + B2 **completas** (CI verde, gate vitest bloqueante). B3 / C / D pendientes.
 **Audiencia:** dev frontend, QA.
 **Principio rector:** *"puedo cambiar billing/inventario sin miedo antes de vender clínicas"*. Estabilidad > arquitectura bonita. No buscamos frontend perfecto.
 
@@ -97,19 +97,25 @@ El riesgo está concentrado: 4 páginas + 2 utils cubren ~90% del peligro de din
 
 ## 4. Plan de implementación
 
-### Fase A — Base de testing
+### Fase A — Base de testing ✅ (commit `9ad376e`)
 - Instalar `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`, `jsdom`.
 - `vite.config.js`: bloque `test` (`environment: 'jsdom'`, `globals: true`, `setupFiles`).
 - `src/test/setup.js`: `@testing-library/jest-dom`.
 - `package.json`: `test` (`vitest run`) + `test:watch` (`vitest`).
 - Reconciliar `mapFieldErrors.test.js`.
 
-### Fase B1 — Tests de lógica crítica (este sprint)
+### Fase B1 — Tests de lógica crítica ✅ (commit `9ad376e`)
 - `utils/payments.js`: pago exacto, insuficiente, sobrepago, cambio no persistido, múltiples métodos, líneas vacías (ADR p30).
 - `utils/apiError.js`: orden 429 → detail → error → errors[] → errors{} → message → fallback; FIELD_MAP.
 - `utils/handleFormError.js`: errores DRF de campo (setErrors) vs error inesperado (toast).
 
-### Fase B2/B3 (siguiente) — PaymentLinesEditor con TL; lógica de stock extraída.
+### Fase B2 — PaymentLinesEditor con Testing Library ✅ (commit `7c2773c`)
+- 19 tests vía host controlado (`useState`): catálogo de métodos, captura de monto,
+  exacto, sobrepago (Cambio vs Excede), split, agregar/quitar línea, inválidos
+  (vacío/cero/texto/negativo), float-drift `.toFixed(2)`, disabled. `payments.js` real.
+- Componente **sin tocar**; a11y gap (trash icon-only sin label) reportado → deuda fase 4.
+
+### Fase B3 (siguiente) — extraer la lógica de stock (`computedStock`) de `inventory.jsx` y testearla.
 
 ### Fase C — Refactor seguro (extraer lógica pura, sin tocar JSX/UX).
 
@@ -166,11 +172,11 @@ Cada flecha = PR independiente.
 ## 8. Criterio de "P1-4 terminado"
 
 **Mínimo (beta-ready):**
-- [ ] `pnpm test` corre en local y CI como gate bloqueante.
-- [ ] `utils/payments.js` + `utils/apiError.js` con tests verdes.
-- [ ] `PaymentLinesEditor` con test de "total exacto / cambio".
-- [ ] Lógica de `computedStock` extraída y testeada.
-- [ ] 0 tests rojos.
+- [x] `pnpm test` corre en local y CI como gate bloqueante. *(Fase A, `9ad376e`)*
+- [x] `utils/payments.js` + `utils/apiError.js` con tests verdes. *(Fase B1)*
+- [x] `PaymentLinesEditor` con test de "total exacto / cambio". *(Fase B2, `7c2773c`)*
+- [ ] Lógica de `computedStock` extraída y testeada. *(Fase B3, pendiente)*
+- [x] 0 tests rojos. *(79 verde)*
 
 **Deseable (no bloqueante):**
 - [ ] billing.jsx sub-componentes extraídos.
