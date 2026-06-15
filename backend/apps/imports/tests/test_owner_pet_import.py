@@ -54,6 +54,22 @@ def _csv(text):
     return SimpleUploadedFile('clientes.csv', text.encode('utf-8'), content_type='text/csv')
 
 
+def _assert_extra(tc, entries, expected):
+    """Verifica datos del sistema anterior (Fase D, decisión final PO).
+
+    expected = [(label, value, source_column), …] en orden. Cada entrada además
+    DEBE traer `imported_at` (fecha del proceso de importación). El timestamp
+    exacto no se compara (es now()); solo que exista y no sea vacío.
+    """
+    tc.assertEqual(len(entries), len(expected), entries)
+    for entry, (label, value, source) in zip(entries, expected):
+        tc.assertEqual(entry['label'], label)
+        tc.assertEqual(entry['value'], value)
+        tc.assertEqual(entry['source_column'], source)
+        tc.assertIn('imported_at', entry)
+        tc.assertTrue(entry['imported_at'])
+
+
 class NormalizationTests(TestCase):
     def test_species_alias(self):
         self.assertEqual(normalize_species('Perro'), 'canino')
@@ -323,7 +339,8 @@ class ImportApiTests(TestCase):
 
     def test_extra_data_imported_as_ordered_list(self):
         # Columnas sin campo del sistema → owner.extra / pet.extra → lista ordenada
-        # de {label, value}, preservando el orden original de columnas.
+        # de {label, value, source_column, imported_at}, preservando el orden de
+        # columnas. source_column = nombre ORIGINAL del Excel/CSV (no se pierde).
         text = (
             'Dueño,Teléfono,Mascota,Especie,Fecha Alta,Observaciones,Facebook\n'
             'Juan,8112345678,Max,Perro,2018-01-01,Nervioso,fb/juan\n'
@@ -338,12 +355,12 @@ class ImportApiTests(TestCase):
         self.client.post(f'/api/imports/{pid}/commit/', format='json')
 
         pet = Pet.objects.for_organization(self.org).get(name='Max')
-        self.assertEqual(pet.extra_data, [
-            {'label': 'Fecha Alta', 'value': '2018-01-01'},
-            {'label': 'Observaciones', 'value': 'Nervioso'},
+        _assert_extra(self, pet.extra_data, [
+            ('Fecha Alta', '2018-01-01', 'Fecha Alta'),
+            ('Observaciones', 'Nervioso', 'Observaciones'),
         ])
         owner = Owner.objects.for_organization(self.org).get(name='Juan')
-        self.assertEqual(owner.extra_data, [{'label': 'Facebook', 'value': 'fb/juan'}])
+        _assert_extra(self, owner.extra_data, [('Facebook', 'fb/juan', 'Facebook')])
 
     def test_extra_data_allows_repeated_labels(self):
         # Dos columnas homónimas "Comentario" → dos entradas distintas (lista).
@@ -359,9 +376,9 @@ class ImportApiTests(TestCase):
         })
         self.client.post(f'/api/imports/{pid}/commit/', format='json')
         pet = Pet.objects.for_organization(self.org).get(name='Max')
-        self.assertEqual(pet.extra_data, [
-            {'label': 'Comentario', 'value': 'A'},
-            {'label': 'Comentario', 'value': 'B'},
+        _assert_extra(self, pet.extra_data, [
+            ('Comentario', 'A', 'Comentario'),
+            ('Comentario', 'B', 'Comentario'),
         ])
 
     def test_extra_targets_exempt_from_dedup_but_system_fields_not(self):
@@ -385,10 +402,10 @@ class ImportApiTests(TestCase):
         res2 = self.client.post(f'/api/imports/{pid2}/validate/', format='json')
         self.assertTrue(any(e['field'] == 'mapping' for e in res2.data['result']['errors']))
 
-    def test_extra_data_custom_label_rename(self):
+    def test_extra_data_custom_label_rename_keeps_source_column(self):
         # El valor del mapping puede ser {target, label} para renombrar el dato
-        # visible; la columna original ("Color fav") sigue siendo la referencia
-        # para leer la celda.
+        # visible; renombrar el label NO cambia source_column: la columna original
+        # ("Color fav") se conserva como referencia (de dónde vino el dato).
         text = 'Dueño,Teléfono,Mascota,Especie,Color fav\nJuan,8112345678,Max,Perro,Rojo\n'
         pid = self._upload(text)
         self._set_mapping(pid, mapping={
@@ -398,7 +415,8 @@ class ImportApiTests(TestCase):
         })
         self.client.post(f'/api/imports/{pid}/commit/', format='json')
         pet = Pet.objects.for_organization(self.org).get(name='Max')
-        self.assertEqual(pet.extra_data, [{'label': 'Color favorito', 'value': 'Rojo'}])
+        # label renombrado, pero source_column = la columna original del archivo.
+        _assert_extra(self, pet.extra_data, [('Color favorito', 'Rojo', 'Color fav')])
 
     def test_extra_data_value_truncated_to_500(self):
         long_val = 'x' * 600
@@ -423,7 +441,33 @@ class ImportApiTests(TestCase):
         pet = Pet.objects.for_organization(self.org).get(name='Max')
         res = self.client.get(f'/api/pets/{pet.public_id}/')
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.data['extra_data'], [{'label': 'Nota', 'value': 'hola'}])
+        _assert_extra(self, res.data['extra_data'], [('Nota', 'hola', 'Nota')])
+
+    def test_extra_data_is_read_only_via_pet_patch(self):
+        # extra_data lo escribe SOLO el importador: la edición manual de la ficha
+        # no puede modificarlo (read_only en el serializer). PATCH lo ignora.
+        text = 'Dueño,Teléfono,Mascota,Especie,Nota\nJuan,8112345678,Max,Perro,hola\n'
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species', 'Nota': 'pet.extra',
+        })
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        pet = Pet.objects.for_organization(self.org).get(name='Max')
+        # PATCH válido de la ficha (el front siempre manda owner) intentando colar
+        # extra_data → el serializer lo ignora (read_only): no se puede editar.
+        res = self.client.patch(
+            f'/api/pets/{pet.public_id}/',
+            {
+                'name': 'Max', 'species': 'canino',
+                'owner': {'name': 'Juan', 'phone': '8112345678'},
+                'extra_data': [{'label': 'hackeado', 'value': 'x'}],
+            },
+            format='json',
+        )
+        self.assertEqual(res.status_code, 200, res.data)
+        pet.refresh_from_db()
+        _assert_extra(self, pet.extra_data, [('Nota', 'hola', 'Nota')])
 
     def test_non_admin_forbidden(self):
         roles = _seed_roles(self.org)

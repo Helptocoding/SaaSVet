@@ -17,6 +17,7 @@ Reglas de negocio (entity_type=owner_pet), ver docs/project_import_sprint.md §6
 import re
 
 from django.db import transaction
+from django.utils import timezone
 
 from apps.patients.models import Owner, Pet
 from apps.patients.serializers import NAME_REGEX
@@ -58,18 +59,40 @@ def _spec_label(spec, header):
     return header.strip()[:_EXTRA_LABEL_MAX]
 
 
+def _extra_entry(spec, header, value, imported_at):
+    """Una entrada de dato del sistema anterior (Fase D, decisión final PO).
+
+    Forma: {label, value, source_column, imported_at}.
+      - label:         nombre visible elegido durante la importación (o el header).
+      - value:         valor importado (truncado).
+      - source_column: nombre ORIGINAL de la columna del Excel/CSV — NO se pierde
+                       aunque el usuario renombre el label (permite saber de dónde
+                       vino el dato si se decide promoverlo a feature oficial).
+      - imported_at:   fecha del proceso de importación (ISO). Solo al persistir.
+    """
+    entry = {
+        'label': _spec_label(spec, header),
+        'value': value[:_EXTRA_VALUE_MAX],
+        'source_column': header.strip()[:_EXTRA_LABEL_MAX],
+    }
+    if imported_at:
+        entry['imported_at'] = imported_at
+    return entry
+
+
 # ---------------------------------------------------------------------------
 # Proyección fila → dict por campo destino
 # ---------------------------------------------------------------------------
-def _project_row(columns, mapping, row):
+def _project_row(columns, mapping, row, imported_at=None):
     """Aplica el mapping a una fila.
 
     Devuelve (data, owner_extra, pet_extra):
       - data: { campo_destino_del_sistema: valor }  (1:1)
-      - owner_extra / pet_extra: [ {label, value}, ... ] para owner.extra/pet.extra
-        (Fase D). Se itera en ORDEN DE COLUMNA para preservar el orden original;
-        labels repetidos conviven (lista, no dict). Caps: máx 50 entradas/registro,
-        value truncado a 500 chars.
+      - owner_extra / pet_extra: [ {label, value, source_column[, imported_at]}, … ]
+        para owner.extra/pet.extra (Fase D, datos del sistema anterior). Se itera en
+        ORDEN DE COLUMNA para preservar el orden original; labels repetidos conviven
+        (lista, no dict). Caps: máx 50 entradas/registro, value truncado a 500 chars.
+        `imported_at` solo se incluye al persistir (commit), no en el dry-run.
     mapping = { header: campo_destino }. Columnas no mapeadas se ignoran.
     """
     data = {}
@@ -87,9 +110,9 @@ def _project_row(columns, mapping, row):
             continue
         value = (row[idx] or '').strip()
         if target == 'owner.extra':
-            owner_extra.append({'label': _spec_label(spec, header), 'value': value[:_EXTRA_VALUE_MAX]})
+            owner_extra.append(_extra_entry(spec, header, value, imported_at))
         elif target == 'pet.extra':
-            pet_extra.append({'label': _spec_label(spec, header), 'value': value[:_EXTRA_VALUE_MAX]})
+            pet_extra.append(_extra_entry(spec, header, value, imported_at))
         else:
             data[target] = value
     return data, owner_extra[:_EXTRA_MAX_ENTRIES], pet_extra[:_EXTRA_MAX_ENTRIES]
@@ -361,10 +384,13 @@ def commit_job(job):
     owners_by_phone = {}        # phone -> Owner
     owners_by_name = {}         # norm_name -> Owner (phoneless, within-file)
     seen_pet_keys = set()       # (owner.pk, norm_name, species)
+    # Una sola marca de tiempo para todo el job: identifica el proceso de
+    # importación que originó cada dato del sistema anterior.
+    imported_at = timezone.now().isoformat()
 
     with transaction.atomic():
         for i, row in enumerate(job.rows, start=1):
-            data, owner_extra, pet_extra = _project_row(columns, job.mapping, row)
+            data, owner_extra, pet_extra = _project_row(columns, job.mapping, row, imported_at)
             clean, errors, warnings = clean_owner_pet_row(data)
             for w in warnings:
                 result['warnings'].append({'row': i, **w})
