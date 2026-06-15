@@ -55,4 +55,19 @@ describe("UploadStep — validación de archivo", () => {
         expect(screen.getByText("clientes.csv")).toBeInTheDocument();
         expect(toast.error).not.toHaveBeenCalled();
     });
+
+    it("la X quita el archivo seleccionado", () => {
+        const onUpload = vi.fn();
+        const { container } = render(<UploadStep onUpload={onUpload} uploading={false} />);
+
+        fireEvent.change(fileInput(container), {
+            target: { files: [fileOfSize("clientes.csv", 2048)] },
+        });
+        expect(screen.getByText("clientes.csv")).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /quitar archivo/i }));
+
+        expect(screen.queryByText("clientes.csv")).not.toBeInTheDocument();
+        expect(onUpload).not.toHaveBeenCalled();
+    });
 });

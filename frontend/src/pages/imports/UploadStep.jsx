@@ -48,6 +48,13 @@ const UploadStep = ({ onUpload, uploading }) => {
         pickFile(e.dataTransfer.files?.[0]);
     };
 
+    const clearFile = () => {
+        setFile(null);
+        // Resetear el input para poder re-seleccionar el MISMO archivo (sin reset,
+        // onChange no dispara si eliges el mismo nombre otra vez).
+        if (inputRef.current) inputRef.current.value = "";
+    };
+
     const handleSubmit = () => {
         if (!file) { toast.error("Selecciona un archivo primero."); return; }
         onUpload(file);
@@ -96,6 +103,16 @@ const UploadStep = ({ onUpload, uploading }) => {
                         <div className={s.fileName}>{file.name}</div>
                         <div className={s.fileMeta}>{formatSize(file.size)}</div>
                     </div>
+                    <button
+                        type="button"
+                        className={s.fileRemove}
+                        onClick={clearFile}
+                        disabled={uploading}
+                        aria-label="Quitar archivo"
+                        title="Quitar archivo"
+                    >
+                        <Icon.X s={14} />
+                    </button>
                 </div>
             )}
 
