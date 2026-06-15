@@ -4,6 +4,7 @@ import { getPet } from "../api/pets";
 import { getMedicalRecords, getMedicalRecord } from "../api/medicalRecords";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import ImportedDataSection from "../components/ImportedDataSection";
 import api from "../api/client";
 
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
@@ -163,6 +164,7 @@ const PetDetail = () => {
                                 <span className="info-row-value">{value}</span>
                             </div>
                         ))}
+                        <ImportedDataSection items={pet.extra_data} />
                     </div>
                     <div className="card">
                         <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Propietario</p>
@@ -174,6 +176,7 @@ const PetDetail = () => {
                             <span className="info-row-label">Teléfono</span>
                             <span className="info-row-value">{pet.owner?.phone || "—"}</span>
                         </div>
+                        <ImportedDataSection items={pet.owner?.extra_data} />
                     </div>
                 </div>
             )}
