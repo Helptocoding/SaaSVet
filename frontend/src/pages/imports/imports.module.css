@@ -115,25 +115,61 @@
 .missingBox ul { margin: 6px 0 0; padding-left: 18px; }
 .missingBox li { margin-bottom: 2px; }
 
-/* ── Mapper rediseñado (Fase D): tarjeta por columna ────────── */
-.colList { display: flex; flex-direction: column; gap: 10px; }
-.colCard {
+/* ── Mapper rediseñado (Fase D): revisar excepciones ────────── */
+.summaryReady { color: var(--c-success-text); font-weight: 600; }
+.summaryWarn { color: var(--c-warning-text); font-weight: 600; }
+.sectionLabel {
+  font-size: 11.5px; font-weight: 700; color: var(--c-text-3);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;
+}
+
+/* Card de columna pendiente — protagonista */
+.exceptionCard {
+  border: 1px solid var(--c-warning-border);
+  background: var(--c-warning-bg);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+}
+.exceptionName { font-weight: 700; font-size: 14px; color: var(--c-text); margin-bottom: 4px; }
+.optList { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 6px; }
+.optBtn {
+  text-align: left; font-size: 13.5px; padding: 10px 14px;
+  border: 1px solid var(--c-border); border-radius: var(--r-md);
+  background: var(--c-surface); color: var(--c-text); cursor: pointer;
+  transition: border-color var(--t), background var(--t);
+}
+.optBtn:hover:not(:disabled) { border-color: var(--c-primary); background: var(--c-subtle); }
+.optBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sysLink {
+  font-size: 12.5px; background: none; border: none; padding: 4px 0;
+  color: var(--c-primary); cursor: pointer; text-align: left;
+}
+.sysLink:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Sección compacta de reconocidas */
+.readyBlock {
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   background: var(--c-surface);
-  padding: 14px 16px;
-  box-shadow: var(--shadow-xs);
+  overflow: hidden;
 }
-.colCardPending { border-color: var(--c-warning-border); background: var(--c-warning-bg); }
-.colHead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.colName { font-weight: 600; font-size: 13.5px; color: var(--c-text); }
-.colSample {
-  font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px;
+.readyToggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--c-subtle); border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--c-text);
 }
-.colDecided { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.colOk { font-size: 13px; color: var(--c-success-text); }
-.colMuted { font-size: 13px; color: var(--c-text-3); font-style: italic; }
+.readyToggle:hover { background: var(--c-border); }
+.readyChevron { font-size: 10px; color: var(--c-text-3); }
+.readyList { display: flex; flex-direction: column; }
+.readyRow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-top: 1px solid var(--c-border); font-size: 13px;
+}
+.readyCol { font-weight: 600; color: var(--c-text); min-width: 120px; }
+.readyArrow { color: var(--c-text-3); }
+.readyDest { color: var(--c-text-2); flex: 1; }
+.readyEditing { padding: 14px 16px; border-top: 1px solid var(--c-border); }
 
 .colPicker { display: flex; flex-direction: column; gap: 10px; }
 .colQuestion { font-weight: 600; font-size: 13.5px; color: var(--c-text); }

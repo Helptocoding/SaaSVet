@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import s from "./imports.module.css";
 
-// Estados posibles de una columna:
+// Estados de una columna:
 const PENDING = "__pending__";   // desconocida, sin decidir → bloquea continuar
-const NO_IMPORT = "";            // "no necesito esta columna"
+const NO_IMPORT = "";            // "no importar esta columna"
 const EXTRA_OWNER = "owner.extra";
 const EXTRA_PET = "pet.extra";
 
@@ -14,7 +14,7 @@ function groupSystemFields(fieldCatalog) {
     const groups = [];
     const byName = new Map();
     for (const f of fieldCatalog) {
-        if (f.is_extra) continue;            // los *.extra no van en el picker del sistema
+        if (f.is_extra) continue;
         const name = f.group || "Otros";
         if (!byName.has(name)) {
             const bucket = { name, fields: [] };
@@ -26,13 +26,12 @@ function groupSystemFields(fieldCatalog) {
     return groups;
 }
 
-/* Paso 2 — Relacionar columnas (rediseño Fase D, lenguaje humano).
-   - Columna RECONOCIDA (el sistema sugirió un campo) → confirmada + "Cambiar".
-   - Columna DESCONOCIDA → "¿Qué hacemos con «X»?" con opciones claras; queda
-     "pendiente de decidir" y BLOQUEA continuar hasta que el usuario elija (por
-     consentimiento, para no meter "Facebook" en la mascota por inercia).
-   - "Cambiar" / decidir abre un picker COMPACTO con búsqueda (no el select gigante)
-     + guardar como dato del cliente / de la mascota / no importar. */
+/* Paso 2 — Revisar excepciones (Fase D, enfoque "el sistema ya hizo el trabajo").
+   - Las columnas reconocidas NO son protagonistas: van en una sección compacta
+     colapsable ("✓ N columnas listas"); solo se tocan con "Modificar".
+   - Las columnas DESCONOCIDAS son las protagonistas: una card por cada una que
+     necesita revisión, con pregunta humana y 3 opciones. Bloquean continuar hasta
+     decidir. El backend (mapping) no cambia. */
 const MappingStep = ({
     sourceColumns = [],
     sampleRows = [],
@@ -57,7 +56,6 @@ const MappingStep = ({
         [fieldCatalog]
     );
 
-    // Semilla: columna con sugerencia/decisión previa → ese valor; sin nada → PENDING.
     const [mapping, setMapping] = useState(() => {
         const seed = {};
         for (const col of sourceColumns) {
@@ -66,11 +64,12 @@ const MappingStep = ({
         }
         return seed;
     });
-    const [editing, setEditing] = useState(() => new Set());  // columnas expandidas
-    const [search, setSearch] = useState({});                 // texto de búsqueda por columna
+    const [readyOpen, setReadyOpen] = useState(false);   // sección de reconocidas
+    const [editing, setEditing] = useState(() => new Set());      // reconocidas en "Modificar"
+    const [sysOpen, setSysOpen] = useState(() => new Set());      // pendientes mostrando picker del sistema
+    const [search, setSearch] = useState({});
 
     const isSystem = (v) => systemKeys.has(v);
-
     const assignedSystem = useMemo(
         () => new Set(Object.values(mapping).filter(isSystem)),
         [mapping]  // eslint-disable-line react-hooks/exhaustive-deps
@@ -79,11 +78,15 @@ const MappingStep = ({
     const decide = (col, value) => {
         setMapping(prev => ({ ...prev, [col]: value }));
         setEditing(prev => { const n = new Set(prev); n.delete(col); return n; });
+        setSysOpen(prev => { const n = new Set(prev); n.delete(col); return n; });
     };
     const openEdit = (col) => setEditing(prev => new Set(prev).add(col));
+    const toggleSys = (col) => setSysOpen(prev => {
+        const n = new Set(prev); n.has(col) ? n.delete(col) : n.add(col); return n;
+    });
 
     const pendingCols = sourceColumns.filter(c => mapping[c] === PENDING);
-    const recognizedCount = sourceColumns.filter(c => isSystem(mapping[c])).length;
+    const readyCols = sourceColumns.filter(c => mapping[c] !== PENDING);
     const missingRequired = requiredKeys.filter(k => !assignedSystem.has(k));
     const canContinue = pendingCols.length === 0 && missingRequired.length === 0 && !busy;
 
@@ -97,9 +100,14 @@ const MappingStep = ({
         return vals.length ? vals.join(" · ") : "—";
     };
 
+    const destLabel = (v) => {
+        if (isSystem(v)) return labelByKey[v];
+        if (v === EXTRA_OWNER) return "Dato del cliente";
+        if (v === EXTRA_PET) return "Dato de la mascota";
+        return "No se importa";
+    };
+
     const handleContinue = () => {
-        // Enviar toda columna decidida (incluye "" = no importar y los *.extra);
-        // PENDING nunca llega (continuar está bloqueado).
         const clean = {};
         for (const [col, v] of Object.entries(mapping)) {
             if (v === PENDING) continue;
@@ -108,13 +116,12 @@ const MappingStep = ({
         onContinue(clean);
     };
 
-    const renderPicker = (col, current) => {
+    // Picker de campos del sistema (búsqueda + botones agrupados). Reusado por
+    // "Modificar" y por la opción secundaria de las cards pendientes.
+    const systemPicker = (col, current) => {
         const q = search[col] || "";
         return (
             <div className={s.colPicker}>
-                {current === PENDING && (
-                    <p className={s.colQuestion}>¿Qué hacemos con «{col}»?</p>
-                )}
                 <input
                     className="select-input"
                     placeholder="Buscar un campo: nombre, teléfono, especie…"
@@ -149,57 +156,68 @@ const MappingStep = ({
                         </div>
                     );
                 })}
-                <div className={s.pickerExtra}>
-                    <span className={s.pickerOr}>o guárdala como información del sistema anterior:</span>
-                    <div className={s.pickerBtns}>
-                        <button
-                            type="button"
-                            className={`${s.pickerBtn} ${current === EXTRA_OWNER ? s.pickerBtnActive : ""}`}
-                            onClick={() => decide(col, EXTRA_OWNER)}
-                            disabled={busy}
-                        >
-                            Guardar como dato del cliente
-                        </button>
-                        <button
-                            type="button"
-                            className={`${s.pickerBtn} ${current === EXTRA_PET ? s.pickerBtnActive : ""}`}
-                            onClick={() => decide(col, EXTRA_PET)}
-                            disabled={busy}
-                        >
-                            Guardar como dato de la mascota
-                        </button>
-                        <button
-                            type="button"
-                            className={s.pickerBtnGhost}
-                            onClick={() => decide(col, NO_IMPORT)}
-                            disabled={busy}
-                        >
-                            No necesito esta columna
-                        </button>
-                    </div>
-                </div>
             </div>
         );
     };
 
-    const renderDecided = (col, v) => {
-        let text;
-        let muted = false;
-        if (isSystem(v)) text = <>✓ Se importará como <strong>«{labelByKey[v]}»</strong></>;
-        else if (v === EXTRA_OWNER) text = <>Se guardará como dato del cliente</>;
-        else if (v === EXTRA_PET) text = <>Se guardará como dato de la mascota</>;
-        else { text = "No se importará"; muted = true; }
+    // Card de columna PENDIENTE — protagonista.
+    const exceptionCard = (col) => {
+        const idx = sourceColumns.indexOf(col);
         return (
-            <div className={s.colDecided}>
-                <span className={muted ? s.colMuted : s.colOk}>{text}</span>
+            <div key={col} className={s.exceptionCard}>
+                <p className={s.exceptionName}>No reconocimos «{col}»</p>
+                <p className={s.colSample}>Ejemplos: {samplePreview(idx)}</p>
+                <p className={s.colQuestion}>¿Qué contiene esta columna?</p>
+                <div className={s.optList}>
+                    <button type="button" className={s.optBtn} onClick={() => decide(col, EXTRA_OWNER)} disabled={busy}>
+                        Guardarlo como dato del cliente
+                    </button>
+                    <button type="button" className={s.optBtn} onClick={() => decide(col, EXTRA_PET)} disabled={busy}>
+                        Guardarlo como dato de la mascota
+                    </button>
+                    <button type="button" className={s.optBtn} onClick={() => decide(col, NO_IMPORT)} disabled={busy}>
+                        No importar esta columna
+                    </button>
+                </div>
+                <button type="button" className={s.sysLink} onClick={() => toggleSys(col)} disabled={busy}>
+                    {sysOpen.has(col) ? "Ocultar campos del sistema" : "¿Es un campo del sistema? (nombre, teléfono…)"}
+                </button>
+                {sysOpen.has(col) && systemPicker(col, mapping[col])}
+            </div>
+        );
+    };
+
+    // Fila de columna RECONOCIDA dentro de la sección colapsable.
+    const readyRow = (col) => {
+        if (editing.has(col)) {
+            return (
+                <div key={col} className={s.readyEditing}>
+                    <p className={s.colQuestion}>Modificar «{col}»</p>
+                    {systemPicker(col, mapping[col])}
+                    <div className={s.pickerExtra}>
+                        <span className={s.pickerOr}>o guárdala como información del sistema anterior:</span>
+                        <div className={s.pickerBtns}>
+                            <button type="button" className={`${s.pickerBtn} ${mapping[col] === EXTRA_OWNER ? s.pickerBtnActive : ""}`} onClick={() => decide(col, EXTRA_OWNER)} disabled={busy}>Dato del cliente</button>
+                            <button type="button" className={`${s.pickerBtn} ${mapping[col] === EXTRA_PET ? s.pickerBtnActive : ""}`} onClick={() => decide(col, EXTRA_PET)} disabled={busy}>Dato de la mascota</button>
+                            <button type="button" className={s.pickerBtnGhost} onClick={() => decide(col, NO_IMPORT)} disabled={busy}>No importar</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div key={col} className={s.readyRow}>
+                <span className={s.readyCol}>{col}</span>
+                <span className={s.readyArrow}>→</span>
+                <span className={s.readyDest}>{destLabel(mapping[col])}</span>
                 <button
                     type="button"
                     className="btn btn-secondary btn-xs"
                     onClick={() => openEdit(col)}
                     disabled={busy}
-                    aria-label={`Cambiar columna ${col}`}
+                    aria-label={`Modificar columna ${col}`}
                 >
-                    Cambiar
+                    Modificar
                 </button>
             </div>
         );
@@ -208,39 +226,41 @@ const MappingStep = ({
     return (
         <div>
             <div className="card" style={{ marginBottom: 16, padding: "16px 20px" }}>
-                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>
-                    Revisa qué hacer con cada columna
+                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+                    {sourceColumns.length} columnas detectadas
                 </p>
-                <p style={{ fontSize: 12.5, color: "var(--c-text-2)" }}>
-                    {sourceColumns.length} columnas · {recognizedCount} reconocidas
-                    {pendingCols.length > 0 && <> · <strong>{pendingCols.length} por decidir</strong></>}
+                <p style={{ fontSize: 13, color: "var(--c-text-2)" }}>
+                    <span className={s.summaryReady}>✓ {readyCols.length} listas</span>
+                    {pendingCols.length > 0 && (
+                        <span className={s.summaryWarn}> · ⚠ {pendingCols.length} necesitan revisión</span>
+                    )}
                 </p>
             </div>
 
-            <div className={s.colList}>
-                {sourceColumns.map((col, idx) => {
-                    const v = mapping[col];
-                    const expanded = v === PENDING || editing.has(col);
-                    return (
-                        <div key={col} className={`${s.colCard} ${v === PENDING ? s.colCardPending : ""}`}>
-                            <div className={s.colHead}>
-                                <span className={s.colName}>{col}</span>
-                                <span className={s.colSample} title={samplePreview(idx)}>
-                                    ej: {samplePreview(idx)}
-                                </span>
-                            </div>
-                            {expanded ? renderPicker(col, v) : renderDecided(col, v)}
-                        </div>
-                    );
-                })}
-            </div>
-
+            {/* Excepciones primero — lo único que requiere acción. */}
             {pendingCols.length > 0 && (
-                <div className={s.missingBox}>
-                    Hay {pendingCols.length === 1 ? "una columna" : `${pendingCols.length} columnas`} por
-                    decidir. Elige qué hacer con cada una para continuar.
+                <div style={{ marginBottom: 14 }}>
+                    <p className={s.sectionLabel}>Necesitan tu revisión</p>
+                    {pendingCols.map(exceptionCard)}
                 </div>
             )}
+
+            {/* Reconocidas — compactas, colapsadas por defecto. */}
+            {readyCols.length > 0 && (
+                <div className={s.readyBlock}>
+                    <button
+                        type="button"
+                        className={s.readyToggle}
+                        onClick={() => setReadyOpen(o => !o)}
+                        aria-expanded={readyOpen}
+                    >
+                        <span>✓ {readyCols.length} columnas listas</span>
+                        <span className={s.readyChevron}>{readyOpen ? "▲" : "▼"}</span>
+                    </button>
+                    {readyOpen && <div className={s.readyList}>{readyCols.map(readyRow)}</div>}
+                </div>
+            )}
+
             {pendingCols.length === 0 && missingRequired.length > 0 && (
                 <div className={s.missingBox}>
                     <strong>Para continuar</strong>, asigna {missingRequired.length === 1 ? "este campo obligatorio" : "estos campos obligatorios"}:
