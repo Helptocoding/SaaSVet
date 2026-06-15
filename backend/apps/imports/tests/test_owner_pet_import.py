@@ -321,6 +321,95 @@ class ImportApiTests(TestCase):
         self.assertEqual(result['error_rows'], 1)
         self.assertTrue(any(e['field'] == 'pet.legacy_id' and e['row'] == 2 for e in result['errors']))
 
+    def test_extra_data_imported_as_ordered_list(self):
+        # Columnas sin campo del sistema → owner.extra / pet.extra → lista ordenada
+        # de {label, value}, preservando el orden original de columnas.
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Fecha Alta,Observaciones,Facebook\n'
+            'Juan,8112345678,Max,Perro,2018-01-01,Nervioso,fb/juan\n'
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species',
+            'Fecha Alta': 'pet.extra', 'Observaciones': 'pet.extra',
+            'Facebook': 'owner.extra',
+        })
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+
+        pet = Pet.objects.for_organization(self.org).get(name='Max')
+        self.assertEqual(pet.extra_data, [
+            {'label': 'Fecha Alta', 'value': '2018-01-01'},
+            {'label': 'Observaciones', 'value': 'Nervioso'},
+        ])
+        owner = Owner.objects.for_organization(self.org).get(name='Juan')
+        self.assertEqual(owner.extra_data, [{'label': 'Facebook', 'value': 'fb/juan'}])
+
+    def test_extra_data_allows_repeated_labels(self):
+        # Dos columnas homónimas "Comentario" → dos entradas distintas (lista).
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Comentario,Comentario\n'
+            'Juan,8112345678,Max,Perro,A,B\n'
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species',
+            'Comentario': 'pet.extra',
+        })
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        pet = Pet.objects.for_organization(self.org).get(name='Max')
+        self.assertEqual(pet.extra_data, [
+            {'label': 'Comentario', 'value': 'A'},
+            {'label': 'Comentario', 'value': 'B'},
+        ])
+
+    def test_extra_targets_exempt_from_dedup_but_system_fields_not(self):
+        # Muchas columnas → pet.extra OK (sin error de "mismo campo").
+        text = 'Dueño,Teléfono,Mascota,Especie,C1,C2\nJuan,8112345678,Max,Perro,x,y\n'
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species',
+            'C1': 'pet.extra', 'C2': 'pet.extra',
+        })
+        res = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        self.assertEqual(res.data['result']['error_rows'], 0, res.data['result'])
+
+        # Pero dos columnas al MISMO campo del sistema sigue siendo error.
+        pid2 = self._upload('A,B,Mascota,Especie\nx,y,Max,Perro\n')
+        self._set_mapping(pid2, mapping={
+            'A': 'owner.name', 'B': 'owner.name',  # colisión 1:1
+            'Mascota': 'pet.name', 'Especie': 'pet.species',
+        })
+        res2 = self.client.post(f'/api/imports/{pid2}/validate/', format='json')
+        self.assertTrue(any(e['field'] == 'mapping' for e in res2.data['result']['errors']))
+
+    def test_extra_data_value_truncated_to_500(self):
+        long_val = 'x' * 600
+        text = f'Dueño,Teléfono,Mascota,Especie,Nota\nJuan,8112345678,Max,Perro,{long_val}\n'
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species', 'Nota': 'pet.extra',
+        })
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        pet = Pet.objects.for_organization(self.org).get(name='Max')
+        self.assertEqual(len(pet.extra_data[0]['value']), 500)
+
+    def test_extra_data_exposed_in_serializer(self):
+        text = 'Dueño,Teléfono,Mascota,Especie,Nota\nJuan,8112345678,Max,Perro,hola\n'
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species', 'Nota': 'pet.extra',
+        })
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        pet = Pet.objects.for_organization(self.org).get(name='Max')
+        res = self.client.get(f'/api/pets/{pet.public_id}/')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data['extra_data'], [{'label': 'Nota', 'value': 'hola'}])
+
     def test_non_admin_forbidden(self):
         roles = _seed_roles(self.org)
         assistant = User.objects.create_user(

@@ -335,3 +335,122 @@ desde Excel · visible/buscable si existe.
   auto-mapping de columnas ("Expediente", "No. Cliente", "Código" → `*.legacy_id`).
 - **Riesgo**: bajo. Aditivo y compatible. Toca 2 modelos core (`patients`) → registrar
   una mini-decisión (no ADR formal completo; calibración de governance del proyecto).
+
+---
+
+## Fase D — Información del sistema anterior (`extra_data`) + rediseño del mapeo
+
+**Estado**: PLAN aprobado por el PO (2026-06-15). Se implementa como **paquete
+completo** (backend + display + rediseño UX juntos). Razón del PO: implementar
+`extra_data` con el selector actual reforzaría un flujo ya comprobado como confuso.
+
+**Problema**: las clínicas traen columnas que no existen en el modelo (Fecha Alta,
+Última vacuna, Observaciones, Comentarios, Código antiguo). Hoy solo se pueden mapear a
+campos del sistema o ignorar → pérdida de información histórica.
+
+### D.1 Modelo / Backend
+
+- `Owner.extra_data` y `Pet.extra_data` = `JSONField(default=list, blank=True)`.
+- **Shape = LISTA de objetos** (ajuste #2 del PO), NO dict:
+  ```json
+  [ {"label": "Fecha Alta", "value": "2018"},
+    {"label": "Comentario", "value": "A"},
+    {"label": "Comentario", "value": "B"} ]
+  ```
+  Razón: es para **mostrar, no consultar** (ficha del paciente, no `WHERE extra_data->>...`).
+  La lista preserva el **orden original** de las columnas y admite **labels repetidos**
+  de forma natural (dos "Comentario" conviven sin inventar sufijos).
+- **Sin EAV, sin columnas dinámicas.** No indexado/queryable en v1 (solo display). Si en
+  el futuro hace falta buscar por "Última vacuna" → rediseño aparte (no v1).
+- **Caps** (anti-basura): máx. ~30 entradas por registro, `value` truncado a ~500 chars.
+- **Sin `bleach`** (ajuste #4 del PO): se guarda **texto plano**; React escapa al
+  renderizar y un Excel no debería generar HTML. No se procesa HTML ni se añade lógica de
+  sanitización extra (más allá de trim + cap de longitud).
+
+`normalization.FIELD_CATALOG` — dos targets nuevos (`isExtra: true`):
+- `owner.extra` → "Dato del cliente" · group Cliente · optional.
+- `pet.extra` → "Dato de la mascota" · group Mascota · optional.
+
+**Reglas de mapeo:**
+- Campos del sistema → **1:1** (`check_mapping` rechaza duplicados, como hoy).
+- `*.extra` → **muchas columnas → un target** (exentos del dedup); cada columna aporta una
+  entrada `{label, value}` a la lista del registro.
+- `""` = no importar.
+- **NO hay default automático a `pet.extra`** (ajuste #1 del PO — rechazado el default que
+  proponía el plan original). Una columna desconocida queda **"Pendiente de decidir"**: el
+  usuario elige explícitamente Cliente / Mascota / No importar. El frontend **bloquea
+  continuar** mientras haya columnas pendientes — no por ser obligatorias, sino por
+  **consentimiento** (evita meter "Facebook" o "Adeudo" en la mascota por inercia). El
+  backend no necesita estado "pendiente": el mapping que llega ya trae cada columna
+  decidida u omitida.
+
+`services` (validate/commit): columnas → `owner.extra`/`pet.extra` se acumulan en la lista
+`extra_data` del registro respectivo, en orden, con `{label: <columna>, value: <celda>}`
+(trim + cap). `validate` lo previsualiza sin escribir.
+
+`serializers`: exponer `extra_data` (read-only) en `OwnerSerializer` + `PetSerializer`.
+Edición manual de `extra_data` = fuera de v1.
+
+### D.2 Migración
+- `patients/00XX`: add `Owner.extra_data` + `Pet.extra_data` (`JSONField`, `default=list`,
+  `blank=True`). Aditiva, sin backfill, filas existentes → `[]`. Mismo perfil que 0013–0015.
+
+### D.3 Display en ficha (`petDetail.jsx`, tab "Información")
+- Nueva sección **"Datos importados"** (ajuste #3 del PO — NO "Información adicional", que
+  suena genérico; alterna "Información del sistema anterior"). Se renderiza como filas
+  label/value (`.info-row`) bajo la card de mascota (`pet.extra_data`) y bajo la de
+  propietario (`owner.extra_data` vía `pet.owner.extra_data`). Oculta si vacío.
+  ```
+  Información del sistema anterior
+    Fecha Alta       12/01/2017
+    Última vacuna    Rabia 2023
+    Notas            Nervioso
+  ```
+
+### D.4 Rediseño del mapeo (UX) — VA EN ESTE PAQUETE (ajuste #5 del PO)
+Eliminar el `<select>` gigante y el lenguaje técnico. Dos tratos visuales por columna:
+
+- **Columna reconocida** → línea confirmada + cambiar:
+  ```
+  Dueño   ✓ Se importará como «Nombre del cliente»   [ Cambiar ]
+  ```
+- **Columna desconocida** → pregunta con lenguaje humano (NO "Campo del sistema /
+  Información adicional / No importar"):
+  ```
+  ¿Qué hacemos con «Fecha Alta»?   (ej: 12/01/2017, 15/03/2019)
+    ○ Guardarlo como dato del cliente
+    ○ Guardarlo como dato de la mascota
+    ○ No necesito esta columna
+  ```
+- "Cambiar" en una reconocida abre el **picker compacto con búsqueda** (solo campos del
+  sistema, agrupados Cliente/Mascota) — reemplaza el select largo; también permite mandarla
+  a dato del cliente/mascota o no importar.
+- **Bloqueo de continuar**: si hay columnas desconocidas sin decidir (○ ninguna marcada) o
+  falta un campo obligatorio (Nombre del cliente / Nombre de la mascota).
+- Header de resumen: "8 columnas · 5 reconocidas · 3 por decidir".
+
+### D.5 Tests
+**Backend:**
+- Varias columnas → `extra_data` como **lista ordenada** de `{label, value}`; labels
+  repetidos conviven; orden preservado.
+- `*.extra` many-to-one permitido; campos del sistema siguen 1:1 (dedup).
+- Caps: nº de entradas + truncado de `value`; texto plano (sin procesar HTML).
+- `commit` persiste; `validate` previsualiza sin escribir.
+- Serializer expone `extra_data`.
+**Frontend:**
+- Mapeo: reconocida muestra confirmación + "Cambiar"; desconocida muestra la pregunta de
+  3 opciones; **continuar bloqueado** mientras haya desconocidas sin decidir.
+- petDetail: sección "Datos importados" visible con datos, oculta si vacío.
+
+### D.6 Riesgos
+- **Basura/PII** en `extra_data` → mitigado por el **consentimiento por columna** (no hay
+  default silencioso) + caps. Es decisión consciente del usuario.
+- **Texto plano sin bleach**: aceptable porque React escapa y el origen es Excel (texto).
+  Si algún día se renderiza `extra_data` como HTML (no previsto), reevaluar.
+- **No queryable** (solo display) — explícito.
+- **UX**: no reintroducir el dropdown gigante ni el lenguaje técnico por módulo.
+- Multi-tenant: `extra_data` viaja en el propio Owner/Pet de la org → sin superficie nueva.
+
+### D.7 Esfuerzo (1 dev, paquete completo)
+Backend+migración+serializers ~1.5 d · display ~0.5 d · rediseño mapeo+tests ~2.5–3 d →
+**~1 semana**. No se parte: el rediseño UX entra junto con `extra_data`.

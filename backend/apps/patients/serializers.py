@@ -20,8 +20,10 @@ def _validate_name(value, field_label="Nombre"):
 class OwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Owner
-        fields = ['id', 'public_id', 'name', 'phone', 'is_generic', 'legacy_id']
-        read_only_fields = ['public_id', 'is_generic']
+        fields = ['id', 'public_id', 'name', 'phone', 'is_generic', 'legacy_id', 'extra_data']
+        # extra_data = datos del sistema anterior (Fase D): read-only en la API
+        # (lo escribe el importador, no la edición manual).
+        read_only_fields = ['public_id', 'is_generic', 'extra_data']
         extra_kwargs = {
             'legacy_id': {'required': False, 'allow_blank': True},
         }
@@ -52,8 +54,9 @@ class PetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pet
-        fields = ['id', 'public_id', 'name', 'species', 'breed', 'birth_date', 'sex', 'color', 'owner', 'owner_id', 'legacy_id']
-        read_only_fields = ['public_id']
+        fields = ['id', 'public_id', 'name', 'species', 'breed', 'birth_date', 'sex', 'color', 'owner', 'owner_id', 'legacy_id', 'extra_data']
+        # extra_data = datos del sistema anterior (Fase D): read-only en la API.
+        read_only_fields = ['public_id', 'extra_data']
         extra_kwargs = {
             'legacy_id': {'required': False, 'allow_blank': True},
         }

@@ -93,6 +93,8 @@ FIELD_CATALOG = {
         {'key': 'owner.name', 'label': 'Nombre del cliente', 'group': 'Cliente', 'importance': 'required'},
         {'key': 'owner.phone', 'label': 'Teléfono del cliente', 'group': 'Cliente', 'importance': 'recommended'},
         {'key': 'owner.legacy_id', 'label': 'Nº de cliente anterior', 'group': 'Cliente', 'importance': 'optional'},
+        # Dato histórico del cliente sin campo propio (Fase D). many→1 permitido.
+        {'key': 'owner.extra', 'label': 'Dato del cliente', 'group': 'Cliente', 'importance': 'optional', 'is_extra': True},
         {'key': 'pet.name', 'label': 'Nombre de la mascota', 'group': 'Mascota', 'importance': 'required'},
         {'key': 'pet.species', 'label': 'Especie', 'group': 'Mascota', 'importance': 'recommended'},
         {'key': 'pet.breed', 'label': 'Raza', 'group': 'Mascota', 'importance': 'optional'},
@@ -100,12 +102,20 @@ FIELD_CATALOG = {
         {'key': 'pet.birth_date', 'label': 'Fecha de nacimiento', 'group': 'Mascota', 'importance': 'optional'},
         {'key': 'pet.color', 'label': 'Color', 'group': 'Mascota', 'importance': 'optional'},
         {'key': 'pet.legacy_id', 'label': 'Nº de expediente anterior', 'group': 'Mascota', 'importance': 'optional'},
+        # Dato histórico de la mascota sin campo propio (Fase D). many→1 permitido.
+        {'key': 'pet.extra', 'label': 'Dato de la mascota', 'group': 'Mascota', 'importance': 'optional', 'is_extra': True},
     ],
 }
 
 
 def required_fields(entity_type):
     return [f['key'] for f in FIELD_CATALOG.get(entity_type, []) if f.get('importance') == 'required']
+
+
+def extra_target_fields(entity_type):
+    """Keys destino que aceptan MUCHAS columnas → una lista (exentos del dedup 1:1):
+    owner.extra / pet.extra (Fase D, datos del sistema anterior)."""
+    return {f['key'] for f in FIELD_CATALOG.get(entity_type, []) if f.get('is_extra')}
 
 
 def field_label(entity_type, key):

@@ -20,6 +20,11 @@ class Owner(PublicIdMixin, OrganizationalModel):
     # default='' (NO null): muchos owners sin legacy conviven; el unique parcial
     # solo aplica cuando hay valor.
     legacy_id = models.CharField(max_length=64, blank=True, default='')
+    # Datos históricos importados del sistema viejo de la clínica (Sprint import
+    # Fase D). SOLO LECTURA / display — NO es el campo de notas operativas vivas
+    # (eso será otro campo en otra fase). Lista de {label, value} para preservar
+    # orden original y labels repetidos. Ver docs/project_import_sprint.md §Fase D.
+    extra_data = models.JSONField(default=list, blank=True)
 
     class Meta:
         indexes = [
@@ -64,6 +69,10 @@ class Pet(PublicIdMixin, OrganizationalModel):
     is_generic = models.BooleanField(default=False)
     # Sprint import: nº de expediente del sistema viejo. Ver Owner.legacy_id.
     legacy_id = models.CharField(max_length=64, blank=True, default='')
+    # Datos históricos importados (Sprint import Fase D). SOLO LECTURA / display.
+    # NO confundir con futuras notas operativas vivas del paciente (Pet.notes en
+    # otra fase). Lista de {label, value}. Ver docs/project_import_sprint.md §Fase D.
+    extra_data = models.JSONField(default=list, blank=True)
 
     owner = models.ForeignKey(
         Owner,

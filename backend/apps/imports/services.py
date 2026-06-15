@@ -23,6 +23,7 @@ from apps.patients.serializers import NAME_REGEX
 
 from .models import ImportJob
 from .normalization import (
+    extra_target_fields,
     normalize_species,
     normalize_sex,
     normalize_text,
@@ -32,26 +33,45 @@ from .normalization import (
 
 _PHONE_DIGITS = re.compile(r'\D')
 _LEGACY_MAX = 64
+# Datos del sistema anterior (Fase D): tope por registro y por valor (ajuste PO).
+_EXTRA_MAX_ENTRIES = 50
+_EXTRA_VALUE_MAX = 500
 
 
 # ---------------------------------------------------------------------------
 # Proyección fila → dict por campo destino
 # ---------------------------------------------------------------------------
 def _project_row(columns, mapping, row):
-    """Aplica el mapping a una fila → { campo_destino: valor }.
+    """Aplica el mapping a una fila.
 
+    Devuelve (data, owner_extra, pet_extra):
+      - data: { campo_destino_del_sistema: valor }  (1:1)
+      - owner_extra / pet_extra: [ {label, value}, ... ] para owner.extra/pet.extra
+        (Fase D). Se itera en ORDEN DE COLUMNA para preservar el orden original;
+        labels repetidos conviven (lista, no dict). Caps: máx 50 entradas/registro,
+        value truncado a 500 chars.
     mapping = { header: campo_destino }. Columnas no mapeadas se ignoran.
     """
-    index_by_header = {h: i for i, h in enumerate(columns)}
     data = {}
-    for header, target in mapping.items():
+    owner_extra = []
+    pet_extra = []
+    # Iterar por ÍNDICE real (no por nombre): si hay headers duplicados
+    # ("Comentario" ×2), cada columna lee SU celda → dos entradas distintas en la
+    # lista extra. El mapping se comparte por nombre (ambas → el mismo target).
+    for idx, header in enumerate(columns):  # orden original de columnas
+        target = mapping.get(header)
         if not target:
             continue
-        idx = index_by_header.get(header)
-        if idx is None or idx >= len(row):
+        if idx >= len(row):
             continue
-        data[target] = (row[idx] or '').strip()
-    return data
+        value = (row[idx] or '').strip()
+        if target == 'owner.extra':
+            owner_extra.append({'label': header.strip(), 'value': value[:_EXTRA_VALUE_MAX]})
+        elif target == 'pet.extra':
+            pet_extra.append({'label': header.strip(), 'value': value[:_EXTRA_VALUE_MAX]})
+        else:
+            data[target] = value
+    return data, owner_extra[:_EXTRA_MAX_ENTRIES], pet_extra[:_EXTRA_MAX_ENTRIES]
 
 
 def _parse_birth_date(raw):
@@ -161,9 +181,11 @@ def check_mapping(job):
     unknown = sorted({t for t in assigned if t not in targets})
     if unknown:
         problems.append(f"Campos destino desconocidos: {', '.join(unknown)}.")
-    # Dos columnas distintas al mismo campo → pérdida silenciosa de datos
-    # (la última gana en _project_row). Rechazar explícitamente.
-    dupes = sorted({t for t in assigned if assigned.count(t) > 1})
+    # Dos columnas distintas al mismo campo del sistema → pérdida silenciosa de
+    # datos (la última gana). Rechazar. Los targets *.extra están EXENTOS: muchas
+    # columnas → una lista (Fase D, datos del sistema anterior).
+    extras = extra_target_fields(job.entity_type)
+    dupes = sorted({t for t in assigned if t not in extras and assigned.count(t) > 1})
     if dupes:
         problems.append(
             f"Hay columnas distintas asignadas al mismo campo: {', '.join(dupes)}. "
@@ -212,7 +234,7 @@ def validate_job(job):
     seen_pet_legacy = set()       # legacy_id de pets nuevos (within-file)
 
     for i, row in enumerate(job.rows, start=1):
-        data = _project_row(columns, job.mapping, row)
+        data, _owner_extra, _pet_extra = _project_row(columns, job.mapping, row)
         clean, errors, warnings = clean_owner_pet_row(data)
         for w in warnings:
             result['warnings'].append({'row': i, **w})
@@ -320,7 +342,7 @@ def commit_job(job):
 
     with transaction.atomic():
         for i, row in enumerate(job.rows, start=1):
-            data = _project_row(columns, job.mapping, row)
+            data, owner_extra, pet_extra = _project_row(columns, job.mapping, row)
             clean, errors, warnings = clean_owner_pet_row(data)
             for w in warnings:
                 result['warnings'].append({'row': i, **w})
@@ -336,10 +358,13 @@ def commit_job(job):
             # siguiente fila que lo reusa perdería su pet (BLOCKER del review).
             # _resolve_owner solo cachea tras un save() exitoso; si el save lanza,
             # el savepoint revierte y el except evita cachear.
+            # owner_extra se aplica SOLO al crear (la 1ª fila gana); un owner
+            # reusado conserva su extra_data de creación.
             try:
                 with transaction.atomic():
                     owner, owner_status = _resolve_owner(
                         org, clean, owners_by_phone, owners_by_name,
+                        owner_extra=owner_extra,
                     )
             except Exception as exc:  # noqa: BLE001 — fila aislada por savepoint
                 result['error_rows'] += 1
@@ -371,6 +396,7 @@ def commit_job(job):
                         sex=clean['pet_sex'],
                         birth_date=clean['pet_birth_date'] or None,
                         legacy_id=clean['pet_legacy_id'],
+                        extra_data=pet_extra,
                     )
                 seen_pet_keys.add(pet_key)
                 result['created_pets'] += 1
@@ -383,11 +409,12 @@ def commit_job(job):
     return result
 
 
-def _resolve_owner(org, clean, owners_by_phone, owners_by_name):
+def _resolve_owner(org, clean, owners_by_phone, owners_by_name, owner_extra=None):
     """Devuelve (Owner, status) donde status ∈ {'created', 'reused'}.
 
     'created' la primera vez que se materializa un owner nuevo; 'reused' si ya
     existía en DB o si una fila previa de este mismo archivo ya lo resolvió.
+    owner_extra solo se persiste al crear (no se mezcla en owners reusados).
     """
     phone = clean['owner_phone']
     if phone:
@@ -399,7 +426,7 @@ def _resolve_owner(org, clean, owners_by_phone, owners_by_name):
         if existing:
             owners_by_phone[phone] = existing
             return existing, 'reused'
-        owner = _create_owner(org, clean, phone=phone)
+        owner = _create_owner(org, clean, phone=phone, owner_extra=owner_extra)
         owners_by_phone[phone] = owner
         return owner, 'created'
 
@@ -407,17 +434,18 @@ def _resolve_owner(org, clean, owners_by_phone, owners_by_name):
     name_key = normalize_text(clean['owner_name'])
     if name_key in owners_by_name:
         return owners_by_name[name_key], 'reused'
-    owner = _create_owner(org, clean, phone='')
+    owner = _create_owner(org, clean, phone='', owner_extra=owner_extra)
     owners_by_name[name_key] = owner
     return owner, 'created'
 
 
-def _create_owner(org, clean, *, phone):
+def _create_owner(org, clean, *, phone, owner_extra=None):
     owner = Owner(
         organization=org,
         name=clean['owner_name'],
         phone=phone,
         legacy_id=clean['owner_legacy_id'],
+        extra_data=owner_extra or [],
     )
     owner.save()  # OrganizationalModel.save() → full_clean()
     return owner
