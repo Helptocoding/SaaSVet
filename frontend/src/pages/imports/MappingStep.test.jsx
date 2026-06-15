@@ -56,24 +56,35 @@ describe("MappingStep — header + reconocidas compactas", () => {
 });
 
 describe("MappingStep — tarjeta de excepción", () => {
-    it("muestra label, ejemplos y selector de 3 opciones", () => {
+    it("usa lenguaje histórico (no 'campo personalizado' / 'dato adicional')", () => {
+        renderStep();
+        // Explicación de migración una sola vez arriba.
+        expect(screen.getByText(/referencia del sistema anterior/i)).toBeInTheDocument();
+        // Opción de relacionar con un campo existente.
+        expect(btn(/Relacionar con un campo existente/i)).toBeInTheDocument();
+        // Nunca lenguaje que sugiera campo vivo/editable.
+        expect(screen.queryByText(/campo personalizado/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/dato adicional/i)).not.toBeInTheDocument();
+    });
+
+    it("muestra label, ejemplos y selector histórico de 3 opciones", () => {
         renderStep();
         expect(screen.getByText("Color fav")).toBeInTheDocument();
         expect(screen.getByText(/Ejemplos:/)).toHaveTextContent("Rojo");
-        expect(btn("Cliente")).toBeInTheDocument();
-        expect(btn("Mascota")).toBeInTheDocument();
+        expect(btn("Histórico cliente")).toBeInTheDocument();
+        expect(btn("Histórico mascota")).toBeInTheDocument();
         expect(btn("No importar")).toBeInTheDocument();
     });
 
     it("el selector es cambiable y nunca se oculta", async () => {
         const user = userEvent.setup();
         renderStep();
-        await user.click(btn("Cliente"));
-        expect(btn("Cliente")).toHaveAttribute("aria-pressed", "true");
-        // cambiar de opinión: ahora Mascota
-        await user.click(btn("Mascota"));
-        expect(btn("Mascota")).toHaveAttribute("aria-pressed", "true");
-        expect(btn("Cliente")).toHaveAttribute("aria-pressed", "false");
+        await user.click(btn("Histórico cliente"));
+        expect(btn("Histórico cliente")).toHaveAttribute("aria-pressed", "true");
+        // cambiar de opinión: ahora la mascota
+        await user.click(btn("Histórico mascota"));
+        expect(btn("Histórico mascota")).toHaveAttribute("aria-pressed", "true");
+        expect(btn("Histórico cliente")).toHaveAttribute("aria-pressed", "false");
         // las 3 opciones siguen visibles
         expect(btn("No importar")).toBeInTheDocument();
     });
@@ -82,14 +93,14 @@ describe("MappingStep — tarjeta de excepción", () => {
         const user = userEvent.setup();
         renderStep();
         expect(continueBtn()).toBeDisabled();
-        await user.click(btn("Mascota"));
+        await user.click(btn("Histórico mascota"));
         expect(continueBtn()).toBeEnabled();
     });
 
     it("entrega el mapping con {target, label} para el dato extra", async () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
-        await user.click(btn("Mascota"));
+        await user.click(btn("Histórico mascota"));
         await user.click(continueBtn());
         expect(onContinue).toHaveBeenCalledWith({
             "Dueño": "owner.name",
@@ -107,7 +118,7 @@ describe("MappingStep — renombrar el dato", () => {
         const input = screen.getByLabelText(/Nombre del dato para Color fav/i);
         await user.clear(input);
         await user.type(input, "Color favorito");
-        await user.click(btn("Mascota"));
+        await user.click(btn("Histórico mascota"));
         await user.click(continueBtn());
         expect(onContinue).toHaveBeenCalledWith({
             "Dueño": "owner.name",

@@ -115,8 +115,8 @@ const MappingStep = ({
 
     const destLabel = (v) => {
         if (isSystem(v)) return labelByKey[v];
-        if (v === EXTRA_OWNER) return "Dato del cliente";
-        if (v === EXTRA_PET) return "Dato de la mascota";
+        if (v === EXTRA_OWNER) return "Histórico del cliente";
+        if (v === EXTRA_PET) return "Histórico de la mascota";
         return "No se importa";
     };
 
@@ -213,14 +213,14 @@ const MappingStep = ({
                     )}
                 </div>
                 <p className={s.exSample}>Ejemplos: {samplePreview(idx)}</p>
-                <p className={s.exGuardar}>Guardar como:</p>
+                <p className={s.exGuardar}>Conservar como:</p>
                 <div className={s.segGroup}>
-                    <button type="button" aria-pressed={v === EXTRA_OWNER} className={`${s.segBtn} ${v === EXTRA_OWNER ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Cliente</button>
-                    <button type="button" aria-pressed={v === EXTRA_PET} className={`${s.segBtn} ${v === EXTRA_PET ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Mascota</button>
+                    <button type="button" aria-pressed={v === EXTRA_OWNER} className={`${s.segBtn} ${v === EXTRA_OWNER ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Histórico cliente</button>
+                    <button type="button" aria-pressed={v === EXTRA_PET} className={`${s.segBtn} ${v === EXTRA_PET ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Histórico mascota</button>
                     <button type="button" aria-pressed={v === NO_IMPORT} className={`${s.segBtn} ${v === NO_IMPORT ? s.segBtnActive : ""}`} onClick={() => choose(col, NO_IMPORT)} disabled={busy}>No importar</button>
                 </div>
                 <button type="button" className={s.sysLink} onClick={() => toggleSys(col)} disabled={busy}>
-                    {sysOpen.has(col) ? "Ocultar campos del sistema" : "¿Es un campo del sistema?"}
+                    {sysOpen.has(col) ? "Ocultar campos del sistema" : "Relacionar con un campo existente"}
                 </button>
                 {sysOpen.has(col) && systemPicker(col, v)}
             </div>
@@ -234,10 +234,10 @@ const MappingStep = ({
                     <p className={s.colQuestion}>Modificar «{col}»</p>
                     {systemPicker(col, mapping[col])}
                     <div className={s.pickerExtra}>
-                        <span className={s.pickerOr}>o guárdala como información del sistema anterior:</span>
+                        <span className={s.pickerOr}>o consérvala como dato del sistema anterior:</span>
                         <div className={s.pickerBtns}>
-                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Dato del cliente</button>
-                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Dato de la mascota</button>
+                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Histórico del cliente</button>
+                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Histórico de la mascota</button>
                             <button type="button" className={s.pickerBtnGhost} onClick={() => choose(col, NO_IMPORT)} disabled={busy}>No importar</button>
                         </div>
                     </div>
@@ -278,7 +278,12 @@ const MappingStep = ({
 
             {exceptionCols.length > 0 && (
                 <div style={{ marginBottom: 14 }}>
-                    <p className={s.sectionLabel}>Otras columnas — elige qué hacer con cada una</p>
+                    <p className={s.sectionLabel}>Columnas sin un campo equivalente</p>
+                    <p className={s.exIntro}>
+                        No encontramos un campo del sistema para estas columnas. Puedes
+                        conservar la información como referencia del sistema anterior, o
+                        no importarla.
+                    </p>
                     <div className={s.exGrid}>{exceptionCols.map(exceptionCard)}</div>
                 </div>
             )}

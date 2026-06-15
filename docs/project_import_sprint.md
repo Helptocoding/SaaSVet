@@ -454,3 +454,39 @@ Eliminar el `<select>` gigante y el lenguaje técnico. Dos tratos visuales por c
 ### D.7 Esfuerzo (1 dev, paquete completo)
 Backend+migración+serializers ~1.5 d · display ~0.5 d · rediseño mapeo+tests ~2.5–3 d →
 **~1 semana**. No se parte: el rediseño UX entra junto con `extra_data`.
+
+### D.8 Decisión final de producto (2026-06-15) — `extra_data` = DATO HISTÓRICO
+
+Ajuste de producto sobre lo ya implementado (commits `06a2f7b`…`3bc7648`). **No** son
+custom fields, ni datos editables, ni extensiones dinámicas del modelo. Son **datos
+históricos importados de un sistema anterior**: referencia de migración, congelada.
+Si en el futuro muchas clínicas necesitan uno de esos datos → se promueve a **feature
+oficial** (modelo real, validación, formulario, permisos, writer, migración desde
+`extra_data`). NO crear ahora EAV / custom fields / formularios generados.
+
+**Cambio de shape** — cada entrada pasa de `{label, value}` a:
+```json
+[ {"label": "Veterinario anterior", "value": "Dr Luis",
+   "source_column": "Vet Fav", "imported_at": "2026-06-15T10:00:00+00:00"} ]
+```
+- `label` — nombre visible elegido durante la importación (renombrable).
+- `value` — valor importado (trim + cap 500).
+- `source_column` — nombre **ORIGINAL** de la columna del Excel/CSV. **Renombrar el
+  label NO lo cambia** → siempre se sabe de dónde vino el dato (clave para promover a
+  feature oficial después).
+- `imported_at` — fecha del proceso de importación (ISO, una sola marca por job).
+
+Reglas (binding): read-only tras importar · sin endpoints de edición · no editable
+desde la ficha (`read_only_fields` en ambos serializers) · NO usar en búsquedas /
+reportes / reglas de negocio (billing, analytics, caja **nunca** leen `extra_data`).
+
+**Lenguaje (mapeo + ficha) = migración, no campo vivo:**
+- Mapeo, columna sin equivalente: explicación "No encontramos un campo del sistema…
+  Puedes conservar la información como **referencia del sistema anterior**, o no
+  importarla." Selector por tarjeta: **Histórico cliente / Histórico mascota / No
+  importar** + enlace **"Relacionar con un campo existente"**. (Reemplaza el viejo
+  "Cliente/Mascota" + "¿Es un campo del sistema?".)
+- Ficha: encabezado **"Datos importados del sistema anterior" 🔒** + aviso "Estos datos
+  vienen de una migración y no se actualizan automáticamente". Oculto si vacío.
+
+Caps finales: 50 entradas/registro, value 500, label 120, source_column 120.
