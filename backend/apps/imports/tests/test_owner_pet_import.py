@@ -110,6 +110,31 @@ class ImportApiTests(TestCase):
         res = self.client.patch(f'/api/imports/{pid}/mapping/', {'mapping': mapping}, format='json')
         self.assertEqual(res.status_code, 200, res.data)
 
+    def test_upload_xlsx_parses(self):
+        # Path XLSX end-to-end (requiere openpyxl). El teléfono va como número en
+        # la celda → debe leerse "8112345678", no "8112345678.0".
+        import io
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.append(["Dueño", "Teléfono", "Mascota", "Especie"])
+        ws.append(["Juan Pérez", 8112345678, "Max", "Perro"])
+        buf = io.BytesIO()
+        wb.save(buf)
+        upload = SimpleUploadedFile(
+            "clientes.xlsx", buf.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        res = self.client.post(
+            '/api/imports/', {'entity_type': 'owner_pet', 'file': upload}, format='multipart',
+        )
+        self.assertEqual(res.status_code, 201, res.data)
+        job = ImportJob.objects.get(public_id=res.data['public_id'])
+        self.assertEqual(job.source_columns, ["Dueño", "Teléfono", "Mascota", "Especie"])
+        self.assertEqual(len(job.rows), 1)
+        self.assertEqual(job.rows[0][0], "Juan Pérez")
+        self.assertEqual(job.rows[0][1], "8112345678")
+
     def test_upload_parses_headers_and_suggests(self):
         pid = self._upload('Dueño,Teléfono,Mascota,Especie,Expediente\nJuan,8112345678,Max,Perro,00231\n')
         job = ImportJob.objects.get(public_id=pid)

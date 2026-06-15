@@ -103,8 +103,13 @@ def _parse_csv(data: bytes):
 def _parse_xlsx(data: bytes):
     try:
         from openpyxl import load_workbook
-    except ImportError:  # pragma: no cover
-        raise ImportParseError("Soporte de Excel no disponible (falta openpyxl).")
+    except ImportError:  # pragma: no cover — openpyxl va en requirements.txt
+        # Mensaje accionable para el usuario (no expone la dependencia interna):
+        # puede salir del paso convirtiendo su archivo a CSV.
+        raise ImportParseError(
+            "No pudimos procesar el archivo de Excel. Intenta de nuevo o "
+            "guárdalo como CSV y vuelve a subirlo."
+        )
     try:
         wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
     except Exception:
