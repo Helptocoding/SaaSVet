@@ -122,12 +122,17 @@ def clean_owner_pet_row(data):
         errors.append({'field': 'pet.name', 'message': 'El nombre de la mascota tiene caracteres no permitidos.'})
     clean['pet_name'] = pet_name
 
+    # Especie OPCIONAL en import (datos históricos): nunca bloquea. Si falta o no
+    # se reconoce → se importa como pendiente ('') con warning. NO se asigna una
+    # especie por defecto en masa. El alta manual sí la exige (PetSerializer).
     raw_species = (data.get('pet.species') or '').strip()
     species = normalize_species(raw_species)
     if not raw_species:
-        errors.append({'field': 'pet.species', 'message': 'La especie es requerida.'})
+        warnings.append({'field': 'pet.species', 'message': 'Mascota sin especie — se importará como pendiente.'})
+        species = ''
     elif species is None:
-        errors.append({'field': 'pet.species', 'message': f'Especie no reconocida: "{raw_species}".'})
+        warnings.append({'field': 'pet.species', 'message': f'Especie no reconocida ("{raw_species}") — se dejó pendiente.'})
+        species = ''
     clean['pet_species'] = species
 
     clean['pet_breed'] = (data.get('pet.breed') or '').strip()[:100]

@@ -7,9 +7,9 @@ import PreviewStep from "./PreviewStep";
 // advertencias. Se prueba el render observable a partir de un result dado.
 
 const FIELD_CATALOG = [
-    { key: "owner.name", label: "Cliente · Nombre", group: "Cliente", required: true },
-    { key: "owner.phone", label: "Cliente · Teléfono", group: "Cliente", required: false },
-    { key: "pet.species", label: "Mascota · Especie", group: "Mascota", required: true },
+    { key: "owner.name", label: "Nombre del cliente", group: "Cliente", importance: "required" },
+    { key: "owner.phone", label: "Teléfono del cliente", group: "Cliente", importance: "recommended" },
+    { key: "pet.species", label: "Especie", group: "Mascota", importance: "recommended" },
 ];
 
 const RESULT = {
@@ -76,7 +76,7 @@ describe("PreviewStep — errores y advertencias por fila", () => {
         expect(screen.getByText("#5")).toBeInTheDocument();
         expect(screen.getByText(/Especie no reconocida/)).toBeInTheDocument();
         // el campo se muestra con su label amistoso del catálogo
-        expect(screen.getAllByText("Mascota · Especie").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Especie").length).toBeGreaterThan(0);
 
         expect(screen.getByText("#9")).toBeInTheDocument();
         expect(screen.getByText(/caracteres no permitidos/)).toBeInTheDocument();

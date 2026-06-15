@@ -4,9 +4,16 @@ import s from "./imports.module.css";
 // Valor de <option> que significa "esta columna no se importa".
 const NONE = "";
 
-/* Agrupa el field_catalog por su `group` preservando el orden de aparición.
-   El backend ya entrega labels amistosos (incluido el de legacy_id, que NUNCA
-   se muestra como "legacy_id" sino como "Nº de expediente anterior"). */
+// Importancia del campo destino → etiqueta humana + clase de badge global.
+const IMPORTANCE = {
+    required: { label: "Obligatorio", cls: "badge-danger" },
+    recommended: { label: "Recomendado", cls: "badge-warning" },
+    optional: { label: "Opcional", cls: "badge-default" },
+};
+
+/* Agrupa el field_catalog por su `group` (Cliente / Mascota) preservando el
+   orden de aparición. El backend entrega labels humanos ("Nombre del cliente",
+   no "Cliente · Nombre"; legacy_id como "Nº de expediente anterior"). */
 function groupCatalog(fieldCatalog) {
     const groups = [];
     const byName = new Map();
@@ -22,11 +29,11 @@ function groupCatalog(fieldCatalog) {
     return groups;
 }
 
-/* Paso 2 — Mapeo columna → campo.
-   Una fila por cada columna del archivo; cada fila muestra el nombre de la
-   columna + sus primeros valores de muestra + un <select> con los campos del
-   catálogo agrupados. El padre (index.jsx) recibe el mapping final en onContinue
-   y se encarga del PATCH mapping + POST validate. */
+/* Paso 2 — Relaciona cada columna del archivo con un campo del sistema.
+   Una fila por columna: nombre + ejemplos + selector de campo (agrupado
+   Cliente/Mascota, con "No importar columna") + el tipo del campo elegido
+   (Obligatorio/Recomendado/Opcional). Solo Nombre del cliente y Nombre de la
+   mascota son obligatorios; el resto no bloquea la importación. */
 const MappingStep = ({
     sourceColumns = [],
     sampleRows = [],
@@ -36,7 +43,6 @@ const MappingStep = ({
     onBack,
     busy = false,
 }) => {
-    // mapping: { <sourceColumn>: <targetFieldKey> }. Pre-cargado con la sugerencia.
     const [mapping, setMapping] = useState(() => {
         const seed = {};
         for (const col of sourceColumns) {
@@ -47,7 +53,12 @@ const MappingStep = ({
 
     const groups = useMemo(() => groupCatalog(fieldCatalog), [fieldCatalog]);
 
-    // Labels por key, para mostrar el nombre amistoso del campo faltante.
+    const metaByKey = useMemo(() => {
+        const m = {};
+        for (const f of fieldCatalog) m[f.key] = f;
+        return m;
+    }, [fieldCatalog]);
+
     const labelByKey = useMemo(() => {
         const m = {};
         for (const f of fieldCatalog) m[f.key] = f.label;
@@ -55,20 +66,23 @@ const MappingStep = ({
     }, [fieldCatalog]);
 
     const requiredKeys = useMemo(
-        () => fieldCatalog.filter(f => f.required).map(f => f.key),
+        () => fieldCatalog.filter(f => f.importance === "required").map(f => f.key),
+        [fieldCatalog]
+    );
+    const recommendedKeys = useMemo(
+        () => fieldCatalog.filter(f => f.importance === "recommended").map(f => f.key),
         [fieldCatalog]
     );
 
-    // Conjunto de keys efectivamente asignadas a alguna columna.
     const assignedKeys = useMemo(
         () => new Set(Object.values(mapping).filter(Boolean)),
         [mapping]
     );
 
     const missingRequired = requiredKeys.filter(k => !assignedKeys.has(k));
+    const missingRecommended = recommendedKeys.filter(k => !assignedKeys.has(k));
     const canContinue = missingRequired.length === 0 && !busy;
 
-    // Muestra los primeros valores no vacíos de la columna (hasta 3).
     const samplePreview = (colIndex) => {
         const vals = [];
         for (const row of sampleRows) {
@@ -86,7 +100,7 @@ const MappingStep = ({
     };
 
     const handleContinue = () => {
-        // Solo enviamos columnas con destino real (omitimos las "(no importar)").
+        // Solo enviamos columnas con destino real (omitimos "No importar columna").
         const clean = {};
         for (const [col, key] of Object.entries(mapping)) {
             if (key) clean[col] = key;
@@ -94,14 +108,23 @@ const MappingStep = ({
         onContinue(clean);
     };
 
+    // Badge del tipo de campo elegido para una columna (o "No se importa").
+    const typeBadge = (key) => {
+        if (!key) return <span className={s.skipTag}>No se importa</span>;
+        const imp = IMPORTANCE[metaByKey[key]?.importance] || IMPORTANCE.optional;
+        return <span className={`badge ${imp.cls}`}>{imp.label}</span>;
+    };
+
     return (
         <div>
             <div className="card" style={{ marginBottom: 18, padding: "16px 20px" }}>
-                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>Relaciona tus columnas con los campos del sistema</p>
+                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>
+                    Relaciona tus columnas con los campos del sistema
+                </p>
                 <p style={{ fontSize: 12.5, color: "var(--c-text-2)" }}>
-                    Detectamos {sourceColumns.length} columna{sourceColumns.length === 1 ? "" : "s"} en tu archivo.
-                    Indica a qué dato corresponde cada una. Las columnas que no necesites
-                    déjalas en <em>(no importar)</em>.
+                    Detectamos {sourceColumns.length} columna{sourceColumns.length === 1 ? "" : "s"} en
+                    tu archivo. Elige a qué dato corresponde cada una. Las columnas que no
+                    necesites déjalas en <em>No importar columna</em>.
                 </p>
             </div>
 
@@ -111,7 +134,8 @@ const MappingStep = ({
                         <tr>
                             <th>Columna del archivo</th>
                             <th>Ejemplos</th>
-                            <th>Campo del sistema</th>
+                            <th>Se importa como</th>
+                            <th>Importancia</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -131,18 +155,19 @@ const MappingStep = ({
                                         disabled={busy}
                                         aria-label={`Campo del sistema para la columna ${col}`}
                                     >
-                                        <option value={NONE}>(no importar)</option>
+                                        <option value={NONE}>No importar columna</option>
                                         {groups.map(g => (
                                             <optgroup key={g.name} label={g.name}>
                                                 {g.fields.map(f => (
                                                     <option key={f.key} value={f.key}>
-                                                        {f.label}{f.required ? " *" : ""}
+                                                        {f.label}
                                                     </option>
                                                 ))}
                                             </optgroup>
                                         ))}
                                     </select>
                                 </td>
+                                <td>{typeBadge(mapping[col])}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -157,6 +182,13 @@ const MappingStep = ({
                             <li key={k}>{labelByKey[k] || k}</li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {missingRequired.length === 0 && missingRecommended.length > 0 && (
+                <div className={s.recommendBox}>
+                    Puedes continuar. Te recomendamos también asignar, si tu archivo los tiene:{" "}
+                    {missingRecommended.map(k => labelByKey[k] || k).join(", ")}.
                 </div>
             )}
 

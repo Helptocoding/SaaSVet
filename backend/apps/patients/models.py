@@ -52,7 +52,10 @@ class Pet(PublicIdMixin, OrganizationalModel):
     )
 
     name = models.CharField(max_length=255)
-    species = models.CharField(max_length=100)
+    # blank=True para migración de clínicas: expedientes viejos a veces no traen
+    # especie (Sprint import). '' = especie pendiente. El alta MANUAL la sigue
+    # exigiendo vía PetSerializer.validate_species — solo el importador admite ''.
+    species = models.CharField(max_length=100, blank=True, default='')
     breed = models.CharField(max_length=100, blank=True, default='')
     birth_date = models.DateField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=SEX_CHOICES, default='unknown')

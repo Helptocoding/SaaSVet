@@ -54,7 +54,9 @@ const IssuesTable = ({ title, items, labelByKey, tone }) => {
    de errores y advertencias. No escribe nada — solo informa. */
 const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing, canCommit }) => {
     const labelByKey = useMemo(() => {
-        const m = {};
+        // Fallbacks humanos para campos genéricos que no están en el catálogo
+        // (errores a nivel fila/mapeo) — nunca mostrar el token técnico crudo.
+        const m = { mapping: "Mapeo de columnas", owner: "Cliente", pet: "Mascota", row: "Fila" };
         for (const f of fieldCatalog) m[f.key] = f.label;
         return m;
     }, [fieldCatalog]);

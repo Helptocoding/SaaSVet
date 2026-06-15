@@ -83,24 +83,37 @@ def normalize_sex(raw):
 # ---------------------------------------------------------------------------
 # Catálogo de campos destino por entity_type (consumido por la UI de mapeo).
 # ---------------------------------------------------------------------------
+# Labels en lenguaje humano (sin prefijos técnicos tipo "Cliente · Nombre").
+# `group` agrupa visualmente. `importance` ∈ {required, recommended, optional}
+# para que la UI muestre Obligatorio / Recomendado / Opcional.
+# Solo nombre de cliente y nombre de mascota son obligatorios; especie y teléfono
+# son recomendados (no bloquean la importación de datos históricos).
 FIELD_CATALOG = {
     'owner_pet': [
-        {'key': 'owner.name', 'label': 'Cliente · Nombre', 'group': 'Cliente', 'required': True},
-        {'key': 'owner.phone', 'label': 'Cliente · Teléfono', 'group': 'Cliente', 'required': False},
-        {'key': 'owner.legacy_id', 'label': 'Cliente · Nº de cliente anterior', 'group': 'Cliente', 'required': False},
-        {'key': 'pet.name', 'label': 'Mascota · Nombre', 'group': 'Mascota', 'required': True},
-        {'key': 'pet.species', 'label': 'Mascota · Especie', 'group': 'Mascota', 'required': True},
-        {'key': 'pet.breed', 'label': 'Mascota · Raza', 'group': 'Mascota', 'required': False},
-        {'key': 'pet.sex', 'label': 'Mascota · Sexo', 'group': 'Mascota', 'required': False},
-        {'key': 'pet.birth_date', 'label': 'Mascota · Fecha de nacimiento', 'group': 'Mascota', 'required': False},
-        {'key': 'pet.color', 'label': 'Mascota · Color', 'group': 'Mascota', 'required': False},
-        {'key': 'pet.legacy_id', 'label': 'Mascota · Nº de expediente anterior', 'group': 'Mascota', 'required': False},
+        {'key': 'owner.name', 'label': 'Nombre del cliente', 'group': 'Cliente', 'importance': 'required'},
+        {'key': 'owner.phone', 'label': 'Teléfono del cliente', 'group': 'Cliente', 'importance': 'recommended'},
+        {'key': 'owner.legacy_id', 'label': 'Nº de cliente anterior', 'group': 'Cliente', 'importance': 'optional'},
+        {'key': 'pet.name', 'label': 'Nombre de la mascota', 'group': 'Mascota', 'importance': 'required'},
+        {'key': 'pet.species', 'label': 'Especie', 'group': 'Mascota', 'importance': 'recommended'},
+        {'key': 'pet.breed', 'label': 'Raza', 'group': 'Mascota', 'importance': 'optional'},
+        {'key': 'pet.sex', 'label': 'Sexo', 'group': 'Mascota', 'importance': 'optional'},
+        {'key': 'pet.birth_date', 'label': 'Fecha de nacimiento', 'group': 'Mascota', 'importance': 'optional'},
+        {'key': 'pet.color', 'label': 'Color', 'group': 'Mascota', 'importance': 'optional'},
+        {'key': 'pet.legacy_id', 'label': 'Nº de expediente anterior', 'group': 'Mascota', 'importance': 'optional'},
     ],
 }
 
 
 def required_fields(entity_type):
-    return [f['key'] for f in FIELD_CATALOG.get(entity_type, []) if f['required']]
+    return [f['key'] for f in FIELD_CATALOG.get(entity_type, []) if f.get('importance') == 'required']
+
+
+def field_label(entity_type, key):
+    """Label humano de un campo destino (para mensajes de error legibles)."""
+    for f in FIELD_CATALOG.get(entity_type, []):
+        if f['key'] == key:
+            return f['label']
+    return key
 
 
 def valid_target_fields(entity_type):

@@ -12,7 +12,7 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
     const navigate = useNavigate();
 
     const labelByKey = useMemo(() => {
-        const m = {};
+        const m = { mapping: "Mapeo de columnas", owner: "Cliente", pet: "Mascota", row: "Fila" };
         for (const f of fieldCatalog) m[f.key] = f.label;
         return m;
     }, [fieldCatalog]);

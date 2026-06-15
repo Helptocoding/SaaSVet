@@ -74,6 +74,17 @@ class NormalizationTests(TestCase):
         self.assertEqual(s['Paciente'], 'pet.name')
         self.assertEqual(s['Tipo de animal'], 'pet.species')
 
+    def test_automap_priority_and_no_double_assign(self):
+        # Cliente/Dueño/Propietario → nombre cliente; Mascota/Paciente/Animal →
+        # nombre mascota; y NUNCA dos columnas al mismo destino.
+        s = suggest_mapping(['Propietario', 'Dueño', 'Mascota', 'Animal'], 'owner_pet')
+        self.assertEqual(s.get('Propietario'), 'owner.name')
+        self.assertNotEqual(s.get('Dueño'), 'owner.name')   # destino ya tomado
+        self.assertEqual(s.get('Mascota'), 'pet.name')
+        self.assertNotEqual(s.get('Animal'), 'pet.name')
+        assigned = [v for v in s.values() if v]
+        self.assertEqual(len(assigned), len(set(assigned)))  # sin destinos repetidos
+
 
 class ImportApiTests(TestCase):
     def setUp(self):
@@ -167,7 +178,9 @@ class ImportApiTests(TestCase):
         self.assertEqual(Owner.objects.for_organization(self.org).filter(phone='8120000000').count(), 1)
         self.assertEqual(existing.pets.count(), 1)
 
-    def test_bad_species_is_row_error_not_crash(self):
+    def test_unrecognized_species_warns_not_errors(self):
+        # Especie opcional: una especie no reconocida NO bloquea — se importa como
+        # pendiente ('') con warning. No se asigna especie por defecto en masa.
         text = (
             'Dueño,Teléfono,Mascota,Especie,Expediente\n'
             'Juan,8112345678,Max,Perro,00231\n'
@@ -177,9 +190,25 @@ class ImportApiTests(TestCase):
         self._set_mapping(pid)
         res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
         result = res.data['result']
+        self.assertEqual(result['created_pets'], 2)
+        self.assertEqual(result['error_rows'], 0)
+        self.assertTrue(any(w['row'] == 2 and w['field'] == 'pet.species' for w in result['warnings']))
+        nemo = Pet.objects.for_organization(self.org).get(name='Nemo')
+        self.assertEqual(nemo.species, '')
+
+    def test_missing_species_imports_as_pending(self):
+        # Columna especie no mapeada → mascota se importa igual, especie pendiente.
+        pid = self._upload('Dueño,Teléfono,Mascota,Expediente\nJuan,8112345678,Max,00231\n')
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Expediente': 'pet.legacy_id',
+        })
+        res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        result = res.data['result']
         self.assertEqual(result['created_pets'], 1)
-        self.assertEqual(result['error_rows'], 1)
-        self.assertTrue(any(e['row'] == 2 and e['field'] == 'pet.species' for e in result['errors']))
+        self.assertEqual(result['error_rows'], 0)
+        self.assertTrue(any(w['field'] == 'pet.species' for w in result['warnings']))
+        self.assertEqual(Pet.objects.for_organization(self.org).get(name='Max').species, '')
 
     def test_legacy_id_unique_per_org_conflict_reported(self):
         # Dos owners distintos (teléfonos distintos) con el mismo pet.legacy_id.
