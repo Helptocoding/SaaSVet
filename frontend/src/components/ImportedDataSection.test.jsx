@@ -13,20 +13,25 @@ describe("ImportedDataSection", () => {
         expect(c2).toBeEmptyDOMElement();
     });
 
-    it("lista label/value con el encabezado de migración", () => {
+    it("lista label/value con el encabezado de migración + aviso read-only", () => {
         render(
             <ImportedDataSection
                 items={[
-                    { label: "Fecha Alta", value: "2018-01-01" },
-                    { label: "Última vacuna", value: "Rabia 2023" },
+                    { label: "Fecha Alta", value: "2018-01-01", source_column: "F. Alta" },
+                    { label: "Última vacuna", value: "Rabia 2023", source_column: "Vacuna" },
                 ]}
             />
         );
-        expect(screen.getByText("Información del sistema anterior")).toBeInTheDocument();
+        expect(screen.getByText("Datos importados del sistema anterior")).toBeInTheDocument();
+        // Aviso de que es histórico read-only (no editable).
+        expect(screen.getByText(/no se actualizan automáticamente/i)).toBeInTheDocument();
         expect(screen.getByText("Fecha Alta")).toBeInTheDocument();
         expect(screen.getByText("2018-01-01")).toBeInTheDocument();
         expect(screen.getByText("Última vacuna")).toBeInTheDocument();
         expect(screen.getByText("Rabia 2023")).toBeInTheDocument();
+        // Solo lectura: sin inputs ni botones.
+        expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+        expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
     it("muestra — cuando el valor está vacío", () => {
