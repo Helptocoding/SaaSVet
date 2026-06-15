@@ -102,48 +102,6 @@
 .fileRemove:hover { background: var(--c-danger-bg); color: var(--c-danger-text); }
 .fileRemove:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Mapping table ──────────────────────────────────────────── */
-.mapWrap {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-.mapTable { width: 100%; border-collapse: separate; border-spacing: 0; }
-.mapTable thead tr { background: var(--ink); }
-.mapTable th {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-.mapTable td {
-  padding: 12px 16px;
-  font-size: 13.5px;
-  color: var(--c-text);
-  vertical-align: middle;
-  border-bottom: 1px solid var(--c-border);
-}
-.mapTable tbody tr:last-child td { border-bottom: none; }
-.mapTable tbody tr:hover { background: var(--c-subtle); }
-
-.srcCol { font-weight: 600; color: var(--c-text); }
-.sampleVals {
-  font-size: 12px;
-  color: var(--c-text-3);
-  font-family: var(--font-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 280px;
-}
-.mapSelect { max-width: 320px; }
-
 /* ── Missing-required notice ────────────────────────────────── */
 .missingBox {
   margin-top: 16px;
@@ -157,34 +115,53 @@
 .missingBox ul { margin: 6px 0 0; padding-left: 18px; }
 .missingBox li { margin-bottom: 2px; }
 
-/* ── Recomendados faltantes (no bloquean; explican la acción) ─ */
-.recommendList {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.recommendCard {
-  padding: 12px 15px;
-  border-radius: var(--r-md);
+/* ── Mapper rediseñado (Fase D): tarjeta por columna ────────── */
+.colList { display: flex; flex-direction: column; gap: 10px; }
+.colCard {
   border: 1px solid var(--c-border);
-  background: var(--c-subtle);
-  color: var(--c-text-2);
-  font-size: 12.5px;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xs);
 }
-.recommendTitle { font-weight: 600; color: var(--c-text); margin-bottom: 5px; }
-.recommendHint { line-height: 1.55; }
-.recommendAction {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+.colCardPending { border-color: var(--c-warning-border); background: var(--c-warning-bg); }
+.colHead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.colName { font-weight: 600; font-size: 13.5px; color: var(--c-text); }
+.colSample {
+  font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px;
 }
+.colDecided { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.colOk { font-size: 13px; color: var(--c-success-text); }
+.colMuted { font-size: 13px; color: var(--c-text-3); font-style: italic; }
 
-/* ── Columna "Tipo" del mapeo (Obligatorio/Recomendado/Opcional) ─ */
-.skipTag { font-size: 12px; color: var(--c-text-3); font-style: italic; }
-.mapHint { font-size: 12px; color: var(--c-text-3); margin-top: 2px; }
+.colPicker { display: flex; flex-direction: column; gap: 10px; }
+.colQuestion { font-weight: 600; font-size: 13.5px; color: var(--c-text); }
+.pickerGroup { display: flex; flex-direction: column; gap: 6px; }
+.pickerGroupName {
+  font-size: 11px; font-weight: 700; color: var(--c-text-3);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.pickerBtns { display: flex; gap: 6px; flex-wrap: wrap; }
+.pickerBtn {
+  font-size: 12.5px; padding: 6px 12px;
+  border: 1px solid var(--c-border-2); border-radius: var(--r-md);
+  background: var(--c-surface); color: var(--c-text); cursor: pointer;
+  transition: border-color var(--t), background var(--t);
+}
+.pickerBtn:hover:not(:disabled) { border-color: var(--c-primary); }
+.pickerBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.pickerBtnActive { border-color: var(--c-primary); background: var(--c-primary); color: #fff; }
+.pickerBtnGhost {
+  font-size: 12.5px; padding: 6px 12px; border: 1px dashed var(--c-border-2);
+  border-radius: var(--r-md); background: transparent; color: var(--c-text-3); cursor: pointer;
+}
+.pickerBtnGhost:hover:not(:disabled) { color: var(--c-text); border-color: var(--c-text-3); }
+.pickerExtra {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--c-border);
+}
+.pickerOr { font-size: 12px; color: var(--c-text-3); }
 
 /* ── Preview summary ────────────────────────────────────────── */
 .summaryGrid {

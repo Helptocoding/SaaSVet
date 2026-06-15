@@ -1,63 +1,38 @@
 import { useMemo, useState } from "react";
 import s from "./imports.module.css";
 
-// Valor de <option> que significa "esta columna no se importa".
-const NONE = "";
+// Estados posibles de una columna:
+const PENDING = "__pending__";   // desconocida, sin decidir → bloquea continuar
+const NO_IMPORT = "";            // "no necesito esta columna"
+const EXTRA_OWNER = "owner.extra";
+const EXTRA_PET = "pet.extra";
 
-// Importancia del campo destino → etiqueta humana + clase de badge global.
-const IMPORTANCE = {
-    required: { label: "Obligatorio", cls: "badge-danger" },
-    recommended: { label: "Recomendado", cls: "badge-warning" },
-    optional: { label: "Opcional", cls: "badge-default" },
-};
+const normalize = (str) =>
+    (str || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
-// Ayuda contextual por campo (frontend-only, no toca backend). `human` = nombre
-// descriptivo para los mensajes; `examples` = cómo suele llamarse la columna en
-// el Excel del usuario; `keywords` = pistas para sugerir una columna sin asignar.
-const FIELD_HELP = {
-    "owner.phone": {
-        human: "Teléfono del cliente",
-        examples: ["Teléfono", "Celular", "WhatsApp"],
-        keywords: ["telefono", "celular", "whatsapp", "movil", "contacto", "tel", "cel"],
-    },
-    "pet.species": {
-        human: "Especie de la mascota",
-        examples: ["Especie", "Tipo de animal", "Perro/Gato"],
-        keywords: ["especie", "tipo"],
-    },
-};
-
-// Normaliza para comparar nombres de columna (sin acentos, minúsculas).
-const normalizeCol = (str) =>
-    (str || "")
-        .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
-        .toLowerCase()
-        .trim();
-
-/* Agrupa el field_catalog por su `group` (Cliente / Mascota) preservando el
-   orden de aparición. El backend entrega labels humanos ("Nombre del cliente",
-   no "Cliente · Nombre"; legacy_id como "Nº de expediente anterior"). */
-function groupCatalog(fieldCatalog) {
+function groupSystemFields(fieldCatalog) {
     const groups = [];
     const byName = new Map();
-    for (const field of fieldCatalog) {
-        const name = field.group || "Otros";
+    for (const f of fieldCatalog) {
+        if (f.is_extra) continue;            // los *.extra no van en el picker del sistema
+        const name = f.group || "Otros";
         if (!byName.has(name)) {
             const bucket = { name, fields: [] };
             byName.set(name, bucket);
             groups.push(bucket);
         }
-        byName.get(name).fields.push(field);
+        byName.get(name).fields.push(f);
     }
     return groups;
 }
 
-/* Paso 2 — Relaciona cada columna del archivo con un campo del sistema.
-   Una fila por columna: nombre + ejemplos + selector de campo (agrupado
-   Cliente/Mascota, con "No importar columna") + el tipo del campo elegido
-   (Obligatorio/Recomendado/Opcional). Solo Nombre del cliente y Nombre de la
-   mascota son obligatorios; el resto no bloquea la importación. */
+/* Paso 2 — Relacionar columnas (rediseño Fase D, lenguaje humano).
+   - Columna RECONOCIDA (el sistema sugirió un campo) → confirmada + "Cambiar".
+   - Columna DESCONOCIDA → "¿Qué hacemos con «X»?" con opciones claras; queda
+     "pendiente de decidir" y BLOQUEA continuar hasta que el usuario elija (por
+     consentimiento, para no meter "Facebook" en la mascota por inercia).
+   - "Cambiar" / decidir abre un picker COMPACTO con búsqueda (no el select gigante)
+     + guardar como dato del cliente / de la mascota / no importar. */
 const MappingStep = ({
     sourceColumns = [],
     sampleRows = [],
@@ -67,207 +42,211 @@ const MappingStep = ({
     onBack,
     busy = false,
 }) => {
-    const [mapping, setMapping] = useState(() => {
-        const seed = {};
-        for (const col of sourceColumns) {
-            seed[col] = initialMapping[col] || NONE;
-        }
-        return seed;
-    });
-
-    const groups = useMemo(() => groupCatalog(fieldCatalog), [fieldCatalog]);
-
-    const metaByKey = useMemo(() => {
-        const m = {};
-        for (const f of fieldCatalog) m[f.key] = f;
-        return m;
-    }, [fieldCatalog]);
-
+    const systemGroups = useMemo(() => groupSystemFields(fieldCatalog), [fieldCatalog]);
+    const systemKeys = useMemo(
+        () => new Set(fieldCatalog.filter(f => !f.is_extra).map(f => f.key)),
+        [fieldCatalog]
+    );
     const labelByKey = useMemo(() => {
         const m = {};
         for (const f of fieldCatalog) m[f.key] = f.label;
         return m;
     }, [fieldCatalog]);
-
     const requiredKeys = useMemo(
         () => fieldCatalog.filter(f => f.importance === "required").map(f => f.key),
         [fieldCatalog]
     );
-    const recommendedKeys = useMemo(
-        () => fieldCatalog.filter(f => f.importance === "recommended").map(f => f.key),
-        [fieldCatalog]
-    );
 
-    const assignedKeys = useMemo(
-        () => new Set(Object.values(mapping).filter(Boolean)),
-        [mapping]
-    );
-
-    const missingRequired = requiredKeys.filter(k => !assignedKeys.has(k));
-    const missingRecommended = recommendedKeys.filter(k => !assignedKeys.has(k));
-    const canContinue = missingRequired.length === 0 && !busy;
-
-    // Para un campo recomendado sin asignar, busca una columna del archivo TODAVÍA
-    // sin asignar cuyo nombre se parezca (keywords) → permite ofrecer "¿asignar la
-    // columna X como Especie?". Sin candidato, se muestran ejemplos de nombres.
-    const candidateColumnFor = (key) => {
-        const kws = FIELD_HELP[key]?.keywords || [];
-        if (!kws.length) return null;
+    // Semilla: columna con sugerencia/decisión previa → ese valor; sin nada → PENDING.
+    const [mapping, setMapping] = useState(() => {
+        const seed = {};
         for (const col of sourceColumns) {
-            if (mapping[col]) continue;          // ya asignada a otro campo
-            const n = normalizeCol(col);
-            if (kws.some(kw => n.includes(kw))) return col;
+            const v = initialMapping[col];
+            seed[col] = v === undefined ? PENDING : v;
         }
-        return null;
-    };
+        return seed;
+    });
+    const [editing, setEditing] = useState(() => new Set());  // columnas expandidas
+    const [search, setSearch] = useState({});                 // texto de búsqueda por columna
 
-    const humanName = (key) => FIELD_HELP[key]?.human || labelByKey[key] || key;
+    const isSystem = (v) => systemKeys.has(v);
+
+    const assignedSystem = useMemo(
+        () => new Set(Object.values(mapping).filter(isSystem)),
+        [mapping]  // eslint-disable-line react-hooks/exhaustive-deps
+    );
+
+    const decide = (col, value) => {
+        setMapping(prev => ({ ...prev, [col]: value }));
+        setEditing(prev => { const n = new Set(prev); n.delete(col); return n; });
+    };
+    const openEdit = (col) => setEditing(prev => new Set(prev).add(col));
+
+    const pendingCols = sourceColumns.filter(c => mapping[c] === PENDING);
+    const recognizedCount = sourceColumns.filter(c => isSystem(mapping[c])).length;
+    const missingRequired = requiredKeys.filter(k => !assignedSystem.has(k));
+    const canContinue = pendingCols.length === 0 && missingRequired.length === 0 && !busy;
 
     const samplePreview = (colIndex) => {
         const vals = [];
         for (const row of sampleRows) {
             const cell = row?.[colIndex];
-            if (cell !== undefined && cell !== null && String(cell).trim() !== "") {
-                vals.push(String(cell));
-            }
+            if (cell !== undefined && cell !== null && String(cell).trim() !== "") vals.push(String(cell));
             if (vals.length >= 3) break;
         }
         return vals.length ? vals.join(" · ") : "—";
     };
 
-    const updateColumn = (col, value) => {
-        setMapping(prev => ({ ...prev, [col]: value }));
-    };
-
     const handleContinue = () => {
-        // Solo enviamos columnas con destino real (omitimos "No importar columna").
+        // Enviar toda columna decidida (incluye "" = no importar y los *.extra);
+        // PENDING nunca llega (continuar está bloqueado).
         const clean = {};
-        for (const [col, key] of Object.entries(mapping)) {
-            if (key) clean[col] = key;
+        for (const [col, v] of Object.entries(mapping)) {
+            if (v === PENDING) continue;
+            clean[col] = v;
         }
         onContinue(clean);
     };
 
-    // Badge del tipo de campo elegido para una columna (o "No se importa").
-    const typeBadge = (key) => {
-        if (!key) return <span className={s.skipTag}>No se importa</span>;
-        const imp = IMPORTANCE[metaByKey[key]?.importance] || IMPORTANCE.optional;
-        return <span className={`badge ${imp.cls}`}>{imp.label}</span>;
+    const renderPicker = (col, current) => {
+        const q = search[col] || "";
+        return (
+            <div className={s.colPicker}>
+                {current === PENDING && (
+                    <p className={s.colQuestion}>¿Qué hacemos con «{col}»?</p>
+                )}
+                <input
+                    className="select-input"
+                    placeholder="Buscar un campo: nombre, teléfono, especie…"
+                    value={q}
+                    onChange={(e) => setSearch(p => ({ ...p, [col]: e.target.value }))}
+                    disabled={busy}
+                    aria-label={`Buscar campo del sistema para ${col}`}
+                />
+                {systemGroups.map(g => {
+                    const fields = g.fields.filter(f => normalize(f.label).includes(normalize(q)));
+                    if (!fields.length) return null;
+                    return (
+                        <div key={g.name} className={s.pickerGroup}>
+                            <span className={s.pickerGroupName}>{g.name}</span>
+                            <div className={s.pickerBtns}>
+                                {fields.map(f => {
+                                    const taken = assignedSystem.has(f.key) && current !== f.key;
+                                    return (
+                                        <button
+                                            key={f.key}
+                                            type="button"
+                                            className={`${s.pickerBtn} ${current === f.key ? s.pickerBtnActive : ""}`}
+                                            disabled={taken || busy}
+                                            title={taken ? "Ya asignado a otra columna" : undefined}
+                                            onClick={() => decide(col, f.key)}
+                                        >
+                                            {f.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+                <div className={s.pickerExtra}>
+                    <span className={s.pickerOr}>o guárdala como información del sistema anterior:</span>
+                    <div className={s.pickerBtns}>
+                        <button
+                            type="button"
+                            className={`${s.pickerBtn} ${current === EXTRA_OWNER ? s.pickerBtnActive : ""}`}
+                            onClick={() => decide(col, EXTRA_OWNER)}
+                            disabled={busy}
+                        >
+                            Guardar como dato del cliente
+                        </button>
+                        <button
+                            type="button"
+                            className={`${s.pickerBtn} ${current === EXTRA_PET ? s.pickerBtnActive : ""}`}
+                            onClick={() => decide(col, EXTRA_PET)}
+                            disabled={busy}
+                        >
+                            Guardar como dato de la mascota
+                        </button>
+                        <button
+                            type="button"
+                            className={s.pickerBtnGhost}
+                            onClick={() => decide(col, NO_IMPORT)}
+                            disabled={busy}
+                        >
+                            No necesito esta columna
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderDecided = (col, v) => {
+        let text;
+        let muted = false;
+        if (isSystem(v)) text = <>✓ Se importará como <strong>«{labelByKey[v]}»</strong></>;
+        else if (v === EXTRA_OWNER) text = <>Se guardará como dato del cliente</>;
+        else if (v === EXTRA_PET) text = <>Se guardará como dato de la mascota</>;
+        else { text = "No se importará"; muted = true; }
+        return (
+            <div className={s.colDecided}>
+                <span className={muted ? s.colMuted : s.colOk}>{text}</span>
+                <button
+                    type="button"
+                    className="btn btn-secondary btn-xs"
+                    onClick={() => openEdit(col)}
+                    disabled={busy}
+                    aria-label={`Cambiar columna ${col}`}
+                >
+                    Cambiar
+                </button>
+            </div>
+        );
     };
 
     return (
         <div>
-            <div className="card" style={{ marginBottom: 18, padding: "16px 20px" }}>
+            <div className="card" style={{ marginBottom: 16, padding: "16px 20px" }}>
                 <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>
-                    Relaciona tus columnas con los campos del sistema
+                    Revisa qué hacer con cada columna
                 </p>
                 <p style={{ fontSize: 12.5, color: "var(--c-text-2)" }}>
-                    Detectamos {sourceColumns.length} columna{sourceColumns.length === 1 ? "" : "s"} en
-                    tu archivo. Elige a qué dato corresponde cada una. Las columnas que no
-                    necesites déjalas en <em>No importar columna</em>.
+                    {sourceColumns.length} columnas · {recognizedCount} reconocidas
+                    {pendingCols.length > 0 && <> · <strong>{pendingCols.length} por decidir</strong></>}
                 </p>
             </div>
 
-            <div className={s.mapWrap}>
-                <table className={s.mapTable}>
-                    <thead>
-                        <tr>
-                            <th>Columna del archivo</th>
-                            <th>Ejemplos</th>
-                            <th>Se importa como</th>
-                            <th>Importancia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sourceColumns.map((col, colIndex) => (
-                            <tr key={col}>
-                                <td className={s.srcCol}>{col}</td>
-                                <td>
-                                    <span className={s.sampleVals} title={samplePreview(colIndex)}>
-                                        {samplePreview(colIndex)}
-                                    </span>
-                                </td>
-                                <td>
-                                    <select
-                                        className={`select-input ${s.mapSelect}`}
-                                        value={mapping[col] ?? NONE}
-                                        onChange={(e) => updateColumn(col, e.target.value)}
-                                        disabled={busy}
-                                        aria-label={`Campo del sistema para la columna ${col}`}
-                                    >
-                                        <option value={NONE}>No importar columna</option>
-                                        {groups.map(g => (
-                                            <optgroup key={g.name} label={g.name}>
-                                                {g.fields.map(f => (
-                                                    <option key={f.key} value={f.key}>
-                                                        {f.label}
-                                                    </option>
-                                                ))}
-                                            </optgroup>
-                                        ))}
-                                    </select>
-                                </td>
-                                <td>{typeBadge(mapping[col])}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className={s.colList}>
+                {sourceColumns.map((col, idx) => {
+                    const v = mapping[col];
+                    const expanded = v === PENDING || editing.has(col);
+                    return (
+                        <div key={col} className={`${s.colCard} ${v === PENDING ? s.colCardPending : ""}`}>
+                            <div className={s.colHead}>
+                                <span className={s.colName}>{col}</span>
+                                <span className={s.colSample} title={samplePreview(idx)}>
+                                    ej: {samplePreview(idx)}
+                                </span>
+                            </div>
+                            {expanded ? renderPicker(col, v) : renderDecided(col, v)}
+                        </div>
+                    );
+                })}
             </div>
 
-            {/* OBLIGATORIO → bloquea la importación. */}
-            {missingRequired.length > 0 && (
+            {pendingCols.length > 0 && (
+                <div className={s.missingBox}>
+                    Hay {pendingCols.length === 1 ? "una columna" : `${pendingCols.length} columnas`} por
+                    decidir. Elige qué hacer con cada una para continuar.
+                </div>
+            )}
+            {pendingCols.length === 0 && missingRequired.length > 0 && (
                 <div className={s.missingBox}>
                     <strong>Para continuar</strong>, asigna {missingRequired.length === 1 ? "este campo obligatorio" : "estos campos obligatorios"}:
                     <ul>
-                        {missingRequired.map(k => (
-                            <li key={k}>{labelByKey[k] || k}</li>
-                        ))}
+                        {missingRequired.map(k => <li key={k}>{labelByKey[k] || k}</li>)}
                     </ul>
-                </div>
-            )}
-
-            {/* RECOMENDADO → permite continuar; explica la acción concreta. */}
-            {missingRequired.length === 0 && missingRecommended.length > 0 && (
-                <div className={s.recommendList}>
-                    {missingRecommended.map(key => {
-                        const candidate = candidateColumnFor(key);
-                        const human = humanName(key);
-                        const examples = FIELD_HELP[key]?.examples || [];
-                        return (
-                            <div key={key} className={s.recommendCard}>
-                                <p className={s.recommendTitle}>
-                                    Detectamos que no asignaste <strong>{human}</strong>.
-                                </p>
-                                {candidate ? (
-                                    <div className={s.recommendAction}>
-                                        <span>
-                                            Encontramos la columna <strong>"{candidate}"</strong>.
-                                            ¿Asignarla como {human}?
-                                        </span>
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary btn-xs"
-                                            onClick={() => updateColumn(candidate, key)}
-                                            disabled={busy}
-                                        >
-                                            Asignar como {human}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <p className={s.recommendHint}>
-                                        Si tu archivo tiene una columna como{" "}
-                                        {examples.map((e, i) => (
-                                            <span key={e}>
-                                                {i > 0 ? ", " : ""}<strong>{e}</strong>
-                                            </span>
-                                        ))}
-                                        , selecciónala en la tabla de arriba. Si no existe, puedes
-                                        continuar y completar este dato después.
-                                    </p>
-                                )}
-                            </div>
-                        );
-                    })}
                 </div>
             )}
 
@@ -276,11 +255,7 @@ const MappingStep = ({
                     Atrás
                 </button>
                 <div className={s.actionsRight}>
-                    <button
-                        className="btn btn-primary btn-md"
-                        onClick={handleContinue}
-                        disabled={!canContinue}
-                    >
+                    <button className="btn btn-primary btn-md" onClick={handleContinue} disabled={!canContinue}>
                         {busy ? "Validando..." : "Continuar"}
                     </button>
                 </div>

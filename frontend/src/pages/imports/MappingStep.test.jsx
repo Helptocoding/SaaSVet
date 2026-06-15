@@ -3,38 +3,24 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MappingStep from "./MappingStep";
 
-// MappingStep conecta la interacción humana (elegir el campo destino por columna)
-// con el contrato del importador: el padre recibe el mapping limpio en onContinue
-// y "Continuar" se bloquea hasta que todos los campos OBLIGATORIOS estén asignados.
-// Obligatorios = solo Nombre del cliente y Nombre de la mascota; especie/teléfono
-// son recomendados (no bloquean). Se prueba comportamiento observable.
+// Rediseño Fase D: columnas reconocidas se confirman; las desconocidas piden una
+// decisión humana (cliente / mascota / no importar) y BLOQUEAN continuar hasta
+// decidir. Picker compacto con búsqueda (no <select> gigante). Se prueba el
+// comportamiento observable (texto, botones, callback).
 
-// field_catalog tal como lo entrega el backend: labels humanos + group + importance
-// (required | recommended | optional). legacy_id se muestra SIEMPRE por su label,
-// nunca como la cadena cruda "legacy_id".
 const FIELD_CATALOG = [
     { key: "owner.name", label: "Nombre del cliente", group: "Cliente", importance: "required" },
     { key: "owner.phone", label: "Teléfono del cliente", group: "Cliente", importance: "recommended" },
-    { key: "owner.legacy_id", label: "Nº de cliente anterior", group: "Cliente", importance: "optional" },
+    { key: "owner.extra", label: "Dato del cliente", group: "Cliente", importance: "optional", is_extra: true },
     { key: "pet.name", label: "Nombre de la mascota", group: "Mascota", importance: "required" },
     { key: "pet.species", label: "Especie", group: "Mascota", importance: "recommended" },
-    { key: "pet.legacy_id", label: "Nº de expediente anterior", group: "Mascota", importance: "optional" },
+    { key: "pet.extra", label: "Dato de la mascota", group: "Mascota", importance: "optional", is_extra: true },
 ];
 
-const SOURCE_COLUMNS = ["Dueño", "Teléfono", "Paciente", "Tipo", "Expediente"];
-
-const SAMPLE_ROWS = [
-    ["Juan", "8112345678", "Max", "Perro", "00231"],
-    ["Ana", "8119998888", "Luna", "Gato", "00232"],
-];
-
-const SUGGESTED = {
-    "Dueño": "owner.name",
-    "Teléfono": "owner.phone",
-    "Paciente": "pet.name",
-    "Tipo": "pet.species",
-    // "Expediente" intencionalmente sin sugerir → queda en "No importar columna"
-};
+const SOURCE_COLUMNS = ["Dueño", "Mascota", "Fecha Alta"];
+const SAMPLE_ROWS = [["Juan", "Max", "2018-01-01"]];
+// Dueño y Mascota reconocidas; "Fecha Alta" sin sugerencia → pendiente.
+const SUGGESTED = { "Dueño": "owner.name", "Mascota": "pet.name" };
 
 function renderStep(props = {}) {
     const onContinue = vi.fn();
@@ -52,162 +38,99 @@ function renderStep(props = {}) {
     return { onContinue };
 }
 
-const selectFor = (col) =>
-    screen.getByRole("combobox", { name: new RegExp(`columna ${col}`, "i") });
 const continueBtn = () => screen.getByRole("button", { name: /continuar/i });
+const btn = (name) => screen.getByRole("button", { name });
 
-describe("MappingStep — render y pre-fill", () => {
-    it("una fila por columna del archivo, con su nombre visible", () => {
+describe("MappingStep — reconocidas vs por decidir", () => {
+    it("muestra una tarjeta por columna; las reconocidas se confirman", () => {
         renderStep();
-        for (const col of SOURCE_COLUMNS) {
-            expect(screen.getByText(col)).toBeInTheDocument();
-        }
-        expect(screen.getAllByRole("combobox")).toHaveLength(SOURCE_COLUMNS.length);
+        // "Dueño"/"Fecha Alta" son únicos; "Mascota" colisiona con el nombre de
+        // grupo del picker → se valida vía las etiquetas confirmadas «...».
+        expect(screen.getByText("Dueño")).toBeInTheDocument();
+        expect(screen.getByText("Fecha Alta")).toBeInTheDocument();
+        expect(screen.getAllByText(/Se importará como/)).toHaveLength(2);
+        expect(screen.getByText("«Nombre del cliente»")).toBeInTheDocument();
+        expect(screen.getByText("«Nombre de la mascota»")).toBeInTheDocument();
     });
 
-    it("pre-llena cada select desde suggested_mapping", () => {
+    it("una columna desconocida pregunta qué hacer, con opciones humanas", () => {
         renderStep();
-        expect(selectFor("Dueño")).toHaveValue("owner.name");
-        expect(selectFor("Teléfono")).toHaveValue("owner.phone");
-        expect(selectFor("Paciente")).toHaveValue("pet.name");
-        expect(selectFor("Tipo")).toHaveValue("pet.species");
-        // columna no sugerida → "No importar columna" = valor vacío
-        expect(selectFor("Expediente")).toHaveValue("");
+        expect(screen.getByText("¿Qué hacemos con «Fecha Alta»?")).toBeInTheDocument();
+        expect(btn("Guardar como dato del cliente")).toBeInTheDocument();
+        expect(btn("Guardar como dato de la mascota")).toBeInTheDocument();
+        expect(btn("No necesito esta columna")).toBeInTheDocument();
     });
 
-    it("usa labels humanos (sin prefijos técnicos 'Cliente · ')", () => {
+    it("bloquea continuar mientras haya columnas por decidir", () => {
         renderStep();
-        expect(screen.getAllByText("Nombre del cliente").length).toBeGreaterThan(0);
-        expect(screen.queryByText(/Cliente · /)).not.toBeInTheDocument();
-    });
-
-    it("muestra el label amistoso de legacy_id, nunca la cadena 'legacy_id'", () => {
-        renderStep();
-        expect(screen.getAllByText(/Nº de expediente anterior/).length).toBeGreaterThan(0);
-        expect(screen.getAllByText(/Nº de cliente anterior/).length).toBeGreaterThan(0);
-        expect(screen.queryByText(/legacy_id/)).not.toBeInTheDocument();
-    });
-
-    it("ofrece 'No importar columna' como opción", () => {
-        renderStep();
-        expect(screen.getAllByText("No importar columna").length).toBeGreaterThan(0);
-    });
-
-    it("muestra el tipo (Obligatorio/Recomendado/Opcional) del campo elegido", () => {
-        renderStep();
-        // Dueño→owner.name (obligatorio), Teléfono→owner.phone (recomendado)
-        expect(screen.getAllByText("Obligatorio").length).toBeGreaterThan(0);
-        expect(screen.getAllByText("Recomendado").length).toBeGreaterThan(0);
-        // Expediente sin mapear → "No se importa"
-        expect(screen.getAllByText("No se importa").length).toBeGreaterThan(0);
-    });
-
-    it("muestra valores de muestra de la columna", () => {
-        renderStep();
-        expect(screen.getByText(/Juan/)).toBeInTheDocument();
-    });
-});
-
-describe("MappingStep — campos obligatorios", () => {
-    it("con todos los obligatorios mapeados, 'Continuar' está habilitado", () => {
-        renderStep();
-        expect(continueBtn()).toBeEnabled();
-    });
-
-    it("si falta un obligatorio, 'Continuar' se bloquea y se nombra el faltante (por su label)", () => {
-        // pet.name sin asignar → falta un obligatorio
-        const partial = { ...SUGGESTED };
-        delete partial["Paciente"];
-        renderStep({ initialMapping: partial });
-
         expect(continueBtn()).toBeDisabled();
-        const missingItems = screen.getAllByRole("listitem").map(li => li.textContent);
-        expect(missingItems).toContain("Nombre de la mascota");
-    });
-
-    it("un campo recomendado sin asignar NO bloquea, y explica la acción concreta", () => {
-        // pet.species (recomendado) sin asignar → puede continuar igual
-        const partial = { ...SUGGESTED };
-        delete partial["Tipo"];
-        renderStep({ initialMapping: partial });
-
-        expect(continueBtn()).toBeEnabled();
-        // mensaje accionable con el nombre humano del campo
-        expect(screen.getByText(/Detectamos que no asignaste/)).toHaveTextContent("Especie de la mascota");
+        expect(screen.getByText(/Elige qué hacer con cada una/)).toBeInTheDocument();
     });
 });
 
-describe("MappingStep — recomendados: ayuda contextual", () => {
-    it("sugiere la columna candidata sin asignar y la asigna con un clic", async () => {
+describe("MappingStep — decidir columnas", () => {
+    it("al decidir la columna pendiente se confirma y habilita continuar", async () => {
         const user = userEvent.setup();
-        const partial = { ...SUGGESTED };
-        delete partial["Tipo"]; // "Tipo" queda libre y se parece a Especie
-        renderStep({ initialMapping: partial });
-
-        expect(screen.getByText(/Encontramos la columna/)).toHaveTextContent("Tipo");
-        const assignBtn = screen.getByRole("button", { name: /Asignar como Especie de la mascota/i });
-        await user.click(assignBtn);
-
-        // queda mapeada y la sugerencia desaparece
-        expect(selectFor("Tipo")).toHaveValue("pet.species");
-        expect(screen.queryByText(/Encontramos la columna/)).not.toBeInTheDocument();
+        renderStep();
+        await user.click(btn("Guardar como dato de la mascota"));
+        expect(screen.getByText("Se guardará como dato de la mascota")).toBeInTheDocument();
         expect(continueBtn()).toBeEnabled();
     });
 
-    it("sin columna candidata, muestra ejemplos de cómo podría llamarse la columna", () => {
-        renderStep({
-            sourceColumns: ["Dueño", "Teléfono", "Paciente"],
-            sampleRows: [["Juan", "8112345678", "Max"]],
-            initialMapping: {
-                "Dueño": "owner.name", "Teléfono": "owner.phone", "Paciente": "pet.name",
-            },
-        });
-        expect(continueBtn()).toBeEnabled();
-        expect(screen.getByText(/Detectamos que no asignaste/)).toHaveTextContent("Especie de la mascota");
-        // ejemplos de nombres de columna (no hay candidata que sugerir)
-        expect(screen.getByText("Tipo de animal")).toBeInTheDocument();
-    });
-});
-
-describe("MappingStep — interacción (cambiar select)", () => {
-    it("asignar el campo obligatorio faltante habilita 'Continuar'", async () => {
-        const user = userEvent.setup();
-        const partial = { ...SUGGESTED };
-        delete partial["Paciente"];
-        renderStep({ initialMapping: partial });
-
-        expect(continueBtn()).toBeDisabled();
-        await user.selectOptions(selectFor("Paciente"), "pet.name");
-        expect(selectFor("Paciente")).toHaveValue("pet.name");
-        expect(continueBtn()).toBeEnabled();
-    });
-
-    it("'Continuar' entrega al padre el mapping limpio (sin las columnas en 'No importar')", async () => {
+    it("entrega al padre el mapping con campos del sistema + extra", async () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
-
-        await user.selectOptions(selectFor("Expediente"), "pet.legacy_id");
+        await user.click(btn("Guardar como dato de la mascota"));   // Fecha Alta → pet.extra
         await user.click(continueBtn());
-
-        expect(onContinue).toHaveBeenCalledTimes(1);
         expect(onContinue).toHaveBeenCalledWith({
             "Dueño": "owner.name",
-            "Teléfono": "owner.phone",
-            "Paciente": "pet.name",
-            "Tipo": "pet.species",
-            "Expediente": "pet.legacy_id",
+            "Mascota": "pet.name",
+            "Fecha Alta": "pet.extra",
         });
     });
 
-    it("poner una columna en 'No importar columna' la excluye del mapping entregado", async () => {
+    it("'No necesito esta columna' la marca como no importada", async () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
-
-        await user.selectOptions(selectFor("Teléfono"), ""); // No importar columna
+        await user.click(btn("No necesito esta columna"));
+        expect(screen.getByText("No se importará")).toBeInTheDocument();
         await user.click(continueBtn());
+        expect(onContinue).toHaveBeenCalledWith({
+            "Dueño": "owner.name",
+            "Mascota": "pet.name",
+            "Fecha Alta": "",
+        });
+    });
+});
 
-        const sent = onContinue.mock.calls[0][0];
-        expect(sent).not.toHaveProperty("Teléfono");
-        expect(sent["Dueño"]).toBe("owner.name");
+describe("MappingStep — picker (cambiar)", () => {
+    it("no permite asignar el mismo campo del sistema a dos columnas", async () => {
+        const user = userEvent.setup();
+        renderStep();
+        await user.click(btn("No necesito esta columna"));        // colapsa Fecha Alta
+        await user.click(btn(/Cambiar columna Mascota/i));         // abre picker de Mascota
+        // owner.name ya está en "Dueño" → su botón está deshabilitado aquí
+        expect(btn("Nombre del cliente")).toBeDisabled();
+    });
+
+    it("el buscador filtra los campos del sistema", async () => {
+        const user = userEvent.setup();
+        renderStep();
+        await user.click(btn("No necesito esta columna"));         // colapsa Fecha Alta
+        await user.click(btn(/Cambiar columna Dueño/i));           // abre picker de Dueño
+        await user.type(screen.getByLabelText(/Buscar campo del sistema para Dueño/i), "tel");
+        expect(btn("Teléfono del cliente")).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Especie" })).not.toBeInTheDocument();
+    });
+
+    it("bloquea continuar si falta un campo obligatorio y lo nombra", async () => {
+        const user = userEvent.setup();
+        renderStep();
+        await user.click(btn("No necesito esta columna"));         // colapsa Fecha Alta
+        await user.click(btn(/Cambiar columna Dueño/i));           // abre picker de Dueño
+        await user.click(btn("No necesito esta columna"));         // Dueño → no importar (quita owner.name)
+        expect(continueBtn()).toBeDisabled();
+        const items = screen.getAllByRole("listitem").map(li => li.textContent);
+        expect(items).toContain("Nombre del cliente");
     });
 });
