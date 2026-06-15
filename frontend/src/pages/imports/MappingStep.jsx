@@ -11,6 +11,30 @@ const IMPORTANCE = {
     optional: { label: "Opcional", cls: "badge-default" },
 };
 
+// Ayuda contextual por campo (frontend-only, no toca backend). `human` = nombre
+// descriptivo para los mensajes; `examples` = cómo suele llamarse la columna en
+// el Excel del usuario; `keywords` = pistas para sugerir una columna sin asignar.
+const FIELD_HELP = {
+    "owner.phone": {
+        human: "Teléfono del cliente",
+        examples: ["Teléfono", "Celular", "WhatsApp"],
+        keywords: ["telefono", "celular", "whatsapp", "movil", "contacto", "tel", "cel"],
+    },
+    "pet.species": {
+        human: "Especie de la mascota",
+        examples: ["Especie", "Tipo de animal", "Perro/Gato"],
+        keywords: ["especie", "tipo"],
+    },
+};
+
+// Normaliza para comparar nombres de columna (sin acentos, minúsculas).
+const normalizeCol = (str) =>
+    (str || "")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .trim();
+
 /* Agrupa el field_catalog por su `group` (Cliente / Mascota) preservando el
    orden de aparición. El backend entrega labels humanos ("Nombre del cliente",
    no "Cliente · Nombre"; legacy_id como "Nº de expediente anterior"). */
@@ -82,6 +106,22 @@ const MappingStep = ({
     const missingRequired = requiredKeys.filter(k => !assignedKeys.has(k));
     const missingRecommended = recommendedKeys.filter(k => !assignedKeys.has(k));
     const canContinue = missingRequired.length === 0 && !busy;
+
+    // Para un campo recomendado sin asignar, busca una columna del archivo TODAVÍA
+    // sin asignar cuyo nombre se parezca (keywords) → permite ofrecer "¿asignar la
+    // columna X como Especie?". Sin candidato, se muestran ejemplos de nombres.
+    const candidateColumnFor = (key) => {
+        const kws = FIELD_HELP[key]?.keywords || [];
+        if (!kws.length) return null;
+        for (const col of sourceColumns) {
+            if (mapping[col]) continue;          // ya asignada a otro campo
+            const n = normalizeCol(col);
+            if (kws.some(kw => n.includes(kw))) return col;
+        }
+        return null;
+    };
+
+    const humanName = (key) => FIELD_HELP[key]?.human || labelByKey[key] || key;
 
     const samplePreview = (colIndex) => {
         const vals = [];
@@ -174,9 +214,10 @@ const MappingStep = ({
                 </table>
             </div>
 
+            {/* OBLIGATORIO → bloquea la importación. */}
             {missingRequired.length > 0 && (
                 <div className={s.missingBox}>
-                    Falta asignar {missingRequired.length === 1 ? "un campo obligatorio" : "campos obligatorios"}:
+                    <strong>Para continuar</strong>, asigna {missingRequired.length === 1 ? "este campo obligatorio" : "estos campos obligatorios"}:
                     <ul>
                         {missingRequired.map(k => (
                             <li key={k}>{labelByKey[k] || k}</li>
@@ -185,10 +226,48 @@ const MappingStep = ({
                 </div>
             )}
 
+            {/* RECOMENDADO → permite continuar; explica la acción concreta. */}
             {missingRequired.length === 0 && missingRecommended.length > 0 && (
-                <div className={s.recommendBox}>
-                    Puedes continuar. Te recomendamos también asignar, si tu archivo los tiene:{" "}
-                    {missingRecommended.map(k => labelByKey[k] || k).join(", ")}.
+                <div className={s.recommendList}>
+                    {missingRecommended.map(key => {
+                        const candidate = candidateColumnFor(key);
+                        const human = humanName(key);
+                        const examples = FIELD_HELP[key]?.examples || [];
+                        return (
+                            <div key={key} className={s.recommendCard}>
+                                <p className={s.recommendTitle}>
+                                    Detectamos que no asignaste <strong>{human}</strong>.
+                                </p>
+                                {candidate ? (
+                                    <div className={s.recommendAction}>
+                                        <span>
+                                            Encontramos la columna <strong>"{candidate}"</strong>.
+                                            ¿Asignarla como {human}?
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary btn-xs"
+                                            onClick={() => updateColumn(candidate, key)}
+                                            disabled={busy}
+                                        >
+                                            Asignar como {human}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <p className={s.recommendHint}>
+                                        Si tu archivo tiene una columna como{" "}
+                                        {examples.map((e, i) => (
+                                            <span key={e}>
+                                                {i > 0 ? ", " : ""}<strong>{e}</strong>
+                                            </span>
+                                        ))}
+                                        , selecciónala en la tabla de arriba. Si no existe, puedes
+                                        continuar y completar este dato después.
+                                    </p>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 

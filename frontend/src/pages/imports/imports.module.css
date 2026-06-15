@@ -137,15 +137,29 @@
 .missingBox ul { margin: 6px 0 0; padding-left: 18px; }
 .missingBox li { margin-bottom: 2px; }
 
-/* ── Recommended-but-optional hint (no bloquea) ─────────────── */
-.recommendBox {
+/* ── Recomendados faltantes (no bloquean; explican la acción) ─ */
+.recommendList {
   margin-top: 14px;
-  padding: 11px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.recommendCard {
+  padding: 12px 15px;
   border-radius: var(--r-md);
   border: 1px solid var(--c-border);
   background: var(--c-subtle);
   color: var(--c-text-2);
   font-size: 12.5px;
+}
+.recommendTitle { font-weight: 600; color: var(--c-text); margin-bottom: 5px; }
+.recommendHint { line-height: 1.55; }
+.recommendAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* ── Columna "Tipo" del mapeo (Obligatorio/Recomendado/Opcional) ─ */

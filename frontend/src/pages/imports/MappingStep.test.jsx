@@ -125,15 +125,47 @@ describe("MappingStep — campos obligatorios", () => {
         expect(missingItems).toContain("Nombre de la mascota");
     });
 
-    it("un campo SOLO recomendado sin asignar NO bloquea 'Continuar'", () => {
+    it("un campo recomendado sin asignar NO bloquea, y explica la acción concreta", () => {
         // pet.species (recomendado) sin asignar → puede continuar igual
         const partial = { ...SUGGESTED };
         delete partial["Tipo"];
         renderStep({ initialMapping: partial });
 
         expect(continueBtn()).toBeEnabled();
-        // y se sugiere (sin bloquear) asignar la especie
-        expect(screen.getByText(/Te recomendamos también asignar/)).toHaveTextContent("Especie");
+        // mensaje accionable con el nombre humano del campo
+        expect(screen.getByText(/Detectamos que no asignaste/)).toHaveTextContent("Especie de la mascota");
+    });
+});
+
+describe("MappingStep — recomendados: ayuda contextual", () => {
+    it("sugiere la columna candidata sin asignar y la asigna con un clic", async () => {
+        const user = userEvent.setup();
+        const partial = { ...SUGGESTED };
+        delete partial["Tipo"]; // "Tipo" queda libre y se parece a Especie
+        renderStep({ initialMapping: partial });
+
+        expect(screen.getByText(/Encontramos la columna/)).toHaveTextContent("Tipo");
+        const assignBtn = screen.getByRole("button", { name: /Asignar como Especie de la mascota/i });
+        await user.click(assignBtn);
+
+        // queda mapeada y la sugerencia desaparece
+        expect(selectFor("Tipo")).toHaveValue("pet.species");
+        expect(screen.queryByText(/Encontramos la columna/)).not.toBeInTheDocument();
+        expect(continueBtn()).toBeEnabled();
+    });
+
+    it("sin columna candidata, muestra ejemplos de cómo podría llamarse la columna", () => {
+        renderStep({
+            sourceColumns: ["Dueño", "Teléfono", "Paciente"],
+            sampleRows: [["Juan", "8112345678", "Max"]],
+            initialMapping: {
+                "Dueño": "owner.name", "Teléfono": "owner.phone", "Paciente": "pet.name",
+            },
+        });
+        expect(continueBtn()).toBeEnabled();
+        expect(screen.getByText(/Detectamos que no asignaste/)).toHaveTextContent("Especie de la mascota");
+        // ejemplos de nombres de columna (no hay candidata que sugerir)
+        expect(screen.getByText("Tipo de animal")).toBeInTheDocument();
     });
 });
 
