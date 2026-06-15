@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { useAuth } from "../../auth/authContext";
 import { useConfirm } from "../../components/useConfirm";
 import { apiError } from "../../utils/apiError";
-import handleFormError from "../../utils/handleFormError";
 import {
     uploadImport, setMapping, validateImport, commitImport,
 } from "../../api/imports";
@@ -54,7 +53,6 @@ const Imports = () => {
 
     const [step, setStep] = useState("upload");
     const [job, setJob] = useState(null);            // ImportJob completo (incluye public_id)
-    const [uploadErrors, setUploadErrors] = useState({});
     const [uploading, setUploading] = useState(false);
     const [validating, setValidating] = useState(false);
     const [committing, setCommitting] = useState(false);
@@ -77,15 +75,16 @@ const Imports = () => {
     // ── Paso 1 → 2: subir archivo ──
     const handleUpload = async (file) => {
         if (uploading) return;
-        setUploadErrors({});
         setUploading(true);
         try {
             const created = await uploadImport(file, "owner_pet");
             setJob(created);
             setStep("mapping");
         } catch (err) {
-            // Errores de parseo/validación → inline; el resto → toast global.
-            handleFormError(err, setUploadErrors);
+            // Errores de parseo/tamaño/validación → toast (mismo patrón que el
+            // resto del sistema). apiError extrae el `message` accionable; nunca
+            // el `code` técnico (import_parse_error, etc.).
+            toast.error(apiError(err, "No se pudo subir el archivo"));
         } finally {
             setUploading(false);
         }
@@ -144,7 +143,6 @@ const Imports = () => {
     const reset = () => {
         setStep("upload");
         setJob(null);
-        setUploadErrors({});
     };
 
     return (
@@ -159,20 +157,6 @@ const Imports = () => {
             </div>
 
             <Stepper current={step} />
-
-            {/* Errores de campo del upload (parseo / validación) — patrón handleFormError. */}
-            {step === "upload" && Object.keys(uploadErrors).length > 0 && (
-                <div className="form-alert form-alert-error">
-                    <span>{Object.values(uploadErrors)[0]}</span>
-                    <button
-                        className="form-alert-close"
-                        onClick={() => setUploadErrors({})}
-                        aria-label="Cerrar"
-                    >
-                        <Icon.X s={14} />
-                    </button>
-                </div>
-            )}
 
             {step === "upload" && (
                 <UploadStep onUpload={handleUpload} uploading={uploading} />

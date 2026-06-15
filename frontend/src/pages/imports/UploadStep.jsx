@@ -5,6 +5,9 @@ import s from "./imports.module.css";
 
 // Extensiones aceptadas en v1 (CSV + XLSX, Ajuste #2 del sprint).
 const ACCEPTED = [".csv", ".xlsx"];
+// Tope de tamaño (igual al backend parsers.MAX_FILE_BYTES). Pre-check en cliente
+// para feedback inmediato; el backend sigue siendo la fuente de verdad.
+const MAX_BYTES = 5 * 1024 * 1024;
 
 const hasAcceptedExt = (name = "") =>
     ACCEPTED.some(ext => name.toLowerCase().endsWith(ext));
@@ -29,6 +32,10 @@ const UploadStep = ({ onUpload, uploading }) => {
         if (!candidate) return;
         if (!hasAcceptedExt(candidate.name)) {
             toast.error("Formato no válido. Sube un archivo .csv o .xlsx.");
+            return;
+        }
+        if (candidate.size > MAX_BYTES) {
+            toast.error(`El archivo pesa demasiado (${formatSize(candidate.size)}). El máximo es 5 MB.`);
             return;
         }
         setFile(candidate);
