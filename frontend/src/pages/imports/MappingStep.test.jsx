@@ -3,9 +3,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MappingStep from "./MappingStep";
 
-// Enfoque "revisar excepciones": las columnas reconocidas NO son protagonistas
-// (van en una sección colapsada); las desconocidas sí (cards). El usuario solo
-// corrige excepciones. Se prueba comportamiento observable.
+// Iteración compacta (tabla rápida): las columnas a clasificar son un grid de
+// tarjetas con selector Cliente/Mascota/No importar SIEMPRE visible y cambiable +
+// renombrar el dato; las reconocidas van en un resumen colapsable. Se prueba
+// comportamiento observable.
 
 const FIELD_CATALOG = [
     { key: "owner.name", label: "Nombre del cliente", group: "Cliente", importance: "required" },
@@ -16,9 +17,9 @@ const FIELD_CATALOG = [
     { key: "pet.extra", label: "Dato de la mascota", group: "Mascota", importance: "optional", is_extra: true },
 ];
 
-const SOURCE_COLUMNS = ["Dueño", "Mascota", "Fecha Alta"];
-const SAMPLE_ROWS = [["Juan", "Max", "2018-01-01"]];
-const SUGGESTED = { "Dueño": "owner.name", "Mascota": "pet.name" }; // Fecha Alta → pendiente
+const SOURCE_COLUMNS = ["Dueño", "Mascota", "Color fav"];
+const SAMPLE_ROWS = [["Juan", "Max", "Rojo"]];
+const SUGGESTED = { "Dueño": "owner.name", "Mascota": "pet.name" }; // Color fav → excepción
 
 function renderStep(props = {}) {
     const onContinue = vi.fn();
@@ -39,74 +40,80 @@ function renderStep(props = {}) {
 const continueBtn = () => screen.getByRole("button", { name: /continuar/i });
 const btn = (name) => screen.getByRole("button", { name });
 
-describe("MappingStep — header de resumen", () => {
-    it("muestra detectadas / listas / necesitan revisión", () => {
+describe("MappingStep — header + reconocidas compactas", () => {
+    it("muestra detectadas / reconocidas / por revisar", () => {
         renderStep();
         expect(screen.getByText("3 columnas detectadas")).toBeInTheDocument();
-        expect(screen.getByText(/2 listas/)).toBeInTheDocument();
-        expect(screen.getByText(/1 necesitan revisión/)).toBeInTheDocument();
+        expect(screen.getByText(/2 reconocidas/)).toBeInTheDocument();
+        expect(screen.getByText(/1 por revisar/)).toBeInTheDocument();
+    });
+
+    it("las reconocidas van en un resumen colapsable, no como cards", () => {
+        renderStep();
+        expect(screen.queryByText("Dueño")).not.toBeInTheDocument();
+        expect(btn(/Reconocidas automáticamente \(2\)/i)).toBeInTheDocument();
     });
 });
 
-describe("MappingStep — reconocidas no son protagonistas", () => {
-    it("las columnas reconocidas NO se muestran como cards por defecto", () => {
+describe("MappingStep — tarjeta de excepción", () => {
+    it("muestra label, ejemplos y selector de 3 opciones", () => {
         renderStep();
-        // Dueño/Mascota están en la sección colapsada → no visibles aún
-        expect(screen.queryByText("Dueño")).not.toBeInTheDocument();
-        expect(btn(/2 columnas listas/i)).toBeInTheDocument();
+        expect(screen.getByText("Color fav")).toBeInTheDocument();
+        expect(screen.getByText(/Ejemplos:/)).toHaveTextContent("Rojo");
+        expect(btn("Cliente")).toBeInTheDocument();
+        expect(btn("Mascota")).toBeInTheDocument();
+        expect(btn("No importar")).toBeInTheDocument();
     });
 
-    it("al abrir la sección se ven 'Columna → Campo' y 'Modificar'", async () => {
+    it("el selector es cambiable y nunca se oculta", async () => {
         const user = userEvent.setup();
         renderStep();
-        await user.click(btn(/2 columnas listas/i));
-        expect(screen.getByText("Dueño")).toBeInTheDocument();
-        expect(screen.getByText("Nombre del cliente")).toBeInTheDocument();
-        expect(btn(/Modificar columna Dueño/i)).toBeInTheDocument();
-    });
-});
-
-describe("MappingStep — excepciones (pendientes)", () => {
-    it("muestra una card protagonista para la columna desconocida", () => {
-        renderStep();
-        expect(screen.getByText("No reconocimos «Fecha Alta»")).toBeInTheDocument();
-        expect(screen.getByText("¿Qué contiene esta columna?")).toBeInTheDocument();
-        expect(btn("Guardarlo como dato del cliente")).toBeInTheDocument();
-        expect(btn("Guardarlo como dato de la mascota")).toBeInTheDocument();
-        expect(btn("No importar esta columna")).toBeInTheDocument();
+        await user.click(btn("Cliente"));
+        expect(btn("Cliente")).toHaveAttribute("aria-pressed", "true");
+        // cambiar de opinión: ahora Mascota
+        await user.click(btn("Mascota"));
+        expect(btn("Mascota")).toHaveAttribute("aria-pressed", "true");
+        expect(btn("Cliente")).toHaveAttribute("aria-pressed", "false");
+        // las 3 opciones siguen visibles
+        expect(btn("No importar")).toBeInTheDocument();
     });
 
-    it("bloquea continuar mientras haya pendientes", () => {
+    it("bloquea continuar hasta decidir la excepción", async () => {
+        const user = userEvent.setup();
         renderStep();
         expect(continueBtn()).toBeDisabled();
-    });
-
-    it("al resolver la pendiente: continuar se habilita y el header se actualiza", async () => {
-        const user = userEvent.setup();
-        renderStep();
-        await user.click(btn("Guardarlo como dato de la mascota"));
+        await user.click(btn("Mascota"));
         expect(continueBtn()).toBeEnabled();
-        expect(screen.getByText(/3 listas/)).toBeInTheDocument();
-        expect(screen.queryByText(/necesitan revisión/)).not.toBeInTheDocument();
     });
 
-    it("entrega el mapping con el sistema + la decisión extra", async () => {
+    it("entrega el mapping con {target, label} para el dato extra", async () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
-        await user.click(btn("Guardarlo como dato de la mascota"));
+        await user.click(btn("Mascota"));
         await user.click(continueBtn());
         expect(onContinue).toHaveBeenCalledWith({
             "Dueño": "owner.name",
             "Mascota": "pet.name",
-            "Fecha Alta": "pet.extra",
+            "Color fav": { target: "pet.extra", label: "Color fav" },
         });
     });
+});
 
-    it("ofrece picker del sistema como opción secundaria", async () => {
+describe("MappingStep — renombrar el dato", () => {
+    it("permite editar el label visible y lo envía en el payload", async () => {
         const user = userEvent.setup();
-        renderStep();
-        await user.click(btn(/¿Es un campo del sistema/i));
-        expect(screen.getByLabelText(/Buscar campo del sistema para Fecha Alta/i)).toBeInTheDocument();
+        const { onContinue } = renderStep();
+        await user.click(btn(/Renombrar Color fav/i));
+        const input = screen.getByLabelText(/Nombre del dato para Color fav/i);
+        await user.clear(input);
+        await user.type(input, "Color favorito");
+        await user.click(btn("Mascota"));
+        await user.click(continueBtn());
+        expect(onContinue).toHaveBeenCalledWith({
+            "Dueño": "owner.name",
+            "Mascota": "pet.name",
+            "Color fav": { target: "pet.extra", label: "Color favorito" },
+        });
     });
 });
 
@@ -114,9 +121,8 @@ describe("MappingStep — modificar una reconocida", () => {
     it("no permite asignar el mismo campo del sistema a dos columnas", async () => {
         const user = userEvent.setup();
         renderStep();
-        await user.click(btn(/2 columnas listas/i));        // abre la sección
-        await user.click(btn(/Modificar columna Mascota/i)); // edita Mascota
-        // owner.name ya está en Dueño → su botón está deshabilitado en el picker
+        await user.click(btn(/Reconocidas automáticamente \(2\)/i));
+        await user.click(btn(/Modificar columna Mascota/i));
         expect(btn("Nombre del cliente")).toBeDisabled();
     });
 });

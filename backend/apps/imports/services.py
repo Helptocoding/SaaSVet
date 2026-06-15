@@ -36,6 +36,26 @@ _LEGACY_MAX = 64
 # Datos del sistema anterior (Fase D): tope por registro y por valor (ajuste PO).
 _EXTRA_MAX_ENTRIES = 50
 _EXTRA_VALUE_MAX = 500
+_EXTRA_LABEL_MAX = 120
+
+
+def _spec_target(spec):
+    """Un valor de mapping puede ser str (campo del sistema / '' = no importar) o
+    dict {target, label} (extra con label visible renombrado). Devuelve el target."""
+    if isinstance(spec, dict):
+        return spec.get('target') or ''
+    return spec or ''
+
+
+def _spec_label(spec, header):
+    """Label visible para un dato extra. Si el usuario renombró la columna usa ese
+    label; si no, el nombre original de la columna. La REFERENCIA a la columna
+    original (header/índice) se mantiene aparte para leer la celda."""
+    if isinstance(spec, dict):
+        lbl = (spec.get('label') or '').strip()
+        if lbl:
+            return lbl[:_EXTRA_LABEL_MAX]
+    return header.strip()[:_EXTRA_LABEL_MAX]
 
 
 # ---------------------------------------------------------------------------
@@ -59,16 +79,17 @@ def _project_row(columns, mapping, row):
     # ("Comentario" ×2), cada columna lee SU celda → dos entradas distintas en la
     # lista extra. El mapping se comparte por nombre (ambas → el mismo target).
     for idx, header in enumerate(columns):  # orden original de columnas
-        target = mapping.get(header)
+        spec = mapping.get(header)
+        target = _spec_target(spec)
         if not target:
             continue
         if idx >= len(row):
             continue
         value = (row[idx] or '').strip()
         if target == 'owner.extra':
-            owner_extra.append({'label': header.strip(), 'value': value[:_EXTRA_VALUE_MAX]})
+            owner_extra.append({'label': _spec_label(spec, header), 'value': value[:_EXTRA_VALUE_MAX]})
         elif target == 'pet.extra':
-            pet_extra.append({'label': header.strip(), 'value': value[:_EXTRA_VALUE_MAX]})
+            pet_extra.append({'label': _spec_label(spec, header), 'value': value[:_EXTRA_VALUE_MAX]})
         else:
             data[target] = value
     return data, owner_extra[:_EXTRA_MAX_ENTRIES], pet_extra[:_EXTRA_MAX_ENTRIES]
@@ -177,7 +198,8 @@ def check_mapping(job):
     """Valida el mapping del job. Devuelve lista de mensajes de error (vacía = OK)."""
     targets = valid_target_fields(job.entity_type)
     problems = []
-    assigned = [t for t in job.mapping.values() if t]
+    # El valor del mapping puede ser str o {target, label} → normalizar a target.
+    assigned = [t for t in (_spec_target(v) for v in job.mapping.values()) if t]
     unknown = sorted({t for t in assigned if t not in targets})
     if unknown:
         problems.append(f"Campos destino desconocidos: {', '.join(unknown)}.")

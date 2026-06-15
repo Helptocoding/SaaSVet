@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import s from "./imports.module.css";
 
-// Estados de una columna:
-const PENDING = "__pending__";   // desconocida, sin decidir → bloquea continuar
-const NO_IMPORT = "";            // "no importar esta columna"
+const PENDING = "__pending__";   // sin decidir → bloquea continuar
+const NO_IMPORT = "";
 const EXTRA_OWNER = "owner.extra";
 const EXTRA_PET = "pet.extra";
 
@@ -26,12 +25,12 @@ function groupSystemFields(fieldCatalog) {
     return groups;
 }
 
-/* Paso 2 — Revisar excepciones (Fase D, enfoque "el sistema ya hizo el trabajo").
-   - Las columnas reconocidas NO son protagonistas: van en una sección compacta
-     colapsable ("✓ N columnas listas"); solo se tocan con "Modificar".
-   - Las columnas DESCONOCIDAS son las protagonistas: una card por cada una que
-     necesita revisión, con pregunta humana y 3 opciones. Bloquean continuar hasta
-     decidir. El backend (mapping) no cambia. */
+/* Paso 2 — Revisar como una tabla rápida (Fase D, iteración compacta).
+   - Columnas que NO son campo del sistema → grid responsive de tarjetas. Cada una
+     con selector Cliente/Mascota/No importar SIEMPRE visible y cambiable, y label
+     renombrable (solo el nombre visible; la columna original sigue siendo la
+     referencia para leer el Excel → backend recibe {target, label}).
+   - Columnas reconocidas → resumen compacto colapsable (sin cards). */
 const MappingStep = ({
     sourceColumns = [],
     sampleRows = [],
@@ -60,13 +59,23 @@ const MappingStep = ({
         const seed = {};
         for (const col of sourceColumns) {
             const v = initialMapping[col];
-            seed[col] = v === undefined ? PENDING : v;
+            // initialMapping puede traer {target,label} (extra renombrado) o string.
+            seed[col] = v === undefined ? PENDING : (typeof v === "object" ? v.target : v);
         }
         return seed;
     });
-    const [readyOpen, setReadyOpen] = useState(false);   // sección de reconocidas
-    const [editing, setEditing] = useState(() => new Set());      // reconocidas en "Modificar"
-    const [sysOpen, setSysOpen] = useState(() => new Set());      // pendientes mostrando picker del sistema
+    const [customLabel, setCustomLabel] = useState(() => {
+        const seed = {};
+        for (const col of sourceColumns) {
+            const v = initialMapping[col];
+            if (v && typeof v === "object" && v.label) seed[col] = v.label;
+        }
+        return seed;
+    });
+    const [editingLabel, setEditingLabel] = useState(() => new Set());
+    const [readyOpen, setReadyOpen] = useState(false);
+    const [editing, setEditing] = useState(() => new Set());   // reconocidas en "Modificar"
+    const [sysOpen, setSysOpen] = useState(() => new Set());   // excepción mostrando picker del sistema
     const [search, setSearch] = useState({});
 
     const isSystem = (v) => systemKeys.has(v);
@@ -75,20 +84,24 @@ const MappingStep = ({
         [mapping]  // eslint-disable-line react-hooks/exhaustive-deps
     );
 
-    const decide = (col, value) => {
+    const labelOf = (col) => (customLabel[col] ?? col);
+
+    const choose = (col, value) => {
         setMapping(prev => ({ ...prev, [col]: value }));
-        setEditing(prev => { const n = new Set(prev); n.delete(col); return n; });
         setSysOpen(prev => { const n = new Set(prev); n.delete(col); return n; });
+        setEditing(prev => { const n = new Set(prev); n.delete(col); return n; });
     };
-    const openEdit = (col) => setEditing(prev => new Set(prev).add(col));
     const toggleSys = (col) => setSysOpen(prev => {
         const n = new Set(prev); n.has(col) ? n.delete(col) : n.add(col); return n;
     });
+    const startLabelEdit = (col) => setEditingLabel(prev => new Set(prev).add(col));
+    const commitLabel = (col) => setEditingLabel(prev => { const n = new Set(prev); n.delete(col); return n; });
 
-    const pendingCols = sourceColumns.filter(c => mapping[c] === PENDING);
-    const readyCols = sourceColumns.filter(c => mapping[c] !== PENDING);
+    const recognizedCols = sourceColumns.filter(c => isSystem(mapping[c]));
+    const exceptionCols = sourceColumns.filter(c => !isSystem(mapping[c]));
+    const pendingCount = exceptionCols.filter(c => mapping[c] === PENDING).length;
     const missingRequired = requiredKeys.filter(k => !assignedSystem.has(k));
-    const canContinue = pendingCols.length === 0 && missingRequired.length === 0 && !busy;
+    const canContinue = pendingCount === 0 && missingRequired.length === 0 && !busy;
 
     const samplePreview = (colIndex) => {
         const vals = [];
@@ -111,13 +124,16 @@ const MappingStep = ({
         const clean = {};
         for (const [col, v] of Object.entries(mapping)) {
             if (v === PENDING) continue;
-            clean[col] = v;
+            if (v === EXTRA_OWNER || v === EXTRA_PET) {
+                const lbl = (labelOf(col) || "").trim() || col;
+                clean[col] = { target: v, label: lbl };  // referencia original = la KEY (col)
+            } else {
+                clean[col] = v;  // campo del sistema o "" (no importar)
+            }
         }
         onContinue(clean);
     };
 
-    // Picker de campos del sistema (búsqueda + botones agrupados). Reusado por
-    // "Modificar" y por la opción secundaria de las cards pendientes.
     const systemPicker = (col, current) => {
         const q = search[col] || "";
         return (
@@ -146,7 +162,7 @@ const MappingStep = ({
                                             className={`${s.pickerBtn} ${current === f.key ? s.pickerBtnActive : ""}`}
                                             disabled={taken || busy}
                                             title={taken ? "Ya asignado a otra columna" : undefined}
-                                            onClick={() => decide(col, f.key)}
+                                            onClick={() => choose(col, f.key)}
                                         >
                                             {f.label}
                                         </button>
@@ -160,34 +176,57 @@ const MappingStep = ({
         );
     };
 
-    // Card de columna PENDIENTE — protagonista.
     const exceptionCard = (col) => {
         const idx = sourceColumns.indexOf(col);
+        const v = mapping[col];
+        const undecided = v === PENDING;
         return (
-            <div key={col} className={s.exceptionCard}>
-                <p className={s.exceptionName}>No reconocimos «{col}»</p>
-                <p className={s.colSample}>Ejemplos: {samplePreview(idx)}</p>
-                <p className={s.colQuestion}>¿Qué contiene esta columna?</p>
-                <div className={s.optList}>
-                    <button type="button" className={s.optBtn} onClick={() => decide(col, EXTRA_OWNER)} disabled={busy}>
-                        Guardarlo como dato del cliente
-                    </button>
-                    <button type="button" className={s.optBtn} onClick={() => decide(col, EXTRA_PET)} disabled={busy}>
-                        Guardarlo como dato de la mascota
-                    </button>
-                    <button type="button" className={s.optBtn} onClick={() => decide(col, NO_IMPORT)} disabled={busy}>
-                        No importar esta columna
-                    </button>
+            <div key={col} className={`${s.exCard} ${undecided ? s.exCardPending : ""}`}>
+                <div className={s.exHead}>
+                    {editingLabel.has(col) ? (
+                        <input
+                            className={s.exLabelInput}
+                            value={labelOf(col)}
+                            autoFocus
+                            onChange={(e) => setCustomLabel(p => ({ ...p, [col]: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") commitLabel(col); }}
+                            onBlur={() => commitLabel(col)}
+                            disabled={busy}
+                            aria-label={`Nombre del dato para ${col}`}
+                        />
+                    ) : (
+                        <>
+                            <span className={s.exLabel} title={labelOf(col) === col ? undefined : `Columna original: ${col}`}>
+                                {labelOf(col)}
+                            </span>
+                            <button
+                                type="button"
+                                className={s.exEdit}
+                                onClick={() => startLabelEdit(col)}
+                                disabled={busy}
+                                aria-label={`Renombrar ${col}`}
+                                title="Renombrar el dato"
+                            >
+                                ✏️
+                            </button>
+                        </>
+                    )}
+                </div>
+                <p className={s.exSample}>Ejemplos: {samplePreview(idx)}</p>
+                <p className={s.exGuardar}>Guardar como:</p>
+                <div className={s.segGroup}>
+                    <button type="button" aria-pressed={v === EXTRA_OWNER} className={`${s.segBtn} ${v === EXTRA_OWNER ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Cliente</button>
+                    <button type="button" aria-pressed={v === EXTRA_PET} className={`${s.segBtn} ${v === EXTRA_PET ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Mascota</button>
+                    <button type="button" aria-pressed={v === NO_IMPORT} className={`${s.segBtn} ${v === NO_IMPORT ? s.segBtnActive : ""}`} onClick={() => choose(col, NO_IMPORT)} disabled={busy}>No importar</button>
                 </div>
                 <button type="button" className={s.sysLink} onClick={() => toggleSys(col)} disabled={busy}>
-                    {sysOpen.has(col) ? "Ocultar campos del sistema" : "¿Es un campo del sistema? (nombre, teléfono…)"}
+                    {sysOpen.has(col) ? "Ocultar campos del sistema" : "¿Es un campo del sistema?"}
                 </button>
-                {sysOpen.has(col) && systemPicker(col, mapping[col])}
+                {sysOpen.has(col) && systemPicker(col, v)}
             </div>
         );
     };
 
-    // Fila de columna RECONOCIDA dentro de la sección colapsable.
     const readyRow = (col) => {
         if (editing.has(col)) {
             return (
@@ -197,9 +236,9 @@ const MappingStep = ({
                     <div className={s.pickerExtra}>
                         <span className={s.pickerOr}>o guárdala como información del sistema anterior:</span>
                         <div className={s.pickerBtns}>
-                            <button type="button" className={`${s.pickerBtn} ${mapping[col] === EXTRA_OWNER ? s.pickerBtnActive : ""}`} onClick={() => decide(col, EXTRA_OWNER)} disabled={busy}>Dato del cliente</button>
-                            <button type="button" className={`${s.pickerBtn} ${mapping[col] === EXTRA_PET ? s.pickerBtnActive : ""}`} onClick={() => decide(col, EXTRA_PET)} disabled={busy}>Dato de la mascota</button>
-                            <button type="button" className={s.pickerBtnGhost} onClick={() => decide(col, NO_IMPORT)} disabled={busy}>No importar</button>
+                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Dato del cliente</button>
+                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Dato de la mascota</button>
+                            <button type="button" className={s.pickerBtnGhost} onClick={() => choose(col, NO_IMPORT)} disabled={busy}>No importar</button>
                         </div>
                     </div>
                 </div>
@@ -213,7 +252,7 @@ const MappingStep = ({
                 <button
                     type="button"
                     className="btn btn-secondary btn-xs"
-                    onClick={() => openEdit(col)}
+                    onClick={() => setEditing(prev => new Set(prev).add(col))}
                     disabled={busy}
                     aria-label={`Modificar columna ${col}`}
                 >
@@ -230,23 +269,21 @@ const MappingStep = ({
                     {sourceColumns.length} columnas detectadas
                 </p>
                 <p style={{ fontSize: 13, color: "var(--c-text-2)" }}>
-                    <span className={s.summaryReady}>✓ {readyCols.length} listas</span>
-                    {pendingCols.length > 0 && (
-                        <span className={s.summaryWarn}> · ⚠ {pendingCols.length} necesitan revisión</span>
+                    <span className={s.summaryReady}>✓ {recognizedCols.length} reconocidas</span>
+                    {pendingCount > 0 && (
+                        <span className={s.summaryWarn}> · ⚠ {pendingCount} por revisar</span>
                     )}
                 </p>
             </div>
 
-            {/* Excepciones primero — lo único que requiere acción. */}
-            {pendingCols.length > 0 && (
+            {exceptionCols.length > 0 && (
                 <div style={{ marginBottom: 14 }}>
-                    <p className={s.sectionLabel}>Necesitan tu revisión</p>
-                    {pendingCols.map(exceptionCard)}
+                    <p className={s.sectionLabel}>Otras columnas — elige qué hacer con cada una</p>
+                    <div className={s.exGrid}>{exceptionCols.map(exceptionCard)}</div>
                 </div>
             )}
 
-            {/* Reconocidas — compactas, colapsadas por defecto. */}
-            {readyCols.length > 0 && (
+            {recognizedCols.length > 0 && (
                 <div className={s.readyBlock}>
                     <button
                         type="button"
@@ -254,14 +291,14 @@ const MappingStep = ({
                         onClick={() => setReadyOpen(o => !o)}
                         aria-expanded={readyOpen}
                     >
-                        <span>✓ {readyCols.length} columnas listas</span>
+                        <span>✓ Reconocidas automáticamente ({recognizedCols.length})</span>
                         <span className={s.readyChevron}>{readyOpen ? "▲" : "▼"}</span>
                     </button>
-                    {readyOpen && <div className={s.readyList}>{readyCols.map(readyRow)}</div>}
+                    {readyOpen && <div className={s.readyList}>{recognizedCols.map(readyRow)}</div>}
                 </div>
             )}
 
-            {pendingCols.length === 0 && missingRequired.length > 0 && (
+            {pendingCount === 0 && missingRequired.length > 0 && (
                 <div className={s.missingBox}>
                     <strong>Para continuar</strong>, asigna {missingRequired.length === 1 ? "este campo obligatorio" : "estos campos obligatorios"}:
                     <ul>

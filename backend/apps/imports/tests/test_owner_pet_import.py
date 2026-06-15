@@ -385,6 +385,21 @@ class ImportApiTests(TestCase):
         res2 = self.client.post(f'/api/imports/{pid2}/validate/', format='json')
         self.assertTrue(any(e['field'] == 'mapping' for e in res2.data['result']['errors']))
 
+    def test_extra_data_custom_label_rename(self):
+        # El valor del mapping puede ser {target, label} para renombrar el dato
+        # visible; la columna original ("Color fav") sigue siendo la referencia
+        # para leer la celda.
+        text = 'Dueño,Teléfono,Mascota,Especie,Color fav\nJuan,8112345678,Max,Perro,Rojo\n'
+        pid = self._upload(text)
+        self._set_mapping(pid, mapping={
+            'Dueño': 'owner.name', 'Teléfono': 'owner.phone',
+            'Mascota': 'pet.name', 'Especie': 'pet.species',
+            'Color fav': {'target': 'pet.extra', 'label': 'Color favorito'},
+        })
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        pet = Pet.objects.for_organization(self.org).get(name='Max')
+        self.assertEqual(pet.extra_data, [{'label': 'Color favorito', 'value': 'Rojo'}])
+
     def test_extra_data_value_truncated_to_500(self):
         long_val = 'x' * 600
         text = f'Dueño,Teléfono,Mascota,Especie,Nota\nJuan,8112345678,Max,Perro,{long_val}\n'
