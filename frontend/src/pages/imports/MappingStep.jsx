@@ -1,36 +1,27 @@
 import { useMemo, useState } from "react";
 import s from "./imports.module.css";
+import DestinationPicker from "./DestinationPicker";
 
 const PENDING = "__pending__";   // sin decidir → bloquea continuar
 const NO_IMPORT = "";
 const EXTRA_OWNER = "owner.extra";
 const EXTRA_PET = "pet.extra";
 
-const normalize = (str) =>
-    (str || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const targetOf = (spec) =>
+    spec === undefined ? PENDING : (typeof spec === "object" ? spec.target : spec);
 
-function groupSystemFields(fieldCatalog) {
-    const groups = [];
-    const byName = new Map();
-    for (const f of fieldCatalog) {
-        if (f.is_extra) continue;
-        const name = f.group || "Otros";
-        if (!byName.has(name)) {
-            const bucket = { name, fields: [] };
-            byName.set(name, bucket);
-            groups.push(bucket);
-        }
-        byName.get(name).fields.push(f);
-    }
-    return groups;
-}
+/* Paso 2 — "VetCare entendió tu Excel, solo revisa unas cosas" (Fase D, rediseño UX).
 
-/* Paso 2 — Revisar como una tabla rápida (Fase D, iteración compacta).
-   - Columnas que NO son campo del sistema → grid responsive de tarjetas. Cada una
-     con selector Cliente/Mascota/No importar SIEMPRE visible y cambiable, y label
-     renombrable (solo el nombre visible; la columna original sigue siendo la
-     referencia para leer el Excel → backend recibe {target, label}).
-   - Columnas reconocidas → resumen compacto colapsable (sin cards). */
+   UNA sola decisión por columna: "¿Qué representa esta columna?" → se abre el
+   DestinationPicker (modal) con campos del sistema + datos históricos + no importar.
+   No se exponen conceptos internos ni listas abiertas dentro de cada card.
+
+   - Columnas auto-reconocidas (el backend ya sugirió un campo del sistema) → sección
+     compacta colapsable ("✓ N reconocidas automáticamente").
+   - Las demás → cards compactas: pendiente "Seleccionar destino" / resuelta
+     "✓ … Cambiar". La decisión nunca es irreversible.
+
+   NO toca backend: el payload sigue siendo { col: string | {target, label} }. */
 const MappingStep = ({
     sourceColumns = [],
     sampleRows = [],
@@ -40,9 +31,8 @@ const MappingStep = ({
     onBack,
     busy = false,
 }) => {
-    const systemGroups = useMemo(() => groupSystemFields(fieldCatalog), [fieldCatalog]);
     const systemKeys = useMemo(
-        () => new Set(fieldCatalog.filter(f => !f.is_extra).map(f => f.key)),
+        () => new Set(fieldCatalog.filter((f) => !f.is_extra).map((f) => f.key)),
         [fieldCatalog]
     );
     const labelByKey = useMemo(() => {
@@ -51,17 +41,26 @@ const MappingStep = ({
         return m;
     }, [fieldCatalog]);
     const requiredKeys = useMemo(
-        () => fieldCatalog.filter(f => f.importance === "required").map(f => f.key),
+        () => fieldCatalog.filter((f) => f.importance === "required").map((f) => f.key),
         [fieldCatalog]
+    );
+    const isSystem = (v) => systemKeys.has(v);
+    const isExtra = (v) => v === EXTRA_OWNER || v === EXTRA_PET;
+
+    // Origen: columnas que el backend ya reconoció como campo del sistema. Estable
+    // (no cambia aunque el usuario reasigne) → define qué va al bloque compacto.
+    const autoCols = useMemo(
+        () => sourceColumns.filter((c) => isSystem(targetOf(initialMapping[c]))),
+        [sourceColumns, initialMapping, systemKeys]  // eslint-disable-line react-hooks/exhaustive-deps
+    );
+    const reviewCols = useMemo(
+        () => sourceColumns.filter((c) => !autoCols.includes(c)),
+        [sourceColumns, autoCols]
     );
 
     const [mapping, setMapping] = useState(() => {
         const seed = {};
-        for (const col of sourceColumns) {
-            const v = initialMapping[col];
-            // initialMapping puede traer {target,label} (extra renombrado) o string.
-            seed[col] = v === undefined ? PENDING : (typeof v === "object" ? v.target : v);
-        }
+        for (const col of sourceColumns) seed[col] = targetOf(initialMapping[col]);
         return seed;
     });
     const [customLabel, setCustomLabel] = useState(() => {
@@ -73,190 +72,129 @@ const MappingStep = ({
         return seed;
     });
     const [editingLabel, setEditingLabel] = useState(() => new Set());
-    const [readyOpen, setReadyOpen] = useState(false);
-    const [editing, setEditing] = useState(() => new Set());   // reconocidas en "Modificar"
-    const [sysOpen, setSysOpen] = useState(() => new Set());   // excepción mostrando picker del sistema
-    const [search, setSearch] = useState({});
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [pickerCol, setPickerCol] = useState(null);   // columna con el modal abierto
 
-    const isSystem = (v) => systemKeys.has(v);
     const assignedSystem = useMemo(
         () => new Set(Object.values(mapping).filter(isSystem)),
         [mapping]  // eslint-disable-line react-hooks/exhaustive-deps
     );
-
     const labelOf = (col) => (customLabel[col] ?? col);
 
     const choose = (col, value) => {
-        setMapping(prev => ({ ...prev, [col]: value }));
-        setSysOpen(prev => { const n = new Set(prev); n.delete(col); return n; });
-        setEditing(prev => { const n = new Set(prev); n.delete(col); return n; });
+        setMapping((prev) => ({ ...prev, [col]: value }));
+        setPickerCol(null);
     };
-    const toggleSys = (col) => setSysOpen(prev => {
-        const n = new Set(prev); n.has(col) ? n.delete(col) : n.add(col); return n;
-    });
-    const startLabelEdit = (col) => setEditingLabel(prev => new Set(prev).add(col));
-    const commitLabel = (col) => setEditingLabel(prev => { const n = new Set(prev); n.delete(col); return n; });
+    const startLabelEdit = (col) => setEditingLabel((prev) => new Set(prev).add(col));
+    const commitLabel = (col) =>
+        setEditingLabel((prev) => { const n = new Set(prev); n.delete(col); return n; });
 
-    const recognizedCols = sourceColumns.filter(c => isSystem(mapping[c]));
-    const exceptionCols = sourceColumns.filter(c => !isSystem(mapping[c]));
-    const pendingCount = exceptionCols.filter(c => mapping[c] === PENDING).length;
-    const missingRequired = requiredKeys.filter(k => !assignedSystem.has(k));
+    const pendingCount = reviewCols.filter((c) => mapping[c] === PENDING).length;
+    const readyCount = sourceColumns.length - pendingCount;
+    const missingRequired = requiredKeys.filter((k) => !assignedSystem.has(k));
     const canContinue = pendingCount === 0 && missingRequired.length === 0 && !busy;
 
-    const samplePreview = (colIndex) => {
+    const colIndex = (col) => sourceColumns.indexOf(col);
+    const samplePreview = (col) => {
+        const idx = colIndex(col);
         const vals = [];
         for (const row of sampleRows) {
-            const cell = row?.[colIndex];
+            const cell = row?.[idx];
             if (cell !== undefined && cell !== null && String(cell).trim() !== "") vals.push(String(cell));
             if (vals.length >= 3) break;
         }
         return vals.length ? vals.join(" · ") : "—";
     };
 
-    const destLabel = (v) => {
-        if (isSystem(v)) return labelByKey[v];
-        if (v === EXTRA_OWNER) return "Histórico del cliente";
-        if (v === EXTRA_PET) return "Histórico de la mascota";
-        return "No se importa";
+    const destLine = (v) => {
+        if (isSystem(v)) return `Se importará como ${labelByKey[v]}`;
+        if (v === EXTRA_OWNER) return "Se conservará como Información anterior del cliente";
+        if (v === EXTRA_PET) return "Se conservará como Información anterior de la mascota";
+        return "No se importará";
     };
 
     const handleContinue = () => {
         const clean = {};
         for (const [col, v] of Object.entries(mapping)) {
             if (v === PENDING) continue;
-            if (v === EXTRA_OWNER || v === EXTRA_PET) {
+            if (isExtra(v)) {
                 const lbl = (labelOf(col) || "").trim() || col;
-                clean[col] = { target: v, label: lbl };  // referencia original = la KEY (col)
+                clean[col] = { target: v, label: lbl };   // referencia original = la KEY (col)
             } else {
-                clean[col] = v;  // campo del sistema o "" (no importar)
+                clean[col] = v;   // campo del sistema o "" (no importar)
             }
         }
         onContinue(clean);
     };
 
-    const systemPicker = (col, current) => {
-        const q = search[col] || "";
-        return (
-            <div className={s.colPicker}>
-                <input
-                    className="select-input"
-                    placeholder="Buscar un campo: nombre, teléfono, especie…"
-                    value={q}
-                    onChange={(e) => setSearch(p => ({ ...p, [col]: e.target.value }))}
-                    disabled={busy}
-                    aria-label={`Buscar campo del sistema para ${col}`}
-                />
-                {systemGroups.map(g => {
-                    const fields = g.fields.filter(f => normalize(f.label).includes(normalize(q)));
-                    if (!fields.length) return null;
-                    return (
-                        <div key={g.name} className={s.pickerGroup}>
-                            <span className={s.pickerGroupName}>{g.name}</span>
-                            <div className={s.pickerBtns}>
-                                {fields.map(f => {
-                                    const taken = assignedSystem.has(f.key) && current !== f.key;
-                                    return (
-                                        <button
-                                            key={f.key}
-                                            type="button"
-                                            className={`${s.pickerBtn} ${current === f.key ? s.pickerBtnActive : ""}`}
-                                            disabled={taken || busy}
-                                            title={taken ? "Ya asignado a otra columna" : undefined}
-                                            onClick={() => choose(col, f.key)}
-                                        >
-                                            {f.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
-
-    const exceptionCard = (col) => {
-        const idx = sourceColumns.indexOf(col);
+    // ── Card de columna a revisar ───────────────────────────────────────────
+    const reviewCard = (col) => {
         const v = mapping[col];
-        const undecided = v === PENDING;
-        return (
-            <div key={col} className={`${s.exCard} ${undecided ? s.exCardPending : ""}`}>
-                <div className={s.exHead}>
-                    {editingLabel.has(col) ? (
-                        <input
-                            className={s.exLabelInput}
-                            value={labelOf(col)}
-                            autoFocus
-                            onChange={(e) => setCustomLabel(p => ({ ...p, [col]: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === "Enter") commitLabel(col); }}
-                            onBlur={() => commitLabel(col)}
-                            disabled={busy}
-                            aria-label={`Nombre del dato para ${col}`}
-                        />
-                    ) : (
-                        <>
-                            <span className={s.exLabel} title={labelOf(col) === col ? undefined : `Columna original: ${col}`}>
-                                {labelOf(col)}
-                            </span>
-                            <button
-                                type="button"
-                                className={s.exEdit}
-                                onClick={() => startLabelEdit(col)}
-                                disabled={busy}
-                                aria-label={`Renombrar ${col}`}
-                                title="Renombrar el dato"
-                            >
-                                ✏️
-                            </button>
-                        </>
-                    )}
-                </div>
-                <p className={s.exSample}>Ejemplos: {samplePreview(idx)}</p>
-                <p className={s.exGuardar}>Conservar como:</p>
-                <div className={s.segGroup}>
-                    <button type="button" aria-pressed={v === EXTRA_OWNER} className={`${s.segBtn} ${v === EXTRA_OWNER ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Histórico cliente</button>
-                    <button type="button" aria-pressed={v === EXTRA_PET} className={`${s.segBtn} ${v === EXTRA_PET ? s.segBtnActive : ""}`} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Histórico mascota</button>
-                    <button type="button" aria-pressed={v === NO_IMPORT} className={`${s.segBtn} ${v === NO_IMPORT ? s.segBtnActive : ""}`} onClick={() => choose(col, NO_IMPORT)} disabled={busy}>No importar</button>
-                </div>
-                <button type="button" className={s.sysLink} onClick={() => toggleSys(col)} disabled={busy}>
-                    {sysOpen.has(col) ? "Ocultar campos del sistema" : "Relacionar con un campo existente"}
-                </button>
-                {sysOpen.has(col) && systemPicker(col, v)}
-            </div>
-        );
-    };
-
-    const readyRow = (col) => {
-        if (editing.has(col)) {
+        if (v === PENDING) {
             return (
-                <div key={col} className={s.readyEditing}>
-                    <p className={s.colQuestion}>Modificar «{col}»</p>
-                    {systemPicker(col, mapping[col])}
-                    <div className={s.pickerExtra}>
-                        <span className={s.pickerOr}>o consérvala como dato del sistema anterior:</span>
-                        <div className={s.pickerBtns}>
-                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_OWNER)} disabled={busy}>Histórico del cliente</button>
-                            <button type="button" className={s.pickerBtn} onClick={() => choose(col, EXTRA_PET)} disabled={busy}>Histórico de la mascota</button>
-                            <button type="button" className={s.pickerBtnGhost} onClick={() => choose(col, NO_IMPORT)} disabled={busy}>No importar</button>
-                        </div>
-                    </div>
+                <div key={col} className={`${s.colCard} ${s.colCardPending}`}>
+                    <p className={s.colCardTitle}>
+                        <span className={s.colCardWarn} aria-hidden="true">⚠</span>
+                        <span className={s.colCardName}>{col}</span>
+                    </p>
+                    <p className={s.colCardExamples}>Ejemplos: {samplePreview(col)}</p>
+                    <p className={s.colCardQuestion}>¿Qué representa esta columna?</p>
+                    <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setPickerCol(col)}
+                        disabled={busy}
+                    >
+                        Seleccionar destino ▾
+                    </button>
                 </div>
             );
         }
         return (
-            <div key={col} className={s.readyRow}>
-                <span className={s.readyCol}>{col}</span>
-                <span className={s.readyArrow}>→</span>
-                <span className={s.readyDest}>{destLabel(mapping[col])}</span>
+            <div key={col} className={s.colCard}>
+                <p className={s.colCardTitle}>
+                    <span className={s.colCardOk} aria-hidden="true">✓</span>
+                    <span className={s.colCardName}>{col}</span>
+                </p>
+                <p className={s.colCardDest}>{destLine(v)}</p>
+                {isExtra(v) && (
+                    <div className={s.renameRow}>
+                        {editingLabel.has(col) ? (
+                            <input
+                                className={s.renameInput}
+                                value={labelOf(col)}
+                                autoFocus
+                                onChange={(e) => setCustomLabel((p) => ({ ...p, [col]: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === "Enter") commitLabel(col); }}
+                                onBlur={() => commitLabel(col)}
+                                disabled={busy}
+                                aria-label={`Nombre visible para ${col}`}
+                            />
+                        ) : (
+                            <>
+                                <span className={s.renameLabel}>Nombre visible: <strong>{labelOf(col)}</strong></span>
+                                <button
+                                    type="button"
+                                    className={s.renameBtn}
+                                    onClick={() => startLabelEdit(col)}
+                                    disabled={busy}
+                                    aria-label={`Renombrar ${col}`}
+                                    title="Cambiar el nombre visible"
+                                >
+                                    ✏️
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
                 <button
                     type="button"
-                    className="btn btn-secondary btn-xs"
-                    onClick={() => setEditing(prev => new Set(prev).add(col))}
+                    className={s.changeLink}
+                    onClick={() => setPickerCol(col)}
                     disabled={busy}
-                    aria-label={`Modificar columna ${col}`}
+                    aria-label={`Cambiar destino de ${col}`}
                 >
-                    Modificar
+                    Cambiar
                 </button>
             </div>
         );
@@ -269,37 +207,59 @@ const MappingStep = ({
                     {sourceColumns.length} columnas detectadas
                 </p>
                 <p style={{ fontSize: 13, color: "var(--c-text-2)" }}>
-                    <span className={s.summaryReady}>✓ {recognizedCols.length} reconocidas</span>
+                    <span className={s.summaryReady}>✓ {readyCount} listas</span>
                     {pendingCount > 0 && (
-                        <span className={s.summaryWarn}> · ⚠ {pendingCount} por revisar</span>
+                        <span className={s.summaryWarn}> · ⚠ {pendingCount} necesitan revisión</span>
                     )}
                 </p>
             </div>
 
-            {exceptionCols.length > 0 && (
+            {reviewCols.length > 0 && (
                 <div style={{ marginBottom: 14 }}>
-                    <p className={s.sectionLabel}>Columnas sin un campo equivalente</p>
-                    <p className={s.exIntro}>
-                        No encontramos un campo del sistema para estas columnas. Puedes
-                        conservar la información como referencia del sistema anterior, o
-                        no importarla.
-                    </p>
-                    <div className={s.exGrid}>{exceptionCols.map(exceptionCard)}</div>
+                    {pendingCount > 0 && (
+                        <p className={s.exIntro}>
+                            Revisa estas columnas: dinos qué representa cada una para
+                            importarla bien (o consérvala como información del sistema
+                            anterior).
+                        </p>
+                    )}
+                    <div className={s.colGrid}>{reviewCols.map(reviewCard)}</div>
                 </div>
             )}
 
-            {recognizedCols.length > 0 && (
+            {autoCols.length > 0 && (
                 <div className={s.readyBlock}>
                     <button
                         type="button"
                         className={s.readyToggle}
-                        onClick={() => setReadyOpen(o => !o)}
-                        aria-expanded={readyOpen}
+                        onClick={() => setDetailsOpen((o) => !o)}
+                        aria-expanded={detailsOpen}
                     >
-                        <span>✓ Reconocidas automáticamente ({recognizedCols.length})</span>
-                        <span className={s.readyChevron}>{readyOpen ? "▲" : "▼"}</span>
+                        <span>✓ {autoCols.length} columnas reconocidas automáticamente</span>
+                        <span className={s.readyChevron}>{detailsOpen ? "Ocultar" : "Ver detalles"}</span>
                     </button>
-                    {readyOpen && <div className={s.readyList}>{recognizedCols.map(readyRow)}</div>}
+                    {detailsOpen && (
+                        <div className={s.readyList}>
+                            {autoCols.map((col) => (
+                                <div key={col} className={s.readyRow}>
+                                    <span className={s.readyCol}>{col}</span>
+                                    <span className={s.readyArrow}>→</span>
+                                    <span className={s.readyDest}>
+                                        {isSystem(mapping[col]) ? labelByKey[mapping[col]] : destLine(mapping[col])}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className={s.changeLink}
+                                        onClick={() => setPickerCol(col)}
+                                        disabled={busy}
+                                        aria-label={`Cambiar columna ${col}`}
+                                    >
+                                        Cambiar
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -307,7 +267,7 @@ const MappingStep = ({
                 <div className={s.missingBox}>
                     <strong>Para continuar</strong>, asigna {missingRequired.length === 1 ? "este campo obligatorio" : "estos campos obligatorios"}:
                     <ul>
-                        {missingRequired.map(k => <li key={k}>{labelByKey[k] || k}</li>)}
+                        {missingRequired.map((k) => <li key={k}>{labelByKey[k] || k}</li>)}
                     </ul>
                 </div>
             )}
@@ -322,6 +282,18 @@ const MappingStep = ({
                     </button>
                 </div>
             </div>
+
+            {pickerCol !== null && (
+                <DestinationPicker
+                    column={pickerCol}
+                    examples={samplePreview(pickerCol)}
+                    fieldCatalog={fieldCatalog}
+                    value={mapping[pickerCol] === PENDING ? undefined : mapping[pickerCol]}
+                    assignedSystem={assignedSystem}
+                    onPick={(value) => choose(pickerCol, value)}
+                    onClose={() => setPickerCol(null)}
+                />
+            )}
         </div>
     );
 };
