@@ -3,6 +3,7 @@ import { apiError } from "../../utils/apiError";
 import { getPresentations } from "../../api/inventory";
 import { Icon } from "../icons";
 import EntitySearch from "../EntitySearch";
+import SearchSelect from "../SearchSelect";
 import { searchPets } from "../../api/lookups";
 import { renderPetOption, petOptionLabel } from "../lookupOptions";
 import { toast } from "sonner";

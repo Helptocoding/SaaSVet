@@ -180,7 +180,9 @@ Lista de FKs embebidos disponibles (incompleta — ver serializers backend):
 - `MedicalRecordSerializer`: `pet_public_id`, `appointment_public_id`, `prescription_public_id`, `invoice_public_id`
 - `AppointmentSerializer`: `pet_public_id`, `owner_public_id`, `veterinarian_public_id`, `medical_record_public_ids`, `invoice_public_id`
 - `InvoiceSerializer`: `pet_public_id`, `owner_public_id`, `appointment_public_id`, `medical_record_public_id`
-- `PrescriptionSerializer`: `pet_public_id`, `medical_record_public_id`
+- `PrescriptionSerializer`: `pet_public_id`, `medical_record_public_id` + metadatos
+  read-only de la mascota `pet_species`/`pet_sex`/`pet_birth_date` (para que la
+  página de Recetas filtre sin cargar el catálogo completo de mascotas — ADR p44b)
 - `VaccineRecordSerializer`: `pet_public_id`, `applied_by_public_id`, `medical_record_public_id`
 - `MeView` response: `organization_public_id`
 
@@ -432,6 +434,18 @@ Consumidores: selectores de mascota de **Citas** (`appointments.jsx`),
 El **historial clínico** (`PetSidebar`) usa el mismo `searchPets` pero como lista
 inline (no dropdown). El `value` pasa a ser el **objeto completo** de la entidad
 (trae `id` PK para el body + `public_id`).
+
+> `PrescriptionForm` combina **EntitySearch** (picker de mascota, server-side) con
+> **SearchSelect** (picker de medicamento). No quitar `import SearchSelect`: el
+> picker de medicamento lo necesita (la regresión ff68196 lo borró → crash; ver
+> ADR p44b addendum).
+
+**Recetas (página) NO carga la lista completa de mascotas** (ADR p44b addendum):
+los filtros especie/sexo/edad leen los metadatos embebidos en cada receta
+(`pet_species`/`pet_sex`/`pet_birth_date`, ver lista de FKs embebidos) y el
+selector "Todas las mascotas" se **deriva** de las recetas cargadas (solo las que
+tienen receta), con filtro por mascota client-side. La lista de recetas en sí
+sigue sin paginar (deuda P1 — DD-013).
 
 ### ConfirmDialog / useConfirm
 

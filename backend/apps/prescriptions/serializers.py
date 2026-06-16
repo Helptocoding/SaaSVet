@@ -84,6 +84,13 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     pet_name = serializers.CharField(source='pet.name', read_only=True)
     # Día 6 B1: pet_public_id para frontend evitar PK en query params
     pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True)
+    # Metadatos de la mascota embebidos (read-only) para que la página de Recetas
+    # filtre por especie/sexo/edad SIN cargar la lista completa de mascotas
+    # (clínicas importadas de miles de pacientes). El pet ya viene select_related
+    # en el queryset → costo cero. Pueden ser '' / null para datos importados.
+    pet_species = serializers.CharField(source='pet.species', read_only=True)
+    pet_sex = serializers.CharField(source='pet.sex', read_only=True)
+    pet_birth_date = serializers.DateField(source='pet.birth_date', read_only=True, allow_null=True)
     medical_record_public_id = serializers.UUIDField(
         source='medical_record.public_id', read_only=True, allow_null=True
     )
@@ -94,11 +101,15 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'public_id', 'medical_record', 'medical_record_public_id',
             'veterinarian', 'veterinarian_name',
-            'pet', 'pet_name', 'pet_public_id', 'notes', 'items',
+            'pet', 'pet_name', 'pet_public_id',
+            'pet_species', 'pet_sex', 'pet_birth_date',
+            'notes', 'items',
             'created_at', 'updated_at',
         ]
         read_only_fields = [
-            'id', 'public_id', 'pet_public_id', 'medical_record_public_id',
+            'id', 'public_id', 'pet_public_id',
+            'pet_species', 'pet_sex', 'pet_birth_date',
+            'medical_record_public_id',
             'veterinarian', 'created_at', 'updated_at',
         ]
 

@@ -8,7 +8,6 @@ import PrescriptionForm from "../components/prescriptions/PrescriptionForm";
 import { useAuth } from "../auth/authContext";
 import { getProducts } from "../api/inventory";
 import { getMedicalRecords } from "../api/medicalRecords";
-import { getPets } from "../api/pets";
 import {
     createPrescription,
     deletePrescription,
@@ -229,7 +228,6 @@ const Prescriptions = () => {
     const [searchParams] = useSearchParams();
 
     const [prescriptions, setPrescriptions]           = useState([]);
-    const [pets, setPets]                             = useState([]);
     const [products, setProducts]                     = useState([]);
     const [medicalRecordsForPet, setMedicalRecords]   = useState([]);
     const [loading, setLoading]                       = useState(true);
@@ -250,14 +248,17 @@ const Prescriptions = () => {
 
     const canCreate = user?.role !== "ASSISTANT";
 
+    // Carga TODAS las recetas (lista no paginada — DD-013). El filtro por mascota
+    // es client-side (igual que especie/sexo/edad), así NO se recarga al cambiar
+    // de mascota y el selector conserva sus opciones. La especie/sexo/edad salen
+    // de los metadatos embebidos en cada receta (pet_species/pet_sex/
+    // pet_birth_date) → ya no se carga la lista completa de mascotas.
     const loadPrescriptions = useCallback(async () => {
         try {
-            const params = {};
-            if (selectedPet) params.pet = selectedPet;
-            const data = await getPrescriptions(params);
+            const data = await getPrescriptions();
             setPrescriptions(toList(data));
         } catch { /* silencioso */ }
-    }, [selectedPet]);
+    }, []);
 
     const loadMedicalRecordsForPet = useCallback(async (petId) => {
         if (!petId || !token) { setMedicalRecords([]); return; }
@@ -272,11 +273,7 @@ const Prescriptions = () => {
         (async () => {
             setLoading(true);
             try {
-                const [petsData, prodsData] = await Promise.all([
-                    getPets(),
-                    getProducts({ active: "true" }),
-                ]);
-                setPets(Array.isArray(petsData) ? petsData : (petsData.results || []));
+                const prodsData = await getProducts({ active: "true" });
                 setProducts(Array.isArray(prodsData) ? prodsData : (prodsData.results || []));
                 await loadPrescriptions();
             } finally { setLoading(false); }
@@ -284,13 +281,10 @@ const Prescriptions = () => {
     }, [token, loadPrescriptions]);
 
     useEffect(() => {
-        if (token) loadPrescriptions();
-    }, [token, loadPrescriptions]);
-
-    useEffect(() => {
         const mrParam = searchParams.get("medical_record");
         const petParam = searchParams.get("pet");
         if (mrParam && petParam && token) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- abre el form lockeado en respuesta a deep-link ?medical_record&pet
             setLocked(true);
             setEditing(null);
             setFormSeed({ medical_record: mrParam, pet: petParam, notes: "", items: [] });
@@ -347,12 +341,20 @@ const Prescriptions = () => {
         finally { setDownloadingId(null); }
     };
 
-    // Join receta -> mascota por pet_public_id para reutilizar filtros de Mascotas
-    const petByPublicId = useMemo(() => {
-        const m = {};
-        pets.forEach(p => { m[p.public_id] = p; });
-        return m;
-    }, [pets]);
+    // Opciones del selector "Todas las mascotas": solo mascotas que YA tienen
+    // recetas (derivadas de la lista cargada). No se trae el catálogo completo
+    // de mascotas → escala con clínicas importadas de miles de pacientes.
+    const petOptions = useMemo(() => {
+        const seen = new Map();
+        prescriptions.forEach(rx => {
+            if (rx.pet_public_id && !seen.has(rx.pet_public_id)) {
+                seen.set(rx.pet_public_id, rx.pet_name || "—");
+            }
+        });
+        return [...seen.entries()]
+            .map(([public_id, name]) => ({ public_id, name }))
+            .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    }, [prescriptions]);
 
     const filtered = prescriptions.filter(rx => {
         const q = search.toLowerCase();
@@ -361,14 +363,16 @@ const Prescriptions = () => {
             rx.veterinarian_name?.toLowerCase().includes(q) ||
             rx.items?.some(i => i.product_name?.toLowerCase().includes(q));
 
-        const pet = petByPublicId[rx.pet_public_id];
+        // Filtros de especie/sexo/edad desde los metadatos embebidos en la receta
+        // (pet_species/pet_sex/pet_birth_date) — sin cargar la mascota.
         const matchSpecies = filterSpecies === "all" ||
-            (filterSpecies === "caninos" && pet && isCanino(pet)) ||
-            (filterSpecies === "felinos" && pet && isFelino(pet));
-        const matchSex = filterSex === "all" || (pet && pet.sex === filterSex);
-        const matchAge = filterAge === "all" || (pet && getAgeGroup(pet.birth_date) === filterAge);
+            (filterSpecies === "caninos" && isCanino({ species: rx.pet_species })) ||
+            (filterSpecies === "felinos" && isFelino({ species: rx.pet_species }));
+        const matchSex = filterSex === "all" || rx.pet_sex === filterSex;
+        const matchAge = filterAge === "all" || getAgeGroup(rx.pet_birth_date) === filterAge;
+        const matchPet = !selectedPet || rx.pet_public_id === selectedPet;
 
-        return matchSearch && matchSpecies && matchSex && matchAge;
+        return matchSearch && matchSpecies && matchSex && matchAge && matchPet;
     });
 
     const hasActiveFilters = search || selectedPet || filterSpecies !== "all" || filterSex !== "all" || filterAge !== "all";
@@ -428,7 +432,7 @@ const Prescriptions = () => {
                     style={{ width: "auto", height: "36px", fontSize: "13px" }}
                 >
                     <option value="">Todas las mascotas</option>
-                    {pets.map(p => <option key={p.public_id} value={p.public_id}>{p.name}</option>)}
+                    {petOptions.map(p => <option key={p.public_id} value={p.public_id}>{p.name}</option>)}
                 </select>
 
                 {/* Especie (reutilizado de Mascotas) */}
@@ -637,7 +641,7 @@ const Prescriptions = () => {
                 <PrescriptionForm
                     title={editing ? "Editar Receta" : "Nueva Receta"}
                     initialValue={formSeed}
-                    pets={pets}
+                    pets={[]}
                     products={products}
                     medicalRecordsForPet={medicalRecordsForPet}
                     lockedPet={lockedFromParams}

@@ -91,10 +91,35 @@ incompletos se comunican sin fricción permanente. El patrón `EntitySearch` es
 - El carve-out "paginar solo con `?page`" (pets y owners) es convención implícita;
   un dropdown que mande `?page` por error recibiría un envelope. Documentado y
   testeado.
-- `prescriptions.jsx` (página) aún carga la lista completa de mascotas para otros
-  usos; solo se migró su **selector**. Fuera de alcance.
 - El historial perdió el badge de "N consultas" por mascota en el sidebar (el
   conteo del pet seleccionado lo da el timeline). Trade-off por no traer todos los
   MR.
 - `petDetail` arrastra deuda react-hooks preexistente (`calcAge`/`Date.now`,
   `loadAll` deps) — no tocada.
+
+## Addendum (fase de cierre) — prescriptions.jsx sin carga completa de mascotas
+
+Auditoría de cierre sobre todo el frontend buscando full-loads que no escalan
+(`getPets`/`getOwners`/`getMedicalRecords`/`page_size` grande). Único caso
+peligroso restante = **`prescriptions.jsx`** (la página, no su selector): hacía
+`getPets()` (lista completa) al abrir para tres cosas — el dropdown "Todas las
+mascotas", el join `pet_public_id → pet` que alimentaba los filtros
+especie/sexo/edad, y el prop `pets` del form. **Resuelto**:
+
+- **Backend**: `PrescriptionSerializer` embebe `pet_species`, `pet_sex`,
+  `pet_birth_date` (read-only; el `pet` ya viene `select_related` → costo cero;
+  toleran datos importados incompletos `''`/`null`). Los filtros leen estos
+  campos de cada receta.
+- **Frontend**: se elimina `getPets()`. El selector "Todas las mascotas" se
+  **deriva** de las recetas cargadas (solo mascotas con receta — dropdown más
+  corto, no de 1500), y el filtro por mascota pasa a client-side (igual que
+  especie/sexo/edad). El form siempre va sin lista (`pets={[]}`): usa
+  `EntitySearch` (server-side) y aquí nunca está lockeado.
+- **Regresión corregida**: ff68196 quitó `import SearchSelect` de
+  `PrescriptionForm` pero el picker de **medicamento** seguía usándolo → abrir el
+  form crasheaba (`ReferenceError`). Re-importado + tests de render
+  (`PrescriptionForm.test.jsx`, `prescriptions.test.jsx`).
+
+Deuda restante (reportada, no P0): `getPrescriptions()` sigue sin paginar (crece
+con el uso, no con la importación). Clasificada **P1** — diferida con
+Products/Appointments hasta tener filtros server-side (DD-013).
