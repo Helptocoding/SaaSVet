@@ -14,11 +14,14 @@ Es el punto de entrada a todos los flujos clinicos del sistema.
 Campos:
 - `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre del propietario
-- `phone` — telefono de contacto (10 digitos, solo Mexico)
+- `phone` — telefono de contacto (10 digitos en alta manual; `blank=True` a nivel modelo — ver excepción del importador abajo)
 - `is_generic` — marca al propietario sintetico "Publico General" creado por organizacion
+- `legacy_id` — identificador del sistema/clínica de origen (nº de cliente del software viejo), agregado en el Sprint import. `blank=True, default=''`. Único por organización **solo cuando está presente** (constraint parcial que excluye `''`). NO es PK ni reemplaza `public_id` — solo referencia. La UI lo muestra como "Número de expediente anterior", nunca "legacy_id".
+- `extra_data` — `JSONField(default=list, blank=True)`: datos históricos del sistema anterior (Sprint import Fase D, ADR p43). Lista de `{label, value, source_column, imported_at}`. **Read-only** (lo escribe solo el importador; `read_only` en el serializer). Ver § Datos del sistema anterior.
 
 Reglas de negocio:
-- telefono debe tener exactamente 10 digitos (validacion en serializer)
+- telefono debe tener exactamente 10 digitos en el alta/edición **manual** (validacion en `OwnerSerializer`)
+- **Excepción del importador (Sprint import):** el modelo declara `phone = blank=True`; el importador CSV/Excel (`apps/imports`) crea owners vía `Owner.save()` directo y puede dejar el teléfono vacío (archivos viejos sin teléfono). El `OwnerSerializer` sigue exigiendo 10 dígitos — la relajación vive **solo** en el importador, no en la API manual. Datos históricos sucios ≠ datos nuevos.
 - la validacion de telefono se omite cuando `is_generic = True`
 - existe un unico propietario generico por organizacion (constraint parcial en DB)
 - el propietario generico se crea automaticamente al crear la organizacion via signal
@@ -30,11 +33,13 @@ Campos:
 - `name` — nombre de la mascota
 - `species` — especie (valor de `SPECIES_CHOICES`)
 - `breed` — raza (texto libre, opcional)
-- `birth_date` — fecha de nacimiento (obligatoria para nuevos registros)
+- `birth_date` — fecha de nacimiento (obligatoria en el alta vía `PetSerializer`; **opcional** en el alta rápida vía `create-with-patient/` — ver Validaciones)
 - `sex` — choices: `male`, `female`, `unknown`
 - `color` — color (opcional, seleccion en frontend)
 - `owner` — FK a Owner (**PROTECT** desde PR-4B / ADR p16 — antes CASCADE)
 - `is_generic` — marca a la mascota genérica "Paciente Anónimo" de la organización
+- `legacy_id` — nº de expediente del sistema viejo (Sprint import). Mismo contrato que `Owner.legacy_id`: `blank=True, default=''`, único parcial por organización cuando está presente
+- `extra_data` — `JSONField(default=list, blank=True)`: datos históricos del sistema anterior (Sprint import Fase D, ADR p43). Mismo contrato que `Owner.extra_data` (lista read-only de `{label, value, source_column, imported_at}`). Ver § Datos del sistema anterior
 
 Existe exactamente una mascota genérica por organización (creada via signal junto al owner genérico).
 Se usa en walk-ins anónimos cuando `allow_anonymous_walkin = True` y no se envía `pet`.
@@ -69,8 +74,14 @@ Solo digitos, exactamente 10. No se valida para propietarios con `is_generic = T
 
 ### Fecha de nacimiento
 
-Obligatoria en serializer para registros nuevos.
+Obligatoria en `PetSerializer` (alta estándar `/api/pets/`) para registros nuevos.
 El modelo mantiene `null=True` para no forzar migracion de datos historicos.
+
+**Divergencia por camino de alta:** el alta rápida `POST /api/appointments/create-with-patient/`
+trata `pet_birth_date` como **opcional** (`request.data.get('pet_birth_date') or None`) —
+crea la mascota sin fecha si no se envía. El importador (`apps/imports`) tampoco la exige.
+Solo el alta estándar vía `PetSerializer` la obliga. (Relevante para flujos de alta rápida
+donde el dueño no recuerda la fecha exacta.)
 
 ## Filtros disponibles (GET /api/pets/)
 
@@ -136,6 +147,33 @@ Es un flujo de mínimo viable para no interrumpir la agenda.
 - **Cobros**: `Invoice.owner` PROTECT obligatoria; `Invoice.pet` PROTECT nullable cuando `owner.is_generic = True`
 - **Vacunas**: `VaccineRecord.pet` es FK **PROTECT** (PR-4B) — ver modulo de historial clinico
 - **Recetas**: `Prescription.pet` es FK **PROTECT** (PR-4B) — ver modulo de prescripciones
+- **Importador** (`apps/imports`, Sprint import): crea `Owner` + `Pet` por lote desde CSV/Excel vía `.save()` directo (no pasa por los serializers manuales). Es la razón de `phone = blank=True` y de los campos `legacy_id`. Dedup por teléfono (owner) y por nombre normalizado (pet); teléfono y fecha de nacimiento opcionales en este camino.
+
+## Datos del sistema anterior (`extra_data`, Sprint import Fase D — ADR p43)
+
+`Owner.extra_data` y `Pet.extra_data` preservan las columnas del Excel/CSV que **no
+tienen un campo equivalente** en el modelo (ej. "Veterinario favorito", "Última
+estética", "Código viejo"). Es **dato histórico de migración**, NO custom fields:
+
+- **Forma**: lista ordenada de `{label, value, source_column, imported_at}`.
+  - `label` — nombre visible elegido durante la importación (renombrable en el mapeo).
+  - `value` — valor importado (texto plano; trim + cap 500 chars).
+  - `source_column` — nombre **original** de la columna del archivo. Renombrar el
+    `label` NO lo cambia → siempre se sabe de dónde vino el dato.
+  - `imported_at` — fecha del proceso de importación (ISO, una marca por job).
+- **Caps**: 50 entradas/registro, value 500, label 120, source_column 120.
+- **Read-only**: `read_only` en `OwnerSerializer`/`PetSerializer`. Lo escribe **solo**
+  el importador (`apps/imports`); la edición manual de la ficha lo ignora. Sin
+  endpoints de edición.
+- **No es queryable**: solo display (ficha del paciente, sección "Datos importados
+  del sistema anterior"). NO se usa en búsquedas, reportes ni reglas de negocio
+  (billing/analytics/caja nunca lo leen).
+- **Promoción a feature**: si varias clínicas necesitan un dato concreto, se crea una
+  feature real (modelo + validación + writer + migración desde `extra_data`); no se
+  introducen EAV ni campos dinámicos. Ver ADR p43.
+
+Sin `bleach`: texto plano + cap de longitud (React escapa al renderizar; el origen
+es Excel, no HTML).
 
 ## Cascade lockdown (PR-4B / ADR p16)
 
