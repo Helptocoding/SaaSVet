@@ -249,34 +249,112 @@ def _base_result():
         'reused_owners': 0,
         'created_pets': 0,
         'skipped_duplicates': 0,
-        'error_rows': 0,
-        'errors': [],
+        'skipped_conflicts': 0,
+        'blocking_rows': 0,
+        'error_rows': 0,          # alias backward-compat = blocking_rows
+        'blocking': [],           # datos faltantes / imposibles
+        'conflicts': [],          # duplicados por legacy_id con contexto
+        'errors': [],             # alias backward-compat = blocking
         'warnings': [],
     }
+
+
+# ---------------------------------------------------------------------------
+# Bulk fetch del contexto existente (evita N+1 en archivos grandes)
+# ---------------------------------------------------------------------------
+def _build_existing_index(org, rows, columns, mapping):
+    """Recolecta todos los legacy_id del archivo y los busca en DB de una vez.
+
+    Devuelve (pet_by_legacy, owner_by_legacy) donde cada dict mapea:
+        legacy_id → {name/public_id fields}  (solo public_id, nunca PK).
+    """
+    pet_legacy_ids = set()
+    owner_legacy_ids = set()
+    for row in rows:
+        data, _, _ = _project_row(columns, mapping, row)
+        ol = (data.get('owner.legacy_id') or '').strip()[:_LEGACY_MAX]
+        pl = (data.get('pet.legacy_id') or '').strip()[:_LEGACY_MAX]
+        if ol:
+            owner_legacy_ids.add(ol)
+        if pl:
+            pet_legacy_ids.add(pl)
+
+    pet_by_legacy = {}
+    if pet_legacy_ids:
+        qs = Pet.objects.for_organization(org).filter(
+            legacy_id__in=pet_legacy_ids,
+        ).select_related('owner').values('legacy_id', 'name', 'public_id', 'owner__name')
+        for p in qs:
+            pet_by_legacy[p['legacy_id']] = {
+                'pet_name': p['name'],
+                'owner_name': p['owner__name'],
+                'public_id': str(p['public_id']),
+            }
+
+    owner_by_legacy = {}
+    if owner_legacy_ids:
+        qs = Owner.objects.for_organization(org).filter(
+            legacy_id__in=owner_legacy_ids,
+        ).values('legacy_id', 'name', 'public_id')
+        for o in qs:
+            owner_by_legacy[o['legacy_id']] = {
+                'name': o['name'],
+                'public_id': str(o['public_id']),
+            }
+
+    return pet_by_legacy, owner_by_legacy
+
+
+def _compute_match_confidence(incoming, existing, scope='pet'):
+    """Calcula match_confidence entre el incoming (fila) y el existing (DB).
+
+    - 'high' → pet_name Y owner_name coinciden normalizados.
+    - 'uncertain' → legacy_id coincide pero algún nombre difiere.
+    """
+    if scope == 'pet':
+        pet_match = normalize_text(incoming.get('pet_name', '')) == normalize_text(existing.get('pet_name', ''))
+        owner_match = normalize_text(incoming.get('owner_name', '')) == normalize_text(existing.get('owner_name', ''))
+        return 'high' if (pet_match and owner_match) else 'uncertain'
+    else:
+        # owner scope: solo comparar owner_name
+        owner_match = normalize_text(incoming.get('owner_name', '')) == normalize_text(existing.get('name', ''))
+        return 'high' if owner_match else 'uncertain'
 
 
 # ---------------------------------------------------------------------------
 # VALIDATE (dry-run) — no escribe nada
 # ---------------------------------------------------------------------------
 def validate_job(job):
-    """Recorre las filas y predice el resultado SIN escribir. Idempotente."""
+    """Recorre las filas y predice el resultado SIN escribir. Idempotente.
+
+    La fila del archivo es la unidad lógica:
+    - Si la mascota entra → crear/reusar owner (predicción).
+    - Si la mascota se omite (duplicado por nombre o conflicto legacy_id) → no
+      contar owner. El preview es honesto: predice lo mismo que commit_job.
+    """
     result = _base_result()
     problems = check_mapping(job)
     if problems:
-        result['errors'] = [{'row': 0, 'field': 'mapping', 'message': p} for p in problems]
+        result['blocking'] = [{'row': 0, 'field': 'mapping', 'message': p} for p in problems]
+        result['errors'] = result['blocking']
+        result['blocking_rows'] = len(problems)
         result['error_rows'] = len(problems)
         return result
 
     org = job.organization
     columns = job.source_columns
 
-    # Caches de predicción (claves virtuales para owners nuevos). Mantener el
-    # MISMO orden de decisiones que commit_job para que el preview no mienta.
-    owner_keys_new = set()        # owners que se crearían (phone o name)
-    owner_keys_existing = {}      # owner_key -> Owner.pk existente
-    seen_pet_keys = set()         # (owner_key, norm_name, species)
-    seen_owner_legacy = set()     # legacy_id de owners nuevos (within-file)
-    seen_pet_legacy = set()       # legacy_id de pets nuevos (within-file)
+    # Bulk fetch del contexto existente (evita N+1).
+    pet_by_legacy, owner_by_legacy = _build_existing_index(
+        org, job.rows, columns, job.mapping,
+    )
+
+    # Caches de predicción.
+    owner_keys_new = set()
+    owner_keys_existing = {}
+    seen_pet_keys = set()
+    seen_owner_legacy = set()
+    seen_pet_legacy = set()
 
     for i, row in enumerate(job.rows, start=1):
         data, _owner_extra, _pet_extra = _project_row(columns, job.mapping, row)
@@ -284,12 +362,14 @@ def validate_job(job):
         for w in warnings:
             result['warnings'].append({'row': i, **w})
         if errors:
+            result['blocking_rows'] += 1
             result['error_rows'] += 1
             for e in errors:
+                result['blocking'].append({'row': i, **e})
                 result['errors'].append({'row': i, **e})
             continue
 
-        # --- predecir owner (sin contar todavía: puede haber conflicto legacy) ---
+        # --- 1. Resolver identidad del owner SOLO por lectura (sin contar) ---
         phone = clean['owner_phone']
         if phone:
             owner_key = ('phone', phone)
@@ -306,30 +386,50 @@ def validate_job(job):
                     owner_is_new = True
         else:
             owner_key = ('name', normalize_text(clean['owner_name']))
-            owner_is_new = owner_key not in owner_keys_new
+            owner_is_new = owner_key not in owner_keys_new and owner_key not in owner_keys_existing
 
-        # Conflicto de legacy_id de cliente (solo al crear uno nuevo).
+        # --- 2. Conflicto de legacy_id de cliente ---
         owner_legacy = clean['owner_legacy_id']
         if owner_is_new and owner_legacy:
-            if owner_legacy in seen_owner_legacy or Owner.objects.for_organization(org).filter(
-                legacy_id=owner_legacy,
-            ).exists():
-                result['error_rows'] += 1
-                result['errors'].append({
-                    'row': i, 'field': 'owner.legacy_id',
-                    'message': f'El nº de cliente anterior "{owner_legacy}" ya existe.',
+            if owner_legacy in seen_owner_legacy:
+                result['skipped_conflicts'] += 1
+                result['conflicts'].append({
+                    'row': i, 'type': 'duplicate_legacy_id',
+                    'severity': 'conflict', 'scope': 'owner',
+                    'match_confidence': 'high',
+                    'message': 'Ya existe un cliente con este número en el archivo.',
+                    'incoming': {'owner_name': clean['owner_name'], 'legacy_id': owner_legacy},
+                    'existing': {},
+                })
+                continue
+            if owner_legacy in owner_by_legacy:
+                existing_owner = owner_by_legacy[owner_legacy]
+                result['skipped_conflicts'] += 1
+                result['conflicts'].append({
+                    'row': i, 'type': 'duplicate_legacy_id',
+                    'severity': 'conflict', 'scope': 'owner',
+                    'match_confidence': _compute_match_confidence(
+                        {'owner_name': clean['owner_name']}, existing_owner, scope='owner',
+                    ),
+                    'message': 'Ya existe un cliente con este número.',
+                    'incoming': {'owner_name': clean['owner_name'], 'legacy_id': owner_legacy},
+                    'existing': {'owner_name': existing_owner.get('name', ''),
+                                 'public_id': existing_owner.get('public_id', '')},
+                })
+                continue
+            if Owner.objects.for_organization(org).filter(legacy_id=owner_legacy).exists():
+                result['skipped_conflicts'] += 1
+                result['conflicts'].append({
+                    'row': i, 'type': 'duplicate_legacy_id',
+                    'severity': 'conflict', 'scope': 'owner',
+                    'match_confidence': 'uncertain',
+                    'message': 'Ya existe un cliente con este número.',
+                    'incoming': {'owner_name': clean['owner_name'], 'legacy_id': owner_legacy},
+                    'existing': {},
                 })
                 continue
 
-        if owner_is_new:
-            owner_keys_new.add(owner_key)
-            if owner_legacy:
-                seen_owner_legacy.add(owner_legacy)
-            result['created_owners'] += 1
-        else:
-            result['reused_owners'] += 1
-
-        # --- predecir pet ---
+        # --- 3. Decidir el pet ANTES de contar el owner ---
         pet_key = (owner_key, normalize_text(clean['pet_name']), clean['pet_species'])
         is_dup = pet_key in seen_pet_keys
         if not is_dup and owner_key in owner_keys_existing:
@@ -347,18 +447,65 @@ def validate_job(job):
         # Conflicto de legacy_id de mascota.
         pet_legacy = clean['pet_legacy_id']
         if pet_legacy:
-            if pet_legacy in seen_pet_legacy or Pet.objects.for_organization(org).filter(
-                legacy_id=pet_legacy,
-            ).exists():
-                result['error_rows'] += 1
-                result['errors'].append({
-                    'row': i, 'field': 'pet.legacy_id',
-                    'message': f'El nº de expediente anterior "{pet_legacy}" ya existe.',
+            if pet_legacy in seen_pet_legacy:
+                result['skipped_conflicts'] += 1
+                result['conflicts'].append({
+                    'row': i, 'type': 'duplicate_legacy_id',
+                    'severity': 'conflict', 'scope': 'pet',
+                    'match_confidence': 'high',
+                    'message': 'Ya existe una mascota con este expediente en el archivo.',
+                    'incoming': {'pet_name': clean['pet_name'],
+                                 'owner_name': clean['owner_name'],
+                                 'legacy_id': pet_legacy},
+                    'existing': {},
                 })
                 continue
-            seen_pet_legacy.add(pet_legacy)
+            if pet_legacy in pet_by_legacy:
+                existing_pet = pet_by_legacy[pet_legacy]
+                result['skipped_conflicts'] += 1
+                result['conflicts'].append({
+                    'row': i, 'type': 'duplicate_legacy_id',
+                    'severity': 'conflict', 'scope': 'pet',
+                    'match_confidence': _compute_match_confidence(
+                        {'pet_name': clean['pet_name'],
+                         'owner_name': clean['owner_name']},
+                        existing_pet, scope='pet',
+                    ),
+                    'message': 'Ya existe una mascota con este expediente.',
+                    'incoming': {'pet_name': clean['pet_name'],
+                                 'owner_name': clean['owner_name'],
+                                 'legacy_id': pet_legacy},
+                    'existing': {'pet_name': existing_pet['pet_name'],
+                                 'owner_name': existing_pet['owner_name'],
+                                 'public_id': existing_pet['public_id']},
+                })
+                continue
+            if Pet.objects.for_organization(org).filter(legacy_id=pet_legacy).exists():
+                result['skipped_conflicts'] += 1
+                result['conflicts'].append({
+                    'row': i, 'type': 'duplicate_legacy_id',
+                    'severity': 'conflict', 'scope': 'pet',
+                    'match_confidence': 'uncertain',
+                    'message': 'Ya existe una mascota con este expediente.',
+                    'incoming': {'pet_name': clean['pet_name'],
+                                 'owner_name': clean['owner_name'],
+                                 'legacy_id': pet_legacy},
+                    'existing': {},
+                })
+                continue
+
+        # --- 4. El pet ENTRA: ahora sí contar el owner y el pet ---
+        if owner_is_new:
+            owner_keys_new.add(owner_key)
+            if owner_legacy:
+                seen_owner_legacy.add(owner_legacy)
+            result['created_owners'] += 1
+        else:
+            result['reused_owners'] += 1
 
         seen_pet_keys.add(pet_key)
+        if pet_legacy:
+            seen_pet_legacy.add(pet_legacy)
         result['created_pets'] += 1
 
     return result
@@ -370,20 +517,36 @@ def validate_job(job):
 def commit_job(job):
     """Escribe los registros. Atómico a nivel job; savepoint por fila (una fila
     mala no tumba el resto). Devuelve result. NO marca el status (lo hace la view).
+
+    La fila del archivo es la unidad lógica:
+    - Si la mascota entra → crear/reusar owner (savepoint) + crear pet (savepoint).
+    - Si la mascota se omite (duplicado por nombre o conflicto legacy_id) → no
+      crear owner. Cero owners huérfanos.
+    - Un owner compartido por varias filas se materializa con el primer pet que
+      entra; las demás filas lo reúsan.
     """
     result = _base_result()
     problems = check_mapping(job)
     if problems:
-        result['errors'] = [{'row': 0, 'field': 'mapping', 'message': p} for p in problems]
+        result['blocking'] = [{'row': 0, 'field': 'mapping', 'message': p} for p in problems]
+        result['errors'] = result['blocking']
+        result['blocking_rows'] = len(problems)
         result['error_rows'] = len(problems)
         return result
 
     org = job.organization
     columns = job.source_columns
 
-    owners_by_phone = {}        # phone -> Owner
+    # Bulk fetch del contexto existente (evita N+1).
+    pet_by_legacy, owner_by_legacy = _build_existing_index(
+        org, job.rows, columns, job.mapping,
+    )
+
+    owners_by_phone = {}        # phone -> Owner (existente o creado)
     owners_by_name = {}         # norm_name -> Owner (phoneless, within-file)
-    seen_pet_keys = set()       # (owner.pk, norm_name, species)
+    seen_pet_keys = set()       # (owner_key, norm_name, species) — virtual para nuevos
+    seen_owner_legacy = set()   # legacy_id de owners creados en este job
+    seen_pet_legacy = set()     # legacy_id de pets creados en este job
     # Una sola marca de tiempo para todo el job: identifica el proceso de
     # importación que originó cada dato del sistema anterior.
     imported_at = timezone.now().isoformat()
@@ -395,19 +558,139 @@ def commit_job(job):
             for w in warnings:
                 result['warnings'].append({'row': i, **w})
             if errors:
+                result['blocking_rows'] += 1
                 result['error_rows'] += 1
                 for e in errors:
+                    result['blocking'].append({'row': i, **e})
                     result['errors'].append({'row': i, **e})
                 continue
 
-            # --- Owner en SU PROPIO savepoint (persiste independiente del pet) ---
-            # Si owner y pet compartieran savepoint, un fallo del pet revertiría
-            # el INSERT del owner dejando un objeto huérfano en el cache → la
-            # siguiente fila que lo reusa perdería su pet (BLOCKER del review).
-            # _resolve_owner solo cachea tras un save() exitoso; si el save lanza,
-            # el savepoint revierte y el except evita cachear.
-            # owner_extra se aplica SOLO al crear (la 1ª fila gana); un owner
-            # reusado conserva su extra_data de creación.
+            # --- 1. Resolver identidad del owner SOLO por lectura (sin INSERT) ---
+            phone = clean['owner_phone']
+            if phone:
+                if phone in owners_by_phone:
+                    owner = owners_by_phone[phone]
+                    owner_is_new = False
+                else:
+                    owner = Owner.objects.for_organization(org).filter(
+                        phone=phone, is_generic=False,
+                    ).first()
+                    if owner:
+                        owners_by_phone[phone] = owner
+                        owner_is_new = False
+                    else:
+                        owner_is_new = True
+                owner_key = ('phone', phone)
+            else:
+                name_key = normalize_text(clean['owner_name'])
+                owner = owners_by_name.get(name_key)
+                owner_is_new = owner is None
+                owner_key = ('name', name_key)
+
+            # --- 2. Conflicto de legacy_id de cliente ---
+            owner_legacy = clean['owner_legacy_id']
+            if owner_is_new and owner_legacy:
+                if owner_legacy in seen_owner_legacy:
+                    result['skipped_conflicts'] += 1
+                    result['conflicts'].append({
+                        'row': i, 'type': 'duplicate_legacy_id',
+                        'severity': 'conflict', 'scope': 'owner',
+                        'match_confidence': 'high',
+                        'message': 'Ya existe un cliente con este número en el archivo.',
+                        'incoming': {'owner_name': clean['owner_name'], 'legacy_id': owner_legacy},
+                        'existing': {},
+                    })
+                    continue
+                if owner_legacy in owner_by_legacy:
+                    existing_owner = owner_by_legacy[owner_legacy]
+                    result['skipped_conflicts'] += 1
+                    result['conflicts'].append({
+                        'row': i, 'type': 'duplicate_legacy_id',
+                        'severity': 'conflict', 'scope': 'owner',
+                        'match_confidence': _compute_match_confidence(
+                            {'owner_name': clean['owner_name']}, existing_owner, scope='owner',
+                        ),
+                        'message': 'Ya existe un cliente con este número.',
+                        'incoming': {'owner_name': clean['owner_name'], 'legacy_id': owner_legacy},
+                        'existing': {'owner_name': existing_owner.get('name', ''),
+                                     'public_id': existing_owner.get('public_id', '')},
+                    })
+                    continue
+                if Owner.objects.for_organization(org).filter(legacy_id=owner_legacy).exists():
+                    result['skipped_conflicts'] += 1
+                    result['conflicts'].append({
+                        'row': i, 'type': 'duplicate_legacy_id',
+                        'severity': 'conflict', 'scope': 'owner',
+                        'match_confidence': 'uncertain',
+                        'message': 'Ya existe un cliente con este número.',
+                        'incoming': {'owner_name': clean['owner_name'], 'legacy_id': owner_legacy},
+                        'existing': {},
+                    })
+                    continue
+
+            # --- 3. Decidir el pet ANTES de materializar el owner ---
+            # Dedup por nombre (within-file + DB para owners existentes).
+            pet_key = (owner_key, normalize_text(clean['pet_name']), clean['pet_species'])
+            if pet_key in seen_pet_keys:
+                result['skipped_duplicates'] += 1
+                continue
+            if owner is not None and _pet_exists(org, owner, clean):
+                result['skipped_duplicates'] += 1
+                continue
+
+            # Conflicto de legacy_id de mascota.
+            pet_legacy = clean['pet_legacy_id']
+            if pet_legacy:
+                if pet_legacy in seen_pet_legacy:
+                    result['skipped_conflicts'] += 1
+                    result['conflicts'].append({
+                        'row': i, 'type': 'duplicate_legacy_id',
+                        'severity': 'conflict', 'scope': 'pet',
+                        'match_confidence': 'high',
+                        'message': 'Ya existe una mascota con este expediente en el archivo.',
+                        'incoming': {'pet_name': clean['pet_name'],
+                                     'owner_name': clean['owner_name'],
+                                     'legacy_id': pet_legacy},
+                        'existing': {},
+                    })
+                    continue
+                if pet_legacy in pet_by_legacy:
+                    existing_pet = pet_by_legacy[pet_legacy]
+                    result['skipped_conflicts'] += 1
+                    result['conflicts'].append({
+                        'row': i, 'type': 'duplicate_legacy_id',
+                        'severity': 'conflict', 'scope': 'pet',
+                        'match_confidence': _compute_match_confidence(
+                            {'pet_name': clean['pet_name'],
+                             'owner_name': clean['owner_name']},
+                            existing_pet, scope='pet',
+                        ),
+                        'message': 'Ya existe una mascota con este expediente.',
+                        'incoming': {'pet_name': clean['pet_name'],
+                                     'owner_name': clean['owner_name'],
+                                     'legacy_id': pet_legacy},
+                        'existing': {'pet_name': existing_pet['pet_name'],
+                                     'owner_name': existing_pet['owner_name'],
+                                     'public_id': existing_pet['public_id']},
+                    })
+                    continue
+                if Pet.objects.for_organization(org).filter(legacy_id=pet_legacy).exists():
+                    result['skipped_conflicts'] += 1
+                    result['conflicts'].append({
+                        'row': i, 'type': 'duplicate_legacy_id',
+                        'severity': 'conflict', 'scope': 'pet',
+                        'match_confidence': 'uncertain',
+                        'message': 'Ya existe una mascota con este expediente.',
+                        'incoming': {'pet_name': clean['pet_name'],
+                                     'owner_name': clean['owner_name'],
+                                     'legacy_id': pet_legacy},
+                        'existing': {},
+                    })
+                    continue
+
+            # --- 4. El pet ENTRA: ahora sí materializar/reusar el owner ---
+            # Owner en SU PROPIO savepoint. owner_extra se aplica SOLO al crear
+            # (la 1ª fila gana); un owner reusado conserva su extra_data de creación.
             try:
                 with transaction.atomic():
                     owner, owner_status = _resolve_owner(
@@ -415,23 +698,23 @@ def commit_job(job):
                         owner_extra=owner_extra,
                     )
             except Exception as exc:  # noqa: BLE001 — fila aislada por savepoint
+                result['blocking_rows'] += 1
                 result['error_rows'] += 1
+                result['blocking'].append({
+                    'row': i, 'field': 'owner', 'message': _humanize_exc(exc),
+                })
                 result['errors'].append({
                     'row': i, 'field': 'owner', 'message': _humanize_exc(exc),
                 })
                 continue
             if owner_status == 'created':
                 result['created_owners'] += 1
+                if owner_legacy:
+                    seen_owner_legacy.add(owner_legacy)
             else:
                 result['reused_owners'] += 1
 
-            # --- Dedup de pet (sin escribir) ---
-            pet_key = (owner.pk, normalize_text(clean['pet_name']), clean['pet_species'])
-            if pet_key in seen_pet_keys or _pet_exists(org, owner, clean):
-                result['skipped_duplicates'] += 1
-                continue
-
-            # --- Pet en su propio savepoint ---
+            # --- Crear el pet en su propio savepoint ---
             try:
                 with transaction.atomic():
                     Pet.objects.create(
@@ -447,9 +730,15 @@ def commit_job(job):
                         extra_data=pet_extra,
                     )
                 seen_pet_keys.add(pet_key)
+                if pet_legacy:
+                    seen_pet_legacy.add(pet_legacy)
                 result['created_pets'] += 1
             except Exception as exc:  # noqa: BLE001 — fila aislada por savepoint
+                result['blocking_rows'] += 1
                 result['error_rows'] += 1
+                result['blocking'].append({
+                    'row': i, 'field': 'pet', 'message': _humanize_exc(exc),
+                })
                 result['errors'].append({
                     'row': i, 'field': 'pet', 'message': _humanize_exc(exc),
                 })

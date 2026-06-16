@@ -2,29 +2,84 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PreviewStep from "./PreviewStep";
 
-// PreviewStep renderiza el `result` del dry-run (validate): el resumen de cuántos
-// registros se crearán/omitirán/fallarán y el detalle por fila de errores y
-// advertencias. Se prueba el render observable a partir de un result dado.
+// PreviewStep renderiza el `result` del dry-run (validate). Fase 3: agrupa
+// conflictos (posibles duplicados), bloqueantes (faltan datos) y avisos.
+// La UI es lenguaje humano, sin tokens técnicos (legacy_id, constraint).
 
 const FIELD_CATALOG = [
     { key: "owner.name", label: "Nombre del cliente", group: "Cliente", importance: "required" },
     { key: "owner.phone", label: "Teléfono del cliente", group: "Cliente", importance: "recommended" },
+    { key: "pet.name", label: "Nombre de la mascota", group: "Mascota", importance: "required" },
     { key: "pet.species", label: "Especie", group: "Mascota", importance: "recommended" },
+    { key: "pet.legacy_id", label: "Nº de expediente anterior", group: "Mascota", importance: "optional" },
 ];
 
-const RESULT = {
-    created_owners: 12,
-    reused_owners: 3,
-    created_pets: 15,
-    skipped_duplicates: 4,
-    error_rows: 2,
+const RESULT_WITH_CONFLICTS = {
+    created_owners: 1,
+    reused_owners: 0,
+    created_pets: 1,
+    skipped_duplicates: 2,
+    skipped_conflicts: 3,
+    blocking_rows: 0,
+    errors: [],
+    blocking: [],
+    conflicts: [
+        {
+            row: 5,
+            type: "duplicate_legacy_id",
+            severity: "conflict",
+            scope: "pet",
+            match_confidence: "high",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Luna", owner_name: "Ana López", legacy_id: "126" },
+            existing: { pet_name: "Luna", owner_name: "Ana López", public_id: "abc-123" },
+        },
+        {
+            row: 8,
+            type: "duplicate_legacy_id",
+            severity: "conflict",
+            scope: "pet",
+            match_confidence: "uncertain",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Rocky", owner_name: "Pedro", legacy_id: "200" },
+            existing: { pet_name: "Max", owner_name: "Juan", public_id: "def-456" },
+        },
+    ],
+    warnings: [],
+};
+
+const RESULT_WITH_BLOCKING = {
+    created_owners: 0,
+    reused_owners: 0,
+    created_pets: 0,
+    skipped_duplicates: 0,
+    skipped_conflicts: 0,
+    blocking_rows: 2,
     errors: [
-        { row: 5, field: "pet.species", message: "Especie no reconocida: 'Dinosaurio'." },
-        { row: 9, field: "owner.name", message: "El nombre contiene caracteres no permitidos." },
+        { row: 2, field: "pet.name", message: "El nombre de la mascota es requerido." },
+        { row: 7, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
     ],
+    blocking: [
+        { row: 2, field: "pet.name", message: "El nombre de la mascota es requerido." },
+        { row: 7, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
+    ],
+    conflicts: [],
     warnings: [
-        { row: 7, field: "owner.phone", message: "Cliente sin teléfono; se importará sin dedup." },
+        { row: 4, field: "owner.phone", message: "Cliente sin teléfono — se importará igual." },
     ],
+};
+
+const RESULT_CLEAN = {
+    created_owners: 5,
+    reused_owners: 0,
+    created_pets: 5,
+    skipped_duplicates: 0,
+    skipped_conflicts: 0,
+    blocking_rows: 0,
+    errors: [],
+    blocking: [],
+    conflicts: [],
+    warnings: [],
 };
 
 function renderPreview(props = {}) {
@@ -32,7 +87,7 @@ function renderPreview(props = {}) {
     const onBack = vi.fn();
     render(
         <PreviewStep
-            result={props.result ?? RESULT}
+            result={props.result ?? RESULT_WITH_CONFLICTS}
             fieldCatalog={FIELD_CATALOG}
             onBack={onBack}
             onConfirm={onConfirm}
@@ -43,77 +98,94 @@ function renderPreview(props = {}) {
     return { onConfirm, onBack };
 }
 
-describe("PreviewStep — resumen de conteos", () => {
-    it("muestra clientes, mascotas, reutilizados, duplicados y filas con error", () => {
+describe("PreviewStep — resumen humano", () => {
+    it("muestra pacientes listos, duplicados omitidos, necesitan revisión", () => {
         renderPreview();
-        // tarjetas del resumen
-        expect(screen.getByText("Clientes nuevos")).toBeInTheDocument();
-        expect(screen.getByText("Mascotas nuevas")).toBeInTheDocument();
-        expect(screen.getByText("Clientes reutilizados")).toBeInTheDocument();
-        expect(screen.getByText("Duplicados omitidos")).toBeInTheDocument();
-        expect(screen.getByText("Filas con error")).toBeInTheDocument();
-
-        // valores (font-mono) presentes
-        expect(screen.getByText("12")).toBeInTheDocument(); // clientes nuevos
-        expect(screen.getByText("15")).toBeInTheDocument(); // mascotas nuevas
+        expect(screen.getByText(/1 paciente listo para importar/)).toBeInTheDocument();
+        // "2 duplicados se omitirán" aparece en resumen + consecuencia → getAllByText
+        expect(screen.getAllByText(/2 duplicados se omitirán/).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText(/3 necesitan revisión/)).toBeInTheDocument();
     });
 
-    it("la línea de resumen redacta el conteo en lenguaje claro", () => {
-        renderPreview();
-        // se crearán 12 clientes y 15 mascotas
-        expect(screen.getByText(/12 clientes/)).toBeInTheDocument();
-        expect(screen.getByText(/15 mascotas/)).toBeInTheDocument();
-        expect(screen.getByText(/4 duplicados se omitir/)).toBeInTheDocument();
-        expect(screen.getByText(/2 filas con error/)).toBeInTheDocument();
-    });
-});
-
-describe("PreviewStep — errores y advertencias por fila", () => {
-    it("lista cada error con su nº de fila, label del campo y mensaje", () => {
-        renderPreview();
-        expect(screen.getByText("Errores (2)")).toBeInTheDocument();
-
-        expect(screen.getByText("#5")).toBeInTheDocument();
-        expect(screen.getByText(/Especie no reconocida/)).toBeInTheDocument();
-        // el campo se muestra con su label amistoso del catálogo
-        expect(screen.getAllByText("Especie").length).toBeGreaterThan(0);
-
-        expect(screen.getByText("#9")).toBeInTheDocument();
-        expect(screen.getByText(/caracteres no permitidos/)).toBeInTheDocument();
+    it("con bloqueantes muestra 'no se pueden importar'", () => {
+        renderPreview({ result: RESULT_WITH_BLOCKING });
+        expect(screen.getByText(/2 no se pueden importar/)).toBeInTheDocument();
     });
 
-    it("lista las advertencias con su fila y mensaje", () => {
-        renderPreview();
-        expect(screen.getByText("Advertencias (1)")).toBeInTheDocument();
-        expect(screen.getByText("#7")).toBeInTheDocument();
-        expect(screen.getByText(/se importará sin dedup/)).toBeInTheDocument();
-    });
-
-    it("sin errores ni advertencias muestra el estado vacío", () => {
-        renderPreview({
-            result: {
-                created_owners: 5, reused_owners: 0, created_pets: 5,
-                skipped_duplicates: 0, error_rows: 0, errors: [], warnings: [],
-            },
-        });
+    it("sin nada muestra estado vacío", () => {
+        renderPreview({ result: RESULT_CLEAN });
         expect(screen.getByText(/Sin errores ni advertencias/)).toBeInTheDocument();
-        expect(screen.queryByText(/^Errores/)).not.toBeInTheDocument();
-        expect(screen.queryByText(/^Advertencias/)).not.toBeInTheDocument();
     });
 });
 
-describe("PreviewStep — gating del commit (can('import.commit'))", () => {
-    it("con permiso muestra el botón de confirmar y dispara onConfirm al hacer clic", async () => {
-        const { onConfirm } = renderPreview({ canCommit: true });
-        const btn = screen.getByRole("button", { name: /confirmar importación/i });
-        expect(btn).toBeInTheDocument();
-        btn.click();
-        expect(onConfirm).toHaveBeenCalledTimes(1);
+describe("PreviewStep — conflictos (posibles duplicados)", () => {
+    it("muestra comparación lado a lado con nombres humanos", () => {
+        renderPreview();
+        // Nombres de mascota en la comparación (aparecen en ambas columnas)
+        expect(screen.getAllByText("Luna").length).toBeGreaterThanOrEqual(2);
+        expect(screen.getByText("Rocky")).toBeInTheDocument();
+        expect(screen.getByText("Max")).toBeInTheDocument();
+        // Nombres de dueño
+        expect(screen.getAllByText("Ana López").length).toBeGreaterThanOrEqual(2);
+        expect(screen.getByText("Pedro")).toBeInTheDocument();
+        expect(screen.getByText("Juan")).toBeInTheDocument();
+        // Sin tokens técnicos
+        expect(screen.queryByText(/legacy_id/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/constraint/)).not.toBeInTheDocument();
     });
 
-    it("sin permiso NO muestra el botón de confirmar e informa la falta de permiso", () => {
+    it("muestra 'Parece el mismo paciente' cuando match_confidence es high", () => {
+        renderPreview();
+        expect(screen.getByText("Parece el mismo paciente.")).toBeInTheDocument();
+    });
+
+    it("muestra 'Mismo expediente, datos distintos' cuando uncertain", () => {
+        renderPreview();
+        expect(screen.getByText("Mismo expediente, datos distintos — revísalo.")).toBeInTheDocument();
+    });
+
+    it("el link 'Ver paciente' apunta con public_id y target _blank", () => {
+        renderPreview();
+        const links = screen.getAllByText("Ver paciente");
+        expect(links).toHaveLength(2);
+        // Primer link apunta a /pets/abc-123
+        expect(links[0].href).toContain("/pets/abc-123");
+        expect(links[0].target).toBe("_blank");
+        expect(links[0].rel).toContain("noopener");
+        expect(links[0].rel).toContain("noreferrer");
+    });
+});
+
+describe("PreviewStep — consecuencias y CTA", () => {
+    it("muestra la consecuencia antes de confirmar con conteos reales", () => {
+        renderPreview();
+        expect(screen.getByText(/Al continuar/)).toBeInTheDocument();
+        expect(screen.getByText(/1 registro/)).toBeInTheDocument();
+        expect(screen.getByText(/3 posibles duplicados se omitirán/)).toBeInTheDocument();
+    });
+
+    it("con registros importables muestra el botón de confirmar", () => {
+        renderPreview({ canCommit: true });
+        expect(screen.getByRole("button", { name: /confirmar importación/i })).toBeInTheDocument();
+    });
+
+    it("sin registros importables bloquea el CTA", () => {
+        renderPreview({ result: RESULT_WITH_BLOCKING, canCommit: true });
+        expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
+        expect(screen.getByText(/Corrige los errores para poder importar/)).toBeInTheDocument();
+    });
+
+    it("sin permiso no muestra el botón e informa", () => {
         renderPreview({ canCommit: false });
         expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
         expect(screen.getByText(/no tienes permiso/i)).toBeInTheDocument();
+    });
+});
+
+describe("PreviewStep — avisos", () => {
+    it("muestra los avisos de datos opcionales", () => {
+        renderPreview({ result: RESULT_WITH_BLOCKING });
+        expect(screen.getByText(/Avisos/)).toBeInTheDocument();
+        expect(screen.getByText(/se importará igual/)).toBeInTheDocument();
     });
 });

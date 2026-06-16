@@ -195,6 +195,7 @@ class ImportApiTests(TestCase):
 
     def test_pet_dedup_normalized_name(self):
         # Mismo dueño (mismo teléfono), "Max" y "MAX" misma especie → 1 pet, 1 skip.
+        # El owner solo se cuenta cuando el pet entra (Fase 1: fila = unidad lógica).
         text = (
             'Dueño,Teléfono,Mascota,Especie,Expediente\n'
             'Juan,8112345678,Max,Perro,00231\n'
@@ -206,7 +207,8 @@ class ImportApiTests(TestCase):
         result = res.data['result']
         self.assertEqual(result['created_pets'], 1)
         self.assertEqual(result['skipped_duplicates'], 1)
-        self.assertEqual(result['reused_owners'], 1)
+        self.assertEqual(result['created_owners'], 1)
+        self.assertEqual(result['reused_owners'], 0)
         self.assertEqual(Pet.objects.for_organization(self.org).filter(owner__phone='8112345678').count(), 1)
 
     def test_owner_reused_when_phone_exists(self):
@@ -253,6 +255,7 @@ class ImportApiTests(TestCase):
 
     def test_legacy_id_unique_per_org_conflict_reported(self):
         # Dos owners distintos (teléfonos distintos) con el mismo pet.legacy_id.
+        # Fase 1: la 2ª fila se omite sin crear owner → skipped_conflicts, no error_row.
         text = (
             'Dueño,Teléfono,Mascota,Especie,Expediente\n'
             'Juan,8112345678,Max,Perro,00231\n'
@@ -263,7 +266,9 @@ class ImportApiTests(TestCase):
         res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
         result = res.data['result']
         self.assertEqual(result['created_pets'], 1)
-        self.assertEqual(result['error_rows'], 1)
+        self.assertEqual(result['created_owners'], 1)
+        self.assertEqual(result['skipped_conflicts'], 1)
+        self.assertEqual(result['error_rows'], 0)
         self.assertEqual(Pet.objects.for_organization(self.org).filter(legacy_id='00231').count(), 1)
 
     def test_commit_twice_conflicts(self):
@@ -283,30 +288,31 @@ class ImportApiTests(TestCase):
         self.assertEqual(res.status_code, 404)
 
     def test_failed_pet_does_not_orphan_owner(self):
-        # BLOCKER del review: owner nuevo creado en una fila cuyo pet falla NO
-        # debe perderse ni dejar un owner huérfano en cache → la fila siguiente
-        # que reusa ese owner debe poder crear su mascota.
+        # Fase 1: el pet legacy_id conflictivo se detecta ANTES de crear el owner.
+        # Ana solo se crea cuando Rocky (sin conflicto) entra. Nemo es skipped_conflict.
         clash_owner = Owner.objects.create(organization=self.org, name='Previo', phone='8129999999')
         Pet.objects.create(organization=self.org, owner=clash_owner, name='Viejo', species='canino', legacy_id='DUP')
         text = (
             'Dueño,Teléfono,Mascota,Especie,Expediente\n'
-            'Ana,8120000001,Nemo,Perro,DUP\n'   # pet.legacy_id DUP → falla el pet
-            'Ana,8120000001,Rocky,Perro,\n'     # mismo owner → debe crear Rocky
+            'Ana,8120000001,Nemo,Perro,DUP\n'   # pet.legacy_id DUP → conflicto, owner NO se crea
+            'Ana,8120000001,Rocky,Perro,\n'     # mismo owner, pet sin conflicto → owner + pet creados
         )
         pid = self._upload(text)
         self._set_mapping(pid)
         res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
         result = res.data['result']
-        # Ana se creó una vez y persiste; Rocky se creó; Nemo es error.
+        # Ana se creó una vez y persiste; Rocky se creó; Nemo es conflicto (no error).
         self.assertEqual(result['created_owners'], 1)
         self.assertEqual(result['created_pets'], 1)
-        self.assertEqual(result['error_rows'], 1)
+        self.assertEqual(result['skipped_conflicts'], 1)
+        self.assertEqual(result['error_rows'], 0)
         ana = Owner.objects.for_organization(self.org).get(phone='8120000001')
         self.assertEqual(ana.name, 'Ana')
         self.assertTrue(ana.pets.filter(name='Rocky').exists())
-        # El mensaje de error NO filtra el nombre del constraint Postgres.
-        msg = result['errors'][0]['message']
+        # El mensaje de conflicto tiene mensaje humano, no el constraint Postgres.
+        msg = result['conflicts'][0]['message']
         self.assertNotIn('pet_legacy_id_unique_per_org', msg)
+        self.assertNotIn('legacy_id', msg.lower())
 
     def test_duplicate_target_mapping_rejected(self):
         text = 'Dueño,Apodo,Teléfono,Mascota,Especie\nJuan,Juanito,8112345678,Max,Perro\n'
@@ -323,7 +329,8 @@ class ImportApiTests(TestCase):
 
     def test_validate_predicts_legacy_conflict(self):
         # Dos filas con el mismo pet.legacy_id dentro del archivo: validate debe
-        # predecir el conflicto (preview honesto), no solo descubrirlo en commit.
+        # predecir el conflicto como skipped_conflicts, no como error_row. La 2ª
+        # fila no crea owner → preview honesto.
         text = (
             'Dueño,Teléfono,Mascota,Especie,Expediente\n'
             'Juan,8112345678,Max,Perro,00231\n'
@@ -334,8 +341,10 @@ class ImportApiTests(TestCase):
         res = self.client.post(f'/api/imports/{pid}/validate/', format='json')
         result = res.data['result']
         self.assertEqual(result['created_pets'], 1)
-        self.assertEqual(result['error_rows'], 1)
-        self.assertTrue(any(e['field'] == 'pet.legacy_id' and e['row'] == 2 for e in result['errors']))
+        self.assertEqual(result['created_owners'], 1)
+        self.assertEqual(result['skipped_conflicts'], 1)
+        self.assertEqual(result['error_rows'], 0)
+        self.assertTrue(any(c['scope'] == 'pet' and c['row'] == 2 for c in result['conflicts']))
 
     def test_extra_data_imported_as_ordered_list(self):
         # Columnas sin campo del sistema → owner.extra / pet.extra → lista ordenada
@@ -483,3 +492,182 @@ class ImportApiTests(TestCase):
             format='multipart',
         )
         self.assertEqual(res.status_code, 403)
+
+    # ── Fase 1: Integridad del commit (fila = unidad lógica) ──────────────
+
+    def test_idempotent_reimport_creates_zero_owners(self):
+        # Subir + commit un archivo; re-subir el MISMO archivo y commit →
+        # 0 owners nuevos, 0 pets nuevos, N skipped. Cero owners huérfanos en DB.
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan,8112345678,Max,Perro,00231\n'
+            'Ana,8113334444,Luna,Gato,00232\n'
+        )
+        pid1 = self._upload(text)
+        self._set_mapping(pid1)
+        res1 = self.client.post(f'/api/imports/{pid1}/commit/', format='json')
+        self.assertEqual(res1.data['result']['created_pets'], 2)
+        self.assertEqual(res1.data['result']['created_owners'], 2)
+        owners_before = Owner.objects.for_organization(self.org).count()
+        pets_before = Pet.objects.for_organization(self.org).count()
+
+        # Re-subir el MISMO archivo.
+        pid2 = self._upload(text)
+        self._set_mapping(pid2)
+        res2 = self.client.post(f'/api/imports/{pid2}/commit/', format='json')
+        result = res2.data['result']
+        self.assertEqual(result['created_owners'], 0)
+        self.assertEqual(result['created_pets'], 0)
+        self.assertGreater(result['skipped_conflicts'] + result['skipped_duplicates'], 0)
+        # Cero owners/pets nuevos en la DB.
+        self.assertEqual(Owner.objects.for_organization(self.org).count(), owners_before)
+        self.assertEqual(Pet.objects.for_organization(self.org).count(), pets_before)
+
+    def test_owner_shared_valid_and_conflict_row(self):
+        # Fila A: pet nuevo + owner X creado. Fila B: mismo owner X + pet con
+        # legacy_id conflictivo → owner X NO se duplica, pet A existe, pet B omitido.
+        # Pre-crear un pet con legacy_id que choque con la fila B.
+        pre_owner = Owner.objects.create(organization=self.org, name='Previo', phone='8119999999')
+        Pet.objects.create(organization=self.org, owner=pre_owner, name='Viejo', species='canino', legacy_id='CLASH')
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Ana,8112345678,Rocky,Perro,\n'      # fila A: pet válido
+            'Ana,8112345678,Nemo,Perro,CLASH\n'  # fila B: mismo owner, pet conflictivo
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        result = res.data['result']
+        self.assertEqual(result['created_pets'], 1)
+        self.assertEqual(result['created_owners'], 1)
+        self.assertEqual(result['reused_owners'], 0)
+        self.assertEqual(result['skipped_conflicts'], 1)
+        # Owner Ana existe UNA SOLA VEZ.
+        self.assertEqual(Owner.objects.for_organization(self.org).filter(phone='8112345678').count(), 1)
+        ana = Owner.objects.for_organization(self.org).get(phone='8112345678')
+        self.assertTrue(ana.pets.filter(name='Rocky').exists())
+        self.assertFalse(ana.pets.filter(name='Nemo').exists())
+
+    def test_all_conflict_rows_create_zero_owners(self):
+        # Archivo donde TODAS las filas tienen pet conflictivo →
+        # created_owners == 0 y sin nuevos owners en DB.
+        existing = Owner.objects.create(organization=self.org, name='Juan', phone='8112345678')
+        Pet.objects.create(organization=self.org, owner=existing, name='Max', species='canino', legacy_id='00231')
+        Pet.objects.create(organization=self.org, owner=existing, name='Nemo', species='canino', legacy_id='00232')
+        owners_before = Owner.objects.for_organization(self.org).count()
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan,8112345678,Max,Perro,00233\n'    # nombre normalizado duplicado (Max ya existe)
+            'Juan,8112345678,Nemo,Perro,00234\n'   # nombre normalizado duplicado (Nemo ya existe)
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        result = res.data['result']
+        self.assertEqual(result['created_owners'], 0)
+        self.assertEqual(result['created_pets'], 0)
+        self.assertGreater(result['skipped_duplicates'], 0)
+        self.assertEqual(Owner.objects.for_organization(self.org).count(), owners_before)
+
+    def test_validate_preview_honest_on_reimport(self):
+        # validate_job sobre un archivo ya importado debe predecir
+        # created_owners == 0 (no el bug de "40 clientes nuevos").
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan,8112345678,Max,Perro,00231\n'
+            'Ana,8113334444,Luna,Gato,00232\n'
+        )
+        pid1 = self._upload(text)
+        self._set_mapping(pid1)
+        self.client.post(f'/api/imports/{pid1}/commit/', format='json')
+
+        # Re-subir y validar (sin commit).
+        pid2 = self._upload(text)
+        self._set_mapping(pid2)
+        res = self.client.post(f'/api/imports/{pid2}/validate/', format='json')
+        result = res.data['result']
+        # Preview honesto: no predice owners nuevos porque los pets son conflicto.
+        self.assertEqual(result['created_pets'], 0)
+        self.assertEqual(result['created_owners'], 0)
+        self.assertGreater(result['skipped_conflicts'] + result['skipped_duplicates'], 0)
+
+    # ── Fase 2: Clasificación + contexto del existente ──────────────────
+
+    def test_conflicts_bring_incoming_and_existing_context(self):
+        # Un pet con legacy_id duplicado debe traer incoming + existing.public_id
+        # + existing.pet_name + owner_name en el conflict.
+        existing_owner = Owner.objects.create(organization=self.org, name='Juan Pérez', phone='8112345678')
+        Pet.objects.create(organization=self.org, owner=existing_owner, name='Max', species='canino', legacy_id='00231')
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Ana,8113334444,Luna,Gato,00231\n'  # mismo legacy_id, distinto owner
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        res = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        result = res.data['result']
+        self.assertEqual(result['skipped_conflicts'], 1)
+        conflict = result['conflicts'][0]
+        self.assertEqual(conflict['type'], 'duplicate_legacy_id')
+        self.assertEqual(conflict['scope'], 'pet')
+        self.assertEqual(conflict['incoming']['pet_name'], 'Luna')
+        self.assertEqual(conflict['incoming']['owner_name'], 'Ana')
+        self.assertEqual(conflict['existing']['pet_name'], 'Max')
+        self.assertEqual(conflict['existing']['owner_name'], 'Juan Pérez')
+        self.assertTrue(conflict['existing']['public_id'])
+        # match_confidence: different pet_name, different owner_name → uncertain
+        self.assertEqual(conflict['match_confidence'], 'uncertain')
+
+    def test_match_confidence_high_when_names_match(self):
+        # Mismo dueño (normalizado), misma mascota → high confidence.
+        # Usamos un nombre de mascota DIFERENTE para que no lo atrape el dedup
+        # por nombre antes del check de legacy_id.
+        existing_owner = Owner.objects.create(organization=self.org, name='Juan Pérez', phone='8112345678')
+        Pet.objects.create(organization=self.org, owner=existing_owner, name='Max', species='canino', legacy_id='00231')
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan Perez,8112345678,Bella,Perro,00231\n'  # distinto nombre, mismo legacy_id
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        res = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        result = res.data['result']
+        # El legacy_id choca (ya existe), no el nombre.
+        self.assertEqual(result['skipped_conflicts'], 1)
+        conflict = result['conflicts'][0]
+        # owner_name normalizado coincide (juan perez == juan perez) pero pet_name no
+        # → uncertain (plan: high solo si AMBOS coinciden)
+        self.assertEqual(conflict['match_confidence'], 'uncertain')
+
+    def test_conflict_not_in_blocking(self):
+        # duplicate_legacy_id cae en conflicts[], NO en blocking[].
+        owner = Owner.objects.create(organization=self.org, name='Juan', phone='8112345678')
+        Pet.objects.create(organization=self.org, owner=owner, name='Max', species='canino', legacy_id='00231')
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Ana,8113334444,Luna,Gato,00231\n'
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        res = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        result = res.data['result']
+        self.assertGreater(len(result['conflicts']), 0)
+        # blocking[] solo tiene datos faltantes/imposibles, no legacy conflicts.
+        self.assertFalse(any('legacy' in b.get('field', '') for b in result['blocking']))
+
+    def test_no_pk_exposed_in_result(self):
+        # existing nunca debe traer PK (id entero), solo public_id (UUID).
+        existing_owner = Owner.objects.create(organization=self.org, name='Juan', phone='8112345678')
+        pet = Pet.objects.create(organization=self.org, owner=existing_owner, name='Max', species='canino', legacy_id='00231')
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Ana,8113334444,Luna,Gato,00231\n'
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        res = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        result = res.data['result']
+        conflict = result['conflicts'][0]
+        self.assertNotIn('id', conflict.get('existing', {}))
+        self.assertNotIn('pk', conflict.get('existing', {}))
+        self.assertEqual(conflict['existing']['public_id'], str(pet.public_id))

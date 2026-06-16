@@ -341,3 +341,208 @@
 .incompleteList li strong {
   color: var(--c-warning-text, #92400e);
 }
+
+/* ── Fase 3: Vista previa humana — grupos colapsables ─────────── */
+.humanSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.humanRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 6px 0;
+}
+.humanBullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.humanRowSuccess { color: var(--c-success-text); }
+.humanRowSuccess .humanBullet {
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+}
+.humanRowMuted { color: var(--c-text-3); }
+.humanRowMuted .humanBullet {
+  background: var(--c-subtle);
+  color: var(--c-text-3);
+}
+.humanRowWarn { color: var(--c-warning-text); }
+.humanRowWarn .humanBullet {
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+}
+.humanRowDanger { color: var(--c-danger-text); }
+.humanRowDanger .humanBullet {
+  background: var(--c-danger-bg);
+  color: var(--c-danger-text);
+}
+.humanExtra {
+  font-weight: 400;
+  color: var(--c-text-3);
+}
+
+/* Collapsible blocks */
+.collapseBlock {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.collapseToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--c-subtle);
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.collapseToggle:hover { background: var(--c-border); }
+.collapseIcon { font-size: 15px; flex-shrink: 0; }
+.collapseLabel { flex: 1; text-align: left; }
+.collapseChevron {
+  font-size: 10px;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.collapseBody {
+  padding: 14px;
+  border-top: 1px solid var(--c-border);
+}
+
+/* Conflict cards (posibles duplicados) */
+.conflictIntro {
+  font-size: 12.5px;
+  color: var(--c-text-3);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+.conflictCard {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-subtle);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.conflictRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.conflictNum {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+}
+.conflictCompare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.conflictSide {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  padding: 10px 12px;
+}
+.conflictSideLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.conflictSideValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.conflictSideMeta {
+  font-size: 12px;
+  color: var(--c-text-3);
+  margin-top: 2px;
+}
+.conflictHint {
+  font-size: 12px;
+  color: var(--c-warning-text);
+  margin: 0 0 8px;
+}
+.conflictLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-primary);
+  text-decoration: none;
+}
+.conflictLink:hover { text-decoration: underline; }
+
+/* Blocking rows (requieren corrección) */
+.blockingRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--c-border);
+}
+.blockingRow:last-child { border-bottom: none; }
+.blockingNum {
+  font-family: var(--font-mono);
+  color: var(--c-text-3);
+  font-size: 12px;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+.blockingField {
+  color: var(--c-text-2);
+  font-size: 12.5px;
+  flex-shrink: 0;
+  min-width: 160px;
+}
+.blockingMsg {
+  color: var(--c-text);
+  flex: 1;
+}
+
+/* Warnings header (no colapsable, solo título) */
+.warningsHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--c-subtle);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+/* Consequence text */
+.consequence {
+  font-size: 12.5px;
+  color: var(--c-text-2);
+  margin: 0;
+  line-height: 1.5;
+}

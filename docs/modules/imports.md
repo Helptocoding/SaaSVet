@@ -86,15 +86,83 @@ Interface `parse_file()` → `CSVParser` | `ExcelParser`.
   se importa sin fecha).
 - **Dedup**: `pet` por `(owner, normalize(name), species)` — normalizado, no string
   exacto ("Max" == "MAX"). `dedup_strategy=skip` (v1): duplicado se salta y se reporta,
-  nunca pisa datos.
-- **`legacy_id`** (Owner + Pet): único parcial por org; conflicto → error de fila
-  (predicho ya en `validate`). UI: "Número de expediente anterior".
+  nunca pisa datos. El duplicado por nombre se detecta ANTES de crear el owner → no
+  genera clientes huérfanos.
+- **`legacy_id`** (Owner + Pet): único parcial por org; conflicto → entrada en
+  `conflicts[]` (no bloquea, pero la fila se omite). El conflicto se detecta y reporta
+  ya en `validate` (preview honesto). UI: "Número de expediente anterior".
+- **Fila = unidad lógica**: si la mascota se omite (duplicado por nombre o conflicto
+  `legacy_id`), el owner de esa fila NO se crea. Un owner compartido por varias filas
+  se materializa con el primer pet que entra. Cero owners huérfanos.
 - **`extra_data`** (Fase D, ADR p43): columnas sin campo equivalente → `owner.extra` /
   `pet.extra`. Muchas columnas → una lista `{label, value, source_column, imported_at}`.
   Ver `modules/patients.md` § Datos del sistema anterior.
 - **Una fila inválida NO aborta el import**: savepoint por fila (`owner` y `pet` en
-  savepoints **separados** — un pet que falla no deja owner huérfano en cache). El
-  resto se importa; el reporte trae errores/warnings por fila.
+  savepoints **separados**). El resto se importa; el reporte trae bloquantes/conflictos/
+  avisos por fila.
+
+## Shape del `result` (contrato)
+
+`ImportJob.result` es un `JSONField` que se escribe al validar y al commit. El shape
+actual clasifica las filas en tres categorías + contadores:
+
+```jsonc
+{
+  // Contadores
+  "created_owners": 0,        // owners nuevos (solo si su pet entró)
+  "reused_owners": 0,         // owners reutilizados (solo si su pet entró)
+  "created_pets": 0,          // mascotas creadas
+  "skipped_duplicates": 0,    // omitidos por duplicado de nombre (owner, norm_name, species)
+  "skipped_conflicts": 0,     // omitidos por conflicto legacy_id
+  "blocking_rows": 0,         // filas con datos faltantes/imposibles
+
+  // Categorías
+  "blocking": [               // datos faltantes / imposibles
+    { "row": 5, "field": "pet.name", "message": "El nombre de la mascota es requerido." }
+  ],
+  "conflicts": [              // posibles duplicados por legacy_id con contexto
+    {
+      "row": 26,
+      "type": "duplicate_legacy_id",
+      "severity": "conflict",
+      "scope": "pet",          // "pet" | "owner"
+      "match_confidence": "high",  // "high" | "uncertain"
+      "message": "Ya existe una mascota con este expediente.",
+      "incoming": { "pet_name": "Bella", "owner_name": "Luis Pérez", "legacy_id": "126" },
+      "existing": { "pet_name": "Bella", "owner_name": "Luis Pérez", "public_id": "…uuid…" }
+    }
+  ],
+  "warnings": [               // datos opcionales faltantes
+    { "row": 12, "field": "owner.phone", "message": "Cliente sin teléfono — se importará igual." }
+  ],
+
+  // Aliases backward-compat (derivados de los anteriores)
+  "errors":  [],              // = blocking[]
+  "error_rows": 0             // = blocking_rows
+}
+```
+
+### Reglas de `match_confidence`
+
+- `high` → `pet_name` y `owner_name` de `incoming` coinciden (normalizados) con
+  `existing`.
+- `uncertain` → coincide el `legacy_id` pero algún nombre difiere.
+
+`match_confidence` es solo UI/contexto; no afecta decisiones de importación.
+
+### Reglas de conteo
+
+- `blocking` NO cuenta como conflicto. `conflicts` NO cuenta como blocking.
+- `created_owners`/`reused_owners` solo se incrementan cuando el pet de esa fila ENTRA.
+- `skipped_duplicates` = omitidos por nombre normalizado duplicado.
+- `skipped_conflicts` = omitidos por `legacy_id` duplicado.
+- `existing` solo expone `public_id` (UUID), nunca PK entero.
+
+### Bulk fetch
+
+El backend recolecta todos los `legacy_id` del archivo y los busca en DB con
+`filter(legacy_id__in=...)` una sola vez (evita N+1). `select_related('owner')` para
+pets, trayendo `owner__name` sin queries extra.
 
 ## Mapeo (`mapping`)
 
@@ -143,6 +211,13 @@ Wizard de pasos: **Subir → Mapear → Validar → Resultado**.
   teléfono"). Informativo, no bloquea, **no** alerta global. El complemento
   **estrategia D** vive en `petDetail` (prompt suave "Completar datos" →
   `/pets?edit=<public_id>`); ver `modules/patients.md`.
+- `PreviewStep` — vista previa humana con tres grupos colapsables:
+  - ⚠ **Posibles duplicados**: comparación lado a lado (archivo vs registrado),
+    `match_confidence`, link "Ver paciente" (`/pets/<public_id>`).
+  - ✗ **Requieren corrección**: filas con datos faltantes/imposibles.
+  - ℹ **Avisos**: datos opcionales pendientes.
+  - Consecuencia antes de confirmar con conteos reales. CTA bloqueado si no hay
+    registros importables.
 
 `api/imports.js` centraliza las llamadas. Errores → `apiError`/toast (nunca códigos
 técnicos como `import_parse_error` en un div).

@@ -116,8 +116,16 @@ const Imports = () => {
     // ── Paso 3 → 4: commit (escribe) ──
     const handleConfirm = async () => {
         if (committing || !job) return;
+        const r = job.result || {};
+        const createdPets = Number(r.created_pets || 0);
+        const skippedConflicts = Number(r.skipped_conflicts || 0);
+        const message = createdPets > 0
+            ? `Se importarán ${createdPets} registro${createdPets === 1 ? "" : "s"} a tu sistema.`
+                + (skippedConflicts > 0 ? ` ${skippedConflicts} posible${skippedConflicts === 1 ? "" : "s"} duplicado${skippedConflicts === 1 ? "" : "s"} se omitirán.` : "")
+                + " ¿Confirmar la importación?"
+            : "No hay registros nuevos para importar. ¿Deseas continuar?";
         const ok = await confirm({
-            message: "Se importarán los registros a tu sistema. Los duplicados se omitirán. ¿Confirmar la importación?",
+            message,
             confirmText: "Importar",
         });
         if (!ok) return;
