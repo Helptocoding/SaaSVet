@@ -28,9 +28,12 @@ class Owner(PublicIdMixin, OrganizationalModel):
 
     class Meta:
         indexes = [
-            # Búsqueda de owners por nombre usa name__icontains (patients/views.py).
-            # GIN trigram acelera substring match; sin él = seq scan por org.
+            # Búsqueda de owners por nombre/teléfono/expediente usa icontains
+            # (patients/views.py + EntitySearch). GIN trigram acelera el substring
+            # match; sin él = seq scan por org.
             GinIndex(OpClass('name', name='gin_trgm_ops'), name='owner_name_trgm'),
+            GinIndex(OpClass('phone', name='gin_trgm_ops'), name='owner_phone_trgm'),
+            GinIndex(OpClass('legacy_id', name='gin_trgm_ops'), name='owner_legacy_trgm'),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -88,8 +91,10 @@ class Pet(PublicIdMixin, OrganizationalModel):
     class Meta:
         indexes = [
             models.Index(fields=["organization", "owner"]),
-            # Búsqueda de mascotas por nombre usa name__icontains (patients/views.py).
+            # Búsqueda de mascotas por nombre/expediente usa icontains
+            # (patients/views.py + EntitySearch). GIN trigram para el substring match.
             GinIndex(OpClass('name', name='gin_trgm_ops'), name='pet_name_trgm'),
+            GinIndex(OpClass('legacy_id', name='gin_trgm_ops'), name='pet_legacy_trgm'),
         ]
         constraints = [
             models.UniqueConstraint(

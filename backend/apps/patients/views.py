@@ -163,9 +163,16 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
     Propietarios. basename='owner' → permisos owner.*
     Soporta ?search=<nombre>. Límite 20 cuando se filtra.
 
-    P1-2: paginación PageNumber(25) en el listado completo. El path `?search`
-    (que alimenta SearchSelect con array plano [:20]) NO se pagina —
-    `paginate_queryset` devuelve None para preservar el contrato de dropdown.
+    P1-2: paginación PageNumber(25) en el listado completo.
+
+    Búsqueda (`?search`) — ADR p44b: filtra por **nombre · teléfono · expediente**
+    (`legacy_id`), todos `icontains` (índices GIN trigram en los tres campos). Con
+    clínicas importadas un cliente se diferencia por su teléfono, no solo por el
+    nombre repetido.
+
+    El path `?search` **sin `?page`** sigue devolviendo array plano `[:20]`
+    (contrato legacy de `SearchSelect`). **Con `?page`** sí pagina → habilita el
+    "Ver más" de `EntitySearch` (mismo carve-out que `PetViewSet`).
     """
     serializer_class = OwnerSerializer
     permission_classes = [HybridPermission]
@@ -173,23 +180,32 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
 
     def get_queryset(self):
         qs = Owner.objects.for_organization(self.request.user.organization)
-        search = self.request.query_params.get("search", "").strip()
-        is_generic = self.request.query_params.get("is_generic", "").strip()
+        p = self.request.query_params
+        is_generic = p.get("is_generic", "").strip()
         if is_generic == "true":
             qs = qs.filter(is_generic=True)
         elif is_generic == "false":
             qs = qs.filter(is_generic=False)
+        search = p.get("search", "").strip()
         if search:
-            return qs.filter(name__icontains=search)[:20]
+            qs = qs.filter(
+                Q(name__icontains=search)
+                | Q(phone__icontains=search)
+                | Q(legacy_id__icontains=search)
+            )
         # Owner no declara Meta.ordering → orden de heap. Orden estable para
         # paginación (name + id desempate).
-        return qs.order_by("name", "id")
+        qs = qs.order_by("name", "id")
+        # Dropdown legacy: ?search sin ?page → array plano [:20].
+        if search and not p.get("page"):
+            return qs[:20]
+        return qs
 
     def paginate_queryset(self, queryset):
-        # El path de búsqueda devuelve un array plano [:20] para los dropdowns
-        # (SearchSelect). No paginar ahí: un queryset ya sliced rompería el
-        # paginador y los consumidores `.then(ps => ps.map(...))` esperan array.
-        if self.request.query_params.get("search", "").strip():
+        # Búsqueda sin ?page → array plano [:20] (dropdowns SearchSelect que hacen
+        # `.then(ps => ps.map(...))`). Con ?page se pagina (EntitySearch "Ver más").
+        p = self.request.query_params
+        if p.get("search", "").strip() and not p.get("page"):
             return None
         return super().paginate_queryset(queryset)
 
