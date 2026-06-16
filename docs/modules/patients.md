@@ -131,7 +131,11 @@ ya no escala con las filas (blindado en `test_pet_list_pagination.py`).
 
 ## Filtros disponibles (GET /api/owners/)
 
-- `search=<texto>` — busqueda por nombre (icontains, limite 20)
+- `search=<texto>` — busqueda por **nombre · teléfono · `legacy_id`** (icontains;
+  ADR p44b). Con clínicas importadas un cliente se diferencia por su teléfono o nº
+  de expediente, no solo el nombre (homónimos). Sin `?page` → array plano `[:20]`
+  (dropdown legacy); con `?page` → envelope paginado (habilita el "Ver más" de
+  `EntitySearch`). Misma lógica opt-in que `Pet` (ADR p44).
 - `is_generic=true/false` — filtrar propietario generico
 
 El frontend usa `?is_generic=true` para obtener el propietario "Publico General" al cargar la vista de cobros.
@@ -160,7 +164,9 @@ N+1 de owner + filtraba en memoria. Ver § Filtros disponibles (GET /api/pets/).
 
 ## Indices de busqueda
 
-`Owner.name` y `Pet.name` tienen índice GIN trigram (`gin_trgm_ops`, extensión `pg_trgm`) desde Capa 2 (2026-05-26), para que la búsqueda `name__icontains` no haga seq scan por org. Requiere `django.contrib.postgres` en INSTALLED_APPS y la extensión `pg_trgm` en la DB (ver `DEPLOY_VPS_PLAN.md`). `phone` no se indexa (no hay búsqueda por teléfono).
+`Owner.name` y `Pet.name` tienen índice GIN trigram (`gin_trgm_ops`, extensión `pg_trgm`) desde Capa 2 (2026-05-26), para que la búsqueda `name__icontains` no haga seq scan por org. Requiere `django.contrib.postgres` en INSTALLED_APPS y la extensión `pg_trgm` en la DB (ver `DEPLOY_VPS_PLAN.md`).
+
+Desde ADR p44b (migración 0017) hay trigram también en **`Owner.phone`**, **`Owner.legacy_id`** y **`Pet.legacy_id`**, porque la búsqueda relacional (clientes por teléfono/expediente; mascotas por expediente) ahora hace `icontains` sobre esos campos. (Antes `phone` no se indexaba: no había búsqueda por teléfono.)
 
 ## Aislamiento multitenant
 
@@ -215,6 +221,22 @@ estética", "Código viejo"). Es **dato histórico de migración**, NO custom fi
 
 Sin `bleach`: texto plano + cap de longitud (React escapa al renderizar; el origen
 es Excel, no HTML).
+
+### Datos opcionales incompletos (post-importación, ADR p44d)
+
+Distinto de `extra_data`. Tras importar, una mascota puede quedar sin campos
+**opcionales** del modelo (fecha de nacimiento, especie, raza, sexo, color;
+teléfono del dueño). NO son errores ni bloquean — son normales en veterinaria.
+Estrategia **C+D**, sin alertas globales:
+
+- **C — resumen al importar** (`ResultStep`): agrega los warnings ("N mascotas sin
+  fecha de nacimiento", etc.), una sola vez.
+- **D — prompt suave en la ficha** (`petDetail`): botón discreto "Completar datos
+  (…)" cuando faltan opcionales → abre la edición vía `/pets?edit=<public_id>`
+  (la página Mascotas resuelve el `?edit` cargando la mascota por `public_id` y
+  abriendo el modal). Sin contador global ni "score de completitud".
+
+Requerido-para-operar (nombre) ≠ deseable (lo demás): nunca se tratan igual.
 
 ## Cascade lockdown (PR-4B / ADR p16)
 

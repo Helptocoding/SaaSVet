@@ -23,7 +23,7 @@ src/
 ├── pages/         — vistas completas por ruta
 │   └── medicalRecords/
 │       ├── index.jsx            — orquestador de la página
-│       ├── PetSidebar.jsx       — sidebar izquierdo (lista de mascotas)
+│       ├── PetSidebar.jsx       — sidebar izquierdo: búsqueda de mascota server-side (searchPets + "Ver más"), NO carga la lista completa (ADR p44c)
 │       ├── PatientHeader.jsx    — header con datos del paciente + vitales (solo lectura)
 │       ├── VitalsEditor.jsx     — editor inline de vitales (ya no se usa en PatientHeader)
 │       ├── Timeline.jsx         — lista de consultas agrupadas por año/mes
@@ -402,7 +402,36 @@ Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage
 
 ### SearchSelect
 
-Combobox con busqueda asincrona. Debounce de 250ms. Maneja race conditions con `reqId`. Props clave: `value`, `onChange`, `onSearch`, `disabled`, `prefetchOnFocus`.
+Combobox con busqueda asincrona. Debounce de 250ms. Maneja race conditions con `reqId`. Props clave: `value`, `onChange`, `onSearch`, `disabled`, `prefetchOnFocus`. Devuelve un array y muestra **solo `item.label`** (string). Úsalo para selects simples y de bajo volumen; para entidades relacionales con muchos registros usa **EntitySearch**.
+
+### EntitySearch (combobox relacional — ADR p44b)
+
+`components/EntitySearch.jsx` — combobox para entidades con miles de registros
+(clínicas importadas). Reusa el patrón de `SearchSelect` (debounce 250ms, race
+con `reqId`, loading) pero resuelve sus dos límites:
+
+- **Render rico** (`renderItem(item) → JSX`): cada opción muestra contexto para
+  diferenciar homónimos (dueño · teléfono · expediente), no solo el nombre.
+- **Paginación incremental** (`fetchPage({query,page}) → {items, hasMore}` +
+  botón "Ver más"): inicial 8, carga más bajo demanda. **Sin tope invisible**
+  (el viejo `maxSuggestions=5` ocultaba coincidencias).
+
+Props: `value` (objeto seleccionado | null), `onChange(item)`, `fetchPage`,
+`renderItem`, `getOptionLabel(item)` (texto del input tras elegir), `placeholder`,
+`disabled`, `prefetchOnFocus`.
+
+**No rearmar el fetch/label por módulo.** Usar las piezas compartidas:
+- `api/lookups.js`: `searchPets({query,page,pageSize,ownerPublicId})` y
+  `searchOwners({query,page,pageSize})` → `{items, hasMore}` sobre los endpoints
+  paginados (`?page` → envelope; `next` → hay más).
+- `components/lookupOptions.jsx`: `renderPetOption`/`renderOwnerOption` +
+  `petOptionLabel`/`ownerOptionLabel`.
+
+Consumidores: selectores de mascota de **Citas** (`appointments.jsx`),
+**Recetas** (`PrescriptionForm`), **POS** (`CustomerSelector`, también cliente).
+El **historial clínico** (`PetSidebar`) usa el mismo `searchPets` pero como lista
+inline (no dropdown). El `value` pasa a ser el **objeto completo** de la entidad
+(trae `id` PK para el body + `public_id`).
 
 ### ConfirmDialog / useConfirm
 

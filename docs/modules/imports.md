@@ -137,6 +137,12 @@ Wizard de pasos: **Subir → Mapear → Validar → Resultado**.
     solo para datos históricos.
 - `ImportedDataSection` (en `petDetail`) muestra `extra_data` read-only con lenguaje de
   migración ("Datos importados del sistema anterior 🔒").
+- `ResultStep` — datos incompletos **estrategia C** (ADR p44d): agrega los
+  `warnings` del backend (datos OPCIONALES faltantes) en un resumen único al
+  terminar ("N mascotas sin fecha de nacimiento / sin especie / N clientes sin
+  teléfono"). Informativo, no bloquea, **no** alerta global. El complemento
+  **estrategia D** vive en `petDetail` (prompt suave "Completar datos" →
+  `/pets?edit=<public_id>`); ver `modules/patients.md`.
 
 `api/imports.js` centraliza las llamadas. Errores → `apiError`/toast (nunca códigos
 técnicos como `import_parse_error` en un div).
