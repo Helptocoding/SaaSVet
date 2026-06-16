@@ -149,7 +149,6 @@
   font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 10px;
 }
-.colCardQuestion { font-size: 12.5px; color: var(--c-text-2); margin: 0 0 8px; }
 .colCardDest { font-size: 13px; color: var(--c-text-2); margin: 0 0 6px; }
 .renameRow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .renameLabel { font-size: 12px; color: var(--c-text-3); }
@@ -188,16 +187,20 @@
   font-size: 12px; color: var(--c-primary); font-weight: 500;
   display: inline-flex; align-items: center; gap: 3px;
 }
-.readyList { display: flex; flex-direction: column; }
-/* Filas compactas: una línea cada una, sin alargar el bloque al desplegar. */
+/* Grid multi-columna: no se alarga al desplegar (4 filas → ~2 en desktop). */
+.readyList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1px; background: var(--c-border); border-top: 1px solid var(--c-border);
+}
 .readyRow {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 14px; border-top: 1px solid var(--c-border); font-size: 12.5px;
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 14px; background: var(--c-surface); font-size: 12.5px;
   white-space: nowrap; overflow: hidden;
 }
 .readyCol {
   font-weight: 600; color: var(--c-text);
-  flex: 0 0 38%; overflow: hidden; text-overflow: ellipsis;
+  overflow: hidden; text-overflow: ellipsis; max-width: 45%;
 }
 .readyArrow { color: var(--c-text-3); flex-shrink: 0; }
 .readyDest { color: var(--c-text-2); flex: 1; overflow: hidden; text-overflow: ellipsis; }
@@ -234,6 +237,15 @@
 .accBody {
   display: flex; flex-direction: column; gap: 6px;
   padding: 4px 14px 14px; background: var(--c-subtle);
+  animation: accExpand 140ms ease;
+}
+/* Apertura sutil al cambiar de categoría (una se cierra, otra se abre). */
+@keyframes accExpand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .accBody { animation: none; }
 }
 .pickerOption {
   text-align: left; font-size: 13px; padding: 9px 12px;

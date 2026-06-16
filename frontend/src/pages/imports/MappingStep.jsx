@@ -139,7 +139,6 @@ const MappingStep = ({
                         <span className={s.colCardName}>{col}</span>
                     </p>
                     <p className={s.colCardExamples}>Ejemplos: {samplePreview(col)}</p>
-                    <p className={s.colCardQuestion}>¿Qué representa esta columna?</p>
                     <button
                         type="button"
                         className={`btn btn-primary btn-sm ${s.btnWithIcon}`}
