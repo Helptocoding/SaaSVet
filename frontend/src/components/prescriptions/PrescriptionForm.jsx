@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiError } from "../../utils/apiError";
-import { getPets } from "../../api/pets";
 import { getPresentations } from "../../api/inventory";
 import { Icon } from "../icons";
-import SearchSelect from "../SearchSelect";
+import EntitySearch from "../EntitySearch";
+import { searchPets } from "../../api/lookups";
+import { renderPetOption, petOptionLabel } from "../lookupOptions";
 import { toast } from "sonner";
 
 const EMPTY_ITEM = { product: "", _productLabel: "", dose: "", duration: "", quantity: "", instructions: "" };
@@ -38,11 +39,19 @@ const PrescriptionForm = ({
     const [form, setForm] = useState(() => buildInitialForm(initialValue));
     const [itemErrors, setItemErrors] = useState(new Set());
     const [submitting, setSubmitting] = useState(false);
+    // Objeto de la mascota seleccionada en el selector (no lockeado). form.pet
+    // sigue siendo el PK (lo que se envía); este objeto solo alimenta el render
+    // rico de EntitySearch. Se resuelve desde `pets` si initialValue trae pet.
+    const resolvePetObj = (id) => (id ? (pets.find(p => String(p.id) === String(id)) ?? null) : null);
+    const [selectedPetObj, setSelectedPetObj] = useState(() => resolvePetObj(initialValue?.pet));
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reset del form al cambiar initialValue
         setForm(buildInitialForm(initialValue));
         setItemErrors(new Set());
         setSubmitting(false);
+        setSelectedPetObj(resolvePetObj(initialValue?.pet));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialValue]);
 
     useEffect(() => {
@@ -145,12 +154,14 @@ const PrescriptionForm = ({
                                     {pets.find(p => String(p.id) === String(form.pet))?.name ?? form.pet}
                                 </p>
                             ) : (
-                                <SearchSelect
+                                <EntitySearch
                                     id="prescription-pet"
                                     name="prescription-pet"
-                                    value={form.pet ? { id: form.pet, label: pets.find(p => String(p.id) === String(form.pet))?.name ?? "" } : null}
-                                    onChange={item => handlePetChange(item?.id ?? "")}
-                                    onSearch={q => getPets({ search: q }).then(ps => ps.map(p => ({ id: p.id, label: p.name })))}
+                                    value={selectedPetObj}
+                                    onChange={item => { handlePetChange(item?.id ?? ""); setSelectedPetObj(item); }}
+                                    fetchPage={({ query, page }) => searchPets({ query, page })}
+                                    renderItem={renderPetOption}
+                                    getOptionLabel={petOptionLabel}
                                     placeholder="Buscar mascota..."
                                     disabled={submitting}
                                 />
