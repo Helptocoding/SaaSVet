@@ -116,8 +116,9 @@
 .missingBox li { margin-bottom: 2px; }
 
 /* ── Mapeo (Fase D, rediseño UX): "revisé unas cosas, no configuré una DB" ── */
-.summaryReady { color: var(--c-success-text); font-weight: 600; }
-.summaryWarn { color: var(--c-warning-text); font-weight: 600; }
+.summaryReady { color: var(--c-success-text); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.summaryWarn { color: var(--c-warning-text); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
+.btnWithIcon { display: inline-flex; align-items: center; gap: 5px; }
 .exIntro {
   font-size: 13px; color: var(--c-text-2); line-height: 1.5;
   margin: 0 0 12px; max-width: 640px;
@@ -141,8 +142,8 @@
   margin: 0 0 6px; display: flex; align-items: center; gap: 6px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.colCardWarn { color: var(--c-warning-text); flex-shrink: 0; }
-.colCardOk { color: var(--c-success-text); flex-shrink: 0; }
+.colCardWarn { color: var(--c-warning-text); flex-shrink: 0; display: inline-flex; }
+.colCardOk { color: var(--c-success-text); flex-shrink: 0; display: inline-flex; }
 .colCardName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .colCardExamples {
   font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
@@ -157,8 +158,8 @@
   border: 1px solid var(--c-primary); border-radius: var(--r-sm); color: var(--c-text);
 }
 .renameBtn {
-  background: none; border: none; cursor: pointer; font-size: 12px;
-  padding: 2px 4px; line-height: 1; opacity: 0.7;
+  background: none; border: none; cursor: pointer; color: var(--c-text-3);
+  padding: 2px 4px; line-height: 0; opacity: 0.8; display: inline-flex;
 }
 .renameBtn:hover { opacity: 1; }
 .renameBtn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -178,19 +179,29 @@
 }
 .readyToggle {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; background: var(--c-subtle); border: none; cursor: pointer;
+  padding: 10px 14px; background: var(--c-subtle); border: none; cursor: pointer;
   font-size: 13px; font-weight: 600; color: var(--c-text);
 }
 .readyToggle:hover { background: var(--c-border); }
-.readyChevron { font-size: 12px; color: var(--c-primary); font-weight: 500; }
-.readyList { display: flex; flex-direction: column; }
-.readyRow {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 16px; border-top: 1px solid var(--c-border); font-size: 13px;
+.readyToggleLabel { display: inline-flex; align-items: center; gap: 6px; color: var(--c-success-text); }
+.readyChevron {
+  font-size: 12px; color: var(--c-primary); font-weight: 500;
+  display: inline-flex; align-items: center; gap: 3px;
 }
-.readyCol { font-weight: 600; color: var(--c-text); min-width: 120px; }
-.readyArrow { color: var(--c-text-3); }
-.readyDest { color: var(--c-text-2); flex: 1; }
+.readyList { display: flex; flex-direction: column; }
+/* Filas compactas: una línea cada una, sin alargar el bloque al desplegar. */
+.readyRow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-top: 1px solid var(--c-border); font-size: 12.5px;
+  white-space: nowrap; overflow: hidden;
+}
+.readyCol {
+  font-weight: 600; color: var(--c-text);
+  flex: 0 0 38%; overflow: hidden; text-overflow: ellipsis;
+}
+.readyArrow { color: var(--c-text-3); flex-shrink: 0; }
+.readyDest { color: var(--c-text-2); flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.readyRow .changeLink { flex-shrink: 0; }
 
 /* ── Modal selector de destino (DestinationPicker) ──────────── */
 .pickerOverlay {
@@ -199,15 +210,30 @@
   display: flex; align-items: center; justify-content: center; padding: 16px;
 }
 .pickerModal { display: flex; flex-direction: column; max-height: 80vh; }
-.pickerBody { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.pickerBody { display: flex; flex-direction: column; overflow-y: auto; }
 .pickerExamples {
   font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
-  margin: 0 0 8px;
+  margin: 0 0 12px;
 }
-.pickerSection { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
-.pickerSectionName {
-  font-size: 11px; font-weight: 700; color: var(--c-text-3);
-  text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 2px;
+
+/* Acordeón de categorías: una abierta a la vez, se despliega hacia abajo. */
+.accordion {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--c-border); border-radius: var(--r-lg); overflow: hidden;
+}
+.accSection:not(:first-child) { border-top: 1px solid var(--c-border); }
+.accHeader {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: var(--c-surface); border: none; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; color: var(--c-text);
+}
+.accHeader:hover { background: var(--c-subtle); }
+.accIcon { display: inline-flex; color: var(--c-text-3); flex-shrink: 0; }
+.accName { flex: 1; text-align: left; }
+.accChevron { display: inline-flex; color: var(--c-text-3); flex-shrink: 0; }
+.accBody {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 4px 14px 14px; background: var(--c-subtle);
 }
 .pickerOption {
   text-align: left; font-size: 13px; padding: 9px 12px;
@@ -215,7 +241,7 @@
   background: var(--c-surface); color: var(--c-text); cursor: pointer;
   transition: border-color var(--t), background var(--t);
 }
-.pickerOption:hover:not(:disabled) { border-color: var(--c-primary); background: var(--c-subtle); }
+.pickerOption:hover:not(:disabled) { border-color: var(--c-primary); }
 .pickerOption:disabled { opacity: 0.45; cursor: not-allowed; }
 .pickerOptionActive { border-color: var(--c-primary); background: var(--c-primary-light); font-weight: 600; }
 .pickerOptionGhost { border-style: dashed; color: var(--c-text-2); }

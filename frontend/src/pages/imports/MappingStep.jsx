@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import s from "./imports.module.css";
+import { Icon } from "../../components/icons";
 import DestinationPicker from "./DestinationPicker";
 
 const PENDING = "__pending__";   // sin decidir → bloquea continuar
@@ -134,18 +135,18 @@ const MappingStep = ({
             return (
                 <div key={col} className={`${s.colCard} ${s.colCardPending}`}>
                     <p className={s.colCardTitle}>
-                        <span className={s.colCardWarn} aria-hidden="true">⚠</span>
+                        <span className={s.colCardWarn} aria-hidden="true"><Icon.AlertTriangle s={15} /></span>
                         <span className={s.colCardName}>{col}</span>
                     </p>
                     <p className={s.colCardExamples}>Ejemplos: {samplePreview(col)}</p>
                     <p className={s.colCardQuestion}>¿Qué representa esta columna?</p>
                     <button
                         type="button"
-                        className="btn btn-primary btn-sm"
+                        className={`btn btn-primary btn-sm ${s.btnWithIcon}`}
                         onClick={() => setPickerCol(col)}
                         disabled={busy}
                     >
-                        Seleccionar destino ▾
+                        Seleccionar destino <Icon.ChevronDown s={14} />
                     </button>
                 </div>
             );
@@ -153,7 +154,7 @@ const MappingStep = ({
         return (
             <div key={col} className={s.colCard}>
                 <p className={s.colCardTitle}>
-                    <span className={s.colCardOk} aria-hidden="true">✓</span>
+                    <span className={s.colCardOk} aria-hidden="true"><Icon.Check s={15} /></span>
                     <span className={s.colCardName}>{col}</span>
                 </p>
                 <p className={s.colCardDest}>{destLine(v)}</p>
@@ -181,7 +182,7 @@ const MappingStep = ({
                                     aria-label={`Renombrar ${col}`}
                                     title="Cambiar el nombre visible"
                                 >
-                                    ✏️
+                                    <Icon.Edit s={14} />
                                 </button>
                             </>
                         )}
@@ -207,9 +208,14 @@ const MappingStep = ({
                     {sourceColumns.length} columnas detectadas
                 </p>
                 <p style={{ fontSize: 13, color: "var(--c-text-2)" }}>
-                    <span className={s.summaryReady}>✓ {readyCount} listas</span>
+                    <span className={s.summaryReady}>
+                        <Icon.Check s={14} /> <span>{readyCount} listas</span>
+                    </span>
                     {pendingCount > 0 && (
-                        <span className={s.summaryWarn}> · ⚠ {pendingCount} necesitan revisión</span>
+                        <span className={s.summaryWarn}>
+                            <span aria-hidden="true"> · </span>
+                            <Icon.AlertTriangle s={14} /> <span>{pendingCount} necesitan revisión</span>
+                        </span>
                     )}
                 </p>
             </div>
@@ -235,8 +241,13 @@ const MappingStep = ({
                         onClick={() => setDetailsOpen((o) => !o)}
                         aria-expanded={detailsOpen}
                     >
-                        <span>✓ {autoCols.length} columnas reconocidas automáticamente</span>
-                        <span className={s.readyChevron}>{detailsOpen ? "Ocultar" : "Ver detalles"}</span>
+                        <span className={s.readyToggleLabel}>
+                            <Icon.Check s={15} /> {autoCols.length} columnas reconocidas automáticamente
+                        </span>
+                        <span className={s.readyChevron}>
+                            {detailsOpen ? "Ocultar" : "Ver detalles"}
+                            {detailsOpen ? <Icon.ChevronUp s={14} /> : <Icon.ChevronDown s={14} />}
+                        </span>
                     </button>
                     {detailsOpen && (
                         <div className={s.readyList}>

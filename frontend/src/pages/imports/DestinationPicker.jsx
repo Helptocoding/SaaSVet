@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import s from "./imports.module.css";
+import { Icon } from "../../components/icons";
 
 /* Selector de destino de UNA columna del Excel (Fase D, rediseño UX).
-   Reemplaza los botones directos + el picker inline. Es la ÚNICA decisión:
-   "¿Qué representa esta columna?" → un campo del sistema, un dato histórico
-   (sistema anterior) o no importar. Modal pequeño (clases globales .modal-*),
+   Acordeón de categorías: cada una se despliega hacia abajo al seleccionarla y
+   solo una está abierta a la vez (abrir otra cierra la anterior). Sin buscador
+   (con pocas categorías confundía). Modal pequeño (clases globales .modal-*),
    sin librerías nuevas. NO toca backend: devuelve el mismo value que consume
    `choose()` en MappingStep (key del sistema | "owner.extra" | "pet.extra" | "").
 
    Props:
-   - column        nombre original de la columna del Excel (solo display).
+   - column         nombre original de la columna del Excel (solo display).
    - examples       string de ejemplos ("Rojo · Azul · Verde").
-   - fieldCatalog   catálogo de campos (se filtran is_extra: van como opción fija).
-   - value          selección actual (para resaltar).
+   - fieldCatalog   catálogo de campos (los is_extra van como categoría histórica).
+   - value          selección actual (para resaltar / abrir su categoría).
    - assignedSystem Set de keys del sistema ya usadas por OTRAS columnas (deshabilita).
    - onPick(value)  callback al elegir.
    - onClose()      cerrar sin cambiar.
@@ -20,11 +21,6 @@ import s from "./imports.module.css";
 const EXTRA_OWNER = "owner.extra";
 const EXTRA_PET = "pet.extra";
 const NO_IMPORT = "";
-
-const normalize = (str) =>
-    (str || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-
-const GROUP_ICON = { Cliente: "👤", Mascota: "🐾" };
 
 const DestinationPicker = ({
     column,
@@ -35,38 +31,59 @@ const DestinationPicker = ({
     onPick,
     onClose,
 }) => {
-    const [q, setQ] = useState("");
+    // Categorías del acordeón: campos del sistema agrupados + histórico + no usar.
+    const sections = useMemo(() => {
+        const byGroup = {};
+        for (const f of fieldCatalog) {
+            if (f.is_extra) continue;
+            const g = f.group || "Otros";
+            (byGroup[g] ||= []).push(f);
+        }
+        const out = [];
+        const sysSection = (name, icon, fields) => ({
+            id: name,
+            name,
+            icon,
+            options: fields.map((f) => ({ value: f.key, label: f.label, system: true })),
+        });
+        if (byGroup.Cliente) out.push(sysSection("Cliente", "User", byGroup.Cliente));
+        if (byGroup.Mascota) out.push(sysSection("Mascota", "Paw", byGroup.Mascota));
+        for (const g of Object.keys(byGroup)) {
+            if (g !== "Cliente" && g !== "Mascota") out.push(sysSection(g, "FileText", byGroup[g]));
+        }
+        out.push({
+            id: "extra",
+            name: "Datos del sistema anterior",
+            icon: "Box",
+            options: [
+                { value: EXTRA_OWNER, label: "Conservar como información anterior del cliente" },
+                { value: EXTRA_PET, label: "Conservar como información anterior de la mascota" },
+            ],
+        });
+        out.push({
+            id: "no",
+            name: "No usar",
+            icon: "X",
+            options: [{ value: NO_IMPORT, label: "No importar esta columna", ghost: true }],
+        });
+        return out;
+    }, [fieldCatalog]);
+
+    // Abrir de inicio la categoría que ya contiene la selección actual (si hay).
+    const initialOpen = useMemo(() => {
+        if (value === undefined) return null;
+        for (const sec of sections) {
+            if (sec.options.some((o) => o.value === value)) return sec.id;
+        }
+        return null;
+    }, [sections, value]);
+    const [open, setOpen] = useState(initialOpen);
 
     useEffect(() => {
         const onKey = (e) => { if (e.key === "Escape") onClose(); };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [onClose]);
-
-    // Campos del sistema agrupados (Cliente / Mascota), sin los is_extra.
-    const systemGroups = useMemo(() => {
-        const groups = [];
-        const byName = new Map();
-        for (const f of fieldCatalog) {
-            if (f.is_extra) continue;
-            const name = f.group || "Otros";
-            if (!byName.has(name)) {
-                const bucket = { name, fields: [] };
-                byName.set(name, bucket);
-                groups.push(bucket);
-            }
-            byName.get(name).fields.push(f);
-        }
-        return groups;
-    }, [fieldCatalog]);
-
-    const match = (label) => normalize(label).includes(normalize(q));
-
-    const extraOptions = [
-        { value: EXTRA_OWNER, label: "Conservar como información anterior del cliente" },
-        { value: EXTRA_PET, label: "Conservar como información anterior de la mascota" },
-    ].filter((o) => match(o.label));
-    const showNoImport = match("No importar esta columna");
 
     return (
         <div className={s.pickerOverlay} onClick={onClose}>
@@ -84,75 +101,51 @@ const DestinationPicker = ({
                     {examples && examples !== "—" && (
                         <p className={s.pickerExamples}>Ejemplos: {examples}</p>
                     )}
-                    <input
-                        className="select-input"
-                        placeholder="Buscar…"
-                        value={q}
-                        autoFocus
-                        onChange={(e) => setQ(e.target.value)}
-                        aria-label="Buscar destino"
-                    />
-
-                    {systemGroups.map((g) => {
-                        const fields = g.fields.filter((f) => match(f.label));
-                        if (!fields.length) return null;
-                        return (
-                            <div key={g.name} className={s.pickerSection}>
-                                <p className={s.pickerSectionName}>
-                                    <span aria-hidden="true">{GROUP_ICON[g.name] || "•"}</span> {g.name}
-                                </p>
-                                {fields.map((f) => {
-                                    const taken = assignedSystem.has(f.key) && value !== f.key;
-                                    return (
-                                        <button
-                                            key={f.key}
-                                            type="button"
-                                            className={`${s.pickerOption} ${value === f.key ? s.pickerOptionActive : ""}`}
-                                            disabled={taken}
-                                            title={taken ? "Ya asignado a otra columna" : undefined}
-                                            onClick={() => onPick(f.key)}
-                                        >
-                                            {f.label}
-                                            {taken && <span className={s.pickerTaken}> · ya asignado</span>}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
-
-                    {extraOptions.length > 0 && (
-                        <div className={s.pickerSection}>
-                            <p className={s.pickerSectionName}>
-                                <span aria-hidden="true">📦</span> Datos del sistema anterior
-                            </p>
-                            {extraOptions.map((o) => (
-                                <button
-                                    key={o.value}
-                                    type="button"
-                                    className={`${s.pickerOption} ${value === o.value ? s.pickerOptionActive : ""}`}
-                                    onClick={() => onPick(o.value)}
-                                >
-                                    {o.label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {showNoImport && (
-                        <div className={s.pickerSection}>
-                            <p className={s.pickerSectionName}>
-                                <span aria-hidden="true">🚫</span> No usar
-                            </p>
-                            <button
-                                type="button"
-                                className={`${s.pickerOption} ${s.pickerOptionGhost} ${value === NO_IMPORT ? s.pickerOptionActive : ""}`}
-                                onClick={() => onPick(NO_IMPORT)}
-                            >
-                                No importar esta columna
-                            </button>
-                        </div>
-                    )}
+                    <div className={s.accordion}>
+                        {sections.map((sec) => {
+                            const isOpen = open === sec.id;
+                            const SecIcon = Icon[sec.icon];
+                            return (
+                                <div key={sec.id} className={s.accSection}>
+                                    <button
+                                        type="button"
+                                        className={s.accHeader}
+                                        aria-expanded={isOpen}
+                                        onClick={() => setOpen(isOpen ? null : sec.id)}
+                                    >
+                                        <span className={s.accIcon} aria-hidden="true">
+                                            <SecIcon s={16} />
+                                        </span>
+                                        <span className={s.accName}>{sec.name}</span>
+                                        <span className={s.accChevron} aria-hidden="true">
+                                            {isOpen ? <Icon.ChevronDown s={16} /> : <Icon.ChevronRight s={16} />}
+                                        </span>
+                                    </button>
+                                    {isOpen && (
+                                        <div className={s.accBody}>
+                                            {sec.options.map((o) => {
+                                                const taken =
+                                                    o.system && assignedSystem.has(o.value) && value !== o.value;
+                                                return (
+                                                    <button
+                                                        key={o.value || "no-import"}
+                                                        type="button"
+                                                        className={`${s.pickerOption} ${o.ghost ? s.pickerOptionGhost : ""} ${value === o.value ? s.pickerOptionActive : ""}`}
+                                                        disabled={taken}
+                                                        title={taken ? "Ya asignado a otra columna" : undefined}
+                                                        onClick={() => onPick(o.value)}
+                                                    >
+                                                        {o.label}
+                                                        {taken && <span className={s.pickerTaken}> · ya asignado</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
                 <div className="modal-footer">
                     <button className="btn btn-secondary btn-md" style={{ width: "100%" }} onClick={onClose}>

@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MappingStep from "./MappingStep";
 
-// Rediseño UX (Fase D): UNA decisión por columna vía modal DestinationPicker.
-// Reconocidas → resumen colapsable. Desconocidas → cards compactas
-// (pendiente "Seleccionar destino" / resuelta "✓ … Cambiar"). Sin conceptos
-// internos expuestos ni listas abiertas en la card. Se prueba comportamiento
+// Rediseño UX (Fase D): UNA decisión por columna vía modal DestinationPicker, que
+// es un ACORDEÓN de categorías (una abierta a la vez, sin buscador). Reconocidas →
+// resumen colapsable compacto. Desconocidas → cards compactas (pendiente
+// "Seleccionar destino" / resuelta "✓ … Cambiar"). Se prueba comportamiento
 // observable (roles, texto, payload).
 
 const FIELD_CATALOG = [
@@ -41,11 +41,18 @@ function renderStep(props = {}) {
 const continueBtn = () => screen.getByRole("button", { name: /continuar/i });
 const btn = (name) => screen.getByRole("button", { name });
 const queryBtn = (name) => screen.queryByRole("button", { name });
+const dialog = () => screen.getByRole("dialog");
+const inDialog = (name) => within(dialog()).getByRole("button", { name });
+const queryInDialog = (name) => within(dialog()).queryByRole("button", { name });
 
-// Abre el modal de destino de la columna "Color fav" (card pendiente).
+// Abre el modal de destino de "Color fav" (card pendiente).
 async function openPicker(user) {
     await user.click(btn(/Seleccionar destino/i));
-    return screen.getByRole("dialog");
+    return dialog();
+}
+// Despliega una categoría del acordeón (Cliente / Mascota / …).
+async function expandSection(user, name) {
+    await user.click(within(dialog()).getByRole("button", { name }));
 }
 
 describe("MappingStep — header + reconocidas compactas", () => {
@@ -74,10 +81,9 @@ describe("MappingStep — card de columna a revisar", () => {
         expect(screen.getByText("Color fav")).toBeInTheDocument();
         expect(screen.getByText(/Ejemplos:/)).toHaveTextContent("Rojo");
         expect(btn(/Seleccionar destino/i)).toBeInTheDocument();
-        // NADA de botones de destino directos dentro de la card.
-        expect(queryBtn("Histórico cliente")).not.toBeInTheDocument();
-        expect(queryBtn("Histórico mascota")).not.toBeInTheDocument();
-        expect(queryBtn("No importar")).not.toBeInTheDocument();
+        // Nada de opciones de destino visibles en la card.
+        expect(queryBtn(/Conservar como información anterior/i)).not.toBeInTheDocument();
+        expect(queryBtn("No importar esta columna")).not.toBeInTheDocument();
     });
 
     it("bloquea continuar hasta decidir la columna pendiente", async () => {
@@ -85,47 +91,52 @@ describe("MappingStep — card de columna a revisar", () => {
         renderStep();
         expect(continueBtn()).toBeDisabled();
         await openPicker(user);
-        await user.click(btn(/Conservar como información anterior de la mascota/i));
+        await expandSection(user, "Datos del sistema anterior");
+        await user.click(inDialog(/Conservar como información anterior de la mascota/i));
         expect(continueBtn()).toBeEnabled();
     });
 });
 
-describe("MappingStep — selector de destino (modal)", () => {
-    it("abre modal con búsqueda + grupos sistema/histórico/no importar", async () => {
+describe("MappingStep — selector de destino (acordeón)", () => {
+    it("abre modal con categorías colapsadas (opciones ocultas hasta desplegar)", async () => {
         const user = userEvent.setup();
         renderStep();
         await openPicker(user);
-        expect(screen.getByLabelText("Buscar destino")).toBeInTheDocument();
-        // owner.name + pet.name ya están asignados a Dueño/Mascota → aparecen
-        // deshabilitados con "· ya asignado" (regex tolera el sufijo).
-        expect(btn(/Nombre de la mascota/)).toBeInTheDocument();
-        expect(btn("Especie")).toBeInTheDocument();
-        expect(btn(/Conservar como información anterior del cliente/i)).toBeInTheDocument();
-        expect(btn(/Conservar como información anterior de la mascota/i)).toBeInTheDocument();
-        expect(btn("No importar esta columna")).toBeInTheDocument();
+        // Headers de categoría presentes.
+        expect(inDialog("Cliente")).toBeInTheDocument();
+        expect(inDialog("Mascota")).toBeInTheDocument();
+        expect(inDialog("Datos del sistema anterior")).toBeInTheDocument();
+        expect(inDialog("No usar")).toBeInTheDocument();
+        // Sin buscador y sin opciones abiertas.
+        expect(screen.queryByLabelText("Buscar destino")).not.toBeInTheDocument();
+        expect(queryInDialog("Especie")).not.toBeInTheDocument();
     });
 
-    it("la búsqueda filtra las opciones del sistema", async () => {
+    it("solo una categoría abierta a la vez (abrir otra cierra la anterior)", async () => {
         const user = userEvent.setup();
         renderStep();
         await openPicker(user);
-        await user.type(screen.getByLabelText("Buscar destino"), "teléf");
-        expect(btn("Teléfono del cliente")).toBeInTheDocument();
-        expect(queryBtn("Especie")).not.toBeInTheDocument();
+        await expandSection(user, "Cliente");
+        expect(inDialog(/Nombre del cliente/)).toBeInTheDocument();
+        await expandSection(user, "Mascota");
+        expect(queryInDialog(/Nombre del cliente/)).not.toBeInTheDocument(); // Cliente se cerró
+        expect(inDialog("Especie")).toBeInTheDocument();
     });
 
     it("no permite el mismo campo del sistema en dos columnas", async () => {
         const user = userEvent.setup();
         renderStep();   // Dueño ya usa "Nombre del cliente"
         await openPicker(user);
-        expect(btn(/Nombre del cliente/i)).toBeDisabled();
+        await expandSection(user, "Cliente");
+        expect(inDialog(/Nombre del cliente/)).toBeDisabled();
     });
 
     it("elegir un campo del sistema deja la card resuelta + payload string", async () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
         await openPicker(user);
-        await user.click(btn("Especie"));
+        await expandSection(user, "Mascota");
+        await user.click(inDialog("Especie"));
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
         expect(screen.getByText(/Se importará como Especie/)).toBeInTheDocument();
         await user.click(continueBtn());
@@ -142,7 +153,8 @@ describe("MappingStep — histórico + reversibilidad + renombrar", () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
         await openPicker(user);
-        await user.click(btn(/Conservar como información anterior de la mascota/i));
+        await expandSection(user, "Datos del sistema anterior");
+        await user.click(inDialog(/Conservar como información anterior de la mascota/i));
         expect(screen.getByText(/Se conservará como Información anterior de la mascota/)).toBeInTheDocument();
         await user.click(continueBtn());
         expect(onContinue).toHaveBeenCalledWith({
@@ -156,10 +168,12 @@ describe("MappingStep — histórico + reversibilidad + renombrar", () => {
         const user = userEvent.setup();
         renderStep();
         await openPicker(user);
-        await user.click(btn(/Conservar como información anterior de la mascota/i));
+        await expandSection(user, "Datos del sistema anterior");
+        await user.click(inDialog(/Conservar como información anterior de la mascota/i));
         // reabrir y cambiar a no importar
         await user.click(btn(/Cambiar destino de Color fav/i));
-        await user.click(btn("No importar esta columna"));
+        await expandSection(user, "No usar");
+        await user.click(inDialog("No importar esta columna"));
         expect(screen.getByText("No se importará")).toBeInTheDocument();
         expect(continueBtn()).toBeEnabled();
     });
@@ -168,7 +182,8 @@ describe("MappingStep — histórico + reversibilidad + renombrar", () => {
         const user = userEvent.setup();
         const { onContinue } = renderStep();
         await openPicker(user);
-        await user.click(btn(/Conservar como información anterior de la mascota/i));
+        await expandSection(user, "Datos del sistema anterior");
+        await user.click(inDialog(/Conservar como información anterior de la mascota/i));
         await user.click(btn(/Renombrar Color fav/i));
         const input = screen.getByLabelText(/Nombre visible para Color fav/i);
         await user.clear(input);
