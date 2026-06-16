@@ -306,13 +306,23 @@ necesita metadata):
 | `GET /billing/invoices/` | `getInvoices` | PageNumber 25 + `?ordering=created_at\|total` server-side |
 | `GET /inventory/movements/` | `getMovements` | Cursor (`next`/`previous`, **sin** `count`) |
 | `GET /owners/` (sin `search`) | `getOwners` | PageNumber 25 |
+| `GET /pets/` (con `?page`) | `getPets` | PageNumber 25/50/100, **opt-in por `?page`** + filtros server-side (ADR p44) |
 
 **`?search` NO pagina** (Owners): `getOwners({search})` y los demás endpoints de
 búsqueda que alimentan `SearchSelect` siguen devolviendo array plano `[:20]`. Los
 dropdowns con `.then(ps => ps.map(...))` NO se rompen.
 
+**Pets — paginación opt-in por `?page` (ADR p44)**: la página Mascotas llama
+`getPets({page, page_size, search, species, sex, age})` → envelope. **Sin `?page`**
+(dropdowns SearchSelect de citas/recetas/POS, y `getPets()` de prescriptions/
+medicalRecords) sigue devolviendo array plano (`[:20]` con filtro, completo sin
+filtro). NO mandar `?page` desde un dropdown. Stat-cards de Mascotas vienen de
+`getPetStats()` (`GET /pets/stats/`, conteos de toda la clínica), no del length
+local; el contador de citas de la semana reusa `getStatusBreakdown` (conteo, sin
+traer filas). Esto **supera** la entrada "Pets sin paginar" de DD-013.
+
 Sin paginar (lista completa, filtro/KPI client-side — DD-013): Products,
-Prescriptions, Appointments, Pets. No asumir que pasarán a paginado sin antes
+Prescriptions, Appointments. No asumir que pasarán a paginado sin antes
 mover sus filtros a server-side.
 
 **Paginador UI**: `components/Pagination.jsx` (Anterior/Siguiente). El sort de una

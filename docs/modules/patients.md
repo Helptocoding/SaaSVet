@@ -85,9 +85,49 @@ donde el dueño no recuerda la fecha exacta.)
 
 ## Filtros disponibles (GET /api/pets/)
 
-- `search=<texto>` — busqueda por nombre (icontains, limite 20)
-- `owner=<id>` — filtrar por propietario (limite 20)
-- Combinables: `?search=luna&owner=3`
+Todos **server-side** (la página Mascotas escala a miles de registros sin
+descargar la tabla a memoria — ADR p44):
+
+- `search=<texto>` — nombre · especie · raza · `legacy_id` (nº expediente) ·
+  nombre del dueño · teléfono del dueño (todos `icontains`).
+- `species=caninos|felinos` — grupo de especie (regex tolerante a datos sucios de
+  importación: `perro|canino|dog` / `gato|felino|cat`).
+- `sex=male|female|unknown`.
+- `age=cachorro|joven|adulto|senior` — traducido a rangos de `birth_date`
+  (año = 365.25 días, coherente con `getAgeGroup` del frontend; `birth_date` NULL
+  queda fuera de todo bucket).
+- `owner=<public_id>` — filtrar por propietario (resuelto por UUID).
+- Combinables: `?search=luna&species=caninos&page=1`.
+
+### Paginación opt-in por `?page` (ADR p44)
+
+`PetViewSet` pagina **solo cuando el request trae `?page`** (PageNumber 25,
+`page_size` 25/50/100). Sin `?page` conserva el **contrato legacy de array
+plano** que consumen los dropdowns `SearchSelect` (citas, recetas, POS) y las
+listas client-side (`prescriptions`, `medicalRecords`) vía
+`.then(ps => ps.map(...))`:
+
+| Request | Respuesta |
+|---|---|
+| `GET /pets/?page=1[&filtros]` | Envelope `{count, next, previous, results}` (vista Mascotas) |
+| `GET /pets/?search=max` (sin page) | Array plano `[:20]` (dropdown) |
+| `GET /pets/` (sin page, sin filtro) | Array plano completo (listas client-side) |
+
+Romper este carve-out (paginar global) rompería 6 consumidores — mismo patrón
+que el `?search` de `OwnerViewSet`.
+
+### `GET /api/pets/stats/`
+
+Conteos agregados de **toda la clínica** (no de la página): `{total, caninos,
+felinos}` en UNA query agregada (sin N+1, sin traer filas). Alimenta los
+stat-cards de la página Mascotas cuando la lista pasa a paginada. Permiso
+`patient.list`. Tenant-scoped.
+
+### Anti-N+1
+
+El listado usa `select_related('owner')`: `PetSerializer` anida `OwnerSerializer`,
+así que sin el join serializar N mascotas costaría 1 + N queries. El nº de queries
+ya no escala con las filas (blindado en `test_pet_list_pagination.py`).
 
 ## Filtros disponibles (GET /api/owners/)
 
@@ -103,9 +143,10 @@ El frontend usa `?is_generic=false` en el buscador de propietarios para excluir 
 `{count, next, previous, results}`). Pero el path **`?search` NO se pagina**:
 `paginate_queryset` devuelve `None` cuando hay `search` → respuesta array plano
 `[:20]`, preservando el contrato de los dropdowns `SearchSelect` (que hacen
-`.map()` directo). Orden de paginación: `name, id`. **`Pet` NO se pagina**
-(la página Pacientes filtra/agrega KPIs client-side sobre la lista completa —
-diferido en DD-013).
+`.map()` directo). Orden de paginación: `name, id`. **`Pet` ahora también pagina
+(opt-in por `?page`, ADR p44)** — esto **supera** DD-013 ("Pet NO se pagina"),
+tomado tras importar una clínica con 1500 mascotas: el listado descargaba todo +
+N+1 de owner + filtraba en memoria. Ver § Filtros disponibles (GET /api/pets/).
 
 ## Permisos RBAC
 
