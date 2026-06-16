@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getPets, createPet, updatePet, deletePet } from "../api/pets";
+import { getPets, getPetStats, createPet, updatePet, deletePet } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
 import { getAppointments } from "../api/appointments";
+import { getStatusBreakdown } from "../api/statusBreakdown";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import Pagination from "../components/Pagination";
 import { DayPicker } from 'react-day-picker';
 import { es } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
 import '../styles/day-picker.css';
 import handleFormError from "../utils/handleFormError";
+import { apiError } from "../utils/apiError";
+import { toList } from "../utils/toList";
 import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -590,15 +594,25 @@ const Pets = () => {
     const navigate = useNavigate();
     const confirm = useConfirm();
 
-    const [pets, setPets] = useState([]);
-    const [weekAppts, setWeekAppts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // ─── Lista server-driven (paginación + filtros server-side) ───
+    const [pets, setPets] = useState([]);        // solo la página actual
+    const [count, setCount] = useState(0);       // total filtrado (backend)
+    const [loading, setLoading] = useState(true);   // carga inicial
+    const [fetching, setFetching] = useState(false); // cambio de página/filtro
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
+    const [reloadKey, setReloadKey] = useState(0);  // fuerza refetch tras mutación
+
+    // Stats de TODA la clínica (no de la página) — alimentan los stat-cards.
+    const [stats, setStats] = useState({ total: 0, caninos: 0, felinos: 0 });
+    const [weekApptCount, setWeekApptCount] = useState(0);
 
     // View
     const [view, setView] = useState("cards");
 
-    // Filters
+    // Filtros (todos server-side)
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [filterSpecies, setFilterSpecies] = useState("all");
     const [filterSex, setFilterSex] = useState("all");
     const [filterAge, setFilterAge] = useState("all");
@@ -615,70 +629,67 @@ const Pets = () => {
     const [panelAppts, setPanelAppts] = useState([]);
     const [panelLoading, setPanelLoading] = useState(false);
 
+    const hasActiveFilters = search || filterSpecies !== "all" || filterSex !== "all" || filterAge !== "all";
+
+    // Cambiar un filtro siempre vuelve a la página 1 (un solo render).
+    const setFilter = (setter, value) => { setter(value); setPage(1); };
+
+    // Debounce de la búsqueda remota (350ms) → resetea a la página 1.
     useEffect(() => {
-        if (token) loadAll();
+        const t = setTimeout(() => {
+            setDebouncedSearch(search.trim());
+            setPage(1);
+        }, 350);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    // Fetch de la página actual ante cualquier cambio de página/tamaño/filtro.
+    useEffect(() => {
+        if (!token) return;
+        let cancelled = false;
+        const params = { page, page_size: pageSize };
+        if (debouncedSearch) params.search = debouncedSearch;
+        if (filterSpecies !== "all") params.species = filterSpecies;
+        if (filterSex !== "all") params.sex = filterSex;
+        if (filterAge !== "all") params.age = filterAge;
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount idiomático
+        setFetching(true);
+        getPets(params)
+            .then(data => {
+                if (cancelled) return;
+                setPets(toList(data));
+                setCount(typeof data?.count === "number" ? data.count : toList(data).length);
+            })
+            .catch(err => { if (!cancelled) toast.error(apiError(err, "No se pudieron cargar las mascotas")); })
+            .finally(() => { if (!cancelled) { setLoading(false); setFetching(false); } });
+        return () => { cancelled = true; };
+    }, [token, page, pageSize, debouncedSearch, filterSpecies, filterSex, filterAge, reloadKey]);
+
+    const loadStats = () => {
+        // Falla suave: si /stats/ no responde, los cards muestran 0 (no bloquea la lista).
+        getPetStats().then(setStats).catch(() => {});
+    };
+    useEffect(() => { if (token) loadStats(); }, [token]);
+
+    // Citas de la semana (solo conteo) vía status-breakdown — sin traer filas.
+    useEffect(() => {
+        if (!token) return;
+        const { start, end } = getWeekRange();
+        getStatusBreakdown({ from: start, to: end })
+            .then(d => {
+                const totals = d?.totals || {};
+                setWeekApptCount(Object.values(totals).reduce((a, b) => a + (b || 0), 0));
+            })
+            .catch(() => setWeekApptCount(0));
     }, [token]);
 
-    const loadAll = async () => {
-        try {
-            const { start, end } = getWeekRange();
-            const [petsData, apptsData] = await Promise.all([
-                getPets(),
-                getAppointments(token).catch(() => []),
-            ]);
-            setPets(petsData);
-            const allAppts = Array.isArray(apptsData) ? apptsData : (apptsData.results || []);
-            setWeekAppts(allAppts.filter(a => {
-                const d = new Date(a.date);
-                return d >= start && d <= end;
-            }));
-        } catch (err) {
-            console.log(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Refetch de la página actual + stats tras crear/editar/eliminar.
+    const reload = () => { setReloadKey(k => k + 1); loadStats(); };
 
-    // ─── Metrics ──────────────────────────────────────────────
-    const totalCaninos = pets.filter(isCanino).length;
-    const totalFelinos = pets.filter(isFelino).length;
-
-    // Distinct pets with appointment this week
-    const petIdsThisWeek = new Set(
-        weekAppts
-            .map(a => a.pet_id ?? a.pet?.id ?? (typeof a.pet === "number" ? a.pet : null))
-            .filter(Boolean)
-    );
-    const petsWithApptCount = petIdsThisWeek.size || weekAppts.length;
-
-    // Pets registered this month (if created_at available)
-    const now = new Date();
-    const petsThisMonth = pets.filter(p => {
-        if (!p.created_at) return false;
-        const d = new Date(p.created_at);
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
-
-    // ─── Filters ──────────────────────────────────────────────
-    const filtered = pets.filter(p => {
-        const q = search.toLowerCase();
-        const matchSearch = !q ||
-            p.name.toLowerCase().includes(q) ||
-            p.species.toLowerCase().includes(q) ||
-            (p.breed || "").toLowerCase().includes(q) ||
-            (p.owner?.name || "").toLowerCase().includes(q);
-
-        const matchSpecies = filterSpecies === "all" ||
-            (filterSpecies === "caninos" && isCanino(p)) ||
-            (filterSpecies === "felinos" && isFelino(p));
-
-        const matchSex = filterSex === "all" || p.sex === filterSex;
-        const matchAge = filterAge === "all" || getAgeGroup(p.birth_date) === filterAge;
-
-        return matchSearch && matchSpecies && matchSex && matchAge;
-    });
-
-    const hasActiveFilters = search || filterSpecies !== "all" || filterSex !== "all" || filterAge !== "all";
+    // Rango "Mostrando X–Y de N".
+    const fromRow = count === 0 ? 0 : (page - 1) * pageSize + 1;
+    const toRow = Math.min(page * pageSize, count);
 
     // ─── Panel ────────────────────────────────────────────────
     const openPanel = async (pet) => {
@@ -728,7 +739,7 @@ const Pets = () => {
             setEditing(null);
             setFormErrors({});
             setShowModal(false);
-            loadAll();
+            reload();
         } catch (err) {
             handleFormError(err, setFormErrors);
         }
@@ -763,7 +774,7 @@ const Pets = () => {
                 error: 'Error al eliminar la mascota'
             });
             if (selectedPet?.public_id === id) closePanel();
-            loadAll();
+            reload();
         } catch {
             // Manejado por toast
         }
@@ -790,7 +801,7 @@ const Pets = () => {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Mascotas</h1>
-                    <p className="page-subtitle">{pets.length} registrada{pets.length !== 1 ? "s" : ""}</p>
+                    <p className="page-subtitle">{stats.total} registrada{stats.total !== 1 ? "s" : ""}</p>
                 </div>
                 <button
                     className="btn btn-primary btn-md"
@@ -810,15 +821,8 @@ const Pets = () => {
                             <Icon.Paw s={16} c="var(--c-primary-dark)" />
                         </div>
                     </div>
-                    <p className="stat-value" style={{ color: "var(--c-primary-dark)" }}>{pets.length}</p>
-                    {petsThisMonth > 0 ? (
-                        <p className="stat-sub" style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--c-success-text)" }}>
-                            <Icon.TrendUp s={12} c="var(--c-success-text)" />
-                            +{petsThisMonth} este mes
-                        </p>
-                    ) : (
-                        <p className="stat-sub">registradas en total</p>
-                    )}
+                    <p className="stat-value" style={{ color: "var(--c-primary-dark)" }}>{stats.total}</p>
+                    <p className="stat-sub">registradas en la clínica</p>
                 </div>
 
                 {/* Caninos */}
@@ -829,9 +833,9 @@ const Pets = () => {
                             <Icon.Dog s={16} c="#3b82f6" />
                         </div>
                     </div>
-                    <p className="stat-value" style={{ color: "#1d4ed8" }}>{totalCaninos}</p>
+                    <p className="stat-value" style={{ color: "#1d4ed8" }}>{stats.caninos}</p>
                     <p className="stat-sub">
-                        {pets.length > 0 ? Math.round(totalCaninos / pets.length * 100) : 0}% del total
+                        {stats.total > 0 ? Math.round(stats.caninos / stats.total * 100) : 0}% del total
                     </p>
                 </div>
 
@@ -843,9 +847,9 @@ const Pets = () => {
                             <Icon.Cat s={16} c="#ec4899" />
                         </div>
                     </div>
-                    <p className="stat-value" style={{ color: "#be185d" }}>{totalFelinos}</p>
+                    <p className="stat-value" style={{ color: "#be185d" }}>{stats.felinos}</p>
                     <p className="stat-sub">
-                        {pets.length > 0 ? Math.round(totalFelinos / pets.length * 100) : 0}% del total
+                        {stats.total > 0 ? Math.round(stats.felinos / stats.total * 100) : 0}% del total
                     </p>
                 </div>
 
@@ -857,9 +861,9 @@ const Pets = () => {
                             <Icon.Calendar s={16} c="var(--c-warning-text)" />
                         </div>
                     </div>
-                    <p className="stat-value" style={{ color: "var(--c-warning-text)" }}>{petsWithApptCount}</p>
+                    <p className="stat-value" style={{ color: "var(--c-warning-text)" }}>{weekApptCount}</p>
                     <p className="stat-sub">
-                        {weekAppts.length} cita{weekAppts.length !== 1 ? "s" : ""} programada{weekAppts.length !== 1 ? "s" : ""}
+                        cita{weekApptCount !== 1 ? "s" : ""} en la semana
                     </p>
                 </div>
             </div>
@@ -890,7 +894,7 @@ const Pets = () => {
                     ].map(({ key, label, icon }) => (
                         <button
                             key={key}
-                            onClick={() => setFilterSpecies(key)}
+                            onClick={() => setFilter(setFilterSpecies, key)}
                             style={{
                                 display: "inline-flex", alignItems: "center", gap: "5px",
                                 height: "28px", padding: "0 10px",
@@ -912,7 +916,7 @@ const Pets = () => {
                 <select
                     className="select-input"
                     value={filterSex}
-                    onChange={e => setFilterSex(e.target.value)}
+                    onChange={e => setFilter(setFilterSex, e.target.value)}
                     style={{ width: "auto", height: "36px", fontSize: "13px" }}
                 >
                     <option value="all">Todos los sexos</option>
@@ -925,7 +929,7 @@ const Pets = () => {
                 <select
                     className="select-input"
                     value={filterAge}
-                    onChange={e => setFilterAge(e.target.value)}
+                    onChange={e => setFilter(setFilterAge, e.target.value)}
                     style={{ width: "auto", height: "36px", fontSize: "13px" }}
                 >
                     <option value="all">Todas las edades</option>
@@ -939,7 +943,7 @@ const Pets = () => {
                 {hasActiveFilters && (
                     <button
                         className="btn btn-ghost btn-sm"
-                        onClick={() => { setSearch(""); setFilterSpecies("all"); setFilterSex("all"); setFilterAge("all"); }}
+                        onClick={() => { setSearch(""); setFilterSpecies("all"); setFilterSex("all"); setFilterAge("all"); setPage(1); }}
                     >
                         <Icon.X s={12} />
                         Limpiar
@@ -970,15 +974,31 @@ const Pets = () => {
                 </div>
             </div>
 
-            {/* Results count */}
-            {hasActiveFilters && (
-                <p style={{ fontSize: "12.5px", color: "var(--c-text-3)", marginBottom: "12px" }}>
-                    {filtered.length} resultado{filtered.length !== 1 ? "s" : ""} de {pets.length} mascotas
-                </p>
+            {/* Results count + page size */}
+            {count > 0 && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                    <p style={{ fontSize: "12.5px", color: "var(--c-text-3)" }}>
+                        Mostrando {fromRow}–{toRow} de {count} mascota{count !== 1 ? "s" : ""}
+                        {hasActiveFilters && " (filtradas)"}
+                    </p>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12.5px", color: "var(--c-text-3)" }}>
+                        Por página
+                        <select
+                            className="select-input"
+                            value={pageSize}
+                            onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                            style={{ width: "auto", height: "32px", fontSize: "13px" }}
+                        >
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </label>
+                </div>
             )}
 
             {/* Empty state */}
-            {filtered.length === 0 && (
+            {pets.length === 0 && !fetching && (
                 <div className="empty-state">
                     {hasActiveFilters ? (
                         <p className="empty-state-title">No se encontraron mascotas con esos filtros</p>
@@ -992,9 +1012,9 @@ const Pets = () => {
             )}
 
             {/* Cards view */}
-            {view === "cards" && filtered.length > 0 && (
+            {view === "cards" && pets.length > 0 && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(272px, 1fr))", gap: "14px" }}>
-                    {filtered.map(pet => (
+                    {pets.map(pet => (
                         <PetCard
                             key={pet.public_id}
                             pet={pet}
@@ -1007,7 +1027,7 @@ const Pets = () => {
             )}
 
             {/* Table view */}
-            {view === "table" && filtered.length > 0 && (
+            {view === "table" && pets.length > 0 && (
                 <div className="table-wrap">
                     <table className="table">
                         <thead>
@@ -1020,7 +1040,7 @@ const Pets = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((pet) => {
+                            {pets.map((pet) => {
                                 const accent = speciesAccent(pet);
                                 return (
                                     <tr key={pet.public_id} style={{ cursor: "pointer" }} onClick={() => openPanel(pet)}>
@@ -1069,10 +1089,14 @@ const Pets = () => {
                         </tbody>
                     </table>
                     <div className="table-footer">
-                        {filtered.length} mascota{filtered.length !== 1 ? "s" : ""}
-                        {hasActiveFilters && ` de ${pets.length} total`}
+                        Mostrando {fromRow}–{toRow} de {count} mascota{count !== 1 ? "s" : ""}
                     </div>
                 </div>
+            )}
+
+            {/* Paginación (server-side) — se auto-oculta si todo cabe en una página */}
+            {pets.length > 0 && (
+                <Pagination page={page} count={count} pageSize={pageSize} onPage={setPage} fetching={fetching} />
             )}
 
             {/* Quick profile panel */}
