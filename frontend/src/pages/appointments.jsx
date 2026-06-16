@@ -8,9 +8,10 @@ import {
     getAppointmentHistory, assignPatient, createAppointmentWithPatient,
 } from "../api/appointments";
 import { getOrgSettings } from "../api/organizations";
-import { getPets } from "../api/pets";
 import { getStaff } from "../api/staff";
-import SearchSelect from "../components/SearchSelect";
+import EntitySearch from "../components/EntitySearch";
+import { searchPets } from "../api/lookups";
+import { renderPetOption, petOptionLabel } from "../components/lookupOptions";
 import QuickPatientForm from "../components/QuickPatientForm";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -280,13 +281,12 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                 </p>
                             ) : assigningPatient ? (
                                 <div>
-                                    <SearchSelect
+                                    <EntitySearch
                                         value={newPetItem}
                                         onChange={item => setNewPetItem(item)}
-                                        onSearch={q => getPets({ search: q }).then(ps =>
-                                            ps.filter(p => !p.is_generic)
-                                               .map(p => ({ id: p.id, label: `${p.name} – ${(p.owner?.name ?? "").trim()}`.trim().replace(/ – $/, "") }))
-                                        )}
+                                        fetchPage={({ query, page }) => searchPets({ query, page })}
+                                        renderItem={renderPetOption}
+                                        getOptionLabel={petOptionLabel}
                                         placeholder="Buscar mascota..."
                                     />
                                     <div style={{display:"flex",gap:"6px",marginTop:"8px"}}>
@@ -698,14 +698,14 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                 <label style={lblStyle}>Mascota</label>
                 {!showQuickPatient ? (
                     <>
-                        <SearchSelect
+                        <EntitySearch
                             id="new-appt-pet"
                             name="new-appt-pet"
                             value={petItem}
                             onChange={item => setPetItem(item)}
-                            onSearch={q => getPets({ search: q }).then(ps =>
-                                ps.map(p => ({ id: p.id, label: `${p.name} – ${(p.owner?.name ?? "").trim()}`.trim().replace(/ – $/, "") }))
-                            )}
+                            fetchPage={({ query, page }) => searchPets({ query, page })}
+                            renderItem={renderPetOption}
+                            getOptionLabel={petOptionLabel}
                             placeholder="Buscar mascota..."
                             disabled={saving}
                         />
@@ -829,14 +829,14 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
                 <div className="modal-body">
                     <div className="form-group">
                         <label className="form-label" htmlFor="walkin-pet">MASCOTA {allowAnonymousWalkIn ? "(opcional)" : "*"}</label>
-                        <SearchSelect
+                        <EntitySearch
                             id="walkin-pet"
                             name="walkin-pet"
                             value={petItem}
                             onChange={item => setPetItem(item)}
-                            onSearch={q => getPets({ search: q }).then(ps =>
-                                ps.map(p => ({ id: p.id, label: `${p.name} – ${(p.owner?.name ?? "").trim()}`.trim().replace(/ – $/, "") }))
-                            )}
+                            fetchPage={({ query, page }) => searchPets({ query, page })}
+                            renderItem={renderPetOption}
+                            getOptionLabel={petOptionLabel}
                             placeholder="Buscar mascota..."
                         />
                         {allowAnonymousWalkIn && (
