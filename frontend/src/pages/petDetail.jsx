@@ -95,6 +95,15 @@ const PetDetail = () => {
 
     const canCreate = user?.role !== "ASSISTANT";
 
+    // Prompt suave de datos incompletos (estrategia D, ADR p44d): contextual en
+    // la ficha, NO una alerta global. Solo campos OPCIONALES — nunca bloquea.
+    const missingOptional = [];
+    if (!pet.birth_date) missingOptional.push("fecha de nacimiento");
+    if (!pet.breed) missingOptional.push("raza");
+    if (!pet.sex || pet.sex === "unknown") missingOptional.push("sexo");
+    if (!pet.color) missingOptional.push("color");
+    if (!pet.owner?.phone) missingOptional.push("teléfono del dueño");
+
     return (
         <div>
             {/* Back + Header */}
@@ -164,6 +173,16 @@ const PetDetail = () => {
                                 <span className="info-row-value">{value}</span>
                             </div>
                         ))}
+                        {canCreate && missingOptional.length > 0 && (
+                            <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ marginTop: "12px", color: "var(--c-primary-dark)", gap: "6px" }}
+                                onClick={() => navigate(`/pets?edit=${pet.public_id}`)}
+                                title="Completar datos opcionales"
+                            >
+                                <Icon.Edit s={13} /> Completar datos ({missingOptional.join(", ")})
+                            </button>
+                        )}
                         <ImportedDataSection items={pet.extra_data} />
                     </div>
                     <div className="card">

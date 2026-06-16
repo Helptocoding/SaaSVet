@@ -22,7 +22,10 @@ vi.mock("../api/appointments", () => ({ getAppointments: vi.fn(() => Promise.res
 vi.mock("../api/statusBreakdown", () => ({ getStatusBreakdown: vi.fn(() => Promise.resolve({ totals: {} })) }));
 vi.mock("../auth/authContext", () => ({ useAuth: () => ({ token: "tok", initializing: false }) }));
 vi.mock("../components/useConfirm", () => ({ useConfirm: () => () => Promise.resolve(true) }));
-vi.mock("react-router-dom", () => ({ useNavigate: () => vi.fn() }));
+vi.mock("react-router-dom", () => ({
+    useNavigate: () => vi.fn(),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+}));
 vi.mock("sonner", () => ({
     toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), promise: vi.fn() }),
 }));

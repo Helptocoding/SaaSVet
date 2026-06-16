@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getPets, getPetStats, createPet, updatePet, deletePet } from "../api/pets";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { getPets, getPet, getPetStats, createPet, updatePet, deletePet } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
@@ -592,6 +592,7 @@ const sectionTitle = {
 const Pets = () => {
     const { token, initializing } = useAuth();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const confirm = useConfirm();
 
     // ─── Lista server-driven (paginación + filtros server-side) ───
@@ -758,6 +759,19 @@ const Pets = () => {
         });
         setShowModal(true);
     };
+
+    // Deep-link de "Completar datos" desde la ficha (?edit=<public_id>): abre el
+    // modal de edición de esa mascota (puede no estar en la página actual → se
+    // pide por public_id). Se limpia el param para no reabrir al refrescar.
+    useEffect(() => {
+        const editId = searchParams.get("edit");
+        if (!token || !editId) return;
+        getPet(editId).then(handleEdit).catch(() => {});
+        const next = new URLSearchParams(searchParams);
+        next.delete("edit");
+        setSearchParams(next, { replace: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, searchParams]);
 
     const handleDelete = async (id) => {
         const ok = await confirm({

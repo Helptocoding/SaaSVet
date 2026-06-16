@@ -327,3 +327,17 @@
 }
 .resultTitle { font-size: 18px; font-weight: 700; color: var(--c-text); }
 .resultSub   { font-size: 13px; color: var(--c-text-3); margin-top: 2px; }
+
+.incompleteList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--c-text);
+}
+
+.incompleteList li strong {
+  color: var(--c-warning-text, #92400e);
+}

@@ -5,6 +5,16 @@ import s from "./imports.module.css";
 
 const num = (v) => Number(v || 0);
 
+// Datos OPCIONALES que faltaron en el archivo (warnings del backend). NO son
+// errores: el registro se importó igual. Se resumen una vez aquí (estrategia C)
+// para no convertirlos en una alerta global permanente.
+const INCOMPLETE_LABELS = {
+    "pet.species": "mascotas sin especie",
+    "pet.birth_date": "mascotas sin fecha de nacimiento",
+    "owner.phone": "clientes sin teléfono",
+};
+const INCOMPLETE_ORDER = ["pet.species", "pet.birth_date", "owner.phone"];
+
 /* Paso 4 — Resultado de la importación (commit).
    Muestra los conteos reales de lo que se escribió + los errores que quedaron,
    con CTA para ir a ver los registros importados y reiniciar el wizard. */
@@ -24,6 +34,21 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
     const skipped = num(r.skipped_duplicates);
     const errorRows = num(r.error_rows);
     const errors = r.errors || [];
+
+    // Resumen de datos opcionales incompletos (estrategia C: una sola vez, aquí).
+    const incompleteRows = useMemo(() => {
+        const counts = {};
+        for (const w of (r.warnings || [])) {
+            if (w.field) counts[w.field] = (counts[w.field] || 0) + 1;
+        }
+        const keys = [...new Set([...INCOMPLETE_ORDER.filter(k => counts[k]), ...Object.keys(counts)])];
+        return keys.map(field => ({
+            field,
+            count: counts[field],
+            label: INCOMPLETE_LABELS[field] || `registros con "${field}" pendiente`,
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [result]);
 
     return (
         <div>
@@ -63,6 +88,21 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
                     </div>
                 </div>
             </div>
+
+            {incompleteRows.length > 0 && (
+                <div className="card" style={{ marginBottom: 18 }}>
+                    <p className={s.issuesTitle}>Datos opcionales pendientes</p>
+                    <p className={s.resultSub} style={{ marginBottom: 12 }}>
+                        Estos registros se importaron sin problema. No necesitas hacer nada ahora:
+                        puedes completar estos datos cuando abras cada ficha.
+                    </p>
+                    <ul className={s.incompleteList}>
+                        {incompleteRows.map(({ field, count, label }) => (
+                            <li key={field}><strong>{count}</strong> {label}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {errors.length > 0 && (
                 <div>
