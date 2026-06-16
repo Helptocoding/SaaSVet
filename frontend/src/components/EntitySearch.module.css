@@ -1,0 +1,123 @@
+.wrap {
+    position: relative;
+    width: 100%;
+}
+
+.inputWrap {
+    position: relative;
+}
+
+.clearBtn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--c-text-3);
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+    display: flex;
+    align-items: center;
+}
+
+.listbox {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.hint {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--c-text-3);
+}
+
+.option {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--c-text);
+    border-bottom: 1px solid var(--c-subtle);
+}
+
+.option:last-child {
+    border-bottom: none;
+}
+
+.optionActive,
+.option:hover {
+    background: var(--c-subtle);
+}
+
+.moreBtn {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--c-subtle);
+    border: none;
+    border-top: 1px solid var(--c-border);
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--c-primary-dark);
+    font-family: inherit;
+}
+
+.moreBtn:hover:not(:disabled) {
+    background: var(--c-primary-light);
+}
+
+.moreBtn:disabled {
+    cursor: default;
+    color: var(--c-text-3);
+}
+
+/* ── Renderers de opción compartidos (PetOption / OwnerOption) ── */
+.optRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.optIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.optBody {
+    min-width: 0;
+    flex: 1;
+}
+
+.optName {
+    font-weight: 600;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.optSub {
+    font-size: 11.5px;
+    color: var(--c-text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
