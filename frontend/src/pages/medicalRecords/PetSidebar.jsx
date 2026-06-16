@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../components/icons";
+import { searchPets } from "../../api/lookups";
 import styles from "./medicalRecords.module.css";
 
 const SPECIES_DOG = /perro|can[ei]|dog/i;
@@ -11,29 +12,94 @@ const getSpeciesBg = (species) => {
     return "var(--c-subtle)";
 };
 
+const SpeciesIcon = ({ species, size = 15 }) =>
+    SPECIES_DOG.test(species) ? <Icon.Dog s={size} /> :
+    SPECIES_CAT.test(species) ? <Icon.Cat s={size} /> :
+    <Icon.Paw s={size} />;
+
+// Línea secundaria que diferencia homónimos: dueño · teléfono · expediente.
+const petSubline = (pet) =>
+    [pet.owner?.name, pet.owner?.phone, pet.legacy_id && `Exp #${pet.legacy_id}`]
+        .filter(Boolean).join(" · ") ||
+    [pet.species, pet.breed].filter(Boolean).join(" · ") || "—";
+
+const PAGE_SIZE = 12;
+
+/**
+ * PetSidebar — buscador/selector de mascota del historial clínico.
+ *
+ * Server-side (ADR p44c): NO carga las miles de mascotas de la clínica a memoria.
+ * Busca contra el backend (debounce + paginación "Ver más") y muestra contexto
+ * suficiente para diferenciar homónimos (dueño · teléfono · expediente). El padre
+ * ya no pasa la lista completa ni los conteos por mascota (que requerían traer
+ * todos los medical records).
+ */
 const PetSidebar = ({
-    pets,
-    petCounts,
     selectedPet,
-    petSearch,
+    selectedPetObj,
     onSelectPet,
-    onPetSearch,
-    isLoadingPets = false,
     collapsed = false,
     onToggleCollapse,
 }) => {
-    const filteredPets = useMemo(() => {
-        if (!petSearch.trim()) return pets;
-        const q = petSearch.toLowerCase();
-        return pets.filter(p =>
-            p.name?.toLowerCase().includes(q) ||
-            p.species?.toLowerCase().includes(q) ||
-            p.breed?.toLowerCase().includes(q) ||
-            (p.owner?.name || "").toLowerCase().includes(q)
-        );
-    }, [pets, petSearch]);
+    const [query, setQuery] = useState("");
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
 
-    const activePet = selectedPet ? pets.find(p => String(p.public_id) === String(selectedPet)) : null;
+    const pageRef = useRef(1);
+    const reqRef = useRef(0);
+    const debRef = useRef(null);
+
+    const fetchFirst = (q) => {
+        if (debRef.current) clearTimeout(debRef.current);
+        setLoading(true);
+        debRef.current = setTimeout(() => {
+            const rid = ++reqRef.current;
+            pageRef.current = 1;
+            searchPets({ query: q, page: 1, pageSize: PAGE_SIZE })
+                .then(({ items: rows, hasMore: more }) => {
+                    if (reqRef.current !== rid) return;
+                    setItems(rows);
+                    setHasMore(Boolean(more));
+                    setLoading(false);
+                })
+                .catch(() => {
+                    if (reqRef.current !== rid) return;
+                    setItems([]);
+                    setHasMore(false);
+                    setLoading(false);
+                });
+        }, 250);
+    };
+
+    // Carga inicial: primeras mascotas (sin query) para poder elegir sin escribir.
+    useEffect(() => {
+        fetchFirst("");
+        return () => { if (debRef.current) clearTimeout(debRef.current); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const onQueryChange = (v) => {
+        setQuery(v);
+        fetchFirst(v.trim());
+    };
+
+    const loadMore = () => {
+        if (loadingMore || loading || !hasMore) return;
+        const rid = reqRef.current;
+        const next = pageRef.current + 1;
+        setLoadingMore(true);
+        searchPets({ query: query.trim(), page: next, pageSize: PAGE_SIZE })
+            .then(({ items: rows, hasMore: more }) => {
+                if (reqRef.current !== rid) return;
+                pageRef.current = next;
+                setItems(prev => [...prev, ...rows]);
+                setHasMore(Boolean(more));
+                setLoadingMore(false);
+            })
+            .catch(() => { if (reqRef.current === rid) setLoadingMore(false); });
+    };
 
     if (collapsed) {
         return (
@@ -46,26 +112,19 @@ const PetSidebar = ({
                     <Icon.ChevronRight s={16} />
                 </button>
 
-                {activePet && (
-                    <div className={styles.sidebarRailPet} title={activePet.name}>
+                {selectedPetObj && (
+                    <div className={styles.sidebarRailPet} title={selectedPetObj.name}>
                         <div
                             className={styles.sidebarRailAvatar}
-                            style={{ background: getSpeciesBg((activePet.species || "").toLowerCase()) }}
+                            style={{ background: getSpeciesBg((selectedPetObj.species || "").toLowerCase()) }}
                         >
-                            {SPECIES_DOG.test(activePet.species || "") ? <Icon.Dog s={14} /> :
-                             SPECIES_CAT.test(activePet.species || "") ? <Icon.Cat s={14} /> :
-                             <Icon.Paw s={14} />}
+                            <SpeciesIcon species={selectedPetObj.species || ""} size={14} />
                         </div>
                         <span className={styles.sidebarRailName}>
-                            {activePet.name.slice(0, 2).toUpperCase()}
+                            {selectedPetObj.name.slice(0, 2).toUpperCase()}
                         </span>
                     </div>
                 )}
-
-                <div className={styles.sidebarRailCount} title={`${pets.length} mascotas`}>
-                    <Icon.Paw s={13} />
-                    <span>{pets.length}</span>
-                </div>
             </aside>
         );
     }
@@ -87,43 +146,45 @@ const PetSidebar = ({
                 <span className={styles.sidebarSearchIcon}><Icon.Search /></span>
                 <input
                     className={styles.sidebarSearchInput}
-                    placeholder="Nombre, raza, especie…"
-                    value={petSearch}
-                    onChange={e => onPetSearch(e.target.value)}
+                    placeholder="Nombre, dueño, teléfono, expediente…"
+                    value={query}
+                    onChange={e => onQueryChange(e.target.value)}
                 />
             </div>
 
             <div className={styles.petList}>
-                {isLoadingPets ? (
+                {loading ? (
                     <p className={styles.sidebarEmpty}>Cargando…</p>
-                ) : filteredPets.length === 0 ? (
+                ) : items.length === 0 ? (
                     <p className={styles.sidebarEmpty}>Sin resultados</p>
-                ) : filteredPets.map(pet => {
-                    const sp = (pet.species || "").toLowerCase();
-                    const isActive = String(pet.public_id) === String(selectedPet);
-                    return (
-                        <button
-                            key={pet.public_id}
-                            className={`${styles.petListItem}${isActive ? ` ${styles.petListItemActive}` : ""}`}
-                            onClick={() => onSelectPet(String(pet.public_id))}
-                        >
-                            <div className={styles.petListIcon} style={{ background: getSpeciesBg(sp) }}>
-                                {SPECIES_DOG.test(sp) ? <Icon.Dog size={15} /> :
-                                 SPECIES_CAT.test(sp) ? <Icon.Cat size={15} /> :
-                                 <Icon.Paw size={15} />}
-                            </div>
-                            <div className={styles.petListInfo}>
-                                <div className={styles.petListName}>{pet.name}</div>
-                                <div className={styles.petListSub}>
-                                    {[pet.species, pet.breed].filter(Boolean).join(" · ") || "—"}
-                                </div>
-                            </div>
-                            {petCounts[pet.public_id] > 0 && (
-                                <span className={styles.petListBadge}>{petCounts[pet.public_id]}</span>
-                            )}
-                        </button>
-                    );
-                })}
+                ) : (
+                    <>
+                        {items.map(pet => {
+                            const sp = (pet.species || "").toLowerCase();
+                            const isActive = String(pet.public_id) === String(selectedPet);
+                            return (
+                                <button
+                                    key={pet.public_id}
+                                    className={`${styles.petListItem}${isActive ? ` ${styles.petListItemActive}` : ""}`}
+                                    onClick={() => onSelectPet(pet)}
+                                >
+                                    <div className={styles.petListIcon} style={{ background: getSpeciesBg(sp) }}>
+                                        <SpeciesIcon species={sp} size={15} />
+                                    </div>
+                                    <div className={styles.petListInfo}>
+                                        <div className={styles.petListName}>{pet.name}</div>
+                                        <div className={styles.petListSub}>{petSubline(pet)}</div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                        {hasMore && (
+                            <button className={styles.sidebarMore} onClick={loadMore} disabled={loadingMore}>
+                                {loadingMore ? "Cargando…" : "Ver más resultados"}
+                            </button>
+                        )}
+                    </>
+                )}
             </div>
         </aside>
     );
