@@ -100,6 +100,9 @@ Interface `parse_file()` → `CSVParser` | `ExcelParser`.
 - **Una fila inválida NO aborta el import**: savepoint por fila (`owner` y `pet` en
   savepoints **separados**). El resto se importa; el reporte trae bloquantes/conflictos/
   avisos por fila.
+- **Commit bloqueado con errores bloqueantes**: si `result.blocking` tiene entradas,
+  el endpoint `commit` retorna 400 (`import_has_blocking_errors`). Warnings y conflicts
+  NO bloquean — solo `blocking[]`.
 
 ## Shape del `result` (contrato)
 
@@ -191,6 +194,7 @@ sistema (los `*.extra` están exentos — many→1), y faltantes requeridos.
 | PATCH | `/api/imports/<public_id>/mapping/` | `import.create` |
 | POST | `/api/imports/<public_id>/validate/` | `import.create` |
 | POST | `/api/imports/<public_id>/commit/` | `import.commit` |
+| POST | `/api/imports/<public_id>/commit/` retorna 400 si `result.blocking` no está vacío (código `import_has_blocking_errors`) | — |
 
 Permisos `import.*` asignados a **ADMIN** (vía `*.*`). El importador es operación de
 migración, no de uso diario. `ImportJobViewSet` usa `PublicIdLookupMixin` +
@@ -219,18 +223,26 @@ Wizard de pasos: **Subir → Mapear → Validar → Resultado**.
   **estrategia D** vive en `petDetail` (prompt suave "Completar datos" →
   `/pets?edit=<public_id>`); ver `modules/patients.md`.
 - `PreviewStep` — vista previa humana con grupos colapsables separados por
-  `match_confidence`:
-  - ⚠ **Posibles duplicados** (`high`): "Parece el mismo paciente." Intro: "Puede
-    que estos pacientes ya estén registrados. Suele pasar si este archivo ya se
-    importó antes."
+  `match_confidence` + agrupación de errores por tipo de problema:
+  - ✗ **No se pueden importar (N)**: intro narrativa + sub-grupos colapsables
+    por tipo de error (ej. "Falta nombre de mascota — Afecta 800 filas").
+    Cada grupo muestra "▶ Qué hacer" con instrucción accionable usando el label
+    real de la columna mapeada, y 5 ejemplos expandibles. El CTA está bloqueado
+    si `blocking.length > 0`.
+  - ⚠ **Posibles duplicados** (`high`): "Parece el mismo paciente."
   - ⚡ **Conflictos de expediente** (`uncertain`): "El número de expediente ya
-    pertenece a otro paciente." Intro: explica causas posibles (otra clínica,
-    numeración reiniciada, columna incorrecta).
-  - ✗ **Requieren corrección**: filas con datos faltantes/imposibles.
-  - ℹ **Avisos**: datos opcionales pendientes.
+    pertenece a otro paciente."
+  - ℹ **Se importarán con datos incompletos (N)**: no bloquea. Agrupado por
+    tipo igual que blocking.
   - Comparación lado a lado, link "Ver paciente" (`/pets/<public_id>`,
     `target="_blank"`). Consecuencia antes de confirmar con conteos reales.
-    CTA bloqueado si no hay registros importables.
+    Tres estados: bloqueado, confirmable, sin registros.
+  - **⬇ Descargar filas con problemas (CSV)**: genera client-side desde
+    `blocking[]` + `warnings[]` con columnas Fila, Campo, Error, Qué hacer.
+    BOM UTF-8 para Excel.
+  - **`groupImportIssues()`**: helper reutilizable que agrupa ítems por
+    `field`, ordena por count, limita a 5 samples por grupo. Usado tanto
+    para blocking como warnings.
 
 `api/imports.js` centraliza las llamadas. Errores → `apiError`/toast (nunca códigos
 técnicos como `import_parse_error` en un div).
