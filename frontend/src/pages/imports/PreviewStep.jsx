@@ -7,6 +7,37 @@ const PAGE_SIZE = 25;
 
 const num = (v) => Number(v || 0);
 
+const CSV_ACTIONS = {
+    "pet.name": "Agrega el nombre de la mascota en la columna correspondiente de tu archivo.",
+    "owner.name": "Agrega el nombre del cliente en la columna correspondiente de tu archivo.",
+    "owner.phone": "Corrige el teléfono: deben ser exactamente 10 dígitos, o deja la celda vacía.",
+    "pet.species": "La especie no se reconoció. Puedes completarla después desde la ficha.",
+    "pet.birth_date": "La fecha no tiene un formato válido. Puedes corregirla o completarla después.",
+};
+
+function buildCsv(items, labelByKey) {
+    const BOM = "\uFEFF";
+    const header = "Fila,Campo,Error,Qué hacer\n";
+    const rows = items.map((it) => {
+        const label = labelByKey[it.field] || it.field || "";
+        const action = CSV_ACTIONS[it.field] || "";
+        const msg = (it.message || "").replace(/"/g, '""');
+        return `${it.row},"${label}","${msg}","${action}"`;
+    });
+    return BOM + header + rows.join("\n");
+}
+
+function downloadCsv(items, labelByKey, filename) {
+    const csv = buildCsv(items, labelByKey);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 /* ── Card de conflicto individual (reusada por ambos grupos) ── */
 const ConflictCard = ({ conflict }) => (
     <div className={s.conflictCard}>
@@ -355,6 +386,21 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
             )}
 
             <WarningsSummary items={warnings} labelByKey={labelByKey} />
+
+            {/* ── Descarga de filas con problemas ── */}
+            {(blocking.length > 0 || warnings.length > 0) && (
+                <div style={{ marginBottom: 14 }}>
+                    <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                            const all = [...blocking, ...warnings].sort((a, b) => a.row - b.row);
+                            downloadCsv(all, labelByKey, "filas-con-problemas.csv");
+                        }}
+                    >
+                        ⬇ Descargar filas con problemas (CSV)
+                    </button>
+                </div>
+            )}
 
             {!hasAnyIssue && (
                 <div className="empty-state" style={{ padding: "32px 20px" }}>
