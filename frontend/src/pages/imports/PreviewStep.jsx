@@ -180,34 +180,40 @@ const GroupCard = ({ group }) => {
     );
 };
 
-/* ── Tabla de advertencias (datos opcionales faltantes) ── */
-const WarningsTable = ({ items, labelByKey }) => {
-    if (!items || items.length === 0) return null;
+/* ── Advertencias agrupadas por tipo ── */
+const WarningsSummary = ({ items, labelByKey }) => {
+    const [open, setOpen] = useState(false);
+
+    const groups = useMemo(
+        () => groupImportIssues(items, labelByKey),
+        [items, labelByKey],
+    );
+
+    if (groups.length === 0) return null;
 
     return (
         <div className={s.collapseBlock}>
-            <div className={s.warningsHeader}>
+            <button
+                className={s.collapseToggle}
+                onClick={() => setOpen((prev) => !prev)}
+                aria-expanded={open}
+            >
                 <span className={s.collapseIcon}>ℹ</span>
                 <span className={s.collapseLabel}>
-                    Avisos ({items.length})
+                    Se importarán con datos incompletos ({items.length})
                 </span>
-            </div>
-            <div className={s.collapseBody}>
-                {items.slice(0, PAGE_SIZE).map((it, i) => (
-                    <div key={`${it.row}-${it.field}-${i}`} className={s.blockingRow}>
-                        <span className={s.blockingNum}>#{it.row}</span>
-                        <span className={s.blockingField}>
-                            {it.field ? (labelByKey[it.field] || it.field) : "—"}
-                        </span>
-                        <span className={s.blockingMsg}>{it.message}</span>
-                    </div>
-                ))}
-                {items.length > PAGE_SIZE && (
-                    <span style={{ fontSize: 12, color: "var(--c-text-3)" }}>
-                        Mostrando {PAGE_SIZE} de {items.length}
-                    </span>
-                )}
-            </div>
+                <span className={s.collapseChevron}>{open ? "▲" : "▼"}</span>
+            </button>
+            {open && (
+                <div className={s.collapseBody}>
+                    <p className={s.warningsIntro}>
+                        No bloquean la importación. Puedes completar estos datos después desde cada ficha.
+                    </p>
+                    {groups.map((g) => (
+                        <GroupCard key={g.field} group={g} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
@@ -348,7 +354,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 />
             )}
 
-            <WarningsTable items={warnings} labelByKey={labelByKey} />
+            <WarningsSummary items={warnings} labelByKey={labelByKey} />
 
             {!hasAnyIssue && (
                 <div className="empty-state" style={{ padding: "32px 20px" }}>
