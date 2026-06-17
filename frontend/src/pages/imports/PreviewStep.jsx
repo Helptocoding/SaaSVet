@@ -154,9 +154,11 @@ const BlockingSummary = ({ items, labelByKey, open, onToggle }) => {
                     <p className={s.blockingIntro}>
                         Necesitan corregirse en el archivo original antes de volver a subirlo.
                     </p>
-                    {groups.map((g) => (
-                        <GroupCard key={g.field} group={g} />
-                    ))}
+                    <div className={s.groupGrid}>
+                        {groups.map((g) => (
+                            <GroupCard key={g.field} group={g} />
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -240,9 +242,11 @@ const WarningsSummary = ({ items, labelByKey }) => {
                     <p className={s.warningsIntro}>
                         No bloquean la importación. Puedes completar estos datos después desde cada ficha.
                     </p>
-                    {groups.map((g) => (
-                        <GroupCard key={g.field} group={g} />
-                    ))}
+                    <div className={s.groupGrid}>
+                        {groups.map((g) => (
+                            <GroupCard key={g.field} group={g} />
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
