@@ -142,14 +142,16 @@ function renderPreview(props = {}) {
 describe("PreviewStep — resumen humano", () => {
     it("muestra pacientes listos, duplicados omitidos, necesitan revisión", () => {
         renderPreview();
-        expect(screen.getByText(/1 paciente listo/)).toBeInTheDocument();
+        expect(screen.getByText(/1 listo/)).toBeInTheDocument();
         expect(screen.getByText(/2 omitidos/)).toBeInTheDocument();
         expect(screen.getByText(/3 en revisión/)).toBeInTheDocument();
     });
 
-    it("con bloqueantes muestra 'Necesitan corrección'", () => {
+    it("con bloqueantes muestra sidebar y pill de corrección", () => {
         renderPreview({ result: RESULT_WITH_BLOCKING });
-        expect(screen.getByText(/Necesitan corrección \(5\)/)).toBeInTheDocument();
+        // El sidebar izquierdo tiene el título "Necesitan corrección"
+        expect(screen.getByText("Necesitan corrección")).toBeInTheDocument();
+        // El pill de estado muestra "5 necesitan corrección"
         expect(screen.getByText(/5 necesitan corrección/)).toBeInTheDocument();
     });
 });

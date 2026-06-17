@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Pagination from "../../components/Pagination";
 import { groupImportIssues } from "./groupImportIssues";
 import s from "./imports.module.css";
@@ -38,7 +38,7 @@ function downloadCsv(items, labelByKey, filename) {
     URL.revokeObjectURL(url);
 }
 
-/* ── Card de conflicto individual (reusada por ambos grupos) ── */
+/* ── Card de conflicto individual ── */
 const ConflictCard = ({ conflict }) => (
     <div className={s.conflictCard}>
         <div className={s.conflictRow}>
@@ -70,12 +70,8 @@ const ConflictCard = ({ conflict }) => (
                 : "El número de expediente ya pertenece a otro paciente."}
         </p>
         {conflict.existing?.public_id && (
-            <a
-                href={`/pets/${conflict.existing.public_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={s.conflictLink}
-            >
+            <a href={`/pets/${conflict.existing.public_id}`}
+               target="_blank" rel="noopener noreferrer" className={s.conflictLink}>
                 Ver paciente
             </a>
         )}
@@ -87,157 +83,130 @@ const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, varia
     const [page, setPage] = useState(1);
     const start = (page - 1) * PAGE_SIZE;
     const slice = items.slice(start, start + PAGE_SIZE);
-
     const variantClass = variant ? s[`collapseBlock${variant}`] : "";
 
     return (
         <div className={`${s.collapseBlock} ${variantClass}`}>
-            <button
-                className={s.collapseToggle}
-                onClick={onToggle}
-                aria-expanded={open}
-            >
+            <button className={s.collapseToggle} onClick={onToggle} aria-expanded={open}>
                 <span className={s.collapseIcon}>{icon}</span>
-                <span className={s.collapseLabel}>
-                    {title} ({count})
-                </span>
+                <span className={s.collapseLabel}>{title} ({count})</span>
                 <span className={s.collapseChevron}>{open ? "▲" : "▼"}</span>
             </button>
             {open && (
                 <div className={s.collapseBody}>
                     {intro && <p className={s.conflictIntro}>{intro}</p>}
-                    {slice.map((c, i) => (
-                        <ConflictCard key={`${c.row}-${i}`} conflict={c} />
-                    ))}
-                    <Pagination
-                        page={page}
-                        count={items.length}
-                        pageSize={PAGE_SIZE}
-                        onPage={setPage}
-                    />
+                    {slice.map((c, i) => <ConflictCard key={`${c.row}-${i}`} conflict={c} />)}
+                    <Pagination page={page} count={items.length} pageSize={PAGE_SIZE} onPage={setPage} />
                 </div>
             )}
         </div>
     );
 };
 
-/* ── Checklist de errores bloqueantes (tipo GitHub checks) ── */
-const BlockingChecklist = ({ items, labelByKey, open, onToggle }) => {
-    const actionsByField = {
-        "pet.name": `Agrega el nombre en la columna asignada como ${labelByKey["pet.name"] || "Nombre de la mascota"}.`,
-        "owner.name": `Agrega el nombre en la columna asignada como ${labelByKey["owner.name"] || "Nombre del cliente"}.`,
-        "owner.phone": "Corrige el teléfono: deben ser 10 dígitos, o deja la celda vacía.",
-    };
+/* ── Panel de revisión tipo inbox ── */
+const ReviewPanel = ({ blockingGroups, warningsGroups, labelByKey }) => {
+    const allItems = [
+        ...blockingGroups.map((g) => ({ ...g, kind: "blocking" })),
+        ...warningsGroups.map((g) => ({ ...g, kind: "warning" })),
+    ];
 
-    const groups = useMemo(
-        () => groupImportIssues(items, labelByKey, actionsByField),
-        [items, labelByKey],
+    const [selected, setSelected] = useState(null);
+
+    useEffect(() => {
+        if (!selected && allItems.length > 0) {
+            setSelected(allItems[0]);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const selectedGroup = allItems.find(
+        (g) => g.field === selected?.field && g.kind === selected?.kind,
     );
-
-    if (groups.length === 0) return null;
+    const isBlocking = selectedGroup?.kind === "blocking";
+    const hasMore = selectedGroup && selectedGroup.count > selectedGroup.samples.length;
 
     return (
-        <div className={s.section}>
-            <button
-                className={s.sectionToggle}
-                onClick={onToggle}
-                aria-expanded={open}
-            >
-                <span className={s.sectionIcon + " " + s.iconDanger}>!</span>
-                <span className={s.sectionLabel}>
-                    Necesitan corrección ({items.length})
-                </span>
-                <span className={s.sectionChevron}>{open ? "▲" : "▼"}</span>
-            </button>
-            {open && (
-                <div className={s.checklistBody}>
-                    <div className={s.checklistHint}>
-                        Corrige estos datos en tu archivo y vuelve a subirlo.
+        <div className={s.reviewPanel}>
+            <div className={s.reviewSidebar}>
+                {blockingGroups.length > 0 && (
+                    <div className={s.reviewSection}>
+                        <div className={s.reviewSectionTitle}>
+                            <span className={s.reviewBullet + " " + s.bulletDanger} />
+                            Necesitan corrección
+                        </div>
+                        {blockingGroups.map((g) => (
+                            <button
+                                key={g.field}
+                                className={`${s.reviewItem} ${selected?.field === g.field && selected?.kind === "blocking" ? s.reviewItemActive : ""}`}
+                                onClick={() => setSelected({ field: g.field, kind: "blocking" })}
+                            >
+                                <span className={s.reviewItemName}>{g.label}</span>
+                                <span className={s.reviewItemCount}>{g.count}</span>
+                            </button>
+                        ))}
                     </div>
-                    {groups.map((g) => (
-                        <ChecklistItem key={g.field} group={g} />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-/* ── Item de checklist (un tipo de problema) ── */
-const ChecklistItem = ({ group }) => {
-    const [open, setOpen] = useState(false);
-    const hasMore = group.count > group.samples.length;
-
-    return (
-        <div className={s.checklistItem}>
-            <button
-                className={s.checklistToggle}
-                onClick={() => setOpen((prev) => !prev)}
-                aria-expanded={open}
-            >
-                <span className={s.checklistBullet} />
-                <span className={s.checklistName}>{group.label}</span>
-                <span className={s.checklistCount}>{group.count} fila{group.count === 1 ? "" : "s"}</span>
-                <span className={s.checklistArrow}>{open ? "▾" : "▸"}</span>
-            </button>
-            <div className={s.checklistAction}>
-                {group.action}
+                )}
+                {warningsGroups.length > 0 && (
+                    <div className={s.reviewSection}>
+                        <div className={s.reviewSectionTitle}>
+                            <span className={s.reviewBullet + " " + s.bulletMuted} />
+                            Datos incompletos
+                        </div>
+                        {warningsGroups.map((g) => (
+                            <button
+                                key={g.field}
+                                className={`${s.reviewItem} ${selected?.field === g.field && selected?.kind === "warning" ? s.reviewItemActive : ""}`}
+                                onClick={() => setSelected({ field: g.field, kind: "warning" })}
+                            >
+                                <span className={s.reviewItemName}>{g.label}</span>
+                                <span className={s.reviewItemCount}>{g.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
-            {open && (
-                <div className={s.checklistSamples}>
-                    {group.samples.map((it) => (
-                        <div key={it.row} className={s.checklistSampleRow}>
-                            <span className={s.checklistSampleNum}>#{it.row}</span>
-                            <span className={s.checklistSampleMsg}>{it.message}</span>
-                        </div>
-                    ))}
-                    {hasMore && (
-                        <div className={s.checklistMore}>
-                            …y {group.count - group.samples.length} más
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
 
-/* ── Advertencias ultra-ligeras ── */
-const WarningsLight = ({ items, labelByKey }) => {
-    const [open, setOpen] = useState(false);
-
-    const groups = useMemo(
-        () => groupImportIssues(items, labelByKey),
-        [items, labelByKey],
-    );
-
-    if (groups.length === 0) return null;
-
-    return (
-        <div className={s.section + " " + s.sectionMuted}>
-            <button
-                className={s.sectionToggle}
-                onClick={() => setOpen((prev) => !prev)}
-                aria-expanded={open}
-            >
-                <span className={s.sectionIcon + " " + s.iconInfo}>ℹ</span>
-                <span className={s.sectionLabel}>
-                    Se importarán con datos incompletos ({items.length})
-                </span>
-                <span className={s.sectionChevron}>{open ? "▲" : "▼"}</span>
-            </button>
-            {open && (
-                <div className={s.warningsList}>
-                    {groups.map((g) => (
-                        <div key={g.field} className={s.warningItem}>
-                            <span className={s.warningBullet}>○</span>
-                            <span className={s.warningText}>
-                                {g.label} ({g.count})
+            <div className={s.reviewDetail}>
+                {selectedGroup ? (
+                    <>
+                        <div className={s.reviewDetailHeader}>
+                            <span className={`${s.reviewDetailIcon} ${isBlocking ? s.iconDanger : s.iconInfo}`}>
+                                {isBlocking ? "!" : "ℹ"}
                             </span>
+                            <div>
+                                <div className={s.reviewDetailTitle}>{selectedGroup.label}</div>
+                                <div className={s.reviewDetailSub}>
+                                    {selectedGroup.count} fila{selectedGroup.count === 1 ? "" : "s"} afectada{selectedGroup.count === 1 ? "" : "s"}
+                                </div>
+                            </div>
                         </div>
-                    ))}
-                </div>
-            )}
+                        <div className={s.reviewDetailDivider} />
+                        <div className={s.reviewDetailAction}>
+                            {isBlocking ? "Qué hacer: " : ""}{selectedGroup.action}
+                        </div>
+                        <div className={s.reviewDetailDivider} />
+                        <div className={s.reviewDetailExamples}>
+                            <div className={s.reviewDetailExamplesLabel}>
+                                Ejemplo{selectedGroup.samples.length === 1 ? "" : "s"}
+                            </div>
+                            {selectedGroup.samples.map((it) => (
+                                <div key={it.row} className={s.reviewDetailExampleRow}>
+                                    <span className={s.reviewDetailExampleNum}>#{it.row}</span>
+                                    <span className={s.reviewDetailExampleMsg}>{it.message}</span>
+                                </div>
+                            ))}
+                            {hasMore && (
+                                <div className={s.reviewDetailMore}>
+                                    …y {selectedGroup.count - selectedGroup.samples.length} más
+                                </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div className={s.reviewDetailEmpty}>
+                        Selecciona un problema para ver detalles.
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
@@ -253,7 +222,6 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const [openSections, setOpenSections] = useState({
         duplicates: true,
         expedientConflicts: true,
-        blocking: true,
     });
 
     const r = result || {};
@@ -274,18 +242,30 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const hasImportable = createdPets > 0;
     const hasAnyIssue = conflicts.length > 0 || hasBlocking || warnings.length > 0;
 
-    const toggle = (section) =>
-        setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    const toggle = (s) => setOpenSections((prev) => ({ ...prev, [s]: !prev[s] }));
 
     const totalOwners = createdOwners + reusedOwners;
 
+    const blockingActions = {
+        "pet.name": `Agrega el nombre en la columna asignada como ${labelByKey["pet.name"] || "Nombre de la mascota"}.`,
+        "owner.name": `Agrega el nombre en la columna asignada como ${labelByKey["owner.name"] || "Nombre del cliente"}.`,
+        "owner.phone": "Corrige el teléfono: deben ser 10 dígitos, o deja la celda vacía.",
+    };
+
+    const blockingGroups = useMemo(
+        () => groupImportIssues(blocking, labelByKey, blockingActions),
+        [blocking, labelByKey],
+    );
+    const warningsGroups = useMemo(
+        () => groupImportIssues(warnings, labelByKey),
+        [warnings, labelByKey],
+    );
+
     return (
         <div>
-            {/* ── Barra de estado horizontal ── */}
+            {/* ── Barra de estado ── */}
             <div className={s.statusBar}>
-                <div className={s.statusBarTitle}>
-                    Revisa antes de importar
-                </div>
+                <div className={s.statusBarTitle}>Revisa antes de importar</div>
                 <div className={s.statusBarSub}>
                     Esta es una simulación — todavía no se ha guardado nada.
                 </div>
@@ -293,7 +273,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                     {createdPets > 0 && (
                         <div className={`${s.statusPill} ${s.pillSuccess}`}>
                             <span className={s.pillIcon}>✓</span>
-                            {createdPets} paciente{createdPets === 1 ? "" : "s"} listo{createdPets === 1 ? "" : "s"}
+                            {createdPets} listo{createdPets === 1 ? "" : "s"}
                             {totalOwners > 0 && (
                                 <span className={s.pillExtra}>
                                     {" · "}{totalOwners} cliente{totalOwners === 1 ? "" : "s"}
@@ -333,15 +313,21 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 </div>
             </div>
 
+            {/* ── Panel de revisión (inbox) ── */}
+            {(hasBlocking || warnings.length > 0) && (
+                <ReviewPanel
+                    blockingGroups={blockingGroups}
+                    warningsGroups={warningsGroups}
+                    labelByKey={labelByKey}
+                />
+            )}
+
             {/* ── Posibles duplicados ── */}
             {highConfidence.length > 0 && (
                 <CollapseGroup
-                    icon="⚠"
-                    title="Posibles duplicados"
-                    count={highConfidence.length}
+                    icon="⚠" title="Posibles duplicados" count={highConfidence.length}
                     intro="Puede que estos pacientes ya estén registrados. Suele pasar si este archivo ya se importó antes."
-                    items={highConfidence}
-                    open={openSections.duplicates}
+                    items={highConfidence} open={openSections.duplicates}
                     onToggle={() => toggle("duplicates")}
                 />
             )}
@@ -349,9 +335,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
             {/* ── Conflictos de expediente ── */}
             {uncertainConfidence.length > 0 && (
                 <CollapseGroup
-                    icon="⚡"
-                    title="Conflictos de expediente"
-                    count={uncertainConfidence.length}
+                    icon="⚡" title="Conflictos de expediente" count={uncertainConfidence.length}
                     intro={
                         "El número de expediente ya pertenece a otro paciente.\n\n"
                         + "Puede pasar si:\n"
@@ -359,25 +343,10 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                         + "· el sistema anterior reinició numeraciones.\n"
                         + "· la columna seleccionada no corresponde al expediente."
                     }
-                    items={uncertainConfidence}
-                    open={openSections.expedientConflicts}
-                    onToggle={() => toggle("expedientConflicts")}
-                    variant="Warn"
+                    items={uncertainConfidence} open={openSections.expedientConflicts}
+                    onToggle={() => toggle("expedientConflicts")} variant="Warn"
                 />
             )}
-
-            {/* ── Errores bloqueantes (checklist) ── */}
-            {blocking.length > 0 && (
-                <BlockingChecklist
-                    items={blocking}
-                    labelByKey={labelByKey}
-                    open={openSections.blocking}
-                    onToggle={() => toggle("blocking")}
-                />
-            )}
-
-            {/* ── Advertencias ── */}
-            <WarningsLight items={warnings} labelByKey={labelByKey} />
 
             {/* ── Descarga CSV ── */}
             {(blocking.length > 0 || warnings.length > 0) && (
@@ -403,9 +372,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
 
             {/* ── CTA ── */}
             <div className={s.actions}>
-                <button className="btn btn-secondary btn-md" onClick={onBack} disabled={committing}>
-                    Atrás
-                </button>
+                <button className="btn btn-secondary btn-md" onClick={onBack} disabled={committing}>Atrás</button>
                 <div className={s.actionsRight}>
                     {hasBlocking ? (
                         <span className={s.ctaBlocked}>
@@ -418,11 +385,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                                 {skippedConflicts > 0 && <>{" · "}⚠ {skippedConflicts} posibles duplicados se omitirán</>}
                                 {skippedDups > 0 && <>{" · "}⊘ {skippedDups} duplicados se omitirán</>}
                             </p>
-                            <button
-                                className="btn btn-primary btn-md"
-                                onClick={onConfirm}
-                                disabled={committing}
-                            >
+                            <button className="btn btn-primary btn-md" onClick={onConfirm} disabled={committing}>
                                 {committing ? "Importando..." : "Confirmar importación"}
                             </button>
                         </div>
