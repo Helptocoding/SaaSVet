@@ -671,3 +671,57 @@ class ImportApiTests(TestCase):
         self.assertNotIn('id', conflict.get('existing', {}))
         self.assertNotIn('pk', conflict.get('existing', {}))
         self.assertEqual(conflict['existing']['public_id'], str(pet.public_id))
+
+    # ── Fase 0: Commit bloqueado con blocking errors ──────────────────────
+
+    def test_commit_blocked_when_blocking_errors(self):
+        # Si validate detecta blocking errors, commit debe rechazar con 400.
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan,8112345678,,Perro,00231\n'    # sin nombre mascota → blocking
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        # Validar primero
+        res_v = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        self.assertEqual(res_v.data['result']['blocking_rows'], 1)
+        # Intentar commit
+        res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data['code'], 'import_has_blocking_errors')
+        self.assertEqual(res.data['blocking_count'], 1)
+
+    def test_commit_blocked_creates_no_records(self):
+        # Commit rechazado con 400 NO debe crear registros en DB.
+        owners_before = Owner.objects.for_organization(self.org).count()
+        pets_before = Pet.objects.for_organization(self.org).count()
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan,8112345678,,Perro,00231\n'
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        self.assertEqual(Owner.objects.for_organization(self.org).count(), owners_before)
+        self.assertEqual(Pet.objects.for_organization(self.org).count(), pets_before)
+
+    def test_commit_allowed_with_only_warnings_and_conflicts(self):
+        # Warnings y conflicts NO bloquean el commit. Solo blocking bloquea.
+        # Pre-crear un pet para generar conflicto de legacy_id
+        clash_owner = Owner.objects.create(organization=self.org, name='Prev', phone='8110000000')
+        Pet.objects.create(organization=self.org, owner=clash_owner, name='Viejo', species='canino', legacy_id='CLASH')
+        text = (
+            'Dueño,Teléfono,Mascota,Especie,Expediente\n'
+            'Juan,8112345678,Rocky,Perro,CLASH\n'  # conflicto legacy_id + sin teléfono → warning
+        )
+        pid = self._upload(text)
+        self._set_mapping(pid)
+        # Validar
+        res_v = self.client.post(f'/api/imports/{pid}/validate/', format='json')
+        result = res_v.data['result']
+        self.assertEqual(result['blocking_rows'], 0)
+        self.assertGreater(result['skipped_conflicts'], 0)
+        # Commit debe permitirse (200) — warnings/conflicts no bloquean
+        res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
+        self.assertEqual(res.status_code, 200)

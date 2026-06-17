@@ -212,15 +212,22 @@ describe("PreviewStep — nombres y comparación", () => {
 });
 
 describe("PreviewStep — consecuencias y CTA", () => {
-    it("con registros importables muestra el botón de confirmar", () => {
+    it("con registros importables y sin blocking muestra el botón de confirmar", () => {
         renderPreview({ canCommit: true });
         expect(screen.getByRole("button", { name: /confirmar importación/i })).toBeInTheDocument();
     });
 
-    it("sin registros importables bloquea el CTA", () => {
+    it("con blocking errors oculta el botón y muestra mensaje de corrección", () => {
         renderPreview({ result: RESULT_WITH_BLOCKING, canCommit: true });
         expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
-        expect(screen.getByText(/Corrige los errores para poder importar/)).toBeInTheDocument();
+        expect(screen.getByText(/Corrige los 2 errores bloqueantes/)).toBeInTheDocument();
+    });
+
+    it("sin blocking ni registros muestra 'No hay registros nuevos'", () => {
+        const empty = { ...RESULT_WITH_BLOCKING, blocking_rows: 0, blocking: [], errors: [] };
+        renderPreview({ result: empty, canCommit: true });
+        expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
+        expect(screen.getByText(/No hay registros nuevos para importar/)).toBeInTheDocument();
     });
 
     it("sin permiso no muestra el botón e informa", () => {

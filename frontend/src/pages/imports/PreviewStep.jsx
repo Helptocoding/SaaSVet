@@ -196,8 +196,9 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const highConfidence = conflicts.filter((c) => c.match_confidence === "high");
     const uncertainConfidence = conflicts.filter((c) => c.match_confidence !== "high");
 
+    const hasBlocking = blocking.length > 0;
     const hasImportable = createdPets > 0;
-    const hasAnyIssue = conflicts.length > 0 || blocking.length > 0 || warnings.length > 0;
+    const hasAnyIssue = conflicts.length > 0 || hasBlocking || warnings.length > 0;
 
     const toggle = (section) =>
         setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -313,7 +314,11 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                     Atrás
                 </button>
                 <div className={s.actionsRight}>
-                    {hasImportable && canCommit ? (
+                    {hasBlocking ? (
+                        <span className={s.ctaBlocked}>
+                            Corrige los {blocking.length} error{blocking.length === 1 ? "" : "es"} bloqueante{blocking.length === 1 ? "" : "s"} para poder importar.
+                        </span>
+                    ) : hasImportable && canCommit ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
                             <p className={s.consequence}>
                                 Al continuar: ✓ se importarán {createdPets} registro{createdPets === 1 ? "" : "s"}
@@ -334,7 +339,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                         </span>
                     ) : (
                         <span style={{ fontSize: 12.5, color: "var(--c-text-3)" }}>
-                            Corrige los errores para poder importar.
+                            No hay registros nuevos para importar.
                         </span>
                     )}
                 </div>

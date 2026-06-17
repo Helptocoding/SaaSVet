@@ -168,6 +168,16 @@ class ImportJobViewSet(
                  'message': 'Esta importación ya fue confirmada.'},
                 status=status.HTTP_409_CONFLICT,
             )
+        # Fase 0: impedir commit con errores bloqueantes pendientes.
+        # Warnings y conflicts NO bloquean — solo blocking[].
+        prev = job.result or {}
+        if len(prev.get('blocking', [])) > 0:
+            return Response(
+                {'code': 'import_has_blocking_errors',
+                 'message': 'Corrige los errores bloqueantes antes de confirmar la importación.',
+                 'blocking_count': len(prev['blocking'])},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         result = commit_job(job)
         job.result = result
         job.status = ImportJob.STATUS_COMMITTED
