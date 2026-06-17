@@ -91,14 +91,20 @@ const RESULT_WITH_BLOCKING = {
     created_pets: 0,
     skipped_duplicates: 0,
     skipped_conflicts: 0,
-    blocking_rows: 2,
+    blocking_rows: 5,
     errors: [
         { row: 2, field: "pet.name", message: "El nombre de la mascota es requerido." },
-        { row: 7, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
+        { row: 7, field: "pet.name", message: "El nombre de la mascota es requerido." },
+        { row: 12, field: "pet.name", message: "El nombre de la mascota es requerido." },
+        { row: 5, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
+        { row: 9, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
     ],
     blocking: [
         { row: 2, field: "pet.name", message: "El nombre de la mascota es requerido." },
-        { row: 7, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
+        { row: 7, field: "pet.name", message: "El nombre de la mascota es requerido." },
+        { row: 12, field: "pet.name", message: "El nombre de la mascota es requerido." },
+        { row: 5, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
+        { row: 9, field: "owner.phone", message: "El teléfono debe tener 10 dígitos." },
     ],
     conflicts: [],
     warnings: [],
@@ -139,6 +145,12 @@ describe("PreviewStep — resumen humano", () => {
         expect(screen.getByText(/1 paciente listo para importar/)).toBeInTheDocument();
         expect(screen.getAllByText(/2 duplicados se omitirán/).length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText(/3 necesitan revisión/)).toBeInTheDocument();
+    });
+
+    it("con bloqueantes muestra 'No se pueden importar'", () => {
+        renderPreview({ result: RESULT_WITH_BLOCKING });
+        expect(screen.getByText(/No se pueden importar \(5\)/)).toBeInTheDocument();
+        expect(screen.getByText(/Necesitan corregirse en el archivo original/)).toBeInTheDocument();
     });
 });
 
@@ -220,7 +232,7 @@ describe("PreviewStep — consecuencias y CTA", () => {
     it("con blocking errors oculta el botón y muestra mensaje de corrección", () => {
         renderPreview({ result: RESULT_WITH_BLOCKING, canCommit: true });
         expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
-        expect(screen.getByText(/Corrige los 2 errores bloqueantes/)).toBeInTheDocument();
+        expect(screen.getByText(/Corrige los 5 errores bloqueantes/)).toBeInTheDocument();
     });
 
     it("sin blocking ni registros muestra 'No hay registros nuevos'", () => {

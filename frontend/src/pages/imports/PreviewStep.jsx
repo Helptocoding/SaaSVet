@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Pagination from "../../components/Pagination";
+import { groupImportIssues } from "./groupImportIssues";
 import s from "./imports.module.css";
 
 const PAGE_SIZE = 25;
@@ -89,11 +90,20 @@ const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, varia
     );
 };
 
-/* ── Sección colapsable para bloqueantes (faltan datos) ── */
-const BlockingGroup = ({ items, labelByKey, onToggle, open }) => {
-    const [page, setPage] = useState(1);
-    const start = (page - 1) * PAGE_SIZE;
-    const slice = items.slice(start, start + PAGE_SIZE);
+/* ── Bloqueantes agrupados por tipo de problema ── */
+const BlockingSummary = ({ items, labelByKey, open, onToggle }) => {
+    const actionsByField = {
+        "pet.name": `Agrega el nombre en la columna asignada como ${labelByKey["pet.name"] || "Nombre de la mascota"}.`,
+        "owner.name": `Agrega el nombre en la columna asignada como ${labelByKey["owner.name"] || "Nombre del cliente"}.`,
+        "owner.phone": "Corrige el teléfono: deben ser 10 dígitos, o deja la celda vacía.",
+    };
+
+    const groups = useMemo(
+        () => groupImportIssues(items, labelByKey, actionsByField),
+        [items, labelByKey],
+    );
+
+    if (groups.length === 0) return null;
 
     return (
         <div className={s.collapseBlock}>
@@ -104,27 +114,66 @@ const BlockingGroup = ({ items, labelByKey, onToggle, open }) => {
             >
                 <span className={s.collapseIcon}>✗</span>
                 <span className={s.collapseLabel}>
-                    Requieren corrección ({items.length})
+                    No se pueden importar ({items.length})
                 </span>
                 <span className={s.collapseChevron}>{open ? "▲" : "▼"}</span>
             </button>
             {open && (
                 <div className={s.collapseBody}>
-                    {slice.map((it, i) => (
-                        <div key={`${it.row}-${it.field}-${i}`} className={s.blockingRow}>
-                            <span className={s.blockingNum}>#{it.row}</span>
-                            <span className={s.blockingField}>
-                                {it.field ? (labelByKey[it.field] || it.field) : "—"}
+                    <p className={s.blockingIntro}>
+                        Necesitan corregirse en el archivo original antes de volver a subirlo.
+                    </p>
+                    {groups.map((g) => (
+                        <GroupCard key={g.field} group={g} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+/* ── Card de un tipo de problema (agrupado) ── */
+const GroupCard = ({ group }) => {
+    const [open, setOpen] = useState(false);
+    const hasMore = group.count > group.samples.length;
+
+    return (
+        <div className={s.groupCard}>
+            <button
+                className={s.groupCardToggle}
+                onClick={() => setOpen((prev) => !prev)}
+                aria-expanded={open}
+            >
+                <span className={s.groupCardLabel}>
+                    {group.label}
+                </span>
+                <span className={s.groupCardCount}>
+                    Afecta {group.count} fila{group.count === 1 ? "" : "s"}
+                </span>
+                <span className={s.groupCardChevron}>{open ? "▲" : "▼"}</span>
+            </button>
+            <div className={s.groupCardAction}>
+                ▶ Qué hacer: {group.action}
+            </div>
+            {open && (
+                <div className={s.groupCardSamples}>
+                    <div className={s.groupCardSamplesLabel}>
+                        Ejemplo{group.samples.length === 1 ? "" : "s"}:
+                    </div>
+                    {group.samples.map((it) => (
+                        <div key={it.row} className={s.sampleRow}>
+                            <span className={s.sampleNum}>Fila #{it.row}</span>
+                            <span className={s.sampleSep}>·</span>
+                            <span className={s.sampleVal}>
+                                {it.message}
                             </span>
-                            <span className={s.blockingMsg}>{it.message}</span>
                         </div>
                     ))}
-                    <Pagination
-                        page={page}
-                        count={items.length}
-                        pageSize={PAGE_SIZE}
-                        onPage={setPage}
-                    />
+                    {hasMore && (
+                        <div className={s.sampleMore}>
+                            ...y {group.count - group.samples.length} más
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -291,7 +340,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
             )}
 
             {blocking.length > 0 && (
-                <BlockingGroup
+                <BlockingSummary
                     items={blocking}
                     labelByKey={labelByKey}
                     open={openSections.blocking}
