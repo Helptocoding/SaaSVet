@@ -148,7 +148,14 @@ actual clasifica las filas en tres categorías + contadores:
   `existing`.
 - `uncertain` → coincide el `legacy_id` pero algún nombre difiere.
 
-`match_confidence` es solo UI/contexto; no afecta decisiones de importación.
+`match_confidence` es solo UI/contexto; no afecta decisiones de importación. Ambos
+casos (`high` y `uncertain`) se omiten de la importación por seguridad (no se crea
+el registro). La diferencia es solo visual para el usuario:
+
+| `match_confidence` | Grupo en UI | Significado |
+|---|---|---|
+| `high` | **Posibles duplicados** | Mismo expediente, mismos nombres → probable re-importación. |
+| `uncertain` | **Conflictos de expediente** | Mismo expediente, datos distintos → posible colisión entre clínicas o sistemas. |
 
 ### Reglas de conteo
 
@@ -211,13 +218,19 @@ Wizard de pasos: **Subir → Mapear → Validar → Resultado**.
   teléfono"). Informativo, no bloquea, **no** alerta global. El complemento
   **estrategia D** vive en `petDetail` (prompt suave "Completar datos" →
   `/pets?edit=<public_id>`); ver `modules/patients.md`.
-- `PreviewStep` — vista previa humana con tres grupos colapsables:
-  - ⚠ **Posibles duplicados**: comparación lado a lado (archivo vs registrado),
-    `match_confidence`, link "Ver paciente" (`/pets/<public_id>`).
+- `PreviewStep` — vista previa humana con grupos colapsables separados por
+  `match_confidence`:
+  - ⚠ **Posibles duplicados** (`high`): "Parece el mismo paciente." Intro: "Puede
+    que estos pacientes ya estén registrados. Suele pasar si este archivo ya se
+    importó antes."
+  - ⚡ **Conflictos de expediente** (`uncertain`): "El número de expediente ya
+    pertenece a otro paciente." Intro: explica causas posibles (otra clínica,
+    numeración reiniciada, columna incorrecta).
   - ✗ **Requieren corrección**: filas con datos faltantes/imposibles.
   - ℹ **Avisos**: datos opcionales pendientes.
-  - Consecuencia antes de confirmar con conteos reales. CTA bloqueado si no hay
-    registros importables.
+  - Comparación lado a lado, link "Ver paciente" (`/pets/<public_id>`,
+    `target="_blank"`). Consecuencia antes de confirmar con conteos reales.
+    CTA bloqueado si no hay registros importables.
 
 `api/imports.js` centraliza las llamadas. Errores → `apiError`/toast (nunca códigos
 técnicos como `import_parse_error` en un div).
@@ -228,6 +241,40 @@ técnicos como `import_parse_error` en un div).
   (modelos, no serializers). Documentado en ADR p43.
 - NO toca billing/inventory/appointments. NO crea facturas ni stock.
 - `extra_data` es display-only: no entra a analytics, billing ni caja.
+
+## Estrategia futura: múltiples orígenes/sucursales (NO implementado)
+
+### Problema
+
+Actualmente `legacy_id` es único dentro de `organization`. Esto funciona para una
+clínica migrando desde un único sistema anterior (ej. Exp 001 → Bella; reimportar
+Exp 001 → Bella se detecta como duplicado). Pero **varias clínicas/sucursales**
+pueden tener la misma numeración histórica:
+
+```
+Sucursal Norte:  Exp 001 → Bella
+Sucursal Sur:    Exp 001 → Rocky
+```
+
+Ambos son válidos, pero el constraint actual lo rechaza.
+
+### Opciones
+
+**Opción A — `ImportSource`**: agregar concepto `ImportSource` (ej. "Sucursal Norte").
+`legacy_id` único por `organization + source + legacy_id`. Mantiene búsqueda clara.
+
+**Opción B — Prefijo automático**: durante import, prefijar según sucursal
+(N-001, S-001). Más simple pero modifica identificadores históricos.
+
+**Opción C — Permitir duplicados libremente**: NO recomendado. La búsqueda por
+expediente devolvería varios pacientes; recepción no sabría cuál abrir.
+
+### Decisión V1
+
+No implementar multi-source todavía. La mayoría de clínicas pequeñas migran
+desde un único sistema. Agregarlo ahora aumenta complejidad antes de validación
+real. Mientras tanto, los conflictos de expediente (`uncertain`) se muestran en
+un grupo separado con explicación de causas posibles.
 
 ## Tests
 
