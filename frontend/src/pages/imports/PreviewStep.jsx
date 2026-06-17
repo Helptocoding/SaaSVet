@@ -82,7 +82,7 @@ const ConflictCard = ({ conflict }) => (
     </div>
 );
 
-/* ── Grupo colapsable genérico ── */
+/* ── Grupo colapsable genérico (conflictos) ── */
 const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, variant }) => {
     const [page, setPage] = useState(1);
     const start = (page - 1) * PAGE_SIZE;
@@ -121,8 +121,8 @@ const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, varia
     );
 };
 
-/* ── Bloqueantes agrupados por tipo de problema ── */
-const BlockingSummary = ({ items, labelByKey, open, onToggle }) => {
+/* ── Checklist de errores bloqueantes (tipo GitHub checks) ── */
+const BlockingChecklist = ({ items, labelByKey, open, onToggle }) => {
     const actionsByField = {
         "pet.name": `Agrega el nombre en la columna asignada como ${labelByKey["pet.name"] || "Nombre de la mascota"}.`,
         "owner.name": `Agrega el nombre en la columna asignada como ${labelByKey["owner.name"] || "Nombre del cliente"}.`,
@@ -137,74 +137,63 @@ const BlockingSummary = ({ items, labelByKey, open, onToggle }) => {
     if (groups.length === 0) return null;
 
     return (
-        <div className={s.collapseBlock}>
+        <div className={s.section}>
             <button
-                className={s.collapseToggle}
+                className={s.sectionToggle}
                 onClick={onToggle}
                 aria-expanded={open}
             >
-                <span className={s.collapseIcon}>✗</span>
-                <span className={s.collapseLabel}>
-                    No se pueden importar ({items.length})
+                <span className={s.sectionIcon + " " + s.iconDanger}>!</span>
+                <span className={s.sectionLabel}>
+                    Necesitan corrección ({items.length})
                 </span>
-                <span className={s.collapseChevron}>{open ? "▲" : "▼"}</span>
+                <span className={s.sectionChevron}>{open ? "▲" : "▼"}</span>
             </button>
             {open && (
-                <div className={s.collapseBody}>
-                    <p className={s.blockingIntro}>
-                        Necesitan corregirse en el archivo original antes de volver a subirlo.
-                    </p>
-                    <div className={s.groupGrid}>
-                        {groups.map((g) => (
-                            <GroupCard key={g.field} group={g} />
-                        ))}
+                <div className={s.checklistBody}>
+                    <div className={s.checklistHint}>
+                        Corrige estos datos en tu archivo y vuelve a subirlo.
                     </div>
+                    {groups.map((g) => (
+                        <ChecklistItem key={g.field} group={g} />
+                    ))}
                 </div>
             )}
         </div>
     );
 };
 
-/* ── Card de un tipo de problema (agrupado) ── */
-const GroupCard = ({ group }) => {
+/* ── Item de checklist (un tipo de problema) ── */
+const ChecklistItem = ({ group }) => {
     const [open, setOpen] = useState(false);
     const hasMore = group.count > group.samples.length;
 
     return (
-        <div className={s.groupCard}>
+        <div className={s.checklistItem}>
             <button
-                className={s.groupCardToggle}
+                className={s.checklistToggle}
                 onClick={() => setOpen((prev) => !prev)}
                 aria-expanded={open}
             >
-                <span className={s.groupCardLabel}>
-                    {group.label}
-                </span>
-                <span className={s.groupCardCount}>
-                    Afecta {group.count} fila{group.count === 1 ? "" : "s"}
-                </span>
-                <span className={s.groupCardChevron}>{open ? "▲" : "▼"}</span>
+                <span className={s.checklistBullet} />
+                <span className={s.checklistName}>{group.label}</span>
+                <span className={s.checklistCount}>{group.count} fila{group.count === 1 ? "" : "s"}</span>
+                <span className={s.checklistArrow}>{open ? "▾" : "▸"}</span>
             </button>
-            <div className={s.groupCardAction}>
-                ▶ Qué hacer: {group.action}
+            <div className={s.checklistAction}>
+                {group.action}
             </div>
             {open && (
-                <div className={s.groupCardSamples}>
-                    <div className={s.groupCardSamplesLabel}>
-                        Ejemplo{group.samples.length === 1 ? "" : "s"}:
-                    </div>
+                <div className={s.checklistSamples}>
                     {group.samples.map((it) => (
-                        <div key={it.row} className={s.sampleRow}>
-                            <span className={s.sampleNum}>Fila #{it.row}</span>
-                            <span className={s.sampleSep}>·</span>
-                            <span className={s.sampleVal}>
-                                {it.message}
-                            </span>
+                        <div key={it.row} className={s.checklistSampleRow}>
+                            <span className={s.checklistSampleNum}>#{it.row}</span>
+                            <span className={s.checklistSampleMsg}>{it.message}</span>
                         </div>
                     ))}
                     {hasMore && (
-                        <div className={s.sampleMore}>
-                            ...y {group.count - group.samples.length} más
+                        <div className={s.checklistMore}>
+                            …y {group.count - group.samples.length} más
                         </div>
                     )}
                 </div>
@@ -213,8 +202,8 @@ const GroupCard = ({ group }) => {
     );
 };
 
-/* ── Advertencias agrupadas por tipo ── */
-const WarningsSummary = ({ items, labelByKey }) => {
+/* ── Advertencias ultra-ligeras ── */
+const WarningsLight = ({ items, labelByKey }) => {
     const [open, setOpen] = useState(false);
 
     const groups = useMemo(
@@ -225,39 +214,35 @@ const WarningsSummary = ({ items, labelByKey }) => {
     if (groups.length === 0) return null;
 
     return (
-        <div className={s.collapseBlock}>
+        <div className={s.section + " " + s.sectionMuted}>
             <button
-                className={s.collapseToggle}
+                className={s.sectionToggle}
                 onClick={() => setOpen((prev) => !prev)}
                 aria-expanded={open}
             >
-                <span className={s.collapseIcon}>ℹ</span>
-                <span className={s.collapseLabel}>
+                <span className={s.sectionIcon + " " + s.iconInfo}>ℹ</span>
+                <span className={s.sectionLabel}>
                     Se importarán con datos incompletos ({items.length})
                 </span>
-                <span className={s.collapseChevron}>{open ? "▲" : "▼"}</span>
+                <span className={s.sectionChevron}>{open ? "▲" : "▼"}</span>
             </button>
             {open && (
-                <div className={s.collapseBody}>
-                    <p className={s.warningsIntro}>
-                        No bloquean la importación. Puedes completar estos datos después desde cada ficha.
-                    </p>
-                    <div className={s.groupGrid}>
-                        {groups.map((g) => (
-                            <GroupCard key={g.field} group={g} />
-                        ))}
-                    </div>
+                <div className={s.warningsList}>
+                    {groups.map((g) => (
+                        <div key={g.field} className={s.warningItem}>
+                            <span className={s.warningBullet}>○</span>
+                            <span className={s.warningText}>
+                                {g.label} ({g.count})
+                            </span>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>
     );
 };
 
-/* Paso 3 — Vista previa (dry-run).
-   Renderiza el `result` del validate con agrupación humana: posibles duplicados
-   (match_confidence=high), conflictos de expediente (match_confidence=uncertain),
-   filas que requieren corrección y avisos. Explica la consecuencia antes de
-   confirmar. Bloquea el CTA si no hay nada importable. */
+/* Paso 3 — Vista previa (dry-run) */
 const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing, canCommit }) => {
     const labelByKey = useMemo(() => {
         const m = { mapping: "Mapeo de columnas", owner: "Cliente", pet: "Mascota", row: "Fila" };
@@ -282,7 +267,6 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const blocking = r.blocking || r.errors || [];
     const warnings = r.warnings || [];
 
-    // Separar conflictos por match_confidence
     const highConfidence = conflicts.filter((c) => c.match_confidence === "high");
     const uncertainConfidence = conflicts.filter((c) => c.match_confidence !== "high");
 
@@ -293,61 +277,63 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const toggle = (section) =>
         setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
+    const totalOwners = createdOwners + reusedOwners;
+
     return (
         <div>
-            {/* ── Resumen humano ── */}
-            <div className="card" style={{ marginBottom: 18 }}>
-                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>
+            {/* ── Barra de estado horizontal ── */}
+            <div className={s.statusBar}>
+                <div className={s.statusBarTitle}>
                     Revisa antes de importar
-                </p>
-                <p style={{ fontSize: 12.5, color: "var(--c-text-2)", marginBottom: 14 }}>
-                    Esta es una simulación: todavía no se ha guardado nada.
-                </p>
-
-                <div className={s.humanSummary}>
+                </div>
+                <div className={s.statusBarSub}>
+                    Esta es una simulación — todavía no se ha guardado nada.
+                </div>
+                <div className={s.statusPills}>
                     {createdPets > 0 && (
-                        <div className={`${s.humanRow} ${s.humanRowSuccess}`}>
-                            <span className={s.humanBullet}>✓</span>
-                            {createdPets} paciente{createdPets === 1 ? "" : "s"} listo{createdPets === 1 ? "" : "s"} para importar
-                            {createdOwners > 0 && (
-                                <span className={s.humanExtra}>
-                                    {" · "}{createdOwners} cliente{createdOwners === 1 ? "" : "s"} nuevo{createdOwners === 1 ? "" : "s"}
-                                </span>
-                            )}
-                            {reusedOwners > 0 && (
-                                <span className={s.humanExtra}>
-                                    {" · "}{reusedOwners} reutilizado{reusedOwners === 1 ? "" : "s"}
+                        <div className={`${s.statusPill} ${s.pillSuccess}`}>
+                            <span className={s.pillIcon}>✓</span>
+                            {createdPets} paciente{createdPets === 1 ? "" : "s"} listo{createdPets === 1 ? "" : "s"}
+                            {totalOwners > 0 && (
+                                <span className={s.pillExtra}>
+                                    {" · "}{totalOwners} cliente{totalOwners === 1 ? "" : "s"}
                                 </span>
                             )}
                         </div>
                     )}
                     {skippedDups > 0 && (
-                        <div className={`${s.humanRow} ${s.humanRowMuted}`}>
-                            <span className={s.humanBullet}>⊘</span>
-                            {skippedDups} duplicado{skippedDups === 1 ? "" : "s"} se omitirá{skippedDups === 1 ? "" : "n"}
+                        <div className={`${s.statusPill} ${s.pillMuted}`}>
+                            <span className={s.pillIcon}>⊘</span>
+                            {skippedDups} omitido{skippedDups === 1 ? "" : "s"}
                         </div>
                     )}
                     {skippedConflicts > 0 && (
-                        <div className={`${s.humanRow} ${s.humanRowWarn}`}>
-                            <span className={s.humanBullet}>⚠</span>
-                            {skippedConflicts} necesitan revisión (posibles duplicados)
+                        <div className={`${s.statusPill} ${s.pillWarn}`}>
+                            <span className={s.pillIcon}>⚠</span>
+                            {skippedConflicts} en revisión
                         </div>
                     )}
-                    {blockingRows > 0 && (
-                        <div className={`${s.humanRow} ${s.humanRowDanger}`}>
-                            <span className={s.humanBullet}>✗</span>
-                            {blockingRows} no se pueden importar (faltan datos)
+                    {hasBlocking && (
+                        <div className={`${s.statusPill} ${s.pillDanger}`}>
+                            <span className={s.pillIcon}>!</span>
+                            {blockingRows} necesitan corrección
+                        </div>
+                    )}
+                    {warnings.length > 0 && (
+                        <div className={`${s.statusPill} ${s.pillInfo}`}>
+                            <span className={s.pillIcon}>ℹ</span>
+                            {warnings.length} con datos incompletos
                         </div>
                     )}
                     {!hasAnyIssue && createdPets === 0 && (
-                        <div className={`${s.humanRow} ${s.humanRowMuted}`}>
+                        <div className={`${s.statusPill} ${s.pillMuted}`}>
                             No se encontraron registros para importar.
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* ── Posibles duplicados (match_confidence = high) ── */}
+            {/* ── Posibles duplicados ── */}
             {highConfidence.length > 0 && (
                 <CollapseGroup
                     icon="⚠"
@@ -360,7 +346,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 />
             )}
 
-            {/* ── Conflictos de expediente (match_confidence = uncertain) ── */}
+            {/* ── Conflictos de expediente ── */}
             {uncertainConfidence.length > 0 && (
                 <CollapseGroup
                     icon="⚡"
@@ -380,8 +366,9 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 />
             )}
 
+            {/* ── Errores bloqueantes (checklist) ── */}
             {blocking.length > 0 && (
-                <BlockingSummary
+                <BlockingChecklist
                     items={blocking}
                     labelByKey={labelByKey}
                     open={openSections.blocking}
@@ -389,9 +376,10 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 />
             )}
 
-            <WarningsSummary items={warnings} labelByKey={labelByKey} />
+            {/* ── Advertencias ── */}
+            <WarningsLight items={warnings} labelByKey={labelByKey} />
 
-            {/* ── Descarga de filas con problemas ── */}
+            {/* ── Descarga CSV ── */}
             {(blocking.length > 0 || warnings.length > 0) && (
                 <div style={{ marginBottom: 14 }}>
                     <button
@@ -413,7 +401,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 </div>
             )}
 
-            {/* ── Consecuencia + CTA ── */}
+            {/* ── CTA ── */}
             <div className={s.actions}>
                 <button className="btn btn-secondary btn-md" onClick={onBack} disabled={committing}>
                     Atrás
@@ -421,7 +409,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 <div className={s.actionsRight}>
                     {hasBlocking ? (
                         <span className={s.ctaBlocked}>
-                            Corrige los {blocking.length} error{blocking.length === 1 ? "" : "es"} bloqueante{blocking.length === 1 ? "" : "s"} para poder importar.
+                            Corrige los {blocking.length} error{blocking.length === 1 ? "" : "es"} para poder importar.
                         </span>
                     ) : hasImportable && canCommit ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>

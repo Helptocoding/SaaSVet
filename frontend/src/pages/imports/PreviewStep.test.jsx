@@ -142,15 +142,15 @@ function renderPreview(props = {}) {
 describe("PreviewStep — resumen humano", () => {
     it("muestra pacientes listos, duplicados omitidos, necesitan revisión", () => {
         renderPreview();
-        expect(screen.getByText(/1 paciente listo para importar/)).toBeInTheDocument();
-        expect(screen.getAllByText(/2 duplicados se omitirán/).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getByText(/3 necesitan revisión/)).toBeInTheDocument();
+        expect(screen.getByText(/1 paciente listo/)).toBeInTheDocument();
+        expect(screen.getByText(/2 omitidos/)).toBeInTheDocument();
+        expect(screen.getByText(/3 en revisión/)).toBeInTheDocument();
     });
 
-    it("con bloqueantes muestra 'No se pueden importar'", () => {
+    it("con bloqueantes muestra 'Necesitan corrección'", () => {
         renderPreview({ result: RESULT_WITH_BLOCKING });
-        expect(screen.getByText(/No se pueden importar \(5\)/)).toBeInTheDocument();
-        expect(screen.getByText(/Necesitan corregirse en el archivo original/)).toBeInTheDocument();
+        expect(screen.getByText(/Necesitan corrección \(5\)/)).toBeInTheDocument();
+        expect(screen.getByText(/5 necesitan corrección/)).toBeInTheDocument();
     });
 });
 
@@ -232,7 +232,7 @@ describe("PreviewStep — consecuencias y CTA", () => {
     it("con blocking errors oculta el botón y muestra mensaje de corrección", () => {
         renderPreview({ result: RESULT_WITH_BLOCKING, canCommit: true });
         expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
-        expect(screen.getByText(/Corrige los 5 errores bloqueantes/)).toBeInTheDocument();
+        expect(screen.getByText(/Corrige los 5 errores para poder importar/)).toBeInTheDocument();
     });
 
     it("sin blocking ni registros muestra 'No hay registros nuevos'", () => {

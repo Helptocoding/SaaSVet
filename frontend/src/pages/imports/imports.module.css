@@ -342,22 +342,89 @@
   color: var(--c-warning-text, #92400e);
 }
 
-/* ── Fase 3: Vista previa humana — grupos colapsables ─────────── */
-.humanSummary {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 4px;
+/* ── Barra de estado horizontal (tipo GitHub checks) ─────────── */
+.statusBar {
+  padding: 18px 20px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 18px;
 }
-.humanRow {
+.statusBarTitle {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--c-text);
+  margin-bottom: 2px;
+}
+.statusBarSub {
+  font-size: 12.5px;
+  color: var(--c-text-2);
+  margin-bottom: 12px;
+}
+.statusPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.pillIcon { font-size: 13px; }
+.pillExtra { font-weight: 400; opacity: 0.7; }
+.pillSuccess {
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+}
+.pillMuted {
+  background: var(--c-subtle);
+  color: var(--c-text-3);
+}
+.pillWarn {
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+}
+.pillDanger {
+  background: var(--c-danger-bg);
+  color: var(--c-danger-text);
+}
+.pillInfo {
+  background: var(--c-info-bg, #e0f2fe);
+  color: var(--c-info-text, #0369a1);
+}
+
+/* ── Secciones colapsables comunes ─────────── */
+.section {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.sectionMuted {
+  border-color: var(--c-border);
+  background: transparent;
+}
+.sectionToggle {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 11px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
   font-size: 13.5px;
-  font-weight: 500;
-  padding: 6px 0;
+  font-weight: 600;
+  color: var(--c-text);
 }
-.humanBullet {
+.sectionToggle:hover { background: var(--c-subtle); }
+.sectionIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -368,66 +435,22 @@
   font-weight: 700;
   flex-shrink: 0;
 }
-.humanRowSuccess { color: var(--c-success-text); }
-.humanRowSuccess .humanBullet {
-  background: var(--c-success-bg);
-  color: var(--c-success-text);
-}
-.humanRowMuted { color: var(--c-text-3); }
-.humanRowMuted .humanBullet {
-  background: var(--c-subtle);
-  color: var(--c-text-3);
-}
-.humanRowWarn { color: var(--c-warning-text); }
-.humanRowWarn .humanBullet {
-  background: var(--c-warning-bg);
-  color: var(--c-warning-text);
-}
-.humanRowDanger { color: var(--c-danger-text); }
-.humanRowDanger .humanBullet {
+.iconDanger {
   background: var(--c-danger-bg);
   color: var(--c-danger-text);
 }
-.humanExtra {
-  font-weight: 400;
-  color: var(--c-text-3);
+.iconInfo {
+  background: var(--c-info-bg, #e0f2fe);
+  color: var(--c-info-text, #0369a1);
 }
-
-/* Collapsible blocks */
-.collapseBlock {
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-surface);
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-.collapseToggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: var(--c-subtle);
-  border: none;
-  cursor: pointer;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--c-text);
-}
-.collapseToggle:hover { background: var(--c-border); }
-.collapseIcon { font-size: 15px; flex-shrink: 0; }
-.collapseLabel { flex: 1; text-align: left; }
-.collapseChevron {
+.sectionLabel { flex: 1; text-align: left; }
+.sectionChevron {
   font-size: 10px;
   color: var(--c-text-3);
   flex-shrink: 0;
 }
-.collapseBody {
-  padding: 14px;
-  border-top: 1px solid var(--c-border);
-}
 
-/* Conflict cards (posibles duplicados) */
+/* ── Conflicto cards (posibles duplicados) se mantienen igual ── */
 .conflictIntro {
   font-size: 12.5px;
   color: var(--c-text-3);
@@ -500,158 +523,155 @@
 }
 .conflictLink:hover { text-decoration: underline; }
 
-/* Blocking rows (requieren corrección) */
-.blockingRow {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 6px 0;
-  font-size: 13px;
-  border-bottom: 1px solid var(--c-border);
+/* ── Collapse blocks (genérico para conflictos) ── */
+.collapseBlock {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 10px;
+  overflow: hidden;
 }
-.blockingRow:last-child { border-bottom: none; }
-.blockingNum {
-  font-family: var(--font-mono);
-  color: var(--c-text-3);
-  font-size: 12px;
-  flex-shrink: 0;
-  min-width: 36px;
-}
-.blockingField {
-  color: var(--c-text-2);
-  font-size: 12.5px;
-  flex-shrink: 0;
-  min-width: 160px;
-}
-.blockingMsg {
-  color: var(--c-text);
-  flex: 1;
-}
-
-/* Warnings header (no colapsable, solo título) */
-.warningsHeader {
+.collapseToggle {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 11px 16px;
   background: var(--c-subtle);
+  border: none;
+  cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--c-text);
 }
+.collapseToggle:hover { background: var(--c-border); }
+.collapseIcon { font-size: 15px; flex-shrink: 0; }
+.collapseLabel { flex: 1; text-align: left; }
+.collapseChevron {
+  font-size: 10px;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.collapseBody {
+  padding: 14px;
+  border-top: 1px solid var(--c-border);
+}
 
-/* Consequence text */
+/* ── Checklist (errores bloqueantes) ─────────── */
+.checklistBody {
+  border-top: 1px solid var(--c-border);
+  padding: 12px 16px;
+}
+.checklistHint {
+  font-size: 12px;
+  color: var(--c-text-3);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--c-subtle);
+}
+.checklistItem {
+  padding: 8px 0;
+}
+.checklistItem + .checklistItem {
+  border-top: 1px solid var(--c-subtle);
+}
+.checklistToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--c-text);
+}
+.checklistBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-danger-text);
+  flex-shrink: 0;
+}
+.checklistName {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+.checklistCount {
+  font-size: 11.5px;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.checklistArrow {
+  font-size: 10px;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.checklistAction {
+  font-size: 12px;
+  color: var(--c-text-2);
+  padding: 3px 0 2px 22px;
+  line-height: 1.4;
+}
+.checklistSamples {
+  padding: 6px 0 2px 22px;
+  border-top: 1px solid var(--c-subtle);
+  margin-top: 4px;
+}
+.checklistSampleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  padding: 2px 0;
+}
+.checklistSampleNum {
+  font-family: var(--font-mono);
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.checklistSampleMsg {
+  color: var(--c-text-2);
+}
+.checklistMore {
+  font-size: 11px;
+  color: var(--c-text-3);
+  margin-top: 2px;
+}
+
+/* ── Warnings ultra-ligeros ─────────── */
+.warningsList {
+  border-top: 1px solid var(--c-border);
+  padding: 10px 16px;
+}
+.warningItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+.warningBullet {
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.warningText {
+  color: var(--c-text-2);
+}
+
+/* ── Consequence + CTA ─────────── */
 .consequence {
   font-size: 12.5px;
   color: var(--c-text-2);
   margin: 0;
   line-height: 1.5;
 }
-
 .ctaBlocked {
   font-size: 12.5px;
   color: var(--c-danger-text);
   font-weight: 500;
-}
-
-/* ── BlockingSummary + GroupCard (Fase 2: agrupado por tipo) ── */
-.blockingIntro {
-  font-size: 12.5px;
-  color: var(--c-text-3);
-  margin: 0 0 14px;
-  line-height: 1.5;
-}
-.groupCard {
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-md);
-  background: var(--c-surface);
-  overflow: hidden;
-}
-.groupGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 8px;
-}
-.groupCardToggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.groupCardToggle:hover { background: var(--c-subtle); }
-.groupCardLabel {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--c-text);
-  flex: 1;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.groupCardCount {
-  font-size: 11px;
-  color: var(--c-text-3);
-  flex-shrink: 0;
-}
-.groupCardChevron {
-  font-size: 10px;
-  color: var(--c-text-3);
-  flex-shrink: 0;
-}
-.groupCardAction {
-  font-size: 11.5px;
-  color: var(--c-text-2);
-  padding: 0 12px 8px;
-  line-height: 1.4;
-}
-.groupCardSamples {
-  border-top: 1px solid var(--c-border);
-  padding: 8px 12px;
-}
-.groupCardSamplesLabel {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--c-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-bottom: 4px;
-}
-.sampleRow {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 12px;
-  padding: 3px 0;
-}
-.sampleNum {
-  font-family: var(--font-mono);
-  color: var(--c-text-3);
-  flex-shrink: 0;
-}
-.sampleSep {
-  color: var(--c-border);
-  flex-shrink: 0;
-}
-.sampleVal {
-  color: var(--c-text-2);
-}
-.sampleMore {
-  font-size: 11px;
-  color: var(--c-text-3);
-  margin-top: 4px;
-}
-
-/* ── WarningsSummary (Fase 3: agrupado + navegable) ── */
-.warningsIntro {
-  font-size: 12.5px;
-  color: var(--c-text-3);
-  margin: 0 0 14px;
-  line-height: 1.5;
 }
 
 /* ── Variante advertencia para conflictos de expediente ── */
