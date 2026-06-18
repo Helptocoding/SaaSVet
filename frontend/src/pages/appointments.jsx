@@ -274,7 +274,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                             borderRadius:"var(--r-md)",
                         }}>
                             <p style={{fontSize:"12.5px",fontWeight:"600",color:"#92400e",marginBottom:"8px"}}>
-                                Paciente anónimo — vincular a paciente real
+                                Atención sin mascota registrada — vincular mascota
                             </p>
                             {appt.status === 'done' ? (
                                 <p style={{fontSize:"12px",color:"#b45309"}}>

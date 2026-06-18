@@ -61,9 +61,9 @@ const CreateOrganization = () => {
         const errs = {};
         if (!form.name.trim()) errs.name = "Nombre requerido.";
         if (!form.admin_username.trim()) errs.admin_username = "Username requerido.";
-        if (!form.admin_email.trim()) errs.admin_email = "Email requerido.";
+        if (!form.admin_email.trim()) errs.admin_email = "Correo electrónico requerido.";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.admin_email))
-            errs.admin_email = "Email inválido.";
+            errs.admin_email = "Correo electrónico inválido.";
         if (!form.admin_first_name.trim()) errs.admin_first_name = "Nombre requerido.";
         if (!form.admin_last_name.trim()) errs.admin_last_name = "Apellido requerido.";
         if (!form.admin_password || form.admin_password.length < 12)
@@ -204,7 +204,7 @@ const CreateOrganization = () => {
                             />
                         </Field>
 
-                        <Field label="Email" required error={fieldError("admin_email")}>
+                        <Field label="Correo electrónico" required error={fieldError("admin_email")}>
                             <input
                                 type="email"
                                 className={inputClass("admin_email")}
@@ -286,7 +286,7 @@ const SuccessCard = ({ result, onCreateAnother }) => {
     const credentialsText =
         `Clínica: ${result.organization.name}\n` +
         `Login: ${result.admin.username}\n` +
-        `Email: ${result.admin.email}\n` +
+        `Correo electrónico: ${result.admin.email}\n` +
         `Contraseña temporal: ${result.admin_password_shown_once}\n` +
         `\n` +
         `Organization public_id: ${result.organization.public_id}\n` +
@@ -335,7 +335,7 @@ const SuccessCard = ({ result, onCreateAnother }) => {
             <dl style={{ display: "grid", gridTemplateColumns: "max-content 1fr", gap: "8px 14px", margin: 0 }}>
                 <Row label="Clínica" value={result.organization.name} />
                 <Row label="Login" value={result.admin.username} mono />
-                <Row label="Email" value={result.admin.email} mono />
+                <Row label="Correo electrónico" value={result.admin.email} mono />
                 <Row label="Contraseña" value={result.admin_password_shown_once} mono highlight />
                 <Row label="Org public_id" value={result.organization.public_id} mono small />
                 <Row label="Admin public_id" value={result.admin.public_id} mono small />
