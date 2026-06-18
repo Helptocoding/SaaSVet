@@ -402,6 +402,28 @@ Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage
 
 ## Componentes compartidos
 
+### EmptyState (estado vacío accionable)
+
+`components/EmptyState.jsx` — **fuente única** de estados vacíos guiados. Reemplaza
+los `.empty-state` pasivos por uno que responde: qué pasa (`title`), por qué +
+siguiente paso (`body`) y la acción (`actions`). **Presentacional puro: NO conoce
+RBAC, NO usa `useAuth`.** El caller arma las acciones ya filtradas por permiso
+(`can("x") ? action : null`) y las pasa; el componente solo descarta las nulas →
+nunca muestra un CTA roto.
+
+Props: `icon` (componente de icono, opcional), `title` (req), `body` (opcional),
+`actions` (array de `{ label, onClick, variant }` | `null`), `compact` (padding
+reducido). Las acciones usan `onClick` (el caller reusa su handler existente: abrir
+modal/wizard o `navigate`) — router-agnóstico.
+
+Aplicado en: **Mascotas** (Importar Excel `import.create` + Agregar paciente
+`patient.create`), **Agenda** (empty complementario sobre el calendario, no lo
+reemplaza; "Registrar atención sin cita" `appointment.create_walkin`),
+**Inventario** (`inventory.create`), **Config·Servicios** (`service.create`).
+**NO** crear empty states por página — usar este componente. Estilos:
+`.empty-state*` en `global.css` (`.empty-state-icon`, `.empty-state-actions`,
+`.empty-state-compact`).
+
 ### SearchSelect
 
 Combobox con busqueda asincrona. Debounce de 250ms. Maneja race conditions con `reqId`. Props clave: `value`, `onChange`, `onSearch`, `disabled`, `prefetchOnFocus`. Devuelve un array y muestra **solo `item.label`** (string). Úsalo para selects simples y de bajo volumen; para entidades relacionales con muchos registros usa **EntitySearch**.
@@ -652,6 +674,7 @@ getUnitChoices()                           // catálogo de unidades base
 | Zona | Hook | Endpoint | Naturaleza |
 |---|---|---|---|
 | KPIs, sidebar (Ahora/backlog/stock) | `useDashboardSummary` | `GET /api/v1/dashboard/summary/` | Live, cache 30s, polling 30s |
+| **Activación primer uso (`SetupChecklist`)** | `useActivation` | `GET /api/v1/dashboard/activation/` | Read-only, **existencia real** (sin flags), refetch en mount + `dashboard:refresh` (sin polling) |
 | **Agenda del día (`TodayAgendaList`)** | `useDayAppointments` | `GET /appointments/?date=YYYY-MM-DD` | Live, refetch al cambiar día + evento `dashboard:refresh` (ADR p35) |
 | Spark + Δ de ingresos (admin) | `useFinancialSeries` | `financial/series/` | Snapshot + hoy live |
 | Card "Analítica" | `useDashboardSeries` + `useFinancialSeries` | `operations/series/` + `financial/series/` | Snapshot + hoy live |
@@ -665,7 +688,27 @@ getUnitChoices()                           // catálogo de unidades base
 
 Sidebar (orden = urgencia): **Ahora** → **Citas por resolver** → **Pendientes clínicos** → **Stock crítico**.
 
-Columna principal: **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+Columna principal: **SetupChecklist** (solo si la activación está incompleta) → **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+
+### SetupChecklist (activación de primer uso)
+
+`components/dashboard/SetupChecklist.jsx` — guía a una clínica nueva con datos
+vacíos. Se monta al tope de la columna principal y **se oculta solo cuando los 4
+hitos están completos** (`activation.completed`). Reemplazó al `EmptyDashboard`
+(huérfano + CSS inexistente, **retirado**).
+
+- **Estado real, sin flags**: `useActivation` consume `GET /api/v1/dashboard/activation/`
+  (endpoint read-only, multi-tenant, `for_organization`); devuelve
+  `{has_patients, has_services, has_appointments, has_consultations, completed}`.
+  `has_patients` **excluye la mascota genérica** (`is_generic=False`). Nada de
+  `localStorage` ni onboarding por usuario.
+- **Orden de producto** (no reordenar sin justificar): pacientes → servicios →
+  cita → consulta.
+- **Gateado por capability** (no por rol): solo se renderiza si `can("service.create")`
+  — representa el acceso a la configuración inicial (un VET/ASISTENTE no ve CTAs a
+  lugares sin permiso, p.ej. `/config`). No existe una capability única dedicada a
+  "ajustes de la organización", por eso `service.create` es el proxy.
+- CTA "Importar Excel" gateado además por `can("import.create")`.
 
 ### Agenda del día (`TodayAgendaList`) — ADR p35
 
@@ -692,6 +735,34 @@ Mini-agenda operativa con navegación por día. Patrón **appointment cards** (N
   - **Conteos vs filas**: los conteos de cabecera (`ready`, `noDiag`) salen de los agregados exactos (`open_total`, `without_diagnosis`); las filas listadas vienen de `backlog.open_records[]` (cap 50 del backend), particionadas por `has_diagnosis`. Si el conteo exacto supera lo listado, se muestra overflow ("+N más"). Cada fila navega **directo** al registro con `navigate(\`/medical-records?record=${public_id}\`)` — **solo `public_id`**, nunca PK.
 - **Citas por resolver (`PendingFollowUp`)**: citas con fecha pasada aún en `scheduled`/`confirmed` (nadie las cerró/canceló/marcó no-asistió). Query a `status-breakdown` rango `hoy-30d → ayer`; el límite de filas es **visual (5)**, no del query (una cita perdida hace semanas no debe desaparecer). Las acciones (Atender / No asistió / Reprogramar) reutilizan `AppointmentQuickModal` (no crear modal nuevo).
 - **Terminología analítica**: usar **"No asistieron"** (no "No-show") y **"Conversión de citas"** (no "Embudo"). Cada gráfica lleva título + descripción que solo nombra lo que realmente grafica (la de actividad no menciona canceladas porque no las plotea).
+
+## Terminología de UI (glosario — fuente única, es-MX)
+
+Reglas de lenguaje del producto para una clínica veterinaria mexicana. Aplican al
+**texto visible** (labels, placeholders, toasts, títulos). **NO** cambian
+variables, modelos, permisos, keys ni endpoints (p.ej. `walk_in`, `Owner`, `Pet`,
+`Invoice` siguen igual en código/serializers).
+
+| Concepto | Término UI | Evitar |
+|---|---|---|
+| Persona que paga / contacto | **Cliente** (Nombre del cliente, Teléfono del cliente) | ~~Dueño~~, ~~Propietario~~ (eliminados de UI) |
+| Animal — contexto **administrativo** (listado, agenda, importación, cobros) | **Mascota** | — |
+| Animal — contexto **clínico** (consulta, historial médico) | **Paciente** | — |
+| Atención sin cita previa | **Atención sin cita** | ~~Walk-in~~ |
+| Documento de venta/pago | **Cobro** (mientras no haya facturación fiscal) | ~~Factura~~ |
+| Cierre de turno de caja | **Corte de caja** | ~~Corte Z~~, ~~Z-close~~ |
+| Correo | **Correo electrónico** / Correo | ~~Email~~ |
+| Métrica clínica del dashboard | **"Pacientes hoy"** (correcto — es clínica) | — |
+| Inventario | **Stock** (entendido en MX; consistente — no traducir) | — |
+| Analítica | **"No asistieron"**, **"Conversión de citas"** | ~~No-show~~, ~~Embudo~~ |
+
+Notas:
+- **Mascota/Paciente** es split por contexto, no sinónimos intercambiables: si la
+  pantalla es administrativa → Mascota; si es el acto clínico → Paciente.
+- La mascota genérica de walk-in se etiqueta en agenda como *"Atención sin mascota
+  registrada — vincular mascota"* (no "Paciente anónimo").
+- Deuda conocida (no clínica, fuera del piloto): `platform/createOrganization`
+  aún valida `"Username requerido."` (anglicismo "Username").
 
 ## Punto de Venta (`/pos`)
 
