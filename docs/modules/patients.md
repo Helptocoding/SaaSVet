@@ -31,9 +31,9 @@ Reglas de negocio:
 Campos:
 - `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre de la mascota
-- `species` — especie (valor de `SPECIES_CHOICES`)
+- `species` — especie (`SPECIES_CHOICES`). **Opcional** en captura manual: `''` = "pendiente" (la mascota sí tiene especie, solo no se capturó). Si se captura, debe ser válida. UI muestra "Pendiente". Ver Validaciones.
 - `breed` — raza (texto libre, opcional)
-- `birth_date` — fecha de nacimiento (obligatoria en el alta vía `PetSerializer`; **opcional** en el alta rápida vía `create-with-patient/` — ver Validaciones)
+- `birth_date` — fecha de nacimiento **opcional** en todos los caminos de alta (estándar, alta rápida e importador) — ver Validaciones
 - `sex` — choices: `male`, `female`, `unknown`
 - `color` — color (opcional, seleccion en frontend)
 - `owner` — FK a Owner (**PROTECT** desde PR-4B / ADR p16 — antes CASCADE)
@@ -72,16 +72,33 @@ Regex: `^\d{10}$`
 
 Solo digitos, exactamente 10. No se valida para propietarios con `is_generic = True`.
 
-### Fecha de nacimiento
+### Datos mínimos en captura manual (regla de producto piloto)
 
-Obligatoria en `PetSerializer` (alta estándar `/api/pets/`) para registros nuevos.
-El modelo mantiene `null=True` para no forzar migracion de datos historicos.
+Para que recepción capture tan rápido como en papel, el alta manual conserva solo
+los datos **necesarios para operar y contactar**; el resto es opcional y se
+completa después (misma filosofía que el importador: dato faltante ≠ error).
 
-**Divergencia por camino de alta:** el alta rápida `POST /api/appointments/create-with-patient/`
-trata `pet_birth_date` como **opcional** (`request.data.get('pet_birth_date') or None`) —
-crea la mascota sin fecha si no se envía. El importador (`apps/imports`) tampoco la exige.
-Solo el alta estándar vía `PetSerializer` la obliga. (Relevante para flujos de alta rápida
-donde el dueño no recuerda la fecha exacta.)
+| Campo | Alta estándar `/api/pets/` | Alta rápida `create-with-patient/` | Importador |
+|---|---|---|---|
+| `owner.name` | requerido | requerido | requerido |
+| `owner.phone` | **requerido** (10 díg) | **requerido** (10 díg) | opcional |
+| `pet.name` | requerido | requerido | requerido |
+| `pet.species` | opcional (`''`=pendiente) | opcional (`''`=pendiente) | opcional |
+| `pet.birth_date` | opcional | opcional | opcional |
+| `sex`, `breed`, `color` | opcionales | opcionales | opcionales |
+
+- **Especie**: `PetSerializer.validate_species` y `create-with-patient/` aceptan
+  vacío (`''`) → "pendiente"; si se envía un valor, debe pertenecer a
+  `SPECIES_CHOICES`. Los filtros/stats ya toleran especie vacía (la produce el
+  importador): `species=caninos|felinos` la excluyen; cuenta en `total`. UI
+  muestra "Pendiente" (no "Sin especie").
+- **Fecha de nacimiento**: opcional en los tres caminos. `PetSerializer.validate_birth_date`
+  acepta `None`; si viene, no puede ser futura. El modelo mantiene `null=True`.
+- **Teléfono — NO se relaja**: sigue requerido (10 díg) en ambos caminos manuales
+  (`OwnerSerializer.validate_phone`). Es la identificación del cliente
+  (recordatorios, WhatsApp futuro) y evita mezclar clientes homónimos en el dedup
+  `get_or_create(name, phone)`. La excepción de teléfono opcional vive **solo** en
+  el importador. Datos históricos sucios ≠ datos nuevos.
 
 ## Filtros disponibles (GET /api/pets/)
 

@@ -612,7 +612,7 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
             if (!quickPatient.ownerName.trim())            { toast.error("Nombre del dueño requerido"); return; }
             if (!/^\d{10}$/.test(quickPatient.ownerPhone)) { toast.error("Teléfono del dueño: 10 dígitos"); return; }
             if (!quickPatient.petName.trim())              { toast.error("Nombre de la mascota requerido"); return; }
-            if (!quickPatient.species)                     { toast.error("Especie requerida"); return; }
+            // Especie OPCIONAL (datos mínimos): '' => "pendiente". Ver modules/patients.md.
 
             setSaving(true);
             try {

@@ -293,7 +293,9 @@ def create_with_patient(request):
         errors['owner_phone'] = 'El teléfono debe tener exactamente 10 dígitos.'
     if not pet_name:
         errors['pet_name'] = 'El nombre de la mascota es requerido.'
-    if pet_species not in SPECIES_CHOICES:
+    # Especie OPCIONAL (datos mínimos): vacía => '' ("pendiente"). Si se captura,
+    # debe ser válida. Consistente con el alta manual de /pets (PetSerializer).
+    if pet_species and pet_species not in SPECIES_CHOICES:
         errors['pet_species'] = f'Especie inválida. Opciones: {", ".join(SPECIES_CHOICES)}'
     if not request.data.get('veterinarian'):
         errors['veterinarian'] = 'El veterinario es requerido.'

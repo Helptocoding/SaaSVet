@@ -59,14 +59,23 @@ class PetSerializer(serializers.ModelSerializer):
         read_only_fields = ['public_id', 'extra_data']
         extra_kwargs = {
             'legacy_id': {'required': False, 'allow_blank': True},
+            # Datos mínimos en alta manual (regla de producto piloto): la mascota
+            # solo exige nombre + dueño (nombre/teléfono). Especie y fecha de
+            # nacimiento son OPCIONALES y se completan después. El teléfono SIGUE
+            # requerido (ver OwnerSerializer.validate_phone). Ver modules/patients.md.
+            'species': {'required': False, 'allow_blank': True},
+            'birth_date': {'required': False, 'allow_null': True},
         }
 
     def validate_name(self, value):
         return _validate_name(value, "Nombre de la mascota")
 
     def validate_species(self, value):
+        # Especie OPCIONAL en captura manual: vacía => '' ("pendiente", se completa
+        # después). Mismo criterio que el importador y el registro rápido de citas.
+        # Si el usuario SÍ captura una especie, debe ser válida (SPECIES_CHOICES).
         if not value or not value.strip():
-            raise serializers.ValidationError("La especie es requerida.")
+            return ''
         if value.strip().lower() not in SPECIES_CHOICES:
             raise serializers.ValidationError(
                 f"Especie inválida. Opciones: {', '.join(SPECIES_CHOICES)}."
@@ -74,8 +83,10 @@ class PetSerializer(serializers.ModelSerializer):
         return value.strip().lower()
 
     def validate_birth_date(self, value):
+        # Fecha de nacimiento OPCIONAL (alineado con importador y registro rápido).
+        # Si viene un valor, no puede ser futura.
         if value is None:
-            raise serializers.ValidationError("La fecha de nacimiento es requerida.")
+            return None
         from datetime import date
         if value > date.today():
             raise serializers.ValidationError("La fecha de nacimiento no puede ser en el futuro.")

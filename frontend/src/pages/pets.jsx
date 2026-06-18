@@ -21,6 +21,10 @@ import { isCanino, isFelino, getAgeGroup } from "../utils/petFilters";
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
 
+// Especie puede quedar "pendiente" ('') en alta manual / importación: la mascota
+// SÍ tiene especie, solo no se capturó. Ver modules/patients.md.
+const speciesLabel = (s) => (s && s.trim() ? s : "Pendiente");
+
 const EMPTY_FORM = {
     name: "", species: "", breed: "", birth_date: "",
     sex: "unknown", color: "",
@@ -148,10 +152,15 @@ const PetModal = ({ form, setForm, editing, onSubmit, onClose, formErrors }) => 
                             <label className="form-label">NOMBRE *</label>
                             <input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ej: Max" />
                         </div>
+                    </div>
+                    <p style={{ fontSize: "11.5px", color: "var(--c-text-3)", margin: "2px 0 12px" }}>
+                        Lo demás es opcional — puedes completarlo después.
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                         <div className="form-group">
-                            <label className="form-label">ESPECIE *</label>
+                            <label className="form-label">ESPECIE</label>
                             <select className="select-input" value={form.species} onChange={e => setForm({ ...form, species: e.target.value })}>
-                                <option value="">Seleccionar especie</option>
+                                <option value="">Pendiente</option>
                                 {SPECIES_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
@@ -160,7 +169,7 @@ const PetModal = ({ form, setForm, editing, onSubmit, onClose, formErrors }) => 
                             <input className="input" value={form.breed} onChange={e => setForm({ ...form, breed: e.target.value })} placeholder="Ej: Labrador" />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">FECHA DE NACIMIENTO *</label>
+                            <label className="form-label">FECHA DE NACIMIENTO</label>
                             <BirthDatePicker
                                 value={form.birth_date}
                                 onChange={(dateStr) => setForm({ ...form, birth_date: dateStr })}
@@ -250,7 +259,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
                         {pet.name}
                     </h3>
                     <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {pet.species}{pet.breed ? ` · ${pet.breed}` : ""}
+                        {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ""}
                     </p>
                 </div>
                 {ageGroup && (
@@ -383,7 +392,7 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                             {pet.name}
                         </h3>
                         <p style={{ fontSize: "12.5px", color: "var(--c-text-2)", marginBottom: "7px" }}>
-                            {pet.species}{pet.breed ? ` · ${pet.breed}` : ""}
+                            {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ""}
                         </p>
                         <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
                             {age && <span className="badge badge-default">{age}</span>}
@@ -725,9 +734,9 @@ const Pets = () => {
         const nameRe = /^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ' -]+$/;
         if (!form.name.trim()) { toast.error("El nombre es obligatorio"); return; }
         if (!nameRe.test(form.name.trim())) { toast.error("El nombre solo puede contener letras, números, espacios, acentos y guiones"); return; }
-        if (!form.species) { toast.error("La especie es obligatoria"); return; }
-        if (!form.birth_date) { toast.error("La fecha de nacimiento es obligatoria"); return; }
-        if (new Date(form.birth_date) > new Date()) { toast.error("La fecha de nacimiento no puede ser en el futuro"); return; }
+        // Especie y fecha de nacimiento son OPCIONALES (datos mínimos): solo se
+        // valida la fecha cuando el usuario la captura. Ver modules/patients.md.
+        if (form.birth_date && new Date(form.birth_date) > new Date()) { toast.error("La fecha de nacimiento no puede ser en el futuro"); return; }
         if (!form.owner.name.trim()) { toast.error("El nombre del propietario es obligatorio"); return; }
         if (!nameRe.test(form.owner.name.trim())) { toast.error("El nombre del dueño solo puede contener letras, espacios y acentos"); return; }
         if (!form.owner.phone || form.owner.phone.length !== 10) { toast.error("El teléfono debe tener exactamente 10 dígitos"); return; }
@@ -1074,7 +1083,7 @@ const Pets = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            {pet.species}
+                                            {speciesLabel(pet.species)}
                                             {pet.breed && <span style={{ color: "var(--c-text-3)" }}> · {pet.breed}</span>}
                                         </td>
                                         <td>

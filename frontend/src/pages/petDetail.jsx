@@ -114,7 +114,7 @@ const PetDetail = () => {
                 <div>
                     <h1 className="page-title">{pet.name}</h1>
                     <p className="page-subtitle">
-                        {pet.species}{pet.breed ? ` · ${pet.breed}` : ""}
+                        {pet.species || "Pendiente"}{pet.breed ? ` · ${pet.breed}` : ""}
                         {pet.sex && pet.sex !== "unknown" ? ` · ${SEX_LABELS[pet.sex]}` : ""}
                         {calcAge(pet.birth_date) ? ` · ${calcAge(pet.birth_date)}` : ""}
                     </p>
@@ -161,7 +161,7 @@ const PetDetail = () => {
                         <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Datos de la mascota</p>
                         {[
                             ["Nombre", pet.name],
-                            ["Especie", pet.species],
+                            ["Especie", pet.species || "Pendiente"],
                             ["Raza", pet.breed || "—"],
                             ["Fecha de nac.", pet.birth_date ? formatDate(pet.birth_date) : "—"],
                             ["Edad", calcAge(pet.birth_date) || "—"],
