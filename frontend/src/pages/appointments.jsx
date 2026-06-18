@@ -610,8 +610,8 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
         if (!slot)          { toast.error("Selecciona un horario en el calendario"); return; }
 
         if (showQuickPatient) {
-            if (!quickPatient.ownerName.trim())            { toast.error("Nombre del dueño requerido"); return; }
-            if (!/^\d{10}$/.test(quickPatient.ownerPhone)) { toast.error("Teléfono del dueño: 10 dígitos"); return; }
+            if (!quickPatient.ownerName.trim())            { toast.error("Nombre del cliente requerido"); return; }
+            if (!/^\d{10}$/.test(quickPatient.ownerPhone)) { toast.error("Teléfono del cliente: 10 dígitos"); return; }
             if (!quickPatient.petName.trim())              { toast.error("Nombre de la mascota requerido"); return; }
             // Especie OPCIONAL (datos mínimos): '' => "pendiente". Ver modules/patients.md.
 
@@ -807,7 +807,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
             if (petItem) payload.pet = petItem.id;
 
             await onSave(payload);
-            toast.success('Walk-in registrado — consulta en progreso');
+            toast.success('Atención sin cita registrada — consulta en progreso');
         } catch (err) {
             handleFormError(err, setFormErrors);
         } finally {
@@ -820,7 +820,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
             <div className="modal modal-md" onClick={e=>e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
-                        <h3 style={{marginBottom:"4px"}}>Walk-in</h3>
+                        <h3 style={{marginBottom:"4px"}}>Atención sin cita</h3>
                         <p style={{fontSize:"12px",color:"var(--c-text-3)",margin:0}}>
                             Consulta inmediata — la cita se crea en estado "En consulta"
                         </p>
@@ -1192,7 +1192,7 @@ const Appointments = () => {
                     <button className="btn btn-primary btn-md"
                         style={{display:"flex",alignItems:"center",gap:"6px"}}
                         onClick={()=>setWalkInOpen(true)}>
-                        <Icon.Plus s={15} /> Walk-in
+                        <Icon.Plus s={15} /> Atención sin cita
                     </button>
                 )}
             </div>
@@ -1209,7 +1209,7 @@ const Appointments = () => {
                         body="Haz clic en un horario del calendario para agendar tu primera cita, o registra un paciente sin cita previa."
                         actions={[
                             can("appointment.create_walkin")
-                                ? { label: "Registrar walk-in", onClick: () => setWalkInOpen(true), variant: "primary" }
+                                ? { label: "Registrar atención sin cita", onClick: () => setWalkInOpen(true), variant: "primary" }
                                 : null,
                         ]}
                     />

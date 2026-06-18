@@ -30,8 +30,8 @@ const FLOW_TOGGLES = [
     },
     {
         key: "allow_anonymous_walkin",
-        label: "Permitir walk-in sin mascota registrada",
-        description: "Permite registrar una consulta sin seleccionar mascota, usando el paciente anónimo genérico.",
+        label: "Permitir atención sin cita (sin mascota registrada)",
+        description: "Permite registrar una consulta sin seleccionar mascota, usando la mascota anónima genérica.",
     },
     {
         key: "show_status_change_history",

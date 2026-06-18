@@ -26,7 +26,7 @@ const STEPS = [
     key: "has_appointments",
     icon: Icon.CalendarClock,
     title: "Agenda tu primera cita",
-    desc: "Programa una cita o registra un paciente sin cita (walk-in).",
+    desc: "Programa una cita o registra una atención sin cita previa.",
     actions: [{ label: "Ir a Citas", to: "/appointments", variant: "primary" }],
   },
   {
