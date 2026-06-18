@@ -102,7 +102,7 @@ const PetDetail = () => {
     if (!pet.breed) missingOptional.push("raza");
     if (!pet.sex || pet.sex === "unknown") missingOptional.push("sexo");
     if (!pet.color) missingOptional.push("color");
-    if (!pet.owner?.phone) missingOptional.push("teléfono del dueño");
+    if (!pet.owner?.phone) missingOptional.push("teléfono del cliente");
 
     return (
         <div>
@@ -186,7 +186,7 @@ const PetDetail = () => {
                         <ImportedDataSection items={pet.extra_data} />
                     </div>
                     <div className="card">
-                        <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Propietario</p>
+                        <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Cliente</p>
                         <div className="info-row">
                             <span className="info-row-label">Nombre</span>
                             <span className="info-row-value">{pet.owner?.name || "—"}</span>

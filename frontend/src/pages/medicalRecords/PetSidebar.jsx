@@ -146,7 +146,7 @@ const PetSidebar = ({
                 <span className={styles.sidebarSearchIcon}><Icon.Search /></span>
                 <input
                     className={styles.sidebarSearchInput}
-                    placeholder="Nombre, dueño, teléfono, expediente…"
+                    placeholder="Nombre, cliente, teléfono, expediente…"
                     value={query}
                     onChange={e => onQueryChange(e.target.value)}
                 />

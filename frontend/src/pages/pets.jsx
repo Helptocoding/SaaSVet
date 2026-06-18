@@ -199,12 +199,12 @@ const PetModal = ({ form, setForm, editing, onSubmit, onClose, formErrors }) => 
                     </div>
                     <hr className="divider" />
                     <p style={{ fontSize: "12.5px", fontWeight: "600", color: "var(--c-text-2)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                        Propietario
+                        Cliente
                     </p>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                         <div className="form-group">
                             <label className="form-label">NOMBRE *</label>
-                            <input className="input" value={form.owner.name} onChange={e => setForm({ ...form, owner: { ...form.owner, name: e.target.value } })} placeholder="Nombre del dueño" />
+                            <input className="input" value={form.owner.name} onChange={e => setForm({ ...form, owner: { ...form.owner, name: e.target.value } })} placeholder="Nombre del cliente" />
                         </div>
                         <div className="form-group">
                             <label className="form-label">TELÉFONO *</label>
@@ -299,7 +299,7 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
                 <Icon.User s={14} c="var(--c-text-3)" />
                 <div style={{ minWidth: 0 }}>
                     <p style={{ fontSize: "12.5px", fontWeight: "500", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {pet.owner?.name || "Sin propietario"}
+                        {pet.owner?.name || "Sin cliente"}
                     </p>
                     {pet.owner?.phone && (
                         <p style={{ fontSize: "11.5px", color: "var(--c-text-3)" }}>{pet.owner.phone}</p>
@@ -424,9 +424,9 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                         </div>
                     ) : (
                         <>
-                            {/* Propietario */}
+                            {/* Cliente */}
                             <section style={{ marginBottom: "22px" }}>
-                                <p style={sectionTitle}>Propietario</p>
+                                <p style={sectionTitle}>Cliente</p>
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                     <div style={{
                                         width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
@@ -738,8 +738,8 @@ const Pets = () => {
         // Especie y fecha de nacimiento son OPCIONALES (datos mínimos): solo se
         // valida la fecha cuando el usuario la captura. Ver modules/patients.md.
         if (form.birth_date && new Date(form.birth_date) > new Date()) { toast.error("La fecha de nacimiento no puede ser en el futuro"); return; }
-        if (!form.owner.name.trim()) { toast.error("El nombre del propietario es obligatorio"); return; }
-        if (!nameRe.test(form.owner.name.trim())) { toast.error("El nombre del dueño solo puede contener letras, espacios y acentos"); return; }
+        if (!form.owner.name.trim()) { toast.error("El nombre del cliente es obligatorio"); return; }
+        if (!nameRe.test(form.owner.name.trim())) { toast.error("El nombre del cliente solo puede contener letras, espacios y acentos"); return; }
         if (!form.owner.phone || form.owner.phone.length !== 10) { toast.error("El teléfono debe tener exactamente 10 dígitos"); return; }
         const payload = { ...form, birth_date: form.birth_date || null };
         try {
@@ -904,7 +904,7 @@ const Pets = () => {
                         className="input"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        placeholder="Nombre, raza, especie, dueño..."
+                        placeholder="Nombre, raza, especie, cliente..."
                         style={{ paddingLeft: "32px" }}
                     />
                 </div>
@@ -1068,7 +1068,7 @@ const Pets = () => {
                             <tr>
                                 <th>Mascota</th>
                                 <th>Especie / Raza</th>
-                                <th>Propietario</th>
+                                <th>Cliente</th>
                                 <th>Edad · Sexo</th>
                                 <th></th>
                             </tr>

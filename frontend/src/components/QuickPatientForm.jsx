@@ -30,7 +30,7 @@ const QuickPatientForm = ({ value, onChange, onCancel, disabled }) => {
                 Nuevo paciente
             </p>
 
-            <p style={sectionLbl}>Dueño</p>
+            <p style={sectionLbl}>Cliente</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
                 <div>
                     <label style={fldLbl}>Nombre *</label>

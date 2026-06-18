@@ -60,7 +60,7 @@ describe("PetSidebar (server-side)", () => {
         renderSidebar();
         await screen.findByText(/Luis Pérez/);
 
-        await user.type(screen.getByPlaceholderText(/Nombre, dueño/), "luis");
+        await user.type(screen.getByPlaceholderText(/Nombre, cliente/), "luis");
 
         await waitFor(() =>
             expect(searchPets).toHaveBeenCalledWith(expect.objectContaining({ query: "luis", page: 1 }))

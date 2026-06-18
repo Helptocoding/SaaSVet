@@ -125,7 +125,7 @@ describe("Mascotas — alta con datos mínimos", () => {
         await user.click(screen.getByRole("button", { name: /nueva mascota/i }));
 
         await user.type(screen.getByPlaceholderText("Ej: Max"), "Lola");
-        await user.type(screen.getByPlaceholderText("Nombre del dueño"), "Ana Soto");
+        await user.type(screen.getByPlaceholderText("Nombre del cliente"), "Ana Soto");
         await user.type(screen.getByPlaceholderText("10 dígitos"), "8112345678");
         // Especie se deja en "Pendiente" ('') y fecha vacía — no se tocan.
 
@@ -146,7 +146,7 @@ describe("Mascotas — alta con datos mínimos", () => {
 
         await user.click(screen.getByRole("button", { name: /nueva mascota/i }));
         await user.type(screen.getByPlaceholderText("Ej: Max"), "Lola");
-        await user.type(screen.getByPlaceholderText("Nombre del dueño"), "Ana Soto");
+        await user.type(screen.getByPlaceholderText("Nombre del cliente"), "Ana Soto");
         // Sin teléfono.
         await user.click(screen.getByRole("button", { name: /registrar mascota/i }));
 

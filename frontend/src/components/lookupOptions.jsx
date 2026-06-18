@@ -34,7 +34,7 @@ export const renderPetOption = (pet) => {
             </div>
             <div className={s.optBody}>
                 <div className={s.optName}>{pet.name}{pet.species ? ` · ${pet.species}` : ""}</div>
-                <div className={s.optSub}>{sub || "Sin datos del dueño"}</div>
+                <div className={s.optSub}>{sub || "Sin datos del cliente"}</div>
             </div>
         </div>
     );
