@@ -15,6 +15,7 @@ import { renderPetOption, petOptionLabel } from "../components/lookupOptions";
 import QuickPatientForm from "../components/QuickPatientForm";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import EmptyState from "../components/EmptyState";
 import api from "../api/client";
 
 import { apiError } from "../utils/apiError";
@@ -893,7 +894,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const Appointments = () => {
-    const { token, initializing, user } = useAuth();
+    const { token, initializing, user, can } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const formRef  = useRef(null);
@@ -1195,6 +1196,25 @@ const Appointments = () => {
                     </button>
                 )}
             </div>
+
+            {/* Empty state complementario — clínica sin citas. NO reemplaza el
+                calendario (queda debajo): guía a agendar haciendo clic en una celda
+                o a registrar un walk-in. */}
+            {appointments.length === 0 && (
+                <div className="card" style={{ marginBottom: "16px" }}>
+                    <EmptyState
+                        compact
+                        icon={Icon.CalendarClock}
+                        title="Tu agenda está vacía"
+                        body="Haz clic en un horario del calendario para agendar tu primera cita, o registra un paciente sin cita previa."
+                        actions={[
+                            can("appointment.create_walkin")
+                                ? { label: "Registrar walk-in", onClick: () => setWalkInOpen(true), variant: "primary" }
+                                : null,
+                        ]}
+                    />
+                </div>
+            )}
 
             {/* Main grid: calendar + sidebar */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 296px",gap:"16px",alignItems:"start"}}>

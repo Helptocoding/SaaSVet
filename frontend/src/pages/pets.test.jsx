@@ -22,7 +22,7 @@ vi.mock("../api/pets", () => ({
 vi.mock("../api/medicalRecords", () => ({ getMedicalRecords: vi.fn(() => Promise.resolve([])) }));
 vi.mock("../api/appointments", () => ({ getAppointments: vi.fn(() => Promise.resolve([])) }));
 vi.mock("../api/statusBreakdown", () => ({ getStatusBreakdown: vi.fn(() => Promise.resolve({ totals: {} })) }));
-vi.mock("../auth/authContext", () => ({ useAuth: () => ({ token: "tok", initializing: false }) }));
+vi.mock("../auth/authContext", () => ({ useAuth: () => ({ token: "tok", initializing: false, can: () => true }) }));
 vi.mock("../components/useConfirm", () => ({ useConfirm: () => () => Promise.resolve(true) }));
 vi.mock("react-router-dom", () => ({
     useNavigate: () => vi.fn(),
@@ -153,4 +153,25 @@ describe("Mascotas — alta con datos mínimos", () => {
         await waitFor(() => expect(toast.error).toHaveBeenCalled());
         expect(createPet).not.toHaveBeenCalled();
     }, 15000);
+});
+
+describe("Mascotas — empty state guiado", () => {
+  it("sin pacientes muestra título guiado + CTAs importar/agregar", async () => {
+    getPets.mockResolvedValue({ count: 0, next: null, previous: null, results: [] });
+    getPetStats.mockResolvedValue({ total: 0, caninos: 0, felinos: 0 });
+
+    render(<Pets />);
+
+    expect(
+      await screen.findByText("Todavía no tienes pacientes")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /importar excel/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /agregar paciente/i })).toBeInTheDocument();
+  });
+
+  it("con pacientes NO muestra el empty state", async () => {
+    render(<Pets />);
+    await screen.findByText("Mascota 1-0");
+    expect(screen.queryByText("Todavía no tienes pacientes")).toBeNull();
+  });
 });

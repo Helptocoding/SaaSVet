@@ -12,6 +12,7 @@ import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
 import StockEntryModal from "../components/StockEntryModal";
+import EmptyState from "../components/EmptyState";
 import s from "./inventory.module.css";
 import ProductCreationTour from "../features/inventory/tutorial/ProductCreationTour";
 import { useProductTour } from "../features/inventory/tutorial/useProductTour";
@@ -143,7 +144,7 @@ const SortHeader = ({ col, label, sortCol, sortDir, onSort, align = "left" }) =>
 
 // ── Component ──────────────────────────────────────────────
 const Inventory = () => {
-    const { token, user, initializing } = useAuth();
+    const { token, user, initializing, can } = useAuth();
     const confirm = useConfirm();
 
     const [products, setProducts] = useState([]);
@@ -854,12 +855,24 @@ const Inventory = () => {
 
             {/* ── Contenido: tabla o grid ── */}
             {filteredProducts.length === 0 ? (
-                <div className={s.listEmpty}>
-                    <span style={{ display: "block", textAlign: "center", opacity: 0.18 }}>
-                        <Icon.Frown s={32} />
-                    </span>
-                    <p>{searchText ? `Sin resultados para "${searchText}"` : "No hay productos registrados"}</p>
-                </div>
+                searchText ? (
+                    <EmptyState
+                        icon={Icon.Frown}
+                        title={`Sin resultados para "${searchText}"`}
+                        body="Prueba con otro nombre o código."
+                    />
+                ) : (
+                    <EmptyState
+                        icon={Icon.Package}
+                        title="Aún no tienes productos"
+                        body="Registra tu inventario para venderlo y descontar stock automáticamente."
+                        actions={[
+                            can("inventory.create")
+                                ? { label: "Agregar producto", onClick: () => openWizardCreate(), variant: "primary" }
+                                : null,
+                        ]}
+                    />
+                )
             ) : viewMode === "table" ? (
                 <div className={s.tableWrap}>
                     <table className={s.table}>

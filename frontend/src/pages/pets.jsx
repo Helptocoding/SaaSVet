@@ -9,6 +9,7 @@ import { getStatusBreakdown } from "../api/statusBreakdown";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import Pagination from "../components/Pagination";
+import EmptyState from "../components/EmptyState";
 import { DayPicker } from 'react-day-picker';
 import { es } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
@@ -599,7 +600,7 @@ const sectionTitle = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Pets = () => {
-    const { token, initializing } = useAuth();
+    const { token, initializing, can } = useAuth();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const confirm = useConfirm();
@@ -1022,16 +1023,26 @@ const Pets = () => {
 
             {/* Empty state */}
             {pets.length === 0 && !fetching && (
-                <div className="empty-state">
-                    {hasActiveFilters ? (
-                        <p className="empty-state-title">No se encontraron mascotas con esos filtros</p>
-                    ) : (
-                        <>
-                            <p className="empty-state-title">Aún no hay mascotas registradas</p>
-                            <p className="empty-state-sub">Usa el botón "Nueva Mascota" para comenzar</p>
-                        </>
-                    )}
-                </div>
+                hasActiveFilters ? (
+                    <EmptyState
+                        title="No se encontraron mascotas con esos filtros"
+                        body="Prueba con otro término de búsqueda o limpia los filtros."
+                    />
+                ) : (
+                    <EmptyState
+                        icon={Icon.PawPrint}
+                        title="Todavía no tienes pacientes"
+                        body="Agrega tus pacientes manualmente o importa tu archivo anterior."
+                        actions={[
+                            can("import.create")
+                                ? { label: "Importar Excel", onClick: () => navigate("/imports"), variant: "secondary" }
+                                : null,
+                            can("patient.create")
+                                ? { label: "Agregar paciente", onClick: () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true); }, variant: "primary" }
+                                : null,
+                        ]}
+                    />
+                )
             )}
 
             {/* Cards view */}
