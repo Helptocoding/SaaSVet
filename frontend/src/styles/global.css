@@ -254,9 +254,12 @@ button, input, select, textarea { font-family: inherit; }
 .page-subtitle { font-size: 13px; color: var(--c-text-2); margin-top: 3px; }
 
 /* ── Empty State ─────────────────────────────────────────── */
-.empty-state       { text-align: center; padding: 56px 24px; color: var(--c-text-3); }
-.empty-state-title { font-size: 14.5px; font-weight: 500; color: var(--c-text-2); margin-bottom: 6px; }
-.empty-state-sub   { font-size: 13px; }
+.empty-state         { text-align: center; padding: 56px 24px; color: var(--c-text-3); }
+.empty-state-compact { padding: 32px 20px; }
+.empty-state-title   { font-size: 14.5px; font-weight: 500; color: var(--c-text-2); margin-bottom: 6px; }
+.empty-state-sub     { font-size: 13px; max-width: 420px; margin-left: auto; margin-right: auto; }
+.empty-state-icon    { display: flex; justify-content: center; margin-bottom: 14px; opacity: 0.55; }
+.empty-state-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
 
 /* ── Timeline ────────────────────────────────────────────── */
 .timeline { position: relative; padding-left: 26px; }
