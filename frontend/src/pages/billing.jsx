@@ -560,7 +560,7 @@ const Billing = () => {
             const detail = await getInvoice(invoice.public_id);
             setSelectedInvoice(detail);
             setShowDetailModal(true);
-        } catch { toast.error("Error al cargar la factura"); }
+        } catch { toast.error("Error al cargar el cobro"); }
     };
 
     const closeDetailModal = () => {
@@ -574,7 +574,7 @@ const Billing = () => {
         setDownloadingInvoiceId(publicId);
         try {
             const { blob, contentDisposition } = await downloadInvoicePDF(publicId);
-            const filename = extractFilename(contentDisposition, "factura.pdf");
+            const filename = extractFilename(contentDisposition, "cobro.pdf");
             triggerDownload(blob, filename);
         } catch (err) { toast.error(apiError(err, "Error al descargar PDF")); }
         finally { setDownloadingInvoiceId(null); }
@@ -767,7 +767,7 @@ const Billing = () => {
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Paciente / Cliente</th>
+                                <th>Mascota / Cliente</th>
                                 <th>Tipo</th>
                                 <th>Estado</th>
                                 <SortHeader col="created_at" label="Fecha" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -833,8 +833,8 @@ const Billing = () => {
                         </div>
                         <div className="modal-body">
                             <div className={s.infoGrid}>
-                                <div><p className={s.infoLabel}>Paciente</p><p className={s.infoValue}>{selectedInvoice.pet_name}</p></div>
-                                <div><p className={s.infoLabel}>Propietario</p><p className={s.infoValue}>{selectedInvoice.owner_name}</p></div>
+                                <div><p className={s.infoLabel}>Mascota</p><p className={s.infoValue}>{selectedInvoice.pet_name}</p></div>
+                                <div><p className={s.infoLabel}>Cliente</p><p className={s.infoValue}>{selectedInvoice.owner_name}</p></div>
                                 <div><p className={s.infoLabel}>Fecha</p><p className={s.infoValue}>{formatDate(selectedInvoice.created_at)}</p></div>
                             </div>
 
