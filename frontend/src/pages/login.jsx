@@ -38,7 +38,7 @@ export default function Login() {
 
       <section className="login-right" aria-label="Formulario de inicio de sesión">
         <div className="login-card">
-          <h2 className="login-title" data-testid="login-title">Bienvenido de nuevo</h2>
+          <h2 className="login-title" data-testid="login-title">Ingresa a tu clínica</h2>
           <p className="login-subtitle">
             Inicia sesión para administrar tu clínica.
           </p>

@@ -71,7 +71,7 @@ const Staff = () => {
         if (!usernameRe.test(form.username.trim())) { toast.error("El usuario solo puede contener letras, números, puntos, guiones y guiones bajos"); return; }
         if (!form.first_name.trim()) { toast.error("El nombre es obligatorio"); return; }
         if (!nameRe.test(form.first_name.trim())) { toast.error("El nombre solo puede contener letras y espacios"); return; }
-        if (!form.email.trim()) { toast.error("El email es obligatorio"); return; }
+        if (!form.email.trim()) { toast.error("El correo electrónico es obligatorio"); return; }
         if (!form.password || form.password.length < 8) { toast.error("La contraseña debe tener al menos 8 caracteres"); return; }
         if (!/[A-Z]/.test(form.password)) { toast.error("La contraseña debe contener al menos una mayúscula"); return; }
         if (!/[0-9]/.test(form.password)) { toast.error("La contraseña debe contener al menos un número"); return; }
@@ -206,7 +206,7 @@ const Staff = () => {
                             <tr>
                                 <th>Nombre</th>
                                 <th>Usuario</th>
-                                <th>Email</th>
+                                <th>Correo</th>
                                 <th>Rol</th>
                                 <th>Especialidad</th>
                                 {isAdmin && <th></th>}
@@ -345,11 +345,11 @@ const Staff = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">EMAIL *</label>
+                                        <label className="form-label">CORREO ELECTRÓNICO *</label>
                                         <input
                                             type="email"
                                             className="input"
-                                            placeholder="email@ejemplo.com"
+                                            placeholder="correo@ejemplo.com"
                                             value={form.email}
                                             onChange={e => setForm({ ...form, email: e.target.value })}
                                         />

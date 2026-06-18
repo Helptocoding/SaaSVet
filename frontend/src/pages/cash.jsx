@@ -84,7 +84,7 @@ const Cash = () => {
                                 <td style={{ textAlign: "right", color: diffColor(s.difference), fontWeight: 500 }}>{money(s.difference)}</td>
                                 <td style={{ textAlign: "right" }}>
                                     <button className="btn btn-ghost btn-xs" onClick={() => setDetail(s)} disabled={s.status === "open"}>
-                                        Ver Z
+                                        Ver corte
                                     </button>
                                 </td>
                             </tr>
@@ -98,7 +98,7 @@ const Cash = () => {
                 <div className="modal-overlay" onClick={() => setDetail(null)}>
                     <div className="modal" style={{ maxWidth: "420px" }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Corte Z</h3>
+                            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>Corte de caja</h3>
                             <button className="modal-close" onClick={() => setDetail(null)}><Icon.X s={14} /></button>
                         </div>
                         <div className="modal-body">
