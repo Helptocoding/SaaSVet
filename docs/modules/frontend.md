@@ -278,10 +278,31 @@ export const updateMedicalRecord = async (token, id, data) => {
 
 - Base URL desde `VITE_API_URL`
 - Interceptor request: inyecta `Authorization: Bearer <token>` leyendo vía `tokenStorage.getItem("access_token")` (NO `localStorage` raw — ver `auth/tokenStorage.js`)
+- Interceptor request: inyecta `X-Request-ID` (uuid por request vía `utils/requestId.js`) si el caller no lo seteó — correlación end-to-end P1-5 A1 (el backend lo reusa en logs/Sentry/respuesta). No pisar un id ya provisto.
 - Interceptor response 401:
   - **Bypassa redirect** si el request fallido es el endpoint de login (`url` termina en `token/`). Sin esto, credenciales malas disparaban full page reload antes de que el toast del login se renderizara. Helper local `isLoginAttempt(config)`. Ver ADR p22.
   - Para 401 en cualquier otro endpoint: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada legítima).
 - Interceptor response 500+: alert global "Error del servidor".
+
+### Observabilidad de errores (P1-5 Fase A)
+
+> Runbook operativo completo: [`docs/runbooks/observability.md`](../runbooks/observability.md).
+
+- **`ErrorBoundary`** (`components/ErrorBoundary.jsx`) reporta a Sentry: en
+  `componentDidCatch` llama `Sentry.captureException(error, {contexts:{react:{componentStack}}})`,
+  guarda el `event_id` y lo muestra en el fallback ("Código de error: … compártelo
+  con soporte"). Ya no solo evita la pantalla blanca — el crash es visible para ops.
+  Envuelve root + cada ruta (`App.jsx`). Si Sentry no está inicializado (sin DSN), el
+  `event_id` no se muestra (degradación silenciosa).
+- **`Sentry.init`** (`main.jsx`): `environment` (`VITE_SENTRY_ENVIRONMENT`),
+  `release` (`VITE_SENTRY_RELEASE`) y `beforeSend = scrubEvent` (`utils/sentryScrub.js`).
+- **Privacidad** (`utils/sentryScrub.js`, espejo del backend): dropea `request.data`/
+  `cookies`, filtra headers sensibles (`Authorization`, `Cookie`, `X-Idempotency-Key`,
+  `X-CSRFToken`, `X-Api-Key`) y strip de PII del `user`. **Nunca** enviar PII
+  clínica/financiera a Sentry.
+- **Source maps**: `vite.config.js` emite `sourcemap: 'hidden'` y `@sentry/vite-plugin`
+  los sube solo con credenciales de upload (CI), luego los borra; el Dockerfile borra
+  los `.map` como safeguard. Sin minified stack traces en beta.
 
 ### Paginación de listas (ADR p42)
 
