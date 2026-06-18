@@ -1,0 +1,5 @@
+# P1-5 A4: @sentry/cli (dep transitiva de @sentry/vite-plugin) trae el binario
+# para subir los source maps a Sentry. Allowlist explícita de build scripts
+# (supply-chain): única dependencia con postinstall en el proyecto.
+allowBuilds:
+  '@sentry/cli': true

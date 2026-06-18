@@ -159,6 +159,12 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        # P1-5: tags de Sentry browser + upload de source maps (build-time).
+        VITE_SENTRY_ENVIRONMENT: ${ENVIRONMENT:-production}
+        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+        SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
     image: vet-frontend:capa1
     restart: unless-stopped
     networks: [internal]

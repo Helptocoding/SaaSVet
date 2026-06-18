@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from apps.core.views import healthz, readyz
+from apps.core.views import healthz, readyz, version
 from apps.dashboard.views import (
     dashboard_stats, analytics_health, operations_series, financial_series,
     dashboard_summary, dashboard_activation,
@@ -141,6 +141,8 @@ urlpatterns = [
     # No auth; never log to RBAC audit. Keep first so they short-circuit on cheap match.
     path('api/healthz/', healthz, name='healthz'),
     path('api/readyz/', readyz, name='readyz'),
+    # Build/version probe (P1-5) — qué commit/environment está corriendo.
+    path('api/version/', version, name='version'),
     # Rutas explícitas que colisionarían con el router deben ir ANTES del include del router
     path('api/organizations/settings/', OrganizationSettingsView.as_view()),
     path('api/organizations/me/', OrganizationMeView.as_view(), name='organization-me'),

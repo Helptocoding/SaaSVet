@@ -121,3 +121,23 @@ def readyz(request):
     except OperationalError:
         return JsonResponse({"status": "db_down"}, status=503)
     return JsonResponse({"status": "ready"})
+
+
+@csrf_exempt
+@require_safe
+def version(request):
+    """
+    Build/version probe (P1-5 Fase A — A5).
+
+    Responde qué está corriendo AHORA: commit y environment. Sirve para que,
+    cuando una clínica reporte un error, sepamos exactamente qué versión estaba
+    desplegada (correlaciona con el `release` tag de Sentry).
+
+    Público (sin auth) y barato como healthz: solo lee settings, no toca DB.
+    No expone secretos — solo el SHA del deploy y el environment.
+    """
+    return JsonResponse({
+        "version": getattr(settings, "APP_VERSION", "dev"),
+        "commit": getattr(settings, "GIT_SHA", "") or None,
+        "environment": getattr(settings, "ENVIRONMENT", "dev"),
+    })

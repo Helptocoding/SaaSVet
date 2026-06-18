@@ -43,13 +43,23 @@ rbac_logger = logging.getLogger("rbac.events")
 
 import uuid
 
+from apps.core.request_context import get_request_id
+
 
 def _get_request_id(request) -> str:
     """
-    ID de correlación por request — permite agrupar todos los eventos RBAC
-    de una misma petición HTTP en Railway logs o cualquier agregador.
-    Se genera una sola vez y se cachea en el objeto request.
+    ID de correlación por request — agrupa todos los eventos RBAC de una misma
+    petición HTTP.
+
+    P1-5 A1: reusa el request_id del RequestIDMiddleware (el mismo X-Request-ID
+    que viaja frontend → header → logs → Sentry → respuesta), de modo que exista
+    UN solo identificador por request en toda la observabilidad. El fallback al
+    uuid corto cacheado solo aplica si la petición no pasó por el middleware
+    (escenarios sin HTTP / tests que invocan el permission directo).
     """
+    rid = get_request_id()
+    if rid:
+        return rid
     if not hasattr(request, "_rbac_request_id"):
         request._rbac_request_id = uuid.uuid4().hex[:12]
     return request._rbac_request_id

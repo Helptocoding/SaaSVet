@@ -23,10 +23,17 @@ import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 _SENTRY_DSN = config('SENTRY_DSN', default='')
 if _SENTRY_DSN:
+    # P1-5 A2: scrubbing de privacidad — nunca enviar historial clínico, notas,
+    # teléfonos, emails, datos financieros ni tokens a Sentry. Importado dentro
+    # del guard para no cargar el módulo cuando Sentry está apagado (dev).
+    from apps.core.observability import before_send as _sentry_before_send
+
     sentry_sdk.init(
         dsn=_SENTRY_DSN,
         integrations=[DjangoIntegration()],
         send_default_pii=False,
+        # P1-5 A2: defensa en profundidad sobre send_default_pii.
+        before_send=_sentry_before_send,
         # Capa 7: traces_sample_rate env-driven. 0.05 = 5% en prod, default
         # razonable para mantener cuota Sentry sana sin perder visibilidad.
         # Dev/staging puede subir a 1.0 para debugging. Antes era 0.2
@@ -41,7 +48,9 @@ if _SENTRY_DSN:
         #   - SHA git corto del deploy (`git rev-parse --short HEAD`)
         #   - Build number CI
         #   - vacío en dev (sentry_sdk omite el tag si vacío)
-        release=config('SENTRY_RELEASE', default='') or None,
+        # P1-5 A5: fallback a GIT_SHA para que el release de Sentry coincida con
+        # lo que reporta /api/version/ sin tener que setear dos variables.
+        release=config('SENTRY_RELEASE', default='') or config('GIT_SHA', default='') or None,
     )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -50,6 +59,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ENVIRONMENT = config('ENVIRONMENT', default='dev')  # dev | staging | production
+# P1-5 A5: versión desplegada, expuesta por /api/version/ y usada como release
+# de Sentry. GIT_SHA lo setea el deploy con `git rev-parse --short HEAD`.
+GIT_SHA = config('GIT_SHA', default='')
+APP_VERSION = config('APP_VERSION', default=GIT_SHA or 'dev')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173', cast=lambda v: [s.strip() for s in v.split(',')])
 
@@ -124,6 +137,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # P1-5 A1: outermost — acuña/propaga el request_id para todo el ciclo,
+    # incluido el manejo de excepciones de las capas internas.
+    'apps.core.middleware.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -439,9 +455,17 @@ _LOG_HANDLERS = ['console'] if ENVIRONMENT == 'production' else ['console', 'fil
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    # P1-5 A1: inyecta request_id en cada record para correlación end-to-end.
+    # Adjuntado a TODOS los handlers para que ningún formatter que referencie
+    # {request_id} levante KeyError.
+    'filters': {
+        'request_id': {
+            '()': 'apps.core.logging.RequestIDLogFilter',
+        },
+    },
     'formatters': {
         'verbose': {
-            'format': '[{levelname}] {asctime} {module}: {message}',
+            'format': '[{levelname}] {asctime} {module} req={request_id}: {message}',
             'style': '{',
         },
         # JSON estructurado para eventos RBAC — una línea por evento
@@ -453,17 +477,20 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+            'filters': ['request_id'],
         },
         'file': {
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'django.log',
             'formatter': 'verbose',
+            'filters': ['request_id'],
             'delay': True,
         },
         # stdout — canal estándar en contenedores (Railway, Heroku, etc.)
         'rbac_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'rbac',
+            'filters': ['request_id'],
         },
     },
     'root': {

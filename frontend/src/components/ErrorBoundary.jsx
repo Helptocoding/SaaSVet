@@ -1,9 +1,10 @@
 import { Component } from "react";
+import * as Sentry from "@sentry/react";
 
 class ErrorBoundary extends Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null };
+        this.state = { hasError: false, error: null, eventId: null };
     }
 
     static getDerivedStateFromError(error) {
@@ -12,6 +13,13 @@ class ErrorBoundary extends Component {
 
     componentDidCatch(error, info) {
         console.error("[ErrorBoundary]", error, info.componentStack);
+        // P1-5 A3: reportar a Sentry con el componentStack y guardar el event_id
+        // para mostrárselo al usuario (lo cita al contactar soporte). Si Sentry
+        // no está inicializado, captureException devuelve un id local igualmente.
+        const eventId = Sentry.captureException(error, {
+            contexts: { react: { componentStack: info.componentStack } },
+        });
+        this.setState({ eventId });
     }
 
     render() {
@@ -40,9 +48,19 @@ class ErrorBoundary extends Component {
                     <h2 style={{ fontSize: "18px", fontWeight: "700", color: "var(--c-text, #1a1a1a)", margin: "0 0 8px" }}>
                         Algo salió mal
                     </h2>
-                    <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 24px" }}>
+                    <p style={{ fontSize: "13px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 16px" }}>
                         Ocurrió un error inesperado. Recarga la página o reporta el problema.
                     </p>
+                    {this.state.eventId && (
+                        <p style={{ fontSize: "12px", color: "var(--c-text-3, #8a8a7f)", margin: "0 0 24px" }}>
+                            Código de error:{" "}
+                            <code style={{ fontFamily: "monospace", fontWeight: "600" }}>
+                                {this.state.eventId}
+                            </code>
+                            <br />
+                            Compártelo con soporte para ayudarnos a resolverlo.
+                        </p>
+                    )}
                     <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
                         <button
                             onClick={() => window.location.reload()}
@@ -60,7 +78,7 @@ class ErrorBoundary extends Component {
                             Recargar página
                         </button>
                         <button
-                            onClick={() => this.setState({ hasError: false, error: null })}
+                            onClick={() => this.setState({ hasError: false, error: null, eventId: null })}
                             style={{
                                 padding: "9px 20px",
                                 background: "transparent",
