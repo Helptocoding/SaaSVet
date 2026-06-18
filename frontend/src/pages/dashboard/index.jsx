@@ -2,7 +2,9 @@ import { useMemo } from "react";
 import { useAuth } from "../../auth/authContext";
 import { useDashboardSummary } from "../../hooks/useDashboardSummary";
 import { useFinancialSeries } from "../../hooks/useFinancialSeries";
+import { useActivation } from "../../hooks/useActivation";
 import DashboardTopBar from "../../components/dashboard/DashboardTopBar";
+import SetupChecklist from "../../components/dashboard/SetupChecklist";
 import KpiStrip from "../../components/dashboard/KpiStrip";
 import TodayAgendaList from "../../components/dashboard/TodayAgendaList";
 import NowPanel from "../../components/dashboard/NowPanel";
@@ -87,6 +89,7 @@ function buildKpiItems(kpis, role) {
 const Dashboard = () => {
   const { user } = useAuth();
   const { data, loading, error, refetch } = useDashboardSummary();
+  const { activation } = useActivation();
   const { series: finSeries, today: finToday } = useFinancialSeries(7, true);
 
   const revenueToday = finToday?.metrics?.revenuePaid ?? null;
@@ -158,6 +161,8 @@ const Dashboard = () => {
 
       <div className="dash-grid">
         <main className="dash-main">
+          <SetupChecklist activation={activation} />
+
           <KpiStrip items={kpiItems} />
 
           <section className="card dash-timeline-card">

@@ -961,3 +961,20 @@
   .dash-grid    { padding: 24px 16px; }
   .dash-side    { grid-template-columns: 1fr; }
 }
+
+/* ─── Setup checklist (activación primer uso) ───────────────────────────── */
+.setup-checklist { margin-bottom: 18px; border: 1px solid var(--c-primary-light, var(--c-border)); }
+.setup-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.setup-title { font-size: 15px; font-weight: 700; color: var(--c-text); margin: 0 0 2px; }
+.setup-sub { font-size: 12.5px; color: var(--c-text-3); margin: 0; }
+.setup-progress { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--c-primary-dark, var(--c-primary)); background: var(--c-primary-light); border-radius: 999px; padding: 4px 12px; white-space: nowrap; }
+.setup-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.setup-step { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--c-border); border-radius: var(--r-md); }
+.setup-step.is-done { opacity: 0.7; }
+.setup-marker { flex-shrink: 0; width: 24px; display: flex; justify-content: center; }
+.setup-num { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: var(--c-subtle); color: var(--c-text-2); font-size: 12px; font-weight: 700; }
+.setup-body { flex: 1; min-width: 0; }
+.setup-step-title { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--c-text); }
+.setup-step.is-done .setup-step-title { color: var(--c-text-3); text-decoration: line-through; }
+.setup-step-desc { font-size: 12.5px; color: var(--c-text-3); margin: 4px 0 10px; }
+.setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -19,7 +19,7 @@ from django.urls import path, include
 from apps.core.views import healthz, readyz
 from apps.dashboard.views import (
     dashboard_stats, analytics_health, operations_series, financial_series,
-    dashboard_summary,
+    dashboard_summary, dashboard_activation,
 )
 from apps.users.views import (
     MeView,
@@ -171,6 +171,7 @@ urlpatterns = [
     path('api/v1/dashboard/operations/series/', operations_series),
     path('api/v1/dashboard/financial/series/', financial_series),
     path('api/v1/dashboard/summary/', dashboard_summary),
+    path('api/v1/dashboard/activation/', dashboard_activation),
     # Cross-tenant SaaS platform operations (ADR-16 / 2026-05-22).
     # Routes inside require IsPlatformOperator — distinct from /api/ tenant scope.
     path('api/platform/', include('apps.platform.urls')),
