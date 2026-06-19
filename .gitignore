@@ -24,6 +24,8 @@ venv/
 # Node
 node_modules/
 dist/
+# Stray vite build output (`--outDir dist-test`); not covered by `dist/`.
+frontend/dist-test/
 # Build-script approval lives in frontend/package.json (pnpm.onlyBuiltDependencies).
 # pnpm 10/11 auto-regenerates a frontend/pnpm-workspace.yaml stub on install; that
 # stub has no `packages:` and breaks pnpm 9 in CI ("packages field missing or empty").
