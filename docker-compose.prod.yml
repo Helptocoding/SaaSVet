@@ -85,7 +85,10 @@ services:
 
   release:
     build: *backend-build
-    image: vet-backend:capa1
+    # P1-6B: SHA-tagged for pointer rollback. deploy.sh exports IMAGE_TAG=<sha>
+    # at build + up; rollback.sh flips it to a previous tag (no rebuild). Default
+    # `latest` keeps a bare `docker compose up` working for the first manual boot.
+    image: vet-backend:${IMAGE_TAG:-latest}
     env_file: .env.prod
     command: ["/app/scripts/release.sh"]
     # Intentionally NOT depends_on redis: release runs migrate / collectstatic
@@ -102,7 +105,10 @@ services:
 
   backend:
     build: *backend-build
-    image: vet-backend:capa1
+    # P1-6B: SHA-tagged for pointer rollback. deploy.sh exports IMAGE_TAG=<sha>
+    # at build + up; rollback.sh flips it to a previous tag (no rebuild). Default
+    # `latest` keeps a bare `docker compose up` working for the first manual boot.
+    image: vet-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file: .env.prod
     command:
@@ -165,7 +171,7 @@ services:
         SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
         SENTRY_ORG: ${SENTRY_ORG:-}
         SENTRY_PROJECT: ${SENTRY_PROJECT:-}
-    image: vet-frontend:capa1
+    image: vet-frontend:${IMAGE_TAG:-latest}   # P1-6B: SHA-tagged (see backend note)
     restart: unless-stopped
     networks: [internal]
     deploy:

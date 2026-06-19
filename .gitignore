@@ -41,6 +41,11 @@ credentials.json
 *.key
 .credentials
 
+# Deploy state (P1-6B) — local pointer file written by scripts/deploy.sh on the
+# VPS (current/previous image tag + pre-deploy snapshot path). Host-specific,
+# never versioned.
+.deploy-state
+
 # Artefactos locales / experimentos (no proyecto)
 CON
 _pdf_preview/
