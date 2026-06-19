@@ -292,9 +292,12 @@ de source maps vía `@sentry/vite-plugin` (devDependency):
   los borra del `dist` (`filesToDeleteAfterUpload`).
 - `frontend/Dockerfile`: safeguard `find dist -name '*.map' -delete` post-build →
   ningún `.map` llega a nginx aunque el upload no haya corrido (no exponer el código).
-- `@sentry/cli` (dep transitiva, trae el binario de upload) está aprobado en
-  `frontend/pnpm-workspace.yaml` (`allowBuilds`). En CI/Docker su postinstall corre
-  durante `pnpm install`.
+- `@sentry/cli` (dep transitiva, trae el binario de upload) tiene su build script
+  aprobado en `frontend/package.json` → `pnpm.onlyBuiltDependencies: ["@sentry/cli"]`.
+  En CI/Docker su postinstall corre durante `pnpm install`. (Antes vivía en un
+  `frontend/pnpm-workspace.yaml` con un campo `allowBuilds` inexistente — pnpm lo
+  ignoraba y, sin `packages:`, pnpm 9 fallaba el install con "packages field missing
+  or empty". Se movió al campo real soportado por pnpm 9/10/11.)
 
 Pasar al build del frontend (build-time, **secretos solo en CI** — idealmente
 BuildKit `--secret`; nunca llegan al bundle ni al image runtime):
