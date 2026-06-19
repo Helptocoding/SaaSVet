@@ -182,10 +182,11 @@ Distincion funcional importante:
 
 ## Seleccion de mascota en el frontend
 
-El modal Nueva Consulta usa `SearchSelect` para la mascota:
-- filtra client-side sobre el array `pets` ya cargado para el sidebar (sin llamada extra)
-- el campo se deshabilita con placeholder "Cargando mascotas..." mientras `getPets()` no ha resuelto
-- el estado `isLoadingPets` controla esto
+La pantalla de Historial clínico (`medicalRecords/index.jsx`, orquestador) lista las
+mascotas en el sidebar izquierdo (`PetSidebar`) sobre el array `pets` ya cargado (sin
+llamada extra mientras `getPets()` no ha resuelto). Al elegir una mascota se abre su
+Timeline; "+ Nueva Consulta" monta `ConsultationForm` (single-screen). Ver
+`docs/modules/frontend.md` §estructura de `pages/medicalRecords/`.
 
 ## Filtros disponibles (GET /api/billing/services/)
 
@@ -390,17 +391,22 @@ Si la validación falla, retorna `400` con el campo afectado en formato estandar
 }
 ```
 
-El frontend mapea estos errores a steps específicos mediante `FIELD_TO_STEP`:
+El frontend (pantalla `ConsultationForm`, **single-screen**) mapea estos errores a la
+sección donde vive el campo, vía `FIELD_SECTION`, y hace scroll a esa sección al fallar
+el cierre:
 
 ```javascript
-const FIELD_TO_STEP = {
-  consultation_type: 1,
-  diagnosis: 1,
-  notes: 1,
-  treatment: 2,
-  weight: 2
+const FIELD_SECTION = {
+  consultation_type: "eval",
+  diagnosis: "eval",
+  notes: "eval",
+  treatment: "treat",
 };
 ```
+
+> Histórico: la consulta usaba un stepper de 4 pasos (`FIELD_TO_STEP`). Hoy es **una
+> sola pantalla** con secciones (Evaluación / Tratamiento / Cargos) + modal de vitales.
+> Ver `docs/modules/frontend.md` §`pages/medicalRecords/` (fuente canónica del frontend).
 
 Auditoría:
 - `status = closed`
@@ -465,35 +471,38 @@ const toNumberOrNull = (v) => {
 
 Esto maneja casos edge como `" "` (espacios) → `null`, `"0"` → `0` (válido).
 
-## Captura de signos vitales en el stepper
+## Captura de signos vitales (pantalla single-screen)
 
-Los signos vitales viven en el sidebar derecho del stepper y pueden editarse durante todo el flujo visual. Operativamente, el frontend los intenta persistir junto con el avance del stepper cuando detecta cambios.
+La consulta es **una sola pantalla** (`ConsultationForm`), no un stepper. Los signos
+vitales se muestran como chips siempre visibles en `ConsultationPatientBanner` (solo
+lectura) y se editan en `VitalsModal` (progressive disclosure). Ver
+`docs/modules/frontend.md` §`pages/medicalRecords/` (fuente canónica del frontend).
 
-```
-Paso 1: Diagnóstico → POST /medical-records/ → recordId creado
-Paso 2: Tratamiento + Receta
-  • Los vitales siguen visibles en el sidebar
-  • Si cambiaron respecto al ultimo snapshot enviado:
-      - PATCH /medical-records/{id}/ (sin weight — peso vive en VitalSigns)
-      - POST /medical-records/{id}/vitals/ (si hay campos llenos)
-Paso 3: Productos → ...
-Paso 4: Facturación → Cerrar
-```
+**Autosave**: el formulario autoguarda el borrador ~1s después de la última edición
+(`persistDraft({ silent: true })` con debounce), con indicador visible en el footer
+(Guardando… / Cambios guardados / No se pudo guardar). El borrador persiste server-side
+como `MedicalRecord` en estado `open` → **recuperable** al reabrir la consulta. El
+primer autosave **crea** el `MedicalRecord` (lazy, ligado a la cita si vino de "Atender
+ahora"); los siguientes hacen `PATCH` parcial.
 
-**Orden de escritura**:
-1. Primero se actualiza el `MedicalRecord`
-2. Luego se crean los `VitalSigns` si hay cambios y al menos un campo no-vacio
+**Orden de escritura por guardado** (mismo contrato de consistencia que antes):
+1. Primero se crea/actualiza el `MedicalRecord` (`POST` lazy la primera vez, luego `PATCH`).
+2. Luego se crean los `VitalSigns` si cambiaron (hash normalizado) y hay al menos un
+   campo no-vacío (`POST /medical-records/{id}/vitals/`; el peso **no** va en el PATCH
+   del MR — vive en `VitalSigns`).
+3. Luego la receta si cambió (hash).
 
-Si el paso 1 falla, los vitales no se guardan (consistencia atómica por orden, no por transacción DB).
-
-El frontend usa un hash normalizado para no duplicar registros identicos de vitales al avanzar entre pasos.
+Si el paso 1 falla, los vitales no se guardan (consistencia por orden, no por transacción DB).
+El hash evita duplicar registros idénticos de vitales en autosaves sucesivos.
 
 **Doble fuente de peso**:
 - `MedicalRecord.weight` — campo legacy, se mantiene por compatibilidad con datos históricos
 - `VitalSigns.weight` — fuente de verdad para signos vitales
-- En step 2, solo se envía `weight` a `createVitals()`, no a `updateMedicalRecord()`
+- Solo se envía `weight` a `createVitals()`, nunca a `updateMedicalRecord()`
 
-**Edición de consulta existente**: Al editar una consulta, el stepper precarga los vitales desde `initialRecord.latest_vitals`, con fallback a `initialRecord.weight` si no hay vitales registrados.
+**Edición de consulta existente**: al editar, `ConsultationForm` precarga los vitales
+desde `initialRecord.latest_vitals`, con fallback a `initialRecord.weight` si no hay
+vitales registrados.
 
 ## Registro de vacunas
 
