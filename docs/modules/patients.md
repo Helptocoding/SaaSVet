@@ -14,11 +14,14 @@ Es el punto de entrada a todos los flujos clinicos del sistema.
 Campos:
 - `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre del propietario
-- `phone` — telefono de contacto (10 digitos, solo Mexico)
+- `phone` — telefono de contacto (10 digitos en alta manual; `blank=True` a nivel modelo — ver excepción del importador abajo)
 - `is_generic` — marca al propietario sintetico "Publico General" creado por organizacion
+- `legacy_id` — identificador del sistema/clínica de origen (nº de cliente del software viejo), agregado en el Sprint import. `blank=True, default=''`. Único por organización **solo cuando está presente** (constraint parcial que excluye `''`). NO es PK ni reemplaza `public_id` — solo referencia. La UI lo muestra como "Número de expediente anterior", nunca "legacy_id".
+- `extra_data` — `JSONField(default=list, blank=True)`: datos históricos del sistema anterior (Sprint import Fase D, ADR p43). Lista de `{label, value, source_column, imported_at}`. **Read-only** (lo escribe solo el importador; `read_only` en el serializer). Ver § Datos del sistema anterior.
 
 Reglas de negocio:
-- telefono debe tener exactamente 10 digitos (validacion en serializer)
+- telefono debe tener exactamente 10 digitos en el alta/edición **manual** (validacion en `OwnerSerializer`)
+- **Excepción del importador (Sprint import):** el modelo declara `phone = blank=True`; el importador CSV/Excel (`apps/imports`) crea owners vía `Owner.save()` directo y puede dejar el teléfono vacío (archivos viejos sin teléfono). El `OwnerSerializer` sigue exigiendo 10 dígitos — la relajación vive **solo** en el importador, no en la API manual. Datos históricos sucios ≠ datos nuevos.
 - la validacion de telefono se omite cuando `is_generic = True`
 - existe un unico propietario generico por organizacion (constraint parcial en DB)
 - el propietario generico se crea automaticamente al crear la organizacion via signal
@@ -28,13 +31,15 @@ Reglas de negocio:
 Campos:
 - `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre de la mascota
-- `species` — especie (valor de `SPECIES_CHOICES`)
+- `species` — especie (`SPECIES_CHOICES`). **Opcional** en captura manual: `''` = "pendiente" (la mascota sí tiene especie, solo no se capturó). Si se captura, debe ser válida. UI muestra "Pendiente". Ver Validaciones.
 - `breed` — raza (texto libre, opcional)
-- `birth_date` — fecha de nacimiento (obligatoria para nuevos registros)
+- `birth_date` — fecha de nacimiento **opcional** en todos los caminos de alta (estándar, alta rápida e importador) — ver Validaciones
 - `sex` — choices: `male`, `female`, `unknown`
 - `color` — color (opcional, seleccion en frontend)
 - `owner` — FK a Owner (**PROTECT** desde PR-4B / ADR p16 — antes CASCADE)
 - `is_generic` — marca a la mascota genérica "Paciente Anónimo" de la organización
+- `legacy_id` — nº de expediente del sistema viejo (Sprint import). Mismo contrato que `Owner.legacy_id`: `blank=True, default=''`, único parcial por organización cuando está presente
+- `extra_data` — `JSONField(default=list, blank=True)`: datos históricos del sistema anterior (Sprint import Fase D, ADR p43). Mismo contrato que `Owner.extra_data` (lista read-only de `{label, value, source_column, imported_at}`). Ver § Datos del sistema anterior
 
 Existe exactamente una mascota genérica por organización (creada via signal junto al owner genérico).
 Se usa en walk-ins anónimos cuando `allow_anonymous_walkin = True` y no se envía `pet`.
@@ -67,20 +72,87 @@ Regex: `^\d{10}$`
 
 Solo digitos, exactamente 10. No se valida para propietarios con `is_generic = True`.
 
-### Fecha de nacimiento
+### Datos mínimos en captura manual (regla de producto piloto)
 
-Obligatoria en serializer para registros nuevos.
-El modelo mantiene `null=True` para no forzar migracion de datos historicos.
+Para que recepción capture tan rápido como en papel, el alta manual conserva solo
+los datos **necesarios para operar y contactar**; el resto es opcional y se
+completa después (misma filosofía que el importador: dato faltante ≠ error).
+
+| Campo | Alta estándar `/api/pets/` | Alta rápida `create-with-patient/` | Importador |
+|---|---|---|---|
+| `owner.name` | requerido | requerido | requerido |
+| `owner.phone` | **requerido** (10 díg) | **requerido** (10 díg) | opcional |
+| `pet.name` | requerido | requerido | requerido |
+| `pet.species` | opcional (`''`=pendiente) | opcional (`''`=pendiente) | opcional |
+| `pet.birth_date` | opcional | opcional | opcional |
+| `sex`, `breed`, `color` | opcionales | opcionales | opcionales |
+
+- **Especie**: `PetSerializer.validate_species` y `create-with-patient/` aceptan
+  vacío (`''`) → "pendiente"; si se envía un valor, debe pertenecer a
+  `SPECIES_CHOICES`. Los filtros/stats ya toleran especie vacía (la produce el
+  importador): `species=caninos|felinos` la excluyen; cuenta en `total`. UI
+  muestra "Pendiente" (no "Sin especie").
+- **Fecha de nacimiento**: opcional en los tres caminos. `PetSerializer.validate_birth_date`
+  acepta `None`; si viene, no puede ser futura. El modelo mantiene `null=True`.
+- **Teléfono — NO se relaja**: sigue requerido (10 díg) en ambos caminos manuales
+  (`OwnerSerializer.validate_phone`). Es la identificación del cliente
+  (recordatorios, WhatsApp futuro) y evita mezclar clientes homónimos en el dedup
+  `get_or_create(name, phone)`. La excepción de teléfono opcional vive **solo** en
+  el importador. Datos históricos sucios ≠ datos nuevos.
 
 ## Filtros disponibles (GET /api/pets/)
 
-- `search=<texto>` — busqueda por nombre (icontains, limite 20)
-- `owner=<id>` — filtrar por propietario (limite 20)
-- Combinables: `?search=luna&owner=3`
+Todos **server-side** (la página Mascotas escala a miles de registros sin
+descargar la tabla a memoria — ADR p44):
+
+- `search=<texto>` — nombre · especie · raza · `legacy_id` (nº expediente) ·
+  nombre del dueño · teléfono del dueño (todos `icontains`).
+- `species=caninos|felinos` — grupo de especie (regex tolerante a datos sucios de
+  importación: `perro|canino|dog` / `gato|felino|cat`).
+- `sex=male|female|unknown`.
+- `age=cachorro|joven|adulto|senior` — traducido a rangos de `birth_date`
+  (año = 365.25 días, coherente con `getAgeGroup` del frontend; `birth_date` NULL
+  queda fuera de todo bucket).
+- `owner=<public_id>` — filtrar por propietario (resuelto por UUID).
+- Combinables: `?search=luna&species=caninos&page=1`.
+
+### Paginación opt-in por `?page` (ADR p44)
+
+`PetViewSet` pagina **solo cuando el request trae `?page`** (PageNumber 25,
+`page_size` 25/50/100). Sin `?page` conserva el **contrato legacy de array
+plano** que consumen los dropdowns `SearchSelect` (citas, recetas, POS) y las
+listas client-side (`prescriptions`, `medicalRecords`) vía
+`.then(ps => ps.map(...))`:
+
+| Request | Respuesta |
+|---|---|
+| `GET /pets/?page=1[&filtros]` | Envelope `{count, next, previous, results}` (vista Mascotas) |
+| `GET /pets/?search=max` (sin page) | Array plano `[:20]` (dropdown) |
+| `GET /pets/` (sin page, sin filtro) | Array plano completo (listas client-side) |
+
+Romper este carve-out (paginar global) rompería 6 consumidores — mismo patrón
+que el `?search` de `OwnerViewSet`.
+
+### `GET /api/pets/stats/`
+
+Conteos agregados de **toda la clínica** (no de la página): `{total, caninos,
+felinos}` en UNA query agregada (sin N+1, sin traer filas). Alimenta los
+stat-cards de la página Mascotas cuando la lista pasa a paginada. Permiso
+`patient.list`. Tenant-scoped.
+
+### Anti-N+1
+
+El listado usa `select_related('owner')`: `PetSerializer` anida `OwnerSerializer`,
+así que sin el join serializar N mascotas costaría 1 + N queries. El nº de queries
+ya no escala con las filas (blindado en `test_pet_list_pagination.py`).
 
 ## Filtros disponibles (GET /api/owners/)
 
-- `search=<texto>` — busqueda por nombre (icontains, limite 20)
+- `search=<texto>` — busqueda por **nombre · teléfono · `legacy_id`** (icontains;
+  ADR p44b). Con clínicas importadas un cliente se diferencia por su teléfono o nº
+  de expediente, no solo el nombre (homónimos). Sin `?page` → array plano `[:20]`
+  (dropdown legacy); con `?page` → envelope paginado (habilita el "Ver más" de
+  `EntitySearch`). Misma lógica opt-in que `Pet` (ADR p44).
 - `is_generic=true/false` — filtrar propietario generico
 
 El frontend usa `?is_generic=true` para obtener el propietario "Publico General" al cargar la vista de cobros.
@@ -92,9 +164,10 @@ El frontend usa `?is_generic=false` en el buscador de propietarios para excluir 
 `{count, next, previous, results}`). Pero el path **`?search` NO se pagina**:
 `paginate_queryset` devuelve `None` cuando hay `search` → respuesta array plano
 `[:20]`, preservando el contrato de los dropdowns `SearchSelect` (que hacen
-`.map()` directo). Orden de paginación: `name, id`. **`Pet` NO se pagina**
-(la página Pacientes filtra/agrega KPIs client-side sobre la lista completa —
-diferido en DD-013).
+`.map()` directo). Orden de paginación: `name, id`. **`Pet` ahora también pagina
+(opt-in por `?page`, ADR p44)** — esto **supera** DD-013 ("Pet NO se pagina"),
+tomado tras importar una clínica con 1500 mascotas: el listado descargaba todo +
+N+1 de owner + filtraba en memoria. Ver § Filtros disponibles (GET /api/pets/).
 
 ## Permisos RBAC
 
@@ -108,7 +181,9 @@ diferido en DD-013).
 
 ## Indices de busqueda
 
-`Owner.name` y `Pet.name` tienen índice GIN trigram (`gin_trgm_ops`, extensión `pg_trgm`) desde Capa 2 (2026-05-26), para que la búsqueda `name__icontains` no haga seq scan por org. Requiere `django.contrib.postgres` en INSTALLED_APPS y la extensión `pg_trgm` en la DB (ver `DEPLOY_VPS_PLAN.md`). `phone` no se indexa (no hay búsqueda por teléfono).
+`Owner.name` y `Pet.name` tienen índice GIN trigram (`gin_trgm_ops`, extensión `pg_trgm`) desde Capa 2 (2026-05-26), para que la búsqueda `name__icontains` no haga seq scan por org. Requiere `django.contrib.postgres` en INSTALLED_APPS y la extensión `pg_trgm` en la DB (ver `DEPLOY_VPS_PLAN.md`).
+
+Desde ADR p44b (migración 0017) hay trigram también en **`Owner.phone`**, **`Owner.legacy_id`** y **`Pet.legacy_id`**, porque la búsqueda relacional (clientes por teléfono/expediente; mascotas por expediente) ahora hace `icontains` sobre esos campos. (Antes `phone` no se indexaba: no había búsqueda por teléfono.)
 
 ## Aislamiento multitenant
 
@@ -136,6 +211,49 @@ Es un flujo de mínimo viable para no interrumpir la agenda.
 - **Cobros**: `Invoice.owner` PROTECT obligatoria; `Invoice.pet` PROTECT nullable cuando `owner.is_generic = True`
 - **Vacunas**: `VaccineRecord.pet` es FK **PROTECT** (PR-4B) — ver modulo de historial clinico
 - **Recetas**: `Prescription.pet` es FK **PROTECT** (PR-4B) — ver modulo de prescripciones
+- **Importador** (`apps/imports`, Sprint import): crea `Owner` + `Pet` por lote desde CSV/Excel vía `.save()` directo (no pasa por los serializers manuales). Es la razón de `phone = blank=True` y de los campos `legacy_id`. Dedup por teléfono (owner) y por nombre normalizado (pet); teléfono y fecha de nacimiento opcionales en este camino.
+
+## Datos del sistema anterior (`extra_data`, Sprint import Fase D — ADR p43)
+
+`Owner.extra_data` y `Pet.extra_data` preservan las columnas del Excel/CSV que **no
+tienen un campo equivalente** en el modelo (ej. "Veterinario favorito", "Última
+estética", "Código viejo"). Es **dato histórico de migración**, NO custom fields:
+
+- **Forma**: lista ordenada de `{label, value, source_column, imported_at}`.
+  - `label` — nombre visible elegido durante la importación (renombrable en el mapeo).
+  - `value` — valor importado (texto plano; trim + cap 500 chars).
+  - `source_column` — nombre **original** de la columna del archivo. Renombrar el
+    `label` NO lo cambia → siempre se sabe de dónde vino el dato.
+  - `imported_at` — fecha del proceso de importación (ISO, una marca por job).
+- **Caps**: 50 entradas/registro, value 500, label 120, source_column 120.
+- **Read-only**: `read_only` en `OwnerSerializer`/`PetSerializer`. Lo escribe **solo**
+  el importador (`apps/imports`); la edición manual de la ficha lo ignora. Sin
+  endpoints de edición.
+- **No es queryable**: solo display (ficha del paciente, sección "Datos importados
+  del sistema anterior"). NO se usa en búsquedas, reportes ni reglas de negocio
+  (billing/analytics/caja nunca lo leen).
+- **Promoción a feature**: si varias clínicas necesitan un dato concreto, se crea una
+  feature real (modelo + validación + writer + migración desde `extra_data`); no se
+  introducen EAV ni campos dinámicos. Ver ADR p43.
+
+Sin `bleach`: texto plano + cap de longitud (React escapa al renderizar; el origen
+es Excel, no HTML).
+
+### Datos opcionales incompletos (post-importación, ADR p44d)
+
+Distinto de `extra_data`. Tras importar, una mascota puede quedar sin campos
+**opcionales** del modelo (fecha de nacimiento, especie, raza, sexo, color;
+teléfono del dueño). NO son errores ni bloquean — son normales en veterinaria.
+Estrategia **C+D**, sin alertas globales:
+
+- **C — resumen al importar** (`ResultStep`): agrega los warnings ("N mascotas sin
+  fecha de nacimiento", etc.), una sola vez.
+- **D — prompt suave en la ficha** (`petDetail`): botón discreto "Completar datos
+  (…)" cuando faltan opcionales → abre la edición vía `/pets?edit=<public_id>`
+  (la página Mascotas resuelve el `?edit` cargando la mascota por `public_id` y
+  abriendo el modal). Sin contador global ni "score de completitud".
+
+Requerido-para-operar (nombre) ≠ deseable (lo demás): nunca se tratan igual.
 
 ## Cascade lockdown (PR-4B / ADR p16)
 

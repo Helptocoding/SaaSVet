@@ -4,6 +4,7 @@ import { getPet } from "../api/pets";
 import { getMedicalRecords, getMedicalRecord } from "../api/medicalRecords";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import ImportedDataSection from "../components/ImportedDataSection";
 import api from "../api/client";
 
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
@@ -94,6 +95,15 @@ const PetDetail = () => {
 
     const canCreate = user?.role !== "ASSISTANT";
 
+    // Prompt suave de datos incompletos (estrategia D, ADR p44d): contextual en
+    // la ficha, NO una alerta global. Solo campos OPCIONALES — nunca bloquea.
+    const missingOptional = [];
+    if (!pet.birth_date) missingOptional.push("fecha de nacimiento");
+    if (!pet.breed) missingOptional.push("raza");
+    if (!pet.sex || pet.sex === "unknown") missingOptional.push("sexo");
+    if (!pet.color) missingOptional.push("color");
+    if (!pet.owner?.phone) missingOptional.push("teléfono del cliente");
+
     return (
         <div>
             {/* Back + Header */}
@@ -104,7 +114,7 @@ const PetDetail = () => {
                 <div>
                     <h1 className="page-title">{pet.name}</h1>
                     <p className="page-subtitle">
-                        {pet.species}{pet.breed ? ` · ${pet.breed}` : ""}
+                        {pet.species || "Pendiente"}{pet.breed ? ` · ${pet.breed}` : ""}
                         {pet.sex && pet.sex !== "unknown" ? ` · ${SEX_LABELS[pet.sex]}` : ""}
                         {calcAge(pet.birth_date) ? ` · ${calcAge(pet.birth_date)}` : ""}
                     </p>
@@ -151,7 +161,7 @@ const PetDetail = () => {
                         <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Datos de la mascota</p>
                         {[
                             ["Nombre", pet.name],
-                            ["Especie", pet.species],
+                            ["Especie", pet.species || "Pendiente"],
                             ["Raza", pet.breed || "—"],
                             ["Fecha de nac.", pet.birth_date ? formatDate(pet.birth_date) : "—"],
                             ["Edad", calcAge(pet.birth_date) || "—"],
@@ -163,9 +173,20 @@ const PetDetail = () => {
                                 <span className="info-row-value">{value}</span>
                             </div>
                         ))}
+                        {canCreate && missingOptional.length > 0 && (
+                            <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ marginTop: "12px", color: "var(--c-primary-dark)", gap: "6px" }}
+                                onClick={() => navigate(`/pets?edit=${pet.public_id}`)}
+                                title="Completar datos opcionales"
+                            >
+                                <Icon.Edit s={13} /> Completar datos ({missingOptional.join(", ")})
+                            </button>
+                        )}
+                        <ImportedDataSection items={pet.extra_data} />
                     </div>
                     <div className="card">
-                        <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Propietario</p>
+                        <p style={{ fontWeight: "600", marginBottom: "16px", fontSize: "13px" }}>Cliente</p>
                         <div className="info-row">
                             <span className="info-row-label">Nombre</span>
                             <span className="info-row-value">{pet.owner?.name || "—"}</span>
@@ -174,6 +195,7 @@ const PetDetail = () => {
                             <span className="info-row-label">Teléfono</span>
                             <span className="info-row-value">{pet.owner?.phone || "—"}</span>
                         </div>
+                        <ImportedDataSection items={pet.owner?.extra_data} />
                     </div>
                 </div>
             )}

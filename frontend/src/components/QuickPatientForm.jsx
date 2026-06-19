@@ -30,7 +30,7 @@ const QuickPatientForm = ({ value, onChange, onCancel, disabled }) => {
                 Nuevo paciente
             </p>
 
-            <p style={sectionLbl}>Dueño</p>
+            <p style={sectionLbl}>Cliente</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
                 <div>
                     <label style={fldLbl}>Nombre *</label>
@@ -70,7 +70,7 @@ const QuickPatientForm = ({ value, onChange, onCancel, disabled }) => {
                     />
                 </div>
                 <div>
-                    <label style={fldLbl}>Especie *</label>
+                    <label style={fldLbl}>Especie</label>
                     <select
                         className="select-input"
                         style={{ fontSize: '12px' }}
@@ -78,7 +78,7 @@ const QuickPatientForm = ({ value, onChange, onCancel, disabled }) => {
                         onChange={e => set('species', e.target.value)}
                         disabled={disabled}
                     >
-                        <option value="">Seleccionar</option>
+                        <option value="">Pendiente</option>
                         {SPECIES_OPTIONS.map(s => (
                             <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                         ))}

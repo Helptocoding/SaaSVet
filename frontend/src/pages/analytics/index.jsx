@@ -23,7 +23,7 @@ const FIN_SIDE = [
     { key: "invoices_paid_count", label: "Facturas cobradas", caption: "Tickets liquidados" },
 ];
 const OPS_SIDE = [
-    { key: "appointments_total", label: "Citas totales", caption: "Agendadas + walk-ins" },
+    { key: "appointments_total", label: "Citas totales", caption: "Agendadas + sin cita" },
     { key: "appointments_no_show", label: "No asistieron", caption: "Clientes que no llegaron" },
     { key: "medical_records_closed", label: "Consultas cerradas", caption: "Atenciones documentadas" },
 ];
@@ -226,7 +226,7 @@ const HeroBlock = ({ isFinancial, todayValue, todayMissing, sideMetrics, todayMe
     const heroLabel = isFinancial ? "Ingreso del día (cobrado)" : "Citas completadas";
     const heroCaption = isFinancial
         ? "Cash-basis en vivo. Suma de facturas con status='paid' cuya marca paid_at cae en hoy en hora local de la organización."
-        : "Atenciones marcadas como 'done'. Walk-ins incluidos. Anchor: start_datetime en hora local.";
+        : "Atenciones marcadas como 'done'. Atenciones sin cita incluidas. Anchor: start_datetime en hora local.";
 
     return (
         <motion.div

@@ -1,0 +1,699 @@
+/* ── Importador CSV/Excel ─────────────────────────────────────
+   Estilos modulares de la página /imports. Usa tokens globales
+   (tokens.css) + reutiliza clases globales (.card, .btn, .table…)
+   donde existen; aquí solo lo específico del wizard.
+──────────────────────────────────────────────────────────────── */
+
+/* ── Stepper ────────────────────────────────────────────────── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--c-text-3);
+}
+.stepNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-border-2);
+  background: var(--c-surface);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+.stepActive { color: var(--c-text); font-weight: 600; }
+.stepActive .stepNum {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+  color: #fff;
+}
+.stepDone .stepNum {
+  border-color: var(--c-success-border);
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+}
+.stepDone { color: var(--c-text-2); }
+.stepSep {
+  flex: 0 0 28px;
+  height: 1px;
+  background: var(--c-border);
+}
+
+/* ── Drop zone ──────────────────────────────────────────────── */
+.dropZone {
+  border: 2px dashed var(--c-border-2);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  padding: 44px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--t), background var(--t);
+}
+.dropZone:hover { border-color: var(--c-primary); background: var(--c-subtle); }
+.dropZoneOver {
+  border-color: var(--c-primary);
+  background: var(--c-primary-light);
+}
+.dropTitle { font-size: 15px; font-weight: 600; color: var(--c-text); margin-top: 12px; }
+.dropHint  { font-size: 12.5px; color: var(--c-text-3); margin-top: 6px; }
+
+.fileChip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-subtle);
+  min-width: 280px;
+  max-width: 100%;
+  width: fit-content;
+}
+.fileName { font-size: 13px; font-weight: 600; color: var(--c-text); }
+.fileMeta { font-size: 12px; color: var(--c-text-3); }
+.fileRemove {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-3);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t), color var(--t);
+  flex-shrink: 0;
+}
+.fileRemove:hover { background: var(--c-danger-bg); color: var(--c-danger-text); }
+.fileRemove:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Missing-required notice ────────────────────────────────── */
+.missingBox {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-warning-border);
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+  font-size: 13px;
+}
+.missingBox ul { margin: 6px 0 0; padding-left: 18px; }
+.missingBox li { margin-bottom: 2px; }
+
+/* ── Mapeo (Fase D, rediseño UX): "revisé unas cosas, no configuré una DB" ── */
+.summaryReady { color: var(--c-success-text); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.summaryWarn { color: var(--c-warning-text); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
+.btnWithIcon { display: inline-flex; align-items: center; gap: 5px; }
+.exIntro {
+  font-size: 13px; color: var(--c-text-2); line-height: 1.5;
+  margin: 0 0 12px; max-width: 640px;
+}
+
+/* Grid de cards compactas de columnas a revisar (desktop 3 / tablet 2 / mobile 1) */
+.colGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.colCard {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+.colCardPending { border-color: var(--c-warning-border); background: var(--c-warning-bg); }
+.colCardTitle {
+  font-weight: 600; font-size: 13.5px; color: var(--c-text);
+  margin: 0 0 6px; display: flex; align-items: center; gap: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.colCardWarn { color: var(--c-warning-text); flex-shrink: 0; display: inline-flex; }
+.colCardOk { color: var(--c-success-text); flex-shrink: 0; display: inline-flex; }
+.colCardName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.colCardExamples {
+  font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 10px;
+}
+.colCardDest { font-size: 13px; color: var(--c-text-2); margin: 0 0 6px; }
+.renameRow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.renameLabel { font-size: 12px; color: var(--c-text-3); }
+.renameInput {
+  flex: 1; font-size: 13px; padding: 4px 8px;
+  border: 1px solid var(--c-primary); border-radius: var(--r-sm); color: var(--c-text);
+}
+.renameBtn {
+  background: none; border: none; cursor: pointer; color: var(--c-text-3);
+  padding: 2px 4px; line-height: 0; opacity: 0.8; display: inline-flex;
+}
+.renameBtn:hover { opacity: 1; }
+.renameBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.changeLink {
+  font-size: 12.5px; background: none; border: none; padding: 2px 0;
+  color: var(--c-primary); cursor: pointer; text-align: left; font-weight: 500;
+}
+.changeLink:hover:not(:disabled) { text-decoration: underline; }
+.changeLink:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Sección compacta de reconocidas automáticamente */
+.readyBlock {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+.readyToggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--c-subtle); border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--c-text);
+}
+.readyToggle:hover { background: var(--c-border); }
+.readyToggleLabel { display: inline-flex; align-items: center; gap: 6px; color: var(--c-success-text); }
+.readyChevron {
+  font-size: 12px; color: var(--c-primary); font-weight: 500;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+/* Grid multi-columna: no se alarga al desplegar (4 filas → ~2 en desktop). */
+.readyList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1px; background: var(--c-border); border-top: 1px solid var(--c-border);
+}
+.readyRow {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 14px; background: var(--c-surface); font-size: 12.5px;
+  white-space: nowrap; overflow: hidden;
+}
+.readyCol {
+  font-weight: 600; color: var(--c-text);
+  overflow: hidden; text-overflow: ellipsis; max-width: 45%;
+}
+.readyArrow { color: var(--c-text-3); flex-shrink: 0; }
+.readyDest { color: var(--c-text-2); flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.readyRow .changeLink { flex-shrink: 0; }
+
+/* ── Modal selector de destino (DestinationPicker) ──────────── */
+.pickerOverlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.pickerModal { display: flex; flex-direction: column; max-height: 80vh; }
+.pickerBody { display: flex; flex-direction: column; overflow-y: auto; }
+.pickerExamples {
+  font-size: 12px; color: var(--c-text-3); font-family: var(--font-mono);
+  margin: 0 0 12px;
+}
+
+/* Acordeón de categorías: una abierta a la vez, se despliega hacia abajo. */
+.accordion {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--c-border); border-radius: var(--r-lg); overflow: hidden;
+}
+.accSection:not(:first-child) { border-top: 1px solid var(--c-border); }
+.accHeader {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: var(--c-surface); border: none; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; color: var(--c-text);
+}
+.accHeader:hover { background: var(--c-subtle); }
+.accIcon { display: inline-flex; color: var(--c-text-3); flex-shrink: 0; }
+.accName { flex: 1; text-align: left; }
+.accChevron { display: inline-flex; color: var(--c-text-3); flex-shrink: 0; }
+.accBody {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 4px 14px 14px; background: var(--c-subtle);
+  animation: accExpand 140ms ease;
+}
+/* Apertura sutil al cambiar de categoría (una se cierra, otra se abre). */
+@keyframes accExpand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .accBody { animation: none; }
+}
+.pickerOption {
+  text-align: left; font-size: 13px; padding: 9px 12px;
+  border: 1px solid var(--c-border); border-radius: var(--r-md);
+  background: var(--c-surface); color: var(--c-text); cursor: pointer;
+  transition: border-color var(--t), background var(--t);
+}
+.pickerOption:hover:not(:disabled) { border-color: var(--c-primary); }
+.pickerOption:disabled { opacity: 0.45; cursor: not-allowed; }
+.pickerOptionActive { border-color: var(--c-primary); background: var(--c-primary-light); font-weight: 600; }
+.pickerOptionGhost { border-style: dashed; color: var(--c-text-2); }
+.pickerTaken { font-size: 11px; color: var(--c-text-3); }
+
+/* ── Preview summary ────────────────────────────────────────── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.sumCard {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-xs);
+}
+.sumValue { font-size: 26px; font-weight: 700; line-height: 1; color: var(--c-text); font-family: var(--font-mono); }
+.sumLabel { font-size: 12px; color: var(--c-text-3); margin-top: 6px; }
+.sumValueDanger  { color: var(--c-danger-text); }
+.sumValueWarning { color: var(--c-warning-text); }
+.sumValueSuccess { color: var(--c-success-text); }
+
+.summaryLine {
+  font-size: 14px;
+  color: var(--c-text-2);
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+
+/* ── Issues table (errors / warnings) ───────────────────────── */
+.issuesTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 18px 0 8px;
+}
+.rowNum { font-family: var(--font-mono); color: var(--c-text-3); white-space: nowrap; }
+.fieldLabel { color: var(--c-text-2); }
+
+/* ── Footer actions ─────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.actionsRight { display: flex; gap: 8px; margin-left: auto; }
+
+/* ── Result hero ────────────────────────────────────────────── */
+.resultHero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.resultIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+  flex-shrink: 0;
+}
+.resultTitle { font-size: 18px; font-weight: 700; color: var(--c-text); }
+.resultSub   { font-size: 13px; color: var(--c-text-3); margin-top: 2px; }
+
+.incompleteList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--c-text);
+}
+
+.incompleteList li strong {
+  color: var(--c-warning-text, #92400e);
+}
+
+/* ── Barra de estado horizontal (tipo GitHub checks) ─────────── */
+.statusBar {
+  padding: 18px 20px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 18px;
+}
+.statusBarTitle {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--c-text);
+  margin-bottom: 2px;
+}
+.statusBarSub {
+  font-size: 12.5px;
+  color: var(--c-text-2);
+  margin-bottom: 12px;
+}
+.statusPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.pillIcon { font-size: 13px; }
+.pillExtra { font-weight: 400; opacity: 0.7; }
+.pillSuccess {
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+}
+.pillMuted {
+  background: var(--c-subtle);
+  color: var(--c-text-3);
+}
+.pillWarn {
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+}
+.pillDanger {
+  background: var(--c-danger-bg);
+  color: var(--c-danger-text);
+}
+.pillInfo {
+  background: var(--c-info-bg, #e0f2fe);
+  color: var(--c-info-text, #0369a1);
+}
+
+/* ── Secciones colapsables comunes ─────────── */
+.section {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.sectionMuted {
+  border-color: var(--c-border);
+  background: transparent;
+}
+.sectionToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.sectionToggle:hover { background: var(--c-subtle); }
+.sectionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.iconDanger {
+  background: var(--c-danger-bg);
+  color: var(--c-danger-text);
+}
+.iconInfo {
+  background: var(--c-info-bg, #e0f2fe);
+  color: var(--c-info-text, #0369a1);
+}
+.sectionLabel { flex: 1; text-align: left; }
+.sectionChevron {
+  font-size: 10px;
+  color: var(--c-text-3);
+  flex-shrink: 0;
+}
+
+/* ── Conflicto cards (posibles duplicados) se mantienen igual ── */
+.conflictIntro {
+  font-size: 12.5px;
+  color: var(--c-text-3);
+  margin: 0 0 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.conflictCard {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-subtle);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.conflictRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.conflictNum {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+}
+.conflictCompare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.conflictSide {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  padding: 10px 12px;
+}
+.conflictSideLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.conflictSideValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.conflictSideMeta {
+  font-size: 12px;
+  color: var(--c-text-3);
+  margin-top: 2px;
+}
+.conflictHint {
+  font-size: 12px;
+  color: var(--c-warning-text);
+  margin: 0 0 8px;
+}
+.conflictLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-primary);
+  text-decoration: none;
+}
+.conflictLink:hover { text-decoration: underline; }
+
+/* ── Collapse blocks (genérico para conflictos) ── */
+.collapseBlock {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.collapseToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  background: var(--c-subtle);
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.collapseToggle:hover { background: var(--c-border); }
+.collapseIcon { font-size: 15px; flex-shrink: 0; }
+.collapseLabel { flex: 1; text-align: left; }
+.collapseChevron { font-size: 10px; color: var(--c-text-3); flex-shrink: 0; }
+.collapseBody { padding: 14px; border-top: 1px solid var(--c-border); }
+
+/* ── Panel de revisión tipo inbox ─────────── */
+.reviewPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 12px;
+  min-height: 200px;
+  overflow: hidden;
+}
+.reviewSidebar {
+  border-right: 1px solid var(--c-border);
+  background: var(--c-subtle);
+  padding: 10px 0;
+  overflow-y: auto;
+}
+.reviewSection {
+  padding: 0;
+}
+.reviewSection + .reviewSection {
+  border-top: 1px solid var(--c-border);
+  padding-top: 6px;
+  margin-top: 6px;
+}
+.reviewSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.reviewBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bulletDanger { background: var(--c-danger-text); }
+.bulletMuted { background: var(--c-text-3); }
+.reviewItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--c-text);
+  text-align: left;
+}
+.reviewItem:hover { background: var(--c-border); }
+.reviewItemActive {
+  background: var(--c-surface);
+  border-left: 3px solid var(--c-primary);
+  padding-left: 11px;
+}
+.reviewItemName { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reviewItemCount {
+  font-size: 11.5px;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* ── Panel derecho (detalle) ─────────── */
+.reviewDetail {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.reviewDetailEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--c-text-3);
+}
+.reviewDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.reviewDetailIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.iconDanger { background: var(--c-danger-bg); color: var(--c-danger-text); }
+.iconInfo { background: var(--c-info-bg, #e0f2fe); color: var(--c-info-text, #0369a1); }
+.reviewDetailTitle { font-size: 15px; font-weight: 600; color: var(--c-text); }
+.reviewDetailSub { font-size: 12px; color: var(--c-text-3); margin-top: 2px; }
+.reviewDetailDivider {
+  height: 1px;
+  background: var(--c-border);
+  margin: 14px 0;
+}
+.reviewDetailAction {
+  font-size: 13px;
+  color: var(--c-text-2);
+  line-height: 1.5;
+}
+.reviewDetailExamplesLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+.reviewDetailExampleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+  padding: 3px 0;
+}
+.reviewDetailExampleNum {
+  font-family: var(--font-mono);
+  color: var(--c-text-3);
+  flex-shrink: 0;
+  min-width: 36px;
+}
+.reviewDetailExampleMsg { color: var(--c-text-2); }
+.reviewDetailMore { font-size: 11.5px; color: var(--c-text-3); margin-top: 4px; }
+
+/* ── Consequence + CTA ─────────── */
+.consequence { font-size: 12.5px; color: var(--c-text-2); margin: 0; line-height: 1.5; }
+.ctaBlocked { font-size: 12.5px; color: var(--c-danger-text); font-weight: 500; }
+
+/* ── Variante advertencia para conflictos de expediente ── */
+.collapseBlockWarn { border-color: var(--c-warning-border); }
+.collapseBlockWarn .collapseToggle { background: var(--c-warning-bg); }

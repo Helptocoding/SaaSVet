@@ -7,6 +7,7 @@ import { toList } from "../utils/toList";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import ChangePasswordForm from "../components/ChangePasswordForm";
+import EmptyState from "../components/EmptyState";
 import { toast } from "sonner";
 
 const EMPTY_SERVICE = { name: "", description: "", base_price: "", is_active: true };
@@ -29,8 +30,8 @@ const FLOW_TOGGLES = [
     },
     {
         key: "allow_anonymous_walkin",
-        label: "Permitir walk-in sin mascota registrada",
-        description: "Permite registrar una consulta sin seleccionar mascota, usando el paciente anónimo genérico.",
+        label: "Permitir atención sin cita (sin mascota registrada)",
+        description: "Permite registrar una consulta sin seleccionar mascota, usando la mascota anónima genérica.",
     },
     {
         key: "show_status_change_history",
@@ -45,7 +46,7 @@ const FLOW_TOGGLES = [
 ];
 
 const Config = () => {
-    const { token, user, initializing } = useAuth();
+    const { token, user, initializing, can } = useAuth();
     const confirm = useConfirm();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -252,10 +253,16 @@ const Config = () => {
                 </div>
 
                 {services.length === 0 ? (
-                    <div className="empty-state" style={{ padding: "32px 20px" }}>
-                        <p className="empty-state-title">No hay servicios definidos todavía.</p>
-                        <p className="empty-state-sub">Agrega servicios para usarlos en facturas.</p>
-                    </div>
+                    <EmptyState
+                        compact
+                        title="Define los servicios que cobras"
+                        body="Consulta, vacunación, cirugía… los usarás al facturar una consulta o venta."
+                        actions={[
+                            can("service.create")
+                                ? { label: "Nuevo servicio", onClick: () => { setEditingService(null); setForm(EMPTY_SERVICE); setShowModal(true); }, variant: "primary" }
+                                : null,
+                        ]}
+                    />
                 ) : (
                     <div style={{ display: "grid", gap: "8px" }}>
                         {services.map(svc => (

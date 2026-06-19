@@ -3,6 +3,11 @@ import api from "./client";
 export const getPets = (params = {}) =>
     api.get("pets/", { params }).then(r => r.data);
 
+// Conteos agregados de toda la clínica (total/caninos/felinos) — server-side,
+// una query. Alimenta los stat-cards de /pets cuando la lista se pagina.
+export const getPetStats = () =>
+    api.get("pets/stats/").then(r => r.data);
+
 export const getPet = async (id) => {
     const res = await api.get(`pets/${id}/`);
     return res.data;

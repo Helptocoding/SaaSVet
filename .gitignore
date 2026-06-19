@@ -24,6 +24,11 @@ venv/
 # Node
 node_modules/
 dist/
+# Build-script approval lives in frontend/package.json (pnpm.onlyBuiltDependencies).
+# pnpm 10/11 auto-regenerates a frontend/pnpm-workspace.yaml stub on install; that
+# stub has no `packages:` and breaks pnpm 9 in CI ("packages field missing or empty").
+# Ignore it so the regenerated file is never committed.
+frontend/pnpm-workspace.yaml
 
 # Local junk / QA / design assets
 nul
@@ -40,6 +45,11 @@ credentials.json
 *.pem
 *.key
 .credentials
+
+# Deploy state (P1-6B) — local pointer file written by scripts/deploy.sh on the
+# VPS (current/previous image tag + pre-deploy snapshot path). Host-specific,
+# never versioned.
+.deploy-state
 
 # Artefactos locales / experimentos (no proyecto)
 CON

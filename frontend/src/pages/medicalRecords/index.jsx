@@ -10,7 +10,7 @@ import {
 } from "../../api/medicalRecords";
 import { createPrescription, downloadPrescriptionPDF } from "../../api/prescriptions";
 import { extractFilename, triggerDownload } from "../../utils/downloadBlob";
-import { getPets } from "../../api/pets";
+import { getPet } from "../../api/pets";
 import { getProducts } from "../../api/inventory";
 import { updateAppointmentStatus } from "../../api/appointments";
 import { useAuth } from "../../auth/authContext";
@@ -48,8 +48,6 @@ const MedicalRecords = () => {
   const location = useLocation();
 
   const [records,          setRecords]          = useState([]);
-  const [pets,             setPets]             = useState([]);
-  const [isLoadingPets,    setIsLoadingPets]    = useState(true);
   const [products,         setProducts]         = useState([]);
   const productMap = useMemo(() => {
     const map = {};
@@ -62,11 +60,10 @@ const MedicalRecords = () => {
   const [totalPages,       setTotalPages]       = useState(1);
 
   const [selectedPet,      setSelectedPet]      = useState("");
+  const [selectedPetObj,   setSelectedPetObj]   = useState(null);
   const [typeFilter,       setTypeFilter]       = useState("all");
-  const [petSearch,        setPetSearch]        = useState("");
   const [historySearch,    setHistorySearch]    = useState("");
   const [expandedId,       setExpandedId]       = useState(null);
-  const [petCounts,        setPetCounts]        = useState({});
 
   const [showStepper,      setShowStepper]      = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -83,16 +80,14 @@ const MedicalRecords = () => {
   useEffect(() => { if (token) loadRecords(); }, [selectedPet, page, token]);
 
   useEffect(() => {
-    if (!selectedPet || pets.length === 0) return;
-    if (!pets.some(p => String(p.public_id) === String(selectedPet))) setSelectedPet("");
-  }, [selectedPet, pets]);
-
-  useEffect(() => {
     const petParam = searchParams.get("pet");
     const appointmentParam = searchParams.get("appointment");
     const recordParam = searchParams.get("record");
     if (petParam) {
       setSelectedPet(petParam);
+      // Deep-link: resolvemos el objeto de la mascota por public_id (ya no hay
+      // lista completa en memoria de la que sacarlo).
+      getPet(petParam).then(setSelectedPetObj).catch(() => {});
       if (appointmentParam) {
         // Flujo "Atender ahora": el stepper crea el MedicalRecord (lazy). Hay
         // que ligarlo a la cita para que, al finalizar, la cita pase a done
@@ -118,36 +113,24 @@ const MedicalRecords = () => {
         if (r?.public_id) {
           setExpandedId(r.public_id);
           // Día 6 B1: pet_public_id viene del serializer del MR
-          if (r.pet_public_id) setSelectedPet(String(r.pet_public_id));
+          if (r.pet_public_id) {
+            setSelectedPet(String(r.pet_public_id));
+            getPet(r.pet_public_id).then(setSelectedPetObj).catch(() => {});
+          }
         }
       }).catch(() => {});
     }
   }, [searchParams, token, location.state]);
 
   const loadAllData = async () => {
-    setIsLoadingPets(true);
-    try {
-      const petsData = await getPets();
-      setPets(normalizeList(petsData));
-    } catch { setPets([]); }
-    finally { setIsLoadingPets(false); }
-
+    // El sidebar busca mascotas server-side (ya NO se carga la lista completa, ni
+    // todos los medical records para contar — eso no escalaba con clínicas
+    // importadas de miles de pacientes). Aquí solo el catálogo de productos para
+    // el stepper de consulta.
     try {
       const prodsData = await getProducts({ active: "true" });
       setProducts(normalizeList(prodsData));
     } catch { setProducts([]); }
-
-    try {
-      const allData = await getMedicalRecords(token, { page_size: 9999 });
-      const allList = normalizeList(allData);
-      const counts = {};
-      // Día 6 B1: keyear por pet_public_id (UUID) alineado con PetSidebar
-      allList.forEach(r => {
-        const key = r.pet_public_id;
-        if (key) counts[key] = (counts[key] || 0) + 1;
-      });
-      setPetCounts(counts);
-    } catch { /* carga best-effort; no bloquea la UI */ }
 
     setLoading(false);
   };
@@ -185,10 +168,13 @@ const MedicalRecords = () => {
     );
   }, [filteredByType, historySearch]);
 
-  const petInfo = selectedPet ? pets.find(p => String(p.public_id) === String(selectedPet)) : null;
+  const petInfo = selectedPetObj;
 
-  const handleSelectPet = (petId) => {
-    setSelectedPet(String(petId));
+  const handleSelectPet = (pet) => {
+    // El sidebar entrega el objeto completo de la mascota (de su búsqueda
+    // server-side) → lo guardamos para el header/consulta sin un GET extra.
+    setSelectedPet(String(pet.public_id));
+    setSelectedPetObj(pet);
     setPage(1);
     setExpandedId(null);
   };
@@ -326,13 +312,9 @@ const MedicalRecords = () => {
       <div className={styles.pageLayout}>
         {!inConsult && (
           <PetSidebar
-            pets={pets}
-            petCounts={petCounts}
             selectedPet={selectedPet}
-            petSearch={petSearch}
+            selectedPetObj={selectedPetObj}
             onSelectPet={handleSelectPet}
-            onPetSearch={setPetSearch}
-            isLoadingPets={isLoadingPets}
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(c => !c)}
           />
@@ -452,7 +434,7 @@ const MedicalRecords = () => {
         <PrescriptionForm
           title="Nueva Receta"
           initialValue={{ pet: prescriptionTarget.pet, medical_record: prescriptionTarget.id, notes: "", items: [] }}
-          pets={pets}
+          pets={selectedPetObj ? [selectedPetObj] : []}
           products={products}
           medicalRecordsForPet={[prescriptionTarget]}
           lockedPet={true}

@@ -129,7 +129,7 @@ export default function TodayAgendaList() {
                   <div className="appointment-info">
                     <div className="appointment-title">
                       {a.walk_in && (
-                        <span className="appointment-walkin" title="Walk-in">
+                        <span className="appointment-walkin" title="Atención sin cita">
                           ●{" "}
                         </span>
                       )}

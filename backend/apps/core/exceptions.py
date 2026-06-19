@@ -1,4 +1,3 @@
-import uuid
 import logging
 from itertools import islice
 from django.db.models.deletion import ProtectedError
@@ -7,6 +6,8 @@ from rest_framework.views import exception_handler
 from rest_framework.exceptions import NotFound, ValidationError as DRFValidationError
 from rest_framework.response import Response
 from rest_framework import status
+
+from apps.core.request_context import get_request_id, new_request_id
 
 logger = logging.getLogger('django')
 
@@ -88,7 +89,10 @@ def custom_exception_handler(exc, context):
             response.data = {'code': output_code, 'message': message}
 
     else:
-        request_id = str(uuid.uuid4())
+        # Reusar el request_id de correlación (RequestIDMiddleware). Solo
+        # acuñar uno nuevo si la excepción ocurre fuera de un request (raro).
+        request_id = get_request_id() or new_request_id()
+        _capture_server_error(exc, request_id, context)
         logger.exception(
             "[%s] Unhandled exception in %s",
             request_id,
@@ -104,6 +108,36 @@ def custom_exception_handler(exc, context):
         )
 
     return response
+
+
+def _capture_server_error(exc, request_id, context):
+    """
+    Envía el 500 a Sentry con scope enriquecido (P1-5 Fase A).
+
+    DRF "traga" las excepciones no manejadas (este handler devuelve una Response
+    en vez de re-lanzar), por lo que el auto-capture de la integración Django de
+    Sentry NO dispara con contexto completo. Capturamos explícitamente y
+    taggeamos request_id / organization_id / endpoint para responder
+    "¿qué pasó? ¿a quién afectó?" sin filtrar PII (el scrubbing vive en
+    observability.before_send).
+    """
+    try:
+        import sentry_sdk
+
+        request = context.get('request')
+        org_id = getattr(getattr(request, 'user', None), 'organization_id', None)
+        view = context.get('view')
+        endpoint = type(view).__name__ if view is not None else 'unknown'
+
+        with sentry_sdk.new_scope() as scope:
+            scope.set_tag('request_id', request_id)
+            if org_id is not None:
+                scope.set_tag('organization_id', org_id)
+            scope.set_tag('endpoint', endpoint)
+            sentry_sdk.capture_exception(exc)
+    except Exception:  # pragma: no cover - defensivo
+        # Nunca dejar que el reporte de errores rompa la respuesta de error.
+        logger.warning("Sentry capture del 500 falló", exc_info=True)
 
 
 def _clean_message(msg: str) -> str:

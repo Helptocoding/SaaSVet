@@ -519,6 +519,23 @@ class RBACEventLoggingTests(SecurityTestCase):
         self.assertEqual(len(request_ids), 1,
                          f"Se esperaba un único request_id por request, se obtuvieron: {request_ids}")
 
+    def test_rbac_request_id_matches_incoming_x_request_id(self):
+        """
+        P1-5 A1: el request_id de los eventos RBAC debe ser EL MISMO que el
+        X-Request-ID que viaja por el RequestIDMiddleware (un solo identificador
+        por request en toda la observabilidad).
+        """
+        incoming = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        self.auth(self.vet_a)
+        with self.assertLogs("rbac.events", level="INFO") as cm:
+            response = self.client.get("/api/pets/", HTTP_X_REQUEST_ID=incoming)
+
+        # La respuesta lo devuelve en el header...
+        self.assertEqual(response["X-Request-ID"], incoming)
+        # ...y los eventos RBAC usan exactamente ese mismo id.
+        request_ids = {rec.request_id for rec in cm.records if hasattr(rec, "request_id")}
+        self.assertEqual(request_ids, {incoming})
+
     def test_required_fields_present_in_all_events(self):
         """Todos los eventos contienen los campos mínimos requeridos."""
         user_no_role = _make_user("no_role_user2", self.org_a, "VET")

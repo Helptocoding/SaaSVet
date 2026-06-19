@@ -16,10 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from apps.core.views import healthz, readyz
+from apps.core.views import healthz, readyz, version
 from apps.dashboard.views import (
     dashboard_stats, analytics_health, operations_series, financial_series,
-    dashboard_summary,
+    dashboard_summary, dashboard_activation,
 )
 from apps.users.views import (
     MeView,
@@ -31,6 +31,7 @@ from apps.users.views import (
 )
 from rest_framework.routers import DefaultRouter
 from apps.patients.views import PetViewSet, OwnerViewSet
+from apps.imports.views import ImportJobViewSet
 from apps.organizations.views import (
     OrganizationMeView,
     OrganizationLegacyView,
@@ -129,6 +130,7 @@ class PublicTokenRefreshView(TokenRefreshView):
 router = DefaultRouter()
 router.register(r'pets', PetViewSet, basename='patient')
 router.register(r'owners', OwnerViewSet, basename='owner')
+router.register(r'imports', ImportJobViewSet, basename='import')
 # Nota PR-4B / ADR p16: `organizations` ya NO es ModelViewSet — list/create/
 # destroy no se exponen. Dos paths explícitos abajo: /me/ (singleton) y
 # /<int:pk>/ (legacy con validación + Sunset RFC 8594).
@@ -139,6 +141,8 @@ urlpatterns = [
     # No auth; never log to RBAC audit. Keep first so they short-circuit on cheap match.
     path('api/healthz/', healthz, name='healthz'),
     path('api/readyz/', readyz, name='readyz'),
+    # Build/version probe (P1-5) — qué commit/environment está corriendo.
+    path('api/version/', version, name='version'),
     # Rutas explícitas que colisionarían con el router deben ir ANTES del include del router
     path('api/organizations/settings/', OrganizationSettingsView.as_view()),
     path('api/organizations/me/', OrganizationMeView.as_view(), name='organization-me'),
@@ -169,6 +173,7 @@ urlpatterns = [
     path('api/v1/dashboard/operations/series/', operations_series),
     path('api/v1/dashboard/financial/series/', financial_series),
     path('api/v1/dashboard/summary/', dashboard_summary),
+    path('api/v1/dashboard/activation/', dashboard_activation),
     # Cross-tenant SaaS platform operations (ADR-16 / 2026-05-22).
     # Routes inside require IsPlatformOperator — distinct from /api/ tenant scope.
     path('api/platform/', include('apps.platform.urls')),

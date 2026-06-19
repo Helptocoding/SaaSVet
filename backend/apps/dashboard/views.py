@@ -732,6 +732,52 @@ def dashboard_summary(request):
     return Response(payload)
 
 
+# ===========================================================================
+# Activación de la clínica (primer uso / SetupChecklist)
+# ===========================================================================
+
+@api_view(['GET'])
+@permission_classes([make_permission('dashboard.summary')])
+def dashboard_activation(request):
+    """
+    Estado de activación de la clínica — read-only, multi-tenant, SIN flags.
+
+    Devuelve la EXISTENCIA real (de por vida) de los hitos de arranque para que el
+    SetupChecklist del dashboard se derive de datos reales y NO de un flag
+    persistido por usuario. Orden de producto: pacientes → servicios → cita →
+    consulta.
+
+    - has_patients:      ≥1 Pet NO genérico (la mascota genérica se siembra al crear
+                         la org; no cuenta como "tiene pacientes").
+    - has_services:      ≥1 Service.
+    - has_appointments:  ≥1 Appointment.
+    - has_consultations: ≥1 MedicalRecord.
+
+    `completed` = los cuatro en True (el checklist se oculta). No escribe nada.
+    Imports locales para evitar acoplar el módulo dashboard al cargar (idiomático
+    en este archivo — read-only sobre los dominios).
+    """
+    from apps.patients.models import Pet
+    from apps.billing.models import Service
+
+    org = request.user.organization
+    if not org:
+        raise PermissionDenied("User has no organization assigned")
+
+    has_patients = Pet.objects.for_organization(org).filter(is_generic=False).exists()
+    has_services = Service.objects.for_organization(org).exists()
+    has_appointments = Appointment.objects.for_organization(org).exists()
+    has_consultations = MedicalRecord.objects.for_organization(org).exists()
+
+    return Response({
+        'has_patients': has_patients,
+        'has_services': has_services,
+        'has_appointments': has_appointments,
+        'has_consultations': has_consultations,
+        'completed': all([has_patients, has_services, has_appointments, has_consultations]),
+    })
+
+
 # ---- Timeline builder ----
 
 # Default clinic hours if no appointments exist for the day.

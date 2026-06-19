@@ -2,7 +2,7 @@
 
 Status: living document
 Owner: Backend / Architecture
-Last updated: 2026-06-13
+Last updated: 2026-06-16
 
 ---
 
@@ -41,6 +41,36 @@ El mapa consolidado vive aquí; los ADRs deciden, justifican y apuntan.
 | **DD-012** | **Geo-redundancia / DB managed** (Neon/Supabase/Crunchy con PITR nativo, o standby self-hosted vía streaming replication) — FASE 3 de backup/DR | Deferred | Postgres >70% CPU sostenido, >10 clínicas, o requisito multi-región | ADR p40 | Backups portables (`pg_dump -Fc`) restaurables a cualquier cluster; `RUNBOOK-RESTORE.md` documenta el cutover; `conn_max_age` ya tuneado para VPS único. Cero lock-in al proveedor actual |
 | **DD-013** | **Paginación de listados con filtro/KPI client-side** (Products, Prescriptions, Appointments, Pets) | Deferred | La lista completa de una de estas páginas duele (RAM/latencia) o una clínica cruza el volumen donde cargar todo time-outea | ADR p42 | P1-2 dejó estos endpoints **sin paginar a propósito**: sus páginas filtran/agregan client-side sobre la lista completa (KPIs de inventario, filtros especie/sexo/edad de recetas, agenda/calendario, KPIs de pacientes). Activar paginación exige primero **filtros + agregados server-side** (`?search`/`?species`/conteos). `toList()` ya absorbe la forma paginada → cuando existan esos filtros, agregar `pagination_class` es mecánico |
 | **DD-014** | Índice `Index(organization, total, id)` en `Invoice` para `?ordering=total` paginado | Deferred | La latencia del sort por Total en Cobros duele a escala (sort en memoria sobre el slice de la org) | ADR p42 | P1-2 indexó el orden default `(organization, -created_at, -id)`; el sort por `total` cae a sort en memoria. `StableOrderingFilter` ya da orden estable; el índice solo es perf. Migración mecánica reversible cuando se requiera |
+
+---
+
+## Principio general — Colecciones server-side (generaliza DD-013)
+
+**Regla**: todo recurso que **crece por operación diaria** debe migrar a
+**paginación + búsqueda server-side + filtros server-side** antes de que su lista
+completa duela (RAM/latencia/timeout). No se filtra ni se agrega client-side
+sobre la colección completa una vez que escala.
+
+**Aplica** (crecen con el uso):
+- `prescriptions` — pendiente (DD-013). Hoy lista completa + filtro especie/sexo/
+  edad client-side; los filtros ya leen metadatos embebidos en la receta, falta
+  el `pagination_class` + `?search`/`?species` server-side (ADR p44b addendum).
+- `invoices` — **hecho** (ADR p42: PageNumber 25 + `?ordering` server-side).
+- `stock movements` — **hecho** (ADR p42: cursor pagination).
+- `products` — pendiente cuando el catálogo cruce el volumen donde cargar todo
+  duela (KPIs de inventario hoy client-side, DD-013).
+- `appointments` — pendiente (DD-013; agenda/calendario client-side).
+- `pets` — **hecho** (ADR p44: paginación opt-in por `?page` + filtros
+  server-side + `/pets/stats/`).
+
+**No aplica** (acotados por diseño, no por uso): catálogos pequeños, settings,
+listas de configuración, lookups de bajo volumen (servicios, unidades, roles).
+
+**Patrón de activación** (mecánico, sin reescritura): `toList()` ya absorbe la
+forma paginada en el frontend → primero se mueven filtros/agregados a server-side
+(`?search`/`?species`/conteos vía endpoint `/stats/`), luego se agrega
+`pagination_class`. Ver ADR p42 (opt-in por `?page`) y ADR p44 (pets como
+plantilla de referencia).
 
 ---
 

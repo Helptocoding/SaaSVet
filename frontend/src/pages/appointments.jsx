@@ -8,12 +8,14 @@ import {
     getAppointmentHistory, assignPatient, createAppointmentWithPatient,
 } from "../api/appointments";
 import { getOrgSettings } from "../api/organizations";
-import { getPets } from "../api/pets";
 import { getStaff } from "../api/staff";
-import SearchSelect from "../components/SearchSelect";
+import EntitySearch from "../components/EntitySearch";
+import { searchPets } from "../api/lookups";
+import { renderPetOption, petOptionLabel } from "../components/lookupOptions";
 import QuickPatientForm from "../components/QuickPatientForm";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
+import EmptyState from "../components/EmptyState";
 import api from "../api/client";
 
 import { apiError } from "../utils/apiError";
@@ -272,7 +274,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                             borderRadius:"var(--r-md)",
                         }}>
                             <p style={{fontSize:"12.5px",fontWeight:"600",color:"#92400e",marginBottom:"8px"}}>
-                                Paciente anónimo — vincular a paciente real
+                                Atención sin mascota registrada — vincular mascota
                             </p>
                             {appt.status === 'done' ? (
                                 <p style={{fontSize:"12px",color:"#b45309"}}>
@@ -280,13 +282,12 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                 </p>
                             ) : assigningPatient ? (
                                 <div>
-                                    <SearchSelect
+                                    <EntitySearch
                                         value={newPetItem}
                                         onChange={item => setNewPetItem(item)}
-                                        onSearch={q => getPets({ search: q }).then(ps =>
-                                            ps.filter(p => !p.is_generic)
-                                               .map(p => ({ id: p.id, label: `${p.name} – ${(p.owner?.name ?? "").trim()}`.trim().replace(/ – $/, "") }))
-                                        )}
+                                        fetchPage={({ query, page }) => searchPets({ query, page })}
+                                        renderItem={renderPetOption}
+                                        getOptionLabel={petOptionLabel}
                                         placeholder="Buscar mascota..."
                                     />
                                     <div style={{display:"flex",gap:"6px",marginTop:"8px"}}>
@@ -609,10 +610,10 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
         if (!slot)          { toast.error("Selecciona un horario en el calendario"); return; }
 
         if (showQuickPatient) {
-            if (!quickPatient.ownerName.trim())            { toast.error("Nombre del dueño requerido"); return; }
-            if (!/^\d{10}$/.test(quickPatient.ownerPhone)) { toast.error("Teléfono del dueño: 10 dígitos"); return; }
+            if (!quickPatient.ownerName.trim())            { toast.error("Nombre del cliente requerido"); return; }
+            if (!/^\d{10}$/.test(quickPatient.ownerPhone)) { toast.error("Teléfono del cliente: 10 dígitos"); return; }
             if (!quickPatient.petName.trim())              { toast.error("Nombre de la mascota requerido"); return; }
-            if (!quickPatient.species)                     { toast.error("Especie requerida"); return; }
+            // Especie OPCIONAL (datos mínimos): '' => "pendiente". Ver modules/patients.md.
 
             setSaving(true);
             try {
@@ -698,14 +699,14 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                 <label style={lblStyle}>Mascota</label>
                 {!showQuickPatient ? (
                     <>
-                        <SearchSelect
+                        <EntitySearch
                             id="new-appt-pet"
                             name="new-appt-pet"
                             value={petItem}
                             onChange={item => setPetItem(item)}
-                            onSearch={q => getPets({ search: q }).then(ps =>
-                                ps.map(p => ({ id: p.id, label: `${p.name} – ${(p.owner?.name ?? "").trim()}`.trim().replace(/ – $/, "") }))
-                            )}
+                            fetchPage={({ query, page }) => searchPets({ query, page })}
+                            renderItem={renderPetOption}
+                            getOptionLabel={petOptionLabel}
                             placeholder="Buscar mascota..."
                             disabled={saving}
                         />
@@ -806,7 +807,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
             if (petItem) payload.pet = petItem.id;
 
             await onSave(payload);
-            toast.success('Walk-in registrado — consulta en progreso');
+            toast.success('Atención sin cita registrada — consulta en progreso');
         } catch (err) {
             handleFormError(err, setFormErrors);
         } finally {
@@ -819,7 +820,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
             <div className="modal modal-md" onClick={e=>e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
-                        <h3 style={{marginBottom:"4px"}}>Walk-in</h3>
+                        <h3 style={{marginBottom:"4px"}}>Atención sin cita</h3>
                         <p style={{fontSize:"12px",color:"var(--c-text-3)",margin:0}}>
                             Consulta inmediata — la cita se crea en estado "En consulta"
                         </p>
@@ -829,14 +830,14 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
                 <div className="modal-body">
                     <div className="form-group">
                         <label className="form-label" htmlFor="walkin-pet">MASCOTA {allowAnonymousWalkIn ? "(opcional)" : "*"}</label>
-                        <SearchSelect
+                        <EntitySearch
                             id="walkin-pet"
                             name="walkin-pet"
                             value={petItem}
                             onChange={item => setPetItem(item)}
-                            onSearch={q => getPets({ search: q }).then(ps =>
-                                ps.map(p => ({ id: p.id, label: `${p.name} – ${(p.owner?.name ?? "").trim()}`.trim().replace(/ – $/, "") }))
-                            )}
+                            fetchPage={({ query, page }) => searchPets({ query, page })}
+                            renderItem={renderPetOption}
+                            getOptionLabel={petOptionLabel}
                             placeholder="Buscar mascota..."
                         />
                         {allowAnonymousWalkIn && (
@@ -893,7 +894,7 @@ function WalkInModal({ staff, user, onClose, onSave, allowAnonymousWalkIn }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const Appointments = () => {
-    const { token, initializing, user } = useAuth();
+    const { token, initializing, user, can } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const formRef  = useRef(null);
@@ -1191,10 +1192,29 @@ const Appointments = () => {
                     <button className="btn btn-primary btn-md"
                         style={{display:"flex",alignItems:"center",gap:"6px"}}
                         onClick={()=>setWalkInOpen(true)}>
-                        <Icon.Plus s={15} /> Walk-in
+                        <Icon.Plus s={15} /> Atención sin cita
                     </button>
                 )}
             </div>
+
+            {/* Empty state complementario — clínica sin citas. NO reemplaza el
+                calendario (queda debajo): guía a agendar haciendo clic en una celda
+                o a registrar un walk-in. */}
+            {appointments.length === 0 && (
+                <div className="card" style={{ marginBottom: "16px" }}>
+                    <EmptyState
+                        compact
+                        icon={Icon.CalendarClock}
+                        title="Tu agenda está vacía"
+                        body="Haz clic en un horario del calendario para agendar tu primera cita, o registra un paciente sin cita previa."
+                        actions={[
+                            can("appointment.create_walkin")
+                                ? { label: "Registrar atención sin cita", onClick: () => setWalkInOpen(true), variant: "primary" }
+                                : null,
+                        ]}
+                    />
+                </div>
+            )}
 
             {/* Main grid: calendar + sidebar */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 296px",gap:"16px",alignItems:"start"}}>

@@ -21,14 +21,33 @@ RUN pnpm install --frozen-lockfile
 # values (API URL, Sentry DSN are designed to be public).
 ARG VITE_API_URL
 ARG VITE_SENTRY_DSN
+# P1-5 A4/A5: environment + release (públicos) para los tags de Sentry browser.
+ARG VITE_SENTRY_ENVIRONMENT
+ARG VITE_SENTRY_RELEASE
 ENV VITE_API_URL=${VITE_API_URL} \
-    VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+    VITE_SENTRY_DSN=${VITE_SENTRY_DSN} \
+    VITE_SENTRY_ENVIRONMENT=${VITE_SENTRY_ENVIRONMENT} \
+    VITE_SENTRY_RELEASE=${VITE_SENTRY_RELEASE}
+
+# P1-5 A4: credenciales de upload de source maps. SECRETO build-time — en CI
+# pasarlas idealmente con BuildKit `--secret`. Se consumen solo durante
+# `pnpm run build`; este stage builder se descarta, así que NO llegan al image
+# runtime (nginx). Si están vacías, el plugin no se carga (ver vite.config.js).
+ARG SENTRY_AUTH_TOKEN
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
 
 # Copy source AFTER deps install to leverage layer cache.
 COPY . .
 
-# Vite default: sourcemap=false. Confirm post-build (Capa 8 audit item H7).
-RUN pnpm run build
+# P1-5 A4: build con source maps 'hidden' (vite.config.js). El plugin de Sentry
+# los sube y borra; el `find ... -delete` es safeguard por si el upload no corrió
+# (sin token) → garantiza que ningún .map llegue a nginx (no exponer el código).
+RUN SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN} \
+    SENTRY_ORG=${SENTRY_ORG} \
+    SENTRY_PROJECT=${SENTRY_PROJECT} \
+    pnpm run build \
+ && find dist -name '*.map' -delete
 
 # ---- runtime ----
 FROM nginx:1.27-alpine AS runtime

@@ -205,7 +205,7 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
             }}
           >
             {[
-              ["Dueño", appt.owner_name || "—"],
+              ["Cliente", appt.owner_name || "—"],
               ["Hora", appt.start_time?.slice(0, 5) || "—"],
               ["Motivo", appt.reason || "—"],
               ["Veterinario", appt.veterinarian_name || "—"],

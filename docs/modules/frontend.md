@@ -23,7 +23,7 @@ src/
 ├── pages/         — vistas completas por ruta
 │   └── medicalRecords/
 │       ├── index.jsx            — orquestador de la página
-│       ├── PetSidebar.jsx       — sidebar izquierdo (lista de mascotas)
+│       ├── PetSidebar.jsx       — sidebar izquierdo: búsqueda de mascota server-side (searchPets + "Ver más"), NO carga la lista completa (ADR p44c)
 │       ├── PatientHeader.jsx    — header con datos del paciente + vitales (solo lectura)
 │       ├── VitalsEditor.jsx     — editor inline de vitales (ya no se usa en PatientHeader)
 │       ├── Timeline.jsx         — lista de consultas agrupadas por año/mes
@@ -180,7 +180,9 @@ Lista de FKs embebidos disponibles (incompleta — ver serializers backend):
 - `MedicalRecordSerializer`: `pet_public_id`, `appointment_public_id`, `prescription_public_id`, `invoice_public_id`
 - `AppointmentSerializer`: `pet_public_id`, `owner_public_id`, `veterinarian_public_id`, `medical_record_public_ids`, `invoice_public_id`
 - `InvoiceSerializer`: `pet_public_id`, `owner_public_id`, `appointment_public_id`, `medical_record_public_id`
-- `PrescriptionSerializer`: `pet_public_id`, `medical_record_public_id`
+- `PrescriptionSerializer`: `pet_public_id`, `medical_record_public_id` + metadatos
+  read-only de la mascota `pet_species`/`pet_sex`/`pet_birth_date` (para que la
+  página de Recetas filtre sin cargar el catálogo completo de mascotas — ADR p44b)
 - `VaccineRecordSerializer`: `pet_public_id`, `applied_by_public_id`, `medical_record_public_id`
 - `MeView` response: `organization_public_id`
 
@@ -276,10 +278,31 @@ export const updateMedicalRecord = async (token, id, data) => {
 
 - Base URL desde `VITE_API_URL`
 - Interceptor request: inyecta `Authorization: Bearer <token>` leyendo vía `tokenStorage.getItem("access_token")` (NO `localStorage` raw — ver `auth/tokenStorage.js`)
+- Interceptor request: inyecta `X-Request-ID` (uuid por request vía `utils/requestId.js`) si el caller no lo seteó — correlación end-to-end P1-5 A1 (el backend lo reusa en logs/Sentry/respuesta). No pisar un id ya provisto.
 - Interceptor response 401:
   - **Bypassa redirect** si el request fallido es el endpoint de login (`url` termina en `token/`). Sin esto, credenciales malas disparaban full page reload antes de que el toast del login se renderizara. Helper local `isLoginAttempt(config)`. Ver ADR p22.
   - Para 401 en cualquier otro endpoint: `clearTokens()` (vía `tokenStorage`) + `window.location.href = "/login"` (sesión expirada legítima).
 - Interceptor response 500+: alert global "Error del servidor".
+
+### Observabilidad de errores (P1-5 Fase A)
+
+> Runbook operativo completo: [`docs/runbooks/observability.md`](../runbooks/observability.md).
+
+- **`ErrorBoundary`** (`components/ErrorBoundary.jsx`) reporta a Sentry: en
+  `componentDidCatch` llama `Sentry.captureException(error, {contexts:{react:{componentStack}}})`,
+  guarda el `event_id` y lo muestra en el fallback ("Código de error: … compártelo
+  con soporte"). Ya no solo evita la pantalla blanca — el crash es visible para ops.
+  Envuelve root + cada ruta (`App.jsx`). Si Sentry no está inicializado (sin DSN), el
+  `event_id` no se muestra (degradación silenciosa).
+- **`Sentry.init`** (`main.jsx`): `environment` (`VITE_SENTRY_ENVIRONMENT`),
+  `release` (`VITE_SENTRY_RELEASE`) y `beforeSend = scrubEvent` (`utils/sentryScrub.js`).
+- **Privacidad** (`utils/sentryScrub.js`, espejo del backend): dropea `request.data`/
+  `cookies`, filtra headers sensibles (`Authorization`, `Cookie`, `X-Idempotency-Key`,
+  `X-CSRFToken`, `X-Api-Key`) y strip de PII del `user`. **Nunca** enviar PII
+  clínica/financiera a Sentry.
+- **Source maps**: `vite.config.js` emite `sourcemap: 'hidden'` y `@sentry/vite-plugin`
+  los sube solo con credenciales de upload (CI), luego los borra; el Dockerfile borra
+  los `.map` como safeguard. Sin minified stack traces en beta.
 
 ### Paginación de listas (ADR p42)
 
@@ -306,13 +329,23 @@ necesita metadata):
 | `GET /billing/invoices/` | `getInvoices` | PageNumber 25 + `?ordering=created_at\|total` server-side |
 | `GET /inventory/movements/` | `getMovements` | Cursor (`next`/`previous`, **sin** `count`) |
 | `GET /owners/` (sin `search`) | `getOwners` | PageNumber 25 |
+| `GET /pets/` (con `?page`) | `getPets` | PageNumber 25/50/100, **opt-in por `?page`** + filtros server-side (ADR p44) |
 
 **`?search` NO pagina** (Owners): `getOwners({search})` y los demás endpoints de
 búsqueda que alimentan `SearchSelect` siguen devolviendo array plano `[:20]`. Los
 dropdowns con `.then(ps => ps.map(...))` NO se rompen.
 
+**Pets — paginación opt-in por `?page` (ADR p44)**: la página Mascotas llama
+`getPets({page, page_size, search, species, sex, age})` → envelope. **Sin `?page`**
+(dropdowns SearchSelect de citas/recetas/POS, y `getPets()` de prescriptions/
+medicalRecords) sigue devolviendo array plano (`[:20]` con filtro, completo sin
+filtro). NO mandar `?page` desde un dropdown. Stat-cards de Mascotas vienen de
+`getPetStats()` (`GET /pets/stats/`, conteos de toda la clínica), no del length
+local; el contador de citas de la semana reusa `getStatusBreakdown` (conteo, sin
+traer filas). Esto **supera** la entrada "Pets sin paginar" de DD-013.
+
 Sin paginar (lista completa, filtro/KPI client-side — DD-013): Products,
-Prescriptions, Appointments, Pets. No asumir que pasarán a paginado sin antes
+Prescriptions, Appointments. No asumir que pasarán a paginado sin antes
 mover sus filtros a server-side.
 
 **Paginador UI**: `components/Pagination.jsx` (Anterior/Siguiente). El sort de una
@@ -390,9 +423,72 @@ Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage
 
 ## Componentes compartidos
 
+### EmptyState (estado vacío accionable)
+
+`components/EmptyState.jsx` — **fuente única** de estados vacíos guiados. Reemplaza
+los `.empty-state` pasivos por uno que responde: qué pasa (`title`), por qué +
+siguiente paso (`body`) y la acción (`actions`). **Presentacional puro: NO conoce
+RBAC, NO usa `useAuth`.** El caller arma las acciones ya filtradas por permiso
+(`can("x") ? action : null`) y las pasa; el componente solo descarta las nulas →
+nunca muestra un CTA roto.
+
+Props: `icon` (componente de icono, opcional), `title` (req), `body` (opcional),
+`actions` (array de `{ label, onClick, variant }` | `null`), `compact` (padding
+reducido). Las acciones usan `onClick` (el caller reusa su handler existente: abrir
+modal/wizard o `navigate`) — router-agnóstico.
+
+Aplicado en: **Mascotas** (Importar Excel `import.create` + Agregar paciente
+`patient.create`), **Agenda** (empty complementario sobre el calendario, no lo
+reemplaza; "Registrar atención sin cita" `appointment.create_walkin`),
+**Inventario** (`inventory.create`), **Config·Servicios** (`service.create`).
+**NO** crear empty states por página — usar este componente. Estilos:
+`.empty-state*` en `global.css` (`.empty-state-icon`, `.empty-state-actions`,
+`.empty-state-compact`).
+
 ### SearchSelect
 
-Combobox con busqueda asincrona. Debounce de 250ms. Maneja race conditions con `reqId`. Props clave: `value`, `onChange`, `onSearch`, `disabled`, `prefetchOnFocus`.
+Combobox con busqueda asincrona. Debounce de 250ms. Maneja race conditions con `reqId`. Props clave: `value`, `onChange`, `onSearch`, `disabled`, `prefetchOnFocus`. Devuelve un array y muestra **solo `item.label`** (string). Úsalo para selects simples y de bajo volumen; para entidades relacionales con muchos registros usa **EntitySearch**.
+
+### EntitySearch (combobox relacional — ADR p44b)
+
+`components/EntitySearch.jsx` — combobox para entidades con miles de registros
+(clínicas importadas). Reusa el patrón de `SearchSelect` (debounce 250ms, race
+con `reqId`, loading) pero resuelve sus dos límites:
+
+- **Render rico** (`renderItem(item) → JSX`): cada opción muestra contexto para
+  diferenciar homónimos (dueño · teléfono · expediente), no solo el nombre.
+- **Paginación incremental** (`fetchPage({query,page}) → {items, hasMore}` +
+  botón "Ver más"): inicial 8, carga más bajo demanda. **Sin tope invisible**
+  (el viejo `maxSuggestions=5` ocultaba coincidencias).
+
+Props: `value` (objeto seleccionado | null), `onChange(item)`, `fetchPage`,
+`renderItem`, `getOptionLabel(item)` (texto del input tras elegir), `placeholder`,
+`disabled`, `prefetchOnFocus`.
+
+**No rearmar el fetch/label por módulo.** Usar las piezas compartidas:
+- `api/lookups.js`: `searchPets({query,page,pageSize,ownerPublicId})` y
+  `searchOwners({query,page,pageSize})` → `{items, hasMore}` sobre los endpoints
+  paginados (`?page` → envelope; `next` → hay más).
+- `components/lookupOptions.jsx`: `renderPetOption`/`renderOwnerOption` +
+  `petOptionLabel`/`ownerOptionLabel`.
+
+Consumidores: selectores de mascota de **Citas** (`appointments.jsx`),
+**Recetas** (`PrescriptionForm`), **POS** (`CustomerSelector`, también cliente).
+El **historial clínico** (`PetSidebar`) usa el mismo `searchPets` pero como lista
+inline (no dropdown). El `value` pasa a ser el **objeto completo** de la entidad
+(trae `id` PK para el body + `public_id`).
+
+> `PrescriptionForm` combina **EntitySearch** (picker de mascota, server-side) con
+> **SearchSelect** (picker de medicamento). No quitar `import SearchSelect`: el
+> picker de medicamento lo necesita (la regresión ff68196 lo borró → crash; ver
+> ADR p44b addendum).
+
+**Recetas (página) NO carga la lista completa de mascotas** (ADR p44b addendum):
+los filtros especie/sexo/edad leen los metadatos embebidos en cada receta
+(`pet_species`/`pet_sex`/`pet_birth_date`, ver lista de FKs embebidos) y el
+selector "Todas las mascotas" se **deriva** de las recetas cargadas (solo las que
+tienen receta), con filtro por mascota client-side. La lista de recetas en sí
+sigue sin paginar (deuda P1 — DD-013).
 
 ### ConfirmDialog / useConfirm
 
@@ -599,6 +695,7 @@ getUnitChoices()                           // catálogo de unidades base
 | Zona | Hook | Endpoint | Naturaleza |
 |---|---|---|---|
 | KPIs, sidebar (Ahora/backlog/stock) | `useDashboardSummary` | `GET /api/v1/dashboard/summary/` | Live, cache 30s, polling 30s |
+| **Activación primer uso (`SetupChecklist`)** | `useActivation` | `GET /api/v1/dashboard/activation/` | Read-only, **existencia real** (sin flags), refetch en mount + `dashboard:refresh` (sin polling) |
 | **Agenda del día (`TodayAgendaList`)** | `useDayAppointments` | `GET /appointments/?date=YYYY-MM-DD` | Live, refetch al cambiar día + evento `dashboard:refresh` (ADR p35) |
 | Spark + Δ de ingresos (admin) | `useFinancialSeries` | `financial/series/` | Snapshot + hoy live |
 | Card "Analítica" | `useDashboardSeries` + `useFinancialSeries` | `operations/series/` + `financial/series/` | Snapshot + hoy live |
@@ -612,7 +709,27 @@ getUnitChoices()                           // catálogo de unidades base
 
 Sidebar (orden = urgencia): **Ahora** → **Citas por resolver** → **Pendientes clínicos** → **Stock crítico**.
 
-Columna principal: **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+Columna principal: **SetupChecklist** (solo si la activación está incompleta) → **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+
+### SetupChecklist (activación de primer uso)
+
+`components/dashboard/SetupChecklist.jsx` — guía a una clínica nueva con datos
+vacíos. Se monta al tope de la columna principal y **se oculta solo cuando los 4
+hitos están completos** (`activation.completed`). Reemplazó al `EmptyDashboard`
+(huérfano + CSS inexistente, **retirado**).
+
+- **Estado real, sin flags**: `useActivation` consume `GET /api/v1/dashboard/activation/`
+  (endpoint read-only, multi-tenant, `for_organization`); devuelve
+  `{has_patients, has_services, has_appointments, has_consultations, completed}`.
+  `has_patients` **excluye la mascota genérica** (`is_generic=False`). Nada de
+  `localStorage` ni onboarding por usuario.
+- **Orden de producto** (no reordenar sin justificar): pacientes → servicios →
+  cita → consulta.
+- **Gateado por capability** (no por rol): solo se renderiza si `can("service.create")`
+  — representa el acceso a la configuración inicial (un VET/ASISTENTE no ve CTAs a
+  lugares sin permiso, p.ej. `/config`). No existe una capability única dedicada a
+  "ajustes de la organización", por eso `service.create` es el proxy.
+- CTA "Importar Excel" gateado además por `can("import.create")`.
 
 ### Agenda del día (`TodayAgendaList`) — ADR p35
 
@@ -639,6 +756,34 @@ Mini-agenda operativa con navegación por día. Patrón **appointment cards** (N
   - **Conteos vs filas**: los conteos de cabecera (`ready`, `noDiag`) salen de los agregados exactos (`open_total`, `without_diagnosis`); las filas listadas vienen de `backlog.open_records[]` (cap 50 del backend), particionadas por `has_diagnosis`. Si el conteo exacto supera lo listado, se muestra overflow ("+N más"). Cada fila navega **directo** al registro con `navigate(\`/medical-records?record=${public_id}\`)` — **solo `public_id`**, nunca PK.
 - **Citas por resolver (`PendingFollowUp`)**: citas con fecha pasada aún en `scheduled`/`confirmed` (nadie las cerró/canceló/marcó no-asistió). Query a `status-breakdown` rango `hoy-30d → ayer`; el límite de filas es **visual (5)**, no del query (una cita perdida hace semanas no debe desaparecer). Las acciones (Atender / No asistió / Reprogramar) reutilizan `AppointmentQuickModal` (no crear modal nuevo).
 - **Terminología analítica**: usar **"No asistieron"** (no "No-show") y **"Conversión de citas"** (no "Embudo"). Cada gráfica lleva título + descripción que solo nombra lo que realmente grafica (la de actividad no menciona canceladas porque no las plotea).
+
+## Terminología de UI (glosario — fuente única, es-MX)
+
+Reglas de lenguaje del producto para una clínica veterinaria mexicana. Aplican al
+**texto visible** (labels, placeholders, toasts, títulos). **NO** cambian
+variables, modelos, permisos, keys ni endpoints (p.ej. `walk_in`, `Owner`, `Pet`,
+`Invoice` siguen igual en código/serializers).
+
+| Concepto | Término UI | Evitar |
+|---|---|---|
+| Persona que paga / contacto | **Cliente** (Nombre del cliente, Teléfono del cliente) | ~~Dueño~~, ~~Propietario~~ (eliminados de UI) |
+| Animal — contexto **administrativo** (listado, agenda, importación, cobros) | **Mascota** | — |
+| Animal — contexto **clínico** (consulta, historial médico) | **Paciente** | — |
+| Atención sin cita previa | **Atención sin cita** | ~~Walk-in~~ |
+| Documento de venta/pago | **Cobro** (mientras no haya facturación fiscal) | ~~Factura~~ |
+| Cierre de turno de caja | **Corte de caja** | ~~Corte Z~~, ~~Z-close~~ |
+| Correo | **Correo electrónico** / Correo | ~~Email~~ |
+| Métrica clínica del dashboard | **"Pacientes hoy"** (correcto — es clínica) | — |
+| Inventario | **Stock** (entendido en MX; consistente — no traducir) | — |
+| Analítica | **"No asistieron"**, **"Conversión de citas"** | ~~No-show~~, ~~Embudo~~ |
+
+Notas:
+- **Mascota/Paciente** es split por contexto, no sinónimos intercambiables: si la
+  pantalla es administrativa → Mascota; si es el acto clínico → Paciente.
+- La mascota genérica de walk-in se etiqueta en agenda como *"Atención sin mascota
+  registrada — vincular mascota"* (no "Paciente anónimo").
+- Deuda conocida (no clínica, fuera del piloto): `platform/createOrganization`
+  aún valida `"Username requerido."` (anglicismo "Username").
 
 ## Punto de Venta (`/pos`)
 

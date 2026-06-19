@@ -8,6 +8,14 @@
 Backup pipeline: [ADR p40](../decisions/2026-06-12-p40-backup-offsite-disaster-recovery.md).
 Scripts: [`pg-backup.sh`](../../scripts/pg-backup.sh) · [`pg-restore.sh`](../../scripts/pg-restore.sh) · [`restore-drill.sh`](../../scripts/restore-drill.sh).
 
+> **Paths en saaslyvet-prod-01 (P1-6B):** este runbook usa `/opt/vet/app` como
+> ejemplo histórico. En el VPS real el repo vive en **`/home/deploy/apps`** (usuario
+> `deploy`). Sustituí `/opt/vet/app` → `/home/deploy/apps`, `/opt/vet/restore` →
+> `/home/deploy/restore`, y cloná el repo como `git clone <repo> /home/deploy/apps`
+> (no `cd /opt/vet && git clone <repo> app`). El host está en **America/Monterrey**,
+> no UTC. La operación de deploy/rollback rutinaria está en
+> [`../production-runbook.md`](../production-runbook.md).
+
 **RPO actual**: 24h (último dump nightly). **RTO objetivo**: 1–2h con este runbook.
 
 ---

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getItem, clearTokens } from "../auth/tokenStorage";
+import { genRequestId } from "../utils/requestId";
 
 const rawBase = import.meta.env.VITE_API_URL;
 if (!rawBase) {
@@ -14,6 +15,11 @@ api.interceptors.request.use((config) => {
     const token = getItem("access_token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    }
+    // P1-5 A1: correlación end-to-end. No pisar un id ya seteado por el caller
+    // (p.ej. ops sensibles que reusan el mismo id en un reintento).
+    if (!config.headers["X-Request-ID"]) {
+        config.headers["X-Request-ID"] = genRequestId();
     }
     return config;
 });

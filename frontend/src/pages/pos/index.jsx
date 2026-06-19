@@ -88,7 +88,7 @@ const POS = () => {
             return false;
         }
         if (!customer.owner && !genericOwner) {
-            toast.error("No se encontró el propietario genérico. Verifica la configuración.");
+            toast.error("No se encontró el cliente genérico. Verifica la configuración.");
             return false;
         }
         return true;

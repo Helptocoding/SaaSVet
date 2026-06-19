@@ -3,7 +3,7 @@
 # Install:
 #   crontab scripts/crontab.example
 #
-# Edit paths primero si tu install difiere de /opt/vet/app.
+# Edit paths primero si tu install difiere de /home/deploy/apps.
 # Validar sintaxis antes de instalar:
 #   crontab -T scripts/crontab.example   (algunos sistemas)
 #   o:  cat scripts/crontab.example | crontab -l ; echo $?
@@ -17,18 +17,20 @@
 #   ssh deploy@<vps>
 #   crontab scripts/crontab.example
 #
-# Horarios en UTC (el host está en UTC tras vps-hardening.md §9).
-# Hora local México (GMT-6) = UTC - 6. Ej: 03:00 UTC = 21:00 anterior MX.
-# Backups arrancan ANTES de la actividad típica del día siguiente.
+# OJO TIMEZONE: este template fue escrito asumiendo host en UTC. saaslyvet-prod-01
+# corre en America/Monterrey (UTC-6) → cron interpreta estos horarios en hora
+# LOCAL de Monterrey, no UTC. Ej: `0 3 * * *` dispara 03:00 Monterrey (= 09:00
+# UTC), no 03:00 UTC. Revisá que la ventana caiga en baja actividad y ajustá si
+# hace falta (ver docs/production-runbook.md §G, nota timezone).
 
 # ---------------------------------------------------------------------------
 # Vars compartidas para todos los jobs.
 # ---------------------------------------------------------------------------
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-COMPOSE_DIR=/opt/vet/app
-ENV_FILE=/opt/vet/app/.env.prod
-COMPOSE_FILE=/opt/vet/app/docker-compose.prod.yml
+COMPOSE_DIR=/home/deploy/apps
+ENV_FILE=/home/deploy/apps/.env.prod
+COMPOSE_FILE=/home/deploy/apps/docker-compose.prod.yml
 BACKUP_DIR=/var/backups/vet
 # Offsite + cifrado (ADR p40). En producción RCLONE_REMOTE es OBLIGATORIO
 # (pg-backup.sh falla loud si está vacío). Estos pueden vivir aquí o en
@@ -51,7 +53,7 @@ BACKUP_DIR=/var/backups/vet
 # Si exit != 0 el deadman NO se pinguea → Healthchecks.io alerta. Define MAILTO
 # arriba para recibir stderr también.
 # ---------------------------------------------------------------------------
-0 3 * * *   /opt/vet/app/scripts/pg-backup.sh >> /var/log/vet-backup.log 2>&1
+0 3 * * *   /home/deploy/apps/scripts/pg-backup.sh >> /var/log/vet-backup.log 2>&1
 
 # ---------------------------------------------------------------------------
 # 04:00 UTC diario — JWT cleanup (ADR p20). Sin esto las tablas
@@ -79,7 +81,7 @@ BACKUP_DIR=/var/backups/vet
 # /var/backups/vet exceden 80%, POST a webhook. Exporta ALERT_WEBHOOK
 # arriba o inline. Sin webhook configurado solo loguea (no alerta).
 # ---------------------------------------------------------------------------
-15 * * * *  ALERT_THRESHOLD=80 /opt/vet/app/scripts/disk-alert.sh >> /var/log/vet-cron.log 2>&1
+15 * * * *  ALERT_THRESHOLD=80 /home/deploy/apps/scripts/disk-alert.sh >> /var/log/vet-cron.log 2>&1
 
 # ---------------------------------------------------------------------------
 # 03:30 UTC día 1 de cada mes — restore drill (ADR p40). Restaura el último
@@ -91,7 +93,7 @@ BACKUP_DIR=/var/backups/vet
 # desde tu máquina con la private key:  BACKUP_DECRYPTION_KEY=... \
 #   scripts/restore-drill.sh --from-offsite
 # ---------------------------------------------------------------------------
-30 3 1 * *  /opt/vet/app/scripts/restore-drill.sh >> /var/log/vet-backup.log 2>&1
+30 3 1 * *  /home/deploy/apps/scripts/restore-drill.sh >> /var/log/vet-backup.log 2>&1
 
 # ---------------------------------------------------------------------------
 # Semanal — logs systemd journal cap a 14 días (evita crecimiento sin tope).

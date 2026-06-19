@@ -390,4 +390,15 @@ Filtrar el stdout por nombre de evento:
 | `DASH_SNAPSHOT_CORRUPT` | Nunca | excluded_anchor_missing > 0 — correr audit_anchor_integrity |
 | `IDEMPOTENT_PAYMENT_DEDUPED` | Bajo | Retry de cobro funcionando como debe |
 
-El `request_id` presente en todos los eventos de `rbac.events` permite agrupar multiples eventos del mismo request HTTP para reconstruir que paso exactamente en una solicitud especifica.
+El `request_id` permite agrupar multiples eventos del mismo request HTTP para reconstruir que paso exactamente en una solicitud especifica.
+
+**P1-5 A1 — request_id unificado end-to-end.** Desde P1-5 el `request_id` de los
+eventos RBAC es el **mismo** `X-Request-ID` que acuña `RequestIDMiddleware`
+(`apps.core.request_context`): un unico identificador por request que viaja Frontend
+(`api/client.js`) → header `X-Request-ID` → todas las lineas de log (`req=<id>` en
+formato verbose, ademas del campo `request_id` en los eventos JSON) → tag de Sentry →
+cuerpo del 500 (`request_id`) → header `X-Request-ID` de la respuesta. `permissions._get_request_id`
+reusa `get_request_id()`; el viejo uuid corto cacheado en el request solo queda como
+fallback si la peticion no paso por el middleware (paths sin HTTP / tests directos).
+Para reconstruir un request reportado por el cliente:
+`docker compose ... logs backend | grep <request_id>`.

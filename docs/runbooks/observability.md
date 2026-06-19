@@ -58,6 +58,54 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
 Sentry agrupa issues por release. Si una regresión aparece exclusivamente en release `abc1234`, sabes qué commit revisar.
 
+**P1-5 A5**: `release` cae a `GIT_SHA` si `SENTRY_RELEASE` está vacío
+(`release=SENTRY_RELEASE or GIT_SHA or None` en settings). Setear `GIT_SHA` en el
+deploy basta para alinear el release de Sentry con `/api/version/` (ver abajo).
+
+### Privacidad — scrubbing de PII (P1-5 A2)
+
+`sentry_sdk.init` pasa `before_send=apps.core.observability.before_send` además de
+`send_default_pii=False`. **Invariante**: a Sentry NUNCA debe salir información
+clínica/financiera/PII. El hook (defensa en profundidad sobre `send_default_pii`):
+
+- **dropea el body del request** (`request.data`) y `cookies` — pueden contener
+  notas clínicas, montos, teléfonos.
+- **filtra headers sensibles** a `[Filtered]`: `Authorization`, `Cookie`,
+  `X-Idempotency-Key`, `X-CSRFToken`, `X-Api-Key`, `Proxy-Authorization`.
+- **strip de PII del bloque `user`** (`email`, `username`, `ip_address`, `name`,
+  `phone`) — solo se conserva `id` (interno, no PII).
+- **fail-closed**: ante un evento con shape inesperado, descarta el evento antes
+  que arriesgar una fuga.
+
+Se taggea `organization_id` + `user.id` (ids internos) en
+`TenantJWTAuthentication` → en Sentry filtrás por `organization_id:<n>` para saber
+**qué clínica** fue afectada sin exponer su nombre. El frontend tiene un scrub
+espejo (`src/utils/sentryScrub.js`, ver §2).
+
+### Correlación request_id end-to-end (P1-5 A1)
+
+`RequestIDMiddleware` (outermost) acuña/propaga un `X-Request-ID` por request. El
+**mismo** id viaja: Frontend (`api/client.js` lo manda) → header → logs backend
+(`req=<id>` en cada línea) → logs RBAC → tag Sentry → cuerpo del 500
+(`{code:server_error, request_id}`) → header `X-Request-ID` de la respuesta. Si el
+cliente manda basura en el header, se ignora y se genera uno nuevo (blindaje
+anti log-injection: solo se acepta un UUID).
+
+Cuando una clínica reporta un error con su "código", buscás ese id en una sola
+pasada: `docker compose ... logs backend | grep <request_id>`.
+
+### Versión desplegada — `/api/version/` (P1-5 A5)
+
+`GET /api/version/` (público, sin DB, como `healthz`) responde
+`{version, commit, environment}`. Sirve para responder **qué versión estaba
+corriendo** cuando una clínica reporta un error. Setear en el deploy:
+
+```bash
+GIT_SHA=$(git rev-parse --short HEAD)   # → commit + release Sentry + /api/version/
+```
+
+Si `GIT_SHA` queda vacío, `/api/version/` reporta `version="dev"` y `commit=null`.
+
 ### Validar que llega un evento
 
 ```bash
@@ -94,6 +142,23 @@ VITE_SENTRY_DSN=https://<key>@<orgID>.ingest.us.sentry.io/<projectID-frontend>
 Build args en `frontend/Dockerfile` ya leen `VITE_SENTRY_DSN`. Cambiar el DSN requiere `docker compose build frontend` para re-bake el bundle (build-time, no runtime).
 
 Validación: abrir DevTools en `https://app.tu-dominio.com`, inducir un error JS (`throw new Error('test')` en consola), revisar Sentry UI frontend project.
+
+### P1-5 A3/A4 — hardening frontend
+
+- **`environment` + `release`** (`main.jsx`): `VITE_SENTRY_ENVIRONMENT` (default =
+  modo Vite) y `VITE_SENTRY_RELEASE` (= SHA del build). Build args en el Dockerfile.
+- **`beforeSend` scrub** (`src/utils/sentryScrub.js`): espejo del backend — dropea
+  `request.data`/`cookies`, filtra headers sensibles, strip PII del `user`.
+- **ErrorBoundary reporta a Sentry**: `componentDidCatch` llama
+  `Sentry.captureException` con el `componentStack` y muestra el **`event_id`** al
+  usuario ("Código de error: … compártelo con soporte"). Antes solo evitaba la
+  pantalla blanca; ahora el crash es visible para ops.
+- **Source maps** (ver §6): `vite.config.js` emite source maps `hidden` y
+  `@sentry/vite-plugin` los sube cuando hay credenciales de upload, luego los borra.
+  El Dockerfile además hace `find dist -name '*.map' -delete` como safeguard → ningún
+  `.map` llega a nginx. Build args nuevos: `VITE_SENTRY_ENVIRONMENT`,
+  `VITE_SENTRY_RELEASE`, y (secreto build-time) `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` /
+  `SENTRY_PROJECT`.
 
 ---
 
@@ -191,6 +256,18 @@ docker compose ... logs backend | grep ADMIN_PASSWORD_RESET_ISSUED
 tail -100 /var/log/vet-backup.log
 ```
 
+### Correlación por request_id (P1-5 A1)
+
+Cada línea de log lleva `req=<request_id>` (formato verbose) y los eventos JSON
+incluyen el campo `request_id`. Es el **mismo** `X-Request-ID` de la respuesta. Para
+reconstruir todo lo que pasó en un request reportado por el cliente:
+
+```bash
+docker compose ... logs backend | grep <request_id>
+```
+
+Fuera de un request (crons, management commands) el id sale como `req=-`.
+
 ### Cuándo upgradear a log shipping
 
 Stack actual = `docker logs` + grep manual. Suficiente para 1-5 servicios.
@@ -204,18 +281,37 @@ Para beta = innecesario.
 
 ---
 
-## 6. Sentry CLI release tracking (opcional, post-beta)
+## 6. Source maps frontend (P1-5 A4 — ya cableado)
 
-Para vincular issues a commits exactos + ver qué archivo / línea cambió entre releases, usar `sentry-cli`:
+Los stack traces minificados son inútiles en Sentry. P1-5 A4 ya integra el upload
+de source maps vía `@sentry/vite-plugin` (devDependency):
+
+- `vite.config.js`: `build.sourcemap: 'hidden'` (emite `.map` sin el comentario
+  `sourceMappingURL` → el navegador no los descarga). El plugin se carga **solo**
+  cuando están las 3 credenciales de upload; con token sube los `.map` a Sentry y
+  los borra del `dist` (`filesToDeleteAfterUpload`).
+- `frontend/Dockerfile`: safeguard `find dist -name '*.map' -delete` post-build →
+  ningún `.map` llega a nginx aunque el upload no haya corrido (no exponer el código).
+- `@sentry/cli` (dep transitiva, trae el binario de upload) tiene su build script
+  aprobado en `frontend/package.json` → `pnpm.onlyBuiltDependencies: ["@sentry/cli"]`.
+  En CI/Docker su postinstall corre durante `pnpm install`. (Antes vivía en un
+  `frontend/pnpm-workspace.yaml` con un campo `allowBuilds` inexistente — pnpm lo
+  ignoraba y, sin `packages:`, pnpm 9 fallaba el install con "packages field missing
+  or empty". Se movió al campo real soportado por pnpm 9/10/11.)
+
+Pasar al build del frontend (build-time, **secretos solo en CI** — idealmente
+BuildKit `--secret`; nunca llegan al bundle ni al image runtime):
 
 ```bash
-# En el script de deploy, post-build:
-sentry-cli releases new "$SENTRY_RELEASE"
-sentry-cli releases set-commits "$SENTRY_RELEASE" --auto
-sentry-cli releases finalize "$SENTRY_RELEASE"
+SENTRY_AUTH_TOKEN=...   SENTRY_ORG=...   SENTRY_PROJECT=...
+VITE_SENTRY_RELEASE=$(git rev-parse --short HEAD)   # debe igualar el release del backend
 ```
 
-Requiere `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` envs. Diferido a post-beta — el tag `release` plano ya cubre 80% del valor.
+Sin esas credenciales el build funciona igual (plugin no se carga); solo se pierde
+la de-minificación de stack traces hasta configurarlas.
+
+Para vincular issues a commits exactos (post-beta) también podés usar `sentry-cli
+releases set-commits --auto` en el deploy con las mismas credenciales.
 
 ---
 
@@ -225,6 +321,10 @@ Requiere `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` envs. Diferido a 
 [ ] SENTRY_DSN backend configurado en .env.prod
 [ ] VITE_SENTRY_DSN frontend configurado en .env.prod (DSN distinto)
 [ ] SENTRY_TRACES_SAMPLE_RATE=0.05 (ajustar según volumen esperado)
+[ ] GIT_SHA seteado en el deploy (→ release Sentry + /api/version/)
+[ ] SENTRY_AUTH_TOKEN/ORG/PROJECT en el build del frontend (source maps) — P1-5 A4
+[ ] Verificado: /api/version/ reporta el commit correcto (no "dev")
+[ ] Verificado: ErrorBoundary muestra event_id ante un crash JS — P1-5 A3
 [ ] Sentry alert rule: nuevo issue P1 en production → email/Slack
 [ ] Test event capturado (sentry_sdk.capture_message("hello"))
 [ ] UptimeRobot monitor creado contra /api/healthz/ cada 5min
@@ -244,7 +344,7 @@ Requiere `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` envs. Diferido a 
 |---------|----------------|-----|
 | Sentry no recibe events | DSN mal pegado / SENTRY_DSN vacío | `docker compose ... exec backend python -c "from django.conf import settings; import sys; sys.exit(0 if settings else 1)"` y verificar |
 | Sentry quota exceeded | TRACES_SAMPLE_RATE muy alto | Bajar a 0.01 o upgrade tier |
-| Sentry recibe events pero todos sin source maps frontend | Build no sube sourcemaps a Sentry (deliberadamente — Capa 8 H7) | Para tener stacktrace legible: usar `sentry-cli sourcemaps upload` post-build sin commitear los .map al bundle público |
+| Sentry recibe events pero stack traces frontend minificados | Build sin credenciales de upload → el `@sentry/vite-plugin` no se cargó (P1-5 A4) | Pasar `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` + `VITE_SENTRY_RELEASE` al `docker compose build frontend` (§6). Verificar que el release del bundle iguala el del evento |
 | UptimeRobot reporta DOWN constantemente | Probe respeta TLS — certificado Caddy aún emitiéndose (ACME challenge falla por DNS no propagado) | `curl -v https://app.tu-dominio.com/` desde tu laptop. Si falla, revisar A record + UFW :80 (ACME HTTP-01) |
 | disk-alert dispara con `/var/lib/docker` >80% | Container images viejas + volumes huérfanos | `docker system prune -a --volumes` (CUIDADO: borra unused — confirmar primero con `--dry-run`) |
 | backend logs muestran tracebacks repetidos sin que Sentry los agrupe | release tag faltante | Verificar `SENTRY_RELEASE` en `.env.prod` y rebootear backend |
