@@ -38,6 +38,10 @@ _LEGACY_MAX = 64
 _EXTRA_MAX_ENTRIES = 50
 _EXTRA_VALUE_MAX = 500
 _EXTRA_LABEL_MAX = 120
+# Vista previa: cuántas filas SÍ importables y cuántas omitidas se muestran
+# en el frontend (el total real va en preview_total / skipped_total).
+_PREVIEW_MAX = 20
+_SKIPPED_SAMPLE_MAX = 10
 
 
 def _spec_target(spec):
@@ -256,6 +260,26 @@ def _base_result():
         'conflicts': [],          # duplicados por legacy_id con contexto
         'errors': [],             # alias backward-compat = blocking
         'warnings': [],
+        'preview': [],            # filas que SÍ se importarán (cleaned, capped)
+        'skipped': [],            # filas omitidas por duplicado de nombre (cleaned)
+        'preview_total': 0,       # total real (puede ser > len(preview))
+        'skipped_total': 0,       # total real (puede ser > len(skipped))
+    }
+
+
+def _preview_row(row_num, clean):
+    """Helper: devuelve dict de preview con los campos de la fila importable."""
+    return {
+        'row': row_num,
+        'owner_name': clean.get('owner_name', ''),
+        'owner_phone': clean.get('owner_phone', ''),
+        'pet_name': clean.get('pet_name', ''),
+        'pet_species': clean.get('pet_species', ''),
+        'pet_breed': clean.get('pet_breed', ''),
+        'pet_sex': clean.get('pet_sex', ''),
+        'pet_birth_date': clean.get('pet_birth_date', ''),
+        'pet_color': clean.get('pet_color', ''),
+        'pet_legacy_id': clean.get('pet_legacy_id', ''),
     }
 
 
@@ -442,6 +466,13 @@ def validate_job(job):
                     break
         if is_dup:
             result['skipped_duplicates'] += 1
+            if len(result['skipped']) < _SKIPPED_SAMPLE_MAX:
+                result['skipped'].append({
+                    **(_preview_row(i, clean)),
+                    'reason': 'duplicate',
+                    'message': 'Ya existe un paciente con el mismo nombre para este cliente.',
+                })
+            result['skipped_total'] += 1
             continue
 
         # Conflicto de legacy_id de mascota.
@@ -507,6 +538,11 @@ def validate_job(job):
         if pet_legacy:
             seen_pet_legacy.add(pet_legacy)
         result['created_pets'] += 1
+
+        # Vista previa de lo que SÍ se importará (capped).
+        if len(result['preview']) < _PREVIEW_MAX:
+            result['preview'].append(_preview_row(i, clean))
+        result['preview_total'] += 1
 
     return result
 

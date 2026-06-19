@@ -220,8 +220,8 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     }, [fieldCatalog]);
 
     const [openSections, setOpenSections] = useState({
-        duplicates: true,
-        expedientConflicts: true,
+        warnings: false,
+        omitted: true,
     });
 
     const r = result || {};
@@ -234,13 +234,17 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const conflicts = r.conflicts || [];
     const blocking = r.blocking || r.errors || [];
     const warnings = r.warnings || [];
+    const preview = r.preview || [];
+    const skipped = r.skipped || [];
+    const previewTotal = num(r.preview_total) || createdPets;
+    const skippedTotal = num(r.skipped_total) || skippedDups;
 
     const highConfidence = conflicts.filter((c) => c.match_confidence === "high");
     const uncertainConfidence = conflicts.filter((c) => c.match_confidence !== "high");
 
     const hasBlocking = blocking.length > 0;
     const hasImportable = createdPets > 0;
-    const hasAnyIssue = conflicts.length > 0 || hasBlocking || warnings.length > 0;
+    const hasAnyIssue = conflicts.length > 0 || hasBlocking || warnings.length > 0 || skipped.length > 0;
 
     const toggle = (s) => setOpenSections((prev) => ({ ...prev, [s]: !prev[s] }));
 
@@ -273,10 +277,10 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                     {createdPets > 0 && (
                         <div className={`${s.statusPill} ${s.pillSuccess}`}>
                             <span className={s.pillIcon}>✓</span>
-                            {createdPets} listo{createdPets === 1 ? "" : "s"}
+                            Se crearán {createdPets} mascota{createdPets !== 1 ? "s" : ""}
                             {totalOwners > 0 && (
                                 <span className={s.pillExtra}>
-                                    {" · "}{totalOwners} cliente{totalOwners === 1 ? "" : "s"}
+                                    {" · "}asociadas a {totalOwners} cliente{totalOwners !== 1 ? "s" : ""}
                                 </span>
                             )}
                         </div>
@@ -313,39 +317,152 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                 </div>
             </div>
 
-            {/* ── Panel de revisión (inbox) ── */}
-            {(hasBlocking || warnings.length > 0) && (
+            {/* ── Sección: SE CREARÁN ── */}
+            {hasImportable && preview.length > 0 && (
+                <div className={s.previewSection}>
+                    <div className={s.previewSectionHeader}>
+                        <span className={s.previewSectionIcon}>✓</span>
+                        <span>SE CREARÁN</span>
+                        <span className={s.previewTotal}>
+                            ({previewTotal} mascota{previewTotal === 1 ? "" : "s"})
+                        </span>
+                    </div>
+                    <div className={s.previewTableWrap}>
+                        <table className={s.previewTable}>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Mascota</th>
+                                    <th>Cliente</th>
+                                    <th>Especie</th>
+                                    <th>Teléfono</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {preview.map((p) => (
+                                    <tr key={p.row}>
+                                        <td className={s.rowNum}>{p.row}</td>
+                                        <td>{p.pet_name || "—"}</td>
+                                        <td>{p.owner_name || "—"}</td>
+                                        <td className={s.cellSpecies}>{p.pet_species || "—"}</td>
+                                        <td className={s.cellMono}>{p.owner_phone || "—"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {previewTotal > preview.length && (
+                        <div className={s.previewShowing}>
+                            Mostrando {preview.length} de {previewTotal}
+                        </div>
+                    )}
+                    {warnings.length > 0 && (
+                        <div className={s.warningNotice}>
+                            <button className={s.warningNoticeToggle} onClick={() => toggle("warnings")} aria-expanded={openSections.warnings}>
+                                <span className={s.warningNoticeIcon}>⚠</span>
+                                <span>{warnings.length} registro{warnings.length === 1 ? "" : "s"} se importará{warnings.length === 1 ? "" : "n"} con algunos datos faltantes.</span>
+                                <span className={s.warningNoticeAction}>
+                                    Puedes completarlos después. {openSections.warnings ? "▲" : "▸ ver detalle"}
+                                </span>
+                            </button>
+                            {openSections.warnings && (
+                                <div className={s.warningNoticeBody}>
+                                    {warningsGroups.map((g) => (
+                                        <div key={g.field} className={s.warningGroup}>
+                                            <div className={s.warningGroupLabel}>
+                                                {g.label} — {g.count} registro{g.count === 1 ? "" : "s"}
+                                            </div>
+                                            <div className={s.warningGroupAction}>{g.action}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ── Panel de revisión: errores que bloquean ── */}
+            {hasBlocking && (
                 <ReviewPanel
                     blockingGroups={blockingGroups}
-                    warningsGroups={warningsGroups}
+                    warningsGroups={[]}
                     labelByKey={labelByKey}
                 />
             )}
 
-            {/* ── Posibles duplicados ── */}
-            {highConfidence.length > 0 && (
-                <CollapseGroup
-                    icon="⚠" title="Posibles duplicados" count={highConfidence.length}
-                    intro="Puede que estos pacientes ya estén registrados. Suele pasar si este archivo ya se importó antes."
-                    items={highConfidence} open={openSections.duplicates}
-                    onToggle={() => toggle("duplicates")}
-                />
-            )}
+            {/* ── NO SE IMPORTARÁN ── */}
+            {(skipped.length > 0 || conflicts.length > 0) && (
+                <div className={s.collapseBlock}>
+                    <button className={s.collapseToggle} onClick={() => toggle("omitted")} aria-expanded={openSections.omitted}>
+                        <span className={s.collapseIcon}>⊘</span>
+                        <span className={s.collapseLabel}>No se importarán ({skippedTotal + skippedConflicts})</span>
+                        <span className={s.collapseChevron}>{openSections.omitted ? "▲" : "▼"}</span>
+                    </button>
+                    {openSections.omitted && (
+                        <div className={s.collapseBody}>
+                            <p className={s.omittedIntro}>
+                                Estos registros no se crearán. No es un error — ya existen en VetCare
+                                o tienen conflictos que requieren revisión.
+                            </p>
 
-            {/* ── Conflictos de expediente ── */}
-            {uncertainConfidence.length > 0 && (
-                <CollapseGroup
-                    icon="⚡" title="Conflictos de expediente" count={uncertainConfidence.length}
-                    intro={
-                        "El número de expediente ya pertenece a otro paciente.\n\n"
-                        + "Puede pasar si:\n"
-                        + "· estás importando información de otra clínica.\n"
-                        + "· el sistema anterior reinició numeraciones.\n"
-                        + "· la columna seleccionada no corresponde al expediente."
-                    }
-                    items={uncertainConfidence} open={openSections.expedientConflicts}
-                    onToggle={() => toggle("expedientConflicts")} variant="Warn"
-                />
+                            {(skipped.length > 0 || highConfidence.length > 0) && (
+                                <div className={s.omittedReasonBlock}>
+                                    <div className={s.omittedReasonTitle}>
+                                        {/* skippedTotal es el total real (el backend envía hasta _SKIPPED_SAMPLE_MAX=10
+                                            en el array skipped[]). Los highConfidence se suman porque se presentan
+                                            como duplicados probables para el usuario. */}
+                                        Ya estaban registrados ({skippedTotal + highConfidence.length})
+                                    </div>
+                                    {skipped.map((item) => (
+                                        <div key={`skip-${item.row}`} className={s.skippedCard}>
+                                            <div className={s.skippedCardHeader}>
+                                                <span className={s.conflictNum}>Fila #{item.row}</span>
+                                            </div>
+                                            <div className={s.skippedCardInfo}>
+                                                <span>
+                                                    <span className={s.skippedInfoLabel}>Mascota: </span>
+                                                    {item.pet_name || "—"}
+                                                </span>
+                                                <span>
+                                                    <span className={s.skippedInfoLabel}>Cliente: </span>
+                                                    {item.owner_name || "—"}
+                                                </span>
+                                            </div>
+                                            <p style={{ fontSize: 12, color: "var(--c-text-3)", margin: "6px 0 0" }}>
+                                                {item.message}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    {skippedTotal > skipped.length && (
+                                        <div className={s.previewShowing}>
+                                            Mostrando {skipped.length} de {skippedTotal}
+                                        </div>
+                                    )}
+                                    {highConfidence.map((c) => (
+                                        <ConflictCard key={`reg-conf-${c.row}`} conflict={c} />
+                                    ))}
+                                </div>
+                            )}
+
+                            {uncertainConfidence.length > 0 && (
+                                <div className={s.omittedReasonBlock}>
+                                    <div className={s.omittedReasonTitle}>
+                                        Mismo expediente con datos diferentes ({uncertainConfidence.length})
+                                    </div>
+                                    <p className={s.omittedReasonDesc}>
+                                        El número de expediente ya pertenece a otro paciente con datos distintos.
+                                        Puede pasar si importas información de otra clínica o el sistema anterior
+                                        reinició numeraciones.
+                                    </p>
+                                    {uncertainConfidence.map((c) => (
+                                        <ConflictCard key={`exp-conf-${c.row}`} conflict={c} />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* ── Descarga CSV ── */}
@@ -382,8 +499,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
                             <p className={s.consequence}>
                                 Al continuar: ✓ se importarán {createdPets} registro{createdPets === 1 ? "" : "s"}
-                                {skippedConflicts > 0 && <>{" · "}⚠ {skippedConflicts} posibles duplicados se omitirán</>}
-                                {skippedDups > 0 && <>{" · "}⊘ {skippedDups} duplicados se omitirán</>}
+                                {(skippedTotal + skippedConflicts) > 0 && <>{" · "}⊘ {skippedTotal + skippedConflicts} no se importarán</>}
                             </p>
                             <button className="btn btn-primary btn-md" onClick={onConfirm} disabled={committing}>
                                 {committing ? "Importando..." : "Confirmar importación"}

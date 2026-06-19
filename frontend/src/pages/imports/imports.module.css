@@ -697,3 +697,195 @@
 /* ── Variante advertencia para conflictos de expediente ── */
 .collapseBlockWarn { border-color: var(--c-warning-border); }
 .collapseBlockWarn .collapseToggle { background: var(--c-warning-bg); }
+
+/* ── Preview Table ("SE CREARÁN") ─────────── */
+.previewSection {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.previewSection .previewSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 16px;
+  background: var(--c-subtle);
+  border-bottom: 1px solid var(--c-border);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.previewSectionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.previewTotal {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--c-text-3);
+  margin-left: auto;
+}
+.previewTableWrap {
+  overflow-x: auto;
+}
+.previewTable {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+.previewTable thead th {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+.previewTable tbody td {
+  padding: 10px 12px;
+  color: var(--c-text);
+  border-bottom: 1px solid var(--c-border-light, var(--c-border));
+  white-space: nowrap;
+}
+.previewTable tbody tr:last-child td {
+  border-bottom: none;
+}
+.previewTable tbody tr:hover {
+  background: var(--c-subtle);
+}
+.cellSpecies {
+  text-transform: capitalize;
+}
+.cellMono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.previewShowing {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--c-text-3);
+  border-top: 1px solid var(--c-border);
+  background: var(--c-subtle);
+}
+
+/* ── Omitidos (Skipped cards) ─────────── */
+.skippedCard {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-subtle);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.skippedCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.skippedReason {
+  font-size: 12px;
+  color: var(--c-text-3);
+}
+.skippedCardInfo {
+  font-size: 12.5px;
+  color: var(--c-text);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.skippedInfoLabel {
+  color: var(--c-text-3);
+}
+
+/* ── Warning notice (dentro de SE CREARÁN) ─────────── */
+.warningNotice {
+  border-top: 1px solid var(--c-border);
+}
+.warningNoticeToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--c-warning-bg);
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--c-warning-text);
+  text-align: left;
+}
+.warningNoticeToggle:hover {
+  background: var(--c-warning-border, #fde68a);
+}
+.warningNoticeIcon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.warningNoticeAction {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.warningNoticeBody {
+  padding: 14px 16px;
+  background: var(--c-surface);
+}
+.warningGroup {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+.warningGroup:last-child {
+  border-bottom: none;
+}
+.warningGroupLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: 2px;
+}
+.warningGroupAction {
+  font-size: 12px;
+  color: var(--c-text-3);
+}
+
+/* ── NO SE IMPORTARÁN (unified) ─────────── */
+.omittedIntro {
+  font-size: 13px;
+  color: var(--c-text-2);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.omittedReasonBlock {
+  margin-bottom: 16px;
+}
+.omittedReasonBlock:last-child {
+  margin-bottom: 0;
+}
+.omittedReasonTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  margin: 0 0 4px;
+}
+.omittedReasonDesc {
+  font-size: 12px;
+  color: var(--c-text-3);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}

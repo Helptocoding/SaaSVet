@@ -2,10 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PreviewStep from "./PreviewStep";
 
-// PreviewStep — agrupa conflictos por match_confidence:
-//   high     → "Posibles duplicados"
-//   uncertain → "Conflictos de expediente"
-// Lenguaje humano, sin tokens técnicos (legacy_id, constraint).
+// PreviewStep — Vista previa humana, no técnica.
+// - SE CREARÁN: preview table + warning notice
+// - ReviewPanel: solo errores bloqueantes
+// - NO SE IMPORTARÁN: unificado con motivos humanos
+//   - "Ya estaban registrados" (skipped + high-confidence)
+//   - "Mismo expediente con datos diferentes" (uncertain)
 
 const FIELD_CATALOG = [
     { key: "owner.name", label: "Nombre del cliente", group: "Cliente", importance: "required" },
@@ -123,6 +125,67 @@ const RESULT_CLEAN = {
     warnings: [],
 };
 
+const RESULT_WITH_PREVIEW = {
+    created_owners: 1500,
+    reused_owners: 0,
+    created_pets: 1500,
+    skipped_duplicates: 10,
+    skipped_conflicts: 5,
+    blocking_rows: 0,
+    errors: [],
+    blocking: [],
+    conflicts: [
+        {
+            row: 5,
+            type: "duplicate_legacy_id",
+            severity: "conflict",
+            scope: "pet",
+            match_confidence: "high",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Luna", owner_name: "Ana López", legacy_id: "126" },
+            existing: { pet_name: "Luna", owner_name: "Ana López", public_id: "abc-123" },
+        },
+    ],
+    warnings: [
+        { row: 3, field: "pet.species", message: "Mascota sin especie — se importará como pendiente." },
+    ],
+    preview: [
+        { row: 1, pet_name: "Bella", owner_name: "Ana López", pet_species: "canino", owner_phone: "8181234567", pet_breed: "", pet_sex: "", pet_birth_date: "", pet_color: "", pet_legacy_id: "" },
+        { row: 2, pet_name: "Rocky", owner_name: "Luis Pérez", pet_species: "felino", owner_phone: "", pet_breed: "", pet_sex: "", pet_birth_date: "", pet_color: "", pet_legacy_id: "" },
+    ],
+    preview_total: 1500,
+    skipped: [
+        { row: 4, pet_name: "Max", owner_name: "Juan Pérez", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+    ],
+    skipped_total: 10,
+};
+
+const RESULT_WITH_SKIPPED_GAP = {
+    created_owners: 0,
+    reused_owners: 0,
+    created_pets: 0,
+    skipped_duplicates: 1500,
+    skipped_conflicts: 0,
+    blocking_rows: 0,
+    errors: [],
+    blocking: [],
+    conflicts: [],
+    warnings: [],
+    skipped: [
+        { row: 1, pet_name: "Thor", owner_name: "Fernando Ruiz", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 2, pet_name: "Thor", owner_name: "Fernando Hernández", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 3, pet_name: "Rocky", owner_name: "Daniel Rodríguez", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 4, pet_name: "Toby", owner_name: "Gabriela Ramírez", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 5, pet_name: "Max", owner_name: "Juan Ramírez", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 6, pet_name: "Kira", owner_name: "Alejandro Pérez", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 7, pet_name: "Max", owner_name: "Jorge López", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 8, pet_name: "Toby", owner_name: "Daniel Rodríguez", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 9, pet_name: "Luna", owner_name: "Verónica Flores", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+        { row: 10, pet_name: "Maya", owner_name: "Laura Hernández", pet_species: "canino", reason: "duplicate", message: "Ya existe un paciente con el mismo nombre para este cliente." },
+    ],
+    skipped_total: 1500,
+};
+
 function renderPreview(props = {}) {
     const onConfirm = vi.fn();
     const onBack = vi.fn();
@@ -140,9 +203,9 @@ function renderPreview(props = {}) {
 }
 
 describe("PreviewStep — resumen humano", () => {
-    it("muestra pacientes listos, duplicados omitidos, necesitan revisión", () => {
+    it("muestra mascotas que se crearán, duplicados omitidos, necesitan revisión", () => {
         renderPreview();
-        expect(screen.getByText(/1 listo/)).toBeInTheDocument();
+        expect(screen.getByText(/Se crearán 1 mascota/)).toBeInTheDocument();
         expect(screen.getByText(/2 omitidos/)).toBeInTheDocument();
         expect(screen.getByText(/3 en revisión/)).toBeInTheDocument();
     });
@@ -156,46 +219,43 @@ describe("PreviewStep — resumen humano", () => {
     });
 });
 
-describe("PreviewStep — Posibles duplicados (match_confidence = high)", () => {
-    it("high aparece en el grupo 'Posibles duplicados'", () => {
+describe("PreviewStep — No se importarán: Ya estaban registrados", () => {
+    it("high-confidence aparece agrupado como 'Ya estaban registrados' con total real", () => {
         renderPreview();
-        expect(screen.getByText(/Posibles duplicados \(1\)/)).toBeInTheDocument();
+        // RESULT_WITH_CONFLICTS: skipped_total no definido → cae a skipped_duplicates=2, + highConfidence=1 = 3
+        expect(screen.getByText(/Ya estaban registrados \(3\)/)).toBeInTheDocument();
     });
 
-    it("muestra el intro clásico de re-importación", () => {
+    it("el intro general de NO SE IMPORTARÁN es tranquilizador", () => {
         renderPreview();
-        expect(screen.getByText(/Puede que estos pacientes ya estén registrados/)).toBeInTheDocument();
+        expect(screen.getByText(/No es un error/)).toBeInTheDocument();
     });
 
-    it("high muestra 'Parece el mismo paciente'", () => {
+    it("high muestra 'Parece el mismo paciente' en la card", () => {
         renderPreview();
         expect(screen.getByText("Parece el mismo paciente.")).toBeInTheDocument();
     });
 });
 
-describe("PreviewStep — Conflictos de expediente (match_confidence = uncertain)", () => {
-    it("uncertain aparece en grupo separado 'Conflictos de expediente'", () => {
+describe("PreviewStep — No se importarán: Mismo expediente con datos diferentes", () => {
+    it("uncertain aparece como 'Mismo expediente con datos diferentes'", () => {
         renderPreview();
-        expect(screen.getByText(/Conflictos de expediente \(1\)/)).toBeInTheDocument();
+        expect(screen.getByText(/Mismo expediente con datos diferentes \(1\)/)).toBeInTheDocument();
     });
 
-    it("muestra el intro de múltiples orígenes posibles", () => {
+    it("muestra descripción sobre múltiples orígenes posibles", () => {
         renderPreview();
-        // El intro y el hint de cada card contienen la misma frase base.
-        // Verificamos que ambas apariciones existen.
-        const matches = screen.getAllByText(/El número de expediente ya pertenece a otro paciente/);
-        expect(matches.length).toBeGreaterThanOrEqual(1);
-        expect(screen.getByText(/estás importando información de otra clínica/)).toBeInTheDocument();
-        expect(screen.getByText(/el sistema anterior reinició numeraciones/)).toBeInTheDocument();
+        expect(screen.getByText(/importas información de otra clínica/)).toBeInTheDocument();
+        expect(screen.getByText(/reinició numeraciones/)).toBeInTheDocument();
     });
 
-    it("NO muestra como posible duplicado el uncertain", () => {
+    it("solo uncertain: no muestra 'Ya estaban registrados'", () => {
         renderPreview({ result: RESULT_UNCERTAIN_ONLY });
-        expect(screen.queryByText(/Posibles duplicados/)).not.toBeInTheDocument();
-        expect(screen.getByText(/Conflictos de expediente \(2\)/)).toBeInTheDocument();
+        expect(screen.queryByText(/Ya estaban registrados/)).not.toBeInTheDocument();
+        expect(screen.getByText(/Mismo expediente con datos diferentes \(2\)/)).toBeInTheDocument();
     });
 
-    it("muestra 'El número de expediente ya pertenece a otro paciente' en uncertain", () => {
+    it("muestra el mensaje de conflicto en la card", () => {
         renderPreview({ result: RESULT_UNCERTAIN_ONLY });
         expect(screen.getAllByText("El número de expediente ya pertenece a otro paciente.").length).toBeGreaterThanOrEqual(1);
     });
@@ -248,5 +308,132 @@ describe("PreviewStep — consecuencias y CTA", () => {
         renderPreview({ canCommit: false });
         expect(screen.queryByRole("button", { name: /confirmar importación/i })).not.toBeInTheDocument();
         expect(screen.getByText(/no tienes permiso/i)).toBeInTheDocument();
+    });
+});
+
+describe("PreviewStep — SE CREARÁN (preview table)", () => {
+    it("muestra tabla con columnas Mascota, Cliente, Especie, Teléfono", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText("SE CREARÁN")).toBeInTheDocument();
+        expect(screen.getByText("Mascota")).toBeInTheDocument();
+        expect(screen.getByText("Cliente")).toBeInTheDocument();
+        const speciesHeaders = screen.getAllByText("Especie");
+        expect(speciesHeaders.length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText("Teléfono")).toBeInTheDocument();
+    });
+
+    it("muestra los registros del preview en la tabla", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText("Bella")).toBeInTheDocument();
+        const anaMatches = screen.getAllByText("Ana López");
+        expect(anaMatches.length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText("Rocky")).toBeInTheDocument();
+        expect(screen.getByText("Luis Pérez")).toBeInTheDocument();
+    });
+
+    it("muestra 'Mostrando N de M' cuando hay más registros que preview", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/Mostrando 2 de 1500/)).toBeInTheDocument();
+    });
+
+    it("no muestra 'Mostrando N de M' cuando el total cabe en el preview", () => {
+        const small = {
+            ...RESULT_CLEAN,
+            created_pets: 2,
+            created_owners: 2,
+            preview: [
+                { row: 1, pet_name: "Bella", owner_name: "Ana López", pet_species: "canino", owner_phone: "8181234567", pet_breed: "", pet_sex: "", pet_birth_date: "", pet_color: "", pet_legacy_id: "" },
+                { row: 2, pet_name: "Rocky", owner_name: "Luis", pet_species: "felino", owner_phone: "", pet_breed: "", pet_sex: "", pet_birth_date: "", pet_color: "", pet_legacy_id: "" },
+            ],
+            preview_total: 2,
+        };
+        renderPreview({ result: small, canCommit: true });
+        expect(screen.getByText("SE CREARÁN")).toBeInTheDocument();
+        expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
+    });
+
+    it("celdas vacías muestran guion (—)", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        const dashElements = screen.getAllByText("—");
+        expect(dashElements.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("no muestra la tabla cuando no hay preview", () => {
+        renderPreview({ result: RESULT_CLEAN, canCommit: true });
+        expect(screen.queryByText("SE CREARÁN")).not.toBeInTheDocument();
+    });
+
+    it("muestra el total de mascotas en el encabezado", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        const mascotaMatches = screen.getAllByText(/1500\s+mascotas/);
+        expect(mascotaMatches.length).toBeGreaterThanOrEqual(1);
+    });
+});
+
+describe("PreviewStep — NO SE IMPORTARÁN (unificado)", () => {
+    it("muestra sección unificada con el total combinado", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/No se importarán \(15\)/)).toBeInTheDocument();
+    });
+
+    it("muestra 'Ya estaban registrados' con el total real, no la muestra", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        // skippedTotal=10, skipped.length=1, highConfidence.length=1 → 11
+        expect(screen.getByText(/Ya estaban registrados \(11\)/)).toBeInTheDocument();
+    });
+
+    it("muestra el nombre de la mascota y cliente omitidos (skipped)", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText("Max")).toBeInTheDocument();
+        expect(screen.getByText("Juan Pérez")).toBeInTheDocument();
+    });
+
+    it("muestra el motivo del omitido por duplicado", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/Ya existe un paciente con el mismo nombre/)).toBeInTheDocument();
+    });
+
+    it("no muestra sección cuando no hay omitidos ni conflictos", () => {
+        renderPreview({ result: RESULT_CLEAN, canCommit: true });
+        expect(screen.queryByText(/No se importarán/)).not.toBeInTheDocument();
+    });
+
+    it("muestra 'Mostrando N de M' cuando la muestra no cubre el total", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        // skippedTotal=10, skipped.length=1 → gap
+        expect(screen.getByText(/Mostrando 1 de 10/)).toBeInTheDocument();
+    });
+
+    it("gap grande: skippedTotal=1500 con 10 samples muestra 1500 en contador y 10 de 1500", () => {
+        renderPreview({ result: RESULT_WITH_SKIPPED_GAP, canCommit: true });
+        // Contador usa el total real, no la muestra
+        expect(screen.getByText(/Ya estaban registrados \(1500\)/)).toBeInTheDocument();
+        // Indicador de muestra
+        expect(screen.getByText(/Mostrando 10 de 1500/)).toBeInTheDocument();
+        // El toggle de la sección también usa el total real
+        expect(screen.getByText(/No se importarán \(1500\)/)).toBeInTheDocument();
+    });
+});
+
+describe("PreviewStep — integración", () => {
+    it("muestra SE CREARÁN y NO SE IMPORTARÁN simultáneamente", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText("SE CREARÁN")).toBeInTheDocument();
+        expect(screen.getByText(/No se importarán/)).toBeInTheDocument();
+    });
+
+    it("warnings aparecen dentro de SE CREARÁN como aviso colapsable", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/1 registro se importará con algunos datos faltantes/)).toBeInTheDocument();
+    });
+
+    it("el aviso de warnings muestra 'ver detalle'", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/ver detalle/)).toBeInTheDocument();
+    });
+
+    it("barra de estado mantiene el pill de datos incompletos", () => {
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/1 con datos incompletos/)).toBeInTheDocument();
     });
 });
