@@ -520,3 +520,51 @@ describe("PreviewStep — regresión: 0 explícito no se enmascara", () => {
         expect(screen.queryByText(/\(5 mascotas\)/)).not.toBeInTheDocument();
     });
 });
+
+// Respuesta de un backend VIEJO: SIN conflicts_high/conflicts_uncertain ni *_total.
+// El frontend debe caer al .length del array (conflicts no se capa) y seguir cuadrando.
+const RESULT_OLD_NO_AGGREGATES = {
+    created_owners: 3,
+    reused_owners: 0,
+    created_pets: 3,
+    skipped_duplicates: 0,
+    skipped_conflicts: 2,
+    // sin conflicts_high / conflicts_uncertain (intencional — respuesta vieja)
+    blocking_rows: 0,
+    errors: [],
+    blocking: [],
+    conflicts: [
+        {
+            row: 5, type: "duplicate_legacy_id", severity: "conflict", scope: "pet",
+            match_confidence: "high",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Luna", owner_name: "Ana López", legacy_id: "126" },
+            existing: { pet_name: "Luna", owner_name: "Ana López", public_id: "abc-1" },
+        },
+        {
+            row: 8, type: "duplicate_legacy_id", severity: "conflict", scope: "pet",
+            match_confidence: "uncertain",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Rocky", owner_name: "Pedro", legacy_id: "200" },
+            existing: { pet_name: "Max", owner_name: "Juan", public_id: "def-2" },
+        },
+    ],
+    warnings: [],
+    // sin preview / preview_total / skipped / skipped_total (respuesta vieja)
+};
+
+describe("PreviewStep — respuesta vieja (sin agregados de conflictos)", () => {
+    it("cae al .length del array y los números siguen cuadrando", () => {
+        renderPreview({ result: RESULT_OLD_NO_AGGREGATES });
+        const parent = countIn(/No se importarán \(\d+\)/);
+        const registrados = countIn(/Ya estaban registrados \(\d+\)/);
+        const expediente = countIn(/Mismo expediente con datos diferentes \(\d+\)/);
+        expect(parent).toBe(2);
+        expect(registrados + expediente).toBe(parent); // 1 + 1 === 2
+    });
+
+    it("no muestra 'Mostrando N de M' cuando el array está completo", () => {
+        renderPreview({ result: RESULT_OLD_NO_AGGREGATES });
+        expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
+    });
+});
