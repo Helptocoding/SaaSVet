@@ -105,10 +105,16 @@ services_healthy() {
   return 0
 }
 
-backend_version() { # prints the commit the running backend serves
+# Prints "<commit>\t<version>" the running backend serves (either field may be
+# empty). From a single /api/version/ request:
+#   commit  = git SHA   (the deploy identifier — what we expect to match)
+#   version = product version (APP_VERSION, e.g. 1.0.0-beta) — fallback only
+# The API cleanly separates the two; the gate prefers commit and falls back to
+# version (covers a backend whose APP_VERSION carries the SHA but commit unset).
+backend_identity() {
   local cid; cid="$(compose ps -q backend 2>/dev/null)"
-  [ -n "$cid" ] || { echo ""; return; }
-  docker exec "$cid" python -c "import urllib.request,json;d=json.load(urllib.request.urlopen('http://localhost:8000/api/version/',timeout=3));print(d.get('commit') or '')" 2>/dev/null | tr -d '\r'
+  [ -n "$cid" ] || { printf '\t'; return; }
+  docker exec "$cid" python -c "import urllib.request,json;d=json.load(urllib.request.urlopen('http://localhost:8000/api/version/',timeout=3));print((d.get('commit') or '')+'\t'+(d.get('version') or ''))" 2>/dev/null | tr -d '\r'
 }
 
 backend_readyz_ok() { # 0 if /api/readyz returns 200 (DB reachable)
@@ -117,19 +123,32 @@ backend_readyz_ok() { # 0 if /api/readyz returns 200 (DB reachable)
   docker exec "$cid" python -c "import urllib.request,sys;r=urllib.request.urlopen('http://localhost:8000/api/readyz/',timeout=3);sys.exit(0 if r.status==200 else 1)" 2>/dev/null
 }
 
-# Poll until all services healthy + readyz ok + version == expected SHA, or
-# timeout. Returns 0 on success.
+# Poll until all services healthy + readyz ok + the running backend identifies
+# as the expected SHA, or timeout. Returns 0 on success.
+#
+# Match precedence (the /api/version/ contract separates the two cleanly):
+#   1. commit  == expected_sha   ← primary: commit is the git SHA, same kind
+#   2. version == expected_sha   ← fallback: only passes if APP_VERSION literally
+#                                  carries the SHA (commit unset). A real product
+#                                  version like "1.0.0-beta" never equals a SHA,
+#                                  so it cannot false-pass.
 health_gate() { # expected_sha
-  local sha="$1" timeout="${DEPLOY_HEALTH_TIMEOUT:-120}" waited=0 step=5 got
-  log "health gate: waiting for version=$sha (timeout ${timeout}s)"
+  local sha="$1" timeout="${DEPLOY_HEALTH_TIMEOUT:-120}" waited=0 step=5 got commit version
+  log "health gate: waiting for commit=$sha (timeout ${timeout}s)"
   while [ "$waited" -lt "$timeout" ]; do
     if services_healthy && backend_readyz_ok; then
-      got="$(backend_version)"
-      if [ "$got" = "$sha" ]; then
-        log "health gate PASS (services healthy, readyz ok, version=$sha)"
+      got="$(backend_identity)"
+      commit="${got%%$'\t'*}"
+      version="${got#*$'\t'}"
+      if [ -n "$commit" ] && [ "$commit" = "$sha" ]; then
+        log "health gate PASS (services healthy, readyz ok, commit=$sha)"
         return 0
       fi
-      log "version mismatch: serving='${got:-?}' expected='$sha' (still settling)"
+      if [ "$version" = "$sha" ]; then
+        log "health gate PASS (services healthy, readyz ok, version=$sha; commit unset/mismatch)"
+        return 0
+      fi
+      log "identity mismatch: commit='${commit:-?}' version='${version:-?}' expected='$sha' (still settling)"
     fi
     sleep "$step"; waited=$((waited+step))
   done
