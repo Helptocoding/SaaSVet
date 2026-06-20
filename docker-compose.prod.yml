@@ -202,7 +202,14 @@ services:
       frontend:
         condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/api/healthz/"]
+      # Liveness probe against the INTERNAL http://localhost:8081 health
+      # listener defined in infra/Caddyfile — plain HTTP, no TLS, no redirect.
+      # Do NOT point this at :80/:443: the public {$DOMAIN} block forces
+      # HTTP→HTTPS and its cert is for the domain, not `localhost`, so a
+      # loopback probe there is flagged `unhealthy` (busybox wget has no
+      # reliable TLS either). Port 8081 is not published → internet can't reach
+      # it. See the Caddyfile block for the full rationale.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8081/api/healthz/"]
       interval: 30s
       timeout: 5s
       retries: 3

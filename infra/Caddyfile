@@ -145,3 +145,33 @@
 		level INFO
 	}
 }
+
+# ---------------------------------------------------------------------------
+# Internal liveness listener — the Docker healthcheck target.
+#
+# The healthcheck runs INSIDE this container (loopback). It must NOT probe the
+# public `{$DOMAIN}` block: that block forces HTTP→HTTPS and its TLS cert is
+# issued for the domain, not `localhost`. So `http://localhost/` hits the
+# 308 redirect and `https://localhost/` fails cert validation — and busybox
+# `wget` in alpine has no reliable TLS. Either way the container is flagged
+# `unhealthy` even though the public stack is fine.
+#
+# This dedicated `http://` site address disables auto-HTTPS for itself: no
+# redirect, no TLS, no ACME (so no Let's Encrypt rate-limit risk). It answers
+# a pure 200 (liveness) — decoupled from backend so a backend hiccup can't
+# cascade caddy to `unhealthy`. External uptime monitors still use the domain
+# `@health` route above, which traverses to backend.
+#
+# Port 8081 is NOT in the compose `ports:` block → unreachable from the
+# internet; only the in-container healthcheck (loopback) hits it. Everything
+# other than the health path 404s, so this listener exposes nothing else.
+# ---------------------------------------------------------------------------
+http://localhost:8081 {
+	@health path /api/healthz /api/healthz/
+	handle @health {
+		respond 200
+	}
+	handle {
+		respond 404
+	}
+}

@@ -200,6 +200,7 @@ sudo reboot
 | **Plain Django views para healthz/readyz** | Bypasa DRF + DEFAULT_PERMISSION_CLASSES sin boilerplate AllowAny |
 | **`require_safe` en healthz/readyz** | Acepta GET + HEAD — UptimeRobot prefiere HEAD a veces |
 | **`SECURE_REDIRECT_EXEMPT` healthz** | Container healthcheck es loopback http — sin exempt Django redirige 301 → "unhealthy" |
+| **Caddy healthcheck → listener interno `http://localhost:8081`** | El bloque público `{$DOMAIN}` fuerza HTTP→HTTPS y su cert es del dominio, no `localhost` → probe loopback sobre `:80`/`:443` falla (busybox wget sin TLS confiable). Listener `http://` dedicado: sin redirect, sin TLS, sin ACME; responde 200 puro (liveness, desacoplado del backend). Puerto 8081 NO publicado → invisible desde internet |
 | **`run --rm backend` en crons** | Container fresh aísla de issues runtime — 5-10s overhead aceptable para crons diarios |
 | **Crons como `deploy`, NO root** | Mismo principio que SSH hardening — único cron que usa sudo es journalctl vacuum |
 | **Horarios cron en UTC** | Host UTC + Django UTC + Postgres UTC = cero ambigüedad correlación |
