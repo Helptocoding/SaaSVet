@@ -248,12 +248,27 @@ def check_mapping(job):
 
 
 def _base_result():
+    """Shape canónico del resultado de validate/commit del importador.
+
+    Counts are authoritative. Arrays are capped samples for UI only.
+
+    Los contadores agregados (`*_total`, `created_*`, `skipped_*`,
+    `conflicts_high`/`conflicts_uncertain`, `blocking_rows`) son la fuente de
+    verdad de TODO número que muestre la UI. Los arrays `preview`/`skipped`/
+    `conflicts` son MUESTRAS para render de ejemplos — nunca usar su `.length`
+    como conteo (ese bug vuelve; ver P1-6C1 / docs/modules/imports.md).
+    """
     return {
         'created_owners': 0,
         'reused_owners': 0,
         'created_pets': 0,
         'skipped_duplicates': 0,
         'skipped_conflicts': 0,
+        # Split agregado de skipped_conflicts (fuente única de verdad para el
+        # desglose del frontend). Invariante: conflicts_high + conflicts_uncertain
+        # == skipped_conflicts. Se mantienen vía _append_conflict().
+        'conflicts_high': 0,
+        'conflicts_uncertain': 0,
         'blocking_rows': 0,
         'error_rows': 0,          # alias backward-compat = blocking_rows
         'blocking': [],           # datos faltantes / imposibles
@@ -265,6 +280,23 @@ def _base_result():
         'preview_total': 0,       # total real (puede ser > len(preview))
         'skipped_total': 0,       # total real (puede ser > len(skipped))
     }
+
+
+def _append_conflict(result, conflict):
+    """Registra un conflicto y mantiene los contadores agregados en sync —
+    fuente única de verdad para los conteos que muestra el frontend.
+
+    `result['conflicts']` es la MUESTRA (ejemplos para la UI); los contadores
+    `skipped_conflicts` / `conflicts_high` / `conflicts_uncertain` son exactos
+    aunque la muestra se cape en el futuro. Invariante garantizado:
+    conflicts_high + conflicts_uncertain == skipped_conflicts.
+    """
+    result['skipped_conflicts'] += 1
+    if conflict.get('match_confidence') == 'high':
+        result['conflicts_high'] += 1
+    else:
+        result['conflicts_uncertain'] += 1
+    result['conflicts'].append(conflict)
 
 
 def _preview_row(row_num, clean):
@@ -416,8 +448,7 @@ def validate_job(job):
         owner_legacy = clean['owner_legacy_id']
         if owner_is_new and owner_legacy:
             if owner_legacy in seen_owner_legacy:
-                result['skipped_conflicts'] += 1
-                result['conflicts'].append({
+                _append_conflict(result, {
                     'row': i, 'type': 'duplicate_legacy_id',
                     'severity': 'conflict', 'scope': 'owner',
                     'match_confidence': 'high',
@@ -428,8 +459,7 @@ def validate_job(job):
                 continue
             if owner_legacy in owner_by_legacy:
                 existing_owner = owner_by_legacy[owner_legacy]
-                result['skipped_conflicts'] += 1
-                result['conflicts'].append({
+                _append_conflict(result, {
                     'row': i, 'type': 'duplicate_legacy_id',
                     'severity': 'conflict', 'scope': 'owner',
                     'match_confidence': _compute_match_confidence(
@@ -442,8 +472,7 @@ def validate_job(job):
                 })
                 continue
             if Owner.objects.for_organization(org).filter(legacy_id=owner_legacy).exists():
-                result['skipped_conflicts'] += 1
-                result['conflicts'].append({
+                _append_conflict(result, {
                     'row': i, 'type': 'duplicate_legacy_id',
                     'severity': 'conflict', 'scope': 'owner',
                     'match_confidence': 'uncertain',
@@ -479,8 +508,7 @@ def validate_job(job):
         pet_legacy = clean['pet_legacy_id']
         if pet_legacy:
             if pet_legacy in seen_pet_legacy:
-                result['skipped_conflicts'] += 1
-                result['conflicts'].append({
+                _append_conflict(result, {
                     'row': i, 'type': 'duplicate_legacy_id',
                     'severity': 'conflict', 'scope': 'pet',
                     'match_confidence': 'high',
@@ -493,8 +521,7 @@ def validate_job(job):
                 continue
             if pet_legacy in pet_by_legacy:
                 existing_pet = pet_by_legacy[pet_legacy]
-                result['skipped_conflicts'] += 1
-                result['conflicts'].append({
+                _append_conflict(result, {
                     'row': i, 'type': 'duplicate_legacy_id',
                     'severity': 'conflict', 'scope': 'pet',
                     'match_confidence': _compute_match_confidence(
@@ -512,8 +539,7 @@ def validate_job(job):
                 })
                 continue
             if Pet.objects.for_organization(org).filter(legacy_id=pet_legacy).exists():
-                result['skipped_conflicts'] += 1
-                result['conflicts'].append({
+                _append_conflict(result, {
                     'row': i, 'type': 'duplicate_legacy_id',
                     'severity': 'conflict', 'scope': 'pet',
                     'match_confidence': 'uncertain',
@@ -627,8 +653,7 @@ def commit_job(job):
             owner_legacy = clean['owner_legacy_id']
             if owner_is_new and owner_legacy:
                 if owner_legacy in seen_owner_legacy:
-                    result['skipped_conflicts'] += 1
-                    result['conflicts'].append({
+                    _append_conflict(result, {
                         'row': i, 'type': 'duplicate_legacy_id',
                         'severity': 'conflict', 'scope': 'owner',
                         'match_confidence': 'high',
@@ -639,8 +664,7 @@ def commit_job(job):
                     continue
                 if owner_legacy in owner_by_legacy:
                     existing_owner = owner_by_legacy[owner_legacy]
-                    result['skipped_conflicts'] += 1
-                    result['conflicts'].append({
+                    _append_conflict(result, {
                         'row': i, 'type': 'duplicate_legacy_id',
                         'severity': 'conflict', 'scope': 'owner',
                         'match_confidence': _compute_match_confidence(
@@ -653,8 +677,7 @@ def commit_job(job):
                     })
                     continue
                 if Owner.objects.for_organization(org).filter(legacy_id=owner_legacy).exists():
-                    result['skipped_conflicts'] += 1
-                    result['conflicts'].append({
+                    _append_conflict(result, {
                         'row': i, 'type': 'duplicate_legacy_id',
                         'severity': 'conflict', 'scope': 'owner',
                         'match_confidence': 'uncertain',
@@ -678,8 +701,7 @@ def commit_job(job):
             pet_legacy = clean['pet_legacy_id']
             if pet_legacy:
                 if pet_legacy in seen_pet_legacy:
-                    result['skipped_conflicts'] += 1
-                    result['conflicts'].append({
+                    _append_conflict(result, {
                         'row': i, 'type': 'duplicate_legacy_id',
                         'severity': 'conflict', 'scope': 'pet',
                         'match_confidence': 'high',
@@ -692,8 +714,7 @@ def commit_job(job):
                     continue
                 if pet_legacy in pet_by_legacy:
                     existing_pet = pet_by_legacy[pet_legacy]
-                    result['skipped_conflicts'] += 1
-                    result['conflicts'].append({
+                    _append_conflict(result, {
                         'row': i, 'type': 'duplicate_legacy_id',
                         'severity': 'conflict', 'scope': 'pet',
                         'match_confidence': _compute_match_confidence(
@@ -711,8 +732,7 @@ def commit_job(job):
                     })
                     continue
                 if Pet.objects.for_organization(org).filter(legacy_id=pet_legacy).exists():
-                    result['skipped_conflicts'] += 1
-                    result['conflicts'].append({
+                    _append_conflict(result, {
                         'row': i, 'type': 'duplicate_legacy_id',
                         'severity': 'conflict', 'scope': 'pet',
                         'match_confidence': 'uncertain',

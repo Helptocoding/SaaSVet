@@ -5,8 +5,10 @@ escritura, commit atómico, dedup skip, multi-tenant, permisos, legacy_id.
 from decimal import Decimal
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from rest_framework.test import APIClient
+
+from apps.imports.services import _append_conflict, _base_result
 
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
@@ -725,3 +727,35 @@ class ImportApiTests(TestCase):
         # Commit debe permitirse (200) — warnings/conflicts no bloquean
         res = self.client.post(f'/api/imports/{pid}/commit/', format='json')
         self.assertEqual(res.status_code, 200)
+
+
+class ConflictAggregateTests(SimpleTestCase):
+    """Split agregado de conflictos = fuente única de verdad de los conteos.
+
+    Invariante (lo consume el frontend para que los números siempre cuadren):
+        conflicts_high + conflicts_uncertain == skipped_conflicts
+    """
+
+    def test_base_result_initializes_split_to_zero(self):
+        result = _base_result()
+        self.assertEqual(result['conflicts_high'], 0)
+        self.assertEqual(result['conflicts_uncertain'], 0)
+        self.assertEqual(result['skipped_conflicts'], 0)
+
+    def test_append_conflict_keeps_counters_in_sync(self):
+        result = _base_result()
+        _append_conflict(result, {'row': 1, 'match_confidence': 'high'})
+        _append_conflict(result, {'row': 2, 'match_confidence': 'uncertain'})
+        _append_conflict(result, {'row': 3, 'match_confidence': 'high'})
+        _append_conflict(result, {'row': 4})  # sin match_confidence → uncertain
+
+        self.assertEqual(result['skipped_conflicts'], 4)
+        self.assertEqual(result['conflicts_high'], 2)
+        self.assertEqual(result['conflicts_uncertain'], 2)
+        # Invariante: el split suma el total exacto.
+        self.assertEqual(
+            result['conflicts_high'] + result['conflicts_uncertain'],
+            result['skipped_conflicts'],
+        )
+        # El array es la muestra para la UI (aquí completa).
+        self.assertEqual(len(result['conflicts']), 4)
