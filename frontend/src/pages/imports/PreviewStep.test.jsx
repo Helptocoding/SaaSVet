@@ -23,7 +23,9 @@ const RESULT_WITH_CONFLICTS = {
     reused_owners: 0,
     created_pets: 1,
     skipped_duplicates: 2,
-    skipped_conflicts: 3,
+    skipped_conflicts: 2,
+    conflicts_high: 1,
+    conflicts_uncertain: 1,
     blocking_rows: 0,
     errors: [],
     blocking: [],
@@ -59,6 +61,8 @@ const RESULT_UNCERTAIN_ONLY = {
     created_pets: 0,
     skipped_duplicates: 0,
     skipped_conflicts: 2,
+    conflicts_high: 0,
+    conflicts_uncertain: 2,
     blocking_rows: 0,
     errors: [],
     blocking: [],
@@ -93,6 +97,8 @@ const RESULT_WITH_BLOCKING = {
     created_pets: 0,
     skipped_duplicates: 0,
     skipped_conflicts: 0,
+    conflicts_high: 0,
+    conflicts_uncertain: 0,
     blocking_rows: 5,
     errors: [
         { row: 2, field: "pet.name", message: "El nombre de la mascota es requerido." },
@@ -118,6 +124,8 @@ const RESULT_CLEAN = {
     created_pets: 5,
     skipped_duplicates: 0,
     skipped_conflicts: 0,
+    conflicts_high: 0,
+    conflicts_uncertain: 0,
     blocking_rows: 0,
     errors: [],
     blocking: [],
@@ -131,6 +139,8 @@ const RESULT_WITH_PREVIEW = {
     created_pets: 1500,
     skipped_duplicates: 10,
     skipped_conflicts: 5,
+    conflicts_high: 5,
+    conflicts_uncertain: 0,
     blocking_rows: 0,
     errors: [],
     blocking: [],
@@ -166,6 +176,8 @@ const RESULT_WITH_SKIPPED_GAP = {
     created_pets: 0,
     skipped_duplicates: 1500,
     skipped_conflicts: 0,
+    conflicts_high: 0,
+    conflicts_uncertain: 0,
     blocking_rows: 0,
     errors: [],
     blocking: [],
@@ -207,7 +219,7 @@ describe("PreviewStep — resumen humano", () => {
         renderPreview();
         expect(screen.getByText(/Se crearán 1 mascota/)).toBeInTheDocument();
         expect(screen.getByText(/2 omitidos/)).toBeInTheDocument();
-        expect(screen.getByText(/3 en revisión/)).toBeInTheDocument();
+        expect(screen.getByText(/2 en revisión/)).toBeInTheDocument();
     });
 
     it("con bloqueantes muestra sidebar y pill de corrección", () => {
@@ -378,8 +390,9 @@ describe("PreviewStep — NO SE IMPORTARÁN (unificado)", () => {
 
     it("muestra 'Ya estaban registrados' con el total real, no la muestra", () => {
         renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
-        // skippedTotal=10, skipped.length=1, highConfidence.length=1 → 11
-        expect(screen.getByText(/Ya estaban registrados \(11\)/)).toBeInTheDocument();
+        // skipped_total=10 (dups) + conflicts_high=5 (agregado) = 15 — usa agregados,
+        // no length de la muestra (que solo trae 1 conflicto high).
+        expect(screen.getByText(/Ya estaban registrados \(15\)/)).toBeInTheDocument();
     });
 
     it("muestra el nombre de la mascota y cliente omitidos (skipped)", () => {
@@ -435,5 +448,123 @@ describe("PreviewStep — integración", () => {
     it("barra de estado mantiene el pill de datos incompletos", () => {
         renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
         expect(screen.getByText(/1 con datos incompletos/)).toBeInTheDocument();
+    });
+});
+
+// Extrae el número de un encabezado tipo "Texto (N)".
+const countIn = (re) => {
+    const el = screen.getByText(re);
+    const m = el.textContent.match(/\((\d+)\)/);
+    return m ? Number(m[1]) : null;
+};
+
+describe("PreviewStep — los números siempre cuadran", () => {
+    it("mixto: padre 'No se importarán' == suma de los hijos visibles", () => {
+        renderPreview({ result: RESULT_WITH_CONFLICTS });
+        const parent = countIn(/No se importarán \(\d+\)/);
+        const registrados = countIn(/Ya estaban registrados \(\d+\)/);
+        const expediente = countIn(/Mismo expediente con datos diferentes \(\d+\)/);
+        expect(registrados + expediente).toBe(parent); // registrados(3=2dup+1high) + expediente(1) === "No se importarán"(4)
+    });
+
+    it("conflictos muestreados (agregado > muestra): el total no se rompe", () => {
+        // RESULT_WITH_PREVIEW: skipped_conflicts=5 pero el array trae 1 conflicto.
+        // Padre=15, "Ya estaban"=15 (10 dups + 5 high), sin bloque uncertain (0).
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(countIn(/No se importarán \(\d+\)/)).toBe(15);
+        expect(countIn(/Ya estaban registrados \(\d+\)/)).toBe(15);
+        expect(screen.queryByText(/Mismo expediente con datos diferentes/)).not.toBeInTheDocument();
+    });
+
+    it("solo uncertain: padre == hijo uncertain (sin bloque 'Ya estaban')", () => {
+        renderPreview({ result: RESULT_UNCERTAIN_ONLY });
+        expect(countIn(/Mismo expediente con datos diferentes \(\d+\)/))
+            .toBe(countIn(/No se importarán \(\d+\)/)); // 2 === 2
+        expect(screen.queryByText(/Ya estaban registrados/)).not.toBeInTheDocument();
+    });
+});
+
+describe("PreviewStep — caps (muestra < total)", () => {
+    it("conflictos high muestreados: indicador 'Mostrando N de M'", () => {
+        // conflicts_high=5 pero el array trae 1 high → indicador de muestra.
+        renderPreview({ result: RESULT_WITH_PREVIEW, canCommit: true });
+        expect(screen.getByText(/Mostrando 1 de 5/)).toBeInTheDocument();
+    });
+
+    it("preview en el tope exacto (20) con total mayor: 'Mostrando 20 de 25'", () => {
+        const rows = Array.from({ length: 20 }, (_, i) => ({
+            row: i + 1, pet_name: `Pet${i + 1}`, owner_name: `Owner${i + 1}`,
+            pet_species: "canino", owner_phone: "", pet_breed: "", pet_sex: "",
+            pet_birth_date: "", pet_color: "", pet_legacy_id: "",
+        }));
+        const capped = {
+            ...RESULT_CLEAN, created_pets: 25, created_owners: 25,
+            preview: rows, preview_total: 25,
+        };
+        renderPreview({ result: capped, canCommit: true });
+        expect(screen.getByText(/Mostrando 20 de 25/)).toBeInTheDocument();
+    });
+});
+
+describe("PreviewStep — regresión: 0 explícito no se enmascara", () => {
+    it("preview_total=0 se respeta (no cae a created_pets)", () => {
+        // Drift de contrato: created_pets=5 pero preview_total=0 explícito. El
+        // header de SE CREARÁN debe mostrar 0, no 5 (antes `|| createdPets` lo tapaba).
+        const drift = {
+            ...RESULT_CLEAN, created_pets: 5, created_owners: 5,
+            preview: [{ row: 1, pet_name: "Bella", owner_name: "Ana", pet_species: "canino", owner_phone: "", pet_breed: "", pet_sex: "", pet_birth_date: "", pet_color: "", pet_legacy_id: "" }],
+            preview_total: 0,
+        };
+        renderPreview({ result: drift, canCommit: true });
+        expect(screen.getByText(/\(0 mascotas\)/)).toBeInTheDocument();
+        expect(screen.queryByText(/\(5 mascotas\)/)).not.toBeInTheDocument();
+    });
+});
+
+// Respuesta de un backend VIEJO: SIN conflicts_high/conflicts_uncertain ni *_total.
+// El frontend debe caer al .length del array (conflicts no se capa) y seguir cuadrando.
+const RESULT_OLD_NO_AGGREGATES = {
+    created_owners: 3,
+    reused_owners: 0,
+    created_pets: 3,
+    skipped_duplicates: 0,
+    skipped_conflicts: 2,
+    // sin conflicts_high / conflicts_uncertain (intencional — respuesta vieja)
+    blocking_rows: 0,
+    errors: [],
+    blocking: [],
+    conflicts: [
+        {
+            row: 5, type: "duplicate_legacy_id", severity: "conflict", scope: "pet",
+            match_confidence: "high",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Luna", owner_name: "Ana López", legacy_id: "126" },
+            existing: { pet_name: "Luna", owner_name: "Ana López", public_id: "abc-1" },
+        },
+        {
+            row: 8, type: "duplicate_legacy_id", severity: "conflict", scope: "pet",
+            match_confidence: "uncertain",
+            message: "Ya existe una mascota con este expediente.",
+            incoming: { pet_name: "Rocky", owner_name: "Pedro", legacy_id: "200" },
+            existing: { pet_name: "Max", owner_name: "Juan", public_id: "def-2" },
+        },
+    ],
+    warnings: [],
+    // sin preview / preview_total / skipped / skipped_total (respuesta vieja)
+};
+
+describe("PreviewStep — respuesta vieja (sin agregados de conflictos)", () => {
+    it("cae al .length del array y los números siguen cuadrando", () => {
+        renderPreview({ result: RESULT_OLD_NO_AGGREGATES });
+        const parent = countIn(/No se importarán \(\d+\)/);
+        const registrados = countIn(/Ya estaban registrados \(\d+\)/);
+        const expediente = countIn(/Mismo expediente con datos diferentes \(\d+\)/);
+        expect(parent).toBe(2);
+        expect(registrados + expediente).toBe(parent); // 1 + 1 === 2
+    });
+
+    it("no muestra 'Mostrando N de M' cuando el array está completo", () => {
+        renderPreview({ result: RESULT_OLD_NO_AGGREGATES });
+        expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
     });
 });

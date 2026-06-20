@@ -5,7 +5,11 @@ import s from "./imports.module.css";
 
 const PAGE_SIZE = 25;
 
-const num = (v) => Number(v || 0);
+// Coerción robusta a número: nunca enmascara un 0 legítimo ni propaga NaN.
+const num = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+};
 
 const CSV_ACTIONS = {
     "pet.name": "Agrega el nombre de la mascota en la columna correspondiente de tu archivo.",
@@ -236,15 +240,29 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     const warnings = r.warnings || [];
     const preview = r.preview || [];
     const skipped = r.skipped || [];
-    const previewTotal = num(r.preview_total) || createdPets;
-    const skippedTotal = num(r.skipped_total) || skippedDups;
+    // Totales reales: el backend manda *_total cuando el array es muestra capada.
+    // `!= null` honra un 0 legítimo; solo cae al array si el campo no vino (resp. vieja).
+    const previewTotal = r.preview_total != null ? num(r.preview_total) : createdPets;
+    const skippedTotal = r.skipped_total != null ? num(r.skipped_total) : skippedDups;
 
+    // Cards de muestra (lo que llega en el array; puede ser < total si se capa).
     const highConfidence = conflicts.filter((c) => c.match_confidence === "high");
     const uncertainConfidence = conflicts.filter((c) => c.match_confidence !== "high");
 
+    // Split AGREGADO de conflictos = fuente única de verdad para los conteos.
+    // El backend envía conflicts_high/uncertain (suman skipped_conflicts). Fallback
+    // a derivarlo del array solo para respuestas viejas sin el split.
+    const conflictsHighTotal = r.conflicts_high != null ? num(r.conflicts_high) : highConfidence.length;
+    const conflictsUncertainTotal = r.conflicts_uncertain != null ? num(r.conflicts_uncertain) : uncertainConfidence.length;
+
+    // Totales derivados SOLO de agregados → los hijos SIEMPRE suman al padre:
+    //   registeredTotal + conflictsUncertainTotal === omittedTotal
+    const omittedTotal = skippedTotal + skippedConflicts;          // "No se importarán"
+    const registeredTotal = skippedTotal + conflictsHighTotal;     // "Ya estaban registrados"
+
     const hasBlocking = blocking.length > 0;
     const hasImportable = createdPets > 0;
-    const hasAnyIssue = conflicts.length > 0 || hasBlocking || warnings.length > 0 || skipped.length > 0;
+    const hasAnyIssue = skippedConflicts > 0 || hasBlocking || warnings.length > 0 || skippedDups > 0;
 
     const toggle = (s) => setOpenSections((prev) => ({ ...prev, [s]: !prev[s] }));
 
@@ -392,11 +410,11 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
             )}
 
             {/* ── NO SE IMPORTARÁN ── */}
-            {(skipped.length > 0 || conflicts.length > 0) && (
+            {omittedTotal > 0 && (
                 <div className={s.collapseBlock}>
                     <button className={s.collapseToggle} onClick={() => toggle("omitted")} aria-expanded={openSections.omitted}>
                         <span className={s.collapseIcon}>⊘</span>
-                        <span className={s.collapseLabel}>No se importarán ({skippedTotal + skippedConflicts})</span>
+                        <span className={s.collapseLabel}>No se importarán ({omittedTotal})</span>
                         <span className={s.collapseChevron}>{openSections.omitted ? "▲" : "▼"}</span>
                     </button>
                     {openSections.omitted && (
@@ -406,13 +424,13 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                                 o tienen conflictos que requieren revisión.
                             </p>
 
-                            {(skipped.length > 0 || highConfidence.length > 0) && (
+                            {registeredTotal > 0 && (
                                 <div className={s.omittedReasonBlock}>
                                     <div className={s.omittedReasonTitle}>
-                                        {/* skippedTotal es el total real (el backend envía hasta _SKIPPED_SAMPLE_MAX=10
-                                            en el array skipped[]). Los highConfidence se suman porque se presentan
-                                            como duplicados probables para el usuario. */}
-                                        Ya estaban registrados ({skippedTotal + highConfidence.length})
+                                        {/* Total real desde AGREGADOS: dups (skippedTotal) + conflictos
+                                            high (conflictsHighTotal). Las cards salen de las muestras
+                                            skipped[]/highConfidence; los "Mostrando N de M" cubren el gap. */}
+                                        Ya estaban registrados ({registeredTotal})
                                     </div>
                                     {skipped.map((item) => (
                                         <div key={`skip-${item.row}`} className={s.skippedCard}>
@@ -442,13 +460,18 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                                     {highConfidence.map((c) => (
                                         <ConflictCard key={`reg-conf-${c.row}`} conflict={c} />
                                     ))}
+                                    {conflictsHighTotal > highConfidence.length && (
+                                        <div className={s.previewShowing}>
+                                            Mostrando {highConfidence.length} de {conflictsHighTotal}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {uncertainConfidence.length > 0 && (
+                            {conflictsUncertainTotal > 0 && (
                                 <div className={s.omittedReasonBlock}>
                                     <div className={s.omittedReasonTitle}>
-                                        Mismo expediente con datos diferentes ({uncertainConfidence.length})
+                                        Mismo expediente con datos diferentes ({conflictsUncertainTotal})
                                     </div>
                                     <p className={s.omittedReasonDesc}>
                                         El número de expediente ya pertenece a otro paciente con datos distintos.
@@ -458,6 +481,11 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                                     {uncertainConfidence.map((c) => (
                                         <ConflictCard key={`exp-conf-${c.row}`} conflict={c} />
                                     ))}
+                                    {conflictsUncertainTotal > uncertainConfidence.length && (
+                                        <div className={s.previewShowing}>
+                                            Mostrando {uncertainConfidence.length} de {conflictsUncertainTotal}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -499,7 +527,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
                             <p className={s.consequence}>
                                 Al continuar: ✓ se importarán {createdPets} registro{createdPets === 1 ? "" : "s"}
-                                {(skippedTotal + skippedConflicts) > 0 && <>{" · "}⊘ {skippedTotal + skippedConflicts} no se importarán</>}
+                                {omittedTotal > 0 && <>{" · "}⊘ {omittedTotal} no se importarán</>}
                             </p>
                             <button className="btn btn-primary btn-md" onClick={onConfirm} disabled={committing}>
                                 {committing ? "Importando..." : "Confirmar importación"}

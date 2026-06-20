@@ -116,7 +116,9 @@ actual clasifica las filas en tres categorías + contadores:
   "reused_owners": 0,         // owners reutilizados (solo si su pet entró)
   "created_pets": 0,          // mascotas creadas
   "skipped_duplicates": 0,    // omitidos por duplicado de nombre (owner, norm_name, species)
-  "skipped_conflicts": 0,     // omitidos por conflicto legacy_id
+  "skipped_conflicts": 0,     // omitidos por conflicto legacy_id (total)
+  "conflicts_high": 0,        // split agregado: conflictos de alta confianza (P1-6C1)
+  "conflicts_uncertain": 0,   // split agregado: conflictos inciertos (P1-6C1)
   "blocking_rows": 0,         // filas con datos faltantes/imposibles
 
   // Categorías
@@ -165,6 +167,30 @@ Los arrays `preview[]` y `skipped[]` están truncados:
 mostrar el total real en contadores y "Mostrando N de M" cuando el total exceda
 la muestra. Esto aplica tanto para la tabla "SE CREARÁN" como para la sección
 "Ya estaban registrados" dentro de omitidos.
+
+### Conteos: fuente única de verdad (P1-6C1)
+
+Los **contadores agregados** (`created_pets`, `skipped_duplicates`,
+`skipped_conflicts`, `conflicts_high`, `conflicts_uncertain`, `blocking_rows`)
+son la **fuente única de verdad** para todos los números que muestra la UI. Los
+arrays (`preview`/`skipped`/`conflicts`) son **muestras** para enseñar ejemplos.
+
+`conflicts[]` hoy NO se capa (a diferencia de `preview`/`skipped`), pero el split
+se expone como agregado para que el desglose de "No se importarán" **siempre
+cuadre** aunque la muestra sea menor:
+
+```
+conflicts_high + conflicts_uncertain == skipped_conflicts           (invariante)
+"No se importarán"      = skipped_total + skipped_conflicts
+"Ya estaban registrados"= skipped_total + conflicts_high
+"Mismo expediente…"     = conflicts_uncertain
+→ los hijos SIEMPRE suman al padre
+```
+
+El frontend deriva los headers de estos agregados (no de `.length` de las
+muestras) y usa los arrays solo para las cards + "Mostrando N de M". Se mantienen
+en sync vía el helper `_append_conflict()` en `services.py` (único sitio que toca
+`skipped_conflicts`/`conflicts_high`/`conflicts_uncertain`).
 
 ### Reglas de `match_confidence`
 
