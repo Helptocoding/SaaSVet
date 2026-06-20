@@ -111,16 +111,24 @@ services_healthy() {
 #   version = product version (APP_VERSION, e.g. 1.0.0-beta) — fallback only
 # The API cleanly separates the two; the gate prefers commit and falls back to
 # version (covers a backend whose APP_VERSION carries the SHA but commit unset).
+#
+# X-Forwarded-Proto: https — /api/version/ is NOT in SECURE_REDIRECT_EXEMPT, so
+# with SECURE_SSL_REDIRECT=True a plain-HTTP loopback hit gets 301'd to https,
+# which urlopen follows into gunicorn (plain HTTP, no TLS) → failure. The header
+# makes Django treat the request as secure (SECURE_PROXY_SSL_HEADER) → no redirect.
 backend_identity() {
   local cid; cid="$(compose ps -q backend 2>/dev/null)"
   [ -n "$cid" ] || { printf '\t'; return; }
-  docker exec "$cid" python -c "import urllib.request,json;d=json.load(urllib.request.urlopen('http://localhost:8000/api/version/',timeout=3));print((d.get('commit') or '')+'\t'+(d.get('version') or ''))" 2>/dev/null | tr -d '\r'
+  docker exec "$cid" python -c "import urllib.request,json;req=urllib.request.Request('http://localhost:8000/api/version/',headers={'X-Forwarded-Proto':'https'});d=json.load(urllib.request.urlopen(req,timeout=3));print((d.get('commit') or '')+'\t'+(d.get('version') or ''))" 2>/dev/null | tr -d '\r'
 }
 
 backend_readyz_ok() { # 0 if /api/readyz returns 200 (DB reachable)
   local cid; cid="$(compose ps -q backend 2>/dev/null)"
   [ -n "$cid" ] || return 1
-  docker exec "$cid" python -c "import urllib.request,sys;r=urllib.request.urlopen('http://localhost:8000/api/readyz/',timeout=3);sys.exit(0 if r.status==200 else 1)" 2>/dev/null
+  # X-Forwarded-Proto: https for parity with backend_identity. readyz IS in
+  # SECURE_REDIRECT_EXEMPT today, so the header is belt-and-suspenders (keeps
+  # working if readyz is ever dropped from the exempt list).
+  docker exec "$cid" python -c "import urllib.request,sys;req=urllib.request.Request('http://localhost:8000/api/readyz/',headers={'X-Forwarded-Proto':'https'});r=urllib.request.urlopen(req,timeout=3);sys.exit(0 if r.status==200 else 1)" 2>/dev/null
 }
 
 # Poll until all services healthy + readyz ok + the running backend identifies
