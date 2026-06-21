@@ -220,11 +220,6 @@ SIMPLE_JWT = {
 # True mientras dure la transición frontend → public_id
 ALLOW_LEGACY_ID_LOOKUP = config('ALLOW_LEGACY_ID_LOOKUP', default=True, cast=bool)
 
-# TEMP P1-7 SENTRY PROBE — DELETE after validation. Gates /api/__sentry_debug__/.
-# Default False so the probe endpoint 404s even if this code lingers. Flip to
-# True in .env.prod only during the test window (runtime, restart — no rebuild).
-ENABLE_SENTRY_DEBUG = config('ENABLE_SENTRY_DEBUG', default=False, cast=bool)
-
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [

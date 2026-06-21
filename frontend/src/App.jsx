@@ -22,8 +22,6 @@ import CreateOrganization from "./pages/platform/createOrganization";
 import ChangePassword from "./pages/changePassword";
 import NotFound from "./pages/notFound";
 import ErrorBoundary from "./components/ErrorBoundary";
-// TEMP P1-7 SENTRY PROBE — DELETE after validation.
-import SentryProbe from "./SentryProbe";
 import FeedbackButton from "./components/FeedbackButton";
 import { ConfirmProvider } from "./components/ConfirmDialog";
 import { Toaster } from "sonner";
@@ -137,8 +135,6 @@ const router = createBrowserRouter([
       { path: "/imports", element: wrap(Imports) },
       { path: "/platform/organizations/new", element: wrap(CreateOrganization) },
       { path: "/change-password", element: wrapNoGate(ChangePassword) },
-      // TEMP P1-7 SENTRY PROBE — DELETE after validation.
-      { path: "/__sentry_debug__", element: wrap(SentryProbe) },
       { path: "*", element: <NotFound /> },
     ],
   },
