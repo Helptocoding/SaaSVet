@@ -25,6 +25,11 @@ class Organization(models.Model):
         default=Decimal('0.0000'),
         help_text="Tasa de IVA aplicada automáticamente a nuevos cobros (ej: 0.16 = 16%)"
     )
+    # P1-8: marca de tenant demo. Es la ÚNICA autoridad para las operaciones
+    # destructivas del seed (seed_demo_clinic --reset/--delete). Nunca operar por
+    # nombre. Las orgs reales conservan is_demo=False (default) y son intocables
+    # por el comando de seed.
+    is_demo = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
