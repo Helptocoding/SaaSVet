@@ -2,22 +2,29 @@
 
 Capa 6 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Tareas recurrentes que viven en el host (no en containers persistentes).
 
-**Pre-requisitos**: VPS provisionado per [vps-hardening.md](./vps-hardening.md). Repo clonado en `/opt/vet/app`. `.env.prod` existe + es 600. Stack arriba al menos una vez.
+**Pre-requisitos**: VPS provisionado per [vps-hardening.md](./vps-hardening.md). Repo clonado en `/home/deploy/apps/SaaSVet`. `.env.prod` existe + es 600. Stack arriba al menos una vez.
 
 ---
 
 ## 1. Inventario
 
-| # | Job | Schedule (UTC) | Schedule (MX, GMT-6) | Criticidad |
-|---|-----|----------------|----------------------|------------|
-| 6.1 | `pg-backup.sh` | 03:00 daily | 21:00 día anterior | **CRÍTICO** — sin esto pierdes datos |
-| 6.2 | `flushexpiredtokens` | 04:00 daily | 22:00 día anterior | ALTO — tablas JWT crecen lineales |
-| 6.3 | `build_daily_metrics` | 06:30 daily | 00:30 mismo día | MEDIO — analytics dashboards |
-| 6.4 | `audit_anchor_integrity` | 06:35 daily | 00:35 mismo día | ALTO — invariantes contables |
-| 6.5 | `journalctl --vacuum-time=14d` | 05:00 domingos | 23:00 sábado | BAJO — housekeeping logs |
-| 6.6 | `restore-drill.sh` (ADR p40) | 03:30 día 1 de mes | 21:30 último día mes anterior | **CRÍTICO** — un backup sin restore probado no es backup |
+> **Timezone:** el host corre en **America/Monterrey (UTC-6)**. Cron interpreta
+> las expresiones en hora **local**, así que la hora de la expresión = hora MX.
+> La columna "Equivale UTC" es local + 6h (para correlacionar con logs en UTC).
 
-Total fenómenos diarios: 4 + 1 semanal + 1 mensual. Carga insignificante.
+| # | Job | Cron (local MX) | Equivale UTC | Criticidad |
+|---|-----|-----------------|--------------|------------|
+| 6.1 | `pg-backup.sh` | `0 21 * * *` | 03:00 diario | **CRÍTICO** — sin esto pierdes datos |
+| 6.2 | `flushexpiredtokens` | `0 4 * * *` | 10:00 diario | ALTO — tablas JWT crecen lineales |
+| 6.3 | `build_daily_metrics` | `30 6 * * *` | 12:30 diario | MEDIO — analytics dashboards |
+| 6.4 | `audit_anchor_integrity` | `35 6 * * *` | 12:35 diario | ALTO — invariantes contables |
+| 6.5 | `journalctl --vacuum-time=14d` | `0 5 * * 0` | 11:00 (dom) | BAJO — housekeeping logs |
+
+`restore-drill.sh` (ADR p40) **NO va por cron** — drill MANUAL mensual desde la
+máquina del operador (`--from-offsite` + age private key). Es el único que prueba
+la cadena real B2 download + age decrypt + restore. Ver §5.bis.
+
+Total cron: 4 diarios + 1 semanal (+ disk-alert horario, ver §abajo). Carga insignificante.
 
 ---
 
@@ -27,9 +34,9 @@ Total fenómenos diarios: 4 + 1 semanal + 1 mensual. Carga insignificante.
 
 ```bash
 ssh deploy@<VPS_IP>
-cd /opt/vet/app
+cd /home/deploy/apps/SaaSVet
 
-# Editar paths si tu install difiere de /opt/vet/app:
+# Editar paths si tu install difiere de /home/deploy/apps/SaaSVet:
 nano scripts/crontab.example
 
 # Instalar
@@ -39,7 +46,7 @@ crontab scripts/crontab.example
 crontab -l
 ```
 
-`crontab -l` debe imprimir las 5 entradas + las vars `SHELL`, `PATH`, `COMPOSE_DIR`, etc.
+`crontab -l` debe imprimir las líneas de jobs + las vars `SHELL`, `PATH`, `COMPOSE_DIR`, etc.
 
 ---
 
@@ -108,19 +115,19 @@ NO ejecutar `pg-backup.sh` 2 veces el mismo día sin necesidad (crea dump duplic
 ```bash
 # Backup manual one-shot
 BACKUP_DIR=/tmp/vet-test \
-COMPOSE_DIR=/opt/vet/app \
-ENV_FILE=/opt/vet/app/.env.prod \
-COMPOSE_FILE=/opt/vet/app/docker-compose.prod.yml \
-/opt/vet/app/scripts/pg-backup.sh
+COMPOSE_DIR=/home/deploy/apps/SaaSVet \
+ENV_FILE=/home/deploy/apps/SaaSVet/.env.prod \
+COMPOSE_FILE=/home/deploy/apps/SaaSVet/docker-compose.prod.yml \
+/home/deploy/apps/SaaSVet/scripts/pg-backup.sh
 
 # JWT cleanup
-cd /opt/vet/app && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py flushexpiredtokens
+cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py flushexpiredtokens
 
 # Snapshot ayer (idempotente, safe re-run)
-cd /opt/vet/app && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py build_daily_metrics
+cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py build_daily_metrics
 
 # Anchor audit
-cd /opt/vet/app && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py audit_anchor_integrity --json
+cd /home/deploy/apps/SaaSVet && docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py audit_anchor_integrity --json
 ```
 
 Verificar exit codes:
@@ -137,30 +144,39 @@ Verificar exit codes:
 
 ---
 
-## 5.bis Restore drill — local (auto) vs offsite (manual). LEER (ADR p40)
+## 5.bis Restore drill — solo MANUAL offsite (ADR p40, decisión beta 2026-06-20)
 
-El drill tiene **dos niveles** y el cron automático solo cubre el primero:
+**El restore drill NO corre por cron.** En beta solo se hace **manual, mensual,
+desde la máquina del operador** con la age **private key** y `--from-offsite`.
 
-| Nivel | Qué prueba | Cómo | Cuándo |
-|---|---|---|---|
-| **Local (automático)** | `dump local → restore → auditorías` | cron mensual `restore-drill.sh` (usa el `.dump` plano local, sin private key) | día 1 de mes, desatendido |
-| **Offsite (MANUAL)** | `B2 → download → **decrypt** → restore → auditorías` | a mano con la age **private key** | **1 vez al mes, a mano** |
+| Qué prueba | Cómo | Cuándo |
+|---|---|---|
+| `B2 download → age decrypt → restore → auditorías` (la cadena de desastre REAL) | a mano con la age **private key** + `--from-offsite` | **1 vez al mes, a mano** |
 
-> ⚠️ **El cron NO prueba la cadena de desastre real.** Restaurar el `.dump` plano
-> local demuestra que el dump y las auditorías sirven, pero **no** demuestra que
-> el `.age` en Backblaze se puede bajar y **descifrar**. Si la private key se
-> perdió, se corrompió, o el `.age` subió mal, solo te enteras el día del
-> desastre — demasiado tarde. Por eso esta prueba es manual y obligatoria.
+Por qué NO el drill local automático por cron:
+
+- El drill local (sin `--from-offsite`) usa el `.dump` **plano local**, así que
+  **NO** prueba B2 ni el descifrado `age` — justo lo que puede fallar en un
+  desastre real (key perdida/corrupta, `.age` subido mal).
+- Crea una DB temporal en el postgres de **prod** y levanta un container backend
+  para las auditorías → partes móviles en producción que no conviene desatender
+  en beta.
+- Conclusión: poco valor + riesgo en prod. Mejor un único drill **manual** que sí
+  ejerce la cadena completa.
+
+> ⚠️ **Un backup sin restore probado no es backup.** Si la private key se perdió,
+> se corrompió, o el `.age` subió mal, solo te enteras el día del desastre. Por
+> eso el drill offsite manual es **obligatorio**, no opcional.
 
 ### Prueba offsite mensual (hazla tú, desde tu máquina con la private key)
 
 ```bash
 # En tu máquina (NO el VPS), con la age private key montada temporalmente.
 # Requiere rclone configurado + acceso al postgres del stack (local o VPS).
-cd /opt/vet/app   # o el repo local
+cd /home/deploy/apps/SaaSVet   # o el repo local
 
 BACKUP_DECRYPTION_KEY=/ruta/segura/age.key \
-RCLONE_REMOTE=saaslyvet-prod-backups:saaslyvet-prod-backups \
+RCLONE_REMOTE=b2:saaslyvet-prod-backups \
   scripts/restore-drill.sh --from-offsite
 # → baja el último vet-*.dump.age de daily/, lo descifra con tu private key,
 #   restaura a una DB descartable, corre las auditorías → RESTORE VERIFIED.
@@ -187,7 +203,7 @@ Healthchecks.io tier free: 20 checks, ping HTTP/HTTPS, alerta email/Slack/Discor
 
 ```cron
 # Ejemplo: agregar ping al final del backup line
-0 3 * * *   /opt/vet/app/scripts/pg-backup.sh && curl -fsS -m 10 https://hc-ping.com/<uuid-backup> > /dev/null
+0 21 * * *  /home/deploy/apps/SaaSVet/scripts/pg-backup.sh && curl -fsS -m 10 https://hc-ping.com/<uuid-backup> > /dev/null
 ```
 
 Para `pg-backup.sh` el ping ya está integrado: solo exporta `HEALTHCHECK_URL` en el crontab. Hace ping cuando el script termina sin error.
@@ -230,16 +246,21 @@ Para crons que toleran 5-10s extra y que DEBEN correr a la hora marcada sí o s�
 
 Mismo principio que el host hardening: nunca operar como root. `deploy` está en grupo `docker` → puede correr `docker compose`. El único cron que usa `sudo` es journalctl vacuum, y eso se restringe via `NOPASSWD` acotado.
 
-### Horarios UTC
+### Horarios — host en America/Monterrey (UTC-6)
 
-Postgres en UTC + Django `TIME_ZONE='UTC'` + host UTC = cero ambigüedad. Convertir a hora MX al planificar:
+Postgres en UTC + Django `TIME_ZONE='UTC'`, pero el **host (y por lo tanto cron)
+corre en America/Monterrey**. Las expresiones cron se interpretan en hora LOCAL
+de Monterrey. Conversión local → UTC = **+6h**:
 ```
-03:00 UTC = 21:00 MX (día anterior)
-04:00 UTC = 22:00 MX (día anterior)
-06:30 UTC = 00:30 MX
+0 21 * * *  = 21:00 MX = 03:00 UTC   (backup)
+0 4  * * *  = 04:00 MX = 10:00 UTC   (jwt cleanup)
+30 6 * * *  = 06:30 MX = 12:30 UTC   (snapshot)
+35 6 * * *  = 06:35 MX = 12:35 UTC   (anchor audit)
 ```
 
-Backup a las 21:00 MX = clínicas ya cerradas, baja actividad. Snapshot a las 00:30 MX = día calendario MX cerrado, dataset estable.
+Backup a las 21:00 MX = clínicas ya cerradas, baja actividad. Snapshot a las
+06:30 MX = ya pasó la medianoche local, el día calendario MX anterior está
+cerrado y el dataset es estable.
 
 ---
 

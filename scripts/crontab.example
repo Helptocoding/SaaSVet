@@ -3,7 +3,7 @@
 # Install:
 #   crontab scripts/crontab.example
 #
-# Edit paths primero si tu install difiere de /home/deploy/apps.
+# Edit paths primero si tu install difiere de /home/deploy/apps/SaaSVet.
 # Validar sintaxis antes de instalar:
 #   crontab -T scripts/crontab.example   (algunos sistemas)
 #   o:  cat scripts/crontab.example | crontab -l ; echo $?
@@ -17,25 +17,26 @@
 #   ssh deploy@<vps>
 #   crontab scripts/crontab.example
 #
-# OJO TIMEZONE: este template fue escrito asumiendo host en UTC. saaslyvet-prod-01
-# corre en America/Monterrey (UTC-6) → cron interpreta estos horarios en hora
-# LOCAL de Monterrey, no UTC. Ej: `0 3 * * *` dispara 03:00 Monterrey (= 09:00
-# UTC), no 03:00 UTC. Revisá que la ventana caiga en baja actividad y ajustá si
-# hace falta (ver docs/production-runbook.md §G, nota timezone).
+# OJO TIMEZONE: el host saaslyvet-prod-01 corre en America/Monterrey (UTC-6) y
+# cron interpreta TODAS las expresiones de abajo en hora LOCAL de Monterrey, no
+# UTC. Conversión: hora local + 6h = UTC. Por eso el backup va en `0 21 * * *`
+# (21:00 Monterrey = 03:00 UTC), la ventana de baja actividad documentada. Cada
+# job lleva su equivalente UTC en el comentario. Ver docs/runbooks/cron-jobs.md
+# y docs/production-runbook.md §G.
 
 # ---------------------------------------------------------------------------
 # Vars compartidas para todos los jobs.
 # ---------------------------------------------------------------------------
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-COMPOSE_DIR=/home/deploy/apps
-ENV_FILE=/home/deploy/apps/.env.prod
-COMPOSE_FILE=/home/deploy/apps/docker-compose.prod.yml
+COMPOSE_DIR=/home/deploy/apps/SaaSVet
+ENV_FILE=/home/deploy/apps/SaaSVet/.env.prod
+COMPOSE_FILE=/home/deploy/apps/SaaSVet/docker-compose.prod.yml
 BACKUP_DIR=/var/backups/vet
 # Offsite + cifrado (ADR p40). En producción RCLONE_REMOTE es OBLIGATORIO
 # (pg-backup.sh falla loud si está vacío). Estos pueden vivir aquí o en
 # .env.prod (.env.prod gana si los define en ambos lados).
-#   RCLONE_REMOTE=saaslyvet-prod-backups:saaslyvet-prod-backups
+#   RCLONE_REMOTE=b2:saaslyvet-prod-backups
 #   BACKUP_ENCRYPTION_PUBLIC_KEY=age1...          # PUBLIC key (no es secreto)
 # Deadman switch (Healthchecks.io) — ping solo en éxito total:
 #   HEALTHCHECK_URL=https://hc-ping.com/<uuid>
@@ -45,34 +46,35 @@ BACKUP_DIR=/var/backups/vet
 # m h dom mon dow command
 
 # ---------------------------------------------------------------------------
-# 03:00 UTC diario — pg_dump → validate (pg_restore --list) → sha256 + manifest
-# → age encrypt → rclone copy a B2 (daily/, y monthly/ el día 01) + retención
-# local 14d + deadman ping (ADR p40).
+# 21:00 Monterrey local = 03:00 UTC diario — pg_dump → validate (pg_restore
+# --list) → sha256 + manifest → age encrypt → rclone copy a B2 (daily/, y
+# monthly/ el día 01) + retención local 14d + deadman ping (ADR p40).
 # Exit: 0 OK | 1 precond | 2 dump corrupto | 3 pg_dump falló |
 #       4 validación falló | 5 cifrado/rclone no disponible | 6 offsite falló (prod).
 # Si exit != 0 el deadman NO se pinguea → Healthchecks.io alerta. Define MAILTO
 # arriba para recibir stderr también.
 # ---------------------------------------------------------------------------
-0 3 * * *   /home/deploy/apps/scripts/pg-backup.sh >> /var/log/vet-backup.log 2>&1
+0 21 * * *  /home/deploy/apps/SaaSVet/scripts/pg-backup.sh >> /var/log/vet-backup.log 2>&1
 
 # ---------------------------------------------------------------------------
-# 04:00 UTC diario — JWT cleanup (ADR p20). Sin esto las tablas
-# token_blacklist_outstandingtoken + token_blacklist_blacklistedtoken
+# 04:00 Monterrey local = 10:00 UTC diario — JWT cleanup (ADR p20). Sin esto
+# las tablas token_blacklist_outstandingtoken + token_blacklist_blacklistedtoken
 # crecen lineales con cada login / refresh / change-password.
 # ---------------------------------------------------------------------------
 0 4 * * *   cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py flushexpiredtokens >> /var/log/vet-cron.log 2>&1
 
 # ---------------------------------------------------------------------------
-# 06:30 UTC diario — Analytics snapshot ayer (ADR p10).
+# 06:30 Monterrey local = 12:30 UTC diario — Analytics snapshot ayer (ADR p10).
 # Idempotente + per-org advisory lock. Failures per-org aislados, exit 2
 # si CUALQUIER org falla — wire alerta en exit != 0.
-# 06:30 UTC = 00:30 MX = cubre cierre del día calendario anterior MX.
+# Corre tras el cierre del día calendario MX anterior (ya pasó medianoche local).
 # ---------------------------------------------------------------------------
 30 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py build_daily_metrics >> /var/log/vet-cron.log 2>&1
 
 # ---------------------------------------------------------------------------
-# 06:35 UTC diario — Anchor integrity audit (corre DESPUÉS del snapshot).
-# Exit 0 OK | 1 unresolved provenance | 2 invariant violation (P1, page on this).
+# 06:35 Monterrey local = 12:35 UTC diario — Anchor integrity audit (corre
+# DESPUÉS del snapshot). Exit 0 OK | 1 unresolved provenance | 2 invariant
+# violation (P1, page on this).
 # ---------------------------------------------------------------------------
 35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
 
@@ -81,21 +83,28 @@ BACKUP_DIR=/var/backups/vet
 # /var/backups/vet exceden 80%, POST a webhook. Exporta ALERT_WEBHOOK
 # arriba o inline. Sin webhook configurado solo loguea (no alerta).
 # ---------------------------------------------------------------------------
-15 * * * *  ALERT_THRESHOLD=80 /home/deploy/apps/scripts/disk-alert.sh >> /var/log/vet-cron.log 2>&1
+15 * * * *  ALERT_THRESHOLD=80 /home/deploy/apps/SaaSVet/scripts/disk-alert.sh >> /var/log/vet-cron.log 2>&1
 
 # ---------------------------------------------------------------------------
-# 03:30 UTC día 1 de cada mes — restore drill (ADR p40). Restaura el último
-# dump LOCAL a una DB descartable y corre audit_anchor_integrity +
-# audit_payment_ledger_integrity + checks multi-tenant. Prueba que el backup
-# es RECUPERABLE (el "0 errores" de 3-2-1-1-0). Usa el .dump plano local → NO
-# necesita la private key. Exit 0 = RESTORE VERIFIED.
-# La verificación del path cifrado/offsite (decrypt + download) se hace a mano
-# desde tu máquina con la private key:  BACKUP_DECRYPTION_KEY=... \
-#   scripts/restore-drill.sh --from-offsite
+# RESTORE DRILL — NO automatizar por cron (decisión beta, 2026-06-20).
+#
+# El restore real debe probar la cadena de desastre COMPLETA:
+#   B2 download → age decrypt → restore → auditorías.
+# Eso requiere la age PRIVATE key, que NUNCA vive en el VPS. El drill local
+# (sin --from-offsite) NO prueba B2 ni el descifrado: usa el .dump plano local,
+# crea una DB temporal en el postgres de prod y levanta un container backend.
+# Poco valor + partes móviles en prod para una beta.
+#
+# En su lugar: drill MANUAL mensual desde la máquina del operador, con la
+# age private key montada temporalmente:
+#   BACKUP_DECRYPTION_KEY=/ruta/segura/age.key \
+#   RCLONE_REMOTE=b2:saaslyvet-prod-backups \
+#     scripts/restore-drill.sh --from-offsite      # → RESTORE VERIFIED
+# Si pasan >35 días sin un RESTORE VERIFIED offsite, es deuda P0.
 # ---------------------------------------------------------------------------
-30 3 1 * *  /home/deploy/apps/scripts/restore-drill.sh >> /var/log/vet-backup.log 2>&1
 
 # ---------------------------------------------------------------------------
 # Semanal — logs systemd journal cap a 14 días (evita crecimiento sin tope).
+# 05:00 Monterrey local (domingos) = 11:00 UTC.
 # ---------------------------------------------------------------------------
 0 5 * * 0   sudo journalctl --vacuum-time=14d >> /var/log/vet-cron.log 2>&1

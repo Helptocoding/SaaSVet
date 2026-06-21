@@ -8,13 +8,19 @@
 Backup pipeline: [ADR p40](../decisions/2026-06-12-p40-backup-offsite-disaster-recovery.md).
 Scripts: [`pg-backup.sh`](../../scripts/pg-backup.sh) · [`pg-restore.sh`](../../scripts/pg-restore.sh) · [`restore-drill.sh`](../../scripts/restore-drill.sh).
 
-> **Paths en saaslyvet-prod-01 (P1-6B):** este runbook usa `/opt/vet/app` como
-> ejemplo histórico. En el VPS real el repo vive en **`/home/deploy/apps`** (usuario
-> `deploy`). Sustituí `/opt/vet/app` → `/home/deploy/apps`, `/opt/vet/restore` →
-> `/home/deploy/restore`, y cloná el repo como `git clone <repo> /home/deploy/apps`
-> (no `cd /opt/vet && git clone <repo> app`). El host está en **America/Monterrey**,
-> no UTC. La operación de deploy/rollback rutinaria está en
-> [`../production-runbook.md`](../production-runbook.md).
+> **Paths (saaslyvet-prod-01):** el repo vive en **`/home/deploy/apps/SaaSVet`**
+> (usuario `deploy`); los dumps descargados van a **`/home/deploy/restore`**. El
+> host está en **America/Monterrey** (no UTC). La operación de deploy/rollback
+> rutinaria está en [`../production-runbook.md`](../production-runbook.md).
+>
+> **Política de drill (beta):** el restore drill real es **MANUAL**, lo ejecuta el
+> operador desde su máquina con la **age private key** y `--from-offsite` — es la
+> prueba principal de recuperabilidad. **No** existe cron de restore (ver
+> [`cron-jobs.md`](./cron-jobs.md) §5.bis).
+>
+> **Flujo validado en producción (2026-06-20):**
+> `Backblaze B2 → descarga .dump.age → age decrypt → checksum vs manifest →
+> restore a DB temporal → auditorías (anchor + payment ledger) → RESTORE VERIFIED.`
 
 **RPO actual**: 24h (último dump nightly). **RTO objetivo**: 1–2h con este runbook.
 
@@ -68,10 +74,10 @@ age --version && rclone version
 
 ```bash
 ssh deploy@<NUEVO_VPS_IP>
-sudo mkdir -p /opt/vet && sudo chown deploy:deploy /opt/vet
-cd /opt/vet
-git clone <repo-url> app
-cd app
+mkdir -p /home/deploy/apps
+cd /home/deploy/apps
+git clone <repo-url> SaaSVet
+cd SaaSVet
 
 cp .env.prod.example .env.prod
 nano .env.prod          # rellenar TODO desde el gestor de contraseñas
@@ -92,18 +98,18 @@ Configura rclone con una App Key (puede ser de solo lectura para recovery):
 ```bash
 rclone config       # crear remote "saaslyvet-prod-backups" tipo B2 con keyID/appKey
 # Verificar:
-rclone lsf saaslyvet-prod-backups:saaslyvet-prod-backups/daily/ | tail
+rclone lsf b2:saaslyvet-prod-backups/daily/ | tail
 ```
 
 Baja el dump cifrado más reciente + su manifest:
 
 ```bash
-mkdir -p /opt/vet/restore && cd /opt/vet/restore
-LATEST=$(rclone lsf saaslyvet-prod-backups:saaslyvet-prod-backups/daily/ \
+mkdir -p /home/deploy/restore && cd /home/deploy/restore
+LATEST=$(rclone lsf b2:saaslyvet-prod-backups/daily/ \
            --include 'vet-*.dump.age' | sort | tail -1)
 echo "Recuperando: $LATEST"
-rclone copy "saaslyvet-prod-backups:saaslyvet-prod-backups/daily/$LATEST" .
-rclone copy "saaslyvet-prod-backups:saaslyvet-prod-backups/daily/${LATEST%.dump.age}.manifest.json" . || true
+rclone copy "b2:saaslyvet-prod-backups/daily/$LATEST" .
+rclone copy "b2:saaslyvet-prod-backups/daily/${LATEST%.dump.age}.manifest.json" . || true
 ls -la
 ```
 
@@ -117,7 +123,7 @@ ls -la
 Necesitas el contenedor `postgres` corriendo para poder restaurar dentro de él.
 
 ```bash
-cd /opt/vet/app
+cd /home/deploy/apps/SaaSVet
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d postgres
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps   # esperar (healthy)
 ```
@@ -134,9 +140,9 @@ Trae tu **age private key** a esta máquina temporalmente (USB; bórrala al
 terminar). Restaura a una DB test (NUNCA directo sobre la futura prod):
 
 ```bash
-cd /opt/vet/app
+cd /home/deploy/apps/SaaSVet
 BACKUP_DECRYPTION_KEY=/ruta/segura/age.key \
-  scripts/pg-restore.sh /opt/vet/restore/vet-XXXXXXX.dump.age vet_restore_test
+  scripts/pg-restore.sh /home/deploy/restore/vet-XXXXXXX.dump.age vet_restore_test
 ```
 
 `pg-restore.sh` (ADR p40):
@@ -163,7 +169,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod \
   python manage.py audit_payment_ledger_integrity --json # exit 0 esperado
 ```
 
-Atajo: `BACKUP_DECRYPTION_KEY=/ruta/age.key scripts/restore-drill.sh /opt/vet/restore/vet-XXXX.dump.age`
+Atajo: `BACKUP_DECRYPTION_KEY=/ruta/age.key scripts/restore-drill.sh /home/deploy/restore/vet-XXXX.dump.age`
 hace restore + ambas auditorías + checks multi-tenant y termina en
 `RESTORE VERIFIED`.
 
@@ -180,7 +186,7 @@ forma más simple y auditable: restaurar el mismo dump sobre la DB de la app.
 ```bash
 # Descifrar a un archivo plano temporal (se borrará).
 age --decrypt --identity /ruta/age.key \
-    --output /opt/vet/restore/vet.dump /opt/vet/restore/vet-XXXX.dump.age
+    --output /home/deploy/restore/vet.dump /home/deploy/restore/vet-XXXX.dump.age
 
 # Recrear la DB de la app vacía y restaurar dentro.
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres \
@@ -188,12 +194,12 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres 
   -c "DROP DATABASE IF EXISTS \"$POSTGRES_DB\";" \
   -c "CREATE DATABASE \"$POSTGRES_DB\" OWNER \"$POSTGRES_USER\";"
 
-cat /opt/vet/restore/vet.dump | \
+cat /home/deploy/restore/vet.dump | \
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres \
   pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-privileges --exit-on-error
 
 # Borrar el plano temporal — contiene PII.
-shred -u /opt/vet/restore/vet.dump 2>/dev/null || rm -f /opt/vet/restore/vet.dump
+shred -u /home/deploy/restore/vet.dump 2>/dev/null || rm -f /home/deploy/restore/vet.dump
 ```
 
 > `pg-restore.sh` se niega a tocar la DB live por diseño (guard rail). Por eso el
@@ -209,7 +215,7 @@ shred -u /opt/vet/restore/vet.dump 2>/dev/null || rm -f /opt/vet/restore/vet.dum
 ## 9. Levantar la aplicación
 
 ```bash
-cd /opt/vet/app
+cd /home/deploy/apps/SaaSVet
 # release corre migrate (no-op si el dump ya estaba al día) + collectstatic + seed_permissions
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm release
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
