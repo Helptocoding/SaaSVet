@@ -17,7 +17,7 @@ export default function Login() {
 
   return (
     <div className="login-page" data-testid="login-page">
-      <section className="login-left" aria-label="Bienvenida VetCare">
+      <section className="login-left" aria-label="Bienvenida SaaslyVet">
         <div className="login-left-inner">
           <Brand />
           <div className="left-body">
@@ -31,7 +31,7 @@ export default function Login() {
               <span className="login-foot-dot" aria-hidden="true">·</span>
               <span>Recepción</span>
             </div>
-            <div className="login-foot-copy">© 2026 VetCare</div>
+            <div className="login-foot-copy">© 2026 SaaslyVet</div>
           </div>
         </div>
       </section>

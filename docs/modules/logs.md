@@ -4,7 +4,7 @@
 
 ## Descripcion general
 
-El sistema emite eventos estructurados en formato JSON al stdout (visible en Railway como logs del servidor).
+El sistema emite eventos estructurados en formato JSON al stdout (Docker stdout — ver con `docker compose logs backend`).
 Cada evento tiene un campo `event` con el nombre del evento y campos adicionales con contexto.
 
 Hay varios grupos de eventos segun su origen:
@@ -87,7 +87,7 @@ Accion requerida: investigar de inmediato. Cambiar `DJANGO_SUPERUSER_USERNAME` a
 
 ### `SUPERUSER_BOOTSTRAP_RACE_RESOLVED` · WARNING
 
-Race condition multi-worker Railway: dos workers de `post_migrate` ejecutaron el signal en paralelo, uno gano la creacion y el otro recibio `IntegrityError`. El que perdio re-fetch el usuario creado y aplica el mismo predicado de validacion. Comportamiento esperado en deploys multi-worker.
+Race condition multi-worker: dos workers de `post_migrate` ejecutaron el signal en paralelo, uno gano la creacion y el otro recibio `IntegrityError`. El que perdio re-fetch el usuario creado y aplica el mismo predicado de validacion. Comportamiento esperado en deploys multi-worker.
 
 Campos: `event`, `username`, `user_id`
 
@@ -97,11 +97,11 @@ Accion requerida: ninguna salvo que aparezca con frecuencia anormal.
 
 ### `SUPERUSER_BOOTSTRAP_INCOMPLETE_ENV` · WARNING
 
-Solo `DJANGO_SUPERUSER_USERNAME` o solo `DJANGO_SUPERUSER_PASSWORD` esta seteado. Config Railway probablemente errónea — el signal aborta sin crear nada.
+Solo `DJANGO_SUPERUSER_USERNAME` o solo `DJANGO_SUPERUSER_PASSWORD` esta seteado. Config del entorno probablemente errónea — el signal aborta sin crear nada.
 
 Campos: `event`, `has_username` (bool), `has_password` (bool)
 
-Accion requerida: revisar config Railway. Setear ambas o ninguna.
+Accion requerida: revisar `.env.prod` en el VPS. Setear ambas o ninguna.
 
 ---
 
@@ -367,7 +367,9 @@ Accion requerida: investigar `audit_anchor_integrity` para encontrar el modelo c
 
 ---
 
-## Regla practica para monitorear en Railway
+## Regla practica para monitorear en produccion
+
+Ver con: `docker compose logs backend --follow`
 
 Filtrar el stdout por nombre de evento:
 

@@ -182,6 +182,10 @@ REST_FRAMEWORK = {
         # ScopedRateThrottle por actor (ADMIN_SAAS) en PlatformOrgCreateView.
         # Hardening fase 2: agregar IPRateThrottle dedicado + alerting Sentry.
         'platform_org_create': '20/hour',
+        # ADR p45: platform-operator cross-tenant password reset.
+        # Más holgado que staff_password_reset (5/h) — ADMIN_SAAS puede
+        # atender múltiples clínicas en una misma sesión de soporte.
+        'platform_password_reset': '20/hour',
         # ADR p20: self-service password change. Throttle modesto para
         # disuadir brute-force del current_password — el endpoint requiere
         # IsAuthenticated, así que el attacker ya tiene credentials válidas.

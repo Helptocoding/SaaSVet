@@ -7,7 +7,7 @@
 ## Pre-requisitos
 
 - Cuenta `ADMIN_SAAS` activa (creada por el bootstrap signal con
-  `DJANGO_SUPERUSER_*` env vars en Railway).
+  `DJANGO_SUPERUSER_*` env vars en el VPS).
 - Backend `develop` deployed con el endpoint `/api/platform/organizations/`
   habilitado (commits posteriores a 2026-05-22 / ADR p19).
 - Datos del cliente listos: nombre de la clínica, timezone, tax_rate,
@@ -18,7 +18,7 @@
 ### 1. Login como ADMIN_SAAS
 
 ```bash
-curl -X POST https://tu-backend.railway.app/api/token/ \
+curl -X POST https://tu-backend.example.com/api/token/ \
   -H "Content-Type: application/json" \
   -d '{
     "username": "<tu ADMIN_SAAS username>",
@@ -53,7 +53,7 @@ Antes de provisionar, ten listas:
 ### 3. POST al endpoint
 
 ```bash
-curl -X POST https://tu-backend.railway.app/api/platform/organizations/ \
+curl -X POST https://tu-backend.example.com/api/platform/organizations/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <access token del paso 1>" \
   -H "X-Request-ID: prov-$(date +%s)" \
@@ -113,7 +113,7 @@ Hola Mariana,
 
 Tu clínica "Clinica San Lazaro" ya está activa en Vet Care.
 
-Login: https://tu-frontend.railway.app/login
+Login: https://tu-frontend.example.com/login
 Usuario: sanlazaro_admin
 Password temporal: TempPass-2026-Set!
 
@@ -127,7 +127,7 @@ Para soporte: soporte@vetcare.example.com
 Verifica que el admin nuevo puede loguearse:
 
 ```bash
-curl -X POST https://tu-backend.railway.app/api/token/ \
+curl -X POST https://tu-backend.example.com/api/token/ \
   -H "Content-Type: application/json" \
   -d '{
     "username": "sanlazaro_admin",
@@ -138,7 +138,7 @@ curl -X POST https://tu-backend.railway.app/api/token/ \
 Y que tiene permisos completos en su tenant:
 
 ```bash
-curl https://tu-backend.railway.app/api/me/ \
+curl https://tu-backend.example.com/api/me/ \
   -H "Authorization: Bearer <access token del paso anterior>"
 ```
 
@@ -212,7 +212,7 @@ Excediste 20 orgs/hora. Espera o coordina con el otro operador.
 
 ### `500 Internal Server Error`
 
-Raro. Verifica logs Railway con el `X-Request-ID` que enviaste:
+Raro. Verifica logs del servidor con el `X-Request-ID` que enviaste:
 
 ```
 request_id=<tu request id> AND level=CRITICAL

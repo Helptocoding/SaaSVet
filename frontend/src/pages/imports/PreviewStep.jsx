@@ -420,7 +420,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                     {openSections.omitted && (
                         <div className={s.collapseBody}>
                             <p className={s.omittedIntro}>
-                                Estos registros no se crearán. No es un error — ya existen en VetCare
+                                Estos registros no se crearán. No es un error — ya existen en SaaslyVet
                                 o tienen conflictos que requieren revisión.
                             </p>
 

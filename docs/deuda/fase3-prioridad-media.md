@@ -127,7 +127,7 @@ class PrescriptionItemWriteSerializer(_PrescriptionItemBase):
 - Reglas duplicadas: si un endpoint chequea `user.role == 'ADMIN'` directamente, bypasea el RBAC DB.
 
 **Criterio de cierre (pre-requisito antes de iniciar):**
-- ✅ Monitoreo Railway por 7 días consecutivos confirma `RBAC_FALLBACK_ALLOWED` count = 0.
+- ✅ Monitoreo de logs del VPS por 7 días consecutivos confirma `RBAC_FALLBACK_ALLOWED` count = 0.
 - ✅ ≥500 requests totales en el periodo.
 - ✅ ≥1 request por cada endpoint crítico (matriz documentada en `apps/core/permissions.py`).
 

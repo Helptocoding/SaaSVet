@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.contrib import admin
 from django.urls import path, include
 from apps.core.views import healthz, readyz, version
@@ -135,8 +136,10 @@ router.register(r'imports', ImportJobViewSet, basename='import')
 # destroy no se exponen. Dos paths explícitos abajo: /me/ (singleton) y
 # /<int:pk>/ (legacy con validación + Sunset RFC 8594).
 
+_ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/')
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(f'{_ADMIN_URL}/', admin.site.urls),
     # Health endpoints — Docker healthchecks + external uptime monitor (Capa 0).
     # No auth; never log to RBAC audit. Keep first so they short-circuit on cheap match.
     path('api/healthz/', healthz, name='healthz'),

@@ -95,7 +95,7 @@ python manage.py build_daily_metrics --org=12 --force
 
 **Production safety**:
 - Per-org PG advisory lock (`build_daily_metrics:org:{id}`) via
-  `apps.core.db_locks`. Railway double-fire safe. Lock contendido →
+  `apps.core.db_locks`. Doble-fire safe (cron en VPS). Lock contendido →
   org saltada con `DASH_BUILD_LOCK_BUSY` warn.
 - Per-org `try/except` con stacktrace. Un org fallido NO aborta otros.
 - `sys.exit(2)` si cualquier org fallo → cron alerting wireable.
@@ -214,7 +214,7 @@ nightly_snapshots: python manage.py build_daily_metrics
 nightly_anchor_audit: python manage.py audit_anchor_integrity --json
 ```
 
-Schedule via Railway Cron service. Recomendacion: 06:00 UTC daily
+Schedule via cron (host crontab o cron container en Docker Compose). Recomendacion: 06:00 UTC daily
 (cubre Mexico GMT-6/-7/-8 yesterday end-of-day).
 
 ## Net of refunds — dual-expose (ADR p29 — Sprint B)

@@ -77,19 +77,21 @@ El comando elimina **OutstandingToken + BlacklistedToken cuyo
 aún en su ventana de 7 días) se preservan — son necesarios para que la
 validación de blacklist funcione.
 
-### Setup en Railway
+### Setup en VPS (Docker Compose)
 
-1. Railway dashboard → tu proyecto backend → **Settings** → **Cron Jobs**.
-2. Crear nuevo cron:
-   - **Schedule:** `0 3 * * *` (3:00 AM UTC diariamente — fuera de pico).
-   - **Command:** `python manage.py flushexpiredtokens`.
-3. Verificar en logs del cron run que la salida sea limpia (no exceptions).
+El proceso corre dentro del container `backend`. Dos opciones:
 
-### Setup alternativo (si no hay Railway scheduler)
+**Opción A — host crontab:**
+```bash
+# crontab -e en el VPS
+0 3 * * * cd /ruta/al/proyecto && docker compose exec -T backend python manage.py flushexpiredtokens
+```
 
-- Script bash en un servidor con acceso a la DB de producción + crontab.
-- O endpoint protegido `/internal/flush-expired-tokens/` con `IsPlatformOperator`
-  + tarea manual ad-hoc. Menos ideal pero válido.
+**Opción B — cron container en docker-compose.prod.yml** (pendiente de implementar):
+agregar un servicio `cron` que dependa de `backend` y ejecute los jobs nocturnos
+(`build_daily_metrics`, `audit_anchor_integrity`, `flushexpiredtokens`).
+
+Verificar via: `docker compose logs backend | grep flushexpiredtokens`
 
 ### Verificación post-setup
 
@@ -136,8 +138,8 @@ varias veces, esperar 1h o ADMIN_SAAS hace reset desde Django admin
 
 Cron `flushexpiredtokens` no está corriendo o frecuencia insuficiente.
 Verificar:
-1. Railway dashboard → cron logs últimas 24h.
-2. Si el cron NO existe, configurarlo (ver "Setup en Railway").
+1. `docker compose logs backend | grep flushexpiredtokens` últimas 24h.
+2. Si el cron NO existe, configurarlo (ver "Setup en VPS").
 3. Si existe pero falla, leer error en logs.
 4. Ejecutar manualmente una vez: `python manage.py flushexpiredtokens`
    para drenar el backlog.

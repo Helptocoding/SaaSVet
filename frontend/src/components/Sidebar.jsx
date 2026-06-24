@@ -106,7 +106,7 @@ const Sidebar = ({ onLogout }) => {
                     </div>
                     <div>
                         <div style={{ fontSize: "13px", fontWeight: "700", color: "#f1f5f9", letterSpacing: "0.02em" }}>
-                            Vet Care
+                            SaaslyVet
                         </div>
                         <div style={{ fontSize: "11px", color: "var(--sidebar-text)", marginTop: "1px", maxWidth: "130px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {user?.organization_name || "Sistema"}

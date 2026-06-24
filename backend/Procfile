@@ -13,10 +13,10 @@ release: ./scripts/release.sh
 web: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-60} --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --log-level info
 
 # Analytics nightly snapshot. Idempotent + per-org advisory locked, so safe
-# even if Railway double-fires. Per-org failures isolated; non-zero exit
+# even if double-fired. Per-org failures isolated; non-zero exit
 # code on any org failure (wire alerting on this).
-# Schedule via Railway "Cron" service. Recommended: 06:00 UTC daily
-# (covers Mexico GMT-6/-7/-8 yesterday end-of-day).
+# Docker Compose (VPS): host crontab → `docker compose exec -T backend python manage.py build_daily_metrics`
+# Recommended: 06:00 UTC daily (covers Mexico GMT-6/-7/-8 yesterday end-of-day).
 nightly_snapshots: python manage.py build_daily_metrics
 # Anchor invariant audit. Runs after the snapshot job so any lurking
 # anchor corruption surfaces. Exit 1 = unresolved provenance, exit 2 =

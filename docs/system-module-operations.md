@@ -1,7 +1,7 @@
 # Operaciones por Módulo
 
-**Fecha**: 2026-05-29
-**Estado**: vigente (refleja Sprint A completo + Sprint B + ADR p30)
+**Fecha**: 2026-06-23
+**Estado**: vigente (refleja Sprint A completo + Sprint B + ADR p30 + ADR p45)
 **Audiencia**: nuevo desarrollador, QA, tester, soporte.
 
 Este documento describe las **acciones operacionales de cada módulo**: qué
@@ -47,6 +47,41 @@ negocio dentro del SaaS** para cada dominio.
 
 **Módulos involucrados**
 `platform`, `organizations`, `users`.
+
+---
+
+### Acción: Resetear contraseña de usuario (ADMIN_SAAS, cross-tenant — ADR p45)
+
+**Requiere**
+- Un usuario `ADMIN_SAAS` autenticado (Bearer JWT).
+- `public_id` del usuario target: debe estar activo y **no** ser `ADMIN_SAAS`.
+- Throttle: 20 peticiones por hora por actor.
+
+**Resultado** (atómico, dentro de `transaction.atomic`)
+- Se genera una contraseña temporal (`secrets.token_urlsafe`, ~22 chars).
+- `target.set_password(temp_password)` + `password_must_change=True` + `password_temp_issued_at=now()`.
+- Todos los `OutstandingToken` del target quedan blacklisted (sesiones activas invalidadas).
+- Se emite log `PLATFORM_PASSWORD_RESET_ISSUED` en `platform.events` con `target_organization_id`
+  y `target_organization_name` (campos extra vs reset de clínica — trazabilidad cross-tenant).
+- `temp_password` se devuelve **una sola vez** en el response 201 y **nunca se loguea**.
+
+**Desbloquea**
+- El target puede loguearse con `temp_password`.
+- En el primer login, `must_change_password=true` en el JWT obliga a cambiar contraseña
+  (`MustChangePasswordGate` bloquea todos los endpoints hasta el cambio).
+
+**Bloquea**
+- ADMIN_SAAS no puede resetear a otro ADMIN_SAAS (queryset excluye `role='ADMIN_SAAS'` → 404).
+- ADMIN_SAAS no puede resetearse a sí mismo (mismo mecanismo → 404, convención "404-as-403").
+- ADMIN, VET, ASSISTANT no tienen acceso a este endpoint → 403.
+
+**Diferencias vs reset de clínica (`reset_password_for_staff`, ADR p21)**
+- Sin restricción de mismo-tenant — funciona con cualquier org.
+- Endpoint distinto: `/api/platform/staff/<public_id>/reset-password/` (namespace platform).
+- Service propio (`platform_reset_password`) — gates y audit distintos.
+
+**Módulos involucrados**
+`platform`, `users`.
 
 ---
 
@@ -854,7 +889,7 @@ hubiera caja abierta → el Z reportaba $0 ventas (diferencia falsa).
 ### Acción: Construir snapshot diario (`build_daily_metrics`)
 
 **Requiere**
-- La ejecución del comando de administración (vía Railway cron, alrededor de las 06:00 UTC).
+- La ejecución del comando de administración (vía cron — host crontab con `docker compose exec backend python manage.py build_daily_metrics`, alrededor de las 06:00 UTC).
 - Un advisory lock de PostgreSQL por organización (anti double-fire).
 
 **Resultado**
@@ -904,7 +939,7 @@ hubiera caja abierta → el Z reportaba $0 ventas (diferencia falsa).
 
 ## 10. Logs y auditoría
 
-Todos los eventos se emiten a stdout en formato JSON (capturados por Railway). A continuación, el resumen por logger:
+Todos los eventos se emiten a stdout en formato JSON (Docker stdout — `docker compose logs backend`). A continuación, el resumen por logger:
 
 | Logger | Eventos clave | Significado |
 |--------|---------------|-------------|

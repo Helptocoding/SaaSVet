@@ -10,7 +10,7 @@ Gestiona las clinicas (tenants), sus usuarios y la configuracion operativa de ca
 
 | Rol          | Alcance            | Descripcion                                    |
 |--------------|--------------------|------------------------------------------------|
-| `ADMIN_SAAS` | Plataforma entera  | Administrador de Vet Care. No pertenece a ninguna clinica. Accede via Django admin. |
+| `ADMIN_SAAS` | Plataforma entera  | Administrador de Vet Care. No pertenece a ninguna clinica. Opera via API platform (`/api/platform/`) o Django admin para casos de recuperacion. |
 | `ADMIN`      | Una organizacion   | Administrador de la clinica. Gestiona staff, configuracion y tiene acceso completo a todos los modulos. |
 | `VET`        | Una organizacion   | Veterinario. Puede crear y cerrar consultas propias. |
 | `ASSISTANT`  | Una organizacion   | Asistente. Acceso limitado segun permisos RBAC configurados. |
@@ -19,9 +19,9 @@ Gestiona las clinicas (tenants), sus usuarios y la configuracion operativa de ca
 
 No existe un endpoint de API para crear organizaciones desde fuera. El flujo es via Django admin.
 
-### En Railway (produccion)
+### En VPS (produccion)
 
-El ADMIN_SAAS se crea automaticamente en cada deploy si las siguientes variables estan en Railway:
+El ADMIN_SAAS se crea automaticamente en cada deploy si las siguientes variables de entorno estan seteadas:
 
 ```
 DJANGO_SUPERUSER_USERNAME=admin_saas
@@ -50,12 +50,12 @@ Resumen del flujo API:
 
 ```bash
 # 1. Login como ADMIN_SAAS
-curl -X POST https://tu-backend.railway.app/api/token/ \
+curl -X POST https://tu-backend.example.com/api/token/ \
   -d '{"username":"<ADMIN_SAAS>","password":"<pwd>"}' \
   -H "Content-Type: application/json"
 
 # 2. Provisionar org + admin inicial (atomico en una sola llamada)
-curl -X POST https://tu-backend.railway.app/api/platform/organizations/ \
+curl -X POST https://tu-backend.example.com/api/platform/organizations/ \
   -H "Authorization: Bearer <access token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -81,16 +81,16 @@ Ventajas del flujo API vs Django admin manual:
 
 **Legacy (Django admin):** El flujo manual via `/admin/` sigue funcionando para casos excepcionales (recuperacion de incidentes, debugging). Pasos:
 
-1. Ir a `https://tu-backend.railway.app/admin/` con las credenciales del ADMIN_SAAS
+1. Ir a `https://tu-backend.example.com/admin/` con las credenciales del ADMIN_SAAS
 2. **Organizations** → `+ Add` → completar `name`, `timezone`, `tax_rate`
 3. **Users** → `+ Add` → completar `username`, `email`, `password`, `organization`, `role='ADMIN'`
 4. Si el signal `_seed_roles_for_org` no corrio (raro), ejecutar `seed_permissions` manualmente
 
 El signal `organizations.signals.initialize_organization` corre en post_save de Organization y crea automaticamente: `OrganizationSettings`, `Owner('Publico General')`, `Pet('Paciente Anonimo')`, y Roles RBAC (ADMIN/VET/ASSISTANT). El admin user es asignado a su UserRole RBAC por el signal `users.signals.assign_rbac_role_on_create`.
 
-### Ejecutar seed_permissions en Railway
+### Ejecutar seed_permissions en VPS
 
-Desde la consola de Railway:
+Desde SSH al servidor:
 
 ```bash
 python manage.py seed_permissions
@@ -99,6 +99,38 @@ python manage.py seed_permissions
 O simplemente hacer redeploy — el Procfile lo ejecuta automaticamente antes de iniciar el servidor.
 
 Si `seed_permissions` no se ejecuta, todos los endpoints de la org nueva retornan `403`. El endpoint `POST /api/platform/organizations/` NO depende de esto (corre el seed por org via signal).
+
+## Como el ADMIN_SAAS resetea credenciales de staff (ADR p45)
+
+Cuando el ADMIN de una clínica olvida su contraseña (y no existe "forgot-password"
+por email), el ADMIN_SAAS puede resetear la contraseña via API:
+
+```bash
+# Reset cross-tenant: no requiere estar en la misma organización
+POST /api/platform/staff/<public_id>/reset-password/
+Authorization: Bearer <JWT ADMIN_SAAS>
+(body vacío)
+
+→ 201 { "temp_password": "...", "expires_in_seconds": 86400, "must_change_on_first_login": true }
+```
+
+El `temp_password` se devuelve **una sola vez** y **nunca se loguea** — debe
+transmitirse out-of-band (Slack DM, llamada, etc.).
+
+En el próximo login con la contraseña temporal, `must_change_password: true` en
+el JWT obliga al usuario a cambiar contraseña antes de poder usar cualquier
+endpoint (`MustChangePasswordGate`).
+
+**Restricciones:**
+- Funciona para ADMIN, VET, ASSISTANT de cualquier clínica.
+- NO funciona para otros ADMIN_SAAS (retorna 404).
+- Throttle `20/hour` por actor.
+- Revoca todos los tokens activos del target.
+
+Ver detalles completos en [`docs/modules/platform.md`](platform.md) §
+`POST /api/platform/staff/<public_id>/reset-password/` y ADR p45.
+
+---
 
 ## Como el ADMIN de una clinica gestiona su equipo
 
@@ -219,7 +251,7 @@ POST /api/token/ → JWT
 → permite o deniega
 ```
 
-Eventos emitidos a stdout (Railway logs):
+Eventos emitidos a stdout (Docker stdout — `docker compose logs backend`):
 - `RBAC_ALLOWED_DB` — permiso concedido desde DB
 - `RBAC_FALLBACK_ALLOWED` — permiso concedido por fallback (no deberia verse en produccion estable)
 - `RBAC_DENIED` — acceso denegado

@@ -6,7 +6,7 @@ Mounted at `/api/platform/` in `config/urls.py`. All routes require
 """
 from django.urls import path
 
-from apps.platform.views import PlatformOrgCreateView
+from apps.platform.views import PlatformOrgCreateView, PlatformStaffResetPasswordView
 
 
 urlpatterns = [
@@ -14,5 +14,10 @@ urlpatterns = [
         'organizations/',
         PlatformOrgCreateView.as_view(),
         name='platform-org-create',
+    ),
+    path(
+        'staff/<str:pk>/reset-password/',
+        PlatformStaffResetPasswordView.as_view(),
+        name='platform-staff-reset-password',
     ),
 ]
