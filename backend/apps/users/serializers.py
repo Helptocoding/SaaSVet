@@ -107,6 +107,15 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
             organization=organization,
         )
 
+        # El staff creado por el ADMIN entra con contraseña de un solo uso: debe
+        # cambiarla en el primer login (MustChangePasswordGate). Sin
+        # password_temp_issued_at → no caduca a 24h (igual que el admin
+        # provisionado). Se setea SOLO aquí (ruta de alta por endpoint), NUNCA en
+        # User.create_user / signal / default del modelo, para no gatear los
+        # usuarios de setUp de la suite, los seeds, ni createsuperuser.
+        user.password_must_change = True
+        user.save(update_fields=['password_must_change'])
+
         self._assign_rbac_role(user, organization)
         return user
 

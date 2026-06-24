@@ -164,6 +164,9 @@ class Command(BaseCommand):
                 "admin_first_name": admin["first_name"],
                 "admin_last_name": admin["last_name"],
             },
+            # Demo de login compartido: el admin demo NO debe quedar gateado por
+            # MustChangePasswordGate (rompería el login con la contraseña común).
+            require_password_change=False,
         )
         org = result.organization
         org.is_demo = True

@@ -10,7 +10,7 @@ Validates that a freshly provisioned org + admin is genuinely usable:
     response.
 """
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -53,6 +53,9 @@ class PlatformProvisioningE2ETests(TestCase):
         self.client.force_authenticate(user=self.platform_op)
         # Throttle uses cache backend — clear between tests.
         cache.clear()
+        # Login throttle usa la cache `throttle_login` (alias distinto de
+        # `default`); limpiarla aísla el bucket 5/15min entre tests (evita 429).
+        caches['throttle_login'].clear()
 
     def test_provisioned_admin_can_login_via_token_endpoint(self):
         response = self.client.post(self.URL, _payload(), format='json')
@@ -140,6 +143,50 @@ class PlatformProvisioningE2ETests(TestCase):
         # also scan full body string for the literal password value
         self.assertNotIn('IntegPass1234!', response.content.decode('utf-8'))
 
+    def test_provisioned_admin_gated_until_password_change(self):
+        """must_change=True admin: blocked on gated endpoints, but /me/ and
+        change-password stay reachable; after changing, access is restored."""
+        resp = self.client.post(self.URL, _payload(), format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Real login flow.
+        public = APIClient()
+        login = public.post(
+            '/api/token/',
+            {'username': 'integadmin', 'password': 'IntegPass1234!'},
+            format='json',
+        )
+        self.assertEqual(login.status_code, status.HTTP_200_OK)
+        self.assertTrue(login.data.get('must_change_password'))
+
+        authed = APIClient()
+        authed.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+
+        # Gated endpoint rejected while must_change=True.
+        self.assertEqual(
+            authed.get('/api/staff/').status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+        # /me/ stays reachable (whitelisted).
+        self.assertEqual(authed.get('/api/me/').status_code, status.HTTP_200_OK)
+
+        # change-password is reachable while gated AND lifts the gate.
+        changed = authed.post(
+            '/api/users/change-password/',
+            {
+                'current_password': 'IntegPass1234!',
+                'new_password': 'BrandNewPass5678!',
+                'confirm_password': 'BrandNewPass5678!',
+            },
+            format='json',
+        )
+        self.assertEqual(changed.status_code, status.HTTP_200_OK)
+
+        # Fresh tokens returned; gate lifted → gated endpoint now allowed.
+        authed2 = APIClient()
+        authed2.credentials(HTTP_AUTHORIZATION=f"Bearer {changed.data['access']}")
+        self.assertEqual(authed2.get('/api/staff/').status_code, status.HTTP_200_OK)
+
 
 class PlatformProvisioningThrottleTests(TestCase):
     """Throttle scope kicks in after configured budget.
@@ -163,6 +210,9 @@ class PlatformProvisioningThrottleTests(TestCase):
         )
         self.client.force_authenticate(user=self.platform_op)
         cache.clear()
+        # Login throttle usa la cache `throttle_login` (alias distinto de
+        # `default`); limpiarla aísla el bucket 5/15min entre tests (evita 429).
+        caches['throttle_login'].clear()
 
     def test_throttle_blocks_after_budget(self):
         from unittest import mock

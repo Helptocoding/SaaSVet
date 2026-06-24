@@ -34,12 +34,12 @@ negocio dentro del SaaS** para cada dominio.
   - `Owner('Público General', is_generic=True)`.
   - `Pet('Paciente Anónimo', is_generic=True)`.
   - Roles RBAC del sistema (`ADMIN`, `VET`, `ASSISTANT`) con los permisos derivados de `PERMISSION_CODES`.
-- Se crea el `User` administrador con `role='ADMIN'`, `is_staff=False`, `is_superuser=False` (los guards impiden la escalación de privilegios).
+- Se crea el `User` administrador con `role='ADMIN'`, `is_staff=False`, `is_superuser=False` (los guards impiden la escalación de privilegios), y `password_must_change=True` (sin `password_temp_issued_at` → la contraseña inicial **no caduca**, pero el primer login obliga a cambiarla vía `MustChangePasswordGate`). El service acepta `require_password_change=False` solo para seeds (demo).
 - Se asigna el `UserRole` al administrador, con `assigned_by` igual al actor que realizó el provisioning.
 
 **Desbloquea**
-- El inicio de sesión del administrador recién creado.
-- La creación de staff, citas, pacientes, inventario, facturas y apertura de caja dentro de esa organización.
+- El inicio de sesión del administrador recién creado (forzado a cambiar la contraseña en el primer acceso).
+- La creación de staff, citas, pacientes, inventario, facturas y apertura de caja dentro de esa organización (tras el cambio de contraseña).
 
 **Bloquea**
 - El administrador recién creado **no** puede provisionar otras organizaciones (no es `ADMIN_SAAS`).
@@ -93,11 +93,11 @@ negocio dentro del SaaS** para cada dominio.
 - Que `seed_permissions` ya se haya ejecutado en la organización.
 
 **Resultado**
-- Se crea el `User` con `organization` igual a la del `ADMIN` que lo creó.
+- Se crea el `User` con `organization` igual a la del `ADMIN` que lo creó y `password_must_change=True` (contraseña de un solo uso: el empleado la cambia en su primer login vía `MustChangePasswordGate`; sin `password_temp_issued_at` → no caduca).
 - El signal `assign_rbac_role_on_create` genera el `UserRole` correspondiente.
 
 **Desbloquea**
-- El nuevo usuario puede iniciar sesión y operar según los permisos de su rol.
+- El nuevo usuario puede iniciar sesión y operar según los permisos de su rol (tras cambiar la contraseña en el primer acceso).
 
 **Bloquea**
 - Si `seed_permissions` no se ejecutó, todas las peticiones del nuevo usuario caen en `RBAC_FALLBACK_ALLOWED` o reciben `403`.

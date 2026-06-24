@@ -62,6 +62,9 @@ acople con platform logic en sprints futuros (impersonation, billing, support to
    │   ├─ User.create_user(role='ADMIN', is_staff=False, is_superuser=False)
    │   │   └─ post_save signal: assign_rbac_role_on_create
    │   │       └─ UserRole.get_or_create(user, role) [SIN assigned_by]
+   │   ├─ admin.password_must_change=True (si require_password_change, default True)
+   │   │   └─ Onboarding forzado: primer login pasa por MustChangePasswordGate.
+   │   │       SIN password_temp_issued_at → no caduca (cf. reset p21 = 24h). Seeds: False.
    │   ├─ Role.objects.filter(organization, name='ADMIN', is_system_role=True).get()
    │   │   └─ RuntimeError + rollback si DoesNotExist
    │   ├─ UserRole.update_or_create(user, role, defaults={'assigned_by': actor})
@@ -89,6 +92,12 @@ acople con platform logic en sprints futuros (impersonation, billing, support to
 5. **Audit trail**: `UserRole.assigned_by` siempre apunta al actor que provisionó.
    El signal automático lo deja NULL — el service hace `update_or_create` con
    `defaults={'assigned_by': actor}` para backfill.
+6. **Onboarding forzado (2026-06-24)**: el admin provisionado se crea con
+   `password_must_change=True` (param `require_password_change`, default True) → el
+   primer login es forzado por `MustChangePasswordGate` a cambiar la contraseña.
+   Sin `password_temp_issued_at` → la temporal **no caduca** (a diferencia del
+   reset admin de 24h, ADR p21 addendum). Seeds (demo) pasan
+   `require_password_change=False`.
 
 ### Anti-patterns prohibidos
 

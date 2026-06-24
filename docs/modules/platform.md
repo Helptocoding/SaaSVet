@@ -120,7 +120,10 @@ Provisión de tenant + admin inicial.
 
 **Importante:** el `admin_password` jamás se incluye en el response. El
 operador SaaS debe transmitir la credencial al admin de la clínica out-of-band
-(email seguro, secure share, etc.).
+(email seguro, secure share, etc.). Es una **contraseña temporal**: el admin se
+crea con `password_must_change=True` y el sistema lo obliga a cambiarla en el
+primer login (`MustChangePasswordGate`). No caduca (sin `password_temp_issued_at`,
+a diferencia del reset admin de 24h).
 
 **Response 400** (validation):
 ```json
@@ -167,6 +170,9 @@ User.create_user(role='ADMIN', organization=org)
    └─ UserRole.get_or_create(user, role) [SIN assigned_by]
 
 provision_organization service hace:
+├─ admin.password_must_change = True   # require_password_change=True (default);
+│                                      # primer login forzado (MustChangePasswordGate);
+│                                      # SIN password_temp_issued_at → no caduca; seeds: False.
 └─ UserRole.update_or_create(user, role, defaults={'assigned_by': actor})
    para backfill del audit field que el signal no captura.
 ```
@@ -318,7 +324,10 @@ python manage.py test \
 ```
 
 NO usar `python manage.py test apps.platform` (TypeError en
-`_path_normpath`).
+`_path_normpath`). `python manage.py test apps` (discovery crudo) SÍ corre la
+suite completa pero emite 2 `_FailedTest` espurios (`platform.tests`,
+`platform.services`) por la misma colisión — **no son fallas de test**. Deuda de
+rename diferida: `docs/deuda/fase4-prioridad-baja.md` C7.
 
 ## Refs
 

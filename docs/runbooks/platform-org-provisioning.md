@@ -47,7 +47,7 @@ Antes de provisionar, ten listas:
 | `tax_rate` | `0.0000` sin IVA, `0.1600` para 16%, `0.0800` para 8%. |
 | `admin_username` | Único. Será el login del admin de la clínica. |
 | `admin_email` | Único. Recomendado: del cliente real. |
-| `admin_password` | **Mínimo 12 caracteres**. No numeric-only. No common-password (Django validators). Provee un password seguro, el cliente lo cambia luego desde la app. |
+| `admin_password` | **Mínimo 12 caracteres**. No numeric-only. No common-password (Django validators). Es una **contraseña temporal de un solo uso**: el sistema obliga al admin a cambiarla en el primer login (`password_must_change=True`). No caduca, a diferencia del reset admin de 24h. |
 | `admin_first_name`, `admin_last_name` | Nombre completo del admin del cliente. |
 
 ### 3. POST al endpoint
@@ -117,7 +117,7 @@ Login: https://tu-frontend.example.com/login
 Usuario: sanlazaro_admin
 Password temporal: TempPass-2026-Set!
 
-Cambia tu password en el primer login (Configuración → Mi cuenta).
+Al iniciar sesión por primera vez, el sistema te pedirá cambiar la contraseña antes de continuar.
 
 Para soporte: soporte@vetcare.example.com
 ```
@@ -144,6 +144,12 @@ curl https://tu-backend.example.com/api/me/ \
 
 Debe responder con `role: "ADMIN"`, `organization_name: "Clinica San Lazaro"`,
 y `permissions` array con todos los códigos (wildcard `*.*`).
+
+**Nota (must-change):** el login del paso anterior responde además con
+`must_change_password: true`. El admin está **gateado** hasta cambiar la
+contraseña: `/api/me/` y `/api/users/change-password/` responden 200, pero
+cualquier otro endpoint devuelve **403** (`MUST_CHANGE_PASSWORD_BLOCKED`) hasta
+que complete el cambio. Es el comportamiento esperado, no un error.
 
 ## Gotcha CORS — `X-Request-ID`
 

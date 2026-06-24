@@ -56,7 +56,8 @@ class ProvisionResult:
 
 
 @transaction.atomic
-def provision_organization(*, actor, validated_data, request_id=None):
+def provision_organization(*, actor, validated_data, request_id=None,
+                           require_password_change=True):
     """
     Create a tenant Organization together with its initial admin user.
 
@@ -69,6 +70,12 @@ def provision_organization(*, actor, validated_data, request_id=None):
             admin_email, admin_password, admin_first_name, admin_last_name.
         request_id: Correlation id for log/response tagging. Generated
             (uuid4) if not provided.
+        require_password_change: When True (default), the provisioned admin is
+            created with ``password_must_change=True`` so the first login is
+            forced through the change-password flow (MustChangePasswordGate).
+            ``password_temp_issued_at`` is left None → the temp does NOT expire
+            (unlike admin resets, ADR p21). Seeds (demo) pass False for a
+            direct-login admin.
 
     Returns:
         ProvisionResult with the persisted Organization, admin User,
@@ -114,6 +121,16 @@ def provision_organization(*, actor, validated_data, request_id=None):
             is_superuser=False,
             is_active=True,
         )
+
+        # Onboarding hardening: el admin provisionado entra con una contraseña de
+        # un solo uso. password_must_change=True fuerza el cambio en el primer
+        # login (MustChangePasswordGate). NO se setea password_temp_issued_at: la
+        # temporal de provisioning NO caduca a 24h (el handoff operador→clínica
+        # puede tardar más), a diferencia del reset admin (ADR p21). Los seeds
+        # (demo) pasan require_password_change=False para un admin de login directo.
+        if require_password_change:
+            admin.password_must_change = True
+            admin.save(update_fields=['password_must_change'])
 
         # 3. Resolve the seeded ADMIN role.
         #    Role is not an OrganizationalModel — use direct filter

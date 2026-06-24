@@ -17,7 +17,7 @@ What we are protecting:
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
@@ -47,6 +47,10 @@ def _reset_url(public_id):
 class _BaseFixtures(TestCase):
     def setUp(self):
         cache.clear()
+        # El throttle de login usa la cache `throttle_login` (alias distinto del
+        # `default`); cache.clear() NO lo toca → el bucket 5/15min se acumula
+        # entre tests y dispara 429. Limpiarlo aquí aísla el throttle por test.
+        caches['throttle_login'].clear()
         self.client = APIClient()
 
         self.org = Organization.objects.create(name='Clinica X')

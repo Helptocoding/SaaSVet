@@ -300,6 +300,35 @@ src/App.jsx:MustChangePasswordGate (UX mirror)   ← redirect frontend
 src/hooks/useLoginForm.js                        ← detecta flag, redirect post-login
 ```
 
+## Addendum (2026-06-24) — Onboarding forzado / first-login enforcement implementado
+
+El uso anticipado en "Justificación arquitectónica" (*"Onboarding forzado
+(forced change post-provisioning)"* + *"First-login enforcement"*) ya está
+implementado. El mismo primitivo `password_must_change` + `MustChangePasswordGate`
+ahora aplica a la **creación manual de usuarios por SaaslyVet**:
+
+- **Provisioning** (`provision_organization`, ADR p19): el admin inicial se crea
+  con `password_must_change=True` (param `require_password_change`, default True).
+- **Alta de staff** (`CreateEmployeeSerializer.create`): VET/ASSISTANT/ADMIN
+  creados por el ADMIN de la clínica también entran con `password_must_change=True`.
+
+**Diferencias vs el admin reset de este ADR:**
+- **Sin `password_temp_issued_at`** → la contraseña inicial **no caduca** a las
+  24h. El handoff operador→clínica puede tardar más; el flag solo (sin caducidad)
+  fuerza el cambio sin riesgo de lockout. La ventana de 24h sigue siendo exclusiva
+  del flujo de *reset*.
+- **Contraseña elegida por el humano** (operador/admin), no `secrets.token_urlsafe`.
+  El anti-pattern "no permitir password manual" aplica al *reset* (server genera),
+  no al alta (operador la define y el usuario la cambia al entrar).
+
+**Locus de implementación (invariante):** el flag se setea SOLO en las rutas de
+creación manual (`provision_organization`, `CreateEmployeeSerializer.create`),
+**nunca** en `User.create_user`, el default del modelo, ni un signal `post_save`
+— eso gatearía los usuarios de `setUp` de la suite, los seeds (demo) y
+`createsuperuser`. Los seeds pasan `require_password_change=False`.
+
+Ref: `docs/fix-provision-must-change-password-2026-06-24.md`.
+
 ## Refs
 
 - CLAUDE.md ADR-18

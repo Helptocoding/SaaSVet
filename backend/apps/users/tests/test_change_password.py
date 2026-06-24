@@ -13,7 +13,7 @@ What we are protecting here:
   - Throttle — brute-forcing the current password must be capped.
 """
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -60,6 +60,9 @@ class ChangePasswordValidationTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
         cache.clear()
+        # Login throttle vive en la cache `throttle_login` (no en `default`);
+        # limpiarla aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
 
     def test_wrong_current_password_rejected_400(self):
         res = self.client.post(
@@ -158,6 +161,9 @@ class ChangePasswordSuccessTests(TestCase):
             organization=self.org,
         )
         cache.clear()
+        # Login throttle vive en la cache `throttle_login` (no en `default`);
+        # limpiarla aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
 
     def _login_get_tokens(self):
         public = APIClient()
@@ -239,6 +245,9 @@ class ChangePasswordJWTLifecycleTests(TestCase):
             organization=self.org,
         )
         cache.clear()
+        # Login throttle vive en la cache `throttle_login` (no en `default`);
+        # limpiarla aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
 
     def _real_login(self):
         public = APIClient()
@@ -367,6 +376,9 @@ class ChangePasswordLoggingTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
         cache.clear()
+        # Login throttle vive en la cache `throttle_login` (no en `default`);
+        # limpiarla aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
 
     def test_success_log_carries_actor_org_ip_useragent(self):
         with self.assertLogs('users.events', level='INFO') as logs:
@@ -424,6 +436,9 @@ class ChangePasswordThrottleTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
         cache.clear()
+        # Login throttle vive en la cache `throttle_login` (no en `default`);
+        # limpiarla aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
 
     def test_throttle_blocks_after_budget_exceeded(self):
         from unittest import mock
@@ -470,6 +485,9 @@ class ChangePasswordAtomicityTests(TestCase):
             organization=self.org,
         )
         cache.clear()
+        # Login throttle vive en la cache `throttle_login` (no en `default`);
+        # limpiarla aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
 
     def test_password_unchanged_when_token_blacklist_step_fails(self):
         """If the blacklist write fails (DB error, etc.), the password

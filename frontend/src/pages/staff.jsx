@@ -381,6 +381,9 @@ const Staff = () => {
                                             value={form.password}
                                             onChange={e => setForm({ ...form, password: e.target.value })}
                                         />
+                                        <div style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
+                                            Contraseña temporal: el empleado deberá cambiarla en su primer acceso.
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">ROL *</label>

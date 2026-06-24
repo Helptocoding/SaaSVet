@@ -184,6 +184,43 @@ la implementación (comportamiento enviado a producción, cubierto por `mapField
 
 ---
 
+## C7 — `apps/platform` colisiona con el módulo `platform` de la stdlib de Python
+
+**Origen:** detectado al correr la suite completa (2026-06-24). Python ya provee
+`import platform` (stdlib); la app local `apps/platform` comparte el nombre base.
+
+**Problema:** con ciertas invocaciones del test runner, el discovery de unittest
+resuelve `platform` al módulo stdlib en vez de `apps.platform`:
+- `python manage.py test apps` → 2 `_FailedTest` espurios (`platform.tests`,
+  `platform.services`: *"'platform' is not a package"*). La suite igual corre
+  (428 tests), pero el runner reporta `errors=2` falsos.
+- `python manage.py test apps.platform` (label de paquete) → **crash**
+  `TypeError: _path_normpath ... not NoneType` en `unittest.discover` (Py 3.13).
+
+Mientras Django resuelva `apps.platform` por su `AppConfig` (runtime normal), **no
+hay impacto funcional** — es solo fricción de tooling (test discovery, y
+potencialmente otras herramientas que importen `platform` sin calificar).
+
+**Workaround vigente (ya documentado, no es deuda):** listar los test modules con
+full path (`apps.platform.tests.test_*`). Ver `docs/modules/platform.md` § Tests.
+
+**Por qué se difiere el rename (no pre-testers):** renombrar `apps/platform` →
+p.ej. `apps/saas_platform` implica tocar: imports en todo el código, `AppConfig`
+(`name`/`label`), **migraciones** (`app_label` en `dependencies`), los
+`ContentType`/permisos persistidos en DB, `INSTALLED_APPS`, rutas, y todos los
+tests. Alto churn + riesgo de migración de datos para una fricción que hoy solo
+afecta al test runner. No vale la pena antes de testers.
+
+**Criterio de cierre (si se decide renombrar, post-testers):**
+- Nuevo nombre de app sin colisión stdlib (p.ej. `apps.saas_platform`).
+- Data migration de rename con `ContentType`/permisos preservados.
+- `INSTALLED_APPS`, imports, urls, tests actualizados.
+- `python manage.py test apps` sin `_FailedTest` espurios.
+
+**Estimación:** 0.5–1 día (rename mecánico + migración de ContentType + verificación).
+
+---
+
 ## Tracking
 
 Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre.

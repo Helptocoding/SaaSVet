@@ -12,7 +12,7 @@ What we are protecting:
   - Throttle — blocks after budget exceeded.
 """
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
@@ -40,6 +40,9 @@ def _reset_url(public_id):
 class _BaseFixtures(TestCase):
     def setUp(self):
         cache.clear()
+        # Login throttle usa la cache `throttle_login` (no `default`); limpiarla
+        # aísla el bucket 5/15min entre tests (evita 429 acumulado).
+        caches['throttle_login'].clear()
         self.client = APIClient()
 
         # Org A with ADMIN + VET + ASSISTANT

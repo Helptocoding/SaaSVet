@@ -76,14 +76,14 @@ Ventajas del flujo API vs Django admin manual:
 - Tests automatizados que cubren todo el ciclo.
 - Throttle `20/hour` previene abuse.
 - `seed_permissions` se ejecuta automaticamente vía signal (no requiere paso manual).
-- Password floor de 12 caracteres + Django validators.
+- Password floor de 12 caracteres + Django validators. El admin se crea con `password_must_change=True` → cambio forzado en el primer login (no caduca; ADR p21 addendum).
 - Guards anti privilege-escalation (payload no puede inyectar `role=ADMIN_SAAS`, `is_superuser`, `is_staff`).
 
 **Legacy (Django admin):** El flujo manual via `/admin/` sigue funcionando para casos excepcionales (recuperacion de incidentes, debugging). Pasos:
 
 1. Ir a `https://tu-backend.example.com/admin/` con las credenciales del ADMIN_SAAS
 2. **Organizations** → `+ Add` → completar `name`, `timezone`, `tax_rate`
-3. **Users** → `+ Add` → completar `username`, `email`, `password`, `organization`, `role='ADMIN'`
+3. **Users** → `+ Add` → completar `username`, `email`, `password`, `organization`, `role='ADMIN'` — **nota:** este alta manual por Django admin **no** setea `password_must_change` (el cambio forzado solo aplica al alta vía API/serializer, no al ORM directo). Setearlo a mano si se desea el gate.
 4. Si el signal `_seed_roles_for_org` no corrio (raro), ejecutar `seed_permissions` manualmente
 
 El signal `organizations.signals.initialize_organization` corre en post_save de Organization y crea automaticamente: `OrganizationSettings`, `Owner('Publico General')`, `Pet('Paciente Anonimo')`, y Roles RBAC (ADMIN/VET/ASSISTANT). El admin user es asignado a su UserRole RBAC por el signal `users.signals.assign_rbac_role_on_create`.
@@ -162,6 +162,8 @@ Authorization: Bearer <token ADMIN>
 ```
 
 Validaciones de password: minimo 8 caracteres, al menos una mayuscula, al menos un numero.
+
+La contraseña es **temporal de un solo uso**: el usuario creado entra con `password_must_change=True` y el sistema lo obliga a cambiarla en el primer login (`MustChangePasswordGate`). Sin `password_temp_issued_at` → no caduca (a diferencia del reset admin de 24h). El flag se setea en `CreateEmployeeSerializer.create` (ruta de alta por endpoint), nunca en `User.create_user` ni en signals. Ver ADR p21 (addendum 2026-06-24).
 
 La asignacion de `UserRole` RBAC ocurre automaticamente al crear el usuario (requiere que `seed_permissions` haya corrido).
 

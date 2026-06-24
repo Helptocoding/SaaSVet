@@ -189,6 +189,30 @@ class ProvisionOrganizationServiceTests(TestCase):
         self.assertTrue(record.admin_user_public_id)
         self.assertIsInstance(record.duration_ms, int)
 
+    # --- Onboarding hardening: forced password change ------------------
+
+    def test_provisioned_admin_must_change_password(self):
+        """The provisioned admin enters with a one-time password: the first
+        login must be forced through the change-password flow."""
+        result = provision_organization(
+            actor=self.actor,
+            validated_data=dict(VALID_PAYLOAD),
+        )
+        result.admin.refresh_from_db()
+        self.assertTrue(result.admin.password_must_change)
+        # No 24h expiry at provisioning (unlike admin resets, ADR p21).
+        self.assertIsNone(result.admin.password_temp_issued_at)
+
+    def test_require_password_change_false_skips_gate(self):
+        """Seeds (demo) opt out → admin can log in directly without the gate."""
+        result = provision_organization(
+            actor=self.actor,
+            validated_data=dict(VALID_PAYLOAD),
+            require_password_change=False,
+        )
+        result.admin.refresh_from_db()
+        self.assertFalse(result.admin.password_must_change)
+
 
 class ProvisionRollbackTests(TestCase):
     """Atomicity invariants — failures must roll back the entire transaction."""
