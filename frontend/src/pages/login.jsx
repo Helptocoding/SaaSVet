@@ -31,7 +31,12 @@ export default function Login() {
               <span className="login-foot-dot" aria-hidden="true">·</span>
               <span>Recepción</span>
             </div>
-            <div className="login-foot-copy">© 2026 SaaslyVet</div>
+            <div className="login-foot-copy">
+              © 2026 SaaslyVet ·{" "}
+              <a href="https://www.saaslyvet.com/aviso-de-privacidad" target="_blank" rel="noopener noreferrer">Aviso de privacidad</a>
+              {" · "}
+              <a href="https://www.saaslyvet.com/terminos" target="_blank" rel="noopener noreferrer">Términos</a>
+            </div>
           </div>
         </div>
       </section>

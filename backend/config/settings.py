@@ -131,6 +131,7 @@ INSTALLED_APPS = [
     'apps.dashboard.apps.DashboardConfig',
     'apps.platform.apps.PlatformConfig',
     'apps.imports.apps.ImportsConfig',
+    'apps.legal.apps.LegalConfig',
     # ADR p20: requerida para JWT refresh-token rotation + blacklist al
     # cambiar password. Infraestructura crítica del auth lifecycle.
     'rest_framework_simplejwt.token_blacklist',
@@ -167,6 +168,10 @@ REST_FRAMEWORK = {
         # curl/Postman puede ignorar el redirect del frontend y usar la
         # app con su temp password indefinidamente.
         'apps.core.permissions.MustChangePasswordGate',
+        # ADR p46: gate de aceptación legal — bloquea endpoints fuera de
+        # whitelist cuando el user tiene documentos legales vigentes sin
+        # aceptar. Corre DESPUÉS del must-change (orden: credencial → legal).
+        'apps.core.permissions.LegalAcceptanceGate',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
@@ -197,6 +202,8 @@ REST_FRAMEWORK = {
         # masiva). Scoped por actor ADMIN. Upload más holgado que commit.
         'import_upload': '30/hour',
         'import_commit': '20/hour',
+        # ADR p46: registro de aceptación legal. Cap modesto anti-abuse.
+        'legal_accept': '30/hour',
     },
     'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
 }

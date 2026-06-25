@@ -102,6 +102,7 @@ class Command(BaseCommand):
 
         org = self._ensure_org(opts["actor_username"])
         users = self._ensure_users(org)
+        self._accept_legal_for_demo_users(users)
         self._restrict_demo_import(org)
         self._ensure_catalog(org)
         self._ensure_people(org)
@@ -198,6 +199,19 @@ class Command(BaseCommand):
             "vet": User.objects.get(username=DEMO_USERS[1]["username"]),
             "recepcion": User.objects.get(username=DEMO_USERS[2]["username"]),
         }
+
+    def _accept_legal_for_demo_users(self, users):
+        """
+        Pre-acepta los documentos legales vigentes para los usuarios demo, de
+        modo que el LegalAcceptanceGate (ADR p46) NO rompa el login compartido
+        del demo (espejo de la decisión require_password_change=False para el
+        admin demo). No-op si aún no hay documentos `is_current`. Idempotente.
+        """
+        from apps.legal.services import current_required_documents, record_acceptances
+        for u in users.values():
+            docs = list(current_required_documents(u))
+            if docs:
+                record_acceptances(user=u, documents=docs, user_agent='seed_demo_clinic')
 
     def _restrict_demo_import(self, org):
         """

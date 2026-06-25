@@ -345,6 +345,15 @@ class HybridPermission(BasePermission):
         if request.user.is_superuser:
             return True
 
+        # ADR p46: LegalAcceptanceGate — bloquea hasta aceptar los documentos
+        # legales vigentes requeridos por el rol. Va DESPUÉS del must-change
+        # (orden: credencial → legal) y DESPUÉS de is_superuser (ADMIN_SAAS
+        # exento). Embebido aquí por la misma razón que el must-change: las
+        # views declaran su propio permission_classes y pisan el DEFAULT.
+        if _legal_blocks(request):
+            _log_legal_blocked(request)
+            return False
+
         required = _resolve_required(request, view)
         if required is None:
             return False
@@ -448,6 +457,72 @@ _MUST_CHANGE_WHITELIST = (
     '/api/token/refresh/',
     '/api/token/',
 )
+
+
+# ---------------------------------------------------------------------------
+# Legal acceptance gate (ADR p46)
+# ---------------------------------------------------------------------------
+
+# Rutas alcanzables aún con aceptación legal pendiente: el namespace legal
+# (ver/aceptar) + el mismo conjunto del must-change (un user puede tener ambos
+# gates pendientes; no debe quedar lockeado).
+_LEGAL_WHITELIST = (
+    '/api/legal/',                  # GET documentos vigentes + POST aceptar
+    '/api/users/change-password/',
+    '/api/me/',
+    '/api/token/refresh/',
+    '/api/token/',
+)
+
+
+def _legal_blocks(request) -> bool:
+    """
+    True si el user autenticado debe aceptar documentos legales vigentes y la
+    ruta NO está whitelisted. Cachea el resultado en el user para el ciclo del
+    request (evita doble query si has_permission corre más de una vez). Import
+    perezoso de apps.legal para no crear ciclo core→legal a nivel de módulo.
+    """
+    user = request.user
+    if user.is_superuser:
+        return False
+    path = request.path
+    for w in _LEGAL_WHITELIST:
+        if path == w or path.startswith(w):
+            return False
+    if not hasattr(user, '_legal_required'):
+        from apps.legal.services import legal_acceptance_required
+        user._legal_required = legal_acceptance_required(user)
+    return user._legal_required
+
+
+def _log_legal_blocked(request) -> None:
+    rbac_logger.warning("LEGAL_ACCEPTANCE_REQUIRED_BLOCKED", extra={
+        "event": "LEGAL_ACCEPTANCE_REQUIRED_BLOCKED",
+        "actor_id": request.user.pk,
+        "actor_username": request.user.username,
+        "path": request.path,
+        "method": request.method,
+    })
+
+
+class LegalAcceptanceGate(BasePermission):
+    """
+    Standalone para views que usan el DEFAULT_PERMISSION_CLASSES (no
+    HybridPermission). Las views de dominio usan HybridPermission, que embebe
+    el mismo chequeo (mismo patrón que MustChangePasswordGate). Server-side
+    autoritativo: el frontend redirige por UX, pero un cliente curl choca aquí.
+    """
+
+    message = "Debes aceptar los documentos legales vigentes para continuar."
+
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return True  # IsAuthenticated maneja unauth — no es lo nuestro
+        if _legal_blocks(request):
+            _log_legal_blocked(request)
+            return False
+        return True
 
 
 class MustChangePasswordGate(BasePermission):

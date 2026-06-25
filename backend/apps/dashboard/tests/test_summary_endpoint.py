@@ -69,6 +69,12 @@ class DashboardSummaryTests(APITestCase):
 
         now = timezone.now()
         cls.today = timezone.localtime(now).date()
+        # Ancla a MEDIODÍA local del día, no a `now ± 1h`. Con `now + 1h`, cuando
+        # faltaba <1h para la medianoche local la cita "scheduled" caía en el día
+        # siguiente y quedaba fuera de la ventana del día → pending_today/
+        # patients_today fallaban (flaky 23:00–24:00 UTC, pre-existente, sin
+        # relación con el gate legal). Mediodía siempre cae dentro del día.
+        _midday = timezone.localtime(now).replace(hour=12, minute=0, second=0, microsecond=0)
 
         # In-progress appointment
         cls.appt_in_progress = Appointment.objects.create(
@@ -79,8 +85,8 @@ class DashboardSummaryTests(APITestCase):
             status='in_progress', reason='Consulta general',
             organization=cls.org,
         )
-        cls.appt_in_progress.start_datetime = now - timedelta(hours=1)
-        cls.appt_in_progress.end_datetime = now + timedelta(minutes=30)
+        cls.appt_in_progress.start_datetime = _midday - timedelta(hours=1)
+        cls.appt_in_progress.end_datetime = _midday - timedelta(minutes=30)
         cls.appt_in_progress.save(update_fields=['start_datetime', 'end_datetime'])
 
         # Scheduled appointment (different pet)
@@ -92,8 +98,8 @@ class DashboardSummaryTests(APITestCase):
             status='scheduled', reason='Seguimiento',
             organization=cls.org,
         )
-        cls.appt_scheduled.start_datetime = now + timedelta(hours=1)
-        cls.appt_scheduled.end_datetime = now + timedelta(hours=1, minutes=30)
+        cls.appt_scheduled.start_datetime = _midday + timedelta(hours=1)
+        cls.appt_scheduled.end_datetime = _midday + timedelta(hours=1, minutes=30)
         cls.appt_scheduled.save(update_fields=['start_datetime', 'end_datetime'])
 
         # Open medical records

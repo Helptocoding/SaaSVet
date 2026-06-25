@@ -29,6 +29,9 @@ class MeView(APIView):
     def get(self, request):
         user = request.user
         org = user.organization
+        # ADR p46: documentos legales pendientes para el gate del frontend.
+        from apps.legal.services import pending_documents
+        _pending_legal = pending_documents(user)
         return Response({
             "id": user.id,
             "username": user.username,
@@ -48,6 +51,18 @@ class MeView(APIView):
             # ADR p21: credential lifecycle. Frontend reads this to
             # force-redirect to /change-password while True.
             "must_change_password": bool(getattr(user, 'password_must_change', False)),
+            # ADR p46: LegalAcceptanceGate. Frontend redirige a /aceptar-terminos
+            # mientras legal_acceptance_required=True.
+            "legal_acceptance_required": len(_pending_legal) > 0,
+            "pending_legal_documents": [
+                {
+                    "public_id": str(d.public_id),
+                    "doc_type": d.doc_type,
+                    "version": d.version,
+                    "landing_url": d.landing_url,
+                }
+                for d in _pending_legal
+            ],
         })
 
 

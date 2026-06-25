@@ -20,6 +20,7 @@ import Config from "./pages/config";
 import Imports from "./pages/imports/index";
 import CreateOrganization from "./pages/platform/createOrganization";
 import ChangePassword from "./pages/changePassword";
+import AcceptLegal from "./pages/acceptLegal";
 import NotFound from "./pages/notFound";
 import ErrorBoundary from "./components/ErrorBoundary";
 import FeedbackButton from "./components/FeedbackButton";
@@ -49,14 +50,28 @@ function MustChangePasswordGate({ children }) {
   return children;
 }
 
+function LegalAcceptanceGate({ children }) {
+  // Frontend mirror del backend ``LegalAcceptanceGate`` (ADR p46). El backend es
+  // el gate autoritativo; esto solo maneja la UX. Va DESPUÉS del must-change
+  // (orden: credencial → legal) y bloquea ANTES del Layout/Dashboard.
+  const { user } = useAuth();
+  const location = useLocation();
+  if (user?.legal_acceptance_required && location.pathname !== "/aceptar-terminos") {
+    return <Navigate to="/aceptar-terminos" replace />;
+  }
+  return children;
+}
+
 const wrap = (Component) => (
   <PrivateRoute>
     <MustChangePasswordGate>
-      <Layout>
-        <ErrorBoundary>
-          <Component />
-        </ErrorBoundary>
-      </Layout>
+      <LegalAcceptanceGate>
+        <Layout>
+          <ErrorBoundary>
+            <Component />
+          </ErrorBoundary>
+        </Layout>
+      </LegalAcceptanceGate>
     </MustChangePasswordGate>
   </PrivateRoute>
 );
@@ -118,9 +133,11 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <MustChangePasswordGate>
-              <ErrorBoundary>
-                <MedicalRecords />
-              </ErrorBoundary>
+              <LegalAcceptanceGate>
+                <ErrorBoundary>
+                  <MedicalRecords />
+                </ErrorBoundary>
+              </LegalAcceptanceGate>
             </MustChangePasswordGate>
           </PrivateRoute>
         ),
@@ -135,6 +152,18 @@ const router = createBrowserRouter([
       { path: "/imports", element: wrap(Imports) },
       { path: "/platform/organizations/new", element: wrap(CreateOrganization) },
       { path: "/change-password", element: wrapNoGate(ChangePassword) },
+      {
+        path: "/aceptar-terminos",
+        element: (
+          <PrivateRoute>
+            <MustChangePasswordGate>
+              <ErrorBoundary>
+                <AcceptLegal />
+              </ErrorBoundary>
+            </MustChangePasswordGate>
+          </PrivateRoute>
+        ),
+      },
       { path: "*", element: <NotFound /> },
     ],
   },
