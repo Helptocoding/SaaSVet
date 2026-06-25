@@ -14,7 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-import os
+from decouple import config
 from django.contrib import admin
 from django.urls import path, include
 from apps.core.views import healthz, readyz, version
@@ -136,7 +136,14 @@ router.register(r'imports', ImportJobViewSet, basename='import')
 # destroy no se exponen. Dos paths explícitos abajo: /me/ (singleton) y
 # /<int:pk>/ (legacy con validación + Sunset RFC 8594).
 
-_ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/')
+# Admin URL slug. Configurable por env para ofuscar la superficie de ataque en
+# producción (un slug secreto ≠ 'admin' deja `/admin` sin ruta → Django 404).
+# Default 'admin' para dev/test. `config()` (decouple) para consistencia con el
+# resto de settings; bajo docker `env_file` también queda en os.environ, así que
+# el Caddyfile puede leer la MISMA variable vía {$DJANGO_ADMIN_URL}.
+# IMPORTANTE: el slug de producción NO debe empezar con 'admin' — el Caddyfile
+# fuerza 404 sobre `/admin*` literal y lo capturaría.
+_ADMIN_URL = config('DJANGO_ADMIN_URL', default='admin').strip('/')
 
 urlpatterns = [
     path(f'{_ADMIN_URL}/', admin.site.urls),

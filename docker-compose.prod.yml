@@ -191,6 +191,11 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL:-admin@${DOMAIN}}
+      # Slug secreto del Django admin. Caddy enruta /{$DJANGO_ADMIN_URL}* al
+      # backend; el backend lee la MISMA var (env_file .env.prod) para montar
+      # admin.site.urls bajo ese slug. Sin setear → Caddy cae a __admin_disabled__
+      # (fail-closed) y /admin literal responde 404. NO debe empezar con 'admin'.
+      DJANGO_ADMIN_URL: ${DJANGO_ADMIN_URL:-__admin_disabled__}
     volumes:
       - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data     # ACME account + issued certs (PERSIST or you re-issue every restart and hit LE rate limits)

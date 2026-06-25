@@ -117,13 +117,35 @@
 		}
 	}
 
-	# Admin (no IP gate — see commented block above for hardening).
-	handle /admin* {
+	# -----------------------------------------------------------------------
+	# Django admin — superficie ofuscada (HIGH H4 / A9).
+	#
+	# El admin real vive bajo un slug secreto leído de la MISMA env var que usa
+	# Django (`backend/config/urls.py`): el operador setea DJANGO_ADMIN_URL en
+	# .env.prod y compose lo inyecta al servicio caddy. Si ambos leen el mismo
+	# valor, el routing y la ruta de Django nunca se desincronizan.
+	#
+	# Fail-closed: si DJANGO_ADMIN_URL NO está seteada, el placeholder cae al
+	# default `__admin_disabled__` → el admin queda INACCESIBLE (no se expone en
+	# ninguna ruta adivinable) hasta que se configure el slug. No hay default a
+	# 'admin' aquí a propósito: colisionaría con el bloque 404 de abajo y
+	# reabriría la superficie.
+	#
+	# REGLA: el slug de producción NO debe empezar con 'admin' — el handler de
+	# 404 literal de abajo captura `/admin*` y lo bloquearía.
+	handle /{$DJANGO_ADMIN_URL:__admin_disabled__}* {
 		reverse_proxy backend:8000 {
 			header_up X-Forwarded-For   {remote_host}
 			header_up X-Forwarded-Proto {scheme}
 			header_up X-Forwarded-Host  {host}
 		}
+	}
+
+	# `/admin` literal SIEMPRE 404 en producción — no revela que existe un panel
+	# ni dónde. Debe ir junto al handler del slug; Caddy ordena los `handle` por
+	# especificidad de path, así que un slug distinto de 'admin' no colisiona.
+	handle /admin* {
+		respond "Not Found" 404
 	}
 
 	# -----------------------------------------------------------------------
