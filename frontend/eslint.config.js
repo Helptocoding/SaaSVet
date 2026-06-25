@@ -34,4 +34,10 @@ export default defineConfig([
       'react/jsx-uses-vars': 'error',
     },
   },
+  // Archivos de configuración (contexto Node, no browser) — exponer globals de
+  // Node (process, etc.) para que no-undef no marque vite.config.js / este archivo.
+  {
+    files: ['vite.config.js', 'eslint.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

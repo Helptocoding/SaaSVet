@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react'
 // en beta. El plugin SOLO se carga cuando las credenciales de upload están
 // presentes (build de prod en CI), así dev/test no necesitan el token ni que el
 // paquete esté instalado. El token vive únicamente en CI/build, NUNCA en el bundle.
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(async () => {
   const plugins = [react()]
 
   const { SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT, VITE_SENTRY_RELEASE } = process.env
