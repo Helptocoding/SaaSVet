@@ -25,6 +25,25 @@
 	admin off
 }
 
+# Temporary beta deployment — the landing is intentionally served from a SEPARATE
+# repository (SaaSVet-Landing) via the RO bind-mount in docker-compose.prod.yml.
+# This will be decoupled in a future infrastructure migration. See docs/deuda C8.
+# Independent Caddy site (apex + www); does not touch {$DOMAIN} (app) or admin.
+saaslyvet.com, www.saaslyvet.com {
+	encode zstd gzip
+
+	root * /srv/landing
+	file_server
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+	}
+}
+
 {$DOMAIN} {
 
 	# -----------------------------------------------------------------------

@@ -221,6 +221,42 @@ afecta al test runner. No vale la pena antes de testers.
 
 ---
 
+## C8 — El Caddy del SaaS sirve la landing (acoplamiento temporal de despliegue)
+
+**Origen:** solución temporal de beta (2026-06-25). Para sacar la beta rápido, el
+Caddy del stack SaaS sirve **también** la landing estática (Astro) del repo
+**independiente** `SaaSVet-Landing`, desde un bind-mount RO
+`/home/deploy/apps/SaaSVet-Landing/frontend/dist → /srv/landing`. Hecho a mano en
+el VPS y reconciliado al repo (commit de drift) para que la infra trackeada
+describa producción.
+
+**Archivos afectados:**
+- `infra/Caddyfile` — bloque de sitio `saaslyvet.com, www.saaslyvet.com` (`root */srv/landing` + `file_server`).
+- `docker-compose.prod.yml` — volumen `/srv/landing` (RO) del servicio `caddy`.
+
+**Problema (no es bug — funciona):** acopla el despliegue de **dos repos
+independientes**. La landing depende del Caddy del SaaS; una caída/cambio del
+stack SaaS afecta a `saaslyvet.com`. El build de la landing debe existir en ese
+host path antes de levantar `caddy`. Contradice la decisión de mantener ambos
+repos/despliegues separados — pero es intencional y temporal para la beta.
+
+**Decisión de arquitectura vigente (NO cambiar en esta tarea):** los repos siguen
+separados. Esto NO mueve la landing al repo del SaaS; solo **versiona la config de
+infra que hoy corre** para eliminar el drift del VPS.
+
+**Criterio de cierre (desacople — migración de infra futura):**
+- La landing obtiene su **propio despliegue**, independiente del Caddy del SaaS
+  (host estático propio: Vercel/Netlify/Caddy aparte/CDN).
+- Retirar el bloque `saaslyvet.com, www.saaslyvet.com` de `infra/Caddyfile` y el
+  volumen `/srv/landing` de `docker-compose.prod.yml`.
+- DNS de `saaslyvet.com`/`www` apuntando al nuevo host.
+- Verificar `www.saaslyvet.com` y `app.saaslyvet.com` siguen respondiendo `200`
+  tras el corte (sin regresión).
+
+**Estimación:** ~0.5 día (provisionar host de landing + DNS + retirar bloque). No bloqueante para beta.
+
+---
+
 ## Tracking
 
 Cuando un item se cierre, mover a `docs/deuda/cerrado/` con su PR asociado + fecha de cierre.

@@ -201,6 +201,9 @@ services:
       - caddy_data:/data     # ACME account + issued certs (PERSIST or you re-issue every restart and hit LE rate limits)
       - caddy_config:/config
       - static_files:/srv/static:ro  # Django collectstatic output, RO
+      # Temporary beta deployment — landing served from a SEPARATE repo
+      # (SaaSVet-Landing); to be decoupled in a future infra migration. See docs/deuda C8.
+      - /home/deploy/apps/SaaSVet-Landing/frontend/dist:/srv/landing:ro
     depends_on:
       backend:
         condition: service_healthy

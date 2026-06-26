@@ -12,7 +12,7 @@ Repositorio centralizado de deuda técnica acumulada durante el desarrollo pre-b
 |------|-----------|-------|---------|
 | Fase 2 | 🔴 Alta — post-beta inmediato | 4 | [fase2-prioridad-alta.md](fase2-prioridad-alta.md) |
 | Fase 3 | 🟠 Media — sprint dedicado | 7 | [fase3-prioridad-media.md](fase3-prioridad-media.md) |
-| Fase 4 | 🟡 Baja — mejoras arquitectónicas | 7 | [fase4-prioridad-baja.md](fase4-prioridad-baja.md) |
+| Fase 4 | 🟡 Baja — mejoras arquitectónicas | 8 | [fase4-prioridad-baja.md](fase4-prioridad-baja.md) |
 | Día 6 — Post-beta | 🔴 Alta — sprint post-cutover | 5 | [../day6/POST-BETA-DEBT.md](../day6/POST-BETA-DEBT.md) |
 | Día 6 — Post-cutover | 🟠 Media — 2026-06-19 | 1 | flag `ALLOW_LEGACY_ID_LOOKUP` cleanup (ver POST-BETA-DEBT) |
 
