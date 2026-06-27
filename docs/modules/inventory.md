@@ -49,7 +49,7 @@ Cada producto puede tener una o más presentaciones (formatos comerciales de ven
 - `conversion_factor` — cuántas unidades base contiene esta presentación (default 1)
 - `sale_price` — precio de venta (> 0)
 - `purchase_price` — costo de compra (opcional)
-- `barcode` — código de barras (único parcial por organización, NULL permitido)
+- `barcode` — código de barras (único parcial por organización, `blank=True`, `default=''` — columna NOT NULL, vacío = sin barcode)
 - `stock` — copia display para backward compat (no escribir directamente)
 - `min_stock` — legacy (no usar para alerta; usar `Product.min_stock`)
 - `quantity` — alias de `conversion_factor` (mantenido para compat)
@@ -89,7 +89,7 @@ Productos consumidos en consulta. Ver también `docs/modules/medical_records.md`
   - `'charge'`: descuenta stock Y genera InvoiceItem
   - `'included'`: descuenta stock pero NO genera InvoiceItem (insumo clínico)
   - **inmutable** una vez guardado
-  - Default en el wizard de consulta: `'included'` (evita cobrar insumos accidentalmente)
+  - Default en el wizard de consulta: `'charge'` (el usuario puede cambiarlo a `'included'` si es insumo clínico)
 
 ## `apply_stock_movement()` — contrato
 
@@ -181,6 +181,15 @@ El frontend ordena: primero agotados (`stock_quantity = 0`), luego bajo mínimo.
 
 Tenant-scoped. Retorna `PresentationSerializer` completo con `product.*`. 404 si no existe.
 Diseñado para POS scanner — cuando el cajero escanea, se selecciona la presentación directamente.
+
+## Frontend: Wizard de alta de producto (ADR p33)
+
+Al crear un producto ("Nuevo producto"), se muestra un **selector de modo** antes del formulario:
+
+- **Producto normal** (`wizardMode = "simple"`): una sola presentación de venta. Shampoo, collar, alimento.
+- **Varias formas de venta** (`wizardMode = "multi"`): el producto se divide en unidades (`divides = true`). Ej: caja de jeringas que también se vende por pieza.
+
+El modo multi tiene auto-sync de `salesPres[1]` (nombre y conversion_factor desde `countUnit`/`dividesCount`) mientras el usuario no los edite manualmente (`presSecondAutoRef`). Ver `frontend/src/pages/inventory.jsx`, `MultiPresentationAnimation.jsx` (5 escenas Framer Motion, gate `localStorage`), `ProductCreationTour.jsx` (6 pasos con spotlight).
 
 ## Frontend: Entrada rápida de stock (recepción)
 

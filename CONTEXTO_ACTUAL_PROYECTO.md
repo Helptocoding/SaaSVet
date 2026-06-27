@@ -1,11 +1,12 @@
 # Contexto actual del proyecto (VeterinariaSaaS)
 
-Fecha de corte: 2026-06-07
-Fuente: estado real del repositorio (backend + frontend) + docs/modules/*.
+Fecha de corte: 2026-06-27
+Fuente: estado real del repositorio (backend + frontend) + docs/modules/* + landingsaas.
 
-> **Notas de desfase (2026-06-07):**
+> **Notas de desfase (2026-06-27):**
 > - **Deploy:** proyecto migrado de Railway/Vercel a **Docker/VPS** (branch `develop`). Secciones 2 y 9 describen la arquitectura objetivo Docker/VPS. Ver `DEPLOY_VPS_PLAN.md` y `DEPLOY_VPS_STATUS.md` para estado real.
-> - **Changelog prosa:** llega hasta p24. Los sprints p25–p33 están en el índice de ADRs (§11) y en la descripción de módulos (§3); su prosa-changelog no se backfilleó en §10.
+> - **Changelog prosa:** llega hasta p33. Los sprints p34–p46 están en el índice de ADRs (§11); su prosa-changelog no se backfilleó en §10.
+> - **Landing:** proyecto hermano `landingsaas` (Astro) en `C:\Users\LAP\Desktop\landingsaas` — landing page de marketing con Logo.astro y favicon compartido `iconosaaslyvet.ico`.
 
 ---
 
@@ -27,7 +28,7 @@ El proyecto está en fase de hardening avanzado. La base multitenant, autenticac
 - **Auditoría arquitectónica + remediación 2026-05-26 (ADR p23 + p24)**: C1/C2 descartados con tests reales; ratchets AST anti-leak + contención `id`/`public_id`; RLS diferido post-beta.
 - **Sprint POS 2026-05-27 (ADR p25–p29)**: owner/pet real en venta directa (p25), atestación receta externa (p26), modelo `Payment` ledger append-only + split + idempotency (p27), módulo `apps/cash/` CashSession + cierre Z (p28), devoluciones/notas de crédito `CreditNote`/`RefundPayment`/`MetricAdjustment` + `revenue_paid_net` dual-expose (p29). Todos con tests verdes.
 - **ADR p30 2026-05-28**: dispensación de receta en factura de consulta (`POST /api/billing/prescriptions/<uuid>/dispense/`); `close_medical_record` garantiza factura (incluso $0) al cerrar.
-- **ADR p31 2026-06-04 (product-level stock)**: `Product.stock_quantity` como fuente autoritativa en base_units; `apply_stock_movement()` lockea `Product` internamente; callers convierten a base_units; dual-write a `Presentation.stock` para backward compat. Lock order actualizado: `CashSession → MedicalRecord → Invoice → Product → InvoiceItem`.
+- **ADR p31 2026-06-04 (product-level stock)**: `Product.stock_quantity` como fuente autoritativa en base_units; `apply_stock_movement()` lockea `Product` internamente; callers convierten a base_units; dual-write a `Presentation.stock` para backward compat. Lock order actualizado: `CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct`.
 - **ADR p32 2026-06-04 (cost_behavior)**: `MedicalRecordProduct.cost_behavior` (`'charge'`|`'included'`); `'included'` descuenta stock pero NO genera InvoiceItem (insumo clínico); default UI es `'included'`; inmutable tras creación.
 - **ADR p33 2026-06-07 (wizard UX inventario)**: pantalla mode-selector antes del formulario (`"simple"` vs `"multi"`); `MultiPresentationAnimation` Framer Motion; `ProductCreationTour` 6 pasos; tutorial interactivo con `productTourSteps.js`/`useProductTour.js`/`ProductCreationTour.jsx`.
 
@@ -58,11 +59,11 @@ Apps activas: `organizations`, `users`, `patients`, `appointments`, `medical_rec
 | `platform` | Periférico | Operaciones SaaS cross-tenant. `POST /api/platform/organizations/` provisiona org+admin en un `atomic()`. Throttle 20/hour. Guard `IsPlatformOperator`. Eventos `PLATFORM_ORG_PROVISIONED` etc. |
 | `dashboard` | Estable | Read endpoints v1 (`/api/v1/dashboard/operations/series/`, `/financial/series/`). Each datapoint tagged `source`+`lifecycle_state`. `revenue_paid_net = gross + ΣMetricAdjustment` dual-expose (ADR p29). `/api/internal/analytics-health/` para ADMIN_SAAS. |
 | `organizations` | Bajo | Settings por org (timezone, tax_rate). `OrganizationSettings` auto-creado. Toggle `require_open_cash_session` (default `False`) integrado (ADR p28). `/api/organizations/me/` canónico; `/<pk>/` legacy deprecado (Sunset 2026-08-17, 410 Gone auto). |
-| `appointments` | Moderado | Máquina de estados. Walk-in idempotente con `walk_in=True` persistido (ADR p9). Modal post-done abierto con CTAs desde backend. DELETE crea `AppointmentStatusChange`. |
-| `inventory` | Moderado-alto | Productos, presentaciones, movimientos de stock. **ADR p31**: `Product.stock_quantity` = stock real en `base_unit` (autoritativo); `apply_stock_movement()` lockea `Product` internamente; callers convierten a base_units. Dual-write a `Presentation.stock` (backward compat, no autoritativo). **ADR p32**: `MedicalRecordProduct.cost_behavior` (`charge`\|`included`), inmutable, default `included` en UI. **ADR p33**: wizard mode-selector (`simple`/`multi`), `MultiPresentationAnimation`, `ProductCreationTour`. Barcode lookup para POS (`GET /api/inventory/presentations/barcode/?barcode=<cod>`). `audit_stock_integrity` mgmt command. |
-| `medical_records` | Alto | Consultas. `consultation_type`, `VitalSigns` append-only. Cierre: valida `diagnosis` siempre + `treatment` si cirugía. **ADR p30**: `close_medical_record` garantiza factura (draft $0 mínimo) al cerrar. `closed_at` editable=False + CHECK constraint + `save()` guard. |
+| `appointments` | Moderado | Máquina de estados. Walk-in idempotente con `walk_in=True` persistido (ADR p9). CTAs post-done determinados por frontend desde `medical_record_ids`/`invoice_id` del backend. DELETE crea `AppointmentStatusChange` (solo desde `scheduled`/`confirmed`). ADR p34: cierre consulta completa cita automáticamente. |
+| `inventory` | Moderado-alto | Productos, presentaciones, movimientos de stock. **ADR p31**: `Product.stock_quantity` = stock real en `base_unit` (autoritativo); `apply_stock_movement()` lockea `Product` internamente; callers convierten a base_units. Dual-write a `Presentation.stock` (backward compat, no autoritativo). **ADR p32**: `MedicalRecordProduct.cost_behavior` (`charge`\|`included`), inmutable, default `charge` en modelo y UI. **ADR p33**: wizard mode-selector (`simple`/`multi`), `MultiPresentationAnimation`, `ProductCreationTour`. Barcode lookup para POS (`GET /api/inventory/presentations/barcode/?barcode=<cod>`). `audit_stock_integrity` mgmt command. |
+| `medical_records` | Alto | Consultas. `consultation_type`, `VitalSigns` append-only. Cierre: valida `diagnosis` siempre + `treatment` para todo tipo excepto VACCINE. **ADR p30**: `close_medical_record` garantiza factura (draft $0 mínimo) al cerrar. `closed_at` editable=False + CHECK constraint + `save()` guard. |
 | `billing` | Alto | Máquina de estados `draft→confirmed→paid/cancelled`. **ADR p25**: owner/pet real en `direct_sale`. **ADR p26**: atestación de receta externa (`ExternalPrescriptionAttestation`, permiso `billing.rx_dispense`). **ADR p27**: modelo `Payment` ledger append-only; `remaining_balance = total − ΣPayment`; split `payment_lines`; idempotency `X-Idempotency-Key`; `audit_payment_ledger_integrity`. **ADR p28**: `CashSession` como cabeza del orden de locks; toggle `require_open_cash_session`. **ADR p29**: `CreditNote`/`CreditNoteItem`/`RefundPayment`/`RefundReversal` (devoluciones); `process_refund` + `reverse_credit_note` services; `MetricAdjustment` negativo en `revenue_paid` del día del reembolso. **ADR p30**: dispensación de receta vía `POST /api/billing/prescriptions/<uuid>/dispense/`; stock se descuenta al confirmar (no al dispensar). `pay_direct_sale()` = 1 lock atomic (confirm + pay interno). |
-| `cash` | Moderado | ADR p28. `CashSession` (append-only, `open→closed` terminal, UniqueConstraint 1-abierta/user). Cierre Z: `expected_cash = opening_float + ΣPayment(cash) − ΣRefundPayment(cash) + ΣRefundReversal(cash)`. `closed_snapshot` JSON frozen (schema version 2 con refunds). Endpoints `/api/cash/sessions/*`. |
+| `cash` | Moderado | ADR p28. `CashSession` (append-only, `open→closed` terminal, UniqueConstraint 1-abierta/user). Cierre Z: `expected_cash = opening_float + ΣPayment(cash) − ΣRefundPayment(cash) + ΣRefundReversal(cash) + manual_in − manual_out`. `closed_snapshot` JSON frozen (`REPORT_SCHEMA_VERSION = 3` con refunds + manual movements ADR p39). Endpoints `/api/cash/sessions/*`. |
 | `analytics` | Lectura-derivada | ADR p10. `DailyOrgMetrics` (7 KPIs, `lifecycle_state`, `metrics_schema_version`, `provenance_mix`). `MetricAdjustment` (ADR p29, append-only, delta firmado para `revenue_paid`). Mgmt: `build_daily_metrics` (per-org PG advisory lock), `audit_anchor_integrity`. Today siempre live. |
 
 ### Modelos con `public_id` (UUID en URLs)
@@ -102,12 +103,12 @@ URLs que referencian modelos con `public_id` usan `<str:pk>`. Resolución vía `
 
 `apps/core/sanitize.py:sanitize_text()` en todos los campos de texto libre. Truncar → NFKC → bleach.clean → strip.
 
-Límites: `diagnosis/treatment → 400`, `notes → 5000`, `vaccine_name/reason/dose/duration → 255`, `motivo/batch_number/cancellation_reason → 100`.
+Límites: `diagnosis/treatment → 400`, `notes → 5000`, `vaccine_name/reason/dose/duration → 255`, `cancellation_reason → 100` (vista cancel) / `500` (serializer). Los límites `motivo`/`batch_number` solo existen como docstring en `core/sanitize.py`, sin enforcement en modelos/serializers.
 
 ### Orden global de locks (canónico, no negociable)
 
 ```
-CashSession → MedicalRecord → Invoice → Product → InvoiceItem
+CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct
 ```
 
 Reglas:
@@ -211,7 +212,7 @@ Paleta:
 - Primario: forest-700 `#1a4434` → forest-800 `#16382a` → forest-900 `#0f2a1f`
 - Acento: coral `#d67b5c`, sage-400 `#a8c4a2`, amber `#e8b87a`
 - Fondos: cream-100 `#f5f1e8`, cream-50 `#fbf8f1`, cream-200 `#ede7d7`
-- Fuentes: Fraunces (display/serif) + Instrument Sans (body)
+- Fuentes: Plus Jakarta Sans (display/body) + IBM Plex Mono (datos clínicos) + Space Grotesk (login)
 
 ---
 
@@ -411,3 +412,17 @@ Stack: React 19 + Vite + React Router 7 + Axios + FullCalendar + Sonner + react-
 | `2026-06-03-p31-product-level-stock-base-units.md` | 06-03 | Product-level stock en base_units (autoritativo) | Implementado |
 | `2026-06-03-p32-cost-behavior-insumo-vs-cobrado.md` | 06-03 | cost_behavior en MedicalRecordProduct (charge / included) | Implementado |
 | `2026-06-04-p33-inventory-wizard-ux-single-form.md` | 06-04 | Wizard UX inventario mode-selector simple/multi | Implementado |
+| `2026-06-10-p34-cierre-consulta-completa-cita.md` | 06-10 | Cierre de consulta completa cita automáticamente (in_progress → done) | Implementado |
+| `2026-06-10-p35-agenda-dia-dashboard.md` | 06-10 | Agenda del día en dashboard con navegación por fecha | Implementado |
+| `2026-06-11-p36-pdf-theme-documentos.md` | 06-11 | PDF theme unificado (consulta, receta, cobro) | Implementado |
+| `2026-06-11-p37-tope-clinico-dispensacion.md` | 06-11 | Tope clínico de dispensación (cap por cantidad recetada) | Implementado |
+| `2026-06-12-p38-pos-pantalla-dedicada.md` | 06-12 | POS pantalla dedicada /pos (reemplaza modal Nuevo Cobro) | Implementado |
+| `2026-06-12-p39-cash-movements-asociacion-pagos.md` | 06-12 | Movimientos manuales del cajón + asociación incondicional pago→caja | Implementado |
+| `2026-06-12-p40-backup-offsite-disaster-recovery.md` | 06-12 | Backup offsite + disaster recovery | Implementado |
+| `2026-06-13-p41-redis-cache-throttle-multiworker.md` | 06-13 | Redis cache + throttle multi-worker | Implementado |
+| `2026-06-13-p42-pagination-opt-in-high-volume.md` | 06-13 | Paginación opt-in para endpoints de alto volumen | Implementado |
+| `2026-06-16-p43-importador-csv-excel.md` | 06-16 | Importador CSV/Excel de pacientes | Implementado |
+| `2026-06-16-p44-paginacion-busqueda-mascotas.md` | 06-16 | Paginación server-side + búsqueda relacional de mascotas | Implementado |
+| `2026-06-16-p44b-busqueda-relacional-datos-incompletos.md` | 06-16 | Búsqueda relacional con datos incompletos (EntitySearch) | Implementado |
+| `2026-06-23-p45-platform-operator-password-reset.md` | 06-23 | Platform operator password reset | Implementado |
+| `2026-06-24-p46-legal-acceptance-gate.md` | 06-24 | Legal acceptance gate (aceptación de términos/privacidad) | Implementado |

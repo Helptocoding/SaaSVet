@@ -562,3 +562,26 @@ class MustChangePasswordGate(BasePermission):
             "method": request.method,
         })
         return False
+
+
+class NotDemoAccount(BasePermission):
+    """
+    Blocks the action for users that belong to the demo tenant
+    (``organization.is_demo=True``). Use on endpoints whose effect must be
+    inert in the public demo: self-service password change (would lock the
+    shared demo credentials) and data import (would pollute the demo dataset).
+
+    Enforcement lives here, not only in the frontend (which merely hides the
+    option): a curl/Postman client must be rejected too. Real tenants
+    (``is_demo=False``) and the platform operator (no org) pass through.
+    """
+
+    message = "Esta acción no está disponible en la cuenta demo."
+    code = "demo_account_restricted"
+
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return True  # IsAuthenticated handles unauth — not our concern
+        org = getattr(user, 'organization', None)
+        return not bool(getattr(org, 'is_demo', False))

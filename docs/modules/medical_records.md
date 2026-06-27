@@ -188,12 +188,6 @@ llamada extra mientras `getPets()` no ha resuelto). Al elegir una mascota se abr
 Timeline; "+ Nueva Consulta" monta `ConsultationForm` (single-screen). Ver
 `docs/modules/frontend.md` §estructura de `pages/medicalRecords/`.
 
-## Filtros disponibles (GET /api/billing/services/)
-
-- `search=<texto>` — busqueda por nombre (icontains)
-- `active=true` — solo servicios activos
-- Combinables: `?search=vacu&active=true`
-
 ## Productos usados en consulta
 
 Los productos agregados desde consulta son parte del contexto clinico y tambien del financiero.
@@ -292,7 +286,7 @@ Valores validos:
 
 Reglas:
 - editable mientras la consulta esta en `open`
-- `surgery` activa validacion adicional en el cierre: requiere `treatment` no vacio
+- `treatment` requerido en el cierre para todos los tipos **excepto** `vaccine` (GENERAL, SURGERY y EMERGENCY requieren tratamiento no vacío)
 
 ## Signos vitales (VitalSigns)
 

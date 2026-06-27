@@ -38,9 +38,11 @@ Inmutable tras cerrar: `expected/counted/difference/closed_snapshot`.
 ### Z legal congelado
 
 Al cerrar, el service escribe `closed_snapshot` (JSON append-only) con
-`{opening_float, totals_by_method, cash_expected, cash_counted, difference,
-operations, movements_by_type, movements_count, actor, generated_at,
-report_schema_version}`. Las claves `movements_*` existen desde **v3** (ADR p39).
+`{opening_float, totals_by_method, cash_refunds, cash_reversals, manual_in,
+manual_out, movements_by_type, movements_count, cash_expected, cash_counted,
+difference, operations, actor, generated_at, report_schema_version}`.
+Las claves `manual_*` y `movements_*` existen desde **v3** (ADR p39);
+`cash_refunds`/`cash_reversals` desde **v2** (ADR p29).
 
 **El Z historico NO se reinterpreta** si cambia el codigo de reporting (mismo
 principio que `DailyOrgMetrics` frozen + `metrics_schema_version`). `report_schema_version`
@@ -129,10 +131,10 @@ Bloquea: registrar sin caja abierta → 400; sobre caja cerrada (el lock lo gara
 | Metodo | URL | Permiso |
 |--------|-----|---------|
 | `POST` | `/api/cash/sessions/open/` | `cashsession.open` |
-| `POST` | `/api/cash/sessions/<uuid>/close/` | `cashsession.close` |
+| `POST` | `/api/cash/sessions/<str:pk>/close/` | `cashsession.close` |
 | `GET`  | `/api/cash/sessions/current/` | `cashsession.retrieve` |
 | `GET`  | `/api/cash/sessions/` (`?status=`) | `cashsession.list` |
-| `GET`  | `/api/cash/movements/` | `cashmovement.list` |
+| `GET`  | `/api/cash/movements/` (`?session=<public_id>`) | `cashmovement.list` |
 | `POST` | `/api/cash/movements/` | `cashmovement.create` |
 
 Body de open: `{opening_float, notes?}`. Body de close: `{counted_cash, notes?, force?}`.

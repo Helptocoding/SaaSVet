@@ -600,7 +600,7 @@ const sectionTitle = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Pets = () => {
-    const { token, initializing, can } = useAuth();
+    const { token, initializing, can, user } = useAuth();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const confirm = useConfirm();
@@ -1034,7 +1034,7 @@ const Pets = () => {
                         title="Todavía no tienes pacientes"
                         body="Agrega tus pacientes manualmente o importa tu archivo anterior."
                         actions={[
-                            can("import.create")
+                            can("import.create") && !user?.is_demo
                                 ? { label: "Importar Excel", onClick: () => navigate("/imports"), variant: "secondary" }
                                 : null,
                             can("patient.create")

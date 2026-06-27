@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
 from apps.core.network import get_client_ip, get_user_agent
-from apps.core.permissions import make_permission, build_permissions_list
+from apps.core.permissions import make_permission, build_permissions_list, NotDemoAccount
 from apps.core.views import resolve_public_id
 from apps.users.serializers import (
     UserSerializer,
@@ -47,6 +47,10 @@ class MeView(APIView):
             "organization_public_id": str(org.public_id) if org else None,
             "organization_name": org.name if org else None,
             "organization_timezone": org.timezone if org else "America/Mexico_City",
+            # Demo tenant: el frontend oculta "cambiar contraseña" e "importar
+            # datos" para los usuarios de la org demo; el backend además bloquea
+            # esos endpoints vía NotDemoAccount (no se confía en el frontend).
+            "is_demo": bool(getattr(org, "is_demo", False)) if org else False,
             "permissions": build_permissions_list(request.user),
             # ADR p21: credential lifecycle. Frontend reads this to
             # force-redirect to /change-password while True.
@@ -143,7 +147,9 @@ class ChangeMyPasswordView(APIView):
     notes including JWT lifecycle and access-token behavior.
     """
 
-    permission_classes = [IsAuthenticated]
+    # NotDemoAccount: la cuenta demo comparte credenciales fijas; cambiar la
+    # contraseña dejaría inaccesible la demo pública (ni el UI muestra la opción).
+    permission_classes = [IsAuthenticated, NotDemoAccount]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'change_password'
 

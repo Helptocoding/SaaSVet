@@ -45,7 +45,7 @@ const STEPS = [
  */
 const SetupChecklist = ({ activation }) => {
   const navigate = useNavigate();
-  const { can } = useAuth();
+  const { can, user } = useAuth();
 
   // El checklist representa el SETUP INICIAL DE LA CLÍNICA, no el onboarding
   // individual de un usuario. Solo debe verlo quien puede configurar la clínica:
@@ -95,7 +95,7 @@ const SetupChecklist = ({ activation }) => {
                     <p className="setup-step-desc">{step.desc}</p>
                     <div className="setup-actions">
                       {step.actions
-                        .filter((a) => !a.perm || can?.(a.perm))
+                        .filter((a) => (!a.perm || can?.(a.perm)) && !(user?.is_demo && a.to === "/imports"))
                         .map((a) => (
                           <button
                             key={a.to}

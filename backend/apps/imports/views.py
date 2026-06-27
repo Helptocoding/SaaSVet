@@ -18,7 +18,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
-from apps.core.permissions import make_permission
+from apps.core.permissions import make_permission, NotDemoAccount
 from apps.core.views import PublicIdLookupMixin, TenantQueryMixin
 
 from .models import ImportJob
@@ -59,8 +59,10 @@ class ImportJobViewSet(
         return ImportJobSerializer
 
     def get_permissions(self):
+        # NotDemoAccount: el importador escribe Owners/Pets reales; en la org demo
+        # debe ser inerte (ni el UI muestra la opción) para no contaminar la demo.
         code = _PERMISSION_BY_ACTION.get(self.action, 'import.create')
-        return [make_permission(code)()]
+        return [make_permission(code)(), NotDemoAccount()]
 
     def get_parsers(self):
         # Solo el upload acepta multipart; el resto es JSON.

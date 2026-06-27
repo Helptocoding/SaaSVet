@@ -171,16 +171,19 @@ const Config = () => {
                 </div>
             </div>
 
-            {/* Mi cuenta — Cambiar contraseña */}
-            <div className="card" style={{ marginBottom: "20px" }}>
-                <div style={{ marginBottom: "14px" }}>
-                    <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Mi cuenta</p>
-                    <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
-                        Cambia tu contraseña. Disponible para todos los usuarios autenticados.
-                    </p>
+            {/* Mi cuenta — Cambiar contraseña. Oculto en la cuenta demo
+                (credenciales compartidas fijas; el backend además lo bloquea). */}
+            {!user?.is_demo && (
+                <div className="card" style={{ marginBottom: "20px" }}>
+                    <div style={{ marginBottom: "14px" }}>
+                        <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Mi cuenta</p>
+                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
+                            Cambia tu contraseña. Disponible para todos los usuarios autenticados.
+                        </p>
+                    </div>
+                    <ChangePasswordForm />
                 </div>
-                <ChangePasswordForm />
-            </div>
+            )}
 
             {/* Secciones tenant-scoped — ocultas para ADMIN_SAAS sin clínica. */}
             {!showTenantSections && (

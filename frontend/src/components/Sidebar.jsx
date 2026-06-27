@@ -130,7 +130,7 @@ const Sidebar = ({ onLogout }) => {
                         </div>
                         {ADMIN_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
                         {CAPABILITY_ITEMS
-                            .filter(item => can?.(item.perm))
+                            .filter(item => can?.(item.perm) && !user?.is_demo)
                             .map(item => <NavLink key={item.path} item={item} />)}
                     </>
                 )}

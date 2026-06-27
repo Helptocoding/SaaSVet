@@ -343,8 +343,9 @@ del anchor `paid_at`, ver ADR p9 y ADR p11).
 Para prevenir deadlocks en operaciones que tocan múltiples tablas, se estableció un orden estricto:
 
 ```
-MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct
+CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct
 ```
+`CashSession` es la **cabeza** del orden global (ADR p28). El flujo de pago la lockea ANTES de Invoice cuando `require_open_cash_session` está activo.
 
 Reglas:
 - Si un flujo no toca alguno, empieza en el primero que sí necesita.
@@ -364,15 +365,12 @@ def cancel_invoice(invoice, user, notes=''):
     if invoice.status == 'paid':
         raise ValidationError(...)
     
-    # Lockear Presentations en orden estable por pk antes de reversar stock
-    locked_presentations = _lock_presentations(
-        item.presentation_id for item in items if item.presentation_id
-    )
+    # Revertir stock ítem por ítem (apply_stock_movement lockea Product internamente)
     for item in items:
         if item.presentation_id:
             apply_stock_movement(
-                presentation=locked_presentations[item.presentation_id],
-                quantity=item.quantity,
+                presentation=item.presentation,
+                quantity=_qty_base(item),
                 movement_type='in',
                 ...
             )

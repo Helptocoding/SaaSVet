@@ -15,7 +15,11 @@ scheduled → confirmed → in_progress → done
  canceled     canceled     canceled
     ↓            ↓
  no_show     no_show
+
+scheduled, confirmed  ──→  no_show  (transición directa)
+canceled, no_show     ──→  scheduled  (solo si fecha no pasó)
 ```
+(Las flechas bajo `canceled` NO implican `canceled → no_show`; esa transición no existe.)
 
 Transiciones validas:
 
@@ -148,7 +152,7 @@ estado no es `done`. El banner desaparece al vincular.
 
 ## Cancelacion
 
-Solo se puede cancelar desde `scheduled`, `confirmed` o `in_progress`.
+Se puede cancelar desde `scheduled`, `confirmed` o `in_progress` vía PATCH `/update-status/`. El endpoint DELETE solo acepta `scheduled` o `confirmed`.
 
 Al cancelar se puede enviar un `cancellation_reason` opcional (texto libre).
 El motivo queda almacenado en la cita para reportes.
@@ -325,12 +329,16 @@ Esto evita dos problemas:
 ```json
 {
   "id": 1,
+  "public_id": "uuid-v4",
   "pet": 12,
+  "pet_public_id": "uuid-v4",
   "pet_name": "Max",
   "pet_is_generic": false,
   "owner_id": 5,
+  "owner_public_id": "uuid-v4",
   "owner_name": "Juan Perez",
   "veterinarian": 3,
+  "veterinarian_public_id": "uuid-v4",
   "veterinarian_name": "Dr. Garcia",
   "date": "2026-04-28",
   "start_time": "10:00:00",
@@ -341,7 +349,9 @@ Esto evita dos problemas:
   "cancellation_reason": "",
   "walk_in": false,
   "medical_record_ids": [],
-  "invoice_id": null
+  "medical_record_public_ids": [],
+  "invoice_id": null,
+  "invoice_public_id": null
 }
 ```
 

@@ -4,13 +4,29 @@
 
 ## Stack
 
-- React 19 + Vite (JavaScript, sin TypeScript)
+- React 19 + Vite 8 (JavaScript, sin TypeScript)
+- Routing: React Router 7
 - Estilos: CSS modules por pagina + variables globales en `tokens.css`
 - Toasts: `sonner` (configurado en `App.jsx`)
+- Iconos: `lucide-react`
 - Auth: Context propio (`src/auth/authContext.jsx`) con JWT + refresh automatico
 - HTTP: Axios con interceptores (`src/api/client.js`)
 - Confirmaciones: `useConfirm` hook (`src/components/ConfirmDialog.jsx`)
+- Calendario: `@fullcalendar/react` (core + daygrid + timegrid + interaction)
+- Gráficas: `recharts`
+- Date picker: `react-day-picker` 9
+- Animaciones: Framer Motion
 - Testing: Vitest 4 + React Testing Library + jsdom (`pnpm test`, **gate CI bloqueante**) — ver § Testing
+
+### Tipografía y favicon
+
+- Display/body: **Plus Jakarta Sans** (400/500/600/700)
+- Mono (datos clínicos): **IBM Plex Mono** (400/500)
+- Login display: **Space Grotesk** (500/600/700)
+- Favicon: `iconosaaslyvet.ico`
+- Título: `SaaslyVet`
+
+Tokens en `src/styles/tokens.css`: `--font-display`, `--font-body`, `--font-mono`.
 
 ## Estructura de directorios
 

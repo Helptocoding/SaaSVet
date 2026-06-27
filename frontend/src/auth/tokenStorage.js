@@ -66,6 +66,10 @@ export function setAccessToken(access) {
     activeStore().setItem("access_token", access);
 }
 
+export function setRefreshToken(refresh) {
+    activeStore().setItem("refresh_token", refresh);
+}
+
 export function setUser(user) {
     activeStore().setItem("user", JSON.stringify(user));
 }

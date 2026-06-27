@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
-import { getItem, setTokens, setAccessToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
+import { getItem, setTokens, setAccessToken, setRefreshToken, setUser as storeUser, clearTokens, isLoggingOut } from "./tokenStorage";
 
 const AuthContext = createContext();
 
@@ -70,6 +70,7 @@ export const AuthProvider = ({ children }) => {
                 if (res.ok) {
                     const data = await res.json();
                     setAccessToken(data.access);
+                    setRefreshToken(data.refresh);
                     setToken(data.access);
                     scheduleTokenRefresh(data.access);
                 } else {

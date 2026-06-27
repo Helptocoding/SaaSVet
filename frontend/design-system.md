@@ -26,7 +26,12 @@ Si vas a desviarte de un contrato, primero edita este documento explicando la ex
 
 ## 1. Tipografía
 
-**Familia:** `var(--font-body)` = `'Helvetica Neue', Helvetica, Arial, sans-serif`. Una sola familia en todo el producto.
+**Familias:**
+- Display/body: `var(--font-body)` = `'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif`
+- Mono (datos clínicos, valores numéricos): `var(--font-mono)` = `'IBM Plex Mono', 'Courier New', monospace`
+- Login display: `Space Grotesk` (solo en login.css)
+
+**Pesos permitidos:** `400` · `500` · `600` · `700`. (No usar 450, 800.)
 
 **Pesos permitidos:** `400` · `500` · `600` · `700`. (No usar 450, 800.)
 
