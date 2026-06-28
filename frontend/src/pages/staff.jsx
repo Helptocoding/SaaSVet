@@ -3,6 +3,7 @@ import { getStaff, createStaff, deactivateStaff, resetStaffPassword } from "../a
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { useConfirm } from "../components/useConfirm";
+import { apiError } from "../utils/apiError";
 import { toast } from "sonner";
 
 const EMPTY_FORM = {
@@ -55,7 +56,7 @@ const Staff = () => {
             const data = await getStaff();
             setStaff(data);
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         } finally {
             setLoading(false);
         }

@@ -44,13 +44,14 @@ from rest_framework_simplejwt.views import (
 )
 from rest_framework.permissions import AllowAny
 import logging
+from apps.core.mixins import NoStoreResponseMixin
 from apps.core.throttling import LoginRateThrottle, LoginUserRateThrottle
 from apps.core.sanitize import sanitize_text
 
 _login_logger = logging.getLogger('django')
 
 
-class ThrottledTokenObtainPairView(TokenObtainPairView):
+class ThrottledTokenObtainPairView(NoStoreResponseMixin, TokenObtainPairView):
     # Issue #13 / ADR p15: el default global REST_FRAMEWORK.DEFAULT_PERMISSION_CLASSES
     # ahora es IsAuthenticated. Las vistas públicas (login, refresh) DEBEN declarar
     # AllowAny explícito para no romper el flujo de autenticación.
@@ -118,7 +119,7 @@ class ThrottledTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-class PublicTokenRefreshView(TokenRefreshView):
+class PublicTokenRefreshView(NoStoreResponseMixin, TokenRefreshView):
     """Refresh endpoint público — sin esto, el default IsAuthenticated bloquea
     el flujo de renovación de tokens (Issue #13 / ADR p15).
 

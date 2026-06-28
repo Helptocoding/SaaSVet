@@ -330,6 +330,114 @@ def reset_password_for_staff(
     )
 
 
+# ---------------------------------------------------------------------------
+# Staff deactivation (H-06)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class DeactivateStaffResult:
+    """Return shape of ``deactivate_staff``."""
+    revoked_refresh_count: int
+    duration_ms: int
+    request_id: str
+
+
+@transaction.atomic
+def deactivate_staff(
+    *,
+    admin,
+    target_user,
+    request_id: str | None = None,
+    client_ip: str = '',
+    user_agent: str = '',
+) -> DeactivateStaffResult:
+    """
+    Deactivate a staff member AND revoke every session they hold (H-06).
+
+    Before this service, ``StaffDeactivateView`` only flipped
+    ``is_active=False``. Access tokens were already rejected by simplejwt
+    (``CHECK_USER_IS_ACTIVE=True``), but the refresh token was never
+    blacklisted: the target could keep hitting ``POST /api/token/refresh/``
+    for up to ``REFRESH_TOKEN_LIFETIME`` (7 days) — minting tokens that,
+    while useless against protected endpoints, kept the credential alive.
+    A fired employee's refresh token must die the moment access is cut.
+
+    Authorisation contract (defence in depth — the view also scopes the
+    queryset to the caller's org + ``is_active=True`` before resolving the
+    target):
+      - ``target_user != admin`` — self-deactivation is a lockout; admins
+        cannot remove their own only path back in. Raises ``ValidationError``
+        (→ 400), preserving the prior endpoint contract.
+      - ``target_user.role != 'ADMIN_SAAS'`` — clinic staff cannot touch
+        platform operators (404-as-403, never confirm existence).
+      - ``target_user.organization == admin.organization`` — strict
+        same-tenant rule.
+
+    Side effects inside a single atomic block:
+      1. ``is_active=False`` (persisted with ``update_fields``).
+      2. Blacklist EVERY ``OutstandingToken`` of the target — identical
+         pattern to ``reset_password_for_staff`` step 4. The refresh
+         endpoint will reject the revoked token on the next attempt.
+      3. Emit a structured ``STAFF_DEACTIVATED`` audit log.
+    """
+    request_id = request_id or str(uuid.uuid4())
+    started_at = time.monotonic()
+
+    # --- Authorisation gates -------------------------------------------------
+    if target_user.pk == admin.pk:
+        raise ValidationError("No puedes desactivar tu propia cuenta.")
+    if getattr(target_user, 'role', None) == 'ADMIN_SAAS':
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
+    if (
+        target_user.organization_id is None
+        or admin.organization_id is None
+        or target_user.organization_id != admin.organization_id
+    ):
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
+
+    # --- 1. Deactivate -------------------------------------------------------
+    target_user.is_active = False
+    target_user.save(update_fields=['is_active'])
+
+    # --- 2. Revoke every existing session ------------------------------------
+    # Same blacklist-everything pattern as the admin password reset: the
+    # deactivated user has no session worth sparing.
+    old_outstanding = OutstandingToken.objects.filter(user=target_user)
+    revoked_count = 0
+    for ot in old_outstanding:
+        _, created = BlacklistedToken.objects.get_or_create(token=ot)
+        if created:
+            revoked_count += 1
+
+    # --- 3. Audit log --------------------------------------------------------
+    duration_ms = int((time.monotonic() - started_at) * 1000)
+    logger.info("STAFF_DEACTIVATED", extra={
+        "event": "STAFF_DEACTIVATED",
+        "request_id": request_id,
+        "actor_id": admin.pk,
+        "actor_username": admin.username,
+        "actor_role": admin.role,
+        "organization_id": admin.organization_id,
+        "target_user_id": target_user.pk,
+        "target_username": target_user.username,
+        "target_public_id": str(target_user.public_id),
+        "target_role": target_user.role,
+        "revoked_refresh_count": revoked_count,
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "duration_ms": duration_ms,
+    })
+
+    return DeactivateStaffResult(
+        revoked_refresh_count=revoked_count,
+        duration_ms=duration_ms,
+        request_id=request_id,
+    )
+
+
 def is_temp_password_expired(user) -> bool:
     """
     Return True if ``user`` is currently in the ``must_change`` state and

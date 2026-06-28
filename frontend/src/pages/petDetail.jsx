@@ -5,6 +5,7 @@ import { getMedicalRecords, getMedicalRecord } from "../api/medicalRecords";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import ImportedDataSection from "../components/ImportedDataSection";
+import { apiError } from "../utils/apiError";
 import api from "../api/client";
 
 const SEX_LABELS = { male: "Macho", female: "Hembra", unknown: "Desconocido" };
@@ -38,7 +39,7 @@ const PetDetail = () => {
             setRecords(recordsData.results || recordsData);
             setAppointments(Array.isArray(apptData) ? apptData : (apptData.results || []));
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         } finally {
             setLoading(false);
         }
@@ -63,7 +64,7 @@ const PetDetail = () => {
             setViewingRecord(data);
             setShowRecordDetail(true);
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         }
     };
 

@@ -1,5 +1,6 @@
 import logging
 
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.core.models import set_current_user
@@ -24,6 +25,19 @@ class TenantJWTAuthentication(JWTAuthentication):
         from django.contrib.auth import get_user_model
         User = get_user_model()
         user = User.objects.select_related('organization').get(pk=user.pk)
+
+        # H-06: defensa-en-profundidad sobre cuentas desactivadas.
+        # simplejwt YA rechaza tokens de usuarios inactivos en get_user()
+        # cuando CHECK_USER_IS_ACTIVE=True (su default, vigente aquí), pero ese
+        # comportamiento depende de un flag de la librería que un upgrade o un
+        # override futuro podría apagar silenciosamente. Re-validamos sobre la
+        # instancia re-cargada (la que setea el contexto de audit) para que la
+        # garantía "desactivar = cortar acceso" sea local y no dependa del
+        # default de un tercero. El refresh token se revoca aparte al desactivar
+        # (apps.users.services.deactivate_staff), de modo que el endpoint de
+        # refresh tampoco siga emitiendo access tokens para la cuenta.
+        if not user.is_active:
+            raise AuthenticationFailed('Cuenta desactivada.', code='user_inactive')
 
         set_current_user(user)
         self._tag_sentry(user)

@@ -716,7 +716,7 @@ const Pets = () => {
             setPanelRecords(Array.isArray(records) ? records : (records.results || []));
             setPanelAppts(Array.isArray(appts) ? appts : (appts.results || []));
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         } finally {
             setPanelLoading(false);
         }

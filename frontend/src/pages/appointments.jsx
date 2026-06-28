@@ -940,7 +940,7 @@ const Appointments = () => {
             setStaff(staffData.filter(s => s.role === 'VET' || s.role === 'ADMIN'));
             setAppointments(Array.isArray(apptData) ? apptData : (apptData.results || []));
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         } finally {
             setLoading(false);
         }
@@ -951,7 +951,7 @@ const Appointments = () => {
             const data = await getAppointments(token);
             setAppointments(Array.isArray(data) ? data : (data.results || []));
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         }
     };
 

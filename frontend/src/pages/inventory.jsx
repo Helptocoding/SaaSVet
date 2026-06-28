@@ -208,7 +208,7 @@ const Inventory = () => {
         try {
             setProducts(toList(await getProducts()));
         } catch (err) {
-            console.error(err);
+            console.error(apiError(err));
         } finally {
             setLoading(false);
         }

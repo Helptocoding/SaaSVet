@@ -135,6 +135,14 @@ toast.error(apiError(err, "Error inesperado"));
 error: (err) => apiError(err, "Error inesperado")
 ```
 
+**Nunca loguear el objeto de error crudo de Axios (ADR p47 / H-07·H-08).**
+`console.log(err)` / `console.error(err)` exponen `err.config.headers.Authorization`
+(= `Bearer <JWT>`) en la consola del navegador; loguear `err.response.data` vuelca
+el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))`
+(string sanitizado, nunca toca `config.headers`). **Gate de regresión bloqueante:**
+`src/test/noConsoleTokenLeak.test.js` escanea `src/` y falla si reaparece
+`console.*(err)` o un `console.*` sobre `…response…data`.
+
 `apiError` extrae el primer mensaje legible en este orden: 429 → detail → error → errors[] → errors{} → message → fallback.
 
 **Shape canónico de errores backend (PR-4B / ADR p16):**

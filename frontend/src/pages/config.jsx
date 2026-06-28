@@ -74,7 +74,7 @@ const Config = () => {
         loadServices();
         getOrgSettings()
             .then(setOrgSettings)
-            .catch(err => console.error('[Config] OrgSettings error:', err?.response?.status, err?.response?.data));
+            .catch(err => console.error('[Config] OrgSettings error:', apiError(err)));
     }, [token, showTenantSections]);
 
     const loadServices = async () => {
@@ -83,7 +83,7 @@ const Config = () => {
             const data = await getServices();
             setServices(toList(data));
         } catch (err) {
-            console.log(err);
+            console.error(apiError(err));
         } finally {
             setLoading(false);
         }

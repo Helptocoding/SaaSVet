@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
 from apps.core.network import get_client_ip, get_user_agent
+from apps.core.mixins import NoStoreResponseMixin
 from apps.core.permissions import make_permission, build_permissions_list, NotDemoAccount
 from apps.core.views import resolve_public_id
 from apps.users.serializers import (
@@ -16,7 +17,11 @@ from apps.users.serializers import (
     CreateEmployeeSerializer,
     ChangePasswordSerializer,
 )
-from apps.users.services import change_password, reset_password_for_staff
+from apps.users.services import (
+    change_password,
+    deactivate_staff,
+    reset_password_for_staff,
+)
 
 User = get_user_model()
 
@@ -119,18 +124,26 @@ class StaffDeactivateView(APIView):
             ),
             pk,
         )
-        # Día 6 audit F13: bloquear self-deactivation. Sin este guard, un
-        # ADMIN que se desactiva queda fuera de su propia cuenta (lockout)
-        # y la única recuperación es Django superuser shell — operativamente
-        # costoso. La superficie con UUID lo hace trivial vía UI.
-        if user.pk == request.user.pk:
-            raise ValidationError("No puedes desactivar tu propia cuenta.")
-        user.is_active = False
-        user.save()
+        # H-06: la desactivación + revocación de sesiones vive en el service
+        # (cambio de estado con efecto secundario sobre tokens → backend
+        # CLAUDE.md "todo cambio de estado pasa por services"). El guard de
+        # self-deactivation (F13, lockout prevention) y los gates de tenant /
+        # ADMIN_SAAS se aplican dentro del service como defensa-en-profundidad.
+        request_id = (
+            request.META.get('HTTP_X_REQUEST_ID')
+            or str(uuid.uuid4())
+        )
+        deactivate_staff(
+            admin=request.user,
+            target_user=user,
+            request_id=request_id,
+            client_ip=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ChangeMyPasswordView(APIView):
+class ChangeMyPasswordView(NoStoreResponseMixin, APIView):
     """
     Self-service password change.
 
