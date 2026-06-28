@@ -387,23 +387,50 @@ triggerDownload(blob, filename);
 
 ### authContext.jsx
 
-- Decodifica el JWT para leer `exp`, `role`, `organization`
-- Programa refresh del token 5 minutos antes de que expire
-- En init: refetch `/api/me/` para datos frescos de usuario y org
-- Persiste tokens y user data vía `auth/tokenStorage.js` (NO `localStorage` directo — ver § Auth storage abajo).
-- `login(access, refresh, remember = true)` — recibe flag de "Recordarme" y lo propaga a `setTokens()`.
-- Refresh callback chequea `isLoggingOut()` antes de aplicar tokens — previene revival de sesión recién terminada (race logout/refresh). Ver ADR p22.
-- Almacena `permissions` como `Set` (desde el array retornado por `/api/me/`)
-- Expone helpers memoizados para control de acceso basado en capabilities:
-  - `can(permCode)` — `Set.has()`, O(1). Ej: `can("invoice.create")`
-  - `canAny(codes)` — `some`. Ej: `canAny(["invoice.create", "invoice.confirm"])`
-  - `canAll(codes)` — `every`. Ej: `canAll(["invoice.create", "invoice.pay"])`
-- `Object.freeze` sobre el `Set` para prevenir mutaciones accidentales
-- Invalidacion en `logout()` y `setUserData()`: `setPermissions(new Set())`
+Autenticación basada en JWT con refresh automático. El flujo de inicialización sigue una **máquina de estados determinista** que evita montar rutas protegidas con tokens vencidos.
 
-**Regla**: nunca inferir permisos por `user.role`. Usar exclusivamente `can()`.
-Esto soporta roles dinamicos donde dos usuarios con el mismo nombre de rol pueden
-tener distintos permisos via RBAC en DB.
+**Máquina de estados de inicialización:**
+
+```
+UNKNOWN            no access_token en storage        → LOGIN
+UNKNOWN            access_token válido (exp > now)   → FETCH_USER
+UNKNOWN            access_token expirado             → RESTORING_SESSION
+RESTORING_SESSION  refresh ok                        → FETCH_USER
+RESTORING_SESSION  refresh fail / no refresh token   → LOGIN
+FETCH_USER         /me/ ok                           → AUTHENTICATED
+FETCH_USER         /me/ fail                         → LOGIN
+```
+
+**Invariante crítico:** `initializing` permanece `true` durante toda la cadena `RESTORING_SESSION → FETCH_USER`. Solo se vuelve `false` al alcanzar un estado terminal (`LOGIN` o `AUTHENTICATED`). `PrivateRoute` espera `initializing=false` antes de evaluar `isAuthenticated`.
+
+**Estados:**
+
+- **LOGIN** — sin sesión válida. Tokens limpiados, React state vacío. `PrivateRoute` redirige a `/login`.
+- **FETCH_USER** — token válido en storage. Se setea en React state, se programa el refresh periódico, y se valida con `GET /api/me/`. Si `/me/` rechaza → `LOGIN`.
+- **RESTORING_SESSION** — token expirado, refresh token disponible. **NO se setea el token expirado en React state.** Se ejecuta secuencialmente:
+  1. `POST /api/token/refresh/` con el refresh token almacenado.
+  2. Si falla → `LOGIN` con limpieza de storage.
+  3. Si ok → se persisten ambos tokens nuevos (`applyTokensAndScheduleRefresh`), se programa el refresh periódico, y se valida con `GET /api/me/`.
+  4. Si `/me/` ok → `AUTHENTICATED`.
+  5. Si `/me/` rechaza → `LOGIN` (no se usa user cache).
+
+**`applyTokensAndScheduleRefresh(access, refresh, remember)`** — función privada compartida que persiste tokens, actualiza React state y programa el siguiente refresh. La usan tanto `login()` como el flujo de `RESTORING_SESSION`, eliminando código duplicado.
+
+**Restauración de sesión tras cerrar/reabrir el navegador:**
+- `remember` se reconstruye del flag explícito `auth_persist` (escrito por `setTokens()` durante el login), no inferido del store.
+- Si el flag no existe (legacy), default `true` (localStorage) por compatibilidad hacia atrás.
+- La secuencia `refresh → /me/` es **secuencial**, no concurrente. Esto elimina la condición de carrera donde `/me/` con token expirado completaba antes que el refresh, causando que el dashboard montara con un access token inválido y el interceptor 401 destruyera la sesión.
+
+**Refresh periódico** (sesión ya autenticada):
+- Decodifica el JWT para leer `exp` y programa refresh 5 min antes de expirar.
+- El callback del timer usa `fetch()` nativo (no axios) para evitar el interceptor 401.
+- Chequea `isLoggingOut()` antes de aplicar tokens — previene revival de sesión recién terminada (race logout/refresh). Ver ADR p22.
+
+**Control de acceso:**
+- `permissions` como `Set` (desde el array retornado por `/api/me/`).
+- Helpers memoizados: `can(permCode)`, `canAny(codes)`, `canAll(codes)`.
+- `Object.freeze` sobre el `Set` para prevenir mutaciones accidentales.
+- **Regla**: nunca inferir permisos por `user.role`. Usar exclusivamente `can()`.
 
 ### Auth storage (`tokenStorage.js`) — ADR p22
 
@@ -413,13 +440,15 @@ Módulo único que centraliza acceso a auth storage. **Todo acceso a `access_tok
 
 1. **No coexistencia**: tokens válidos NUNCA en `localStorage` y `sessionStorage` simultáneamente. `setTokens()` enforce wipe del other store.
 2. **Read priority**: `sessionStorage > localStorage`. Sesión temporal de tab gana sobre persistente vieja.
-3. **Source of truth**: presencia del `access_token` en algún store. El `auth_persist` flag es **metadata only**, nunca leído como autoridad.
+3. **Source of truth**: presencia del `access_token` en algún store. El `auth_persist` flag registra la decisión explícita del checkbox "Recordarme" y se usa para reconstruir `remember` durante la restauración de sesión (`getItem("auth_persist") !== "0"`). No se infiere el store activo de la presencia física de los tokens en localStorage/sessionStorage — el flag es la fuente autoritativa de esa decisión.
 4. **Logout flag**: `clearTokens()` levanta `loggingOut=true`; `setTokens()` lo limpia. Async callbacks (refresh) chequean `isLoggingOut()` antes de mutar estado.
 
 **API:**
 - `getItem(key)` — lectura con prioridad session > local.
-- `setTokens({ access, refresh, remember })` — escribe al store correcto + wipea el otro.
-- `setAccessToken(access)` / `setUser(user)` — actualiza en el `activeStore()` actual.
+- `setTokens({ access, refresh, remember })` — escribe ambos tokens al store correcto + wipea el otro + escribe flag `auth_persist`.
+- `setAccessToken(access)` — actualiza solo el access token en el `activeStore()` actual. Usado por el refresh periódico.
+- `setRefreshToken(refresh)` — actualiza solo el refresh token en el `activeStore()` actual. Usado por el refresh periódico para persistir el token rotado (el backend emite un refresh nuevo con `ROTATE_REFRESH_TOKENS=True`; sin esta función el token viejo blacklisteado seguía en storage y el siguiente refresh fallaba con 401).
+- `setUser(user)` — actualiza user data en el `activeStore()` actual.
 - `clearTokens()` — borra ambos stores + levanta flag de logout.
 - `isLoggingOut()` — predicado para async guard.
 
@@ -432,7 +461,7 @@ Módulo único que centraliza acceso a auth storage. **Todo acceso a `access_tok
 
 **Anti-patterns prohibidos:**
 - ❌ `localStorage.getItem("access_token"|"refresh_token"|"user")` fuera de `tokenStorage.js`.
-- ❌ Leer `PERSIST_FLAG` para decisiones de routing — solo se escribe como metadata auxiliar.
+- ❌ Leer `PERSIST_FLAG` para decisiones de routing — solo se lee durante la restauración de sesión vía `getItem("auth_persist")` para reconstruir `remember`.
 - ❌ Bypass de `isLoggingOut()` en callbacks async que mutan estado de auth.
 
 Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage|sessionStorage)\.(getItem|setItem|removeItem)\(['"](access_token|refresh_token|user|auth_persist)` en archivos != `auth/tokenStorage.js`.

@@ -84,15 +84,46 @@ export const AuthProvider = ({ children }) => {
         }, delay);
     }, [logout]);
 
+    // ── Shared: persist tokens + update React state + schedule next refresh ──
+    // Used by login() and by the session-restore path inside the init effect.
+    const applyTokensAndScheduleRefresh = useCallback((access, refresh, remember) => {
+        setTokens({ access, refresh, remember });
+        setToken(access);
+        scheduleTokenRefresh(access);
+    }, [scheduleTokenRefresh]);
+
+    // ── Init state machine ────────────────────────────────────────────────
+    // States: UNKNOWN → LOGIN | FETCH_USER | RESTORING_SESSION
+    //
+    // UNKNOWN            no access_token in storage        → LOGIN
+    // UNKNOWN            access_token valid (exp > now)    → FETCH_USER
+    // UNKNOWN            access_token expired              → RESTORING_SESSION
+    // RESTORING_SESSION  refresh ok                        → FETCH_USER
+    // RESTORING_SESSION  refresh fail / no refresh token   → LOGIN
+    // FETCH_USER         /me/ ok                           → AUTHENTICATED
+    // FETCH_USER         /me/ fail                         → LOGIN
+    //
+    // Critical invariant: `initializing` stays true across the entire
+    // RESTORING_SESSION → FETCH_USER chain. It only becomes false when the
+    // chain reaches a terminal state (LOGIN or AUTHENTICATED). This prevents
+    // PrivateRoute from mounting protected routes with a stale/expired token.
     useEffect(() => {
         const storedToken = getItem("access_token");
-        const storedUser = getItem("user");
 
-        if (storedToken) {
+        // ── UNKNOWN → LOGIN: no token at all ──────────────────────────
+        if (!storedToken) {
+            setInitializing(false);
+            return;
+        }
+
+        const exp = getTokenExp(storedToken);
+        const isValid = exp && exp > Date.now();
+
+        // ── UNKNOWN → FETCH_USER: token is still valid ────────────────
+        if (isValid) {
             setToken(storedToken);
             scheduleTokenRefresh(storedToken);
 
-            // Refresh user data from server to avoid stale org/role data in storage
             fetch(`${API_BASE}me/`, {
                 headers: { Authorization: `Bearer ${storedToken}` },
             })
@@ -102,40 +133,88 @@ export const AuthProvider = ({ children }) => {
                         storeUser(data);
                         setUser(data);
                         setPermissions(Object.freeze(new Set(data.permissions || [])));
-                    } else if (storedUser) {
-                        const parsed = JSON.parse(storedUser);
-                        setUser(parsed);
-                        setPermissions(Object.freeze(new Set(parsed.permissions || [])));
+                    } else {
+                        // Valid token but /me/ rejected → force clean login
+                        logout();
                     }
                 })
                 .catch(() => {
-                    if (storedUser) {
-                        const parsed = JSON.parse(storedUser);
-                        setUser(parsed);
-                        setPermissions(Object.freeze(new Set(parsed.permissions || [])));
-                    }
+                    logout();
                 })
                 .finally(() => setInitializing(false));
-        } else {
-            if (storedUser) {
-                const parsed = JSON.parse(storedUser);
-                setUser(parsed);
-                setPermissions(Object.freeze(new Set(parsed.permissions || [])));
-            }
-            setInitializing(false);
+
+            return;
         }
+
+        // ── UNKNOWN → RESTORING_SESSION: token expired ────────────────
+
+        const storedRefresh = getItem("refresh_token");
+
+        if (!storedRefresh) {
+            clearTokens();
+            setInitializing(false);
+            return;
+        }
+
+        // Reconstruct `remember` from the explicit flag written by
+        // setTokens() at login time — never inferred from store choice.
+        const remember = getItem("auth_persist") !== "0";
+
+        // Async session restoration. No React state is mutated until
+        // the refresh succeeds AND /me/ validates the new token.
+        (async () => {
+            try {
+                // Step 1 — Refresh (T4/T5/T6)
+                const refreshRes = await fetch(`${API_BASE}token/refresh/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ refresh: storedRefresh }),
+                });
+
+                if (!refreshRes.ok) {
+                    clearTokens();
+                    setInitializing(false);
+                    return;
+                }
+
+                const tokens = await refreshRes.json();
+
+                // Persist both tokens, update React state, schedule next
+                // periodic refresh — reuses the same helper as login().
+                applyTokensAndScheduleRefresh(tokens.access, tokens.refresh, remember);
+
+                // Step 2 — Validate with backend (T7/T8)
+                const meRes = await fetch(`${API_BASE}me/`, {
+                    headers: { Authorization: `Bearer ${tokens.access}` },
+                });
+
+                if (meRes.ok) {
+                    const userData = await meRes.json();
+                    storeUser(userData);
+                    setUser(userData);
+                    setPermissions(Object.freeze(new Set(userData.permissions || [])));
+                } else {
+                    // Refresh succeeded but the backend rejects this user.
+                    // Do NOT fall back to cached data — the session is invalid.
+                    logout();
+                }
+            } catch (err) {
+                console.error("[Auth] Session restoration failed", err);
+                logout();
+            } finally {
+                setInitializing(false);
+            }
+        })();
 
         return () => {
             if (refreshTimerRef.current) {
                 clearTimeout(refreshTimerRef.current);
             }
         };
-    }, [scheduleTokenRefresh]);
+    }, [applyTokensAndScheduleRefresh, scheduleTokenRefresh]);
 
     const login = (accessToken, refreshToken, remember = true) => {
-        setTokens({ access: accessToken, refresh: refreshToken, remember });
-        setToken(accessToken);
-        scheduleTokenRefresh(accessToken);
+        applyTokensAndScheduleRefresh(accessToken, refreshToken, remember);
     };
 
     const setUserData = (userData) => {
