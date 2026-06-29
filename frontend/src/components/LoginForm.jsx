@@ -25,10 +25,10 @@ export function LoginForm() {
       <div className="field-group">
         <Field
           id="username"
-          label="Correo electrónico"
+          label="Correo o usuario"
           value={username}
           onChange={setUsername}
-          placeholder="correo@clinica.com"
+          placeholder="correo@clinica.com o usuario"
           autoComplete="username"
           required
           leadingIcon={<MailIcon size={18} />}
