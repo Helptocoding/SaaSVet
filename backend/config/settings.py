@@ -172,6 +172,10 @@ REST_FRAMEWORK = {
         # whitelist cuando el user tiene documentos legales vigentes sin
         # aceptar. Corre DESPUÉS del must-change (orden: credencial → legal).
         'apps.core.permissions.LegalAcceptanceGate',
+        # ADR p49: ventana de mantenimiento del tenant demo — 503 en escrituras
+        # de la org demo mientras un reset está en curso. No-op para tenants
+        # reales (is_demo=False) y para lecturas (métodos safe).
+        'apps.core.permissions.DemoResetGate',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',

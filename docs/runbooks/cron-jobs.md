@@ -19,6 +19,7 @@ Capa 6 de [DEPLOY_VPS_PLAN.md](../../DEPLOY_VPS_PLAN.md). Tareas recurrentes que
 | 6.3 | `build_daily_metrics` | `30 6 * * *` | 12:30 diario | MEDIO — analytics dashboards |
 | 6.4 | `audit_anchor_integrity` | `35 6 * * *` | 12:35 diario | ALTO — invariantes contables |
 | 6.5 | `journalctl --vacuum-time=14d` | `0 5 * * 0` | 11:00 (dom) | BAJO — housekeeping logs |
+| 6.6 | `seed_demo_clinic --reset --yes` | `10,40 * * * *` | cada 30 min | MEDIO — demo pública: si falla, datos sucios/rotos (NO afecta clínicas reales, ADR p49) |
 
 `restore-drill.sh` (ADR p40) **NO va por cron** — drill MANUAL mensual desde la
 máquina del operador (`--from-offsite` + age private key). Es el único que prueba
@@ -141,6 +142,10 @@ Verificar exit codes:
 - `flushexpiredtokens`: 0 siempre (idempotente).
 - `build_daily_metrics`: 0 = OK, 2 = al menos 1 org falló (revisar logs).
 - `audit_anchor_integrity`: 0 = OK, 1 = unresolved provenance, 2 = invariant violation P1.
+- `seed_demo_clinic --reset` (ADR p49): 0 = OK **o** skip por advisory lock |
+  != 0 = fallo de validación/integridad (ROLLBACK, demo intacta). Solo exit 0
+  pinguea el deadman `HEALTHCHECK_DEMO_RESET_URL`. Offset a :10/:40 para no
+  coincidir con backup/snapshot/anchor. Recuperación: ADR p49 §12.
 
 ---
 

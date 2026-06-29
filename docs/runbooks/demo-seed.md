@@ -77,6 +77,29 @@ python manage.py build_daily_metrics
 
 ---
 
+## 3.bis Reset automático cada 30 min (cron, ADR p49)
+
+En producción un cron ejecuta `seed_demo_clinic --reset --yes` cada 30 min
+(`10,40 * * * *`, ver [`cron-jobs.md`](./cron-jobs.md) §6.6). Endurecimientos
+sobre el reset manual:
+
+- **Atómico**: purge + rebuild en UNA transacción. Fallo a mitad → ROLLBACK total
+  → demo en su último estado bueno (nunca a medio borrar).
+- **Exclusión mutua**: `pg_try_advisory_xact_lock` no bloqueante — si otro reset
+  corre, sale 0 sin tocar nada (no se encolan disparos).
+- **Ventana de mantenimiento**: durante el reset, las ESCRITURAS de la org demo
+  reciben `503 demo_resetting` (las lecturas pasan vía MVCC). Tenants reales
+  jamás se ven afectados.
+- **Validación inline**: conteos mínimos pre-commit; si no se alcanzan → ROLLBACK.
+- **NO** encadena `build_daily_metrics` (hoy es live; el purge ya limpia los
+  snapshots viejos para evitar curva fantasma).
+
+Recuperación si el reset empieza a fallar en prod: ADR p49 §12
+(`docs/decisions/2026-06-29-p49-demo-tenant-reset.md`) — deshabilitar cron,
+limpiar el flag de mantenimiento, reset manual, auditorías `--org`, rehabilitar.
+
+---
+
 ## 4. Eliminar la demo por completo
 
 Borra la org demo entera, incluidos usuarios.
@@ -195,4 +218,4 @@ Pendiente: QA manual de UI (login 3 roles + revisión visual, §7).
 - Sin botón "Entrar demo" / auto-login / credenciales públicas (privada por ahora).
 - El seed no crea recetas (`Prescription`) — se prueban manualmente (QA #6).
 - `is_demo` no se excluye aún de analytics globales (decisión post-beta).
-- Reset automático semanal (cron) = post-beta, cuando el seed esté rodado.
+- Reset automático cada 30 min (cron) = **implementado** (ADR p49, ver §3.bis).

@@ -26,14 +26,16 @@ Uso:
 
 Tras el seed, correr `build_daily_metrics` para poblar el histórico de analytics.
 """
+import logging
 import random
 from datetime import datetime, time, timedelta
 from decimal import Decimal
+from time import monotonic
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 
 from apps.organizations.models import Organization
@@ -65,6 +67,8 @@ from ._demo_data import (
 )
 
 User = get_user_model()
+
+logger = logging.getLogger('apps.core.demo_reset')
 
 # Productos seguros para venta directa (stock holgado — nunca los deliberadamente
 # bajos, que existen solo para poblar "stock crítico").
@@ -99,6 +103,7 @@ class Command(BaseCommand):
             return
         if opts["reset"]:
             self._reset_demo(opts["yes"])
+            return
 
         org = self._ensure_org(opts["actor_username"])
         users = self._ensure_users(org)
@@ -545,12 +550,78 @@ class Command(BaseCommand):
     # Reset / Delete (protegidos por is_demo)
     # ------------------------------------------------------------------ #
     def _reset_demo(self, yes):
+        """
+        ADR p49 — reset atómico del tenant demo: purge + rebuild en UNA sola
+        transacción, bajo advisory lock (exclusión mutua) y ventana de
+        mantenimiento (deflecta escrituras de visitantes con 503). Un crash a
+        mitad → ROLLBACK total → demo en su último estado bueno (nunca a medio
+        borrar). El advisory lock se libera solo al terminar la transacción.
+        """
         org = self._demo_org_or_abort()
         if not yes:
             raise CommandError("--reset es destructivo: añade --yes para confirmar.")
-        with transaction.atomic():
-            self._purge(org, full=False)
-        self.stdout.write(self.style.WARNING(f"Datos de «{org.name}» borrados. Reconstruyendo…"))
+
+        from django.core.cache import cache
+        from apps.core.demo_reset import (
+            DEMO_RESET_ADVISORY_KEY, DEMO_RESET_FLAG_KEY, DEMO_RESET_FLAG_TTL,
+        )
+
+        flag_set = False
+        try:
+            with transaction.atomic():
+                # Exclusión mutua (ADR p49 §7): advisory lock xact-scoped, no
+                # bloqueante. Si otro reset corre, salir limpio sin encolar.
+                with connection.cursor() as cur:
+                    cur.execute("SELECT pg_try_advisory_xact_lock(%s)", [DEMO_RESET_ADVISORY_KEY])
+                    acquired = cur.fetchone()[0]
+                if not acquired:
+                    logger.warning("DEMO_RESET_SKIPPED_LOCKED", extra={
+                        "event": "DEMO_RESET_SKIPPED_LOCKED", "org_id": org.pk,
+                    })
+                    self.stdout.write(self.style.WARNING(
+                        "Otro reset en curso (advisory lock) — se omite."
+                    ))
+                    return
+
+                # Ventana de mantenimiento (ADR p49 §9): durante el reset las
+                # ESCRITURAS de la demo reciben 503 (DemoResetGate). Las lecturas
+                # pasan (MVCC sirve un estado consistente). Flag limpiado en
+                # finally; el TTL es la red de seguridad ante crash.
+                cache.set(DEMO_RESET_FLAG_KEY, True, timeout=DEMO_RESET_FLAG_TTL)
+                flag_set = True
+
+                t0 = monotonic()
+                self._purge(org, full=False)
+                t1 = monotonic()
+
+                users = self._ensure_users(org)
+                self._accept_legal_for_demo_users(users)
+                self._restrict_demo_import(org)
+                self._ensure_catalog(org)
+                self._ensure_people(org)
+                self._build_operations(org, users)
+                t2 = monotonic()
+
+                # Validación inline pre-commit (ADR p49 §11.1): si los conteos no
+                # alcanzan el mínimo → raise → ROLLBACK (demo intacta).
+                self._validate_rebuild(org)
+
+                purge_ms = int((t1 - t0) * 1000)
+                rebuild_ms = int((t2 - t1) * 1000)
+                total_ms = int((t2 - t0) * 1000)
+                logger.info("DEMO_RESET_COMPLETED", extra={
+                    "event": "DEMO_RESET_COMPLETED", "org_id": org.pk,
+                    "purge_ms": purge_ms, "rebuild_ms": rebuild_ms, "total_ms": total_ms,
+                })
+                self.stdout.write(self.style.SUCCESS(
+                    f"Reset demo «{org.name}» OK — purge {purge_ms}ms · "
+                    f"rebuild {rebuild_ms}ms · total {total_ms}ms."
+                ))
+        finally:
+            if flag_set:
+                cache.delete(DEMO_RESET_FLAG_KEY)
+
+        self._report(org)
 
     def _delete_demo(self, yes):
         org = self._demo_org_or_abort()
@@ -581,6 +652,14 @@ class Command(BaseCommand):
         CreditNote.all_objects.filter(**f).delete()
         ExternalPrescriptionAttestation.all_objects.filter(**f).delete()
 
+        # ADR p49 (P0): MetricAdjustment.source_invoice es PROTECT → DEBE borrarse
+        # ANTES que Invoice, o el DELETE de Invoice lanza ProtectedError. Lo crea
+        # billing.services.process_refund cuando un visitante devuelve un cobro.
+        from apps.analytics.models import (
+            DailyOrgMetrics, DashboardSnapshotAudit, MetricAdjustment,
+        )
+        MetricAdjustment.all_objects.filter(**f).delete()
+
         StockMovement.all_objects.filter(**f).delete()
         MedicalRecordProduct.all_objects.filter(**f).delete()  # QuerySet.delete → sin reversa de stock
         InvoiceItem.all_objects.filter(**f).delete()
@@ -603,6 +682,14 @@ class Command(BaseCommand):
 
         CashMovement.all_objects.filter(**f).delete()
         CashSession.all_objects.filter(**f).delete()
+
+        # ADR p49: limpieza de analytics (evita snapshots fantasma de ciclos
+        # previos) + jobs de importación. Tras esto no queda org-FK PROTECT
+        # apuntando al subgrafo demo desde analytics/imports.
+        DailyOrgMetrics.all_objects.filter(**f).delete()
+        DashboardSnapshotAudit.all_objects.filter(**f).delete()
+        from apps.imports.models import ImportJob
+        ImportJob.all_objects.filter(**f).delete()
 
         Presentation.all_objects.filter(**f).delete()
         Product.all_objects.filter(**f).delete()
@@ -649,3 +736,37 @@ class Command(BaseCommand):
             "\nSiguiente: correr `build_daily_metrics` para poblar analytics:\n"
             "  python manage.py build_daily_metrics"
         ))
+
+    # ------------------------------------------------------------------ #
+    # Validación inline post-rebuild (ADR p49 §11.1) — lower bounds.
+    # ------------------------------------------------------------------ #
+    def _validate_rebuild(self, org):
+        """
+        Confirma que el rebuild pobló la demo. Usa lower bounds (no igualdad
+        exacta) para no ser frágil ante ajustes menores del dataset; el objetivo
+        es detectar un rebuild catastróficamente parcial. Si algún conteo cae bajo
+        el mínimo → raise (la transacción del reset hace ROLLBACK; demo intacta).
+        """
+        f = {"organization": org}
+        checks = {
+            "owners": (Owner.all_objects.filter(is_generic=False, **f).count(), 40),
+            "pets": (Pet.all_objects.filter(is_generic=False, **f).count(), 60),
+            "services": (Service.all_objects.filter(**f).count(), 8),
+            "products": (Product.all_objects.filter(**f).count(), 15),
+            "appointments": (Appointment.all_objects.filter(**f).count(), 70),
+            "medical_records": (MedicalRecord.all_objects.filter(**f).count(), 45),
+            "invoices": (Invoice.all_objects.filter(**f).count(), 55),
+            "payments": (Payment.all_objects.filter(**f).count(), 40),
+            "cash_sessions": (CashSession.all_objects.filter(**f).count(), 1),
+        }
+        failed = {
+            k: {"got": got, "min": lo}
+            for k, (got, lo) in checks.items() if got < lo
+        }
+        if failed:
+            logger.error("DEMO_RESET_VALIDATION_FAILED", extra={
+                "event": "DEMO_RESET_VALIDATION_FAILED", "org_id": org.pk, "failed": failed,
+            })
+            raise CommandError(
+                f"Validación post-reset falló (conteos bajo el mínimo): {failed}"
+            )

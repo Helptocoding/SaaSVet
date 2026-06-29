@@ -40,6 +40,8 @@ BACKUP_DIR=/var/backups/vet
 #   BACKUP_ENCRYPTION_PUBLIC_KEY=age1...          # PUBLIC key (no es secreto)
 # Deadman switch (Healthchecks.io) — ping solo en éxito total:
 #   HEALTHCHECK_URL=https://hc-ping.com/<uuid>
+# Deadman del reset de la demo (ADR p49) — ping solo si el reset termina exit 0:
+#   HEALTHCHECK_DEMO_RESET_URL=https://hc-ping.com/<uuid-demo-reset>
 # La App Key de B2 NO va aquí: vive en ~/.config/rclone/rclone.conf (chmod 600).
 # La PRIVATE key de age NUNCA va al VPS (solo en restore real desde tu máquina).
 
@@ -77,6 +79,18 @@ BACKUP_DIR=/var/backups/vet
 # violation (P1, page on this).
 # ---------------------------------------------------------------------------
 35 6 * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py audit_anchor_integrity --json >> /var/log/vet-anchor.log 2>&1
+
+# ---------------------------------------------------------------------------
+# Cada 30 min (:10 y :40) — Reset del tenant demo (ADR p49). Acotado a la org
+# is_demo=True; JAMÁS toca clínicas reales. Atómico (purge+rebuild en una tx) +
+# idempotente + advisory lock (si otro reset corre, sale 0 sin tocar nada).
+# Offset a :10/:40 para no coincidir con backup (21:00), snapshot (06:30) ni
+# anchor audit (06:35). Exit 0 = OK o skip por lock; exit != 0 = fallo de
+# validación/integridad → sin ping → Healthchecks.io alerta.
+# Recuperación si empieza a fallar: ADR p49 §12 (deshabilitar cron, reset manual,
+# auditorías --org, rehabilitar).
+# ---------------------------------------------------------------------------
+10,40 * * * *  cd $COMPOSE_DIR && docker compose -f $COMPOSE_FILE --env-file $ENV_FILE run --rm backend python manage.py seed_demo_clinic --reset --yes >> /var/log/vet-cron.log 2>&1 && { [ -z "$HEALTHCHECK_DEMO_RESET_URL" ] || curl -fsS -m 10 "$HEALTHCHECK_DEMO_RESET_URL" > /dev/null; }
 
 # ---------------------------------------------------------------------------
 # Cada hora (minuto 15) — disk usage alert. Si /, /var/lib/docker o

@@ -107,6 +107,10 @@ def custom_exception_handler(exc, context):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+    # ADR p49: ventana de mantenimiento del demo — sugerir reintento al cliente.
+    if response is not None and getattr(exc, 'default_code', None) == 'demo_resetting':
+        response['Retry-After'] = '15'
+
     return response
 
 

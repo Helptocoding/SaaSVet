@@ -17,9 +17,12 @@ REGLAS:
 """
 import logging
 
-from rest_framework.permissions import BasePermission
+from django.core.cache import cache
+from rest_framework.exceptions import APIException
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from .permissions_codes import PERMISSIONS, PERMISSION_CODES
+from .demo_reset import DEMO_RESET_FLAG_KEY
 
 logger = logging.getLogger(__name__)
 rbac_logger = logging.getLogger("rbac.events")
@@ -75,6 +78,34 @@ def _rbac_extra(request, user, required: str | None) -> dict:
         "method": getattr(request, "method", None),
         "required_permission": required,
     }
+
+
+# ---------------------------------------------------------------------------
+# ADR p49 — ventana de mantenimiento del tenant demo
+# ---------------------------------------------------------------------------
+class DemoResetInProgress(APIException):
+    """503 emitido durante la ventana de reset del tenant demo (ADR p49 §9)."""
+    status_code = 503
+    default_detail = "La demo se está reiniciando, vuelve a intentar en unos segundos."
+    default_code = "demo_resetting"
+
+
+def _demo_reset_blocks(request) -> bool:
+    """
+    True si una ESCRITURA de un usuario de la org demo debe rechazarse porque hay
+    un reset en curso (flag en cache, lo pone `seed_demo_clinic --reset`). Las
+    lecturas (métodos safe) y los tenants reales nunca se bloquean. Camino común
+    = short-circuit barato (no toca la cache salvo write de usuario demo).
+    """
+    if request.method in SAFE_METHODS:
+        return False
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated:
+        return False
+    org = getattr(user, 'organization', None)
+    if not bool(getattr(org, 'is_demo', False)):
+        return False
+    return bool(cache.get(DEMO_RESET_FLAG_KEY))
 
 
 # ---------------------------------------------------------------------------
@@ -320,6 +351,13 @@ class HybridPermission(BasePermission):
     def has_permission(self, request, view) -> bool:
         if not request.user.is_authenticated:
             return False
+
+        # ADR p49: ventana de mantenimiento del demo. Embebido aquí (igual que el
+        # must-change y el legal gate) porque las views declaran su propio
+        # permission_classes y pisan el DEFAULT. Solo escrituras de la org demo y
+        # solo durante un reset en curso → 503 (las lecturas pasan: MVCC).
+        if _demo_reset_blocks(request):
+            raise DemoResetInProgress()
 
         # ADR p21: must_change_password gate (embedded here because DRF
         # ignores ``DEFAULT_PERMISSION_CLASSES`` once a view declares its
@@ -585,3 +623,18 @@ class NotDemoAccount(BasePermission):
             return True  # IsAuthenticated handles unauth — not our concern
         org = getattr(user, 'organization', None)
         return not bool(getattr(org, 'is_demo', False))
+
+
+class DemoResetGate(BasePermission):
+    """
+    ADR p49 — ventana de mantenimiento del tenant demo, para las views que SÍ
+    usan el DEFAULT_PERMISSION_CLASSES (las que no declaran permission_classes
+    propio). Las views RBAC pisan el default con HybridPermission, que embebe el
+    mismo check en su has_permission. Mantener ambos espeja exactamente el patrón
+    de MustChangePasswordGate / LegalAcceptanceGate.
+    """
+
+    def has_permission(self, request, view):
+        if _demo_reset_blocks(request):
+            raise DemoResetInProgress()
+        return True
