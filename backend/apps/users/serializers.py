@@ -60,6 +60,18 @@ class CreateEmployeeSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate_email(self, value):
+        # ADR p48: correo obligatorio, normalizado a minúsculas y único global.
+        # Ningún flujo normal de negocio crea usuarios sin correo.
+        value = (value or '').strip().lower()
+        if not value:
+            raise serializers.ValidationError("El correo electrónico es obligatorio.")
+        if User.objects.filter(email__iexact=value).exists():
+            # Mensaje genérico (ADR p48 T-2): no confirma en qué organización
+            # existe el correo (no amplía el leak de existencia cross-tenant).
+            raise serializers.ValidationError("Este correo no está disponible.")
+        return value
+
     def validate_first_name(self, value):
         if not value:
             return value

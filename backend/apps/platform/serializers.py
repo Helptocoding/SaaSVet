@@ -94,6 +94,8 @@ class ProvisionOrgSerializer(serializers.Serializer):
         return value
 
     def validate_admin_email(self, value):
+        # ADR p48: correo = identidad global única, normalizado a minúsculas.
+        value = (value or '').strip().lower()
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("Email ya en uso.")
         return value
