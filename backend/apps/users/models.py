@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.functions import Lower
 from apps.organizations.models import Organization
 
 
@@ -47,4 +48,17 @@ class User(AbstractUser):
     class Meta(AbstractUser.Meta):
         indexes = [
             models.Index(fields=["organization", "role", "is_active"]),
+        ]
+        constraints = [
+            # ADR p48: correo = identidad global única, case-insensitive.
+            # PARCIAL (excluye email='') para que las cuentas técnicas
+            # (superuser CLI, demo, seeds, fixtures de test) sin correo convivan.
+            # La OBLIGATORIEDAD de correo en flujos de negocio (provisioning +
+            # alta de staff) la enforzan los serializers, no el constraint:
+            # ningún flujo normal de negocio crea usuarios sin correo.
+            models.UniqueConstraint(
+                Lower("email"),
+                name="user_email_ci_unique",
+                condition=~models.Q(email=""),
+            ),
         ]
