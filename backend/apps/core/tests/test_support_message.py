@@ -36,7 +36,7 @@ class SupportMessageTests(APITestCase):
         self.client.force_authenticate(self.user)
 
     @override_settings(DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/test/123")
-    @patch("apps.core.views.requests.post")
+    @patch("apps.core.services.requests.post")
     def test_success_without_image(self, mock_post):
         mock_post.return_value.status_code = 204
 
@@ -55,7 +55,7 @@ class SupportMessageTests(APITestCase):
         self.assertEqual(embed["fields"][2]["value"], "https://app.example.com/invoices")
 
     @override_settings(DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/test/123")
-    @patch("apps.core.views.requests.post")
+    @patch("apps.core.services.requests.post")
     def test_success_with_image(self, mock_post):
         mock_post.return_value.status_code = 200
 
@@ -133,7 +133,7 @@ class SupportMessageTests(APITestCase):
         self.assertIn("image", resp.json()["errors"])
 
     @override_settings(DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/test/123")
-    @patch("apps.core.views.requests.post")
+    @patch("apps.core.services.requests.post")
     def test_discord_returns_error_status(self, mock_post):
         mock_post.return_value.status_code = 400
         mock_post.return_value.text = "Invalid form body"
@@ -146,7 +146,7 @@ class SupportMessageTests(APITestCase):
         self.assertEqual(resp.json()["code"], "service_error")
 
     @override_settings(DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/test/123")
-    @patch("apps.core.views.requests.post")
+    @patch("apps.core.services.requests.post")
     def test_discord_timeout(self, mock_post):
         import requests as req_lib
         mock_post.side_effect = req_lib.Timeout()
@@ -159,7 +159,7 @@ class SupportMessageTests(APITestCase):
         self.assertEqual(resp.json()["code"], "service_error")
 
     @override_settings(DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/test/123")
-    @patch("apps.core.views.requests.post")
+    @patch("apps.core.services.requests.post")
     def test_discord_connection_error(self, mock_post):
         import requests as req_lib
         mock_post.side_effect = req_lib.ConnectionError()
