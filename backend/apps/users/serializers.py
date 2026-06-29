@@ -2,12 +2,41 @@ import re
 import logging
 
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from apps.organizations.models import Organization
 
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+
+class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    ADR p48: login por correo O username.
+
+    Si el identificador enviado en el campo de username contiene '@', se resuelve
+    a su usuario por correo (case-insensitive, solo activos) y se sustituye por el
+    username canónico antes de autenticar. El constraint único parcial
+    `Lower(email)` (migración 0010) garantiza ≤1 match → no hay ambigüedad
+    cross-tenant. Si no hay match, se deja el identificador tal cual:
+    `TokenObtainPairSerializer.validate` autentica contra un username inexistente
+    → 401 genérico, y `ModelBackend` corre su hash dummy (constant-time), sin
+    oráculo de enumeración.
+    """
+
+    def validate(self, attrs):
+        identifier = attrs.get(self.username_field, "")
+        if identifier and "@" in identifier:
+            normalized = identifier.strip().lower()
+            user = (
+                User.objects.filter(email__iexact=normalized, is_active=True)
+                .only("pk", self.username_field)
+                .first()
+            )
+            if user is not None:
+                attrs[self.username_field] = user.get_username()
+        return super().validate(attrs)
 
 
 # Min length para self-change (ADR p20). Distinto del floor=12 de

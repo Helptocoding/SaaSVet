@@ -42,6 +42,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from apps.users.serializers import EmailOrUsernameTokenObtainPairSerializer
 from rest_framework.permissions import AllowAny
 import logging
 from apps.core.mixins import NoStoreResponseMixin
@@ -57,6 +58,8 @@ class ThrottledTokenObtainPairView(NoStoreResponseMixin, TokenObtainPairView):
     # AllowAny explícito para no romper el flujo de autenticación.
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle, LoginUserRateThrottle]
+    # ADR p48: resuelve login por correo O username antes de autenticar.
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -80,14 +83,22 @@ class ThrottledTokenObtainPairView(NoStoreResponseMixin, TokenObtainPairView):
         if response.status_code == 200:
             from django.contrib.auth import get_user_model
             from apps.users.services import is_temp_password_expired
+            from rest_framework_simplejwt.tokens import AccessToken
+            from rest_framework_simplejwt.exceptions import TokenError
 
             User = get_user_model()
-            raw_username = (request.data or {}).get('username', '')
+            # ADR p48: resolver el usuario por el user_id del access token recién
+            # emitido, NO por `request.data['username']`. El login ahora acepta
+            # correo o username (resolver del serializer), así que buscar por
+            # username rompía el gate de temp-password para los logins por correo
+            # (DoesNotExist → se saltaba el 403 de expiración). El token ya
+            # codifica el usuario autenticado → lookup agnóstico al identificador.
             try:
-                user = User.objects.get(username=raw_username)
-            except User.DoesNotExist:
-                # Race: user deleted between auth and our re-fetch. Let
-                # the response stand — the next request will 401 naturally.
+                uid = AccessToken(response.data['access'])['user_id']
+                user = User.objects.get(pk=uid)
+            except (KeyError, TokenError, User.DoesNotExist):
+                # Race: user borrado entre auth y re-fetch, o token sin user_id.
+                # Dejar pasar la respuesta — el próximo request fallará naturalmente.
                 return response
 
             if is_temp_password_expired(user):
