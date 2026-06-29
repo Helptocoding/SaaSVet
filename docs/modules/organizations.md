@@ -140,9 +140,27 @@ Una vez que el ADMIN tiene credenciales, todo lo demas es via API.
 
 ```
 POST /api/token/
-{ "username": "...", "password": "..." }
+{ "username": "<correo O username>", "password": "..." }
 → { "access": "...", "refresh": "..." }
 ```
+
+**Identidad de login (ADR p48).** El campo `username` del request acepta **el
+correo O el username**. Si contiene `@`, el backend lo resuelve por correo
+(case-insensitive, solo usuarios activos) al username canónico antes de
+autenticar; si no, autentica por username. Sin match → 401 genérico (sin oráculo
+de enumeración). El SPA etiqueta el campo como "Correo o usuario".
+
+Invariante de identidad:
+- **El correo es identidad global única** (índice parcial `Lower(email)` único,
+  `WHERE email <> ''`). **Un usuario = una clínica**; no existe identidad
+  multi-clínica (una persona en dos clínicas usa dos cuentas con dos correos).
+- **El correo es obligatorio, normalizado a minúsculas y único** en todo flujo
+  de negocio (provisioning + alta de staff, vía serializers). Ningún flujo normal
+  crea usuarios sin correo.
+- Excepción: cuentas técnicas (superuser CLI, demo, seeds, fixtures) pueden tener
+  correo vacío — el índice es parcial. No son usuarios de clínica.
+- `username` se conserva como identidad interna estable (auditoría, throttle,
+  logs); no es lo que el usuario necesita conocer para entrar.
 
 ### Crear staff
 
