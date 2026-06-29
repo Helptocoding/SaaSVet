@@ -19,6 +19,7 @@ el DPA estándar del proveedor está **disponible y pendiente de aceptar/archiva
 | Healthchecks.io | Ping deadman de backups | Sin PII | — | Activo |
 | Let's Encrypt (vía Caddy) | Certificados TLS | Dominio, email ACME | — | Activo |
 | Redis | Cache + contadores de throttle | Sin PII clínica | Self-hosted (mismo VPS) | Activo |
+| Discord Inc. | Canal interno de reportes de soporte (botón "Reportar problema") | Mensaje + usuario/clínica + captura opcional (puede incluir PII si el usuario la adjunta) | EE.UU. | Activo · transferencia internacional · DPA pendiente · mitigación: aviso en UI |
 
 ---
 
@@ -28,8 +29,13 @@ el DPA estándar del proveedor está **disponible y pendiente de aceptar/archiva
   No hay un subprocesador de correo en la cadena.
 - **Stripe NO está conectado**: la integración de pagos en línea es **futura (P1)**.
   No procesa datos actualmente.
-- **Transferencia internacional**: Hetzner (UE), Backblaze (EE.UU.) y Sentry
-  (EE.UU.) tratan datos **fuera de México**. Esta transferencia internacional
-  **debe divulgarse en el Aviso de Privacidad**.
-- **Tarea P0**: aceptar y archivar los **DPAs estándar** de Hetzner, Backblaze y
-  Sentry.
+- **Transferencia internacional**: Hetzner (UE), Backblaze (EE.UU.), Sentry
+  (EE.UU.) y Discord (EE.UU.) tratan datos **fuera de México**. Esta transferencia
+  internacional **debe divulgarse en el Aviso de Privacidad**.
+- **Tarea P0**: aceptar y archivar los **DPAs estándar** de Hetzner, Backblaze,
+  Sentry y Discord.
+- **Discord (soporte)**: el botón "Reportar problema" envía el mensaje + usuario/
+  clínica + captura opcional a un canal de Discord (EE.UU.). La captura puede
+  contener PII clínica si el usuario la adjunta; mitigación actual = aviso en el
+  modal de no incluir datos sensibles. Evaluar un canal sin transferencia a
+  EE.UU. (o sin captura) si la exposición lo amerita.

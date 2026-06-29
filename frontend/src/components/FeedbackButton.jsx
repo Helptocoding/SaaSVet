@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { useAuth } from "../auth/authContext";
+import { sendSupportMessage } from "../api/support";
+import { apiError } from "../utils/apiError";
 
-const DISCORD_WEBHOOK_URL = import.meta.env.VITE_DISCORD_WEBHOOK_URL;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB — espejo del límite del backend
 
 const FeedbackButton = () => {
-    const { user } = useAuth();
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState("");
     const [image, setImage] = useState(null);
@@ -15,8 +15,8 @@ const FeedbackButton = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // Límite 5MB
-                toast.error("La imagen es demasiado grande (máx 5MB)");
+            if (file.size > MAX_IMAGE_BYTES) {
+                toast.error("La imagen es demasiado grande (max 5MB)");
                 return;
             }
             setImage(file);
@@ -29,80 +29,20 @@ const FeedbackButton = () => {
             return;
         }
 
-        if (!DISCORD_WEBHOOK_URL) {
-            toast.error("El soporte no está configurado (falta VITE_DISCORD_WEBHOOK_URL).");
-            return;
-        }
-
         setSending(true);
         try {
-            const formData = new FormData();
-            
-            const payload = {
-                embeds: [
-                    {
-                        title: "🚀 Nuevo reporte de problema",
-                        description: message,
-                        color: 16711680,
-                        fields: [
-                            {
-                                name: "👤 Usuario",
-                                value: user ? `${user.first_name || ""} ${user.last_name || ""} (@${user.username})` : "Anónimo",
-                                inline: true
-                            },
-                            {
-                                name: "🏢 Organización",
-                                value: user?.organization_name || user?.organization || "N/A",
-                                inline: true
-                            },
-                            {
-                                name: "📍 Página",
-                                value: window.location.href,
-                                inline: false
-                            },
-                            {
-                                name: "💻 Sistema / Navegador",
-                                value: navigator.userAgent.split(') ')[0] + ')',
-                                inline: true
-                            },
-                            {
-                                name: "📏 Pantalla",
-                                value: `${window.innerWidth}x${window.innerHeight}`,
-                                inline: true
-                            }
-                        ],
-                        footer: {
-                            text: "SaaSly — Intelligent Diagnostics"
-                        },
-                        timestamp: new Date().toISOString()
-                    }
-                ]
-            };
-
-            // Si hay imagen, la adjuntamos al FormData
-            if (image) {
-                formData.append("file", image, image.name);
-                // Discord permite referenciar el archivo adjunto en el embed
-                payload.embeds[0].image = { url: `attachment://${image.name}` };
-            }
-
-            formData.append("payload_json", JSON.stringify(payload));
-
-            const response = await fetch(DISCORD_WEBHOOK_URL, {
-                method: "POST",
-                body: formData, // fetch maneja el Content-Type automáticamente para FormData
+            await sendSupportMessage({
+                message: message,
+                pageUrl: window.location.href,
+                timestamp: new Date().toISOString(),
+                image: image,
             });
-
-            if (response.ok) {
-                toast.success("Reporte enviado correctamente. ¡Gracias!");
-                setOpen(false);
-                setMessage("");
-                setImage(null);
-            } else {
-                throw new Error();
-            }
-        } catch {
-            toast.error("No se pudo enviar el reporte. Intenta más tarde.");
+            toast.success("Reporte enviado correctamente. Gracias!");
+            setOpen(false);
+            setMessage("");
+            setImage(null);
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo enviar el reporte. Intenta mas tarde."));
         } finally {
             setSending(false);
         }
@@ -141,8 +81,11 @@ const FeedbackButton = () => {
                         <h3 style={{ margin: "0 0 8px", fontSize: "18px", fontWeight: "700", color: "#111" }}>
                             ¿Algo no va bien?
                         </h3>
-                        <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#666", lineHeight: "1.4" }}>
+                        <p style={{ margin: "0 0 12px", fontSize: "14px", color: "#666", lineHeight: "1.4" }}>
                             Describe el problema y adjunta una captura si es necesario.
+                        </p>
+                        <p style={{ margin: "0 0 20px", fontSize: "12px", color: "#b45309", lineHeight: "1.4" }}>
+                            ⚠️ No incluyas datos sensibles de pacientes (nombres, historiales, cobros) en el texto ni en la captura.
                         </p>
                         
                         <textarea

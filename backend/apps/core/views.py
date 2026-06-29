@@ -1,5 +1,8 @@
+import json
+import logging
 import uuid as _uuid_module
 
+import requests
 from django.conf import settings
 from django.db import connections
 from django.db.utils import OperationalError
@@ -7,7 +10,15 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_safe
+from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
+from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 
 class TenantQueryMixin:
@@ -141,3 +152,121 @@ def version(request):
         "commit": getattr(settings, "GIT_SHA", "") or None,
         "environment": getattr(settings, "ENVIRONMENT", "dev"),
     })
+
+
+# ---------------------------------------------------------------------------
+# Reporte de soporte → Discord (webhook server-side).
+# ---------------------------------------------------------------------------
+_SUPPORT_HTTP_TIMEOUT = 10                    # s — cap del bloqueo síncrono del worker
+_MAX_SUPPORT_IMAGE_BYTES = 5 * 1024 * 1024    # 5MB
+_DISCORD_DESC_MAX = 4096                       # límite de embed.description de Discord
+_DISCORD_FIELD_MAX = 1024                      # límite de embed field value de Discord
+
+
+class SupportMessageThrottle(UserRateThrottle):
+    scope = 'support_message'
+
+
+class SupportMessageView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    throttle_classes = [SupportMessageThrottle]
+
+    def post(self, request):
+        message = request.data.get("message", "")
+        image = request.FILES.get("image")
+
+        if not message or not message.strip():
+            return Response(
+                {"code": "validation_error", "errors": {"message": ["Este campo es requerido."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        webhook_url = getattr(settings, 'DISCORD_WEBHOOK_URL', '')
+        if not webhook_url:
+            logger.error("SUPPORT_WEBHOOK_NOT_CONFIGURED")
+            return Response(
+                {"code": "service_unavailable", "message": "El soporte no está disponible en este momento."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        if image:
+            if image.size > _MAX_SUPPORT_IMAGE_BYTES:
+                return Response(
+                    {"code": "validation_error", "errors": {"image": ["La imagen no debe superar 5MB."]}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not image.content_type or not image.content_type.startswith("image/"):
+                return Response(
+                    {"code": "validation_error", "errors": {"image": ["El archivo debe ser una imagen."]}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        user = request.user
+        user_name = f"{user.first_name or ''} {user.last_name or ''} (@{user.username})".strip()
+        org_name = getattr(user.organization, 'name', 'N/A') if user.organization else 'N/A'
+
+        embed = {
+            "title": "🚀 Nuevo reporte de problema",
+            "description": message.strip()[:_DISCORD_DESC_MAX],
+            "color": 16711680,
+            "fields": [
+                {"name": "👤 Usuario", "value": user_name[:_DISCORD_FIELD_MAX], "inline": True},
+                {"name": "🏢 Organización", "value": org_name[:_DISCORD_FIELD_MAX], "inline": True},
+                {"name": "📍 Página", "value": request.data.get("page_url", "N/A")[:_DISCORD_FIELD_MAX], "inline": False},
+            ],
+            "footer": {"text": "SaaSly — Intelligent Diagnostics"},
+            "timestamp": request.data.get("timestamp", ""),
+        }
+
+        if image:
+            embed["image"] = {"url": f"attachment://{image.name}"}
+
+        payload = {"embeds": [embed]}
+
+        # Llamada síncrona: bloquea el worker hasta _SUPPORT_HTTP_TIMEOUT s. Aceptable
+        # al volumen de este endpoint (throttle 10/h por usuario). Si escala, mover a
+        # una cola asíncrona — el proyecto no tiene task queue hoy (trade-off consciente).
+        try:
+            if image:
+                image.seek(0)
+                resp = requests.post(
+                    webhook_url,
+                    data={"payload_json": json.dumps(payload)},
+                    files={"file": (image.name, image.read(), image.content_type)},
+                    timeout=_SUPPORT_HTTP_TIMEOUT,
+                )
+            else:
+                resp = requests.post(
+                    webhook_url,
+                    json=payload,
+                    timeout=_SUPPORT_HTTP_TIMEOUT,
+                )
+
+            if resp.status_code == 204 or 200 <= resp.status_code < 300:
+                logger.info(
+                    "SUPPORT_MESSAGE_SENT",
+                    extra={"user_id": user.pk, "org_id": user.organization_id},
+                )
+                return Response({"ok": True})
+            else:
+                logger.error(
+                    "SUPPORT_WEBHOOK_FAILED",
+                    extra={"status": resp.status_code, "body": resp.text[:500]},
+                )
+                return Response(
+                    {"code": "service_error", "message": "No se pudo enviar el reporte. Intenta más tarde."},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+        except requests.Timeout:
+            logger.error("SUPPORT_WEBHOOK_TIMEOUT")
+            return Response(
+                {"code": "service_error", "message": "No se pudo enviar el reporte. Intenta más tarde."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except requests.RequestException as e:
+            logger.error("SUPPORT_WEBHOOK_ERROR", extra={"error": str(e)[:200]})
+            return Response(
+                {"code": "service_error", "message": "No se pudo enviar el reporte. Intenta más tarde."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
