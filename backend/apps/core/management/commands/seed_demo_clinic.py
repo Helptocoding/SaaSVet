@@ -388,11 +388,27 @@ class Command(BaseCommand):
             self._backdate_mr(mr, when)
 
         # --- 5 consultas ABIERTAS (backlog clínico) ------------------------
+        # Las 2 primeras se anclan a "ahora" (hoy, hace 5–40 min) → el tag
+        # "Ahora/En consulta" del dashboard coincide con el reloj a cualquier hora
+        # (cada reset las regenera). Las otras 3 quedan abiertas de días previos
+        # → pueblan "Pendientes clínicos" sin salir como "Ahora".
         open_pets = self.rnd.sample(pets, 5)
+        now_local = self.now.astimezone(self.tz)
+        day_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
         for i, pet in enumerate(open_pets):
             tmpl = CONSULTATION_TEMPLATES[i % len(CONSULTATION_TEMPLATES)]
-            when = self.now - timedelta(days=self.rnd.randint(0, 3))
-            appt = self._make_appointment(org, pet, vet, when, "in_progress", tmpl["reason"])
+            if i < 2:
+                start_local = now_local - timedelta(minutes=self.rnd.randint(5, 40))
+                if start_local < day_start + timedelta(minutes=1):
+                    start_local = day_start + timedelta(minutes=1)  # mantener HOY
+                when = start_local
+                appt = self._make_appointment(
+                    org, pet, vet, when, "in_progress", tmpl["reason"],
+                    start_override=start_local,
+                )
+            else:
+                when = self.now - timedelta(days=self.rnd.randint(1, 3))
+                appt = self._make_appointment(org, pet, vet, when, "in_progress", tmpl["reason"])
             # Algunas sin diagnóstico → grupo "sin diagnóstico" del dashboard.
             no_dx = (i % 2 == 0)
             _, mr = self._build_consultation(
@@ -452,15 +468,23 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ #
     # Helpers de construcción
     # ------------------------------------------------------------------ #
-    def _make_appointment(self, org, pet, vet, when, status, reason):
-        hour = 9 + (self.rnd.randint(0, 8))
-        start_t = time(hour, 0)
-        end_t = time(hour, 30)
-        start_dt = datetime.combine(when.date(), start_t, tzinfo=self.tz)
-        end_dt = datetime.combine(when.date(), end_t, tzinfo=self.tz)
+    def _make_appointment(self, org, pet, vet, when, status, reason, start_override=None):
+        # start_override (datetime tz-aware): ancla la cita a un instante exacto
+        # (p.ej. "ahora" para las consultas en curso → el tag "Ahora" del dashboard
+        # coincide con el reloj). Sin él: hora aleatoria de horario laboral 9–17.
+        if start_override is not None:
+            start_dt = start_override
+        else:
+            hour = 9 + (self.rnd.randint(0, 8))
+            start_dt = datetime.combine(when.date(), time(hour, 0), tzinfo=self.tz)
+        end_dt = start_dt + timedelta(minutes=30)
+        # No cruzar medianoche: start_time/end_time son TimeField naive y hay un
+        # CHECK end_time > start_time. Si +30min cae al día siguiente, clamp a 23:59.
+        if end_dt.date() != start_dt.date():
+            end_dt = start_dt.replace(hour=23, minute=59, second=0, microsecond=0)
         return Appointment.objects.create(
             organization=org, pet=pet, veterinarian=vet,
-            date=when.date(), start_time=start_t, end_time=end_t,
+            date=start_dt.date(), start_time=start_dt.time(), end_time=end_dt.time(),
             start_datetime=start_dt, end_datetime=end_dt,
             timezone_at_creation=org.timezone,
             reason=reason, status=status,
