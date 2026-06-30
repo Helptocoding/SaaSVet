@@ -18,6 +18,8 @@ Hay varios grupos de eventos segun su origen:
 - `cash.events` — turnos de caja, cierre Z (Sprint A / ADR p28)
 - `platform.events` — provisioning cross-tenant (ADR p19)
 - `analytics.events` — late arrivals, build de snapshots, anchor governance (ADR p17)
+- `apps.core.demo_reset` — reset del tenant demo (ADR p49)
+- `apps.core.services` — reporte de soporte → Discord
 
 ---
 
@@ -367,6 +369,60 @@ Accion requerida: investigar `audit_anchor_integrity` para encontrar el modelo c
 
 ---
 
+## Eventos del reset del tenant demo (`apps.core.demo_reset`)
+
+ADR p49 (`2026-06-29-p49-demo-tenant-reset.md`). Emitidos por `seed_demo_clinic --reset` (cron cada 30 min). El detalle de cada corrida también va al stdout del comando → `/var/log/vet-cron.log`.
+
+### `DEMO_RESET_COMPLETED` · INFO
+
+El reset de la org demo terminó OK (purge + rebuild atómico). Incluye los tiempos.
+
+Campos: `event`, `org_id`, `purge_ms`, `rebuild_ms`, `total_ms`.
+
+Accion requerida: ninguna.
+
+---
+
+### `DEMO_RESET_SKIPPED_LOCKED` · WARNING
+
+Otro reset ya estaba corriendo (advisory lock tomado). Este se omitió sin tocar nada — esperado si dos disparos se solapan.
+
+Campos: `event`, `org_id`.
+
+Accion requerida: ninguna si esporádico. Si es constante, revisar si un reset previo quedó colgado.
+
+---
+
+### `DEMO_RESET_VALIDATION_FAILED` · ERROR
+
+La validación inline post-rebuild falló (algún conteo bajo el mínimo) → la transacción hizo ROLLBACK; la demo quedó intacta. Indica un rebuild parcial o un cambio que rompió el seed.
+
+Campos: `event`, `org_id`, `failed` (dict `{métrica: {got, min}}`).
+
+Accion requerida: investigar (correr el reset manual + leer el error). Recuperación: ADR p49 §12.
+
+---
+
+## Eventos del reporte de soporte (`apps.core.services`)
+
+Botón "Reportar problema" → `POST /api/support/message/` → webhook de Discord (`send_support_report`). El secreto del webhook **nunca** se loguea.
+
+### `SUPPORT_MESSAGE_SENT` · INFO
+
+Reporte enviado a Discord OK. Campos: `event`, `user_id`, `org_id`.
+
+### `SUPPORT_WEBHOOK_NOT_CONFIGURED` · ERROR
+
+`DISCORD_WEBHOOK_URL` vacío → el endpoint responde 503 (soporte deshabilitado). Setear la variable en `.env.prod`.
+
+### `SUPPORT_WEBHOOK_FAILED` / `SUPPORT_WEBHOOK_TIMEOUT` / `SUPPORT_WEBHOOK_ERROR` · ERROR
+
+Discord rechazó (status no-2xx), no respondió a tiempo, o hubo error de red → el endpoint responde 502. Campos: `event` (+ `status`/`body` truncado en FAILED, `error` truncado en ERROR).
+
+Accion requerida: si frecuente, revisar que el webhook de Discord siga válido/activo y la conectividad saliente del VPS.
+
+---
+
 ## Regla practica para monitorear en produccion
 
 Ver con: `docker compose logs backend --follow`
@@ -391,6 +447,9 @@ Filtrar el stdout por nombre de evento:
 | `ANCHOR_LATE_ARRIVAL` | Bajo | Anchor en bucket frozen; warn-only Dia 5 |
 | `DASH_SNAPSHOT_CORRUPT` | Nunca | excluded_anchor_missing > 0 — correr audit_anchor_integrity |
 | `IDEMPOTENT_PAYMENT_DEDUPED` | Bajo | Retry de cobro funcionando como debe |
+| `DEMO_RESET_VALIDATION_FAILED` | Nunca | Reset demo dejó conteos bajo el mínimo (rollback) — ADR p49 §12 |
+| `DEMO_RESET_SKIPPED_LOCKED` | Ocasional | Dos resets demo solapados — normal; constante = reset colgado |
+| `SUPPORT_WEBHOOK_*` (ERROR) | Bajo | Webhook Discord caído / mal configurado — soporte responde 502/503 |
 
 El `request_id` permite agrupar multiples eventos del mismo request HTTP para reconstruir que paso exactamente en una solicitud especifica.
 

@@ -152,6 +152,7 @@ el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))
 - Conflicto de estado/integridad (409): `{code: 'resource_has_dependencies', message, protected_count: int, protected_count_truncated: bool, protected_sample: [{type, id, public_id}]}` (cuando el backend bloquea por FK PROTECT)
 - Conflicto de recurso genérico (409): `{code: 'generic_resource_protected', message}` (cuando se intenta borrar Owner/Pet genérico)
 - Endpoint deprecado removido (410): `{code: 'endpoint_sunset', message}` (post-Sunset RFC 8594, e.g. `/api/organizations/<pk>/` post-2026-08-17)
+- Demo en reset (503): `{code: 'demo_resetting', message}` + header `Retry-After` (solo **escrituras** de la org demo durante un reset automático; las lecturas pasan — ADR p49). Tenants reales nunca lo reciben.
 
 Frontend debe distinguir por `code` field, no por status code. El handler `apiError` ya extrae `message` correctamente. Para mostrar acción específica (e.g. "este registro tiene 5 mascotas asociadas"), parsear `protected_count` y `protected_sample`.
 

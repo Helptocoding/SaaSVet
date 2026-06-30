@@ -258,6 +258,50 @@ Toggles disponibles:
 Ver ADR `2026-04-28-organization-settings-toggles.md` para el racional de cada toggle.
 Ver ADR `2026-05-27-p28-cash-session-cierre-z.md` para el toggle de caja.
 
+## Tenant demo (`is_demo`) y su reset automático (ADR p49)
+
+La demo pública del SaaS es **una `Organization` real marcada `is_demo=True`** (no
+es otra base ni mocks: es un tenant más, aislado por multitenancy).
+`Organization.is_demo` es la **única autoridad** para las operaciones destructivas
+del demo — nunca se opera por nombre.
+
+### Reset automático cada 30 min
+
+Un cron (`scripts/crontab.example`, `10,40 * * * *`) corre
+`seed_demo_clinic --reset --yes`, que deja la org demo en su estado inicial **sin
+tocar ninguna otra clínica**:
+
+- **Atómico**: purge + rebuild en una sola `transaction.atomic` (MVCC oculta el
+  estado intermedio; un crash hace ROLLBACK total → la demo nunca queda a medio
+  borrar).
+- **Exclusión mutua**: `pg_try_advisory_xact_lock` no bloqueante — si otro reset
+  corre, sale 0 sin tocar nada (no se encolan disparos).
+- **Validación inline** pre-commit (conteos mínimos) + log de duración.
+- **Cierre del P0**: el purge borra `analytics.MetricAdjustment` (FK PROTECT a
+  `Invoice`) **antes** de `Invoice`, además de los snapshots de analytics e
+  `ImportJob`. Sin esto, una devolución de un visitante bloqueaba el reset.
+- Guards: aborta si hay 0 o >1 orgs `is_demo=True`; exige `--yes`.
+
+Runbook: [`docs/runbooks/demo-seed.md`](../runbooks/demo-seed.md). Diseño completo
+y recuperación ante fallo (§12): ADR p49 (`docs/decisions/2026-06-29-p49-demo-tenant-reset.md`).
+Benchmark real en prod: purge ~0.4 s · rebuild ~13 s · total ~13 s.
+
+### Ventana de mantenimiento (`DemoResetGate`)
+
+Mientras un reset está en curso, un flag en cache (`demo_reset:in_progress`) hace
+que las **escrituras** de usuarios de la org demo reciban **`503` con código
+`demo_resetting` + header `Retry-After`**. Las **lecturas** pasan (MVCC sirve un
+estado consistente) y los **tenants reales jamás se ven afectados**. El check vive
+en `core.permissions._demo_reset_blocks`, embebido en `HybridPermission` (cubre los
+endpoints RBAC, que pisan el `DEFAULT_PERMISSION_CLASSES`) y también registrado como
+`DemoResetGate` en el default.
+
+### Restricciones de la cuenta demo (`NotDemoAccount`)
+
+Los usuarios demo (credenciales compartidas) **no** pueden cambiar contraseña ni
+importar datos (`core.permissions.NotDemoAccount` → 403); el resto de la operación
+es normal. `/api/me/` expone `is_demo` para que el frontend oculte esas opciones.
+
 ## RBAC — como funciona
 
 El sistema usa `HybridPermission`: primero busca permisos en DB, si no encuentra usa fallback estatico.
