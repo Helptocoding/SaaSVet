@@ -154,7 +154,7 @@ patrón del P0.
 
 ## 6. Estrategia transaccional (decisión aprobada: una sola transacción; tiempos = estimación, validación posterior)
 
-### 6.1 Tiempos — estimación analítica (NO medición)
+### 6.1 Tiempos — estimación analítica + medición real (prod)
 No se exige benchmark como requisito bloqueante: hoy no hay un entorno representativo para
 medir con la carga real de producción sin riesgo. Se documenta explícitamente:
 
@@ -168,6 +168,12 @@ medir con la carga real de producción sin riesgo. Se documenta explícitamente:
 Conteo (de `seed_demo_clinic.py`): purge ≈ 20 `DELETE` masivos (no por-fila) → **< 1 s**;
 rebuild ≈ **1.8–2k** round-trips (≈50 con `select_for_update`, mayoría con `full_clean`) →
 **~3–30 s** estimado; **proceso completo estimado < ~30 s**.
+
+**Medición real (prod, 2026-06-30):** purge **369 ms** · rebuild **12.8 s** · total
+**~13.2 s** (`seed_demo_clinic --reset`, org demo id=2 en el VPS). Confirma la
+estimación y valida la transacción única: ~13 s vs ventana de 30 min (1800 s) =
+**~135× de margen**, y el TTL del flag de mantenimiento (120 s) queda holgado sobre
+los 13 s. **Benchmark cerrado** — no requiere reevaluación (§6.4).
 
 **La arquitectura no depende de si el reset tarda 4, 8 o 15 segundos.** Lo relevante es que
 permanezca dentro de un orden de magnitud razonable para una ejecución cada 30 min (margen
