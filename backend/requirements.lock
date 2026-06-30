@@ -11,9 +11,13 @@ asgiref==3.11.1
 bleach==6.3.0
     # via -r requirements.txt
 certifi==2026.5.20
-    # via sentry-sdk
+    # via
+    #   requests
+    #   sentry-sdk
 charset-normalizer==3.4.7
-    # via reportlab
+    # via
+    #   reportlab
+    #   requests
 dj-database-url==3.1.2
     # via -r requirements.txt
 django==6.0.5
@@ -36,6 +40,8 @@ djangorestframework-simplejwt==5.5.1
     # via -r requirements.txt
 gunicorn==26.0.0
     # via -r requirements.txt
+idna==3.13
+    # via requests
 packaging==26.2
     # via gunicorn
 pillow==12.2.0
@@ -54,6 +60,8 @@ redis==8.0.0
     # via django-redis
 reportlab==4.5.1
     # via -r requirements.txt
+requests==2.33.1
+    # via -r requirements.txt
 sentry-sdk==2.60.0
     # via -r requirements.txt
 sqlparse==0.5.5
@@ -63,7 +71,9 @@ tzdata==2026.2
     #   django
     #   psycopg
 urllib3==2.7.0
-    # via sentry-sdk
+    # via
+    #   requests
+    #   sentry-sdk
 webencodings==0.5.1
     # via bleach
 whitenoise==6.12.0
