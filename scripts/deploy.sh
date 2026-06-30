@@ -144,6 +144,13 @@ compose up -d
 # ---------------------------------------------------------------------------
 if health_gate "$SHA"; then
   external_health
+  # Point :latest at the just-deployed code so `docker compose run --rm backend`
+  # (manual mgmt commands + cron jobs, which DON'T pass IMAGE_TAG → resolve to
+  # vet-backend:latest) uses the CURRENT code, not a stale first-build image.
+  # Without this the demo-reset cron (and every cron mgmt command) silently runs
+  # old code. Best-effort; never fail the deploy.
+  docker tag "vet-backend:$SHA" vet-backend:latest 2>/dev/null || true
+  docker tag "vet-frontend:$SHA" vet-frontend:latest 2>/dev/null || true
   # Rollback target = the tag we just replaced. On a same-SHA redeploy keep the
   # PRE-EXISTING previous so rollback still has somewhere to go (don't collapse
   # PREVIOUS onto CURRENT).
@@ -174,6 +181,10 @@ compose up -d
 
 if health_gate "$PREV_TAG"; then
   err "ROLLED BACK to previous image $PREV_TAG — service is healthy again on the OLD code."
+  # Keep :latest pointing at the LIVE (rolled-back) code so `run --rm` + cron
+  # don't use the failed image.
+  docker tag "vet-backend:$PREV_TAG" vet-backend:latest 2>/dev/null || true
+  docker tag "vet-frontend:$PREV_TAG" vet-frontend:latest 2>/dev/null || true
   # Live is PREV_TAG again; the next rollback target is the tag that preceded it
   # (not PREV_TAG itself — that would make a further rollback a no-op).
   write_state "$PREV_TAG" "${PREV_PREV_TAG:-}" "$PREDEPLOY"
