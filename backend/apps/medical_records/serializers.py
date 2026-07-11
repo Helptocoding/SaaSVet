@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from apps.core.sanitize import sanitize_text
-from .models import ConsultationAssessment, MedicalRecord, MedicalRecordService, VaccineRecord, VitalSigns
+from .models import ConsultationAssessment, MedicalRecord, MedicalRecordService, SurgeryRecord, VaccineRecord, VitalSigns
 from .models import _get_last_weight
 from .policies import can_close_medical_record, can_modify_medical_record_charges, medical_record_has_clinical_content
 
@@ -14,7 +14,7 @@ from .policies import can_close_medical_record, can_modify_medical_record_charge
 # fuente de verdad). Se amplia 1 clave por protocolo clinico nuevo. Evita que el
 # campo se vuelva un cajon de sastre donde cualquier componente escriba cualquier
 # cosa. Ver docs/modules/medical_records.md (principio de protocolos).
-ALLOWED_CONSULTATION_DRAFT_KEYS = {"vaccine", "general"}
+ALLOWED_CONSULTATION_DRAFT_KEYS = {"vaccine", "general", "surgery"}
 
 
 def _validate_weight_change(pet, new_weight, force=False):
@@ -426,6 +426,17 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El nombre de la vacuna es requerido.")
         return clean
 
+    def validate(self, attrs):
+        # Defensa en profundidad (espeja vaccineProtocol.validate del frontend):
+        # el refuerzo debe ser posterior a la aplicación.
+        app = attrs.get('application_date')
+        due = attrs.get('next_due_date')
+        if app and due and due <= app:
+            raise serializers.ValidationError(
+                {"next_due_date": "El refuerzo debe ser posterior a la fecha de aplicación."}
+            )
+        return attrs
+
     def validate_application_date(self, value):
         if value > date.today():
             raise serializers.ValidationError("La fecha de aplicación no puede ser en el futuro.")
@@ -435,6 +446,50 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
         if pet and pet.organization != self.context['request'].user.organization:
             raise serializers.ValidationError('Acceso inválido.')
         return pet
+
+
+class SurgeryRecordSerializer(serializers.ModelSerializer):
+    """Protocolo Cirugía (A3). Valida el mínimo obligatorio (PreOp+Proc+Recup)."""
+    surgeon_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SurgeryRecord
+        fields = [
+            'id', 'public_id', 'pet', 'medical_record', 'surgeon', 'surgeon_name',
+            'preop_diagnosis', 'surgery_type', 'asa_class', 'asa_emergency',
+            'anesthesia_type', 'procedure', 'wound_class', 'findings', 'complications',
+            'postop_instructions', 'suture_removal_date', 'protocol_version', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'public_id', 'pet', 'medical_record', 'surgeon', 'surgeon_name',
+            'protocol_version', 'created_at',
+        ]
+
+    def get_surgeon_name(self, obj):
+        if obj.surgeon:
+            return f"{obj.surgeon.first_name} {obj.surgeon.last_name}".strip()
+        return None
+
+    def validate_procedure(self, value):
+        clean = sanitize_text(value or '', max_length=2000)
+        if not clean.strip():
+            raise serializers.ValidationError("El procedimiento realizado es obligatorio.")
+        return clean
+
+    def validate_postop_instructions(self, value):
+        clean = sanitize_text(value or '', max_length=2000)
+        if not clean.strip():
+            raise serializers.ValidationError("Las indicaciones postoperatorias son obligatorias.")
+        return clean
+
+    def validate_preop_diagnosis(self, value):
+        return sanitize_text(value or '', max_length=500)
+
+    def validate_findings(self, value):
+        return sanitize_text(value or '', max_length=2000)
+
+    def validate_complications(self, value):
+        return sanitize_text(value or '', max_length=2000)
 
     def validate_medical_record(self, mr):
         if mr and mr.organization != self.context['request'].user.organization:

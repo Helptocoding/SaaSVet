@@ -37,12 +37,12 @@ def apply_consultation_draft_on_close(medical_record, request):
     -> rollback del cierre completo (defensa en profundidad; el frontend ya valida
     antes de finalizar).
     """
-    ctype = medical_record.consultation_type
-    if ctype == MedicalRecord.ConsultationType.VACCINE:
-        return _materialize_vaccine(medical_record, request)
-    if ctype == MedicalRecord.ConsultationType.GENERAL:
-        return _materialize_general(medical_record, request)
-    return None
+    # Registry de materializadores por tipo de consulta (extraído en la 2ª
+    # repetición — Cirugía, A3). Agregar protocolo = 1 entrada en _MATERIALIZERS.
+    materializer = _MATERIALIZERS.get(medical_record.consultation_type)
+    if materializer is None:
+        return None
+    return materializer(medical_record, request)
 
 
 def add_medical_record_product(medical_record, presentation, quantity, cost_behavior, lot, user):
@@ -241,3 +241,67 @@ def _materialize_general(medical_record, request):
         },
     )
     return assessment
+
+
+def _materialize_surgery(medical_record, request):
+    """
+    Protocolo Cirugía (A3). Gate: el draft `surgery` trae contenido estructurado
+    (tipo/procedimiento/postop). El `SurgeryRecordSerializer` valida el mínimo
+    obligatorio (tipo, ASA, anestesia, procedimiento, postop) → draft inválido =
+    rollback del cierre. `surgeon` = el vet que finaliza (server-side).
+    """
+    from .serializers import SurgeryRecordSerializer
+    from .models import SurgeryRecord
+
+    draft = medical_record.consultation_draft or {}
+    surgery = draft.get("surgery") or {}
+    has_content = any([
+        surgery.get("surgery_type"),
+        (surgery.get("procedure") or "").strip(),
+        (surgery.get("postop_instructions") or "").strip(),
+    ])
+    if not has_content:
+        return None
+
+    payload = {
+        "preop_diagnosis": surgery.get("preop_diagnosis") or "",
+        "surgery_type": surgery.get("surgery_type"),
+        "asa_class": surgery.get("asa_class"),
+        "asa_emergency": bool(surgery.get("asa_emergency", False)),
+        "anesthesia_type": surgery.get("anesthesia_type"),
+        "procedure": surgery.get("procedure") or "",
+        "wound_class": surgery.get("wound_class") or "",
+        "findings": surgery.get("findings") or "",
+        "complications": surgery.get("complications") or "",
+        "postop_instructions": surgery.get("postop_instructions") or "",
+        "suture_removal_date": surgery.get("suture_removal_date") or None,
+    }
+    serializer = SurgeryRecordSerializer(data=payload, context={"request": request})
+    serializer.is_valid(raise_exception=True)
+    record = serializer.save(
+        organization=medical_record.organization,
+        medical_record=medical_record,
+        pet=medical_record.pet,
+        surgeon=request.user,
+        protocol_version=SurgeryRecord.PROTOCOL_VERSION,
+    )
+
+    logger.info(
+        "SURGERY_RECORD_MATERIALIZED_ON_CLOSE",
+        extra={
+            "user_id": request.user.id,
+            "organization_id": request.user.organization_id,
+            "medical_record_id": medical_record.id,
+            "surgery_record_id": record.id,
+        },
+    )
+    return record
+
+
+# Registry de materializadores por tipo de consulta (extraído en la 2ª repetición).
+# Agregar un protocolo backend = una entrada aquí (+ su whitelist en el serializer).
+_MATERIALIZERS = {
+    MedicalRecord.ConsultationType.VACCINE: _materialize_vaccine,
+    MedicalRecord.ConsultationType.GENERAL: _materialize_general,
+    MedicalRecord.ConsultationType.SURGERY: _materialize_surgery,
+}

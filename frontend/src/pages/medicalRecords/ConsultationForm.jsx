@@ -74,7 +74,11 @@ const normalizeVitals = (d) => ({
 const validateForClose = (d) => {
   const errors = {};
   if (!(d.diagnosis || "").trim()) errors.diagnosis = ["El diagnóstico es obligatorio."];
-  if (d.consultation_type !== "vaccine" && !(d.treatment || "").trim()) {
+  // Tratamiento del MedicalRecord no obligatorio para protocolos que capturan su
+  // plan en su propio registro: Vacuna (VaccineRecord) y Cirugía (postop en
+  // SurgeryRecord). Delegación al protocolo (diseño A3, espeja el backend).
+  const treatmentExempt = d.consultation_type === "vaccine" || d.consultation_type === "surgery";
+  if (!treatmentExempt && !(d.treatment || "").trim()) {
     errors.treatment = ["El tratamiento es obligatorio."];
   }
   return errors;

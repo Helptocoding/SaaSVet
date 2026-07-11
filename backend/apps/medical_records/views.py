@@ -478,7 +478,15 @@ def close_medical_record(request, pk):
             )
             raise ValidationError({"diagnosis": "El diagnóstico es obligatorio."})
 
-        if medical_record.consultation_type != MedicalRecord.ConsultationType.VACCINE:
+        # El tratamiento del MedicalRecord no es obligatorio para protocolos que
+        # capturan su plan en su propio registro: Vacuna (VaccineRecord) y
+        # Cirugía (SurgeryRecord.postop_instructions). Delegación de validación al
+        # protocolo activo (diseño A3).
+        _treatment_exempt = {
+            MedicalRecord.ConsultationType.VACCINE,
+            MedicalRecord.ConsultationType.SURGERY,
+        }
+        if medical_record.consultation_type not in _treatment_exempt:
             treatment = sanitize_text(medical_record.treatment or '', max_length=400)
             if not treatment.strip():
                 events_logger.warning(

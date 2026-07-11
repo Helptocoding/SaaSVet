@@ -323,9 +323,19 @@ del `transaction.atomic()` de `close_medical_record`**, junto al invoice-guard y
 completación de la cita. Finalizar es **una sola operación**: o se cierra la consulta Y se
 crea el registro legal, o nada (rollback). El frontend **NO** hace un POST aparte de vacuna.
 
-- Gate: solo materializa si `consultation_type == 'vaccine'` y el draft trae `vaccine_name`.
-  Si se finaliza como otro tipo, el draft de vacuna **no** se materializa (puede sobrevivir
-  en `consultation_draft` sin volverse registro legal).
+- **Registry de materializadores** (`services._MATERIALIZERS = {type: fn}`, extraído en la 2ª
+  repetición — Cirugía, A3): `apply_consultation_draft_on_close` despacha por
+  `consultation_type`. Protocolos hoy: `general` (`ConsultationAssessment`), `vaccine`
+  (`VaccineRecord`), `surgery` (`SurgeryRecord`). Agregar protocolo = 1 entrada + su clave en
+  `ALLOWED_CONSULTATION_DRAFT_KEYS` + su serializer. Cada materializador gatea si su slice del
+  draft trae contenido; si no, el tipo se finaliza sin registro (fallback, como una consulta
+  clásica).
+- **Cirugía** (`SurgeryRecord`, A3): grupos PreOp·Proc·Recup (`surgery_type`, `asa_class`,
+  `anesthesia_type`, `procedure`, `wound_class`, `complications`, `postop_instructions`,
+  `suture_removal_date`; `surgeon` server-side; `protocol_version`). El
+  `SurgeryRecordSerializer` valida el mínimo obligatorio → draft inválido = rollback del cierre.
+  **Cierre delega la validación al protocolo**: Cirugía y Vacuna **no** exigen
+  `MedicalRecord.treatment` (su plan vive en su registro).
 - Reusa `VaccineRecordSerializer` para validar (nombre, `application_date` no futura,
   `next_due_date > application_date`); `applied_by`/`organization` server-side. Draft
   inválido → `ValidationError` → rollback del cierre (400). Defensa en profundidad (el

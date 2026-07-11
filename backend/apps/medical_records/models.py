@@ -240,6 +240,86 @@ class ConsultationAssessment(OrganizationalModel):
         ]
 
 
+class SurgeryRecord(PublicIdMixin, OrganizationalModel):
+    """
+    Registro quirúrgico (protocolo Cirugía, A3 — diseño 2026-07-09 §12). Una tabla
+    con los grupos PreOp · Procedimiento · Recuperación. Se materializa en el cierre;
+    un protocolo NUNCA muta MedicalRecord (ADR p50). `protocol_version` congela el
+    esquema para interpretar cirugías viejas cuando el protocolo evolucione.
+    """
+    PROTOCOL_VERSION = 1
+
+    class SurgeryType(models.TextChoices):
+        ELECTIVA = 'electiva', 'Electiva'
+        PROGRAMADA = 'programada', 'Programada'
+        URGENCIA = 'urgencia', 'Urgencia'
+        EMERGENCIA = 'emergencia', 'Emergencia'
+
+    class AsaClass(models.TextChoices):
+        I = 'I', 'ASA I'
+        II = 'II', 'ASA II'
+        III = 'III', 'ASA III'
+        IV = 'IV', 'ASA IV'
+        V = 'V', 'ASA V'
+
+    class AnesthesiaType(models.TextChoices):
+        GENERAL = 'general', 'General'
+        LOCORREGIONAL = 'locorregional', 'Locorregional'
+        SEDACION = 'sedacion', 'Sedación'
+        LOCAL = 'local', 'Local'
+
+    class WoundClass(models.TextChoices):
+        LIMPIA = 'limpia', 'Limpia'
+        LIMPIA_CONTAMINADA = 'limpia_contaminada', 'Limpia-contaminada'
+        CONTAMINADA = 'contaminada', 'Contaminada'
+        SUCIA = 'sucia', 'Sucia'
+
+    medical_record = models.ForeignKey(
+        MedicalRecord, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='surgery_records',
+    )
+    pet = models.ForeignKey(Pet, on_delete=models.PROTECT, related_name='surgery_records')
+    surgeon = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='surgeries_performed',
+    )
+
+    # PreOp
+    preop_diagnosis = models.CharField(max_length=500, blank=True)
+    surgery_type = models.CharField(max_length=20, choices=SurgeryType.choices)
+    asa_class = models.CharField(max_length=5, choices=AsaClass.choices)
+    asa_emergency = models.BooleanField(default=False)   # sufijo "E" de ASA
+
+    # Procedimiento
+    anesthesia_type = models.CharField(max_length=20, choices=AnesthesiaType.choices)
+    procedure = models.TextField(max_length=2000)
+    wound_class = models.CharField(max_length=20, choices=WoundClass.choices, blank=True, default='')
+    findings = models.TextField(max_length=2000, blank=True)
+    complications = models.TextField(max_length=2000, blank=True)   # "ninguna" permitido
+
+    # Recuperación
+    postop_instructions = models.TextField(max_length=2000)
+    suture_removal_date = models.DateField(null=True, blank=True)
+
+    protocol_version = models.PositiveSmallIntegerField(default=1, editable=False)
+
+    def clean(self):
+        org = self.organization_id
+        if org and self.pet_id and self.pet.organization_id != org:
+            raise ValidationError("La mascota no pertenece a la misma organización que la cirugía.")
+        if org and self.medical_record_id and self.medical_record.organization_id != org:
+            raise ValidationError("La consulta no pertenece a la misma organización que la cirugía.")
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['organization', 'pet', '-created_at'],
+                         name='idx_surgery_org_pet'),
+            models.Index(fields=['organization', 'created_at'],
+                         name='idx_surgery_org_created'),
+        ]
+
+
 class VitalSigns(OrganizationalModel):
     """
     Registro histórico de signos vitales por consulta. Append-only: sin PATCH/DELETE.

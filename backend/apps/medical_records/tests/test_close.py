@@ -213,7 +213,9 @@ class CloseMedicalRecordTests(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("diagnosis", r.data["errors"])
 
-    def test_close_cirugia_sin_treatment_retorna_400(self):
+    def test_close_cirugia_sin_treatment_retorna_200(self):
+        # A3: cirugía NO exige treatment del MedicalRecord (el plan postoperatorio
+        # vive en SurgeryRecord.postop_instructions). Validación delegada al protocolo.
         mr = self._make_record()
         mr.consultation_type = MedicalRecord.ConsultationType.SURGERY
         mr.diagnosis = "fractura"
@@ -221,8 +223,7 @@ class CloseMedicalRecordTests(APITestCase):
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
         r = self.client.post(self._close_url(mr.pk))
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("treatment", r.data["errors"])
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_close_cirugia_con_ambos_retorna_200(self):
         mr = self._make_record()
