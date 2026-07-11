@@ -271,6 +271,17 @@ class InvoiceItem(OrganizationalModel):
         blank=True,
         related_name='dispensed_invoice_items',
     )
+    # Trazabilidad por lote (spec 2026-07-10, B2b). Nullable: productos sin
+    # tracks_lots lo dejan null. Para ítems que LIQUIDAN stock (venta directa /
+    # dispensación) de un producto tracks_lots, es el lote del que se descuenta al
+    # confirmar y al que se revierte en cancelación/devolución (P4). Inmutable.
+    lot = models.ForeignKey(
+        'inventory.StockLot',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invoice_items',
+    )
     DISCOUNT_TYPE_CHOICES = (
         ('percentage', 'Porcentaje'),
         ('fixed', 'Monto fijo'),

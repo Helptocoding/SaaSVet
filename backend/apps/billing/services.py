@@ -12,8 +12,8 @@ _analytics_events = logging.getLogger('analytics.events')
 
 from decimal import Decimal
 
-from apps.inventory.services import apply_stock_movement
-from apps.inventory.models import Presentation
+from apps.inventory.services import consume_product, restock_product, first_consumable_lot
+from apps.inventory.models import Presentation, StockLot
 from apps.billing.money import money, discount_amount, line_subtotal
 from .models import Invoice, InvoiceAuditLog, InvoiceItem, Payment
 
@@ -190,11 +190,13 @@ def _confirm_locked_invoice(invoice, user):
         )
         for item in items_to_settle:
             try:
-                apply_stock_movement(
+                # Única entrada de consumo (spec §10). lot=item.lot (None en
+                # productos sin tracks_lots → path histórico idéntico).
+                consume_product(
                     presentation=item.presentation,
-                    quantity=_qty_base(item),
-                    movement_type='out',
+                    quantity_base=_qty_base(item),
                     organization=invoice.organization,
+                    lot=item.lot,
                     reason=reason,
                     created_by=user,
                     invoice=invoice,
@@ -418,11 +420,13 @@ def cancel_invoice(invoice, user, notes=''):
         if items_to_revert:
             for item in items_to_revert:
                 try:
-                    apply_stock_movement(
+                    # Reverso al MISMO lote del que se descontó (P4). lot=None en
+                    # productos sin tracks_lots → path histórico idéntico.
+                    restock_product(
                         presentation=item.presentation,
-                        quantity=_qty_base(item),
-                        movement_type='in',
+                        quantity_base=_qty_base(item),
                         organization=invoice.organization,
+                        lot=item.lot,
                         reason=f'Reversión por cancelación — Factura #{invoice.pk}',
                         created_by=user,
                         invoice=invoice,
@@ -665,9 +669,10 @@ def process_refund(invoice, user, *, credit_lines, refund_lines, reason_code,
         if disposition == 'restock' and item.presentation_id:
             # ADR p31: qty está en presentaciones; convertir a base_units para stock.
             qty_base = qty * (item.presentation.conversion_factor or 1)
-            apply_stock_movement(
-                presentation=item.presentation, quantity=qty_base,
-                movement_type='in', organization=invoice.organization,
+            # Reverso al lote original del ítem (P4); None si el producto no usa lotes.
+            restock_product(
+                presentation=item.presentation, quantity_base=qty_base,
+                organization=invoice.organization, lot=item.lot,
                 reason=f'Devolución — NC #{credit_note.pk}', created_by=user, invoice=invoice,
             )
 
@@ -998,7 +1003,11 @@ def dispense_prescription_into_invoice(prescription, lines, user):
         if qty <= 0:
             raise ValidationError("La cantidad a dispensar debe ser mayor a 0.")
         pres_id = line['presentation_id']
-        entry = aggregated.setdefault(pres_id, {'qty': Decimal('0'), 'rx_item_id': line.get('prescription_item_id')})
+        entry = aggregated.setdefault(pres_id, {
+            'qty': Decimal('0'),
+            'rx_item_id': line.get('prescription_item_id'),
+            'lot_id': line.get('lot_id'),
+        })
         entry['qty'] += qty
 
     if not aggregated:
@@ -1046,9 +1055,41 @@ def dispense_prescription_into_invoice(prescription, lines, user):
                 f"consulta; ajusta su cantidad directamente en la factura."
             )
 
+        # Lote (B2b): obligatorio y consumible si el producto lo trackea. Si el
+        # ítem dispensado ya existe, conserva su lote (inmutable); el nuevo lote
+        # solo aplica al crear la línea.
+        stock_lot = None
+        if pres.product.tracks_lots:
+            if existing is not None:
+                stock_lot = existing.lot  # inmutable: conserva el lote de la línea
+            else:
+                lot_id = entry.get('lot_id')
+                if lot_id is not None:
+                    # Override explícito (si la UI lo envía).
+                    stock_lot = (
+                        StockLot.objects.for_organization(org)
+                        .filter(pk=lot_id, product=pres.product).first()
+                    )
+                    if stock_lot is None:
+                        raise ValidationError("Lote inválido para este producto.")
+                    if not stock_lot.is_consumable:
+                        raise ValidationError(
+                            f"El lote {stock_lot.lot_number} no está disponible "
+                            f"({stock_lot.effective_status})."
+                        )
+                else:
+                    # FEFO automático (P1) — se fija en el ítem para que el reverso
+                    # (cancelación/devolución) vuelva al mismo lote.
+                    stock_lot = first_consumable_lot(pres.product)
+                    if stock_lot is None:
+                        raise ValidationError(
+                            f"'{pres.product.name}' no tiene lotes disponibles para dispensar."
+                        )
+
         entry['pres'] = pres
         entry['rx_item'] = rx_item
         entry['existing'] = existing
+        entry['lot'] = stock_lot
         cf = pres.conversion_factor or Decimal('1')
         requested_base[rx_item.id] = requested_base.get(rx_item.id, Decimal('0')) + qty * cf
 
@@ -1071,6 +1112,7 @@ def dispense_prescription_into_invoice(prescription, lines, user):
                 unit_price=pres.sale_price,
                 organization=org,
                 dispensed_from_prescription_item=entry['rx_item'],
+                lot=entry.get('lot'),
             )
 
     return Invoice.objects.for_organization(org).select_for_update().get(pk=invoice.pk)

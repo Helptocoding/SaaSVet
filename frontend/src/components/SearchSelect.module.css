@@ -1,0 +1,71 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.clearBtn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-text-3);
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+  transition: color var(--t), background var(--t);
+}
+
+.clearBtn:hover {
+  color: var(--c-text);
+  background: var(--c-subtle);
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: popoverIn 0.15s ease;
+}
+
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.statusText {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--c-text-3);
+}
+
+.item {
+  padding: 9px 14px;
+  font-size: 13.5px;
+  cursor: pointer;
+  color: var(--c-text);
+  transition: background var(--t);
+}
+
+.item:hover {
+  background: var(--c-subtle);
+}
+
+.item:not(:last-child) {
+  border-bottom: none;
+}

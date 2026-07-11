@@ -87,6 +87,11 @@ const POS = () => {
             toast.error(`${rxIncomplete.name} requiere receta: confirma que el cliente la presentó e indica el médico.`);
             return false;
         }
+        const missingLot = cart.items.find(i => i.type === "product" && i.tracksLots && !i.lot?.id);
+        if (missingLot) {
+            toast.error(`${missingLot.name}: selecciona un lote disponible.`);
+            return false;
+        }
         if (!customer.owner && !genericOwner) {
             toast.error("No se encontró el cliente genérico. Verifica la configuración.");
             return false;
@@ -111,6 +116,9 @@ const POS = () => {
                 let body;
                 if (item.type === "product") {
                     body = { presentation: item.id, quantity: String(parseInt(item.quantity, 10)) };
+                    if (item.tracksLots && item.lot?.id) {
+                        body.lot = item.lot.id;
+                    }
                     if (item.requiresRx) {
                         // ADR p26: atestación de receta externa.
                         body.rx_attested = true;

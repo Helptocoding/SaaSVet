@@ -223,6 +223,30 @@ export const AuthProvider = ({ children }) => {
         setPermissions(Object.freeze(new Set(userData.permissions || [])));
     };
 
+    // Re-lee /me/ con el access token vigente y refresca user + permisos en React
+    // state. Necesario cuando un flag del usuario cambió server-side pero el token
+    // que ya tenía el cliente no lo reflejaba (p.ej. tras cambiar la contraseña
+    // temporal: el backend limpia must_change_password, pero login() solo intercambia
+    // tokens — sin esto, el gate seguiría rebotando a /change-password). Devuelve el
+    // user fresco o null si falla.
+    const refreshUser = useCallback(async () => {
+        const access = getItem("access_token");
+        if (!access) return null;
+        try {
+            const res = await fetch(`${API_BASE}me/`, {
+                headers: { Authorization: `Bearer ${access}` },
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            storeUser(data);
+            setUser(data);
+            setPermissions(Object.freeze(new Set(data.permissions || [])));
+            return data;
+        } catch {
+            return null;
+        }
+    }, []);
+
     const isAuthenticated = !!token && !!user;
 
     const can = useCallback(
@@ -249,6 +273,7 @@ export const AuthProvider = ({ children }) => {
                 login,
                 logout,
                 setUserData,
+                refreshUser,
                 isAuthenticated,
                 permissions,
                 can,

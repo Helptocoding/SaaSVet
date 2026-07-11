@@ -1,10 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../auth/authContext";
 import { useDashboardSummary } from "../../hooks/useDashboardSummary";
 import { useFinancialSeries } from "../../hooks/useFinancialSeries";
-import { useActivation } from "../../hooks/useActivation";
+import { useActivationContext } from "../../hooks/activationContext";
 import DashboardTopBar from "../../components/dashboard/DashboardTopBar";
-import SetupChecklist from "../../components/dashboard/SetupChecklist";
+import FirstRunAssistant from "../../components/dashboard/FirstRunAssistant";
 import KpiStrip from "../../components/dashboard/KpiStrip";
 import TodayAgendaList from "../../components/dashboard/TodayAgendaList";
 import NowPanel from "../../components/dashboard/NowPanel";
@@ -89,8 +89,22 @@ function buildKpiItems(kpis, role) {
 const Dashboard = () => {
   const { user } = useAuth();
   const { data, loading, error, refetch } = useDashboardSummary();
-  const { activation } = useActivation();
+  const { refetch: refetchActivation } = useActivationContext();
   const { series: finSeries, today: finToday } = useFinancialSeries(7, true);
+
+  // Al (re)entrar al dashboard, re-chequear la activación: si el usuario acaba de
+  // crear un paciente/servicio en otro módulo, el paso avanza y se dispara la
+  // micro-celebración (o el cierre) del FirstRunAssistant.
+  useEffect(() => { refetchActivation(); }, [refetchActivation]);
+
+  // Reveal de página (una sola animación) al terminar el onboarding: el overlay se
+  // desvanece y el dashboard entra con `.dash-reveal`. One-shot.
+  const [revealing, setRevealing] = useState(false);
+  const handleFirstRunComplete = useCallback(() => {
+    setRevealing(true);
+    const t = setTimeout(() => setRevealing(false), 1000);
+    return () => clearTimeout(t);
+  }, []);
 
   const revenueToday = finToday?.metrics?.revenuePaid ?? null;
   const revenueDelta = useMemo(
@@ -144,13 +158,18 @@ const Dashboard = () => {
   if (loading && !data) return renderSkeleton();
 
   return (
-    <div className="dash-page">
-      <DashboardTopBar
-        summary={data}
-        revenueToday={revenueToday}
-        revenueSpark={revenueSpark}
-        revenueDelta={revenueDelta}
-      />
+    <>
+      {/* Overlay de primer uso (fuera de .dash-page: el reveal anima solo el
+          dashboard, no el overlay que se desvanece por su cuenta). */}
+      <FirstRunAssistant onComplete={handleFirstRunComplete} />
+
+      <div className={`dash-page${revealing ? " dash-reveal" : ""}`}>
+        <DashboardTopBar
+          summary={data}
+          revenueToday={revenueToday}
+          revenueSpark={revenueSpark}
+          revenueDelta={revenueDelta}
+        />
 
       {error && (
         <div className="dash-error-banner">
@@ -161,8 +180,6 @@ const Dashboard = () => {
 
       <div className="dash-grid">
         <main className="dash-main">
-          <SetupChecklist activation={activation} />
-
           <KpiStrip items={kpiItems} />
 
           <section className="card dash-timeline-card">
@@ -179,7 +196,8 @@ const Dashboard = () => {
           <div className="card"><StockAlerts alerts={data?.stock_alerts} /></div>
         </aside>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

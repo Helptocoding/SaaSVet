@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from apps.core.models import OrganizationalModel, PublicIdMixin
 
 
@@ -35,6 +37,18 @@ class Product(PublicIdMixin, OrganizationalModel):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     requires_prescription = models.BooleanField(default=False)
     # is_active, created_at, updated_at heredados de OrganizationalModel
+
+    # Trazabilidad por lote (StockLot, spec 2026-07-10). manufacturer = fabricante
+    # del PRODUCTO COMERCIAL (Zoetis/MSD), no el principio activo. tracks_lots es
+    # opt-in: False = flujo idéntico al histórico (sin lotes, sin caducidad).
+    manufacturer = models.CharField(max_length=255, blank=True, default='')
+    tracks_lots = models.BooleanField(default=False)
+    # Modo de cobro por defecto al consumir en consulta (A2). El auto-alta de
+    # producto (p.ej. vacuna aplicada) lo usa; el usuario puede cambiarlo en Cargos.
+    DEFAULT_COST_BEHAVIOR_CHOICES = [('charge', 'Cobrar'), ('included', 'Insumo')]
+    default_cost_behavior = models.CharField(
+        max_length=20, choices=DEFAULT_COST_BEHAVIOR_CHOICES, default='charge',
+    )
 
     # ADR p31: stock real en unidades base (poblado por migration 0018)
     base_unit = models.CharField(
@@ -125,6 +139,103 @@ class Presentation(PublicIdMixin, OrganizationalModel):
         ]
 
 
+class StockLot(PublicIdMixin, OrganizationalModel):
+    """
+    Lote/batch físico de un Product con `tracks_lots=True` (spec inventario
+    2026-07-10). El stock vive en DOS niveles: `Product.stock_quantity` = agregado
+    autoritativo; `StockLot.quantity_on_hand` = saldo por lote (base-units).
+    Invariante: Σ lotes == Product.stock_quantity (verificado por
+    `audit_stock_integrity`). El escritor único sigue siendo `apply_stock_movement`.
+
+    Estados ALMACENADOS (administrativos, no derivables): active | quarantined | recalled.
+    Estados DERIVADOS (fuente de verdad = dato, sin cron, sin drift):
+        expired (expiry_date < hoy) | consumed (quantity_on_hand <= 0).
+    `effective_status` expone los 5 con precedencia BINDING (no reordenar):
+        RECALLED → QUARANTINED → EXPIRED → CONSUMED → ACTIVE.
+    """
+    STATUS_ACTIVE = 'active'
+    STATUS_QUARANTINED = 'quarantined'
+    STATUS_RECALLED = 'recalled'
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'Activo'),
+        (STATUS_QUARANTINED, 'En cuarentena'),
+        (STATUS_RECALLED, 'Retirado'),
+    ]
+
+    # effective_status (derivado, NO columna)
+    EFFECTIVE_RECALLED = 'recalled'
+    EFFECTIVE_QUARANTINED = 'quarantined'
+    EFFECTIVE_EXPIRED = 'expired'
+    EFFECTIVE_CONSUMED = 'consumed'
+    EFFECTIVE_ACTIVE = 'active'
+
+    product = models.ForeignKey(
+        Product, on_delete=models.PROTECT, related_name='lots',
+    )
+    lot_number = models.CharField(max_length=100)
+    expiry_date = models.DateField(null=True, blank=True)
+    received_at = models.DateField(null=True, blank=True)
+    quantity_on_hand = models.DecimalField(
+        max_digits=14, decimal_places=4, default=0,
+    )
+    # Snapshot del proveedor. La FK `supplier` se agregará AL LADO cuando exista el
+    # módulo Compras (spec §12) — sin renombrar, sin migración rara.
+    supplier_name = models.CharField(max_length=255, blank=True, default='')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE,
+    )
+
+    @property
+    def effective_status(self):
+        # Precedencia BINDING: RECALLED → QUARANTINED → EXPIRED → CONSUMED → ACTIVE.
+        if self.status == self.STATUS_RECALLED:
+            return self.EFFECTIVE_RECALLED
+        if self.status == self.STATUS_QUARANTINED:
+            return self.EFFECTIVE_QUARANTINED
+        if self.expiry_date and self.expiry_date < timezone.localdate():
+            return self.EFFECTIVE_EXPIRED
+        if self.quantity_on_hand <= 0:
+            return self.EFFECTIVE_CONSUMED
+        return self.EFFECTIVE_ACTIVE
+
+    @property
+    def is_consumable(self):
+        """Elegible para consumo/FEFO: activo, no vencido y con saldo."""
+        return self.effective_status == self.EFFECTIVE_ACTIVE
+
+    def clean(self):
+        # El lote hereda el tenant del producto — nunca cross-org.
+        if (self.product_id and self.organization_id
+                and self.product.organization_id != self.organization_id):
+            raise ValidationError(
+                "El lote debe pertenecer a la misma organización que el producto."
+            )
+
+    def __str__(self):
+        return f"{self.product.name} — lote {self.lot_number}"
+
+    class Meta:
+        # Orden natural FEFO: caducidad ascendente (nulls al final por default de
+        # Postgres en ASC). El id desempata de forma determinista.
+        ordering = ['expiry_date', 'id']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity_on_hand__gte=0),
+                name='stocklot_quantity_non_negative',
+            ),
+            models.UniqueConstraint(
+                fields=['product', 'lot_number', 'expiry_date'],
+                name='stocklot_product_lot_expiry_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'product', 'expiry_date'],
+                         name='idx_stocklot_org_prod_exp'),
+            models.Index(fields=['organization', 'status'],
+                         name='idx_stocklot_org_status'),
+        ]
+
+
 class StockMovement(OrganizationalModel):
     MOVEMENT_TYPES = [
         ('in', 'Entrada'),
@@ -150,6 +261,17 @@ class StockMovement(OrganizationalModel):
         null=True,
         blank=True,
     )
+    # Trazabilidad por lote (spec 2026-07-10). Nullable: movimientos legacy y de
+    # productos sin `tracks_lots` lo dejan null. `lot_number` = snapshot
+    # denormalizado para que el ledger conserve la identidad aunque el lote se borre.
+    lot = models.ForeignKey(
+        'inventory.StockLot',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movements',
+    )
+    lot_number = models.CharField(max_length=100, blank=True, default='')
     movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES)
     quantity = models.DecimalField(max_digits=14, decimal_places=4)
     quantity_unit = models.CharField(
@@ -226,6 +348,17 @@ class MedicalRecordProduct(OrganizationalModel):
         choices=COST_BEHAVIOR_CHOICES,
         default='charge',
     )
+    # Trazabilidad por lote (spec 2026-07-10, B2a). Nullable: productos sin
+    # tracks_lots lo dejan null. Para productos con tracks_lots es el lote del que
+    # se consumió — inmutable por línea (como cost_behavior). El consumo/reverso de
+    # stock se hace SIEMPRE sobre este lote (consume_product / restock_product).
+    lot = models.ForeignKey(
+        'inventory.StockLot',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='medical_record_usages',
+    )
 
     class Meta:
         unique_together = [['medical_record', 'presentation']]
@@ -242,7 +375,7 @@ class MedicalRecordProduct(OrganizationalModel):
             self.organization_id = self.medical_record.organization_id
 
         from django.db import connection, transaction
-        from .services import apply_stock_movement
+        from .services import consume_product, restock_product
         locked_presentation = kwargs.pop('locked_presentation', None)
         previous_quantity = kwargs.pop('previous_quantity', None)
 
@@ -276,30 +409,41 @@ class MedicalRecordProduct(OrganizationalModel):
             super().save(*args, **kwargs)
 
             cf = self.presentation.conversion_factor or 1
+            # Consumo/reverso vía la única entrada (consume_product/restock_product),
+            # siempre sobre self.lot (None en productos sin tracks_lots → path histórico).
             if self.pk and previous_quantity is not None:
                 diff = self.quantity - previous_quantity
-                if diff != 0:
-                    apply_stock_movement(
+                if diff > 0:
+                    consume_product(
                         presentation=self.presentation,
-                        quantity=abs(diff) * cf,
-                        movement_type='out' if diff > 0 else 'in',
+                        quantity_base=diff * cf,
                         organization=self.medical_record.organization,
+                        lot=self.lot,
+                        reason='Ajuste por edición de consulta médica',
+                        medical_record=self.medical_record,
+                    )
+                elif diff < 0:
+                    restock_product(
+                        presentation=self.presentation,
+                        quantity_base=abs(diff) * cf,
+                        organization=self.medical_record.organization,
+                        lot=self.lot,
                         reason='Ajuste por edición de consulta médica',
                         medical_record=self.medical_record,
                     )
             elif previous_quantity is None:
-                apply_stock_movement(
+                consume_product(
                     presentation=self.presentation,
-                    quantity=self.quantity * cf,
-                    movement_type='out',
+                    quantity_base=self.quantity * cf,
                     organization=self.medical_record.organization,
+                    lot=self.lot,
                     reason='Consumido en consulta médica',
                     medical_record=self.medical_record,
                 )
 
     def delete(self, *args, **kwargs):
         from django.db import connection, transaction
-        from .services import apply_stock_movement
+        from .services import restock_product
         locked_presentation = kwargs.pop('locked_presentation', None)
         assert connection.in_atomic_block, (
             "MedicalRecordProduct.delete() debe llamarse dentro de transaction.atomic(); "
@@ -308,11 +452,12 @@ class MedicalRecordProduct(OrganizationalModel):
         with transaction.atomic():
             fresh = locked_presentation or Presentation.objects.select_for_update().get(pk=self.presentation_id)
             cf = fresh.conversion_factor or 1
-            apply_stock_movement(
+            # Reverso al MISMO lote del que se consumió (política P4).
+            restock_product(
                 presentation=fresh,
-                quantity=self.quantity * cf,
-                movement_type='in',
+                quantity_base=self.quantity * cf,
                 organization=self.medical_record.organization,
+                lot=self.lot,
                 reason='Reversión por eliminación de producto en consulta',
                 medical_record=self.medical_record,
             )

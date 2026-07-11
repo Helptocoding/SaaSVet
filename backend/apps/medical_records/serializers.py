@@ -1,12 +1,20 @@
+import json
 from datetime import date, timedelta
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from apps.core.sanitize import sanitize_text
-from .models import MedicalRecord, MedicalRecordService, VaccineRecord, VitalSigns
+from .models import ConsultationAssessment, MedicalRecord, MedicalRecordService, VaccineRecord, VitalSigns
 from .models import _get_last_weight
 from .policies import can_close_medical_record, can_modify_medical_record_charges, medical_record_has_clinical_content
+
+
+# Claves permitidas en MedicalRecord.consultation_draft (scratchpad de UI, no
+# fuente de verdad). Se amplia 1 clave por protocolo clinico nuevo. Evita que el
+# campo se vuelva un cajon de sastre donde cualquier componente escriba cualquier
+# cosa. Ver docs/modules/medical_records.md (principio de protocolos).
+ALLOWED_CONSULTATION_DRAFT_KEYS = {"vaccine", "general"}
 
 
 def _validate_weight_change(pet, new_weight, force=False):
@@ -137,6 +145,9 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     can_close = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
     latest_vitals = serializers.SerializerMethodField()
+    # Protocolo General: valoración estructurada (SOAP S/O). None si la consulta
+    # no capturó SOAP estructurado (general "clásica" o aún sin materializar).
+    consultation_assessment = serializers.SerializerMethodField()
 
     def get_invoice_public_id(self, obj):
         # invoice_id es ReadOnlyField sobre property o cached value; resolver
@@ -153,6 +164,10 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         return invoice.status if invoice else None
 
     force_weight = serializers.BooleanField(write_only=True, required=False, default=False)
+
+    # Scratchpad de UI (borrador de secciones en progreso). Writable pero NO es
+    # fuente de verdad — ver comentario del modelo y validate_consultation_draft.
+    consultation_draft = serializers.JSONField(required=False)
 
     weight = serializers.DecimalField(
         max_digits=5,
@@ -175,10 +190,12 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'appointment', 'appointment_public_id', 'appointment_date',
             'consultation_type',
             'diagnosis', 'treatment', 'notes', 'weight', 'force_weight', 'created_at', 'updated_at',
+            'consultation_draft',
             'products_used',
             'prescription_id', 'prescription_public_id', 'prescription_summary',
             'invoice_id', 'invoice_public_id', 'invoice_status',
             'latest_vitals',
+            'consultation_assessment',
             'status', 'closed_at', 'closed_by',
             'can_modify_charges', 'can_close', 'can_delete',
         ]
@@ -232,6 +249,22 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         if pet and pet.organization != self.context['request'].user.organization:
             raise serializers.ValidationError('Acceso inválido.')
         return pet
+
+    def validate_consultation_draft(self, value):
+        # Valida ESTRUCTURA, no contenido. Solo claves whitelisteadas + tope de
+        # tamaño (evita que el scratchpad se vuelva un cajon de sastre / payload
+        # gigante). El contenido de cada slice lo valida su protocolo al finalizar
+        # (p.ej. VaccineRecordSerializer en apply_consultation_draft_on_close).
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Formato inválido.")
+        extra = set(value) - ALLOWED_CONSULTATION_DRAFT_KEYS
+        if extra:
+            raise serializers.ValidationError(
+                f"Claves no permitidas en el borrador: {sorted(extra)}"
+            )
+        if len(json.dumps(value)) > 16_384:  # ~16 KB
+            raise serializers.ValidationError("El borrador es demasiado grande.")
+        return value
 
     def validate_appointment(self, appointment):
         if appointment and appointment.organization != self.context['request'].user.organization:
@@ -313,6 +346,12 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'recorded_at': vital.recorded_at,
         }
 
+    def get_consultation_assessment(self, obj):
+        # Prefetched via 'consultation_assessments' en las views (anti N+1).
+        # Ordering del modelo = -created_at → el primero es el más reciente.
+        assessment = next(iter(obj.consultation_assessments.all()), None)
+        return ConsultationAssessmentSerializer(assessment).data if assessment else None
+
 
 class MedicalRecordDetailSerializer(MedicalRecordSerializer):
     services_used = serializers.SerializerMethodField()
@@ -350,6 +389,11 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
     medical_record_public_id = serializers.UUIDField(
         source='medical_record.public_id', read_only=True, allow_null=True
     )
+    # A2: trazabilidad por lote (snapshot denormalizado, solo lectura).
+    product_public_id = serializers.UUIDField(
+        source='product.public_id', read_only=True, allow_null=True
+    )
+    product_name = serializers.CharField(source='product.name', read_only=True, allow_null=True)
 
     class Meta:
         model = VaccineRecord
@@ -360,11 +404,15 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
             'applied_by', 'applied_by_public_id', 'applied_by_name',
             'notes',
             'medical_record', 'medical_record_public_id',
+            'product', 'product_public_id', 'product_name',
+            'lot', 'lot_number', 'lot_expiry', 'manufacturer',
             'status', 'created_at',
         ]
         read_only_fields = [
             'id', 'public_id', 'pet_public_id', 'applied_by_public_id',
-            'medical_record_public_id', 'status', 'created_at',
+            'medical_record_public_id', 'product', 'product_public_id',
+            'product_name', 'lot', 'lot_number', 'lot_expiry', 'manufacturer',
+            'status', 'created_at',
         ]
 
     def get_applied_by_name(self, obj):
@@ -404,3 +452,38 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
                 'next_due_date': 'La fecha de próxima dosis debe ser posterior a la fecha de aplicación.'
             })
         return data
+
+
+class ConsultationAssessmentSerializer(serializers.ModelSerializer):
+    """
+    Valida el contenido del protocolo General (familia diagnóstica) al
+    materializar ConsultationAssessment en el cierre. `pet`/`medical_record`/
+    `assessed_by`/`organization`/`protocol_version` los fija el service
+    (server-side), no el cliente — por eso no están en `fields`.
+    """
+    class Meta:
+        model = ConsultationAssessment
+        fields = [
+            'id', 'chief_complaint', 'history', 'exam',
+            'differentials', 'recheck_date', 'protocol_version', 'created_at',
+        ]
+        read_only_fields = ['id', 'protocol_version', 'created_at']
+
+    def validate_chief_complaint(self, value):
+        return sanitize_text(value or '', max_length=255)
+
+    def validate_history(self, value):
+        return sanitize_text(value or '', max_length=5000)
+
+    def validate_differentials(self, value):
+        return sanitize_text(value or '', max_length=2000)
+
+    def validate_exam(self, value):
+        # Valida estructura + tope de tamaño; el contenido por sistema es libre.
+        if value in (None, ''):
+            return {}
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Formato de exploración inválido.")
+        if len(json.dumps(value)) > 16_384:  # ~16 KB
+            raise serializers.ValidationError("La exploración es demasiado grande.")
+        return value

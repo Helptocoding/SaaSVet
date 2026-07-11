@@ -41,6 +41,10 @@ export default function usePOSCart() {
                 rxAttested: false,
                 prescriberName: "",
                 prescriptionFolio: "",
+                // Trazabilidad por lote (B2b). El picker del carrito auto-elige FEFO.
+                tracksLots: !!pres.tracks_lots,
+                productPublicId: pres.product_public_id,
+                lot: null,
             }]);
         }
         return true;

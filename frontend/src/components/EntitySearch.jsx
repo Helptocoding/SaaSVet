@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
 import s from "./EntitySearch.module.css";
 
 /**
@@ -195,18 +196,17 @@ export default function EntitySearch({
 
     return (
         <div ref={wrapperRef} className={s.wrap}>
-            <div className={s.inputWrap}>
+            <div className="searchBar">
+                <Search size={15} strokeWidth={2.5} style={{ flexShrink: 0, color: "var(--c-text-3)" }} />
                 <input
                     id={inputId}
                     name={name || inputId}
-                    className="input"
                     value={inputVal}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     onFocus={handleFocus}
                     placeholder={placeholder}
                     disabled={disabled}
-                    style={{ paddingRight: showClear ? "28px" : undefined, width: "100%", boxSizing: "border-box" }}
                     autoComplete="off"
                     role="combobox"
                     aria-expanded={open}

@@ -96,6 +96,7 @@ class MedicalRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
             'services_used__service',
             'prescription__items__product__presentations',
             'vital_signs',
+            'consultation_assessments',
         )
 
         if pet_lookup:
@@ -127,6 +128,7 @@ class MedicalRecordDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Re
             'services_used__service',
             'prescription__items__product__presentations',
             'vital_signs',
+            'consultation_assessments',
         )
 
     def _check_not_closed(self, instance):
@@ -188,6 +190,7 @@ class MedicalRecordByPetView(TenantQueryMixin, generics.ListAPIView):
             'services_used__service',
             'prescription__items__product__presentations',
             'vital_signs',
+            'consultation_assessments',
         ).order_by('-created_at')
 
 
@@ -437,10 +440,13 @@ def close_medical_record(request, pk):
             pk,
         )
 
-        if not can_close_medical_record(request.user, medical_record):
-            log_ownership_denied(user=request.user, medical_record=medical_record, request=request)
-            raise PermissionDenied("No puedes finalizar esta consulta")
-
+        # Idempotencia PRIMERO: una consulta ya cerrada retorna 200 sin re-validar
+        # ni re-checar ownership. can_close_medical_record() devuelve False para
+        # registros CLOSED (refleja "acción disponible" para el botón del Timeline),
+        # así que checarlo antes bloqueaba el cierre idempotente con 403. El queryset
+        # ya está scopeado a la organización y el permiso `medicalrecord.close` lo
+        # gatea permission_classes → el no-op idempotente es seguro (mismo-tenant,
+        # con permiso, sobre datos que ese usuario ya puede leer con un GET).
         if medical_record.status == MedicalRecord.Status.CLOSED:
             events_logger.info(
                 "MEDICAL_RECORD_CLOSE_IDEMPOTENT",
@@ -453,6 +459,10 @@ def close_medical_record(request, pk):
                 },
             )
             return Response(MedicalRecordDetailSerializer(medical_record, context={"request": request}).data)
+
+        if not can_close_medical_record(request.user, medical_record):
+            log_ownership_denied(user=request.user, medical_record=medical_record, request=request)
+            raise PermissionDenied("No puedes finalizar esta consulta")
 
         # Validación de campos requeridos para cierre
         diagnosis = sanitize_text(medical_record.diagnosis or '', max_length=400)
@@ -505,6 +515,15 @@ def close_medical_record(request, pk):
         # cita no está en in_progress. NO toca Invoice/pagos.
         from apps.appointments.services import complete_appointment_on_record_close
         complete_appointment_on_record_close(medical_record.appointment, request.user)
+
+        # Protocolos clínicos (ADR p50): materializa los registros de dominio
+        # capturados en el scratchpad consultation_draft (hoy solo Vacuna →
+        # VaccineRecord), dentro del MISMO atomic. Finalizar es una sola operación:
+        # o se cierra la consulta Y se crea el registro legal, o nada. El frontend
+        # NO hace un POST aparte. Un protocolo NUNCA muta MedicalRecord (principio
+        # binding). Draft inválido → ValidationError → rollback del cierre.
+        from .services import apply_consultation_draft_on_close
+        apply_consultation_draft_on_close(medical_record, request)
 
         # Late-arrival observability (ADR p17 Día 5, warn-only).
         # Call lives inside the active transaction so the log only emits
@@ -601,9 +620,11 @@ def medical_record_pdf(request, pk):
                 'services_used__service',
                 'products_used__presentation__product',
                 'prescription__items__product',
+                'consultation_assessments',
             ),
         pk,
     )
+    assessment = next(iter(record.consultation_assessments.all()), None)
 
     org = record.organization
     theme = get_theme_for_organization(org)
@@ -645,9 +666,20 @@ def medical_record_pdf(request, pk):
         ]
     flow += info_card(st, theme, patient_pairs, columns=3)
 
-    if record.appointment_id and getattr(record.appointment, 'reason', ''):
-        flow += section(st, theme, "Motivo")
-        flow.append(Paragraph(safe_pdf_text(record.appointment.reason), st['body']))
+    # Motivo (SOAP·S): motivo principal del assessment; fallback al motivo de la cita.
+    motivo = (assessment.chief_complaint if assessment else '') or (
+        record.appointment.reason
+        if record.appointment_id and getattr(record.appointment, 'reason', '') else ''
+    )
+    if motivo:
+        flow += section(st, theme, "Motivo de consulta")
+        flow.append(Paragraph(safe_pdf_text(motivo), st['body']))
+
+    if assessment and assessment.history:
+        flow += section(st, theme, "Historia clínica")
+        flow.append(Paragraph(
+            safe_pdf_text(assessment.history).replace('\n', '<br/>'), st['body'],
+        ))
 
     last_vital = None
     for v in record.vital_signs.all():
@@ -669,10 +701,39 @@ def medical_record_pdf(request, pk):
         flow += section(st, theme, "Signos vitales")
         flow += info_card(st, theme, vital_pairs, columns=4)
 
+    # Exploración física por sistemas (SOAP·O). Contrato del campo `exam`:
+    #   {"<sistema>": {"status": "normal"|"altered", "finding": "<texto>"}}
+    # Solo se imprimen los sistemas alterados o con hallazgo (los normales no
+    # aportan al documento). Defensivo: `exam` puede venir vacío o con otra forma.
+    if assessment and isinstance(assessment.exam, dict) and assessment.exam:
+        abnormal = []
+        for system, val in assessment.exam.items():
+            if isinstance(val, dict):
+                finding = (val.get('finding') or '').strip()
+                if val.get('status') == 'altered' or finding:
+                    abnormal.append((system, finding))
+        if abnormal:
+            flow += section(st, theme, "Exploración física")
+            rows = [
+                [Paragraph(safe_pdf_text(str(s)), st['cell']),
+                 Paragraph(safe_pdf_text(f or 'Alterado'), st['cell'])]
+                for s, f in abnormal
+            ]
+            flow += data_table(
+                st, theme, ["Sistema", "Hallazgo"], rows,
+                col_widths=[5 * cm, CONTENT_WIDTH - 5 * cm],
+            )
+
     if record.diagnosis:
         flow += section(st, theme, "Diagnóstico")
         flow.append(Paragraph(
             safe_pdf_text(record.diagnosis).replace('\n', '<br/>'), st['body'],
+        ))
+
+    if assessment and assessment.differentials:
+        flow += section(st, theme, "Diagnósticos diferenciales")
+        flow.append(Paragraph(
+            safe_pdf_text(assessment.differentials).replace('\n', '<br/>'), st['body'],
         ))
 
     if record.treatment:
@@ -680,6 +741,10 @@ def medical_record_pdf(request, pk):
         flow.append(Paragraph(
             safe_pdf_text(record.treatment).replace('\n', '<br/>'), st['body'],
         ))
+
+    if assessment and assessment.recheck_date:
+        flow += section(st, theme, "Próxima revisión")
+        flow.append(Paragraph(assessment.recheck_date.strftime('%d/%m/%Y'), st['body']))
 
     services = list(record.services_used.all())
     if services:

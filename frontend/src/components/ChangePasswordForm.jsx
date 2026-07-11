@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { changePassword } from "../api/users";
@@ -24,7 +25,8 @@ const MIN_PASSWORD_LENGTH = 8;
  * picks up the new pair atomically.
  */
 const ChangePasswordForm = () => {
-    const { login } = useAuth();
+    const { login, refreshUser, user } = useAuth();
+    const navigate = useNavigate();
     const [form, setForm] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
@@ -59,14 +61,27 @@ const ChangePasswordForm = () => {
             return;
         }
 
+        // Capturar ANTES del submit: si esta era la contraseña temporal obligatoria,
+        // al terminar hay que llevar al usuario al dashboard (sin re-login).
+        const wasForced = !!user?.must_change_password;
+
         setErrors({});
         setSaving(true);
         try {
             const data = await changePassword(form);
             // Reemplazo de tokens via central manager — NO localStorage directo.
             login(data.access, data.refresh);
+            // El backend limpió must_change_password, pero el user en React state
+            // todavía lo tiene en true (login solo intercambia tokens). Re-leer /me/
+            // sincroniza el flag → el MustChangePasswordGate deja de rebotar.
+            const fresh = await refreshUser();
             toast.success("Contraseña actualizada.");
             setForm(EMPTY_FORM);
+            // Flujo obligatorio: Login → cambio → Dashboard → Onboarding, sin re-login.
+            // Solo navegar si el flag ya se limpió (evita loop contra el gate).
+            if (wasForced && fresh && !fresh.must_change_password) {
+                navigate("/", { replace: true });
+            }
         } catch (err) {
             const statusCode = err?.response?.status;
             if (statusCode === 429) {

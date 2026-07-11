@@ -37,6 +37,10 @@ Presentation.stock              ← copia display (backward compat); no autorita
 - `base_unit` — unidad mínima de inventario
 - `stock_quantity` — existencias en `base_unit` (Decimal 14.4) — **fuente autoritativa** (ADR p31)
 - `min_stock` — umbral de alerta en `base_unit`
+- `manufacturer` — fabricante del **producto comercial** (Zoetis/MSD); no el principio activo (spec lotes 2026-07-10)
+- `tracks_lots` — opt-in de trazabilidad por lote. `False` (default) = flujo idéntico al histórico
+- `default_cost_behavior` — `charge`|`included` (default `charge`). Modo de cobro por defecto al
+  auto-agregar el producto en consulta (p.ej. vacuna aplicada, A2). Editable luego en Cargos.
 - `is_active` — soft delete
 
 ### Presentation
@@ -71,6 +75,8 @@ Ledger append-only de cada cambio de stock.
 - `movement_type` — `in`, `out`, `adjustment`
 - `quantity` — en unidades base (ADR p31: `quantity_unit='base'`; legacy: `quantity_unit='presentation'`)
 - `quantity_unit` — `'base'` o `'presentation'`
+- `lot` — FK nullable a `StockLot` (spec lotes 2026-07-10). Null en movimientos legacy y de productos sin `tracks_lots`
+- `lot_number` — snapshot denormalizado del lote (el ledger conserva la identidad aunque el `StockLot` se borre)
 - FK opcionales a `MedicalRecord`, `Invoice`, `created_by`
 
 El listado `GET /api/inventory/movements/` está **paginado por cursor** (ADR p42):
@@ -90,10 +96,75 @@ Productos consumidos en consulta. Ver también `docs/modules/medical_records.md`
   - `'included'`: descuenta stock pero NO genera InvoiceItem (insumo clínico)
   - **inmutable** una vez guardado
   - Default en el wizard de consulta: `'charge'` (el usuario puede cambiarlo a `'included'` si es insumo clínico)
+- `lot` — FK nullable a `StockLot` (B2a). **Obligatorio** si el producto tiene `tracks_lots`
+  (validado en serializer); null en productos sin lote. Inmutable por línea (como `cost_behavior`).
+  `save()/delete()` rutean por `consume_product`/`restock_product` sobre este lote → el
+  consumo descuenta el lote elegido y el reverso vuelve al **mismo lote** (P4).
+  Serializer expone `tracks_lots`, `lot_number`, `lot_expiry`, `lot_effective_status` (read).
+
+### StockLot (trazabilidad por lote — spec 2026-07-10)
+
+> Diseño congelado: [`docs/analisis-inventario-trazabilidad-lotes-2026-07-10.md`](../analisis-inventario-trazabilidad-lotes-2026-07-10.md).
+> Plan: [`docs/plan-implementacion-inventario-lotes-2026-07-10.md`](../plan-implementacion-inventario-lotes-2026-07-10.md).
+> **Implementado**: B0 (modelo + servicio de consumo), B1 (recepción multi-lote), **B2a**
+> (consumo en consulta vía `MedicalRecordProduct`), **B2b** (billing/POS: `InvoiceItem.lot`;
+> confirm/cancel/refund/dispensación ruteados por `consume_product`/`restock_product`; POS con
+> picker FEFO, dispensación FEFO-auto), **B2c** (caducidad `lot_alerts`; `discard_lot` merma;
+> `set_lot_status` cuarentena/retiro; frontend `LotManagerModal` + banner). **Trazabilidad por
+> lote completa (B0–B2c).** Sigue: A2 (Vacuna consume StockLot).
+
+Lote/batch físico de un `Product` con `tracks_lots=True`. Stock en **dos niveles**:
+`Product.stock_quantity` = agregado autoritativo; `StockLot.quantity_on_hand` = saldo por lote
+(base-units). Invariante: `Σ lotes == Product.stock_quantity`.
+
+- `product` — FK PROTECT
+- `lot_number` — número de lote
+- `expiry_date` — caducidad (nullable)
+- `received_at` — fecha de recepción (nullable)
+- `quantity_on_hand` — saldo del lote en base-units (CHECK `>= 0`)
+- `supplier_name` — snapshot del proveedor (la FK `supplier` se agregará al lado, futuro)
+- `status` — **almacenado**: `active | quarantined | recalled`
+- `effective_status` (property, derivado) — precedencia **BINDING**:
+  `RECALLED → QUARANTINED → EXPIRED → CONSUMED → ACTIVE`. `EXPIRED` (fecha) y `CONSUMED`
+  (saldo 0) se derivan → sin cron, sin drift.
+- `PublicIdMixin` (expuesto en API en B1-B2). Unicidad `(product, lot_number, expiry_date)`.
+
+## `consume_product()` — única entrada de consumo de inventario
+
+Ubicación: `apps/inventory/services.py`. **Toda** baja de stock por consumo pasa por aquí
+(MedicalRecordProduct, Billing, y futuros). Ningún caller llama `resolve_consumption_lots`
+directamente → la política de lotes vive en un solo lugar (spec §10).
+
+```python
+consume_product(presentation, quantity_base, organization,
+                reason='', created_by=None, medical_record=None, invoice=None,
+                lot=None, force=False)
+```
+
+- Producto sin `tracks_lots` → `apply_stock_movement('out', lot=None)` (idéntico al histórico).
+- Con `tracks_lots`: `lot` dado = override manual (P3; bloqueado si no es consumible salvo
+  `force=True`); `lot=None` = **FEFO** vía `resolve_consumption_lots` (P1), reparte entre lotes.
+- `resolve_consumption_lots(product, qty)` → asignación FEFO entre lotes elegibles
+  (`effective_status=ACTIVE`), o `ValidationError` si no hay saldo (P2).
+- `restock_product(...)` — inversa (movimiento `in`); con `lot` devuelve al **lote original** (P4).
+- Debe correr en `transaction.atomic()` (assert).
+
+### Recepción multi-lote — `receive_stock` (B1)
+
+`receive_stock(presentation, lots, organization, supplier_name='', received_at=None, created_by=None)`.
+Una recepción = una presentación + **N líneas de lote** (una compra suele traer varios lotes).
+Cada línea `find-or-create` el `StockLot` `(product, lot_number, expiry_date)` y aplica un
+movimiento `in` lot-scoped. `quantity` de la línea en unidades de **presentación** (convierte con
+`conversion_factor`). Solo `tracks_lots` (los demás usan el ajuste histórico). Endpoint
+`POST /presentations/<id>/receive/`; frontend en `StockEntryModal` (sección de lotes condicional).
 
 ## `apply_stock_movement()` — contrato
 
 **Único escritor autorizado de `Product.stock_quantity`.** Ubicación: `apps/inventory/services.py`.
+**Single-lot**: mueve stock de un lote (o de ninguno con `lot=None`). El reparto multi-lote y
+FEFO viven en `consume_product`, no aquí. Con `lot`: además de `Product.stock_quantity`, ajusta
+`StockLot.quantity_on_hand` bajo el mismo lock de Product (orden de locks intacto), valida saldo
+del lote en `out`, y denormaliza `lot_number` en el movimiento.
 
 ```python
 apply_stock_movement(
@@ -207,6 +278,11 @@ Capa UX **solo de entrada** sobre el ajuste existente. NO crea productos ni edit
 - Scanner UX: autofocus, Enter ejecuta lookup → Enter confirma → limpia y reenfoca para el siguiente. Modal queda abierto.
 - `reason` fijo `"Entrada de mercancía"` para mantener movimientos filtrables.
 
+- **Producto con `tracks_lots` (B1):** el modal muestra una sección de **lotes** (proveedor
+  opcional + N filas lote/caducidad/cantidad, "+ Agregar lote") en vez del stepper simple, y
+  confirma vía `receiveStock` (`POST /presentations/<id>/receive/`). Producto sin lotes: el
+  modal se comporta igual que antes (stepper + `adjustPresentationStock`).
+
 No reemplaza el ajuste manual (`adjust_stock` / corrección, inventario físico) — ambos coexisten.
 
 ## Endpoints
@@ -221,11 +297,16 @@ No reemplaza el ajuste manual (`adjust_stock` / corrección, inventario físico)
 | `DELETE` | `/api/inventory/products/<id>/`                     | Desactivar producto (soft delete)         |
 | `POST`   | `/api/inventory/products/<id>/adjust/`              | Ajustar stock (primera presentación, compat) |
 | `POST`   | `/api/inventory/products/<id>/presentations/`       | Agregar presentación adicional            |
+| `GET`    | `/api/inventory/products/<id>/lots/`                | Lotes del producto (orden FEFO; `?with_stock=true`) |
+| `GET`    | `/api/inventory/lots/alerts/`                       | Caducidad: `expiring_soon` + `expired_with_stock` (`?days=30`, B2c) |
+| `POST`   | `/api/inventory/lots/<id>/discard/`                 | Merma/write-off del lote (`{quantity?, reason?}`, B2c) |
+| `POST`   | `/api/inventory/lots/<id>/status/`                  | Estado del lote: `active\|quarantined\|recalled` (B2c) |
 | `GET`    | `/api/inventory/presentations/`                     | Listar presentaciones con filtros         |
 | `GET`    | `/api/inventory/presentations/barcode/`             | Lookup por código de barras (POS)         |
 | `PATCH`  | `/api/inventory/presentations/<id>/`                | Editar presentación                       |
 | `DELETE` | `/api/inventory/presentations/<id>/`                | Eliminar (con checks)                     |
 | `POST`   | `/api/inventory/presentations/<id>/adjust/`         | Ajustar stock de presentación específica  |
+| `POST`   | `/api/inventory/presentations/<id>/receive/`        | Recepción multi-lote (B1, solo `tracks_lots`) |
 | `GET`    | `/api/inventory/movements/`                         | Historial de movimientos (paginado cursor, ADR p42) |
 | `GET`    | `/api/inventory/units/`                             | Catálogo de unidades válidas              |
 

@@ -29,8 +29,16 @@ const TimelineCard = ({
   const canClose = record.can_close;
   const canDel   = !!record.can_delete;
 
+  // Valoración estructurada (protocolo General). exam = {sistema:{status,finding}}.
+  const assess = record.consultation_assessment;
+  const alteredExam = assess?.exam && typeof assess.exam === "object"
+    ? Object.entries(assess.exam).filter(([, v]) => v && (v.status === "altered" || v.finding))
+    : [];
+  const hasAssessDetail = !!(assess && (assess.history || alteredExam.length || assess.differentials || assess.recheck_date));
+
   const hasExpandable = !!(
     record.notes ||
+    hasAssessDetail ||
     record.products_used?.length > 0 ||
     (hasPrx && record.prescription_summary?.items?.length > 0)
   );
@@ -84,8 +92,14 @@ const TimelineCard = ({
         </div>
       </div>
 
-      {/* ── Contenido principal: diagnóstico · tratamiento · vitales ── */}
+      {/* ── Contenido principal: motivo · diagnóstico · tratamiento · vitales ── */}
       <div className={styles.txContent}>
+        {assess?.chief_complaint && (
+          <p className={styles.txMotivo}>
+            <span className={styles.txMotivoLabel}>Motivo</span>
+            {truncate(assess.chief_complaint, 120)}
+          </p>
+        )}
         <p className={styles.txDiagnosis}>
           {record.diagnosis
             ? truncate(record.diagnosis, 180)
@@ -183,6 +197,30 @@ const TimelineCard = ({
                   <p className={styles.txText}>{record.notes}</p>
                 </div>
               )}
+              {assess?.history && (
+                <div className={styles.txSection}>
+                  <p className={styles.txLabel}>Historia clínica</p>
+                  <p className={styles.txText}>{assess.history}</p>
+                </div>
+              )}
+              {alteredExam.length > 0 && (
+                <div className={styles.txSection}>
+                  <p className={styles.txLabel}>Exploración — hallazgos</p>
+                  <div className={styles.txChips}>
+                    {alteredExam.map(([sys, v], i) => (
+                      <span key={i} className={styles.txChip}>
+                        {sys.replace(/_/g, " ")}{v.finding ? `: ${v.finding}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {assess?.differentials && (
+                <div className={styles.txSection}>
+                  <p className={styles.txLabel}>Diagnósticos diferenciales</p>
+                  <p className={styles.txText}>{assess.differentials}</p>
+                </div>
+              )}
               {record.products_used?.length > 0 && (
                 <div className={styles.txSection}>
                   <p className={styles.txLabel}>Productos utilizados</p>
@@ -213,6 +251,12 @@ const TimelineCard = ({
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+              {assess?.recheck_date && (
+                <div className={styles.txSection}>
+                  <p className={styles.txLabel}>Próxima revisión</p>
+                  <p className={styles.txText}>{assess.recheck_date}</p>
                 </div>
               )}
             </div>

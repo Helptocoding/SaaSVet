@@ -7,11 +7,13 @@ import { stockStatus, productStockQty, productStockValue, computeInitialStock, f
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, getUnitChoices, createPresentation, updatePresentation,
+    getLotAlerts,
 } from "../api/inventory";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import { toast } from "sonner";
 import StockEntryModal from "../components/StockEntryModal";
+import LotManagerModal from "../components/LotManagerModal";
 import EmptyState from "../components/EmptyState";
 import s from "./inventory.module.css";
 import ProductCreationTour from "../features/inventory/tutorial/ProductCreationTour";
@@ -34,6 +36,7 @@ const CATEGORY_UNITS = {
 const EMPTY_WIZARD_PRODUCT = {
     name: "", internal_code: "", description: "",
     category: "other", requires_prescription: false,
+    manufacturer: "", tracks_lots: false,
     min_stock: "",
 };
 
@@ -175,6 +178,9 @@ const Inventory = () => {
     const [wizardErrors, setWizardErrors] = useState({});
     const [showSummary, setShowSummary] = useState(false);
     const [tutorialStep, setTutorialStep] = useState(null);
+    // B2c — lotes: modal de gestión + alertas de caducidad.
+    const [lotModalProduct, setLotModalProduct] = useState(null);
+    const [lotAlerts, setLotAlerts] = useState({ expiring_soon: [], expired_with_stock: [] });
 
     const [showAdjustModal, setShowAdjustModal] = useState(false);
     const [adjustingProduct, setAdjustingProduct] = useState(null);
@@ -211,6 +217,11 @@ const Inventory = () => {
             console.error(apiError(err));
         } finally {
             setLoading(false);
+        }
+        try {
+            setLotAlerts(await getLotAlerts({ days: 30 }));
+        } catch {
+            /* alertas informativas: silencioso */
         }
     };
 
@@ -460,6 +471,8 @@ const Inventory = () => {
             description: product.description || "",
             category: product.category || "other",
             requires_prescription: product.requires_prescription || false,
+            manufacturer: product.manufacturer || "",
+            tracks_lots: product.tracks_lots || false,
             min_stock: parseFloat(product.min_stock ?? 0) || 0,
         });
         setSalesPres(loadedSalesPres.length > 0 ? loadedSalesPres : [newSalesPres()]);
@@ -579,6 +592,8 @@ const Inventory = () => {
                 description: wizardProduct.description || "",
                 category: wizardProduct.category,
                 requires_prescription: wizardProduct.requires_prescription,
+                manufacturer: wizardProduct.manufacturer || "",
+                tracks_lots: wizardProduct.tracks_lots,
             };
 
             if (wizardEditing) {
@@ -805,7 +820,7 @@ const Inventory = () => {
 
             {/* ── Toolbar ── */}
             <div className={s.toolbar}>
-                <div className={s.tsearch}>
+                <div className="searchBar" style={{ flex: 1, maxWidth: 300 }}>
                     <Icon.Search s={13} />
                     <input
                         type="text"
@@ -852,6 +867,31 @@ const Inventory = () => {
                     </button>
                 ))}
             </div>
+
+            {/* ── Alertas de caducidad (B2c) ── */}
+            {(lotAlerts.expired_with_stock?.length > 0 || lotAlerts.expiring_soon?.length > 0) && (
+                <div
+                    className={s.lotAlertBanner}
+                    style={{
+                        display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+                        padding: "10px 14px", marginBottom: 14, borderRadius: 10,
+                        border: "1px solid var(--c-warning, #e0b34a)",
+                        background: "var(--c-warning-bg, #fdf6ec)", fontSize: 13,
+                    }}
+                >
+                    <Icon.AlertTriangle s={16} c="var(--c-warning-text, #b7791f)" />
+                    {lotAlerts.expired_with_stock?.length > 0 && (
+                        <span><strong>{lotAlerts.expired_with_stock.length}</strong> lote(s) vencido(s) con saldo</span>
+                    )}
+                    {lotAlerts.expired_with_stock?.length > 0 && lotAlerts.expiring_soon?.length > 0 && <span>·</span>}
+                    {lotAlerts.expiring_soon?.length > 0 && (
+                        <span><strong>{lotAlerts.expiring_soon.length}</strong> por vencer en 30 días</span>
+                    )}
+                    <span style={{ color: "var(--c-text-3)" }}>
+                        — abre "Lotes" en el producto para descartar o retirar.
+                    </span>
+                </div>
+            )}
 
             {/* ── Contenido: tabla o grid ── */}
             {filteredProducts.length === 0 ? (
@@ -974,6 +1014,9 @@ const Inventory = () => {
                                         {canManage && (
                                             <td className={s.td}>
                                                 <div className={s.actCell}>
+                                                    {product.tracks_lots && (
+                                                        <button className={`${s.ab} ${s.abAj}`} onClick={e => { e.stopPropagation(); setLotModalProduct(product); }} title="Lotes y caducidad"><Icon.Box s={14} /></button>
+                                                    )}
                                                     <button className={`${s.ab} ${s.abAj}`} onClick={e => openAdjust(product, e)} title="Ajustar stock"><Icon.Package s={14} /></button>
                                                     <button className={`${s.ab} ${s.abEd}`} onClick={e => openWizardEdit(product, e)} title="Editar"><Icon.Edit s={14} /></button>
                                                     <button className={`${s.ab} ${s.abDl}`} onClick={e => { e.stopPropagation(); handleDelete(product.public_id); }} title="Eliminar"><Icon.Trash s={14} /></button>
@@ -1276,13 +1319,32 @@ const Inventory = () => {
                                                                 onChange={e => setWizardProduct(p => ({ ...p, description: e.target.value }))}
                                                                 placeholder="Descripción breve..." />
                                                         </div>
-                                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                                        <div className="form-group">
                                                             <label className="checkbox-label">
                                                                 <input type="checkbox"
                                                                     checked={wizardProduct.requires_prescription}
                                                                     onChange={e => setWizardProduct(p => ({ ...p, requires_prescription: e.target.checked }))} />
                                                                 Requiere receta médica
                                                             </label>
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label className="form-label">FABRICANTE</label>
+                                                            <input className="text-input"
+                                                                value={wizardProduct.manufacturer}
+                                                                onChange={e => setWizardProduct(p => ({ ...p, manufacturer: e.target.value }))}
+                                                                placeholder="Ej: Zoetis, MSD..." />
+                                                        </div>
+                                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                                            <label className="checkbox-label">
+                                                                <input type="checkbox"
+                                                                    checked={wizardProduct.tracks_lots}
+                                                                    onChange={e => setWizardProduct(p => ({ ...p, tracks_lots: e.target.checked }))} />
+                                                                Requiere control de lotes y caducidad
+                                                            </label>
+                                                            <p style={{ margin: "4px 0 0 26px", fontSize: 12, color: "var(--c-text-3)", lineHeight: 1.5 }}>
+                                                                Actívalo para vacunas, inyectables o cualquier producto con caducidad.
+                                                                Podrás registrar lote y fecha de vencimiento al recibir mercancía.
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 )}
@@ -1690,6 +1752,15 @@ const Inventory = () => {
                     onClose={() => setStockEntryOpen(false)}
                     onSaved={loadAll}
                     onCreateNew={() => openWizardCreate()}
+                />
+            )}
+
+            {/* ── Modal: Lotes y caducidad (B2c) ── */}
+            {lotModalProduct && (
+                <LotManagerModal
+                    product={lotModalProduct}
+                    onClose={() => setLotModalProduct(null)}
+                    onChanged={loadAll}
                 />
             )}
         </div>

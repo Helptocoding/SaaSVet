@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
+import styles from "./SearchSelect.module.css";
 
 export default function SearchSelect({
     id,
@@ -26,7 +28,6 @@ export default function SearchSelect({
     const reqId = useRef(0);
     const lastQueryRef = useRef(null);
 
-    // Sync input text when parent resets value externally
     useEffect(() => {
         setInputVal(value?.label ?? "");
         if (!value) {
@@ -36,7 +37,6 @@ export default function SearchSelect({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value?.id]);
 
-    // Close on outside click
     useEffect(() => {
         function handleMouseDown(e) {
             if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -129,19 +129,18 @@ export default function SearchSelect({
     const showClear = !disabled && value !== null && value !== undefined;
 
     return (
-        <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
-            <div style={{ position: "relative" }}>
+        <div ref={wrapperRef} className={styles.wrapper}>
+            <div className="searchBar">
+                <Search size={15} strokeWidth={2.5} style={{ flexShrink: 0, color: "var(--c-text-3)" }} />
                 <input
                     id={inputId}
                     name={name || inputId}
-                    className="input"
                     value={inputVal}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     onFocus={handleFocus}
                     placeholder={placeholder}
                     disabled={disabled}
-                    style={{ paddingRight: showClear ? "28px" : undefined, width: "100%", boxSizing: "border-box" }}
                     autoComplete="off"
                     role="combobox"
                     aria-expanded={open}
@@ -151,13 +150,9 @@ export default function SearchSelect({
                     <button
                         type="button"
                         onClick={handleClear}
-                        style={{
-                            position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)",
-                            background: "none", border: "none", cursor: "pointer",
-                            color: "var(--c-text-3)", fontSize: "16px", lineHeight: 1,
-                            padding: "0 2px", display: "flex", alignItems: "center",
-                        }}
+                        className={styles.clearBtn}
                         tabIndex={-1}
+                        aria-label="Limpiar selección"
                     >
                         ×
                     </button>
@@ -168,19 +163,15 @@ export default function SearchSelect({
                 <div
                     id={listboxId}
                     role="listbox"
-                    style={{
-                    position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
-                    zIndex: 200, background: "var(--c-surface)",
-                    border: "1px solid var(--c-border)", borderRadius: "var(--r-md)",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)", overflow: "hidden",
-                    }}>
+                    className={styles.popover}
+                >
                     {loading && (
-                        <div style={{ padding: "8px 12px", fontSize: "13px", color: "var(--c-text-3)" }}>
+                        <div className={styles.statusText}>
                             Buscando...
                         </div>
                     )}
                     {!loading && results.length === 0 && (
-                        <div style={{ padding: "8px 12px", fontSize: "13px", color: "var(--c-text-3)" }}>
+                        <div className={styles.statusText}>
                             Sin resultados
                         </div>
                     )}
@@ -188,12 +179,7 @@ export default function SearchSelect({
                         <div
                             key={`${item.id ?? "no-id"}-${item.label ?? "no-label"}-${index}`}
                             onMouseDown={() => handleSelect(item)}
-                            style={{
-                                padding: "8px 12px", fontSize: "13px", cursor: "pointer",
-                                color: "var(--c-text)",
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = "var(--c-subtle)"}
-                            onMouseLeave={e => e.currentTarget.style.background = ""}
+                            className={styles.item}
                         >
                             {item.label}
                         </div>

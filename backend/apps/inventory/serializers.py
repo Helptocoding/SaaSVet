@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 from uuid import uuid4
 from django.db import transaction
 from rest_framework import serializers
-from .models import Product, Presentation, StockMovement, MedicalRecordProduct
+from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
 
 PRODUCT_NAME_REGEX = re.compile(r"^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\.\-\(\)\/\%\+]+$")
 
@@ -35,7 +35,9 @@ class PresentationSerializer(serializers.ModelSerializer):
     is_low_stock = serializers.BooleanField(read_only=True)
     base_unit_display = serializers.CharField(source='get_base_unit_display', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
+    product_public_id = serializers.UUIDField(source='product.public_id', read_only=True)
     requires_prescription = serializers.BooleanField(source='product.requires_prescription', read_only=True)
+    tracks_lots = serializers.BooleanField(source='product.tracks_lots', read_only=True)
     # ADR p31: stock real en unidades base (desde Product)
     stock_quantity = serializers.DecimalField(
         source='product.stock_quantity', max_digits=14, decimal_places=4, read_only=True,
@@ -45,11 +47,11 @@ class PresentationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Presentation
         fields = [
-            'id', 'public_id', 'product', 'name', 'product_name',
+            'id', 'public_id', 'product', 'product_public_id', 'name', 'product_name',
             'base_unit', 'base_unit_display', 'quantity', 'conversion_factor',
             'sale_price', 'purchase_price', 'stock', 'min_stock', 'is_low_stock',
             'stock_quantity', 'product_base_unit',
-            'barcode', 'requires_prescription',
+            'barcode', 'requires_prescription', 'tracks_lots',
         ]
         read_only_fields = [
             'id', 'public_id', 'product', 'product_name', 'requires_prescription',
@@ -126,6 +128,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'category', 'requires_prescription', 'is_active',
             # ADR p31: stock real en unidades base
             'base_unit', 'stock_quantity', 'min_stock',
+            # Trazabilidad por lote (spec 2026-07-10) — opt-in por producto.
+            'manufacturer', 'tracks_lots',
             'presentations', 'presentation', 'presentation_input',
             'created_at', 'updated_at',
         ]
@@ -295,6 +299,65 @@ class StockAdjustmentSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
 
 
+class StockLotSerializer(serializers.ModelSerializer):
+    """Lectura de lotes (spec 2026-07-10). effective_status derivado (no columna)."""
+    effective_status = serializers.CharField(read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = StockLot
+        fields = [
+            'id', 'public_id', 'product', 'product_name', 'lot_number',
+            'expiry_date', 'received_at', 'quantity_on_hand', 'supplier_name',
+            'status', 'effective_status', 'created_at',
+        ]
+        read_only_fields = fields
+
+
+class StockReceptionLineSerializer(serializers.Serializer):
+    # lot_number obligatorio: la recepción por lotes existe para trazar el lote.
+    lot_number = serializers.CharField(max_length=100)
+    expiry_date = serializers.DateField(required=False, allow_null=True)
+    # En unidades de PRESENTACIÓN (el backend convierte con conversion_factor).
+    quantity = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=Decimal('0.01'),
+    )
+
+    def validate_lot_number(self, value):
+        value = (value or '').strip()
+        if not value:
+            raise serializers.ValidationError("El número de lote es obligatorio.")
+        return value
+
+
+class StockReceptionSerializer(serializers.Serializer):
+    """Recepción de mercancía multi-lote (B1): una presentación + N líneas de lote."""
+    supplier_name = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default='',
+    )
+    received_at = serializers.DateField(required=False, allow_null=True)
+    lots = StockReceptionLineSerializer(many=True)
+
+    def validate_lots(self, value):
+        if not value:
+            raise serializers.ValidationError("Agrega al menos un lote.")
+        return value
+
+
+class LotDiscardSerializer(serializers.Serializer):
+    """Merma/write-off de un lote (B2c). quantity en base-units; default = saldo."""
+    quantity = serializers.DecimalField(
+        max_digits=14, decimal_places=4, required=False, allow_null=True,
+        min_value=Decimal('0.0001'),
+    )
+    reason = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
+
+
+class LotStatusSerializer(serializers.Serializer):
+    """Cambio de estado administrativo del lote (B2c)."""
+    status = serializers.ChoiceField(choices=['active', 'quarantined', 'recalled'])
+
+
 class MedicalRecordProductSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='presentation.product.name', read_only=True)
     presentation_name = serializers.CharField(source='presentation.name', read_only=True)
@@ -305,12 +368,18 @@ class MedicalRecordProductSerializer(serializers.ModelSerializer):
     unit_price = serializers.DecimalField(
         source='presentation.sale_price', max_digits=10, decimal_places=2, read_only=True
     )
+    # Trazabilidad por lote (B2a). `lot` write = PK (body FK, ADR p18). Metadata read.
+    tracks_lots = serializers.BooleanField(source='presentation.product.tracks_lots', read_only=True)
+    lot_number = serializers.CharField(source='lot.lot_number', read_only=True)
+    lot_expiry = serializers.DateField(source='lot.expiry_date', read_only=True)
+    lot_effective_status = serializers.CharField(source='lot.effective_status', read_only=True)
 
     class Meta:
         model = MedicalRecordProduct
         fields = [
             'id', 'presentation', 'product_name', 'presentation_name',
             'base_unit', 'base_unit_display', 'quantity', 'unit_price', 'cost_behavior',
+            'lot', 'tracks_lots', 'lot_number', 'lot_expiry', 'lot_effective_status',
         ]
         validators = []
 
@@ -319,11 +388,34 @@ class MedicalRecordProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Acceso inválido.')
         return presentation
 
+    def validate_lot(self, lot):
+        if lot is None:
+            return lot
+        request = self.context.get('request')
+        if request and lot.organization_id != request.user.organization_id:
+            raise serializers.ValidationError('Lote fuera de tu organización.')
+        return lot
+
     def validate(self, attrs):
         presentation = attrs.get('presentation')
         if not presentation:
             return attrs
         product = presentation.product
+
+        # Lote: obligatorio y consumible si el producto lo trackea (spec P1/P2).
+        lot = attrs.get('lot')
+        if product.tracks_lots:
+            if lot is None:
+                raise serializers.ValidationError({'lot': 'Selecciona el lote a consumir.'})
+            if lot.product_id != product.id:
+                raise serializers.ValidationError({'lot': 'El lote no corresponde a este producto.'})
+            if not lot.is_consumable:
+                raise serializers.ValidationError(
+                    {'lot': f"El lote {lot.lot_number} no está disponible ({lot.effective_status})."}
+                )
+        elif lot is not None:
+            raise serializers.ValidationError({'lot': 'Este producto no usa control de lotes.'})
+
         if not product.requires_prescription:
             return attrs
         medical_record = self.context.get('medical_record')

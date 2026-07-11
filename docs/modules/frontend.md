@@ -76,6 +76,36 @@ Reglas:
   ligado y el stepper creaba OTRO sin `appointment` → el segundo, al cerrarse, no
   completaba la cita y el primero quedaba huérfano abierto (bug corregido en ADR p34).
 
+### Protocolos clínicos de la consulta (Vacuna) — primer protocolo
+
+`consultation_type` puede activar una **sección clínica especializada** ("protocolo")
+dentro de `ConsultationForm`. Primer y único protocolo hoy: **Vacuna**.
+
+```
+src/features/consultation/protocols/
+├── registry.js            — protocolFor(type) → protocolo | null (general → null)
+└── vaccine/
+    ├── VaccineSection.jsx  — sección "Vacuna aplicada" (presentacional; SearchSelect de presets)
+    ├── vaccineProtocol.js  — contrato { label, Section, initDraft, validate }
+    ├── vaccinePresets.js   — catálogo estático extensible (getVaccinePresets/computeNextDue/todayISO)
+    └── index.js            — barrel
+```
+
+- **Contrato mínimo** `{ label, Section, initDraft, validate }` — sin método de
+  persistencia: el `VaccineRecord` lo crea el **backend** al finalizar (ver
+  `docs/modules/medical_records.md` §Protocolos). Crece por evidencia (`initDraft` apareció
+  por reload-survival). Agregar protocolo = **copiar la carpeta** + 1 entrada en `registry.js`.
+  **No** es un motor de schema (cada protocolo es código con su UI/validación).
+- **Estado en `ConsultationForm`**: slice `protocolDraft[type]` (sembrado por `initDraft`),
+  se persiste como `MedicalRecord.consultation_draft` por el **mismo autosave** (sobrevive
+  recarga). **No** se limpia al cambiar `consultation_type` (capturar vacuna → General →
+  volver a Vacuna conserva lo capturado). `proto.validate` corre en `handleFinalize`.
+- **UI Vacuna**: combobox `SearchSelect` de presets (con "Otra vacuna" para texto libre),
+  fecha de aplicación (default hoy), switch "Programar próximo refuerzo", fecha de refuerzo
+  auto-calculada con hint "Calculado según protocolo"/"Personalizado" + ayuda contextual,
+  y banner histórico no bloqueante (`api/vaccines.js` `getVaccines`, solo lectura).
+- Glosario: la sección se titula **"Vacuna aplicada"** (voz clínica), nunca "Plantilla".
+
 ## Reglas de UX (no negociables)
 
 ### Prevenir doble submit
@@ -425,6 +455,8 @@ FETCH_USER         /me/ fail                         → LOGIN
 
 **`applyTokensAndScheduleRefresh(access, refresh, remember)`** — función privada compartida que persiste tokens, actualiza React state y programa el siguiente refresh. La usan tanto `login()` como el flujo de `RESTORING_SESSION`, eliminando código duplicado.
 
+**`refreshUser()`** — re-lee `GET /me/` con el access token vigente y refresca `user` + `permissions` en React state (devuelve el user fresco o `null`). Necesario cuando un flag del usuario cambió **server-side** pero el token que ya tenía el cliente no lo reflejaba. Caso canónico: **cambio de contraseña temporal obligatoria**. `changePassword` devuelve solo `{access, refresh}`; `login()` intercambia tokens pero **no** refetcha `/me/`, así que `user.must_change_password` seguía en `true` en React state → el `MustChangePasswordGate` rebotaba a `/change-password` en un loop (el usuario tenía que cerrar sesión y re-loguear). `ChangePasswordForm`, tras `login()`, llama `await refreshUser()` para sincronizar el flag; si el cambio era el **obligatorio** (`user.must_change_password` capturado antes del submit) y el flag ya quedó limpio, navega a `/` → **Login → cambio obligatorio → Dashboard → Onboarding, sin re-login**.
+
 **Restauración de sesión tras cerrar/reabrir el navegador:**
 - `remember` se reconstruye del flag explícito `auth_persist` (escrito por `setTokens()` durante el login), no inferido del store.
 - Si el flag no existe (legacy), default `true` (localStorage) por compatibilidad hacia atrás.
@@ -749,7 +781,7 @@ getUnitChoices()                           // catálogo de unidades base
 | Zona | Hook | Endpoint | Naturaleza |
 |---|---|---|---|
 | KPIs, sidebar (Ahora/backlog/stock) | `useDashboardSummary` | `GET /api/v1/dashboard/summary/` | Live, cache 30s, polling 30s |
-| **Activación primer uso (`SetupChecklist`)** | `useActivation` | `GET /api/v1/dashboard/activation/` | Read-only, **existencia real** (sin flags), refetch en mount + `dashboard:refresh` (sin polling) |
+| **Activación primer uso (`FirstRunAssistant`)** | `useActivationContext` (`ActivationProvider` en `Root`) | `GET /api/v1/dashboard/activation/` | Read-only, **existencia real** (sin flags), refetch en mount + `dashboard:refresh` + `refetch()` bajo demanda (sin polling) |
 | **Agenda del día (`TodayAgendaList`)** | `useDayAppointments` | `GET /appointments/?date=YYYY-MM-DD` | Live, refetch al cambiar día + evento `dashboard:refresh` (ADR p35) |
 | Spark + Δ de ingresos (admin) | `useFinancialSeries` | `financial/series/` | Snapshot + hoy live |
 | Card "Analítica" | `useDashboardSeries` + `useFinancialSeries` | `operations/series/` + `financial/series/` | Snapshot + hoy live |
@@ -763,27 +795,139 @@ getUnitChoices()                           // catálogo de unidades base
 
 Sidebar (orden = urgencia): **Ahora** → **Citas por resolver** → **Pendientes clínicos** → **Stock crítico**.
 
-Columna principal: **SetupChecklist** (solo si la activación está incompleta) → **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+Columna principal: **KPIs** → **Agenda del día** (`TodayAgendaList`) → **Analítica**.
+Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
+**overlay full-screen** por encima de todo (no es un ítem de la columna).
 
-### SetupChecklist (activación de primer uso)
+### FirstRunAssistant (experiencia de primer uso)
 
-`components/dashboard/SetupChecklist.jsx` — guía a una clínica nueva con datos
-vacíos. Se monta al tope de la columna principal y **se oculta solo cuando los 4
-hitos están completos** (`activation.completed`). Reemplazó al `EmptyDashboard`
-(huérfano + CSS inexistente, **retirado**).
+`components/dashboard/FirstRunAssistant.jsx` — reemplaza al viejo `SetupChecklist`
+(checklist de 4 cajas apiladas, **retirado**; antes había reemplazado a
+`EmptyDashboard`). Experiencia de **primer uso** estilo Linear/Notion/Stripe: guía con
+**un solo paso a la vez**, jerarquía tipográfica (sin cajas/bordes), mucho blanco.
 
-- **Estado real, sin flags**: `useActivation` consume `GET /api/v1/dashboard/activation/`
-  (endpoint read-only, multi-tenant, `for_organization`); devuelve
-  `{has_patients, has_services, has_appointments, has_consultations, completed}`.
-  `has_patients` **excluye la mascota genérica** (`is_generic=False`). Nada de
-  `localStorage` ni onboarding por usuario.
-- **Orden de producto** (no reordenar sin justificar): pacientes → servicios →
-  cita → consulta.
+- **Completado = READINESS, no "ya usó el sistema"**: el onboarding mide si la clínica
+  quedó **lista para operar**, NO si ya recibió un cliente real. Por eso `completed` =
+  `has_patients && has_services` (2 hitos: **pacientes → servicios**). **NO** incluye
+  cita ni consulta: ésos dependen de que llegue un cliente y mantendrían el overlay
+  activo días. Objetivo: completarse en la **primera sesión (3-5 min)**. El gate vive
+  en el backend (`dashboard_activation`: `completed = has_patients and has_services`);
+  `has_appointments`/`has_consultations` se siguen devolviendo (informativos) pero **no**
+  gatean el cierre.
+- **Overlay takeover**: `position: fixed; inset: 0; z-index: 200` (tapa la sidebar,
+  z-index 100) — solo en `/` (los módulos conservan su sidebar). Se muestra mientras
+  `!activation.completed`; al completar **desaparece para siempre** (sin "card de
+  felicitaciones"): overlay `opacity→0` + `onComplete()` → el dashboard entra con
+  **una sola** animación de página (`.dash-reveal`, keyframe `firstrun-rise`), no una
+  coreografía por widget. **No es un bloqueo**: es una guía. Fuera de `/` el usuario
+  navega libremente toda la app (el único gate global es `MustChangePasswordGate`,
+  por seguridad, no el onboarding).
+- **Estado real, sin flags** (PRINCIPIO, no romper): deriva de
+  `useActivationContext()` (`ActivationProvider` en `Root`, `GET .../activation/`,
+  read-only, multi-tenant, `for_organization`) → `{has_patients, has_services,
+  has_appointments, has_consultations, completed}`. `has_patients` **excluye la
+  mascota genérica**. El onboarding **nunca** introduce estado persistente propio
+  (`has_seen_step_2`, `completed_onboarding`, `onboardingDismissed`, `localStorage`…):
+  siempre se deriva del estado operativo real — no duplicar la fuente de verdad.
+- **Provider "tonto"**: `ActivationProvider` expone solo `{activation, loading,
+  refetch}`. **Toda** la lógica de UI del onboarding (paso actual, celebración, cierre,
+  animaciones) vive en `FirstRunAssistant`. Si el onboarding se rediseña/elimina, el
+  provider no queda acoplado.
+- **Orden de producto** (no reordenar sin justificar): pacientes → servicios. El
+  servicio cierra como final de readiness.
+- **Composición editorial de dos columnas** (desktop ≥900px, art direction — no cambia
+  UX): izquierda = flujo (saludo discreto + **título del paso dominante** ~40px + lead +
+  CTA + timeline + ETA); derecha = **preview elegante del módulo** por paso (lista de
+  pacientes / lista de servicios). La preview es **no interactiva** (`aria-hidden`, una
+  sola superficie `--c-surface`), simplificada — no mockups/capturas. <900px: una
+  columna, sin preview.
+- **Progreso**: **timeline conectado** estilo Stripe (nodos unidos por tramos que se
+  estiran a lo ancho de la columna). **No** verbaliza "Paso N de N".
+- **CTA secundario solo con ruta alterna real**: únicamente el paso 1 (Agregar
+  paciente / **Importar Excel**, gateado por `can("import.create")` y oculto si
+  `user.is_demo`). Servicios = solo primary.
+- **Flujo sin intervención (auto-redirect)**: cada CTA navega con
+  `{ state: { fromOnboarding: true } }`. El módulo destino (`pets.jsx`, `config.jsx`),
+  tras el create-success **de creación** (no edición), si
+  `location.state?.fromOnboarding` → `navigate('/', { state: { onboardingStep: '<key>' } })`.
+  Al volver, `FirstRunAssistant` lee ese `onboardingStep` → **micro-celebración**
+  `✓ …` (~1.2 s) → siguiente paso o cierre.
+- **Cierre robusto al remontaje**: `FirstRunAssistant` se desmonta al navegar a un
+  módulo y se re-monta al volver a `/`. El latch `sawStepRef` (que autoriza el momento
+  de cierre solo si el montaje vio un paso en marcha — evita mostrarlo a una clínica ya
+  activada) se levanta **también** al consumir el signal `onboardingStep`, porque ese
+  signal prueba que el usuario venía del flujo. Así, aunque al volver la activación ya
+  esté `completed` (sin paso que renderizar), el momento final igual dispara. Muestra
+  ~1 s `Todo listo. {clínica} ya está lista. ✓` y fade. Personalizado con
+  `user.organization_name` (nunca la marca).
+- **Volver guiado**: `Layout.jsx`, si `location.state?.fromOnboarding`, muestra
+  `← Volver al Dashboard` en el header en vez del título (hint de recorrido).
 - **Gateado por capability** (no por rol): solo se renderiza si `can("service.create")`
-  — representa el acceso a la configuración inicial (un VET/ASISTENTE no ve CTAs a
-  lugares sin permiso, p.ej. `/config`). No existe una capability única dedicada a
-  "ajustes de la organización", por eso `service.create` es el proxy.
-- CTA "Importar Excel" gateado además por `can("import.create")`.
+  — proxy del acceso a la configuración inicial (un VET/ASISTENTE no ve CTAs a lugares
+  sin permiso, p.ej. `/config`). No existe capability única para "ajustes de la org".
+- **Motion**: `framer-motion` — entrada **orquestada escalonada** (marca → saludo →
+  eyebrow → título → lead → CTA → timeline → ETA; preview desliza desde la derecha),
+  transición fade+slide entre pasos, y micro-motions CSS (pulso del nodo actual del
+  timeline, pop del ✓). Todo gateado por `useReducedMotion`
+  / `@media (prefers-reduced-motion: reduce)`.
+- **Atmósfera** (no plano): fondo con doble `radial-gradient` tonal (spotlight cálido +
+  halo verde `--c-primary-ring`) + grano SVG sutil (`::before`, `mix-blend: multiply`),
+  marca `SaaslyVet` arriba-izquierda y eyebrow "Primeros pasos" en color de marca. Solo
+  tokens (sin teal, sin hex).
+
+### Recorridos por módulo (spotlight sobre la UI real)
+
+Recorridos guiados que enseñan **para qué sirve cada módulo** resaltando los elementos
+**reales** de la pantalla (coach-marks), NO un modal con mocks. Motor **genérico y
+reutilizable**: `components/SpotlightTour.jsx` (+ `.module.css`) — atenúa la pantalla,
+recorta un hueco sobre `step.target` (selector CSS) y muestra un popover con la narración.
+Un **overlay bloquea toda interacción** con la UI real (z 10499, encima de modales z 1000)
+→ el usuario navega solo por el popover; **imposible disparar acciones reales por
+accidente**. Precedente: `features/inventory/tutorial/ProductCreationTour.jsx` (bespoke de
+inventario; `SpotlightTour` es el motor canónico a futuro — inventario migra luego).
+
+**Primero implementado para Citas**: `features/appointments/tour/` = `agendaSteps.js`
+(10 pasos + copy + `makeDemoLuna`) + `useAgendaTour.js` (orquestador). Cada paso resalta
+un elemento real (`data-tour="agenda-*"` en `appointments.jsx`: calendario, formulario,
+`#new-appt-pet`, quickadd, walk-in, detalle, "▶ Atender ahora") y su `onEnter(actions)`
+**maneja la página real** (`setSelectedSlot`, `setWeekOffset`, `setViewAppt`,
+`setTourDemoAppt`).
+
+Reglas (no negociables — voz de producto):
+- **EN VIVO sobre la UI real, no un modal de mocks.** El recorrido opera la pantalla real:
+  abre el formulario de nueva cita, y el **modal de detalle REAL** de la cita.
+- **Cita demo Luna NO persistida**: `makeDemoLuna()` (`public_id="__demo__"`) se inyecta
+  SOLO en el grid local (`tourDemoAppt` → merge en `weekAppts`, **no** en las stats,
+  **nunca** al backend) para que aparezca como `ApptBadge` real y abra el `DetailModal`
+  real. Se limpia en `skip`/`finish` (`setViewAppt(null)` + `setTourDemoAppt(null)` +
+  `setSelectedSlot(null)`). Resuelve el problema de clínica vacía sin escribir datos.
+- **Contar una HISTORIA, no listar features.** Narra la visita de un paciente (**Luna**)
+  en 10 pasos; el usuario aprende calendario, búsqueda, detalle, estados y flujo clínico
+  *sin darse cuenta*. Un "calendario → botón → filtro → …" se siente PowerPoint y está
+  **prohibido**.
+- **Prohibida la palabra "Tutorial" en texto visible.** Usar **"Recorrido" / "Cómo
+  funciona" / "Conoce…"**. Disparador en el `page-header` de Citas: **"Cómo funciona"**
+  (`btn-secondary`, `Icon.Help`).
+- **Cierre que no intimida** (último paso): "Ya conoces lo esencial… conforme uses el
+  sistema irás descubriendo funciones más avanzadas" (evita sentir que "ya debería
+  saberlo todo"). Ahí se *mencionan* las funciones que no son paso propio (atención sin
+  cita, alta de paciente).
+- **Glosario es-MX**: Cliente / Mascota / Paciente / **"Atención sin cita"** (NO
+  "Walk-in") / **Cobro**. Estados vía `StatusBadge` (`Programada`/`En consulta`/`Completada`).
+- **Gate**: auto 1ª visita (`localStorage: agenda_tour_seen !== "true"`, solo si
+  `canCreate`) + replay desde "Cómo funciona". Flag = **preferencia de UI** ("ya vio esta
+  ayuda"), distinto del principio de onboarding (deriva de estado de negocio real) — no
+  confundir.
+- **Solo tokens** (sin teal/hex), reusa `.btn`. Spotlight/popover gateados por
+  `@media (prefers-reduced-motion)`.
+- **Gate CI**: `components/SpotlightTour.test.jsx` (smoke del motor: navegación de pasos,
+  cierre, `Anterior` deshabilitado en el 1º, ausencia de "Tutorial").
+
+Extender a otros módulos = nuevo `features/<módulo>/tour/` (`<módulo>Steps.js` +
+`use<Módulo>Tour.js`) reusando `SpotlightTour` + `data-tour` en la página real.
+
+Extender a otros módulos = nuevo `features/<módulo>/tour/` siguiendo esta plantilla
+(historia real, sin "Tutorial", cierre amable, autocontenido).
 
 ### Agenda del día (`TodayAgendaList`) — ADR p35
 

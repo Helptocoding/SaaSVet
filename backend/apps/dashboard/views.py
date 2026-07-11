@@ -743,17 +743,23 @@ def dashboard_activation(request):
     Estado de activación de la clínica — read-only, multi-tenant, SIN flags.
 
     Devuelve la EXISTENCIA real (de por vida) de los hitos de arranque para que el
-    SetupChecklist del dashboard se derive de datos reales y NO de un flag
-    persistido por usuario. Orden de producto: pacientes → servicios → cita →
-    consulta.
+    FirstRunAssistant del dashboard se derive de datos reales y NO de un flag
+    persistido por usuario.
 
     - has_patients:      ≥1 Pet NO genérico (la mascota genérica se siembra al crear
                          la org; no cuenta como "tiene pacientes").
     - has_services:      ≥1 Service.
-    - has_appointments:  ≥1 Appointment.
-    - has_consultations: ≥1 MedicalRecord.
+    - has_appointments:  ≥1 Appointment (informativo).
+    - has_consultations: ≥1 MedicalRecord (informativo).
 
-    `completed` = los cuatro en True (el checklist se oculta). No escribe nada.
+    `completed` = clínica LISTA PARA OPERAR = has_patients AND has_services (readiness).
+    Deliberadamente NO depende de has_appointments/has_consultations: esos hitos
+    dependen de que llegue un cliente real, y mantendrían el onboarding activo durante
+    días aunque la clínica ya esté configurada. El onboarding mide "lista para empezar",
+    no "ya usó el sistema" → se completa en la primera sesión (3-5 min).
+    has_appointments/has_consultations se siguen devolviendo (informativos) pero NO
+    gatean el cierre del onboarding. No escribe nada.
+
     Imports locales para evitar acoplar el módulo dashboard al cargar (idiomático
     en este archivo — read-only sobre los dominios).
     """
@@ -774,7 +780,8 @@ def dashboard_activation(request):
         'has_services': has_services,
         'has_appointments': has_appointments,
         'has_consultations': has_consultations,
-        'completed': all([has_patients, has_services, has_appointments, has_consultations]),
+        # Readiness: paciente + servicio. NO depende de cita/consulta (eventos externos).
+        'completed': has_patients and has_services,
     })
 
 

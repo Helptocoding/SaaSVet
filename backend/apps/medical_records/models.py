@@ -33,6 +33,18 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
     )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN, db_index=True)
 
+    # Temporary UI scratchpad.
+    # May be deleted or reshaped without migration.
+    # Never use as business source of truth.
+    #
+    # Borrador de UI de secciones en progreso (vaccine, surgery, ...), solo para
+    # que sobrevivan a una recarga antes de finalizar la consulta. NO es historial
+    # clinico. NUNCA leer para analytics, reportes, historial ni registros legales.
+    # Los registros autoritativos se crean al finalizar (p.ej. VaccineRecord, via
+    # services.apply_consultation_draft_on_close). Claves acotadas por whitelist en
+    # el serializer (ALLOWED_CONSULTATION_DRAFT_KEYS). Forma: {"vaccine": {...}}
+    consultation_draft = models.JSONField(default=dict, blank=True)
+
     # Analytics anchor (editable=False, solo escrito por close_medical_record view).
     # Ver docs/dashboard-metrics-contract.md §2.7.
     closed_at = models.DateTimeField(null=True, blank=True, editable=False)
@@ -135,6 +147,23 @@ class VaccineRecord(PublicIdMixin, OrganizationalModel):
         MedicalRecord, on_delete=models.SET_NULL, null=True, blank=True, related_name='vaccine_records'
     )
 
+    # Trazabilidad por lote (A2, spec inventario 2026-07-10). Ligado a inventario:
+    # product/lot (SET_NULL) + snapshot denormalizado (lot_number/lot_expiry/
+    # manufacturer) para que el registro legal sea INMUTABLE aunque el lote se
+    # corrija/borre (append-only NOM-007/046). Todos nullable: vacuna de texto
+    # libre (sin inventario) los deja vacíos.
+    product = models.ForeignKey(
+        'inventory.Product', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='vaccine_records',
+    )
+    lot = models.ForeignKey(
+        'inventory.StockLot', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='vaccine_records',
+    )
+    lot_number = models.CharField(max_length=100, blank=True, default='')
+    lot_expiry = models.DateField(null=True, blank=True)
+    manufacturer = models.CharField(max_length=255, blank=True, default='')
+
     @property
     def status(self):
         if not self.next_due_date:
@@ -151,6 +180,63 @@ class VaccineRecord(PublicIdMixin, OrganizationalModel):
                          name='idx_vacc_org_app_date'),
             models.Index(fields=['organization', 'next_due_date'],
                          name='idx_vacc_org_next_due'),
+        ]
+
+
+class ConsultationAssessment(OrganizationalModel):
+    """
+    Valoración estructurada de una consulta de la **familia diagnóstica**
+    (general y futuros control/revisión/dermatología comparten este modelo;
+    el nombre no se ata al examen físico).
+
+    Guarda la S (motivo + historia) y la O (exploración por sistemas)
+    estructuradas de SOAP; el diagnóstico (A) y el plan (P) siguen viviendo en
+    MedicalRecord. NO es transversal: cada acto clínico tiene su propia
+    valoración (ver docs/diseno-protocolos-clinicos-2026-07-09.md).
+
+    Se materializa en el cierre de la consulta
+    (services.apply_consultation_draft_on_close), dentro del mismo atomic. Un
+    protocolo NUNCA muta MedicalRecord; solo crea su propio registro (principio
+    binding, ADR p50). El scratchpad `MedicalRecord.consultation_draft['general']`
+    es el borrador de UI; este modelo es la fuente de verdad.
+
+    `protocol_version` congela el esquema con que se capturó el registro, para
+    interpretar correctamente registros viejos cuando el protocolo evolucione.
+    """
+    PROTOCOL_VERSION = 1
+
+    medical_record = models.ForeignKey(
+        MedicalRecord, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='consultation_assessments',
+    )
+    pet = models.ForeignKey(Pet, on_delete=models.PROTECT, related_name='consultation_assessments')
+    assessed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='consultation_assessments',
+    )
+    # S de SOAP
+    chief_complaint = models.CharField(max_length=255, blank=True)  # motivo principal (1 línea, buscable)
+    history = models.TextField(max_length=5000, blank=True)         # anamnesis / historia
+    # O de SOAP — exploración por sistemas (estructura libre por sistema: normal/alterado + hallazgo)
+    exam = models.JSONField(default=dict, blank=True)
+    differentials = models.TextField(max_length=2000, blank=True)
+    recheck_date = models.DateField(null=True, blank=True)          # seguimiento del acto (próxima revisión)
+    protocol_version = models.PositiveSmallIntegerField(default=1, editable=False)
+
+    def clean(self):
+        org = self.organization_id
+        if org and self.pet_id and self.pet.organization_id != org:
+            raise ValidationError("La mascota no pertenece a la misma organizacion que la valoracion.")
+        if org and self.medical_record_id and self.medical_record.organization_id != org:
+            raise ValidationError("La consulta no pertenece a la misma organizacion que la valoracion.")
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['organization', 'pet', '-created_at'],
+                         name='idx_consult_assess_org_pet'),
+            models.Index(fields=['organization', 'medical_record'],
+                         name='idx_consult_assess_org_mr'),
         ]
 
 

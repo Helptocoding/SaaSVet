@@ -7,6 +7,7 @@ import PetDetail from "./pages/petDetail";
 import Layout from "./components/Layout";
 import { useAuth } from "./auth/authContext";
 import { AuthProvider } from "./auth/authContext";
+import { ActivationProvider } from "./hooks/activationContext";
 import Staff from "./pages/staff";
 import Appointments from "./pages/appointments";
 import MedicalRecords from "./pages/medicalRecords/index";
@@ -108,12 +109,14 @@ function AuthGate() {
 function Root() {
   return (
     <AuthProvider>
-      <ConfirmProvider>
-        <ErrorBoundary>
-          <AuthGate />
-        </ErrorBoundary>
-        <Toaster richColors position="top-right" toastOptions={{ duration: 4000 }} visibleToasts={3} />
-      </ConfirmProvider>
+      <ActivationProvider>
+        <ConfirmProvider>
+          <ErrorBoundary>
+            <AuthGate />
+          </ErrorBoundary>
+          <Toaster richColors position="top-right" toastOptions={{ duration: 4000 }} visibleToasts={3} />
+        </ConfirmProvider>
+      </ActivationProvider>
     </AuthProvider>
   );
 }

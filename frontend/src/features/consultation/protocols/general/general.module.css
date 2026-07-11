@@ -1,0 +1,192 @@
+/* Exploración por sistemas — patrón "resumen colapsable + excepciones + acordeón"
+   (spec §4). Candidato a extraerse como ExamGrid compartido en la 2ª repetición
+   (preop de Cirugía / ABC de Urgencia). Solo estructura; usa tokens del sistema. */
+
+.hint {
+  font-size: 12px;
+  color: var(--c-text-3, #999);
+  margin: 0 0 10px;
+}
+
+/* ── Fila resumen (siempre visible) ── */
+
+.examSummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border, #e4e1dc);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.examDots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.summaryDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-success, #3a9d5d);
+  transition: transform 0.2s var(--ease, ease), background 0.2s var(--ease, ease);
+}
+
+.summaryDotAltered {
+  background: var(--c-warning, #c47f17);
+  transform: scale(1.25);
+}
+
+.examSummaryText {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.examReveal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--c-primary, #1a4434);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.examReveal:hover {
+  background: var(--c-subtle, #f2f4f0);
+}
+
+.chev {
+  display: inline-flex;
+  transition: transform 0.22s var(--ease, ease);
+}
+
+.chevOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Excepciones (solo lo alterado, siempre visible si existe) ── */
+
+.examExceptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.exceptionCard {
+  padding: 10px 12px;
+  border: 1px solid var(--c-warning, #c47f17);
+  border-radius: 10px;
+  background: var(--c-warning-bg, #fdf6ec);
+}
+
+.exceptionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.exceptionName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.exceptionRemove {
+  border: none;
+  background: transparent;
+  color: var(--c-text-3, #888);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.exceptionRemove:hover {
+  color: var(--c-primary, #1a4434);
+}
+
+/* ── Acordeón: lista completa como nube de chips (grid-rows 0fr → 1fr) ── */
+
+.examAccordion {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s var(--ease, ease);
+  margin-top: 10px;
+}
+
+.examAccordionOpen {
+  grid-template-rows: 1fr;
+}
+
+.examAccordionInner {
+  overflow: hidden;
+}
+
+.chipCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 2px 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border: 1px solid var(--c-border, #e4e1dc);
+  border-radius: 999px;
+  background: #fff;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease, ease), border-color 0.15s var(--ease, ease),
+    background 0.15s var(--ease, ease);
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--c-primary, #1a4434);
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.chip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chipAltered {
+  border-color: var(--c-warning, #c47f17);
+  background: var(--c-warning-bg, #fdf6ec);
+  font-weight: 600;
+}
+
+.chipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-success, #3a9d5d);
+  flex-shrink: 0;
+}
+
+.chipAltered .chipDot {
+  background: var(--c-warning, #c47f17);
+}

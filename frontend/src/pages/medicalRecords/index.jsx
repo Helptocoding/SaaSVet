@@ -164,6 +164,7 @@ const MedicalRecords = () => {
       (r.diagnosis || "").toLowerCase().includes(q) ||
       (r.treatment || "").toLowerCase().includes(q) ||
       (r.notes || "").toLowerCase().includes(q) ||
+      (r.consultation_assessment?.chief_complaint || "").toLowerCase().includes(q) ||
       (r.veterinarian_name || "").toLowerCase().includes(q)
     );
   }, [filteredByType, historySearch]);
@@ -308,8 +309,8 @@ const MedicalRecords = () => {
   const inConsult = showStepper && selectedPet;
 
   return (
-    <Layout>
-      <div className={styles.pageLayout}>
+      <Layout>
+      <div className={`${styles.pageLayout} ${inConsult ? styles.pageLayoutConsult : ""}`}>
         {!inConsult && (
           <PetSidebar
             selectedPet={selectedPet}
@@ -331,7 +332,7 @@ const MedicalRecords = () => {
             appointmentId={attendAppointmentId}
           />
         ) : (
-            <main className={styles.mainContent}>
+            <main className={`${styles.mainContent} ${inConsult ? styles.mainContentConsult : ""}`}>
               {!selectedPet ? (
                 <div className={styles.emptyCenter}>
                   <div className={styles.emptyIconWrap}>

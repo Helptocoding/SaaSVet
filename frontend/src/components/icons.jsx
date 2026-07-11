@@ -18,7 +18,7 @@ import {
     Printer, Download, Upload,
     Frown,
     Link, Heart, Activity,
-    Building2, Wallet,
+    Building2, Wallet, Lock,
 } from "lucide-react";
 
 export const Icon = {
@@ -87,4 +87,5 @@ export const Icon = {
     Activity: ({ s = 20, c = "currentColor" }) => <Activity size={s} color={c} strokeWidth={2} />,
     Building: ({ s = 20, c = "currentColor" }) => <Building2 size={s} color={c} strokeWidth={2} />,
     Wallet: ({ s = 20, c = "currentColor" }) => <Wallet size={s} color={c} strokeWidth={2} />,
+    Lock: ({ s = 20, c = "currentColor" }) => <Lock size={s} color={c} strokeWidth={2} />,
 };

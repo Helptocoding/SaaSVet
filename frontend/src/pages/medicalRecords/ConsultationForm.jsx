@@ -15,19 +15,20 @@ import {
   removeMedicalRecordService,
 } from "../../api/medicalRecords";
 import { createVitals, getSummary } from "../../api/vitals";
+import { getVaccines } from "../../api/vaccines";
+import { protocolFor } from "../../features/consultation/protocols/registry";
 import {
   addMedicalRecordProduct,
   removeMedicalRecordProduct,
   getMedicalRecordProducts,
+  getProductLots,
 } from "../../api/inventory";
 import { getServices } from "../../api/billing";
 import { createPrescription, updatePrescription } from "../../api/prescriptions";
-import ConsultationPatientBanner from "./ConsultationPatientBanner";
+import ConsultationRail from "./ConsultationRail";
 import EvaluationSection from "./EvaluationSection";
 import TreatmentSection from "./TreatmentSection";
 import ChargesSection from "./ChargesSection";
-import ConsultationFooter from "./ConsultationFooter";
-import VitalsModal from "./VitalsModal";
 import styles from "./consultationForm.module.css";
 
 const CONSULTATION_TYPES = [
@@ -152,7 +153,10 @@ export default function ConsultationForm({
     presentation: null,
     quantity: "1",
     cost_behavior: "charge",
+    lot: null,
   });
+  // Lotes elegibles del producto seleccionado (solo si tracks_lots) — B2a.
+  const [productLots, setProductLots] = useState([]);
 
   const [availableServices, setAvailableServices] = useState([]);
   const [addedServices, setAddedServices] = useState([]);
@@ -164,8 +168,18 @@ export default function ConsultationForm({
   const [closed, setClosed] = useState(() => initialRecord?.status === "closed");
   const [completionInvoicePublicId, setCompletionInvoicePublicId] = useState(null);
   const [forceWeight, setForceWeight] = useState(false);
-  const [showVitalsModal, setShowVitalsModal] = useState(false);
   const [dirtyFlag, setDirtyFlag] = useState(false);
+  const [activeSection, setActiveSection] = useState("sec-eval");
+
+  // Borrador de protocolos clínicos (scratchpad de UI). Se persiste como
+  // MedicalRecord.consultation_draft por el mismo autosave; NO se limpia al
+  // cambiar consultation_type (capturar vacuna → ir a General → volver a Vacuna
+  // conserva lo capturado). Los VaccineRecord se materializan en el backend al
+  // finalizar (apply_consultation_draft_on_close), no aquí.
+  const [protocolDraft, setProtocolDraft] = useState(
+    () => initialRecord?.consultation_draft || {}
+  );
+  const [vaccineHistory, setVaccineHistory] = useState([]);
 
   // Refs: anti-duplicado de saves, serialización de autosave, race del summary.
   const lastVitalsHash = useRef(null);
@@ -174,9 +188,9 @@ export default function ConsultationForm({
   const pendingSaveRef = useRef(false);
   const requestSeq = useRef(0);
   const [summary, setSummary] = useState(null);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
 
-  const evalRef = useRef(null);
-  const treatRef = useRef(null);
+  const scrollRef = useRef(null);
 
   const updateDraft = useCallback((patch) => {
     setDraft((prev) => ({ ...prev, ...patch }));
@@ -196,6 +210,55 @@ export default function ConsultationForm({
     const f = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
     return (v) => f.format(Number(v) || 0);
   }, []);
+
+  const fmtDate = useMemo(
+    () => (ds) =>
+      ds
+        ? new Date(`${ds}T00:00:00`).toLocaleDateString("es-MX", {
+            day: "numeric", month: "short", year: "numeric",
+          })
+        : "",
+    []
+  );
+
+  // Protocolo clínico activo según el tipo de consulta (null si no aplica, p.ej.
+  // general). El slice se siembra vía initDraft solo para render; se persiste al
+  // primer edit del usuario.
+  const proto = protocolFor(draft.consultation_type);
+  const protoSlice = proto
+    ? protocolDraft[draft.consultation_type] ?? proto.initDraft(initialRecord)
+    : null;
+
+  const updateProtocol = useCallback(
+    (patch) => {
+      if (!proto) return;
+      const type = draft.consultation_type;
+      setProtocolDraft((prev) => {
+        const current = prev[type] ?? proto.initDraft(initialRecord);
+        return { ...prev, [type]: { ...current, ...patch } };
+      });
+      setDirtyFlag(true);
+    },
+    [proto, draft.consultation_type, initialRecord]
+  );
+
+  // Historial de vacunas de la mascota (ayuda contextual no bloqueante).
+  useEffect(() => {
+    if (!pet?.public_id) return;
+    let active = true;
+    (async () => {
+      try {
+        const data = await getVaccines({ pet: pet.public_id });
+        const list = Array.isArray(data) ? data : data?.results || [];
+        if (active) setVaccineHistory(list);
+      } catch {
+        /* informativo: silencioso */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [pet?.public_id]);
 
   // Totales en vivo desde el estado local (instantáneo). El backend sigue siendo
   // la fuente autoritativa de la factura; aquí solo damos feedback inmediato.
@@ -274,6 +337,33 @@ export default function ConsultationForm({
     })();
   }, []);
 
+  // Lotes elegibles cuando se selecciona un producto con tracks_lots (B2a).
+  // El backend ordena por caducidad (FEFO) → el primer elegible es el default.
+  useEffect(() => {
+    const prod = productLine.product ? productMap[productLine.product.id] : null;
+    if (!prod?.tracks_lots || !prod?.public_id) {
+      setProductLots([]);
+      return undefined;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const data = await getProductLots(prod.public_id, { with_stock: "true" });
+        const list = (Array.isArray(data) ? data : data?.results || [])
+          .filter((l) => l.effective_status === "active");
+        if (!active) return;
+        setProductLots(list);
+        setProductLine((pl) => (pl.lot ? pl : { ...pl, lot: list[0] || null }));
+      } catch {
+        if (active) setProductLots([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productLine.product, productMap]);
+
   const handleProductSearch = useCallback(
     async (q) => {
       const lower = q.trim().toLowerCase();
@@ -351,6 +441,7 @@ export default function ConsultationForm({
           diagnosis: draft.diagnosis,
           treatment: draft.treatment,
           notes: draft.notes,
+          consultation_draft: protocolDraft,
         };
         if (!resultPublicId) {
           // Liga el MR a la cita cuando viene del flujo "Atender ahora"
@@ -453,6 +544,7 @@ export default function ConsultationForm({
         if (ok) {
           setDirtyFlag(false);
           setSaveState("saved");
+          setLastSavedAt(Date.now());
         } else {
           setSaveState("idle");
         }
@@ -485,6 +577,7 @@ export default function ConsultationForm({
       draft,
       forceWeight,
       prescriptionDraft,
+      protocolDraft,
       recipeLine,
       productMap,
       prescriptionId,
@@ -499,13 +592,65 @@ export default function ConsultationForm({
     if (closed || !dirtyFlag) return;
     const t = setTimeout(() => persistDraft({ silent: true }), 1000);
     return () => clearTimeout(t);
-  }, [draft, prescriptionDraft, dirtyFlag, closed, persistDraft]);
+  }, [draft, prescriptionDraft, protocolDraft, dirtyFlag, closed, persistDraft]);
 
-  const scrollToField = useCallback((field) => {
-    const section = FIELD_SECTION[field];
-    const target = section === "treat" ? treatRef.current : evalRef.current;
-    target?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  // Secciones navegables del riel (dependen del protocolo activo).
+  const sectionIds = useMemo(() => {
+    const ids = ["sec-eval"];
+    if (proto) ids.push(`sec-${draft.consultation_type}`);
+    ids.push("sec-treat", "sec-charges");
+    return ids;
+  }, [proto, draft.consultation_type]);
+
+  const chargesBadge =
+    grandTotal > 0
+      ? fmtMXN(grandTotal)
+      : addedProducts.length + addedServices.length || null;
+
+  const navItems = useMemo(() => {
+    const items = [{ id: "sec-eval", label: "Evaluación" }];
+    if (proto) items.push({ id: `sec-${draft.consultation_type}`, label: proto.label });
+    items.push({ id: "sec-treat", label: "Tratamiento" });
+    items.push({ id: "sec-charges", label: "Cobros", badge: chargesBadge });
+    return items;
+  }, [proto, draft.consultation_type, chargesBadge]);
+
+  const scrollToId = useCallback((id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  const scrollToField = useCallback(
+    (field) => {
+      const section = FIELD_SECTION[field];
+      scrollToId(section === "treat" ? "sec-treat" : "sec-eval");
+    },
+    [scrollToId]
+  );
+
+  // Scroll-spy: marca la sección activa según lo visible en el scroll container.
+  useEffect(() => {
+    if (closed) return undefined;
+    const root = scrollRef.current;
+    if (!root) return undefined;
+    const els = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+    if (!els.length) return undefined;
+    const visible = new Set();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) visible.add(e.target.id);
+          else visible.delete(e.target.id);
+        });
+        const firstVisible = sectionIds.find((id) => visible.has(id));
+        if (firstVisible) setActiveSection(firstVisible);
+      },
+      { root, rootMargin: "0px 0px -60% 0px", threshold: 0 }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sectionIds, closed]);
 
   // Cierre de la consulta tras un guardado exitoso.
   const closeRecord = useCallback(async () => {
@@ -540,7 +685,10 @@ export default function ConsultationForm({
   }, [persistDraft]);
 
   const handleFinalize = useCallback(async () => {
-    const errors = validateForClose(draft);
+    const errors = {
+      ...validateForClose(draft),
+      ...(proto ? proto.validate(protoSlice) : {}),
+    };
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       const firstField = Object.keys(errors)[0];
@@ -551,7 +699,7 @@ export default function ConsultationForm({
     const saved = await persistDraft({ silent: false });
     if (!saved) return;
     await closeRecord();
-  }, [draft, persistDraft, closeRecord, scrollToField]);
+  }, [draft, proto, protoSlice, persistDraft, closeRecord, scrollToField]);
 
   // ── Receta (medicamentos) ──
   const handleAddRecipe = useCallback(() => {
@@ -603,11 +751,16 @@ export default function ConsultationForm({
       toast.error("Selecciona una forma de venta");
       return;
     }
+    if (selected?.tracks_lots && !productLine.lot?.id) {
+      toast.error("Selecciona el lote a consumir.");
+      return;
+    }
     try {
       const result = await addMedicalRecordProduct(recordRef.publicId, {
         presentation: chosen.id,
         quantity: productLine.quantity,
         cost_behavior: productLine.cost_behavior,
+        ...(selected?.tracks_lots && productLine.lot?.id ? { lot: productLine.lot.id } : {}),
       });
       setAddedProducts((prev) => [
         ...prev,
@@ -618,9 +771,10 @@ export default function ConsultationForm({
           quantity: result.quantity,
           unit_price: result.unit_price,
           cost_behavior: result.cost_behavior || productLine.cost_behavior,
+          lot_number: result.lot_number,
         },
       ]);
-      setProductLine({ product: null, presentation: null, quantity: "1", cost_behavior: "charge" });
+      setProductLine({ product: null, presentation: null, quantity: "1", cost_behavior: "charge", lot: null });
       toast.success("Producto agregado");
       refreshSummary();
     } catch (err) {
@@ -751,34 +905,37 @@ export default function ConsultationForm({
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty, closed]);
 
-  // Si una validación marca un vital (ej. force_weight), abrir el modal para no
-  // ocultar el error ahora que la edición de vitales vive en un modal.
-  useEffect(() => {
-    if (VITAL_FIELDS.some((v) => formErrors[v.f])) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowVitalsModal(true);
-    }
-  }, [formErrors]);
-
   const title = closed ? "Consulta" : isEditing ? "Editar consulta" : "Nueva consulta";
   const doneTotal = summary?.totals?.total != null ? Number(summary.totals.total) : grandTotal;
 
   return (
     <div className={styles.page}>
-      <ConsultationPatientBanner
-        pet={pet}
-        title={title}
-        draft={draft}
-        vitalFields={VITAL_FIELDS}
-        formErrors={formErrors}
-        closed={closed}
-        onEditVitals={() => setShowVitalsModal(true)}
-      />
+      <div className={styles.scroll} ref={scrollRef}>
+        <div className={styles.shell}>
+          <div className={styles.grid}>
+            <ConsultationRail
+              pet={pet}
+              title={title}
+              draft={draft}
+              vitalFields={VITAL_FIELDS}
+              formErrors={formErrors}
+              closed={closed}
+              onVitalsChange={updateDraft}
+              onClearError={clearError}
+              navItems={navItems}
+              activeSection={activeSection}
+              onNavigate={scrollToId}
+              saveState={saveState}
+              lastSavedAt={lastSavedAt}
+              saving={saving}
+              onCancel={requestClose}
+              onSaveDraft={handleSaveDraft}
+              onFinalize={handleFinalize}
+            />
 
-      <div className={styles.scroll}>
-        <div className={styles.sheet}>
-          {closed ? (
-            <div className={`fade-in ${styles.doneWrap}`}>
+            <div className={styles.content}>
+              {closed ? (
+                <div className={`fade-in ${styles.doneWrap}`}>
               <div className={styles.doneIcon}>
                 <Icon.Check s={32} />
               </div>
@@ -843,80 +1000,97 @@ export default function ConsultationForm({
                 </>
               )}
             </div>
-          ) : (
-            <>
-              <EvaluationSection
-                ref={evalRef}
-                draft={draft}
-                consultationTypes={CONSULTATION_TYPES}
-                formErrors={formErrors}
-                onChange={updateDraft}
-                onClearError={clearError}
-                disabled={closed}
-              />
-              <TreatmentSection
-                ref={treatRef}
-                draft={draft}
-                formErrors={formErrors}
-                onChange={updateDraft}
-                onClearError={clearError}
-                disabled={closed}
-                prescriptionItems={prescriptionDraft.items}
-                prescriptionNotes={prescriptionDraft.notes}
-                recipeLine={recipeLine}
-                onRecipeLineChange={(patch) => setRecipeLine((prev) => ({ ...prev, ...patch }))}
-                onAddRecipe={handleAddRecipe}
-                onRemoveRecipe={handleRemoveRecipe}
-                onPrescriptionNotesChange={handlePrescriptionNotesChange}
-                onProductSearch={handleProductSearch}
-                productMap={productMap}
-              />
-              <ChargesSection
-                recordReady={!!recordRef.publicId}
-                disabled={closed}
-                productMap={productMap}
-                fmtMXN={fmtMXN}
-                productLine={productLine}
-                onProductLineChange={(patch) => setProductLine((prev) => ({ ...prev, ...patch }))}
-                onAddProduct={handleAddProduct}
-                addedProducts={addedProducts}
-                onRemoveProduct={handleRemoveProduct}
-                onProductSearch={handleProductSearch}
-                serviceLine={serviceLine}
-                onServiceLineChange={(patch) => setServiceLine((prev) => ({ ...prev, ...patch }))}
-                onAddService={handleAddService}
-                addedServices={addedServices}
-                onRemoveService={handleRemoveService}
-                onServiceSearch={handleServiceSearch}
-                productsTotal={productsTotal}
-                servicesTotal={servicesTotal}
-                grandTotal={grandTotal}
-              />
-            </>
-          )}
+              ) : (
+                <>
+                  <div id="sec-eval" className={styles.anchor}>
+                    <EvaluationSection
+                      draft={draft}
+                      consultationTypes={CONSULTATION_TYPES}
+                      formErrors={formErrors}
+                      onChange={updateDraft}
+                      onClearError={clearError}
+                      disabled={closed}
+                    />
+                  </div>
+
+                  {proto && (
+                    <div id={`sec-${draft.consultation_type}`} className={styles.anchor}>
+                      <proto.Section
+                        value={protoSlice}
+                        onChange={updateProtocol}
+                        history={vaccineHistory}
+                        species={pet?.species}
+                        disabled={closed}
+                        fmtDate={fmtDate}
+                        products={products}
+                      />
+                    </div>
+                  )}
+
+                  <div id="sec-treat" className={styles.anchor}>
+                    <TreatmentSection
+                      draft={draft}
+                      formErrors={formErrors}
+                      onChange={updateDraft}
+                      onClearError={clearError}
+                      disabled={closed}
+                      prescriptionItems={prescriptionDraft.items}
+                      prescriptionNotes={prescriptionDraft.notes}
+                      recipeLine={recipeLine}
+                      onRecipeLineChange={(patch) => setRecipeLine((prev) => ({ ...prev, ...patch }))}
+                      onAddRecipe={handleAddRecipe}
+                      onRemoveRecipe={handleRemoveRecipe}
+                      onPrescriptionNotesChange={handlePrescriptionNotesChange}
+                      onProductSearch={handleProductSearch}
+                      productMap={productMap}
+                    />
+                  </div>
+
+                  <div id="sec-charges" className={styles.anchor}>
+                    <ChargesSection
+                      recordReady={!!recordRef.publicId}
+                      disabled={closed}
+                      productMap={productMap}
+                      fmtMXN={fmtMXN}
+                      productLine={productLine}
+                      productLots={productLots}
+                      onProductLineChange={(patch) => setProductLine((prev) => ({ ...prev, ...patch }))}
+                      onAddProduct={handleAddProduct}
+                      addedProducts={addedProducts}
+                      onRemoveProduct={handleRemoveProduct}
+                      onProductSearch={handleProductSearch}
+                      serviceLine={serviceLine}
+                      onServiceLineChange={(patch) => setServiceLine((prev) => ({ ...prev, ...patch }))}
+                      onAddService={handleAddService}
+                      addedServices={addedServices}
+                      onRemoveService={handleRemoveService}
+                      onServiceSearch={handleServiceSearch}
+                    />
+                  </div>
+
+                  {(addedProducts.length > 0 || addedServices.length > 0) && (
+                    <div className={styles.totalsBar}>
+                      <div className={styles.totalsSub}>
+                        <span className={styles.totalsSubLabel}>Productos</span>
+                        <span className={styles.totalsSubVal}>{fmtMXN(productsTotal)}</span>
+                      </div>
+                      <div className={styles.totalsSub}>
+                        <span className={styles.totalsSubLabel}>Servicios</span>
+                        <span className={styles.totalsSubVal}>{fmtMXN(servicesTotal)}</span>
+                      </div>
+                      <div className={styles.totalsSpacer} />
+                      <div className={styles.totalsGrand}>
+                        <span className={styles.totalsGrandLabel}>Total a cobrar</span>
+                        <span className={styles.totalsGrandVal}>{fmtMXN(grandTotal)}</span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      <ConsultationFooter
-        closed={closed}
-        saveState={saveState}
-        saving={saving}
-        onCancel={requestClose}
-        onSaveDraft={handleSaveDraft}
-        onFinalize={handleFinalize}
-      />
-
-      {showVitalsModal && (
-        <VitalsModal
-          vitalFields={VITAL_FIELDS}
-          draft={draft}
-          formErrors={formErrors}
-          closed={closed}
-          onChange={updateDraft}
-          onClearError={clearError}
-          onClose={() => setShowVitalsModal(false)}
-        />
-      )}
     </div>
   );
 }

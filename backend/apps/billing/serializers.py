@@ -81,6 +81,10 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
     # (agregado al cobro de la consulta). La UI lo usa para distinguir "para
     # llevar" de los insumos consumidos en la consulta.
     dispensed = serializers.SerializerMethodField()
+    # Trazabilidad por lote (B2b). `lot` write = PK (body FK). Metadata read.
+    tracks_lots = serializers.BooleanField(source='presentation.product.tracks_lots', read_only=True)
+    lot_number = serializers.CharField(source='lot.lot_number', read_only=True)
+    lot_effective_status = serializers.CharField(source='lot.effective_status', read_only=True)
 
     class Meta:
         model = InvoiceItem
@@ -90,6 +94,7 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             'quantity', 'unit_price',
             'discount_type', 'discount_value', 'discount_amount',
             'subtotal', 'dispensed',
+            'lot', 'tracks_lots', 'lot_number', 'lot_effective_status',
         ]
         read_only_fields = ['id', 'subtotal', 'invoice', 'dispensed']
 
@@ -161,6 +166,23 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"'{presentation.product.name}' no tiene stock disponible."
                 )
+            # Lote (B2b): obligatorio y consumible si el producto lo trackea (P1/P2).
+            # Solo en CREATE (el lote es inmutable; PATCH parcial no lo re-valida).
+            lot = data.get('lot')
+            if presentation.product.tracks_lots:
+                if not self.instance:
+                    if lot is None:
+                        raise serializers.ValidationError({'lot': 'Selecciona el lote a consumir.'})
+                    if lot.organization_id != request.user.organization_id:
+                        raise serializers.ValidationError({'lot': 'Lote fuera de tu organización.'})
+                    if lot.product_id != presentation.product_id:
+                        raise serializers.ValidationError({'lot': 'El lote no corresponde a este producto.'})
+                    if not lot.is_consumable:
+                        raise serializers.ValidationError(
+                            {'lot': f"El lote {lot.lot_number} no está disponible ({lot.effective_status})."}
+                        )
+            elif lot is not None:
+                raise serializers.ValidationError({'lot': 'Este producto no usa control de lotes.'})
             # ADR p26: la venta de un producto `requires_prescription` en una
             # venta directa YA NO se bloquea aquí. El gate autoritativo (atestación
             # de receta externa + permiso billing.rx_dispense) vive en
@@ -416,6 +438,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 'remaining_quantity': str(remaining),
                 'base_unit': item.product.get_base_unit_display() or '',
                 'presentations': presentations,
+                # Trazabilidad por lote (B2c): si el producto la usa, el frontend
+                # muestra un picker de lote (FEFO default + override).
+                'tracks_lots': item.product.tracks_lots,
+                'product_public_id': str(item.product.public_id),
             })
         return suggestions
 

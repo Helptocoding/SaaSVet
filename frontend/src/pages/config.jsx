@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useConfirm } from "../components/useConfirm";
 import { getServices, createService, updateService, deleteService } from "../api/billing";
 import { getOrgSettings, updateOrgSettings } from "../api/organizations";
@@ -45,8 +47,52 @@ const FLOW_TOGGLES = [
     },
 ];
 
+const ToggleSwitch = ({ checked, disabled, onChange }) => (
+    <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={onChange}
+        style={{
+            position: "relative", flexShrink: 0,
+            width: 40, height: 22,
+            borderRadius: 11,
+            background: checked ? "var(--c-primary)" : "var(--c-border)",
+            border: "none", cursor: disabled ? "not-allowed" : "pointer",
+            transition: "background 0.25s ease",
+            opacity: disabled ? 0.5 : 1,
+        }}
+    >
+        <span
+            style={{
+                position: "absolute", top: 2, left: checked ? 20 : 2,
+                width: 18, height: 18, borderRadius: "50%",
+                background: "#fff",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                transition: "left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}
+        />
+    </button>
+);
+
+const sectionVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+};
+
+const rowVariants = {
+    hidden: { opacity: 0, x: -8 },
+    visible: (i) => ({
+        opacity: 1, x: 0,
+        transition: { delay: i * 0.04, duration: 0.25, ease: "easeOut" },
+    }),
+};
+
 const Config = () => {
     const { token, user, initializing, can } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
     const confirm = useConfirm();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -57,6 +103,13 @@ const Config = () => {
     const [orgSettings, setOrgSettings] = useState(null);
     const [savingToggle, setSavingToggle] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+    useEffect(() => {
+        const handler = () => setShowPasswordModal(true);
+        window.addEventListener("open-change-password", handler);
+        return () => window.removeEventListener("open-change-password", handler);
+    }, []);
 
     // ADMIN_SAAS no pertenece a una clínica — los endpoints tenant-scoped
     // (services, orgSettings) responden 404 / 400 si user.organization es null.
@@ -115,6 +168,11 @@ const Config = () => {
             }
             toast.success(editingService ? 'Servicio actualizado' : 'Servicio creado');
             closeModal();
+            // Onboarding: volver al dashboard automáticamente tras crear el 1er servicio.
+            if (!editingService && location.state?.fromOnboarding) {
+                navigate("/", { state: { onboardingStep: "has_services" } });
+                return;
+            }
             await loadServices();
         } catch (err) {
             toast.error(apiError(err, "Error al guardar el servicio"));
@@ -171,20 +229,6 @@ const Config = () => {
                 </div>
             </div>
 
-            {/* Mi cuenta — Cambiar contraseña. Oculto en la cuenta demo
-                (credenciales compartidas fijas; el backend además lo bloquea). */}
-            {!user?.is_demo && (
-                <div className="card" style={{ marginBottom: "20px" }}>
-                    <div style={{ marginBottom: "14px" }}>
-                        <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Mi cuenta</p>
-                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
-                            Cambia tu contraseña. Disponible para todos los usuarios autenticados.
-                        </p>
-                    </div>
-                    <ChangePasswordForm />
-                </div>
-            )}
-
             {/* Secciones tenant-scoped — ocultas para ADMIN_SAAS sin clínica. */}
             {!showTenantSections && (
                 <div className="card" style={{ marginBottom: "20px" }}>
@@ -195,116 +239,170 @@ const Config = () => {
                 </div>
             )}
 
+            {/* Catálogo de Servicios — tenant-scoped */}
+            {showTenantSections && (
+                <motion.div
+                    variants={sectionVariants} initial="hidden" animate="visible"
+                    style={{
+                        background: "var(--c-surface)", borderRadius: "var(--r-lg)",
+                        border: "1px solid var(--c-border)",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)",
+                        marginBottom: "24px", overflow: "hidden",
+                        transition: "box-shadow 0.25s ease, transform 0.25s ease",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                    <div style={{
+                        padding: "18px 22px",
+                        borderBottom: "1px solid var(--c-border)",
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                    }}>
+                        <div>
+                            <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Catálogo de Servicios</p>
+                            <p style={{ fontSize: "12.5px", color: "var(--c-text-3)" }}>
+                                Servicios que puedes agregar al facturar una consulta o venta
+                            </p>
+                        </div>
+                        {canManage && (
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => { setEditingService(null); setForm(EMPTY_SERVICE); setShowModal(true); }}
+                            >
+                                + Nuevo Servicio
+                            </button>
+                        )}
+                    </div>
+
+                    <div style={{ padding: services.length === 0 ? "0" : "10px 14px 14px" }}>
+                    {services.length === 0 ? (
+                        <EmptyState
+                            compact
+                            title="Define los servicios que cobras"
+                            body="Consulta, vacunación, cirugía… los usarás al facturar una consulta o venta."
+                            actions={[
+                                can("service.create")
+                                    ? { label: "Nuevo servicio", onClick: () => { setEditingService(null); setForm(EMPTY_SERVICE); setShowModal(true); }, variant: "primary" }
+                                    : null,
+                            ]}
+                        />
+                    ) : (
+                        <div style={{ display: "grid", gap: "4px" }}>
+                            {services.map((svc, i) => (
+                                <motion.div
+                                    key={svc.id}
+                                    custom={i}
+                                    variants={rowVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    style={{
+                                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                                        padding: "10px 12px", borderRadius: "var(--r-md)",
+                                        cursor: "default",
+                                    }}
+                                    whileHover={{ backgroundColor: "var(--c-subtle)", x: 2 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                >
+                                    <div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <span style={{ fontWeight: "500", fontSize: "13.5px", color: svc.is_active ? "var(--c-text)" : "var(--c-text-3)" }}>
+                                                {svc.name}
+                                            </span>
+                                            {!svc.is_active && <span className="badge badge-default">Inactivo</span>}
+                                        </div>
+                                        {svc.description && (
+                                            <p style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "1px" }}>{svc.description}</p>
+                                        )}
+                                    </div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <span style={{ fontWeight: "600", color: "var(--c-text-2)", fontSize: "13px" }}>
+                                            ${formatCurrency(svc.base_price)}
+                                        </span>
+                                        {canManage && (
+                                            <div style={{ display: "flex", gap: "4px" }}>
+                                                <motion.button
+                                                    className="btn btn-secondary btn-sm"
+                                                    style={{ padding: "4px 8px" }}
+                                                    onClick={() => openEdit(svc)} title="Editar"
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    <Icon.Edit s={13} />
+                                                </motion.button>
+                                                <motion.button
+                                                    className="btn btn-danger btn-sm"
+                                                    style={{ padding: "4px 8px" }}
+                                                    onClick={() => handleDelete(svc.public_id)} title="Eliminar"
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    <Icon.Trash s={13} />
+                                                </motion.button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+                    </div>
+                </motion.div>
+            )}
+
             {/* Flujo Clínico */}
             {showTenantSections && orgSettings !== null && (
-                <div className="card" style={{ marginBottom: "20px" }}>
-                    <div style={{ marginBottom: "18px" }}>
+                <motion.div
+                    variants={sectionVariants} initial="hidden" animate="visible"
+                    style={{
+                        background: "var(--c-surface)", borderRadius: "var(--r-lg)",
+                        border: "1px solid var(--c-border)",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)",
+                        overflow: "hidden",
+                        transition: "box-shadow 0.25s ease, transform 0.25s ease",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                    <div style={{
+                        padding: "18px 22px",
+                        borderBottom: "1px solid var(--c-border)",
+                    }}>
                         <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Flujo Clínico</p>
-                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
+                        <p style={{ fontSize: "12.5px", color: "var(--c-text-3)" }}>
                             Comportamiento automático de citas y consultas en tu organización
                         </p>
                     </div>
-                    <div style={{ display: "grid", gap: "12px" }}>
-                        {FLOW_TOGGLES.map(({ key, label, description }) => (
-                            <div
+                    <div style={{ padding: "6px 22px 10px" }}>
+                        {FLOW_TOGGLES.map(({ key, label, description }, i) => (
+                            <motion.div
                                 key={key}
+                                custom={i}
+                                variants={rowVariants}
+                                initial="hidden"
+                                animate="visible"
                                 style={{
                                     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-                                    padding: "12px 14px", border: "1px solid var(--c-border)",
-                                    borderRadius: "var(--r-md)",
-                                    opacity: savingToggle === key ? 0.6 : 1,
+                                    padding: "14px 0",
+                                    borderBottom: i < FLOW_TOGGLES.length - 1 ? "1px solid var(--c-border)" : "none",
+                                    opacity: savingToggle === key ? 0.5 : 1,
                                     transition: "opacity 0.15s",
                                 }}
+                                whileHover={{ x: 3 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
                             >
                                 <div style={{ flex: 1, marginRight: "16px" }}>
-                                    <p style={{ fontWeight: "600", fontSize: "13.5px", marginBottom: "2px" }}>{label}</p>
-                                    <p style={{ fontSize: "12px", color: "var(--c-text-3)" }}>{description}</p>
+                                    <p style={{ fontWeight: "500", fontSize: "13.5px", marginBottom: "2px" }}>{label}</p>
+                                    <p style={{ fontSize: "12px", color: "var(--c-text-3)", lineHeight: 1.4 }}>{description}</p>
                                 </div>
-                                <label style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={!!orgSettings[key]}
-                                        disabled={savingToggle === key || !canManage}
-                                        onChange={e => handleToggle(key, e.target.checked)}
-                                        style={{ width: "16px", height: "16px", cursor: "pointer" }}
-                                    />
-                                </label>
-                            </div>
+                                <ToggleSwitch
+                                    checked={!!orgSettings[key]}
+                                    disabled={savingToggle === key || !canManage}
+                                    onChange={() => handleToggle(key, !orgSettings[key])}
+                                />
+                            </motion.div>
                         ))}
                     </div>
-                </div>
-            )}
-
-            {/* Catálogo de Servicios — tenant-scoped */}
-            {showTenantSections && (
-            <div className="card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
-                    <div>
-                        <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "3px" }}>Catálogo de Servicios</p>
-                        <p style={{ fontSize: "12.5px", color: "var(--c-text-2)" }}>
-                            Servicios que puedes agregar al facturar una consulta o venta
-                        </p>
-                    </div>
-                    {canManage && (
-                        <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => { setEditingService(null); setForm(EMPTY_SERVICE); setShowModal(true); }}
-                        >
-                            + Nuevo Servicio
-                        </button>
-                    )}
-                </div>
-
-                {services.length === 0 ? (
-                    <EmptyState
-                        compact
-                        title="Define los servicios que cobras"
-                        body="Consulta, vacunación, cirugía… los usarás al facturar una consulta o venta."
-                        actions={[
-                            can("service.create")
-                                ? { label: "Nuevo servicio", onClick: () => { setEditingService(null); setForm(EMPTY_SERVICE); setShowModal(true); }, variant: "primary" }
-                                : null,
-                        ]}
-                    />
-                ) : (
-                    <div style={{ display: "grid", gap: "8px" }}>
-                        {services.map(svc => (
-                            <div
-                                key={svc.id}
-                                style={{
-                                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                                    padding: "12px 14px", border: "1px solid var(--c-border)",
-                                    borderRadius: "var(--r-md)",
-                                    background: svc.is_active ? "transparent" : "var(--c-subtle)",
-                                }}
-                            >
-                                <div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <span style={{ fontWeight: "600", color: svc.is_active ? "var(--c-text)" : "var(--c-text-3)" }}>
-                                            {svc.name}
-                                        </span>
-                                        {!svc.is_active && <span className="badge badge-default">Inactivo</span>}
-                                    </div>
-                                    {svc.description && (
-                                        <p style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "2px" }}>{svc.description}</p>
-                                    )}
-                                </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                    <span style={{ fontWeight: "700", color: "var(--c-success-text)", minWidth: "70px", textAlign: "right" }}>
-                                        ${formatCurrency(svc.base_price)}
-                                    </span>
-                                    {canManage && (
-                                        <div style={{ display: "flex", gap: "6px" }}>
-                                            <button className="btn btn-secondary btn-sm" onClick={() => openEdit(svc)} title="Editar"><Icon.Edit s={14} /></button>
-                                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(svc.public_id)} title="Eliminar"><Icon.Trash s={14} /></button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                </motion.div>
             )}
 
             {/* Modal */}
@@ -374,6 +472,32 @@ const Config = () => {
                             </button>
                             <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={closeModal} disabled={saving}>
                                 Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal cambiar contraseña */}
+            {showPasswordModal && (
+                <div className="modal-overlay">
+                    <div className="modal modal-sm">
+                        <div className="modal-header">
+                            <h3>Cambiar contraseña</h3>
+                            <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
+                                <Icon.X s={16} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <ChangePasswordForm />
+                        </div>
+                        <div className="modal-footer">
+                            <button
+                                className="btn btn-secondary btn-md"
+                                style={{ flex: 1 }}
+                                onClick={() => setShowPasswordModal(false)}
+                            >
+                                Cerrar
                             </button>
                         </div>
                     </div>

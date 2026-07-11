@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "./icons";
 import { apiError } from "../utils/apiError";
-import { adjustPresentationStock } from "../api/inventory";
+import { adjustPresentationStock, receiveStock } from "../api/inventory";
 import s from "../pages/inventory.module.css";
+
+const emptyLot = () => ({ lot_number: "", expiry_date: "", quantity: 1 });
 
 const fmt = (n) => Math.round(parseFloat(n ?? 0) || 0);
 
@@ -33,6 +35,9 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
     const [nameResults, setNameResults] = useState([]);
     const [notFound, setNotFound] = useState(false);
     const [saving, setSaving] = useState(false);
+    // Recepción por lotes (B1) — solo si el producto tiene tracks_lots.
+    const [lots, setLots] = useState([emptyLot()]);
+    const [supplierName, setSupplierName] = useState("");
 
     const searchRef = useRef(null);
     const qtyRef = useRef(null);
@@ -46,8 +51,13 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
         if (clearQuery) setQuery("");
         setMatch(null); setPresId(""); setQty(1);
         setNameResults([]); setNotFound(false);
+        setLots([emptyLot()]); setSupplierName("");
         focusSearch();
     };
+
+    const addLot = () => setLots(ls => [...ls, emptyLot()]);
+    const updateLot = (i, patch) => setLots(ls => ls.map((l, idx) => idx === i ? { ...l, ...patch } : l));
+    const removeLot = (i) => setLots(ls => ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls);
 
     const selectProduct = (product, locked) => {
         const press = product.presentations || [];
@@ -107,8 +117,42 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
         || (match?.product?.presentations || []).find(p => p.public_id === presId)
         || null;
 
+    const tracksLots = !!match?.product?.tracks_lots;
+
+    // Al elegir un producto con control de lotes, reiniciar el editor de lotes.
+    useEffect(() => {
+        if (tracksLots) { setLots([emptyLot()]); setSupplierName(""); }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+    }, [match?.product?.public_id, tracksLots]);
+
     const handleConfirm = async () => {
         if (!currentPres) { toast.error("Selecciona la presentación recibida."); return; }
+
+        if (tracksLots) {
+            const clean = lots.map(l => ({ ...l, lot_number: (l.lot_number || "").trim() }));
+            if (clean.some(l => !l.lot_number)) { toast.error("Cada lote necesita su número."); return; }
+            if (clean.some(l => !(Number(l.quantity) > 0))) { toast.error("La cantidad de cada lote debe ser mayor a 0."); return; }
+            setSaving(true);
+            try {
+                await receiveStock(currentPres.public_id, {
+                    supplier_name: supplierName.trim(),
+                    lots: clean.map(l => ({
+                        lot_number: l.lot_number,
+                        expiry_date: l.expiry_date || null,
+                        quantity: Number(l.quantity),
+                    })),
+                });
+                toast.success(`Recepción registrada · ${match.product.name}`);
+                await onSaved?.();
+                resetToSearch(true);
+            } catch (err) {
+                toast.error(apiError(err, "No se pudo registrar la recepción"));
+            } finally {
+                setSaving(false);
+            }
+            return;
+        }
+
         const n = Number(qty);
         if (!(n > 0)) { toast.error("La cantidad debe ser mayor a 0"); return; }
         setSaving(true);
@@ -132,7 +176,8 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
     const stockBase = currentPres ? (parseFloat(match.product.stock_quantity ?? 0) || 0) : 0;
     const cf = currentPres ? (parseFloat(currentPres.conversion_factor ?? 1) || 1) : 1;
     const baseUnitLabel = currentPres ? (currentPres.base_unit_display || currentPres.base_unit || "ud.") : "";
-    const addedBase = (Number(qty) || 0) * cf;
+    const lotsTotal = lots.reduce((a, l) => a + (Number(l.quantity) || 0), 0);
+    const addedBase = (tracksLots ? lotsTotal : (Number(qty) || 0)) * cf;
     const newBase = stockBase + addedBase;
     const multiPres = (match?.product?.presentations?.length || 0) > 1;
 
@@ -261,37 +306,100 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
                                         </div>
                                     </div>
 
-                                    {/* Cantidad recibida */}
-                                    <div className="form-group" style={{ marginBottom: 0 }}>
-                                        <label className="form-label">
-                                            CANTIDAD RECIBIDA ({currentPres.name.toUpperCase()}) *
-                                        </label>
-                                        <div className={s.seStepper}>
-                                            <button
-                                                type="button" className="btn btn-secondary btn-md"
-                                                style={{ width: 38, padding: 0, fontSize: 20, fontWeight: 400, flexShrink: 0 }}
-                                                onClick={() => setQty(q => Math.max(1, (Number(q) || 1) - 1))}
-                                            >−</button>
-                                            <input
-                                                ref={qtyRef}
-                                                type="number" min="1" step="1" className="input"
-                                                style={{ textAlign: "center", fontWeight: 700, fontSize: 16 }}
-                                                value={qty}
-                                                onChange={e => setQty(e.target.value)}
-                                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleConfirm(); } }}
-                                            />
-                                            <button
-                                                type="button" className="btn btn-secondary btn-md"
-                                                style={{ width: 38, padding: 0, fontSize: 20, fontWeight: 400, flexShrink: 0 }}
-                                                onClick={() => setQty(q => (Number(q) || 0) + 1)}
-                                            >+</button>
+                                    {/* Lote-trackeado: recepción multi-lote. Si no, stepper simple. */}
+                                    {tracksLots ? (
+                                        <>
+                                            <div className="form-group" style={{ marginBottom: 10 }}>
+                                                <label className="form-label">PROVEEDOR (OPCIONAL)</label>
+                                                <input
+                                                    className="input"
+                                                    placeholder="Ej: Distribuidora X"
+                                                    value={supplierName}
+                                                    onChange={e => setSupplierName(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                                <label className="form-label">
+                                                    LOTES RECIBIDOS ({currentPres.name.toUpperCase()}) *
+                                                </label>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 10.5, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>
+                                                    <span>Lote</span>
+                                                    <span>Caduca</span>
+                                                    <span style={{ textAlign: "center" }}>Cant.</span>
+                                                    <span />
+                                                </div>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                                    {lots.map((l, i) => (
+                                                        <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, alignItems: "center" }}>
+                                                            <input
+                                                                className="input" placeholder="A123"
+                                                                value={l.lot_number}
+                                                                onChange={e => updateLot(i, { lot_number: e.target.value })}
+                                                            />
+                                                            <input
+                                                                className="input" type="date"
+                                                                value={l.expiry_date}
+                                                                onChange={e => updateLot(i, { expiry_date: e.target.value })}
+                                                            />
+                                                            <input
+                                                                className="input" type="number" min="1" step="1"
+                                                                style={{ textAlign: "center", fontWeight: 700 }}
+                                                                value={l.quantity}
+                                                                onChange={e => updateLot(i, { quantity: e.target.value })}
+                                                            />
+                                                            <button
+                                                                type="button" className="btn btn-ghost btn-sm"
+                                                                style={{ padding: 0 }}
+                                                                disabled={lots.length === 1}
+                                                                onClick={() => removeLot(i)}
+                                                                title="Quitar lote"
+                                                            >
+                                                                <Icon.Trash s={14} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={addLot}>
+                                                    <Icon.Plus s={13} /> Agregar lote
+                                                </button>
+                                                <p className={s.prodDesc} style={{ marginTop: 8, maxWidth: "none" }}>
+                                                    Total: {fmt(lotsTotal)} {currentPres.name}
+                                                    {cf > 1 ? ` = ${fmt(addedBase)} ${baseUnitLabel}` : ""}
+                                                </p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">
+                                                CANTIDAD RECIBIDA ({currentPres.name.toUpperCase()}) *
+                                            </label>
+                                            <div className={s.seStepper}>
+                                                <button
+                                                    type="button" className="btn btn-secondary btn-md"
+                                                    style={{ width: 38, padding: 0, fontSize: 20, fontWeight: 400, flexShrink: 0 }}
+                                                    onClick={() => setQty(q => Math.max(1, (Number(q) || 1) - 1))}
+                                                >−</button>
+                                                <input
+                                                    ref={qtyRef}
+                                                    type="number" min="1" step="1" className="input"
+                                                    style={{ textAlign: "center", fontWeight: 700, fontSize: 16 }}
+                                                    value={qty}
+                                                    onChange={e => setQty(e.target.value)}
+                                                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleConfirm(); } }}
+                                                />
+                                                <button
+                                                    type="button" className="btn btn-secondary btn-md"
+                                                    style={{ width: 38, padding: 0, fontSize: 20, fontWeight: 400, flexShrink: 0 }}
+                                                    onClick={() => setQty(q => (Number(q) || 0) + 1)}
+                                                >+</button>
+                                            </div>
+                                            {cf > 1 && Number(qty) > 0 && (
+                                                <p className={s.prodDesc} style={{ marginTop: 6, maxWidth: "none" }}>
+                                                    {fmt(qty)} {currentPres.name} = {fmt(addedBase)} {baseUnitLabel}
+                                                </p>
+                                            )}
                                         </div>
-                                        {cf > 1 && Number(qty) > 0 && (
-                                            <p className={s.prodDesc} style={{ marginTop: 6, maxWidth: "none" }}>
-                                                {fmt(qty)} {currentPres.name} = {fmt(addedBase)} {baseUnitLabel}
-                                            </p>
-                                        )}
-                                    </div>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -302,7 +410,7 @@ const StockEntryModal = ({ products, onClose, onSaved, onCreateNew }) => {
                     {match && currentPres ? (
                         <>
                             <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleConfirm} disabled={saving}>
-                                {saving ? "Registrando..." : "Confirmar entrada"}
+                                {saving ? "Registrando..." : (tracksLots ? "Registrar recepción" : "Confirmar entrada")}
                             </button>
                             <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => resetToSearch(true)}>
                                 Otro producto

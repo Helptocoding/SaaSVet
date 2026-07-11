@@ -1,6 +1,48 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Icon } from "../icons";
+import { getProductLots } from "../../api/inventory";
 import s from "./pos.module.css";
+
+/* Selector de lote (FEFO) para un ítem de producto con tracks_lots.
+   Carga los lotes elegibles del producto y auto-selecciona el primero (FEFO). */
+const LotSelect = ({ item, updateRx, disabled }) => {
+    const [lots, setLots] = useState([]);
+    useEffect(() => {
+        if (!item.productPublicId) return undefined;
+        let active = true;
+        (async () => {
+            try {
+                const data = await getProductLots(item.productPublicId, { with_stock: "true" });
+                const list = (Array.isArray(data) ? data : data?.results || [])
+                    .filter(l => l.effective_status === "active");
+                if (!active) return;
+                setLots(list);
+                if (!item.lot) updateRx(item.key, { lot: list[0] || null });
+            } catch {
+                /* noop */
+            }
+        })();
+        return () => { active = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [item.productPublicId]);
+
+    return (
+        <select
+            className="input"
+            style={{ flex: 1, maxWidth: 340 }}
+            value={item.lot?.id ?? ""}
+            disabled={disabled}
+            onChange={e => updateRx(item.key, { lot: lots.find(l => String(l.id) === e.target.value) || null })}
+        >
+            {lots.length === 0 && <option value="">Sin lotes disponibles</option>}
+            {lots.map(l => (
+                <option key={l.id} value={l.id}>
+                    {l.lot_number}{l.expiry_date ? ` · vence ${l.expiry_date}` : ""} · {Math.round(Number(l.quantity_on_hand))} disp.
+                </option>
+            ))}
+        </select>
+    );
+};
 
 /* ── Cart — tabla de la venta en curso ──
    Cantidad editable inline; productos Rx despliegan la atestación de receta
@@ -61,6 +103,18 @@ const Cart = ({ items, updateQuantity, updateRx, removeItem, disabled }) => (
                                 </button>
                             </td>
                         </tr>
+                        {item.type === "product" && item.tracksLots && (
+                            <tr>
+                                <td colSpan="5" className={s.rxCell}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--c-text-3)", whiteSpace: "nowrap" }}>
+                                            Lote (FEFO)
+                                        </span>
+                                        <LotSelect item={item} updateRx={updateRx} disabled={disabled} />
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
                         {item.requiresRx && (
                             <tr>
                                 <td colSpan="5" className={s.rxCell}>

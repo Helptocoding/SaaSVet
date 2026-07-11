@@ -59,6 +59,12 @@ Campos:
 - `discount_type` — `percentage` o `fixed` (nullable)
 - `discount_value` — decimal (default 0)
 - `subtotal` — calculado en `save()`
+- `lot` — FK nullable a `inventory.StockLot` (trazabilidad por lote, B2b). Se fija en los
+  ítems que **liquidan stock** (venta directa / dispensación) de un producto `tracks_lots`.
+  Inmutable. `_confirm_locked_invoice` descuenta de este lote vía `consume_product`;
+  `cancel_invoice` y el restock de `process_refund` revierten al **mismo lote** vía
+  `restock_product` (P4). Producto sin lote → `lot=None` → path histórico. Venta directa
+  (POS) lo elige con picker FEFO; dispensación usa FEFO-auto (`first_consumable_lot`).
 
 Restricciones de unicidad en DB:
 - `unique_together = [('invoice', 'presentation')]` — sin presentaciones duplicadas por factura

@@ -286,6 +286,7 @@ def dispense_prescription(request, pk):
             'presentation_id': pres.pk,
             'quantity': qty,
             'prescription_item_id': raw.get('prescription_item'),
+            'lot_id': raw.get('lot'),
         })
 
     # Dispensar un producto requires_prescription contra la receta interna exige

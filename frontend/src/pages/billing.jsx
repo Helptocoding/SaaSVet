@@ -8,6 +8,7 @@ import {
     dispensePrescription,
 } from "../api/billing";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
+import { getProductLots } from "../api/inventory";
 import { getOrgSettings } from "../api/organizations";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -240,6 +241,44 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
     );
 };
 
+/* Selector de lote (FEFO) para una línea de dispensación con tracks_lots (B2c). */
+const DispenseLotSelect = ({ row, setRow, disabled }) => {
+    const [lots, setLots] = useState([]);
+    useEffect(() => {
+        if (!row.productPublicId) return undefined;
+        let active = true;
+        (async () => {
+            try {
+                const data = await getProductLots(row.productPublicId, { with_stock: "true" });
+                const list = (Array.isArray(data) ? data : data?.results || [])
+                    .filter(l => l.effective_status === "active");
+                if (!active) return;
+                setLots(list);
+                if (!row.lot) setRow(row.key, { lot: list[0] || null });
+            } catch {
+                /* noop */
+            }
+        })();
+        return () => { active = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [row.productPublicId]);
+
+    return (
+        <select
+            className="input" style={{ height: "30px" }}
+            value={row.lot?.id ?? ""} disabled={disabled}
+            onChange={e => setRow(row.key, { lot: lots.find(l => String(l.id) === e.target.value) || null })}
+        >
+            {lots.length === 0 && <option value="">Sin lotes</option>}
+            {lots.map(l => (
+                <option key={l.id} value={l.id}>
+                    {l.lot_number}{l.expiry_date ? ` · ${l.expiry_date}` : ""} · {Math.round(Number(l.quantity_on_hand))}
+                </option>
+            ))}
+        </select>
+    );
+};
+
 /* ── PrescriptionDispensePanel — dispensar receta interna (ADR p30) ── */
 const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
     const suggestions = invoice.prescription_suggestions || [];
@@ -263,6 +302,10 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                 selected: presentations.length > 0 && firstMax > 0,
                 presentationId: presentations[0]?.id ? String(presentations[0].id) : "",
                 quantity: firstMax > 0 ? "1" : "0",
+                // Trazabilidad por lote (B2c): picker FEFO si el producto lo usa.
+                tracksLots: !!s.tracks_lots,
+                productPublicId: s.product_public_id,
+                lot: null,
             };
         })
     );
@@ -289,10 +332,16 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
     const canSubmit = selected.length > 0 && !overCap && !submitting;
 
     const submit = async () => {
+        const missingLot = selected.find(r => r.tracksLots && !r.lot?.id);
+        if (missingLot) {
+            toast.error(`${missingLot.productName}: selecciona un lote disponible.`);
+            return;
+        }
         const lines = selected.map(r => ({
             presentation: Number(r.presentationId),
             quantity: Number(r.quantity),
             prescription_item: r.key,
+            ...(r.tracksLots && r.lot?.id ? { lot: r.lot.id } : {}),
         }));
         setSubmitting(true);
         // sonner v2: toast.promise NO resuelve a la data — await la promesa real
@@ -331,6 +380,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                         <th style={{ width: "28px" }}></th>
                         <th>Medicamento</th>
                         <th style={{ width: "180px" }}>Presentación</th>
+                        <th style={{ width: "150px" }}>Lote</th>
                         <th style={{ width: "70px" }}>Cant.</th>
                     </tr>
                 </thead>
@@ -383,6 +433,13 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                                 </option>
                                             ))}
                                         </select>
+                                    )}
+                                </td>
+                                <td>
+                                    {r.tracksLots && r.selected && !noPres && !exhausted ? (
+                                        <DispenseLotSelect row={r} setRow={setRow} disabled={submitting} />
+                                    ) : (
+                                        <span style={{ fontSize: "11px", color: "var(--c-text-4)" }}>—</span>
                                     )}
                                 </td>
                                 <td>

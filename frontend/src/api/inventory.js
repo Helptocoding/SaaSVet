@@ -26,6 +26,27 @@ export const adjustPresentationStock = (presentationPublicId, data) =>
 export const getPresentationByBarcode = (barcode) =>
     api.get("inventory/presentations/barcode/", { params: { barcode } }).then(r => r.data);
 
+// Recepción de mercancía multi-lote (B1). data = { supplier_name?, received_at?, lots: [{lot_number, expiry_date?, quantity}] }.
+// Solo para productos con tracks_lots; el backend valida y convierte por conversion_factor.
+export const receiveStock = (presentationPublicId, data) =>
+    api.post(`inventory/presentations/${presentationPublicId}/receive/`, data).then(r => r.data);
+
+// Lotes de un producto (orden FEFO). params: { with_stock: 'true' } para solo con saldo.
+export const getProductLots = (productPublicId, params = {}) =>
+    api.get(`inventory/products/${productPublicId}/lots/`, { params }).then(r => r.data);
+
+// B2c — alertas de caducidad: { expiring_soon: [], expired_with_stock: [] }.
+export const getLotAlerts = (params = {}) =>
+    api.get("inventory/lots/alerts/", { params }).then(r => r.data);
+
+// B2c — merma/descarte de un lote. data = { quantity?, reason? } (quantity en base-units; default = saldo).
+export const discardLot = (lotPublicId, data = {}) =>
+    api.post(`inventory/lots/${lotPublicId}/discard/`, data).then(r => r.data);
+
+// B2c — estado del lote: { status: 'active' | 'quarantined' | 'recalled' }.
+export const setLotStatus = (lotPublicId, data) =>
+    api.post(`inventory/lots/${lotPublicId}/status/`, data).then(r => r.data);
+
 export const getMovements = (params = {}) =>
     api.get("inventory/movements/", { params }).then(r => r.data);
 

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { getPets, getPet, getPetStats, createPet, updatePet, deletePet } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
 import { getMedicalRecords } from "../api/medicalRecords";
+import { getVaccines } from "../api/vaccines";
 import { getAppointments } from "../api/appointments";
 import { getStatusBreakdown } from "../api/statusBreakdown";
 import { useAuth } from "../auth/authContext";
@@ -74,9 +75,8 @@ function BirthDatePicker({ value, onChange }) {
     const ref = useRef(null);
     const today = new Date();
 
-    // value is "YYYY-MM-DD" string or ""
-    // Parse with noon time to avoid UTC offset flipping the day
     const selected = value ? new Date(`${value}T12:00:00`) : undefined;
+    const [month, setMonth] = useState(selected || today);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -88,7 +88,6 @@ function BirthDatePicker({ value, onChange }) {
 
     const handleSelect = (date) => {
         if (!date) return;
-        // Build YYYY-MM-DD using local date parts — never toISOString() (UTC shift)
         const str = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         onChange(str);
         setOpen(false);
@@ -97,6 +96,25 @@ function BirthDatePicker({ value, onChange }) {
     const displayValue = selected
         ? selected.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
         : '';
+
+    const years = Array.from({ length: today.getFullYear() - 1949 }, (_, i) => today.getFullYear() - i);
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    const selectStyle = {
+        background: "var(--c-subtle)", border: "1px solid var(--c-border)",
+        borderRadius: "var(--r-md)", padding: "4px 8px",
+        fontSize: "12px", fontFamily: "inherit", fontWeight: 600, color: "var(--c-text)",
+        cursor: "pointer", outline: "none",
+    };
+
+    const navBtnStyle = {
+        background: "none", border: "1px solid var(--c-border)",
+        borderRadius: "var(--r-md)", padding: "4px 8px",
+        cursor: "pointer", color: "var(--c-text-3)",
+        fontSize: "13px", lineHeight: 1,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        transition: "color 0.15s, background 0.15s",
+    };
 
     return (
         <div ref={ref} style={{ position: 'relative' }}>
@@ -110,14 +128,66 @@ function BirthDatePicker({ value, onChange }) {
             />
             {open && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 200 }}>
-                    <DayPicker
-                        mode="single"
-                        selected={selected}
-                        onSelect={handleSelect}
-                        disabled={{ after: today }}
-                        defaultMonth={selected || today}
-                        locale={es}
-                    />
+                    <div style={{
+                        background: "var(--c-surface)", borderRadius: "var(--r-lg)",
+                        border: "1px solid var(--c-border)", boxShadow: "var(--shadow-md)",
+                        padding: "12px",
+                    }}>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "10px" }}>
+                            <button
+                                onClick={() => {
+                                    const d = new Date(month);
+                                    d.setMonth(d.getMonth() - 1);
+                                    setMonth(d);
+                                }}
+                                style={navBtnStyle}
+                                onMouseEnter={e => { e.currentTarget.style.color = "var(--c-text)"; e.currentTarget.style.background = "var(--c-hover)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = "var(--c-text-3)"; e.currentTarget.style.background = "none"; }}
+                            >
+                                ‹
+                            </button>
+                            <select
+                                value={month.getMonth()}
+                                onChange={e => setMonth(new Date(month.getFullYear(), Number(e.target.value)))}
+                                style={{ ...selectStyle, flex: 1 }}
+                            >
+                                {monthNames.map((m, i) => (
+                                    <option key={i} value={i}>{m}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={month.getFullYear()}
+                                onChange={e => setMonth(new Date(Number(e.target.value), month.getMonth()))}
+                                style={{ ...selectStyle, width: 80 }}
+                            >
+                                {years.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={() => {
+                                    const d = new Date(month);
+                                    d.setMonth(d.getMonth() + 1);
+                                    if (d <= today) setMonth(d);
+                                }}
+                                style={navBtnStyle}
+                                onMouseEnter={e => { e.currentTarget.style.color = "var(--c-text)"; e.currentTarget.style.background = "var(--c-hover)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = "var(--c-text-3)"; e.currentTarget.style.background = "none"; }}
+                            >
+                                ›
+                            </button>
+                        </div>
+                        <DayPicker
+                            mode="single"
+                            selected={selected}
+                            onSelect={handleSelect}
+                            disabled={{ after: today }}
+                            month={month}
+                            onMonthChange={setMonth}
+                            locale={es}
+                            components={{ Caption: () => null, Nav: () => null }}
+                        />
+                    </div>
                 </div>
             )}
         </div>
@@ -322,6 +392,24 @@ const PetCard = ({ pet, onSelect, onEdit, onDelete }) => {
 
 // ─── Quick Profile Panel ──────────────────────────────────────────────────────
 const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navigate }) => {
+    // Historial de vacunación real (VaccineRecord), no derivado de texto de consultas.
+    // El hook debe correr siempre (antes de cualquier early return) para no violar
+    // las reglas de hooks; se guarda contra pet nulo dentro del effect.
+    const [vaccines, setVaccines] = useState([]);
+    useEffect(() => {
+        if (!pet?.public_id) { setVaccines([]); return; }
+        let active = true;
+        (async () => {
+            try {
+                const data = await getVaccines({ pet: pet.public_id });
+                if (active) setVaccines(toList(data));
+            } catch {
+                /* informativo: silencioso */
+            }
+        })();
+        return () => { active = false; };
+    }, [pet?.public_id]);
+
     if (!pet) return null;
 
     const accent = speciesAccent(pet);
@@ -331,13 +419,8 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
     // Sort records by date desc
     const sortedRecords = [...records].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    // Vaccine records: treatment or diagnosis mentions "vacun"
-    const vaccineRecords = sortedRecords.filter(r =>
-        /vacun/i.test(r.diagnosis || "") ||
-        /vacun/i.test(r.treatment || "") ||
-        /vacun/i.test(r.notes || "")
-    );
-    const lastVaccine = vaccineRecords[0] || null;
+    // VaccineRecord ya viene ordenado por -application_date desde el backend.
+    const lastVaccine = vaccines[0] || null;
 
     // Upcoming scheduled appointments
     const now = new Date();
@@ -346,7 +429,13 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .slice(0, 2);
 
-    const fmtDate = (ds) => new Date(ds).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+    // Fechas date-only ("YYYY-MM-DD", p.ej. VaccineRecord.application_date) se
+    // parsean como local para no desfasar un día en tz negativa (MX = UTC-6).
+    const fmtDate = (ds) => {
+        if (!ds) return "";
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(ds) ? new Date(`${ds}T00:00:00`) : new Date(ds);
+        return d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+    };
     const fmtWeekday = (ds) => new Date(ds).toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" });
 
     return (
@@ -540,10 +629,10 @@ const QuickPanel = ({ pet, records, appointments, loading, onClose, onEdit, navi
                                     }}>
                                         <Icon.Syringe s={14} c="var(--c-success-text)" />
                                         <div>
-                                            <p style={{ fontSize: "12.5px", fontWeight: "600", color: "var(--c-success-text)" }}>Último registro de vacunación</p>
+                                            <p style={{ fontSize: "12.5px", fontWeight: "600", color: "var(--c-success-text)" }}>{lastVaccine.vaccine_name}</p>
                                             <p style={{ fontSize: "11.5px", color: "var(--c-success-text)", opacity: 0.85, marginTop: "1px" }}>
-                                                {fmtDate(lastVaccine.created_at)}
-                                                {lastVaccine.veterinarian_name ? ` · Dr. ${lastVaccine.veterinarian_name}` : ""}
+                                                {fmtDate(lastVaccine.application_date)}
+                                                {lastVaccine.applied_by_name ? ` · ${lastVaccine.applied_by_name}` : ""}
                                             </p>
                                         </div>
                                     </div>
@@ -602,6 +691,7 @@ const sectionTitle = {
 const Pets = () => {
     const { token, initializing, can, user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
     const confirm = useConfirm();
 
@@ -750,6 +840,12 @@ const Pets = () => {
             setEditing(null);
             setFormErrors({});
             setShowModal(false);
+            // Flujo de onboarding: si se llegó desde el FirstRunAssistant, volver al
+            // dashboard automáticamente (sin intervención) y disparar la celebración.
+            if (!editing && location.state?.fromOnboarding) {
+                navigate("/", { state: { onboardingStep: "has_patients" } });
+                return;
+            }
             reload();
         } catch (err) {
             handleFormError(err, setFormErrors);
@@ -895,17 +991,13 @@ const Pets = () => {
             {/* Filter bar */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
                 {/* Search */}
-                <div style={{ position: "relative", flex: "1 1 220px", maxWidth: "300px" }}>
-                    <div style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                        <Icon.Search s={14} c="var(--c-text-3)" />
-                    </div>
+                <div className="searchBar" style={{ flex: "1 1 220px", maxWidth: "300px" }}>
+                    <Icon.Search s={14} c="var(--c-text-3)" />
                     <input
                         type="text"
-                        className="input"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Nombre, raza, especie, cliente..."
-                        style={{ paddingLeft: "32px" }}
                     />
                 </div>
 

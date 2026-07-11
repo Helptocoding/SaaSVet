@@ -5,7 +5,9 @@ Read-only, multi-tenant, basado en existencia REAL (sin flags persistidos):
 - org recién creada (solo genéricos sembrados) => los 4 hitos en False.
 - la mascota GENÉRICA no cuenta como "tiene pacientes".
 - cada hito flipea a True al crear el recurso real de SU dominio.
-- `completed` = los cuatro en True.
+- `completed` = READINESS = has_patients AND has_services (clínica lista para operar).
+  NO depende de has_appointments/has_consultations (eventos que requieren un cliente
+  real; mantendrían el onboarding activo días). Se completa en la 1ª sesión.
 - datos de OTRA org nunca cuentan (aislamiento).
 """
 from decimal import Decimal
@@ -85,7 +87,7 @@ class DashboardActivationTests(APITestCase):
         pet = Pet.objects.create(name="Lola", species="canino", owner=owner, organization=self.org)
         resp = self.client.get(ACTIVATION_URL)
         self.assertTrue(resp.data['has_patients'])
-        self.assertFalse(resp.data['completed'])
+        self.assertFalse(resp.data['completed'])  # falta el servicio
 
         Service.objects.create(name="Consulta", base_price=Decimal("250.00"), organization=self.org)
         self.assertTrue(self.client.get(ACTIVATION_URL).data['has_services'])
@@ -104,6 +106,34 @@ class DashboardActivationTests(APITestCase):
         final = self.client.get(ACTIVATION_URL).data
         self.assertTrue(final['has_consultations'])
         self.assertTrue(final['completed'])
+
+    def test_completed_is_readiness_patients_and_services_only(self):
+        """`completed` = has_patients AND has_services, sin depender de cita/consulta.
+
+        La clínica queda "lista para operar" al configurarse (1ª sesión); no debe
+        esperar a que llegue un cliente real (cita/consulta = eventos externos).
+        """
+        owner = Owner.objects.create(name="Dueño", phone="5553334444", organization=self.org)
+        Pet.objects.create(name="Fido", species="canino", owner=owner, organization=self.org)
+
+        # Solo paciente → aún NO listo (falta servicio).
+        self.assertFalse(self.client.get(ACTIVATION_URL).data['completed'])
+
+        Service.objects.create(name="Baño", base_price=Decimal("150.00"), organization=self.org)
+
+        # Paciente + servicio → LISTO, aunque NO haya cita ni consulta.
+        data = self.client.get(ACTIVATION_URL).data
+        self.assertTrue(data['completed'])
+        self.assertFalse(data['has_appointments'])
+        self.assertFalse(data['has_consultations'])
+
+    def test_only_services_without_patients_not_completed(self):
+        """Servicio sin paciente NO completa (readiness exige ambos)."""
+        Service.objects.create(name="Vacuna", base_price=Decimal("200.00"), organization=self.org)
+        data = self.client.get(ACTIVATION_URL).data
+        self.assertTrue(data['has_services'])
+        self.assertFalse(data['has_patients'])
+        self.assertFalse(data['completed'])
 
     def test_multitenant_other_org_data_does_not_count(self):
         # cls.other tiene pet + service; cls.org sigue vacía.

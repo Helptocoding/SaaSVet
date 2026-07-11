@@ -42,6 +42,11 @@ const Layout = ({ children }) => {
 
     const isDashboard = location.pathname === "/" || location.pathname === "/dashboard";
 
+    // Se llegó a este módulo desde un CTA del onboarding (FirstRunAssistant): mostrar
+    // un "volver" guiado en vez del título, para que se sienta un recorrido, no una
+    // navegación normal. Solo un hint visual; sin lógica.
+    const fromOnboarding = !!location.state?.fromOnboarding;
+
     return (
         <div style={{ minHeight: "100vh", backgroundColor: "var(--c-bg)" }}>
             <Sidebar onLogout={handleLogout} />
@@ -59,10 +64,40 @@ const Layout = ({ children }) => {
                         position: "sticky", top: 0, zIndex: 50,
                         boxShadow: "var(--shadow-xs)",
                     }}>
-                        <span style={{ fontSize: "14px", fontWeight: "600", color: "var(--c-text)" }}>
-                            {pageTitle}
-                        </span>
-                        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
+                        {fromOnboarding ? (
+                            <button
+                                onClick={() => navigate("/")}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: "6px",
+                                    background: "none", border: "none", padding: "0",
+                                    fontFamily: "inherit", fontSize: "14px", fontWeight: "600",
+                                    color: "var(--c-primary)", cursor: "pointer",
+                                }}
+                            >
+                                <Icon.ChevronLeft s={16} c="var(--c-primary)" /> Volver al Dashboard
+                            </button>
+                        ) : (
+                            <span style={{ fontSize: "14px", fontWeight: "600", color: "var(--c-text)" }}>
+                                {pageTitle}
+                            </span>
+                        )}
+                        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "12px" }}>
+                            {location.pathname === "/config" && !user?.is_demo && (
+                                <button
+                                    onClick={() => window.dispatchEvent(new CustomEvent("open-change-password"))}
+                                    style={{
+                                        background: "none", border: "none", padding: "4px 8px",
+                                        fontFamily: "inherit", fontSize: "12px", fontWeight: 500,
+                                        color: "var(--c-text-3)", cursor: "pointer",
+                                        borderRadius: "var(--r-md)",
+                                        transition: "color 0.15s, background 0.15s",
+                                    }}
+                                    onMouseEnter={e => { e.target.style.color = "var(--c-text)"; e.target.style.background = "var(--c-subtle)"; }}
+                                    onMouseLeave={e => { e.target.style.color = "var(--c-text-3)"; e.target.style.background = "transparent"; }}
+                                >
+                                    Cambiar contraseña
+                                </button>
+                            )}
                             <div style={{
                                 width: "30px", height: "30px",
                                 borderRadius: "50%",

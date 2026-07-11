@@ -47,7 +47,7 @@ class Command(BaseCommand):
                             help="Emite un unico objeto JSON en vez de salida humana.")
 
     def handle(self, *args, **options):
-        from apps.inventory.models import Product, StockMovement
+        from apps.inventory.models import Product, StockLot, StockMovement
 
         org_filter = Q(organization_id=options['org']) if options['org'] else Q()
 
@@ -116,7 +116,33 @@ class Command(BaseCommand):
                         'baseline_adjustment_pk': last_adj['pk'],
                     })
 
-        exit_code = 1 if drift_count > 0 else 0
+        # Invariante de lotes (spec 2026-07-10): para productos con tracks_lots,
+        # Σ StockLot.quantity_on_hand == Product.stock_quantity.
+        lot_drift_count = 0
+        lot_drift_sample = []
+        lot_products = (
+            Product.all_objects.filter(org_filter, tracks_lots=True)
+            .values('pk', 'organization_id', 'name', 'stock_quantity')
+            .order_by('pk')
+        )
+        for p in lot_products.iterator(chunk_size=500):
+            agg = StockLot.all_objects.filter(product_id=p['pk']).aggregate(
+                total=Sum('quantity_on_hand')
+            )
+            lot_total = agg['total'] or Decimal('0')
+            if lot_total != p['stock_quantity']:
+                lot_drift_count += 1
+                if len(lot_drift_sample) < SAMPLE_SIZE:
+                    lot_drift_sample.append({
+                        'product_id': p['pk'],
+                        'product_name': p['name'],
+                        'organization_id': p['organization_id'],
+                        'stock_quantity': str(p['stock_quantity']),
+                        'sum_lots': str(lot_total),
+                        'diff': str(p['stock_quantity'] - lot_total),
+                    })
+
+        exit_code = 1 if (drift_count > 0 or lot_drift_count > 0) else 0
 
         report = {
             'checked_products': checked,
@@ -124,6 +150,8 @@ class Command(BaseCommand):
             'no_baseline': no_baseline,
             'drift_count': drift_count,
             'drift_sample': drift_sample,
+            'lot_drift_count': lot_drift_count,
+            'lot_drift_sample': lot_drift_sample,
             'exit_code': exit_code,
         }
 
@@ -157,6 +185,24 @@ class Command(BaseCommand):
                     f"org={row['organization_id']} "
                     f"actual={row['stock_actual']} esperado={row['stock_esperado']} "
                     f"diff={row['diff']} (baseline adj pk={row['baseline_adjustment_pk']})"
+                )
+
+        self.stdout.write("")
+        if report['lot_drift_count'] == 0:
+            self.stdout.write(self.style.SUCCESS(
+                "  OK Invariante de lotes (Σ lotes == stock) sin drift."
+            ))
+        else:
+            self.stdout.write(self.style.ERROR(
+                f"  X DRIFT DE LOTES: {report['lot_drift_count']} productos con "
+                f"Σ lotes != Product.stock_quantity"
+            ))
+            for row in report['lot_drift_sample']:
+                self.stdout.write(
+                    f"      - product={row['product_id']} ({row['product_name']}) "
+                    f"org={row['organization_id']} "
+                    f"stock={row['stock_quantity']} sum_lotes={row['sum_lots']} "
+                    f"diff={row['diff']}"
                 )
 
         self.stdout.write("")

@@ -288,6 +288,68 @@ Reglas:
 - editable mientras la consulta esta en `open`
 - `treatment` requerido en el cierre para todos los tipos **excepto** `vaccine` (GENERAL, SURGERY y EMERGENCY requieren tratamiento no vacío)
 
+## Protocolos clínicos (`consultation_draft` + materialización)
+
+> **ADR**: [`decisions/2026-07-08-p50-vaccine-protocol-consultation-draft.md`](../decisions/2026-07-08-p50-vaccine-protocol-consultation-draft.md).
+> El ADR cubre **solo** la decisión consolidada de Vacuna; el patrón generalizado
+> (cirugía/hospitalización/…) está **diferido** hasta tener 2-3 implementaciones reales.
+
+Algunos `consultation_type` activan una **sección clínica especializada** ("protocolo")
+que captura datos estructurados. Primer protocolo: **Vacuna** (`consultation_type=vaccine`).
+
+### Principio de arquitectura (binding)
+
+**Un protocolo NUNCA modifica directamente `MedicalRecord`** (no agrega campos como
+`next_deworming`, no escribe en `diagnosis`/`treatment`). Solo puede **crear o actualizar
+sus propios registros de dominio** (`VaccineRecord`, futuros `SurgeryRecord`/`DewormingRecord`…)
+durante el cierre. `MedicalRecord` permanece agnóstico a los protocolos; el único
+acoplamiento permitido es el scratchpad `consultation_draft`.
+
+### `MedicalRecord.consultation_draft` (scratchpad de UI — NO fuente de verdad)
+
+`JSONField(default=dict)`. Borrador de UI de las secciones en progreso, para que
+**sobrevivan a una recarga** antes de finalizar. Viaja en el mismo autosave/PATCH del
+`MedicalRecord` (no hay otro canal, no localStorage).
+
+- **NUNCA** leer para analytics, reportes, historial clínico ni registros legales.
+- El serializer valida **estructura, no contenido**: whitelist `ALLOWED_CONSULTATION_DRAFT_KEYS`
+  (hoy `{"vaccine"}`, se amplía 1 clave por protocolo nuevo) + tope de tamaño ~16 KB.
+  Rechaza claves ajenas y payloads gigantes (evita cajón de sastre). Forma: `{"vaccine": {...}}`.
+
+### Materialización atómica en el cierre
+
+`services.apply_consultation_draft_on_close(medical_record, request)` se invoca **dentro
+del `transaction.atomic()` de `close_medical_record`**, junto al invoice-guard y a la
+completación de la cita. Finalizar es **una sola operación**: o se cierra la consulta Y se
+crea el registro legal, o nada (rollback). El frontend **NO** hace un POST aparte de vacuna.
+
+- Gate: solo materializa si `consultation_type == 'vaccine'` y el draft trae `vaccine_name`.
+  Si se finaliza como otro tipo, el draft de vacuna **no** se materializa (puede sobrevivir
+  en `consultation_draft` sin volverse registro legal).
+- Reusa `VaccineRecordSerializer` para validar (nombre, `application_date` no futura,
+  `next_due_date > application_date`); `applied_by`/`organization` server-side. Draft
+  inválido → `ValidationError` → rollback del cierre (400). Defensa en profundidad (el
+  frontend valida antes de finalizar).
+- Idempotente: solo corre en la rama "estaba `open` → se cierra" (cierre ya cerrado retorna
+  antes) → un solo `VaccineRecord` por consulta.
+- Emite log `VACCINE_RECORD_MATERIALIZED_ON_CLOSE` (INFO).
+
+#### A2 — Vacuna ligada a inventario (trazabilidad por lote)
+
+Si el draft de vacuna liga un `product_id` de inventario:
+- Se **consume 1 dosis del lote** vía el auto-alta de `MedicalRecordProduct` (qty=1, `lot`=el
+  elegido), usando la **fuente única** `services.add_medical_record_product(...)` — la misma que
+  la view de Cargos (extraída al aparecer el 2º caller). El modo (`charge`/`included`) se toma de
+  `Product.default_cost_behavior`; el usuario lo ajusta luego en Cobros.
+- El `VaccineRecord` guarda `product` + `lot` + **snapshot** (`lot_number`, `lot_expiry`,
+  `manufacturer`) — inmutable aunque el lote se corrija/borre.
+- Si el vet ya agregó ese producto en Cargos, se **reusa** su MRP/lote (no doble consumo).
+- Lote obligatorio si el producto tiene `tracks_lots`; sin lote válido → `ValidationError` →
+  rollback del cierre. Sin `product_id` → vacuna de **texto libre** (fallback, sin consumo).
+- Frontend: `VaccineSection` con picker de producto (opcional) + lote FEFO.
+
+Frontend: ver `docs/modules/frontend.md` §`features/consultation/protocols/`.
+
 ## Signos vitales (VitalSigns)
 
 Los signos vitales se registran como un historial append-only vinculado a la consulta.

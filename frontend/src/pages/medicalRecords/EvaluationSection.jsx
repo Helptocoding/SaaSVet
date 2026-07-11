@@ -1,16 +1,7 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
-import { Icon } from "../../components/icons";
 import styles from "./consultationForm.module.css";
 
-/**
- * Sección "Evaluación" (presentacional): tipo de consulta (selección única),
- * motivo y diagnóstico clínico (obligatorio). Sin chips de sugerencia (no hay
- * fuente de datos en backend todavía).
- *
- * Recibe `ref` para que el container pueda hacer scroll a esta sección cuando
- * una validación de cierre falla en uno de sus campos.
- */
 const EvaluationSection = forwardRef(function EvaluationSection(
   { draft, consultationTypes, formErrors, onChange, onClearError, disabled },
   ref
@@ -18,27 +9,28 @@ const EvaluationSection = forwardRef(function EvaluationSection(
   return (
     <motion.section
       ref={ref}
-      className={styles.section}
+      className={styles.card}
+      data-consult-step="eval"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className={styles.secHead}>
-        <div className={styles.secIcon}>
-          <Icon.Stethoscope s={17} />
-        </div>
-        <div>
-          <h2 className={styles.secTitle}>Evaluación</h2>
-        </div>
+      <div className={styles.cardHead}>
+        <h2 className={styles.cardTitle}>Evaluación</h2>
+        <p className={styles.cardDesc}>Tipo de consulta, notas y diagnóstico clínico</p>
       </div>
 
       <div className={styles.field}>
         <label className={styles.fieldLabel}>Tipo de consulta</label>
         <div className={styles.typeGrid}>
-          {consultationTypes.map((t) => (
+          {consultationTypes.map((t, idx) => (
             <motion.button
               key={t.value}
               type="button"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.05 }}
+              whileHover={disabled ? undefined : { scale: 1.02 }}
               whileTap={disabled ? undefined : { scale: 0.98 }}
               className={`${styles.typeCard} ${
                 draft.consultation_type === t.value ? styles.typeCardActive : ""
@@ -49,21 +41,19 @@ const EvaluationSection = forwardRef(function EvaluationSection(
               <span className={styles.typeIcon}>{t.icon}</span>
               <span>
                 <span className={styles.typeName}>{t.label}</span>
-                <span className={styles.typeDesc} style={{ display: "block" }}>
-                  {t.desc}
-                </span>
+                <span className={styles.typeDesc}>{t.desc}</span>
               </span>
             </motion.button>
           ))}
         </div>
       </div>
 
-      <div className={styles.grid2}>
+      <div className={styles.editorColumn}>
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Motivo de consulta</label>
+          <label className={`${styles.fieldLabel} ${styles.fieldLabelMinimal}`}>Notas</label>
           <textarea
-            className={`${styles.control} ${formErrors.notes ? styles.fieldError : ""}`}
-            placeholder="Tos seca persistente desde hace 4 días…"
+            className={`${styles.control} ${styles.editorTextarea} ${formErrors.notes ? styles.fieldError : ""}`}
+            placeholder="Notas generales de la consulta..."
             value={draft.notes}
             disabled={disabled}
             onChange={(e) => {
@@ -77,12 +67,12 @@ const EvaluationSection = forwardRef(function EvaluationSection(
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>
-            Diagnóstico clínico <span className={styles.req}>*</span>
+          <label className={`${styles.fieldLabel} ${styles.fieldLabelMinimal}`}>
+            Diagnóstico <span className={styles.req}>*</span>
           </label>
           <textarea
-            className={`${styles.control} ${formErrors.diagnosis ? styles.fieldError : ""}`}
-            placeholder="Bronquitis aguda"
+            className={`${styles.control} ${styles.editorTextarea} ${styles.inputRequired} ${formErrors.diagnosis ? styles.fieldError : ""}`}
+            placeholder="Comienza a escribir..."
             value={draft.diagnosis}
             disabled={disabled}
             onChange={(e) => {

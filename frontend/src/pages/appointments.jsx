@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/useConfirm";
 import { toast } from "sonner";
@@ -16,6 +16,9 @@ import QuickPatientForm from "../components/QuickPatientForm";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import EmptyState from "../components/EmptyState";
+import SpotlightTour from "../components/SpotlightTour";
+import { useAgendaTour } from "../features/appointments/tour/useAgendaTour";
+import { AGENDA_TOUR_KEY } from "../features/appointments/tour/agendaSteps";
 import api from "../api/client";
 
 import { apiError } from "../utils/apiError";
@@ -158,7 +161,9 @@ function ApptBadge({ appt, pal, petName, ownerName, onClick }) {
         ? { bg:"var(--c-subtle)", text:"var(--c-text-3)", border:"var(--c-border-2)" }
         : pal;
     return (
-        <div onClick={e=>{e.stopPropagation(); onClick(appt);}} style={{
+        <div
+            data-tour={appt.public_id === "__demo__" ? "agenda-appt-demo" : undefined}
+            onClick={e=>{e.stopPropagation(); onClick(appt);}} style={{
             position:"absolute", left:"3px", right:"3px", top:"3px",
             background:c.bg, borderLeft:`3px solid ${c.border}`,
             borderRadius:"5px", padding:"3px 6px", cursor:"pointer", zIndex:2,
@@ -238,7 +243,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     </div>
                     <button className="modal-close" onClick={onClose}>×</button>
                 </div>
-                <div className="modal-body">
+                <div className="modal-body" data-tour="agenda-detail">
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
                         {[
                             ["Veterinario", vetName || appt.veterinarian_name || "—"],
@@ -363,6 +368,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                         <>
                             <button
                                 className="btn btn-primary btn-lg"
+                                data-tour="agenda-attend"
                                 style={{ width: "100%", background: "#f59e0b", borderColor: "#f59e0b", color: "#fff", fontWeight: 700, fontSize: "14px" }}
                                 disabled={attending}
                                 onClick={async () => {
@@ -712,6 +718,7 @@ function SidebarForm({ slot, onSave, onSaveWithPatient, onClear, staff, user, fo
                         />
                         <button
                             type="button"
+                            data-tour="agenda-quickadd"
                             onClick={() => setShowQuickPatient(true)}
                             disabled={saving}
                             style={{
@@ -913,6 +920,14 @@ const Appointments = () => {
     const [walkInOpen,   setWalkInOpen]   = useState(false);
     const [filterVetId,  setFilterVetId]  = useState("");
     const [orgSettings,  setOrgSettings]  = useState(null);
+    // Recorrido guiado (spotlight sobre la UI real). La cita demo se inyecta SOLO en el
+    // grid local (nunca al backend) y se limpia al terminar.
+    const [tourDemoAppt, setTourDemoAppt] = useState(null);
+    const tourActions = useMemo(() => ({
+        setWeekOffset, setSelectedSlot, setViewAppt, setTourDemoAppt,
+    }), []);
+    const tour = useAgendaTour(tourActions);
+    const tourStartedRef = useRef(false);
 
     useEffect(() => {
         if (token) {
@@ -972,8 +987,10 @@ const Appointments = () => {
         const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
     });
 
-    // Filtered appointments for this week's grid
-    const weekAppts = appointments.filter(a => {
+    // Filtered appointments for this week's grid. La cita demo del recorrido se inyecta
+    // SOLO aquí (grid), no en las stats — nunca toca el backend.
+    const gridAppts = tourDemoAppt ? [...appointments, tourDemoAppt] : appointments;
+    const weekAppts = gridAppts.filter(a => {
         const d = (() => { const [y,m,d] = a.date.split('-').map(Number); return new Date(y,m-1,d); })();
         const inWeek = weekDays.some(wd => isSameDay(d, wd));
         const vetOk  = !filterVetId || String(a.veterinarian) === filterVetId;
@@ -1001,6 +1018,16 @@ const Appointments = () => {
     // Permissions
     const canCreate = user?.role !== "ASSISTANT";
     const canEdit   = user?.role === "ADMIN" || user?.role === "VET";
+
+    // Auto-inicia el recorrido en la 1ª visita (solo quien puede crear citas). El gate
+    // `agenda_tour_seen` es preferencia de UI; se marca al terminar/saltar.
+    const startTour = tour.start;
+    useEffect(() => {
+        if (tourStartedRef.current || !canCreate) return;
+        let seen = true;
+        try { seen = localStorage.getItem(AGENDA_TOUR_KEY) === "true"; } catch { /* ignore */ }
+        if (!seen) { tourStartedRef.current = true; startTour(); }
+    }, [canCreate, startTour]);
 
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleSlotClick = (date, hour) => {
@@ -1188,13 +1215,21 @@ const Appointments = () => {
                     <h1 className="page-title">Citas</h1>
                     <p className="page-subtitle">{weekTitle(weekStart)}</p>
                 </div>
-                {canEdit && (
-                    <button className="btn btn-primary btn-md"
+                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                    <button className="btn btn-secondary btn-md"
                         style={{display:"flex",alignItems:"center",gap:"6px"}}
-                        onClick={()=>setWalkInOpen(true)}>
-                        <Icon.Plus s={15} /> Atención sin cita
+                        onClick={()=>tour.start()}>
+                        <Icon.Help s={15} /> Cómo funciona
                     </button>
-                )}
+                    {canEdit && (
+                        <button className="btn btn-primary btn-md"
+                            data-tour="agenda-walkin"
+                            style={{display:"flex",alignItems:"center",gap:"6px"}}
+                            onClick={()=>setWalkInOpen(true)}>
+                            <Icon.Plus s={15} /> Atención sin cita
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Empty state complementario — clínica sin citas. NO reemplaza el
@@ -1220,7 +1255,7 @@ const Appointments = () => {
             <div style={{display:"grid",gridTemplateColumns:"1fr 296px",gap:"16px",alignItems:"start"}}>
 
                 {/* ── Calendar panel ── */}
-                <div style={{
+                <div data-tour="agenda-calendar" style={{
                     background:"var(--c-surface)",border:"1px solid var(--c-border)",
                     borderRadius:"var(--r-xl)",overflow:"hidden",boxShadow:"var(--shadow-sm)",
                 }}>
@@ -1382,7 +1417,7 @@ const Appointments = () => {
                     </div>
 
                     {/* New appointment form */}
-                    <div style={{
+                    <div data-tour="agenda-form" style={{
                         background:"var(--c-surface)",border:"1px solid var(--c-border)",
                         borderRadius:"var(--r-xl)",padding:"18px 20px",boxShadow:"var(--shadow-sm)",
                     }}>
@@ -1465,6 +1500,18 @@ const Appointments = () => {
                     allowAnonymousWalkIn={!!orgSettings?.allow_anonymous_walkin}
                     onClose={()=>setWalkInOpen(false)}
                     onSave={handleWalkIn}
+                />
+            )}
+
+            {/* Recorrido guiado de Agenda (historia de Luna) — spotlight sobre la UI real */}
+            {tour.active && (
+                <SpotlightTour
+                    steps={tour.steps}
+                    stepIdx={tour.stepIdx}
+                    onNext={tour.next}
+                    onPrev={tour.prev}
+                    onSkip={tour.skip}
+                    onFinish={tour.finish}
                 />
             )}
         </div>

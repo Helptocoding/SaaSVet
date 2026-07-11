@@ -2,6 +2,7 @@ import logging
 
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -19,13 +20,17 @@ from apps.medical_records.policies import (
     log_ownership_denied,
 )
 
-from .models import Product, Presentation, StockMovement, MedicalRecordProduct
+from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
 from .serializers import (
     ProductSerializer,
     PresentationSerializer,
     PresentationCreateSerializer,
     StockMovementSerializer,
     StockAdjustmentSerializer,
+    StockLotSerializer,
+    StockReceptionSerializer,
+    LotDiscardSerializer,
+    LotStatusSerializer,
     MedicalRecordProductSerializer,
 )
 
@@ -181,6 +186,159 @@ def adjust_presentation_stock(request, pk):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(PresentationSerializer(presentation).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("inventory.update")])
+def receive_presentation_stock(request, pk):
+    """Recepción de mercancía multi-lote para una presentación (spec §7, B1).
+
+    POST /api/inventory/presentations/<pk>/receive/
+    Body: {supplier_name?, received_at?, lots: [{lot_number, expiry_date?, quantity}]}
+    Solo para productos con tracks_lots. Cada lote → StockLot + movimiento 'in'.
+    """
+    from django.core.exceptions import ValidationError as DjValidationError
+    from .services import receive_stock
+
+    presentation = resolve_public_id(
+        Presentation.objects.for_organization(request.user.organization).select_related('product'),
+        pk,
+    )
+    if not presentation.product.tracks_lots:
+        return Response(
+            {'code': 'validation_error',
+             'errors': {'product': ['Este producto no usa control de lotes.']}},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    serializer = StockReceptionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    try:
+        with transaction.atomic():
+            affected = receive_stock(
+                presentation=presentation,
+                lots=serializer.validated_data['lots'],
+                organization=request.user.organization,
+                supplier_name=serializer.validated_data.get('supplier_name', ''),
+                received_at=serializer.validated_data.get('received_at'),
+                created_by=request.user,
+            )
+    except DjValidationError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    presentation.refresh_from_db()
+    return Response({
+        'presentation': PresentationSerializer(presentation).data,
+        'lots': StockLotSerializer(affected, many=True).data,
+    })
+
+
+class ProductLotsView(TenantQueryMixin, generics.ListAPIView):
+    """Lotes de un producto (los activos con saldo primero, orden FEFO)."""
+    serializer_class = StockLotSerializer
+    permission_classes = [HybridPermission]
+    resource_name = "inventory"
+
+    def get_queryset(self):
+        product = resolve_public_id(
+            Product.objects.for_organization(self.request.user.organization),
+            self.kwargs['product_pk'],
+        )
+        qs = StockLot.objects.for_organization(
+            self.request.user.organization
+        ).filter(product=product).select_related('product')
+        if self.request.query_params.get('with_stock') == 'true':
+            qs = qs.filter(quantity_on_hand__gt=0)
+        return qs
+
+
+@api_view(['GET'])
+@permission_classes([make_permission("inventory.list")])
+def lot_alerts(request):
+    """Alertas de caducidad (B2c): lotes por vencer en N días + vencidos con saldo.
+
+    GET /api/inventory/lots/alerts/?days=30
+    Solo lotes con saldo y estado 'active' (cuarentena/retiro se gestionan aparte).
+    """
+    from datetime import timedelta
+    try:
+        days = int(request.query_params.get('days', 30))
+    except (TypeError, ValueError):
+        days = 30
+    days = max(1, min(days, 365))
+
+    org = request.user.organization
+    today = timezone.localdate()
+    horizon = today + timedelta(days=days)
+    base = (
+        StockLot.objects.for_organization(org)
+        .filter(quantity_on_hand__gt=0, status=StockLot.STATUS_ACTIVE)
+        .select_related('product')
+    )
+    expiring = base.filter(
+        expiry_date__isnull=False, expiry_date__gte=today, expiry_date__lte=horizon,
+    ).order_by('expiry_date')
+    expired = base.filter(expiry_date__lt=today).order_by('expiry_date')
+
+    return Response({
+        'days': days,
+        'expiring_soon': StockLotSerializer(expiring, many=True).data,
+        'expired_with_stock': StockLotSerializer(expired, many=True).data,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("inventory.update")])
+def discard_lot_view(request, pk):
+    """Merma/write-off de un lote (B2c). POST /api/inventory/lots/<pk>/discard/"""
+    from django.core.exceptions import ValidationError as DjValidationError
+    from .services import discard_lot
+
+    lot = resolve_public_id(
+        StockLot.objects.for_organization(request.user.organization).select_related('product'),
+        pk,
+    )
+    serializer = LotDiscardSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    reason = serializer.validated_data.get('reason') or 'Descarte de lote'
+    try:
+        with transaction.atomic():
+            discard_lot(
+                lot, request.user.organization,
+                quantity=serializer.validated_data.get('quantity'),
+                reason=reason, created_by=request.user,
+            )
+    except DjValidationError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    lot.refresh_from_db()
+    return Response(StockLotSerializer(lot).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission("inventory.update")])
+def set_lot_status_view(request, pk):
+    """Cambia el estado del lote: active|quarantined|recalled (B2c).
+    POST /api/inventory/lots/<pk>/status/"""
+    from django.core.exceptions import ValidationError as DjValidationError
+    from .services import set_lot_status
+
+    lot = resolve_public_id(
+        StockLot.objects.for_organization(request.user.organization).select_related('product'),
+        pk,
+    )
+    serializer = LotStatusSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    try:
+        with transaction.atomic():
+            set_lot_status(
+                lot, serializer.validated_data['status'],
+                request.user.organization, created_by=request.user,
+            )
+    except DjValidationError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    lot.refresh_from_db()
+    return Response(StockLotSerializer(lot).data)
 
 
 class StockMovementListView(TenantQueryMixin, generics.ListAPIView):
@@ -361,11 +519,9 @@ class MedicalRecordProductListCreateView(TenantQueryMixin, generics.ListCreateAP
         return ctx
 
     def perform_create(self, serializer):
-        from apps.billing.models import InvoiceItem
-        from apps.billing.services import (
-            apply_invoice_item_quantity_delta,
-            get_or_create_invoice_for_medical_record,
-        )
+        # Fuente única del alta de producto en consulta (crea/incrementa MRP +
+        # sincroniza InvoiceItem). Compartida con la materialización de Vacuna (A2).
+        from apps.medical_records.services import add_medical_record_product
 
         with transaction.atomic():
             medical_record = resolve_public_id(
@@ -376,53 +532,12 @@ class MedicalRecordProductListCreateView(TenantQueryMixin, generics.ListCreateAP
             presentation = serializer.validated_data['presentation']
             quantity = serializer.validated_data['quantity']
             cost_behavior = serializer.validated_data.get('cost_behavior', 'charge')
+            lot = serializer.validated_data.get('lot')
             if presentation.organization_id != self.request.user.organization_id:
                 raise ValidationError({'presentation': 'Presentación fuera de tu organización'})
-            invoice = get_or_create_invoice_for_medical_record(medical_record)
-            locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
-
-            mrp = MedicalRecordProduct.objects.select_for_update().filter(
-                medical_record=medical_record,
-                presentation=locked_pres,
-            ).first()
-
-            # cost_behavior es inmutable tras la creación; al incrementar cantidad
-            # se usa el valor del MRP existente, no el del request.
-            effective_cost_behavior = mrp.cost_behavior if mrp is not None else cost_behavior
-
-            if invoice.status == 'draft' and effective_cost_behavior == 'charge':
-                item = (
-                    InvoiceItem.objects
-                    .select_for_update()
-                    .filter(invoice=invoice, presentation=locked_pres, is_active=True)
-                    .first()
-                )
-                # InvoiceItem.quantity en unidades de presentación (para billing).
-                # MRP.quantity también en presentaciones; unit_price = precio por presentación.
-                if item is None:
-                    InvoiceItem.objects.create(
-                        invoice=invoice,
-                        presentation=locked_pres,
-                        description=str(locked_pres),
-                        quantity=quantity,
-                        unit_price=locked_pres.sale_price,
-                        organization=invoice.organization,
-                    )
-                else:
-                    apply_invoice_item_quantity_delta(item, quantity)
-
-            if mrp is not None:
-                previous_quantity = mrp.quantity
-                mrp.quantity = previous_quantity + quantity
-                mrp.save(locked_presentation=locked_pres, previous_quantity=previous_quantity)
-            else:
-                mrp = MedicalRecordProduct(
-                    medical_record=medical_record,
-                    presentation=locked_pres,
-                    quantity=quantity,
-                    cost_behavior=cost_behavior,
-                )
-                mrp.save(locked_presentation=locked_pres)
+            add_medical_record_product(
+                medical_record, presentation, quantity, cost_behavior, lot, self.request.user,
+            )
 
 
 class MedicalRecordProductDeleteView(generics.DestroyAPIView):

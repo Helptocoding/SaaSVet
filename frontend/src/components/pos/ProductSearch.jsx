@@ -141,20 +141,21 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
 
     return (
         <div ref={wrapperRef} className={s.searchWrap}>
-            <input
-                ref={inputRef}
-                className={`input ${s.searchInput}`}
-                value={query}
-                placeholder="Escanea un código o busca producto / servicio…"
-                disabled={disabled}
-                autoFocus
-                autoComplete="off"
-                role="combobox"
-                aria-expanded={open}
-                onChange={e => { setQuery(e.target.value); runSearch(e.target.value); }}
-                onKeyDown={handleKeyDown}
-                onFocus={() => { if (!disabled) runSearch(query); }}
-            />
+            <div className="searchBar" style={{ height: 44, fontSize: 14 }}>
+                <input
+                    ref={inputRef}
+                    value={query}
+                    placeholder="Escanea un código o busca producto / servicio…"
+                    disabled={disabled}
+                    autoFocus
+                    autoComplete="off"
+                    role="combobox"
+                    aria-expanded={open}
+                    onChange={e => { setQuery(e.target.value); runSearch(e.target.value); }}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => { if (!disabled) runSearch(query); }}
+                />
+            </div>
             {open && !disabled && (
                 <div className={s.dropdown} role="listbox">
                     {loading && <div className={s.dropdownEmpty}>Buscando...</div>}
