@@ -320,6 +320,82 @@ class SurgeryRecord(PublicIdMixin, OrganizationalModel):
         ]
 
 
+class EmergencyRecord(PublicIdMixin, OrganizationalModel):
+    """
+    Registro de urgencia (protocolo Urgencia, A3 — diseño 2026-07-09 §13). Gira
+    alrededor del **tiempo** (puerta→triage→estabilización→egreso) y del outcome.
+    La UI muestra "Evaluación rápida" (semáforos) y guarda por detrás A/B/C. Se
+    materializa en el cierre; un protocolo NUNCA muta MedicalRecord (ADR p50).
+    Anchor analítico: `arrived_at`. `protocol_version` congela el esquema.
+    """
+    PROTOCOL_VERSION = 1
+
+    class TriageLevel(models.TextChoices):
+        RED = 'red', 'Rojo — reanimación'
+        ORANGE = 'orange', 'Naranja — emergencia'
+        YELLOW = 'yellow', 'Amarillo — urgente'
+        GREEN = 'green', 'Verde — menos urgente'
+        BLUE = 'blue', 'Azul — no urgente'
+
+    class AbcStatus(models.TextChoices):
+        NORMAL = 'normal', 'Normal'
+        COMPROMISED = 'compromised', 'Comprometido'
+        CRITICAL = 'critical', 'Crítico'
+
+    class DischargeStatus(models.TextChoices):
+        DISCHARGED = 'alta', 'Alta'
+        HOSPITALIZED = 'hospitalizacion', 'Hospitalización'
+        REFERRED = 'referido', 'Referido'
+        DECEASED = 'fallecido', 'Fallecido'
+
+    medical_record = models.ForeignKey(
+        MedicalRecord, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='emergency_records',
+    )
+    pet = models.ForeignKey(Pet, on_delete=models.PROTECT, related_name='emergency_records')
+    attended_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='emergencies_attended',
+    )
+
+    # Tiempos (el motor del protocolo). arrived_at = anchor.
+    arrived_at = models.DateTimeField()
+    triage_at = models.DateTimeField()
+    stabilized_at = models.DateTimeField(null=True, blank=True)
+    discharged_at = models.DateTimeField(null=True, blank=True)
+
+    triage_level = models.CharField(max_length=10, choices=TriageLevel.choices)
+
+    # "Evaluación rápida" → A/B/C por detrás.
+    airway_status = models.CharField(max_length=15, choices=AbcStatus.choices)
+    breathing_status = models.CharField(max_length=15, choices=AbcStatus.choices)
+    circulation_status = models.CharField(max_length=15, choices=AbcStatus.choices)
+
+    chief_complaint = models.CharField(max_length=255)
+    stabilization_actions = models.TextField(max_length=2000)   # checklist + texto
+    response = models.TextField(max_length=1000, blank=True)
+    discharge_status = models.CharField(max_length=20, choices=DischargeStatus.choices)
+    reassessment_date = models.DateField(null=True, blank=True)
+
+    protocol_version = models.PositiveSmallIntegerField(default=1, editable=False)
+
+    def clean(self):
+        org = self.organization_id
+        if org and self.pet_id and self.pet.organization_id != org:
+            raise ValidationError("La mascota no pertenece a la misma organización que la urgencia.")
+        if org and self.medical_record_id and self.medical_record.organization_id != org:
+            raise ValidationError("La consulta no pertenece a la misma organización que la urgencia.")
+
+    class Meta:
+        ordering = ['-arrived_at', '-id']
+        indexes = [
+            models.Index(fields=['organization', 'pet', '-arrived_at'],
+                         name='idx_emerg_org_pet'),
+            models.Index(fields=['organization', 'arrived_at'],
+                         name='idx_emerg_org_arrived'),
+        ]
+
+
 class VitalSigns(OrganizationalModel):
     """
     Registro histórico de signos vitales por consulta. Append-only: sin PATCH/DELETE.

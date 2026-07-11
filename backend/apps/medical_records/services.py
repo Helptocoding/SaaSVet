@@ -298,10 +298,68 @@ def _materialize_surgery(medical_record, request):
     return record
 
 
+def _materialize_emergency(medical_record, request):
+    """
+    Protocolo Urgencia (A3). Gate: el draft `emergency` trae contenido (triage +
+    problema + estado al egreso). `EmergencyRecordSerializer` valida el mínimo
+    obligatorio (tiempos, triage, ABC, acciones, egreso) → inválido = rollback.
+    `attended_by` = el vet que finaliza (server-side).
+    """
+    from .serializers import EmergencyRecordSerializer
+    from .models import EmergencyRecord
+
+    draft = medical_record.consultation_draft or {}
+    emergency = draft.get("emergency") or {}
+    has_content = any([
+        emergency.get("triage_level"),
+        (emergency.get("chief_complaint") or "").strip(),
+        emergency.get("discharge_status"),
+    ])
+    if not has_content:
+        return None
+
+    payload = {
+        "arrived_at": emergency.get("arrived_at"),
+        "triage_at": emergency.get("triage_at"),
+        "stabilized_at": emergency.get("stabilized_at") or None,
+        "discharged_at": emergency.get("discharged_at") or None,
+        "triage_level": emergency.get("triage_level"),
+        "airway_status": emergency.get("airway_status"),
+        "breathing_status": emergency.get("breathing_status"),
+        "circulation_status": emergency.get("circulation_status"),
+        "chief_complaint": emergency.get("chief_complaint") or "",
+        "stabilization_actions": emergency.get("stabilization_actions") or "",
+        "response": emergency.get("response") or "",
+        "discharge_status": emergency.get("discharge_status"),
+        "reassessment_date": emergency.get("reassessment_date") or None,
+    }
+    serializer = EmergencyRecordSerializer(data=payload, context={"request": request})
+    serializer.is_valid(raise_exception=True)
+    record = serializer.save(
+        organization=medical_record.organization,
+        medical_record=medical_record,
+        pet=medical_record.pet,
+        attended_by=request.user,
+        protocol_version=EmergencyRecord.PROTOCOL_VERSION,
+    )
+
+    logger.info(
+        "EMERGENCY_RECORD_MATERIALIZED_ON_CLOSE",
+        extra={
+            "user_id": request.user.id,
+            "organization_id": request.user.organization_id,
+            "medical_record_id": medical_record.id,
+            "emergency_record_id": record.id,
+        },
+    )
+    return record
+
+
 # Registry de materializadores por tipo de consulta (extraído en la 2ª repetición).
 # Agregar un protocolo backend = una entrada aquí (+ su whitelist en el serializer).
 _MATERIALIZERS = {
     MedicalRecord.ConsultationType.VACCINE: _materialize_vaccine,
     MedicalRecord.ConsultationType.GENERAL: _materialize_general,
     MedicalRecord.ConsultationType.SURGERY: _materialize_surgery,
+    MedicalRecord.ConsultationType.EMERGENCY: _materialize_emergency,
 }

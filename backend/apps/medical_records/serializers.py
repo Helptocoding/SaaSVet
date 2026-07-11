@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from apps.core.sanitize import sanitize_text
-from .models import ConsultationAssessment, MedicalRecord, MedicalRecordService, SurgeryRecord, VaccineRecord, VitalSigns
+from .models import ConsultationAssessment, EmergencyRecord, MedicalRecord, MedicalRecordService, SurgeryRecord, VaccineRecord, VitalSigns
 from .models import _get_last_weight
 from .policies import can_close_medical_record, can_modify_medical_record_charges, medical_record_has_clinical_content
 
@@ -14,7 +14,7 @@ from .policies import can_close_medical_record, can_modify_medical_record_charge
 # fuente de verdad). Se amplia 1 clave por protocolo clinico nuevo. Evita que el
 # campo se vuelva un cajon de sastre donde cualquier componente escriba cualquier
 # cosa. Ver docs/modules/medical_records.md (principio de protocolos).
-ALLOWED_CONSULTATION_DRAFT_KEYS = {"vaccine", "general", "surgery"}
+ALLOWED_CONSULTATION_DRAFT_KEYS = {"vaccine", "general", "surgery", "emergency"}
 
 
 def _validate_weight_change(pet, new_weight, force=False):
@@ -426,17 +426,6 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El nombre de la vacuna es requerido.")
         return clean
 
-    def validate(self, attrs):
-        # Defensa en profundidad (espeja vaccineProtocol.validate del frontend):
-        # el refuerzo debe ser posterior a la aplicación.
-        app = attrs.get('application_date')
-        due = attrs.get('next_due_date')
-        if app and due and due <= app:
-            raise serializers.ValidationError(
-                {"next_due_date": "El refuerzo debe ser posterior a la fecha de aplicación."}
-            )
-        return attrs
-
     def validate_application_date(self, value):
         if value > date.today():
             raise serializers.ValidationError("La fecha de aplicación no puede ser en el futuro.")
@@ -446,6 +435,23 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
         if pet and pet.organization != self.context['request'].user.organization:
             raise serializers.ValidationError('Acceso inválido.')
         return pet
+
+    def validate_medical_record(self, mr):
+        if mr and mr.organization != self.context['request'].user.organization:
+            raise serializers.ValidationError('Acceso inválido.')
+        return mr
+
+    def validate(self, data):
+        if 'notes' in data:
+            data['notes'] = sanitize_text(data['notes'], max_length=5000)
+
+        next_due = data.get('next_due_date')
+        app_date = data.get('application_date')
+        if next_due and app_date and next_due <= app_date:
+            raise serializers.ValidationError({
+                'next_due_date': 'La fecha de próxima dosis debe ser posterior a la fecha de aplicación.'
+            })
+        return data
 
 
 class SurgeryRecordSerializer(serializers.ModelSerializer):
@@ -491,22 +497,53 @@ class SurgeryRecordSerializer(serializers.ModelSerializer):
     def validate_complications(self, value):
         return sanitize_text(value or '', max_length=2000)
 
-    def validate_medical_record(self, mr):
-        if mr and mr.organization != self.context['request'].user.organization:
-            raise serializers.ValidationError('Acceso inválido.')
-        return mr
 
-    def validate(self, data):
-        if 'notes' in data:
-            data['notes'] = sanitize_text(data['notes'], max_length=5000)
+class EmergencyRecordSerializer(serializers.ModelSerializer):
+    """Protocolo Urgencia (A3). Valida el mínimo obligatorio (tiempos+triage+ABC+egreso)."""
+    attended_by_name = serializers.SerializerMethodField()
 
-        next_due = data.get('next_due_date')
-        app_date = data.get('application_date')
-        if next_due and app_date and next_due <= app_date:
-            raise serializers.ValidationError({
-                'next_due_date': 'La fecha de próxima dosis debe ser posterior a la fecha de aplicación.'
-            })
-        return data
+    class Meta:
+        model = EmergencyRecord
+        fields = [
+            'id', 'public_id', 'pet', 'medical_record', 'attended_by', 'attended_by_name',
+            'arrived_at', 'triage_at', 'stabilized_at', 'discharged_at', 'triage_level',
+            'airway_status', 'breathing_status', 'circulation_status', 'chief_complaint',
+            'stabilization_actions', 'response', 'discharge_status', 'reassessment_date',
+            'protocol_version', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'public_id', 'pet', 'medical_record', 'attended_by', 'attended_by_name',
+            'protocol_version', 'created_at',
+        ]
+
+    def get_attended_by_name(self, obj):
+        if obj.attended_by:
+            return f"{obj.attended_by.first_name} {obj.attended_by.last_name}".strip()
+        return None
+
+    def validate_chief_complaint(self, value):
+        clean = sanitize_text(value or '', max_length=255)
+        if not clean.strip():
+            raise serializers.ValidationError("El problema principal es obligatorio.")
+        return clean
+
+    def validate_stabilization_actions(self, value):
+        clean = sanitize_text(value or '', max_length=2000)
+        if not clean.strip():
+            raise serializers.ValidationError("Registra al menos una acción de estabilización.")
+        return clean
+
+    def validate_response(self, value):
+        return sanitize_text(value or '', max_length=1000)
+
+    def validate(self, attrs):
+        arrived = attrs.get('arrived_at')
+        triage = attrs.get('triage_at')
+        if arrived and triage and triage < arrived:
+            raise serializers.ValidationError(
+                {'triage_at': 'El triage no puede ser anterior a la hora de llegada.'}
+            )
+        return attrs
 
 
 class ConsultationAssessmentSerializer(serializers.ModelSerializer):

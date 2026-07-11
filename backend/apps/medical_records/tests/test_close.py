@@ -246,16 +246,17 @@ class CloseMedicalRecordTests(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("treatment", r.data["errors"])
 
-    def test_close_emergency_sin_treatment_retorna_400(self):
+    def test_close_emergency_sin_diagnosis_ni_treatment_retorna_200(self):
+        # A3: Urgencia no exige diagnosis (presuntivo) ni treatment del MedicalRecord;
+        # su triage/ABC/egreso viven en EmergencyRecord. Validación delegada al protocolo.
         mr = self._make_record()
         mr.consultation_type = MedicalRecord.ConsultationType.EMERGENCY
-        mr.diagnosis = "urgencia sin tratamiento"
+        mr.diagnosis = ""
         mr.treatment = ""
         mr.save(update_fields=["consultation_type", "diagnosis", "treatment"])
         self.client.force_authenticate(self.vet_a)
         r = self.client.post(self._close_url(mr.pk))
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("treatment", r.data["errors"])
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
 
     def test_close_vaccine_sin_treatment_retorna_200(self):
         mr = self._make_record()

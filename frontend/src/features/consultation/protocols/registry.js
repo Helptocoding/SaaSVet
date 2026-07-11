@@ -1,6 +1,7 @@
 import { generalProtocol } from "./general";
 import { vaccineProtocol } from "./vaccine";
 import { surgeryProtocol } from "./surgery";
+import { emergencyProtocol } from "./emergency";
 
 /**
  * Registry de protocolos clínicos por `consultation_type`.
@@ -16,6 +17,7 @@ const PROTOCOLS = {
   general: generalProtocol,
   vaccine: vaccineProtocol,
   surgery: surgeryProtocol,
+  emergency: emergencyProtocol,
 };
 
 export const protocolFor = (type) => PROTOCOLS[type] || null;

@@ -329,13 +329,18 @@ crea el registro legal, o nada (rollback). El frontend **NO** hace un POST apart
   (`VaccineRecord`), `surgery` (`SurgeryRecord`). Agregar protocolo = 1 entrada + su clave en
   `ALLOWED_CONSULTATION_DRAFT_KEYS` + su serializer. Cada materializador gatea si su slice del
   draft trae contenido; si no, el tipo se finaliza sin registro (fallback, como una consulta
-  clásica).
+  clásica). Protocolos hoy: `general`, `vaccine`, `surgery`, `emergency`.
 - **Cirugía** (`SurgeryRecord`, A3): grupos PreOp·Proc·Recup (`surgery_type`, `asa_class`,
   `anesthesia_type`, `procedure`, `wound_class`, `complications`, `postop_instructions`,
-  `suture_removal_date`; `surgeon` server-side; `protocol_version`). El
-  `SurgeryRecordSerializer` valida el mínimo obligatorio → draft inválido = rollback del cierre.
-  **Cierre delega la validación al protocolo**: Cirugía y Vacuna **no** exigen
-  `MedicalRecord.treatment` (su plan vive en su registro).
+  `suture_removal_date`; `surgeon` server-side).
+- **Urgencia** (`EmergencyRecord`, A3): tiempos (`arrived_at` anchor, `triage_at`,
+  `stabilized_at`, `discharged_at`), `triage_level` (5 niveles), ABC "evaluación rápida"
+  (`airway/breathing/circulation_status`), `chief_complaint`, `stabilization_actions`,
+  `discharge_status` (alta/hospitalización/referido/fallecido), `reassessment_date`;
+  `attended_by` server-side.
+- **Cierre delega la validación al protocolo** (diseño A3): Cirugía, Vacuna y Urgencia **no**
+  exigen `MedicalRecord.treatment`; **Urgencia** además **no** exige `diagnosis` (presuntivo
+  permitido). Cada serializer valida su mínimo obligatorio → draft inválido = rollback del cierre.
 - Reusa `VaccineRecordSerializer` para validar (nombre, `application_date` no futura,
   `next_due_date > application_date`); `applied_by`/`organization` server-side. Draft
   inválido → `ValidationError` → rollback del cierre (400). Defensa en profundidad (el

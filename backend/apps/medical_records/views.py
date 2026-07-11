@@ -464,9 +464,12 @@ def close_medical_record(request, pk):
             log_ownership_denied(user=request.user, medical_record=medical_record, request=request)
             raise PermissionDenied("No puedes finalizar esta consulta")
 
-        # Validación de campos requeridos para cierre
+        # Validación de campos requeridos para cierre. El diagnóstico es obligatorio
+        # salvo en Urgencia (diagnóstico presuntivo permitido — el protocolo captura
+        # triage/ABC/egreso; diseño A3). Delegación al protocolo activo.
         diagnosis = sanitize_text(medical_record.diagnosis or '', max_length=400)
-        if not diagnosis.strip():
+        if (medical_record.consultation_type != MedicalRecord.ConsultationType.EMERGENCY
+                and not diagnosis.strip()):
             events_logger.warning(
                 "MEDICAL_RECORD_CLOSE_VALIDATION_FAILED",
                 extra={
@@ -485,6 +488,7 @@ def close_medical_record(request, pk):
         _treatment_exempt = {
             MedicalRecord.ConsultationType.VACCINE,
             MedicalRecord.ConsultationType.SURGERY,
+            MedicalRecord.ConsultationType.EMERGENCY,
         }
         if medical_record.consultation_type not in _treatment_exempt:
             treatment = sanitize_text(medical_record.treatment or '', max_length=400)
