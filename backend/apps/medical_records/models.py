@@ -20,6 +20,14 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
     pet = models.ForeignKey(Pet, on_delete=models.PROTECT, related_name='medical_records')
     veterinarian = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='medical_records', null=True, blank=True)
     appointment = models.ForeignKey("appointments.Appointment", on_delete=models.SET_NULL, null=True, blank=True, related_name='medical_record')
+    # Cadena de episodio (A3): un encuentro puede originarse de otro
+    # (urgencia → cirugía → hospitalización). Único campo estructural nuevo en el
+    # central. SET_NULL: borrar el origen no rompe el derivado. Sin UI aún (solo el
+    # enlace de datos); `discharge_status='hospitalizacion'` enlazará a Hospitalización futura.
+    originated_from = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='derived_records',
+    )
 
     diagnosis = models.TextField(max_length=400, blank=True)
     treatment = models.TextField(max_length=400, blank=True)

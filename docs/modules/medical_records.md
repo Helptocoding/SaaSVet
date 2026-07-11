@@ -341,6 +341,21 @@ crea el registro legal, o nada (rollback). El frontend **NO** hace un POST apart
 - **Cierre delega la validación al protocolo** (diseño A3): Cirugía, Vacuna y Urgencia **no**
   exigen `MedicalRecord.treatment`; **Urgencia** además **no** exige `diagnosis` (presuntivo
   permitido). Cada serializer valida su mínimo obligatorio → draft inválido = rollback del cierre.
+
+#### Superficies de los registros (A3)
+
+- `MedicalRecordSerializer` expone `consultation_assessment`, `surgery_record`, `emergency_record`
+  (último de cada tipo, prefetch anti-N+1) con campos `*_display` para labels. El **Timeline**
+  (`TimelineCard`) los renderiza (resumen en la card + detalle expandido: informe quirúrgico /
+  informe de urgencia).
+- **PDF** (`medical_record_pdf`): además del SOAP de General, secciones **Informe quirúrgico**
+  (tipo/ASA/anestesia/herida/procedimiento/complicaciones/postop) e **Informe de urgencia**
+  (triage/tiempos/ABC/acciones/egreso).
+- **`MedicalRecord.originated_from`** (self-FK, SET_NULL): cadena de episodio
+  (urgencia→cirugía→hospitalización). Único campo estructural nuevo en el central; expuesto como
+  `originated_from_public_id` (read-only). **Sin UI aún** (solo el enlace de datos, diseño A3 §9).
+- **Analítica por protocolo** (tiempos de urgencia, tasa de complicaciones/ISQ de cirugía,
+  outcomes por estado al egreso) — **pendiente** (proyecto de dominio `analytics` aparte).
 - Reusa `VaccineRecordSerializer` para validar (nombre, `application_date` no futura,
   `next_due_date > application_date`); `applied_by`/`organization` server-side. Draft
   inválido → `ValidationError` → rollback del cierre (400). Defensa en profundidad (el

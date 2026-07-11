@@ -96,7 +96,7 @@ class MedicalRecordListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
             'services_used__service',
             'prescription__items__product__presentations',
             'vital_signs',
-            'consultation_assessments',
+            'consultation_assessments', 'surgery_records', 'emergency_records',
         )
 
         if pet_lookup:
@@ -128,7 +128,7 @@ class MedicalRecordDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Re
             'services_used__service',
             'prescription__items__product__presentations',
             'vital_signs',
-            'consultation_assessments',
+            'consultation_assessments', 'surgery_records', 'emergency_records',
         )
 
     def _check_not_closed(self, instance):
@@ -190,7 +190,7 @@ class MedicalRecordByPetView(TenantQueryMixin, generics.ListAPIView):
             'services_used__service',
             'prescription__items__product__presentations',
             'vital_signs',
-            'consultation_assessments',
+            'consultation_assessments', 'surgery_records', 'emergency_records',
         ).order_by('-created_at')
 
 
@@ -632,7 +632,7 @@ def medical_record_pdf(request, pk):
                 'services_used__service',
                 'products_used__presentation__product',
                 'prescription__items__product',
-                'consultation_assessments',
+                'consultation_assessments', 'surgery_records', 'emergency_records',
             ),
         pk,
     )
@@ -757,6 +757,53 @@ def medical_record_pdf(request, pk):
     if assessment and assessment.recheck_date:
         flow += section(st, theme, "Próxima revisión")
         flow.append(Paragraph(assessment.recheck_date.strftime('%d/%m/%Y'), st['body']))
+
+    # Informe quirúrgico (protocolo Cirugía, A3).
+    surgery = next(iter(record.surgery_records.all()), None)
+    if surgery:
+        flow += section(st, theme, "Informe quirúrgico")
+        sg_pairs = [
+            ("Tipo", safe_pdf_text(surgery.get_surgery_type_display())),
+            ("ASA", "ASA " + surgery.asa_class + ("E" if surgery.asa_emergency else "")),
+            ("Anestesia", safe_pdf_text(surgery.get_anesthesia_type_display())),
+        ]
+        if surgery.wound_class:
+            sg_pairs.append(("Herida", safe_pdf_text(surgery.get_wound_class_display())))
+        flow += info_card(st, theme, sg_pairs, columns=3)
+        if surgery.preop_diagnosis:
+            flow.append(Paragraph("<b>Dx prequirúrgico:</b> " + safe_pdf_text(surgery.preop_diagnosis), st['body']))
+        flow.append(Paragraph("<b>Procedimiento:</b> " + safe_pdf_text(surgery.procedure).replace('\n', '<br/>'), st['body']))
+        if surgery.findings:
+            flow.append(Paragraph("<b>Hallazgos:</b> " + safe_pdf_text(surgery.findings).replace('\n', '<br/>'), st['body']))
+        if surgery.complications:
+            flow.append(Paragraph("<b>Complicaciones:</b> " + safe_pdf_text(surgery.complications), st['body']))
+        flow.append(Paragraph("<b>Indicaciones postoperatorias:</b> " + safe_pdf_text(surgery.postop_instructions).replace('\n', '<br/>'), st['body']))
+        if surgery.suture_removal_date:
+            flow.append(Paragraph("<b>Retiro de puntos:</b> " + surgery.suture_removal_date.strftime('%d/%m/%Y'), st['body']))
+
+    # Informe de urgencia (protocolo Urgencia, A3).
+    emergency = next(iter(record.emergency_records.all()), None)
+    if emergency:
+        flow += section(st, theme, "Informe de urgencia")
+        em_pairs = [
+            ("Triage", safe_pdf_text(emergency.get_triage_level_display())),
+            ("Llegada", fmt_dt(emergency.arrived_at)),
+            ("Hora triage", fmt_dt(emergency.triage_at)),
+        ]
+        if emergency.discharged_at:
+            em_pairs.append(("Egreso", fmt_dt(emergency.discharged_at)))
+        flow += info_card(st, theme, em_pairs, columns=3)
+        abc = ("A: " + emergency.get_airway_status_display()
+               + " · B: " + emergency.get_breathing_status_display()
+               + " · C: " + emergency.get_circulation_status_display())
+        flow.append(Paragraph("<b>Evaluación rápida (ABC):</b> " + safe_pdf_text(abc), st['body']))
+        flow.append(Paragraph("<b>Problema principal:</b> " + safe_pdf_text(emergency.chief_complaint), st['body']))
+        flow.append(Paragraph("<b>Acciones de estabilización:</b> " + safe_pdf_text(emergency.stabilization_actions).replace('\n', '<br/>'), st['body']))
+        if emergency.response:
+            flow.append(Paragraph("<b>Respuesta:</b> " + safe_pdf_text(emergency.response), st['body']))
+        flow.append(Paragraph("<b>Estado al egreso:</b> " + safe_pdf_text(emergency.get_discharge_status_display()), st['body']))
+        if emergency.reassessment_date:
+            flow.append(Paragraph("<b>Revaloración:</b> " + emergency.reassessment_date.strftime('%d/%m/%Y'), st['body']))
 
     services = list(record.services_used.all())
     if services:

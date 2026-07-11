@@ -148,6 +148,13 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     # Protocolo General: valoración estructurada (SOAP S/O). None si la consulta
     # no capturó SOAP estructurado (general "clásica" o aún sin materializar).
     consultation_assessment = serializers.SerializerMethodField()
+    # Protocolos Cirugía / Urgencia (A3): registro materializado, None si no aplica.
+    surgery_record = serializers.SerializerMethodField()
+    emergency_record = serializers.SerializerMethodField()
+    # Cadena de episodio (A3): encuentro del que se originó éste (urgencia→cirugía).
+    originated_from_public_id = serializers.UUIDField(
+        source='originated_from.public_id', read_only=True, allow_null=True,
+    )
 
     def get_invoice_public_id(self, obj):
         # invoice_id es ReadOnlyField sobre property o cached value; resolver
@@ -195,7 +202,8 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'prescription_id', 'prescription_public_id', 'prescription_summary',
             'invoice_id', 'invoice_public_id', 'invoice_status',
             'latest_vitals',
-            'consultation_assessment',
+            'consultation_assessment', 'surgery_record', 'emergency_record',
+            'originated_from', 'originated_from_public_id',
             'status', 'closed_at', 'closed_by',
             'can_modify_charges', 'can_close', 'can_delete',
         ]
@@ -205,6 +213,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'prescription_id', 'invoice_id',
             'status', 'closed_at', 'closed_by',
             'organization',
+            'originated_from', 'originated_from_public_id',
         ]
 
     def validate(self, data):
@@ -352,6 +361,14 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         assessment = next(iter(obj.consultation_assessments.all()), None)
         return ConsultationAssessmentSerializer(assessment).data if assessment else None
 
+    def get_surgery_record(self, obj):
+        sr = next(iter(obj.surgery_records.all()), None)
+        return SurgeryRecordSerializer(sr).data if sr else None
+
+    def get_emergency_record(self, obj):
+        er = next(iter(obj.emergency_records.all()), None)
+        return EmergencyRecordSerializer(er).data if er else None
+
 
 class MedicalRecordDetailSerializer(MedicalRecordSerializer):
     services_used = serializers.SerializerMethodField()
@@ -457,13 +474,17 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
 class SurgeryRecordSerializer(serializers.ModelSerializer):
     """Protocolo Cirugía (A3). Valida el mínimo obligatorio (PreOp+Proc+Recup)."""
     surgeon_name = serializers.SerializerMethodField()
+    surgery_type_display = serializers.CharField(source='get_surgery_type_display', read_only=True)
+    anesthesia_type_display = serializers.CharField(source='get_anesthesia_type_display', read_only=True)
+    wound_class_display = serializers.CharField(source='get_wound_class_display', read_only=True)
 
     class Meta:
         model = SurgeryRecord
         fields = [
             'id', 'public_id', 'pet', 'medical_record', 'surgeon', 'surgeon_name',
-            'preop_diagnosis', 'surgery_type', 'asa_class', 'asa_emergency',
-            'anesthesia_type', 'procedure', 'wound_class', 'findings', 'complications',
+            'preop_diagnosis', 'surgery_type', 'surgery_type_display', 'asa_class',
+            'asa_emergency', 'anesthesia_type', 'anesthesia_type_display', 'procedure',
+            'wound_class', 'wound_class_display', 'findings', 'complications',
             'postop_instructions', 'suture_removal_date', 'protocol_version', 'created_at',
         ]
         read_only_fields = [
@@ -501,14 +522,23 @@ class SurgeryRecordSerializer(serializers.ModelSerializer):
 class EmergencyRecordSerializer(serializers.ModelSerializer):
     """Protocolo Urgencia (A3). Valida el mínimo obligatorio (tiempos+triage+ABC+egreso)."""
     attended_by_name = serializers.SerializerMethodField()
+    triage_level_display = serializers.CharField(source='get_triage_level_display', read_only=True)
+    discharge_status_display = serializers.CharField(source='get_discharge_status_display', read_only=True)
+    airway_status_display = serializers.CharField(source='get_airway_status_display', read_only=True)
+    breathing_status_display = serializers.CharField(source='get_breathing_status_display', read_only=True)
+    circulation_status_display = serializers.CharField(source='get_circulation_status_display', read_only=True)
 
     class Meta:
         model = EmergencyRecord
         fields = [
             'id', 'public_id', 'pet', 'medical_record', 'attended_by', 'attended_by_name',
-            'arrived_at', 'triage_at', 'stabilized_at', 'discharged_at', 'triage_level',
-            'airway_status', 'breathing_status', 'circulation_status', 'chief_complaint',
-            'stabilization_actions', 'response', 'discharge_status', 'reassessment_date',
+            'arrived_at', 'triage_at', 'stabilized_at', 'discharged_at',
+            'triage_level', 'triage_level_display',
+            'airway_status', 'airway_status_display',
+            'breathing_status', 'breathing_status_display',
+            'circulation_status', 'circulation_status_display',
+            'chief_complaint', 'stabilization_actions', 'response',
+            'discharge_status', 'discharge_status_display', 'reassessment_date',
             'protocol_version', 'created_at',
         ]
         read_only_fields = [

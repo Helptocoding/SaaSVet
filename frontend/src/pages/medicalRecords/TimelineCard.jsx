@@ -36,9 +36,15 @@ const TimelineCard = ({
     : [];
   const hasAssessDetail = !!(assess && (assess.history || alteredExam.length || assess.differentials || assess.recheck_date));
 
+  // Protocolos Cirugía / Urgencia (A3).
+  const surgery = record.surgery_record;
+  const emergency = record.emergency_record;
+
   const hasExpandable = !!(
     record.notes ||
     hasAssessDetail ||
+    surgery ||
+    emergency ||
     record.products_used?.length > 0 ||
     (hasPrx && record.prescription_summary?.items?.length > 0)
   );
@@ -108,6 +114,22 @@ const TimelineCard = ({
 
         {record.treatment && (
           <p className={styles.txTreatment}>{truncate(record.treatment, 130)}</p>
+        )}
+
+        {surgery && (
+          <p className={styles.txMotivo}>
+            <span className={styles.txMotivoLabel}>Cirugía</span>
+            {surgery.surgery_type_display}
+            {surgery.procedure ? ` · ${truncate(surgery.procedure, 110)}` : ""}
+          </p>
+        )}
+        {emergency && (
+          <p className={styles.txMotivo}>
+            <span className={styles.txMotivoLabel}>Urgencia</span>
+            Triage {emergency.triage_level_display}
+            {emergency.chief_complaint ? ` · ${truncate(emergency.chief_complaint, 90)}` : ""}
+            {` · Egreso: ${emergency.discharge_status_display}`}
+          </p>
         )}
 
         {vitals && (
@@ -219,6 +241,37 @@ const TimelineCard = ({
                 <div className={styles.txSection}>
                   <p className={styles.txLabel}>Diagnósticos diferenciales</p>
                   <p className={styles.txText}>{assess.differentials}</p>
+                </div>
+              )}
+              {surgery && (
+                <div className={styles.txSection}>
+                  <p className={styles.txLabel}>Informe quirúrgico</p>
+                  <div className={styles.txChips}>
+                    <span className={styles.txChip}>{surgery.surgery_type_display}</span>
+                    <span className={styles.txChip}>ASA {surgery.asa_class}{surgery.asa_emergency ? "E" : ""}</span>
+                    <span className={styles.txChip}>{surgery.anesthesia_type_display}</span>
+                    {surgery.wound_class_display && <span className={styles.txChip}>{surgery.wound_class_display}</span>}
+                  </div>
+                  {surgery.preop_diagnosis && <p className={styles.txText}><b>Dx prequirúrgico:</b> {surgery.preop_diagnosis}</p>}
+                  {surgery.procedure && <p className={styles.txText}><b>Procedimiento:</b> {surgery.procedure}</p>}
+                  {surgery.findings && <p className={styles.txText}><b>Hallazgos:</b> {surgery.findings}</p>}
+                  {surgery.complications && <p className={styles.txText}><b>Complicaciones:</b> {surgery.complications}</p>}
+                  {surgery.postop_instructions && <p className={styles.txText}><b>Postoperatorio:</b> {surgery.postop_instructions}</p>}
+                  {surgery.suture_removal_date && <p className={styles.txText}><b>Retiro de puntos:</b> {surgery.suture_removal_date}</p>}
+                </div>
+              )}
+              {emergency && (
+                <div className={styles.txSection}>
+                  <p className={styles.txLabel}>Informe de urgencia</p>
+                  <div className={styles.txChips}>
+                    <span className={styles.txChip}>Triage {emergency.triage_level_display}</span>
+                    <span className={styles.txChip}>Egreso: {emergency.discharge_status_display}</span>
+                  </div>
+                  <p className={styles.txText}><b>ABC:</b> A {emergency.airway_status_display} · B {emergency.breathing_status_display} · C {emergency.circulation_status_display}</p>
+                  {emergency.chief_complaint && <p className={styles.txText}><b>Problema:</b> {emergency.chief_complaint}</p>}
+                  {emergency.stabilization_actions && <p className={styles.txText}><b>Acciones:</b> {emergency.stabilization_actions}</p>}
+                  {emergency.response && <p className={styles.txText}><b>Respuesta:</b> {emergency.response}</p>}
+                  {emergency.reassessment_date && <p className={styles.txText}><b>Revaloración:</b> {emergency.reassessment_date}</p>}
                 </div>
               )}
               {record.products_used?.length > 0 && (
