@@ -881,3 +881,103 @@ def medical_record_pdf(request, pk):
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@api_view(['GET'])
+@permission_classes([make_permission("medicalrecord.list")])
+def protocol_analytics(request):
+    """
+    Analítica por protocolo — versión **LITE** (A3): agregación read-only AL VUELO
+    sobre SurgeryRecord/EmergencyRecord/VaccineRecord por rango de fechas. NO usa
+    snapshots `DailyOrgMetrics` ni bumpea `METRICS_SCHEMA_VERSION`. Deuda de
+    migración a snapshot formal documentada en docs/modules/analytics.md.
+
+    GET /api/medical-records/protocol-analytics/?from=YYYY-MM-DD&to=YYYY-MM-DD
+    Default: últimos 30 días. Anchors: cirugía=created_at, urgencia=arrived_at,
+    vacuna=application_date.
+    """
+    from datetime import timedelta
+    from .models import SurgeryRecord, EmergencyRecord
+
+    org = request.user.organization
+    today = timezone.localdate()
+
+    def parse_date(value, default):
+        try:
+            return date.fromisoformat(value) if value else default
+        except (TypeError, ValueError):
+            return default
+
+    date_to = parse_date(request.query_params.get('to'), today)
+    date_from = parse_date(request.query_params.get('from'), today - timedelta(days=30))
+
+    def bump(d, key):
+        d[key] = d.get(key, 0) + 1
+
+    # ── Cirugía (anchor: created_at) ──
+    _NONE = {'', 'ninguna', 'ninguno', 'sin complicaciones', 'no', 'n/a', 's/c'}
+    s_total = 0
+    s_by_type, s_by_asa, s_by_wound, s_compl = {}, {}, {}, 0
+    for s in SurgeryRecord.objects.for_organization(org).filter(
+        created_at__date__gte=date_from, created_at__date__lte=date_to,
+    ).values('surgery_type', 'asa_class', 'asa_emergency', 'wound_class', 'complications'):
+        s_total += 1
+        bump(s_by_type, s['surgery_type'] or '—')
+        bump(s_by_asa, 'ASA ' + (s['asa_class'] or '?') + ('E' if s['asa_emergency'] else ''))
+        if s['wound_class']:
+            bump(s_by_wound, s['wound_class'])
+        c = (s['complications'] or '').strip().lower()
+        if c and c not in _NONE:
+            s_compl += 1
+    surgery = {
+        'total': s_total,
+        'by_type': s_by_type,
+        'by_asa': s_by_asa,
+        'by_wound_class': s_by_wound,
+        'complications_count': s_compl,
+        'complication_rate': round(s_compl / s_total, 3) if s_total else 0,
+    }
+
+    # ── Urgencia (anchor: arrived_at) ──
+    e_total = 0
+    e_by_triage, e_by_discharge = {}, {}
+    door_to_triage, length_of_stay = [], []
+    for e in EmergencyRecord.objects.for_organization(org).filter(
+        arrived_at__date__gte=date_from, arrived_at__date__lte=date_to,
+    ).values('triage_level', 'discharge_status', 'arrived_at', 'triage_at', 'discharged_at'):
+        e_total += 1
+        bump(e_by_triage, e['triage_level'] or '—')
+        bump(e_by_discharge, e['discharge_status'] or '—')
+        if e['arrived_at'] and e['triage_at']:
+            door_to_triage.append((e['triage_at'] - e['arrived_at']).total_seconds() / 60)
+        if e['arrived_at'] and e['discharged_at']:
+            length_of_stay.append((e['discharged_at'] - e['arrived_at']).total_seconds() / 60)
+
+    def avg(values):
+        return round(sum(values) / len(values), 1) if values else None
+
+    emergency = {
+        'total': e_total,
+        'by_triage_level': e_by_triage,
+        'by_discharge_status': e_by_discharge,
+        'avg_door_to_triage_min': avg(door_to_triage),
+        'avg_length_of_stay_min': avg(length_of_stay),
+    }
+
+    # ── Vacuna (anchor: application_date) ──
+    vaccine = {
+        'total': VaccineRecord.objects.for_organization(org).filter(
+            application_date__gte=date_from, application_date__lte=date_to,
+        ).count(),
+        'upcoming_boosters_30d': VaccineRecord.objects.for_organization(org).filter(
+            next_due_date__gte=today, next_due_date__lte=today + timedelta(days=30),
+        ).count(),
+    }
+
+    return Response({
+        'from': date_from.isoformat(),
+        'to': date_to.isoformat(),
+        'surgery': surgery,
+        'emergency': emergency,
+        'vaccine': vaccine,
+    })

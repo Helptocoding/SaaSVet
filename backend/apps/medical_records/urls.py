@@ -9,12 +9,15 @@ from .views import (
     VitalSignsListCreateView,
     close_medical_record,
     medical_record_pdf,
+    protocol_analytics,
     VaccineRecordListCreateView,
     VaccineRecordDetailView,
 )
 
 urlpatterns = [
     path("medical-records/", MedicalRecordListCreateView.as_view()),
+    # DEBE ir antes del catch-all <str:pk> (si no, "protocol-analytics" se toma como pk).
+    path("medical-records/protocol-analytics/", protocol_analytics),
     path("medical-records/<str:pk>/", MedicalRecordDetailView.as_view()),
     path("medical-records/<str:pk>/close/", close_medical_record),
     path("medical-records/<str:pk>/vitals/", VitalSignsListCreateView.as_view()),

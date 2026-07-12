@@ -17,6 +17,15 @@ const buildQS = ({ from, to, includeToday = true } = {}) => {
     return p.toString();
 };
 
+// Analítica por protocolo (LITE, agregación read-only). params: { from, to } (YYYY-MM-DD | Date).
+export const getProtocolAnalytics = ({ from, to } = {}) => {
+    const p = new URLSearchParams();
+    if (from instanceof Date) p.set("from", fmt(from)); else if (from) p.set("from", from);
+    if (to instanceof Date) p.set("to", fmt(to)); else if (to) p.set("to", to);
+    const q = p.toString();
+    return api.get(`medical-records/protocol-analytics/${q ? `?${q}` : ""}`).then(r => r.data);
+};
+
 export const getOperationsSeries = (opts) =>
     api.get(`v1/dashboard/operations/series/?${buildQS(opts)}`).then(r => r.data);
 

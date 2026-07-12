@@ -361,3 +361,37 @@ cuando ese service exista (ADR p9 compliance).
   si la migration creo el constraint con `NOT VALID` (no es nuestro caso).
   Aunque la CHECK protege, el patron sigue prohibido en codigo de negocio.
 - Frontend que ignore `source` o `lifecycle_state` en la respuesta.
+
+## Analítica por protocolo (LITE) + deuda de migración a snapshot formal
+
+**Estado: LITE (agregación read-only al vuelo).** Endpoint
+`GET /api/medical-records/protocol-analytics/?from=&to=` (`apps/medical_records/views.py::protocol_analytics`).
+Agrega **al momento** `SurgeryRecord`/`EmergencyRecord`/`VaccineRecord` por rango de fechas.
+Anchors: cirugía=`created_at`, urgencia=`arrived_at`, vacuna=`application_date`. Frontend:
+sección "Protocolos clínicos" en `pages/analytics/index.jsx`.
+
+Métricas hoy: cirugía (total, por tipo, por clase de herida, % complicaciones aprox.),
+urgencia (total, por triage, por estado al egreso, promedio puerta→triage y estancia),
+vacuna (aplicadas, refuerzos próximos 30d).
+
+**Por qué LITE**: NO toca `DailyOrgMetrics` ni bumpea `METRICS_SCHEMA_VERSION` (que exige
+ADR + dual-write 30d + PO). Se calcula on-read: correcto para volumen de clínica, pero **no
+queda congelado** como histórico inmutable ni respeta el contrato `source`/`lifecycle_state`.
+
+### DEUDA — migrar a snapshot formal (futuro)
+
+Cuando se requiera histórico inmutable / reporting oficial, promover a `DailyOrgMetrics`:
+
+1. **Definir los KPIs v(N)** por protocolo y **bumpear `METRICS_SCHEMA_VERSION`** → requiere
+   **ADR + dual-write 30 días + aprobación del Product Owner** (invariante duro, no negociable).
+2. **Anchors faltantes**: agregar `SurgeryRecord.started_at`/`ended_at` para tiempos de
+   quirófano (hoy solo `created_at`). Urgencia ya tiene `arrived_at`/`triage_at`/`stabilized_at`/
+   `discharged_at`.
+3. **Métrica estructurada de complicaciones**: hoy el % se estima por heurística de texto sobre
+   `complications`; el snapshot necesita un campo booleano/enum (p.ej. `had_complications`) para
+   una tasa exacta.
+4. Extender `compute_daily_metrics` (misma fn para snapshot + live), `build_daily_metrics`
+   (rebuild de días afectados) y los read endpoints (`clinical/series/` o extender
+   `operations/series/`) con el contrato `source`/`lifecycle_state` por datapoint.
+5. Frontend: reemplazar el fetch LITE por el endpoint de series con marcado de fuente/lifecycle.
+6. Tests: snapshot==live parity, idempotencia, `MetricAdjustment` si aplica.

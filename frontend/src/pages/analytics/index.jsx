@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../auth/authContext";
-import { getOperationsSeries, getFinancialSeries } from "../../api/analytics";
+import { getOperationsSeries, getFinancialSeries, getProtocolAnalytics } from "../../api/analytics";
 import styles from "./analytics.module.css";
 
 const RANGES = [
@@ -160,7 +160,117 @@ const Analytics = () => {
                     )}
                 </>
             )}
+
+            <ProtocolSection rangeDays={range.days} />
         </div>
+    );
+};
+
+/* ─── Analítica por protocolo (LITE, agregación read-only) ─────── */
+
+const TRIAGE_LABEL = { red: "Rojo", orange: "Naranja", yellow: "Amarillo", green: "Verde", blue: "Azul" };
+const DISCHARGE_LABEL = { alta: "Alta", hospitalizacion: "Hospitalización", referido: "Referido", fallecido: "Fallecido" };
+const SURGERY_TYPE_LABEL = { electiva: "Electiva", programada: "Programada", urgencia: "Urgencia", emergencia: "Emergencia" };
+
+const HAIRLINE = "var(--hairline, #e5e0d0)";
+
+const PStat = ({ label, value, hint }) => (
+    <div style={{ padding: "10px 14px", border: `1px solid ${HAIRLINE}`, borderRadius: 10 }}>
+        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em", opacity: 0.6 }}>{label}</div>
+        <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--font-display)" }}>{value}</div>
+        {hint && <div style={{ fontSize: 11, opacity: 0.55 }}>{hint}</div>}
+    </div>
+);
+
+const DistBars = ({ dict, labels, color }) => {
+    const entries = Object.entries(dict || {}).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) return <div style={{ fontSize: 12, opacity: 0.5 }}>Sin datos</div>;
+    const max = Math.max(1, ...entries.map(([, n]) => n));
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {entries.map(([k, n]) => (
+                <div key={k} style={{ display: "grid", gridTemplateColumns: "110px 1fr 28px", alignItems: "center", gap: 8, fontSize: 12 }}>
+                    <span style={{ opacity: 0.75 }}>{(labels && labels[k]) || k}</span>
+                    <span style={{ height: 8, background: HAIRLINE, borderRadius: 4, overflow: "hidden" }}>
+                        <span style={{ display: "block", height: "100%", width: `${(n / max) * 100}%`, background: color || "var(--mulberry, #7c3a52)" }} />
+                    </span>
+                    <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{n}</span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const PCard = ({ children }) => (
+    <div style={{ border: `1px solid ${HAIRLINE}`, borderRadius: 14, padding: 18 }}>{children}</div>
+);
+const PGroupLabel = ({ children }) => (
+    <div style={{ fontSize: 11, textTransform: "uppercase", opacity: 0.6, margin: "12px 0 6px" }}>{children}</div>
+);
+
+const ProtocolSection = ({ rangeDays }) => {
+    const [pa, setPa] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        const to = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - (rangeDays - 1));
+        getProtocolAnalytics({ from, to })
+            .then((res) => { if (!cancelled) setPa(res); })
+            .catch(() => { if (!cancelled) setPa(null); })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, [rangeDays]);
+
+    if (loading || !pa) return null;
+    const s = pa.surgery, e = pa.emergency, v = pa.vaccine;
+
+    return (
+        <section style={{ marginTop: 48 }}>
+            <div className={styles.sectionMast}>
+                <h2 className={styles.sectionTitle}>Protocolos clínicos</h2>
+                <div className={styles.sectionRule} />
+                <span className={styles.sectionMeta}>Cirugía · Urgencia · Vacuna</span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+                <PCard>
+                    <h3 style={{ marginTop: 0 }}>Cirugía</h3>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <PStat label="Cirugías" value={s.total} />
+                        <PStat label="Complicaciones" value={`${Math.round((s.complication_rate || 0) * 100)}%`} hint={`${s.complications_count} de ${s.total}`} />
+                    </div>
+                    <PGroupLabel>Por tipo</PGroupLabel>
+                    <DistBars dict={s.by_type} labels={SURGERY_TYPE_LABEL} />
+                    <PGroupLabel>Por clase de herida</PGroupLabel>
+                    <DistBars dict={s.by_wound_class} />
+                </PCard>
+
+                <PCard>
+                    <h3 style={{ marginTop: 0 }}>Urgencia</h3>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                        <PStat label="Urgencias" value={e.total} />
+                        <PStat label="Puerta→triage" value={e.avg_door_to_triage_min != null ? `${e.avg_door_to_triage_min}m` : "—"} />
+                        <PStat label="Estancia" value={e.avg_length_of_stay_min != null ? `${e.avg_length_of_stay_min}m` : "—"} />
+                    </div>
+                    <PGroupLabel>Nivel de triage</PGroupLabel>
+                    <DistBars dict={e.by_triage_level} labels={TRIAGE_LABEL} color="#c0392b" />
+                    <PGroupLabel>Estado al egreso</PGroupLabel>
+                    <DistBars dict={e.by_discharge_status} labels={DISCHARGE_LABEL} />
+                </PCard>
+
+                <PCard>
+                    <h3 style={{ marginTop: 0 }}>Vacuna</h3>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <PStat label="Aplicadas" value={v.total} />
+                        <PStat label="Refuerzos 30d" value={v.upcoming_boosters_30d} hint="Próximos a vencer" />
+                    </div>
+                </PCard>
+            </div>
+        </section>
     );
 };
 
