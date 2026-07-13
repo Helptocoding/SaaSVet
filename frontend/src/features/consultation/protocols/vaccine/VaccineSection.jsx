@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Icon } from "../../../../components/icons";
 import SearchSelect from "../../../../components/SearchSelect";
+import DateField from "../../../../components/DateField";
 import { getProductLots } from "../../../../api/inventory";
 import styles from "../../../../pages/medicalRecords/consultationForm.module.css";
 import {
@@ -138,8 +139,7 @@ const VaccineSection = forwardRef(function VaccineSection(
   );
 
   const handleApplicationDate = useCallback(
-    (e) => {
-      const application_date = e.target.value;
+    (application_date) => {
       const patch = { application_date };
       // Recalcula el refuerzo sugerido si el usuario no lo editó a mano.
       if (v.scheduleBooster && !v._boosterEdited && v._boosterMonths != null) {
@@ -161,7 +161,7 @@ const VaccineSection = forwardRef(function VaccineSection(
   }, [onChange, v.scheduleBooster, v._boosterEdited, v.next_due_date, v.application_date, v._boosterMonths]);
 
   const handleNextDue = useCallback(
-    (e) => onChange({ next_due_date: e.target.value, _boosterEdited: true }),
+    (next_due_date) => onChange({ next_due_date, _boosterEdited: true }),
     [onChange]
   );
 
@@ -232,13 +232,12 @@ const VaccineSection = forwardRef(function VaccineSection(
 
         <div className={styles.field}>
           <label className={styles.fieldLabel}>Fecha de aplicación <span className={styles.req}>*</span></label>
-          <input
-            type="date"
-            className={styles.control}
+          <DateField
             value={v.application_date || ""}
+            onChange={handleApplicationDate}
             max={todayISO()}
             disabled={disabled}
-            onChange={handleApplicationDate}
+            inputClassName={styles.control}
           />
         </div>
       </div>
@@ -305,13 +304,13 @@ const VaccineSection = forwardRef(function VaccineSection(
               Próximo refuerzo
               {boosterHint && <span className={styles.protocolHint}>{boosterHint}</span>}
             </label>
-            <input
-              type="date"
-              className={styles.control}
+            <DateField
               value={v.next_due_date || ""}
+              onChange={handleNextDue}
               min={v.application_date || undefined}
               disabled={disabled}
-              onChange={handleNextDue}
+              clearable
+              inputClassName={styles.control}
             />
             {boosterHelp && <p className={styles.note}>{boosterHelp}</p>}
           </div>

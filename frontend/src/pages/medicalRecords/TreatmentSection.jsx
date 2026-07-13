@@ -82,7 +82,7 @@ const TreatmentSection = forwardRef(function TreatmentSection(
                     onSearch={onProductSearch}
                   />
                   <button
-                    className="btn btn-primary btn-md"
+                    className={styles.btnDark}
                     onClick={onAddRecipe}
                     disabled={!recipeLine.product}
                   >

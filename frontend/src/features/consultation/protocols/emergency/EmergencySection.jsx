@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { Icon } from "../../../../components/icons";
+import DateField from "../../../../components/DateField";
 import styles from "../../../../pages/medicalRecords/consultationForm.module.css";
 
 /**
@@ -165,10 +166,12 @@ const EmergencySection = forwardRef(function EmergencySection({ value, onChange,
         </div>
         <div className={styles.field}>
           <label className={styles.fieldLabel}>Revaloración</label>
-          <input
-            type="date" className={styles.control}
-            value={v.reassessment_date || ""} disabled={disabled}
-            onChange={(e) => set({ reassessment_date: e.target.value || null })}
+          <DateField
+            value={v.reassessment_date || ""}
+            onChange={(s) => set({ reassessment_date: s || null })}
+            disabled={disabled}
+            clearable
+            inputClassName={styles.control}
           />
         </div>
       </div>

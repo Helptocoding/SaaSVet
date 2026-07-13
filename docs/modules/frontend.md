@@ -509,6 +509,33 @@ Grep gate sugerido (post-beta, vía ESLint custom rule): bloquear `(localStorage
 
 ## Componentes compartidos
 
+### DateField (selector de fecha — calendario con selects mes/año)
+
+`components/DateField.jsx` — **fuente única** de captura de fechas. Reemplaza los
+`<input type="date">` nativos por un calendario `react-day-picker` con navegación
+por **selects de mes y año** (estilo OriginUI) + locale `es`. Un solo look en toda
+la app; el año se elige con dropdown (clave para fecha de nacimiento).
+
+- Contrato: `value`/`onChange` en **string ISO `"YYYY-MM-DD"`** (`""` al limpiar).
+  `min`/`max` (ISO | `Date`) limitan días seleccionables y el rango de años.
+  `disabled`, `placeholder`, `clearable` (botón ×, para fechas opcionales),
+  `inputClassName` (para reusar el estilo del control del contenedor, p.ej.
+  `styles.control` en las secciones de consulta), `id`, `className`.
+- **Popover en portal** (`createPortal` → `document.body`) con `position: fixed`:
+  no lo recorta el scroll del riel de consulta ni un modal. Se reubica en
+  scroll/resize (listener con `capture`) y hace **flip** hacia arriba si no cabe
+  abajo. z-index 1100 (sobre modales).
+- Internamente reusa `styles/day-picker.css` (tokens) + `react-day-picker/style.css`.
+  **No** duplicar el import de esos CSS en las páginas — viven en `DateField`.
+
+Consumidores: **Mascotas** (fecha de nacimiento, `max=hoy`), y las **fechas de
+consulta**: Vacuna (aplicación `max=hoy`; refuerzo `min=aplicación`, clearable),
+Cirugía (retiro de puntos), General (próxima revisión), Urgencia (revaloración).
+**No** volver a poner `<input type="date">` para fechas de negocio — usar DateField.
+Fuera de alcance (siguen nativos por ahora): fecha de cita (agenda), caducidad de
+lote (Entrada de stock), DOB de QuickPatientForm, y el date-range de Cobros
+(`DateRangePicker`, impl vanilla aparte).
+
 ### EmptyState (estado vacío accionable)
 
 `components/EmptyState.jsx` — **fuente única** de estados vacíos guiados. Reemplaza

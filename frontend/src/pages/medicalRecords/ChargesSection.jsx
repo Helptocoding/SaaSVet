@@ -167,7 +167,7 @@ const ChargesSection = forwardRef(function ChargesSection({
                     />
                   </div>
                   <button
-                    className="btn btn-primary btn-md"
+                    className={styles.btnDark}
                     style={{ height: "38px" }}
                     onClick={onAddProduct}
                     disabled={!recordReady || !productLine.product || !productLine.presentation}
@@ -284,7 +284,7 @@ const ChargesSection = forwardRef(function ChargesSection({
                         />
                       </div>
                       <button
-                        className="btn btn-primary btn-md"
+                        className={styles.btnDark}
                         style={{ height: "38px", marginLeft: "auto" }}
                         onClick={onAddService}
                         disabled={!recordReady || !serviceLine.service}

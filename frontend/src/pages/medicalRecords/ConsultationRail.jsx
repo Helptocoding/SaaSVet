@@ -75,7 +75,7 @@ function EditableVital({ field, draft, formErrors, disabled, onChange, onClearEr
 }
 
 /** Indicador de autosave con contador de segundos desde el último guardado. */
-function SaveIndicator({ saveState, lastSavedAt }) {
+export function SaveIndicator({ saveState, lastSavedAt, dot = false }) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -91,6 +91,20 @@ function SaveIndicator({ saveState, lastSavedAt }) {
     if (secs < 60) return `Guardado hace ${secs} s`;
     return "Todo sincronizado";
   }, [lastSavedAt, now]);
+
+  // Variante barra superior (spec): punto de estado + texto gris.
+  if (dot) {
+    const stateCls =
+      saveState === "saving" ? styles.topSyncSaving : saveState === "error" ? styles.topSyncErr : "";
+    const text =
+      saveState === "saving" ? "Guardando…" : saveState === "error" ? "No se pudo guardar" : savedText;
+    return (
+      <span className={`${styles.topSync} ${stateCls}`}>
+        <span className={styles.topSyncDot} />
+        {text}
+      </span>
+    );
+  }
 
   const map = {
     saving: { cls: "", icon: <Icon.Loader s={14} />, text: "Guardando…", spin: true },
@@ -126,7 +140,6 @@ function SaveIndicator({ saveState, lastSavedAt }) {
 
 export default function ConsultationRail({
   pet,
-  title,
   draft,
   vitalFields,
   formErrors,
@@ -136,96 +149,59 @@ export default function ConsultationRail({
   navItems,
   activeSection,
   onNavigate,
-  saveState,
-  lastSavedAt,
-  saving,
-  onCancel,
-  onSaveDraft,
-  onFinalize,
 }) {
   const ownerName = pet?.owner?.name || pet?.owner_name || "No asignado";
-  const metaParts = [pet?.species, pet?.breed, pet?.age_label || pet?.age].filter(Boolean);
   const initial = (pet?.name || "?").trim().charAt(0).toUpperCase();
 
   return (
     <aside className={styles.rail}>
-      <div className={styles.railIdentity}>
-        <span className={styles.railAvatar}>{initial}</span>
-        <div className={styles.railWho}>
-          <div className={styles.railEyebrow}>{title}</div>
-          <div className={styles.railName}>{pet?.name || "—"}</div>
-          <div className={styles.railSub}>
-            {metaParts.length ? metaParts.join(" · ") : "Sin datos"} · Tutor {ownerName}
+      {/* Tarjeta de paciente */}
+      <div className={styles.railCard}>
+        <div className={styles.railIdentity}>
+          <span className={styles.railAvatar}>{initial}</span>
+          <div className={styles.railWho}>
+            <div className={styles.railName}>{pet?.name || "—"}</div>
+            <div className={styles.railSub}>Tutor {ownerName}</div>
           </div>
+        </div>
+
+        <span className={`${styles.railStatus} ${closed ? styles.railStatusDone : ""}`}>
+          {closed ? "Finalizada" : "En consulta"}
+        </span>
+
+        <div className={styles.railVitals}>
+          {vitalFields.map((f) => (
+            <EditableVital
+              key={f.f}
+              field={f}
+              draft={draft}
+              formErrors={formErrors}
+              disabled={closed}
+              onChange={onVitalsChange}
+              onClearError={onClearError}
+            />
+          ))}
         </div>
       </div>
 
-      <hr className={styles.railDivider} />
-
-      <div className={styles.railVitals}>
-        {vitalFields.map((f) => (
-          <EditableVital
-            key={f.f}
-            field={f}
-            draft={draft}
-            formErrors={formErrors}
-            disabled={closed}
-            onChange={onVitalsChange}
-            onClearError={onClearError}
-          />
-        ))}
-      </div>
-
+      {/* Navegación de secciones */}
       {!closed && navItems.length > 0 && (
-        <>
-          <hr className={styles.railDivider} />
-          <nav className={styles.railNav}>
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`${styles.railNavBtn} ${
-                  activeSection === item.id ? styles.railNavBtnActive : ""
-                }`}
-                onClick={() => onNavigate(item.id)}
-              >
-                <span>{item.label}</span>
-                {item.badge != null && <span className={styles.railNavBadge}>{item.badge}</span>}
-              </button>
-            ))}
-          </nav>
-        </>
+        <nav className={`${styles.railCard} ${styles.railNavCard} ${styles.railNav}`}>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`${styles.railNavBtn} ${
+                activeSection === item.id ? styles.railNavBtnActive : ""
+              }`}
+              onClick={() => onNavigate(item.id)}
+            >
+              <span>{item.label}</span>
+              {item.badge != null && <span className={styles.railNavBadge}>{item.badge}</span>}
+            </button>
+          ))}
+        </nav>
       )}
-
-      <div className={styles.railFoot}>
-        {closed ? (
-          <>
-            <span className={`${styles.railSave} ${styles.railSaveOk}`}>
-              <Icon.Check s={14} /> Consulta finalizada
-            </span>
-            <div className={styles.railActions}>
-              <button className="btn btn-secondary btn-md" onClick={onCancel}>
-                Cerrar
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <SaveIndicator saveState={saveState} lastSavedAt={lastSavedAt} />
-            <div className={styles.railActions}>
-              <button className="btn btn-primary btn-md" onClick={onFinalize} disabled={saving}>
-                Finalizar y enviar a Cobros <Icon.ChevronRight s={16} />
-              </button>
-              <button className="btn btn-secondary btn-md" onClick={onSaveDraft} disabled={saving}>
-                <Icon.Check s={16} /> Guardar borrador
-              </button>
-              <button className="btn btn-ghost btn-md" onClick={onCancel} disabled={saving}>
-                Cancelar
-              </button>
-            </div>
-          </>
-        )}
-      </div>
     </aside>
   );
 }

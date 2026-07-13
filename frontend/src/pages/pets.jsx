@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { getPets, getPet, getPetStats, createPet, updatePet, deletePet } from "../api/pets";
 import { useConfirm } from "../components/useConfirm";
@@ -11,10 +11,7 @@ import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
 import Pagination from "../components/Pagination";
 import EmptyState from "../components/EmptyState";
-import { DayPicker } from 'react-day-picker';
-import { es } from 'react-day-picker/locale';
-import 'react-day-picker/style.css';
-import '../styles/day-picker.css';
+import DateField from "../components/DateField";
 import handleFormError from "../utils/handleFormError";
 import { apiError } from "../utils/apiError";
 import { toList } from "../utils/toList";
@@ -71,127 +68,9 @@ const speciesAccent = (pet) => isCanino(pet)
 
 // ─── Birth Date Picker ────────────────────────────────────────────────────────
 function BirthDatePicker({ value, onChange }) {
-    const [open, setOpen] = useState(false);
-    const ref = useRef(null);
-    const today = new Date();
-
-    const selected = value ? new Date(`${value}T12:00:00`) : undefined;
-    const [month, setMonth] = useState(selected || today);
-
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleSelect = (date) => {
-        if (!date) return;
-        const str = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        onChange(str);
-        setOpen(false);
-    };
-
-    const displayValue = selected
-        ? selected.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
-        : '';
-
-    const years = Array.from({ length: today.getFullYear() - 1949 }, (_, i) => today.getFullYear() - i);
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-    const selectStyle = {
-        background: "var(--c-subtle)", border: "1px solid var(--c-border)",
-        borderRadius: "var(--r-md)", padding: "4px 8px",
-        fontSize: "12px", fontFamily: "inherit", fontWeight: 600, color: "var(--c-text)",
-        cursor: "pointer", outline: "none",
-    };
-
-    const navBtnStyle = {
-        background: "none", border: "1px solid var(--c-border)",
-        borderRadius: "var(--r-md)", padding: "4px 8px",
-        cursor: "pointer", color: "var(--c-text-3)",
-        fontSize: "13px", lineHeight: 1,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        transition: "color 0.15s, background 0.15s",
-    };
-
-    return (
-        <div ref={ref} style={{ position: 'relative' }}>
-            <input
-                className="input"
-                readOnly
-                value={displayValue}
-                placeholder="Selecciona una fecha"
-                onClick={() => setOpen(o => !o)}
-                style={{ cursor: 'pointer' }}
-            />
-            {open && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 200 }}>
-                    <div style={{
-                        background: "var(--c-surface)", borderRadius: "var(--r-lg)",
-                        border: "1px solid var(--c-border)", boxShadow: "var(--shadow-md)",
-                        padding: "12px",
-                    }}>
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "10px" }}>
-                            <button
-                                onClick={() => {
-                                    const d = new Date(month);
-                                    d.setMonth(d.getMonth() - 1);
-                                    setMonth(d);
-                                }}
-                                style={navBtnStyle}
-                                onMouseEnter={e => { e.currentTarget.style.color = "var(--c-text)"; e.currentTarget.style.background = "var(--c-hover)"; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = "var(--c-text-3)"; e.currentTarget.style.background = "none"; }}
-                            >
-                                ‹
-                            </button>
-                            <select
-                                value={month.getMonth()}
-                                onChange={e => setMonth(new Date(month.getFullYear(), Number(e.target.value)))}
-                                style={{ ...selectStyle, flex: 1 }}
-                            >
-                                {monthNames.map((m, i) => (
-                                    <option key={i} value={i}>{m}</option>
-                                ))}
-                            </select>
-                            <select
-                                value={month.getFullYear()}
-                                onChange={e => setMonth(new Date(Number(e.target.value), month.getMonth()))}
-                                style={{ ...selectStyle, width: 80 }}
-                            >
-                                {years.map(y => (
-                                    <option key={y} value={y}>{y}</option>
-                                ))}
-                            </select>
-                            <button
-                                onClick={() => {
-                                    const d = new Date(month);
-                                    d.setMonth(d.getMonth() + 1);
-                                    if (d <= today) setMonth(d);
-                                }}
-                                style={navBtnStyle}
-                                onMouseEnter={e => { e.currentTarget.style.color = "var(--c-text)"; e.currentTarget.style.background = "var(--c-hover)"; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = "var(--c-text-3)"; e.currentTarget.style.background = "none"; }}
-                            >
-                                ›
-                            </button>
-                        </div>
-                        <DayPicker
-                            mode="single"
-                            selected={selected}
-                            onSelect={handleSelect}
-                            disabled={{ after: today }}
-                            month={month}
-                            onMonthChange={setMonth}
-                            locale={es}
-                            components={{ Caption: () => null, Nav: () => null }}
-                        />
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+    // Estilo OriginUI (selects mes/año) centralizado en DateField. `max` = hoy
+    // (nadie nace en el futuro).
+    return <DateField value={value} onChange={onChange} max={new Date()} />;
 }
 
 // ─── Pet Form Modal ───────────────────────────────────────────────────────────

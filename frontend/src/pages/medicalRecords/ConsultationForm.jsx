@@ -25,7 +25,7 @@ import {
 } from "../../api/inventory";
 import { getServices } from "../../api/billing";
 import { createPrescription, updatePrescription } from "../../api/prescriptions";
-import ConsultationRail from "./ConsultationRail";
+import ConsultationRail, { SaveIndicator } from "./ConsultationRail";
 import EvaluationSection from "./EvaluationSection";
 import TreatmentSection from "./TreatmentSection";
 import ChargesSection from "./ChargesSection";
@@ -920,12 +920,43 @@ export default function ConsultationForm({
 
   return (
     <div className={styles.page}>
+      {/* ── Barra superior fija ── */}
+      <div className={styles.topbar}>
+        <div className={styles.topLeft}>
+          <button className={styles.backBtn} onClick={requestClose} aria-label="Volver" type="button">
+            <Icon.ChevronLeft s={18} />
+          </button>
+          <div className={styles.topHead}>
+            <div className={styles.topTitle}>{pet?.name || title}</div>
+            {closed ? (
+              <span className={styles.topSync}>
+                <span className={styles.topSyncDot} /> Consulta finalizada
+              </span>
+            ) : (
+              <SaveIndicator saveState={saveState} lastSavedAt={lastSavedAt} dot />
+            )}
+          </div>
+        </div>
+        {!closed && (
+          <div className={styles.topActions}>
+            <button className={styles.btnGhost} onClick={requestClose} disabled={saving} type="button">
+              Cancelar
+            </button>
+            <button className={styles.btnSecondary} onClick={handleSaveDraft} disabled={saving} type="button">
+              <Icon.Check s={15} /> Guardar borrador
+            </button>
+            <button className={styles.btnPrimary} onClick={handleFinalize} disabled={saving} type="button">
+              Finalizar y enviar a Cobros <Icon.ChevronRight s={15} />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className={styles.scroll} ref={scrollRef}>
         <div className={styles.shell}>
           <div className={styles.grid}>
             <ConsultationRail
               pet={pet}
-              title={title}
               draft={draft}
               vitalFields={VITAL_FIELDS}
               formErrors={formErrors}
@@ -935,12 +966,6 @@ export default function ConsultationForm({
               navItems={navItems}
               activeSection={activeSection}
               onNavigate={scrollToId}
-              saveState={saveState}
-              lastSavedAt={lastSavedAt}
-              saving={saving}
-              onCancel={requestClose}
-              onSaveDraft={handleSaveDraft}
-              onFinalize={handleFinalize}
             />
 
             <div className={styles.content}>
@@ -1079,19 +1104,20 @@ export default function ConsultationForm({
                   </div>
 
                   {(addedProducts.length > 0 || addedServices.length > 0) && (
-                    <div className={styles.totalsBar}>
-                      <div className={styles.totalsSub}>
-                        <span className={styles.totalsSubLabel}>Productos</span>
-                        <span className={styles.totalsSubVal}>{fmtMXN(productsTotal)}</span>
-                      </div>
-                      <div className={styles.totalsSub}>
-                        <span className={styles.totalsSubLabel}>Servicios</span>
-                        <span className={styles.totalsSubVal}>{fmtMXN(servicesTotal)}</span>
-                      </div>
-                      <div className={styles.totalsSpacer} />
-                      <div className={styles.totalsGrand}>
-                        <span className={styles.totalsGrandLabel}>Total a cobrar</span>
-                        <span className={styles.totalsGrandVal}>{fmtMXN(grandTotal)}</span>
+                    <div className={styles.resumen}>
+                      <div className={styles.resumenBox}>
+                        <div className={styles.resumenLine}>
+                          <span>Productos</span>
+                          <span className={styles.mono}>{fmtMXN(productsTotal)}</span>
+                        </div>
+                        <div className={styles.resumenLine}>
+                          <span>Servicios</span>
+                          <span className={styles.mono}>{fmtMXN(servicesTotal)}</span>
+                        </div>
+                        <div className={styles.resumenTotal}>
+                          <b>Total a cobrar</b>
+                          <span className={styles.resumenTotalVal}>{fmtMXN(grandTotal)}</span>
+                        </div>
                       </div>
                     </div>
                   )}

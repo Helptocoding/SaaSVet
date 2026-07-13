@@ -48,7 +48,7 @@ const EvaluationSection = forwardRef(function EvaluationSection(
         </div>
       </div>
 
-      <div className={styles.editorColumn}>
+      <div className={styles.grid2}>
         <div className={styles.field}>
           <label className={`${styles.fieldLabel} ${styles.fieldLabelMinimal}`}>Notas</label>
           <textarea

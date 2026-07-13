@@ -120,6 +120,7 @@ class ProductSerializer(serializers.ModelSerializer):
         allow_blank=True,
         default='',
     )
+    base_unit_display = serializers.CharField(source='get_base_unit_display', read_only=True)
 
     class Meta:
         model = Product
@@ -127,7 +128,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'public_id', 'name', 'internal_code', 'description',
             'category', 'requires_prescription', 'is_active',
             # ADR p31: stock real en unidades base
-            'base_unit', 'stock_quantity', 'min_stock',
+            'base_unit', 'base_unit_display', 'stock_quantity', 'min_stock',
             # Trazabilidad por lote (spec 2026-07-10) — opt-in por producto.
             'manufacturer', 'tracks_lots',
             'presentations', 'presentation', 'presentation_input',

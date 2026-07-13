@@ -7,7 +7,10 @@
   --rdp-day-width: 36px;
   --rdp-day_button-height: 34px;
   --rdp-day_button-width: 34px;
-  --rdp-day_button-border-radius: var(--r-md);
+  /* Círculo (no cuadro): idle sin borde/fondo; fondo solo en hover/selección.
+     El cuadro (var(--r-md)) hacía que cada día se viera como celda. */
+  --rdp-day_button-border-radius: var(--r-full);
+  --rdp-day_button-border: none;
   --rdp-nav_button-height: 2rem;
   --rdp-nav_button-width: 2rem;
   font-family: var(--font-body);
@@ -15,13 +18,13 @@
   color: var(--c-text);
 }
 
-/* Calendar container */
+/* Calendar container — SIN card propia: el popover de DateField ya aporta
+   superficie/borde/sombra. Si el .rdp-months trae las suyas se ve doble caja. */
 .rdp-root .rdp-months {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-md);
-  padding: 10px 12px 12px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 /* Month caption */
@@ -55,20 +58,31 @@
   opacity: 1;
 }
 
-/* Day cells */
+/* Day cells — número limpio (círculo), sin borde ni fondo en reposo.
+   El fondo aparece SOLO en hover/selección → no se ve como celda. */
 .rdp-root .rdp-day_button {
   font-size: 12.5px;
-  transition: background var(--t);
+  border: none;
+  background: transparent;
+  border-radius: var(--r-full);
+  transition: background var(--t), color var(--t);
 }
 .rdp-root .rdp-day_button:hover:not([disabled]) {
   background: var(--c-hover);
 }
+.rdp-root .rdp-day_button:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 0;
+}
 
-/* Selected day */
+/* Selected day — círculo lleno */
 .rdp-root .rdp-selected .rdp-day_button {
   background: var(--c-primary);
   color: #fff;
-  border-color: var(--c-primary);
+  border: none;
+}
+.rdp-root .rdp-selected .rdp-day_button:hover:not([disabled]) {
+  background: var(--c-primary-hover);
 }
 
 /* Today (unselected) */

@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Icon } from "../../../../components/icons";
+import DateField from "../../../../components/DateField";
 import styles from "../../../../pages/medicalRecords/consultationForm.module.css";
 import g from "./general.module.css";
 
@@ -82,27 +83,29 @@ const GeneralSection = forwardRef(function GeneralSection(
         <p className={styles.cardDesc}>Motivo, historia y exploración. Captura solo lo que aplique.</p>
       </div>
 
-      <div className={styles.field}>
-        <label className={styles.fieldLabel}>Motivo principal</label>
-        <input
-          className={styles.control}
-          placeholder="p. ej. Vómito desde ayer"
-          value={v.chief_complaint || ""}
-          disabled={disabled}
-          onChange={(e) => onChange({ chief_complaint: e.target.value })}
-        />
-      </div>
+      <div className={styles.grid2}>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Motivo principal</label>
+          <input
+            className={styles.control}
+            placeholder="p. ej. Vómito desde ayer"
+            value={v.chief_complaint || ""}
+            disabled={disabled}
+            onChange={(e) => onChange({ chief_complaint: e.target.value })}
+          />
+        </div>
 
-      <div className={styles.field}>
-        <label className={styles.fieldLabel}>Historia clínica</label>
-        <textarea
-          className={styles.control}
-          rows={2}
-          placeholder="Evolución, antecedentes, cambios recientes…"
-          value={v.history || ""}
-          disabled={disabled}
-          onChange={(e) => onChange({ history: e.target.value })}
-        />
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Historia clínica</label>
+          <textarea
+            className={styles.control}
+            rows={2}
+            placeholder="Evolución, antecedentes, cambios recientes…"
+            value={v.history || ""}
+            disabled={disabled}
+            onChange={(e) => onChange({ history: e.target.value })}
+          />
+        </div>
       </div>
 
       <div className={styles.field}>
@@ -190,27 +193,29 @@ const GeneralSection = forwardRef(function GeneralSection(
         </div>
       </div>
 
-      <div className={styles.field}>
-        <label className={styles.fieldLabel}>Diagnósticos diferenciales</label>
-        <textarea
-          className={styles.control}
-          rows={2}
-          placeholder="Otras posibilidades a descartar…"
-          value={v.differentials || ""}
-          disabled={disabled}
-          onChange={(e) => onChange({ differentials: e.target.value })}
-        />
-      </div>
+      <div className={styles.grid2}>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Diagnósticos diferenciales</label>
+          <textarea
+            className={styles.control}
+            rows={2}
+            placeholder="Otras posibilidades a descartar…"
+            value={v.differentials || ""}
+            disabled={disabled}
+            onChange={(e) => onChange({ differentials: e.target.value })}
+          />
+        </div>
 
-      <div className={styles.field}>
-        <label className={styles.fieldLabel}>Próxima revisión</label>
-        <input
-          type="date"
-          className={styles.control}
-          value={v.recheck_date || ""}
-          disabled={disabled}
-          onChange={(e) => onChange({ recheck_date: e.target.value || null })}
-        />
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Próxima revisión</label>
+          <DateField
+            value={v.recheck_date || ""}
+            onChange={(s) => onChange({ recheck_date: s || null })}
+            disabled={disabled}
+            clearable
+            inputClassName={styles.control}
+          />
+        </div>
       </div>
     </motion.section>
   );

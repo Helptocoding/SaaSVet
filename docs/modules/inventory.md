@@ -262,6 +262,25 @@ Al crear un producto ("Nuevo producto"), se muestra un **selector de modo** ante
 
 El modo multi tiene auto-sync de `salesPres[1]` (nombre y conversion_factor desde `countUnit`/`dividesCount`) mientras el usuario no los edite manualmente (`presSecondAutoRef`). Ver `frontend/src/pages/inventory.jsx`, `MultiPresentationAnimation.jsx` (5 escenas Framer Motion, gate `localStorage`), `ProductCreationTour.jsx` (6 pasos con spotlight).
 
+### Existencia inicial con `tracks_lots` — primer lote inline
+
+El bloque de existencia inicial del wizard es **condicional al `tracks_lots`** del producto:
+
+- **Sin lotes** (comportamiento previo): campo **Cantidad** + unidad → el producto se crea con
+  ese stock inline (`presentation_input.stock`). 1 paso.
+- **Con lotes**: el campo Cantidad se reemplaza por un editor de **Primer lote (opcional)**
+  (proveedor + N filas lote/caducidad/cantidad, "+ Agregar lote") — reusa la UX de recepción de
+  `StockEntryModal`. El producto se crea con `stock: 0` y, si hay lotes válidos, se registran
+  con `receiveStock` sobre la **presentación base** (cf=1 → cantidad en unidad base) en el mismo
+  guardado. También 1 paso; el usuario puede dejarlo vacío y registrar el stock luego en Entrada
+  de stock. Los selectores estructurales (unidad base / "cada X contiene") se conservan.
+
+**Motivo (correctitud, no solo UX):** el bloque de cantidad no captura lote/caducidad; si un
+producto `tracks_lots` se creaba con stock inline quedaba stock base **sin lote**
+(`Product.stock_quantity = N` pero `Σ lotes = 0`) y el primer consumo fallaba en FEFO
+(`resolve_consumption_lots` → "No hay lotes elegibles"). Capturar el primer lote en el alta
+cierra ese hueco manteniendo paridad (normal=1 paso, lote=1 paso).
+
 ## Frontend: Entrada rápida de stock (recepción)
 
 `frontend/src/components/StockEntryModal.jsx` — botón "+ Entrada de stock" junto a "Nuevo Producto".

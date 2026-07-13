@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { useState } from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import VaccineSection from "./VaccineSection";
 
@@ -38,10 +38,13 @@ describe("VaccineSection", () => {
     expect(screen.getByText(/Refuerzo recomendado en 12 meses/)).toBeInTheDocument();
   });
 
-  it("al editar la fecha de refuerzo el hint pasa a 'Personalizado'", () => {
+  it("al editar la fecha de refuerzo el hint pasa a 'Personalizado'", async () => {
+    const user = userEvent.setup();
     render(<Host initial={presetValue} />);
-    const dateInput = screen.getByDisplayValue("2027-07-01");
-    fireEvent.change(dateInput, { target: { value: "2028-01-01" } });
+    // DateField muestra la fecha formateada; abrir el calendario y elegir otro
+    // día del mes visible (julio 2027) = edición manual del refuerzo.
+    await user.click(screen.getByDisplayValue("1 de julio de 2027"));
+    await user.click(screen.getByText("15"));
     expect(screen.getByText("Personalizado")).toBeInTheDocument();
     expect(screen.queryByText("Calculado según protocolo")).not.toBeInTheDocument();
   });
@@ -49,9 +52,9 @@ describe("VaccineSection", () => {
   it("apagar 'Programar próximo refuerzo' oculta la fecha de refuerzo", async () => {
     const user = userEvent.setup();
     render(<Host initial={presetValue} />);
-    expect(screen.getByDisplayValue("2027-07-01")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1 de julio de 2027")).toBeInTheDocument();
     await user.click(screen.getByRole("switch"));
-    expect(screen.queryByDisplayValue("2027-07-01")).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("1 de julio de 2027")).not.toBeInTheDocument();
   });
 
   it("muestra ayuda histórica no bloqueante si la mascota ya tiene esa vacuna", () => {

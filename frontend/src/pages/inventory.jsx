@@ -7,7 +7,7 @@ import { stockStatus, productStockQty, productStockValue, computeInitialStock, f
 import {
     getProducts, createProduct, updateProduct, deleteProduct,
     adjustStock, getUnitChoices, createPresentation, updatePresentation,
-    getLotAlerts,
+    getLotAlerts, receiveStock,
 } from "../api/inventory";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -174,6 +174,9 @@ const Inventory = () => {
     const [divides, setDivides] = useState(null); // null | true | false
     const [dividesCount, setDividesCount] = useState("");
     const [dividesUnit, setDividesUnit] = useState("piece");
+    // Primer lote inline (solo alta con tracks_lots) — existencia inicial trazable.
+    const [wizardLots, setWizardLots] = useState([{ lot_number: "", expiry_date: "", quantity: "" }]);
+    const [wizardSupplier, setWizardSupplier] = useState("");
     const [showDetails, setShowDetails] = useState(false);
     const [wizardErrors, setWizardErrors] = useState({});
     const [showSummary, setShowSummary] = useState(false);
@@ -440,6 +443,7 @@ const Inventory = () => {
         setSalesPres([newSalesPres()]);
         setCountQty(""); setCountUnit("piece");
         setDivides(null); setDividesCount(""); setDividesUnit("piece");
+        setWizardLots([{ lot_number: "", expiry_date: "", quantity: "" }]); setWizardSupplier("");
         setShowDetails(false);
         setWizardErrors({});
         setShowSummary(false);
@@ -497,6 +501,7 @@ const Inventory = () => {
         setSalesPres([newSalesPres()]);
         setCountQty(""); setCountUnit("piece");
         setDivides(null); setDividesCount(""); setDividesUnit("piece");
+        setWizardLots([{ lot_number: "", expiry_date: "", quantity: "" }]); setWizardSupplier("");
         setShowDetails(false);
         setWizardErrors({});
         setShowSummary(false);
@@ -510,6 +515,7 @@ const Inventory = () => {
         setWizardMode(null);
         setCountQty(""); setCountUnit("piece");
         setDivides(null); setDividesCount(""); setDividesUnit("piece");
+        setWizardLots([{ lot_number: "", expiry_date: "", quantity: "" }]); setWizardSupplier("");
         setSalesPres([newSalesPres()]);
         setWizardErrors({});
         presSecondAutoRef.current = { nameEdited: false, cfEdited: false };
@@ -520,7 +526,17 @@ const Inventory = () => {
         if (!wizardProduct.name.trim()) errs.name = "El nombre es obligatorio.";
 
         if (!wizardEditing) {
-            if (!(Number(countQty) > 0)) errs.count_qty = "Ingresa la cantidad.";
+            if (wizardProduct.tracks_lots) {
+                // Primer lote opcional; solo rechazar filas a medias.
+                wizardLots.forEach((l, i) => {
+                    const hasNum = (l.lot_number || "").trim();
+                    const hasQty = Number(l.quantity) > 0;
+                    if (hasNum && !hasQty) errs[`wlot_${i}_qty`] = "Cantidad > 0.";
+                    if (hasQty && !hasNum) errs[`wlot_${i}_lot`] = "Falta el número de lote.";
+                });
+            } else {
+                if (!(Number(countQty) > 0)) errs.count_qty = "Ingresa la cantidad.";
+            }
             if (wizardMode === "multi") {
                 if (!(Number(dividesCount) >= 1)) errs.divides_count = "Ingresa cuántas partes tiene cada unidad.";
             }
@@ -546,6 +562,8 @@ const Inventory = () => {
         const hasData = wizardProduct.name.trim().length > 0
             || showSummary
             || countQty !== ""
+            || wizardSupplier.trim() !== ""
+            || wizardLots.some(l => (l.lot_number || "").trim() || Number(l.quantity) > 0)
             || salesPres.some(p => p.sale_price);
         if (!hasData) { closeWizard(); return; }
         const ok = await confirm({
@@ -630,7 +648,10 @@ const Inventory = () => {
                     toast.success("Producto actualizado");
                 }
             } else {
-                const computedStock = computeInitialStock(divides, countQty, dividesCount);
+                const isLots = wizardProduct.tracks_lots;
+                // Con lotes: el producto nace en 0 y la existencia entra como primer
+                // lote (trazable). Sin lotes: stock inicial inline (comportamiento previo).
+                const computedStock = isLots ? 0 : computeInitialStock(divides, countQty, dividesCount);
                 const stockInSp0Units = computedStock; // sp0cf is always 1
 
                 const created = await createProduct({
@@ -658,7 +679,42 @@ const Inventory = () => {
                 }
 
                 const stockLabel = divides ? dividesUnitData.label : countUnitData.label;
-                const stockMsg = ` Stock ingresado: ${fmt(computedStock)} ${stockLabel}.`;
+
+                // Primer lote (opcional) sobre la presentación base (cf=1 → cantidad = unidad base).
+                let stockMsg;
+                if (isLots) {
+                    const validLots = wizardLots
+                        .map(l => ({
+                            lot_number: (l.lot_number || "").trim(),
+                            expiry_date: l.expiry_date || null,
+                            quantity: Number(l.quantity) || 0,
+                        }))
+                        .filter(l => l.lot_number && l.quantity > 0);
+                    if (validLots.length) {
+                        const basePres = (created.presentations || []).find(p => Number(p.conversion_factor) === 1)
+                            || (created.presentations || [])[0];
+                        if (basePres) {
+                            try {
+                                await receiveStock(basePres.public_id, {
+                                    supplier_name: wizardSupplier.trim(),
+                                    lots: validLots,
+                                });
+                                const total = validLots.reduce((a, l) => a + l.quantity, 0);
+                                stockMsg = ` Primer lote registrado: ${fmt(total)} ${stockLabel} en ${validLots.length} lote(s).`;
+                            } catch (err) {
+                                toast.warning(`Producto creado, pero el primer lote no se registró: ${apiError(err, "regístralo en Entrada de stock")}.`);
+                                stockMsg = "";
+                            }
+                        } else {
+                            stockMsg = "";
+                        }
+                    } else {
+                        stockMsg = " Registra el stock inicial en Entrada de stock.";
+                    }
+                } else {
+                    stockMsg = ` Stock ingresado: ${fmt(computedStock)} ${stockLabel}.`;
+                }
+
                 if (failedPres.length) {
                     toast.warning(`Producto creado.${stockMsg} No se guardaron ${failedPres.length} presentación(es): ${failedPres.join(", ")}. Agrégalas desde edición.`);
                 } else {
@@ -685,6 +741,14 @@ const Inventory = () => {
 
     const removeSalesPres = (idx) =>
         setSalesPres(prev => prev.filter((_, i) => i !== idx));
+
+    // ── Primer lote (alta con tracks_lots) ────────────────
+    const addWizardLot = () =>
+        setWizardLots(ls => [...ls, { lot_number: "", expiry_date: "", quantity: "" }]);
+    const updateWizardLot = (i, patch) =>
+        setWizardLots(ls => ls.map((l, idx) => idx === i ? { ...l, ...patch } : l));
+    const removeWizardLot = (i) =>
+        setWizardLots(ls => ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls);
 
     // ── Other handlers ────────────────────────────────────
     const handleDelete = async (id) => {
@@ -1099,9 +1163,12 @@ const Inventory = () => {
                     ? (STOCK_COUNTING_UNITS.find(u => u.backendUnit === (wizardEditing.base_unit || "piece"))?.label || wizardEditing.base_unit || "unidad")
                     : baseUnitLabel;
                 const baseUnitLabelForSales = wizardEditing ? editBaseUnitLabel : baseUnitLabel;
-                const computedStock = (!wizardEditing && divides !== null)
-                    ? computeInitialStock(divides, countQty, dividesCount)
-                    : 0;
+                const wizardLotsTotal = wizardLots.reduce((a, l) => a + (Number(l.quantity) || 0), 0);
+                const computedStock = wizardEditing
+                    ? 0
+                    : wizardProduct.tracks_lots
+                        ? wizardLotsTotal
+                        : (divides !== null ? computeInitialStock(divides, countQty, dividesCount) : 0);
 
                 return (
                     <div className="modal-overlay">
@@ -1136,9 +1203,18 @@ const Inventory = () => {
                                             <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--c-text)", lineHeight: 1 }}>
                                                 {fmt(computedStock)} <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--c-text-2)" }}>{baseUnitLabelForSales}</span>
                                             </div>
-                                            {divides === true && Number(dividesCount) > 0 && (
+                                            {!wizardProduct.tracks_lots && divides === true && Number(dividesCount) > 0 && (
                                                 <div style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "3px" }}>
                                                     {countQty} {countUnitLabel.toLowerCase()} × {dividesCount} {dividesUnitLabel}
+                                                </div>
+                                            )}
+                                            {wizardProduct.tracks_lots && (
+                                                <div style={{ fontSize: "12px", color: "var(--c-text-3)", marginTop: "3px" }}>
+                                                    {(() => {
+                                                        const n = wizardLots.filter(l => (l.lot_number || "").trim() && Number(l.quantity) > 0).length;
+                                                        if (!n) return "Sin lote inicial — regístralo en Entrada de stock";
+                                                        return `En ${n} lote(s)${wizardSupplier.trim() ? ` · ${wizardSupplier.trim()}` : ""}`;
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>
@@ -1358,18 +1434,20 @@ const Inventory = () => {
                                                             /* Modo simple: solo cantidad + unidad, sin pregunta de división */
                                                             <>
                                                                 <div data-demo="stock-section" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "var(--c-text-3)", marginBottom: "10px" }}>
-                                                                    ¿Cuánto tienes actualmente?
+                                                                    {wizardProduct.tracks_lots ? "Unidad base" : "¿Cuánto tienes actualmente?"}
                                                                 </div>
-                                                                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1.4fr", gap: "0 12px" }}>
-                                                                    <div className="form-group">
-                                                                        <label className="form-label">CANTIDAD *</label>
-                                                                        <input type="number" min="0" step="1"
-                                                                            className={`input${wizardErrors.count_qty ? " input-error" : ""}`}
-                                                                            value={countQty}
-                                                                            onChange={e => setCountQty(e.target.value)}
-                                                                            placeholder="0" />
-                                                                        {wizardErrors.count_qty && <p className={s.fieldErr}>{wizardErrors.count_qty}</p>}
-                                                                    </div>
+                                                                <div style={{ display: "grid", gridTemplateColumns: wizardProduct.tracks_lots ? "1fr" : "1.4fr 1.4fr", gap: "0 12px" }}>
+                                                                    {!wizardProduct.tracks_lots && (
+                                                                        <div className="form-group">
+                                                                            <label className="form-label">CANTIDAD *</label>
+                                                                            <input type="number" min="0" step="1"
+                                                                                className={`input${wizardErrors.count_qty ? " input-error" : ""}`}
+                                                                                value={countQty}
+                                                                                onChange={e => setCountQty(e.target.value)}
+                                                                                placeholder="0" />
+                                                                            {wizardErrors.count_qty && <p className={s.fieldErr}>{wizardErrors.count_qty}</p>}
+                                                                        </div>
+                                                                    )}
                                                                     <div className="form-group">
                                                                         <label className="form-label">UNIDAD</label>
                                                                         <select className="select-input" value={countUnit}
@@ -1378,7 +1456,7 @@ const Inventory = () => {
                                                                         </select>
                                                                     </div>
                                                                 </div>
-                                                                {Number(countQty) > 0 && (
+                                                                {!wizardProduct.tracks_lots && Number(countQty) > 0 && (
                                                                     <div className={s.stockPreview}>
                                                                         <strong>{fmt(Number(countQty))}</strong> {countUnitLabel} disponibles
                                                                     </div>
@@ -1388,18 +1466,20 @@ const Inventory = () => {
                                                             /* Modo multi: cantidad + división directa (sin toggle) */
                                                             <>
                                                                 <div data-demo="stock-section" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "var(--c-text-3)", marginBottom: "10px" }}>
-                                                                    ¿Cuánto tienes actualmente?
+                                                                    {wizardProduct.tracks_lots ? "Estructura del producto" : "¿Cuánto tienes actualmente?"}
                                                                 </div>
-                                                                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1.4fr", gap: "0 12px" }}>
-                                                                    <div className="form-group">
-                                                                        <label className="form-label">CANTIDAD *</label>
-                                                                        <input type="number" min="0" step="1"
-                                                                            className={`input${wizardErrors.count_qty ? " input-error" : ""}`}
-                                                                            value={countQty}
-                                                                            onChange={e => setCountQty(e.target.value)}
-                                                                            placeholder="0" />
-                                                                        {wizardErrors.count_qty && <p className={s.fieldErr}>{wizardErrors.count_qty}</p>}
-                                                                    </div>
+                                                                <div style={{ display: "grid", gridTemplateColumns: wizardProduct.tracks_lots ? "1fr" : "1.4fr 1.4fr", gap: "0 12px" }}>
+                                                                    {!wizardProduct.tracks_lots && (
+                                                                        <div className="form-group">
+                                                                            <label className="form-label">CANTIDAD *</label>
+                                                                            <input type="number" min="0" step="1"
+                                                                                className={`input${wizardErrors.count_qty ? " input-error" : ""}`}
+                                                                                value={countQty}
+                                                                                onChange={e => setCountQty(e.target.value)}
+                                                                                placeholder="0" />
+                                                                            {wizardErrors.count_qty && <p className={s.fieldErr}>{wizardErrors.count_qty}</p>}
+                                                                        </div>
+                                                                    )}
                                                                     <div className="form-group">
                                                                         <label className="form-label">CONTADO COMO</label>
                                                                         <select className="select-input" value={countUnit}
@@ -1426,12 +1506,75 @@ const Inventory = () => {
                                                                         </select>
                                                                     </div>
                                                                 </div>
-                                                                {Number(countQty) > 0 && (
+                                                                {!wizardProduct.tracks_lots && Number(countQty) > 0 && (
                                                                     <div className={s.stockPreview}>
                                                                         {dividesCount
                                                                             ? <>{countQty} {countUnitLabel.toLowerCase()} × {dividesCount} = <strong>{fmt((Number(countQty) || 0) * (Number(dividesCount) || 0))}</strong> {dividesUnitLabel} disponibles</>
                                                                             : <>Indica cuántas {dividesUnitLabel} tiene cada {countUnitLabel.toLowerCase()} →</>
                                                                         }
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+
+                                                        {wizardProduct.tracks_lots && (
+                                                            <>
+                                                                <div className={s.formDivider} />
+                                                                <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "var(--c-text-3)", marginBottom: "4px" }}>
+                                                                    Primer lote <span style={{ fontWeight: 500, textTransform: "none", letterSpacing: 0 }}>(opcional)</span>
+                                                                </div>
+                                                                <p style={{ margin: "0 0 10px", fontSize: 12, color: "var(--c-text-3)", lineHeight: 1.5 }}>
+                                                                    Captura la existencia inicial como lote (número + caducidad). Puedes dejarlo vacío y registrarlo luego en Entrada de stock.
+                                                                </p>
+                                                                <div className="form-group" style={{ marginBottom: 10 }}>
+                                                                    <label className="form-label">PROVEEDOR (OPCIONAL)</label>
+                                                                    <input className="input" placeholder="Ej: Distribuidora X"
+                                                                        value={wizardSupplier}
+                                                                        onChange={e => setWizardSupplier(e.target.value)} />
+                                                                </div>
+                                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, fontSize: 10.5, fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>
+                                                                    <span>Lote</span>
+                                                                    <span>Caduca</span>
+                                                                    <span style={{ textAlign: "center" }}>Cant.</span>
+                                                                    <span />
+                                                                </div>
+                                                                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                                                    {wizardLots.map((l, i) => (
+                                                                        <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 62px 30px", gap: 6, alignItems: "start" }}>
+                                                                            <div>
+                                                                                <input className={`input${wizardErrors[`wlot_${i}_lot`] ? " input-error" : ""}`}
+                                                                                    placeholder="A123"
+                                                                                    value={l.lot_number}
+                                                                                    onChange={e => updateWizardLot(i, { lot_number: e.target.value })} />
+                                                                                {wizardErrors[`wlot_${i}_lot`] && <p className={s.fieldErr}>{wizardErrors[`wlot_${i}_lot`]}</p>}
+                                                                            </div>
+                                                                            <input className="input" type="date"
+                                                                                value={l.expiry_date}
+                                                                                onChange={e => updateWizardLot(i, { expiry_date: e.target.value })} />
+                                                                            <div>
+                                                                                <input className={`input${wizardErrors[`wlot_${i}_qty`] ? " input-error" : ""}`}
+                                                                                    type="number" min="1" step="1"
+                                                                                    style={{ textAlign: "center", fontWeight: 700 }}
+                                                                                    value={l.quantity}
+                                                                                    onChange={e => updateWizardLot(i, { quantity: e.target.value })} />
+                                                                                {wizardErrors[`wlot_${i}_qty`] && <p className={s.fieldErr}>{wizardErrors[`wlot_${i}_qty`]}</p>}
+                                                                            </div>
+                                                                            <button type="button" className="btn btn-ghost btn-sm"
+                                                                                style={{ padding: 0 }}
+                                                                                disabled={wizardLots.length === 1}
+                                                                                onClick={() => removeWizardLot(i)}
+                                                                                title="Quitar lote">
+                                                                                <Icon.Trash s={14} />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={addWizardLot}>
+                                                                    <Icon.Plus s={13} /> Agregar lote
+                                                                </button>
+                                                                {wizardLotsTotal > 0 && (
+                                                                    <div className={s.stockPreview} style={{ marginTop: 10 }}>
+                                                                        <strong>{fmt(wizardLotsTotal)}</strong> {baseUnitLabel} disponibles
                                                                     </div>
                                                                 )}
                                                             </>

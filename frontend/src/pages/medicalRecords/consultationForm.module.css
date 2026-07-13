@@ -9,14 +9,203 @@
 
 .page {
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Variante "Clásica" — acento = paleta del SISTEMA (verde --c-primary), no azul.
+     Como variables locales para mantener el markup limpio. */
+  --accent: var(--c-primary);
+  --accent-soft: var(--c-primary-ring);
+  --ink: #15140f;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-soft: rgba(0, 0, 0, 0.06);
+  --surface: #ffffff;
+  --field-border: rgba(0, 0, 0, 0.12);
+  --ok: var(--c-success-text);
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
   height: 100%;
-  color: #1a1a1a;
+  color: var(--ink);
   font-family: var(--font-sans);
-  background: #f4f5f1;
+  background: #f7f7f5;
+}
+
+/* ── Barra superior fija (sticky) ── */
+
+.topbar {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.backBtn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: filter var(--t);
+}
+
+.backBtn:hover {
+  filter: brightness(0.96);
+}
+
+.topHead {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #15140f;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topSync {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8a8a86;
+  min-height: 15px;
+}
+
+.topSyncDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex-shrink: 0;
+}
+
+.topSyncSaving .topSyncDot {
+  background: #c9a227;
+}
+
+.topSyncErr {
+  color: var(--c-danger-text);
+}
+
+.topSyncErr .topSyncDot {
+  background: var(--c-danger-text);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Botones (primitivos de la variante) ── */
+
+.btnPrimary,
+.btnSecondary,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 9px 16px;
+  transition: background var(--t), border-color var(--t), filter var(--t);
+  white-space: nowrap;
+}
+
+.btnPrimary {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.btnSecondary {
+  background: #fff;
+  color: #2a2a28;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #f7f7f5;
+}
+
+.btnGhost {
+  background: transparent;
+  color: #6b6b66;
+  border: 1px solid transparent;
+  padding: 9px 12px;
+}
+
+.btnGhost:hover:not(:disabled) {
+  color: #15140f;
+}
+
+.btnPrimary:disabled,
+.btnSecondary:disabled,
+.btnGhost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Botón oscuro de acción (Agregar) — NO pill (radius 10) — usado en secciones (paso 2). */
+.btnDark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--ink);
+  color: #fff;
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: filter var(--t);
+}
+
+.btnDark:hover:not(:disabled) {
+  filter: brightness(1.25);
+}
+
+.btnDark:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ── Banner ── */
@@ -136,21 +325,21 @@
 .scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 28px;
 }
 
 /* ── App shell + 2-column grid (rail | content) ── */
 
 .shell {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: 288px minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
 }
 
@@ -163,12 +352,20 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 18px;
-  border: 1px solid #e7e4df;
-  border-radius: 18px;
-  background: #fbfaf8;
-  max-height: calc(100vh - 84px);
+  max-height: calc(100vh - 92px);
   overflow: auto;
+}
+
+/* Tarjeta blanca reutilizable del sidebar (paciente + nav). */
+.railCard {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 20px;
+}
+
+.railNavCard {
+  padding: 6px;
 }
 
 .railIdentity {
@@ -178,17 +375,37 @@
 }
 
 .railAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  background: #eef2ea;
-  color: var(--c-primary);
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--sage-400), var(--c-primary));
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   flex-shrink: 0;
+}
+
+.railStatus {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--c-warning-bg);
+  color: var(--c-warning-text);
+  border: 1px solid var(--c-warning-border);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.railStatusDone {
+  background: var(--c-success-bg);
+  color: var(--c-success-text);
+  border-color: var(--c-success-border);
 }
 
 .railWho {
@@ -197,10 +414,10 @@
 
 .railName {
   font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #111;
-  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #15140f;
+  line-height: 1.2;
 }
 
 .railSub {
@@ -230,32 +447,38 @@
 
 /* ── Inline-editable vitals (no modal — spec §2) ── */
 
+/* Grid 2x2 con hairlines (gap 1px sobre fondo del mismo color de la línea). */
 .railVitals {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 1px;
+  margin-top: 16px;
+  background: var(--line-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .railVital {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid #e7e4df;
-  border-radius: 12px;
-  background: #fff;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 0;
+  background: var(--surface);
   cursor: text;
   text-align: left;
-  transition: border-color var(--t), box-shadow var(--t);
+  transition: background var(--t);
 }
 
 .railVital:hover:not(.railVitalDisabled) {
-  border-color: #cfccc6;
+  background: #fafafa;
 }
 
 .railVital:focus-within {
-  border-color: #888;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.04);
+  background: #fafafa;
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
 }
 
 .railVitalDisabled {
@@ -285,11 +508,11 @@
 }
 
 .railVitalLabel {
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #a09a91;
+  color: #8a8a86;
 }
 
 .railVitalValue {
@@ -342,24 +565,24 @@
   border: none;
   border-radius: 9px;
   background: transparent;
-  color: #6b6660;
+  color: #5d5c58;
   font-family: var(--font-sans);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   text-align: left;
   transition: background var(--t), color var(--t), box-shadow var(--t);
 }
 
 .railNavBtn:hover {
-  background: #f1efe9;
-  color: #111;
+  background: #f4f4f2;
+  color: #15140f;
 }
 
 .railNavBtnActive {
-  background: #fff;
-  color: #111;
-  box-shadow: inset 2px 0 0 var(--c-primary), 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .railNavBadge {
@@ -372,7 +595,7 @@
 }
 
 .railNavBtnActive .railNavBadge {
-  color: var(--c-primary);
+  color: var(--accent);
 }
 
 /* ── Rail footer: autosave + stacked actions ── */
@@ -417,23 +640,29 @@
 
 .content {
   min-width: 0;
-  max-width: 760px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
 }
 
 .anchor {
   scroll-margin-top: 16px;
 }
 
+/* Sección PLANA (variante Clásica): sin card, delimitada por divisor inferior. */
 .card {
-  background: #fff;
-  border: 1px solid #e7e4df;
-  border-radius: 16px;
-  padding: 24px 26px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 30px 0 32px;
   display: flex;
   flex-direction: column;
+}
+
+/* Última sección sin divisor. */
+.content > .anchor:last-of-type .card {
+  border-bottom: none;
 }
 
 .cardHead {
@@ -445,17 +674,17 @@
 
 .cardTitle {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 600;
   letter-spacing: -0.02em;
-  color: #111;
+  color: #15140f;
 }
 
 .cardDesc {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #7a7a7a;
+  color: #8a8a86;
 }
 
 /* ── Sticky totals bar (spec §6) ── */
@@ -551,7 +780,7 @@
 
 .chapterSidebar {
   padding-top: 2px;
-  border-left: 3px solid var(--c-primary);
+  border-left: 3px solid var(--accent);
   padding-left: 16px;
 }
 
@@ -661,10 +890,10 @@
 .control {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--field-border);
   border-radius: 10px;
   background: #fff;
-  color: #1a1a1a;
+  color: #15140f;
   font-family: var(--font-sans);
   font-size: 14.5px;
   outline: none;
@@ -672,12 +901,12 @@
 }
 
 .control::placeholder {
-  color: #bbb;
+  color: #b0b0ac;
 }
 
 .control:focus {
-  border-color: #888;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.04);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 textarea.control {
@@ -701,8 +930,8 @@ textarea.control {
 }
 
 .editorTextarea:focus {
-  border-color: #666;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.04);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .miniInput {
@@ -710,16 +939,50 @@ textarea.control {
   padding: 0 10px;
 }
 
+/* SearchSelect / inputs globales dentro de la consulta → look de la variante
+   (radius 10 + foco azul), sin tocar el componente global compartido. */
+.content :global(.input) {
+  border-radius: 10px;
+  border-color: var(--field-border);
+}
+
+.content :global(.input:focus) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* SearchSelect dentro de la consulta: campo + menú desplegable a la paleta neutra
+   (blanco + acento azul), sin tocar el componente global (que sigue beige fuera). */
+.content :global(.searchBar) {
+  background: #fff;
+  border: 1px solid var(--field-border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.content :global(.searchBar:focus-within) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.content :global([role="listbox"]) {
+  background: #fff;
+  border-color: var(--line);
+}
+
+.content :global([role="listbox"] > div:hover) {
+  background: #f4f4f2;
+}
+
 /* ── Type selector (segmented control) ── */
 
 .typeGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid #e5e5e5;
-  background: #fff;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .typeCard {
@@ -727,22 +990,22 @@ textarea.control {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
+  padding: 14px;
+  border: 1px solid #e5e3df;
+  border-radius: 12px;
+  background: #fff;
   cursor: pointer;
   text-align: center;
-  transition: background var(--t);
+  transition: border-color var(--t), background var(--t);
 }
 
 .typeCard:hover {
-  background: #f5f5f5;
+  border-color: #cfccc6;
 }
 
 .typeCardActive {
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
 }
 
 .typeIcon {
@@ -756,7 +1019,7 @@ textarea.control {
 }
 
 .typeCardActive .typeIcon {
-  color: var(--c-primary);
+  color: var(--accent);
 }
 
 .typeName {
@@ -775,7 +1038,7 @@ textarea.control {
 
 .typeCardActive .typeName,
 .typeCardActive .typeDesc {
-  color: var(--c-primary);
+  color: var(--accent);
 }
 
 /* ── Adders ── */
@@ -842,22 +1105,33 @@ textarea.control {
 }
 
 .costToggleBtnActive {
-  background: #fff;
-  color: var(--c-primary);
+  background: var(--ink);
+  color: #fff;
 }
 
 /* ── Table modes ── */
 
+/* Modo de línea en la tabla de Cobros (spec: pill verde "Cobrar" / gris "Insumo"). */
 .tableModeMuted {
-  font-size: 13px;
-  font-weight: 500;
-  color: #888;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f1f0ed;
+  color: #8a8a86;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .tableModeStrong {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #e6f5ee;
+  color: #1a7d55;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--c-primary);
 }
 
 /* ── Badge incluído ── */
@@ -901,7 +1175,7 @@ textarea.control {
 
 .tableWrap {
   margin-top: 16px;
-  border: 1px solid #eee;
+  border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
@@ -915,12 +1189,15 @@ textarea.control {
 }
 
 .table th {
-  padding: 10px 14px 8px;
-  background: transparent;
+  padding: 9px 14px;
+  background: #faf9f7;
+  border-bottom: 1px solid var(--line);
   text-align: left;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #999;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a8a86;
 }
 
 .table td {
@@ -996,8 +1273,8 @@ textarea.control {
 }
 
 .serviceToggleOpen .serviceToggleIcon {
-  border-color: var(--c-primary);
-  color: var(--c-primary);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .serviceSection {
@@ -1044,10 +1321,13 @@ textarea.control {
 }
 
 .recipeEmpty {
-  padding: 12px 0;
-  font-size: 14px;
-  font-style: italic;
-  color: #999;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px dashed var(--field-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #a0a09b;
+  text-align: center;
 }
 
 .recipeNotes {
@@ -1123,15 +1403,17 @@ textarea.control {
 }
 
 .resumenTotal b {
-  font-size: 15px;
-  font-weight: 700;
-  color: #000;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a8a86;
 }
 
 .resumenTotalVal {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
-  color: var(--c-primary);
+  color: #15140f;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Section title row ── */
@@ -1173,7 +1455,7 @@ textarea.control {
 }
 
 .switchOn {
-  background: var(--c-primary);
+  background: var(--accent);
 }
 
 .switchThumb {
@@ -1206,7 +1488,7 @@ textarea.control {
   padding: 2px 9px;
   border-radius: 999px;
   background: transparent;
-  color: var(--c-primary);
+  color: var(--accent);
   font-size: 12px;
   font-weight: 600;
 }

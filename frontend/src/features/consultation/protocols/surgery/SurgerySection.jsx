@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { Icon } from "../../../../components/icons";
+import DateField from "../../../../components/DateField";
 import styles from "../../../../pages/medicalRecords/consultationForm.module.css";
 
 /**
@@ -166,12 +167,12 @@ const SurgerySection = forwardRef(function SurgerySection({ value, onChange, dis
 
       <div className={styles.field}>
         <label className={styles.fieldLabel}>Retiro de puntos</label>
-        <input
-          type="date"
-          className={styles.control}
+        <DateField
           value={v.suture_removal_date || ""}
+          onChange={(s) => set({ suture_removal_date: s || null })}
           disabled={disabled}
-          onChange={(e) => set({ suture_removal_date: e.target.value || null })}
+          clearable
+          inputClassName={styles.control}
         />
       </div>
     </motion.section>
