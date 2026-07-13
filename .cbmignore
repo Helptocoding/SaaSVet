@@ -1,0 +1,5 @@
+# codebase-memory-mcp — overrides del índice (sintaxis gitignore, negación con !).
+# docs/ está en los excludes hardcoded del binario; lo re-incluimos: ahí vive
+# toda la documentación de contratos/ADR del proyecto y queremos consultarla.
+!docs/
+!docs/**
