@@ -268,6 +268,11 @@ def reset_password_for_staff(
         raise PermissionDenied(
             "No puedes resetear la contraseña de operadores de plataforma."
         )
+    if getattr(target_user, 'is_service_account', False):
+        # ADR p51 — 404-as-403: un reset pondría password_must_change=True y
+        # el gate embebido en HybridPermission inutilizaría al agente virtual.
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
     if (
         target_user.organization_id is None
         or admin.organization_id is None
@@ -390,6 +395,11 @@ def deactivate_staff(
     if getattr(target_user, 'role', None) == 'ADMIN_SAAS':
         from django.http import Http404
         raise Http404("Usuario no encontrado.")
+    if getattr(target_user, 'is_service_account', False):
+        # ADR p51 — 404-as-403: el kill switch del agente virtual es
+        # AgentSettings.enabled (É-F0) / ensure_agent_users, no esta API.
+        from django.http import Http404
+        raise Http404("Usuario no encontrado.")
     if (
         target_user.organization_id is None
         or admin.organization_id is None
@@ -436,6 +446,105 @@ def deactivate_staff(
         duration_ms=duration_ms,
         request_id=request_id,
     )
+
+
+# ---------------------------------------------------------------------------
+# Service account del agente virtual (ADR p51)
+# ---------------------------------------------------------------------------
+
+AGENT_USERNAME_TEMPLATE = 'agent.whatsapp.{org_public_id}'
+
+
+def ensure_agent_user(organization):
+    """
+    Garantiza el user AGENT (service account) de una organización (ADR p51).
+
+    Idempotente y auto-reparador — protege contra borrados/desactivaciones
+    por shell: crea la cuenta si no existe, la reactiva si está inactiva y
+    fuerza password inutilizable si alguien le puso una. Devuelve
+    ``(user, status)`` con status ∈ {'created', 'repaired', 'ok'}.
+
+    Reglas de la cuenta (ADR p51):
+      - ``set_unusable_password()`` — jamás login interactivo; los tokens se
+        acuñan server-side (Tool Executor, É-F1).
+      - ``email=''`` — el constraint parcial de unicidad global (ADR p48)
+        excluye email vacío para cuentas técnicas.
+      - ``password_must_change`` siempre False (el gate bloquearía sus tools;
+        la API de staff no puede resetearla — guard 404 arriba).
+      - UserRole: lo asigna el signal ``assign_rbac_role_on_create`` al
+        crear; aquí se re-garantiza por si el Role AGENT se sembró después
+        (deploy con seed_permissions posterior a la creación del user).
+    """
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    user = (
+        User.objects
+        .filter(organization=organization, role='AGENT', is_service_account=True)
+        .order_by('pk')
+        .first()
+    )
+    status_ = 'ok'
+
+    if user is None:
+        user = User(
+            username=AGENT_USERNAME_TEMPLATE.format(
+                org_public_id=organization.public_id
+            ),
+            email='',
+            organization=organization,
+            role='AGENT',
+            is_service_account=True,
+            first_name='Asistente',
+            last_name='Virtual',
+        )
+        user.set_unusable_password()
+        user.save()
+        status_ = 'created'
+        logger.info("AGENT_USER_CREATED", extra={
+            "event": "AGENT_USER_CREATED",
+            "organization_id": organization.pk,
+            "user_id": user.pk,
+            "username": user.username,
+        })
+    else:
+        repaired_fields = []
+        if not user.is_active:
+            user.is_active = True
+            repaired_fields.append('is_active')
+        if user.has_usable_password():
+            user.set_unusable_password()
+            repaired_fields.append('password')
+        if user.password_must_change:
+            user.password_must_change = False
+            repaired_fields.append('password_must_change')
+        if repaired_fields:
+            user.save(update_fields=repaired_fields)
+            status_ = 'repaired'
+            logger.warning("AGENT_USER_REPAIRED", extra={
+                "event": "AGENT_USER_REPAIRED",
+                "organization_id": organization.pk,
+                "user_id": user.pk,
+                "repaired_fields": repaired_fields,
+            })
+
+    # Re-garantizar el UserRole (idempotente; cubre el orden inverso
+    # user-antes-que-seed). Si el Role no existe aún, WARNING igual que el
+    # signal — la señal de que falta correr seed_permissions.
+    from apps.core.models import Role, UserRole
+    try:
+        role = Role.objects.get(
+            name='AGENT', organization=organization, is_system_role=True
+        )
+        UserRole.objects.get_or_create(user=user, role=role)
+    except Role.DoesNotExist:
+        logger.warning(
+            "ensure_agent_user: rol 'AGENT' no encontrado en org %s — "
+            "ejecuta seed_permissions primero",
+            organization.pk,
+        )
+
+    return user, status_
 
 
 def is_temp_password_expired(user) -> bool:

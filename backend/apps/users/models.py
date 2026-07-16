@@ -12,6 +12,10 @@ class User(AbstractUser):
         ('ADMIN', 'Administrador'),
         ('VET', 'Veterinario'),
         ('ASSISTANT', 'Asistente'),
+        # ADR p51: conjunto de permisos del agente virtual (service account).
+        # La API de staff NO puede crear usuarios con este rol
+        # (CreateEmployeeSerializer lo excluye); solo ensure_agent_users.
+        ('AGENT', 'Agente virtual'),
     )
 
     # Día 6 Fase 5 (Issue #38): public_id para superficies externas.
@@ -44,6 +48,14 @@ class User(AbstractUser):
     # temporary password. Read by the login view to reject expired temps
     # (24h window). Cleared by `services.change_password` on success.
     password_temp_issued_at = models.DateTimeField(null=True, blank=True)
+
+    # ADR p51: eje "clase de principal" (persona vs actor del sistema),
+    # ortogonal a `role` (que nombra el conjunto de permisos). Las
+    # superficies humanas (lista de Equipo, deactivate, reset-password)
+    # excluyen service accounts por ESTE flag, nunca por nombre de rol —
+    # así N agentes futuros no obligan a tocar esas superficies. El user
+    # AGENT del subsistema conversacional es el primer service account.
+    is_service_account = models.BooleanField(default=False)
 
     class Meta(AbstractUser.Meta):
         indexes = [

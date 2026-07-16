@@ -79,10 +79,12 @@ class StaffListView(APIView):
     permission_classes = [make_permission("staff.list")]
 
     def get(self, request):
+        # ADR p51: los service accounts (agente virtual) no son Equipo — se
+        # excluyen por flag, nunca por nombre de rol.
         qs = User.objects.filter(
             organization=request.user.organization,
             is_active=True
-        ).exclude(role='ADMIN_SAAS')
+        ).exclude(role='ADMIN_SAAS').exclude(is_service_account=True)
 
         role = request.query_params.get('role')
         if role:
@@ -117,11 +119,13 @@ class StaffDeactivateView(APIView):
     def delete(self, request, pk):
         # Día 6 Fase 5 (Issue #38): lookup por public_id (UUID).
         # Antes <int:pk> permitía enumeration de usuarios cross-org.
+        # ADR p51: service accounts excluidos (404-as-403) — el kill switch
+        # del agente es AgentSettings.enabled, no la API de staff.
         user = resolve_public_id(
             User.objects.filter(
                 organization=request.user.organization,
                 is_active=True,
-            ),
+            ).exclude(is_service_account=True),
             pk,
         )
         # H-06: la desactivación + revocación de sesiones vive en el service
@@ -221,11 +225,14 @@ class StaffResetPasswordView(APIView):
     throttle_scope = 'staff_password_reset'
 
     def post(self, request, pk):
+        # ADR p51: service accounts excluidos (404-as-403) — un reset pondría
+        # password_must_change=True y el gate inutilizaría todas las tools
+        # del agente. La cuenta no se gestiona por la API de staff.
         target = resolve_public_id(
             User.objects.filter(
                 organization=request.user.organization,
                 is_active=True,
-            ),
+            ).exclude(is_service_account=True),
             pk,
         )
 

@@ -194,4 +194,19 @@ PERMISSIONS = {
         # Movimientos manuales de caja (ADR p39)
         "cashmovement.list", "cashmovement.create",
     ],
+
+    # Agente virtual — service account del subsistema conversacional
+    # (ADR p51). Menor privilegio POR FASE: F1 = solo las lecturas que
+    # respaldan sus tools (spec congelada: whatsapp-agent-functional-spec
+    # §9). F2 añadirá appointment.create/update editando esta lista (el
+    # seed propaga en el siguiente deploy). PROHIBIDO acercarlo a
+    # invoice/billing/cash/medicalrecord/prescription/staff/import.
+    "AGENT": [
+        "appointment.list", "appointment.retrieve",
+        "patient.list", "patient.retrieve",
+        "owner.list", "owner.retrieve",
+        "vaccinerecord.list", "vaccinerecord.retrieve",
+        "service.list", "service.retrieve",
+        "inventory.list", "inventory.retrieve",
+    ],
 }
