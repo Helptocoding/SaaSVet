@@ -77,6 +77,12 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      # Dummy, NO secreto. src/api/client.js valida VITE_API_URL a nivel módulo
+      # (throw si falta); los tests que importan páginas/API transitivamente
+      # ejecutan ese módulo bajo Vitest. Sin esto, 3 test files fallan al
+      # importar aunque los 247 tests pasen (rojo desde f6c2321).
+      VITE_API_URL: http://127.0.0.1:8000/api
     steps:
       - uses: actions/checkout@v4
       # pnpm must be installed before setup-node so its pnpm cache works.
