@@ -34,6 +34,17 @@ PERMISSION_CODES = [
     "medicalrecord.vitals.list",
     "medicalrecord.summary.retrieve",
 
+    # Vacunas (É0-PR1 — fix del gap RBAC). Las views declaran
+    # resource_name="vaccinerecord" desde Día 6/ADR p18, pero el catálogo
+    # nunca tuvo estos códigos → VET/ASSISTANT con UserRole en DB recibían
+    # RBAC_DENIED en /api/vaccines/ (solo ADMIN pasaba vía *.*).
+    # Sin "vaccinerecord.destroy": DELETE está bloqueado en la view
+    # (NOM-007/046, registro legal — ADR p16).
+    "vaccinerecord.list",
+    "vaccinerecord.retrieve",
+    "vaccinerecord.create",
+    "vaccinerecord.update",
+
     # Facturas
     "invoice.list",
     "invoice.retrieve",
@@ -135,6 +146,8 @@ PERMISSIONS = {
         "medicalrecord.update", "medicalrecord.close",
         "medicalrecord.vitals.create", "medicalrecord.vitals.list",
         "medicalrecord.summary.retrieve",
+        "vaccinerecord.list", "vaccinerecord.retrieve",
+        "vaccinerecord.create", "vaccinerecord.update",
         "prescription.list", "prescription.retrieve", "prescription.create",
         "prescription.destroy",
         "patient.list", "patient.retrieve", "patient.create",
@@ -162,6 +175,7 @@ PERMISSIONS = {
         "appointment.update", "appointment.destroy",
         "medicalrecord.list", "medicalrecord.retrieve",
         "medicalrecord.vitals.list", "medicalrecord.summary.retrieve",
+        "vaccinerecord.list", "vaccinerecord.retrieve",
         "prescription.list", "prescription.retrieve",
         "patient.list", "patient.retrieve", "patient.create",
         "patient.update", "patient.destroy",
