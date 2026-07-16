@@ -33,6 +33,13 @@ BASELINE = {
     ('billing', 'serializers.py', 'ServiceSerializer'),
     ('inventory', 'serializers.py', 'PresentationSerializer'),
     ('inventory', 'serializers.py', 'ProductSerializer'),
+    # Revisados 2026-07-15: añadidos en los sprints de lotes (B2a) y protocolos
+    # A3 mientras el CI corría 0 tests (apps/ sin __init__.py) y este guard no
+    # ejecutaba. Misma deuda híbrida contenida que el resto (ADR p24): la
+    # salida es migración por-modelo post-beta, no endurecimiento piecemeal.
+    ('inventory', 'serializers.py', 'StockLotSerializer'),
+    ('medical_records', 'serializers.py', 'EmergencyRecordSerializer'),
+    ('medical_records', 'serializers.py', 'SurgeryRecordSerializer'),
     ('medical_records', 'serializers.py', 'MedicalRecordSerializer'),
     ('medical_records', 'serializers.py', 'VaccineRecordSerializer'),
     ('organizations', 'serializers.py', 'OrganizationSerializer'),

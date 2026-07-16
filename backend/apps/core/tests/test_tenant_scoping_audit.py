@@ -49,6 +49,9 @@ NON_TENANT_MODELS = {
     'User', 'Organization', 'OrganizationSettings', 'OrganizationTimezoneAudit',
     'Permission', 'Role', 'UserRole',
     'OutstandingToken', 'BlacklistedToken',
+    # ADR p46: LegalDocument es GLOBAL (sin FK a organization) — el texto legal
+    # es único para todo el SaaS; no aplica for_organization por diseño.
+    'LegalDocument',
 }
 
 # Baseline congelado: (módulo_top, archivo, modelo, método). Cada entrada es un
@@ -73,8 +76,19 @@ BASELINE = {
     ('inventory', 'views.py', 'InvoiceItem', 'filter'),
     ('inventory', 'views.py', 'MedicalRecordProduct', 'filter'),
     ('inventory', 'views.py', 'Product', 'filter'),
+    # Revisado 2026-07-15 (inventory/services.py:420): get_or_create con
+    # organization= explícito en el lookup — tenant-scoped por construcción.
+    ('inventory', 'services.py', 'StockLot', 'get_or_create'),
+    # Revisados 2026-07-15: LegalAcceptance se filtra/crea por user, y un user
+    # pertenece a exactamente una organización (invariante ADR p48). El scoping
+    # viene del principal autenticado, no de un id del cliente.
+    ('legal', 'services.py', 'LegalAcceptance', 'filter'),
+    ('legal', 'services.py', 'LegalAcceptance', 'get_or_create'),
     ('medical_records', 'views.py', 'Invoice', 'filter'),
     ('medical_records', 'views.py', 'MedicalRecordService', 'filter'),
+    # Revisado 2026-07-15 (medical_records/services.py:136): scoped por FK padre
+    # medical_record, obtenido org-scoped y bajo lock por el caller (cierre).
+    ('medical_records', 'services.py', 'MedicalRecordProduct', 'filter'),
     ('patients', 'serializers.py', 'Owner', 'get_or_create'),
 }
 
