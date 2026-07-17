@@ -178,4 +178,72 @@ Todas **aditivas** (tablas nuevas, cero ALTER a tablas existentes): `channels_ch
 
 ---
 
-*Las épicas siguientes (É-F1, É-F2) añadirán aquí su plan con la misma estructura antes de escribir código.*
+## É-F1 — Agente read-only (LLM + Policy Engine + tools de lectura)
+
+**Fecha del plan**: 2026-07-17 · **Estado**: PENDIENTE DE APROBACIÓN · **Estimación**: ~3 semanas (5 PRs; el colchón vive en PR-13/eval, único tramo sin precedente interno) · **Contrato**: spec funcional **congelada** F1 (INT-00..14 + reglas §2 + 63 casos) + plan v1.1 §B-F1.
+
+**Valor al cierre**: el agente responde solo el ~70 % del tráfico real de recepción — "¿cuándo es mi cita?", "¿qué vacunas le tocan?", "¿cuánto cuesta X?", "¿a qué hora abren?" — con escalado a humano impecable. Escritura: cero (llega en É-F2).
+
+### 1. Impacto sobre el código existente
+
+| Superficie | Cambio |
+|---|---|
+| `backend/requirements.txt` + **`requirements.lock` regenerado** (pip-compile, regla del proyecto) | + SDK `anthropic` (decisión Q3: un solo proveedor; Claude — DPA/no-training de serie en la API comercial). Modelos por env: planner `claude-sonnet-4-6`, router/clasificación `claude-haiku-4-5` |
+| `config/settings.py` | + `ANTHROPIC_API_KEY`, `AGENT_LLM_MODEL_PLANNER/ROUTER`, `AGENT_INTERNAL_API_URL` (loopback del worker al backend: `http://backend:8000` en compose), presupuestos (constantes globales v1: 15 turnos LLM/conversación, 5 tools/turno — spec §2.6) |
+| `apps/core/throttling.py` | + throttle de usuario **service-account-aware**: el `UserRateThrottle` global (500/h) exime `is_service_account` (el límite real del agente es el presupuesto del Policy Engine, no el throttle HTTP — riesgo R9 del doc de arquitectura). Cambio pequeño con tests de no-regresión (humanos siguen throttleados) |
+| `apps/agent/` | Todo lo nuevo vive aquí: `policy.py`, `executor.py`, `planner.py`, `llm.py`, `tools/`, `identity.py` + modelos `ToolExecution`/`LLMCall`/`HumanHandoff` |
+| Bandeja (frontend) | Retoque mínimo: chip con `handoff_reason` en conversaciones "Esperando" (la columna ya existe visualmente) |
+| Dominios | **CERO cambios** — las tools leen la API existente vía loopback |
+| `.env.prod.example` | + sección LLM (key + modelos + presupuestos) |
+
+**Decisiones ya tomadas que este plan solo ejecuta** (no se reabren): loopback HTTP con JWT del user AGENT acuñado server-side (`RefreshToken.for_user`, TTL corto, jamás logueado — diferido de A0-2 exactamente para este momento); handles efímeros con validación server-side de ownership como control primario; plantillas/parafraseos por copy fijo, jamás generados; minimización de proyecciones por tool (R4).
+
+### 2. Plan incremental (PRs)
+
+| PR | Contenido | Est. |
+|---|---|---|
+| **PR-9 — modelos + adaptador LLM** | `ToolExecution` (append-only: tool, `args_redacted`, `policy_tier/decision`, `http_status`, `duration_ms`, **`domain_object_public_id` indexado + `request_id`** — cadena de auditoría ADR p51), `LLMCall` (append-only: provider, model_id, tokens in/out, costo estimado, latencia, `prompt_version` string, retry_of), `HumanHandoff` (reason_code/priority/claimed/resolved), `Conversation.total_llm_calls`; migraciones aditivas; `llm.py` (interfaz `complete()` + implementación Anthropic + stub determinista para tests); dep + lock regenerado | 2d |
+| **PR-10 — Tool Executor + tools de lectura** | Minting JWT interno + loopback con timeout + mapeo de errores DRF→eventos conversacionales (§2.5 de la spec) + registro `ToolExecution`; throttle service-account-aware; registry de tools + T2 (mis mascotas), T3 (vacunas), T5 (info clínica — local, lee AgentSettings), T6 (precios), T7 (disponibilidad producto, sí/no), T8 (mis citas) con **proyecciones mínimas** definidas en la spec §9; resolver de handles (refs en `flow`) | 3d |
+| **PR-11 — Policy Engine + FSM + identidad** | Reglas pre-planner en el orden EXACTO del router §3 de la spec (urgencia primero — keywords es-MX, plantilla T0-EMERGENCY + handoff urgent; humano; opt-out; bot-question INT-06; confirmación two-stage UX-02 con falsas afirmativas; saludo; fuera-de-alcance INT-05); presupuestos y anti-flood §2.6; transiciones FSM en services + cierre por inactividad 24h (pasada periódica del worker); **verificación de identidad**: T1 + verificación implícita (mascota nombrada = reto pasado) + reto explícito tolerante UX-03 (normalización, typo distancia 1, repetición sin costo, 2º factor titular, 2 fallos reales → E-06) + caducidad 6 meses; aviso de privacidad just-in-time (T0-PRIVACY, UX-01) | 3–4d |
+| **PR-12 — Planner + handoff end-to-end** | Ensamblado de contexto (§10: system prompt versionado + estado FSM + resumen + últimos K mensajes + resultados de tools del turno — datos SIEMPRE delimitados como datos, G6); el worker reemplaza su rama F0: `enabled=True` → pipeline policy→planner→executor (con `enabled=False` T0-DISABLED intacto); `HumanHandoff` reemplaza el claim-lite en los triggers E-01..E-10; chip de motivo en bandeja; presupuesto → degradación a plantilla + handoff | 3d |
+| **PR-13 — suite conversacional + eval** | Los **63 casos F1 congelados** (spec §9.4: 21 tier-0 + 23 lecturas + 6 UX P0 + 8 seguridad + 5 bordes) como tests CI contra el **stub determinista** (bloqueantes: policy/FSM/tools/guards) + fixture trampa cross-tenant §9.2 + aserciones prohibidas globales (UUID/PK/stock/consejo médico/jerga); script de **eval nightly con LLM real** (no bloqueante, reporta % pass — gate del piloto: ≥95 % en 5 corridas); hardening de prompt con los hallazgos; runbook actualizado | 4–5d |
+
+Gate de salida de la épica = **Gate F1 de la spec §10** (los 5 criterios, incluido kill switch probado y latencia P50 < 15 s / urgencias < 10 s).
+
+### 3. Migraciones
+
+Todas aditivas en `agent`: 3 tablas nuevas (`ToolExecution`, `LLMCall`, `HumanHandoff`) + `AddField Conversation.total_llm_calls` (default 0, metadata-only). Cero cambios a tablas de dominio. Rollback trivial.
+
+### 4. Riesgos
+
+| Riesgo | Mitigación |
+|---|---|
+| Prompt injection (R3, directa y 2º orden) | Ya diseñada: policy post-planner valida tool/tier/args/ownership FUERA del LLM; afirmativa jamás amplía el parafraseo (TC-SEC-03 bloqueante absoluto); datos delimitados como datos (G6); 8 casos adversariales en CI |
+| Fuga PII al proveedor (R4) | Proyecciones mínimas por tool (contrato §9); nada financiero ni expediente en contexto; **gate: la key no se usa hasta que confirmes el DPA/settings de la cuenta Anthropic (Q3)** |
+| Costo fuera de control (R11) | Presupuestos duros (15 turnos/conv) + tier-0 resuelve 40-60 % sin LLM + router en Haiku + kill switch por org + `LLMCall` contabiliza todo desde el día 1 |
+| Latencia (O5: P50 < 15 s) | Router barato primero; tools en paralelo no (secuencial simple v1); medición en `LLMCall.latency_ms` desde el arranque |
+| JWT del agente | TTL corto acuñado por request, solo en memoria del worker, jamás en logs (gate `noConsoleTokenLeak` equivalente backend: test de que el token no aparece en `ToolExecution.args_redacted` ni logs) |
+| Estimación de PR-13 (sin precedente interno) | Colchón explícito; los 63 casos ya están ESPECIFICADOS (fixtures+aserciones definidas en la spec) — es transcripción disciplinada, no diseño |
+| Eval nightly flaky | No bloqueante por diseño (§9.1 de la spec); el CI bloqueante es el stub determinista |
+
+### 5. Pruebas
+
+- **Unitarias**: matcher de confirmación es-MX (tabla completa UX-02 incl. falsas afirmativas), detector de urgencia, normalización/reto de identidad (UX-03 tabla), presupuestos, ensamblado de contexto (aserción: jamás PKs, datos delimitados), redacción de `args_redacted`.
+- **Integración**: executor end-to-end contra la API real en test (minting + loopback + ToolExecution persistido con `domain_object_public_id`); cada tool con su proyección exacta; throttle: AGENT exento / humano throttleado; FSM completa; handoff crea registro + estado + visible en bandeja.
+- **Regresión conversacional**: los 63 casos como suite CI (stub) — **este es el entregable central de la épica**; suite completa del proyecto verde.
+- **Manual/piloto**: eval nightly ≥95 % × 5 corridas + Gate F1 §10 con la clínica piloto.
+
+### 6. Prerrequisitos del lado del usuario
+
+- [ ] **Cuenta Anthropic + API key** → `ANTHROPIC_API_KEY` en `.env.prod` (y local para el eval). Revisar términos comerciales/DPA (Q3). Sin key: PR-9..12 avanzan con el stub; el eval nightly y el piloto la esperan.
+- [ ] Smoke E2E de É-F0 (recomendado ANTES de encender F1 — valida el transporte real).
+- [ ] Consulta legal A1-1 — **gate del piloto**, no del código.
+
+### 7. Aprobación
+
+- [ ] É-F1 aprobada (PR-9..PR-13)
+- Aprobado por: ______ · Fecha: ______
+
+---
+
+*É-F2 añadirá aquí su plan con la misma estructura antes de escribir código.*
