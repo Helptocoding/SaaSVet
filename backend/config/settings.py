@@ -64,6 +64,15 @@ ENVIRONMENT = config('ENVIRONMENT', default='dev')  # dev | staging | production
 GIT_SHA = config('GIT_SHA', default='')
 APP_VERSION = config('APP_VERSION', default=GIT_SHA or 'dev')
 DISCORD_WEBHOOK_URL = config('DISCORD_WEBHOOK_URL', default='')
+
+# --- WhatsApp Cloud API (subsistema agente, É-F0) -------------------------
+# Secretos SOLO por env (.env.prod, regla dura del runbook de deploy).
+# Sin APP_SECRET el webhook rechaza todo POST (fail-closed).
+WHATSAPP_VERIFY_TOKEN = config('WHATSAPP_VERIFY_TOKEN', default='')
+WHATSAPP_APP_SECRET = config('WHATSAPP_APP_SECRET', default='')
+# Token para ENVIAR (lo consume el sender en PR-5 vía
+# ChannelAccount.provider_credentials_ref → nombre de esta env var).
+WHATSAPP_ACCESS_TOKEN = config('WHATSAPP_ACCESS_TOKEN', default='')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173', cast=lambda v: [s.strip() for s in v.split(',')])
 

@@ -61,6 +61,12 @@ NON_TENANT_MODELS = {
 # este set. Ver docstring para cómo actualizar.
 BASELINE = {
     ('analytics', 'services.py', 'DailyOrgMetrics', 'filter'),
+    # Revisado 2026-07-16 (É-F0 PR-4): el webhook de WhatsApp resuelve
+    # número→organización por external_account_id (unique GLOBAL) — es el
+    # punto donde NACE el tenant context del subsistema (R1); no existe org
+    # previa con la cual scopear. Todo lo demás en channels/agent usa
+    # for_organization derivada de este canal.
+    ('channels', 'views.py', 'ChannelAccount', 'filter'),
     ('appointments', 'serializers.py', 'MedicalRecord', 'filter'),
     ('appointments', 'serializers.py', 'Invoice', 'filter'),
     ('appointments', 'serializers.py', 'Appointment', 'filter'),

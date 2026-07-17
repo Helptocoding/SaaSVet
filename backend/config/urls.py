@@ -18,6 +18,7 @@ from decouple import config
 from django.contrib import admin
 from django.urls import path, include
 from apps.core.views import healthz, readyz, version, SupportMessageView
+from apps.channels.views import whatsapp_webhook
 from apps.dashboard.views import (
     dashboard_stats, analytics_health, operations_series, financial_series,
     dashboard_summary, dashboard_activation,
@@ -159,6 +160,9 @@ _ADMIN_URL = config('DJANGO_ADMIN_URL', default='admin').strip('/')
 
 urlpatterns = [
     path(f'{_ADMIN_URL}/', admin.site.urls),
+    # Webhook de WhatsApp (É-F0) — FUERA de /api/: público, autentica por
+    # firma HMAC del proveedor (vista Django plana, sin DRF).
+    path('hooks/whatsapp/', whatsapp_webhook, name='whatsapp-webhook'),
     # Health endpoints — Docker healthchecks + external uptime monitor (Capa 0).
     # No auth; never log to RBAC audit. Keep first so they short-circuit on cheap match.
     path('api/healthz/', healthz, name='healthz'),
