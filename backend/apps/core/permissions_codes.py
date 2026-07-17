@@ -124,6 +124,16 @@ PERMISSION_CODES = [
     "import.retrieve",
     "import.create",
     "import.commit",
+
+    # Bandeja del agente conversacional (É-F0 PR-6, decisión Q13 de la spec).
+    # La bandeja expone transcripts (PII conversacional) → permisos propios,
+    # no colgados de appointment.*. claim cubre también cerrar/liberar
+    # (gestión de estado de la conversación); config = kill switch + horario
+    # + FAQ (solo ADMIN vía *.*).
+    "agentinbox.view",
+    "agentinbox.claim",
+    "agentinbox.send",
+    "agentinbox.config",
 ]
 
 # ---------------------------------------------------------------------------
@@ -167,6 +177,9 @@ PERMISSIONS = {
         "cashsession.open", "cashsession.close",
         # Movimientos manuales de caja (ADR p39)
         "cashmovement.list", "cashmovement.create",
+        # Bandeja del agente: el VET puede VER conversaciones (contexto
+        # clínico), no operarlas — la recepción es de ASSISTANT/ADMIN (Q13).
+        "agentinbox.view",
     ],
 
     # Asistente / Recepcionista
@@ -193,6 +206,9 @@ PERMISSIONS = {
         "cashsession.open", "cashsession.close",
         # Movimientos manuales de caja (ADR p39)
         "cashmovement.list", "cashmovement.create",
+        # Bandeja del agente (Q13): la recepcionista atiende WhatsApp —
+        # ver, reclamar/cerrar y responder. config (kill switch) es ADMIN.
+        "agentinbox.view", "agentinbox.claim", "agentinbox.send",
     ],
 
     # Agente virtual — service account del subsistema conversacional

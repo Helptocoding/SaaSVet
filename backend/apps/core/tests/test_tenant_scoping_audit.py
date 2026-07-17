@@ -52,6 +52,10 @@ NON_TENANT_MODELS = {
     # ADR p46: LegalDocument es GLOBAL (sin FK a organization) — el texto legal
     # es único para todo el SaaS; no aplica for_organization por diseño.
     'LegalDocument',
+    # É-F0: AgentSettings es OneToOne a Organization (mismo patrón que
+    # OrganizationSettings, ya listado arriba) — plain Model sin TenantManager;
+    # las views lo acceden con organization=request.user.organization.
+    'AgentSettings',
 }
 
 # Baseline congelado: (módulo_top, archivo, modelo, método). Cada entrada es un

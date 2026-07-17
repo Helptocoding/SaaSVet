@@ -163,6 +163,8 @@ urlpatterns = [
     # Webhook de WhatsApp (É-F0) — FUERA de /api/: público, autentica por
     # firma HMAC del proveedor (vista Django plana, sin DRF).
     path('hooks/whatsapp/', whatsapp_webhook, name='whatsapp-webhook'),
+    # Bandeja del agente conversacional (É-F0 PR-6, permisos agentinbox.*).
+    path('api/inbox/', include('apps.agent.urls')),
     # Health endpoints — Docker healthchecks + external uptime monitor (Capa 0).
     # No auth; never log to RBAC audit. Keep first so they short-circuit on cheap match.
     path('api/healthz/', healthz, name='healthz'),
