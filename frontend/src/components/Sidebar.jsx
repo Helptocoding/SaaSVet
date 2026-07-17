@@ -6,6 +6,9 @@ const NAV_ITEMS = [
     { path: "/", label: "Dashboard", icon: Icon.LayoutDashboard },
     { path: "/pets", label: "Mascotas", icon: Icon.PawPrint },
     { path: "/appointments", label: "Citas", icon: Icon.CalendarClock },
+    // Bandeja del agente (É-F0): gated por capability, no por rol —
+    // ASSISTANT/ADMIN operan, VET solo ve (agentinbox.view).
+    { path: "/inbox", label: "WhatsApp", icon: Icon.MessageCircle, perm: "agentinbox.view" },
     { path: "/medical-records", label: "Historial Clínico", icon: Icon.FileHeart },
     { path: "/prescriptions", label: "Recetas", icon: Icon.Pill },
     { path: "/inventory", label: "Inventario", icon: Icon.Package },
@@ -120,7 +123,9 @@ const Sidebar = ({ onLogout }) => {
 
             {/* Nav principal */}
             <nav style={{ flex: 1, padding: "0 10px", overflowY: "auto" }}>
-                {NAV_ITEMS.map(item => <NavLink key={item.path} item={item} />)}
+                {NAV_ITEMS
+                    .filter(item => !item.perm || can?.(item.perm))
+                    .map(item => <NavLink key={item.path} item={item} />)}
 
                 {/* Admin items */}
                 {isAdmin && (

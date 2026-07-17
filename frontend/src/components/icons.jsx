@@ -19,6 +19,7 @@ import {
     Frown,
     Link, Heart, Activity,
     Building2, Wallet, Lock,
+    MessageCircle, Send,
 } from "lucide-react";
 
 export const Icon = {
@@ -39,6 +40,8 @@ export const Icon = {
     Rows: ({ s = 20, c = "currentColor" }) => <List size={s} color={c} strokeWidth={2} />,
     User: ({ s = 20, c = "currentColor" }) => <User size={s} color={c} strokeWidth={2} />,
     Phone: ({ s = 20, c = "currentColor" }) => <Phone size={s} color={c} strokeWidth={2} />,
+    MessageCircle: ({ s = 20, c = "currentColor" }) => <MessageCircle size={s} color={c} strokeWidth={2} />,
+    Send: ({ s = 20, c = "currentColor" }) => <Send size={s} color={c} strokeWidth={2} />,
     Syringe: ({ s = 20, c = "currentColor" }) => <Syringe size={s} color={c} strokeWidth={2} />,
     TrendUp: ({ s = 20, c = "currentColor" }) => <TrendingUp size={s} color={c} strokeWidth={2} />,
     Edit: ({ s = 20, c = "currentColor" }) => <Edit2 size={s} color={c} strokeWidth={2} />,
