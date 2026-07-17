@@ -73,6 +73,14 @@ WHATSAPP_APP_SECRET = config('WHATSAPP_APP_SECRET', default='')
 # Token para ENVIAR (lo consume el sender en PR-5 vía
 # ChannelAccount.provider_credentials_ref → nombre de esta env var).
 WHATSAPP_ACCESS_TOKEN = config('WHATSAPP_ACCESS_TOKEN', default='')
+# Base de la Graph API (overridable: sandbox/tests/bump de versión sin release).
+WHATSAPP_API_BASE_URL = config(
+    'WHATSAPP_API_BASE_URL', default='https://graph.facebook.com/v20.0',
+)
+# Deadman del worker (Healthchecks.io, patrón ADR p49). Vacío = sin ping.
+HEALTHCHECK_AGENT_WORKER_URL = config(
+    'HEALTHCHECK_AGENT_WORKER_URL', default='',
+)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173', cast=lambda v: [s.strip() for s in v.split(',')])
 
