@@ -133,6 +133,10 @@ INSTALLED_APPS = [
     'apps.platform.apps.PlatformConfig',
     'apps.imports.apps.ImportsConfig',
     'apps.legal.apps.LegalConfig',
+    # Subsistema del agente conversacional (É-F0, plan v1.1 + ADR p51).
+    # Dominios FRONTERA: ningún módulo de dominio los importa.
+    'apps.channels.apps.ChannelsConfig',
+    'apps.agent.apps.AgentConfig',
     # ADR p20: requerida para JWT refresh-token rotation + blacklist al
     # cambiar password. Infraestructura crítica del auth lifecycle.
     'rest_framework_simplejwt.token_blacklist',

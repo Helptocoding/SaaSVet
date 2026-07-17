@@ -174,8 +174,7 @@ Todas **aditivas** (tablas nuevas, cero ALTER a tablas existentes): `channels_ch
 
 ### 7. Aprobación
 
-- [ ] É-F0 aprobada (PR-3..PR-8)
-- Aprobado por: ______ · Fecha: ______
+- [x] É-F0 aprobada (PR-3..PR-8) — Product Owner, 2026-07-16
 
 ---
 
