@@ -199,6 +199,11 @@ Sin esto, si los crons **no corren** (host caído, docker daemon murió, disco l
 
 Healthchecks.io tier free: 20 checks, ping HTTP/HTTPS, alerta email/Slack/Discord/Pushover. Suficiente para 4 crons.
 
+> **É-F0**: además de los crons, el **worker del agente WhatsApp** tiene su
+> propio deadman ("vet-agent-worker", period ~5 min, grace 5 min) — no es un
+> cron sino un loop permanente que pinguea `HEALTHCHECK_AGENT_WORKER_URL`
+> cada ~60 ciclos sanos. Ver `docs/runbooks/agent-whatsapp.md` §4.
+
 ### Setup
 
 1. Crear cuenta en https://healthchecks.io (free, sin tarjeta).
