@@ -81,6 +81,37 @@ WHATSAPP_API_BASE_URL = config(
 HEALTHCHECK_AGENT_WORKER_URL = config(
     'HEALTHCHECK_AGENT_WORKER_URL', default='',
 )
+
+# --- LLM del agente (É-F1) — PROVEEDOR-AGNÓSTICO ---------------------------
+# El proveedor es elección del operador (feedback PO 2026-07-17: jamás
+# asumir marca). API compatible con OpenAI: DeepSeek/OpenAI/Groq/Together/
+# self-hosted funcionan con solo cambiar estas envs. Vacío = el planner no
+# arranca (el buzón F0 y las plantillas tier-0 siguen operando).
+AGENT_LLM_BASE_URL = config('AGENT_LLM_BASE_URL', default='')
+AGENT_LLM_API_KEY = config('AGENT_LLM_API_KEY', default='')
+AGENT_LLM_MODEL_PLANNER = config('AGENT_LLM_MODEL_PLANNER', default='')
+# Router/clasificación barata; vacío = usa el planner para todo.
+AGENT_LLM_MODEL_ROUTER = config('AGENT_LLM_MODEL_ROUTER', default='')
+# Pricing del proveedor elegido (USD por millón de tokens) para LLMCall.
+# 0 = sin contabilidad de costo (los tokens igual se registran).
+AGENT_LLM_COST_PER_MTOK_INPUT = config(
+    'AGENT_LLM_COST_PER_MTOK_INPUT', default=0.0, cast=float,
+)
+AGENT_LLM_COST_PER_MTOK_OUTPUT = config(
+    'AGENT_LLM_COST_PER_MTOK_OUTPUT', default=0.0, cast=float,
+)
+# Loopback del worker al backend (Tool Executor, É-F1): el worker corre en
+# su propio contenedor y consume la API por HTTP interno.
+AGENT_INTERNAL_API_URL = config(
+    'AGENT_INTERNAL_API_URL', default='http://backend:8000',
+)
+# Presupuestos (spec §2.6, constantes globales v1).
+AGENT_MAX_LLM_TURNS_PER_CONVERSATION = config(
+    'AGENT_MAX_LLM_TURNS_PER_CONVERSATION', default=15, cast=int,
+)
+AGENT_MAX_TOOLS_PER_TURN = config(
+    'AGENT_MAX_TOOLS_PER_TURN', default=5, cast=int,
+)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173', cast=lambda v: [s.strip() for s in v.split(',')])
 

@@ -127,6 +127,9 @@ class Conversation(PublicIdMixin, OrganizationalModel):
     flow = models.JSONField(default=dict, blank=True)
     # Resumen rodante (F1) — compresión conversacional, jamás datos clínicos.
     summary = models.TextField(blank=True, default='')
+    # Presupuesto (spec §2.6): al alcanzar el tope global la conversación
+    # degrada a plantilla + handoff (E-09). Solo lo incrementa el planner.
+    total_llm_calls = models.PositiveIntegerField(default=0)
 
     class Meta:
         indexes = [
@@ -136,6 +139,167 @@ class Conversation(PublicIdMixin, OrganizationalModel):
 
     def __str__(self):
         return f"Conversation<{self.public_id} {self.state}>"
+
+
+class ToolExecution(OrganizationalModel):
+    """Auditoría append-only de cada tool ejecutada (É-F1, ADR p51).
+
+    Completa la cadena de trazabilidad SIN FKs desde el dominio hacia agent:
+    fila de dominio (`created_by = user AGENT`) → `domain_object_public_id`
+    (indexado) → esta fila → conversación → mensaje disparador → LLMCall.
+    Dado cualquier objeto creado por el agente se reconstruye exactamente
+    qué conversación, mensaje, tool y corrida de LLM lo produjeron.
+
+    `args_redacted`/`result_summary_redacted`: proyecciones SIN PII cruda
+    (los cuerpos viven solo en Message — regla R15). Append-only por
+    convención (corrección = fila nueva, jamás editar).
+    """
+
+    DECISION_AUTO = 'auto'
+    DECISION_CONFIRMED = 'confirmed'
+    DECISION_DENIED = 'denied'
+    DECISION_ESCALATED = 'escalated'
+    DECISION_CHOICES = (
+        (DECISION_AUTO, 'Automática'),
+        (DECISION_CONFIRMED, 'Confirmada por el cliente'),
+        (DECISION_DENIED, 'Denegada por policy'),
+        (DECISION_ESCALATED, 'Escalada a humano'),
+    )
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT, related_name='tool_executions',
+    )
+    tool_name = models.CharField(max_length=64)
+    args_redacted = models.JSONField(default=dict, blank=True)
+    policy_tier = models.CharField(max_length=8, blank=True, default='')
+    policy_decision = models.CharField(
+        max_length=12, choices=DECISION_CHOICES, default=DECISION_AUTO,
+    )
+    http_status = models.PositiveSmallIntegerField(null=True, blank=True)
+    result_summary_redacted = models.JSONField(default=dict, blank=True)
+    error_code = models.CharField(max_length=64, blank=True, default='')
+    duration_ms = models.PositiveIntegerField(null=True, blank=True)
+    # Correlación con la observabilidad existente (X-Request-ID, P1-5 A1).
+    request_id = models.CharField(max_length=64, blank=True, default='')
+    # public_id del objeto de dominio creado/afectado (cita, etc.).
+    domain_object_public_id = models.UUIDField(
+        null=True, blank=True, db_index=True,
+    )
+    triggered_by_message = models.ForeignKey(
+        'channels.Message', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'conversation', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"ToolExecution<{self.tool_name} {self.policy_decision}>"
+
+
+class LLMCall(OrganizationalModel):
+    """Auditoría/costos append-only de cada llamada al LLM (É-F1, R11).
+
+    Proveedor-agnóstico: `provider`/`model_id` son datos, no supuestos
+    (el proveedor es elección del PO — feedback 2026-07-17). No guarda el
+    prompt (PII + volumen): `prompt_version` identifica la plantilla en git.
+    """
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT, related_name='llm_calls',
+    )
+    provider = models.CharField(max_length=32, blank=True, default='')
+    model_id = models.CharField(max_length=64)
+    prompt_version = models.CharField(max_length=32, blank=True, default='')
+    input_tokens = models.PositiveIntegerField(default=0)
+    output_tokens = models.PositiveIntegerField(default=0)
+    # Estimado con AGENT_LLM_COST_PER_MTOK_* (env por proveedor); 0 = sin
+    # pricing configurado. Contabilidad, no facturación.
+    cost_estimate = models.DecimalField(
+        max_digits=10, decimal_places=6, default=0,
+    )
+    latency_ms = models.PositiveIntegerField(null=True, blank=True)
+    finish_reason = models.CharField(max_length=32, blank=True, default='')
+    retry_of = models.ForeignKey(
+        'self', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    error = models.CharField(max_length=200, blank=True, default='')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"LLMCall<{self.model_id} in={self.input_tokens} out={self.output_tokens}>"
+
+
+class HumanHandoff(OrganizationalModel):
+    """Cola de escalado a humano (É-F1; matriz E-01..E-10 de la spec §7).
+
+    En F0 la bandeja usaba claim-lite sobre Conversation; desde F1 cada
+    escalado deja SU registro (métrica de tasa de handoff = gate F1).
+    """
+
+    REASON_EXPLICIT = 'explicit_request'
+    REASON_EMERGENCY = 'emergency'
+    REASON_POLICY = 'policy_block'
+    REASON_LOW_CONFIDENCE = 'low_confidence'
+    REASON_TOOL_FAILURE = 'tool_failure'
+    REASON_IDENTITY = 'identity_ambiguous'
+    REASON_BUDGET = 'budget_exhausted'
+    REASON_CHOICES = (
+        (REASON_EXPLICIT, 'Pidió humano'),
+        (REASON_EMERGENCY, 'Urgencia'),
+        (REASON_POLICY, 'Bloqueado por política'),
+        (REASON_LOW_CONFIDENCE, 'Baja confianza'),
+        (REASON_TOOL_FAILURE, 'Fallo de herramienta'),
+        (REASON_IDENTITY, 'Identidad ambigua'),
+        (REASON_BUDGET, 'Presupuesto agotado'),
+    )
+
+    PRIORITY_URGENT = 'urgent'
+    PRIORITY_NORMAL = 'normal'
+    PRIORITY_CHOICES = (
+        (PRIORITY_URGENT, 'Urgente'),
+        (PRIORITY_NORMAL, 'Normal'),
+    )
+
+    RESOLUTION_CHOICES = (
+        ('handled', 'Atendido'),
+        ('returned_to_agent', 'Devuelto al agente'),
+        ('closed', 'Cerrado'),
+    )
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT, related_name='handoffs',
+    )
+    reason_code = models.CharField(max_length=20, choices=REASON_CHOICES)
+    reason_detail = models.CharField(max_length=200, blank=True, default='')
+    priority = models.CharField(
+        max_length=8, choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL,
+    )
+    claimed_by = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    claimed_at = models.DateTimeField(null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolution = models.CharField(
+        max_length=20, choices=RESOLUTION_CHOICES, blank=True, default='',
+    )
+
+    class Meta:
+        indexes = [
+            # Cola de pendientes por org (resolved_at IS NULL).
+            models.Index(fields=['organization', 'resolved_at', 'priority']),
+        ]
+
+    def __str__(self):
+        return f"HumanHandoff<{self.reason_code} {self.priority}>"
 
 
 class AgentSettings(models.Model):

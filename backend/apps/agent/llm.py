@@ -1,0 +1,196 @@
+"""
+agent/llm.py — Adaptador LLM proveedor-agnóstico (É-F1 PR-9).
+
+REGLA (feedback PO 2026-07-17): el proveedor NO está decidido y este módulo
+JAMÁS asume una marca. Habla la API compatible con OpenAI
+(``/chat/completions`` + tool calling), que cubre DeepSeek, OpenAI, Groq,
+Together y despliegues self-hosted (vLLM/Ollama) con un solo cliente:
+``AGENT_LLM_BASE_URL`` + ``AGENT_LLM_API_KEY`` + modelos, todo por env.
+
+Sin SDKs: ``requests`` (ya en el lock). El planner consume la interfaz
+``complete()``; los tests usan ``StubLLMClient`` (determinista — la suite
+CI de la spec §9.1 corre sin red ni proveedor).
+
+PII: este módulo no loguea prompts ni respuestas (regla R15); la
+contabilidad vive en el modelo LLMCall (la persiste el planner).
+"""
+import json
+import logging
+import time
+from dataclasses import dataclass, field
+
+import requests
+from django.conf import settings
+
+logger = logging.getLogger('agent.events')
+
+DEFAULT_TIMEOUT = 30
+DEFAULT_MAX_TOKENS = 600
+DEFAULT_TEMPERATURE = 0.3
+
+
+class LLMError(Exception):
+    """Fallo del proveedor. `retryable`: timeout/5xx/429 sí; 4xx no."""
+
+    def __init__(self, message, retryable):
+        super().__init__(message)
+        self.retryable = retryable
+
+
+@dataclass
+class LLMResult:
+    """Salida normalizada de una llamada.
+
+    kind: 'text' (respuesta libre) | 'tool_call' (el modelo pide una tool).
+    Los tokens vienen del campo `usage` del proveedor (0 si no lo reporta).
+    """
+
+    kind: str
+    text: str = ''
+    tool_name: str = ''
+    tool_args: dict = field(default_factory=dict)
+    finish_reason: str = ''
+    input_tokens: int = 0
+    output_tokens: int = 0
+    model_id: str = ''
+    latency_ms: int = 0
+
+
+def estimate_cost(input_tokens, output_tokens):
+    """Costo estimado con el pricing por env (0 si no está configurado).
+
+    AGENT_LLM_COST_PER_MTOK_INPUT/OUTPUT = USD por millón de tokens del
+    proveedor elegido. Contabilidad (R11), no facturación.
+    """
+    price_in = getattr(settings, 'AGENT_LLM_COST_PER_MTOK_INPUT', 0.0)
+    price_out = getattr(settings, 'AGENT_LLM_COST_PER_MTOK_OUTPUT', 0.0)
+    return (
+        (input_tokens / 1_000_000) * price_in
+        + (output_tokens / 1_000_000) * price_out
+    )
+
+
+class OpenAICompatibleClient:
+    """Cliente mínimo de `/chat/completions` con tool calling."""
+
+    def __init__(self, base_url=None, api_key=None, model=None):
+        self.base_url = (
+            base_url or getattr(settings, 'AGENT_LLM_BASE_URL', '')
+        ).rstrip('/')
+        self.api_key = api_key or getattr(settings, 'AGENT_LLM_API_KEY', '')
+        self.model = model or getattr(settings, 'AGENT_LLM_MODEL_PLANNER', '')
+
+    def complete(self, *, system, messages, tools=None,
+                 max_tokens=DEFAULT_MAX_TOKENS,
+                 temperature=DEFAULT_TEMPERATURE):
+        """messages = [{'role': 'user'|'assistant'|'tool', 'content': ...}].
+
+        Devuelve LLMResult; levanta LLMError. El caller (planner) decide
+        reintentos y persiste LLMCall.
+        """
+        if not self.base_url or not self.api_key or not self.model:
+            raise LLMError(
+                "LLM no configurado (AGENT_LLM_BASE_URL/API_KEY/MODEL)",
+                retryable=False,
+            )
+
+        payload = {
+            'model': self.model,
+            'messages': [{'role': 'system', 'content': system}] + list(messages),
+            'max_tokens': max_tokens,
+            'temperature': temperature,
+        }
+        if tools:
+            payload['tools'] = tools
+            payload['tool_choice'] = 'auto'
+
+        started = time.monotonic()
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={'Authorization': f'Bearer {self.api_key}'},
+                json=payload,
+                timeout=DEFAULT_TIMEOUT,
+            )
+        except requests.RequestException as exc:
+            raise LLMError(f"red: {exc.__class__.__name__}", retryable=True)
+        latency_ms = int((time.monotonic() - started) * 1000)
+
+        if response.status_code >= 500 or response.status_code == 429:
+            raise LLMError(f"proveedor {response.status_code}", retryable=True)
+        if response.status_code >= 400:
+            raise LLMError(f"proveedor {response.status_code}", retryable=False)
+
+        try:
+            data = response.json()
+            choice = data['choices'][0]
+            message = choice.get('message') or {}
+        except (ValueError, KeyError, IndexError):
+            raise LLMError("respuesta no parseable", retryable=False)
+
+        usage = data.get('usage') or {}
+        base = {
+            'finish_reason': choice.get('finish_reason', ''),
+            'input_tokens': usage.get('prompt_tokens', 0) or 0,
+            'output_tokens': usage.get('completion_tokens', 0) or 0,
+            'model_id': data.get('model', self.model),
+            'latency_ms': latency_ms,
+        }
+
+        tool_calls = message.get('tool_calls') or []
+        if tool_calls:
+            function = (tool_calls[0].get('function') or {})
+            raw_args = function.get('arguments') or '{}'
+            try:
+                tool_args = json.loads(raw_args)
+                if not isinstance(tool_args, dict):
+                    raise ValueError
+            except ValueError:
+                # Args malformados = el modelo alucinó JSON: NO retryable a
+                # ciegas — el planner lo trata como turno fallido (fallback).
+                raise LLMError("tool_args no parseables", retryable=False)
+            return LLMResult(
+                kind='tool_call',
+                tool_name=function.get('name', ''),
+                tool_args=tool_args,
+                **base,
+            )
+
+        return LLMResult(kind='text', text=message.get('content') or '', **base)
+
+
+class StubLLMClient:
+    """Determinista para tests (spec §9.1: la suite CI corre sin proveedor).
+
+    `scripted` = lista de LLMResult (o LLMError para simular fallos) que se
+    consumen en orden; registra cada invocación en `calls`.
+    """
+
+    def __init__(self, scripted=None, model='stub-model'):
+        self.scripted = list(scripted or [])
+        self.model = model
+        self.calls = []
+
+    def complete(self, *, system, messages, tools=None, **kwargs):
+        self.calls.append({
+            'system': system, 'messages': messages, 'tools': tools,
+        })
+        if not self.scripted:
+            return LLMResult(kind='text', text='(stub sin guion)',
+                             model_id=self.model)
+        item = self.scripted.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+def get_llm_client(role='planner'):
+    """Factory por rol: 'planner' (modelo capaz) | 'router' (barato).
+
+    Ambos modelos por env; si el router no está configurado cae al planner
+    (una sola config mínima levanta el sistema completo).
+    """
+    model = getattr(settings, 'AGENT_LLM_MODEL_PLANNER', '')
+    if role == 'router':
+        model = getattr(settings, 'AGENT_LLM_MODEL_ROUTER', '') or model
+    return OpenAICompatibleClient(model=model)

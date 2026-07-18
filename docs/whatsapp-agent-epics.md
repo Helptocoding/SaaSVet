@@ -241,8 +241,7 @@ Todas aditivas en `agent`: 3 tablas nuevas (`ToolExecution`, `LLMCall`, `HumanHa
 
 ### 7. Aprobación
 
-- [ ] É-F1 aprobada (PR-9..PR-13)
-- Aprobado por: ______ · Fecha: ______
+- [x] É-F1 aprobada (PR-9..PR-13) — Product Owner, 2026-07-17 (con la corrección proveedor-agnóstico ya incorporada; proveedor LLM = elección abierta del PO, no bloquea PR-9..12)
 
 ---
 
