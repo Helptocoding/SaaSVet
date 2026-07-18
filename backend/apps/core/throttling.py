@@ -1,7 +1,36 @@
 import re
 
 from django.core.cache import caches
-from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle
+from rest_framework.throttling import (
+    AnonRateThrottle,
+    SimpleRateThrottle,
+    UserRateThrottle,
+)
+
+
+class ServiceAwareUserRateThrottle(UserRateThrottle):
+    """UserRateThrottle global con exención para service accounts (É-F1, R9).
+
+    El user AGENT (ADR p51) consume la API vía loopback para TODAS las
+    conversaciones de su organización: el rate global de 500/h lo agotaría
+    en horas pico y fallaría en cascada sus tools. Su límite operativo real
+    es el presupuesto del Policy Engine (turnos LLM + tools por turno,
+    spec §2.6), no el throttle HTTP.
+
+    Los usuarios humanos (is_service_account=False) conservan exactamente
+    el comportamiento previo — test de no-regresión en
+    apps/core/tests/test_service_account_throttle.py.
+    """
+
+    def allow_request(self, request, view):
+        user = getattr(request, 'user', None)
+        if (
+            user is not None
+            and user.is_authenticated
+            and getattr(user, 'is_service_account', False)
+        ):
+            return True
+        return super().allow_request(request, view)
 
 
 class ExtendedRateThrottle(SimpleRateThrottle):

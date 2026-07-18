@@ -232,7 +232,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        # É-F1 (R9): igual que UserRateThrottle para humanos; exime service
+        # accounts (user AGENT — su límite real es el presupuesto del Policy
+        # Engine, no el rate HTTP). Ver apps/core/throttling.py.
+        'apps.core.throttling.ServiceAwareUserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/hour',
