@@ -64,6 +64,92 @@ def is_open_now(business_hours, tz_name, now=None):
     return False
 
 
+# --- Plantillas F1 (LITERALES, spec §1.3; el LLM no participa) -------------
+
+# INT-01 · urgencia (R16): acudir de inmediato + teléfono + aviso al equipo.
+# JAMÁS evalúa el cuadro (G2). {phone} = faq_facts['telefono'] o genérico.
+T0_EMERGENCY = (
+    "Esto puede ser una emergencia 🚨 Acude de inmediato a la clínica o "
+    "llámanos{phone}. Ya avisé al equipo para que te contacte lo antes "
+    "posible."
+)
+T0_EMERGENCY_NO_PHONE = (
+    "Esto puede ser una emergencia 🚨 Acude de inmediato a la clínica. Ya "
+    "avisé al equipo para que te contacte lo antes posible."
+)
+
+# INT-02 · handoff explícito.
+T0_HANDOFF = (
+    "Claro, en un momento una persona del equipo continúa contigo por aquí 🙌"
+)
+T0_HANDOFF_AFTER_HOURS = (
+    "Con gusto. Ahorita estamos fuera de horario; el equipo te responde por "
+    "aquí en cuanto abramos 🙌"
+)
+
+# INT-06 · "¿eres una persona?".
+T0_BOTQ = (
+    "Soy el asistente virtual de la clínica 🙂 Puedo agendarte y resolver "
+    "dudas al momento — y si prefieres, te comunico con una persona del equipo."
+)
+
+# UX-01 · aviso de privacidad just-in-time (antes de la 1ª recolección de datos).
+T0_PRIVACY = (
+    "Antes de continuar: tus datos se tratan conforme al aviso de privacidad "
+    "de la clínica{link}."
+)
+
+# E-09 · presupuesto de conversación agotado.
+T0_BUDGET = (
+    "Para darte una mejor atención, dejo que una persona del equipo continúe "
+    "contigo 🙌"
+)
+
+# INT-05 · fuera de alcance.
+T0_OUT_PAYMENT = (
+    "Los pagos se realizan directamente en la clínica 🙂 Si tienes una duda "
+    "de un cobro, con gusto te comunico con el equipo."
+)
+T0_OUT_MEDICAL = (
+    "Eso mejor que lo valore el veterinario 🙏 ¿Te agendo una consulta? Y si "
+    "es algo urgente, acude de inmediato a la clínica."
+)
+
+# UX-16 · falsa afirmativa a un pending_action (no ejecuta, no cierra).
+T0_DEFER = "Va, aquí queda pendiente — me dices 🙌"
+
+# Reto de identidad (G4: nunca enumera).
+T0_CHALLENGE_PET = (
+    "Para proteger tus datos, ¿me confirmas el nombre de tu mascota?"
+)
+T0_CHALLENGE_RETRY = (
+    "Mmm, no me coincide. ¿Me lo repites tal como lo registraron?"
+)
+T0_CHALLENGE_OWNER = (
+    "¿A nombre de quién está el registro?"
+)
+T0_CHALLENGE_FAILED = (
+    "No logro validar tus datos por aquí 🙏 Te comunico con el equipo para "
+    "que te apoyen."
+)
+
+T0_THANKS = "¡Con gusto! Aquí estoy si necesitas algo más 🐾"
+
+
+def render_emergency(agent_settings):
+    facts = (agent_settings.faq_facts or {}) if agent_settings else {}
+    phone = facts.get('telefono') or facts.get('teléfono')
+    if phone:
+        return T0_EMERGENCY.format(phone=f" al {phone}")
+    return T0_EMERGENCY_NO_PHONE
+
+
+def render_privacy(agent_settings):
+    facts = (agent_settings.faq_facts or {}) if agent_settings else {}
+    link = facts.get('aviso_privacidad') or facts.get('privacidad')
+    return T0_PRIVACY.format(link=f" ({link})" if link else "")
+
+
 def render_first_reply(agent_settings, organization, now=None):
     """Texto de la PRIMERA respuesta automática de una conversación (F0).
 
