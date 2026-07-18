@@ -5,6 +5,7 @@
 #     internal self-signed CA when DOMAIN=localhost for smoke).
 #   - Route requests:
 #       /api/*            → backend:8000 (gunicorn)
+#       /hooks/*          → backend:8000 (webhooks públicos, firma HMAC — É-F0)
 #       /static/*         → static_files volume (Django admin + DRF assets)
 #       /admin/*          → backend:8000 (with optional IP allow-list)
 #       /                 → frontend:80 (nginx serving the SPA bundle)
@@ -133,6 +134,21 @@ saaslyvet.com, www.saaslyvet.com {
 
 			# Caddy default transport timeouts are sane; tighten only if
 			# you observe slow upstreams. transport http { read_timeout 60s }
+		}
+	}
+
+	# -----------------------------------------------------------------------
+	# Webhooks entrantes (É-F0) — WhatsApp Cloud API. FUERA de /api/: endpoint
+	# público que autentica por firma HMAC del proveedor (no JWT). DEBE
+	# enrutar al backend igual que /api/*; sin este bloque cae al catch-all
+	# (SPA) y el handshake de verificación de Meta recibe HTML → falla.
+	# -----------------------------------------------------------------------
+	handle /hooks/* {
+		reverse_proxy backend:8000 {
+			header_up X-Forwarded-For   {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host  {host}
+			header_up X-Real-IP         {remote_host}
 		}
 	}
 
