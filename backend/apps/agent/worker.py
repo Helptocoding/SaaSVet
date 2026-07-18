@@ -90,14 +90,27 @@ def _process_one(conversation, now):
         pk__in=[m.pk for m in pending],
     ).update(status=Message.STATUS_PROCESSED)
 
+    agent_settings = AgentSettings.objects.filter(organization=org).first()
+    triggered_by = pending[-1]
+
+    # É-F1: con el agente encendido y provisionado, cada entrante pasa por el
+    # pipeline completo (policy → planner → tools). Si NO está provisionado el
+    # actor (agent_user), caemos al comportamiento F0 de buzón (auto-saludo
+    # único) para no romper instalaciones a medio provisionar.
+    if agent_settings and agent_settings.enabled and agent_settings.agent_user_id:
+        from . import planner
+        planner.handle_inbound(
+            conversation, agent_settings=agent_settings,
+            triggered_by=triggered_by,
+        )
+        return
+
+    # F0 fallback (buzón sin LLM): saludo/aviso una sola vez por conversación.
     has_outbound = Message.objects.for_organization(org).filter(
         conversation=conversation, direction=Message.DIRECTION_OUT,
     ).exists()
     if has_outbound:
-        # F0: la conversación ya fue saludada — la sigue un humano (bandeja).
         return
-
-    agent_settings = AgentSettings.objects.filter(organization=org).first()
     body = render_first_reply(agent_settings, org)
     Message(
         organization=org,

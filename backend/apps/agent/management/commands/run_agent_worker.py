@@ -65,6 +65,9 @@ class Command(BaseCommand):
             cycles += 1
             if cycles % _DEADMAN_EVERY_CYCLES == 0:
                 self._ping_deadman()
+                # Cierre por inactividad (spec §2.8) — barato, poco frecuente.
+                from apps.agent.policy import close_inactive_conversations
+                close_inactive_conversations()
 
             if options['once']:
                 self.stdout.write(
