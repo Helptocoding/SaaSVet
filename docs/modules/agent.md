@@ -1,6 +1,6 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
-> **Estado**: É-F0 (buzón operable, sin LLM). Contrato de implementación:
+> **Estado**: É-F1 (agente read-only con LLM — policy + tools de lectura). É-F0 (buzón) + É-F1 código completo en CI. Contrato de implementación:
 > [`docs/whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) · spec funcional
 > congelada F1: [`docs/whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
 > · identidad del actor: ADR p51. Runbook operativo:
@@ -58,7 +58,28 @@ Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
 - `provision_channel --org --phone-number-id [--display-number] [--credentials-ref]`
   — idempotente; guard R1 (número de otra org → error, sin escrituras).
 - `ensure_agent_users [--org]` — repara/recrea el service account (ADR p51).
-- `run_agent_worker [--once] [--poll] [--batch]` — el proceso worker.
+- `run_agent_worker [--once] [--poll] [--batch]` — el proceso worker (F1:
+  corre policy→planner→tools por entrante; cierra inactivas 24h en el loop).
+- `agent_eval [--json]` — eval nightly con LLM real (no bloqueante, rollback;
+  skip si no hay `AGENT_LLM_API_KEY`). Gate del piloto: ≥95 % en 5 corridas.
+
+## Agente F1 (LLM read-only)
+
+Pipeline por entrante (`agent/planner.py`): `policy.evaluate` resuelve
+tier-0 sin LLM (urgencia/humano/opt-out/bot/confirmación/presupuesto);
+`RUN_PLANNER` corre el bucle acotado LLM↔tools (executor loopback+RBAC
+reales, resultado como DATOS G6, `LLMCall` por llamada). El LLM **nunca
+autoriza**: policy decide antes, run_tool/executor revalidan
+tier/verificación/ownership. Proveedor LLM = elección del operador
+(`AGENT_LLM_*` por env, cliente OpenAI-compatible en `agent/llm.py`).
+Tools de lectura (spec §9): list_my_pets, get_vaccine_status,
+list_upcoming_appointments, get_clinic_info, get_service_catalog,
+check_product_availability, request_human. Handles efímeros en `flow.refs`
+con resolver+ownership server-side (handle desconocido = denegación dura).
+Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03.
+Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`
+(bloqueante) + fixture trampa cross-tenant + aserciones prohibidas globales
+(`agent/tests/harness.py`).
 
 ## Invariantes propios (además de los globales)
 

@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **É0** | Fundaciones core: PR-0 fotografía + fix RBAC `vaccinerecord` (PR-1) + identidad del agente (PR-2) | **✅ COMPLETADA 2026-07-16** — PR-0 (a960e07..997c796), PR-1 (13115af), PR-2 (886fbd6); CI verde en los tres. Pendiente solo el deploy a prod | — |
 | É-F0 | Buzón operable: apps `channels`+`agent`, webhook, worker, outbox, plantillas tier-0, bandeja `/inbox` | **CÓDIGO COMPLETO 2026-07-17** — PR-3 (9c253f5) · PR-4 (eb24a83) · PR-5 (90f17ad) · PR-6 (ab2b4d3) · PR-7 (61925dc) · PR-8 (infra+runbooks). CI verde en todos. **Gate pendiente: smoke E2E con sandbox de Meta** (runbook agent-whatsapp.md §2) — requiere credenciales Meta (usuario) + deploy | É0 + número Meta (A0-1, lado usuario) |
-| É-F1 | Agente read-only: LLM, Policy Engine, FSM, Tool Executor (incluye minting + throttle scope diferidos de A0-2), tools T1–T8+T15 | Sin planear | É0, É-F0, consulta legal A1-1 |
+| É-F1 | Agente read-only: LLM, Policy Engine, FSM, Tool Executor (incluye minting + throttle scope diferidos de A0-2), tools T1–T8+T15 | **CÓDIGO COMPLETO 2026-07-18** — PR-9 (f3e4f83) · PR-10 (f8c1c0c) · PR-11 (ef14ca0) · PR-12 (fb16a6e) · PR-13 (suite regresión + eval). CI verde en todos. Proveedor LLM = elección abierta del PO (adaptador OpenAI-compatible por env). **Gates pendientes: eval nightly ≥95 % (requiere key LLM) + Gate F1 §10 con clínica piloto (requiere consulta legal A1-1)** | É0, É-F0, consulta legal A1-1 |
 | É-F2 | Escritura de agenda: A2-1 idempotencia + T9–T14 + tier-2 + P1 de la revisión UX | Sin planear | É-F1 |
 
 Pendientes del lado del usuario (ruta crítica, sin código): **A0-1** trámites Meta (número/WABA) · **A1-1** consulta legal (Q2/Q3/Q9).
