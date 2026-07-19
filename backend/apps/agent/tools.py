@@ -338,6 +338,139 @@ def list_upcoming_appointments(conversation, executor, args, triggered_by=None):
                        summary={'upcoming': len(projection)})
 
 
+SLOT_MINUTES = 30  # duración de cita estándar (misma que el walk-in del dominio)
+
+
+def _weekday_ranges(business_hours, weekday_index):
+    key = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')[weekday_index]
+    ranges = business_hours.get(key, []) if isinstance(business_hours, dict) else []
+    return ranges if isinstance(ranges, list) else []
+
+
+def _time_bucket_ok(hhmm, preferred):
+    """Filtro por franja coloquial (UX-07): mañana/tarde/noche o 'HH:MM'±1h."""
+    if not preferred:
+        return True
+    p = _norm(preferred)
+    hour = int(hhmm[:2])
+    if 'manana' in p or 'temprano' in p:
+        return 6 <= hour < 12
+    if 'tarde' in p:
+        return 12 <= hour < 18
+    if 'noche' in p:
+        return hour >= 18
+    # "tipo 4", "a las 4", "4 pm" → hora ± ventana
+    digits = ''.join(c for c in p if c.isdigit())
+    if digits:
+        target = int(digits[:2]) if len(digits) >= 2 else int(digits)
+        if 'pm' in p or 'tarde' in p:
+            target = target + 12 if target < 12 else target
+        return abs(hour - target) <= 1
+    return True
+
+
+def _resolve_scheduling_vet(organization, agent_settings):
+    """Vet objetivo para ofertar/agendar (Q14). fixed_vet → default; si no hay,
+    el primer VET activo de la org (fallback determinista)."""
+    from apps.users.models import User
+    if agent_settings and agent_settings.default_veterinarian_id:
+        vet = agent_settings.default_veterinarian
+        if vet and vet.is_active:
+            return vet
+    return (
+        User.objects.filter(organization=organization, role='VET', is_active=True)
+        .order_by('pk').first()
+    )
+
+
+def find_available_slots(conversation, executor, args, triggered_by=None):
+    """Horarios libres de UN día (spec T9, UX-06). Compone la ocupación real
+    (GET /appointments/?date=&veterinarian=) ∩ business_hours. ≤3 slots.
+
+    Una responsabilidad = un día, un vet, una llamada a la API. Si el día
+    está lleno → lista vacía y el planner ofrece otro día."""
+    from datetime import datetime, timedelta
+
+    from .models import AgentSettings
+
+    date_str = (args.get('date') or '').strip()
+    if not date_str:
+        return ToolOutcome(ok=False, client_error='need_date')
+    try:
+        day = datetime.strptime(date_str[:10], '%Y-%m-%d').date()
+    except ValueError:
+        return ToolOutcome(ok=False, client_error='bad_date')
+
+    org = conversation.organization
+    today = timezone.localdate()
+    if day < today:
+        return ToolOutcome(ok=False, client_error='past_date')
+
+    agent_settings = AgentSettings.objects.filter(organization=org).first()
+    business_hours = (agent_settings.business_hours or {}) if agent_settings else {}
+    ranges = _weekday_ranges(business_hours, day.weekday())
+    if not ranges:
+        return ToolOutcome(ok=True, data=[], summary={'slots': 0, 'closed': True})
+
+    vet = _resolve_scheduling_vet(org, agent_settings)
+    if vet is None:
+        return ToolOutcome(ok=False, client_error='no_vet')
+
+    # Ocupación real del vet ese día (API, RBAC del AGENT).
+    status_code, data = executor.call(
+        'GET', '/api/appointments/', tool_name='find_available_slots',
+        params={'date': date_str, 'veterinarian': str(vet.public_id)},
+        args_redacted={'date': date_str, 'preferred': args.get('preferred_time', '')},
+        triggered_by_message=triggered_by,
+        result_summarizer=lambda d: {'occupied': len(d) if isinstance(d, list) else 0},
+    )
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    appts = data if isinstance(data, list) else data.get('results', [])
+    occupied = {
+        (a.get('start_time') or '')[:5]
+        for a in appts
+        if a.get('status') in ('scheduled', 'confirmed', 'in_progress')
+    }
+
+    now_hhmm = timezone.localtime().strftime('%H:%M') if day == today else '00:00'
+    preferred = args.get('preferred_time', '')
+    slots = []
+    for start, end in [(r[0], r[1]) for r in ranges if len(r) == 2]:
+        cursor = datetime.strptime(start, '%H:%M')
+        limit = datetime.strptime(end, '%H:%M')
+        while cursor + timedelta(minutes=SLOT_MINUTES) <= limit:
+            hhmm = cursor.strftime('%H:%M')
+            if (
+                hhmm not in occupied
+                and hhmm > now_hhmm
+                and _time_bucket_ok(hhmm, preferred)
+            ):
+                slots.append(hhmm)
+                if len(slots) >= MAX_ITEMS:
+                    break
+            cursor += timedelta(minutes=SLOT_MINUTES)
+        if len(slots) >= MAX_ITEMS:
+            break
+
+    projection = [{
+        'fecha': format_local_datetime(
+            f"{date_str}T{hhmm}:00", org,
+        ).rsplit(',', 1)[0],  # "martes 21 de julio" (la hora va aparte)
+        'hora': _hhmm_label(hhmm),
+        'iso_date': date_str,
+        'iso_time': hhmm,
+    } for hhmm in slots[:3]]
+    return ToolOutcome(ok=True, data=projection, summary={'slots': len(projection)})
+
+
+def _hhmm_label(hhmm):
+    hour, minute = int(hhmm[:2]), int(hhmm[3:5])
+    ampm = 'a.m.' if hour < 12 else 'p.m.'
+    h12 = hour % 12 or 12
+    return f"{h12}:{minute:02d} {ampm}"
+
+
 def request_human(conversation, executor, args, triggered_by=None):
     """LOCAL: crea el handoff y silencia al agente (E-02; disponible SIEMPRE)."""
     handoff = HumanHandoff(
@@ -425,6 +558,25 @@ TOOL_SPECS = {
             'type': 'object',
             'properties': {'pet_handle': {'type': 'string'}},
             'required': [],
+        },
+    },
+    'find_available_slots': {
+        'handler': find_available_slots,
+        'tier': '1',
+        'min_verification': 'unknown',
+        'description': (
+            'Horarios libres de la clínica para UN día concreto (formato '
+            'YYYY-MM-DD). Úsalo para proponer horarios antes de agendar. '
+            'preferred_time opcional: "mañana"/"tarde"/"noche" o una hora.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'date': {'type': 'string',
+                         'description': 'Día en formato YYYY-MM-DD'},
+                'preferred_time': {'type': 'string'},
+            },
+            'required': ['date'],
         },
     },
     'request_human': {

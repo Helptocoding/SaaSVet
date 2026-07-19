@@ -328,5 +328,24 @@ class AgentSettings(models.Model):
     # Hechos de FAQ (dirección, estacionamiento…) para INT-10/T5.
     faq_facts = models.JSONField(default=dict, blank=True)
 
+    # É-F2 (Q14): cómo elige veterinario el agente al ofrecer/crear citas.
+    #   fixed_vet     → siempre default_veterinarian (predecible; default).
+    #   any_available → el subsistema resuelve un vet con hueco.
+    SCHEDULING_FIXED = 'fixed_vet'
+    SCHEDULING_ANY = 'any_available'
+    SCHEDULING_CHOICES = (
+        (SCHEDULING_FIXED, 'Veterinario fijo'),
+        (SCHEDULING_ANY, 'Cualquiera disponible'),
+    )
+    scheduling_mode = models.CharField(
+        max_length=16, choices=SCHEDULING_CHOICES, default=SCHEDULING_FIXED,
+    )
+    default_veterinarian = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    # UX-08: nudge único de flujo abandonado (PR-18). Por-org, default on.
+    nudge_enabled = models.BooleanField(default=True)
+
     def __str__(self):
         return f"AgentSettings — {self.organization.name} ({'ON' if self.enabled else 'OFF'})"
