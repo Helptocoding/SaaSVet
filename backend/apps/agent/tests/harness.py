@@ -39,12 +39,26 @@ FORBIDDEN_MEDICAL = (
 
 
 class RealApiTransport:
-    """Loopback por el Django test client con el JWT del AGENT (API+RBAC reales)."""
+    """Loopback por el Django test client con el JWT del AGENT (API+RBAC reales).
+
+    Reenvía el body `json` en escrituras (POST/PATCH, F2) y `params` en lecturas
+    (GET, F1). Los headers extra (X-Idempotency-Key, X-Request-ID) van como META
+    para que el loopback se comporte como en producción."""
 
     def __call__(self, method, path, *, headers, params=None, json=None):
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION=headers.get('Authorization', ''))
-        response = getattr(client, method.lower())(path, data=params or {})
+        extra = {}
+        for key, value in (headers or {}).items():
+            if key.lower() == 'authorization':
+                extra['HTTP_AUTHORIZATION'] = value
+            else:
+                extra['HTTP_' + key.upper().replace('-', '_')] = value
+        if json is not None:
+            response = getattr(client, method.lower())(
+                path, data=json, format='json', **extra)
+        else:
+            response = getattr(client, method.lower())(
+                path, data=params or {}, **extra)
         try:
             payload = response.json() if response.content else {}
         except ValueError:
