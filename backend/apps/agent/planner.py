@@ -239,6 +239,9 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
 
 def _commit_success_text(tool, outcome):
     cuando = (outcome.data or {}).get('cuando', '')
+    if tool == 'register_new_client_and_pet':
+        return (f"¡Listo! ✅ Te registré y quedó agendada tu cita para el "
+                f"{cuando}. Te esperamos 🐾")
     if tool == 'create_appointment':
         return f"¡Listo! ✅ Quedó agendada para el {cuando}. Te esperamos 🐾"
     if tool == 'reschedule_appointment':

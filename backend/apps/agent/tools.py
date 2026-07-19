@@ -702,11 +702,117 @@ def commit_reschedule_appointment(conversation, executor, args, triggered_by=Non
     })
 
 
+def _wa_id_to_local10(wa_id):
+    """10 dígitos nacionales MX desde el wa_id (E.164 sin '+'); None si no
+    alcanza. Los últimos 10 sirven con o sin el '1' legacy mexicano
+    (5219371651868 y 529371651868 → 9371651868)."""
+    digits = ''.join(c for c in str(wa_id or '') if c.isdigit())
+    return digits[-10:] if len(digits) >= 10 else None
+
+
+def register_new_client_and_pet(conversation, executor, args, triggered_by=None):
+    """Alta atómica de cliente NUEVO + 1ª mascota + 1ª cita (T11, tier-2).
+    Llama al endpoint compuesto `create-with-patient` (Owner+Pet+Cita en una
+    transacción, sin huérfanos) — el agente no orquesta la atomicidad."""
+    from . import confirmations
+    from .models import AgentSettings, ContactIdentity  # noqa: F401
+    org = conversation.organization
+    contact = conversation.contact
+
+    # E-05 (parcial en 17a): si el número YA es de un cliente o es ambiguo,
+    # nunca se auto-registra (la vinculación permanente es de PR-17b/humano).
+    if contact.owner_id is not None:
+        return ToolOutcome(ok=False, client_error='already_client')
+    if contact.is_ambiguous:
+        return ToolOutcome(ok=False, client_error='ambiguous_identity')
+
+    owner_name = (args.get('owner_name') or '').strip()
+    pet_name = (args.get('pet_name') or '').strip()
+    species = (args.get('pet_species') or '').strip()
+    date_str = (args.get('date') or '')[:10]
+    time_str = (args.get('time') or '')[:5]
+    reason = (args.get('reason') or '').strip()
+    if not (owner_name and pet_name and date_str and time_str and reason):
+        return ToolOutcome(ok=False, client_error='need_data')
+
+    phone = _wa_id_to_local10(contact.external_id)
+    if phone is None:
+        return ToolOutcome(ok=False, client_error='bad_phone')
+    err = _future_or_error(org, date_str, time_str)
+    if err:
+        return ToolOutcome(ok=False, client_error=err)
+
+    agent_settings = AgentSettings.objects.filter(organization=org).first()
+    vet = _resolve_scheduling_vet(org, agent_settings)
+    if vet is None:
+        return ToolOutcome(ok=False, client_error='no_vet')
+
+    import uuid
+    fecha = format_local_wallclock(date_str, time_str)
+    paraphrase = confirmations.CONFIRM_CREATE_NEW_CLIENT.format(
+        owner=owner_name, pet=pet_name, especie=species or 'sin especificar',
+        fecha=fecha, reason=reason)
+    staged = {
+        'owner_name': owner_name, 'owner_phone': phone,
+        'pet_name': pet_name, 'pet_species': species,
+        'veterinarian': vet.pk, 'date': date_str, 'start_time': time_str,
+        'end_time': _appt_end_time(time_str), 'reason': reason,
+        'notes': f"Alta por asistente virtual · conv {conversation.public_id}",
+        'idempotency_key': uuid.uuid4().hex,
+    }
+    confirmations.stage_pending(conversation, tool='register_new_client_and_pet',
+                               args=staged, paraphrase=paraphrase)
+    return ToolOutcome(ok=True, needs_confirmation=True,
+                       confirmation_text=paraphrase, summary={'proposed': 'register'})
+
+
+def commit_register_new_client_and_pet(conversation, executor, args, triggered_by=None):
+    from .models import ContactIdentity
+    body = {k: args[k] for k in (
+        'owner_name', 'owner_phone', 'pet_name', 'pet_species',
+        'veterinarian', 'date', 'start_time', 'end_time', 'reason', 'notes')}
+    status_code, data = executor.call(
+        'POST', '/api/appointments/create-with-patient/',
+        tool_name='register_new_client_and_pet', json=body,
+        args_redacted={'date': args['date'], 'time': args['start_time']},
+        policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by,
+        idempotency_key=args.get('idempotency_key'),
+        extract_domain_id=lambda d: d.get('public_id'),
+        result_summarizer=lambda d: {'status': d.get('status')})
+    if status_code == 400:
+        return ToolOutcome(ok=False, client_error='slot_taken')
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+
+    # Auto-vínculo: el número queda ligado al owner recién creado (probó
+    # control del número al escribir + aportó sus datos → confirmed_in_chat).
+    owner_pid = data.get('owner_public_id')
+    contact = conversation.contact
+    if owner_pid and contact.owner_id is None:
+        from apps.patients.models import Owner
+        owner = Owner.objects.filter(
+            organization=conversation.organization, public_id=owner_pid).first()
+        if owner is not None:
+            contact.owner = owner
+            contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
+            contact.verified_at = timezone.now()
+            contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
+            contact.save(update_fields=[
+                'owner', 'verification_level', 'verified_at', 'linked_via'])
+
+    _add_ref(conversation, 'cita', data.get('public_id'))
+    _save_refs(conversation)
+    return ToolOutcome(ok=True, summary={'registered': True}, data={
+        'cuando': format_local_wallclock(args['date'], args['start_time'])})
+
+
 # Ejecutores del pending_action confirmado (el planner los invoca).
 COMMIT_HANDLERS = {
     'create_appointment': commit_create_appointment,
     'cancel_appointment': commit_cancel_appointment,
     'reschedule_appointment': commit_reschedule_appointment,
+    'register_new_client_and_pet': commit_register_new_client_and_pet,
 }
 
 
@@ -887,6 +993,32 @@ TOOL_SPECS = {
                 'new_time': {'type': 'string', 'description': 'HH:MM (24h)'},
             },
             'required': ['appointment_handle', 'new_date', 'new_time'],
+        },
+    },
+    'register_new_client_and_pet': {
+        'handler': register_new_client_and_pet,
+        'tier': '2',
+        'min_verification': 'unknown',
+        'description': (
+            'Registra a un cliente NUEVO (que aún no está en el sistema) junto '
+            'con su primera mascota y agenda su primera cita, en un solo paso. '
+            'Úsalo SOLO cuando el contacto no es un cliente existente. PROPONE '
+            'y espera el "sí". El teléfono se toma del propio WhatsApp — NO lo '
+            'pidas. Fecha YYYY-MM-DD, hora HH:MM.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'owner_name': {'type': 'string',
+                               'description': 'Nombre del cliente'},
+                'pet_name': {'type': 'string'},
+                'pet_species': {'type': 'string',
+                                'description': 'perro/gato/… (opcional)'},
+                'date': {'type': 'string', 'description': 'YYYY-MM-DD'},
+                'time': {'type': 'string', 'description': 'HH:MM (24h)'},
+                'reason': {'type': 'string'},
+            },
+            'required': ['owner_name', 'pet_name', 'date', 'time', 'reason'],
         },
     },
     'request_human': {

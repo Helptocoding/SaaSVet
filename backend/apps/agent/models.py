@@ -62,6 +62,20 @@ class ContactIdentity(OrganizationalModel):
     # ≥2 owners con el mismo teléfono en la org (D1): el sistema nunca
     # "elige" — intenciones personales escalan a humano (E-05).
     is_ambiguous = models.BooleanField(default=False)
+    # Procedencia del vínculo contacto→owner (É-F2). '' = sin vínculo /
+    # phone_match implícito. Sirve para señalizar y REVOCAR en bandeja un
+    # vínculo secundario (self_register hoy; family_challenge en PR-17b).
+    LINKED_SELF_REGISTER = 'self_register'
+    LINKED_FAMILY = 'family_challenge'
+    LINKED_STAFF = 'staff'
+    LINKED_VIA_CHOICES = (
+        ('', 'Sin vínculo explícito'),
+        (LINKED_SELF_REGISTER, 'Auto-registro'),
+        (LINKED_FAMILY, 'Vínculo familiar'),
+        (LINKED_STAFF, 'Vinculado por staff'),
+    )
+    linked_via = models.CharField(
+        max_length=20, choices=LINKED_VIA_CHOICES, blank=True, default='')
     # UX-01: aviso de privacidad just-in-time, una sola vez por contacto.
     privacy_notice_sent_at = models.DateTimeField(null=True, blank=True)
 

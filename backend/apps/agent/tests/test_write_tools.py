@@ -250,6 +250,56 @@ class WriteToolsTests(TestCase):
         self.assertFalse(out.ok)
         self.assertEqual(out.client_error, "past_date")
 
+    # -- alta de cliente nuevo (T11, PR-17a) --------------------------------
+    def _unknown_conv(self, wa="5215512345678"):
+        contact = ContactIdentity.objects.create(
+            organization=self.org, external_id=wa,
+            verification_level="unknown")
+        conv = Conversation.objects.create(
+            organization=self.org, channel_account=self.channel, contact=contact)
+        ex = ToolExecutor(conv, self.agent_user,
+                          transport=HeaderForwardingTransport())
+        return conv, ex
+
+    def test_register_proposes_new_client(self):
+        conv, ex = self._unknown_conv()
+        out = tools.run_tool("register_new_client_and_pet", {
+            "owner_name": "Carlos", "pet_name": "Rocky", "pet_species": "perro",
+            "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
+            conversation=conv, executor=ex)
+        self.assertTrue(out.ok, out.client_error)
+        self.assertTrue(out.needs_confirmation)
+        self.assertIn("Carlos", out.confirmation_text)
+        self.assertIn("Rocky", out.confirmation_text)
+        pending = confirmations.get_pending(conv)
+        self.assertEqual(pending["args"]["owner_phone"], "5512345678")  # 10 díg
+        self.assertEqual(Owner.objects.filter(phone="5512345678").count(), 0)
+
+    def test_register_commits_and_autolinks(self):
+        conv, ex = self._unknown_conv()
+        tools.run_tool("register_new_client_and_pet", {
+            "owner_name": "Carlos", "pet_name": "Rocky",
+            "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
+            conversation=conv, executor=ex)
+        policy.evaluate(conv, "sí", agent_settings=self.settings)
+        res = planner._commit_pending(conv, ex)
+        self.assertEqual(res["decision"], "committed")
+        owner = Owner.objects.get(phone="5512345678")
+        self.assertEqual(owner.name, "Carlos")
+        self.assertEqual(Appointment.objects.filter(pet__owner=owner).count(), 1)
+        conv.contact.refresh_from_db()
+        self.assertEqual(conv.contact.owner_id, owner.id)           # auto-vínculo
+        self.assertEqual(conv.contact.verification_level, "confirmed_in_chat")
+        self.assertEqual(conv.contact.linked_via, "self_register")
+
+    def test_register_refused_for_existing_client(self):
+        out = self._run("register_new_client_and_pet", {
+            "owner_name": "X", "pet_name": "Y", "date": self.day.isoformat(),
+            "time": "10:00", "reason": "z"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "already_client")
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
     # -- expiración del pending --------------------------------------------
     def test_expired_pending_reparaphrases_not_executes(self):
         self.conv.flow["pending_action"] = {
