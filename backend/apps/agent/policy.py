@@ -14,6 +14,7 @@ conversacional determinista (verificación implícita, arranque/avance del
 reto de identidad, opt-out) — todo testeable sin proveedor.
 """
 from dataclasses import dataclass, field
+from datetime import timedelta
 
 from django.conf import settings
 from django.utils import timezone
@@ -251,6 +252,47 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
     conversation.flow.pop('pending_action', None)
     conversation.state = Conversation.STATE_HANDOFF_PENDING
     conversation.save(update_fields=['state', 'flow'])
+
+
+NUDGE_IDLE = timedelta(minutes=60)   # silencio mínimo antes del recordatorio
+NUDGE_WINDOW = timedelta(hours=24)   # ventana 24h de WhatsApp (fuera: plantillas F3)
+NUDGE_TEXT = "¿Seguimos con tu cita? Aquí sigo para ayudarte 🐾"
+
+
+def nudge_abandoned_flows(now=None):
+    """UX-08: UN solo recordatorio por conversación cuando el cliente dejó a
+    medias una propuesta de cita (hay `pending_action` sin responder). Nunca
+    tras opt-out, nunca fuera de la ventana de 24 h, jamás dos veces. El worker
+    lo corre en su pasada periódica. Devuelve cuántos nudges encoló."""
+    from .outbound import enqueue_outbound
+    now = now or timezone.now()
+    candidates = (
+        Conversation.objects.filter(
+            state=Conversation.STATE_ACTIVE,
+            last_inbound_at__lte=now - NUDGE_IDLE,
+            last_inbound_at__gte=now - NUDGE_WINDOW,
+        )
+        .select_related('contact', 'organization')
+    )
+    count = 0
+    for conversation in candidates:
+        flow = conversation.flow or {}
+        if conversation.contact.is_blocked:        # opt-out (GB-10)
+            continue
+        if flow.get('nudge_sent'):                 # una sola vez por conversación
+            continue
+        if not flow.get('pending_action'):         # solo un flujo a medias
+            continue
+        agent_settings = _agent_settings(conversation)
+        if (agent_settings is None or not agent_settings.enabled
+                or not agent_settings.nudge_enabled
+                or getattr(conversation.organization, 'is_demo', False)):
+            continue
+        enqueue_outbound(conversation, NUDGE_TEXT, author='agent')
+        conversation.flow['nudge_sent'] = True
+        conversation.save(update_fields=['flow'])
+        count += 1
+    return count
 
 
 def close_inactive_conversations(idle_hours=24, now=None):

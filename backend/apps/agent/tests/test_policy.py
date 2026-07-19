@@ -216,3 +216,41 @@ class FsmTests(PolicyTestCase):
         self.assertEqual(closed, 1)
         self.conv.refresh_from_db()
         self.assertEqual(self.conv.state, Conversation.STATE_CLOSED)
+
+
+class NudgeTests(PolicyTestCase):
+    """UX-08 (PR-18): recordatorio único de flujo abandonado."""
+
+    def _arm(self, minutes_ago=90):
+        self.conv.last_inbound_at = timezone.now() - timedelta(minutes=minutes_ago)
+        self.conv.flow = {'pending_action': {
+            'tool': 'create_appointment', 'args': {}, 'paraphrase': 'x'}}
+        self.conv.save(update_fields=['last_inbound_at', 'flow'])
+
+    def test_nudges_abandoned_pending_once(self):
+        self._arm()
+        self.assertEqual(policy.nudge_abandoned_flows(), 1)
+        self.conv.refresh_from_db()
+        self.assertTrue(self.conv.flow.get('nudge_sent'))
+        self.assertEqual(policy.nudge_abandoned_flows(), 0)   # no repite
+
+    def test_no_nudge_without_pending(self):
+        self.conv.last_inbound_at = timezone.now() - timedelta(minutes=90)
+        self.conv.save(update_fields=['last_inbound_at'])
+        self.assertEqual(policy.nudge_abandoned_flows(), 0)
+
+    def test_no_nudge_after_optout(self):
+        self._arm()
+        self.contact.is_blocked = True
+        self.contact.save(update_fields=['is_blocked'])
+        self.assertEqual(policy.nudge_abandoned_flows(), 0)
+
+    def test_no_nudge_when_disabled(self):
+        self._arm()
+        self.settings.nudge_enabled = False
+        self.settings.save(update_fields=['nudge_enabled'])
+        self.assertEqual(policy.nudge_abandoned_flows(), 0)
+
+    def test_no_nudge_when_too_recent(self):
+        self._arm(minutes_ago=5)   # dentro de los 60 min → aún no
+        self.assertEqual(policy.nudge_abandoned_flows(), 0)

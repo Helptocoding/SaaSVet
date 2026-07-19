@@ -231,10 +231,46 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
                 'reason': 'commit_failed'}
 
     enqueue_outbound(conversation,
-                     _commit_success_text(pending['tool'], outcome),
+                     _success_message(pending['tool'], outcome, conversation, executor),
                      author='agent')
     return {'decision': 'committed', 'llm_calls': 0, 'tools': 1,
             'tool': pending['tool']}
+
+
+def _success_message(tool, outcome, conversation, executor):
+    """Mensaje de éxito enriquecido (UX-09/UX-11): al agendar se añade
+    dirección/indicaciones; al cancelar se ofrece reagendar con horarios
+    concretos (retención)."""
+    if tool == 'cancel_appointment':
+        fecha, horas = tools.suggest_retention_slots(conversation, executor)
+        if fecha and horas:
+            return (f"Listo, cancelé tu cita. Si quieres te reagendo — tengo "
+                    f"lugar el {fecha}: {' o '.join(horas)}. ¿Te acomoda "
+                    f"alguno? 🙂")
+        return _commit_success_text(tool, outcome)
+
+    base = _commit_success_text(tool, outcome)
+    if tool in ('create_appointment', 'register_new_client_and_pet'):
+        base += _post_scheduling_info(conversation)
+    return base
+
+
+def _post_scheduling_info(conversation):
+    """UX-09: sufijo con dirección/indicaciones de la clínica (de faq_facts).
+    '' si no hay datos — nunca se inventa (G1)."""
+    from .models import AgentSettings
+    settings_obj = AgentSettings.objects.filter(
+        organization=conversation.organization).first()
+    facts = (settings_obj.faq_facts or {}) if settings_obj else {}
+    address = facts.get('direccion') or facts.get('dirección')
+    hints = (facts.get('indicaciones') or facts.get('como_llegar')
+             or facts.get('cómo_llegar'))
+    parts = []
+    if address:
+        parts.append(f"📍 {address}")
+    if hints:
+        parts.append(str(hints))
+    return ("\n\n" + "\n".join(parts)) if parts else ""
 
 
 def _commit_success_text(tool, outcome):

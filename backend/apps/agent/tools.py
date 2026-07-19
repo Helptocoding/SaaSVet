@@ -387,13 +387,87 @@ def _resolve_scheduling_vet(organization, agent_settings):
     )
 
 
+def _free_slots_for_day(org, executor, day, vet, ranges, *, preferred='',
+                        triggered_by=None, tool_name='find_available_slots'):
+    """[hhmm…] libres ese día = business_hours (`ranges`) ∩ ocupación real del
+    `vet` (GET /appointments/). None si la API falla. El caller resuelve vet y
+    ranges (para mapear sus propios errores). Compartido por la tool de slots y
+    la retención al cancelar (UX-11)."""
+    from datetime import datetime, timedelta
+
+    date_str = day.isoformat()
+    status_code, data = executor.call(
+        'GET', '/api/appointments/', tool_name=tool_name,
+        params={'date': date_str, 'veterinarian': str(vet.public_id)},
+        args_redacted={'date': date_str, 'preferred': preferred},
+        triggered_by_message=triggered_by,
+        result_summarizer=lambda d: {'occupied': len(d) if isinstance(d, list) else 0},
+    )
+    if status_code >= 400:
+        return None
+    appts = data if isinstance(data, list) else data.get('results', [])
+    occupied = {
+        (a.get('start_time') or '')[:5]
+        for a in appts
+        if a.get('status') in ('scheduled', 'confirmed', 'in_progress')
+    }
+    today = timezone.localdate()
+    now_hhmm = timezone.localtime().strftime('%H:%M') if day == today else '00:00'
+    slots = []
+    for start, end in [(r[0], r[1]) for r in ranges if len(r) == 2]:
+        cursor = datetime.strptime(start, '%H:%M')
+        limit = datetime.strptime(end, '%H:%M')
+        while cursor + timedelta(minutes=SLOT_MINUTES) <= limit:
+            hhmm = cursor.strftime('%H:%M')
+            if (
+                hhmm not in occupied
+                and hhmm > now_hhmm
+                and _time_bucket_ok(hhmm, preferred)
+            ):
+                slots.append(hhmm)
+                if len(slots) >= MAX_ITEMS:
+                    break
+            cursor += timedelta(minutes=SLOT_MINUTES)
+        if len(slots) >= MAX_ITEMS:
+            break
+    return slots
+
+
+def suggest_retention_slots(conversation, executor, *, max_days=7):
+    """UX-11: (fecha_label, [hora_labels≤2]) del PRÓXIMO día con hueco desde
+    mañana, o (None, []). Se usa al cancelar para ofrecer reagendar con
+    horarios concretos. Tolerante a errores (salta el día que falle)."""
+    from datetime import timedelta
+
+    from .models import AgentSettings
+    org = conversation.organization
+    agent_settings = AgentSettings.objects.filter(organization=org).first()
+    business_hours = (agent_settings.business_hours or {}) if agent_settings else {}
+    vet = _resolve_scheduling_vet(org, agent_settings)
+    if vet is None:
+        return None, []
+    day = timezone.localdate() + timedelta(days=1)
+    for _ in range(max_days):
+        ranges = _weekday_ranges(business_hours, day.weekday())
+        if ranges:
+            slots = _free_slots_for_day(
+                org, executor, day, vet, ranges,
+                tool_name='suggest_retention_slots')
+            if slots:
+                fecha = format_local_wallclock(
+                    day.isoformat(), slots[0]).rsplit(',', 1)[0]
+                return fecha, [_hhmm_label(h) for h in slots[:2]]
+        day += timedelta(days=1)
+    return None, []
+
+
 def find_available_slots(conversation, executor, args, triggered_by=None):
     """Horarios libres de UN día (spec T9, UX-06). Compone la ocupación real
     (GET /appointments/?date=&veterinarian=) ∩ business_hours. ≤3 slots.
 
     Una responsabilidad = un día, un vet, una llamada a la API. Si el día
     está lleno → lista vacía y el planner ofrece otro día."""
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
     from .models import AgentSettings
 
@@ -420,42 +494,12 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     if vet is None:
         return ToolOutcome(ok=False, client_error='no_vet')
 
-    # Ocupación real del vet ese día (API, RBAC del AGENT).
-    status_code, data = executor.call(
-        'GET', '/api/appointments/', tool_name='find_available_slots',
-        params={'date': date_str, 'veterinarian': str(vet.public_id)},
-        args_redacted={'date': date_str, 'preferred': args.get('preferred_time', '')},
-        triggered_by_message=triggered_by,
-        result_summarizer=lambda d: {'occupied': len(d) if isinstance(d, list) else 0},
-    )
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    appts = data if isinstance(data, list) else data.get('results', [])
-    occupied = {
-        (a.get('start_time') or '')[:5]
-        for a in appts
-        if a.get('status') in ('scheduled', 'confirmed', 'in_progress')
-    }
-
-    now_hhmm = timezone.localtime().strftime('%H:%M') if day == today else '00:00'
     preferred = args.get('preferred_time', '')
-    slots = []
-    for start, end in [(r[0], r[1]) for r in ranges if len(r) == 2]:
-        cursor = datetime.strptime(start, '%H:%M')
-        limit = datetime.strptime(end, '%H:%M')
-        while cursor + timedelta(minutes=SLOT_MINUTES) <= limit:
-            hhmm = cursor.strftime('%H:%M')
-            if (
-                hhmm not in occupied
-                and hhmm > now_hhmm
-                and _time_bucket_ok(hhmm, preferred)
-            ):
-                slots.append(hhmm)
-                if len(slots) >= MAX_ITEMS:
-                    break
-            cursor += timedelta(minutes=SLOT_MINUTES)
-        if len(slots) >= MAX_ITEMS:
-            break
+    slots = _free_slots_for_day(
+        org, executor, day, vet, ranges,
+        preferred=preferred, triggered_by=triggered_by)
+    if slots is None:
+        return ToolOutcome(ok=False, client_error='tool_failure')
 
     projection = [{
         'fecha': format_local_wallclock(

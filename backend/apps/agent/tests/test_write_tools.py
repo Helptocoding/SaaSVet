@@ -300,6 +300,32 @@ class WriteToolsTests(TestCase):
         self.assertEqual(out.client_error, "already_client")
         self.assertIsNone(confirmations.get_pending(self.conv))
 
+    # -- proactividad UX (PR-18) -------------------------------------------
+    def test_post_scheduling_info_on_create(self):
+        self.settings.faq_facts = {"direccion": "Av. Siempre Viva 123"}
+        self.settings.save(update_fields=["faq_facts"])
+        self._run("create_appointment", {
+            "pet_handle": self._pet_handle(), "date": self.day.isoformat(),
+            "time": "10:00", "reason": "Vacunación"})
+        self._affirm("sí")
+        planner._commit_pending(self.conv, self.executor)
+        out = self._last_out()
+        self.assertIn("Av. Siempre Viva 123", out)   # UX-09 dirección
+        self.assertIn("📍", out)
+
+    def test_retention_offer_on_cancel(self):
+        self.settings.business_hours = {
+            d: [["09:00", "13:00"]] for d in
+            ("mon", "tue", "wed", "thu", "fri", "sat", "sun")}
+        self.settings.save(update_fields=["business_hours"])
+        appt, handle = self._make_appt(status="confirmed")
+        self._run("cancel_appointment", {"appointment_handle": handle})
+        self._affirm("sí")
+        planner._commit_pending(self.conv, self.executor)
+        out = self._last_out()
+        self.assertIn("cancelé tu cita", out)
+        self.assertIn("te reagendo", out)            # UX-11 retención con horario
+
     # -- expiración del pending --------------------------------------------
     def test_expired_pending_reparaphrases_not_executes(self):
         self.conv.flow["pending_action"] = {

@@ -65,9 +65,12 @@ class Command(BaseCommand):
             cycles += 1
             if cycles % _DEADMAN_EVERY_CYCLES == 0:
                 self._ping_deadman()
-                # Cierre por inactividad (spec §2.8) — barato, poco frecuente.
-                from apps.agent.policy import close_inactive_conversations
-                close_inactive_conversations()
+                # Pasadas periódicas (baratas, poco frecuentes):
+                from apps.agent.policy import (
+                    close_inactive_conversations, nudge_abandoned_flows,
+                )
+                close_inactive_conversations()   # cierre por inactividad (§2.8)
+                nudge_abandoned_flows()          # UX-08 recordatorio único
 
             if options['once']:
                 self.stdout.write(
