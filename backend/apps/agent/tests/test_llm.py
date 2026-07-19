@@ -3,6 +3,7 @@ test_llm.py — É-F1 PR-9: adaptador LLM proveedor-agnóstico.
 
 Todo mockeado (spec §9.1: la suite CI jamás toca un proveedor real).
 """
+from decimal import Decimal
 from unittest import mock
 
 import requests
@@ -139,12 +140,19 @@ class EstimateCostTests(SimpleTestCase):
     @override_settings(AGENT_LLM_COST_PER_MTOK_INPUT=1.0,
                        AGENT_LLM_COST_PER_MTOK_OUTPUT=4.0)
     def test_cost_from_env_pricing(self):
-        self.assertAlmostEqual(
-            estimate_cost(500_000, 250_000), 0.5 + 1.0,
-        )
+        self.assertEqual(estimate_cost(500_000, 250_000), Decimal('1.500000'))
 
     def test_zero_without_pricing(self):
-        self.assertEqual(estimate_cost(1_000_000, 1_000_000), 0.0)
+        self.assertEqual(estimate_cost(1_000_000, 1_000_000), Decimal('0.000000'))
+
+    @override_settings(AGENT_LLM_COST_PER_MTOK_INPUT=0.27,
+                       AGENT_LLM_COST_PER_MTOK_OUTPUT=1.10)
+    def test_tiny_cost_quantized_to_6_decimals(self):
+        """Bug real (2026-07-18): el float traía ruido de precisión y el
+        DecimalField(10,6) lo rechazaba. Debe cuantizar a 6 decimales."""
+        cost = estimate_cost(277, 59)
+        self.assertEqual(cost.as_tuple().exponent, -6)  # exactamente 6 decimales
+        self.assertLess(cost, Decimal('0.001'))
 
 
 class StubLLMClientTests(SimpleTestCase):

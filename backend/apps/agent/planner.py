@@ -108,7 +108,12 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     'tools': tool_calls, 'reason': 'llm_error'}
 
         llm_calls += 1
-        _persist_llm_call(conversation, llm_client, result)
+        # La telemetría (costo/tokens) JAMÁS debe tumbar la respuesta al
+        # cliente: si falla el registro, se loguea y el turno continúa.
+        try:
+            _persist_llm_call(conversation, llm_client, result)
+        except Exception:
+            logger.exception("AGENT_LLMCALL_PERSIST_FAILED")
         _bump_budget(conversation)
 
         if result.kind == 'text':

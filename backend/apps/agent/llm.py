@@ -18,6 +18,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
+from decimal import ROUND_HALF_UP, Decimal
 
 import requests
 from django.conf import settings
@@ -64,10 +65,18 @@ def estimate_cost(input_tokens, output_tokens):
     """
     price_in = getattr(settings, 'AGENT_LLM_COST_PER_MTOK_INPUT', 0.0)
     price_out = getattr(settings, 'AGENT_LLM_COST_PER_MTOK_OUTPUT', 0.0)
-    return (
+    total = (
         (input_tokens / 1_000_000) * price_in
         + (output_tokens / 1_000_000) * price_out
     )
+    # LLMCall.cost_estimate es DecimalField(max_digits=10, decimal_places=6):
+    # el float trae ruido de precisión (0.0000747900...01) → cuantizar a 6
+    # decimales antes de persistir, o Django lo rechaza. Cap defensivo a
+    # 9999.999999 (el máximo del campo) por si el pricing se configura mal.
+    quantized = Decimal(str(total)).quantize(
+        Decimal('0.000001'), rounding=ROUND_HALF_UP,
+    )
+    return min(quantized, Decimal('9999.999999'))
 
 
 class OpenAICompatibleClient:
