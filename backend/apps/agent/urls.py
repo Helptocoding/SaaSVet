@@ -19,4 +19,5 @@ urlpatterns = [
     path('conversations/<str:pk>/release/', views.release_conversation,
          name='inbox-release'),
     path('settings/', views.agent_settings_view, name='inbox-settings'),
+    path('metrics/', views.metrics_view, name='inbox-metrics'),
 ]

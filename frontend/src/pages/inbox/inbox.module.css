@@ -1,5 +1,35 @@
 /* Bandeja WhatsApp (É-F0 PR-7) — dos paneles: lista | transcript. */
 
+/* ---------- Métricas de negocio del piloto (F2, spec §8) ---------- */
+
+.metricsBar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.metricCard {
+    background: var(--c-surface, #fff);
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.metricValue {
+    font-family: var(--font-mono, monospace);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--c-text, #0f172a);
+    line-height: 1.1;
+}
+
+.metricLabel {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--c-text-muted, #64748b);
+}
+
 .layout {
     display: grid;
     grid-template-columns: 340px 1fr;

@@ -78,6 +78,43 @@ def list_conversations(request):
 
 @api_view(['GET'])
 @permission_classes([make_permission('agentinbox.view')])
+def metrics_view(request):
+    """Métricas de NEGOCIO del piloto F2 (spec §8): GET /api/inbox/metrics/
+    ?from=&to= (YYYY-MM-DD, días locales de la org). Default: últimos 30 días.
+    Read-only sobre ToolExecution/Conversation/HumanHandoff (nunca analytics)."""
+    from datetime import datetime, timedelta
+
+    from .metrics import compute_business_metrics
+
+    org = request.user.organization
+    now = timezone.now()
+
+    def _day_bound(value, fallback):
+        if not value:
+            return fallback
+        try:
+            day = datetime.strptime(value[:10], '%Y-%m-%d').date()
+        except ValueError:
+            return fallback
+        return timezone.make_aware(datetime.combine(day, datetime.min.time()))
+
+    date_from = _day_bound(request.query_params.get('from'),
+                           now - timedelta(days=30))
+    # `to` es inclusivo por día → el límite superior es el inicio del día siguiente.
+    to_param = request.query_params.get('to')
+    if to_param:
+        date_to = _day_bound(to_param, now) + timedelta(days=1)
+    else:
+        date_to = now
+    # Cap defensivo del rango (consistente con el contrato de analytics: 365d).
+    if (date_to - date_from) > timedelta(days=366):
+        date_from = date_to - timedelta(days=366)
+
+    return Response(compute_business_metrics(org, date_from, date_to))
+
+
+@api_view(['GET'])
+@permission_classes([make_permission('agentinbox.view')])
 def conversation_messages(request, pk):
     conversation = _get_conversation(request, pk)
     org = request.user.organization

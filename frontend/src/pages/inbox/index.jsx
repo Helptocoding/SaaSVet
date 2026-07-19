@@ -7,6 +7,7 @@ import {
     getAgentSettings,
     getConversationMessages,
     getConversations,
+    getInboxMetrics,
     releaseConversation,
     sendInboxMessage,
     updateAgentSettings,
@@ -63,6 +64,31 @@ const AUTHOR_LABEL = {
     system: "Automático",
 };
 
+// Tile de métricas de negocio del piloto F2 (spec §8): read-only, últimos 30d.
+const MetricsBar = ({ metrics }) => {
+    if (!metrics) return null;
+    const pct = Math.round((metrics.tasa_conversion || 0) * 100);
+    const cards = [
+        { value: metrics.conversaciones_iniciadas, label: "Conversaciones" },
+        { value: metrics.con_intencion_agendar, label: "Con intención" },
+        { value: metrics.citas_creadas, label: "Citas creadas" },
+        { value: `${pct}%`, label: "Conversión" },
+        { value: metrics.citas_abandonadas, label: "Abandonadas" },
+        { value: metrics.cancelaciones, label: "Cancelaciones" },
+        { value: metrics.handoffs?.total ?? 0, label: "A un humano" },
+    ];
+    return (
+        <div className={styles.metricsBar}>
+            {cards.map((c) => (
+                <div key={c.label} className={styles.metricCard}>
+                    <div className={styles.metricValue}>{c.value}</div>
+                    <div className={styles.metricLabel}>{c.label}</div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 const Inbox = () => {
     const { can } = useAuth();
     const confirm = useConfirm();
@@ -76,6 +102,7 @@ const Inbox = () => {
     const [sending, setSending] = useState(false);
     const [acting, setActing] = useState(false);
     const [agentSettings, setAgentSettings] = useState(null);
+    const [metrics, setMetrics] = useState(null);
     const threadEndRef = useRef(null);
 
     const canSend = can?.("agentinbox.send");
@@ -126,6 +153,13 @@ const Inbox = () => {
             .then(setAgentSettings)
             .catch((err) => console.error(apiError(err)));
     }, [canConfig]);
+
+    // Métricas de negocio (últimos 30d) — carga única, read-only.
+    useEffect(() => {
+        getInboxMetrics()
+            .then(setMetrics)
+            .catch((err) => console.error(apiError(err)));
+    }, []);
 
     useEffect(() => {
         threadEndRef.current?.scrollIntoView({ block: "end" });
@@ -209,6 +243,8 @@ const Inbox = () => {
                     </button>
                 )}
             </div>
+
+            <MetricsBar metrics={metrics} />
 
             <div className={styles.layout}>
                 {/* -------- Lista -------- */}

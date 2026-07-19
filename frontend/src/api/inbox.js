@@ -26,3 +26,7 @@ export const getAgentSettings = () =>
 
 export const updateAgentSettings = (data) =>
   api.patch("inbox/settings/", data).then((r) => r.data);
+
+// Métricas de negocio del piloto F2 (spec §8). params: { from, to } YYYY-MM-DD.
+export const getInboxMetrics = (params = {}) =>
+  api.get("inbox/metrics/", { params }).then((r) => r.data);
