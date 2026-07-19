@@ -273,8 +273,8 @@ Todas aditivas en `agent`: 3 tablas nuevas (`ToolExecution`, `LLMCall`, `HumanHa
 |---|---|---|
 | **PR-14 — A2-1 idempotencia (dominio)** | Mini-ADR + campo `idempotency_key` en Appointment (unique parcial) + lectura de `X-Idempotency-Key` en las dos vistas de creación + replay devuelve la original + fix del guard de fecha-pasada en update. Tests de dominio (replay, doble-click, PATCH-al-pasado bloqueado). **Deployable solo** (mejora el frontend actual). | 2d |
 | **PR-15 — tools de lectura de agenda** | T9 `find_available_slots` (compone ocupación real `GET /appointments/?date=&veterinarian=` ∩ `business_hours`; ≤3 slots; oferta proactiva UX-06). Permiso AGENT sin escritura aún. Tests contra API real. | 2–3d |
-| **PR-16 — tools de escritura + confirmación tier-2** | T10 `create_appointment`, T12 `confirm_appointment`, T13 `cancel_appointment`, T14 `reschedule_appointment`; `pending_action` + parafraseo por plantilla (fecha absoluta G5) + ejecución solo con afirmativa (TC-SEC-03 invariante); guard de fecha futura en Policy (reagendado); `scheduling_mode`. Idempotency key por acción. | 3–4d |
-| **PR-17 — alta de cliente nuevo + vinculación familiar** | T11 `register_new_client_and_pet` (`create-with-patient` atómico + tamiz UX-05); vinculación familiar UX-04 (reto triple → contacto secundario, revocable en bandeja); conflicto de identidad (número con registro previo → nunca escritura automática, E-05). | 3d |
+| **PR-16 — tools de escritura + confirmación tier-2** | T10 `create_appointment`, T12 `confirm_appointment`, T13 `cancel_appointment`, T14 `reschedule_appointment`; `pending_action` + parafraseo por plantilla (fecha absoluta G5) + ejecución solo con afirmativa (TC-SEC-03 invariante); guard de fecha futura en Policy (reagendado); `scheduling_mode`; idempotency key por acción; **vigencia de oferta explícita (P4) + anotación de auditoría en `reason` (P5)**. | 3–4d |
+| **PR-17 — alta de cliente nuevo + vinculación familiar** | T11 `register_new_client_and_pet` (`create-with-patient` atómico + tamiz UX-05); vinculación familiar UX-04 (reto triple → contacto secundario, revocable en bandeja) **+ instrumentación del desenlace (P3)**; conflicto de identidad (número con registro previo → nunca escritura automática, E-05); anotación de auditoría en `reason` (P5). | 3d |
 | **PR-18 — proactividad de flujo (UX P1)** | Nudge único de flujo abandonado (UX-08, 1 por conversación, dentro de ventana 24h, jamás tras opt-out); post-agendado con dirección/indicaciones (UX-09); retención con horarios concretos al cancelar (UX-11). | 2d |
 | **PR-19 — suite de escritura + eval** | Los **30 casos F2 congelados** (spec §9.4: INT-20..24 + TC-UX-05) como tests CI contra el stub (bloqueantes; TC-INT20-06 confirmación vencida y TC-SEC-03 afirmativa-con-extra = bloqueantes absolutos) + fixture trampa cross-tenant sobre escritura (jamás agenda en otra org) + escenarios de escritura en el eval nightly. | 3–4d |
 
@@ -313,9 +313,32 @@ Rollback trivial en todas.
 - [ ] Mini-ADR de A2-1 aprobado (cambio de contrato de un endpoint de dominio — gobernanza del proyecto).
 - [ ] Datos reales de la clínica cargados (horario/dirección) para que la oferta de slots y el post-agendado tengan sustancia.
 
-### 7. Aprobación
+### 7. Revisión del PO (2026-07-19) — respuestas a 5 observaciones
 
-- [ ] É-F2 aprobada (PR-14..PR-19)
+**P1 — ¿Seis tools o una `AppointmentTool(action=...)`? → SE MANTIENEN SEPARADAS (con razón).**
+No es preferencia estética: el **tool calling del LLM es más confiable con schemas acotados**. Una tool única con `action ∈ {create,cancel,reschedule,confirm}` obliga a que TODOS los parámetros sean opcionales (create necesita pet+fecha+hora+motivo; cancel necesita solo handle+motivo; reschedule necesita handle+nueva-fecha) → el modelo tiene que **elegir la combinación correcta de campos por acción**, y una combinación mal formada (cancelar con fecha, reagendar sin handle) se cuela. Con tools separadas, el **schema mismo** restringe qué es válido por acción — el modelo no puede alucinar una mezcla ilegal. Además el **tier de política mapea 1:1**: `confirm` es tier-1 (benigno), `create/cancel/reschedule` son tier-2 (parafraseo obligatorio); una tool única metería esa lógica de tiers ADENTRO, rompiendo la tabla de política. Consolidar es barato después si el piloto muestra que sobran; **partir una tool fusionada tras el hecho es caro** (el modelo ya aprendió el patrón fusionado). Regla del proyecto: una responsabilidad por tool.
+
+**P2 — `register_new_client_and_pet` hace 3 cosas → NO se divide (razón de dominio).**
+La tool NO mezcla tres dominios: **llama UN endpoint que el dominio construyó atómico a propósito** — `POST /api/appointments/create-with-patient/` (existe justo para crear Owner+Pet+Appointment en una transacción, sin huérfanos). Dividir la tool en `CreateOwner → CreatePet → CreateAppointment` reintroduciría exactamente el riesgo que ese endpoint elimina: owner creado y pet falla → owner huérfano; pet creado y cita falla → pet sin cita. Y obligaría al **agente a orquestar una transacción multi-paso con rollback**, que es precisamente lo que el plan v1.1 §6.7 prohíbe (la atomicidad multi-endpoint vive en el dominio como endpoint compuesto, no en el agente). La tool es delgada; la atomicidad ya está encapsulada. **Se mantiene.**
+
+**P3 — Vinculación familiar (reto triple): la UX preocupa → SE INSTRUMENTA en el piloto.**
+De acuerdo con la observación. Se mantiene el reto triple como **barrera de seguridad** (un vínculo permanente merece ese piso; la esposa que no sabe los 4 dígitos → handoff a humano, que ES la ruta correcta para vincular un número permanente). **Pero** se añade a PR-17 instrumentación explícita: cada intento de vínculo registra su desenlace (`linked | failed_digits | failed_other | abandoned`) en `HumanHandoff.reason_detail` + un contador. El **gate del piloto** incluye medir "% de handoffs cuyo único motivo es la validación de los 4 dígitos" — si duele, se relaja el factor (p.ej. mes de última visita en vez de 4 dígitos) con datos, no por intuición.
+
+**P4 — Vigencia de la oferta de horarios: faltaba explícita → SE AGREGA a la spec.**
+Correcto, el plan mencionaba el TOCTOU pero no la regla de vigencia. Enmienda a la spec §6 (INT-20), dos ventanas explícitas:
+  - **Ventana de confirmación**: el `pending_action` con los slots ofrecidos vence a los **30 min** (spec §2.4). Un "sí" después de eso NO ejecuta → se re-parafrasea.
+  - **Disponibilidad del slot**: **el sistema NO reserva horarios** (sin soft-hold — evita bloquear reservas reales y una tabla de reservas con expiración). La oferta es una **propuesta**; al confirmar se **revalida** y, si otro lo tomó, se compensa: *"ese horario se acaba de ocupar 😅"* + re-oferta (INT-20 B5). Trade-off aceptado a este volumen; trigger para añadir soft-hold = tasa de colisión medida > umbral en el piloto.
+El texto de vigencia se agrega a la spec funcional como enmienda de F2 al kickoff de la épica.
+
+**P5 — Auditoría: `decision_reason` + `conversation_id` + `tool_execution_id` → SE AGREGA, respetando el boundary.**
+De acuerdo, sin tener que "reconstruir media base de datos". Dos capas, sin romper la regla de que el dominio NUNCA depende de `agent` (ADR p51):
+  - **Migaja directa en el dominio**: al crear/cancelar/mover, el agente escribe en el campo **`AppointmentStatusChange.reason` (ya existe, texto libre, sin FK)** una anotación legible: `"Agente virtual · conv <public_id> · exec <tool_execution_id>"`. Quien mira el historial de la cita ve de inmediato **quién y de qué conversación** — cero joins.
+  - **Traza profunda en el agente**: `ToolExecution` ya lleva `conversation_id`, `domain_object_public_id` (indexado), `request_id`, `args_redacted`, `policy_decision`. Dado el public_id de la cita se reconstruye Actor→Tool→Conversación→Mensaje→LLMCall.
+La anotación es un **string** (no FK) → el dominio no importa `agent`, el boundary se conserva. Se implementa en PR-16/17.
+
+### 8. Aprobación
+
+- [ ] É-F2 aprobada (PR-14..PR-19, con las respuestas §7 incorporadas)
 - Aprobado por: ______ · Fecha: ______
 
 ---
