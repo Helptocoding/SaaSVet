@@ -4,9 +4,11 @@ test_agent_identity.py — É0-PR2: identidad del agente virtual (ADR p51).
 Cubre las dos mitades de la decisión:
   - `is_service_account` (eje "clase de principal"): superficies humanas lo
     excluyen por FLAG; gates de sesión no lo bloquean.
-  - `role='AGENT'` (eje "conjunto de permisos"): solo lecturas F1; toda
-    escritura y todo billing → 403. Los roles se siembran DESDE el catálogo
-    real (PERMISSIONS) para que el test falle si el catálogo cambia.
+  - `role='AGENT'` (eje "conjunto de permisos"): en F2 gana un WHITELIST
+    acotado de escritura de agenda (create/update de cita, alta de
+    cliente/mascota); sigue SIN destroy, billing, clínico, staff → 403. Los
+    roles se siembran DESDE el catálogo real (PERMISSIONS) para que el test
+    falle si el catálogo cambia.
 
 Plan aprobado: docs/whatsapp-agent-epics.md (É0 v2).
 """
@@ -133,15 +135,23 @@ class AgentCatalogTests(SimpleTestCase):
         overlap = prefixes & self.FORBIDDEN_PREFIXES
         self.assertFalse(overlap, f"AGENT tiene recursos prohibidos: {overlap}")
 
-    def test_agent_is_read_only_in_f1(self):
-        """F1 congelada: solo .list/.retrieve. F2 relajará esto a propósito
-        (appointment.create/update) — actualizar este test JUNTO con el gate
-        de la spec (whatsapp-agent-functional-spec §10), no antes."""
-        non_read = [
+    # F2: el read-only de F1 se relaja a un WHITELIST cerrado. Cualquier
+    # permiso que no sea .list/.retrieve DEBE estar aquí — ni uno más
+    # (defensa contra scope creep silencioso; ampliar exige tocar este set).
+    F2_WRITE_WHITELIST = {
+        "appointment.create", "appointment.update",
+        "patient.create", "owner.create",
+    }
+
+    def test_agent_writes_are_whitelisted_in_f2(self):
+        non_read = {
             c for c in PERMISSIONS["AGENT"]
             if not c.endswith(".list") and not c.endswith(".retrieve")
-        ]
-        self.assertFalse(non_read, f"AGENT con permisos de escritura en F1: {non_read}")
+        }
+        extra = non_read - self.F2_WRITE_WHITELIST
+        self.assertFalse(extra, f"AGENT con escrituras fuera del whitelist F2: {extra}")
+        # y NO gana destroy de cita (cancela vía /status/, no DELETE).
+        self.assertNotIn("appointment.destroy", PERMISSIONS["AGENT"])
 
     def test_agent_codes_exist_in_catalog(self):
         catalog = set(PERMISSION_CODES)
@@ -183,9 +193,18 @@ class AgentApiPermissionsTests(APITestCase):
                 r.status_code, status.HTTP_200_OK, f"{url}: {r.status_code}"
             )
 
-    def test_agent_cannot_write_appointments_in_f1(self):
+    def test_agent_can_reach_appointment_create_in_f2(self):
+        """F2: ya NO es 403 (tiene appointment.create). Body vacío → cae en la
+        validación del serializer (400), prueba de que el permiso pasó."""
         r = self.client.post("/api/appointments/", {})
-        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
+
+    def test_agent_cannot_destroy_appointments_in_f2(self):
+        """El agente cancela vía PATCH /status/ (deja lineage de auditoría);
+        el DELETE (destroy) es de staff → 403 antes de tocar el objeto."""
+        import uuid
+        r = self.client.delete(f"/api/appointments/{uuid.uuid4()}/")
+        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN, r.content)
 
     def test_agent_cannot_create_vaccines(self):
         r = self.client.post("/api/vaccines/", {
