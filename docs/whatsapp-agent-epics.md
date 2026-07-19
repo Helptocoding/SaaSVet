@@ -11,7 +11,7 @@
 | **É0** | Fundaciones core: PR-0 fotografía + fix RBAC `vaccinerecord` (PR-1) + identidad del agente (PR-2) | **✅ COMPLETADA 2026-07-16** — PR-0 (a960e07..997c796), PR-1 (13115af), PR-2 (886fbd6); CI verde en los tres. Pendiente solo el deploy a prod | — |
 | É-F0 | Buzón operable: apps `channels`+`agent`, webhook, worker, outbox, plantillas tier-0, bandeja `/inbox` | **CÓDIGO COMPLETO 2026-07-17** — PR-3 (9c253f5) · PR-4 (eb24a83) · PR-5 (90f17ad) · PR-6 (ab2b4d3) · PR-7 (61925dc) · PR-8 (infra+runbooks). CI verde en todos. **Gate pendiente: smoke E2E con sandbox de Meta** (runbook agent-whatsapp.md §2) — requiere credenciales Meta (usuario) + deploy | É0 + número Meta (A0-1, lado usuario) |
 | É-F1 | Agente read-only: LLM, Policy Engine, FSM, Tool Executor (incluye minting + throttle scope diferidos de A0-2), tools T1–T8+T15 | **CÓDIGO COMPLETO 2026-07-18** — PR-9 (f3e4f83) · PR-10 (f8c1c0c) · PR-11 (ef14ca0) · PR-12 (fb16a6e) · PR-13 (suite regresión + eval). CI verde en todos. Proveedor LLM = elección abierta del PO (adaptador OpenAI-compatible por env). **Gates pendientes: eval nightly ≥95 % (requiere key LLM) + Gate F1 §10 con clínica piloto (requiere consulta legal A1-1)** | É0, É-F0, consulta legal A1-1 |
-| É-F2 | Escritura de agenda: A2-1 idempotencia + T9–T14 + tier-2 + P1 de la revisión UX | Sin planear | É-F1 |
+| É-F2 | Escritura de agenda: A2-1 idempotencia + T9–T14 + tier-2 + P1 de la revisión UX | **Plan presentado 2026-07-19 — PENDIENTE DE APROBACIÓN** | É-F1 (validado en piloto) |
 
 Pendientes del lado del usuario (ruta crítica, sin código): **A0-1** trámites Meta (número/WABA) · **A1-1** consulta legal (Q2/Q3/Q9).
 
@@ -245,4 +245,90 @@ Todas aditivas en `agent`: 3 tablas nuevas (`ToolExecution`, `LLMCall`, `HumanHa
 
 ---
 
-*É-F2 añadirá aquí su plan con la misma estructura antes de escribir código.*
+## É-F2 — Escritura de agenda (agendar · confirmar · cancelar · reagendar)
+
+**Fecha del plan**: 2026-07-19 · **Estado**: PENDIENTE DE APROBACIÓN · **Estimación**: ~2.5–3 semanas (6 PRs) · **Contrato**: spec funcional **congelada** F1 §6 (INT-20..24, 30 casos) + revisión UX P1 (UX-04/06/08/09/11) + decisiones §18 (Q11/Q12/Q14).
+
+**Valor al cierre**: el agente **ES** la recepcionista 24/7 para la agenda — agenda citas de clientes existentes y nuevos, confirma, cancela y reagenda, todo con confirmación explícita y sin ensuciar la agenda real. Es la épica que convierte el asistente de "informativo" a "operativo".
+
+> **Precondición de proceso (no negociable)**: no se arranca É-F2 hasta que É-F1 haya sido **validada en piloto real** (Gate F1 §10). Dar poder de *escritura* a un agente cuya *lectura* no se probó con clientes reales es apilar riesgo a ciegas. El smoke de É0/É-F1 en producción (2026-07-18) ya cazó 3 bugs de integración que ningún test unitario vio (Caddy `/hooks/`, número MX con `1` legacy, `cost_estimate` sin cuantizar) — la escritura merece el mismo filtro de realidad antes de construirse encima.
+
+### 1. Impacto sobre el código existente
+
+| Superficie | Cambio |
+|---|---|
+| `apps/appointments/` (dominio) | **A2-1 — idempotencia**: `POST /api/appointments/` y `POST /api/appointments/create-with-patient/` aceptan `X-Idempotency-Key` opcional; unique parcial `(organization, idempotency_key)`; replay devuelve la cita original. Calca de `_is_payment_replay` (ADR p27). **Mini-ADR de dominio** requerido (cambio de contrato de un endpoint existente). Beneficia también al frontend actual (doble-click). |
+| `apps/appointments/serializers.py` | **Fix del guard de fecha-pasada en update** (hallazgo verificado): `validate` solo rechaza fecha pasada en creación (`if not instance and start_utc < now()`, línea 98). El reagendado (PATCH) **puede mover una cita al pasado**. Se cierra en el dominio (un `if`) — beneficia a staff y agente por igual. El solape SÍ se revalida en update excluyéndose (línea 109, Q11 resuelto: T14 = PATCH directo, no cancel+create). |
+| `apps/agent/tools.py` | +6 tools de escritura (T9–T14). Reusan el executor loopback+JWT ya existente; el rol `AGENT` gana `appointment.create` y `appointment.update` (editar `PERMISSIONS["AGENT"]` — el mecanismo de evolución ya probado en É0-PR2). |
+| `apps/agent/policy.py` | Flujo de confirmación tier-2 **activado** (en F1 quedó dormant): `pending_action` + parafraseo por plantilla + afirmativa ejecuta. La rama ya está cableada (spec §2.4); F2 la llena. |
+| `apps/agent/models.py` (AgentSettings) | `scheduling_mode` (`fixed_vet` default \| `any_available`, Q14) + `default_veterinarian` FK opcional; campos de UX P1 (nudge on/off). Migración aditiva. |
+| `apps/agent/identity.py` | **Vinculación familiar (UX-04)**: reto triple (titular + mascota + últimos 4 dígitos del teléfono registrado) → número no registrado se vincula como contacto secundario del Owner. Nuevo estado de reto en `flow`. |
+| Frontend `/inbox` | Chip "handoff por identidad ambigua" + señalización del vínculo familiar nuevo (revocable). Retoque menor. |
+
+**Dominios de negocio**: el único cambio es en `appointments` (idempotencia + fix de guard), ambos aditivos/correctivos y con beneficio propio más allá del agente. Cero cambios a billing/inventory/medical_records.
+
+### 2. Plan incremental (PRs)
+
+| PR | Contenido | Est. |
+|---|---|---|
+| **PR-14 — A2-1 idempotencia (dominio)** | Mini-ADR + campo `idempotency_key` en Appointment (unique parcial) + lectura de `X-Idempotency-Key` en las dos vistas de creación + replay devuelve la original + fix del guard de fecha-pasada en update. Tests de dominio (replay, doble-click, PATCH-al-pasado bloqueado). **Deployable solo** (mejora el frontend actual). | 2d |
+| **PR-15 — tools de lectura de agenda** | T9 `find_available_slots` (compone ocupación real `GET /appointments/?date=&veterinarian=` ∩ `business_hours`; ≤3 slots; oferta proactiva UX-06). Permiso AGENT sin escritura aún. Tests contra API real. | 2–3d |
+| **PR-16 — tools de escritura + confirmación tier-2** | T10 `create_appointment`, T12 `confirm_appointment`, T13 `cancel_appointment`, T14 `reschedule_appointment`; `pending_action` + parafraseo por plantilla (fecha absoluta G5) + ejecución solo con afirmativa (TC-SEC-03 invariante); guard de fecha futura en Policy (reagendado); `scheduling_mode`. Idempotency key por acción. | 3–4d |
+| **PR-17 — alta de cliente nuevo + vinculación familiar** | T11 `register_new_client_and_pet` (`create-with-patient` atómico + tamiz UX-05); vinculación familiar UX-04 (reto triple → contacto secundario, revocable en bandeja); conflicto de identidad (número con registro previo → nunca escritura automática, E-05). | 3d |
+| **PR-18 — proactividad de flujo (UX P1)** | Nudge único de flujo abandonado (UX-08, 1 por conversación, dentro de ventana 24h, jamás tras opt-out); post-agendado con dirección/indicaciones (UX-09); retención con horarios concretos al cancelar (UX-11). | 2d |
+| **PR-19 — suite de escritura + eval** | Los **30 casos F2 congelados** (spec §9.4: INT-20..24 + TC-UX-05) como tests CI contra el stub (bloqueantes; TC-INT20-06 confirmación vencida y TC-SEC-03 afirmativa-con-extra = bloqueantes absolutos) + fixture trampa cross-tenant sobre escritura (jamás agenda en otra org) + escenarios de escritura en el eval nightly. | 3–4d |
+
+Gate de salida = **Gate F2 de la spec §10**: A2-1 desplegado, los 30 casos verdes, toda cita creada/cancelada/movida auditada con actor AGENT en `AppointmentStatusChange`, y **2 semanas de piloto con < 1 % de citas erróneas/duplicadas** (medido contra la agenda real).
+
+### 3. Migraciones
+
+- `appointments`: `AddField idempotency_key` (nullable) + `AddConstraint` unique parcial. Aditiva; sin migración de datos.
+- `agent`: `AddField scheduling_mode` (default `fixed_vet`) + `default_veterinarian` FK nullable + flag de nudge. Aditiva.
+- `ContactIdentity`: sin campo nuevo — el vínculo secundario reusa la FK `owner` existente + un flag; el estado del reto vive en `Conversation.flow`.
+
+Rollback trivial en todas.
+
+### 4. Riesgos
+
+| Riesgo | Mitigación |
+|---|---|
+| **Doble cita por reintento** (R5/R6, el crítico de escritura) | A2-1 idempotencia (PR-14, patrón Payment probado) + una sola tool mutadora en vuelo por conversación (serialización del worker, ya existe) |
+| **TOCTOU de solape** (dos confirmaciones al mismo slot) | El dominio revalida solape bajo el serializer al crear; si dos ganan la carrera, el 2º recibe 400 → el agente se disculpa y re-oferta (compensación, spec INT-20 B5). **No** se toca el orden global de locks (ADR p12) desde el subsistema |
+| **Afirmativa que amplía el alcance** (TC-SEC-03) | La afirmativa ejecuta SOLO el `pending_action` parafraseado, jamás lo que el mensaje agregue. Clasificador conservador (ya probado en É-F1) + test bloqueante absoluto |
+| **Vinculación familiar → acceso indebido** (UX-04) | Reto triple (titular + mascota + últimos 4 dígitos) — un conocido casual no los tiene los tres; vínculo señalado y revocable en bandeja; notificación al titular cuando existan plantillas (F3) |
+| **Agenda ensuciada con datos basura** | Sanitización del dominio (ya aplica a `reason`/nombres); `pet_species` mapeada a lista cerrada; confirmación obligatoria antes de todo alta |
+| **Reagendar al pasado** | Fix de dominio (PR-14) + guard redundante en Policy Engine |
+| **Presupuesto/costo con escritura** | Sin cambio: el tope de turnos y el kill switch por org ya existen; la escritura no añade llamadas LLM extra por turno |
+
+### 5. Pruebas
+
+- **Unitarias (dominio)**: idempotencia (replay devuelve la misma cita; sin key = comportamiento actual), guard de fecha-pasada en update, solape en update excluyéndose.
+- **Integración (agente)**: cada tool T9–T14 contra la API real con el JWT del AGENT (RBAC de escritura verificado end-to-end); flujo de confirmación completo (oferta→parafraseo→afirmativa→cita creada; negativa→cero escritura; vencida→re-parafraseo, jamás ejecuta); alta cliente nuevo atómica; vinculación familiar (reto triple ok/parcial→handoff); conflicto de identidad → cero escritura.
+- **Regresión conversacional**: los 30 casos F2 como suite CI (stub) + fixture trampa cross-tenant sobre escritura; **este es el entregable central**. Suite completa del proyecto verde con los 4 guards de auditoría.
+- **Piloto**: 2 semanas, < 1 % citas erróneas/duplicadas vs agenda real (Gate F2 §10).
+
+### 6. Prerrequisitos
+
+- [ ] **É-F1 validada en piloto** (Gate F1 §10) — precondición dura (ver arriba).
+- [ ] Mini-ADR de A2-1 aprobado (cambio de contrato de un endpoint de dominio — gobernanza del proyecto).
+- [ ] Datos reales de la clínica cargados (horario/dirección) para que la oferta de slots y el post-agendado tengan sustancia.
+
+### 7. Aprobación
+
+- [ ] É-F2 aprobada (PR-14..PR-19)
+- Aprobado por: ______ · Fecha: ______
+
+---
+
+## Deuda técnica detectada en el smoke real (É0/É-F0/É-F1, 2026-07-18) — fuera de las épicas
+
+Anotada para un PR de higiene independiente (no bloquea É-F2):
+
+- **`deploy.sh` no recrea Caddy** cuando cambia `infra/Caddyfile` (hubo que `restart caddy` a mano en el fix de `/hooks/`). El script debe detectar el cambio y reiniciar Caddy.
+- **`Message.failure_reason` no se limpia** al reenviar con éxito (queda texto viejo junto a `status=sent`). Cosmético; limpiar en el path de éxito del sender.
+- **`header_up X-Forwarded-*` redundantes** en el bloque `/hooks/` del Caddyfile (Caddy los manda por default — WARN inofensivo).
+- **Token de WhatsApp temporal (24h)**: operativo, no código — migrar a System User token permanente antes del piloto formal.
+
+---
+
+*Todas las épicas de código (É0, É-F0, É-F1) están completas y verdes en CI, y validadas en producción real. É-F2 es la última épica del roadmap v1.1; F3 (proactividad/recordatorios) se especificará al cerrar F2 con datos reales.*
