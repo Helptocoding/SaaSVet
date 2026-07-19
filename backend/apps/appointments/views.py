@@ -74,8 +74,31 @@ class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
 
         return queryset.order_by('start_datetime', 'id')
 
-    def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization)
+    def create(self, request, *args, **kwargs):
+        # A2-1: idempotencia opcional por X-Idempotency-Key. Un reintento (red
+        # o doble-click) con la misma key devuelve la cita original en vez de
+        # crear otra. Sin key → comportamiento actual intacto.
+        from django.db import IntegrityError
+        from .services import get_idempotency_key, replay_appointment
+
+        org = request.user.organization
+        key = get_idempotency_key(request)
+        existing = replay_appointment(org, key)
+        if existing is not None:
+            return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                serializer.save(organization=org, idempotency_key=key)
+        except IntegrityError:
+            # Carrera real: otro request con la misma key ganó el INSERT.
+            existing = replay_appointment(org, key)
+            if existing is not None:
+                return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+            raise
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.RetrieveUpdateDestroyAPIView):
@@ -279,6 +302,17 @@ def create_with_patient(request):
     if not org:
         raise PermissionDenied("User has no organization assigned")
 
+    # A2-1: replay idempotente (mismo patrón que POST /appointments/).
+    from django.db import IntegrityError
+    from .services import get_idempotency_key, replay_appointment
+    idem_key = get_idempotency_key(request)
+    replay = replay_appointment(org, idem_key)
+    if replay is not None:
+        return Response(
+            AppointmentSerializer(replay, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
+
     owner_name     = request.data.get('owner_name', '').strip()
     owner_phone    = request.data.get('owner_phone', '').strip()
     pet_name       = request.data.get('pet_name', '').strip()
@@ -321,26 +355,37 @@ def create_with_patient(request):
     }
 
     from apps.patients.models import Owner
-    with transaction.atomic():
-        owner, _ = Owner.objects.get_or_create(
-            organization=org,
-            phone=owner_phone,
-            defaults={'name': owner_name},
-        )
-        pet = Pet.objects.create(
-            name=pet_name,
-            species=pet_species,
-            sex=pet_sex,
-            birth_date=pet_birth_date,
-            owner=owner,
-            organization=org,
-        )
-        serializer = AppointmentSerializer(
-            data={**appt_fields, 'pet': pet.id},
-            context={'request': request},
-        )
-        serializer.is_valid(raise_exception=True)
-        appt = serializer.save(organization=org)
+    try:
+        with transaction.atomic():
+            owner, _ = Owner.objects.get_or_create(
+                organization=org,
+                phone=owner_phone,
+                defaults={'name': owner_name},
+            )
+            pet = Pet.objects.create(
+                name=pet_name,
+                species=pet_species,
+                sex=pet_sex,
+                birth_date=pet_birth_date,
+                owner=owner,
+                organization=org,
+            )
+            serializer = AppointmentSerializer(
+                data={**appt_fields, 'pet': pet.id},
+                context={'request': request},
+            )
+            serializer.is_valid(raise_exception=True)
+            appt = serializer.save(organization=org, idempotency_key=idem_key)
+    except IntegrityError:
+        # Carrera: otro request con la misma key ya creó todo (rollback del
+        # owner/pet de este request — sin huérfanos). Devolver la original.
+        replay = replay_appointment(org, idem_key)
+        if replay is not None:
+            return Response(
+                AppointmentSerializer(replay, context={'request': request}).data,
+                status=status.HTTP_200_OK,
+            )
+        raise
 
     return Response(AppointmentSerializer(appt, context={'request': request}).data, status=status.HTTP_201_CREATED)
 

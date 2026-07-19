@@ -95,8 +95,16 @@ class AppointmentSerializer(serializers.ModelSerializer):
         start_utc = local_date_time_to_utc(org, local_date, start_time)
         end_utc = local_date_time_to_utc(org, local_date, end_time)
 
-        if not instance and start_utc < now():
-            raise serializers.ValidationError({"date": "No se pueden crear citas en el pasado."})
+        # A2-1 (PR-14): el guard de fecha-pasada aplica en creación Y en
+        # cualquier update que MUEVA la fecha/hora (reagendado). Antes solo
+        # corría en creación → un PATCH podía mover una cita al pasado.
+        date_or_time_changing = any(
+            f in attrs for f in ('date', 'start_time', 'end_time')
+        )
+        if (not instance or date_or_time_changing) and start_utc < now():
+            raise serializers.ValidationError(
+                {"date": "No se pueden agendar citas en el pasado."}
+            )
 
         vet_pk = veterinarian_id.pk if hasattr(veterinarian_id, 'pk') else veterinarian_id
         conflicts = Appointment.objects.filter(

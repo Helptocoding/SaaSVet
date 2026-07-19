@@ -276,7 +276,7 @@ Todas aditivas en `agent`: 3 tablas nuevas (`ToolExecution`, `LLMCall`, `HumanHa
 | **PR-16 — tools de escritura + confirmación tier-2** | T10 `create_appointment`, T12 `confirm_appointment`, T13 `cancel_appointment`, T14 `reschedule_appointment`; `pending_action` + parafraseo por plantilla (fecha absoluta G5) + ejecución solo con afirmativa (TC-SEC-03 invariante); guard de fecha futura en Policy (reagendado); `scheduling_mode`; idempotency key por acción; **vigencia de oferta explícita (P4) + anotación de auditoría en `reason` (P5)**. | 3–4d |
 | **PR-17 — alta de cliente nuevo + vinculación familiar** | T11 `register_new_client_and_pet` (`create-with-patient` atómico + tamiz UX-05); vinculación familiar UX-04 (reto triple → contacto secundario, revocable en bandeja) **+ instrumentación del desenlace (P3)**; conflicto de identidad (número con registro previo → nunca escritura automática, E-05); anotación de auditoría en `reason` (P5). | 3d |
 | **PR-18 — proactividad de flujo (UX P1)** | Nudge único de flujo abandonado (UX-08, 1 por conversación, dentro de ventana 24h, jamás tras opt-out); post-agendado con dirección/indicaciones (UX-09); retención con horarios concretos al cancelar (UX-11). | 2d |
-| **PR-19 — suite de escritura + eval** | Los **30 casos F2 congelados** (spec §9.4: INT-20..24 + TC-UX-05) como tests CI contra el stub (bloqueantes; TC-INT20-06 confirmación vencida y TC-SEC-03 afirmativa-con-extra = bloqueantes absolutos) + fixture trampa cross-tenant sobre escritura (jamás agenda en otra org) + escenarios de escritura en el eval nightly. | 3–4d |
+| **PR-19 — suite de escritura + métricas de negocio + eval** | Los **30 casos F2 congelados** (spec §9.4: INT-20..24 + TC-UX-05) como tests CI contra el stub (bloqueantes; TC-INT20-06 confirmación vencida y TC-SEC-03 afirmativa-con-extra = bloqueantes absolutos) + fixture trampa cross-tenant sobre escritura + **métricas de negocio (`GET /api/inbox/metrics/` + tile en `/inbox`, §8)** + escenarios de escritura en el eval nightly. | 4–5d |
 
 Gate de salida = **Gate F2 de la spec §10**: A2-1 desplegado, los 30 casos verdes, toda cita creada/cancelada/movida auditada con actor AGENT en `AppointmentStatusChange`, y **2 semanas de piloto con < 1 % de citas erróneas/duplicadas** (medido contra la agenda real).
 
@@ -336,10 +336,40 @@ De acuerdo, sin tener que "reconstruir media base de datos". Dos capas, sin romp
   - **Traza profunda en el agente**: `ToolExecution` ya lleva `conversation_id`, `domain_object_public_id` (indexado), `request_id`, `args_redacted`, `policy_decision`. Dado el public_id de la cita se reconstruye Actor→Tool→Conversación→Mensaje→LLMCall.
 La anotación es un **string** (no FK) → el dominio no importa `agent`, el boundary se conserva. Se implementa en PR-16/17.
 
-### 8. Aprobación
+### 8. Métricas de NEGOCIO del piloto (P6 del PO — F2 es una funcionalidad comercial)
 
-- [ ] É-F2 aprobada (PR-14..PR-19, con las respuestas §7 incorporadas)
-- Aprobado por: ______ · Fecha: ______
+Además de las métricas técnicas (latencia, tasa de error, costo/tokens), F2
+mide **desempeño comercial** — porque el objetivo real es agendar citas, no
+solo "responder bien". Todas se derivan de tablas que YA existen en el
+subsistema (sin escribir en `analytics`, que tiene su propio contrato —
+arquitectura §12.3): se exponen en un endpoint `GET /api/inbox/metrics/?from=&to=`
++ tile en `/inbox`.
+
+| Métrica | Definición | Fuente |
+|---|---|---|
+| **Conversaciones iniciadas** | `Conversation` creadas en el periodo | `Conversation.created_at` |
+| **Con intención de agendar** | conversaciones que abrieron flujo de cita (T9 ofertó slots o hubo `pending_action` de create) | `ToolExecution(find_available_slots)` / `flow` |
+| **Citas creadas** | ejecuciones confirmadas de `create_appointment` / `register_new_client_and_pet` con `http_status < 400` | `ToolExecution` (agente) — coincide con `AppointmentStatusChange` actor=AGENT |
+| **Tasa de conversión** | citas creadas ÷ conversaciones con intención | derivada |
+| **Handoffs** | por `reason_code` (explícito, urgencia, identidad, presupuesto…) | `HumanHandoff` |
+| **Citas abandonadas** | conversaciones con intención que cerraron **sin** cita creada | `Conversation` + ausencia de create |
+| **Cancelaciones** | ejecuciones confirmadas de `cancel_appointment` | `ToolExecution(cancel_appointment)` |
+| **Embudo (dónde abandonan)** | conversación → intención → slots ofertados → confirmación pendiente → creada | progresión de `ToolExecution` + `pending_action` |
+
+Estas métricas responden las preguntas de producto del PO: *¿cuántas citas
+agenda el agente al mes? ¿qué % de conversaciones terminan en cita? ¿en qué
+paso abandonan más?* — sin reconstruir la base a mano.
+
+**Materialización**: v1 computa on-the-fly (volumen bajo del piloto — la
+consulta agrega sobre ToolExecution/Conversation/HumanHandoff con índices ya
+existentes). Trigger para materializar `AgentDailyUsage` (deferido en plan
+v1.1 §C8): cuando la agregación duela o al cobrar el add-on. El **Gate F2**
+incluye reportar estas métricas de las 2 semanas de piloto.
+
+### 9. Aprobación
+
+- [x] **É-F2 APROBADA** (PR-14..PR-19 + métricas de negocio §8) — Product Owner, 2026-07-19.
+- Nota de proceso: el PO autoriza arrancar la implementación; PR-14 (idempotencia de dominio) es seguro de construir de inmediato (mejora el frontend actual, independiente del agente). Las tools de escritura del agente (PR-16+) idealmente se encienden tras validar É-F1 en piloto, pero se construyen ya conforme a esta aprobación.
 
 ---
 

@@ -1,6 +1,31 @@
 from .models import Appointment, AppointmentStatusChange
 
 
+# ---------------------------------------------------------------------------
+# A2-1 — Idempotencia de creación de citas (ADR appointment-idempotency)
+# ---------------------------------------------------------------------------
+
+def get_idempotency_key(request):
+    """Lee X-Idempotency-Key del header (opcional). Trunca a 64, o None."""
+    key = (request.headers.get('X-Idempotency-Key') or '').strip()
+    return key[:64] or None
+
+
+def replay_appointment(organization, idempotency_key):
+    """Cita ya creada con esta idempotency_key en la org (replay), o None.
+
+    Sin key → None (crea normal). Con key → si ya existe una cita con esa
+    key, es un reintento: se devuelve la original en vez de crear otra
+    (patrón Payment, ADR p27)."""
+    if not idempotency_key:
+        return None
+    return (
+        Appointment.objects.for_organization(organization)
+        .filter(idempotency_key=idempotency_key)
+        .first()
+    )
+
+
 def create_appointment(user, data):
     # eliminar organization de los datos enviados para evitar inyecciones
     data.pop("organization", None)

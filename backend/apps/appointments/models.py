@@ -41,6 +41,14 @@ class Appointment(PublicIdMixin, OrganizationalModel):
     # walk_in() view. Ver docs/analytics-schema-audit.md §2.9.
     walk_in = models.BooleanField(default=False, editable=False, db_index=True)
 
+    # A2-1 (ADR appointment-idempotency): deduplicación de creación. Opcional
+    # (null); un reintento de red con la misma X-Idempotency-Key devuelve la
+    # cita original en vez de crear otra. Patrón espejo de Payment
+    # (billing, ADR p27). Beneficia también al doble-click del frontend.
+    idempotency_key = models.CharField(
+        max_length=64, null=True, blank=True, editable=False,
+    )
+
     def clean(self):
         org = self.organization_id
         if org and self.pet_id and self.pet.organization_id != org:
@@ -74,6 +82,14 @@ class Appointment(PublicIdMixin, OrganizationalModel):
             models.CheckConstraint(
                 condition=models.Q(end_time__gt=models.F('start_time')),
                 name="appointment_end_after_start",
+            ),
+            # A2-1: unique por (org, key) SOLO cuando la key existe. Permite
+            # múltiples NULL (creaciones sin idempotencia, comportamiento
+            # actual). Igual que Payment.idempotency_key (ADR p27).
+            models.UniqueConstraint(
+                fields=['organization', 'idempotency_key'],
+                condition=models.Q(idempotency_key__isnull=False),
+                name='appointment_unique_idempotency_key_per_org',
             ),
         ]
 
