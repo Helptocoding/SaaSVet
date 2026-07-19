@@ -9,6 +9,7 @@ from apps.agent.services import (
     ingest_inbound_message,
     normalize_wa_id,
     resolve_contact_identity,
+    wa_id_to_sendable,
 )
 from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
@@ -33,6 +34,23 @@ class NormalizeWaIdTests(TestCase):
         for raw, expected in self.CASES:
             with self.subTest(raw=raw):
                 self.assertEqual(normalize_wa_id(raw), expected)
+
+
+class WaIdToSendableTests(TestCase):
+    """Bug real MX (2026-07-18): Meta rechaza enviar a 521... (error 131030);
+    hay que quitar el '1' legacy → 52..."""
+
+    def test_strips_mexican_legacy_one(self):
+        self.assertEqual(wa_id_to_sendable("5219371651868"), "529371651868")
+
+    def test_already_without_one_unchanged(self):
+        self.assertEqual(wa_id_to_sendable("529371651868"), "529371651868")
+
+    def test_ten_digits_gets_country_code(self):
+        self.assertEqual(wa_id_to_sendable("9371651868"), "529371651868")
+
+    def test_unknown_format_passthrough(self):
+        self.assertEqual(wa_id_to_sendable("15551234567"), "15551234567")
 
 
 class ResolveContactIdentityTests(TestCase):

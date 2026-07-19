@@ -183,9 +183,12 @@ def _send_one(message, provider_factory, now):
     message.attempts += 1
 
     try:
+        from .services import wa_id_to_sendable
         provider = provider_factory(message.channel_account)
         wamid = provider.send_text(
-            conversation.contact.external_id, message.body,
+            # El wa_id entrante trae el '1' legacy de México (521...); Meta
+            # exige el formato sin él para enviar (52...). Ver wa_id_to_sendable.
+            wa_id_to_sendable(conversation.contact.external_id), message.body,
         )
     except ProviderError as exc:
         if exc.retryable and message.attempts < SEND_MAX_ATTEMPTS:

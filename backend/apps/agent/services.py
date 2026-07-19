@@ -50,6 +50,25 @@ def normalize_wa_id(wa_id: str) -> str:
     return ''
 
 
+def wa_id_to_sendable(wa_id):
+    """Convierte el wa_id ENTRANTE al número que Meta acepta para ENVIAR.
+
+    WhatsApp entrega los móviles mexicanos con un '1' legacy tras el código
+    de país (``521XXXXXXXXXX``), pero la API de envío rechaza ese formato
+    (error 131030 "not in allowed list") — hay que mandar a ``52XXXXXXXXXX``
+    (sin el '1'). Meta responde el mapeo: input ``52...`` → wa_id ``521...``.
+
+    México-only (decisión Q5): para 10 dígitos se antepone ``52``; otros
+    formatos se devuelven tal cual (defensivo — no reescribir números que
+    no reconocemos)."""
+    digits = ''.join(ch for ch in (wa_id or '') if ch.isdigit())
+    if len(digits) == 13 and digits.startswith('521'):
+        return '52' + digits[3:]
+    if len(digits) == 10:
+        return '52' + digits
+    return digits
+
+
 def resolve_contact_identity(channel_account, wa_id, profile_name=''):
     """``get_or_create`` de la identidad de contacto + match a Owner.
 
