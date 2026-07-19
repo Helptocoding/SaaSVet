@@ -219,8 +219,15 @@ PERMISSIONS = {
     # invoice/billing/cash/medicalrecord/prescription/staff/import.
     "AGENT": [
         "appointment.list", "appointment.retrieve",
+        # É-F2: escritura de agenda (crear/confirmar/cancelar/reagendar). NO
+        # gana appointment.destroy (el agente cancela vía /status/, que deja
+        # lineage de auditoría; el DELETE es de staff). Sigue SIN billing,
+        # medicalrecord, prescription, cash, staff, import.
+        "appointment.create", "appointment.update",
         "patient.list", "patient.retrieve",
-        "owner.list", "owner.retrieve",
+        # É-F2: alta de cliente+mascota vía create-with-patient (INT-21).
+        "patient.create",
+        "owner.list", "owner.retrieve", "owner.create",
         "vaccinerecord.list", "vaccinerecord.retrieve",
         "service.list", "service.retrieve",
         "inventory.list", "inventory.retrieve",

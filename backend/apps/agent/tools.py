@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 
 from django.utils import timezone
 
-from .executor import format_local_datetime
+from .executor import format_local_datetime, format_local_wallclock
 from .models import ContactIdentity, Conversation, HumanHandoff
 
 MAX_ITEMS = 5
@@ -44,6 +44,10 @@ class ToolOutcome:
     data: object = None            # proyección para el LLM
     client_error: str = ''         # guía conversacional si falló (spec §2.5)
     summary: dict = field(default_factory=dict)  # redactado, para auditoría
+    # Tier-2 (É-F2): la tool PROPONE una mutación → el planner encola este
+    # texto de confirmación y NO ejecuta hasta la afirmativa del cliente.
+    needs_confirmation: bool = False
+    confirmation_text: str = ''
 
 
 def _norm(text):
@@ -454,8 +458,8 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
             break
 
     projection = [{
-        'fecha': format_local_datetime(
-            f"{date_str}T{hhmm}:00", org,
+        'fecha': format_local_wallclock(
+            date_str, hhmm,
         ).rsplit(',', 1)[0],  # "martes 21 de julio" (la hora va aparte)
         'hora': _hhmm_label(hhmm),
         'iso_date': date_str,
@@ -469,6 +473,241 @@ def _hhmm_label(hhmm):
     ampm = 'a.m.' if hour < 12 else 'p.m.'
     h12 = hour % 12 or 12
     return f"{h12}:{minute:02d} {ampm}"
+
+
+# ---------------------------------------------------------------------------
+# Escritura de agenda (É-F2). Las tier-2 PROPONEN (stage + parafraseo); el
+# planner ejecuta el commit tras la afirmativa del cliente (spec §2.4).
+# ---------------------------------------------------------------------------
+
+def _appt_end_time(time_str, minutes=SLOT_MINUTES):
+    from datetime import datetime, timedelta
+    t = datetime.strptime(time_str[:5], '%H:%M')
+    return (t + timedelta(minutes=minutes)).strftime('%H:%M')
+
+
+def _future_or_error(org, date_str, time_str):
+    """'' si la fecha/hora es futura; 'bad_date' o 'past_date' si no."""
+    from datetime import datetime
+
+    from apps.core.datetime_utils import local_date_time_to_utc
+    try:
+        d = datetime.strptime(date_str[:10], '%Y-%m-%d').date()
+        t = datetime.strptime(time_str[:5], '%H:%M').time()
+    except ValueError:
+        return 'bad_date'
+    if local_date_time_to_utc(org, d, t) < timezone.now():
+        return 'past_date'
+    return ''
+
+
+def _appt_when_label(appt, org):
+    # El anchor UTC (start_datetime) es la fuente correcta; si faltara, cae al
+    # wall-clock local (date+start_time) SIN conversión (no double-shift).
+    anchor = appt.get('start_datetime')
+    if anchor:
+        return format_local_datetime(anchor, org)
+    return format_local_wallclock(appt.get('date'), appt.get('start_time'))
+
+
+def create_appointment(conversation, executor, args, triggered_by=None):
+    from . import confirmations
+    from .models import AgentSettings
+    org = conversation.organization
+
+    pet_pid = resolve_handle(conversation, args.get('pet_handle'))
+    if pet_pid is None:
+        return ToolOutcome(ok=False, client_error='unknown_handle')
+    date_str = (args.get('date') or '')[:10]
+    time_str = (args.get('time') or '')[:5]
+    reason = (args.get('reason') or '').strip()
+    if not (date_str and time_str and reason):
+        return ToolOutcome(ok=False, client_error='need_data')
+    err = _future_or_error(org, date_str, time_str)
+    if err:
+        return ToolOutcome(ok=False, client_error=err)
+
+    status_code, pet = executor.call(
+        'GET', f'/api/pets/{pet_pid}/', tool_name='create_appointment',
+        args_redacted={'pet_handle': args.get('pet_handle')},
+        triggered_by_message=triggered_by,
+    )
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+
+    agent_settings = AgentSettings.objects.filter(organization=org).first()
+    vet = _resolve_scheduling_vet(org, agent_settings)
+    if vet is None:
+        return ToolOutcome(ok=False, client_error='no_vet')
+
+    import uuid
+    fecha = format_local_wallclock(date_str, time_str)
+    paraphrase = confirmations.CONFIRM_CREATE.format(
+        pet=pet.get('name', ''), fecha=fecha, reason=reason,
+    )
+    staged = {
+        'pet': pet.get('id'), 'veterinarian': vet.pk,
+        'date': date_str, 'start_time': time_str,
+        'end_time': _appt_end_time(time_str), 'reason': reason,
+        'notes': f"Agendada por asistente virtual · conv {conversation.public_id}",
+        'idempotency_key': uuid.uuid4().hex,
+    }
+    confirmations.stage_pending(conversation, tool='create_appointment',
+                               args=staged, paraphrase=paraphrase)
+    return ToolOutcome(ok=True, needs_confirmation=True,
+                       confirmation_text=paraphrase, summary={'proposed': 'create'})
+
+
+def commit_create_appointment(conversation, executor, args, triggered_by=None):
+    body = {k: args[k] for k in
+            ('pet', 'veterinarian', 'date', 'start_time', 'end_time', 'reason', 'notes')}
+    status_code, data = executor.call(
+        'POST', '/api/appointments/', tool_name='create_appointment',
+        json=body, args_redacted={'date': args['date'], 'time': args['start_time']},
+        policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by,
+        idempotency_key=args.get('idempotency_key'),
+        extract_domain_id=lambda d: d.get('public_id'),
+        result_summarizer=lambda d: {'status': d.get('status')},
+    )
+    if status_code == 400:
+        return ToolOutcome(ok=False, client_error='slot_taken')
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    _add_ref(conversation, 'cita', data.get('public_id'))
+    _save_refs(conversation)
+    return ToolOutcome(ok=True, summary={'created': True}, data={
+        'cuando': format_local_wallclock(args['date'], args['start_time']),
+    })
+
+
+def confirm_appointment(conversation, executor, args, triggered_by=None):
+    """Tier-1 (INT-22): scheduled→confirmed, sin parafraseo (benigno)."""
+    appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
+    if appt_pid is None:
+        return ToolOutcome(ok=False, client_error='unknown_handle')
+    status_code, data = executor.call(
+        'PATCH', f'/api/appointments/{appt_pid}/status/',
+        tool_name='confirm_appointment', json={'status': 'confirmed'},
+        policy_tier='1', args_redacted={'appointment_handle': args.get('appointment_handle')},
+        triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
+        result_summarizer=lambda d: {'status': d.get('status')},
+    )
+    if status_code == 400:
+        return ToolOutcome(ok=True, data={'already_or_invalid': True}, summary={'noop': True})
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    return ToolOutcome(ok=True, data={'confirmed': True}, summary={'confirmed': True})
+
+
+def cancel_appointment(conversation, executor, args, triggered_by=None):
+    from . import confirmations
+    org = conversation.organization
+    appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
+    if appt_pid is None:
+        return ToolOutcome(ok=False, client_error='unknown_handle')
+    status_code, appt = executor.call(
+        'GET', f'/api/appointments/{appt_pid}/', tool_name='cancel_appointment',
+        args_redacted={'appointment_handle': args.get('appointment_handle')},
+        triggered_by_message=triggered_by,
+    )
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    if appt.get('status') not in ('scheduled', 'confirmed'):
+        return ToolOutcome(ok=False, client_error='not_cancelable')
+
+    paraphrase = confirmations.CONFIRM_CANCEL.format(
+        pet=appt.get('pet_name', ''), fecha=_appt_when_label(appt, org),
+    )
+    reason = (args.get('reason') or '').strip()
+    annotation = f"asistente virtual · conv {conversation.public_id}"
+    staged = {
+        'appointment_public_id': appt_pid,
+        'cancellation_reason': (f"{reason} · {annotation}" if reason else annotation)[:100],
+    }
+    confirmations.stage_pending(conversation, tool='cancel_appointment',
+                               args=staged, paraphrase=paraphrase)
+    return ToolOutcome(ok=True, needs_confirmation=True,
+                       confirmation_text=paraphrase, summary={'proposed': 'cancel'})
+
+
+def commit_cancel_appointment(conversation, executor, args, triggered_by=None):
+    appt_pid = args['appointment_public_id']
+    status_code, _ = executor.call(
+        'PATCH', f'/api/appointments/{appt_pid}/status/',
+        tool_name='cancel_appointment',
+        json={'status': 'canceled', 'cancellation_reason': args.get('cancellation_reason', '')},
+        policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
+    )
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    return ToolOutcome(ok=True, data={'canceled': True}, summary={'canceled': True})
+
+
+def reschedule_appointment(conversation, executor, args, triggered_by=None):
+    from . import confirmations
+    org = conversation.organization
+    appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
+    if appt_pid is None:
+        return ToolOutcome(ok=False, client_error='unknown_handle')
+    new_date = (args.get('new_date') or '')[:10]
+    new_time = (args.get('new_time') or '')[:5]
+    if not (new_date and new_time):
+        return ToolOutcome(ok=False, client_error='need_data')
+    err = _future_or_error(org, new_date, new_time)
+    if err:
+        return ToolOutcome(ok=False, client_error=err)
+
+    status_code, appt = executor.call(
+        'GET', f'/api/appointments/{appt_pid}/', tool_name='reschedule_appointment',
+        args_redacted={'appointment_handle': args.get('appointment_handle')},
+        triggered_by_message=triggered_by,
+    )
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    if appt.get('status') not in ('scheduled', 'confirmed'):
+        return ToolOutcome(ok=False, client_error='not_reschedulable')
+
+    paraphrase = confirmations.CONFIRM_RESCHEDULE.format(
+        pet=appt.get('pet_name', ''),
+        vieja=_appt_when_label(appt, org),
+        nueva=format_local_wallclock(new_date, new_time),
+    )
+    staged = {
+        'appointment_public_id': appt_pid, 'date': new_date,
+        'start_time': new_time, 'end_time': _appt_end_time(new_time),
+    }
+    confirmations.stage_pending(conversation, tool='reschedule_appointment',
+                               args=staged, paraphrase=paraphrase)
+    return ToolOutcome(ok=True, needs_confirmation=True,
+                       confirmation_text=paraphrase, summary={'proposed': 'reschedule'})
+
+
+def commit_reschedule_appointment(conversation, executor, args, triggered_by=None):
+    appt_pid = args['appointment_public_id']
+    status_code, _ = executor.call(
+        'PATCH', f'/api/appointments/{appt_pid}/', tool_name='reschedule_appointment',
+        json={'date': args['date'], 'start_time': args['start_time'],
+              'end_time': args['end_time']},
+        policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
+    )
+    if status_code == 400:
+        return ToolOutcome(ok=False, client_error='slot_taken')
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    return ToolOutcome(ok=True, summary={'rescheduled': True}, data={
+        'cuando': format_local_wallclock(args['date'], args['start_time']),
+    })
+
+
+# Ejecutores del pending_action confirmado (el planner los invoca).
+COMMIT_HANDLERS = {
+    'create_appointment': commit_create_appointment,
+    'cancel_appointment': commit_cancel_appointment,
+    'reschedule_appointment': commit_reschedule_appointment,
+}
 
 
 def request_human(conversation, executor, args, triggered_by=None):
@@ -577,6 +816,77 @@ TOOL_SPECS = {
                 'preferred_time': {'type': 'string'},
             },
             'required': ['date'],
+        },
+    },
+    'create_appointment': {
+        'handler': create_appointment,
+        'tier': '2',
+        'min_verification': 'confirmed_in_chat',
+        'description': (
+            'Agenda una cita para UNA mascota del cliente verificado. NO la '
+            'crea de inmediato: PROPONE y espera el "sí" del cliente. Usa '
+            'find_available_slots antes para ofrecer un horario libre. Fecha '
+            'YYYY-MM-DD, hora HH:MM (24h).'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'pet_handle': {'type': 'string'},
+                'date': {'type': 'string', 'description': 'YYYY-MM-DD'},
+                'time': {'type': 'string', 'description': 'HH:MM (24h)'},
+                'reason': {'type': 'string',
+                           'description': 'Motivo de la cita'},
+            },
+            'required': ['pet_handle', 'date', 'time', 'reason'],
+        },
+    },
+    'confirm_appointment': {
+        'handler': confirm_appointment,
+        'tier': '1',
+        'min_verification': 'confirmed_in_chat',
+        'description': (
+            'Marca como CONFIRMADA una cita ya agendada del cliente (cuando '
+            'avisa que sí asistirá). Acción benigna, sin parafraseo.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {'appointment_handle': {'type': 'string'}},
+            'required': ['appointment_handle'],
+        },
+    },
+    'cancel_appointment': {
+        'handler': cancel_appointment,
+        'tier': '2',
+        'min_verification': 'confirmed_in_chat',
+        'description': (
+            'Cancela una cita del cliente verificado. PROPONE y espera el '
+            '"sí" antes de cancelar.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'appointment_handle': {'type': 'string'},
+                'reason': {'type': 'string'},
+            },
+            'required': ['appointment_handle'],
+        },
+    },
+    'reschedule_appointment': {
+        'handler': reschedule_appointment,
+        'tier': '2',
+        'min_verification': 'confirmed_in_chat',
+        'description': (
+            'Mueve una cita del cliente a otra fecha/hora. PROPONE y espera '
+            'el "sí". new_date YYYY-MM-DD, new_time HH:MM.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'appointment_handle': {'type': 'string'},
+                'new_date': {'type': 'string', 'description': 'YYYY-MM-DD'},
+                'new_time': {'type': 'string', 'description': 'HH:MM (24h)'},
+            },
+            'required': ['appointment_handle', 'new_date', 'new_time'],
         },
     },
     'request_human': {

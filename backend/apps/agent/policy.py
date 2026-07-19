@@ -111,8 +111,9 @@ def evaluate(conversation, text, *, agent_settings=None):
         return PolicyDecision(kind=REPLY, text=tier0.T0_BOTQ,
                               meta={'reason': 'bot_question'})
 
-    # 7. Confirmación de un pending_action (dormant en F1: read-only no crea
-    #    pending; el framework queda listo para F2).
+    # 7. Confirmación de un pending_action (ACTIVO en F2: las tools de
+    #    escritura proponen; la afirmativa ejecuta el commit staged en el
+    #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
     if flow.get('pending_action'):
         verdict = matchers.classify_confirmation(text)
         if verdict == 'defer':

@@ -91,7 +91,8 @@ class ToolExecutor:
     def call(self, method, path, *, tool_name, params=None, json=None,
              args_redacted=None, policy_tier='', policy_decision='auto',
              triggered_by_message=None, result_summarizer=None,
-             domain_object_public_id=None):
+             domain_object_public_id=None, extract_domain_id=None,
+             idempotency_key=None):
         """Un request autenticado + una fila de auditoría. Devuelve
         ``(status_code, data)`` — el mapeo a comportamiento conversacional
         (spec §2.5) es del caller (planner/policy), no de aquí.
@@ -104,6 +105,9 @@ class ToolExecutor:
             # sus logs → webhook→worker→tool→dominio trazable.
             'X-Request-ID': request_id,
         }
+        # A2-1: idempotencia de escritura (una cita, no dos, ante reintento).
+        if idempotency_key:
+            headers['X-Idempotency-Key'] = idempotency_key
 
         started = time.monotonic()
         status_code, data = self.transport(
@@ -125,6 +129,13 @@ class ToolExecutor:
                 summary = result_summarizer(data) or {}
             except Exception:  # la auditoría jamás tumba la ejecución
                 summary = {'summary_error': True}
+
+        # public_id del objeto de dominio creado/afectado (cadena ADR p51).
+        if extract_domain_id is not None and status_code < 400 and domain_object_public_id is None:
+            try:
+                domain_object_public_id = extract_domain_id(data)
+            except Exception:
+                domain_object_public_id = None
 
         ToolExecution(
             organization=self.conversation.organization,
@@ -180,9 +191,28 @@ class ToolExecutor:
         return execution
 
 
+_ES_DAYS = ('lunes', 'martes', 'miércoles', 'jueves',
+            'viernes', 'sábado', 'domingo')
+_ES_MONTHS = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+              'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre')
+
+
+def _es_datetime_label(local):
+    """'martes 21 de julio, 4:00 p. m.' desde un datetime ya en hora local."""
+    hour12 = local.hour % 12 or 12
+    ampm = 'a. m.' if local.hour < 12 else 'p. m.'
+    return (
+        f"{_ES_DAYS[local.weekday()]} {local.day} de {_ES_MONTHS[local.month - 1]}, "
+        f"{hour12}:{local.minute:02d} {ampm}"
+    )
+
+
 def format_local_datetime(iso_or_dt, organization):
-    """'martes 21 de julio, 04:00 p. m.' en la zona horaria de la ORG (G5:
-    las fechas al cliente van SIEMPRE absolutas y en su hora local)."""
+    """Etiqueta absoluta en la zona horaria de la ORG a partir de un instante
+    UTC/aware (G5: fechas al cliente SIEMPRE absolutas y en su hora local).
+    Para fecha+hora que YA vienen en hora local (wall-clock, p.ej. `date` +
+    `start_time` del serializer o un slot ofertado) usar
+    `format_local_wallclock` — NO esta función (double-shift de tz)."""
     from datetime import datetime
     from zoneinfo import ZoneInfo
 
@@ -197,14 +227,18 @@ def format_local_datetime(iso_or_dt, organization):
         local = value.astimezone(ZoneInfo(organization.timezone))
     except Exception:
         local = value
+    return _es_datetime_label(local)
 
-    days = ('lunes', 'martes', 'miércoles', 'jueves',
-            'viernes', 'sábado', 'domingo')
-    months = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
-              'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre')
-    hour12 = local.hour % 12 or 12
-    ampm = 'a. m.' if local.hour < 12 else 'p. m.'
-    return (
-        f"{days[local.weekday()]} {local.day} de {months[local.month - 1]}, "
-        f"{hour12}:{local.minute:02d} {ampm}"
-    )
+
+def format_local_wallclock(date_str, time_str):
+    """Etiqueta absoluta desde fecha (YYYY-MM-DD) + hora (HH:MM) que YA están
+    en la hora local de la org — SIN conversión de tz. El slot ofertado, la
+    cita agendada y la cita a cancelar/mover se expresan en wall-clock local;
+    convertirlos como si fueran UTC los desfasaría."""
+    from datetime import datetime
+    try:
+        dt = datetime.strptime(
+            f"{str(date_str)[:10]} {str(time_str)[:5]}", '%Y-%m-%d %H:%M')
+    except (ValueError, TypeError):
+        return f"{date_str} {time_str}".strip()
+    return _es_datetime_label(dt)

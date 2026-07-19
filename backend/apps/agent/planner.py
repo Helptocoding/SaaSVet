@@ -21,7 +21,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from . import policy, prompts, tier0, tools
+from . import confirmations, policy, prompts, tier0, tools
 from .executor import ToolExecutor
 from .llm import LLMError, estimate_cost, get_llm_client
 from .models import Conversation, HumanHandoff, LLMCall
@@ -72,10 +72,17 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
                 'handoff_reason': decision.handoff_reason}
 
     # RUN_PLANNER
-    if llm_client is None:
-        llm_client = get_llm_client('planner')
     if executor is None:
         executor = ToolExecutor(conversation, agent_settings.agent_user)
+
+    # Afirmativa a una acción propuesta (tier-2): ejecuta EXACTAMENTE lo
+    # parafraseado, sin volver a pasar por el LLM (invariante TC-SEC-03).
+    if (decision.meta.get('confirm') == 'affirmative'
+            and confirmations.get_pending(conversation)):
+        return _commit_pending(conversation, executor, triggered_by=triggered_by)
+
+    if llm_client is None:
+        llm_client = get_llm_client('planner')
     return _run_planner(conversation, agent_settings, llm_client, executor,
                         triggered_by)
 
@@ -130,6 +137,15 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             triggered_by=triggered_by,
         )
 
+        # Tier-2: la tool PROPUSO (ya stageó el pending). Enviamos el
+        # parafraseo y cerramos el turno — el "sí" del cliente lo ejecuta
+        # (policy §7 → _commit_pending). NO se re-alimenta al LLM.
+        if outcome.needs_confirmation:
+            enqueue_outbound(conversation, outcome.confirmation_text,
+                             author='agent')
+            return {'decision': 'awaiting_confirmation',
+                    'llm_calls': llm_calls, 'tools': tool_calls}
+
         if not outcome.ok:
             if outcome.client_error == 'verification_required':
                 text = policy.start_identity_challenge(conversation)
@@ -160,6 +176,77 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     enqueue_outbound(conversation, _fallback_text(), author='agent')
     return {'decision': 'tool_budget_exhausted', 'llm_calls': llm_calls,
             'tools': tool_calls}
+
+
+def _commit_pending(conversation, executor, *, triggered_by=None):
+    """Ejecuta el pending_action ya confirmado (spec §2.4). Corre el
+    `commit_*` con los args STAGED (nunca re-generados por el LLM) → cumple
+    TC-SEC-03: la afirmativa jamás amplía el alcance de lo parafraseado."""
+    pending = confirmations.get_pending(conversation)
+
+    # TTL vencido (spec §2.4): re-parafrasea y re-arma expiración; NO ejecuta.
+    if confirmations.is_expired(pending):
+        confirmations.stage_pending(
+            conversation, tool=pending['tool'], args=pending['args'],
+            paraphrase=pending['paraphrase'],
+        )
+        enqueue_outbound(
+            conversation,
+            confirmations.EXPIRED_REPARAPHRASE.format(
+                paraphrase=pending['paraphrase']),
+            author='agent',
+        )
+        return {'decision': 'confirm_expired', 'llm_calls': 0, 'tools': 0}
+
+    handler = tools.COMMIT_HANDLERS.get(pending['tool'])
+    if handler is None:  # defensivo: pending corrupto
+        confirmations.clear_pending(conversation)
+        enqueue_outbound(conversation, _fallback_text(), author='agent')
+        return {'decision': 'commit_unknown', 'llm_calls': 0, 'tools': 0}
+
+    outcome = handler(conversation, executor, pending['args'],
+                      triggered_by=triggered_by)
+    confirmations.clear_pending(conversation)
+
+    if not outcome.ok:
+        if outcome.client_error == 'slot_taken':
+            enqueue_outbound(
+                conversation,
+                "Uy, justo se ocupó ese horario 😅 ¿Buscamos otra opción?",
+                author='agent',
+            )
+            return {'decision': 'commit_slot_taken', 'llm_calls': 0,
+                    'tools': 1}
+        policy.escalate_to_human(
+            conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
+            detail='commit_failed',
+        )
+        enqueue_outbound(
+            conversation,
+            "Tuve un problema para completar eso. Te comunico con una persona "
+            "del equipo 🙏",
+            author='agent',
+        )
+        return {'decision': 'escalate', 'llm_calls': 0, 'tools': 1,
+                'reason': 'commit_failed'}
+
+    enqueue_outbound(conversation,
+                     _commit_success_text(pending['tool'], outcome),
+                     author='agent')
+    return {'decision': 'committed', 'llm_calls': 0, 'tools': 1,
+            'tool': pending['tool']}
+
+
+def _commit_success_text(tool, outcome):
+    cuando = (outcome.data or {}).get('cuando', '')
+    if tool == 'create_appointment':
+        return f"¡Listo! ✅ Quedó agendada para el {cuando}. Te esperamos 🐾"
+    if tool == 'reschedule_appointment':
+        return f"¡Listo! Tu cita quedó reprogramada para el {cuando} ✅"
+    if tool == 'cancel_appointment':
+        return ("Listo, cancelé tu cita. Si quieres agendar otra, con gusto te "
+                "ayudo 🙂")
+    return "¡Listo! ✅"
 
 
 def _last_inbound_text(conversation):
