@@ -21,6 +21,10 @@ export const closeConversation = (publicId) =>
 export const releaseConversation = (publicId) =>
   api.post(`inbox/conversations/${publicId}/release/`).then((r) => r.data);
 
+// Revoca un vínculo familiar secundario (PR-17b).
+export const unlinkFamily = (publicId) =>
+  api.post(`inbox/conversations/${publicId}/unlink-family/`).then((r) => r.data);
+
 export const getAgentSettings = () =>
   api.get("inbox/settings/").then((r) => r.data);
 

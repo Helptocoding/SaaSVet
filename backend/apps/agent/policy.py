@@ -134,6 +134,12 @@ def evaluate(conversation, text, *, agent_settings=None):
     if challenge:
         return _advance_challenge(conversation, contact, text, challenge)
 
+    # 8b. Reto de vinculación familiar en curso (UX-04, PR-17b): el mensaje es
+    #     un factor del reto triple (mascota → 4 dígitos).
+    family = flow.get('family_challenge')
+    if family:
+        return _advance_family_challenge(conversation, contact, text, family)
+
     # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
     #    (no cambia la decisión, habilita las tools personales del turno).
     if contact.verification_level == contact.VERIFICATION_PHONE_MATCH:
@@ -228,6 +234,75 @@ def _clear_challenge(conversation, verified):
         # Verificado: cede al planner para atender la petición original.
         return PolicyDecision(kind=RUN_PLANNER, meta={'verified': True})
     return PolicyDecision(kind=RUN_PLANNER)
+
+
+# ---------------------------------------------------------------------------
+# Reto de vinculación familiar (UX-04, PR-17b) — 3 factores, acceso RESTRINGIDO
+# ---------------------------------------------------------------------------
+
+def _advance_family_challenge(conversation, contact, text, family):
+    """Avanza el reto triple. mascota (narrow de candidatos) → 4 dígitos (pin a
+    uno). 3/3 ok → vínculo secundario. 2 fallos reales → handoff instrumentado.
+    El sistema VERIFICA lo aportado; jamás revela qué dato falló (G4/E-06)."""
+    from apps.patients.models import Owner
+    stage = family.get('stage', 'pet')
+    owners = list(
+        Owner.objects.for_organization(conversation.organization)
+        .filter(pk__in=family.get('candidate_ids', []))
+    )
+
+    if stage == 'pet':
+        survivors = [o.pk for o in owners if identity.owner_has_pet(o, text)]
+        if survivors:
+            family['candidate_ids'] = survivors
+            family['stage'] = 'digits'
+            conversation.save(update_fields=['flow'])
+            return PolicyDecision(
+                kind=REPLY, meta={'family': 'digits'},
+                text="Gracias 🙂 Por último: ¿los últimos 4 dígitos del "
+                     "teléfono que el titular tiene registrado con nosotros?")
+        return _family_fail(conversation, family, 'failed_other')
+
+    # stage == 'digits'
+    matches = [o for o in owners if identity.owner_digits_match(o, text)]
+    if len(matches) == 1:
+        identity.link_family(contact, matches[0])
+        conversation.flow.pop('family_challenge', None)
+        conversation.save(update_fields=['flow'])
+        _log_family(conversation, 'AGENT_FAMILY_LINK_LINKED', 'linked')
+        return PolicyDecision(kind=RUN_PLANNER,
+                              meta={'verified': True, 'family_linked': True})
+    # 0 → dígitos incorrectos; >1 → homónimos indistinguibles (ambiguo).
+    return _family_fail(conversation, family,
+                        'failed_digits' if not matches else 'failed_ambiguous')
+
+
+def _family_fail(conversation, family, reason_detail):
+    family['fails'] = family.get('fails', 0) + 1
+    if family['fails'] >= 2:
+        conversation.flow.pop('family_challenge', None)
+        conversation.save(update_fields=['flow'])
+        _log_family(conversation, 'AGENT_FAMILY_LINK_FAILED', reason_detail)
+        return PolicyDecision(
+            kind=ESCALATE,
+            text="No pude validar esos datos. Te comunico con el equipo para "
+                 "ayudarte con gusto 🙂",
+            handoff_reason=HumanHandoff.REASON_IDENTITY,
+            meta={'handoff_detail': f'family:{reason_detail}'})
+    conversation.save(update_fields=['flow'])
+    return PolicyDecision(
+        kind=REPLY, meta={'family': 'retry'},
+        text="Mmm, ese dato no me coincide. ¿Puedes revisarlo? 🙂")
+
+
+def _log_family(conversation, event, reason_detail=''):
+    import logging
+    logging.getLogger('agent.events').info(event, extra={
+        'event': event,
+        'organization_id': conversation.organization_id,
+        'conversation_id': conversation.pk,
+        'reason_detail': reason_detail,
+    })
 
 
 # ---------------------------------------------------------------------------

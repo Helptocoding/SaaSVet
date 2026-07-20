@@ -42,6 +42,11 @@ class ConversationListSerializer(serializers.ModelSerializer):
     contact_verification = serializers.CharField(
         source='contact.verification_level', read_only=True,
     )
+    # Procedencia del vínculo contacto→cliente: 'family_challenge' marca un
+    # vínculo familiar secundario (revocable en bandeja, PR-17b).
+    linked_via = serializers.CharField(
+        source='contact.linked_via', read_only=True,
+    )
     # Nombre del Cliente registrado (si la identidad matcheó a un Owner) —
     # ayuda a recepción a reconocer a quién atiende.
     owner_name = serializers.SerializerMethodField()
@@ -55,7 +60,7 @@ class ConversationListSerializer(serializers.ModelSerializer):
             'public_id', 'state', 'created_at', 'last_inbound_at',
             'last_activity_at', 'closed_at',
             'contact_display_name', 'contact_phone', 'contact_verification',
-            'owner_name', 'claimed_by_name',
+            'linked_via', 'owner_name', 'claimed_by_name',
             'last_message_preview', 'has_unanswered',
         ]
 

@@ -140,3 +140,46 @@ def _promote(contact):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
     contact.save(update_fields=['verification_level', 'verified_at'])
+
+
+# ---------------------------------------------------------------------------
+# Vinculación familiar (UX-04, É-F2 PR-17b) — reto TRIPLE
+# ---------------------------------------------------------------------------
+# Un número no registrado que actúa por un cliente existente queda vinculado
+# como contacto SECUNDARIO SOLO tras acertar los tres factores contra un mismo
+# owner: nombre del titular + una mascota + últimos 4 dígitos del teléfono
+# registrado. El contacto aporta; el sistema verifica (G4) — jamás se enumera.
+
+def find_link_candidates(organization, titular_name):
+    """Owners cuyo nombre matchea (tolerante) el aportado. Uso interno del reto
+    — NUNCA se revela al cliente si existe o no."""
+    from apps.patients.models import Owner
+    if not _norm(titular_name):
+        return []
+    return [
+        owner for owner in
+        Owner.objects.for_organization(organization).filter(is_generic=False)
+        if _name_matches(titular_name, owner.name)
+    ]
+
+
+def owner_has_pet(owner, answer):
+    return any(_name_matches(answer, reg) for reg in _pet_names(owner))
+
+
+def owner_digits_match(owner, answer):
+    """True si los últimos 4 del teléfono registrado del owner == los aportados."""
+    import re
+    given = re.sub(r'\D', '', answer or '')
+    phone = re.sub(r'\D', '', owner.phone or '')
+    return bool(phone) and len(given) >= 4 and phone[-4:] == given[-4:]
+
+
+def link_family(contact, owner):
+    """Vincula el contacto como secundario del owner (tras el reto triple)."""
+    contact.owner = owner
+    contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
+    contact.verified_at = timezone.now()
+    contact.linked_via = ContactIdentity.LINKED_FAMILY
+    contact.save(update_fields=[
+        'owner', 'verification_level', 'verified_at', 'linked_via'])

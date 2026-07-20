@@ -48,6 +48,9 @@ class ToolOutcome:
     # texto de confirmación y NO ejecuta hasta la afirmativa del cliente.
     needs_confirmation: bool = False
     confirmation_text: str = ''
+    # La tool emite una pregunta/plantilla directa y cierra el turno (sin
+    # realimentar al LLM) — p.ej. el 1er paso del reto familiar (PR-17b).
+    reply_text: str = ''
 
 
 def _norm(text):
@@ -646,7 +649,12 @@ def confirm_appointment(conversation, executor, args, triggered_by=None):
 
 def cancel_appointment(conversation, executor, args, triggered_by=None):
     from . import confirmations
+    from .models import ContactIdentity
     org = conversation.organization
+    # Acceso restringido (PO): un número vinculado como familiar puede
+    # consultar/agendar, pero NO cancelar lo que hizo el titular.
+    if conversation.contact.linked_via == ContactIdentity.LINKED_FAMILY:
+        return ToolOutcome(ok=False, client_error='family_restricted')
     appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
     if appt_pid is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
@@ -691,7 +699,10 @@ def commit_cancel_appointment(conversation, executor, args, triggered_by=None):
 
 def reschedule_appointment(conversation, executor, args, triggered_by=None):
     from . import confirmations
+    from .models import ContactIdentity
     org = conversation.organization
+    if conversation.contact.linked_via == ContactIdentity.LINKED_FAMILY:
+        return ToolOutcome(ok=False, client_error='family_restricted')
     appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
     if appt_pid is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
@@ -858,6 +869,40 @@ COMMIT_HANDLERS = {
     'reschedule_appointment': commit_reschedule_appointment,
     'register_new_client_and_pet': commit_register_new_client_and_pet,
 }
+
+
+def link_family_member(conversation, executor, args, triggered_by=None):
+    """Arranca el reto TRIPLE de vinculación familiar (UX-04, PR-17b). NO
+    vincula nada: valida candidatos por nombre del titular y pide el 1er factor
+    (mascota). El resto del reto lo conduce el Policy Engine, sin LLM."""
+    from . import identity
+    contact = conversation.contact
+    # E-05: un número que YA es de un cliente no se vincula a otro titular.
+    if contact.owner_id is not None:
+        return ToolOutcome(ok=False, client_error='already_a_client')
+    titular = (args.get('titular_name') or '').strip()
+    if not titular:
+        return ToolOutcome(ok=False, client_error='need_data')
+
+    candidates = identity.find_link_candidates(conversation.organization, titular)
+    # Se siembra el reto AUNQUE no haya candidatos → comportamiento uniforme,
+    # sin oráculo de existencia (G4): fallará al final como cualquier dato malo.
+    conversation.flow['family_challenge'] = {
+        'stage': 'pet',
+        'candidate_ids': [o.pk for o in candidates],
+        'titular': titular,
+        'fails': 0,
+    }
+    conversation.save(update_fields=['flow'])
+    executor.record_local(
+        tool_name='link_family_member',
+        args_redacted={'titular_provided': True},
+        policy_decision='auto', triggered_by_message=triggered_by,
+        summary={'candidates': len(candidates)})
+    question = ("Para proteger los datos del titular necesito validar 3 cosas. "
+               "Primero: ¿cómo se llama una de sus mascotas? 🐾")
+    return ToolOutcome(ok=True, reply_text=question,
+                       summary={'family_challenge': 'started'})
 
 
 def request_human(conversation, executor, args, triggered_by=None):
@@ -1063,6 +1108,24 @@ TOOL_SPECS = {
                 'reason': {'type': 'string'},
             },
             'required': ['owner_name', 'pet_name', 'date', 'time', 'reason'],
+        },
+    },
+    'link_family_member': {
+        'handler': link_family_member,
+        'tier': '1',
+        'min_verification': 'unknown',
+        'description': (
+            'Inicia la validación para vincular a un FAMILIAR/autorizado de un '
+            'cliente existente (p.ej. "soy la esposa de Juan", "hablo por la '
+            'mascota de mi mamá"). Pásale el nombre del titular. Inicia un reto '
+            'de seguridad de 3 datos; NO vincula nada por sí solo.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {'titular_name': {
+                'type': 'string',
+                'description': 'Nombre del cliente titular que dijo el contacto'}},
+            'required': ['titular_name'],
         },
     },
     'request_human': {

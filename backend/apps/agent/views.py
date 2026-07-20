@@ -131,6 +131,35 @@ def conversation_messages(request, pk):
 
 
 @api_view(['POST'])
+@permission_classes([make_permission('agentinbox.claim')])
+def unlink_family(request, pk):
+    """Revoca un vínculo familiar secundario (PR-17b): el número deja de tener
+    acceso a los datos del titular. Solo aplica a vínculos family_challenge —
+    nunca desvincula un phone_match/self_register legítimo."""
+    from .models import ContactIdentity
+    conversation = _get_conversation(request, pk)
+    contact = conversation.contact
+    if contact.linked_via != ContactIdentity.LINKED_FAMILY:
+        return Response(
+            {'error': 'Esta conversación no tiene un vínculo familiar.'},
+            status=400,
+        )
+    contact.owner = None
+    contact.linked_via = ''
+    contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+    contact.verified_at = None
+    contact.save(update_fields=[
+        'owner', 'linked_via', 'verification_level', 'verified_at'])
+    logger.info("AGENT_FAMILY_LINK_REVOKED", extra={
+        "event": "AGENT_FAMILY_LINK_REVOKED",
+        "organization_id": request.user.organization_id,
+        "conversation_id": conversation.pk,
+        "actor_id": request.user.id,
+    })
+    return Response(ConversationListSerializer(conversation).data)
+
+
+@api_view(['POST'])
 @permission_classes([make_permission('agentinbox.send')])
 def send_message(request, pk):
     conversation = _get_conversation(request, pk)

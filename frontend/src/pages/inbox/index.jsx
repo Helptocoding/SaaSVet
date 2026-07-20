@@ -10,6 +10,7 @@ import {
     getInboxMetrics,
     releaseConversation,
     sendInboxMessage,
+    unlinkFamily,
     updateAgentSettings,
 } from "../../api/inbox";
 import { useAuth } from "../../auth/authContext";
@@ -211,6 +212,16 @@ const Inbox = () => {
         await runAction(closeConversation, "Conversación cerrada");
     };
 
+    const handleUnlinkFamily = async () => {
+        const ok = await confirm({
+            message: "¿Revocar el vínculo familiar? Este número dejará de tener acceso a los datos del titular.",
+            confirmText: "Revocar acceso",
+            dangerMode: true,
+        });
+        if (!ok) return;
+        await runAction(unlinkFamily, "Vínculo familiar revocado");
+    };
+
     const handleToggleAgent = async () => {
         const next = !agentSettings?.enabled;
         try {
@@ -319,6 +330,11 @@ const Inbox = () => {
                                     <span className={`badge ${STATE_BADGE[conv.state]}`} style={{ marginLeft: 8 }}>
                                         {STATE_LABEL[conv.state]}
                                     </span>
+                                    {conv.linked_via === "family_challenge" && (
+                                        <span className="badge badge-purple" style={{ marginLeft: 8 }}>
+                                            Vínculo familiar
+                                        </span>
+                                    )}
                                     {conv.claimed_by_name && (
                                         <span style={{ color: "var(--c-text-muted, #64748b)", marginLeft: 8, fontSize: 12 }}>
                                             Atiende: {conv.claimed_by_name}
@@ -337,6 +353,12 @@ const Inbox = () => {
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={() => runAction(releaseConversation, "Conversación liberada")}>
                                                 Liberar
+                                            </button>
+                                        )}
+                                        {conv.linked_via === "family_challenge" && (
+                                            <button className="btn btn-secondary btn-xs" disabled={acting}
+                                                onClick={handleUnlinkFamily}>
+                                                Revocar vínculo
                                             </button>
                                         )}
                                         <button className="btn btn-secondary btn-xs" disabled={acting} onClick={handleClose}>

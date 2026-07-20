@@ -65,6 +65,7 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
         policy.escalate_to_human(
             conversation, reason_code=decision.handoff_reason,
             priority=decision.handoff_priority,
+            detail=decision.meta.get('handoff_detail', ''),
         )
         if decision.text:
             enqueue_outbound(conversation, decision.text, author='agent')
@@ -146,7 +147,25 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             return {'decision': 'awaiting_confirmation',
                     'llm_calls': llm_calls, 'tools': tool_calls}
 
+        # La tool emitió una pregunta directa (p.ej. arranque del reto
+        # familiar) → se envía y se cierra el turno, sin realimentar al LLM.
+        if outcome.ok and outcome.reply_text:
+            enqueue_outbound(conversation, outcome.reply_text, author='agent')
+            return {'decision': 'awaiting_reply',
+                    'llm_calls': llm_calls, 'tools': tool_calls}
+
         if not outcome.ok:
+            # Acceso restringido del familiar (PR-17b): no es un fallo de
+            # sistema — se explica y se ofrece una persona (sin escalar en bucle).
+            if outcome.client_error == 'family_restricted':
+                enqueue_outbound(
+                    conversation,
+                    "Por seguridad, cancelar o mover una cita solo lo puede "
+                    "hacer el titular o nuestro equipo. ¿Te comunico con una "
+                    "persona? 🙂",
+                    author='agent')
+                return {'decision': 'family_restricted',
+                        'llm_calls': llm_calls, 'tools': tool_calls}
             if outcome.client_error == 'verification_required':
                 text = policy.start_identity_challenge(conversation)
                 enqueue_outbound(conversation, text, author='agent')

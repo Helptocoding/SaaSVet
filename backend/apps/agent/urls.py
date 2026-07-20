@@ -18,6 +18,8 @@ urlpatterns = [
          name='inbox-close'),
     path('conversations/<str:pk>/release/', views.release_conversation,
          name='inbox-release'),
+    path('conversations/<str:pk>/unlink-family/', views.unlink_family,
+         name='inbox-unlink-family'),
     path('settings/', views.agent_settings_view, name='inbox-settings'),
     path('metrics/', views.metrics_view, name='inbox-metrics'),
 ]
