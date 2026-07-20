@@ -76,6 +76,53 @@ def list_conversations(request):
     )
 
 
+@api_view(['GET', 'POST'])
+@permission_classes([make_permission('agentinbox.config')])
+def whatsapp_token_view(request):
+    """Gestiona el access token de WhatsApp de la org (ADMIN, agentinbox.config).
+
+    GET  → estado {configured, last4, channel} — NUNCA devuelve el token.
+    POST {token} → cifra y guarda en el/los ChannelAccount(s) de WhatsApp de la
+    org. Write-only: el token no se registra en logs ni se devuelve. Permite
+    rotar el token temporal de Meta desde la UI sin tocar .env.prod ni reiniciar
+    (el provider lee DB-first, con fallback a env)."""
+    from apps.channels.models import ChannelAccount
+    org = request.user.organization
+    channels = (ChannelAccount.objects.for_organization(org)
+                .filter(channel_type=ChannelAccount.CHANNEL_WHATSAPP))
+
+    if request.method == 'POST':
+        token = (request.data.get('token') or '').strip()
+        if not token:
+            return Response(
+                {'code': 'validation_error',
+                 'errors': {'token': ['El token es requerido.']}},
+                status=400)
+        if not channels.exists():
+            return Response(
+                {'code': 'not_found',
+                 'message': 'La organización no tiene un canal de WhatsApp.'},
+                status=404)
+        updated = 0
+        for channel in channels:
+            channel.set_access_token(token)
+            channel.save(update_fields=[
+                'access_token_encrypted', 'access_token_last4'])
+            updated += 1
+        logger.info("WHATSAPP_TOKEN_SET", extra={
+            "event": "WHATSAPP_TOKEN_SET",
+            "organization_id": org.id, "actor_id": request.user.id,
+            "channels": updated,
+        })
+
+    primary = channels.first()
+    return Response({
+        'configured': bool(primary and primary.has_db_token),
+        'last4': (primary.access_token_last4 if primary else ''),
+        'channel': (primary.external_account_id if primary else None),
+    })
+
+
 @api_view(['GET'])
 @permission_classes([make_permission('agentinbox.view')])
 def metrics_view(request):

@@ -41,11 +41,17 @@ class MetaWhatsAppProvider:
         self.channel_account = channel_account
 
     def _access_token(self):
+        # 1) Token cifrado en DB (rotable desde la UI, sin restart).
+        db_token = self.channel_account.get_access_token()
+        if db_token:
+            return db_token
+        # 2) Fallback: env var nombrada por provider_credentials_ref (.env.prod).
         ref = self.channel_account.provider_credentials_ref
         token = os.environ.get(ref, '') or getattr(settings, ref, '')
         if not token:
             raise ProviderError(
-                f"access token no configurado (env {ref})", retryable=False,
+                f"access token no configurado (ni en DB ni env {ref})",
+                retryable=False,
             )
         return token
 

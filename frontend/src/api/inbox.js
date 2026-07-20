@@ -34,3 +34,9 @@ export const updateAgentSettings = (data) =>
 // Métricas de negocio del piloto F2 (spec §8). params: { from, to } YYYY-MM-DD.
 export const getInboxMetrics = (params = {}) =>
   api.get("inbox/metrics/", { params }).then((r) => r.data);
+
+// Token de WhatsApp (write-only). GET → { configured, last4 }; POST { token }.
+export const getWhatsappToken = () =>
+  api.get("inbox/whatsapp-token/").then((r) => r.data);
+export const setWhatsappToken = (token) =>
+  api.post("inbox/whatsapp-token/", { token }).then((r) => r.data);

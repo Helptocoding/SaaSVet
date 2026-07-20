@@ -22,4 +22,5 @@ urlpatterns = [
          name='inbox-unlink-family'),
     path('settings/', views.agent_settings_view, name='inbox-settings'),
     path('metrics/', views.metrics_view, name='inbox-metrics'),
+    path('whatsapp-token/', views.whatsapp_token_view, name='inbox-whatsapp-token'),
 ]

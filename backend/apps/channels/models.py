@@ -46,11 +46,19 @@ class ChannelAccount(OrganizationalModel):
     external_account_id = models.CharField(max_length=64, unique=True)
     display_number = models.CharField(max_length=20, blank=True, default='')
     # NOMBRE de la variable de entorno que contiene el access token del
-    # proveedor. El secreto vive en .env.prod (regla dura del runbook de
-    # deploy), JAMÁS en la base de datos.
+    # proveedor (fallback). El token puede vivir cifrado en DB (abajo) para
+    # rotarlo desde la UI; si no hay token en DB, se usa esta env var.
     provider_credentials_ref = models.CharField(
         max_length=100, default='WHATSAPP_ACCESS_TOKEN',
     )
+    # Access token CIFRADO en reposo (Fernet, ver channels/crypto.py). Permite
+    # rotar el token temporal de Meta desde /inbox sin tocar .env.prod ni
+    # reiniciar. Write-only por API (nunca se devuelve en claro). Vacío =
+    # se usa el fallback de env (`provider_credentials_ref`).
+    access_token_encrypted = models.TextField(blank=True, default='')
+    # Últimos 4 chars del token (no sensible) — para mostrar "…1234" en la UI
+    # sin descifrar.
+    access_token_last4 = models.CharField(max_length=4, blank=True, default='')
     status = models.CharField(
         max_length=10, choices=STATUS_CHOICES, default=STATUS_ACTIVE,
     )
@@ -62,6 +70,22 @@ class ChannelAccount(OrganizationalModel):
 
     def __str__(self):
         return f"ChannelAccount<{self.channel_type} {self.display_number or self.external_account_id}>"
+
+    def set_access_token(self, plaintext):
+        """Cifra y guarda el token (o lo limpia). NO hace save()."""
+        from .crypto import encrypt_secret
+        plaintext = (plaintext or '').strip()
+        self.access_token_encrypted = encrypt_secret(plaintext)
+        self.access_token_last4 = plaintext[-4:] if plaintext else ''
+
+    def get_access_token(self):
+        """Token en claro desde DB (cifrado), o '' si no hay."""
+        from .crypto import decrypt_secret
+        return decrypt_secret(self.access_token_encrypted)
+
+    @property
+    def has_db_token(self):
+        return bool(self.access_token_encrypted)
 
 
 class Message(OrganizationalModel):

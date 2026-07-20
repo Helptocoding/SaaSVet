@@ -8,8 +8,10 @@ import {
     getConversationMessages,
     getConversations,
     getInboxMetrics,
+    getWhatsappToken,
     releaseConversation,
     sendInboxMessage,
+    setWhatsappToken,
     unlinkFamily,
     updateAgentSettings,
 } from "../../api/inbox";
@@ -104,6 +106,9 @@ const Inbox = () => {
     const [acting, setActing] = useState(false);
     const [agentSettings, setAgentSettings] = useState(null);
     const [metrics, setMetrics] = useState(null);
+    const [tokenStatus, setTokenStatus] = useState(null);
+    const [tokenInput, setTokenInput] = useState("");
+    const [savingToken, setSavingToken] = useState(false);
     const threadEndRef = useRef(null);
 
     const canSend = can?.("agentinbox.send");
@@ -161,6 +166,30 @@ const Inbox = () => {
             .then(setMetrics)
             .catch((err) => console.error(apiError(err)));
     }, []);
+
+    // Estado del token de WhatsApp (solo ADMIN).
+    useEffect(() => {
+        if (!canConfig) return;
+        getWhatsappToken()
+            .then(setTokenStatus)
+            .catch((err) => console.error(apiError(err)));
+    }, [canConfig]);
+
+    const handleSaveToken = async () => {
+        const t = tokenInput.trim();
+        if (!t) { toast.error("Pega el token de WhatsApp"); return; }
+        setSavingToken(true);
+        try {
+            const data = await setWhatsappToken(t);
+            setTokenStatus(data);
+            setTokenInput("");
+            toast.success("Token de WhatsApp actualizado");
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo guardar el token"));
+        } finally {
+            setSavingToken(false);
+        }
+    };
 
     useEffect(() => {
         threadEndRef.current?.scrollIntoView({ block: "end" });
@@ -254,6 +283,32 @@ const Inbox = () => {
                     </button>
                 )}
             </div>
+
+            {canConfig && (
+                <div className={styles.tokenBar}>
+                    <span className={styles.tokenLabel}>
+                        Token de WhatsApp:{" "}
+                        {tokenStatus?.configured
+                            ? <strong>configurado ✓ …{tokenStatus.last4}</strong>
+                            : <em>no configurado</em>}
+                    </span>
+                    <input
+                        type="password"
+                        className={styles.tokenInput}
+                        placeholder="Pegar token nuevo de Meta"
+                        value={tokenInput}
+                        autoComplete="off"
+                        onChange={(e) => setTokenInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !savingToken) handleSaveToken();
+                        }}
+                    />
+                    <button className="btn btn-secondary btn-xs" disabled={savingToken}
+                        onClick={handleSaveToken}>
+                        {savingToken ? "Guardando…" : "Guardar token"}
+                    </button>
+                </div>
+            )}
 
             <MetricsBar metrics={metrics} />
 
