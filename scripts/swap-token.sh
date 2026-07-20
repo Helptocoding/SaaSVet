@@ -2,7 +2,7 @@
 # Rota el WHATSAPP_ACCESS_TOKEN (token temporal de Meta) sin nano ni deploy.
 #
 # Uso EN EL VPS, desde el repo root:
-#   bash scripts/swap-token.sh EAAG...nuevotoken
+#   bash scripts/swap-token.sh <NUEVO_TOKEN>
 #
 # Qué hace:
 #   1. Reemplaza (o agrega) WHATSAPP_ACCESS_TOKEN en .env.prod.

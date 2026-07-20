@@ -28,7 +28,7 @@ def _seed_role(org, role_name):
 
 class CryptoRoundtripTests(TestCase):
     def test_encrypt_decrypt_roundtrip(self):
-        secret = "EAAG-super-secreto/con=chars+raros"
+        secret = "dummy-super-secreto/con=chars+raros"
         ct = encrypt_secret(secret)
         self.assertNotEqual(ct, secret)          # cifrado, no claro
         self.assertNotIn(secret, ct)
@@ -47,13 +47,13 @@ class ChannelTokenTests(TestCase):
             organization=self.org, external_account_id="111222333")
 
     def test_set_get_token(self):
-        self.channel.set_access_token("EAAG-token-1234")
+        self.channel.set_access_token("dummy-token-1234")
         self.channel.save()
         self.channel.refresh_from_db()
         self.assertTrue(self.channel.has_db_token)
         self.assertEqual(self.channel.access_token_last4, "1234")
         self.assertNotIn("EAAG", self.channel.access_token_encrypted)  # cifrado
-        self.assertEqual(self.channel.get_access_token(), "EAAG-token-1234")
+        self.assertEqual(self.channel.get_access_token(), "dummy-token-1234")
 
     def test_clear_token(self):
         self.channel.set_access_token("x")
@@ -96,7 +96,8 @@ class TokenEndpointTests(TestCase):
 
     def test_set_token_is_write_only(self):
         r = self.client.post("/api/inbox/whatsapp-token/",
-                             {"token": "EAAG-nuevo-9876"}, format="json")
+                             {"token": "dummy-nuevo-9876"},  # gitleaks:allow
+                             format="json")
         self.assertEqual(r.status_code, 200, r.content)
         body = r.json()
         self.assertTrue(body["configured"])
@@ -104,7 +105,7 @@ class TokenEndpointTests(TestCase):
         self.assertNotIn("9876", str(body.get("token", "")))  # nunca el token
         self.assertNotIn("token", body)
         self.channel.refresh_from_db()
-        self.assertEqual(self.channel.get_access_token(), "EAAG-nuevo-9876")
+        self.assertEqual(self.channel.get_access_token(), "dummy-nuevo-9876")
 
     def test_get_status_no_token(self):
         r = self.client.get("/api/inbox/whatsapp-token/")
