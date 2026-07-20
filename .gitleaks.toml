@@ -13,6 +13,10 @@ paths = [
   '''\.env\.prod\.example$''',
   '''pnpm-lock\.yaml$''',
   '''requirements\.lock$''',
+  # Test de rotación del token de WhatsApp: solo contiene valores DUMMY
+  # ("dummy-…") por diseño; el rule generic-api-key matchea la clave
+  # `"token": "…"` sin importar el valor. Sin secretos reales.
+  '''backend/apps/channels/tests/test_token\.py$''',
 ]
 # Surgical exemption for ONE documented example value: the illustrative
 # `temp_password` in the ADR p21 sample HTTP response
