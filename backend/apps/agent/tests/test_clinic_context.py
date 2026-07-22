@@ -1,0 +1,125 @@
+"""
+test_clinic_context.py — El agente lee la config de clínica de la fuente única
+(Organization + OrganizationSchedule, ADR p53), con fallback legacy.
+
+Nota: el signal initialize_organization siembra 7 filas de horario por defecto
+al crear una org (L-V 9-18, Sáb 9-14, Dom cerrado). Los tests que aíslan la
+lógica de horario LIMPIAN ese seed primero.
+"""
+from datetime import time
+
+from django.test import TestCase
+
+from apps.agent import clinic_context
+from apps.agent.models import AgentSettings, ContactIdentity, Conversation
+from apps.agent.tools import get_clinic_info
+from apps.channels.models import ChannelAccount
+from apps.organizations.models import Organization, OrganizationSchedule
+
+
+class _FakeExecutor:
+    """get_clinic_info es una tool LOCAL: audita vía executor.record_local."""
+    def record_local(self, **kwargs):
+        return None
+
+
+class ClinicFactsTests(TestCase):
+    def setUp(self):
+        self.org = Organization.objects.create(
+            name="Clinic Org", timezone="America/Mexico_City",
+            phone="5555550000", email="hola@clinica.mx",
+            address_line1="Av. Reforma 100", city="CDMX",
+            google_maps_url="https://maps.google.com/?q=clinica",
+            arrival_instructions="Timbre azul, segundo piso.")
+
+    def test_clinic_facts_from_organization(self):
+        facts = clinic_context.clinic_facts(self.org)
+        self.assertEqual(facts["teléfono"], "5555550000")
+        self.assertEqual(facts["correo"], "hola@clinica.mx")
+        self.assertIn("Av. Reforma 100", facts["dirección"])
+        self.assertIn("CDMX", facts["dirección"])
+        self.assertIn("maps.google", facts["mapa"])
+        self.assertIn("Timbre azul", facts["indicaciones"])
+
+    def test_empty_fields_absent(self):
+        bare = Organization.objects.create(name="Bare", timezone="UTC")
+        self.assertEqual(clinic_context.clinic_facts(bare), {})
+
+
+class ScheduleTests(TestCase):
+    def setUp(self):
+        self.org = Organization.objects.create(name="Sched Org", timezone="UTC")
+        # Aislar la lógica: partir de cero (sin el seed del signal).
+        OrganizationSchedule.objects.filter(organization=self.org).delete()
+
+    def _day(self, weekday, **kw):
+        return OrganizationSchedule.objects.create(
+            organization=self.org, weekday=weekday, **kw)
+
+    def test_ranges_with_break_gives_two_windows(self):
+        self._day(1, opens_at=time(9), closes_at=time(14), has_break=True,
+                  break_start=time(12), break_end=time(13))
+        ranges = clinic_context.weekday_ranges(self.org, 0)  # 0 = lunes
+        self.assertEqual(ranges, [["09:00", "12:00"], ["13:00", "14:00"]])
+
+    def test_closed_day_empty(self):
+        self._day(2, is_closed=True)
+        self.assertEqual(clinic_context.weekday_ranges(self.org, 1), [])
+
+    def test_schedule_present_but_missing_weekday_is_closed(self):
+        self._day(1, opens_at=time(9), closes_at=time(17))
+        self.assertEqual(clinic_context.weekday_ranges(self.org, 6), [])  # dom
+
+    def test_legacy_fallback_when_no_schedule(self):
+        legacy = [["08:00", "10:00"]]
+        self.assertEqual(
+            clinic_context.weekday_ranges(self.org, 0, legacy_ranges=legacy),
+            legacy)
+
+    def test_humanize_schedule(self):
+        self._day(1, opens_at=time(9), closes_at=time(14))
+        self._day(3, is_closed=True)
+        human = clinic_context.humanize_schedule(self.org)
+        self.assertIn("lun 09:00 a 14:00", human)
+        self.assertNotIn("mié", human)
+
+    def test_default_seed_is_source_of_truth(self):
+        # Una org recién creada (con el seed del signal) → lunes 09-18.
+        fresh = Organization.objects.create(name="Seeded", timezone="UTC")
+        self.assertEqual(clinic_context.weekday_ranges(fresh, 0),
+                         [["09:00", "18:00"]])
+        self.assertEqual(clinic_context.weekday_ranges(fresh, 6), [])  # dom cerrado
+
+
+class GetClinicInfoIntegrationTests(TestCase):
+    def setUp(self):
+        self.org = Organization.objects.create(
+            name="Info Org", timezone="UTC", phone="5544332211")
+        self.channel = ChannelAccount.objects.create(
+            organization=self.org, external_account_id="123123123")
+        self.contact = ContactIdentity.objects.create(
+            organization=self.org, external_id="5215500000000")
+        self.conv = Conversation.objects.create(
+            organization=self.org, channel_account=self.channel,
+            contact=self.contact)
+        self.ex = _FakeExecutor()
+
+    def test_org_overrides_legacy_faq(self):
+        AgentSettings.objects.create(
+            organization=self.org, enabled=True,
+            faq_facts={"teléfono": "0000000000", "estacionamiento": "Sí"})
+        out = get_clinic_info(self.conv, self.ex, {})
+        self.assertEqual(out.data["teléfono"], "5544332211")   # config nueva gana
+        self.assertEqual(out.data["estacionamiento"], "Sí")    # legacy se conserva
+
+    def test_schedule_beats_business_hours(self):
+        AgentSettings.objects.create(
+            organization=self.org, enabled=True,
+            business_hours={"mon": [["06:00", "07:00"]]})
+        # Ajustar el horario sembrado del lunes a 09-18.
+        OrganizationSchedule.objects.filter(
+            organization=self.org, weekday=1).update(
+            opens_at=time(9), closes_at=time(18), is_closed=False)
+        out = get_clinic_info(self.conv, self.ex, {})
+        self.assertIn("09:00 a 18:00", out.data["horario"])
+        self.assertNotIn("06:00", out.data["horario"])

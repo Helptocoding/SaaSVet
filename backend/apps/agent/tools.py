@@ -164,15 +164,25 @@ def get_vaccine_status(conversation, executor, args, triggered_by=None):
 
 
 def get_clinic_info(conversation, executor, args, triggered_by=None):
-    """LOCAL (sin HTTP): AgentSettings.faq_facts + horario. G1: sin dato
-    configurado se responde honesto — jamás se inventa."""
+    """LOCAL (sin HTTP): datos de clínica + horario. Fuente única = la config
+    nueva (Organization + OrganizationSchedule, ADR p53); AgentSettings.faq_facts
+    /business_hours son fallback legacy. G1: sin dato se responde honesto — jamás
+    se inventa."""
+    from . import clinic_context
     from .models import AgentSettings
-    settings_obj = AgentSettings.objects.filter(
-        organization=conversation.organization,
-    ).first()
+    org = conversation.organization
+    settings_obj = AgentSettings.objects.filter(organization=org).first()
+
+    # Base legacy (faq_facts) → la config nueva la PISA campo a campo.
     facts = dict((settings_obj.faq_facts or {}) if settings_obj else {})
-    if settings_obj and settings_obj.business_hours:
-        facts.setdefault('horario', _humanize_hours(settings_obj.business_hours))
+    facts.update(clinic_context.clinic_facts(org))
+
+    # Horario: OrganizationSchedule primero; si no hay, business_hours legacy.
+    horario = clinic_context.humanize_schedule(org)
+    if not horario and settings_obj and settings_obj.business_hours:
+        horario = _humanize_hours(settings_obj.business_hours)
+    if horario:
+        facts['horario'] = horario
 
     topic = _norm(args.get('topic', ''))
     if topic:
@@ -442,6 +452,7 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
     horarios concretos. Tolerante a errores (salta el día que falle)."""
     from datetime import timedelta
 
+    from . import clinic_context
     from .models import AgentSettings
     org = conversation.organization
     agent_settings = AgentSettings.objects.filter(organization=org).first()
@@ -451,7 +462,9 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
         return None, []
     day = timezone.localdate() + timedelta(days=1)
     for _ in range(max_days):
-        ranges = _weekday_ranges(business_hours, day.weekday())
+        ranges = clinic_context.weekday_ranges(
+            org, day.weekday(), agent_settings=agent_settings,
+            legacy_ranges=_weekday_ranges(business_hours, day.weekday()))
         if ranges:
             slots = _free_slots_for_day(
                 org, executor, day, vet, ranges,
@@ -472,6 +485,7 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     está lleno → lista vacía y el planner ofrece otro día."""
     from datetime import datetime
 
+    from . import clinic_context
     from .models import AgentSettings
 
     date_str = (args.get('date') or '').strip()
@@ -489,7 +503,9 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
 
     agent_settings = AgentSettings.objects.filter(organization=org).first()
     business_hours = (agent_settings.business_hours or {}) if agent_settings else {}
-    ranges = _weekday_ranges(business_hours, day.weekday())
+    ranges = clinic_context.weekday_ranges(
+        org, day.weekday(), agent_settings=agent_settings,
+        legacy_ranges=_weekday_ranges(business_hours, day.weekday()))
     if not ranges:
         return ToolOutcome(ok=True, data=[], summary={'slots': 0, 'closed': True})
 

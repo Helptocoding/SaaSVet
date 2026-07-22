@@ -6,10 +6,13 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from zoneinfo import available_timezones
 
+
+def _validate_weekday_range(value):
+    if value < 1 or value > 7:
+        raise ValidationError('El día de la semana debe estar entre 1 (lunes) y 7 (domingo).')
+
+
 class Organization(models.Model):
-    # Día 6 Fase 4: public_id para superficies externas (ADR p18).
-    # Organization se promueve a modelo público porque /me/ y embeds en
-    # responses exponen el FK organization.
     public_id = models.UUIDField(
         default=uuid4,
         editable=False,
@@ -17,6 +20,9 @@ class Organization(models.Model):
         db_index=True,
     )
     name = models.CharField(max_length=255)
+
+    display_name = models.CharField(max_length=255, blank=True, default='')
+
     timezone = models.CharField(max_length=64, default='America/Mexico_City')
     timezone_updated_at = models.DateTimeField(null=True, blank=True)
     tax_rate = models.DecimalField(
@@ -25,16 +31,36 @@ class Organization(models.Model):
         default=Decimal('0.0000'),
         help_text="Tasa de IVA aplicada automáticamente a nuevos cobros (ej: 0.16 = 16%)"
     )
-    # P1-8: marca de tenant demo. Es la ÚNICA autoridad para las operaciones
-    # destructivas del seed (seed_demo_clinic --reset/--delete). Nunca operar por
-    # nombre. Las orgs reales conservan is_demo=False (default) y son intocables
-    # por el comando de seed.
+
+    # Contacto
+    phone = models.CharField(max_length=32, blank=True, default='')
+    whatsapp = models.CharField(max_length=32, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
+    website = models.URLField(blank=True, default='')
+
+    # Ubicacion
+    address_line1 = models.CharField(max_length=255, blank=True, default='')
+    address_line2 = models.CharField(max_length=255, blank=True, default='')
+    district = models.CharField(max_length=120, blank=True, default='')
+    city = models.CharField(max_length=120, blank=True, default='')
+    state = models.CharField(max_length=120, blank=True, default='')
+    postal_code = models.CharField(max_length=16, blank=True, default='')
+    country = models.CharField(max_length=80, blank=True, default='Mexico')
+    google_maps_url = models.URLField(blank=True, default='')
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    # Instrucciones
+    arrival_instructions = models.TextField(blank=True, default='')
+
     is_demo = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
         if self.timezone not in available_timezones():
-            raise ValidationError({'timezone': 'Zona horaria inválida'})
+            raise ValidationError({'timezone': 'Zona horaria invalida'})
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValidationError('Latitud y longitud deben enviarse juntas.')
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -53,12 +79,68 @@ class OrganizationSettings(models.Model):
     require_confirmation_before_start = models.BooleanField(default=False)
     allow_anonymous_walkin = models.BooleanField(default=False)
     show_status_change_history = models.BooleanField(default=True)
-    # ADR p28: exige una caja abierta para cobrar/pagar. Default False →
-    # comportamiento actual intacto (caja opcional).
     require_open_cash_session = models.BooleanField(default=False)
+
+    locale = models.CharField(max_length=16, default='es-MX')
+    currency_code = models.CharField(max_length=3, default='MXN')
+    default_appointment_duration_minutes = models.PositiveSmallIntegerField(default=30)
+    appointment_buffer_minutes = models.PositiveSmallIntegerField(default=0)
+    allow_emergency_walkin = models.BooleanField(default=False)
+    week_starts_on = models.PositiveSmallIntegerField(default=1, validators=[_validate_weekday_range])
 
     def __str__(self):
         return f"Settings — {self.organization.name}"
+
+
+class OrganizationSchedule(models.Model):
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='schedules'
+    )
+    weekday = models.PositiveSmallIntegerField(validators=[_validate_weekday_range])
+    is_closed = models.BooleanField(default=False)
+    opens_at = models.TimeField(null=True, blank=True)
+    closes_at = models.TimeField(null=True, blank=True)
+    has_break = models.BooleanField(default=False)
+    break_start = models.TimeField(null=True, blank=True)
+    break_end = models.TimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'weekday'],
+                name='org_schedule_unique_weekday',
+            ),
+        ]
+        ordering = ['weekday']
+
+    def clean(self):
+        if self.is_closed:
+            self.opens_at = None
+            self.closes_at = None
+            self.has_break = False
+            self.break_start = None
+            self.break_end = None
+            return
+        if self.opens_at is None or self.closes_at is None:
+            raise ValidationError('opens_at y closes_at son obligatorios cuando is_closed=False.')
+        if self.opens_at >= self.closes_at:
+            raise ValidationError('La hora de apertura debe ser anterior a la de cierre.')
+        if self.has_break:
+            if self.break_start is None or self.break_end is None:
+                raise ValidationError('break_start y break_end son obligatorios cuando has_break=True.')
+            if not (self.opens_at < self.break_start < self.break_end < self.closes_at):
+                raise ValidationError('El descanso debe estar dentro del horario de apertura.')
+        else:
+            self.break_start = None
+            self.break_end = None
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        status = 'Cerrado' if self.is_closed else f'{self.opens_at}–{self.closes_at}'
+        return f'Weekday {self.weekday}: {status}'
 
 
 class OrganizationTimezoneAudit(models.Model):

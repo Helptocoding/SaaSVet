@@ -236,6 +236,56 @@ Mantenido por retrocompat hasta **2026-08-17** (RFC 8594 Sunset). Reglas:
 
 `OrganizationAdmin.has_delete_permission = False` — la org se desactiva, no se borra (consistencia con `User.organization` PROTECT).
 
+## Nuevos endpoints desde Fase 1 (ADR p53)
+
+### Horario semanal
+
+```
+GET  /api/organizations/schedule/
+PUT  /api/organizations/schedule/
+Authorization: Bearer <token ADMIN>
+```
+
+`GET` devuelve las 7 filas del horario semanal (lunes=1 a domingo=7). `PUT` recibe
+exactamente 7 objetos con los campos `weekday`, `is_closed`, `opens_at`, `closes_at`,
+`has_break`, `break_start`, `break_end`. Solo `ADMIN` puede escribir.
+
+Reglas del endpoint:
+- exige exactamente 7 elementos con weekdays 1-7 sin duplicados
+- persiste todo dentro de `transaction.atomic()`
+- si cualquier fila falla validacion, no guarda nada
+- el backend ordena por `weekday`
+
+### Lectura agregada de configuracion
+
+```
+GET /api/settings/configuration/
+```
+
+Devuelve la configuracion completa de la clinica en una sola llamada: organizacion
+(identidad, contacto, ubicacion), settings (reglas operativas) y schedule (horario
+semanal). La respuesta incluye los campos nuevos de Fase 1.
+
+### Horario por dia — modelo `OrganizationSchedule`
+
+Cada fila representa un dia de la semana:
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `weekday` | PositiveSmallInteger (1-7) | Lunes=1 ... Domingo=7 |
+| `is_closed` | Boolean | `True` = cerrado |
+| `opens_at` | Time (nullable) | Hora de apertura |
+| `closes_at` | Time (nullable) | Hora de cierre |
+| `has_break` | Boolean | `True` = tiene descanso |
+| `break_start` | Time (nullable) | Inicio del descanso |
+| `break_end` | Time (nullable) | Fin del descanso |
+
+Validaciones:
+- si `is_closed=True`: todos los horarios deben ser `null`
+- si `is_closed=False`: `opens_at` y `closes_at` obligatorios, `opens_at < closes_at`
+- si `has_break=True`: `break_start` y `break_end` obligatorios, dentro del horario
+- un solo bloque de apertura y un solo descanso por dia en Fase 1
+
 ## Configuracion de la clinica
 
 ```
@@ -253,10 +303,29 @@ Toggles disponibles:
 | `require_confirmation_before_start`| `false` | La cita debe confirmarse antes de iniciar                     |
 | `allow_anonymous_walkin`           | `false` | Permite walk-in sin mascota registrada                        |
 | `show_status_change_history`       | `true`  | Muestra historial de cambios de estado en citas               |
-| `require_open_cash_session`        | `false` | Si `True`, `pay_invoice` / `pay_direct_sale` exigen una caja abierta del actor; el `Payment` se ata a esa sesion (ADR p28). |
+| `require_open_cash_session`        | `false` | Si `True`, `pay_invoice` / `pay_direct_sale` exigen una caja abierta del actor (ADR p28). |
+| `locale`                           | `es-MX` | Locale del sistema                                            |
+| `currency_code`                    | `MXN`   | Codigo de moneda ISO-4217                                     |
+| `default_appointment_duration_minutes` | `30` | Duracion sugerida al crear citas nuevas. No modifica citas existentes. |
+| `appointment_buffer_minutes`       | `0`     | Intervalo entre citas                                         |
+| `allow_emergency_walkin`           | `false` | Permite urgencias sin cita                                    |
+| `week_starts_on`                   | `1`     | Primer dia de la semana (1=lunes, 7=domingo)                  |
+
+Campos desde Fase 1 (ADR p53):
+- `locale` (default `es-MX`)
+- `currency_code` (default `MXN`)
+- `default_appointment_duration_minutes` (default `30`)
+- `appointment_buffer_minutes` (default `0`)
+- `allow_emergency_walkin` (default `False`)
+- `week_starts_on` (default `1`)
+
+`default_appointment_duration_minutes` solo define el valor sugerido al crear nuevas
+citas; no modifica citas existentes ni reorganiza la agenda automaticamente.
 
 Ver ADR `2026-04-28-organization-settings-toggles.md` para el racional de cada toggle.
 Ver ADR `2026-05-27-p28-cash-session-cierre-z.md` para el toggle de caja.
+Ver ADR `2026-07-21-p53-clinic-configuration-aggregates.md` para la separacion de
+agregados y la Fase 1 de configuracion de clinica.
 
 ## Tenant demo (`is_demo`) y su reset automático (ADR p49)
 

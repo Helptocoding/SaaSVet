@@ -228,6 +228,7 @@ Ver ADR `2026-04-28-organization-settings-toggles.md`.
 | `auto_create_medical_record` | `False` | Al pasar a `done`, puede crear `MedicalRecord` vacio en estado `open` si la clinica lo habilita |
 | `require_confirmation_before_start` | `False` | Bloquea cualquier transición a `in_progress` si el estado previo no es `confirmed` |
 | `allow_anonymous_walkin` | `False` | Permite walk-in sin mascota; usa paciente genérico (`Pet.is_generic=True`) |
+| `allow_emergency_walkin` | `False` | Permite urgencias sin cita previa; toggle separado de `allow_anonymous_walkin` |
 | `show_status_change_history` | `True` | Controla visibilidad del panel de historial en la UI de detalle de cita |
 
 Los defaults actuales privilegian un flujo manual y explicito: completar la cita no crea automaticamente artefactos clinicos ni financieros salvo que la organizacion lo habilite.
@@ -235,13 +236,17 @@ El fallback cuando no existe registro de settings está en `get_org_setting()` (
 
 ## Duracion por defecto de slot en el formulario
 
-La duracion por defecto al crear una cita desde el formulario del calendario es **30 minutos**.
+La duracion por defecto al crear una cita desde el formulario del calendario es el valor
+de `default_appointment_duration_minutes` en `OrganizationSettings` (default: **30 minutos**).
+
+Este valor solo afecta citas nuevas; no modifica duraciones de citas existentes ni reorganiza slots.
+Se configura desde `/config` → Reglas operativas → "Duración predeterminada de cita".
 
 - Hora inicio: la hora del slot seleccionado (en punto, ej: 10:00)
-- Hora fin: 30 minutos despues (ej: 10:30), salvo en el ultimo slot del dia (20:00) donde se ajusta automaticamente
+- Hora fin: `default_appointment_duration_minutes` minutos despues (ej: 10:30), salvo en el ultimo slot del dia (20:00) donde se ajusta automaticamente
 - El backend acepta cualquier duracion siempre que `end_time > start_time`
 
-El walk-in tambien usa 30 minutos por defecto (comportamiento sin cambio).
+El walk-in tambien usa `default_appointment_duration_minutes` por defecto (comportamiento sin cambio).
 
 ## Relacion con otros modulos
 

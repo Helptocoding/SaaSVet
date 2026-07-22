@@ -14,6 +14,9 @@ def initialize_organization(sender, instance, created, **kwargs):
         from .models import OrganizationSettings
         OrganizationSettings.objects.get_or_create(organization=instance)
 
+        from .utils import create_default_schedule
+        create_default_schedule(instance)
+
         from apps.patients.models import Owner, Pet
         generic_owner, _ = Owner.objects.get_or_create(
             organization=instance,
@@ -34,7 +37,6 @@ def initialize_organization(sender, instance, created, **kwargs):
 
     except Exception as e:
         logger.error("Error inicializando organización %s: %s", instance.pk, e)
-        # No re-raise: la org debe quedar creada aunque el setup auxiliar falle
 
 
 def _seed_roles_for_org(org):

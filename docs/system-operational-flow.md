@@ -23,7 +23,7 @@ contexto de trabajo ligero y preciso:
 | Módulo | Responsabilidad |
 |--------|-----------------|
 | `platform` | Provisión cross-tenant: crear organizaciones nuevas y su admin inicial. SaaS-wide. |
-| `organizations` | Tenant. Una clínica = una organización. Settings, timezone, tax_rate. |
+| `organizations` | Tenant. Una clínica = una organización. Perfil, timezone, tax_rate. Tres agregados: `Organization` (identidad/contacto/ubicación), `OrganizationSettings` (reglas operativas, toggles), `OrganizationSchedule` (horario semanal, 7 filas por organización). Ver ADR p53. |
 | `users` | Cuentas y roles (ADMIN_SAAS, ADMIN, VET, ASSISTANT). RBAC dinámico. |
 | `patients` | Propietarios (Owner) + mascotas (Pet). Punto de entrada a todos los flujos clínicos. |
 | `appointments` | Agenda. Estados, walk-in, asignación de paciente, registro rápido. |

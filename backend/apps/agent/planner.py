@@ -275,18 +275,26 @@ def _success_message(tool, outcome, conversation, executor):
 
 
 def _post_scheduling_info(conversation):
-    """UX-09: sufijo con dirección/indicaciones de la clínica (de faq_facts).
-    '' si no hay datos — nunca se inventa (G1)."""
+    """UX-09: sufijo con dirección/indicaciones de la clínica. Fuente única =
+    Organization (ADR p53); faq_facts es fallback. '' si no hay datos — nunca
+    se inventa (G1)."""
+    from . import clinic_context
     from .models import AgentSettings
-    settings_obj = AgentSettings.objects.filter(
-        organization=conversation.organization).first()
-    facts = (settings_obj.faq_facts or {}) if settings_obj else {}
-    address = facts.get('direccion') or facts.get('dirección')
-    hints = (facts.get('indicaciones') or facts.get('como_llegar')
-             or facts.get('cómo_llegar'))
+    org = conversation.organization
+    org_facts = clinic_context.clinic_facts(org)
+    settings_obj = AgentSettings.objects.filter(organization=org).first()
+    legacy = (settings_obj.faq_facts or {}) if settings_obj else {}
+
+    address = (org_facts.get('dirección')
+               or legacy.get('direccion') or legacy.get('dirección'))
+    hints = (org_facts.get('indicaciones') or legacy.get('indicaciones')
+             or legacy.get('como_llegar') or legacy.get('cómo_llegar'))
+    maps = org_facts.get('mapa')
     parts = []
     if address:
         parts.append(f"📍 {address}")
+    if maps:
+        parts.append(str(maps))
     if hints:
         parts.append(str(hints))
     return ("\n\n" + "\n".join(parts)) if parts else ""
