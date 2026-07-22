@@ -94,6 +94,12 @@ BASELINE = {
     # viene del principal autenticado, no de un id del cliente.
     ('legal', 'services.py', 'LegalAcceptance', 'filter'),
     ('legal', 'services.py', 'LegalAcceptance', 'get_or_create'),
+    # Revisado 2026-07-22 (ADR p53): OrganizationSchedule (aliasado `Schedule`
+    # en la view) se filtra siempre con organization=request.user.organization
+    # inline (PUT/GET del horario) — tenant-scoped por construcción, mismo
+    # patrón que OrganizationSettings (en NON_TENANT_MODELS). El horario es hijo
+    # 1:N de Organization; nunca se accede sin el filtro org.
+    ('organizations', 'views.py', 'Schedule', 'filter'),
     ('medical_records', 'views.py', 'Invoice', 'filter'),
     ('medical_records', 'views.py', 'MedicalRecordService', 'filter'),
     # Revisado 2026-07-15 (medical_records/services.py:136): scoped por FK padre
