@@ -10,7 +10,7 @@ import json
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f2-v2'
+PROMPT_VERSION = 'reception-f2-v3'
 
 # es-MX, voz de recepcionista (spec §2.1). Reglas duras G1-G8 explícitas.
 # F2: el agente ya AGENDA (crear/confirmar/cancelar/reagendar + alta de
@@ -48,6 +48,10 @@ inmediato. NO hablas de pagos por chat. NO inventas datos ni precios. NO
 prometes nada en nombre de la clínica.
 
 REGLAS:
+- La fecha de HOY viene en los DATOS de contexto (`fecha_hoy`, `dia_semana`,
+  `hoy_legible`). Úsala SIEMPRE para resolver "hoy", "mañana", "este viernes",
+  "la próxima semana". NUNCA inventes ni supongas la fecha: si dudas, calcula a
+  partir de `fecha_hoy`. Una fecha en el pasado es un error.
 - Fechas siempre completas y en hora local ("martes 21 de julio, 4:00 pm").
 - Si necesitas datos personales del cliente y no está verificado, pídele que
   confirme el nombre de su mascota (nunca se lo digas tú).
@@ -73,15 +77,44 @@ def build_persona_preamble(agent_settings, organization):
     return f"Clínica: {clinic}."
 
 
+_ES_WEEKDAY = ('lunes', 'martes', 'miércoles', 'jueves',
+               'viernes', 'sábado', 'domingo')
+_ES_MONTH = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+             'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre')
+
+
+def _now_context(org):
+    """Fecha/hora ACTUAL en la zona de la org, para que el LLM resuelva
+    'este viernes', 'mañana', etc. Sin esto el modelo no tiene reloj y
+    alucina la fecha (bug real en piloto)."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from django.utils import timezone
+    try:
+        now = timezone.now().astimezone(ZoneInfo(org.timezone))
+    except Exception:
+        now = timezone.localtime()
+    return {
+        'fecha_hoy': now.date().isoformat(),               # 2026-07-24
+        'dia_semana': _ES_WEEKDAY[now.weekday()],
+        'hoy_legible': (f"{_ES_WEEKDAY[now.weekday()]} {now.day} de "
+                        f"{_ES_MONTH[now.month - 1]} de {now.year}"),
+        'hora_actual': now.strftime('%H:%M'),
+    }
+
+
 def assemble_messages(conversation, *, extra_data=None):
     """Historial → mensajes rol/contenido para el LLM.
 
     Cliente = 'user'; agente/sistema = 'assistant'. Un bloque de sistema con
-    contexto (clínica, nivel de verificación) va primero, marcado como DATOS.
-    `extra_data` (resultados de tools del turno) se inyecta como DATOS."""
+    contexto (clínica, FECHA ACTUAL, nivel de verificación) va primero,
+    marcado como DATOS. `extra_data` (resultados de tools del turno) se
+    inyecta como DATOS."""
     org = conversation.organization
     context = {
         'clinica': org.name,
+        **_now_context(org),
         'verificado': conversation.contact.verification_level
         in ('confirmed_in_chat', 'staff_verified'),
         'cliente': (
