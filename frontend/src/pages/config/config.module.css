@@ -99,10 +99,10 @@
 }
 
 .sectionTitle {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.012em;
-  color: var(--c-text);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.014em;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -115,12 +115,28 @@
 }
 
 /* ─── Panel: la única "caja" por sección ──────────────────────── */
+/* Blanco nítido sobre el fondo crema de la app → contraste + profundidad
+   (evita el "crema sobre crema" que aplanaba todo). */
 .panel {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  background: var(--bg-card);
+  border: 1px solid var(--c-border-2);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+/* Inputs dentro del panel: fondo canvas (casi blanco) con borde visible —
+   se leen como campos, no como bloques crema fundidos con la tarjeta. */
+.panel :global(.input),
+.panel :global(.select-input),
+.panel :global(.textarea-input) {
+  background: var(--bg-canvas);
+  border-color: var(--border);
+}
+.panel :global(.input):focus,
+.panel :global(.select-input):focus,
+.panel :global(.textarea-input):focus {
+  background: #fff;
 }
 
 .panelBody {
