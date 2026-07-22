@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { createService, updateService, deleteService } from "../../api/billing";
 import { apiError } from "../../utils/apiError";
@@ -7,14 +6,13 @@ import { useAuth } from "../../auth/authContext";
 import { useConfirm } from "../../components/useConfirm";
 import { Icon } from "../../components/icons";
 import EmptyState from "../../components/EmptyState";
+import SettingsPanel from "./SettingsPanel";
 import styles from "./config.module.css";
 
 const EMPTY_SERVICE = { name: "", description: "", base_price: "", is_active: true };
 
 const ServicesSection = ({ services, onServicesChange }) => {
   const { can } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const confirm = useConfirm();
   const canManage = can("service.create");
 
@@ -23,28 +21,13 @@ const ServicesSection = ({ services, onServicesChange }) => {
   const [form, setForm] = useState(EMPTY_SERVICE);
   const [saving, setSaving] = useState(false);
 
-  const openNew = () => {
-    setEditing(null);
-    setForm(EMPTY_SERVICE);
-    setShowModal(true);
-  };
-
+  const openNew = () => { setEditing(null); setForm(EMPTY_SERVICE); setShowModal(true); };
   const openEdit = (svc) => {
     setEditing(svc);
-    setForm({
-      name: svc.name,
-      description: svc.description || "",
-      base_price: svc.base_price,
-      is_active: svc.is_active,
-    });
+    setForm({ name: svc.name, description: svc.description || "", base_price: svc.base_price, is_active: svc.is_active });
     setShowModal(true);
   };
-
-  const close = () => {
-    setShowModal(false);
-    setEditing(null);
-    setForm(EMPTY_SERVICE);
-  };
+  const close = () => { setShowModal(false); setEditing(null); setForm(EMPTY_SERVICE); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,54 +66,50 @@ const ServicesSection = ({ services, onServicesChange }) => {
   const fmt = (n) => Number(n || 0).toFixed(2);
 
   return (
-    <div>
-      <div className={styles.sectionToolbar}>
-        <span className={styles.serviceCount}>{services.length} servicio{services.length !== 1 ? "s" : ""}</span>
-        {canManage && (
-          <button className="btn btn-primary btn-sm" onClick={openNew}>+ Nuevo</button>
-        )}
-      </div>
-
+    <SettingsPanel
+      title="Servicios"
+      description="El catálogo que usas al cobrar y que el asistente consulta para dar precios."
+      padded={false}
+      action={canManage && (
+        <button className="btn btn-secondary btn-sm" onClick={openNew}>+ Nuevo servicio</button>
+      )}
+    >
       {services.length === 0 ? (
-        <EmptyState
-          compact
-          title="Define los servicios que cobras"
-          body="Consulta, vacunación, cirugía… los usarás al facturar."
-          actions={[
-            canManage
-              ? { label: "Nuevo servicio", onClick: openNew, variant: "primary" }
-              : null,
-          ]}
-        />
-      ) : (
-        <div className={styles.serviceList}>
-          {services.map((svc) => (
-            <div key={svc.id} className={styles.serviceRow}>
-              <div className={styles.serviceInfo}>
-                <span className={`${styles.serviceName} ${!svc.is_active ? styles.serviceNameInactive : ""}`}>
-                  {svc.name}
-                </span>
-                {!svc.is_active && <span className="badge badge-default">Inactivo</span>}
-              </div>
-              <div className={styles.serviceActions}>
-                <span className={styles.servicePrice}>${fmt(svc.base_price)}</span>
-                <button className="btn-icon" onClick={() => openEdit(svc)} title="Editar">
-                  <Icon.Edit s={12} />
-                </button>
-                <button className="btn-icon btn-icon-danger" onClick={() => handleDelete(svc.public_id)} title="Eliminar">
-                  <Icon.Trash s={12} />
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className={styles.serviceEmpty}>
+          <EmptyState
+            compact
+            title="Define los servicios que cobras"
+            body="Consulta, vacunación, cirugía… los usarás al facturar."
+            actions={[canManage ? { label: "Nuevo servicio", onClick: openNew, variant: "primary" } : null]}
+          />
         </div>
+      ) : (
+        services.map((svc) => (
+          <div key={svc.id} className={styles.serviceRow}>
+            <div className={styles.serviceInfo}>
+              <span className={`${styles.serviceName} ${!svc.is_active ? styles.serviceNameInactive : ""}`}>
+                {svc.name}
+              </span>
+              {!svc.is_active && <span className="badge badge-default">Inactivo</span>}
+            </div>
+            <div className={styles.serviceActions}>
+              <span className={styles.servicePrice}>${fmt(svc.base_price)}</span>
+              <button className={styles.iconBtn} onClick={() => openEdit(svc)} title="Editar">
+                <Icon.Edit s={13} />
+              </button>
+              <button className={`${styles.iconBtn} ${styles.iconBtnDanger}`} onClick={() => handleDelete(svc.public_id)} title="Eliminar">
+                <Icon.Trash s={13} />
+              </button>
+            </div>
+          </div>
+        ))
       )}
 
       {showModal && (
         <div className="modal-overlay">
           <div className="modal modal-sm">
             <div className="modal-header">
-              <h3>{editing ? "Editar Servicio" : "Nuevo Servicio"}</h3>
+              <h3>{editing ? "Editar servicio" : "Nuevo servicio"}</h3>
               <button className="modal-close" onClick={close}><Icon.X s={16} /></button>
             </div>
             <div className="modal-body">
@@ -168,7 +147,7 @@ const ServicesSection = ({ services, onServicesChange }) => {
           </div>
         </div>
       )}
-    </div>
+    </SettingsPanel>
   );
 };
 

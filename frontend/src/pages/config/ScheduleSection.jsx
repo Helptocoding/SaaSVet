@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { replaceSchedule } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
+import SettingsPanel from "./SettingsPanel";
 import styles from "./config.module.css";
 
 const WEEKDAY_LABELS = {
@@ -9,9 +10,7 @@ const WEEKDAY_LABELS = {
   5: "Viernes", 6: "Sábado", 7: "Domingo",
 };
 
-// "HH:MM:SS" | "HH:MM" | null → "HH:MM"
 const toHM = (t) => (t ? t.slice(0, 5) : "");
-// "HH:MM" → "HH:MM:00" (formato que espera el backend TimeField)
 const toHMS = (v) => (v ? `${v}:00` : null);
 
 const ScheduleSection = ({ schedule, onScheduleChange }) => {
@@ -50,13 +49,33 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
     }
   };
 
+  const timeCell = (day, field, fallback, enabled) => (
+    <input
+      type="time"
+      className={styles.scheduleTimeInput}
+      value={enabled ? (toHM(day[field]) || fallback) : ""}
+      disabled={!enabled}
+      onChange={(e) => updateDay(day.weekday, { [field]: toHMS(e.target.value) })}
+    />
+  );
+
   return (
-    <div>
+    <SettingsPanel
+      title="Horarios"
+      description="Cuándo atiende la clínica. El asistente solo ofrece citas dentro de este horario; el descanso parte el día en dos."
+      padded={false}
+      footerNote="Días completos, una franja + descanso opcional."
+      footer={
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? "Guardando..." : "Guardar horario"}
+        </button>
+      }
+    >
       <table className={styles.scheduleTable}>
         <thead>
           <tr>
             <th className={styles.scheduleTh}>Día</th>
-            <th className={styles.scheduleTh}>Abre</th>
+            <th className={styles.scheduleTh}>Abierto</th>
             <th className={styles.scheduleTh}>Entrada</th>
             <th className={styles.scheduleTh}>Salida</th>
             <th className={styles.scheduleTh}>Descanso</th>
@@ -65,79 +84,36 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
           </tr>
         </thead>
         <tbody>
-          {schedule.map((day) => (
-            <tr key={day.weekday} className={day.is_closed ? styles.scheduleRowClosed : ""}>
-              <td className={styles.scheduleTd}>
-                <span className={styles.scheduleDayName}>{WEEKDAY_LABELS[day.weekday]}</span>
-              </td>
-              <td className={styles.scheduleTd}>
-                <input
-                  type="checkbox"
-                  className={styles.scheduleCheckbox}
-                  checked={!day.is_closed}
-                  onChange={(e) => setOpen(day.weekday, e.target.checked)}
-                />
-              </td>
-              <td className={styles.scheduleTd}>
-                <input
-                  type="time"
-                  className={styles.scheduleTimeInput}
-                  value={day.is_closed ? "" : (toHM(day.opens_at) || "09:00")}
-                  disabled={day.is_closed}
-                  onChange={(e) => updateDay(day.weekday, { opens_at: toHMS(e.target.value) })}
-                />
-              </td>
-              <td className={styles.scheduleTd}>
-                <input
-                  type="time"
-                  className={styles.scheduleTimeInput}
-                  value={day.is_closed ? "" : (toHM(day.closes_at) || "18:00")}
-                  disabled={day.is_closed}
-                  onChange={(e) => updateDay(day.weekday, { closes_at: toHMS(e.target.value) })}
-                />
-              </td>
-              <td className={styles.scheduleTd}>
-                <input
-                  type="checkbox"
-                  className={styles.scheduleCheckbox}
-                  checked={!!day.has_break}
-                  disabled={day.is_closed}
-                  onChange={(e) => setBreak(day.weekday, e.target.checked)}
-                />
-              </td>
-              <td className={styles.scheduleTd}>
-                <input
-                  type="time"
-                  className={styles.scheduleTimeInput}
-                  value={(!day.is_closed && day.has_break) ? (toHM(day.break_start) || "13:00") : ""}
-                  disabled={day.is_closed || !day.has_break}
-                  onChange={(e) => updateDay(day.weekday, { break_start: toHMS(e.target.value) })}
-                />
-              </td>
-              <td className={styles.scheduleTd}>
-                <input
-                  type="time"
-                  className={styles.scheduleTimeInput}
-                  value={(!day.is_closed && day.has_break) ? (toHM(day.break_end) || "14:00") : ""}
-                  disabled={day.is_closed || !day.has_break}
-                  onChange={(e) => updateDay(day.weekday, { break_end: toHMS(e.target.value) })}
-                />
-              </td>
-            </tr>
-          ))}
+          {schedule.map((day) => {
+            const open = !day.is_closed;
+            const brk = open && day.has_break;
+            return (
+              <tr key={day.weekday} className={day.is_closed ? styles.scheduleRowClosed : ""}>
+                <td className={styles.scheduleTd}>
+                  <span className={styles.scheduleDayName}>{WEEKDAY_LABELS[day.weekday]}</span>
+                </td>
+                <td className={styles.scheduleTd}>
+                  <input type="checkbox" className={styles.scheduleCheckbox}
+                    checked={open} onChange={(e) => setOpen(day.weekday, e.target.checked)} />
+                </td>
+                <td className={styles.scheduleTd}>{timeCell(day, "opens_at", "09:00", open)}</td>
+                <td className={styles.scheduleTd}>{timeCell(day, "closes_at", "18:00", open)}</td>
+                <td className={styles.scheduleTd}>
+                  <input type="checkbox" className={styles.scheduleCheckbox}
+                    checked={!!day.has_break} disabled={!open}
+                    onChange={(e) => setBreak(day.weekday, e.target.checked)} />
+                </td>
+                <td className={styles.scheduleTd}>{timeCell(day, "break_start", "13:00", brk)}</td>
+                <td className={styles.scheduleTd}>{timeCell(day, "break_end", "14:00", brk)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-
       <p className={styles.scheduleHint}>
-        El descanso parte el día en dos: se atiende antes y después (comida, por ejemplo).
+        Marca “Descanso” para cerrar a media jornada (comida, por ejemplo): se atiende antes y después.
       </p>
-
-      <div className={styles.actions}>
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-          {saving ? "Guardando..." : "Guardar horario"}
-        </button>
-      </div>
-    </div>
+    </SettingsPanel>
   );
 };
 

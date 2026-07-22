@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ChangePasswordForm from "../../components/ChangePasswordForm";
 import { Icon } from "../../components/icons";
+import SettingsPanel from "./SettingsPanel";
 import styles from "./config.module.css";
 
 const AccountSection = () => {
@@ -13,14 +14,17 @@ const AccountSection = () => {
   }, []);
 
   return (
-    <div>
-      <div className={styles.accountCard}>
+    <SettingsPanel
+      title="Cuenta"
+      description="Tu acceso personal al sistema."
+    >
+      <div className={styles.accountRow}>
         <div className={styles.accountIcon}>
-          <Icon.Lock s={20} c="var(--c-primary)" />
+          <Icon.Lock s={18} c="var(--c-primary)" />
         </div>
         <div className={styles.accountInfo}>
           <p className={styles.accountLabel}>Contraseña</p>
-          <p className={styles.accountDesc}>Actualiza tu contraseña de acceso al sistema</p>
+          <p className={styles.accountDesc}>Actualiza tu contraseña de acceso al sistema.</p>
         </div>
         <button className="btn btn-secondary btn-sm" onClick={() => setShowModal(true)}>
           Cambiar contraseña
@@ -46,7 +50,7 @@ const AccountSection = () => {
           </div>
         </div>
       )}
-    </div>
+    </SettingsPanel>
   );
 };
 

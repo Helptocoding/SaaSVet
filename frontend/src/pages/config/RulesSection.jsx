@@ -2,16 +2,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { updateOrgSettings } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
+import SettingsPanel from "./SettingsPanel";
 import styles from "./config.module.css";
 
 const RULES = [
-  { key: "auto_create_invoice_on_done", label: "Factura automática", description: "Al completar una cita, genera una factura en borrador." },
-  { key: "require_confirmation_before_start", label: "Confirmación obligatoria", description: "No se puede iniciar consulta sin confirmar la cita." },
+  { key: "auto_create_invoice_on_done", label: "Factura automática", description: "Al completar una cita, genera un cobro en borrador." },
+  { key: "require_confirmation_before_start", label: "Confirmación obligatoria", description: "No se puede iniciar la consulta sin confirmar la cita primero." },
   { key: "auto_create_medical_record", label: "Historial clínico automático", description: "Al completar una cita, abre un historial clínico." },
-  { key: "allow_anonymous_walkin", label: "Atención sin cita", description: "Permite registrar consulta sin mascota registrada." },
+  { key: "allow_anonymous_walkin", label: "Atención sin cita", description: "Permite registrar una consulta sin mascota registrada." },
   { key: "allow_emergency_walkin", label: "Urgencias sin cita", description: "Acepta pacientes de urgencia sin cita previa." },
-  { key: "show_status_change_history", label: "Historial de cambios", description: "Muestra cambios de estado en el detalle de la cita." },
-  { key: "require_open_cash_session", label: "Caja abierta obligatoria", description: "Requiere turno de caja abierto para cobrar." },
+  { key: "show_status_change_history", label: "Historial de cambios", description: "Muestra los cambios de estado en el detalle de la cita." },
+  { key: "require_open_cash_session", label: "Caja abierta obligatoria", description: "Requiere un turno de caja abierto para poder cobrar." },
 ];
 
 const RulesSection = ({ settings, onSettingsChange, canManage }) => {
@@ -31,12 +32,20 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
     }
   };
 
-  const toggle = (key) => {
-    onSettingsChange({ ...settings, [key]: !settings[key] });
-  };
+  const toggle = (key) => onSettingsChange({ ...settings, [key]: !settings[key] });
 
   return (
-    <div>
+    <SettingsPanel
+      title="Reglas operativas"
+      description="Cómo opera tu clínica día a día. Estos ajustes controlan el flujo de citas, cobros y caja."
+      padded={false}
+      footerNote={canManage ? undefined : "Solo un administrador puede cambiar estas reglas."}
+      footer={
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving || !canManage}>
+          {saving ? "Guardando..." : "Guardar reglas"}
+        </button>
+      }
+    >
       {RULES.map(({ key, label, description }) => (
         <div key={key} className={styles.ruleRow}>
           <div className={styles.ruleContent}>
@@ -55,13 +64,7 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
           </button>
         </div>
       ))}
-
-      <div className={styles.actions} style={{ marginTop: 24 }}>
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving || !canManage}>
-          {saving ? "Guardando..." : "Guardar reglas"}
-        </button>
-      </div>
-    </div>
+    </SettingsPanel>
   );
 };
 
