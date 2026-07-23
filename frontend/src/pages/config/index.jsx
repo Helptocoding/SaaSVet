@@ -89,6 +89,7 @@ const SettingsLayout = ({ user, token }) => {
       </header>
       <div className={styles.layout}>
       <aside className={styles.sidebar}>
+        <p className={styles.sidebarLabel}>Ajustes</p>
         <nav className={styles.sidebarNav}>
           {SECTIONS.map(({ id, label, icon: IconComp }) => (
             <button

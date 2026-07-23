@@ -63,18 +63,29 @@
   align-self: start;
 }
 
+.sidebarLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--p-text-3);
+  padding: 0 10px 10px;
+  margin: 0;
+}
+
 .sidebarNav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .sidebarItem {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 11px;
   padding: 9px 12px;
-  border-radius: 9px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 500;
@@ -83,21 +94,22 @@
   background: none;
   width: 100%;
   text-align: left;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.14s, background 0.14s;
   font-family: inherit;
 }
 
-.sidebarItem:hover {
-  color: var(--p-text);
-  background: rgba(16, 24, 32, 0.045);
-}
+.sidebarItem:hover { color: var(--p-text); background: rgba(16, 24, 32, 0.04); }
 
 .sidebarItemActive,
 .sidebarItemActive:hover {
-  color: var(--p-accent);
-  background: var(--p-accent-ring);
+  color: var(--p-text);
+  background: #fff;
   font-weight: 600;
+  box-shadow: 0 1px 2px rgba(16, 24, 32, 0.05), 0 0 0 1px var(--p-border) inset;
 }
+
+.sidebarItem:not(.sidebarItemActive) .sidebarIcon { color: var(--p-text-3); }
+.sidebarItemActive .sidebarIcon { color: var(--p-accent); }
 
 .sidebarIcon {
   display: flex;
@@ -105,7 +117,6 @@
   justify-content: center;
   flex-shrink: 0;
   width: 17px;
-  opacity: 0.9;
 }
 
 /* ─── Contenido ────────────────────────────────────────────────── */
@@ -153,16 +164,17 @@
   max-width: 58ch;
 }
 
-/* ─── Panel ────────────────────────────────────────────────────── */
+/* ─── Panel (abierto, sin caja) ────────────────────────────────── */
+/* Sin fondo blanco ni borde de tarjeta: el contenido fluye sobre la
+   superficie de la página; la estructura la dan los divisores y el aire. */
 .panel {
-  background: var(--p-card);
-  border: 1px solid var(--p-border);
-  border-radius: 16px;
-  box-shadow: var(--p-shadow-card);
-  overflow: hidden;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.panelBody { padding: 26px 28px; }
+.panelBody { padding: 4px 0 0; }
 .panelBodyFlush { padding: 0; }
 
 .panelFooter {
@@ -170,9 +182,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 28px;
+  padding: 20px 0 0;
+  margin-top: 6px;
   border-top: 1px solid var(--p-border);
-  background: linear-gradient(180deg, #fcfcfb, #f7f8f6);
 }
 
 .footerNote {
@@ -207,9 +219,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 22px 28px;
+  padding: 0 0 20px;
   border-bottom: 1px solid var(--p-border);
-  background: linear-gradient(180deg, #fbfdfc, #f6f9f7);
 }
 
 .avatar {
@@ -254,7 +265,7 @@
   display: grid;
   grid-template-columns: minmax(180px, 240px) 1fr;
   gap: 28px;
-  padding: 20px 28px;
+  padding: 20px 0;
   align-items: start;
 }
 
@@ -449,23 +460,21 @@
 
 .scheduleTh {
   text-align: left;
-  padding: 13px 28px;
+  padding: 12px 16px 12px 0;
   font-size: 11px;
   font-weight: 700;
   color: var(--p-text-3);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   border-bottom: 1px solid var(--p-border);
-  background: #fbfcfb;
 }
 
 .scheduleTd {
-  padding: 11px 28px;
+  padding: 11px 16px 11px 0;
   border-bottom: 1px solid var(--p-border);
   vertical-align: middle;
 }
 .scheduleTable tbody tr:last-child .scheduleTd { border-bottom: none; }
-.scheduleTable tbody tr:hover .scheduleTd { background: #fbfcfb; }
 
 .scheduleRowClosed .scheduleDayName { color: var(--p-text-3); }
 
@@ -522,11 +531,9 @@
 .scheduleTimeInput:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .scheduleHint {
-  padding: 15px 28px;
+  padding: 15px 0 0;
   font-size: 12.5px;
   color: var(--p-text-2);
-  border-top: 1px solid var(--p-border);
-  background: linear-gradient(180deg, #fcfcfb, #f7f8f6);
 }
 
 /* ─── Servicios ────────────────────────────────────────────────── */
@@ -535,9 +542,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 15px 28px;
+  padding: 15px 0;
 }
-.serviceRow:hover { background: #fbfcfb; }
 .serviceRow + .serviceRow { border-top: 1px solid var(--p-border); }
 
 .serviceInfo {
@@ -572,7 +578,7 @@
   margin-right: 10px;
 }
 
-.serviceEmpty { padding: 44px 28px; }
+.serviceEmpty { padding: 40px 0; }
 
 .iconBtn {
   display: inline-flex;
