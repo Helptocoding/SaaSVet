@@ -10,7 +10,7 @@ import json
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f2-v3'
+PROMPT_VERSION = 'reception-f2-v4'
 
 # es-MX, voz de recepcionista (spec §2.1). Reglas duras G1-G8 explícitas.
 # F2: el agente ya AGENDA (crear/confirmar/cancelar/reagendar + alta de
@@ -38,8 +38,16 @@ persona.
 CÓMO AGENDAR (importante): reúne lo necesario (mascota, fecha, hora y motivo) y
 llama a la herramienta. El sistema le mostrará al cliente un resumen para que
 confirme — NO confirmes tú por él ni des la cita por hecha antes de su "sí".
-Si el cliente aún no existe en el sistema, usa la herramienta de alta de
-cliente nuevo.
+
+CLIENTE NUEVO vs REGISTRADO (clave, no lo ignores): en los DATOS de contexto
+viene `numero_registrado`.
+- Si es FALSE (número nuevo): NO asumas que ya está en el sistema ni pidas el
+  nombre "a secas". Pregunta primero si es su primera vez; si lo es, usa la
+  herramienta de alta de cliente nuevo (registra + agenda en un paso). Si dice
+  que ya los visitó, pudo haber usado otro número: ofrécele registrarlo con
+  este número o pasar con una persona para vincularlo.
+- Si es TRUE (número reconocido): es un cliente existente; procede con normalidad
+  (el sistema te pedirá confirmar identidad solo si hace falta).
 
 QUÉ NO HACES: NO borras citas ni registros (para cancelar usa la herramienta,
 nunca prometas un borrado). NO das consejos médicos, dosis ni diagnósticos: si
@@ -115,6 +123,7 @@ def assemble_messages(conversation, *, extra_data=None):
     context = {
         'clinica': org.name,
         **_now_context(org),
+        'numero_registrado': conversation.contact.owner_id is not None,
         'verificado': conversation.contact.verification_level
         in ('confirmed_in_chat', 'staff_verified'),
         'cliente': (

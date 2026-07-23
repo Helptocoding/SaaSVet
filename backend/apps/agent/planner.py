@@ -167,6 +167,14 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 return {'decision': 'family_restricted',
                         'llm_calls': llm_calls, 'tools': tool_calls}
             if outcome.client_error == 'verification_required':
+                # Número YA registrado (phone_match) → reto de identidad para
+                # confirmar que es el titular. Número NO registrado → no tiene
+                # mascota que confirmar: ofrecer alta en vez de rebotar a humano.
+                if conversation.contact.owner_id is None:
+                    enqueue_outbound(conversation, tier0.T0_NEW_CLIENT,
+                                     author='agent')
+                    return {'decision': 'offer_new_client',
+                            'llm_calls': llm_calls, 'tools': tool_calls}
                 text = policy.start_identity_challenge(conversation)
                 enqueue_outbound(conversation, text, author='agent')
                 return {'decision': 'identity_challenge',

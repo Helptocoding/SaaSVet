@@ -133,6 +133,15 @@ T0_CHALLENGE_FAILED = (
     "que te apoyen."
 )
 
+# Número NO registrado que pide una acción personal (agendar / ver sus citas).
+# En vez de retar por una mascota que no existe (→ rebote a humano), se ofrece
+# el alta: primera vez → registro; ya visitó → puede haber usado otro número.
+T0_NEW_CLIENT = (
+    "¡Con gusto te ayudo! 🐾 Veo que este número aún no está registrado con "
+    "nosotros. ¿Es tu primera vez en la clínica? Si es así, te doy de alta y "
+    "agendamos en un momento — solo dime tu nombre y el de tu mascota."
+)
+
 T0_THANKS = "¡Con gusto! Aquí estoy si necesitas algo más 🐾"
 
 
