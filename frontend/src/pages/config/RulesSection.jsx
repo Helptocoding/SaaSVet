@@ -21,11 +21,10 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await toast.promise(
-        updateOrgSettings(settings),
-        { loading: "Guardando...", success: "Reglas guardadas", error: (e) => apiError(e) }
-      );
-      onSettingsChange(updated);
+      const req = updateOrgSettings(settings);
+      toast.promise(req, { loading: "Guardando...", success: "Reglas guardadas", error: (e) => apiError(e) });
+      const updated = await req;   // sonner: await la promesa REAL, no toast.promise
+      if (updated && typeof updated === "object") onSettingsChange(updated);
     } catch {
     } finally {
       setSaving(false);

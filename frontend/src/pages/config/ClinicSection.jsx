@@ -12,26 +12,25 @@ const ClinicSection = ({ org, onOrgChange }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await toast.promise(
-        updateOrg({
-          display_name: org.display_name,
-          phone: org.phone,
-          whatsapp: org.whatsapp,
-          email: org.email,
-          website: org.website,
-          timezone: org.timezone,
-          address_line1: org.address_line1,
-          district: org.district,
-          city: org.city,
-          state: org.state,
-          postal_code: org.postal_code,
-          country: org.country,
-          google_maps_url: org.google_maps_url,
-          arrival_instructions: org.arrival_instructions,
-        }),
-        { loading: "Guardando...", success: "Clínica actualizada", error: (e) => apiError(e) }
-      );
-      onOrgChange(updated);
+      const req = updateOrg({
+        display_name: org.display_name,
+        phone: org.phone,
+        whatsapp: org.whatsapp,
+        email: org.email,
+        website: org.website,
+        timezone: org.timezone,
+        address_line1: org.address_line1,
+        district: org.district,
+        city: org.city,
+        state: org.state,
+        postal_code: org.postal_code,
+        country: org.country,
+        google_maps_url: org.google_maps_url,
+        arrival_instructions: org.arrival_instructions,
+      });
+      toast.promise(req, { loading: "Guardando...", success: "Clínica actualizada", error: (e) => apiError(e) });
+      const updated = await req;   // sonner: await la promesa REAL, no toast.promise
+      if (updated && typeof updated === "object") onOrgChange(updated);
     } catch {
     } finally {
       setSaving(false);

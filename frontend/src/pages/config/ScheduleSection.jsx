@@ -38,11 +38,10 @@ const ScheduleSection = ({ schedule, onScheduleChange }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await toast.promise(
-        replaceSchedule(schedule),
-        { loading: "Guardando...", success: "Horario guardado", error: (e) => apiError(e) }
-      );
-      onScheduleChange(updated);
+      const req = replaceSchedule(schedule);
+      toast.promise(req, { loading: "Guardando...", success: "Horario guardado", error: (e) => apiError(e) });
+      const updated = await req;   // sonner: await la promesa REAL, no toast.promise
+      if (Array.isArray(updated)) onScheduleChange(updated);
     } catch {
     } finally {
       setSaving(false);
