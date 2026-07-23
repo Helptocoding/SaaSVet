@@ -78,11 +78,16 @@ const SettingsLayout = ({ user, token }) => {
   }
 
   if (loading || !org) {
-    return <div className={styles.loading}>Cargando...</div>;
+    return <div className={styles.page}><div className={styles.loading}>Cargando...</div></div>;
   }
 
   return (
-    <div className={styles.layout}>
+    <div className={styles.page}>
+      <header className={styles.pageHead}>
+        <h1 className={styles.pageTitle}>Configuración</h1>
+        <p className={styles.pageSubtitle}>Información, horarios y reglas operativas de tu clínica</p>
+      </header>
+      <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <nav className={styles.sidebarNav}>
           {SECTIONS.map(({ id, label, icon: IconComp }) => (
@@ -130,6 +135,7 @@ const SettingsLayout = ({ user, token }) => {
           )}
         </Suspense>
       </main>
+      </div>
     </div>
   );
 };

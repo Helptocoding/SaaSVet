@@ -12,18 +12,7 @@ const Config = () => {
     );
   }
 
-  return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Configuración</h1>
-          <p className="page-subtitle">Información, horarios y reglas operativas de tu clínica</p>
-        </div>
-      </div>
-
-      <SettingsLayout user={user} token={token} />
-    </div>
-  );
+  return <SettingsLayout user={user} token={token} />;
 };
 
 export default Config;
