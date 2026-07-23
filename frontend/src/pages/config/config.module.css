@@ -202,11 +202,99 @@
   margin: 0 0 18px;
 }
 
-/* ─── Campos ───────────────────────────────────────────────────── */
+/* ─── Header de identidad de la clínica ────────────────────────── */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--p-border);
+  background: linear-gradient(180deg, #fbfdfc, #f6f9f7);
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  background: linear-gradient(150deg, var(--p-accent-2), var(--p-accent));
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px -4px var(--p-accent-ring);
+}
+
+.identityInfo { min-width: 0; }
+
+.identityName {
+  font-size: 18px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: var(--p-text);
+  margin: 0 0 3px;
+}
+
+.identityMeta {
+  font-size: 13px;
+  color: var(--p-text-2);
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.identityDot { color: var(--p-text-3); }
+
+/* ─── Fila de ajuste (patrón settings: label izq / control der) ── */
+.settingRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 28px;
+  padding: 20px 28px;
+  align-items: start;
+}
+
+.settingRow + .settingRow { border-top: 1px solid var(--p-border); }
+
+.settingLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--p-text);
+  letter-spacing: -0.01em;
+  margin: 0;
+  padding-top: 9px;
+}
+
+.settingLabelToggle { padding-top: 0; }
+
+.settingDesc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--p-text-2);
+  margin: 4px 0 0;
+}
+
+.settingControl {
+  min-width: 0;
+  max-width: 420px;
+}
+
+/* Fila cuyo control es un toggle → alinea a la derecha, centrado */
+.settingRowToggle {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.settingRowToggle .settingControl { max-width: none; justify-self: end; }
+
+/* ─── Campos (grid, para la sub-rejilla de dirección) ──────────── */
 .fieldGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px 22px;
+  gap: 16px 16px;
 }
 
 .fieldGroup {

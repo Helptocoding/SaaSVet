@@ -3,15 +3,8 @@ import { toast } from "sonner";
 import { updateOrg } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
 import SettingsPanel from "./SettingsPanel";
+import { SettingRow, IdentityHeader } from "./parts";
 import styles from "./config.module.css";
-
-const Field = ({ label, hint, full, children }) => (
-  <div className={`${styles.fieldGroup} ${full ? styles.fieldFull : ""}`}>
-    <label className={styles.fieldLabel}>{label}</label>
-    {children}
-    {hint && <span className={styles.fieldHint}>{hint}</span>}
-  </div>
-);
 
 const ClinicSection = ({ org, onOrgChange }) => {
   const [saving, setSaving] = useState(false);
@@ -47,10 +40,17 @@ const ClinicSection = ({ org, onOrgChange }) => {
 
   const set = (key) => (e) => onOrgChange({ ...org, [key]: e.target.value });
 
+  const meta = [
+    [org.city, org.state].filter(Boolean).join(", "),
+    org.phone,
+    org.email,
+  ].filter(Boolean);
+
   return (
     <SettingsPanel
       title="Clínica"
-      description="Identidad y contacto de tu clínica. El asistente de WhatsApp usa estos datos al responder dirección, teléfono e indicaciones."
+      description="Identidad y contacto. El asistente de WhatsApp usa estos datos al responder dirección, teléfono e indicaciones."
+      padded={false}
       footerNote="Se aplica a toda la clínica."
       footer={
         <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
@@ -58,59 +58,52 @@ const ClinicSection = ({ org, onOrgChange }) => {
         </button>
       }
     >
-      <div className={styles.group}>
-        <p className={styles.groupTitle}>Información</p>
-        <div className={styles.fieldGrid}>
-          <Field label="Nombre comercial">
-            <input className="input" value={org.display_name || ""} onChange={set("display_name")} placeholder={org.name} />
-          </Field>
-          <Field label="Teléfono">
-            <input className="input" value={org.phone || ""} onChange={set("phone")} placeholder="5512345678" />
-          </Field>
-          <Field label="WhatsApp">
-            <input className="input" value={org.whatsapp || ""} onChange={set("whatsapp")} placeholder="5512345678" />
-          </Field>
-          <Field label="Correo electrónico">
-            <input className="input" type="email" value={org.email || ""} onChange={set("email")} placeholder="hola@clinica.mx" />
-          </Field>
-          <Field label="Sitio web">
-            <input className="input" value={org.website || ""} onChange={set("website")} placeholder="https://clinica.mx" />
-          </Field>
-          <Field label="Zona horaria" hint="Afecta agenda, cobros y reportes.">
-            <input className="input" value={org.timezone || ""} onChange={set("timezone")} placeholder="America/Mexico_City" />
-          </Field>
-        </div>
-      </div>
+      <IdentityHeader name={org.display_name || org.name} meta={meta} />
 
-      <div className={styles.group}>
-        <p className={styles.groupTitle}>Ubicación</p>
+      <SettingRow label="Nombre comercial" desc="Como aparece ante tus clientes.">
+        <input className="input" value={org.display_name || ""} onChange={set("display_name")} placeholder={org.name} />
+      </SettingRow>
+      <SettingRow label="Teléfono" desc="Línea principal de la clínica.">
+        <input className="input" value={org.phone || ""} onChange={set("phone")} placeholder="5512345678" />
+      </SettingRow>
+      <SettingRow label="WhatsApp" desc="Número del asistente virtual.">
+        <input className="input" value={org.whatsapp || ""} onChange={set("whatsapp")} placeholder="5512345678" />
+      </SettingRow>
+      <SettingRow label="Correo electrónico">
+        <input className="input" type="email" value={org.email || ""} onChange={set("email")} placeholder="hola@clinica.mx" />
+      </SettingRow>
+      <SettingRow label="Sitio web">
+        <input className="input" value={org.website || ""} onChange={set("website")} placeholder="https://clinica.mx" />
+      </SettingRow>
+      <SettingRow label="Zona horaria" desc="Afecta agenda, cobros y reportes.">
+        <input className="input" value={org.timezone || ""} onChange={set("timezone")} placeholder="America/Mexico_City" />
+      </SettingRow>
+
+      <SettingRow label="Dirección" desc="Se muestra al agendar y en indicaciones.">
         <div className={styles.fieldGrid}>
-          <Field label="Calle y número" full>
-            <input className="input" value={org.address_line1 || ""} onChange={set("address_line1")} placeholder="Av. Principal 123" />
-          </Field>
-          <Field label="Colonia">
-            <input className="input" value={org.district || ""} onChange={set("district")} placeholder="Centro" />
-          </Field>
-          <Field label="Ciudad">
-            <input className="input" value={org.city || ""} onChange={set("city")} placeholder="Puebla" />
-          </Field>
-          <Field label="Estado">
-            <input className="input" value={org.state || ""} onChange={set("state")} placeholder="Puebla" />
-          </Field>
-          <Field label="Código postal">
-            <input className="input" value={org.postal_code || ""} onChange={set("postal_code")} placeholder="72000" />
-          </Field>
-          <Field label="País">
-            <input className="input" value={org.country || "Mexico"} onChange={set("country")} />
-          </Field>
-          <Field label="Google Maps" full hint="Enlace que el asistente comparte al agendar.">
-            <input className="input" value={org.google_maps_url || ""} onChange={set("google_maps_url")} placeholder="https://maps.google.com/..." />
-          </Field>
-          <Field label="Indicaciones para llegar" full>
-            <textarea className="textarea-input" style={{ minHeight: 64 }} value={org.arrival_instructions || ""} onChange={set("arrival_instructions")} placeholder="Estacionamiento por la calle lateral, timbre azul..." />
-          </Field>
+          <div className={`${styles.fieldGroup} ${styles.fieldFull}`}>
+            <input className="input" value={org.address_line1 || ""} onChange={set("address_line1")} placeholder="Calle y número" />
+          </div>
+          <div className={styles.fieldGroup}>
+            <input className="input" value={org.district || ""} onChange={set("district")} placeholder="Colonia" />
+          </div>
+          <div className={styles.fieldGroup}>
+            <input className="input" value={org.postal_code || ""} onChange={set("postal_code")} placeholder="C.P." />
+          </div>
+          <div className={styles.fieldGroup}>
+            <input className="input" value={org.city || ""} onChange={set("city")} placeholder="Ciudad" />
+          </div>
+          <div className={styles.fieldGroup}>
+            <input className="input" value={org.state || ""} onChange={set("state")} placeholder="Estado" />
+          </div>
         </div>
-      </div>
+      </SettingRow>
+      <SettingRow label="Google Maps" desc="Enlace que el asistente comparte al agendar.">
+        <input className="input" value={org.google_maps_url || ""} onChange={set("google_maps_url")} placeholder="https://maps.google.com/..." />
+      </SettingRow>
+      <SettingRow label="Indicaciones para llegar" desc="Referencias que el asistente comparte.">
+        <textarea className="textarea-input" style={{ minHeight: 64 }} value={org.arrival_instructions || ""} onChange={set("arrival_instructions")} placeholder="Estacionamiento por la calle lateral, timbre azul..." />
+      </SettingRow>
     </SettingsPanel>
   );
 };

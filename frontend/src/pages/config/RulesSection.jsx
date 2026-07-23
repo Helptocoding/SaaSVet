@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { updateOrgSettings } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
 import SettingsPanel from "./SettingsPanel";
-import styles from "./config.module.css";
+import { ToggleRow } from "./parts";
 
 const RULES = [
   { key: "auto_create_invoice_on_done", label: "Factura automática", description: "Al completar una cita, genera un cobro en borrador." },
@@ -32,12 +32,12 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
     }
   };
 
-  const toggle = (key) => onSettingsChange({ ...settings, [key]: !settings[key] });
+  const toggle = (key) => () => onSettingsChange({ ...settings, [key]: !settings[key] });
 
   return (
     <SettingsPanel
       title="Reglas operativas"
-      description="Cómo opera tu clínica día a día. Estos ajustes controlan el flujo de citas, cobros y caja."
+      description="Cómo opera tu clínica día a día. Controlan el flujo de citas, cobros y caja."
       padded={false}
       footerNote={canManage ? undefined : "Solo un administrador puede cambiar estas reglas."}
       footer={
@@ -47,22 +47,14 @@ const RulesSection = ({ settings, onSettingsChange, canManage }) => {
       }
     >
       {RULES.map(({ key, label, description }) => (
-        <div key={key} className={styles.ruleRow}>
-          <div className={styles.ruleContent}>
-            <p className={styles.ruleLabel}>{label}</p>
-            <p className={styles.ruleDesc}>{description}</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={!!settings?.[key]}
-            disabled={!canManage}
-            onClick={() => toggle(key)}
-            className={`${styles.toggle} ${settings?.[key] ? styles.toggleOn : styles.toggleOff} ${!canManage ? styles.toggleDisabled : ""}`}
-          >
-            <span className={`${styles.toggleKnob} ${settings?.[key] ? styles.toggleKnobOn : styles.toggleKnobOff}`} />
-          </button>
-        </div>
+        <ToggleRow
+          key={key}
+          label={label}
+          desc={description}
+          on={!!settings?.[key]}
+          disabled={!canManage}
+          onToggle={toggle(key)}
+        />
       ))}
     </SettingsPanel>
   );
