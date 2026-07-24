@@ -791,19 +791,28 @@ _SPECIES_MAP = {
 
 
 def _normalize_species(raw):
-    """Mapea lo que dice el cliente (a menudo una RAZA como 'maltés') a la lista
-    cerrada del dominio. Desconocido → '' (la especie es opcional; el backend
-    rechaza valores fuera de SPECIES_CHOICES → evita un 400 al registrar)."""
+    """Mapea lo que dice el cliente (a menudo una RAZA como 'maltés', y a veces
+    con typos) a la lista cerrada del dominio. Desconocido → '' (la especie es
+    opcional; el backend rechaza valores fuera de SPECIES_CHOICES → evita un 400
+    al registrar). Un typo NUNCA rebota: peor caso, especie vacía (pendiente)."""
+    from .identity import _levenshtein_le_1
     s = _norm(raw or '')
     if not s:
         return ''
     if s in _SPECIES_MAP:
         return _SPECIES_MAP[s]
-    # frase ("una perrita maltés") → busca una palabra conocida
-    for token in s.split():
+    tokens = s.split()
+    # frase ("una perrita maltés") → palabra conocida exacta
+    for token in tokens:
         if token in _SPECIES_MAP:
             return _SPECIES_MAP[token]
-    return ''  # raza desconocida → sin especie (pendiente), no error
+    # tolerancia a typos (distancia ≤1) en palabras ≥4 letras ("prro"→perro)
+    for token in tokens:
+        if len(token) >= 4:
+            for key, value in _SPECIES_MAP.items():
+                if len(key) >= 4 and _levenshtein_le_1(token, key):
+                    return value
+    return ''  # desconocido/raza → sin especie (pendiente), jamás error
 
 
 def _wa_id_to_local10(wa_id):
