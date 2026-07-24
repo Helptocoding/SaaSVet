@@ -179,6 +179,20 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 enqueue_outbound(conversation, text, author='agent')
                 return {'decision': 'identity_challenge',
                         'llm_calls': llm_calls, 'tools': tool_calls}
+
+            # Errores SUAVES (faltan datos, fecha inválida, hueco tomado…):
+            # NO son fallos de sistema. Se realimentan al LLM con una guía para
+            # que PREGUNTE o AJUSTE — jamás rebotan a un humano. Solo un
+            # 'tool_failure' real (HTTP 5xx/transporte) escala.
+            if outcome.client_error != 'tool_failure':
+                consecutive_failures = 0
+                extra_data = {
+                    'tool': result.tool_name,
+                    'error': outcome.client_error,
+                    'guia': _soft_error_hint(outcome.client_error),
+                }
+                continue
+
             consecutive_failures += 1
             if consecutive_failures >= MAX_CONSECUTIVE_TOOL_FAILURES:
                 policy.escalate_to_human(
@@ -186,14 +200,13 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 )
                 enqueue_outbound(
                     conversation,
-                    "Disculpa, tuve un problema para consultar eso. Te "
-                    "comunico con una persona del equipo 🙏",
+                    "Disculpa, tuve un problema técnico. Te comunico con una "
+                    "persona del equipo 🙏",
                     author='agent',
                 )
                 return {'decision': 'escalate', 'llm_calls': llm_calls,
                         'tools': tool_calls, 'reason': 'tool_failure'}
-            # Un fallo: reintenta el turno con el error como dato.
-            extra_data = {'tool': result.tool_name, 'error': outcome.client_error}
+            extra_data = {'tool': result.tool_name, 'error': 'tool_failure'}
             continue
 
         consecutive_failures = 0
@@ -321,6 +334,34 @@ def _commit_success_text(tool, outcome):
         return ("Listo, cancelé tu cita. Si quieres agendar otra, con gusto te "
                 "ayudo 🙂")
     return "¡Listo! ✅"
+
+
+def _soft_error_hint(client_error):
+    """Guía para el LLM cuando una tool devuelve un error 'suave' → que
+    PREGUNTE o AJUSTE en vez de rebotar a un humano."""
+    return {
+        'need_data': 'Faltan datos para agendar. Pregúntale al cliente lo que '
+                     'falte (fecha y HORA concreta, y el motivo) antes de usar '
+                     'la herramienta de nuevo.',
+        'need_date': 'Falta el día. Pregúntale al cliente para qué fecha quiere.',
+        'bad_date': 'No entendí la fecha. Pídesela al cliente en concreto '
+                    '(por ejemplo "el viernes" o una fecha).',
+        'past_date': 'Esa fecha ya pasó. Ofrécele una fecha futura.',
+        'slot_taken': 'Ese horario se acaba de ocupar. Ofrécele otro horario.',
+        'no_vet': 'La clínica aún no tiene su agenda lista para reservas '
+                  'automáticas. Discúlpate y ofrece pasar con una persona.',
+        'unknown_handle': 'No ubico esa cita o mascota. Pídele al cliente que '
+                          'te dé más detalle (nombre de la mascota o del día).',
+        'not_cancelable': 'Esa cita ya no se puede cancelar por aquí. Ofrece '
+                          'pasar con una persona.',
+        'not_reschedulable': 'Esa cita ya no se puede mover por aquí. Ofrece '
+                             'pasar con una persona.',
+        'already_a_client': 'Este número ya está registrado. Trátalo como '
+                            'cliente existente.',
+        'ambiguous_identity': 'Hay varios registros con este número. Ofrece '
+                              'pasar con una persona para validar.',
+    }.get(client_error, 'No se pudo completar. Pregúntale al cliente o '
+          'reformula lo que necesitas.')
 
 
 def _last_inbound_text(conversation):
