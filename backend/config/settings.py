@@ -113,6 +113,14 @@ AGENT_MAX_TOOLS_PER_TURN = config(
     'AGENT_MAX_TOOLS_PER_TURN', default=5, cast=int,
 )
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+# El agente consume la API por loopback interno (AGENT_INTERNAL_API_URL, p.ej.
+# http://backend:8000 dentro de la red de Docker). Ese host DEBE ser válido o
+# Django responde 400 DisallowedHost a cada herramienta HTTP del agente. Se
+# agrega automáticamente para no depender de que esté en el env ALLOWED_HOSTS.
+from urllib.parse import urlparse as _urlparse
+_agent_internal_host = _urlparse(AGENT_INTERNAL_API_URL).hostname
+if _agent_internal_host and _agent_internal_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_agent_internal_host)
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # ---------------------------------------------------------------------------

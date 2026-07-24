@@ -104,6 +104,11 @@ class ToolExecutor:
             # Correlación end-to-end (P1-5 A1): el backend reusa este id en
             # sus logs → webhook→worker→tool→dominio trazable.
             'X-Request-ID': request_id,
+            # El loopback es HTTP interno (worker→backend:8000); sin esto,
+            # SECURE_SSL_REDIRECT responde 301→https y la tool falla. Con el
+            # proto header (SECURE_PROXY_SSL_HEADER) Django lo trata como seguro,
+            # igual que cuando Caddy lo reenvía desde afuera.
+            'X-Forwarded-Proto': 'https',
         }
         # A2-1: idempotencia de escritura (una cita, no dos, ante reintento).
         if idempotency_key:
