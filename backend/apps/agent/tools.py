@@ -773,6 +773,39 @@ def commit_reschedule_appointment(conversation, executor, args, triggered_by=Non
     })
 
 
+_SPECIES_MAP = {
+    'perro': 'canino', 'perros': 'canino', 'perrito': 'canino',
+    'perrita': 'canino', 'perra': 'canino', 'cachorro': 'canino',
+    'canino': 'canino', 'can': 'canino',
+    'gato': 'felino', 'gata': 'felino', 'gatito': 'felino',
+    'gatita': 'felino', 'minino': 'felino', 'felino': 'felino',
+    'caballo': 'equino', 'yegua': 'equino', 'potro': 'equino', 'equino': 'equino',
+    'ave': 'ave', 'pajaro': 'ave', 'perico': 'ave', 'loro': 'ave',
+    'canario': 'ave', 'gallina': 'ave', 'pollo': 'ave',
+    'reptil': 'reptil', 'tortuga': 'reptil', 'iguana': 'reptil',
+    'serpiente': 'reptil', 'lagarto': 'reptil',
+    'conejo': 'exótico', 'hamster': 'exótico', 'huron': 'exótico',
+    'cuyo': 'exótico', 'cobayo': 'exótico', 'exotico': 'exótico',
+    'exótico': 'exótico', 'otro': 'otro',
+}
+
+
+def _normalize_species(raw):
+    """Mapea lo que dice el cliente (a menudo una RAZA como 'maltés') a la lista
+    cerrada del dominio. Desconocido → '' (la especie es opcional; el backend
+    rechaza valores fuera de SPECIES_CHOICES → evita un 400 al registrar)."""
+    s = _norm(raw or '')
+    if not s:
+        return ''
+    if s in _SPECIES_MAP:
+        return _SPECIES_MAP[s]
+    # frase ("una perrita maltés") → busca una palabra conocida
+    for token in s.split():
+        if token in _SPECIES_MAP:
+            return _SPECIES_MAP[token]
+    return ''  # raza desconocida → sin especie (pendiente), no error
+
+
 def _wa_id_to_local10(wa_id):
     """10 dígitos nacionales MX desde el wa_id (E.164 sin '+'); None si no
     alcanza. Los últimos 10 sirven con o sin el '1' legacy mexicano
@@ -799,7 +832,7 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
 
     owner_name = (args.get('owner_name') or '').strip()
     pet_name = (args.get('pet_name') or '').strip()
-    species = (args.get('pet_species') or '').strip()
+    species = _normalize_species(args.get('pet_species'))
     date_str = (args.get('date') or '')[:10]
     time_str = (args.get('time') or '')[:5]
     reason = (args.get('reason') or '').strip()

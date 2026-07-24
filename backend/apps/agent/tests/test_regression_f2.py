@@ -279,16 +279,34 @@ class Int21Tests(RegF2Base):
         ])
         self.assertEqual(Owner.objects.count(), before)   # cero altas
 
-    def test_21_03_b1_invalid_species_not_created(self):
+    def test_21_03_b1_unknown_species_registers_blank(self):
+        # El cliente suele decir la RAZA ("maltés") como especie. En vez de
+        # fallar (400 → rebote), se normaliza: raza conocida → especie; raza
+        # desconocida → vacío (pendiente). SIEMPRE registra.
         conv = self._unknown_conv("5215512345679")
         args = self._reg_args()
-        args["pet_species"] = "dinosaurio"   # fuera de la lista cerrada
+        args["pet_species"] = "maltés"   # raza, no especie
         run_turn(self, conv, self.agent_user, "nuevo", scripted_llm=[
             LLMResult(kind="tool_call", tool_name="register_new_client_and_pet",
                       tool_args=args)])
         conv.refresh_from_db()
         run_turn(self, conv, self.agent_user, "sí", scripted_llm=[])
-        self.assertFalse(Owner.objects.filter(phone="5512345679").exists())
+        owner = Owner.objects.filter(phone="5512345679").first()
+        self.assertIsNotNone(owner)               # se registró pese a la "raza"
+        pet = Pet.objects.filter(owner=owner).first()
+        self.assertEqual(pet.species, "")         # especie pendiente, sin error
+
+    def test_21_03b_breed_phrase_maps_to_species(self):
+        conv = self._unknown_conv("5215512345678")
+        args = self._reg_args()
+        args["pet_species"] = "una perrita maltés"
+        run_turn(self, conv, self.agent_user, "nuevo", scripted_llm=[
+            LLMResult(kind="tool_call", tool_name="register_new_client_and_pet",
+                      tool_args=args)])
+        conv.refresh_from_db()
+        run_turn(self, conv, self.agent_user, "sí", scripted_llm=[])
+        pet = Pet.objects.filter(owner__phone="5512345678").first()
+        self.assertEqual(pet.species, "canino")   # detecta "perrita" → canino
 
     def test_21_04_b5_ambiguous_zero_registration(self):
         conv = self._unknown_conv("5215512345670")
