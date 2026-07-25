@@ -105,6 +105,54 @@ T0_BUDGET = (
     "contigo 🙌"
 )
 
+# W1-5 · el cliente escribe cuando ya hay una escalada en cola. Un acuse, una
+# sola vez: ni seguir conversando como si nada (le prometimos una persona) ni
+# silencio absoluto (parece que nadie lo leyó).
+T0_HANDOFF_WAITING = (
+    "Aquí sigo 🙌 Ya le pasé tu mensaje al equipo; en cuanto alguien se "
+    "desocupe continúa contigo por aquí."
+)
+
+# W1-1 · el guard de salida bloqueó el texto generado. El cliente nunca ve el
+# motivo técnico: ve a alguien que prefiere que lo atienda una persona.
+T0_GUARD_BLOCKED = (
+    "Mejor que esto te lo confirme una persona del equipo — no quiero darte "
+    "un dato equivocado 🙏 Ya les avisé."
+)
+
+# Problema técnico real (LLM caído, tool en 5xx). Antes se reusaba T0_BUDGET,
+# que habla de "mejor atención" para un fallo de infraestructura.
+T0_TECH_PROBLEM = (
+    "Uy, se me trabó el sistema tantito 😅 Ya le avisé al equipo para que te "
+    "atiendan por aquí."
+)
+
+# W2 · el objetivo lleva 3 turnos sin avanzar un solo dato. No es un fallo
+# técnico ni un límite contable: la conversación no está llegando a ningún
+# lado y una persona la resuelve mejor.
+T0_GOAL_STALLED = (
+    "Creo que por aquí nos estamos enredando 🙈 Le paso tu caso a una persona "
+    "del equipo para que lo resuelva contigo rapidito."
+)
+
+# GB-1 · media entrante sin transcripción. Se mide el volumen (`payload_type`)
+# para decidir si toca transcribir (UX-14, umbral 15 %).
+T0_MEDIA_AUDIO = (
+    "Por ahora no puedo escuchar las notas de voz 🙈 ¿Me lo escribes? Así te "
+    "ayudo de inmediato."
+)
+T0_MEDIA_OTHER = (
+    "No alcanzo a ver lo que me mandaste 🙈 ¿Me lo cuentas por escrito? Así te "
+    "ayudo de inmediato."
+)
+
+
+def render_media_reply(payload_types=None):
+    """Plantilla según el tipo de adjunto (audio vs. lo demás)."""
+    if payload_types and 'audio' in set(payload_types):
+        return T0_MEDIA_AUDIO
+    return T0_MEDIA_OTHER
+
 # INT-05 · fuera de alcance.
 T0_OUT_PAYMENT = (
     "Los pagos se realizan directamente en la clínica 🙂 Si tienes una duda "

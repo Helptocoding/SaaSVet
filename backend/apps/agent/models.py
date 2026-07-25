@@ -58,7 +58,12 @@ class ContactIdentity(OrganizationalModel):
     # Nombre de perfil de WhatsApp — dato NO confiable (lo escribe el
     # cliente); solo display de bandeja, jamás para verificación.
     display_name = models.CharField(max_length=128, blank=True, default='')
+    # Bloqueo duro (abuso/spam): sus mensajes ni se procesan.
     is_blocked = models.BooleanField(default=False)
+    # Baja de mensajes PROACTIVOS (INT-04). Distinto de `is_blocked`: si el
+    # cliente vuelve a escribir se le atiende normal — un "stop" en un mal día
+    # no puede dejarlo inalcanzable para siempre.
+    proactive_opt_out = models.BooleanField(default=False)
     # ≥2 owners con el mismo teléfono en la org (D1): el sistema nunca
     # "elige" — intenciones personales escalan a humano (E-05).
     is_ambiguous = models.BooleanField(default=False)
@@ -144,6 +149,10 @@ class Conversation(PublicIdMixin, OrganizationalModel):
     # Presupuesto (spec §2.6): al alcanzar el tope global la conversación
     # degrada a plantilla + handoff (E-09). Solo lo incrementa el planner.
     total_llm_calls = models.PositiveIntegerField(default=0)
+    # Lease del turno en vuelo (É-F3 W0-7): mientras esté en el futuro, ningún
+    # otro worker toma esta conversación. Serializa el turno SIN mantener una
+    # transacción abierta durante la llamada al LLM.
+    processing_until = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [
@@ -153,6 +162,70 @@ class Conversation(PublicIdMixin, OrganizationalModel):
 
     def __str__(self):
         return f"Conversation<{self.public_id} {self.state}>"
+
+
+class ConversationGoal(OrganizationalModel):
+    """Objetivo que persigue la conversación (É-F3 W2).
+
+    Tabla propia y no un blob en `Conversation.flow` por dos razones: un JSON
+    no se agrega (y esto tiene que servir para analytics: embudo por objetivo
+    y por slot), y el ciclo de vida con estado explícito es exactamente el
+    patrón de `HumanHandoff`.
+
+    El sistema es dueño del checklist (`missing`), el modelo solo redacta la
+    pregunta. `slots` guarda `{slot: {value, confidence}}` con el valor YA
+    normalizado por el validador — nunca el texto crudo del cliente.
+    """
+
+    STATUS_ACTIVE = 'active'
+    STATUS_PAUSED = 'paused'
+    STATUS_COMPLETED = 'completed'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_HANDOFF = 'handoff'
+    STATUS_CHOICES = (
+        (STATUS_ACTIVE, 'En curso'),
+        (STATUS_PAUSED, 'Pausado'),
+        (STATUS_COMPLETED, 'Completado'),
+        (STATUS_CANCELLED, 'Cancelado'),
+        (STATUS_HANDOFF, 'Escalado a humano'),
+    )
+    OPEN_STATUSES = (STATUS_ACTIVE, STATUS_PAUSED)
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT, related_name='goals',
+    )
+    name = models.CharField(max_length=40)
+    status = models.CharField(
+        max_length=12, choices=STATUS_CHOICES, default=STATUS_ACTIVE,
+    )
+    slots = models.JSONField(default=dict, blank=True)
+    missing = models.JSONField(default=list, blank=True)
+    # Valores propuestos por debajo del umbral de confianza: se confirman con
+    # el cliente, jamás se dan por buenos.
+    low_confidence = models.JSONField(default=list, blank=True)
+    # {slot: veces_preguntado} — anti-repetición.
+    asked = models.JSONField(default=dict, blank=True)
+    stall_turns = models.PositiveSmallIntegerField(default=0)
+    last_progress_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closed_reason = models.CharField(max_length=80, blank=True, default='')
+
+    class Meta:
+        constraints = [
+            # Un solo objetivo abierto por conversación (patrón espejo de
+            # `cashsession_one_open_per_user`).
+            models.UniqueConstraint(
+                fields=['conversation'],
+                condition=models.Q(status__in=('active', 'paused')),
+                name='conversationgoal_one_open_per_conversation',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'name', 'status']),
+        ]
+
+    def __str__(self):
+        return f"ConversationGoal<{self.name} {self.status}>"
 
 
 class ToolExecution(OrganizationalModel):

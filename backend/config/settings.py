@@ -106,9 +106,18 @@ AGENT_INTERNAL_API_URL = config(
     'AGENT_INTERNAL_API_URL', default='http://backend:8000',
 )
 # Presupuestos (spec §2.6, constantes globales v1).
+# É-F3 W1-5: 15 llamadas se agotaban al quinto mensaje del cliente (cada
+# mensaje cuesta 2-4 llamadas con tools) — el presupuesto era el principal
+# generador de handoffs, y disparaba justo a mitad de un agendado.
 AGENT_MAX_LLM_TURNS_PER_CONVERSATION = config(
-    'AGENT_MAX_LLM_TURNS_PER_CONVERSATION', default=15, cast=int,
+    'AGENT_MAX_LLM_TURNS_PER_CONVERSATION', default=40, cast=int,
 )
+# É-F3 W2: umbral de confianza por slot. Por debajo, el dato NO llena el slot
+# — se le pide confirmación al cliente en vez de asumirlo.
+AGENT_SLOT_CONFIDENCE_THRESHOLD = config(
+    'AGENT_SLOT_CONFIDENCE_THRESHOLD', default=0.70, cast=float,
+)
+
 AGENT_MAX_TOOLS_PER_TURN = config(
     'AGENT_MAX_TOOLS_PER_TURN', default=5, cast=int,
 )

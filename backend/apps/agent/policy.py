@@ -13,6 +13,7 @@ del modelo — el LLM propone, el sistema dispone (plan v1.1, principio 2).
 conversacional determinista (verificación implícita, arranque/avance del
 reto de identidad, opt-out) — todo testeable sin proveedor.
 """
+import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
 
@@ -21,6 +22,8 @@ from django.utils import timezone
 
 from . import identity, matchers, tier0
 from .models import Conversation, HumanHandoff
+
+logger = logging.getLogger('agent.events')
 
 # Tipos de decisión que consume el worker (PR-12).
 REPLY = 'reply'              # enviar `text` (plantilla), no invocar LLM
@@ -51,13 +54,24 @@ def _agent_settings(conversation):
     ).first()
 
 
-def evaluate(conversation, text, *, agent_settings=None):
-    """Pipeline pre-planner. Devuelve PolicyDecision. `text` = cuerpo del
-    mensaje entrante ya persistido (los efectos de dominio no ocurren aquí)."""
+def evaluate(conversation, text, *, burst=None, payload_types=None,
+             agent_settings=None):
+    """Pipeline pre-planner. Devuelve PolicyDecision.
+
+    `text` = último entrante. `burst` = TODOS los entrantes drenados en este
+    turno (el worker los agrupa). Los matchers de seguridad —urgencia, petición
+    de humano, opt-out y confirmación— corren sobre la ráfaga COMPLETA: con
+    "mi perro convulsiona" + "ayúdenme por favor" el detector solo veía el
+    segundo mensaje y la urgencia se perdía. Los matchers de conveniencia
+    (gracias, pagos) siguen mirando el último mensaje, que es su semántica.
+    """
     if agent_settings is None:
         agent_settings = _agent_settings(conversation)
     contact = conversation.contact
     flow = conversation.flow
+    raw_burst = list(burst) if burst is not None else [text]
+    burst = [b for b in raw_burst if b]
+    burst_text = '\n'.join(burst) if burst else (text or '')
 
     # 0. Kill switch / demo → buzón pasivo (T0-DISABLED, sin LLM).
     org = conversation.organization
@@ -76,9 +90,21 @@ def evaluate(conversation, text, *, agent_settings=None):
     if conversation.state == Conversation.STATE_HUMAN_ACTIVE:
         return PolicyDecision(kind=SILENT, meta={'reason': 'human_active'})
 
+    # 2b. Media sin texto (audio, foto, sticker, ubicación): no hay nada que
+    #     leer. Antes esto llegaba al modelo como "[mensaje sin texto]" y
+    #     producía una respuesta confusa gastando una llamada; la spec GB-1
+    #     pedía plantilla. En México el audio es una fracción enorme del
+    #     tráfico: esta rama se mide (`payload_type`) para decidir si toca
+    #     transcripción (UX-14).
+    if raw_burst and not any((b or '').strip() for b in raw_burst):
+        return PolicyDecision(
+            kind=REPLY, text=tier0.render_media_reply(payload_types),
+            meta={'reason': 'media'},
+        )
+
     # 3. URGENCIA (prioridad 1, R16) — antes que todo, incluso a mitad de
     #    flujo; descarta cualquier pending_action.
-    if matchers.is_emergency(text):
+    if matchers.is_emergency(burst_text):
         flow.pop('pending_action', None)
         conversation.save(update_fields=['flow'])
         return PolicyDecision(
@@ -89,17 +115,21 @@ def evaluate(conversation, text, *, agent_settings=None):
         )
 
     # 4. Pide humano.
-    if matchers.wants_human(text):
+    if matchers.wants_human(burst_text):
         return PolicyDecision(
             kind=ESCALATE,
             text=tier0.T0_HANDOFF,
             handoff_reason=HumanHandoff.REASON_EXPLICIT,
         )
 
-    # 5. Opt-out → baja + despedida + cierre.
-    if matchers.wants_optout(text):
-        contact.is_blocked = True  # F0/F1: opt-out cierra y silencia futuros
-        contact.save(update_fields=['is_blocked'])
+    # 5. Opt-out → baja de PROACTIVOS + despedida + cierre.
+    #    No bloquea al contacto: la spec (INT-04) dice que si el cliente
+    #    vuelve a escribir se le atiende normal. Con `is_blocked` quedaba
+    #    silenciado para siempre — un "stop" en un mal día lo dejaba
+    #    inalcanzable.
+    if any(matchers.wants_optout(part) for part in burst):
+        contact.proactive_opt_out = True
+        contact.save(update_fields=['proactive_opt_out'])
         return PolicyDecision(
             kind=CLOSE,
             text="Listo, no volveré a escribirte por aquí. Si cambias de "
@@ -112,11 +142,25 @@ def evaluate(conversation, text, *, agent_settings=None):
         return PolicyDecision(kind=REPLY, text=tier0.T0_BOTQ,
                               meta={'reason': 'bot_question'})
 
+    # 6b. Ya hay una escalada esperando: le prometimos una persona, así que el
+    #     agente no sigue conversando como si nada. Un acuse UNA vez y luego
+    #     silencio — antes seguía respondiendo con el modelo, contradiciendo
+    #     la promesa; el silencio total tampoco vale (el cliente insiste sin
+    #     saber si lo leyeron).
+    if conversation.state == Conversation.STATE_HANDOFF_PENDING:
+        if flow.get('handoff_ack_sent'):
+            return PolicyDecision(kind=SILENT,
+                                  meta={'reason': 'handoff_pending'})
+        flow['handoff_ack_sent'] = True
+        conversation.save(update_fields=['flow'])
+        return PolicyDecision(kind=REPLY, text=tier0.T0_HANDOFF_WAITING,
+                              meta={'reason': 'handoff_ack'})
+
     # 7. Confirmación de un pending_action (ACTIVO en F2: las tools de
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
     #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
     if flow.get('pending_action'):
-        verdict = matchers.classify_confirmation(text)
+        verdict = _burst_confirmation(burst)
         if verdict == 'defer':
             return PolicyDecision(kind=REPLY, text=tier0.T0_DEFER,
                                   meta={'reason': 'confirm_defer'})
@@ -143,13 +187,24 @@ def evaluate(conversation, text, *, agent_settings=None):
     # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
     #    (no cambia la decisión, habilita las tools personales del turno).
     if contact.verification_level == contact.VERIFICATION_PHONE_MATCH:
-        identity.try_verify_by_pet_name(contact, text)
+        identity.try_verify_by_pet_name(contact, burst_text)
 
     # 10. Presupuesto agotado (R11, E-09).
     if _budget_exhausted(conversation):
         return PolicyDecision(
             kind=ESCALATE, text=tier0.T0_BUDGET,
             handoff_reason=HumanHandoff.REASON_BUDGET,
+        )
+
+    # 10b. Saludo pelón en el primer turno → bienvenida institucional, sin
+    #      LLM. La plantilla estaba escrita y aprobada por el PO pero solo
+    #      corría con el agente APAGADO: con el agente encendido la primera
+    #      impresión la improvisaba el modelo.
+    if matchers.is_bare_greeting(text) and not _has_outbound(conversation):
+        return PolicyDecision(
+            kind=REPLY,
+            text=tier0.render_first_reply(agent_settings, org),
+            meta={'reason': 'greeting'},
         )
 
     # 11. Agradecimiento trivial → cierre cordial sin LLM.
@@ -165,6 +220,27 @@ def evaluate(conversation, text, *, agent_settings=None):
 
     # 13. Nada aplicó → el planner decide (lecturas INT-10..14).
     return PolicyDecision(kind=RUN_PLANNER)
+
+
+def _has_outbound(conversation):
+    from apps.channels.models import Message
+    return Message.objects.for_organization(conversation.organization).filter(
+        conversation=conversation, direction=Message.DIRECTION_OUT,
+    ).exists()
+
+
+def _burst_confirmation(burst):
+    """Primer veredicto decisivo de la ráfaga.
+
+    "sí" seguido de "gracias" es una afirmativa, no un agradecimiento: sin
+    esto el último mensaje ganaba y la acción confirmada no se ejecutaba.
+    'unclear' solo si NINGÚN mensaje de la ráfaga decide.
+    """
+    for part in burst:
+        verdict = matchers.classify_confirmation(part)
+        if verdict != 'unclear':
+            return verdict
+    return 'unclear'
 
 
 _PAYMENT_LEMMAS = (
@@ -296,8 +372,7 @@ def _family_fail(conversation, family, reason_detail):
 
 
 def _log_family(conversation, event, reason_detail=''):
-    import logging
-    logging.getLogger('agent.events').info(event, extra={
+    logger.info(event, extra={
         'event': event,
         'organization_id': conversation.organization_id,
         'conversation_id': conversation.pk,
@@ -316,7 +391,8 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
     existing = HumanHandoff.objects.filter(
         conversation=conversation, resolved_at__isnull=True,
     ).first()
-    if existing is None:
+    created = existing is None
+    if created:
         HumanHandoff.objects.create(
             organization=conversation.organization,
             conversation=conversation,
@@ -324,9 +400,37 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
             reason_detail=detail[:200],
             priority=priority,
         )
+    escalated_now = created
+    if (not created and priority == HumanHandoff.PRIORITY_URGENT
+            and existing.priority != HumanHandoff.PRIORITY_URGENT):
+        # La conversación ya estaba en cola por algo menor y ahora aparece una
+        # urgencia: sube de prioridad y avisa (antes se quedaba en 'normal').
+        existing.priority = HumanHandoff.PRIORITY_URGENT
+        existing.reason_code = reason_code
+        existing.save(update_fields=['priority', 'reason_code'])
+        escalated_now = True
     conversation.flow.pop('pending_action', None)
+    # El acuse al cliente que insiste se rearma con cada escalada nueva.
+    conversation.flow.pop('handoff_ack_sent', None)
     conversation.state = Conversation.STATE_HANDOFF_PENDING
     conversation.save(update_fields=['state', 'flow'])
+
+    # El objetivo en curso pasa a manos del humano: queda cerrado como
+    # `handoff`, no como abandonado (W2 — importa para el embudo).
+    from . import goals
+    from .models import ConversationGoal
+    goals.close_open_goal(
+        conversation, ConversationGoal.STATUS_HANDOFF, reason_code)
+
+    # Una urgencia no puede quedarse esperando a que alguien tenga la bandeja
+    # abierta (W0-4). El aviso nunca puede tumbar el turno: se traga todo.
+    if escalated_now and priority == HumanHandoff.PRIORITY_URGENT:
+        from . import alerts
+        try:
+            alerts.notify_urgent_handoff(
+                conversation, reason_code=reason_code, detail=detail)
+        except Exception:
+            logger.exception("AGENT_URGENT_ALERT_FAILED")
 
 
 NUDGE_IDLE = timedelta(minutes=60)   # silencio mínimo antes del recordatorio
@@ -352,7 +456,8 @@ def nudge_abandoned_flows(now=None):
     count = 0
     for conversation in candidates:
         flow = conversation.flow or {}
-        if conversation.contact.is_blocked:        # opt-out (GB-10)
+        contact = conversation.contact
+        if contact.is_blocked or contact.proactive_opt_out:
             continue
         if flow.get('nudge_sent'):                 # una sola vez por conversación
             continue

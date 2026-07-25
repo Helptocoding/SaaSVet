@@ -192,6 +192,11 @@ class Message(OrganizationalModel):
     # Drain-on-pickup (v1.1 §7-C9): el worker no toma mensajes con
     # available_at futuro — delay fijo barato en vez de debounce con timers.
     available_at = models.DateTimeField(null=True, blank=True)
+    # Veces que el worker intentó procesar este ENTRANTE (É-F3 W0-3). Distinto
+    # de `attempts`, que cuenta envíos de un saliente. Al agotar el tope, el
+    # mensaje se descarta y la conversación pasa a un humano: sin esto, un
+    # payload que revienta el turno se reprocesaba para siempre.
+    process_attempts = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ['created_at', 'id']

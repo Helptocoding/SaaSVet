@@ -6,6 +6,43 @@
 
 **Alcance**: intenciones de F1 (lectura) y F2 (escritura de agenda). F3 (proactividad) se especificará al cerrar F2 con datos reales. Fuera de alcance permanente: pagos, escritura clínica, triage médico.
 
+> ### Enmienda É-F3 (2026-07-25) — aplicada e implementada
+>
+> La [auditoría conversacional](whatsapp-agent-auditoria-conversacional-2026-07-24.md)
+> encontró que esta spec y el código **habían divergido en silencio**: varias
+> conductas aquí congeladas no existían en producción y otras funcionaban
+> distinto. Una spec que diverge sin enmienda deja de ser contrato. Esto la
+> re-sincroniza. Plan y justificación:
+> [É-F3](whatsapp-agent-epica-f3-conversacion-por-objetivos.md).
+>
+> **Se implementó lo que ya estaba especificado y no existía**: T0-GREET con el
+> agente encendido (§4 INT-00 — antes solo corría con el buzón apagado), aviso
+> de privacidad just-in-time (§4 INT-00, era código muerto), plantilla de media
+> entrante (§8 GB-1), y la interrupción sin pérdida de flujo (§2.7, inejecutable
+> sin estado persistido).
+>
+> **Cambia el contrato en cuatro puntos**:
+> 1. **§2.6 presupuesto**: 15 → **40** turnos con LLM. Con 15 se agotaba al
+>    quinto mensaje del cliente y escalaba a mitad de un agendado; el disparador
+>    principal pasa a ser el **estancamiento del objetivo** (3 turnos sin llenar
+>    un dato), que es una señal semántica y no contable.
+> 2. **§2.4 mecánica de flujo**: se añade la capa de **objetivos** — el sistema
+>    es dueño del checklist (`missing`), el modelo solo redacta la pregunta; los
+>    datos se capturan de forma incremental con **confianza por slot** (por
+>    debajo de 0.70 no se llena: se confirma). Estado explícito
+>    `active/paused/completed/cancelled/handoff`.
+> 3. **§4 INT-04 opt-out**: corta mensajes proactivos, **no** silencia al
+>    contacto. Antes lo bloqueaba para siempre, contra lo que la propia INT-04
+>    dice ("si el cliente escribe de nuevo, se le atiende normal").
+> 4. **§2.2 reglas duras**: G1, G2, G3 y G7 dejan de ser advisorias. Se
+>    verifican en runtime (`agent/guards.py`) sobre el texto ya generado: una
+>    violación dura no se envía al cliente. El prompt se acortó y el sistema
+>    quedó **más** estricto — ninguna prohibición fue eliminada.
+>
+> **Sigue sin implementarse** (deuda declarada, con trigger): §2.6 anti-flood,
+> §2.4 clasificación LLM de la afirmativa (etapa 2), transcripción de audio
+> (gate: >15 % de entrantes, medido por `agent_quality`).
+
 ---
 
 ## Índice
@@ -146,7 +183,7 @@ Regla transversal: **2 fallos de tool consecutivos en la misma conversación →
 
 ### 2.6 Presupuestos y límites (constantes globales v1)
 
-- Máx. **15 turnos con LLM** por conversación → al agotar: plantilla T0-BUDGET + E-09.
+- Máx. **40 turnos con LLM** por conversación → al agotar: plantilla T0-BUDGET + E-09. *(Enmienda É-F3: eran 15 y se agotaban al quinto mensaje del cliente. El disparador principal de escalada pasa a ser el estancamiento del objetivo — 3 turnos sin llenar un solo dato.)*
 - Máx. **5 tools por turno**, máx. **1 mutadora** por turno.
 - Máx. **3 slots propuestos** por oferta de horarios (INT-20/24).
 - Ráfagas: > 10 mensajes del cliente en 60 s → plantilla anti-flood + pausa de procesamiento 60 s.

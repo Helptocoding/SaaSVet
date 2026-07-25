@@ -19,9 +19,10 @@ ref; `channels.views` importa `agent.services` perezoso.
 | Modelo | App | Claves |
 |---|---|---|
 | `ChannelAccount` | channels | `external_account_id` (phone_number_id) **unique GLOBAL** — el enrutamiento número→org es el control anti cross-tenant (R1); `provider_credentials_ref` = NOMBRE de env var (secreto jamás en DB) |
-| `Message` | channels | Tabla ÚNICA in/out. El inbox ES la cola y el outbox un filtro (`status`); dedup de reintentos: unique parcial `(channel_account, external_message_id)` solo inbound (patrón Payment/ADR p27); `available_at` = drain-on-pickup (+3 s) |
+| `Message` | channels | Tabla ÚNICA in/out. El inbox ES la cola y el outbox un filtro (`status`); dedup de reintentos: unique parcial `(channel_account, external_message_id)` solo inbound (patrón Payment/ADR p27); `available_at` = ventana silenciosa del debounce (cada entrante empuja la de TODO el hilo: 8 s, tope 25 s desde el más viejo); `process_attempts` = intentos de TURNO del entrante (≠ `attempts`, que cuenta envíos) → al agotar `MAX_PROCESS_ATTEMPTS` el mensaje se descarta y la conversación escala a humano |
 | `ContactIdentity` | agent | Identidad POR ORG (`unique org+channel+external_id` — el mismo cliente puede escribir a 2 clínicas); `verification_level` (unknown→phone_match→confirmed_in_chat→staff_verified); `phone_normalized` (Q5: últimos 10 dígitos, México-only); NO es un User — jamás recibe tokens |
-| `Conversation` | agent | `PublicIdMixin` (la bandeja navega por UUID); FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo); org fijada al crear e inmutable; `flow`/`summary` = scratchpad (filosofía ADR p50, jamás fuente de verdad) |
+| `Conversation` | agent | `PublicIdMixin` (la bandeja navega por UUID); FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo); org fijada al crear e inmutable; `flow`/`summary` = scratchpad (filosofía ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo (serializa entre réplicas sin transacción abierta) |
+| `ConversationGoal` | agent | **Objetivo en curso** (É-F3 W2). Estado explícito `active/paused/completed/cancelled/handoff`; `slots` `{slot:{value,confidence}}` con el valor YA normalizado por el validador; `missing`, `low_confidence`, `asked`, `stall_turns`. Constraint parcial: **un objetivo abierto por conversación** |
 | `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `business_hours`, `faq_facts` |
 
 ## Flujo F0
@@ -62,6 +63,9 @@ Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
   corre policy→planner→tools por entrante; cierra inactivas 24h en el loop).
 - `agent_eval [--json]` — eval nightly con LLM real (no bloqueante, rollback;
   skip si no hay `AGENT_LLM_API_KEY`). Gate del piloto: ≥95 % en 5 corridas.
+- `agent_quality [--days 7] [--sample 20] [--org <public_id>] [--json]` — É-F3
+  W3: métricas de calidad conversacional + **muestra estratificada de
+  transcripts para leer** (escaladas / abandonadas / completadas). Semanal.
 
 ## Agente F1 (LLM read-only)
 
@@ -81,13 +85,95 @@ Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`
 (bloqueante) + fixture trampa cross-tenant + aserciones prohibidas globales
 (`agent/tests/harness.py`).
 
+## Endurecimiento É-F3 W0 (2026-07-24)
+
+Correcciones de la [auditoría conversacional](../whatsapp-agent-auditoria-conversacional-2026-07-24.md); plan en [É-F3](../whatsapp-agent-epica-f3-conversacion-por-objetivos.md).
+
+| # | Cambio | Contrato nuevo |
+|---|---|---|
+| W0-1 | Horarios con el reloj de la ORG (`org_today_local`/`org_now_local`), no del proceso (`TIME_ZONE='UTC'`) | Toda comparación de "hoy"/"ya pasó" en slots usa la zona de la clínica |
+| W0-2 | El Policy Engine evalúa la **ráfaga completa** (`burst`), no solo el último entrante | Urgencia, petición de humano, opt-out y confirmación se detectan en cualquier mensaje del grupo |
+| W0-3 | Turno aislado: `try/except` por conversación + `process_attempts` + dead-letter | Un turno que revienta reintenta 3 veces y luego descarta + escala; **nunca** tumba el worker |
+| W0-4 | Urgencia notificada a ops (webhook Discord) + prioridad en `/inbox` | `HumanHandoff(priority=urgent)` dispara aviso (sin PII) y la bandeja ordena urgentes primero |
+| W0-5 | `fixed_vet` **exige** `default_veterinarian` | Sin configurar → `no_vet` y oferta de humano; jamás "el primer VET por pk" |
+| W0-6 | Aviso de privacidad just-in-time | Se emite una vez por contacto, antes del primer reto de identidad o alta (`privacy_notice_sent_at`) |
+| W0-7 | Transacción corta por conversación + lease (`processing_until`) | La red (LLM, loopback) queda FUERA de toda transacción |
+
+### W1 — experiencia y conservación vinculante
+
+Enmienda E2 del PO: **ninguna regla se eliminó**. Las verificables en código
+pasaron del prompt (advisorio) al runtime (vinculante); el resto se reescribió
+como conducta. Regla de oro: *si una regla sale del prompt, entra al código con
+un test que la ancle.*
+
+| # | Cambio | Contrato nuevo |
+|---|---|---|
+| W1-1 | `agent/guards.py`: filtro determinista sobre el texto generado | Precio sin respaldo de tool, consejo médico o promesa ⇒ 1 reintento con corrección ⇒ si persiste **no sale**: plantilla + handoff. G1/G2/G3/G7 dejan de ser advisorias |
+| W1-2 | Prompt `reception-f3-v6`: mismas reglas en forma conductual + 4 ejemplos + formato WhatsApp (`*negritas*`) | Sale del prompt solo lo que era parche técnico o lógica determinista duplicada |
+| W1-3 | Hilo de herramientas real (`assistant` con `tool_calls` + `tool` con `tool_call_id`) | El modelo ve sus propias llamadas: deja de repetir tools y de auto-responderse |
+| W1-4 | Debounce por ventana silenciosa (8 s, tope 25 s) + descarte del saliente si llegó un entrante nuevo | La ráfaga humana se responde en UN turno. Solo se descartan respuestas de **texto puro** (nunca una confirmación) |
+| W1-5 | Presupuesto 15 → **40** · copy de escalado por motivo · acuse único en `handoff_pending` | El presupuesto deja de ser el generador principal de handoffs |
+| W1-6 | Reto tolerante al nombre de pila + re-match teléfono→Owner en contactos aún desconocidos | Un cliente dado de alta después de escribir deja de ser tratado como nuevo |
+| W1-7 | Media entrante (audio/imagen/sticker) responde plantilla **sin invocar al modelo** | `payload_type` mide el volumen: >15 % de audio activa el gate de transcripción (UX-14) |
+| W1-8 | 400 del dominio mapeado por su contenido (`map_domain_400`) | `slot_taken` solo cuando de verdad hay solape; el resto se pide o se registra |
+| W1-9 | Saludo institucional + aviso de fuera de horario con el agente ENCENDIDO | T0-GREET deja de existir solo en el buzón apagado |
+| W1-10 | `proactive_opt_out` ≠ `is_blocked` · mensajes de staff humano al contexto | Un "ya no me escriban" corta proactivos, no silencia al cliente |
+
+### W2 — conversación por objetivos
+
+El agente pasa de `mensaje → intent → tool → respuesta` a
+`objetivo → qué me falta → lo obtengo → cierro`. La capa estaba **diseñada**
+(arquitectura §7.3: `flow.name` + `flow.slots`) y nunca se implementó.
+
+| Pieza | Contrato |
+|---|---|
+| `agent/goals.py` | Catálogo cerrado de **4 objetivos, solo multi-turno**: `schedule_appointment`, `register_and_schedule`, `cancel_appointment`, `reschedule_appointment`. Las lecturas de un turno NO llevan objetivo (es lo que impide que esto sea un motor de diálogo genérico) |
+| Contrato de slot | **nombre + validador**, nada más. Sin extractores (el LLM propone el valor; el código lo valida) y **sin copy** (el objetivo publica `missing`; cómo se pregunta es del modelo) |
+| Confianza | El modelo acompaña cada dato con `<slot>_confidence`. Por debajo de `AGENT_SLOT_CONFIDENCE_THRESHOLD` (0.70) el slot **no se llena**: pasa a `por_confirmar`. Filtro EN SERIE con el validador, no alternativo. Ausente ⇒ 1.0 (compatibilidad) |
+| Herramientas de escritura | `required: []` y parámetros `<slot>_confidence` (los inyecta `as_openai_tools`). Llamada **parcial** = normal: persiste lo válido y devuelve qué falta. Antes eran todo-o-nada y el modelo inventaba lo que faltaba |
+| Interrupción | Una lectura intercalada **pausa** el objetivo (no lo destruye) y se retoma con los slots intactos — spec §2.7, inejecutable hasta ahora |
+| Estancamiento | 3 turnos sin llenar un solo slot ⇒ escalada semántica (`T0_GOAL_STALLED`). Sustituye al presupuesto contable como disparador principal |
+| Cierre | `completed` solo donde consta que el dominio aceptó la escritura (commit tier-2); `handoff` al escalar; `cancelled` al abrir otro objetivo |
+| Métricas | `compute_goal_metrics`: abiertos, completados, tasa, por estado, por objetivo y **slots donde se atoran** — el embudo deja de inferirse de nombres de herramienta |
+
+**No se tocó** ninguna barrera de control: el objetivo vive DESPUÉS del Policy
+Engine y ANTES de la confirmación tier-2. El parafraseo por plantilla, el
+commit de args staged y TC-SEC-03 siguen exactamente igual.
+
+### W3 — medición de calidad conversacional
+
+Las métricas de negocio responden *"¿agendó?"*. Estas responden la pregunta que
+decide el piloto: ***"¿se siente como una buena recepcionista?"*** — con datos,
+no con opinión. Todo se deriva de tablas existentes; **cero campos nuevos**.
+
+| Métrica | Cómo se mide | Para qué |
+|---|---|---|
+| `latencia_respuesta_ms` p50/p95 | Del **último** entrante del cliente al saliente del agente (la ventana silenciosa del debounce es espera deseada, no lentitud). Los descartados no cuentan: nunca llegaron | Gate F1 §10.4 (<15 s) medido de verdad |
+| `turnos_por_resolucion` | Mensajes del cliente en conversaciones con objetivo **completado** | Fricción real del flujo; los abandonos no contaminan el promedio |
+| `tasa_repregunta` | Objetivos donde se pidió el MISMO dato ≥2 veces (`asked`) | El tic más reconociblemente robótico |
+| `tasa_handoff` | Conversaciones con escalada / conversaciones (no escaladas/conversación) | Gate F1 (<40 %) |
+| `pct_audio` | `payload_type` de entrantes | Trigger UX-14: >15 % ⇒ transcripción entra al gate de F2 |
+| `respuestas_descartadas` | Salientes `discarded` (W1-4) | Si sube mucho, la ventana silenciosa está corta |
+| `objetivos.slots_atorados` | Slots faltantes al cerrar sin completar | **En qué dato concreto** se pierde la gente |
+
+Se exponen en `GET /api/inbox/metrics/` (bloque `calidad`) y en el comando
+`agent_quality`, que además imprime la muestra de transcripts a leer: sin
+lectura humana no hay ciclo de mejora, solo intuición.
+
 ## Invariantes propios (además de los globales)
 
 1. La organización de una conversación nace del `ChannelAccount` receptor y
    NUNCA se re-deriva (R1).
 2. Un wamid entrante se persiste a lo sumo una vez por canal (R5, constraint DB).
-3. Cuerpos de mensaje SOLO en DB — jamás en logs ni Sentry (R15).
+3. Cuerpos de mensaje SOLO en DB — jamás en logs ni Sentry (R15). El aviso de
+   urgencia a ops lleva org, conversación y motivo: nunca texto del cliente.
 4. Plantillas tier-0 son literales (contrato spec §1.3) — el copy no se
    improvisa en código.
 5. Fuera de la ventana de 24 h no sale texto libre (lo valida el sender).
 6. `enabled=False` no apaga la captura: solo cambia la primera respuesta.
+7. Ninguna llamada de red ocurre dentro de una transacción de base de datos.
+8. Un turno fallido nunca deja al cliente sin respuesta ni al worker caído.
+9. El sistema es dueño del checklist del objetivo; el modelo solo redacta la
+   pregunta. Ningún slot se llena con un valor que no pasó validador, y
+   ninguno se llena con confianza por debajo del umbral.
+10. Como máximo un `ConversationGoal` abierto por conversación (constraint DB).

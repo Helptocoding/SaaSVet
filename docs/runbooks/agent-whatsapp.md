@@ -106,6 +106,23 @@ Desde un número registrado en el sandbox:
   `AGENT_CONVERSATION_OPENED`. **Jamás contienen cuerpos de mensaje** (PII
   solo en DB — regla R15).
 
+## 4.1 Revisión semanal de calidad (É-F3 W3)
+
+Una vez por semana durante el piloto:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T backend \
+  python manage.py agent_quality --days 7 --sample 20
+```
+
+Imprime latencia real p50/p95, turnos por resolución, tasa de repregunta y de
+handoff, % de audio entrante, y una **muestra estratificada de conversaciones
+para leer en `/inbox`** (escaladas, abandonadas y completadas — leer solo las
+felices no enseña nada).
+
+Umbrales de atención: latencia p95 > 30 s · handoff > 40 % · repregunta > 20 %
+· audio > 15 % (activa el requisito de transcripción, UX-14).
+
 ## 5. Troubleshooting
 
 | Síntoma | Causa probable | Acción |
@@ -115,7 +132,14 @@ Desde un número registrado en el sandbox:
 | `WEBHOOK_UNKNOWN_CHANNEL` | Mensaje a un `phone_number_id` sin `ChannelAccount` | Correr `provision_channel` para esa org |
 | Mensajes salientes en "enviando…" eternos | Worker caído (deadman alertó) o token vencido | `logs worker`; token sandbox caduca en 24 h → regenerar; `AGENT_SEND_FAILED` con 401 = token |
 | "no entregado — ventana de sesión de 24h cerrada" | Se intentó responder >24 h tras el último mensaje del cliente | Esperado (límite del canal): el cliente debe escribir de nuevo; plantillas HSM llegan en F3 |
-| Respuesta automática duplicada tras reinicio | No debe pasar (estado en DB, `TC-GB-07`) | Si pasara: bug — revisar `has_outbound` en `agent/worker.py::_process_one` |
+| Respuesta automática duplicada tras reinicio | No debe pasar (estado en DB, `TC-GB-07`) | Si pasara: bug — revisar `has_outbound` en `agent/worker.py::_first_reply_fallback` |
+| `AGENT_TURN_FAILED` repetido en la misma conversación | Un turno revienta (payload raro, bug). El worker ya NO se cae: reintenta hasta 3 veces con 30 s de respiro | Al agotar reintentos el mensaje pasa a `discarded` y la conversación escala a humano. Revisar el traceback del log y la conversación en `/inbox` |
+| Conversación atascada sin procesarse | `processing_until` quedó en el futuro (worker muerto a mitad de turno) | El lease expira solo a los 5 min. Si urge: poner `processing_until=NULL` por shell |
+| `AGENT_URGENT_HANDOFF` con `alert_delivered: false` | `DISCORD_WEBHOOK_URL` sin configurar o webhook caído | Configurar la variable; el evento igual queda en el log estructurado |
+| El agente tarda ~10 s en responder | Esperado (W1-4): la ventana silenciosa de 8 s agrupa la ráfaga del cliente en un solo turno. Tope duro 25 s | Solo investigar si supera los 30 s |
+| `AGENT_REPLY_SUPERSEDED` en logs | El cliente siguió escribiendo mientras el modelo pensaba: la respuesta se descartó y se replanificó | Normal. Frecuencia alta sostenida ⇒ subir `QUIET_WINDOW` |
+| `AGENT_OUTPUT_GUARD` con `action: blocked` | El modelo insistió en un precio inventado, un consejo médico o una promesa: **no se envió** y escaló | Revisar la conversación y el prompt. Un pico ⇒ regresión de calidad del proveedor |
+| `AGENT_COMMIT_REJECTED` | El dominio rechazó la escritura por datos inválidos (ya no se disfraza de "se ocupó el horario") | El `detail` del log trae el mensaje real del serializer |
 | Conversación en org equivocada | NUNCA debe pasar (unique global + guard R1) | Incidente crítico: parar worker, auditar `ChannelAccount`, avisar |
 
 ## 6. Kill switch y desmonte

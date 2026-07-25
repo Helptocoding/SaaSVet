@@ -12,7 +12,7 @@ Toda query org-scoped con for_organization; conversaciones por public_id
 """
 import logging
 
-from django.db.models import Prefetch
+from django.db.models import Exists, OuterRef, Prefetch
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -22,7 +22,7 @@ from apps.core.permissions import make_permission
 from apps.core.sanitize import sanitize_text
 from apps.core.views import resolve_public_id
 
-from .models import AgentSettings, Conversation
+from .models import AgentSettings, Conversation, HumanHandoff
 from .serializers import (
     AgentSettingsSerializer,
     ConversationListSerializer,
@@ -58,8 +58,25 @@ def list_conversations(request):
                 queryset=Message.objects.order_by('-created_at', '-id')[:1],
                 to_attr='latest_messages',
             ),
+            # Escalada abierta: la bandeja necesita distinguir una urgencia
+            # clínica de una duda de horarios (É-F3 W0-4).
+            Prefetch(
+                'handoffs',
+                queryset=HumanHandoff.objects.filter(resolved_at__isnull=True)
+                .order_by('-created_at')[:1],
+                to_attr='open_handoffs',
+            ),
         )
-        .order_by('-last_activity_at')
+        # Las urgentes primero, siempre: una convulsión no puede quedar debajo
+        # de una conversación más reciente sobre precios.
+        .annotate(_urgent=Exists(
+            HumanHandoff.objects.filter(
+                conversation=OuterRef('pk'),
+                resolved_at__isnull=True,
+                priority=HumanHandoff.PRIORITY_URGENT,
+            )
+        ))
+        .order_by('-_urgent', '-last_activity_at')
     )
     state = request.query_params.get('state')
     if state:
@@ -168,6 +185,11 @@ def conversation_messages(request, pk):
     messages = list(
         Message.objects.for_organization(org)
         .filter(conversation=conversation)
+        # Un saliente `discarded` nunca se envió (se descartó porque el cliente
+        # siguió escribiendo, W1-4): mostrarlo haría que recepción leyera un
+        # mensaje que el cliente jamás vio. Queda en DB para auditoría.
+        .exclude(direction=Message.DIRECTION_OUT,
+                 status=Message.STATUS_DISCARDED)
         .select_related('human_author')
         .order_by('-created_at', '-id')[:TRANSCRIPT_CAP]
     )[::-1]  # cap por los más recientes, entregados en orden cronológico

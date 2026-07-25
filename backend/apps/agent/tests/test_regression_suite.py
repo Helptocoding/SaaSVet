@@ -232,10 +232,18 @@ class SecurityTests(RegressionBase):
                 LLMResult(kind="text", text="Tienes 2 mascotas registradas 🐾"),
             ],
         )
-        # El nombre-injection viaja SOLO dentro del bloque de DATOS delimitado.
+        # El nombre-injection viaja SOLO como RESULTADO de herramienta
+        # (role='tool', correlacionado por tool_call_id desde W1-3), jamás
+        # como instrucción del sistema ni del usuario.
         second = stub.calls[1]["messages"][-1]
-        self.assertEqual(second["role"], "system")
-        self.assertIn("DATOS de las herramientas", second["content"])
+        self.assertEqual(second["role"], "tool")
+        self.assertIn("Firulais", second["content"])
+        roles = {m["role"] for m in stub.calls[1]["messages"]}
+        self.assertNotIn("developer", roles)
+        # Ningún bloque de sistema contiene el payload de la mascota.
+        for message in stub.calls[1]["messages"]:
+            if message["role"] == "system":
+                self.assertNotIn("Firulais", message["content"])
 
     def test_sec03_affirmative_with_extra_is_conservative(self):
         """'sí, y cancela también...' NO clasifica como afirmativa simple

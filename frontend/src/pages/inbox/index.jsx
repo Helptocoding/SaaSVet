@@ -340,11 +340,11 @@ const Inbox = () => {
                             conversations.map((c) => (
                                 <button
                                     key={c.public_id}
-                                    className={
-                                        c.public_id === selectedId
-                                            ? `${styles.convItem} ${styles.convItemActive}`
-                                            : styles.convItem
-                                    }
+                                    className={[
+                                        styles.convItem,
+                                        c.public_id === selectedId ? styles.convItemActive : "",
+                                        c.handoff_priority === "urgent" ? styles.convItemUrgent : "",
+                                    ].filter(Boolean).join(" ")}
                                     onClick={() => setSelectedId(c.public_id)}
                                 >
                                     <div className={styles.convTop}>
@@ -356,10 +356,19 @@ const Inbox = () => {
                                     </div>
                                     <div className={styles.convTop}>
                                         <span className={styles.convPreview}>{c.last_message_preview || "—"}</span>
-                                        <span className={`badge ${STATE_BADGE[c.state] || "badge-default"}`}>
-                                            {STATE_LABEL[c.state] || c.state}
-                                        </span>
+                                        {c.handoff_priority === "urgent" ? (
+                                            <span className="badge badge-danger">Urgente</span>
+                                        ) : (
+                                            <span className={`badge ${STATE_BADGE[c.state] || "badge-default"}`}>
+                                                {STATE_LABEL[c.state] || c.state}
+                                            </span>
+                                        )}
                                     </div>
+                                    {c.handoff_priority === "urgent" && (
+                                        <div className={styles.urgentHint}>
+                                            Posible emergencia — atiende de inmediato
+                                        </div>
+                                    )}
                                 </button>
                             ))
                         )}

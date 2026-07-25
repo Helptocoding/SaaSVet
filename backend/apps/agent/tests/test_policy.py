@@ -88,11 +88,18 @@ class PriorityOrderTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.ESCALATE)
         self.assertEqual(d.handoff_reason, HumanHandoff.REASON_EXPLICIT)
 
-    def test_optout_closes_and_blocks(self):
+    def test_optout_closes_and_stops_proactive_only(self):
+        """W1-10: la baja corta los proactivos, NO silencia al contacto.
+
+        Con `is_blocked` un "ya no me escriban" dejaba al cliente inalcanzable
+        para siempre; la spec (INT-04) dice que si vuelve a escribir se le
+        atiende normal.
+        """
         d = self._eval("ya no me escriban")
         self.assertEqual(d.kind, policy.CLOSE)
         self.contact.refresh_from_db()
-        self.assertTrue(self.contact.is_blocked)
+        self.assertTrue(self.contact.proactive_opt_out)
+        self.assertFalse(self.contact.is_blocked)
 
     def test_bot_question_replies_without_escalating(self):
         self.conv.flow["pending_action"] = {"tool": "x"}
@@ -178,7 +185,10 @@ class ImplicitVerificationTests(PolicyTestCase):
 
 class BudgetAndScopeTests(PolicyTestCase):
     def test_budget_exhausted_escalates(self):
-        self.conv.total_llm_calls = 15
+        from django.conf import settings as dj_settings
+        # W1-5: el tope subió de 15 a 40 (15 se agotaba al 5º mensaje).
+        self.conv.total_llm_calls = (
+            dj_settings.AGENT_MAX_LLM_TURNS_PER_CONVERSATION)
         self.conv.save()
         d = self._eval("y otra pregunta")
         self.assertEqual(d.kind, policy.ESCALATE)
@@ -240,6 +250,12 @@ class NudgeTests(PolicyTestCase):
         self.assertEqual(policy.nudge_abandoned_flows(), 0)
 
     def test_no_nudge_after_optout(self):
+        self._arm()
+        self.contact.proactive_opt_out = True
+        self.contact.save(update_fields=['proactive_opt_out'])
+        self.assertEqual(policy.nudge_abandoned_flows(), 0)
+
+    def test_no_nudge_when_blocked(self):
         self._arm()
         self.contact.is_blocked = True
         self.contact.save(update_fields=['is_blocked'])

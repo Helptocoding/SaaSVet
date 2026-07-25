@@ -42,8 +42,8 @@ def _factory(error=None, wamid="wamid.FAKE"):
 
 
 def _later():
-    """`now` ya vencido el drain-delay de 3s de los entrantes."""
-    return timezone.now() + timedelta(seconds=5)
+    """`now` ya vencida la ventana silenciosa de los entrantes (W1-4: 8 s)."""
+    return timezone.now() + timedelta(seconds=15)
 
 
 class ProcessPendingTests(TestCase):

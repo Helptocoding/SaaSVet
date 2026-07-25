@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 
 from django.utils import timezone
 
+from apps.core.datetime_utils import org_now_local, org_today_local
+
 from .executor import format_local_datetime, format_local_wallclock
 from .models import ContactIdentity, Conversation, HumanHandoff
 
@@ -43,6 +45,7 @@ class ToolOutcome:
     ok: bool
     data: object = None            # proyección para el LLM
     client_error: str = ''         # guía conversacional si falló (spec §2.5)
+    detail: str = ''               # mensaje real del dominio (W1-8), ya legible
     summary: dict = field(default_factory=dict)  # redactado, para auditoría
     # Tier-2 (É-F2): la tool PROPONE una mutación → el planner encola este
     # texto de confirmación y NO ejecuta hasta la afirmativa del cliente.
@@ -387,13 +390,24 @@ def _time_bucket_ok(hhmm, preferred):
 
 
 def _resolve_scheduling_vet(organization, agent_settings):
-    """Vet objetivo para ofertar/agendar (Q14). fixed_vet → default; si no hay,
-    el primer VET activo de la org (fallback determinista)."""
+    """Vet objetivo para ofertar/agendar (Q14).
+
+    `fixed_vet` (default) EXIGE `default_veterinarian` configurado. Antes caía
+    al "primer VET activo por pk", lo que asignaba citas del agente a un
+    veterinario que nunca aceptó atenderlas — silenciosamente. Sin configurar
+    devuelve None → la tool responde `no_vet` y el agente ofrece una persona.
+    Solo `any_available` resuelve automáticamente (es su semántica declarada).
+    """
     from apps.users.models import User
+
+    from .models import AgentSettings
     if agent_settings and agent_settings.default_veterinarian_id:
         vet = agent_settings.default_veterinarian
         if vet and vet.is_active:
             return vet
+    mode = getattr(agent_settings, 'scheduling_mode', AgentSettings.SCHEDULING_FIXED)
+    if mode != AgentSettings.SCHEDULING_ANY:
+        return None
     return (
         User.objects.filter(organization=organization, role='VET', is_active=True)
         .order_by('pk').first()
@@ -424,8 +438,12 @@ def _free_slots_for_day(org, executor, day, vet, ranges, *, preferred='',
         for a in appts
         if a.get('status') in ('scheduled', 'confirmed', 'in_progress')
     }
-    today = timezone.localdate()
-    now_hhmm = timezone.localtime().strftime('%H:%M') if day == today else '00:00'
+    # Reloj de la ORGANIZACIÓN, no del proceso (settings.TIME_ZONE='UTC').
+    # Con la zona del servidor, a las 10:00 en México se descartaban como
+    # "pasados" todos los huecos anteriores a las 16:00 y a la 13:00 no quedaba
+    # ninguno: el agente decía "no tengo horarios" con la agenda vacía.
+    today = org_today_local(org)
+    now_hhmm = org_now_local(org).strftime('%H:%M') if day == today else '00:00'
     slots = []
     for start, end in [(r[0], r[1]) for r in ranges if len(r) == 2]:
         cursor = datetime.strptime(start, '%H:%M')
@@ -460,7 +478,7 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
     vet = _resolve_scheduling_vet(org, agent_settings)
     if vet is None:
         return None, []
-    day = timezone.localdate() + timedelta(days=1)
+    day = org_today_local(org) + timedelta(days=1)
     for _ in range(max_days):
         ranges = clinic_context.weekday_ranges(
             org, day.weekday(), agent_settings=agent_settings,
@@ -497,7 +515,9 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
         return ToolOutcome(ok=False, client_error='bad_date')
 
     org = conversation.organization
-    today = timezone.localdate()
+    # Día local de la org: con el reloj UTC del proceso, después de las 18:00
+    # en México "hoy" ya era ayer y se rechazaba la fecha del día en curso.
+    today = org_today_local(org)
     if day < today:
         return ToolOutcome(ok=False, client_error='past_date')
 
@@ -543,6 +563,48 @@ def _hhmm_label(hhmm):
 # planner ejecuta el commit tras la afirmativa del cliente (spec §2.4).
 # ---------------------------------------------------------------------------
 
+_SLOT_TAKEN_LEMMAS = ('ya existe una cita', 'ese horario', 'no disponible')
+_PAST_LEMMAS = ('en el pasado',)
+
+
+def _domain_messages(data):
+    """Mensajes legibles de un error DRF ({code, errors:{campo:[msgs]}})."""
+    if not isinstance(data, dict):
+        return []
+    messages = []
+    errors = data.get('errors')
+    if isinstance(errors, dict):
+        for value in errors.values():
+            if isinstance(value, (list, tuple)):
+                messages.extend(str(v) for v in value)
+            else:
+                messages.append(str(value))
+    elif isinstance(errors, (list, tuple)):
+        messages.extend(str(v) for v in errors)
+    for key in ('message', 'detail', 'error'):
+        value = data.get(key)
+        if isinstance(value, str):
+            messages.append(value)
+    return messages
+
+
+def map_domain_400(data):
+    """Traduce un 400 del dominio a (client_error, detalle legible).
+
+    Antes CUALQUIER 400 se reportaba como `slot_taken` → el agente decía "se
+    acaba de ocupar ese horario" ante un motivo vacío, una especie inválida o
+    un veterinario mal configurado. Mentía al cliente y escondía errores de
+    configuración justo durante el piloto.
+    """
+    messages = _domain_messages(data)
+    blob = _norm(' | '.join(messages))
+    if any(lemma in blob for lemma in _SLOT_TAKEN_LEMMAS):
+        return 'slot_taken', ''
+    if any(lemma in blob for lemma in _PAST_LEMMAS):
+        return 'past_date', ''
+    return 'invalid_data', (messages[0][:160] if messages else '')
+
+
 def _appt_end_time(time_str, minutes=SLOT_MINUTES):
     from datetime import datetime, timedelta
     t = datetime.strptime(time_str[:5], '%H:%M')
@@ -573,19 +635,69 @@ def _appt_when_label(appt, org):
     return format_local_wallclock(appt.get('date'), appt.get('start_time'))
 
 
+def _goal_error(state):
+    """Código conversacional a partir del estado del objetivo (W2)."""
+    rejected = state.get('rejected') or {}
+    for why in rejected.values():
+        if why == 'pasado':
+            return 'past_date'
+        if why == 'fuera de horizonte':
+            return 'out_of_horizon'
+        if why == 'handle desconocido':
+            return 'unknown_handle'
+    if rejected:
+        return 'invalid_slot'
+    if state.get('low_confidence'):
+        return 'confirm_slot'
+    return 'need_data'
+
+
+def _goal_gate(conversation, tool_name, args):
+    """Abre/retoma el objetivo, ingiere lo que el modelo propuso y decide si
+    ya se puede ejecutar (W2).
+
+    Devuelve `(goal, outcome)`: si `outcome` no es None, faltan datos (o hay
+    algo por confirmar) y el turno se resuelve preguntando — el objetivo queda
+    persistido con lo que sí se pudo validar. Antes esta información se
+    calculaba y se tiraba: cada turno empezaba de cero.
+    """
+    from . import goals
+    goal = goals.open_goal(conversation, goals.TOOL_GOALS[tool_name])
+    state = goals.capture(goal, args, conversation)
+    if state['missing'] or state['low_confidence'] or state['rejected']:
+        goals.mark_asked(goal, state['missing'])
+        return goal, ToolOutcome(
+            ok=False,
+            client_error=_goal_error(state),
+            data={
+                'ya_tengo': goals.values(goal),
+                'me_falta': state['missing'],
+                'por_confirmar': state['low_confidence'],
+                'rechazado': state['rejected'],
+            },
+        )
+    return goal, None
+
+
 def create_appointment(conversation, executor, args, triggered_by=None):
     from . import confirmations
     from .models import AgentSettings
     org = conversation.organization
 
-    pet_pid = resolve_handle(conversation, args.get('pet_handle'))
+    goal, pending_outcome = _goal_gate(conversation, 'create_appointment', args)
+    if pending_outcome is not None:
+        return pending_outcome
+    from . import goals
+    slots = goals.values(goal)
+
+    pet_pid = resolve_handle(conversation, slots['pet_handle'])
     if pet_pid is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
-    date_str = (args.get('date') or '')[:10]
-    time_str = (args.get('time') or '')[:5]
-    reason = (args.get('reason') or '').strip()
-    if not (date_str and time_str and reason):
-        return ToolOutcome(ok=False, client_error='need_data')
+    date_str = slots['date']
+    time_str = slots['time']
+    reason = slots['reason']
+    # El validador de slot comprueba el DÍA; aquí se comprueba el instante
+    # completo (una hora de hoy que ya pasó).
     err = _future_or_error(org, date_str, time_str)
     if err:
         return ToolOutcome(ok=False, client_error=err)
@@ -634,7 +746,8 @@ def commit_create_appointment(conversation, executor, args, triggered_by=None):
         result_summarizer=lambda d: {'status': d.get('status')},
     )
     if status_code == 400:
-        return ToolOutcome(ok=False, client_error='slot_taken')
+        client_error, detail = map_domain_400(data)
+        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
     if status_code >= 400:
         return ToolOutcome(ok=False, client_error='tool_failure')
     _add_ref(conversation, 'cita', data.get('public_id'))
@@ -671,7 +784,12 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
     # consultar/agendar, pero NO cancelar lo que hizo el titular.
     if conversation.contact.linked_via == ContactIdentity.LINKED_FAMILY:
         return ToolOutcome(ok=False, client_error='family_restricted')
-    appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
+    goal, pending_outcome = _goal_gate(conversation, 'cancel_appointment', args)
+    if pending_outcome is not None:
+        return pending_outcome
+    from . import goals
+    appt_pid = resolve_handle(
+        conversation, goals.values(goal)['appointment_handle'])
     if appt_pid is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
     status_code, appt = executor.call(
@@ -719,13 +837,17 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
     org = conversation.organization
     if conversation.contact.linked_via == ContactIdentity.LINKED_FAMILY:
         return ToolOutcome(ok=False, client_error='family_restricted')
-    appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
+    goal, pending_outcome = _goal_gate(
+        conversation, 'reschedule_appointment', args)
+    if pending_outcome is not None:
+        return pending_outcome
+    from . import goals
+    slots = goals.values(goal)
+    appt_pid = resolve_handle(conversation, slots['appointment_handle'])
     if appt_pid is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
-    new_date = (args.get('new_date') or '')[:10]
-    new_time = (args.get('new_time') or '')[:5]
-    if not (new_date and new_time):
-        return ToolOutcome(ok=False, client_error='need_data')
+    new_date = slots['new_date']
+    new_time = slots['new_time']
     err = _future_or_error(org, new_date, new_time)
     if err:
         return ToolOutcome(ok=False, client_error=err)
@@ -757,7 +879,7 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
 
 def commit_reschedule_appointment(conversation, executor, args, triggered_by=None):
     appt_pid = args['appointment_public_id']
-    status_code, _ = executor.call(
+    status_code, data = executor.call(
         'PATCH', f'/api/appointments/{appt_pid}/', tool_name='reschedule_appointment',
         json={'date': args['date'], 'start_time': args['start_time'],
               'end_time': args['end_time']},
@@ -765,7 +887,8 @@ def commit_reschedule_appointment(conversation, executor, args, triggered_by=Non
         triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
     )
     if status_code == 400:
-        return ToolOutcome(ok=False, client_error='slot_taken')
+        client_error, detail = map_domain_400(data)
+        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
     if status_code >= 400:
         return ToolOutcome(ok=False, client_error='tool_failure')
     return ToolOutcome(ok=True, summary={'rescheduled': True}, data={
@@ -839,14 +962,18 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
     if contact.is_ambiguous:
         return ToolOutcome(ok=False, client_error='ambiguous_identity')
 
-    owner_name = (args.get('owner_name') or '').strip()
-    pet_name = (args.get('pet_name') or '').strip()
-    species = _normalize_species(args.get('pet_species'))
-    date_str = (args.get('date') or '')[:10]
-    time_str = (args.get('time') or '')[:5]
-    reason = (args.get('reason') or '').strip()
-    if not (owner_name and pet_name and date_str and time_str and reason):
-        return ToolOutcome(ok=False, client_error='need_data')
+    goal, pending_outcome = _goal_gate(
+        conversation, 'register_new_client_and_pet', args)
+    if pending_outcome is not None:
+        return pending_outcome
+    from . import goals
+    slots = goals.values(goal)
+    owner_name = slots['owner_name']
+    pet_name = slots['pet_name']
+    species = slots.get('pet_species') or ''
+    date_str = slots['date']
+    time_str = slots['time']
+    reason = slots['reason']
 
     phone = _wa_id_to_local10(contact.external_id)
     if phone is None:
@@ -894,7 +1021,8 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
         extract_domain_id=lambda d: d.get('public_id'),
         result_summarizer=lambda d: {'status': d.get('status')})
     if status_code == 400:
-        return ToolOutcome(ok=False, client_error='slot_taken')
+        client_error, detail = map_domain_400(data)
+        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
     if status_code >= 400:
         return ToolOutcome(ok=False, client_error='tool_failure')
 
@@ -1200,16 +1328,52 @@ TOOL_SPECS = {
 }
 
 
+_GOAL_TOOL_HINT = (
+    " Puedes llamarla con datos PARCIALES: el sistema lleva la cuenta de lo "
+    "que ya tiene y te dice qué falta. Acompaña cada dato con "
+    "<campo>_confidence (0 a 1) cuando no estés seguro: si es baja, el "
+    "sistema te pedirá confirmarlo con el cliente en vez de darlo por bueno."
+)
+
+
+def _with_confidence(parameters):
+    """Añade `<slot>_confidence` a cada campo y vacía `required` (W2).
+
+    Vaciar `required` es deliberado: la herramienta debe poder llamarse con
+    datos incompletos. Con campos obligatorios el modelo solo tenía dos
+    salidas — no llamar (y re-derivar todo el turno siguiente) o **inventar**
+    lo que faltaba. Ahora el objetivo persiste lo válido y pide el resto.
+    """
+    props = dict(parameters.get('properties') or {})
+    for slot in list(props):
+        if slot.endswith('_confidence'):
+            continue
+        props[slot + '_confidence'] = {
+            'type': 'number',
+            'description': 'Qué tan seguro estás de este dato (0 a 1).',
+        }
+    return {**parameters, 'properties': props, 'required': []}
+
+
 def as_openai_tools():
     """Specs en el formato de tool calling OpenAI-compatible (llm.py)."""
-    return [{
-        'type': 'function',
-        'function': {
-            'name': name,
-            'description': spec['description'],
-            'parameters': spec['parameters'],
-        },
-    } for name, spec in TOOL_SPECS.items()]
+    from . import goals
+    tools_payload = []
+    for name, spec in TOOL_SPECS.items():
+        description = spec['description']
+        parameters = spec['parameters']
+        if name in goals.TOOL_GOALS:
+            description += _GOAL_TOOL_HINT
+            parameters = _with_confidence(parameters)
+        tools_payload.append({
+            'type': 'function',
+            'function': {
+                'name': name,
+                'description': description,
+                'parameters': parameters,
+            },
+        })
+    return tools_payload
 
 
 def run_tool(name, args, *, conversation, executor, triggered_by=None):

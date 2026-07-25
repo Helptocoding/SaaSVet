@@ -60,9 +60,27 @@ def _levenshtein_le_1(a, b):
     return True
 
 
+def _token_eq(a, b):
+    if a == b:
+        return True
+    return len(a) >= 4 and len(b) >= 4 and _levenshtein_le_1(a, b)
+
+
 def _name_matches(candidate, registered):
-    """Match tolerante (UX-03): normalizado exacto, o typo distancia 1 en
-    nombres de ≥4 letras (evita colapsar nombres cortos tipo 'Kim'/'Tim')."""
+    """Match tolerante (UX-03 + É-F3 W1-6).
+
+    Tres vías, de la más estricta a la más laxa:
+      1. Igualdad normalizada.
+      2. Typo de distancia 1 en nombres de ≥4 letras (no colapsa 'Kim'/'Tim').
+      3. **Subconjunto de tokens**: el lado corto está contenido en el largo
+         ("Ana" contra "Ana Torres" registrado, "Luna" contra "Luna Bella").
+
+    La vía 3 existe porque el reto preguntaba "¿a nombre de quién está el
+    registro?" y rechazaba el **nombre de pila del propio cliente** — un
+    cliente legítimo diciendo la verdad terminaba en handoff. Se exige que
+    TODOS los tokens aportados coincidan y que al menos uno tenga ≥3 letras:
+    no basta con acertar una partícula ("de", "la").
+    """
     c, r = _norm(candidate), _norm(registered)
     if not c or not r:
         return False
@@ -70,7 +88,15 @@ def _name_matches(candidate, registered):
         return True
     if len(r) >= 4 and len(c) >= 4 and _levenshtein_le_1(c, r):
         return True
-    return False
+
+    short, long = c.split(), r.split()
+    if len(short) > len(long):
+        short, long = long, short
+    if not short or not long:
+        return False
+    if max(len(t) for t in short) < 3:
+        return False
+    return all(any(_token_eq(a, b) for b in long) for a in short)
 
 
 def is_verification_current(contact):

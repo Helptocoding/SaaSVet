@@ -9,9 +9,11 @@ NUNCA se escribe en `analytics` (contrato propio, boundary arquitectura §12.3).
 v1 computa on-the-fly (volumen bajo del piloto). Materializar `AgentDailyUsage`
 solo cuando la agregación duela o al cobrar el add-on (deferido, plan v1.1 §C8).
 """
+from collections import Counter
+
 from django.db.models import Count
 
-from .models import Conversation, HumanHandoff, ToolExecution
+from .models import Conversation, ConversationGoal, HumanHandoff, ToolExecution
 
 # Ejecuciones que cuentan como "intención de agendar" (T9 ofertó horarios o
 # hubo un intento de crear/registrar — la lectura de la mascota al proponer ya
@@ -20,6 +22,158 @@ _INTENT_TOOLS = (
     'find_available_slots', 'create_appointment', 'register_new_client_and_pet',
 )
 _CREATE_TOOLS = ('create_appointment', 'register_new_client_and_pet')
+
+
+def _percentile(values, pct):
+    """Percentil sin numpy (muestras del piloto: decenas, no millones)."""
+    if not values:
+        return None
+    ordered = sorted(values)
+    index = min(int(round((pct / 100) * (len(ordered) - 1))), len(ordered) - 1)
+    return ordered[index]
+
+
+def compute_quality_metrics(organization, date_from, date_to):
+    """Calidad CONVERSACIONAL (É-F3 W3).
+
+    Las métricas de negocio responden "¿agendó?". Estas responden la pregunta
+    que de verdad decide el piloto: **"¿se siente como una buena
+    recepcionista?"** — y la responden con datos, no con opinión.
+
+    Todo se deriva de tablas existentes; cero campos nuevos.
+    """
+    from apps.channels.models import Message
+
+    rows = list(
+        Message.objects.for_organization(organization)
+        .filter(created_at__gte=date_from, created_at__lt=date_to)
+        .values('conversation_id', 'direction', 'author_type',
+                'payload_type', 'status', 'created_at')
+        .order_by('conversation_id', 'created_at', 'id')
+    )
+
+    entrantes = [r for r in rows if r['direction'] == 'in']
+    tipos = Counter(r['payload_type'] for r in entrantes)
+    total_in = sum(tipos.values())
+
+    # Latencia de respuesta: desde el ÚLTIMO entrante del cliente hasta que el
+    # agente encola su respuesta. Se mide desde el último a propósito: la
+    # ventana silenciosa del debounce (W1-4) es espera deseada, no lentitud.
+    latencias = []
+    last_inbound = {}
+    for row in rows:
+        conv = row['conversation_id']
+        if row['direction'] == 'in':
+            if row['status'] != 'discarded':
+                last_inbound[conv] = row['created_at']
+        elif (row['author_type'] == 'agent'
+                and row['status'] != 'discarded'
+                and conv in last_inbound):
+            delta = (row['created_at'] - last_inbound.pop(conv))
+            latencias.append(int(delta.total_seconds() * 1000))
+
+    # Turnos por resolución: mensajes del cliente en conversaciones cuyo
+    # objetivo terminó completado. Menos turnos = menos fricción.
+    completados = ConversationGoal.objects.filter(
+        organization=organization,
+        status=ConversationGoal.STATUS_COMPLETED,
+        closed_at__gte=date_from, closed_at__lt=date_to,
+    ).values_list('conversation_id', flat=True)
+    por_conversacion = Counter(
+        r['conversation_id'] for r in entrantes
+        if r['conversation_id'] in set(completados)
+    )
+    turnos = list(por_conversacion.values())
+
+    # Repregunta: objetivos donde hubo que pedir el MISMO dato ≥2 veces. Es el
+    # tic más reconociblemente robótico que existe.
+    abiertos = ConversationGoal.objects.filter(
+        organization=organization,
+        created_at__gte=date_from, created_at__lt=date_to,
+    ).values_list('asked', flat=True)
+    abiertos = list(abiertos)
+    repreguntados = sum(
+        1 for asked in abiertos
+        if any(n >= 2 for n in (asked or {}).values())
+    )
+
+    conversaciones = Conversation.objects.filter(
+        organization=organization,
+        created_at__gte=date_from, created_at__lt=date_to,
+    ).count()
+    con_handoff = HumanHandoff.objects.filter(
+        organization=organization,
+        created_at__gte=date_from, created_at__lt=date_to,
+    ).values('conversation_id').distinct().count()
+
+    descartadas = sum(
+        1 for r in rows
+        if r['direction'] == 'out' and r['status'] == 'discarded'
+    )
+
+    return {
+        'latencia_respuesta_ms': {
+            'p50': _percentile(latencias, 50),
+            'p95': _percentile(latencias, 95),
+            'muestras': len(latencias),
+        },
+        'turnos_por_resolucion': {
+            'promedio': (round(sum(turnos) / len(turnos), 2)
+                         if turnos else None),
+            'p95': _percentile(turnos, 95),
+            'muestras': len(turnos),
+        },
+        'tasa_repregunta': (round(repreguntados / len(abiertos), 4)
+                            if abiertos else 0.0),
+        'tasa_handoff': (round(con_handoff / conversaciones, 4)
+                         if conversaciones else 0.0),
+        'entrantes_por_tipo': dict(tipos),
+        # Gate de UX-14: >15 % de audio activa el requisito de transcripción.
+        'pct_audio': (round(tipos.get('audio', 0) / total_in, 4)
+                      if total_in else 0.0),
+        'respuestas_descartadas': descartadas,
+    }
+
+
+def compute_goal_metrics(organization, date_from, date_to):
+    """Embudo por OBJETIVO y por SLOT (É-F3 W2).
+
+    Hasta W2 el embudo se infería de nombres de herramienta porque no existía
+    el objeto que representa la intención. Ahora se mide lo que de verdad
+    pasó: cuántos objetivos se abrieron, cuántos se cerraron bien, y — lo más
+    accionable — **en qué dato se atoran** los que no llegan.
+    """
+    goals = ConversationGoal.objects.filter(
+        organization=organization,
+        created_at__gte=date_from, created_at__lt=date_to,
+    )
+    por_estado = {
+        status: n for status, n in
+        goals.values_list('status').annotate(n=Count('id'))
+    }
+    por_objetivo = {
+        name: n for name, n in
+        goals.values_list('name').annotate(n=Count('id'))
+    }
+    total = sum(por_estado.values())
+    completados = por_estado.get(ConversationGoal.STATUS_COMPLETED, 0)
+
+    # Dónde se quedan los que no se completan: el slot que faltaba al cerrar.
+    atorados = Counter()
+    for missing in goals.exclude(
+        status=ConversationGoal.STATUS_COMPLETED,
+    ).values_list('missing', flat=True):
+        for slot in (missing or []):
+            atorados[slot] += 1
+
+    return {
+        'abiertos': total,
+        'completados': completados,
+        'tasa_completado': round(completados / total, 4) if total else 0.0,
+        'por_estado': por_estado,
+        'por_objetivo': por_objetivo,
+        'slots_atorados': dict(atorados.most_common(5)),
+    }
 
 
 def compute_business_metrics(organization, date_from, date_to):
@@ -79,6 +233,8 @@ def compute_business_metrics(organization, date_from, date_to):
     )
 
     return {
+        'objetivos': compute_goal_metrics(organization, date_from, date_to),
+        'calidad': compute_quality_metrics(organization, date_from, date_to),
         'periodo': {'from': date_from.isoformat(), 'to': date_to.isoformat()},
         'conversaciones_iniciadas': conversaciones,
         'con_intencion_agendar': con_intencion,

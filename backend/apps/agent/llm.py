@@ -50,6 +50,10 @@ class LLMResult:
     text: str = ''
     tool_name: str = ''
     tool_args: dict = field(default_factory=dict)
+    # Id que devuelve el proveedor para correlacionar la llamada con su
+    # resultado (mensajes role='tool'). El stub no lo emite: el planner le
+    # asigna uno sintético (W1-3).
+    tool_call_id: str = ''
     finish_reason: str = ''
     input_tokens: int = 0
     output_tokens: int = 0
@@ -162,6 +166,7 @@ class OpenAICompatibleClient:
                 kind='tool_call',
                 tool_name=function.get('name', ''),
                 tool_args=tool_args,
+                tool_call_id=tool_calls[0].get('id', '') or '',
                 **base,
             )
 

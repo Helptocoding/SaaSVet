@@ -53,6 +53,10 @@ class ConversationListSerializer(serializers.ModelSerializer):
     claimed_by_name = serializers.SerializerMethodField()
     last_message_preview = serializers.SerializerMethodField()
     has_unanswered = serializers.SerializerMethodField()
+    # Escalada abierta (É-F3 W0-4): sin esto la bandeja pintaba igual una
+    # urgencia clínica y una duda de horarios.
+    handoff_priority = serializers.SerializerMethodField()
+    handoff_reason = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -62,7 +66,22 @@ class ConversationListSerializer(serializers.ModelSerializer):
             'contact_display_name', 'contact_phone', 'contact_verification',
             'linked_via', 'owner_name', 'claimed_by_name',
             'last_message_preview', 'has_unanswered',
+            'handoff_priority', 'handoff_reason',
         ]
+
+    def _open_handoff(self, obj):
+        prefetched = getattr(obj, 'open_handoffs', None)
+        if prefetched is not None:
+            return prefetched[0] if prefetched else None
+        return obj.handoffs.filter(resolved_at__isnull=True).first()
+
+    def get_handoff_priority(self, obj):
+        handoff = self._open_handoff(obj)
+        return handoff.priority if handoff else None
+
+    def get_handoff_reason(self, obj):
+        handoff = self._open_handoff(obj)
+        return handoff.reason_code if handoff else None
 
     def get_owner_name(self, obj):
         if obj.contact.owner_id is None:

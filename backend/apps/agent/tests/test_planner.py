@@ -156,10 +156,24 @@ class PlannerHappyPathTests(PlannerTestCase):
         self.assertEqual(result["decision"], "planner_reply")
         self.assertEqual(result["tools"], 1)
         self.assertIn("15 de enero de 2027", self._last_outbound().body)
-        # El resultado de la tool se inyectó como DATOS en el 2º prompt.
+        # W1-3: el 2º prompt lleva el HILO del turno — la llamada del propio
+        # modelo (role=assistant con tool_calls) y su resultado correlacionado
+        # (role=tool). Antes solo viajaba el último resultado como bloque de
+        # sistema y el modelo no veía que ya había llamado a la herramienta.
         second_call = stub.calls[1]
-        joined = " ".join(m["content"] for m in second_call["messages"])
-        self.assertIn("DATOS de las herramientas", joined)
+        roles = [m["role"] for m in second_call["messages"]]
+        self.assertIn("assistant", roles)
+        self.assertIn("tool", roles)
+        tool_msg = next(m for m in second_call["messages"] if m["role"] == "tool")
+        assistant_msg = next(
+            m for m in second_call["messages"]
+            if m["role"] == "assistant" and m.get("tool_calls")
+        )
+        self.assertEqual(
+            tool_msg["tool_call_id"],
+            assistant_msg["tool_calls"][0]["id"],
+        )
+        self.assertIn("2027", tool_msg["content"])
 
 
 class PlannerPolicyShortCircuitTests(PlannerTestCase):
@@ -203,7 +217,9 @@ class PlannerVerificationTests(PlannerTestCase):
 
 class PlannerFailureTests(PlannerTestCase):
     def test_llm_error_escalates(self):
-        self._inbound("hola")
+        # Texto con intención (un "hola" pelón lo resuelve la plantilla de
+        # bienvenida sin tocar el modelo desde W1-9).
+        self._inbound("¿tienen cita para mañana?")
         stub = StubLLMClient(scripted=[LLMError("boom", retryable=False)])
         result = self._handle(stub)
         self.assertEqual(result["decision"], "escalate")
@@ -240,7 +256,9 @@ class PlannerFailureTests(PlannerTestCase):
 
 class PlannerBudgetTests(PlannerTestCase):
     def test_budget_exhausted_escalates_before_llm(self):
-        self.conv.total_llm_calls = 15
+        from django.conf import settings as dj_settings
+        self.conv.total_llm_calls = (
+            dj_settings.AGENT_MAX_LLM_TURNS_PER_CONVERSATION)
         self.conv.save()
         self._inbound("otra pregunta más")
         stub = StubLLMClient(scripted=[LLMResult(kind="text", text="x")])

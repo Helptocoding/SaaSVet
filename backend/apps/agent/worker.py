@@ -20,7 +20,7 @@ import logging
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import Q, Subquery
+from django.db.models import F, Q
 from django.utils import timezone
 
 from apps.channels.models import Message
@@ -40,85 +40,201 @@ SEND_BACKOFF_CAP = timedelta(hours=1)
 # caben plantillas HSM (F3) — en F0/F1 el texto libre se marca failed.
 SESSION_WINDOW = timedelta(hours=24)
 
+# Aislamiento de fallos del turno (É-F3 W0-3).
+MAX_PROCESS_ATTEMPTS = 3               # tras esto, dead-letter + humano
+TURN_RETRY_DELAY = timedelta(seconds=30)
+PROCESSING_LEASE = timedelta(minutes=5)  # ventana de exclusividad del turno
+
+TURN_FAILURE_TEXT = (
+    "Perdón, tuve un problema técnico y no pude atenderte bien 🙏 Ya avisé al "
+    "equipo para que te contacte."
+)
+
 
 def process_pending_conversations(batch=10, now=None):
     """Drena conversaciones con entrantes pendientes. Devuelve cuántas tocó.
 
-    F0 (buzón): marca los entrantes como procesados y, si la conversación
-    aún no tiene NINGÚN saliente, encola la primera respuesta automática
-    (T0-GREET / T0-DISABLED / fuera-de-horario). Los mensajes siguientes
-    los atiende un humano desde la bandeja (PR-6/7). El planner LLM
-    sustituirá esta rama en É-F1.
+    Con el agente encendido corre el pipeline completo (policy → planner →
+    tools); sin provisionar cae al buzón F0 (saludo único por conversación).
+
+    Dos garantías que antes no existían (É-F3 W0-3/W0-7):
+
+    1. **Una transacción CORTA por conversación**, solo para reclamar el turno.
+       Antes, un único `atomic()` envolvía el lote entero *incluyendo* las
+       llamadas al LLM (hasta 30 s cada una) y el loopback HTTP: una clínica
+       lenta bloqueaba las otras nueve y la conexión quedaba idle-in-transaction.
+    2. **Un turno que revienta no tumba el worker.** Antes, cualquier excepción
+       salía hasta el command, mataba el proceso, el rollback devolvía el
+       mensaje a `pending` y al reiniciar se reprocesaba: crash-loop con todas
+       las clínicas mudas y una llamada al LLM quemada por vuelta.
     """
     now = now or timezone.now()
-    processed = 0
-
-    pending_conv_ids = Message.objects.filter(
-        direction=Message.DIRECTION_IN,
-        status=Message.STATUS_PENDING,
-        available_at__lte=now,
-        conversation__isnull=False,
-    ).values('conversation_id')
-
-    with transaction.atomic():
-        conversations = list(
-            Conversation.objects
-            .select_for_update(skip_locked=True)
-            .filter(pk__in=Subquery(pending_conv_ids))
-            [:batch]
+    conv_ids = list(
+        Message.objects.filter(
+            direction=Message.DIRECTION_IN,
+            status=Message.STATUS_PENDING,
+            conversation__isnull=False,
         )
-        for conversation in conversations:
-            _process_one(conversation, now)
-            processed += 1
+        .filter(Q(available_at__isnull=True) | Q(available_at__lte=now))
+        .values_list('conversation_id', flat=True)
+        .distinct()[:batch]
+    )
+
+    processed = 0
+    for conv_id in conv_ids:
+        claimed = _claim_turn(conv_id, now)
+        if claimed is None:
+            continue
+        conversation, pending = claimed
+        try:
+            _run_turn(conversation, pending, now)
+        except Exception:
+            _handle_turn_failure(conversation, pending)
+        else:
+            _release_turn(conversation)
+        processed += 1
     return processed
 
 
-def _process_one(conversation, now):
-    org = conversation.organization
-    pending = list(
+def _claim_turn(conv_id, now):
+    """Reclama la conversación y sus entrantes elegibles. Transacción corta.
+
+    Devuelve `(conversation, pending)` o None si otro worker la tiene, si el
+    turno anterior sigue vivo (lease) o si ya no hay nada elegible. El lease
+    sustituye al lock sostenido: serializa el turno entre réplicas sin mantener
+    una transacción abierta mientras se espera al modelo.
+    """
+    with transaction.atomic():
+        conversation = (
+            Conversation.objects
+            # of=('self',): lockear SOLO la conversación. Sin esto el lock se
+            # extiende a organization/contact/channel_account y dos
+            # conversaciones del mismo contacto se bloquean entre sí.
+            .select_for_update(skip_locked=True, of=('self',))
+            .select_related('organization', 'contact', 'channel_account')
+            .filter(pk=conv_id)
+            .first()
+        )
+        if conversation is None:
+            return None                       # otra réplica la tiene tomada
+        if conversation.processing_until and conversation.processing_until > now:
+            return None                       # turno en vuelo en otra réplica
+
+        org = conversation.organization
+        pending = list(
+            Message.objects.for_organization(org)
+            .filter(
+                conversation=conversation,
+                direction=Message.DIRECTION_IN,
+                status=Message.STATUS_PENDING,
+            )
+            .filter(Q(available_at__isnull=True) | Q(available_at__lte=now))
+            .order_by('created_at', 'id')
+        )
+        if not pending:
+            return None
+
         Message.objects.for_organization(org).filter(
-            conversation=conversation,
-            direction=Message.DIRECTION_IN,
-            status=Message.STATUS_PENDING,
-            available_at__lte=now,
-        ).order_by('created_at', 'id')
-    )
-    if not pending:
-        return
+            pk__in=[m.pk for m in pending],
+        ).update(
+            status=Message.STATUS_PROCESSED,
+            process_attempts=F('process_attempts') + 1,
+        )
+        conversation.processing_until = now + PROCESSING_LEASE
+        conversation.save(update_fields=['processing_until'])
+    return conversation, pending
 
-    Message.objects.for_organization(org).filter(
-        pk__in=[m.pk for m in pending],
-    ).update(status=Message.STATUS_PROCESSED)
 
+def _run_turn(conversation, pending, now):
+    """Ejecuta el turno FUERA de toda transacción (red: LLM + loopback)."""
+    org = conversation.organization
     agent_settings = AgentSettings.objects.filter(organization=org).first()
-    triggered_by = pending[-1]
 
-    # É-F1: con el agente encendido y provisionado, cada entrante pasa por el
+    # É-F1: con el agente encendido y provisionado, el turno pasa por el
     # pipeline completo (policy → planner → tools). Si NO está provisionado el
     # actor (agent_user), caemos al comportamiento F0 de buzón (auto-saludo
     # único) para no romper instalaciones a medio provisionar.
     if agent_settings and agent_settings.enabled and agent_settings.agent_user_id:
         from . import planner
-        planner.handle_inbound(
-            conversation, agent_settings=agent_settings,
-            triggered_by=triggered_by,
+        before_ids = set(
+            Message.objects.for_organization(org)
+            .filter(conversation=conversation,
+                    direction=Message.DIRECTION_OUT)
+            .values_list('pk', flat=True)
         )
+        result = planner.handle_inbound(
+            conversation, agent_settings=agent_settings,
+            triggered_by=pending[-1],
+            # La ráfaga COMPLETA va al Policy Engine: la urgencia puede venir
+            # en cualquier mensaje del grupo, no solo en el último (W0-2).
+            burst=[m.body for m in pending],
+            payload_types=[m.payload_type for m in pending],
+        )
+        _discard_if_superseded(conversation, pending, before_ids, result)
         return
 
-    # F0 fallback (buzón sin LLM): saludo/aviso una sola vez por conversación.
+    _first_reply_fallback(conversation, agent_settings, now)
+
+
+def _discard_if_superseded(conversation, pending, before_ids, result):
+    """Descarta la respuesta si el cliente siguió escribiendo mientras el
+    modelo pensaba (É-F3 W1-4). Devuelve cuántos salientes descartó.
+
+    Solo aplica a respuestas de TEXTO PURO. Si el turno ejecutó una
+    herramienta, propuso una confirmación o escaló, el mensaje sale igual:
+    descartar la confirmación de una cita ya creada sería mucho peor que una
+    respuesta ligeramente desfasada.
+    """
+    result = result or {}
+    if result.get('decision') not in ('planner_reply', 'reply'):
+        return 0
+    if result.get('tools'):
+        return 0
+
+    org = conversation.organization
+    superseded = Message.objects.for_organization(org).filter(
+        conversation=conversation,
+        direction=Message.DIRECTION_IN,
+        status=Message.STATUS_PENDING,
+        created_at__gt=pending[-1].created_at,
+    ).exists()
+    if not superseded:
+        return 0
+
+    discarded = (
+        Message.objects.for_organization(org)
+        .filter(conversation=conversation,
+                direction=Message.DIRECTION_OUT,
+                status=Message.STATUS_PENDING)
+        .exclude(pk__in=before_ids)
+        .update(status=Message.STATUS_DISCARDED,
+                failure_reason='descartado: el cliente siguió escribiendo')
+    )
+    if discarded:
+        logger.info("AGENT_REPLY_SUPERSEDED", extra={
+            "event": "AGENT_REPLY_SUPERSEDED",
+            "organization_id": org.pk,
+            "conversation_id": conversation.pk,
+            "discarded": discarded,
+        })
+    return discarded
+
+
+def _first_reply_fallback(conversation, agent_settings, now):
+    """Buzón F0 (sin LLM): saludo/aviso una sola vez por conversación."""
+    org = conversation.organization
     has_outbound = Message.objects.for_organization(org).filter(
         conversation=conversation, direction=Message.DIRECTION_OUT,
     ).exists()
     if has_outbound:
         return
-    body = render_first_reply(agent_settings, org)
     Message(
         organization=org,
         channel_account=conversation.channel_account,
         conversation=conversation,
         direction=Message.DIRECTION_OUT,
         author_type=Message.AUTHOR_SYSTEM,
-        body=body,
+        body=render_first_reply(agent_settings, org),
         status=Message.STATUS_PENDING,
     ).save()
     conversation.last_activity_at = now
@@ -128,6 +244,69 @@ def _process_one(conversation, now):
         "organization_id": org.pk,
         "conversation_id": conversation.pk,
     })
+
+
+def _release_turn(conversation):
+    conversation.processing_until = None
+    conversation.save(update_fields=['processing_until'])
+
+
+def _handle_turn_failure(conversation, pending):
+    """Turno fallido: reintentar con respiro, o dead-letter + humano.
+
+    Trade-off consciente: si el turno murió DESPUÉS de encolar una respuesta,
+    el reintento puede duplicarla. Está acotado a `MAX_PROCESS_ATTEMPTS` y es
+    preferible al silencio — un cliente sin respuesta es peor que uno con dos.
+    """
+    logger.exception("AGENT_TURN_FAILED", extra={
+        "event": "AGENT_TURN_FAILED",
+        "organization_id": conversation.organization_id,
+        "conversation_id": conversation.pk,
+    })
+    try:
+        with transaction.atomic():
+            org = conversation.organization
+            rows = list(
+                Message.objects.for_organization(org)
+                .filter(pk__in=[m.pk for m in pending])
+            )
+            exhausted = [m for m in rows
+                         if m.process_attempts >= MAX_PROCESS_ATTEMPTS]
+            if exhausted:
+                Message.objects.for_organization(org).filter(
+                    pk__in=[m.pk for m in rows],
+                ).update(
+                    status=Message.STATUS_DISCARDED,
+                    failure_reason='turno fallido: agotó reintentos',
+                )
+                _escalate_after_failure(conversation)
+            else:
+                Message.objects.for_organization(org).filter(
+                    pk__in=[m.pk for m in rows],
+                ).update(
+                    status=Message.STATUS_PENDING,
+                    available_at=timezone.now() + TURN_RETRY_DELAY,
+                )
+            conversation.processing_until = None
+            conversation.save(update_fields=['processing_until'])
+    except Exception:
+        # El manejador de fallos jamás puede propagar: sería el crash-loop
+        # que este bloque existe para evitar.
+        logger.exception("AGENT_TURN_FAILURE_HANDLER_FAILED", extra={
+            "event": "AGENT_TURN_FAILURE_HANDLER_FAILED",
+            "conversation_id": conversation.pk,
+        })
+
+
+def _escalate_after_failure(conversation):
+    from . import policy
+    from .models import HumanHandoff
+    from .outbound import enqueue_outbound
+    policy.escalate_to_human(
+        conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
+        detail='turn_failed',
+    )
+    enqueue_outbound(conversation, TURN_FAILURE_TEXT, author='agent')
 
 
 def send_pending_outbound(batch=20, provider_factory=get_provider, now=None):
