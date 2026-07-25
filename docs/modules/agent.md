@@ -95,9 +95,30 @@ Correcciones de la [auditoría conversacional](../whatsapp-agent-auditoria-conve
 | W0-2 | El Policy Engine evalúa la **ráfaga completa** (`burst`), no solo el último entrante | Urgencia, petición de humano, opt-out y confirmación se detectan en cualquier mensaje del grupo |
 | W0-3 | Turno aislado: `try/except` por conversación + `process_attempts` + dead-letter | Un turno que revienta reintenta 3 veces y luego descarta + escala; **nunca** tumba el worker |
 | W0-4 | Urgencia notificada a ops (webhook Discord) + prioridad en `/inbox` | `HumanHandoff(priority=urgent)` dispara aviso (sin PII) y la bandeja ordena urgentes primero |
-| W0-5 | `fixed_vet` **exige** `default_veterinarian` | Sin configurar → `no_vet` y oferta de humano; jamás "el primer VET por pk" |
+| W0-5 | Se agenda con el veterinario **libre**, no con "el primer VET por pk" | Ver §Asignación de veterinario |
 | W0-6 | Aviso de privacidad just-in-time | Se emite una vez por contacto, antes del primer reto de identidad o alta (`privacy_notice_sent_at`) |
 | W0-7 | Transacción corta por conversación + lease (`processing_until`) | La red (LLM, loopback) queda FUERA de toda transacción |
+
+### Asignación de veterinario (Q14, revisado 2026-07-25)
+
+Decisión de producto del PO: **a la clínica le da igual quién atienda**. El
+sistema no elige "un veterinario asignado al bot"; elige al que está **libre**.
+
+| Configuración | Comportamiento |
+|---|---|
+| `default_veterinarian` **sin** configurar (default) | Candidatos = todos los VET activos de la org. Un hueco se ofrece si **alguno** lo tiene libre, y la cita se asigna al primero libre a esa hora |
+| `default_veterinarian` configurado | Solo se ofertan y asignan los huecos de ese veterinario (la clínica eligió explícitamente) |
+| Sin ningún VET activo | `no_vet` → el agente se disculpa y ofrece pasar con una persona. Es el único caso honesto: no hay con quién agendar |
+
+Por qué importa: con "el primer VET por pk" la capacidad ofertada era la de
+**un** veterinario aunque hubiera tres, y toda la agenda del bot caía sobre el
+mismo. La ocupación del día se resuelve en **una sola** llamada a la API
+(`GET /appointments/?date=`) agrupando por veterinario, no una por vet.
+
+Limitación conocida (deuda MP-5 de la auditoría): la rejilla compara
+`start_time` exacto en pasos de 30 min, así que no modela duraciones distintas
+ni citas fuera de rejilla. El dominio revalida el solape real al crear; si
+pierde la carrera, el agente re-oferta.
 
 ### W1 — experiencia y conservación vinculante
 

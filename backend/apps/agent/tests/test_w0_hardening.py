@@ -264,26 +264,54 @@ class WorkerFaultIsolationTests(AgentFixture):
 
 
 class SchedulingVetTests(AgentFixture):
-    """W0-5 — sin veterinario configurado NO se inventa uno."""
+    """W0-5 (revisado por el PO 2026-07-25) — a la clínica le da igual QUIÉN
+    atienda, así que se usa a quien esté LIBRE.
+
+    El comportamiento viejo ("primer VET por pk") cargaba toda la agenda del
+    bot sobre un solo veterinario y agotaba su día aunque los demás estuvieran
+    libres. `no_vet` queda reservado para el único caso honesto: la clínica no
+    tiene ningún veterinario activo.
+    """
 
     account_id = "900000005"
 
-    def test_without_default_vet_fixed_mode_refuses(self):
+    def _second_vet(self):
+        vet = User.objects.create_user(
+            username=f"w0vet2{self.account_id}", password="p",
+            organization=self.org, role="VET")
+        role = Role.objects.get(name="VET", organization=self.org)
+        UserRole.objects.get_or_create(user=vet, role=role)
+        return vet
+
+    def test_without_default_vet_any_active_vet_serves(self):
         self.settings.default_veterinarian = None
         self.settings.save(update_fields=["default_veterinarian"])
-        self.assertIsNone(
-            tools._resolve_scheduling_vet(self.org, self.settings))
-
-    def test_any_available_mode_still_resolves(self):
-        self.settings.default_veterinarian = None
-        self.settings.scheduling_mode = AgentSettings.SCHEDULING_ANY
-        self.settings.save(
-            update_fields=["default_veterinarian", "scheduling_mode"])
         self.assertEqual(
-            tools._resolve_scheduling_vet(self.org, self.settings), self.vet)
+            tools._scheduling_vets(self.org, self.settings), [self.vet])
 
-    def test_slots_report_no_vet_instead_of_guessing(self):
+    def test_all_active_vets_are_candidates(self):
+        second = self._second_vet()
         self.settings.default_veterinarian = None
+        self.settings.save(update_fields=["default_veterinarian"])
+        self.assertCountEqual(
+            tools._scheduling_vets(self.org, self.settings),
+            [self.vet, second])
+
+    def test_explicit_default_vet_is_respected(self):
+        self.assertEqual(
+            tools._scheduling_vets(self.org, self.settings), [self.vet])
+
+    def test_inactive_vets_are_excluded(self):
+        self.settings.default_veterinarian = None
+        self.settings.save(update_fields=["default_veterinarian"])
+        self.vet.is_active = False
+        self.vet.save(update_fields=["is_active"])
+        self.assertEqual(tools._scheduling_vets(self.org, self.settings), [])
+
+    def test_no_active_vet_reports_no_vet(self):
+        self.settings.default_veterinarian = None
+        self.vet.is_active = False
+        self.vet.save(update_fields=["is_active"])
         day = timezone.now().astimezone(MX).date() + timedelta(days=3)
         self.settings.business_hours = {
             _WEEKDAYS[day.weekday()]: [["09:00", "19:00"]]}
@@ -293,6 +321,36 @@ class SchedulingVetTests(AgentFixture):
             self.conv, self.executor(), {"date": day.isoformat()})
         self.assertFalse(out.ok)
         self.assertEqual(out.client_error, "no_vet")
+
+    def test_a_busy_vet_does_not_block_a_free_one(self):
+        """El hueco sigue disponible porque el otro veterinario está libre:
+        con 3 veterinarios la capacidad es la de 3, no la del primero."""
+        from apps.appointments.models import Appointment
+        second = self._second_vet()
+        self.settings.default_veterinarian = None
+        day = timezone.now().astimezone(MX).date() + timedelta(days=3)
+        self.settings.business_hours = {
+            _WEEKDAYS[day.weekday()]: [["09:00", "11:00"]]}
+        self.settings.save(
+            update_fields=["default_veterinarian", "business_hours"])
+        Appointment.objects.create(
+            organization=self.org, pet=self.pet, veterinarian=self.vet,
+            date=day, start_time="09:00", end_time="09:30", reason="x",
+            status="scheduled",
+            start_datetime=datetime(day.year, day.month, day.day, 9, 0,
+                                    tzinfo=dt_timezone.utc),
+            end_datetime=datetime(day.year, day.month, day.day, 9, 30,
+                                  tzinfo=dt_timezone.utc))
+
+        out = tools.find_available_slots(
+            self.conv, self.executor(), {"date": day.isoformat()})
+        self.assertTrue(out.ok, out.client_error)
+        self.assertIn("09:00", [s["iso_time"] for s in out.data])
+        # …y la cita se asigna al que está libre, no al ocupado.
+        self.assertEqual(
+            tools.pick_free_vet(self.org, self.executor(), day.isoformat(),
+                                "09:00", [self.vet, second]),
+            second)
 
 
 class PrivacyNoticeTests(AgentFixture):

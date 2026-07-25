@@ -389,55 +389,103 @@ def _time_bucket_ok(hhmm, preferred):
     return True
 
 
-def _resolve_scheduling_vet(organization, agent_settings):
-    """Vet objetivo para ofertar/agendar (Q14).
+def _scheduling_vets(organization, agent_settings):
+    """Veterinarios candidatos para las citas del agente (Q14).
 
-    `fixed_vet` (default) EXIGE `default_veterinarian` configurado. Antes caía
-    al "primer VET activo por pk", lo que asignaba citas del agente a un
-    veterinario que nunca aceptó atenderlas — silenciosamente. Sin configurar
-    devuelve None → la tool responde `no_vet` y el agente ofrece una persona.
-    Solo `any_available` resuelve automáticamente (es su semántica declarada).
+    Decisión de producto (PO, 2026-07-25): a la clínica **le da igual quién**
+    atienda. Entonces el sistema usa a quien esté LIBRE, no siempre al primero
+    por id: con tres veterinarios la capacidad disponible es la de los tres, no
+    la del primero (que además terminaba con toda la agenda del bot encima).
+
+    Si la clínica SÍ fija `default_veterinarian`, se respeta esa elección y solo
+    se ofertan sus huecos. Lista vacía = la clínica no tiene veterinarios
+    activos → `no_vet` (no hay nada que inventar).
     """
     from apps.users.models import User
-
-    from .models import AgentSettings
     if agent_settings and agent_settings.default_veterinarian_id:
         vet = agent_settings.default_veterinarian
         if vet and vet.is_active:
-            return vet
-    mode = getattr(agent_settings, 'scheduling_mode', AgentSettings.SCHEDULING_FIXED)
-    if mode != AgentSettings.SCHEDULING_ANY:
-        return None
-    return (
-        User.objects.filter(organization=organization, role='VET', is_active=True)
-        .order_by('pk').first()
+            return [vet]
+    return list(
+        User.objects.filter(
+            organization=organization, role='VET', is_active=True,
+        ).order_by('pk')
     )
 
 
-def _free_slots_for_day(org, executor, day, vet, ranges, *, preferred='',
-                        triggered_by=None, tool_name='find_available_slots'):
-    """[hhmm…] libres ese día = business_hours (`ranges`) ∩ ocupación real del
-    `vet` (GET /appointments/). None si la API falla. El caller resuelve vet y
-    ranges (para mapear sus propios errores). Compartido por la tool de slots y
-    la retención al cancelar (UX-11)."""
-    from datetime import datetime, timedelta
+def _day_occupancy(org, executor, day, *, tool_name, triggered_by=None,
+                   preferred=''):
+    """`{vet_pk: {'HH:MM', …}}` del día, en UNA sola llamada a la API.
 
+    Antes se consultaba la agenda de UN veterinario; ahora se traen las citas
+    del día y se agrupan. Con la misma llamada se responde la pregunta que de
+    verdad importa: *¿queda algún veterinario libre a esta hora?*
+    Devuelve None si la API falla.
+    """
     date_str = day.isoformat()
     status_code, data = executor.call(
         'GET', '/api/appointments/', tool_name=tool_name,
-        params={'date': date_str, 'veterinarian': str(vet.public_id)},
+        params={'date': date_str},
         args_redacted={'date': date_str, 'preferred': preferred},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'occupied': len(d) if isinstance(d, list) else 0},
     )
     if status_code >= 400:
         return None
-    appts = data if isinstance(data, list) else data.get('results', [])
-    occupied = {
-        (a.get('start_time') or '')[:5]
-        for a in appts
-        if a.get('status') in ('scheduled', 'confirmed', 'in_progress')
-    }
+    rows = data if isinstance(data, list) else data.get('results', [])
+    occupancy = {}
+    for row in rows:
+        if row.get('status') not in ('scheduled', 'confirmed', 'in_progress'):
+            continue
+        vet_pk = row.get('veterinarian')
+        hhmm = (row.get('start_time') or '')[:5]
+        if vet_pk is None or not hhmm:
+            continue
+        occupancy.setdefault(vet_pk, set()).add(hhmm)
+    return occupancy
+
+
+def _any_vet_free(vets, occupancy, hhmm):
+    return any(hhmm not in occupancy.get(vet.pk, ()) for vet in vets)
+
+
+def pick_free_vet(org, executor, date_str, hhmm, vets, *, triggered_by=None,
+                  tool_name='create_appointment'):
+    """Primer veterinario libre a esa hora, o None si no queda ninguno.
+
+    Si la consulta de agenda falla se devuelve el primer candidato en vez de
+    bloquear el agendado: el dominio revalida el solape bajo su propia
+    validación y, si está ocupado, responde 400 → el agente re-oferta.
+    """
+    from datetime import datetime
+    try:
+        day = datetime.strptime(str(date_str)[:10], '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return None
+    occupancy = _day_occupancy(org, executor, day, tool_name=tool_name,
+                               triggered_by=triggered_by)
+    if occupancy is None:
+        return vets[0] if vets else None
+    for vet in vets:
+        if hhmm not in occupancy.get(vet.pk, ()):
+            return vet
+    return None
+
+
+def _free_slots_for_day(org, executor, day, vets, ranges, *, preferred='',
+                        triggered_by=None, tool_name='find_available_slots'):
+    """[hhmm…] libres ese día = business_hours (`ranges`) ∩ ocupación real.
+
+    Un hueco se ofrece si **algún** veterinario candidato lo tiene libre (a la
+    clínica le da igual quién atienda). None si la API falla. El caller resuelve
+    `vets` y `ranges` para mapear sus propios errores. Compartido por la tool de
+    slots y la retención al cancelar (UX-11)."""
+    from datetime import datetime, timedelta
+
+    occupancy = _day_occupancy(org, executor, day, tool_name=tool_name,
+                               triggered_by=triggered_by, preferred=preferred)
+    if occupancy is None:
+        return None
     # Reloj de la ORGANIZACIÓN, no del proceso (settings.TIME_ZONE='UTC').
     # Con la zona del servidor, a las 10:00 en México se descartaban como
     # "pasados" todos los huecos anteriores a las 16:00 y a la 13:00 no quedaba
@@ -451,9 +499,9 @@ def _free_slots_for_day(org, executor, day, vet, ranges, *, preferred='',
         while cursor + timedelta(minutes=SLOT_MINUTES) <= limit:
             hhmm = cursor.strftime('%H:%M')
             if (
-                hhmm not in occupied
-                and hhmm > now_hhmm
+                hhmm > now_hhmm
                 and _time_bucket_ok(hhmm, preferred)
+                and _any_vet_free(vets, occupancy, hhmm)
             ):
                 slots.append(hhmm)
                 if len(slots) >= MAX_ITEMS:
@@ -475,8 +523,8 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
     org = conversation.organization
     agent_settings = AgentSettings.objects.filter(organization=org).first()
     business_hours = (agent_settings.business_hours or {}) if agent_settings else {}
-    vet = _resolve_scheduling_vet(org, agent_settings)
-    if vet is None:
+    vets = _scheduling_vets(org, agent_settings)
+    if not vets:
         return None, []
     day = org_today_local(org) + timedelta(days=1)
     for _ in range(max_days):
@@ -485,7 +533,7 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
             legacy_ranges=_weekday_ranges(business_hours, day.weekday()))
         if ranges:
             slots = _free_slots_for_day(
-                org, executor, day, vet, ranges,
+                org, executor, day, vets, ranges,
                 tool_name='suggest_retention_slots')
             if slots:
                 fecha = format_local_wallclock(
@@ -529,13 +577,13 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     if not ranges:
         return ToolOutcome(ok=True, data=[], summary={'slots': 0, 'closed': True})
 
-    vet = _resolve_scheduling_vet(org, agent_settings)
-    if vet is None:
+    vets = _scheduling_vets(org, agent_settings)
+    if not vets:
         return ToolOutcome(ok=False, client_error='no_vet')
 
     preferred = args.get('preferred_time', '')
     slots = _free_slots_for_day(
-        org, executor, day, vet, ranges,
+        org, executor, day, vets, ranges,
         preferred=preferred, triggered_by=triggered_by)
     if slots is None:
         return ToolOutcome(ok=False, client_error='tool_failure')
@@ -711,9 +759,14 @@ def create_appointment(conversation, executor, args, triggered_by=None):
         return ToolOutcome(ok=False, client_error='tool_failure')
 
     agent_settings = AgentSettings.objects.filter(organization=org).first()
-    vet = _resolve_scheduling_vet(org, agent_settings)
-    if vet is None:
+    vets = _scheduling_vets(org, agent_settings)
+    if not vets:
         return ToolOutcome(ok=False, client_error='no_vet')
+    # Quien esté libre a esa hora: da igual quién atienda (decisión del PO).
+    vet = pick_free_vet(org, executor, date_str, time_str, vets,
+                        triggered_by=triggered_by)
+    if vet is None:
+        return ToolOutcome(ok=False, client_error='slot_taken')
 
     import uuid
     fecha = format_local_wallclock(date_str, time_str)
@@ -983,9 +1036,14 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
         return ToolOutcome(ok=False, client_error=err)
 
     agent_settings = AgentSettings.objects.filter(organization=org).first()
-    vet = _resolve_scheduling_vet(org, agent_settings)
-    if vet is None:
+    vets = _scheduling_vets(org, agent_settings)
+    if not vets:
         return ToolOutcome(ok=False, client_error='no_vet')
+    vet = pick_free_vet(org, executor, date_str, time_str, vets,
+                        triggered_by=triggered_by,
+                        tool_name='register_new_client_and_pet')
+    if vet is None:
+        return ToolOutcome(ok=False, client_error='slot_taken')
 
     import uuid
     fecha = format_local_wallclock(date_str, time_str)

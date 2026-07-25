@@ -468,8 +468,8 @@ def _soft_error_hint(client_error):
                     '(por ejemplo "el viernes" o una fecha).',
         'past_date': 'Esa fecha ya pasó. Ofrécele una fecha futura.',
         'slot_taken': 'Ese horario se acaba de ocupar. Ofrécele otro horario.',
-        'no_vet': 'La clínica aún no tiene su agenda lista para reservas '
-                  'automáticas. Discúlpate y ofrece pasar con una persona.',
+        'no_vet': 'La clínica no tiene veterinarios activos para agendar. '
+                  'Discúlpate y ofrece pasar con una persona.',
         'unknown_handle': 'No ubico esa cita o mascota. Pídele al cliente que '
                           'te dé más detalle (nombre de la mascota o del día).',
         'not_cancelable': 'Esa cita ya no se puede cancelar por aquí. Ofrece '
