@@ -620,6 +620,20 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        # Subsistema del agente conversacional (channels + agent).
+        # Sin esta entrada caía en `root` (WARNING) y en producción se perdía
+        # TODO el INFO: AGENT_WORKER_STARTED, AGENT_FIRST_REPLY_QUEUED,
+        # AGENT_CONVERSATION_OPENED, AGENT_GOAL_OPENED/CLOSED… — es decir, el
+        # runbook mandaba buscar en los logs eventos que nunca se emitían y no
+        # había forma de seguir un turno end-to-end durante el piloto.
+        # PII: los cuerpos de mensaje jamás se loguean (regla R15) — estos
+        # eventos llevan ids y metadatos, así que INFO no expone datos del
+        # cliente. JSON estructurado, mismo destino que `rbac.events`.
+        'agent.events': {
+            'handlers': ['rbac_console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
 
