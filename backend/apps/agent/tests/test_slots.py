@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from apps.agent import executor as executor_module
 from apps.agent.executor import ToolExecutor
+from apps.agent.tests.harness import set_schedule_day
 from apps.agent.models import AgentSettings, ContactIdentity, Conversation
 from apps.agent.tools import run_tool
 from apps.appointments.models import Appointment
@@ -70,8 +71,9 @@ class SlotsTests(TestCase):
         self.settings = AgentSettings.objects.create(
             organization=self.org, enabled=True, agent_user=self.agent_user,
             default_veterinarian=self.vet,
-            business_hours={wd: [["09:00", "13:00"]]},
         )
+        # Horario: fuente única = OrganizationSchedule (ADR p53).
+        set_schedule_day(self.org, d.weekday(), "09:00", "13:00")
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="770100770")
         self.contact = ContactIdentity.objects.create(
@@ -114,7 +116,7 @@ class SlotsTests(TestCase):
         self.assertIn("09:30", times)
 
     def test_closed_day_returns_empty(self):
-        # domingo (sin business_hours) → vacío, no error
+        # domingo (sin horario configurado) → vacío, no error
         sunday = self.day
         while sunday.weekday() != 6:
             sunday += timedelta(days=1)

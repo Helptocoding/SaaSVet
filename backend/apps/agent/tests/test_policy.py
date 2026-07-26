@@ -40,9 +40,12 @@ class PolicyTestCase(TestCase):
             organization=self.org, channel_account=self.channel,
             contact=self.contact,
         )
+        Organization.objects.filter(pk=self.org.pk).update(
+            phone="55-1234-5678")
+        self.org.refresh_from_db()
+        self.conv.organization = self.org
         self.settings = AgentSettings.objects.create(
             organization=self.org, enabled=True,
-            faq_facts={"telefono": "55-1234-5678"},
         )
 
     def _eval(self, text):

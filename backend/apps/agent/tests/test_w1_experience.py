@@ -29,7 +29,7 @@ from apps.agent.models import (
     LLMCall,
 )
 from apps.agent.services import ingest_inbound_message
-from apps.agent.tests.harness import run_turn
+from apps.agent.tests.harness import close_all_days, run_turn
 from apps.agent.tests.test_w0_hardening import AgentFixture
 from apps.agent.worker import process_pending_conversations
 from apps.channels.models import Message
@@ -377,8 +377,11 @@ class GreetingTests(AgentFixture):
         process_pending_conversations(now=_later())
         outbound = Message.objects.get(conversation=self.conv,
                                        direction=Message.DIRECTION_OUT)
-        self.assertEqual(outbound.body,
-                         tier0.T0_GREET.format(clinic=self.org.name))
+        # `startswith`: fuera del horario de la clínica el saludo lleva además
+        # el aviso de fuera de horario (INT-03), y el horario por defecto lo
+        # siembra el alta de la organización.
+        self.assertTrue(outbound.body.startswith(
+            tier0.T0_GREET.format(clinic=self.org.name)), outbound.body)
         self.assertEqual(LLMCall.objects.filter(conversation=self.conv).count(), 0)
 
     def test_greeting_with_intent_goes_to_the_planner(self):
@@ -400,11 +403,7 @@ class AfterHoursNoticeTests(AgentFixture):
     account_id = "900000109"
 
     def test_notice_is_prepended_once_when_closed(self):
-        # Sin franjas para ningún día → siempre cerrado.
-        self.settings.business_hours = {"mon": [], "tue": [], "wed": [],
-                                        "thu": [], "fri": [], "sat": [],
-                                        "sun": []}
-        self.settings.save(update_fields=["business_hours"])
+        close_all_days(self.org)   # cerrada toda la semana
         first, _, _ = run_turn(
             self, self.conv, self.agent_user, "¿a qué hora abren?",
             scripted_llm=[LLMResult(kind="text", text="Abrimos a las 9 🙂")],

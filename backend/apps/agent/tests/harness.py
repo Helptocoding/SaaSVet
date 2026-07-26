@@ -27,6 +27,29 @@ FORBIDDEN_JARGON = guards.FORBIDDEN_JARGON + ('conversation',)
 FORBIDDEN_MEDICAL = guards.MEDICAL_ADVICE_PATTERNS + ('dale ', 'administra ')
 
 
+def set_schedule_day(organization, weekday_index, opens="09:00",
+                     closes="13:00"):
+    """Fija el horario de UN día (0=lunes) en la fuente única (ADR p53).
+
+    El alta de organización siembra 7 filas por defecto; los tests que dependen
+    de un horario concreto lo sobreescriben aquí. Sustituye al difunto
+    `AgentSettings.business_hours`, que era una segunda fuente de verdad.
+    """
+    from apps.organizations.models import OrganizationSchedule
+    OrganizationSchedule.objects.update_or_create(
+        organization=organization, weekday=weekday_index + 1,
+        defaults={'opens_at': opens, 'closes_at': closes, 'is_closed': False,
+                  'has_break': False, 'break_start': None, 'break_end': None},
+    )
+
+
+def close_all_days(organization):
+    """Clínica cerrada toda la semana (para probar el aviso de fuera de horario)."""
+    from apps.organizations.models import OrganizationSchedule
+    OrganizationSchedule.objects.filter(
+        organization=organization).update(is_closed=True)
+
+
 class RealApiTransport:
     """Loopback por el Django test client con el JWT del AGENT (API+RBAC reales).
 

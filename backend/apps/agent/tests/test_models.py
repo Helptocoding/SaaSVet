@@ -80,5 +80,4 @@ class AgentSettingsTests(TestCase):
         org = Organization.objects.create(name="AS Org", timezone="UTC")
         settings_obj = AgentSettings.objects.create(organization=org)
         self.assertFalse(settings_obj.enabled)
-        self.assertEqual(settings_obj.business_hours, {})
         self.assertEqual(settings_obj.faq_facts, {})

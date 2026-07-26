@@ -30,27 +30,29 @@ T0_DISABLED = (
     "responderá en cuanto esté disponible 🙌"
 )
 
-# Claves válidas del JSON business_hours (AgentSettings): lun..dom con
-# listas de rangos [apertura, cierre] en HH:MM local de la org.
+# Forma del horario que produce `clinic_context.effective_business_hours`:
+# lun..dom con listas de rangos [apertura, cierre] en HH:MM local de la org.
 #   {"mon": [["09:00", "19:00"]], "sat": [["09:00", "14:00"]], "sun": []}
 _WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 
-def is_open_now(business_hours, tz_name, now=None):
+def is_open_now(hours, tz_name, now=None):
     """¿La clínica está abierta ahora, en SU zona horaria?
 
-    Devuelve None si el horario no está configurado (dict vacío/ilegible):
-    el caller trata "sin configurar" como "no anteponer aviso de cierre" —
-    jamás se inventa un horario (regla G1).
+    `hours` viene de `clinic_context.effective_business_hours`. Devuelve None
+    si el horario no está configurado (dict vacío/ilegible): el caller trata
+    "sin configurar" como "no anteponer aviso de cierre" — jamás se inventa un
+    horario (regla G1). Ojo: "configurado pero cerrado todos los días" NO es lo
+    mismo — ahí devuelve False y el aviso sí se emite.
     """
-    if not business_hours or not isinstance(business_hours, dict):
+    if not hours or not isinstance(hours, dict):
         return None
     try:
         tz = ZoneInfo(tz_name)
     except Exception:
         return None
     local_now = (now or datetime.now(tz)).astimezone(tz)
-    ranges = business_hours.get(_WEEKDAYS[local_now.weekday()], [])
+    ranges = hours.get(_WEEKDAYS[local_now.weekday()], [])
     if not isinstance(ranges, list):
         return None
     current = local_now.strftime('%H:%M')
@@ -67,7 +69,7 @@ def is_open_now(business_hours, tz_name, now=None):
 # --- Plantillas F1 (LITERALES, spec §1.3; el LLM no participa) -------------
 
 # INT-01 · urgencia (R16): acudir de inmediato + teléfono + aviso al equipo.
-# JAMÁS evalúa el cuadro (G2). {phone} = faq_facts['telefono'] o genérico.
+# JAMÁS evalúa el cuadro (G2). {phone} = `Organization.phone` (ADR p53).
 T0_EMERGENCY = (
     "Esto puede ser una emergencia 🚨 Acude de inmediato a la clínica o "
     "llámanos{phone}. Ya avisé al equipo para que te contacte lo antes "
@@ -193,9 +195,16 @@ T0_NEW_CLIENT = (
 T0_THANKS = "¡Con gusto! Aquí estoy si necesitas algo más 🐾"
 
 
-def render_emergency(agent_settings):
-    facts = (agent_settings.faq_facts or {}) if agent_settings else {}
-    phone = facts.get('telefono') or facts.get('teléfono')
+def render_emergency(agent_settings, organization):
+    """Plantilla de urgencia con el teléfono de la clínica.
+
+    El teléfono sale de la configuración de clínica (`Organization.phone`,
+    ADR p53). Antes miraba únicamente `faq_facts`, así que una clínica con sus
+    datos en Configuración recibía el mensaje de emergencia **sin número al que
+    llamar** — en la plantilla de mayor riesgo del sistema.
+    """
+    from . import clinic_context
+    phone = clinic_context.clinic_phone(organization, agent_settings)
     if phone:
         return T0_EMERGENCY.format(phone=f" al {phone}")
     return T0_EMERGENCY_NO_PHONE
@@ -218,9 +227,11 @@ def render_first_reply(agent_settings, organization, now=None):
     if agent_settings is None or not agent_settings.enabled:
         return T0_DISABLED.format(clinic=clinic)
 
+    from . import clinic_context
     text = T0_GREET.format(clinic=clinic)
     open_now = is_open_now(
-        agent_settings.business_hours, organization.timezone, now=now,
+        clinic_context.effective_business_hours(organization, agent_settings),
+        organization.timezone, now=now,
     )
     if open_now is False:
         text += T0_AFTER_HOURS_SUFFIX

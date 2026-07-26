@@ -109,7 +109,7 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         conversation.save(update_fields=['flow'])
         return PolicyDecision(
             kind=ESCALATE,
-            text=tier0.render_emergency(agent_settings),
+            text=tier0.render_emergency(agent_settings, org),
             handoff_reason=HumanHandoff.REASON_EMERGENCY,
             handoff_priority=HumanHandoff.PRIORITY_URGENT,
         )

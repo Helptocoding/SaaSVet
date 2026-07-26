@@ -522,8 +522,11 @@ def _after_hours_prefix(conversation, agent_settings):
     """
     if agent_settings is None or conversation.flow.get('after_hours_notified'):
         return ''
+    from . import clinic_context
+    org = conversation.organization
     open_now = tier0.is_open_now(
-        agent_settings.business_hours, conversation.organization.timezone)
+        clinic_context.effective_business_hours(org, agent_settings),
+        org.timezone)
     if open_now is not False:          # None = sin horario configurado
         return ''
     conversation.flow['after_hours_notified'] = True

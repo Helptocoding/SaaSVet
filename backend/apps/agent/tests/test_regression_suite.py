@@ -92,10 +92,11 @@ class RegressionBase(TestCase):
     def setUp(self):
         executor_module._token_cache.clear()
         self.agent_user, _ = ensure_agent_user(self.org)
+        Organization.objects.filter(pk=self.org.pk).update(
+            phone="55-1000-2000", address_line1="Av. Siempre Viva 123")
+        self.org.refresh_from_db()
         self.settings = AgentSettings.objects.create(
             organization=self.org, enabled=True, agent_user=self.agent_user,
-            faq_facts={"telefono": "55-1000-2000",
-                       "direccion": "Av. Siempre Viva 123"},
         )
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="920920920",

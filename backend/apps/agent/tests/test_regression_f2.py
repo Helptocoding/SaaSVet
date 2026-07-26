@@ -22,7 +22,7 @@ from apps.agent import executor as executor_module
 from apps.agent import confirmations, tools
 from apps.agent.llm import LLMResult
 from apps.agent.models import AgentSettings, ContactIdentity, Conversation
-from apps.agent.tests.harness import run_turn
+from apps.agent.tests.harness import run_turn, set_schedule_day
 from apps.appointments.models import Appointment
 from apps.channels.models import ChannelAccount
 from apps.core.models import Permission, Role, UserRole
@@ -71,10 +71,12 @@ class RegF2Base(TestCase):
         wd = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")[d.weekday()]
         self.settings = AgentSettings.objects.create(
             organization=self.org, enabled=True, agent_user=self.agent_user,
-            default_veterinarian=self.vet,
-            business_hours={wd: [["09:00", "13:00"]]},
-            faq_facts={"telefono": "55-1000-2000",
-                       "direccion": "Av. Siempre Viva 123"})
+            default_veterinarian=self.vet)
+        # Horario y contacto: fuente única = configuración de clínica (p53).
+        set_schedule_day(self.org, d.weekday(), "09:00", "13:00")
+        Organization.objects.filter(pk=self.org.pk).update(
+            phone="55-1000-2000", address_line1="Av. Siempre Viva 123")
+        self.org.refresh_from_db()
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="931931931")
         self.contact = ContactIdentity.objects.create(
@@ -416,10 +418,8 @@ class Int22Tests(RegF2Base):
 
 class Int23Tests(RegF2Base):
     def test_23_01_cancel_happy_with_retention(self):
-        self.settings.business_hours = {
-            d: [["09:00", "13:00"]] for d in
-            ("mon", "tue", "wed", "thu", "fri", "sat", "sun")}
-        self.settings.save(update_fields=["business_hours"])
+        for weekday in range(7):          # abierta toda la semana
+            set_schedule_day(self.org, weekday, "09:00", "13:00")
         appt = self._make_appt(status="confirmed")
         _, r1, _ = self._propose("cancela mi cita", "cancel_appointment",
                                  {"appointment_handle": "cita_1"})

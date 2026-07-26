@@ -33,7 +33,7 @@ from apps.agent.models import (
     HumanHandoff,
 )
 from apps.agent.services import ingest_inbound_message
-from apps.agent.tests.harness import run_turn
+from apps.agent.tests.harness import run_turn, set_schedule_day
 from apps.agent.worker import MAX_PROCESS_ATTEMPTS, process_pending_conversations
 from apps.channels.models import ChannelAccount, Message
 from apps.core.models import Permission, Role, UserRole
@@ -120,9 +120,7 @@ class SlotsUseOrgClockTests(AgentFixture):
     FROZEN = datetime(2026, 7, 24, 16, 0, tzinfo=dt_timezone.utc)
 
     def _open_all_day(self, local_date):
-        self.settings.business_hours = {
-            _WEEKDAYS[local_date.weekday()]: [["09:00", "19:00"]]}
-        self.settings.save(update_fields=["business_hours"])
+        set_schedule_day(self.org, local_date.weekday(), "09:00", "19:00")
 
     def test_morning_slots_are_offered_at_local_morning(self):
         local_today = self.FROZEN.astimezone(MX).date()
@@ -313,10 +311,8 @@ class SchedulingVetTests(AgentFixture):
         self.vet.is_active = False
         self.vet.save(update_fields=["is_active"])
         day = timezone.now().astimezone(MX).date() + timedelta(days=3)
-        self.settings.business_hours = {
-            _WEEKDAYS[day.weekday()]: [["09:00", "19:00"]]}
-        self.settings.save(
-            update_fields=["default_veterinarian", "business_hours"])
+        set_schedule_day(self.org, day.weekday(), "09:00", "19:00")
+        self.settings.save(update_fields=["default_veterinarian"])
         out = tools.find_available_slots(
             self.conv, self.executor(), {"date": day.isoformat()})
         self.assertFalse(out.ok)
@@ -329,10 +325,8 @@ class SchedulingVetTests(AgentFixture):
         second = self._second_vet()
         self.settings.default_veterinarian = None
         day = timezone.now().astimezone(MX).date() + timedelta(days=3)
-        self.settings.business_hours = {
-            _WEEKDAYS[day.weekday()]: [["09:00", "11:00"]]}
-        self.settings.save(
-            update_fields=["default_veterinarian", "business_hours"])
+        set_schedule_day(self.org, day.weekday(), "09:00", "11:00")
+        self.settings.save(update_fields=["default_veterinarian"])
         Appointment.objects.create(
             organization=self.org, pet=self.pet, veterinarian=self.vet,
             date=day, start_time="09:00", end_time="09:30", reason="x",

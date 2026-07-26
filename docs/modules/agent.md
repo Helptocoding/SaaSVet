@@ -23,7 +23,7 @@ ref; `channels.views` importa `agent.services` perezoso.
 | `ContactIdentity` | agent | Identidad POR ORG (`unique org+channel+external_id` — el mismo cliente puede escribir a 2 clínicas); `verification_level` (unknown→phone_match→confirmed_in_chat→staff_verified); `phone_normalized` (Q5: últimos 10 dígitos, México-only); NO es un User — jamás recibe tokens |
 | `Conversation` | agent | `PublicIdMixin` (la bandeja navega por UUID); FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo); org fijada al crear e inmutable; `flow`/`summary` = scratchpad (filosofía ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo (serializa entre réplicas sin transacción abierta) |
 | `ConversationGoal` | agent | **Objetivo en curso** (É-F3 W2). Estado explícito `active/paused/completed/cancelled/handoff`; `slots` `{slot:{value,confidence}}` con el valor YA normalizado por el validador; `missing`, `low_confidence`, `asked`, `stall_turns`. Constraint parcial: **un objetivo abierto por conversación** |
-| `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `business_hours`, `faq_facts` |
+| `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `faq_facts` (solo hechos sin campo propio), `default_veterinarian`, `scheduling_mode`, `nudge_enabled` |
 
 ## Flujo F0
 
@@ -31,7 +31,8 @@ ref; `channels.views` importa `agent.services` perezoso.
 Cliente → WhatsApp → POST /hooks/whatsapp/ (firma HMAC, fail-closed)
   → routing phone_number_id → ChannelAccount → org (R1)
   → dedup wamid → ContactIdentity (match Owner: 0/1/≥2=ambiguous)
-  → Conversation abierta (o nueva) → Message(in, pending, available_at=+3s)
+  → Conversation abierta (o nueva) → Message(in, pending, available_at=+8s;
+    cada entrante nuevo empuja la ventana de todo el hilo, tope 25 s)
 Worker (run_agent_worker, SKIP LOCKED por conversación):
   → marca procesados → si NO hay salientes previos: encola 1ª respuesta
     (T0-GREET / T0-DISABLED / +sufijo fuera-de-horario, plantillas LITERALES)
@@ -49,7 +50,7 @@ Staff → /inbox (bandeja): responder = tomar (human_active + claim).
 | `GET /api/inbox/conversations/<uuid>/messages/` | `agentinbox.view` | Transcript cronológico, cap 200 |
 | `POST …/send/` | `agentinbox.send` | Sanitizado, máx 4000; deja la conversación en `human_active` + claim |
 | `POST …/claim/` · `…/close/` · `…/release/` | `agentinbox.claim` | Claim exclusivo → 409 `already_claimed` |
-| `GET/PATCH /api/inbox/settings/` | `agentinbox.config` | Kill switch + `business_hours` (schema validado) + `faq_facts` (caps 20×500) |
+| `GET/PATCH /api/inbox/settings/` | `agentinbox.config` | Kill switch + `faq_facts` (caps 20×500; rechaza claves de la config de clínica). El horario NO se toca aquí: vive en `/config` |
 
 Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
 (el bot) ninguno de bandeja.
@@ -98,6 +99,36 @@ Correcciones de la [auditoría conversacional](../whatsapp-agent-auditoria-conve
 | W0-5 | Se agenda con el veterinario **libre**, no con "el primer VET por pk" | Ver §Asignación de veterinario |
 | W0-6 | Aviso de privacidad just-in-time | Se emite una vez por contacto, antes del primer reto de identidad o alta (`privacy_notice_sent_at`) |
 | W0-7 | Transacción corta por conversación + lease (`processing_until`) | La red (LLM, loopback) queda FUERA de toda transacción |
+
+### Configuración de clínica: fuente única (ADR p53)
+
+Todo lo que el agente sabe de la clínica sale de `agent/clinic_context.py`, y
+solo hay **una** superficie donde se edita: `/config` (Configuración).
+
+| Dato | Fuente única | Dónde lo edita el ADMIN |
+|---|---|---|
+| Horario (slots, "¿abierto ahora?", aviso de fuera de horario) | `OrganizationSchedule` — 7 filas sembradas al crear la org (`create_default_schedule`); respeta `is_closed` y descanso | Configuración → Horario (`ScheduleSection`) |
+| Teléfono (incluida la **plantilla de urgencia**), dirección, mapa, indicaciones, correo, sitio | `Organization` | Configuración → Clínica (`ClinicSection`) |
+| FAQ libre (estacionamiento, aviso de privacidad…) | `AgentSettings.faq_facts` | `PATCH /api/inbox/settings/` |
+
+Puntos únicos de resolución: `effective_business_hours()`, `clinic_phone()`,
+`clinic_facts()`, `humanize_schedule()`. Cualquier superficie nueva que pregunte
+por horario o contacto pasa por ahí — no por `AgentSettings`.
+
+**`AgentSettings.business_hours` se eliminó** (migración `0009`). Era una
+segunda superficie de escritura del horario: el ADMIN podía configurarlo en
+Configuración y el agente usar otro. Además dejaba dos modos de fallo — el
+aviso de fuera de horario leía solo el legacy (una clínica migrada nunca decía
+que estaba cerrada) y la plantilla de urgencia también (quedaba sin número al
+que llamar).
+
+`faq_facts` sobrevive **solo** para hechos sin campo propio: el serializer
+rechaza las claves reservadas (`telefono`, `direccion`, `horario`, `correo`,
+`mapa`, `indicaciones`…) con 400.
+
+Semántica de horario, deliberada: **sin filas** → `is_open_now` devuelve `None`
+y no se antepone aviso (no se inventa nada, G1); **filas con todos los días
+cerrados** → `False`, y el aviso sí se emite.
 
 ### Asignación de veterinario (Q14, revisado 2026-07-25)
 

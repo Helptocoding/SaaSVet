@@ -234,23 +234,38 @@ class InboxSettingsTests(InboxApiTestCase):
             AgentSettings.objects.get(organization=self.org).enabled
         )
 
-    def test_business_hours_schema_is_validated(self):
+    def test_schedule_is_not_configurable_here(self):
+        """El horario vive en Configuración → Horario (`OrganizationSchedule`).
+
+        `business_hours` se eliminó: dos superficies escribiendo el horario
+        significaba que el ADMIN podía configurarlo en un lado y el agente
+        usar el otro. Un intento de mandarlo aquí se ignora en silencio (campo
+        desconocido), nunca crea una segunda fuente.
+        """
         self.client.force_authenticate(self.admin)
-        bad_payloads = [
-            {"business_hours": {"lunes": [["09:00", "19:00"]]}},   # día inválido
-            {"business_hours": {"mon": [["19:00", "09:00"]]}},     # invertido
-            {"business_hours": {"mon": [["9am", "7pm"]]}},         # formato
-        ]
-        for payload in bad_payloads:
-            with self.subTest(payload=payload):
+        r = self.client.patch(
+            "/api/inbox/settings/",
+            {"business_hours": {"mon": [["09:00", "19:00"]]}},
+            format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+        self.assertNotIn("business_hours", r.json())
+
+    def test_faq_facts_reject_keys_owned_by_clinic_config(self):
+        """Lo que ya se edita en Configuración → Clínica no se duplica aquí."""
+        self.client.force_authenticate(self.admin)
+        for key in ("telefono", "Teléfono", "direccion", "horario", "correo"):
+            with self.subTest(key=key):
                 r = self.client.patch(
-                    "/api/inbox/settings/", payload, format="json",
+                    "/api/inbox/settings/",
+                    {"faq_facts": {key: "algo"}}, format="json",
                 )
                 self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_faq_facts_accept_free_keys(self):
+        self.client.force_authenticate(self.admin)
         r = self.client.patch(
             "/api/inbox/settings/",
-            {"business_hours": {"mon": [["09:00", "19:00"]], "sun": []}},
-            format="json",
+            {"faq_facts": {"estacionamiento": "Sí, gratuito"}}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)

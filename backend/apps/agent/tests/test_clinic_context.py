@@ -46,6 +46,90 @@ class ClinicFactsTests(TestCase):
         self.assertEqual(clinic_context.clinic_facts(bare), {})
 
 
+class EffectiveHoursTests(TestCase):
+    """"¿Estamos abiertos?" y "¿qué huecos hay?" leen la MISMA fuente.
+
+    El aviso de fuera de horario miraba `AgentSettings.business_hours` mientras
+    los slots ya usaban `OrganizationSchedule`: una clínica ofertaba huecos
+    correctos y jamás decía que estaba cerrada. `business_hours` se eliminó.
+    """
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Hours Org", timezone="UTC")
+        OrganizationSchedule.objects.filter(organization=self.org).delete()
+        self.settings = AgentSettings.objects.create(organization=self.org)
+
+    def test_hours_come_from_the_schedule(self):
+        OrganizationSchedule.objects.create(
+            organization=self.org, weekday=1,
+            opens_at=time(8), closes_at=time(16))
+        hours = clinic_context.effective_business_hours(self.org, self.settings)
+        self.assertEqual(hours["mon"], [["08:00", "16:00"]])
+
+    def test_break_produces_two_windows(self):
+        OrganizationSchedule.objects.create(
+            organization=self.org, weekday=2,
+            opens_at=time(9), closes_at=time(18), has_break=True,
+            break_start=time(13), break_end=time(15))
+        hours = clinic_context.effective_business_hours(self.org, self.settings)
+        self.assertEqual(hours["tue"], [["09:00", "13:00"], ["15:00", "18:00"]])
+
+    def test_no_schedule_is_empty(self):
+        self.assertEqual(
+            clinic_context.effective_business_hours(self.org, self.settings), {})
+
+    def test_closed_all_week_is_not_the_same_as_unconfigured(self):
+        """"Cerrado hoy" debe avisar; "sin configurar" no debe inventar nada."""
+        from apps.agent.tier0 import is_open_now
+        for weekday in range(1, 8):
+            OrganizationSchedule.objects.create(
+                organization=self.org, weekday=weekday, is_closed=True)
+        hours = clinic_context.effective_business_hours(self.org, self.settings)
+        self.assertTrue(hours)                      # el horario EXISTE…
+        self.assertFalse(is_open_now(hours, "UTC"))  # …y dice que está cerrado
+        self.assertIsNone(is_open_now({}, "UTC"))    # sin configurar → None
+
+    def test_open_now_reads_the_new_schedule(self):
+        from apps.agent.tier0 import is_open_now
+        for weekday in range(1, 8):
+            OrganizationSchedule.objects.create(
+                organization=self.org, weekday=weekday,
+                opens_at=time(0), closes_at=time(23, 59))
+        hours = clinic_context.effective_business_hours(self.org, self.settings)
+        self.assertTrue(is_open_now(hours, "UTC"))
+
+
+class ClinicPhoneTests(TestCase):
+    """El teléfono de urgencias sale de la configuración de clínica."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(
+            name="Phone Org", timezone="UTC", phone="5511112222")
+        self.settings = AgentSettings.objects.create(organization=self.org)
+
+    def test_phone_comes_from_the_organization(self):
+        self.assertEqual(
+            clinic_context.clinic_phone(self.org, self.settings), "5511112222")
+
+    def test_without_phone_returns_empty(self):
+        Organization.objects.filter(pk=self.org.pk).update(phone="")
+        self.org.refresh_from_db()
+        self.assertEqual(
+            clinic_context.clinic_phone(self.org, self.settings), "")
+
+    def test_emergency_template_uses_the_configured_phone(self):
+        from apps.agent.tier0 import render_emergency
+        text = render_emergency(self.settings, self.org)
+        self.assertIn("5511112222", text)
+
+    def test_emergency_without_any_phone_omits_it(self):
+        from apps.agent.tier0 import render_emergency
+        bare = Organization.objects.create(name="Bare Phone", timezone="UTC")
+        text = render_emergency(None, bare)
+        self.assertIn("Acude de inmediato", text)
+        self.assertNotIn("llámanos al", text)
+
+
 class ScheduleTests(TestCase):
     def setUp(self):
         self.org = Organization.objects.create(name="Sched Org", timezone="UTC")
@@ -70,11 +154,10 @@ class ScheduleTests(TestCase):
         self._day(1, opens_at=time(9), closes_at=time(17))
         self.assertEqual(clinic_context.weekday_ranges(self.org, 6), [])  # dom
 
-    def test_legacy_fallback_when_no_schedule(self):
-        legacy = [["08:00", "10:00"]]
-        self.assertEqual(
-            clinic_context.weekday_ranges(self.org, 0, legacy_ranges=legacy),
-            legacy)
+    def test_no_schedule_means_closed(self):
+        """Sin fila de horario el agente no ofrece huecos; jamás inventa uno
+        (ya no existe un `business_hours` del que tirar)."""
+        self.assertEqual(clinic_context.weekday_ranges(self.org, 0), [])
 
     def test_humanize_schedule(self):
         self._day(1, opens_at=time(9), closes_at=time(14))
@@ -112,10 +195,8 @@ class GetClinicInfoIntegrationTests(TestCase):
         self.assertEqual(out.data["teléfono"], "5544332211")   # config nueva gana
         self.assertEqual(out.data["estacionamiento"], "Sí")    # legacy se conserva
 
-    def test_schedule_beats_business_hours(self):
-        AgentSettings.objects.create(
-            organization=self.org, enabled=True,
-            business_hours={"mon": [["06:00", "07:00"]]})
+    def test_schedule_is_the_only_source_of_hours(self):
+        AgentSettings.objects.create(organization=self.org, enabled=True)
         # Ajustar el horario sembrado del lunes a 09-18.
         OrganizationSchedule.objects.filter(
             organization=self.org, weekday=1).update(

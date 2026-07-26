@@ -15,6 +15,7 @@ from apps.agent.tier0 import (
     render_first_reply,
 )
 from apps.organizations.models import Organization
+from apps.agent.tests.harness import set_schedule_day
 
 HOURS = {
     "mon": [["09:00", "19:00"]],
@@ -71,6 +72,12 @@ class RenderFirstReplyTests(TestCase):
             name="Clínica Patitas", timezone="America/Mexico_City",
         )
 
+    def setUp(self):
+        # El alta de organización siembra 7 filas de horario; estos tests
+        # parten de "sin horario" y lo fijan cuando lo necesitan.
+        from apps.organizations.models import OrganizationSchedule
+        OrganizationSchedule.objects.filter(organization=self.org).delete()
+
     def test_disabled_settings_renders_t0_disabled(self):
         settings_obj = AgentSettings.objects.create(organization=self.org)
         text = render_first_reply(settings_obj, self.org)
@@ -90,8 +97,10 @@ class RenderFirstReplyTests(TestCase):
 
     def test_enabled_after_hours_appends_suffix(self):
         settings_obj = AgentSettings.objects.create(
-            organization=self.org, enabled=True, business_hours=HOURS,
+            organization=self.org, enabled=True,
         )
+        # 2026-07-13 es lunes: abierto 09-19, así que a las 22:00 está cerrado.
+        set_schedule_day(self.org, 0, "09:00", "19:00")
         text = render_first_reply(
             settings_obj, self.org, now=_cdmx(2026, 7, 13, 22),
         )

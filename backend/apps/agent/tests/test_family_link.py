@@ -15,6 +15,7 @@ from rest_framework.test import APIClient
 from apps.agent import executor as executor_module
 from apps.agent import tools
 from apps.agent.executor import ToolExecutor
+from apps.agent.tests.harness import set_schedule_day
 from apps.agent.llm import LLMResult
 from apps.agent.models import (
     AgentSettings, ContactIdentity, Conversation, HumanHandoff,
@@ -69,8 +70,8 @@ class FamilyLinkBase(TestCase):
         wd = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")[d.weekday()]
         self.settings = AgentSettings.objects.create(
             organization=self.org, enabled=True, agent_user=self.agent_user,
-            default_veterinarian=self.vet,
-            business_hours={wd: [["09:00", "13:00"]]})
+            default_veterinarian=self.vet)
+        set_schedule_day(self.org, d.weekday(), "09:00", "13:00")
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="944944944")
         # El número de quien escribe (la esposa) — sin owner, sin verificar.

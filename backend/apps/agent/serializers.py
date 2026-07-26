@@ -6,14 +6,29 @@ NUEVOS de modelos públicos exponen SOLO `public_id`, jamás `id`+`public_id`.
 `Message` es modelo interno (sin public_id) → expone su `id` entero para
 keys de React, consistente con InvoiceItem/VitalSigns (ADR p18).
 """
+import unicodedata
+
 from rest_framework import serializers
 
 from apps.channels.models import Message
 
 from .models import AgentSettings, Conversation
 
-# Días válidos del JSON business_hours (espejo de tier0._WEEKDAYS).
-_VALID_DAYS = {'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'}
+# Claves que YA tienen campo propio en la configuración de clínica (ADR p53).
+# Aceptarlas aquí recrearía la segunda fuente de verdad que se eliminó al
+# retirar `business_hours`: el ADMIN edita esto en Configuración → Clínica y
+# el agente lo lee de ahí (`clinic_context.clinic_facts`).
+RESERVED_FACT_KEYS = {
+    'horario', 'horarios', 'telefono', 'tel', 'whatsapp', 'correo', 'email',
+    'direccion', 'domicilio', 'ubicacion', 'mapa', 'maps', 'google_maps',
+    'sitio_web', 'web', 'pagina', 'indicaciones', 'como_llegar',
+}
+
+
+def _normalize_fact_key(key):
+    text = unicodedata.normalize('NFD', str(key or '').lower().strip())
+    text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
+    return text.replace(' ', '_')
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -120,34 +135,7 @@ class SendMessageSerializer(serializers.Serializer):
 class AgentSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgentSettings
-        fields = ['enabled', 'business_hours', 'faq_facts']
-
-    def validate_business_hours(self, value):
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Debe ser un objeto por día.")
-        for day, ranges in value.items():
-            if day not in _VALID_DAYS:
-                raise serializers.ValidationError(
-                    f"Día inválido: {day} (usa mon..sun)."
-                )
-            if not isinstance(ranges, list):
-                raise serializers.ValidationError(
-                    f"{day}: debe ser lista de rangos [inicio, fin]."
-                )
-            for item in ranges:
-                if (
-                    not isinstance(item, (list, tuple)) or len(item) != 2
-                    or not all(isinstance(t, str) and len(t) == 5
-                               and t[2] == ':' for t in item)
-                ):
-                    raise serializers.ValidationError(
-                        f"{day}: rango inválido (formato ['HH:MM', 'HH:MM'])."
-                    )
-                if item[0] >= item[1]:
-                    raise serializers.ValidationError(
-                        f"{day}: la apertura debe ser antes del cierre."
-                    )
-        return value
+        fields = ['enabled', 'faq_facts']
 
     def validate_faq_facts(self, value):
         if not isinstance(value, dict):
@@ -155,6 +143,10 @@ class AgentSettingsSerializer(serializers.ModelSerializer):
         if len(value) > 20:
             raise serializers.ValidationError("Máximo 20 datos de FAQ.")
         for key, text in value.items():
+            if _normalize_fact_key(key) in RESERVED_FACT_KEYS:
+                raise serializers.ValidationError(
+                    f"'{key}' se configura en Configuración → Clínica, no aquí."
+                )
             if not isinstance(text, str) or len(text) > 500:
                 raise serializers.ValidationError(
                     f"{key}: cada dato es texto de máximo 500 caracteres."

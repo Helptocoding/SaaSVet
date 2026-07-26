@@ -73,7 +73,11 @@ class ProcessPendingTests(TestCase):
             conversation=message.conversation,
             direction=Message.DIRECTION_OUT,
         )
-        self.assertEqual(outbound.body, T0_GREET.format(clinic="Worker Org"))
+        # `startswith`: fuera del horario sembrado el saludo lleva además el
+        # aviso de fuera de horario (INT-03).
+        self.assertTrue(
+            outbound.body.startswith(T0_GREET.format(clinic="Worker Org")),
+            outbound.body)
         self.assertEqual(outbound.status, Message.STATUS_PENDING)
         self.assertEqual(outbound.author_type, Message.AUTHOR_SYSTEM)
 

@@ -83,9 +83,11 @@ class PlannerTestCase(TestCase):
     def setUp(self):
         executor_module._token_cache.clear()
         self.agent_user, _ = ensure_agent_user(self.org)
+        Organization.objects.filter(pk=self.org.pk).update(
+            phone="55-1000-2000")
+        self.org.refresh_from_db()
         self.settings = AgentSettings.objects.create(
             organization=self.org, enabled=True, agent_user=self.agent_user,
-            faq_facts={"telefono": "55-1000-2000"},
         )
         self.channel = ChannelAccount.objects.create(
             organization=self.org, external_account_id="900900900",
@@ -132,7 +134,12 @@ class PlannerHappyPathTests(PlannerTestCase):
         ])
         result = self._handle(stub)
         self.assertEqual(result["decision"], "planner_reply")
-        self.assertEqual(self._last_outbound().body, "Abrimos de 9 a 7 🙂")
+        # `endswith`: fuera del horario de la clínica la respuesta lleva
+        # antepuesto el aviso de fuera de horario (INT-03), y el alta de la
+        # organización siembra un horario por defecto.
+        self.assertTrue(
+            self._last_outbound().body.endswith("Abrimos de 9 a 7 🙂"),
+            self._last_outbound().body)
         self.assertEqual(self._last_outbound().author_type, Message.AUTHOR_AGENT)
         # LLMCall persistido + presupuesto incrementado.
         self.assertEqual(LLMCall.objects.filter(conversation=self.conv).count(), 1)

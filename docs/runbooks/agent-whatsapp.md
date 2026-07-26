@@ -59,8 +59,16 @@ aborta — un número jamás se reasigna por comando.
 Kill switch (default OFF): en la app → `/inbox` → "Activar respuestas
 automáticas" (requiere `agentinbox.config`, ADMIN). Con OFF el buzón igual
 captura todo; solo cambia la primera respuesta automática (T0-DISABLED vs
-T0-GREET). Horario y FAQ: `PATCH /api/inbox/settings/`
-(`business_hours = {"mon": [["09:00","19:00"]], ...}` en hora local de la org).
+T0-GREET).
+
+**Horario y datos de la clínica**: en la app → `/config` (Configuración →
+Horario y Configuración → Clínica). Es la **fuente única**: el agente lee de
+ahí los huecos que ofrece, el aviso de fuera de horario y el teléfono de la
+plantilla de urgencia. `AgentSettings.business_hours` se eliminó.
+
+**FAQ libre** (estacionamiento, aviso de privacidad…): `PATCH
+/api/inbox/settings/` con `faq_facts`. Rechaza con 400 las claves que ya se
+editan en Configuración (`telefono`, `direccion`, `horario`, `correo`…).
 
 ---
 

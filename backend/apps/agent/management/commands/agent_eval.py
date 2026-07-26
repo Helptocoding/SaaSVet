@@ -89,7 +89,7 @@ class Command(BaseCommand):
         from apps.core.models import Permission, Role
         from apps.core.permissions_codes import PERMISSIONS
         from apps.medical_records.models import VaccineRecord
-        from apps.organizations.models import Organization
+        from apps.organizations.models import Organization, OrganizationSchedule
         from apps.patients.models import Owner, Pet
         from apps.users.models import User
         from apps.users.services import ensure_agent_user
@@ -107,11 +107,18 @@ class Command(BaseCommand):
         AgentSettings.objects.create(
             organization=org, enabled=True, agent_user=agent_user,
             default_veterinarian=vet,
-            business_hours={"mon": [["09:00", "19:00"]], "tue": [["09:00", "19:00"]],
-                            "wed": [["09:00", "19:00"]], "thu": [["09:00", "19:00"]],
-                            "fri": [["09:00", "19:00"]], "sat": [["09:00", "14:00"]]},
-            faq_facts={"telefono": "55-1000-2000", "direccion": "Av. Reforma 100"},
+            faq_facts={"estacionamiento": "Sí, gratuito para clientes"},
         )
+        # Horario y datos de contacto: fuente única = configuración de clínica.
+        Organization.objects.filter(pk=org.pk).update(
+            phone="55-1000-2000", address_line1="Av. Reforma 100")
+        org.refresh_from_db()
+        for weekday in range(1, 7):          # lunes a sábado
+            OrganizationSchedule.objects.update_or_create(
+                organization=org, weekday=weekday,
+                defaults={"opens_at": "09:00", "closes_at": "19:00",
+                          "is_closed": False},
+            )
         Service.objects.create(organization=org, name="Consulta general",
                                base_price="350.00")
         owner = Owner.objects.create(organization=org, name="Cliente Eval",

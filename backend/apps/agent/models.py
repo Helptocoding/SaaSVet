@@ -408,11 +408,10 @@ class AgentSettings(models.Model):
         'users.User', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='+',
     )
-    # Horario de atención (los datos públicos de la clínica NO existen en
-    # organizations — gap D2 del plan; viven aquí hasta promoverse).
-    # Schema del JSON se define con las plantillas tier-0 (PR-5).
-    business_hours = models.JSONField(default=dict, blank=True)
-    # Hechos de FAQ (dirección, estacionamiento…) para INT-10/T5.
+    # Hechos de FAQ que NO tienen campo propio en la configuración de clínica
+    # (estacionamiento, aviso de privacidad…). El horario y los datos de
+    # contacto viven en `Organization`/`OrganizationSchedule` (ADR p53) y son
+    # fuente única: el serializer rechaza aquí las claves que los dupliquen.
     faq_facts = models.JSONField(default=dict, blank=True)
 
     # É-F2 (Q14): cómo elige veterinario el agente al ofrecer/crear citas.

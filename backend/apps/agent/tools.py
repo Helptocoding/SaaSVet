@@ -167,23 +167,22 @@ def get_vaccine_status(conversation, executor, args, triggered_by=None):
 
 
 def get_clinic_info(conversation, executor, args, triggered_by=None):
-    """LOCAL (sin HTTP): datos de clínica + horario. Fuente única = la config
-    nueva (Organization + OrganizationSchedule, ADR p53); AgentSettings.faq_facts
-    /business_hours son fallback legacy. G1: sin dato se responde honesto — jamás
-    se inventa."""
+    """LOCAL (sin HTTP): datos de clínica + horario. Fuente única = la
+    configuración de clínica (Organization + OrganizationSchedule, ADR p53);
+    `faq_facts` solo aporta hechos sin campo propio. G1: sin dato se responde
+    honesto — jamás se inventa."""
     from . import clinic_context
     from .models import AgentSettings
     org = conversation.organization
     settings_obj = AgentSettings.objects.filter(organization=org).first()
 
-    # Base legacy (faq_facts) → la config nueva la PISA campo a campo.
+    # `faq_facts` solo aporta hechos sin campo propio (estacionamiento, aviso
+    # de privacidad…): el serializer rechaza las claves que duplican la
+    # configuración de clínica, que es la fuente única.
     facts = dict((settings_obj.faq_facts or {}) if settings_obj else {})
     facts.update(clinic_context.clinic_facts(org))
 
-    # Horario: OrganizationSchedule primero; si no hay, business_hours legacy.
     horario = clinic_context.humanize_schedule(org)
-    if not horario and settings_obj and settings_obj.business_hours:
-        horario = _humanize_hours(settings_obj.business_hours)
     if horario:
         facts['horario'] = horario
 
@@ -202,20 +201,6 @@ def get_clinic_info(conversation, executor, args, triggered_by=None):
         triggered_by_message=triggered_by,
     )
     return ToolOutcome(ok=True, data=facts, summary={'facts': len(facts)})
-
-
-_DAY_LABEL = {'mon': 'lun', 'tue': 'mar', 'wed': 'mié', 'thu': 'jue',
-              'fri': 'vie', 'sat': 'sáb', 'sun': 'dom'}
-
-
-def _humanize_hours(business_hours):
-    parts = []
-    for day in ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'):
-        ranges = business_hours.get(day)
-        if ranges:
-            spans = ' y '.join(f"{a} a {b}" for a, b in ranges)
-            parts.append(f"{_DAY_LABEL[day]} {spans}")
-    return '; '.join(parts)
 
 
 def get_service_catalog(conversation, executor, args, triggered_by=None):
@@ -361,12 +346,6 @@ def list_upcoming_appointments(conversation, executor, args, triggered_by=None):
 SLOT_MINUTES = 30  # duración de cita estándar (misma que el walk-in del dominio)
 
 
-def _weekday_ranges(business_hours, weekday_index):
-    key = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')[weekday_index]
-    ranges = business_hours.get(key, []) if isinstance(business_hours, dict) else []
-    return ranges if isinstance(ranges, list) else []
-
-
 def _time_bucket_ok(hhmm, preferred):
     """Filtro por franja coloquial (UX-07): mañana/tarde/noche o 'HH:MM'±1h."""
     if not preferred:
@@ -474,7 +453,7 @@ def pick_free_vet(org, executor, date_str, hhmm, vets, *, triggered_by=None,
 
 def _free_slots_for_day(org, executor, day, vets, ranges, *, preferred='',
                         triggered_by=None, tool_name='find_available_slots'):
-    """[hhmm…] libres ese día = business_hours (`ranges`) ∩ ocupación real.
+    """[hhmm…] libres ese día = horario de la clínica (`ranges`) ∩ ocupación real.
 
     Un hueco se ofrece si **algún** veterinario candidato lo tiene libre (a la
     clínica le da igual quién atienda). None si la API falla. El caller resuelve
@@ -522,15 +501,12 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
     from .models import AgentSettings
     org = conversation.organization
     agent_settings = AgentSettings.objects.filter(organization=org).first()
-    business_hours = (agent_settings.business_hours or {}) if agent_settings else {}
     vets = _scheduling_vets(org, agent_settings)
     if not vets:
         return None, []
     day = org_today_local(org) + timedelta(days=1)
     for _ in range(max_days):
-        ranges = clinic_context.weekday_ranges(
-            org, day.weekday(), agent_settings=agent_settings,
-            legacy_ranges=_weekday_ranges(business_hours, day.weekday()))
+        ranges = clinic_context.weekday_ranges(org, day.weekday())
         if ranges:
             slots = _free_slots_for_day(
                 org, executor, day, vets, ranges,
@@ -545,7 +521,7 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
 
 def find_available_slots(conversation, executor, args, triggered_by=None):
     """Horarios libres de UN día (spec T9, UX-06). Compone la ocupación real
-    (GET /appointments/?date=&veterinarian=) ∩ business_hours. ≤3 slots.
+    (GET /appointments/?date=) ∩ horario de la clínica. ≤3 slots.
 
     Una responsabilidad = un día, un vet, una llamada a la API. Si el día
     está lleno → lista vacía y el planner ofrece otro día."""
@@ -570,10 +546,7 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
         return ToolOutcome(ok=False, client_error='past_date')
 
     agent_settings = AgentSettings.objects.filter(organization=org).first()
-    business_hours = (agent_settings.business_hours or {}) if agent_settings else {}
-    ranges = clinic_context.weekday_ranges(
-        org, day.weekday(), agent_settings=agent_settings,
-        legacy_ranges=_weekday_ranges(business_hours, day.weekday()))
+    ranges = clinic_context.weekday_ranges(org, day.weekday())
     if not ranges:
         return ToolOutcome(ok=True, data=[], summary={'slots': 0, 'closed': True})
 

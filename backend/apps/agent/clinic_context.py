@@ -1,14 +1,22 @@
 """
 agent/clinic_context.py — Datos de clínica y horario para el agente (ADR p53).
 
-Fuente ÚNICA de verdad = la configuración de clínica (`Organization` identidad/
-contacto/ubicación + `OrganizationSchedule` horario semanal). `AgentSettings.
-faq_facts` / `business_hours` quedan como **fallback legacy**: se usan solo si el
-dato no está en la config nueva (o si la tabla p53 aún no existe en el entorno).
+Fuente ÚNICA de verdad: la configuración de clínica que edita el ADMIN en
+`/config` — `Organization` (identidad, contacto, ubicación) y
+`OrganizationSchedule` (horario semanal). No hay segunda fuente.
 
-Este módulo es el "paso 8" del ADR p53 (conectar WhatsApp como consumidor). Es
-DEFENSIVO por diseño: cualquier fallo leyendo la config nueva cae al legacy sin
-tumbar una conversación en vivo.
+`AgentSettings.business_hours` existió como fallback mientras la pantalla de
+Configuración no estaba conectada; se eliminó al comprobar que sí lo está
+(`config/ScheduleSection.jsx` → `PUT /organizations/schedule/`). Dos superficies
+que escriben el horario significaban que un ADMIN podía configurarlo en un lado
+y el agente usar el otro.
+
+`AgentSettings.faq_facts` sobrevive SOLO para hechos que no tienen campo propio
+(estacionamiento, aviso de privacidad…): el serializer rechaza las claves que
+duplican la configuración de clínica.
+
+Es DEFENSIVO por diseño: cualquier fallo leyendo la config no puede tumbar una
+conversación en vivo.
 """
 _WD_LABEL = {1: 'lun', 2: 'mar', 3: 'mié', 4: 'jue', 5: 'vie', 6: 'sáb', 7: 'dom'}
 
@@ -27,24 +35,46 @@ def _schedule_rows(organization):
         return {}
 
 
-def weekday_ranges(organization, weekday_index, *, agent_settings=None,
-                   legacy_ranges=None):
-    """[[open,close]...] de un día (weekday_index 0=lunes) para el scheduling.
+def weekday_ranges(organization, weekday_index):
+    """[[open, close]…] de un día (weekday_index 0=lunes) para el scheduling.
 
-    Config nueva primero (`OrganizationSchedule`, respeta `is_closed` y el
-    descanso → dos ventanas); si la org NO tiene schedule nuevo, usa el legacy
-    (`AgentSettings.business_hours` vía `legacy_ranges`)."""
+    Respeta `is_closed` y el descanso (que produce dos ventanas). Sin filas de
+    horario → lista vacía: el agente dice que no tiene huecos, jamás inventa un
+    horario (G1)."""
     rows = _schedule_rows(organization)
-    if rows:  # la org usa el schedule nuevo → es la fuente de verdad
-        row = rows.get(weekday_index + 1)  # OrganizationSchedule: 1=lunes
-        if row is None or row.is_closed or not (row.opens_at and row.closes_at):
-            return []
-        opens, closes = _hhmm(row.opens_at), _hhmm(row.closes_at)
-        if row.has_break and row.break_start and row.break_end:
-            return [[opens, _hhmm(row.break_start)],
-                    [_hhmm(row.break_end), closes]]
-        return [[opens, closes]]
-    return legacy_ranges if legacy_ranges is not None else []
+    row = rows.get(weekday_index + 1)  # OrganizationSchedule: 1=lunes
+    if row is None or row.is_closed or not (row.opens_at and row.closes_at):
+        return []
+    opens, closes = _hhmm(row.opens_at), _hhmm(row.closes_at)
+    if row.has_break and row.break_start and row.break_end:
+        return [[opens, _hhmm(row.break_start)],
+                [_hhmm(row.break_end), closes]]
+    return [[opens, closes]]
+
+
+_WD_KEY = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
+
+
+def effective_business_hours(organization, agent_settings=None):
+    """Horario semanal como dict `{'mon': [[open, close], …], …}`.
+
+    Punto único para todas las superficies que preguntan "¿estamos abiertos?"
+    (slots, aviso de fuera de horario, saludo). `agent_settings` se acepta por
+    compatibilidad de firma y ya no influye.
+    """
+    if not _schedule_rows(organization):
+        # Sin horario configurado: dict vacío → `is_open_now` devuelve None y
+        # el caller NO antepone el aviso de cierre. Distinto de "configurado
+        # pero cerrado hoy", que sí debe avisar.
+        return {}
+    return {key: weekday_ranges(organization, index)
+            for index, key in enumerate(_WD_KEY)}
+
+
+def clinic_phone(organization, agent_settings=None):
+    """Teléfono público de la clínica (config de clínica). Lo usa la plantilla
+    de urgencia, la de mayor riesgo del sistema."""
+    return clinic_facts(organization).get('teléfono', '')
 
 
 def humanize_schedule(organization):
