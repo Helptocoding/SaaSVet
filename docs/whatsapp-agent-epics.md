@@ -11,9 +11,18 @@
 | **É0** | Fundaciones core: PR-0 fotografía + fix RBAC `vaccinerecord` (PR-1) + identidad del agente (PR-2) | **✅ COMPLETADA 2026-07-16** — PR-0 (a960e07..997c796), PR-1 (13115af), PR-2 (886fbd6); CI verde en los tres. Pendiente solo el deploy a prod | — |
 | É-F0 | Buzón operable: apps `channels`+`agent`, webhook, worker, outbox, plantillas tier-0, bandeja `/inbox` | **CÓDIGO COMPLETO 2026-07-17** — PR-3 (9c253f5) · PR-4 (eb24a83) · PR-5 (90f17ad) · PR-6 (ab2b4d3) · PR-7 (61925dc) · PR-8 (infra+runbooks). CI verde en todos. **Gate pendiente: smoke E2E con sandbox de Meta** (runbook agent-whatsapp.md §2) — requiere credenciales Meta (usuario) + deploy | É0 + número Meta (A0-1, lado usuario) |
 | É-F1 | Agente read-only: LLM, Policy Engine, FSM, Tool Executor (incluye minting + throttle scope diferidos de A0-2), tools T1–T8+T15 | **CÓDIGO COMPLETO 2026-07-18** — PR-9 (f3e4f83) · PR-10 (f8c1c0c) · PR-11 (ef14ca0) · PR-12 (fb16a6e) · PR-13 (suite regresión + eval). CI verde en todos. Proveedor LLM = elección abierta del PO (adaptador OpenAI-compatible por env). **Gates pendientes: eval nightly ≥95 % (requiere key LLM) + Gate F1 §10 con clínica piloto (requiere consulta legal A1-1)** | É0, É-F0, consulta legal A1-1 |
-| É-F2 | Escritura de agenda: A2-1 idempotencia + T9–T14 + tier-2 + P1 de la revisión UX | **Plan presentado 2026-07-19 — PENDIENTE DE APROBACIÓN** | É-F1 (validado en piloto) |
+| É-F2 | Escritura de agenda: A2-1 idempotencia + T9–T14 + tier-2 + P1 de la revisión UX | **CÓDIGO COMPLETO 2026-07-20** — PR-14..PR-19; CI verde. Auditada en É-F3 | É-F1 |
+| **É-F3** | Remediación de la auditoría conversacional + **conversación por objetivos**: W0 bloqueantes · W1 experiencia y guards vinculantes · W2 objetivos · W3 medición de calidad | **✅ CÓDIGO COMPLETO 2026-07-25** — `9bce13c` (W0-W3) · `0767eb9` (veterinario libre) · `06e6edc` (fuente única de config) · `9986217` (env). 380 tests verdes. ADR p54. **Sin desplegar** | É-F2 |
 
-Pendientes del lado del usuario (ruta crítica, sin código): **A0-1** trámites Meta (número/WABA) · **A1-1** consulta legal (Q2/Q3/Q9).
+Pendientes del lado del usuario (ruta crítica, sin código): **A1-1** consulta legal (Q2/Q3/Q9) · deploy a producción · token permanente de WhatsApp.
+
+> **Origen de É-F3**: la [auditoría conversacional](whatsapp-agent-auditoria-conversacional-2026-07-24.md)
+> del 2026-07-24 encontró cinco defectos que se habrían manifestado el primer
+> día del piloto (zona horaria en los huecos, urgencia perdida en ráfaga,
+> crash-loop del worker, urgencia escalada a una cola sin vigilancia,
+> veterinario elegido en silencio) y una capa de diseño —los objetivos— que
+> estaba especificada y nunca se implementó. Plan y ejecución:
+> [É-F3](whatsapp-agent-epica-f3-conversacion-por-objetivos.md).
 
 ---
 

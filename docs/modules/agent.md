@@ -1,10 +1,18 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
-> **Estado**: É-F1 (agente read-only con LLM — policy + tools de lectura). É-F0 (buzón) + É-F1 código completo en CI. Contrato de implementación:
-> [`docs/whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) · spec funcional
-> congelada F1: [`docs/whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
-> · identidad del actor: ADR p51. Runbook operativo:
-> [`docs/runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
+> **Estado**: É-F3 completa — el agente lee, **agenda** (crear/confirmar/cancelar/
+> reagendar + alta de cliente) y persigue **objetivos**, con guards de salida
+> vinculantes y medición de calidad. 380 tests en CI. **Sin desplegar a prod.**
+>
+> Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
+> épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
+> (spec funcional + enmienda É-F3) · [`whatsapp-agent-epica-f3-conversacion-por-objetivos.md`](../whatsapp-agent-epica-f3-conversacion-por-objetivos.md)
+> (plan de remediación) · [`whatsapp-agent-auditoria-conversacional-2026-07-24.md`](../whatsapp-agent-auditoria-conversacional-2026-07-24.md)
+> (auditoría que lo originó).
+>
+> ADRs: **p51** identidad del actor · **p52** idempotencia de citas · **p53**
+> configuración de clínica · **p54** objetivos + conservación vinculante.
+> Runbook operativo: [`runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
 
 ## Boundary (vinculante)
 
@@ -68,7 +76,7 @@ Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
   W3: métricas de calidad conversacional + **muestra estratificada de
   transcripts para leer** (escaladas / abandonadas / completadas). Semanal.
 
-## Agente F1 (LLM read-only)
+## Pipeline del turno
 
 Pipeline por entrante (`agent/planner.py`): `policy.evaluate` resuelve
 tier-0 sin LLM (urgencia/humano/opt-out/bot/confirmación/presupuesto);
@@ -77,9 +85,13 @@ reales, resultado como DATOS G6, `LLMCall` por llamada). El LLM **nunca
 autoriza**: policy decide antes, run_tool/executor revalidan
 tier/verificación/ownership. Proveedor LLM = elección del operador
 (`AGENT_LLM_*` por env, cliente OpenAI-compatible en `agent/llm.py`).
-Tools de lectura (spec §9): list_my_pets, get_vaccine_status,
+Tools de **lectura** (tier 1): list_my_pets, get_vaccine_status,
 list_upcoming_appointments, get_clinic_info, get_service_catalog,
-check_product_availability, request_human. Handles efímeros en `flow.refs`
+check_product_availability, find_available_slots. De **escritura**: 
+create_appointment, cancel_appointment, reschedule_appointment y
+register_new_client_and_pet (tier 2 — proponen y esperan el "sí"),
+confirm_appointment (tier 1, benigna), link_family_member (arranca el reto
+triple). request_human siempre disponible. Handles efímeros en `flow.refs`
 con resolver+ownership server-side (handle desconocido = denegación dura).
 Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03.
 Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`

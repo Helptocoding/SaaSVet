@@ -286,6 +286,26 @@ Validaciones:
 - si `has_break=True`: `break_start` y `break_end` obligatorios, dentro del horario
 - un solo bloque de apertura y un solo descanso por dia en Fase 1
 
+Las 7 filas las siembra el signal `initialize_organization`
+(`create_default_schedule`: L-V 9-18, sáb 9-14, dom cerrado) al crear la
+organización, y `ensure_schedule_integrity` repara las que falten al leer o
+escribir el horario. Una org creada **antes** de la migración `0011` puede no
+tenerlas hasta que alguien abra Configuración.
+
+> **⚠️ Consumidor externo: el agente de WhatsApp (ADR p54).**
+> `OrganizationSchedule` es la **fuente única** del horario para el agente:
+> los huecos que ofrece a los clientes, el "¿está abierta ahora?" y el aviso de
+> fuera de horario salen de aquí (vía `agent/clinic_context.py`). Igual para
+> `Organization.phone`, que es el número que aparece en su **plantilla de
+> urgencia**.
+>
+> El campo espejo `AgentSettings.business_hours` **se eliminó** justamente para
+> que no hubiera dos superficies escribiendo el mismo dato. Al cambiar este
+> modelo o sus validaciones, el agente es un consumidor a considerar:
+> `is_closed` en los 7 días significa "cerrada toda la semana" (el agente lo
+> dice), mientras que **cero filas** significa "sin configurar" (el agente
+> calla en vez de inventar un horario).
+
 ## Configuracion de la clinica
 
 ```
