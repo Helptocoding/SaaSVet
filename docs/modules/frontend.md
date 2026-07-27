@@ -835,12 +835,30 @@ Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
 
 - **Completado = READINESS, no "ya usó el sistema"**: el onboarding mide si la clínica
   quedó **lista para operar**, NO si ya recibió un cliente real. Por eso `completed` =
-  `has_patients && has_services` (2 hitos: **pacientes → servicios**). **NO** incluye
-  cita ni consulta: ésos dependen de que llegue un cliente y mantendrían el overlay
-  activo días. Objetivo: completarse en la **primera sesión (3-5 min)**. El gate vive
-  en el backend (`dashboard_activation`: `completed = has_patients and has_services`);
+  `has_patients && has_clinic_contact && has_services` (3 hitos: **pacientes → datos de
+  tu clínica → servicios**). **NO** incluye cita ni consulta: ésos dependen de que
+  llegue un cliente y mantendrían el overlay activo días. Objetivo: completarse en la
+  **primera sesión (3-5 min)**. El gate vive en el backend (`dashboard_activation`);
   `has_appointments`/`has_consultations` se siguen devolviendo (informativos) pero **no**
   gatean el cierre.
+- **Hito `has_clinic_contact` = `bool(Organization.phone)`** (Configuración → Clínica).
+  Existe porque el teléfono es lo que el asistente de WhatsApp da en su **plantilla de
+  urgencia**: sin él, un cliente que reporta una emergencia recibe *"acude de inmediato
+  a la clínica"* sin número al que llamar. Sigue siendo señal derivable porque el campo
+  nace vacío y el serializer impide guardar basura (ver
+  [`organizations.md`](organizations.md) §Teléfono de la clínica) → *existir* equivale
+  a *ser válido*.
+  - El **horario NO es hito**: `create_default_schedule` siembra las 7 filas al crear la
+    org, así que "tiene horario" es `true` desde el segundo cero; distinguir "es el
+    default" de "la clínica lo revisó" exigiría un flag — justo lo prohibido. Se edita
+    dentro del paso pero no gatea.
+  - **Consecuencia aceptada por el PO**: una organización ya activada **sin** teléfono
+    ve reaparecer el overlay una vez. Tiene causa clara y solución inmediata; no se
+    inventan excepciones. La demo se blinda sembrando el contacto en
+    `seed_demo_clinic` (`DEMO_ORG_CONTACT`, idempotente, sobrevive al reset de ADR p49).
+  - Defensa complementaria (no la sustituye): `PATCH /api/inbox/settings/` con
+    `enabled: true` exige teléfono válido → 400 (ver [`agent.md`](agent.md) §Gate del
+    kill switch). El onboarding **educa**, el gate **garantiza**.
 - **Overlay takeover**: `position: fixed; inset: 0; z-index: 200` (tapa la sidebar,
   z-index 100) — solo en `/` (los módulos conservan su sidebar). Se muestra mientras
   `!activation.completed`; al completar **desaparece para siempre** (sin "card de
@@ -860,7 +878,9 @@ Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
   refetch}`. **Toda** la lógica de UI del onboarding (paso actual, celebración, cierre,
   animaciones) vive en `FirstRunAssistant`. Si el onboarding se rediseña/elimina, el
   provider no queda acoplado.
-- **Orden de producto** (no reordenar sin justificar): pacientes → servicios. El
+- **Orden de producto** (no reordenar sin justificar): pacientes → datos de tu clínica
+  → servicios. Abre con **pacientes**, que es donde está el valor visible — nunca con un
+  formulario. Luego **identidad** (contacto) y al final **configuración operativa**: el
   servicio cierra como final de readiness.
 - **Composición editorial de dos columnas** (desktop ≥900px, art direction — no cambia
   UX): izquierda = flujo (saludo discreto + **título del paso dominante** ~40px + lead +
@@ -872,13 +892,23 @@ Mientras la activación esté incompleta, **`FirstRunAssistant`** se monta como
   estiran a lo ancho de la columna). **No** verbaliza "Paso N de N".
 - **CTA secundario solo con ruta alterna real**: únicamente el paso 1 (Agregar
   paciente / **Importar Excel**, gateado por `can("import.create")` y oculto si
-  `user.is_demo`). Servicios = solo primary.
+  `user.is_demo`). Datos de clínica y servicios = solo primary.
 - **Flujo sin intervención (auto-redirect)**: cada CTA navega con
-  `{ state: { fromOnboarding: true } }`. El módulo destino (`pets.jsx`, `config.jsx`),
-  tras el create-success **de creación** (no edición), si
+  `{ state: { fromOnboarding: true } }` (+ `section` cuando el destino es `/config`:
+  `"clinic"` o `"services"` — sin eso ambos CTAs caían en la sección por defecto).
+  El módulo destino, tras el create-success **de creación** (no edición), si
   `location.state?.fromOnboarding` → `navigate('/', { state: { onboardingStep: '<key>' } })`.
   Al volver, `FirstRunAssistant` lee ese `onboardingStep` → **micro-celebración**
   `✓ …` (~1.2 s) → siguiente paso o cierre.
+  - Quién emite la señal: `pets.jsx` (`has_patients`) y **`pages/config/index.jsx`**
+    (`has_clinic_contact`, `has_services`). El layout de Configuración es el **único**
+    dueño del `navigate` — las secciones (`ClinicSection`, `ServicesSection`) solo
+    reciben `onOnboardingDone` y avisan que el hito quedó cubierto (no duplican
+    lógica de router). **Antes ninguna sección de `/config` lo emitía**: el paso de
+    servicios no celebraba ni cerraba y el usuario se quedaba en Configuración.
+  - `ClinicSection` solo avisa si el guardado **devolvió teléfono**; guardar sin él
+    no cubre el hito (celebrar algo que el endpoint sigue viendo incompleto
+    confundiría al ADMIN) — muestra un toast diciendo qué falta.
 - **Cierre robusto al remontaje**: `FirstRunAssistant` se desmonta al navegar a un
   módulo y se re-monta al volver a `/`. El latch `sawStepRef` (que autoriza el momento
   de cierre solo si el montaje vio un paso en marcha — evita mostrarlo a una clínica ya
@@ -1129,6 +1159,7 @@ blocking (Fase D).
 | `utils/toList.js` | `toList.test.js` | normalización array \| paginado DRF |
 | `components/PaymentLinesEditor.jsx` | `PaymentLinesEditor.test.jsx` | interacción usuario→inputs→footer (Falta/Exacto/Cambio/Excede), split, agregar/quitar línea, float-drift `.toFixed(2)` |
 | `utils/inventory.js` | `inventory.test.js` | stock: `stockStatus` (agotado/bajo/normal), `productStockQty`, `productStockValue` (`sale_price/cf×qty`), `computeInitialStock`, `fmt`/`fmtCur` |
+| `components/dashboard/FirstRunAssistant.jsx` | `FirstRunAssistant.test.jsx` | onboarding: orden de los 3 hitos, un solo paso a la vez, deep-link de sección en los CTAs, celebración/cierre, gate por `service.create` |
 
 ### Gotchas
 

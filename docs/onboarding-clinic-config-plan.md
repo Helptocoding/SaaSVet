@@ -248,9 +248,18 @@ cosas distintas y ninguno sustituye al otro.
 
 ## 10. Aprobación
 
-- [ ] PR-1 validación real de `Organization.phone` + limpieza
-- [ ] PR-2 retorno desde `/config`
-- [ ] PR-3 hito en el endpoint (sin gatear)
-- [ ] PR-4 demo + orgs internas
-- [ ] PR-5 paso nuevo + gate del onboarding
-- [ ] PR-6 gate del kill switch (seguridad)
+- [x] PR-1 validación real de `Organization.phone` (`apps/core/validators.py`,
+      compartido con `OwnerSerializer`) — **limpieza de filas pendiente** (manual, §7)
+- [x] PR-2 retorno desde `/config` (`config/index.jsx` dueño del navigate;
+      además deep-link de sección, que faltaba)
+- [x] PR-3 hito `has_clinic_contact` en el endpoint + tests
+- [x] PR-4 demo (`DEMO_ORG_CONTACT` + `_ensure_org_contact`, idempotente) —
+      **captura manual en las orgs internas pendiente**
+- [x] PR-5 paso nuevo + copy + preview + `completed` incluye el hito + smoke Vitest
+- [x] PR-6 gate del kill switch (`AgentSettingsSerializer.validate_enabled` + UI)
+
+**Ejecutado el 2026-07-26.** Los 6 PRs se implementaron en un solo árbol; las
+restricciones de orden del §6 son de **despliegue**, no de edición: al desplegar,
+la limpieza de teléfonos (PR-1) y la captura en las orgs internas (PR-4) deben
+completarse **antes** de que PR-5 llegue a producción, o esos ADMIN verán el
+overlay.

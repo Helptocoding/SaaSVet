@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getServices } from "../../api/billing";
 import { getConfiguration } from "../../api/organizations";
 import { apiError } from "../../utils/apiError";
@@ -26,13 +27,26 @@ const LoadingFallback = () => (
 );
 
 const SettingsLayout = ({ user, token }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState("clinic");
+  // El onboarding manda a una sección concreta (`state.section`); por defecto Clínica.
+  const [activeSection, setActiveSection] = useState(
+    () => (SECTIONS.some((s) => s.id === location.state?.section) ? location.state.section : "clinic")
+  );
 
   const [org, setOrg] = useState(null);
   const [settings, setSettings] = useState(null);
   const [schedule, setSchedule] = useState([]);
   const [services, setServices] = useState([]);
+
+  // Retorno automático del onboarding: al completar el hito desde aquí, volver al
+  // dashboard con la señal de celebración. Vive en el layout (no en cada sección)
+  // para no duplicar la lógica de router — las secciones solo avisan que el hito
+  // quedó cubierto. `null` cuando NO se llegó desde el FirstRunAssistant.
+  const onboardingReturn = location.state?.fromOnboarding
+    ? (stepKey) => navigate("/", { state: { onboardingStep: stepKey } })
+    : null;
 
   const isPlatformOperator = user?.role === "ADMIN_SAAS";
   const hasOrg = !!user?.organization;
@@ -106,7 +120,11 @@ const SettingsLayout = ({ user, token }) => {
       <main className={styles.content}>
         <Suspense fallback={<LoadingFallback />}>
           {activeSection === "clinic" && (
-            <ClinicSection org={org} onOrgChange={setOrg} />
+            <ClinicSection
+              org={org}
+              onOrgChange={setOrg}
+              onOnboardingDone={onboardingReturn && (() => onboardingReturn("has_clinic_contact"))}
+            />
           )}
           {activeSection === "schedule" && (
             <ScheduleSection schedule={schedule} onScheduleChange={setSchedule} />
@@ -121,6 +139,7 @@ const SettingsLayout = ({ user, token }) => {
           {activeSection === "services" && (
             <ServicesSection
               services={services}
+              onOnboardingDone={onboardingReturn && (() => onboardingReturn("has_services"))}
               onServicesChange={async () => {
                 try {
                   const data = await getServices();

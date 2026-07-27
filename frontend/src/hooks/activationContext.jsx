@@ -13,7 +13,8 @@ import { useAuth } from "../auth/authContext";
  * Fuente de verdad de la activación de la clínica (primer uso).
  *
  * Deriva del endpoint read-only `v1/dashboard/activation/` (existencia real, sin
- * flags): `{has_patients, has_services, has_appointments, has_consultations, completed}`.
+ * flags): `{has_patients, has_clinic_contact, has_services, has_appointments,
+ * has_consultations, completed}`.
  *
  * Provider DELIBERADAMENTE "tonto": expone SOLO `{ activation, loading, refetch }`.
  * NO conoce nada del onboarding (qué paso se completó, celebraciones, momento de

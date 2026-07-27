@@ -54,12 +54,16 @@ import FirstRunAssistant from "./FirstRunAssistant";
 
 const A = (over = {}) => ({
   has_patients: false,
+  has_clinic_contact: false,
   has_services: false,
   has_appointments: false,
   has_consultations: false,
   completed: false,
   ...over,
 });
+
+// Readiness completa: pacientes + contacto + servicios (sin cita ni consulta).
+const READY = { has_patients: true, has_clinic_contact: true, has_services: true, completed: true };
 
 beforeEach(() => {
   navigate.mockReset();
@@ -77,16 +81,13 @@ describe("FirstRunAssistant", () => {
   });
 
   it("no renderiza cuando la clínica ya estaba activada (completed, sin transición)", () => {
-    activationImpl = A({
-      has_patients: true, has_services: true, has_appointments: true,
-      has_consultations: true, completed: true,
-    });
+    activationImpl = A({ ...READY, has_appointments: true, has_consultations: true });
     const { container } = render(<FirstRunAssistant />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("muestra SOLO el paso actual + saludo con el nombre de la clínica", () => {
-    activationImpl = A({ has_patients: true }); // siguiente = servicios
+    activationImpl = A({ has_patients: true, has_clinic_contact: true }); // siguiente = servicios
     render(<FirstRunAssistant />);
     expect(screen.getByText("Configura tus servicios")).toBeInTheDocument();
     expect(screen.queryByText("Agrega tu primer paciente")).toBeNull();
@@ -109,13 +110,19 @@ describe("FirstRunAssistant", () => {
   });
 
   it("el CTA secundario 'Importar' solo existe en el paso 1", () => {
-    // Paso 1 → aparece
+    // Paso 1 → aparece (única ruta alterna real del onboarding)
     activationImpl = A();
     const { unmount } = render(<FirstRunAssistant />);
     expect(screen.getByRole("button", { name: /importar desde excel/i })).toBeInTheDocument();
     unmount();
-    // Paso 2 → no hay secundario (solo primary)
+    // Paso 2 (datos de clínica) → solo primary
     activationImpl = A({ has_patients: true });
+    const second = render(<FirstRunAssistant />);
+    expect(screen.queryByRole("button", { name: /importar/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /capturar datos de la clínica/i })).toBeInTheDocument();
+    second.unmount();
+    // Paso 3 (servicios) → solo primary
+    activationImpl = A({ has_patients: true, has_clinic_contact: true });
     render(<FirstRunAssistant />);
     expect(screen.queryByRole("button", { name: /importar/i })).toBeNull();
     expect(screen.getByRole("button", { name: /configurar servicios/i })).toBeInTheDocument();
@@ -143,23 +150,74 @@ describe("FirstRunAssistant", () => {
     expect(screen.getByText("Primer paciente agregado")).toBeInTheDocument();
   });
 
-  it("no incluye pasos de cita ni consulta (readiness = paciente + servicio)", () => {
-    activationImpl = A({ has_patients: true }); // siguiente y ÚLTIMO = servicios
+  it("no incluye pasos de cita ni consulta (readiness = paciente + contacto + servicio)", () => {
+    activationImpl = A({ has_patients: true, has_clinic_contact: true }); // ÚLTIMO = servicios
     render(<FirstRunAssistant />);
     expect(screen.getByText("Configura tus servicios")).toBeInTheDocument();
     expect(screen.queryByText("Agenda tu primera cita")).toBeNull();
     expect(screen.queryByText("Todo preparado")).toBeNull();
   });
 
-  it("al completar readiness (paciente + servicio) muestra el momento de cierre", () => {
+  it("al completar readiness muestra el momento de cierre", () => {
     // Falta el servicio → el componente 've' el paso en marcha (latch sawStep).
-    activationImpl = A({ has_patients: true });
+    activationImpl = A({ has_patients: true, has_clinic_contact: true });
     const { rerender } = render(<FirstRunAssistant />);
     expect(screen.getByText("Configura tus servicios")).toBeInTheDocument();
     // Servicio creado → completed → momento de cierre (sin depender de cita/consulta).
-    activationImpl = A({ has_patients: true, has_services: true, completed: true });
+    activationImpl = A(READY);
     rerender(<FirstRunAssistant />);
     expect(screen.getByText("Todo listo.")).toBeInTheDocument();
     expect(screen.getByText(/Clínica San Pedro ya está lista/)).toBeInTheDocument();
+  });
+
+  // ── Paso "datos de tu clínica" ────────────────────────────────────────────
+  // El teléfono es lo que el asistente de WhatsApp da en su plantilla de urgencia.
+
+  it("pide los datos de la clínica después de pacientes y antes de servicios", () => {
+    activationImpl = A({ has_patients: true });
+    render(<FirstRunAssistant />);
+    expect(screen.getByText("¿Cómo pueden encontrarte tus clientes?")).toBeInTheDocument();
+    expect(screen.queryByText("Configura tus servicios")).toBeNull();
+  });
+
+  it("el copy habla de llamadas, WhatsApp y emergencias — no de 'completar tus datos'", () => {
+    activationImpl = A({ has_patients: true });
+    render(<FirstRunAssistant />);
+    expect(screen.getByText(/emergencia/i)).toHaveTextContent(/WhatsApp/);
+    expect(screen.queryByText(/completa tus datos/i)).toBeNull();
+  });
+
+  it("el CTA de clínica deep-linkea su sección de /config", async () => {
+    const user = userEvent.setup();
+    activationImpl = A({ has_patients: true });
+    render(<FirstRunAssistant />);
+    await user.click(screen.getByRole("button", { name: /capturar datos de la clínica/i }));
+    expect(navigate).toHaveBeenCalledWith("/config", {
+      state: { fromOnboarding: true, section: "clinic" },
+    });
+  });
+
+  it("el CTA de servicios abre la sección de servicios, no la de clínica", async () => {
+    const user = userEvent.setup();
+    activationImpl = A({ has_patients: true, has_clinic_contact: true });
+    render(<FirstRunAssistant />);
+    await user.click(screen.getByRole("button", { name: /configurar servicios/i }));
+    expect(navigate).toHaveBeenCalledWith("/config", {
+      state: { fromOnboarding: true, section: "services" },
+    });
+  });
+
+  it("celebra el hito de contacto al volver de /config", () => {
+    locationState = { onboardingStep: "has_clinic_contact" };
+    activationImpl = A({ has_patients: true, has_clinic_contact: true });
+    render(<FirstRunAssistant />);
+    expect(screen.getByText("Datos de tu clínica listos")).toBeInTheDocument();
+  });
+
+  it("sin teléfono NO cierra el onboarding aunque haya pacientes y servicios", () => {
+    activationImpl = A({ has_patients: true, has_services: true }); // completed: false
+    render(<FirstRunAssistant />);
+    expect(screen.getByText("¿Cómo pueden encontrarte tus clientes?")).toBeInTheDocument();
+    expect(screen.queryByText("Todo listo.")).toBeNull();
   });
 });

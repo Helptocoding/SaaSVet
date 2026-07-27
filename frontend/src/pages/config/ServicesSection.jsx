@@ -11,7 +11,7 @@ import styles from "./config.module.css";
 
 const EMPTY_SERVICE = { name: "", description: "", base_price: "", is_active: true };
 
-const ServicesSection = ({ services, onServicesChange }) => {
+const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
   const { can } = useAuth();
   const confirm = useConfirm();
   const canManage = can("service.create");
@@ -45,6 +45,12 @@ const ServicesSection = ({ services, onServicesChange }) => {
         await req;
       }
       close();
+      // Flujo de onboarding: solo la CREACIÓN cubre el hito (editar un servicio
+      // existente no es un primer paso). El layout hace el navigate.
+      if (!editing && onOnboardingDone) {
+        onOnboardingDone();
+        return;
+      }
       onServicesChange();
     } catch {
     } finally {

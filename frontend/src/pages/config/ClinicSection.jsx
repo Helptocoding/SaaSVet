@@ -6,7 +6,7 @@ import SettingsPanel from "./SettingsPanel";
 import { SettingRow, IdentityHeader } from "./parts";
 import styles from "./config.module.css";
 
-const ClinicSection = ({ org, onOrgChange }) => {
+const ClinicSection = ({ org, onOrgChange, onOnboardingDone }) => {
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -31,6 +31,17 @@ const ClinicSection = ({ org, onOrgChange }) => {
       toast.promise(req, { loading: "Guardando...", success: "Clínica actualizada", error: (e) => apiError(e) });
       const updated = await req;   // sonner: await la promesa REAL, no toast.promise
       if (updated && typeof updated === "object") onOrgChange(updated);
+
+      // Flujo de onboarding: el hito es `has_clinic_contact` = teléfono capturado.
+      // Guardar sin teléfono NO lo cubre — volver al dashboard celebrando algo que
+      // el endpoint de activación seguirá viendo incompleto confundiría al ADMIN.
+      if (onOnboardingDone) {
+        if (updated?.phone) {
+          onOnboardingDone();
+        } else {
+          toast.info("Falta el teléfono de la clínica para terminar este paso.");
+        }
+      }
     } catch {
     } finally {
       setSaving(false);

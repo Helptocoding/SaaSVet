@@ -5,12 +5,17 @@ import { useAuth } from "../../auth/authContext";
 import { useActivationContext } from "../../hooks/activationContext";
 import { Icon } from "../icons";
 
-// Hitos de READINESS: pacientes → servicios. El onboarding mide "clínica lista para
-// operar", NO "ya usó el sistema" — por eso NO incluye cita ni consulta (dependen de
-// que llegue un cliente real y mantendrían el onboarding activo días; ver
-// dashboard_activation: `completed` = has_patients AND has_services). Se completa en la
-// primera sesión (3-5 min). Cada paso se deriva de la EXISTENCIA real (endpoint
-// activation/), nunca de un flag. `done` = etiqueta de la micro-celebración.
+// Hitos de READINESS: pacientes → datos de la clínica → servicios. El onboarding mide
+// "clínica lista para operar", NO "ya usó el sistema" — por eso NO incluye cita ni
+// consulta (dependen de que llegue un cliente real y mantendrían el onboarding activo
+// días; ver dashboard_activation: `completed` = has_patients AND has_clinic_contact AND
+// has_services). Se completa en la primera sesión (3-5 min). Cada paso se deriva de la
+// EXISTENCIA real (endpoint activation/), nunca de un flag. `done` = etiqueta de la
+// micro-celebración.
+//
+// ORDEN (no reordenar sin justificar): abre con PACIENTES, que es donde está el valor
+// visible — nunca con un formulario. Luego IDENTIDAD (contacto) y al final CONFIGURACIÓN
+// OPERATIVA: el servicio cierra como final de readiness (decisión previa, preservada).
 const STEPS = [
   {
     key: "has_patients",
@@ -23,11 +28,21 @@ const STEPS = [
     ],
   },
   {
+    // Señal = `Organization.phone`. Es el número que el asistente de WhatsApp da en
+    // su plantilla de URGENCIA: sin él, un cliente que reporta una emergencia recibe
+    // "acude de inmediato a la clínica" sin a dónde llamar.
+    key: "has_clinic_contact",
+    title: "¿Cómo pueden encontrarte tus clientes?",
+    lead: "El teléfono al que te llaman, el WhatsApp por el que te escriben y la dirección a la que llegan. Es lo que el asistente les comparte cuando preguntan cómo llegar — y el número que da si hay una emergencia.",
+    done: "Datos de tu clínica listos",
+    actions: [{ label: "Capturar datos de la clínica", to: "/config", section: "clinic", variant: "primary" }],
+  },
+  {
     key: "has_services",
     title: "Configura tus servicios",
     lead: "Consulta, vacunación, estética… lo que ofrece tu clínica.",
     done: "Servicios configurados",
-    actions: [{ label: "Configurar servicios", to: "/config", variant: "primary" }],
+    actions: [{ label: "Configurar servicios", to: "/config", section: "services", variant: "primary" }],
   },
 ];
 
@@ -45,6 +60,11 @@ const PV_SERVICES = [
   { name: "Cirugía", price: "$1,200" },
   { name: "Estética", price: "$400" },
   { name: "Desparasitación", price: "$180" },
+];
+const PV_CLINIC = [
+  { label: "Teléfono", value: "55 1234 5678" },
+  { label: "WhatsApp", value: "55 1234 5678" },
+  { label: "Dirección", value: "Av. Reforma 120, Centro" },
 ];
 
 const PreviewPatients = () => (
@@ -76,8 +96,23 @@ const PreviewServices = () => (
   </div>
 );
 
+const PreviewClinic = () => (
+  <div className="fp-pv">
+    <span className="fp-pv-label">Datos de tu clínica</span>
+    <div className="fp-pv-rows">
+      {PV_CLINIC.map((f) => (
+        <div key={f.label} className="fp-pv-row fp-pv-row--between">
+          <span className="fp-pv-field">{f.label}</span>
+          <span className="fp-pv-value">{f.value}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const STEP_PREVIEW = {
   has_patients: PreviewPatients,
+  has_clinic_contact: PreviewClinic,
   has_services: PreviewServices,
 };
 
@@ -205,7 +240,10 @@ const FirstRunAssistant = ({ onComplete }) => {
   if (current) sawStepRef.current = true;
 
   const orgName = user?.organization_name;
-  const go = (to) => navigate(to, { state: { fromOnboarding: true } });
+  // `section` deep-linkea dentro de /config (Clínica vs Servicios): sin esto ambos
+  // CTAs caían en la sección por defecto y el usuario tenía que buscar la correcta.
+  const go = ({ to, section }) =>
+    navigate(to, { state: { fromOnboarding: true, ...(section ? { section } : {}) } });
 
   // Entrada orquestada (escalonada). `useReducedMotion` desactiva todo el movimiento.
   const ease = [0.22, 0.61, 0.36, 1];
@@ -281,14 +319,14 @@ const FirstRunAssistant = ({ onComplete }) => {
                     )
                     .map((a) =>
                       a.variant === "link" ? (
-                        <button key={a.to} className="firstrun-link" onClick={() => go(a.to)}>
+                        <button key={a.label} className="firstrun-link" onClick={() => go(a)}>
                           {a.label}
                         </button>
                       ) : (
                         <button
-                          key={a.to}
+                          key={a.label}
                           className="btn btn-primary btn-md firstrun-cta"
-                          onClick={() => go(a.to)}
+                          onClick={() => go(a)}
                         >
                           {a.label}
                         </button>
