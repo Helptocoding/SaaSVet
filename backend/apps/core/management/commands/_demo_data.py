@@ -13,6 +13,24 @@ DEMO_ORG_NAME = "Clínica Demo SaaSlyVet"
 DEMO_TIMEZONE = "America/Mexico_City"
 DEMO_TAX_RATE = "0.16"  # IVA 16% visible en cobros
 
+# Contacto genérico de la demo. Existe por UNA razón: sin `Organization.phone`
+# la demo arrancaría con el overlay de onboarding encima (el hito
+# `has_clinic_contact` gatea `completed`) — y la demo es la superficie de venta.
+# La demo NO ejercita la automatización de WhatsApp, así que un número genérico
+# basta; debe pasar la validación real (`apps.core.validators`: 10 dígitos, sin
+# relleno evidente).
+DEMO_ORG_CONTACT = {
+    "phone": "5512345678",
+    "whatsapp": "5512345678",
+    "email": "contacto@saaslyvet.com",
+    "address_line1": "Av. Insurgentes Sur 1234",
+    "district": "Del Valle",
+    "city": "Ciudad de México",
+    "state": "CDMX",
+    "postal_code": "03100",
+    "country": "México",
+}
+
 # --- Usuarios demo (3, P1-8 ajustado) ------------------------------------
 # password único para beta privada (cumple validators: ≥8, mayúscula, número).
 DEMO_PASSWORD = "DemoSaaSlyVet2026"

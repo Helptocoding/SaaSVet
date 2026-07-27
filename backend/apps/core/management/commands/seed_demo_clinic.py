@@ -62,6 +62,7 @@ from apps.platform.services.provision_organization import provision_organization
 
 from ._demo_data import (
     DEMO_ORG_NAME, DEMO_TIMEZONE, DEMO_TAX_RATE, DEMO_PASSWORD, DEMO_USERS,
+    DEMO_ORG_CONTACT,
     DEMO_SERVICES, DEMO_PRODUCTS, OWNER_NAMES, PET_NAMES, BREEDS,
     SPECIES_WEIGHTS, CONSULTATION_TEMPLATES,
 )
@@ -106,6 +107,7 @@ class Command(BaseCommand):
             return
 
         org = self._ensure_org(opts["actor_username"])
+        self._ensure_org_contact(org)
         users = self._ensure_users(org)
         self._accept_legal_for_demo_users(users)
         self._restrict_demo_import(org)
@@ -181,6 +183,26 @@ class Command(BaseCommand):
             f"Org demo creada: «{org.name}» (id={org.pk}), admin={result.admin.username}."
         ))
         return org
+
+    def _ensure_org_contact(self, org):
+        """Datos de contacto de la clínica demo — idempotente y no destructivo.
+
+        Solo rellena los campos VACÍOS: si alguien capturó un dato real en la
+        demo, el seed no lo pisa. Sobrevive al reset porque el purge (ADR p49)
+        borra el subgrafo operativo, no la fila `Organization`.
+
+        Por qué existe: sin `phone`, el hito `has_clinic_contact` del endpoint de
+        activación es False → la demo arranca con el overlay de onboarding encima.
+        """
+        changed = []
+        for field, value in DEMO_ORG_CONTACT.items():
+            if (getattr(org, field, '') or '').strip():
+                continue
+            setattr(org, field, value)
+            changed.append(field)
+        if changed:
+            org.save(update_fields=changed)
+            self.stdout.write(f"Contacto demo sembrado: {', '.join(changed)}.")
 
     def _ensure_users(self, org):
         for u in DEMO_USERS:
@@ -618,6 +640,7 @@ class Command(BaseCommand):
                 self._purge(org, full=False)
                 t1 = monotonic()
 
+                self._ensure_org_contact(org)
                 users = self._ensure_users(org)
                 self._accept_legal_for_demo_users(users)
                 self._restrict_demo_import(org)

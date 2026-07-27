@@ -746,19 +746,32 @@ def dashboard_activation(request):
     FirstRunAssistant del dashboard se derive de datos reales y NO de un flag
     persistido por usuario.
 
-    - has_patients:      ≥1 Pet NO genérico (la mascota genérica se siembra al crear
-                         la org; no cuenta como "tiene pacientes").
-    - has_services:      ≥1 Service.
-    - has_appointments:  ≥1 Appointment (informativo).
-    - has_consultations: ≥1 MedicalRecord (informativo).
+    - has_patients:        ≥1 Pet NO genérico (la mascota genérica se siembra al crear
+                           la org; no cuenta como "tiene pacientes").
+    - has_clinic_contact:  Organization.phone capturado.
+    - has_services:        ≥1 Service.
+    - has_appointments:    ≥1 Appointment (informativo).
+    - has_consultations:   ≥1 MedicalRecord (informativo).
 
-    `completed` = clínica LISTA PARA OPERAR = has_patients AND has_services (readiness).
+    `completed` = clínica LISTA PARA OPERAR = has_patients AND has_clinic_contact
+    AND has_services (readiness).
     Deliberadamente NO depende de has_appointments/has_consultations: esos hitos
     dependen de que llegue un cliente real, y mantendrían el onboarding activo durante
     días aunque la clínica ya esté configurada. El onboarding mide "lista para empezar",
     no "ya usó el sistema" → se completa en la primera sesión (3-5 min).
     has_appointments/has_consultations se siguen devolviendo (informativos) pero NO
     gatean el cierre del onboarding. No escribe nada.
+
+    Sobre `has_clinic_contact` — por qué `bool(phone)` basta y por qué el HORARIO
+    no es un hito:
+      - `Organization.phone` NACE vacío y `OrganizationSerializer.validate_phone`
+        (regla en `apps.core.validators`) impide guardar basura → *existir*
+        equivale a *ser válido*. La señal sigue siendo existencia real, sin flags.
+      - El horario NO es derivable: `create_default_schedule` siembra las 7 filas al
+        crear la org, así que "tiene horario" es True desde el segundo cero.
+        Distinguir "es el default" de "la clínica lo revisó" exigiría un flag o un
+        timestamp — exactamente lo que este endpoint prohíbe. Por eso el horario se
+        edita dentro del paso pero NO gatea (ver plan de onboarding §3.2/§8).
 
     Imports locales para evitar acoplar el módulo dashboard al cargar (idiomático
     en este archivo — read-only sobre los dominios).
@@ -771,17 +784,20 @@ def dashboard_activation(request):
         raise PermissionDenied("User has no organization assigned")
 
     has_patients = Pet.objects.for_organization(org).filter(is_generic=False).exists()
+    has_clinic_contact = bool((org.phone or '').strip())
     has_services = Service.objects.for_organization(org).exists()
     has_appointments = Appointment.objects.for_organization(org).exists()
     has_consultations = MedicalRecord.objects.for_organization(org).exists()
 
     return Response({
         'has_patients': has_patients,
+        'has_clinic_contact': has_clinic_contact,
         'has_services': has_services,
         'has_appointments': has_appointments,
         'has_consultations': has_consultations,
-        # Readiness: paciente + servicio. NO depende de cita/consulta (eventos externos).
-        'completed': has_patients and has_services,
+        # Readiness: paciente + contacto + servicio. NO depende de cita/consulta
+        # (eventos externos, requieren que llegue un cliente real).
+        'completed': has_patients and has_clinic_contact and has_services,
     })
 
 
