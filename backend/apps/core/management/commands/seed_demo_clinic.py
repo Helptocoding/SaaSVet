@@ -376,9 +376,22 @@ class Command(BaseCommand):
             Product.objects.filter(organization=org).prefetch_related("presentations")
         }
 
-        # Caja abierta de recepción (hoy) → los pagos de "hoy" se asocian al turno.
+        # Caja abierta de HOY para CADA usuario que cobra. `pay_invoice` resuelve
+        # la sesión por `opened_by=actor` (ADR p28/p39), así que con
+        # `require_open_cash_session=True` —encendido en la demo— un actor sin
+        # turno propio revienta el cobro. Abajo se cobra con recepción (lo de hoy)
+        # y con el veterinario (lo histórico): ambos necesitan turno.
+        #
+        # NO reducir a una sola sesión compartida: el turno es por usuario (el
+        # cierre Z reconcilia el cajón de UNA persona). Sin la del veterinario, el
+        # reset fallaba en el primer cobro histórico y hacía ROLLBACK completo —
+        # la demo llevaba ~24 días sin resetearse.
         cash_session = CashSession.objects.create(
             organization=org, opened_by=recepcion, opened_at=self.now,
+            opening_float=Decimal("500.00"), status="open",
+        )
+        CashSession.objects.create(
+            organization=org, opened_by=vet, opened_at=self.now,
             opening_float=Decimal("500.00"), status="open",
         )
 

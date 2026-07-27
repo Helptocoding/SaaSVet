@@ -98,6 +98,23 @@ Recuperación si el reset empieza a fallar en prod: ADR p49 §12
 (`docs/decisions/2026-06-29-p49-demo-tenant-reset.md`) — deshabilitar cron,
 limpiar el flag de mantenimiento, reset manual, auditorías `--org`, rehabilitar.
 
+> **El ROLLBACK esconde el fallo.** La demo queda íntegra y sirviendo su último
+> estado bueno, así que un reset roto **no se nota desde la UI**: solo deja de
+> refrescarse. Detectado en producción el 2026-07-26 con **1182 fallos
+> consecutivos (~24 días)** y ningún `DEMO_RESET_COMPLETED`. Vigilar el deadman
+> (`HEALTHCHECK_DEMO_RESET_URL`, que solo pinguea con exit 0) o revisar:
+> ```bash
+> grep -c "DEMO_RESET_COMPLETED" /var/log/vet-cron.log   # debe crecer cada 30 min
+> ```
+
+> **Gotcha — un turno de caja por actor.** `_build_operations` cobra con
+> **recepción** (lo de hoy) y con el **veterinario** (lo histórico), y
+> `pay_invoice` resuelve la sesión por `opened_by=actor` (ADR p28/p39). Con
+> `require_open_cash_session=True` —encendido en la demo— cada actor que cobra
+> necesita su **propio** turno abierto; si falta uno, el reset revienta en el
+> primer cobro de ese actor y hace ROLLBACK. Fue la causa de los 1182 fallos.
+> Al agregar un actor nuevo que cobre, ábrele turno.
+
 ---
 
 ## 4. Eliminar la demo por completo
