@@ -256,6 +256,43 @@ Reglas del endpoint:
 - si cualquier fila falla validacion, no guarda nada
 - el backend ordena por `weekday`
 
+### Teléfono de la clínica — validación real (regla compartida)
+
+`Organization.phone` no es un campo cosmético: es el número que el agente de
+WhatsApp pone en su **plantilla de urgencia** y la señal del hito
+`has_clinic_contact` del onboarding (`GET /api/v1/dashboard/activation/`).
+
+La regla vive en **`apps/core/validators.py`** (dueño único) y la consumen
+`OrganizationSerializer.validate_phone` y `OwnerSerializer.validate_phone`:
+
+| Capa | Regla |
+|---|---|
+| Formato | Normaliza a dígitos; exige exactamente **10** (México-only, misma decisión Q5 que `agent.services.normalize_wa_id`) |
+| Relleno evidente | Rechaza todos los dígitos iguales (`1111111111`) y secuencias triviales (`1234567890`, `9876543210`) |
+| Vacío | `Organization.phone` lo permite (`allow_blank=True` — la org nace sin él y el ADMIN debe poder guardar el resto de la sección). `Owner.phone` **no** (alta manual siempre exige teléfono) |
+
+**Lo que NO pasa nunca**: un valor no vacío que no normaliza. Antes
+`validate_phone` solo quitaba los no-dígitos, así que `"5"` se guardaba como `"5"`
+y `"no sé"` se guardaba como `""` **en silencio** — el ADMIN creía haber capturado
+el dato. Por eso arriba basta con `bool(phone)`: si el campo no puede contener
+basura, *existir* equivale a *ser válido*.
+
+**Límite honesto**: sube el piso de "cualquier cosa" a "plausible". Un número
+válido pero equivocado pasa igual; la única prueba real sería un OTP (fuera de
+alcance). Residual asumido.
+
+**Deuda contenida** (no ampliar sin ADR): el registro rápido de citas
+(`appointments/views.py`) y `PetSerializer.validate` conservan su propio chequeo
+inline de 10 dígitos (sin rechazo de relleno) — escriben `Owner` por rutas que no
+pasan por `OwnerSerializer`. `validate_whatsapp` sigue siendo el stripper viejo.
+
+**Verificación antes de desplegar** (las orgs sin teléfono verán el overlay de
+onboarding al siguiente login):
+
+```python
+Organization.objects.filter(phone='').values_list('name', flat=True)
+```
+
 ### Lectura agregada de configuracion
 
 ```

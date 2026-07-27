@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.utils import timezone
 from zoneinfo import available_timezones
 
+from apps.core.validators import validate_mx_phone
+
 from .models import Organization, OrganizationTimezoneAudit, OrganizationSettings, OrganizationSchedule
 
 
@@ -28,10 +30,16 @@ class OrganizationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_phone(self, value):
-        if value:
-            cleaned = ''.join(c for c in value if c.isdigit())
-            return cleaned
-        return value
+        # Teléfono público de la clínica. Es lo que el agente de WhatsApp pone en
+        # su plantilla de URGENCIA (`agent/clinic_context.clinic_phone`), así que
+        # el campo no puede aceptar basura: `bool(phone)` es la señal del hito
+        # `has_clinic_contact` del onboarding, y solo vale si existir == ser válido.
+        #
+        # `allow_blank=True`: la org NACE con phone='' y el ADMIN debe poder
+        # guardar el resto de la sección antes de capturarlo. Lo que sí se rechaza
+        # es un valor NO vacío que no normaliza ("no sé" → antes se guardaba ''
+        # en silencio y el onboarding reaparecía sin explicación).
+        return validate_mx_phone(value, allow_blank=True)
 
     def validate_whatsapp(self, value):
         if value:

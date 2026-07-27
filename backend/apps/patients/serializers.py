@@ -1,6 +1,9 @@
 import re
 
 from rest_framework import serializers
+
+from apps.core.validators import validate_mx_phone
+
 from .models import Pet, Owner, SPECIES_CHOICES
 
 NAME_REGEX = re.compile(r"^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\' \-]+$")
@@ -43,9 +46,11 @@ class OwnerSerializer(serializers.ModelSerializer):
         # (apps/imports/services.py), que escribe vía Owner.save() directo y NO
         # pasa por este serializer — Owner.phone es blank=True a nivel modelo para
         # permitirlo. NO relajar aquí: datos históricos sucios ≠ datos nuevos.
-        if not PHONE_REGEX.match(value or ''):
-            raise serializers.ValidationError("El teléfono debe tener exactamente 10 dígitos.")
-        return value
+        #
+        # La regla vive en `apps.core.validators` (dueño único, compartida con
+        # `OrganizationSerializer.validate_phone`): 10 dígitos MX + rechazo de
+        # relleno evidente. Aquí el teléfono es OBLIGATORIO → `allow_blank=False`.
+        return validate_mx_phone(value)
 
 
 class PetSerializer(serializers.ModelSerializer):
