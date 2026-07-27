@@ -25,6 +25,11 @@ export const releaseConversation = (publicId) =>
 export const unlinkFamily = (publicId) =>
   api.post(`inbox/conversations/${publicId}/unlink-family/`).then((r) => r.data);
 
+// Resetea la identidad del contacto a "unknown" (cualquier vínculo, no solo
+// familiar) y cierra el hilo activo. Solo ADMIN.
+export const resetContactIdentity = (publicId) =>
+  api.post(`inbox/conversations/${publicId}/reset-identity/`).then((r) => r.data);
+
 export const getAgentSettings = () =>
   api.get("inbox/settings/").then((r) => r.data);
 

@@ -13,6 +13,7 @@ from apps.channels.models import ChannelAccount, Message
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSIONS
 from apps.organizations.models import Organization
+from apps.patients.models import Owner
 
 User = get_user_model()
 
@@ -217,6 +218,68 @@ class InboxFlowTests(InboxApiTestCase):
         self.conversation.refresh_from_db()
         self.assertEqual(self.conversation.state, Conversation.STATE_CLOSED)
         self.assertIsNotNone(self.conversation.closed_at)
+
+
+class InboxResetIdentityTests(InboxApiTestCase):
+    """`reset-identity`: generaliza `unlink-family` a CUALQUIER `linked_via`
+    (aquí, `self_register` — el caso que `unlink-family` rechaza a propósito).
+    Solo ADMIN (`agentinbox.config`), a diferencia de claim/close/unlink-family
+    (`agentinbox.claim`, que ASSISTANT también tiene)."""
+
+    def setUp(self):
+        self.owner = Owner.objects.create(
+            organization=self.org, name="Felipe Díaz", phone="9371651868",
+        )
+        self.contact.owner = self.owner
+        self.contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
+        self.contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
+        self.contact.verified_at = self.conversation.created_at
+        self.contact.save(update_fields=[
+            "owner", "verification_level", "linked_via", "verified_at"])
+
+    def test_admin_resets_self_registered_contact_and_closes_thread(self):
+        self.client.force_authenticate(self.admin)
+        r = self.client.post(
+            f"/api/inbox/conversations/{self.conversation.public_id}/reset-identity/"
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+
+        self.contact.refresh_from_db()
+        self.assertIsNone(self.contact.owner_id)
+        self.assertEqual(
+            self.contact.verification_level, ContactIdentity.VERIFICATION_UNKNOWN)
+        self.assertIsNone(self.contact.verified_at)
+        self.assertEqual(self.contact.linked_via, "")
+
+        self.conversation.refresh_from_db()
+        self.assertEqual(self.conversation.state, Conversation.STATE_CLOSED)
+        self.assertIsNotNone(self.conversation.closed_at)
+
+    def test_unlink_family_refuses_self_registered_contact(self):
+        """Confirma el contraste: el endpoint viejo NUNCA toca self_register."""
+        self.client.force_authenticate(self.admin)
+        r = self.client.post(
+            f"/api/inbox/conversations/{self.conversation.public_id}/unlink-family/"
+        )
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.contact.refresh_from_db()
+        self.assertEqual(self.contact.owner_id, self.owner.pk)
+
+    def test_assistant_cannot_reset_identity(self):
+        self.client.force_authenticate(self.assistant)
+        r = self.client.post(
+            f"/api/inbox/conversations/{self.conversation.public_id}/reset-identity/"
+        )
+        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
+        self.contact.refresh_from_db()
+        self.assertEqual(self.contact.owner_id, self.owner.pk)
+
+    def test_reset_identity_is_tenant_scoped(self):
+        self.client.force_authenticate(self.admin)
+        r = self.client.post(
+            f"/api/inbox/conversations/{self.other_conversation.public_id}/reset-identity/"
+        )
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class InboxSettingsTests(InboxApiTestCase):

@@ -11,6 +11,7 @@ import {
     getInboxMetrics,
     getWhatsappToken,
     releaseConversation,
+    resetContactIdentity,
     sendInboxMessage,
     setWhatsappToken,
     unlinkFamily,
@@ -253,6 +254,20 @@ const Inbox = () => {
         await runAction(unlinkFamily, "Vínculo familiar revocado");
     };
 
+    const handleResetIdentity = async () => {
+        const conv = conversations.find((c) => c.public_id === selectedId);
+        const owner = conv?.owner_name;
+        const ok = await confirm({
+            message: owner
+                ? `¿Resetear la identidad de este contacto? Deja de estar vinculado a ${owner} y esta conversación se cierra — el siguiente mensaje se tratará como contacto nuevo.`
+                : "¿Resetear la identidad de este contacto? Esta conversación se cierra — el siguiente mensaje se tratará como contacto nuevo.",
+            confirmText: "Resetear identidad",
+            dangerMode: true,
+        });
+        if (!ok) return;
+        await runAction(resetContactIdentity, "Identidad reseteada");
+    };
+
     const handleToggleAgent = async () => {
         const next = !agentSettings?.enabled;
         try {
@@ -432,6 +447,13 @@ const Inbox = () => {
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={handleUnlinkFamily}>
                                                 Revocar vínculo
+                                            </button>
+                                        )}
+                                        {canConfig && conv.contact_verification && conv.contact_verification !== "unknown" && (
+                                            <button className="btn btn-secondary btn-xs" disabled={acting}
+                                                onClick={handleResetIdentity}
+                                                title="Desliga este número de cualquier cliente y cierra el hilo — útil para volver a probar el flujo de identidad">
+                                                Resetear identidad
                                             </button>
                                         )}
                                         <button className="btn btn-secondary btn-xs" disabled={acting} onClick={handleClose}>

@@ -229,6 +229,53 @@ def unlink_family(request, pk):
 
 
 @api_view(['POST'])
+@permission_classes([make_permission('agentinbox.config')])
+def reset_contact_identity(request, pk):
+    """Resetea la identidad del contacto a `unknown` y cierra el hilo activo.
+
+    A diferencia de `unlink_family` (solo revoca vínculos `family_challenge`),
+    esta acción resetea CUALQUIER vínculo (`phone_match`, `confirmed_in_chat`,
+    `self_register`, `staff_verified`) — pensada para soporte/QA cuando un
+    número quedó ligado por error, o para reprobar el flujo de identidad
+    desde cero con el mismo número real (`resolve_contact_identity` solo
+    matchea teléfono→Owner al CREAR la fila; nunca la re-deriva después).
+    Solo ADMIN (`agentinbox.config`, el mismo permiso del kill switch y el
+    token de WhatsApp — acción igual de sensible: desligar una identidad ya
+    verificada es la mitad del vector que el diseño original evita)."""
+    from .models import ContactIdentity
+    conversation = _get_conversation(request, pk)
+    contact = conversation.contact
+    previous_owner_id = contact.owner_id
+    contact.owner = None
+    contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+    contact.verified_at = None
+    contact.linked_via = ''
+    contact.is_ambiguous = False
+    contact.save(update_fields=[
+        'owner', 'verification_level', 'verified_at', 'linked_via',
+        'is_ambiguous'])
+
+    now = timezone.now()
+    open_conversations = Conversation.objects.for_organization(
+        request.user.organization
+    ).filter(contact=contact).exclude(state=Conversation.STATE_CLOSED)
+    for conv in open_conversations:
+        conv.state = Conversation.STATE_CLOSED
+        conv.closed_at = now
+        conv.save(update_fields=['state', 'closed_at'])
+
+    logger.info("AGENT_CONTACT_IDENTITY_RESET", extra={
+        "event": "AGENT_CONTACT_IDENTITY_RESET",
+        "organization_id": request.user.organization_id,
+        "contact_id": contact.pk,
+        "previous_owner_id": previous_owner_id,
+        "actor_id": request.user.id,
+    })
+    conversation.refresh_from_db()
+    return Response(ConversationListSerializer(conversation).data)
+
+
+@api_view(['POST'])
 @permission_classes([make_permission('agentinbox.send')])
 def send_message(request, pk):
     conversation = _get_conversation(request, pk)
