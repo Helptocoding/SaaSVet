@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
@@ -95,6 +96,7 @@ const MetricsBar = ({ metrics }) => {
 const Inbox = () => {
     const { can } = useAuth();
     const confirm = useConfirm();
+    const navigate = useNavigate();
 
     const [conversations, setConversations] = useState([]);
     const [loadingList, setLoadingList] = useState(true);
@@ -258,7 +260,14 @@ const Inbox = () => {
             setAgentSettings(data);
             toast.success(next ? "Respuestas automáticas activadas" : "Respuestas automáticas desactivadas");
         } catch (err) {
-            toast.error(apiError(err, "No se pudo actualizar"));
+            // El backend bloquea `enabled=true` sin teléfono de clínica (plantilla
+            // de urgencia sin número al que llamar). El mensaje ya es accionable —
+            // se acompaña del atajo para no dejar al ADMIN buscando dónde ir.
+            const message = apiError(err, "No se pudo actualizar");
+            toast.error(message, next ? {
+                action: { label: "Ir a Configuración", onClick: () => navigate("/config") },
+                duration: 8000,
+            } : undefined);
         }
     };
 

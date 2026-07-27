@@ -11,6 +11,7 @@ import unicodedata
 from rest_framework import serializers
 
 from apps.channels.models import Message
+from apps.core.validators import is_valid_mx_phone
 
 from .models import AgentSettings, Conversation
 
@@ -136,6 +137,31 @@ class AgentSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgentSettings
         fields = ['enabled', 'faq_facts']
+
+    def validate_enabled(self, value):
+        """No debe existir `enabled=True` + `Organization.phone` vacío/inválido.
+
+        NO es UX, es seguridad. El agente atiende urgencias: la plantilla de
+        urgencia (`clinic_context.clinic_phone`) le dice al cliente "acude de
+        inmediato a la clínica" y, sin teléfono, sin número al que llamar. Ese
+        estado no debe ser alcanzable — independientemente de si el ADMIN pasó
+        por el onboarding nuevo o venía de antes.
+
+        División de responsabilidades: el onboarding EDUCA (te lleva al dato al
+        arrancar), este gate GARANTIZA (impide el estado peligroso). El HORARIO
+        no entra: se siembra por defecto al crear la org, así que "tiene horario"
+        siempre es verdadero y bloquear sobre eso no protegería de nada.
+        """
+        if not value:
+            return value
+        org = getattr(self.instance, 'organization', None)
+        if org is None or not is_valid_mx_phone(getattr(org, 'phone', '')):
+            raise serializers.ValidationError(
+                "Antes de activar las respuestas automáticas, captura el teléfono "
+                "de la clínica en Configuración → Clínica. El asistente lo necesita "
+                "para decirle a un cliente a dónde llamar en una urgencia."
+            )
+        return value
 
     def validate_faq_facts(self, value):
         if not isinstance(value, dict):

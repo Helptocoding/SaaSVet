@@ -220,7 +220,12 @@ class InboxFlowTests(InboxApiTestCase):
 
 
 class InboxSettingsTests(InboxApiTestCase):
+    def _capture_clinic_phone(self, phone="5512345678"):
+        self.org.phone = phone
+        self.org.save(update_fields=["phone"])
+
     def test_admin_toggles_kill_switch(self):
+        self._capture_clinic_phone()
         self.client.force_authenticate(self.admin)
         r = self.client.get("/api/inbox/settings/")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
@@ -233,6 +238,52 @@ class InboxSettingsTests(InboxApiTestCase):
         self.assertTrue(
             AgentSettings.objects.get(organization=self.org).enabled
         )
+
+    # ---- Gate: enabled=True exige teléfono de clínica -----------------------
+    # No es UX, es seguridad: la plantilla de URGENCIA le dice al cliente que
+    # acuda a la clínica; sin teléfono, sin número al que llamar. Ese estado no
+    # debe ser alcanzable.
+
+    def test_enable_without_clinic_phone_is_rejected(self):
+        self.assertEqual(self.org.phone, "")
+        self.client.force_authenticate(self.admin)
+        r = self.client.patch(
+            "/api/inbox/settings/", {"enabled": True}, format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
+        self.assertIn("Configuración", r.content.decode())
+        self.assertFalse(AgentSettings.objects.get(organization=self.org).enabled)
+
+    def test_enable_with_legacy_invalid_phone_is_rejected(self):
+        """Filas guardadas antes de que el serializer validara (p.ej. `"5"`)."""
+        self._capture_clinic_phone("5")
+        self.client.force_authenticate(self.admin)
+        r = self.client.patch(
+            "/api/inbox/settings/", {"enabled": True}, format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
+
+    def test_disabling_never_requires_a_phone(self):
+        """Apagar el agente SIEMPRE debe poder hacerse (es el kill switch)."""
+        AgentSettings.objects.update_or_create(
+            organization=self.org, defaults={"enabled": True},
+        )
+        self.assertEqual(self.org.phone, "")
+        self.client.force_authenticate(self.admin)
+        r = self.client.patch(
+            "/api/inbox/settings/", {"enabled": False}, format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+        self.assertFalse(AgentSettings.objects.get(organization=self.org).enabled)
+
+    def test_other_fields_editable_without_clinic_phone(self):
+        """El gate solo bloquea el encendido, no toda la configuración."""
+        self.client.force_authenticate(self.admin)
+        r = self.client.patch(
+            "/api/inbox/settings/",
+            {"faq_facts": {"estacionamiento": "Sí"}}, format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
 
     def test_schedule_is_not_configurable_here(self):
         """El horario vive en Configuración → Horario (`OrganizationSchedule`).

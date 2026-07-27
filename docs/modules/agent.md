@@ -58,7 +58,7 @@ Staff → /inbox (bandeja): responder = tomar (human_active + claim).
 | `GET /api/inbox/conversations/<uuid>/messages/` | `agentinbox.view` | Transcript cronológico, cap 200 |
 | `POST …/send/` | `agentinbox.send` | Sanitizado, máx 4000; deja la conversación en `human_active` + claim |
 | `POST …/claim/` · `…/close/` · `…/release/` | `agentinbox.claim` | Claim exclusivo → 409 `already_claimed` |
-| `GET/PATCH /api/inbox/settings/` | `agentinbox.config` | Kill switch + `faq_facts` (caps 20×500; rechaza claves de la config de clínica). El horario NO se toca aquí: vive en `/config` |
+| `GET/PATCH /api/inbox/settings/` | `agentinbox.config` | Kill switch + `faq_facts` (caps 20×500; rechaza claves de la config de clínica). `enabled=true` exige teléfono de clínica válido → 400 (ver §Gate del kill switch). El horario NO se toca aquí: vive en `/config` |
 
 Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
 (el bot) ninguno de bandeja.
@@ -126,6 +126,31 @@ solo hay **una** superficie donde se edita: `/config` (Configuración).
 Puntos únicos de resolución: `effective_business_hours()`, `clinic_phone()`,
 `clinic_facts()`, `humanize_schedule()`. Cualquier superficie nueva que pregunte
 por horario o contacto pasa por ahí — no por `AgentSettings`.
+
+### Gate del kill switch: `enabled=True` exige teléfono de clínica
+
+No debe existir la combinación `AgentSettings.enabled=True` + `Organization.phone`
+vacío o inválido. **No es UX, es seguridad**: el agente atiende urgencias, y la
+plantilla de urgencia le dice al cliente *"acude de inmediato a la clínica"* — sin
+teléfono, sin número al que llamar. Ese estado no debe ser alcanzable,
+independientemente de si el ADMIN pasó por el onboarding nuevo o venía de antes.
+
+- `PATCH /api/inbox/settings/` con `enabled: true` valida
+  `apps.core.validators.is_valid_mx_phone(organization.phone)` → si no pasa, **400**
+  con mensaje accionable que apunta a Configuración → Clínica. El predicado (en vez
+  de `bool(phone)`) cubre las filas guardadas **antes** de que el serializer validara
+  (un `"5"` histórico no habilita el agente).
+- **Apagar nunca se bloquea** (`enabled: false` siempre pasa): es el kill switch.
+  El gate tampoco bloquea editar `faq_facts` sin teléfono.
+- El **horario NO entra** en el gate: `create_default_schedule` lo siembra al crear
+  la org, así que "tiene horario" es verdadero desde el segundo cero y bloquear
+  sobre una señal siempre verdadera no protege de nada.
+- La UI de `/inbox` muestra el motivo del backend + atajo "Ir a Configuración"
+  (nunca un error crudo).
+
+**División de responsabilidades**: el onboarding (`FirstRunAssistant`, hito
+`has_clinic_contact`) **educa** — te lleva al dato cuando arrancas; este gate
+**garantiza** — impide el estado peligroso. Ninguno sustituye al otro.
 
 **`AgentSettings.business_hours` se eliminó** (migración `0009`). Era una
 segunda superficie de escritura del horario: el ADMIN podía configurarlo en
