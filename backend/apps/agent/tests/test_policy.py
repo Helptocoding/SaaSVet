@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.agent import policy, tier0
+from apps.agent import matchers, policy, tier0
 from apps.agent.models import (
     AgentSettings,
     ContactIdentity,
@@ -210,6 +210,239 @@ class BudgetAndScopeTests(PolicyTestCase):
     def test_normal_query_runs_planner(self):
         d = self._eval("cuánto cuesta la consulta")
         self.assertEqual(d.kind, policy.RUN_PLANNER)
+
+
+class IdentityTriageTests(PolicyTestCase):
+    """Tamiz UX-05: un número sin registro NUNCA se asume cliente nuevo.
+
+    Y decir "ya soy cliente" no manda a nadie con un humano: arranca el reto
+    que lo busca en `Owner` y lo verifica, para que el agente siga atendiendo.
+    Solo una verificación FALLIDA escala (eso ya lo cubre `_family_fail`).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.unknown_contact = ContactIdentity.objects.create(
+            organization=self.org, external_id="5215500001111",
+            phone_normalized="5500001111",
+        )
+        self.unknown_conv = Conversation.objects.create(
+            organization=self.org, channel_account=self.channel,
+            contact=self.unknown_contact,
+        )
+
+    def _eval_unknown(self, text):
+        return policy.evaluate(self.unknown_conv, text,
+                               agent_settings=self.settings)
+
+    def test_personal_action_from_unregistered_number_asks_triage(self):
+        d = self._eval_unknown("quiero agendar una cita")
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta.get("triage"), "asked")
+        self.assertIn("primera vez", d.text.lower())
+        self.unknown_conv.refresh_from_db()
+        self.assertIn("identity_triage", self.unknown_conv.flow)
+
+    def test_price_question_does_not_trigger_triage(self):
+        """Precio/horario se atienden en anónimo: el tamiz sería fricción."""
+        d = self._eval_unknown("cuánto cuesta una cita?")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.unknown_conv.refresh_from_db()
+        self.assertNotIn("identity_triage", self.unknown_conv.flow)
+
+    def test_registered_number_skips_triage(self):
+        d = self._eval("quiero agendar una cita")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.conv.refresh_from_db()
+        self.assertNotIn("identity_triage", self.conv.flow)
+
+    def test_new_client_answer_yields_to_planner(self):
+        self._eval_unknown("quiero agendar una cita")
+        d = self._eval_unknown("es mi primera vez")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.meta.get("triage"), "new")
+        self.unknown_conv.refresh_from_db()
+        self.assertNotIn("identity_triage", self.unknown_conv.flow)
+
+    def test_returning_client_is_found_and_verified_without_handoff(self):
+        """El caso que el PO corrigió: "ya soy cliente" NO escala. Se busca en
+        la tabla, se verifica (mascota + 4 dígitos) y el agente continúa."""
+        self._eval_unknown("quiero agendar una cita")
+
+        d = self._eval_unknown("ya soy cliente, cambié de número")
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta.get("triage"), "returning")
+
+        d = self._eval_unknown("Ana Torres")
+        self.assertEqual(d.kind, policy.REPLY)
+        self.unknown_conv.refresh_from_db()
+        family = self.unknown_conv.flow["family_challenge"]
+        self.assertEqual(family["stage"], "pet")
+        self.assertIn(self.owner.pk, family["candidate_ids"])
+
+        self._eval_unknown("Luna")
+        self.unknown_conv.refresh_from_db()
+        self.assertEqual(
+            self.unknown_conv.flow["family_challenge"]["stage"], "digits")
+
+        d = self._eval_unknown("8877")  # últimos 4 de 5511998877
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(d.meta.get("verified"))
+        self.unknown_contact.refresh_from_db()
+        self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
+        self.assertEqual(
+            self.unknown_contact.verification_level,
+            ContactIdentity.VERIFICATION_CONFIRMED,
+        )
+        self.assertEqual(
+            HumanHandoff.objects.filter(conversation=self.unknown_conv).count(),
+            0,
+        )
+
+    def test_already_answered_in_the_same_message_is_not_re_asked(self):
+        """"soy nuevo, quiero cita" ya contesta el tamiz: preguntarlo sería la
+        repregunta robótica que la métrica `tasa_repregunta` persigue."""
+        d = self._eval_unknown("soy nuevo, quiero cita")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.meta.get("triage"), "new")
+        self.unknown_conv.refresh_from_db()
+        self.assertNotIn("identity_triage", self.unknown_conv.flow)
+
+    def test_already_says_returning_goes_straight_to_lookup(self):
+        d = self._eval_unknown("ya soy cliente, quiero agendar una cita")
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta.get("triage"), "returning")
+        self.unknown_conv.refresh_from_db()
+        self.assertEqual(
+            self.unknown_conv.flow["identity_triage"]["stage"], "titular")
+
+    def test_unclear_answer_re_asks_once_then_yields(self):
+        self._eval_unknown("quiero agendar una cita")
+        d = self._eval_unknown("mmm pues no sé")
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta.get("triage"), "retry")
+        d = self._eval_unknown("pues eso")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.meta.get("triage"), "unclear")
+
+    def test_first_contact_opens_with_the_clinic_welcome(self):
+        """Sin salientes previos el tamiz es lo PRIMERO que lee el cliente:
+        abre con bienvenida, no hablándole de la base de datos (§2.1)."""
+        d = self._eval_unknown("quiero agendar una cita")
+        self.assertIn(self.org.name, d.text)
+        self.assertNotIn("registrado", d.text.lower())
+
+    def test_triage_replies_carry_the_privacy_notice_flag(self):
+        """UX-01: el aviso just-in-time va antes de pedir datos personales."""
+        d = self._eval_unknown("quiero agendar una cita")
+        self.assertTrue(d.meta.get("privacy_notice"))
+        d = self._eval_unknown("ya soy cliente")
+        self.assertTrue(d.meta.get("privacy_notice"))
+
+    def test_pet_already_named_skips_that_factor(self):
+        """Nombró a Luna en el primer mensaje: pedírsela otra vez sería la
+        repregunta más torpe. Se salta al último factor."""
+        from apps.channels.models import Message
+        Message.objects.create(
+            organization=self.org, channel_account=self.channel,
+            conversation=self.unknown_conv,
+            direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT,
+            body="quiero agendar cita para Luna",
+            status=Message.STATUS_PROCESSED,
+        )
+        self._eval_unknown("quiero agendar cita para Luna")
+        self._eval_unknown("ya soy cliente")
+        d = self._eval_unknown("Ana Torres")
+
+        self.unknown_conv.refresh_from_db()
+        family = self.unknown_conv.flow["family_challenge"]
+        self.assertEqual(family["stage"], "digits")
+        self.assertEqual(family["candidate_ids"], [self.owner.pk])
+        self.assertIn("4 dígitos", d.text)
+
+        d = self._eval_unknown("8877")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.unknown_contact.refresh_from_db()
+        self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
+
+    def test_triage_is_asked_once_per_conversation(self):
+        self._eval_unknown("quiero agendar una cita")
+        self._eval_unknown("es mi primera vez")
+        d = self._eval_unknown("quiero agendar una cita")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+
+    def test_emergency_still_beats_triage(self):
+        """El tamiz vive DESPUÉS de urgencia: nunca la retrasa."""
+        d = self._eval_unknown("quiero una cita, mi perro convulsiona")
+        self.assertEqual(d.kind, policy.ESCALATE)
+        self.assertEqual(d.handoff_reason, HumanHandoff.REASON_EMERGENCY)
+
+
+class TriageMatcherTests(PolicyTestCase):
+    """D4/D5: recall del clasificador y falsos positivos de la puerta.
+
+    Cada frase es es-MX que un cliente escribe de verdad; el diccionario se
+    amplió porque muchas caían en 'unclear' y disparaban un reintento que se
+    lee como "no te entendí".
+    """
+
+    def test_returning_phrasings(self):
+        for phrase in [
+            "ya vine antes", "sí, ya había venido", "ya fui el año pasado",
+            "ya llevé a mi perro con ustedes", "ya me atendieron ahí",
+            "ya soy cliente", "soy paciente de ahí", "ya tengo expediente",
+            "ya me conocen", "no es la primera vez", "no soy nuevo",
+            "cambié de número", "es que tengo otro número",
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(
+                    matchers.classify_client_triage(phrase), "returning")
+
+    def test_new_phrasings(self):
+        for phrase in [
+            "primera vez", "es mi primera vez", "sí, primera visita",
+            "soy nuevo", "somos nuevos", "nunca he ido",
+            "nunca lo he llevado", "apenas voy a llevarlo",
+            "no soy cliente", "no tengo expediente", "no estoy registrado",
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(
+                    matchers.classify_client_triage(phrase), "new")
+
+    def test_negations_are_not_read_backwards(self):
+        """"no soy cliente" contiene "soy cliente"; "no es la primera" contiene
+        "primera". Sin evaluar las negaciones primero, ambas salían al revés."""
+        self.assertEqual(
+            matchers.classify_client_triage("no soy cliente"), "new")
+        self.assertEqual(
+            matchers.classify_client_triage("no es la primera vez"), "returning")
+
+    def test_bare_yes_no_stays_unclear(self):
+        """Adivinar aquí abre expedientes duplicados: mejor re-preguntar."""
+        for phrase in ["sí", "no", "ajá", "pues no sé"]:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(
+                    matchers.classify_client_triage(phrase), "unclear")
+
+    def test_info_questions_do_not_need_identity(self):
+        for phrase in [
+            "¿cuánto tarda una cita?", "¿qué incluye la cita?",
+            "¿necesito cita o puedo llegar así?", "¿atienden sin cita?",
+            "¿cuánto cuesta una cita?", "¿qué horario tienen?",
+            "¿dónde están?", "¿qué necesito para la primera consulta?",
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertFalse(matchers.wants_personal_action(phrase))
+
+    def test_real_requests_still_need_identity(self):
+        for phrase in [
+            "quiero agendar una cita", "me das una cita para mañana",
+            "¿qué citas tengo?", "quiero cancelar mi cita",
+            "necesito una cita para mi perro", "¿cuándo le toca la vacuna?",
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertTrue(matchers.wants_personal_action(phrase))
 
 
 class FsmTests(PolicyTestCase):

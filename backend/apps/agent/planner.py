@@ -64,7 +64,14 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
         return {'decision': 'silent', 'llm_calls': 0, 'tools': 0}
 
     if decision.kind == policy.REPLY:
-        enqueue_outbound(conversation, decision.text, author='agent')
+        text = decision.text
+        # UX-01: el aviso just-in-time va ANTES de la primera recolección de
+        # datos personales. El tamiz de identidad se resuelve en el router y
+        # sale por aquí — sin este prefijo, un cliente nuevo daba su nombre sin
+        # haberlo recibido (el camino viejo, por el planner, sí lo emitía).
+        if decision.meta.get('privacy_notice'):
+            text = _privacy_prefix(conversation) + text
+        enqueue_outbound(conversation, text, author='agent')
         return {'decision': 'reply', 'llm_calls': 0, 'tools': 0,
                 'reason': decision.meta.get('reason')}
 
@@ -245,13 +252,15 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             if outcome.client_error == 'verification_required':
                 # Número YA registrado (phone_match) → reto de identidad para
                 # confirmar que es el titular. Número NO registrado → no tiene
-                # mascota que confirmar: ofrecer alta en vez de rebotar a humano.
+                # mascota que confirmar: tamiz (¿nuevo o ya cliente?), que
+                # resuelve ambas ramas solo — nunca se asume el alta.
                 if conversation.contact.owner_id is None:
+                    triage = policy.start_identity_triage(conversation)
                     enqueue_outbound(
                         conversation,
-                        _privacy_prefix(conversation) + tier0.T0_NEW_CLIENT,
+                        _privacy_prefix(conversation) + triage,
                         author='agent')
-                    return {'decision': 'offer_new_client',
+                    return {'decision': 'identity_triage',
                             'llm_calls': llm_calls, 'tools': tool_calls}
                 challenge = policy.start_identity_challenge(conversation)
                 enqueue_outbound(conversation,

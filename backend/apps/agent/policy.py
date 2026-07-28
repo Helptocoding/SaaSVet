@@ -184,6 +184,13 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     if family:
         return _advance_family_challenge(conversation, contact, text, family)
 
+    # 8c. Tamiz de identidad en curso (UX-05): el mensaje responde "¿nuevo o
+    #     ya registrado?", o aporta el nombre del titular. Determinista.
+    triage = flow.get('identity_triage')
+    if triage:
+        return _advance_identity_triage(conversation, contact, burst_text,
+                                        triage)
+
     # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
     #    (no cambia la decisión, habilita las tools personales del turno).
     if contact.verification_level == contact.VERIFICATION_PHONE_MATCH:
@@ -217,6 +224,37 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     if _mentions_payment(text):
         return PolicyDecision(kind=REPLY, text=tier0.T0_OUT_PAYMENT,
                               meta={'reason': 'out_payment'})
+
+    # 12b. Número SIN registro que pide algo PERSONAL (agendar / sus citas /
+    #      cancelar): nunca se asume que es nuevo — se pregunta, y si dice que
+    #      ya es cliente el reto lo busca en la tabla y lo verifica para seguir
+    #      atendiéndolo.
+    #
+    #      Vive aquí, en el router determinista, y no en el planner: antes esto
+    #      solo reaccionaba si el MODELO llamaba una tool personal y ésta
+    #      rebotaba con verification_required. Un modelo que se ponía a
+    #      recolectar nombre/mascota/fecha en texto plano (piloto 2026-07-28)
+    #      nunca disparaba nada — y terminó "agendando" una cita inexistente.
+    if (contact.owner_id is None
+            and not flow.get('identity_triage_done')
+            and matchers.wants_personal_action(burst_text)):
+        # Si el propio mensaje ya lo contesta ("soy nuevo, quiero cita"), no se
+        # pregunta lo que el cliente acaba de decir (`tasa_repregunta`).
+        verdict = matchers.classify_client_triage(burst_text)
+        if verdict == 'new':
+            flow['identity_triage_done'] = 'new'
+            conversation.save(update_fields=['flow'])
+            return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'new'})
+        if verdict == 'returning':
+            flow['identity_triage'] = {'stage': 'titular', 'asks': 1}
+            conversation.save(update_fields=['flow'])
+            return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_TITULAR,
+                                  meta={'reason': 'identity_triage',
+                                        'triage': 'returning'})
+        return PolicyDecision(
+            kind=REPLY, text=start_identity_triage(conversation),
+            meta={'reason': 'identity_triage', 'triage': 'asked',
+                  'privacy_notice': True})
 
     # 13. Nada aplicó → el planner decide (lecturas INT-10..14).
     return PolicyDecision(kind=RUN_PLANNER)
@@ -310,6 +348,115 @@ def _clear_challenge(conversation, verified):
         # Verificado: cede al planner para atender la petición original.
         return PolicyDecision(kind=RUN_PLANNER, meta={'verified': True})
     return PolicyDecision(kind=RUN_PLANNER)
+
+
+# ---------------------------------------------------------------------------
+# Tamiz de identidad (UX-05) — ¿cliente nuevo, o ya registrado?
+# ---------------------------------------------------------------------------
+# Decisión de producto: el sistema NUNCA asume que un número sin registro es un
+# cliente nuevo. Pregunta; y si dice que ya es cliente, lo BUSCA en `Owner` y lo
+# verifica con el reto de 3 factores para seguir atendiéndolo él mismo. Decir
+# "ya vine antes" no escala a nadie — solo escala una verificación FALLIDA.
+
+def start_identity_triage(conversation):
+    """Siembra el tamiz y devuelve la pregunta.
+
+    Público: el planner también lo usa cuando una tool personal rebota con
+    `verification_required` sobre un número sin registro.
+    """
+    conversation.flow['identity_triage'] = {'stage': 'ask', 'asks': 1}
+    conversation.save(update_fields=['flow'])
+    return tier0.render_triage(
+        conversation.organization,
+        first_contact=not _has_outbound(conversation),
+    )
+
+
+def _advance_identity_triage(conversation, contact, text, triage):
+    flow = conversation.flow
+    if triage.get('stage') == 'titular':
+        return _seed_family_challenge(conversation, text)
+
+    verdict = matchers.classify_client_triage(text)
+
+    if verdict == 'returning':
+        triage['stage'] = 'titular'
+        conversation.save(update_fields=['flow'])
+        return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_TITULAR,
+                              meta={'reason': 'identity_triage',
+                                    'triage': 'returning',
+                                    'privacy_notice': True})
+
+    if verdict == 'new':
+        flow.pop('identity_triage', None)
+        flow['identity_triage_done'] = 'new'
+        conversation.save(update_fields=['flow'])
+        return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'new'})
+
+    # 'unclear' → una re-pregunta explícita sin costo (patrón del reto UX-03).
+    # A la segunda se cede al planner: mejor que dejar al cliente en un bucle.
+    if triage.get('asks', 1) < 2:
+        triage['asks'] = triage.get('asks', 1) + 1
+        conversation.save(update_fields=['flow'])
+        return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_RETRY,
+                              meta={'reason': 'identity_triage',
+                                    'triage': 'retry',
+                                    'privacy_notice': True})
+    flow.pop('identity_triage', None)
+    flow['identity_triage_done'] = 'unclear'
+    conversation.save(update_fields=['flow'])
+    return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'unclear'})
+
+
+def _seed_family_challenge(conversation, titular_name):
+    """Dice ser cliente y aporta el nombre del titular: se busca en `Owner` y
+    arranca el reto (mascota → últimos 4 dígitos). Es el MISMO estado que
+    siembra la tool `link_family_member`, pero sin depender del LLM."""
+    titular = (titular_name or '').strip()
+    candidates = identity.find_link_candidates(
+        conversation.organization, titular)
+    flow = conversation.flow
+    flow.pop('identity_triage', None)
+    flow['identity_triage_done'] = 'returning'
+
+    # Si el cliente YA nombró a la mascota antes en la conversación ("cita para
+    # Luna"), ese factor está aportado: volver a pedirlo es la repregunta más
+    # torpe posible. No debilita el reto — el dato lo dio él, sin que el
+    # sistema enumerara nada (G4), y de hecho antes de saber que se le pediría.
+    stage, survivors = 'pet', candidates
+    if candidates:
+        named = [o for o in candidates
+                 if identity.owner_has_pet(o, _inbound_history(conversation))]
+        if len(named) == 1:
+            stage, survivors = 'digits', named
+
+    # Se siembra AUNQUE no haya candidatos: comportamiento uniforme, sin
+    # oráculo de existencia (G4) — falla al final como cualquier dato malo.
+    flow['family_challenge'] = {
+        'stage': stage,
+        'candidate_ids': [o.pk for o in survivors],
+        'titular': titular,
+        'fails': 0,
+    }
+    conversation.save(update_fields=['flow'])
+    text = tier0.T0_TRIAGE_DIGITS if stage == 'digits' else tier0.T0_TRIAGE_PET
+    return PolicyDecision(kind=REPLY, text=text,
+                          meta={'reason': 'identity_triage',
+                                'triage': f'family_seeded_{stage}',
+                                'privacy_notice': True})
+
+
+def _inbound_history(conversation, limit=12):
+    """Texto de los entrantes recientes — para saber qué datos ya aportó el
+    cliente por su cuenta y no volver a pedírselos."""
+    from apps.channels.models import Message
+    bodies = (
+        Message.objects.for_organization(conversation.organization)
+        .filter(conversation=conversation, direction=Message.DIRECTION_IN)
+        .order_by('-created_at', '-id')
+        .values_list('body', flat=True)[:limit]
+    )
+    return '\n'.join(b for b in bodies if b)
 
 
 # ---------------------------------------------------------------------------

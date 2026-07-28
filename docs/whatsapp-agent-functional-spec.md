@@ -43,6 +43,50 @@
 > §2.4 clasificación LLM de la afirmativa (etapa 2), transcripción de audio
 > (gate: >15 % de entrantes, medido por `agent_quality`).
 
+> ### Enmienda UX-05-D (2026-07-28) — el tamiz pasa a ser determinista
+>
+> **Origen**: fallo del piloto (org `Clinica Bebe coche`, conv. 10). Un número
+> sin registro pidió cita; el modelo recolectó nombre, mascota, especie, fecha y
+> hora **en texto plano**, nunca llamó una herramienta, y dio la cita por
+> agendada — dos veces, incluida la respuesta a un *"¿la cita se creó bien?"* del
+> cliente. En la base de datos no existía ninguna cita.
+>
+> **Causa**: §6 INT-21 pone el tamiz (UX-05) dentro del flujo conducido por el
+> LLM, y la única salvaguarda determinista (`T0_NEW_CLIENT` en el planner) solo
+> reaccionaba si el modelo llamaba una tool personal y ésta rebotaba con
+> `verification_required`. Un modelo que nunca llama una tool no dispara nada.
+> La [auditoría del 2026-07-24](whatsapp-agent-auditoria-conversacional-2026-07-24.md)
+> además había **quitado del prompt** la regla "cliente nuevo vs registrado"
+> asumiendo que esa ruta ya la cubría. Cubría solo la ruta con rebote. Pasar
+> `numero_registrado` al contexto tampoco bastó: el modelo lo tenía y lo ignoró.
+>
+> **Cambia el contrato en dos puntos**:
+> 1. **§3 router**: se añade un paso determinista (prioridad entre "fuera de
+>    alcance" y el fallback al planner). Contacto sin `owner` + petición
+>    personal (`matchers.wants_personal_action`) ⇒ tamiz obligatorio antes de
+>    ceder al modelo. Preguntas de precio/horario/política de citas **no** lo
+>    disparan (siguen siendo tier-1 anónimo).
+> 2. **§6 INT-21 borde B4**: *"ya me han atendido"* deja de resolverse con
+>    `E-05 (humano vincula)`. Se resuelve con el **reto triple ya implementado**
+>    (titular → mascota → últimos 4 dígitos, `family_challenge`), que busca en
+>    `Owner`, verifica y **vincula**; el agente continúa la petición original.
+>    A un humano se llega **solo** si la verificación falla de verdad (E-06).
+>    La spec ya preveía esta rama ("con vinculación familiar activa → reto
+>    triple"); lo que faltaba era enrutarla sin depender del LLM.
+>
+> **Costo aceptado (decisión del PO, 2026-07-28)**: un cliente registrado que
+> escribe desde otro número paga 4 turnos de verificación (3 si ya nombró a la
+> mascota). El tercer factor se diseñó para un **familiar**, no para el titular
+> que cambió de número, y puede fallar por memoria. Se deja así: un tercer
+> factor más débil no compensa el riesgo.
+>
+> **No cubre**: que el modelo afirme un éxito ("ya quedó agendada") sin haber
+> llamado la herramienta. El ruteo ya no debería llegar ahí, pero la garantía
+> exige un guard en `agent/guards.py` — pendiente.
+>
+> Detalle de implementación y copy: [`modules/agent.md`](modules/agent.md)
+> §Tamiz de identidad.
+
 ---
 
 ## Índice
@@ -216,11 +260,18 @@ Orden de evaluación (determinista antes que LLM — plan §B13):
 | 6 | INT-00 Saludo/1er contacto | Primera interacción de la conversación | F0 | 0 |
 | 7 | INT-03 Fuera de horario | Reloj vs `business_hours` (modifica, no reemplaza: ver §4) | F0 | 0 |
 | 8 | INT-05 Fuera de alcance | Matcher (pagos/cobros) + clasificación LLM (consejo médico, queja) | F1 | 0 |
+| 8b | **UX-05 Tamiz de identidad** | **Matcher** (enmienda UX-05-D): contacto sin `owner` + petición personal ⇒ *¿primera vez o ya has venido?* **antes** de ceder al modelo. Precio/horario/política de citas NO lo disparan | F2 | 0 |
 | 9 | INT-10..14 (lecturas) | Clasificación LLM | F1 | 1 |
 | 10 | INT-20..24 (escrituras) | Clasificación LLM | F2 | 2 |
 | 11 | Fallback no entendido | LLM sin intención con confianza | F1 | — |
 
 Fallback: 1ª vez → re-preguntar en claro ("¿Te ayudo a agendar una cita, o tienes una duda de precios u horarios?"); 2ª vez consecutiva → E-07 (humano).
+
+El paso 8b es **determinista a propósito**: mientras el tamiz dependió de que el
+modelo llamara una tool, un modelo que recolectaba datos en texto lo saltaba por
+completo y agendaba al aire (piloto 2026-07-28). Las dos ramas se resuelven sin
+LLM: `new` → alta (INT-21); `returning` → reto triple que busca, verifica y
+vincula, y el agente **sigue** con la petición original.
 
 ---
 
@@ -447,6 +498,7 @@ Comunes a todas: tier 2 (confirmación §2.4 obligatoria), idempotencia A2-1 act
 | B2 | Cliente da otro teléfono "mejor regístrame este" | G8 → el registro usa el número del chat; otro número → humano |
 | B3 | T11 falla a mitad | Atómico en el dominio (rollback total) → §2.5; retry con misma key |
 | B4 | **Conflicto de identidad**: dice ser nuevo pero T1 = `phone_match` | No revelar el nombre registrado (G4). "Veo visitas previas desde este número — ¿has venido antes o alguien más usó este teléfono?" Si reconoce visitas → flujo INT-20 (con reto/implícita). Si insiste en ser nuevo → E-05 (posible número reciclado; jamás adjuntar mascota nueva a un owner que puede ser otra persona) |
+| B4-bis | **Dice ser cliente pero el número NO está registrado** (enmienda UX-05-D) | **No escala.** El tamiz del router (§3 paso 8b) pide el nombre del titular → `find_link_candidates` lo busca en `Owner` → reto triple (mascota → últimos 4 dígitos) → `link_family` vincula el número y el agente **continúa la petición original**. Humano solo si la verificación falla de verdad (E-06). Si la mascota ya se nombró antes en el hilo, ese factor se da por aportado y se salta |
 | B5 | T1 = `ambiguous` (≥2 owners mismo teléfono) | `get_or_create` del dominio reventaría (MultipleObjectsReturned) → **no invocar T11** → E-05 directo |
 
 - **INT-21-bis (mascota nueva de cliente existente)**: mismo T11 — `create-with-patient` reusa el Owner por teléfono y crea solo la mascota + cita. Requiere `confirmed_in_chat` (es una escritura sobre el expediente del owner) — la verificación implícita con **otra** mascota registrada o el reto explícito aplican antes. Parafraseo incluye "registraré a [[Michi]] ([[gato]])".

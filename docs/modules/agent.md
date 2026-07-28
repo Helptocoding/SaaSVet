@@ -95,10 +95,81 @@ register_new_client_and_pet (tier 2 — proponen y esperan el "sí"),
 confirm_appointment (tier 1, benigna), link_family_member (arranca el reto
 triple). request_human siempre disponible. Handles efímeros en `flow.refs`
 con resolver+ownership server-side (handle desconocido = denegación dura).
-Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03.
+Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03 +
+tamiz UX-05 (abajo).
 Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`
 (bloqueante) + fixture trampa cross-tenant + aserciones prohibidas globales
 (`agent/tests/harness.py`).
+
+### Tamiz de identidad (UX-05) — nuevo vs. ya registrado
+
+**El sistema nunca asume que un número sin registro es un cliente nuevo.** Un
+contacto con `owner_id IS NULL` que pide algo **personal** (agendar, ver sus
+citas, cancelar/mover — `matchers.wants_personal_action`) recibe primero el
+tamiz `T0_TRIAGE`: *"¿primera vez, o ya eres cliente y escribes desde otro
+número?"*. Preguntas de precio/horario **no** lo disparan: se atienden en
+anónimo (tier 1) y meterles un tamiz sería fricción gratuita.
+
+Las dos ramas las resuelve el propio agente (`matchers.classify_client_triage`):
+
+| Respuesta | Efecto |
+|---|---|
+| `new` | `RUN_PLANNER` → el modelo debe llamar `register_new_client_and_pet` (alta + cita en una transacción) |
+| `returning` | Pide el nombre del titular → `identity.find_link_candidates` lo **busca en `Owner`** → siembra `family_challenge` → reto de 3 factores (titular → mascota → últimos 4 dígitos) → `link_family` → `RUN_PLANNER` verificado, y el agente **sigue atendiendo** |
+| `unclear` | Una re-pregunta explícita sin costo; a la segunda cede al planner |
+
+Detalles que evitan que el tamiz se sienta robótico (revisión UX 2026-07-28):
+
+- **Negaciones primero**: `"no soy cliente"` contiene `"soy cliente"` y
+  `"no es la primera"` contiene `"primera"`. Las listas negadas se evalúan
+  antes que las positivas o ambas se clasifican al revés.
+- **`sí`/`no` pelones se quedan en `unclear`** y se re-preguntan. Adivinar es
+  peor que preguntar: un falso `new` abre un expediente **duplicado** sobre
+  alguien que ya existe.
+- **El reintento no dice "no te entendí"**: pide elegir entre *«soy nuevo»* y
+  *«ya he venido»* — dos frases que el diccionario reconoce, así que la 2ª
+  vuelta casi siempre resuelve.
+- **Si el dato ya vino en el mismo mensaje** (`"soy nuevo, quiero cita"`) no se
+  pregunta nada — es la repregunta que persigue `tasa_repregunta`.
+- **Si la mascota ya se nombró** antes en el hilo (`"cita para Luna"`), ese
+  factor del reto se da por aportado y se salta al de los dígitos. No debilita
+  nada: el dato lo dio el cliente sin que el sistema enumerara (G4), y de hecho
+  antes de saber que se le pediría.
+- **Preguntas de política de citas e información** (`"¿necesito cita o puedo
+  llegar así?"`, `"¿cuánto tarda una cita?"`, horarios, ubicación) **no** pasan
+  por el tamiz: son tier-1 anónimo y meterles una puerta era fricción gratuita.
+- **Aviso de privacidad (UX-01)**: las respuestas del tamiz llevan
+  `meta['privacy_notice']` y el planner antepone `_privacy_prefix` en la rama
+  `REPLY`. Sin eso, un cliente nuevo daba su nombre sin haber recibido el aviso
+  just-in-time — el camino viejo sí lo emitía.
+- **Primer contacto**: `tier0.render_triage(org, first_contact=True)` abre con
+  la bienvenida institucional. Ese mensaje es lo primero que lee alguien que
+  nunca ha escrito; arrancar con "este número no está registrado" era hablarle
+  de la base de datos (§2.1).
+
+**Costo conocido y aceptado**: un cliente ya registrado que escribe desde un
+número nuevo paga **4 turnos** de verificación antes de avanzar (tamiz →
+titular → mascota → 4 dígitos; 3 si ya nombró a la mascota). El tercer factor
+—últimos 4 dígitos del teléfono registrado— se diseñó para un **familiar**, no
+para el titular que cambió de número, así que puede fallar por memoria y acabar
+en humano. Revisado con el PO el 2026-07-28: **se deja así**; la alternativa
+(un tercer factor más débil) no compensa el riesgo.
+
+**Decir "ya vine antes" NO escala a un humano** (decisión del PO, 2026-07-28):
+se busca, se verifica y se atiende. A un humano solo se llega si la
+verificación **falla** de verdad (2 fallos reales → `_family_fail`, E-06).
+
+**Vive en el router determinista** (`policy.evaluate` paso 12b), no en el
+planner. Antes solo reaccionaba si el **modelo** llamaba una tool personal y
+ésta rebotaba con `verification_required` — un modelo que se ponía a recolectar
+nombre/mascota/fecha en texto plano no disparaba nada. Fue exactamente el fallo
+del piloto (2026-07-28, conv. 10 de `Clinica Bebe coche`): recolectó todo en
+texto, jamás llamó una tool, y dio por agendada una cita inexistente — dos
+veces, incluida la respuesta a un "¿la cita se creó bien?" del cliente. La
+auditoría de 2026-07-24 había quitado esta regla del prompt asumiendo que
+`T0_NEW_CLIENT` ya la cubría desde el planner; cubría solo la ruta con rebote
+de tool. Pasar `numero_registrado` al contexto tampoco bastó: el modelo lo
+tenía y lo ignoró.
 
 ## Endurecimiento É-F3 W0 (2026-07-24)
 

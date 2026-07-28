@@ -338,18 +338,27 @@ class Int21Tests(RegF2Base):
         self.assertEqual(
             confirmations.get_pending(conv)["args"]["owner_phone"], "5512349999")
 
-    def test_unknown_number_offered_registration_not_challenge(self):
-        """Número NO registrado que quiere agendar → oferta de alta (no reto de
-        identidad que rebota, no handoff). Corrige el sobre-escalado del piloto."""
+    def test_unknown_number_gets_triage_not_challenge_nor_handoff(self):
+        """Número NO registrado que quiere agendar → tamiz "¿nuevo o ya
+        cliente?" (no reto de identidad que rebota, no handoff, y sin asumir
+        el alta). Corrige el sobre-escalado del piloto.
+
+        El tamiz lo resuelve el ROUTER: ni siquiera se llega al LLM — por eso
+        el guion de abajo queda sin consumir. Ése es justo el arreglo: antes
+        dependía de que el modelo llamara una tool personal para reaccionar.
+        """
         conv = self._unknown_conv("5215512340000")
         bodies, r, _ = run_turn(
             self, conv, self.agent_user, "quiero agendar una cita",
             scripted_llm=[LLMResult(kind="tool_call",
                                     tool_name="list_upcoming_appointments",
                                     tool_args={})])
-        self.assertEqual(r["decision"], "offer_new_client")
+        self.assertEqual(r["decision"], "reply")
+        self.assertEqual(r.get("reason"), "identity_triage")
+        self.assertEqual(r["llm_calls"], 0)
         self.assertIn("primera vez", bodies[-1].lower())
         conv.refresh_from_db()
+        self.assertIn("identity_triage", conv.flow)
         self.assertNotIn("identity_challenge", conv.flow)
         from apps.agent.models import HumanHandoff
         self.assertEqual(

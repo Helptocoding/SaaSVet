@@ -183,14 +183,47 @@ T0_CHALLENGE_FAILED = (
     "que te apoyen."
 )
 
-# Número NO registrado que pide una acción personal (agendar / ver sus citas).
-# En vez de retar por una mascota que no existe (→ rebote a humano), se ofrece
-# el alta: primera vez → registro; ya visitó → puede haber usado otro número.
-T0_NEW_CLIENT = (
-    "¡Con gusto te ayudo! 🐾 Veo que este número aún no está registrado con "
-    "nosotros. ¿Es tu primera vez en la clínica? Si es así, te doy de alta y "
-    "agendamos en un momento — solo dime tu nombre y el de tu mascota."
+# Tamiz de identidad (UX-05) — número NO registrado que pide algo personal.
+#
+# El sistema JAMÁS asume que es un cliente nuevo: pregunta. Las dos ramas se
+# atienden solas — "primera vez" va al alta; "ya soy cliente" arranca el reto
+# que lo BUSCA en la tabla y lo verifica, y el agente sigue trabajando. A un
+# humano solo se llega si la verificación falla de verdad.
+T0_TRIAGE_BODY = (
+    "Para ayudarte rápido y no pedirte datos de más: ¿es la *primera vez* "
+    "que nos visitan, o *ya has venido antes* con nosotros?"
 )
+# El reintento NO dice "no te entendí": pide elegir una de dos frases, y ambas
+# están en el diccionario del clasificador — la 2ª vuelta casi siempre resuelve.
+T0_TRIAGE_RETRY = (
+    "Perdón, me expliqué mal 🙂 Dime cuál de las dos: *«soy nuevo»* o "
+    "*«ya he venido»*."
+)
+T0_TRIAGE_TITULAR = (
+    "¡Perfecto! ¿A nombre de quién está el registro? Así lo busco 🙂"
+)
+T0_TRIAGE_PET = (
+    "Gracias. Para proteger los datos del titular necesito validar un par de "
+    "cosas: ¿cómo se llama una de sus mascotas? 🐾"
+)
+# Cuando la mascota YA se nombró antes en la conversación no se vuelve a pedir
+# (se usa como factor tal cual la aportó el cliente) y se salta a los dígitos.
+T0_TRIAGE_DIGITS = (
+    "¡Gracias! Una última cosa por seguridad: ¿los últimos *4 dígitos* del "
+    "teléfono que el titular tiene registrado con nosotros?"
+)
+
+
+def render_triage(organization, first_contact=False):
+    """Tamiz UX-05 (¿nuevo o ya registrado?).
+
+    En un primer contacto abre con la bienvenida institucional: ese mensaje es
+    lo PRIMERO que lee alguien que nunca ha escrito, y arrancar con "este
+    número no está registrado" era hablarle de la base de datos (§2.1).
+    """
+    if first_contact:
+        return f"¡Hola! Bienvenido a {organization.name} 🐾 {T0_TRIAGE_BODY}"
+    return f"¡Claro que sí! 🐾 {T0_TRIAGE_BODY}"
 
 T0_THANKS = "¡Con gusto! Aquí estoy si necesitas algo más 🐾"
 
