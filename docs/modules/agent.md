@@ -294,13 +294,37 @@ El agente pasa de `mensaje → intent → tool → respuesta` a
 | Confianza | El modelo acompaña cada dato con `<slot>_confidence`. Por debajo de `AGENT_SLOT_CONFIDENCE_THRESHOLD` (0.70) el slot **no se llena**: pasa a `por_confirmar`. Filtro EN SERIE con el validador, no alternativo. Ausente ⇒ 1.0 (compatibilidad) |
 | Herramientas de escritura | `required: []` y parámetros `<slot>_confidence` (los inyecta `as_openai_tools`). Llamada **parcial** = normal: persiste lo válido y devuelve qué falta. Antes eran todo-o-nada y el modelo inventaba lo que faltaba |
 | Interrupción | Una lectura intercalada **pausa** el objetivo (no lo destruye) y se retoma con los slots intactos — spec §2.7, inejecutable hasta ahora |
-| Estancamiento | 3 turnos sin llenar un solo slot ⇒ escalada semántica (`T0_GOAL_STALLED`). Sustituye al presupuesto contable como disparador principal |
+| Estancamiento | 3 turnos **sin progreso** ⇒ escalada semántica (`T0_GOAL_STALLED`). Sustituye al presupuesto contable como disparador principal. Ver §Progreso abajo — la definición de "progreso" es lo que hace que esto funcione |
 | Cierre | `completed` solo donde consta que el dominio aceptó la escritura (commit tier-2); `handoff` al escalar; `cancelled` al abrir otro objetivo |
 | Métricas | `compute_goal_metrics`: abiertos, completados, tasa, por estado, por objetivo y **slots donde se atoran** — el embudo deja de inferirse de nombres de herramienta |
 
 **No se tocó** ninguna barrera de control: el objetivo vive DESPUÉS del Policy
 Engine y ANTES de la confirmación tier-2. El parafraseo por plantilla, el
 commit de args staged y TC-SEC-03 siguen exactamente igual.
+
+#### Progreso del objetivo (corrección 2026-07-29)
+
+**Un dato que el cliente ya dio no se vuelve a pedir.** Tres reglas lo sostienen,
+las tres nacidas del piloto (conv. 12 de `Clinica Bebe coche`: el agente pidió la
+fecha **4 veces** — `asked = {'date': 4, 'time': 4}` — con `stall_turns = 0`,
+después de que el cliente la diera *y el propio agente la dijera en voz alta*):
+
+| Regla | Contrato |
+|---|---|
+| `filled` ≠ `advanced` | `goals.capture` compara contra una foto previa de los slots. **`filled`** = lo que la llamada escribió; **`advanced`** = un slot vacío se llenó, o el cliente **corrigió** uno ("martes → jueves"). Solo `advanced` resetea `stall_turns`. Reafirmar lo ya sabido no es avanzar |
+| Estancamiento = intento **sin** avance | `planner` distingue `goal_attempted` / `goal_progressed` / `other_tool_used`. Antes bastaba con **llamar** una tool de objetivo para que el turno contara como productivo (`goal_touched`), así que un modelo repreguntando en bucle mantenía `stall_turns` en 0 para siempre — el detector era ciego justo al caso que existe para cazar |
+| Las lecturas alimentan el objetivo | `find_available_slots(date=X)` captura `X` en el slot `date` si estaba **vacío** (`tools._capture_slot_from_read`). Hasta ahora el único acceso a los slots eran los argumentos de una tool de **escritura**: si el modelo resolvía la fecha, la usaba para consultar disponibilidad y se la anunciaba al cliente pero no la reenviaba al escribir, el sistema seguía reportando `me_falta: [date]`. **Solo rellena huecos** — nunca pisa lo elegido (el modelo consulta días alternativos y eso no debe borrar nada); la confirmación tier-2 sigue siendo la barrera real antes de escribir |
+
+El modelo **nunca perdió el contexto**: `goals.context_block` le inyecta
+`ya_tengo` / `me_falta` / `ya_preguntado_2_veces` en cada turno. Preguntaba
+porque el sistema le decía la verdad — no tenía el dato. El defecto estaba en la
+captura, no en la memoria.
+
+`_goal_gate` publica `capturado` (= `advanced`) en el resultado de la tool, que es
+la señal que el planner usa para decidir si hubo progreso. Sus salidas tempranas
+también dejan `record_local`: antes una llamada parcial de escritura **no**
+generaba `ToolExecution`, y la telemetría hacía creer que el modelo casi no
+llamaba herramientas.
 
 ### W3 — medición de calidad conversacional
 

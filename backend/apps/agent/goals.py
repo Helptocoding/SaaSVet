@@ -249,6 +249,10 @@ def capture(goal, raw_args, conversation):
     low, rejected, filled = [], {}, []
 
     known = set(spec.required_slots) | set(spec.optional_slots)
+    # Foto previa: distinguir "el modelo reenvió lo mismo" de "el objetivo
+    # avanzó". Sin esto, repetir los datos ya conocidos contaba como progreso
+    # y el estancamiento no se detectaba nunca (piloto conv 12).
+    before = {slot: (goal.slots.get(slot) or {}).get('value') for slot in known}
     for slot in known:
         if slot not in raw_args or raw_args.get(slot) in (None, ''):
             continue
@@ -270,14 +274,19 @@ def capture(goal, raw_args, conversation):
         goal.slots[slot] = {'value': normalized, 'confidence': confidence}
         filled.append(slot)
 
+    # PROGRESO = un slot que estaba vacío ahora tiene valor, o el cliente
+    # corrigió uno (martes → jueves). Reafirmar lo ya sabido NO es avanzar.
+    advanced = [slot for slot in filled
+                if before.get(slot) != (goal.slots.get(slot) or {}).get('value')]
+
     goal.low_confidence = low
     goal.missing = missing_slots(goal)
-    if filled:
+    if advanced:
         goal.last_progress_at = timezone.now()
         goal.stall_turns = 0
     goal.save(update_fields=['slots', 'low_confidence', 'missing',
                              'last_progress_at', 'stall_turns'])
-    return {'filled': filled, 'missing': goal.missing,
+    return {'filled': filled, 'advanced': advanced, 'missing': goal.missing,
             'low_confidence': low, 'rejected': rejected}
 
 

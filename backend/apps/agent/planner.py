@@ -119,7 +119,12 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     turn_messages = []
     tool_facts = []          # lo que las tools devolvieron ESTE turno (G1)
     correction = None        # instrucción correctiva del guard (un intento)
-    goal_touched = False     # ¿se avanzó en el objetivo en curso? (W2)
+    # W2 — tres señales distintas, antes colapsadas en una sola (`goal_touched`)
+    # que solo decía "se llamó una tool de objetivo". Un modelo atascado la
+    # llama en CADA vuelta, así que el estancamiento nunca se detectaba.
+    goal_attempted = False   # se llamó una tool de objetivo
+    goal_progressed = False  # …y de verdad llenó algo
+    other_tool_used = False  # se usó una tool ajena al objetivo (interrupción)
     llm_calls = 0
     tool_calls = 0
     consecutive_failures = 0
@@ -179,8 +184,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 return {'decision': 'guard_blocked', 'llm_calls': llm_calls,
                         'tools': tool_calls,
                         'reason': guards.summarize(violations)}
-            if _settle_goal(conversation, goal_touched=goal_touched,
-                            other_tool_used=bool(tool_calls)):
+            if _settle_goal(conversation, goal_progressed=goal_progressed,
+                            goal_attempted=goal_attempted,
+                            other_tool_used=other_tool_used):
                 # Estancamiento semántico: 3 turnos sin llenar un solo dato.
                 # Sustituye al presupuesto contable como disparador — "no
                 # avanzamos" es una señal real; "gastaste N llamadas" no.
@@ -204,8 +210,11 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
 
         # tool_call
         tool_calls += 1
-        if result.tool_name in goals.TOOL_GOALS:
-            goal_touched = True
+        is_goal_tool = result.tool_name in goals.TOOL_GOALS
+        if is_goal_tool:
+            goal_attempted = True
+        else:
+            other_tool_used = True
         # El stub de tests no emite id: se sintetiza para poder correlacionar.
         result.tool_call_id = result.tool_call_id or f'call_{step}'
         turn_messages.append(prompts.tool_call_message(result))
@@ -214,6 +223,14 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             conversation=conversation, executor=executor,
             triggered_by=triggered_by,
         )
+
+        # ¿AVANZÓ el objetivo, o solo se tocó? Llamar la herramienta con los
+        # mismos datos de siempre no es progreso: es el bucle.
+        if is_goal_tool:
+            if outcome.ok:
+                goal_progressed = True
+            elif isinstance(outcome.data, dict) and outcome.data.get('capturado'):
+                goal_progressed = True
 
         # Tier-2: la tool PROPUSO (ya stageó el pending). Enviamos el
         # parafraseo y cerramos el turno — el "sí" del cliente lo ejecuta
@@ -505,17 +522,26 @@ def _soft_error_hint(client_error):
           'reformula lo que necesitas.')
 
 
-def _settle_goal(conversation, *, goal_touched, other_tool_used):
+def _settle_goal(conversation, *, goal_progressed, goal_attempted,
+                 other_tool_used):
     """Cierra el turno desde el punto de vista del objetivo (W2).
 
     Devuelve True si el objetivo se estancó y toca escalar. Un cliente que
     intercala una pregunta NO estanca nada: eso **pausa** el objetivo (se
     retoma solo, con lo ya capturado intacto) — es justo lo que la spec §2.7
     pedía y no se podía cumplir sin estado persistido.
+
+    El intento SIN progreso cuenta como estancamiento (corrección piloto conv
+    12): antes bastaba con llamar la herramienta para que el turno se diera por
+    productivo, así que un modelo repreguntando el mismo dato en bucle
+    mantenía `stall_turns` en 0 indefinidamente — el detector era ciego
+    justamente al caso que existe para cazar.
     """
     goal = goals.get_open_goal(conversation)
-    if goal is None or goal_touched:
+    if goal is None or goal_progressed:
         return False
+    if goal_attempted:
+        return goals.bump_stall(goal)
     if other_tool_used:
         goals.pause(goal)
         return False

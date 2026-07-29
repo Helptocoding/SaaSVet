@@ -569,7 +569,29 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
         'iso_date': date_str,
         'iso_time': hhmm,
     } for hhmm in slots[:3]]
+
+    # El día consultado ENTRA al objetivo en curso (piloto 2026-07-28, conv 12).
+    # Hasta aquí el único acceso a los slots eran los argumentos de una tool de
+    # ESCRITURA: si el modelo resolvía la fecha, la usaba para consultar
+    # disponibilidad y hasta se la decía al cliente ("el martes 4 está libre")
+    # pero no la reenviaba al escribir, el sistema seguía reportando
+    # `me_falta: [date]` y el agente la volvía a preguntar — cuatro veces.
+    # El cliente ya la dio y el agente ya la dijo: no se vuelve a pedir.
+    _capture_slot_from_read(conversation, 'date', date_str)
+
     return ToolOutcome(ok=True, data=projection, summary={'slots': len(projection)})
+
+
+def _capture_slot_from_read(conversation, slot, value):
+    """Alimenta un slot FALTANTE del objetivo en curso desde una tool de
+    lectura. Solo rellena huecos: nunca pisa un valor ya capturado (el modelo
+    consulta días alternativos y eso no debe borrar lo que el cliente eligió).
+    La confirmación tier-2 sigue siendo la barrera real antes de escribir."""
+    from . import goals
+    goal = goals.get_open_goal(conversation)
+    if goal is None or slot not in (goal.missing or []):
+        return
+    goals.capture(goal, {slot: value}, conversation)
 
 
 def _hhmm_label(hhmm):
@@ -673,7 +695,8 @@ def _goal_error(state):
     return 'need_data'
 
 
-def _goal_gate(conversation, tool_name, args):
+def _goal_gate(conversation, tool_name, args, executor=None,
+               triggered_by=None):
     """Abre/retoma el objetivo, ingiere lo que el modelo propuso y decide si
     ya se puede ejecutar (W2).
 
@@ -687,6 +710,18 @@ def _goal_gate(conversation, tool_name, args):
     state = goals.capture(goal, args, conversation)
     if state['missing'] or state['low_confidence'] or state['rejected']:
         goals.mark_asked(goal, state['missing'])
+        # Rastro de la llamada PARCIAL. Antes esta salida temprana no generaba
+        # `ToolExecution`, así que 4 intentos de escritura del piloto (conv 12)
+        # eran invisibles y la telemetría hacía creer que el modelo casi no
+        # llamaba herramientas — estorbó el diagnóstico del propio incidente.
+        if executor is not None:
+            executor.record_local(
+                tool_name=tool_name,
+                args_redacted={'me_falta': state['missing'],
+                               'capturado': state['advanced']},
+                triggered_by_message=triggered_by,
+                summary={'objetivo': goal.name, 'resultado': 'need_data'},
+            )
         return goal, ToolOutcome(
             ok=False,
             client_error=_goal_error(state),
@@ -695,6 +730,12 @@ def _goal_gate(conversation, tool_name, args):
                 'me_falta': state['missing'],
                 'por_confirmar': state['low_confidence'],
                 'rechazado': state['rejected'],
+                # Si esta llamada llenó algo, hubo progreso real. El planner lo
+                # usa para distinguir "avanzó el objetivo" de "solo lo tocó" —
+                # sin esta señal el detector de estancamiento era ciego al
+                # bucle que existe para cazar (piloto conv 12: 4 repreguntas
+                # del mismo dato con stall_turns=0).
+                'capturado': state['advanced'],
             },
         )
     return goal, None
@@ -705,7 +746,9 @@ def create_appointment(conversation, executor, args, triggered_by=None):
     from .models import AgentSettings
     org = conversation.organization
 
-    goal, pending_outcome = _goal_gate(conversation, 'create_appointment', args)
+    goal, pending_outcome = _goal_gate(conversation, 'create_appointment', args,
+                                       executor=executor,
+                                       triggered_by=triggered_by)
     if pending_outcome is not None:
         return pending_outcome
     from . import goals
@@ -810,7 +853,9 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
     # consultar/agendar, pero NO cancelar lo que hizo el titular.
     if conversation.contact.linked_via == ContactIdentity.LINKED_FAMILY:
         return ToolOutcome(ok=False, client_error='family_restricted')
-    goal, pending_outcome = _goal_gate(conversation, 'cancel_appointment', args)
+    goal, pending_outcome = _goal_gate(conversation, 'cancel_appointment', args,
+                                       executor=executor,
+                                       triggered_by=triggered_by)
     if pending_outcome is not None:
         return pending_outcome
     from . import goals
@@ -864,7 +909,8 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
     if conversation.contact.linked_via == ContactIdentity.LINKED_FAMILY:
         return ToolOutcome(ok=False, client_error='family_restricted')
     goal, pending_outcome = _goal_gate(
-        conversation, 'reschedule_appointment', args)
+        conversation, 'reschedule_appointment', args,
+        executor=executor, triggered_by=triggered_by)
     if pending_outcome is not None:
         return pending_outcome
     from . import goals
@@ -989,7 +1035,8 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
         return ToolOutcome(ok=False, client_error='ambiguous_identity')
 
     goal, pending_outcome = _goal_gate(
-        conversation, 'register_new_client_and_pet', args)
+        conversation, 'register_new_client_and_pet', args,
+        executor=executor, triggered_by=triggered_by)
     if pending_outcome is not None:
         return pending_outcome
     from . import goals

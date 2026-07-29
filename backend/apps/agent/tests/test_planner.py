@@ -261,6 +261,159 @@ class PlannerFailureTests(PlannerTestCase):
         self.assertEqual(result["reason"], "tool_failure")
 
 
+class PlannerGoalStallTests(PlannerTestCase):
+    """El detector de estancamiento debe medir PROGRESO, no "llamó la tool".
+
+    Piloto conv 12 (2026-07-28): el modelo llamó `register_new_client_and_pet`
+    cuatro veces con los mismos datos, sin fecha. Cada llamada marcaba el turno
+    como productivo, así que `stall_turns` se quedó en 0 y el agente repreguntó
+    el mismo dato indefinidamente (`asked = {'date': 4, 'time': 4}`).
+    """
+
+    def _reg_call(self, **extra):
+        args = {"owner_name": "Ana Torres", "pet_name": "Luna",
+                "reason": "consulta"}
+        args.update(extra)
+        return LLMResult(kind="tool_call",
+                         tool_name="register_new_client_and_pet",
+                         tool_args=args)
+
+    def setUp(self):
+        super().setUp()
+        # Contacto SIN owner: el alta es la ruta válida.
+        self.contact.owner = None
+        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        self.contact.save()
+        # El tamiz ya se resolvió: aquí se prueba lo que pasa DESPUÉS.
+        self.conv.flow = {"identity_triage_done": "new"}
+        self.conv.save(update_fields=["flow"])
+
+    def _goal(self):
+        from apps.agent import goals
+        return goals.get_open_goal(self.conv)
+
+    def _stuck_turn(self):
+        """Un turno en el que el modelo reenvía EXACTAMENTE lo que ya sabía."""
+        self._inbound("regístrame")
+        return self._handle(StubLLMClient(scripted=[
+            self._reg_call(),
+            LLMResult(kind="text", text="¿Qué día te gustaría?"),
+        ]))
+
+    def test_first_call_is_progress_repeats_are_not(self):
+        self._stuck_turn()          # captura owner_name/pet_name/reason
+        self.assertEqual(self._goal().stall_turns, 0)
+        for turn in range(1, 3):    # reenviar lo mismo NO avanza
+            self._stuck_turn()
+            self.assertEqual(self._goal().stall_turns, turn, f"repetición {turn}")
+
+    def test_stall_escalates_instead_of_asking_forever(self):
+        result = None
+        for _ in range(4):          # 1 productivo + 3 estancados
+            result = self._stuck_turn()
+        self.assertEqual(result["decision"], "goal_stalled")
+        self.assertEqual(
+            HumanHandoff.objects.filter(conversation=self.conv).count(), 1)
+
+    def test_new_datum_resets_the_stall_counter(self):
+        self._stuck_turn()
+        self._stuck_turn()
+        self.assertEqual(self._goal().stall_turns, 1)
+
+        # Este turno SÍ aporta un dato nuevo → el contador vuelve a cero.
+        self._inbound("el 4 de agosto")
+        self._handle(StubLLMClient(scripted=[
+            self._reg_call(date="2026-08-04"),
+            LLMResult(kind="text", text="¿A qué hora?"),
+        ]))
+        goal = self._goal()
+        self.assertEqual(goal.stall_turns, 0)
+        self.assertEqual(goal.slots["date"]["value"], "2026-08-04")
+
+    def test_partial_write_attempt_leaves_an_audit_row(self):
+        """Una llamada de escritura incompleta debe verse en la telemetría.
+
+        Antes salía temprano sin `record_local`, así que los 4 intentos del
+        piloto eran invisibles y parecía que el modelo no llamaba herramientas.
+        """
+        from apps.agent.models import ToolExecution
+        self._stuck_turn()
+        rows = ToolExecution.objects.filter(
+            conversation=self.conv, tool_name="register_new_client_and_pet")
+        self.assertEqual(rows.count(), 1)
+        row = rows.first()
+        self.assertEqual(row.result_summary_redacted["resultado"], "need_data")
+        self.assertIn("date", row.args_redacted["me_falta"])
+
+    def test_correcting_a_value_counts_as_progress(self):
+        """"mejor el jueves" mueve la conversación aunque el slot ya tuviera
+        valor: es avance, no repetición."""
+        self._inbound("regístrame")
+        self._handle(StubLLMClient(scripted=[
+            self._reg_call(date="2026-08-04"),
+            LLMResult(kind="text", text="¿A qué hora?"),
+        ]))
+        self._inbound("mejor el 6")
+        self._handle(StubLLMClient(scripted=[
+            self._reg_call(date="2026-08-06"),
+            LLMResult(kind="text", text="¿A qué hora?"),
+        ]))
+        goal = self._goal()
+        self.assertEqual(goal.stall_turns, 0)
+        self.assertEqual(goal.slots["date"]["value"], "2026-08-06")
+
+
+class PlannerSlotCaptureTests(PlannerTestCase):
+    """Lo que el cliente ya dio no se vuelve a pedir — aunque el dato haya
+    entrado por una tool de LECTURA (piloto conv 12: el agente resolvió
+    "martes a las 9", consultó disponibilidad, lo dijo en voz alta… y siguió
+    preguntando la fecha porque el slot nunca se llenó)."""
+
+    def setUp(self):
+        super().setUp()
+        self.contact.owner = None
+        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        self.contact.save()
+        self.conv.flow = {"identity_triage_done": "new"}
+        self.conv.save(update_fields=["flow"])
+
+    def test_availability_lookup_fills_the_missing_date(self):
+        from apps.agent import goals
+        day = (timezone.now() + timedelta(days=3)).date().isoformat()
+        self._inbound("regístrame, quiero ir el jueves")
+        self._handle(StubLLMClient(scripted=[
+            LLMResult(kind="tool_call",
+                      tool_name="register_new_client_and_pet",
+                      tool_args={"owner_name": "Ana Torres",
+                                 "pet_name": "Luna", "reason": "consulta"}),
+            LLMResult(kind="tool_call", tool_name="find_available_slots",
+                      tool_args={"date": day}),
+            LLMResult(kind="text", text="Ese día tengo espacio 🙂"),
+        ]))
+        goal = goals.get_open_goal(self.conv)
+        self.assertEqual(goal.slots["date"]["value"], day)
+        self.assertNotIn("date", goal.missing)
+
+    def test_lookup_does_not_overwrite_a_date_already_chosen(self):
+        """El modelo consulta días alternativos; eso no borra lo elegido."""
+        from apps.agent import goals
+        chosen = (timezone.now() + timedelta(days=2)).date().isoformat()
+        other = (timezone.now() + timedelta(days=9)).date().isoformat()
+        self._inbound("regístrame")
+        self._handle(StubLLMClient(scripted=[
+            LLMResult(kind="tool_call",
+                      tool_name="register_new_client_and_pet",
+                      tool_args={"owner_name": "Ana Torres",
+                                 "pet_name": "Luna", "reason": "consulta",
+                                 "date": chosen}),
+            LLMResult(kind="tool_call", tool_name="find_available_slots",
+                      tool_args={"date": other}),
+            LLMResult(kind="text", text="También tengo ese otro día."),
+        ]))
+        goal = goals.get_open_goal(self.conv)
+        self.assertEqual(goal.slots["date"]["value"], chosen)
+
+
 class PlannerBudgetTests(PlannerTestCase):
     def test_budget_exhausted_escalates_before_llm(self):
         from django.conf import settings as dj_settings

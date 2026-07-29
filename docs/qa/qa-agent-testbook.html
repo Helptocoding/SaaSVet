@@ -6090,7 +6090,19 @@
       <td>El agente anunció como agendada una cita que nunca creó (cero llamadas a herramienta de escritura), y lo reafirmó al ser preguntado explícitamente. El tamiz de identidad dependía de que el modelo llamara una tool; un modelo que recolecta en texto lo saltaba por completo.</td>
       <td>Corregido — pendiente de retest</td>
     </tr>
+    <tr>
+      <td><code>BUG-AGENT-002</code></td>
+      <td>Piloto conv. 12 · 2026-07-28</td>
+      <td><strong>Mayor</strong></td>
+      <td>Objective Engine · Slot Filling</td>
+      <td>Pidió la misma fecha <strong>4 veces</strong> (<code>asked={'date':4,'time':4}</code>) después de que el cliente la diera y el propio agente la anunciara ("el martes 4 a las 9:00 am está libre"). El dato se resolvió, se usó para consultar disponibilidad y se tiró: la captura solo entraba por argumentos de una tool de <em>escritura</em>. Y el detector de estancamiento medía "llamó la tool", no "avanzó", así que <code>stall_turns</code> quedó en 0 para siempre.</td>
+      <td>Corregido — pendiente de retest</td>
+    </tr>
   </table>
+  <div class="callout warn">
+    <strong>BUG-AGENT-002 — corrección aplicada (2026-07-29)</strong>
+    <p style="margin-bottom:0;">Tres cambios: (1) <code>goals.capture</code> distingue <code>filled</code> (escribió) de <code>advanced</code> (un slot vacío se llenó o el cliente corrigió uno) — reafirmar lo ya sabido dejó de contar como progreso; (2) el planner separa <em>intentó</em> / <em>avanzó</em> / <em>usó otra tool</em>, así un intento sin avance sí incrementa <code>stall_turns</code> y a los 3 escala; (3) <code>find_available_slots</code> alimenta el slot <code>date</code> si estaba vacío, sin pisar lo ya elegido. <strong>El modelo nunca perdió el contexto</strong>: <code>goals.context_block</code> le inyecta <code>ya_tengo</code>/<code>me_falta</code> en cada turno — preguntaba porque el sistema le decía la verdad. Al re-testear, cubrir <a href="#TC-SLOT-003">TC-SLOT-003</a> (corrección de slot) y <a href="#TC-SLOT-005">TC-SLOT-005</a> (repregunta cero).</p>
+  </div>
   <div class="callout warn">
     <strong>BUG-AGENT-001 — corrección aplicada (2026-07-28)</strong>
     <p style="margin-bottom:0;">El tamiz pasó al <strong>router determinista</strong> (enmienda UX-05-D de la spec funcional): un contacto sin registro que pide algo personal no llega al modelo sin identificarse. Rama "ya soy cliente" → búsqueda en <code>Owner</code> + reto de 3 factores + vinculación, sin humano. <strong>Cobertura parcial</strong>: esto impide llegar a la situación, pero <em>no</em> impide que el modelo afirme un éxito falso. La garantía dura exige un guard en <code>agent/guards.py</code> que invalide "quedó agendada/cancelada/movida" sin herramienta ejecutada en el turno — <strong>pendiente</strong>. Al re-testear, ejecutar además <a href="#TC-NOR-001">TC-NOR-001</a> y <a href="#TC-SLOT-004">TC-SLOT-004</a> para descartar regresión lateral.</p>

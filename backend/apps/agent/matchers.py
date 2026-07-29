@@ -177,6 +177,13 @@ _PERSONAL_ACTION_STRONG = (
     'cambiar mi cita', 'recorrer mi cita',
     'cuando le toca', 'sus vacunas', 'vacunas de mi',
     'quiero llevar a', 'puedo llevar a', 'quiero llevarlo', 'quiero llevarla',
+    # Alta explícita: es la petición personal por excelencia y faltaba. Sin
+    # ella, "hola regístrame en el sistema" no disparaba el tamiz y el agente
+    # se ponía a recolectar datos de un desconocido (piloto conv 12).
+    'registrame', 'registrarme', 'registranos', 'me registras',
+    'quiero registrar', 'necesito registrar', 'dar de alta', 'darme de alta',
+    'darnos de alta', 'me das de alta', 'quiero darme de alta', 'inscribirme',
+    'alta en el sistema', 'registrar a mi', 'registrar mi',
 )
 _PERSONAL_ACTION_WEAK = (
     'una cita', 'la cita', 'cita para', 'consulta para',
