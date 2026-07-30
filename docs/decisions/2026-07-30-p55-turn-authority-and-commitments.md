@@ -152,12 +152,12 @@ con un solo slot de suspensión; aquí se generaliza):
               SUSPENDIDO       otro compromiso tomó el frente (urgencia, handoff)
                    │
                    ▼
-              BLOQUEADO        el dominio no puede cumplirlo → se dice la verdad
+              BLOQUEADO        el dominio NO PUEDE cumplirlo → se dice la verdad
                                 y SE DEJA DE PEDIR
               ABANDONADO       el cliente lo abandonó explícitamente
 ```
 
-Dos distinciones vinculantes:
+Tres distinciones vinculantes:
 
 - **`desviar` exige DIRECCIÓN DE RETORNO.** Una pausa sin dirección de retorno
   no es una pausa: es una interrupción que se sobrevivió por suerte. Registrar
@@ -167,6 +167,21 @@ Dos distinciones vinculantes:
   agendar **no abandonó la cita**. Al cerrar la urgencia, una recepcionista
   dice "¿retomamos la cita de Luna?". Colapsar ambos en un `cancelled` hace esa
   frase imposible.
+- **`bloqueado` ≠ `abandonado`.** `bloqueado` es *el dominio **no puede***
+  (productor real: `no_vet` — una clínica sin veterinario activo no puede
+  agendar, y ahí lo honesto es decirlo una vez y dejar de pedir). `abandonado`
+  es *el cliente no quiere*. Confundirlos manda a un humano casos que solo
+  necesitaban cerrarse, y deja pidiendo para siempre los que de verdad no
+  tienen salida.
+
+  > **Ojo con el caso que parece `bloqueado` y no lo es.** Un cliente que pide
+  > darse de alta **sin** cita choca con una restricción **deliberada de
+  > producto** (decisión del PO, 2026-07-30: el alta va siempre con la primera
+  > cita). El dominio *sí* puede cumplir el compromiso; quien no quiere el paso
+  > exigido es el cliente ⇒ el terminal correcto es `abandonado`. Lo que R6
+  > prohíbe no es la restricción: es **enunciarla como schema** ("el sistema me
+  > pide una fecha") y **no dejar de pedirla**. Ambas cosas las cierra este ADR
+  > — la primera vía el `why` del factor (§5), la segunda vía el terminal.
 
 **El embudo de compromisos parte los creados en terminales con dueño**:
 `completado` · `abandonado` (producto) · `bloqueado` (**PO** — es R6) ·
@@ -352,10 +367,17 @@ Esta es una jerarquía de **gobierno conversacional**, no de seguridad. Intactos
 
 ## Fuera de alcance de este ADR
 
-- **R6 / alta sin cita** (Fase 5 del plan): bloqueada por una decisión de
-  producto pendiente. Este ADR solo garantiza que, mientras no exista, la
-  conducta correcta sea `bloqueado` — decirlo una vez con honestidad y **dejar
-  de pedir** — en vez de exigirle al cliente que satisfaga un schema.
+- **Alta sin cita** (Fase 5 del plan): **cancelada**. Decisión del PO
+  (2026-07-30): dar de alta sin cita no debe poder hacerse — el alta va siempre
+  con la primera cita. La restricción es política de la clínica, no una fuga
+  del schema, así que no hay nada que quitar.
+
+  **R6 sí queda cerrado por este ADR**, por otra vía: lo que la regla prohíbe
+  es que el cliente tenga que satisfacer una restricción *interna*, y el
+  defecto real de la conv 12 fue **cómo se enunció** ("el sistema me pide una
+  fecha") y **que no dejara de pedir**. Lo primero lo cierra el `why`
+  obligatorio del factor (§5) — que exige un motivo decible en voz de clínica;
+  lo segundo, el terminal `abandonado` del ciclo de vida (§3).
 - **Guards conversacionales** (Fase 4): extienden el mecanismo existente a
   conducta; no cambian autoridad ni contratos.
 - Transcripción de audio, cambio de proveedor LLM y presupuesto de conversación:

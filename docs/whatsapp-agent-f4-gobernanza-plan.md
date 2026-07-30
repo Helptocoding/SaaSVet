@@ -2,10 +2,14 @@
 
 **Fecha**: 2026-07-29
 **Base**: [`whatsapp-agent-auditoria-rigidez-2026-07-29.md`](whatsapp-agent-auditoria-rigidez-2026-07-29.md)
-**Estado**: Fases 0, 1 y 2 **implementadas** (2026-07-30). Fases 3-5 siguen
-como propuesta, sin código.
-**Contexto de riesgo**: org 3 (`Clinica Bebe coche`) es la única clínica con agente encendido y
-canal real de WhatsApp. Todo lo que se despliegue lo prueba una persona real ese mismo día.
+**Estado**: Fases 0, 1 y 2 **implementadas** (2026-07-30, en `develop`). Fase 3 con su
+[ADR p55](decisions/2026-07-30-p55-turn-authority-and-commitments.md) escrito y aceptado, sin
+código. Fase 4 pendiente. **Fase 5 cancelada** (§7).
+**Contexto de riesgo — revisado 2026-07-30**: el plan se escribió asumiendo que org 3
+(`Clinica Bebe coche`) era una clínica real probando el agente el mismo día. El PO aclaró que esa
+y las demás organizaciones activas son **demo y pruebas**: no hay usuarios reales todavía. La regla
+"una fase, un despliegue" se relaja mientras eso siga así — pero **vuelve a aplicar** en cuanto
+entre la primera clínica real, y ese es el momento de releerla, no después.
 
 La auditoría es el diagnóstico. Este documento es lo ejecutable: archivos, formas de código,
 tests, criterio de terminado y qué NO entra.
@@ -31,21 +35,21 @@ tests, criterio de terminado y qué NO entra.
 ## 1. Secuencia y dependencias
 
 ```
-Fase 0  R1 + R9(copy)        ── desbloquea al cliente real. Sin dependencias.
+Fase 0  R1 + R9(copy)        ── ✅ HECHA (8346f1c). Desbloquea al cliente real.
    │
-   ├── Fase 1  R5 R8 R12     ── suspender + rastro. Necesita nada de Fase 0.
-   │      │                     (paralelizable con Fase 0; se despliega después)
-   │      ▼
-   ├── Fase 2  R11 R2        ── autoría + ventana. Necesita Fase 1 para medir el efecto.
+   ├── Fase 1  R5 R8 R12     ── ✅ HECHA (666273e). Suspender + rastro.
    │      │
    │      ▼
-   └── Fase 3  R3 R4 R7 R9*  ── árbitro + compromisos. ADR p55.
+   ├── Fase 2  R11 R2        ── ✅ HECHA (42dd994). Autoría + ventana.
+   │      │
+   │      ▼
+   └── Fase 3  R3 R4 R7 R9*  ── árbitro + compromisos. ADR p55 ✅ escrito (f0323ab).
           │                     Necesita Fase 1 (línea base de TurnDecision).
           ▼
        Fase 4  R10 R2        ── guards conversacionales. Necesita Fase 3.
-          │
-          ▼
-       Fase 5  R6            ── alta sin cita. BLOQUEADA por decisión de producto.
+
+       Fase 5  R6            ── ❌ CANCELADA (2026-07-30): el alta sin cita no debe
+                                existir. R6 se cierra dentro de Fase 3 (§7).
 ```
 
 **Fase 1 antes de Fase 3 no es negociable**: la arquitectura grande se mide contra el
@@ -105,14 +109,14 @@ Tres consecuencias prácticas:
    fila pero **nunca** se afirman. Un solo test que afirme sobre `duration_ms` reintroduce la
    inestabilidad y con ella el apagado de la suite.
 
-| Fase | Esfuerzo | Riesgo de despliegue | Reglas |
-|---|---|---|---|
-| 0 | **M** (1-2 d) | bajo · lógica pura + copy | R1, R9 (copy) |
-| 1 | **M** (2 d) | medio · 1 migración, toca escalada | R5, R8, R12 |
-| 2 | **S** (1 d) | bajo · afecta contexto del modelo | R11, R2 (parcial) |
-| 3 | **XL** (sprint) | alto · contrato de `ToolOutcome` | R3, R4, R7, R9 (estructural) |
-| 4 | **M** (2 d) | medio · puede escalar de más | R10, R2 |
-| 5 | **L** (3-5 d) | medio · toca dominio atómico | R6 |
+| Fase | Esfuerzo | Riesgo de despliegue | Reglas | Estado |
+|---|---|---|---|---|
+| 0 | **M** (1-2 d) | bajo · lógica pura + copy | R1, R9 (copy) | ✅ hecha |
+| 1 | **M** (2 d) | medio · 1 migración, toca escalada | R5, R8, R12 | ✅ hecha |
+| 2 | **S** (1 d) | bajo · afecta contexto del modelo | R11, R2 (parcial) | ✅ hecha |
+| 3 | **XL** (sprint) | alto · contrato de `ToolOutcome` | R3, R4, R7, R9 (estructural) | ADR listo |
+| 4 | **M** (2 d) | medio · puede escalar de más | R10, R2 | pendiente |
+| 5 | ~~L (3-5 d)~~ | — | ~~R6~~ → se cierra en Fase 3 | ❌ cancelada |
 
 ---
 
@@ -564,9 +568,10 @@ gate estadístico borraría la salvaguarda.
 ### 3.6 · Embudo de compromisos
 
 Terminales que **particionan** los creados, cada uno con dueño: `completado` · `abandonado`
-(producto, con etapa) · `bloqueado` (**PO, es R6**) · `suplantado sin retomar` (**ingeniería, viola
-R4**) · `handoff` · `expirado`. Corte por etapa: *"el 60 % de identidad muere en `digits`"* se ve en
-días.
+(**producto**, con etapa — aquí caen los que chocan con una restricción deliberada, p.ej. quien no
+quiere agendar al darse de alta) · `bloqueado` (**PO**: el dominio no puede, p.ej. `no_vet`) ·
+`suplantado sin retomar` (**ingeniería, viola R4**) · `handoff` · `expirado`. Corte por etapa:
+*"el 60 % de identidad muere en `digits`"* se ve en días.
 
 ### Terminado cuando
 
@@ -600,17 +605,40 @@ conversaciones sanas, y una escalada de más cuesta más que un log.
 
 ---
 
-## 7. Fase 5 · Alta sin cita — **bloqueada**
+## 7. Fase 5 · Alta sin cita — **CANCELADA** (decisión de producto, 2026-07-30)
 
-**Cierra R6.** `register_and_schedule` exige `date`/`time` porque `create-with-patient` es atómico
-(cliente + mascota + cita). Por eso el agente terminó discutiendo con el cliente en nombre de un
-schema: *"el sistema me pide al menos una fecha"*.
+**Decisión del PO: dar de alta sin cita NO debe poder hacerse.** El alta va siempre acompañada de
+la primera cita, como hoy. Esta fase **no se implementa**.
 
-**No es un problema de copy.** R6: si una restricción no se puede satisfacer sin que el cliente se
-entere, la restricción es un bug de producto. Requiere decisión del PO (§10).
+`register_and_schedule` exige `date`/`time` porque `create-with-patient` es atómico (cliente +
+mascota + cita). Yo lo había leído como el corolario de R6 —*si una restricción no se puede
+satisfacer sin que el cliente se entere, la restricción es un bug de producto*— y por tanto como
+algo a **quitar**. Era una lectura equivocada: la restricción es **política de la clínica**, no
+una fuga del schema. Que exista una restricción legítima no es el defecto.
 
-Mientras no se decida, la conducta correcta es `bloqueado`: decirlo una vez con honestidad y
-**dejar de pedir** — que ya llega con Fase 3.
+**R6 sigue cerrándose, pero por otra vía.** El defecto real de la conv 12 nunca fue la restricción:
+fue **cómo se enunció** y **que no dejara de pedir**.
+
+```
+21:22:24  Entiendo, pero el sistema me pide al menos una *fecha y hora* para
+          poder registrar a Luna.                    ← habla del schema, no de la clínica
+21:24:38  Ah, el sistema me pide una *fecha y hora*… Es solo un requisito del alta
+```
+
+Dos correcciones, ambas dentro de **Fase 3**, ninguna requiere fase propia:
+
+1. **Voz de clínica, no de sistema** — el `why` del factor (R9 estructural, [ADR p55
+   §5](decisions/2026-07-30-p55-turn-authority-and-commitments.md)) obliga a que el motivo sea
+   decible en voz alta: *"el alta la hacemos junto con tu primera cita, así queda todo listo de
+   una vez"*. Nunca *"el sistema me pide"*.
+2. **Un cliente que se niega no entra en bucle** — el compromiso termina `abandonado` (lo abandonó
+   el cliente), que es un terminal legítimo del ciclo de vida. **No** es `bloqueado`: el dominio
+   *sí* puede cumplirlo, el cliente es quien no quiere el paso que exige.
+
+**Ajuste al ADR p55 que salió de esta decisión** (§3): `bloqueado` queda reservado para "el dominio
+**no puede** cumplirlo" y su productor real es `no_vet` (una clínica sin veterinario activo no
+puede agendar) — no el alta sin cita. Sin esta corrección, `bloqueado` habría quedado como un
+estado sin ningún productor, es decir código muerto con nombre bonito.
 
 ---
 
@@ -755,16 +783,19 @@ tiene precedente aquí.
 
 ## 10. Decisiones que necesito antes de empezar
 
-**Estado al 2026-07-30**: resueltas 1, 3, 4 y 5. Sigue abierta la 2 (y con ella la Fase 5).
+**Estado al 2026-07-30**: las cinco resueltas. Ninguna bloquea ya la Fase 3.
 
 1. ✅ **¿Fase 0 se despliega sola, ya?** → **Sí**. Implementada y en `develop` (`8346f1c`). El
    despliegue al VPS quedó pendiente por un problema de credenciales de git en el servidor, ajeno
    al código. Contexto revisado por el PO: las organizaciones activas son **demo y pruebas** — no
    hay usuarios reales todavía, así que la cautela de "una fase, un despliegue avisando a la
    clínica" se relaja mientras eso siga así.
-2. ⬜ **¿Alta sin cita existe como producto?** — **ABIERTA**. Bloquea Fase 5 y R6. Fase 3 igual
-   mejora el trato: `bloqueado` (decirlo una vez y dejar de pedir) en vez de exigir el dato para
-   siempre.
+2. ✅ **¿Alta sin cita existe como producto?** → **NO, y no debe poder hacerse.** El alta va
+   siempre con la primera cita. **Fase 5 queda CANCELADA** (§7): no hay restricción que quitar —
+   es política de la clínica, no una fuga del schema. R6 se cierra igual, dentro de Fase 3: el
+   `why` obligatorio del factor impide enunciarla como sistema ("el sistema me pide una fecha") y
+   el terminal `abandonado` impide el bucle de pedir. Ojo con el matiz: **no** es `bloqueado` —
+   el dominio sí puede cumplirlo, el cliente es quien no quiere el paso que exige.
 3. ✅ **Retención de `TurnDecision`** → 90 días en crudo + agregado mensual, **con un principio
    por encima del número**: *se retiene por **utilidad**, no por tiempo*. 90 no es mágico: es
    donde el uso cambia de "reconstruir un caso" (regresión, depuración, incidentes) a "mirar una
