@@ -29,7 +29,7 @@ El objetivo se sitúa ANTES de la confirmación tier-2 y DESPUÉS del Policy
 Engine: no toca ninguna barrera de control existente.
 """
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -105,12 +105,69 @@ def _v_species(value, conversation):
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
-class GoalSpec:
+class Factor:
+    """Un dato que un compromiso necesita para poder cumplirse.
+
+    **`why` no es documentación: es un requisito estructural (R9, ADR p55
+    §5).** Es el motivo que el agente tiene que poder decir en voz alta si el
+    cliente pregunta "¿y eso para qué?". Un `Factor` sin `why` **no compila** —
+    literalmente: el constructor lo rechaza.
+
+    R9 empezó como criterio de revisión de copy y el principio
+    contenido/control la volvió estructural: el árbitro decide *qué* factor
+    toca (control), nunca *cómo* se pide (contenido), así que el porqué tiene
+    que vivir aquí o no existe en ningún lado. En la conv 13 el agente pidió
+    los últimos 4 dígitos y, al preguntarle el cliente para qué, no tenía qué
+    contestar.
+
+    El `why` se escribe en **voz de clínica**, jamás de sistema: "el alta la
+    hacemos junto con tu primera cita" sí; "el sistema me pide una fecha" no
+    (R6 — es el defecto exacto de la conv 12, y `WhyVoiceTests` lo gatea).
+    """
     name: str
-    required_slots: tuple
-    validators: dict = field(default_factory=dict)
-    optional_slots: tuple = ()
+    why: str
+    validator: object = None
+
+    def __post_init__(self):
+        if not (self.why or '').strip():
+            raise ValueError(
+                f"Factor '{self.name}' sin `why`. R9 (ADR p55 §5): todo dato "
+                f"que se le pide al cliente lleva un motivo decible en voz alta."
+            )
+
+
+@dataclass(frozen=True)
+class GoalSpec:
+    """Catálogo de un compromiso. `required_slots`/`validators` se DERIVAN de
+    los factores para que el resto del módulo no cambie: el contrato de slot
+    (nombre + validador, ADR p54) sigue igual, solo gana el `why`."""
+    name: str
+    factors: tuple = ()
+    optional_factors: tuple = ()
     max_stall_turns: int = 3
+
+    @property
+    def all_factors(self):
+        return self.factors + self.optional_factors
+
+    @property
+    def required_slots(self):
+        return tuple(f.name for f in self.factors)
+
+    @property
+    def optional_slots(self):
+        return tuple(f.name for f in self.optional_factors)
+
+    @property
+    def validators(self):
+        return {f.name: f.validator
+                for f in self.all_factors if f.validator is not None}
+
+    def why(self, slot):
+        for factor in self.all_factors:
+            if factor.name == slot:
+                return factor.why
+        return ''
 
 
 SCHEDULE = 'schedule_appointment'
@@ -118,43 +175,67 @@ REGISTER = 'register_and_schedule'
 CANCEL = 'cancel_appointment'
 RESCHEDULE = 'reschedule_appointment'
 
+# El alta va SIEMPRE con la primera cita: es política de la clínica, no un
+# requisito del schema (decisión del PO 2026-07-30; Fase 5 del plan É-F4 se
+# canceló por esto). El motivo tiene que sonar a eso — en la conv 12 el agente
+# dijo "el sistema me pide al menos una fecha y hora" y terminó discutiendo
+# con el cliente en nombre de una tabla.
+_WHY_ALTA_CON_CITA = (
+    'el alta la hacemos junto con tu primera cita, así te queda todo listo de '
+    'una vez'
+)
+
 GOAL_SPECS = {
     SCHEDULE: GoalSpec(
         name=SCHEDULE,
-        required_slots=('pet_handle', 'date', 'time', 'reason'),
-        validators={
-            'pet_handle': _v_handle('mascota'),
-            'date': _v_date,
-            'time': _v_time,
-            'reason': _v_text(),
-        },
+        factors=(
+            Factor('pet_handle', 'saber a cuál de tus mascotas vamos a atender',
+                   _v_handle('mascota')),
+            Factor('date', 'apartar el día en la agenda del veterinario',
+                   _v_date),
+            Factor('time', 'apartarte la hora y que no se empalme con otra cita',
+                   _v_time),
+            Factor('reason',
+                   'que el veterinario sepa qué revisar y le reserve el tiempo '
+                   'que necesita', _v_text()),
+        ),
     ),
     REGISTER: GoalSpec(
         name=REGISTER,
-        required_slots=('owner_name', 'pet_name', 'date', 'time', 'reason'),
-        optional_slots=('pet_species',),
-        validators={
-            'owner_name': _v_text(2),
-            'pet_name': _v_text(),
-            'pet_species': _v_species,
-            'date': _v_date,
-            'time': _v_time,
-            'reason': _v_text(),
-        },
+        factors=(
+            Factor('owner_name', 'abrir tu expediente en la clínica',
+                   _v_text(2)),
+            Factor('pet_name', 'abrir el expediente de tu mascota', _v_text()),
+            Factor('date', _WHY_ALTA_CON_CITA, _v_date),
+            Factor('time', _WHY_ALTA_CON_CITA, _v_time),
+            Factor('reason',
+                   'que el veterinario sepa qué revisar en esa primera visita',
+                   _v_text()),
+        ),
+        optional_factors=(
+            Factor('pet_species',
+                   'que el veterinario prepare lo adecuado para tu mascota',
+                   _v_species),
+        ),
     ),
     CANCEL: GoalSpec(
         name=CANCEL,
-        required_slots=('appointment_handle',),
-        validators={'appointment_handle': _v_handle('cita')},
+        factors=(
+            Factor('appointment_handle',
+                   'asegurarme de que cancelo la cita correcta',
+                   _v_handle('cita')),
+        ),
     ),
     RESCHEDULE: GoalSpec(
         name=RESCHEDULE,
-        required_slots=('appointment_handle', 'new_date', 'new_time'),
-        validators={
-            'appointment_handle': _v_handle('cita'),
-            'new_date': _v_date,
-            'new_time': _v_time,
-        },
+        factors=(
+            Factor('appointment_handle',
+                   'asegurarme de que muevo la cita correcta',
+                   _v_handle('cita')),
+            Factor('new_date', 'apartar el día nuevo en la agenda', _v_date),
+            Factor('new_time',
+                   'apartarte la hora nueva con el veterinario', _v_time),
+        ),
     ),
 }
 
@@ -176,26 +257,50 @@ def spec_for(name):
 # ---------------------------------------------------------------------------
 
 def get_open_goal(conversation):
+    """El compromiso EN EL FRENTE (activo o desviado). Un suspendido no está
+    al frente: se ofrece de vuelta, no se retoma solo."""
     from .models import ConversationGoal
     return ConversationGoal.objects.filter(
         conversation=conversation,
-        status__in=(ConversationGoal.STATUS_ACTIVE,
-                    ConversationGoal.STATUS_PAUSED),
+        status__in=ConversationGoal.FOREGROUND_STATUSES,
+    ).first()
+
+
+def get_suspended_goal(conversation):
+    from .models import ConversationGoal
+    return ConversationGoal.objects.filter(
+        conversation=conversation,
+        status=ConversationGoal.STATUS_SUSPENDED,
     ).first()
 
 
 def open_goal(conversation, name):
-    """Abre (o retoma) el objetivo. Uno abierto por conversación: iniciar otro
-    cancela el anterior — la spec §2.7 ya exigía un solo flujo de escritura."""
+    """Abre, retoma o SUPLANTA.
+
+    Cambio de ADR p55 §3 (R4): abrir otro compromiso ya no **cancela** el
+    anterior — lo **suspende**. Un cliente cuyo perro convulsiona a mitad de
+    agendar no abandonó la cita; al cerrar la urgencia hay que poder decir
+    "¿retomamos la cita de Luna?". Con `close(CANCELLED)` esa frase era
+    imposible porque el compromiso ya no existía.
+
+    Si ya había uno suspendido, ese sí se da por **abandonado**: el slot es
+    único (ver constraint) y apilar compromisos no tiene caso de uso hoy.
+    """
     from .models import ConversationGoal
     current = get_open_goal(conversation)
     if current is not None:
         if current.name == name:
-            if current.status == ConversationGoal.STATUS_PAUSED:
-                current.status = ConversationGoal.STATUS_ACTIVE
-                current.save(update_fields=['status'])
-            return current
-        close(current, ConversationGoal.STATUS_CANCELLED, 'otro objetivo')
+            return resume(current)
+        suspended = get_suspended_goal(conversation)
+        if suspended is not None:
+            close(suspended, ConversationGoal.STATUS_ABANDONED,
+                  'desplazado por otro compromiso')
+        suspend(current, supplanted_by=name)
+    else:
+        # Retomar explícitamente lo que se ofreció de vuelta.
+        suspended = get_suspended_goal(conversation)
+        if suspended is not None and suspended.name == name:
+            return resume(suspended)
     goal = ConversationGoal.objects.create(
         organization=conversation.organization,
         conversation=conversation,
@@ -216,13 +321,88 @@ def close(goal, status, reason=''):
     return goal
 
 
-def pause(goal):
+def deviate(goal, return_to):
+    """El agente atiende otra cosa y VUELVE al punto exacto (R4).
+
+    `return_to` es obligatorio: sin dirección de retorno esto no es un desvío,
+    es una interrupción sobrevivida por suerte.
+    """
     from .models import ConversationGoal
     if goal is None or goal.status != ConversationGoal.STATUS_ACTIVE:
         return goal
-    goal.status = ConversationGoal.STATUS_PAUSED
-    goal.save(update_fields=['status'])
+    if not (return_to or '').strip():
+        raise ValueError(
+            "deviate() exige `return_to` (R4, ADR p55 §3): un desvío sin "
+            "dirección de retorno obliga a re-derivar la pregunta pendiente."
+        )
+    goal.status = ConversationGoal.STATUS_DEVIATED
+    goal.return_to = return_to[:32]
+    goal.save(update_fields=['status', 'return_to'])
     return goal
+
+
+def suspend(goal, *, supplanted_by):
+    """Otro compromiso tomó el frente. NO es abandono: se ofrece de vuelta."""
+    from .models import ConversationGoal
+    if goal is None or goal.status not in ConversationGoal.FOREGROUND_STATUSES:
+        return goal
+    goal.status = ConversationGoal.STATUS_SUSPENDED
+    goal.supplanted_by = (supplanted_by or '')[:40]
+    goal.save(update_fields=['status', 'supplanted_by'])
+    return goal
+
+
+def resume(goal):
+    """Vuelve al frente conservando `return_to` (el punto exacto)."""
+    from .models import ConversationGoal
+    if goal is None or goal.status == ConversationGoal.STATUS_ACTIVE:
+        return goal
+    if goal.status not in ConversationGoal.OPEN_STATUSES:
+        return goal
+    goal.status = ConversationGoal.STATUS_ACTIVE
+    goal.supplanted_by = ''
+    goal.save(update_fields=['status', 'supplanted_by'])
+    return goal
+
+
+def block(goal, reason):
+    """El dominio NO PUEDE cumplirlo (p.ej. `no_vet`): se dice una vez y se
+    deja de pedir.
+
+    Distinto de `abandon`, y la distinción importa: ahí el dominio sí podía y
+    quien no quiso fue el cliente. Confundirlos manda a un humano casos que
+    solo necesitaban cerrarse, y deja pidiendo para siempre los que de verdad
+    no tienen salida.
+    """
+    from .models import ConversationGoal
+    if goal is None:
+        return None
+    goal.blocked_reason = (reason or '')[:40]
+    goal.save(update_fields=['blocked_reason'])
+    return close(goal, ConversationGoal.STATUS_BLOCKED, reason)
+
+
+def abandon(goal, reason=''):
+    """El CLIENTE lo abandonó — incluido "no quiero agendar" dentro de un
+    alta: esa restricción es política de la clínica y el dominio sí podía
+    cumplirla, así que no es `block`."""
+    from .models import ConversationGoal
+    return close(goal, ConversationGoal.STATUS_ABANDONED, reason)
+
+
+# Alias histórico: `pause` era el desvío sin dirección de retorno. Se conserva
+# el nombre para no tocar los call sites de un golpe, pero ahora EXIGE saber
+# dónde se retoma (R4).
+def pause(goal, return_to=''):
+    return deviate(goal, return_to or _default_return_to(goal))
+
+
+def _default_return_to(goal):
+    """Dónde retomar si el caller no lo dijo: el primer dato que falta. Es la
+    pregunta que estaba pendiente — derivable del propio compromiso, no de la
+    ventana de mensajes."""
+    pending = missing_slots(goal) if goal is not None else []
+    return pending[0] if pending else 'confirmacion'
 
 
 def close_open_goal(conversation, status, reason=''):

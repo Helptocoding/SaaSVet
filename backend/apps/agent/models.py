@@ -177,19 +177,37 @@ class ConversationGoal(OrganizationalModel):
     normalizado por el validador — nunca el texto crudo del cliente.
     """
 
+    # Ciclo de vida del COMPROMISO (ADR p55 §3). Un compromiso nunca
+    # desaparece: siempre está en uno de estos estados.
     STATUS_ACTIVE = 'active'
-    STATUS_PAUSED = 'paused'
+    STATUS_DEVIATED = 'deviated'      # ex-`paused`: el agente atiende otra
+                                      # cosa y VUELVE — exige `return_to`
+    STATUS_SUSPENDED = 'suspended'    # otro compromiso tomó el frente; se
+                                      # OFRECE de vuelta (suplantar ≠ abortar)
+    STATUS_BLOCKED = 'blocked'        # el dominio NO PUEDE cumplirlo
     STATUS_COMPLETED = 'completed'
-    STATUS_CANCELLED = 'cancelled'
+    STATUS_ABANDONED = 'abandoned'    # el cliente lo abandonó
     STATUS_HANDOFF = 'handoff'
+    # DEPRECADO. `cancelled` conflacionaba «suplantado» y «abandonado» (el
+    # hallazgo de §10.4 de la auditoría de rigidez). Se conserva SOLO para no
+    # reetiquetar filas históricas con un significado que no tuvieron: no se
+    # puede saber, fila por fila, cuál de los dos casos fue. No usar en código
+    # nuevo — hoy se escribe `suspended` o `abandoned` según corresponda.
+    STATUS_CANCELLED_DEPRECATED = 'cancelled'
     STATUS_CHOICES = (
         (STATUS_ACTIVE, 'En curso'),
-        (STATUS_PAUSED, 'Pausado'),
+        (STATUS_DEVIATED, 'Desviado'),
+        (STATUS_SUSPENDED, 'Suspendido'),
+        (STATUS_BLOCKED, 'Bloqueado'),
         (STATUS_COMPLETED, 'Completado'),
-        (STATUS_CANCELLED, 'Cancelado'),
+        (STATUS_ABANDONED, 'Abandonado'),
         (STATUS_HANDOFF, 'Escalado a humano'),
+        (STATUS_CANCELLED_DEPRECATED, 'Cancelado (deprecado)'),
     )
-    OPEN_STATUSES = (STATUS_ACTIVE, STATUS_PAUSED)
+    # No terminales: el compromiso sigue vivo y puede retomarse.
+    OPEN_STATUSES = (STATUS_ACTIVE, STATUS_DEVIATED, STATUS_SUSPENDED)
+    # En el FRENTE de la conversación (como máximo uno — ver constraints).
+    FOREGROUND_STATUSES = (STATUS_ACTIVE, STATUS_DEVIATED)
 
     conversation = models.ForeignKey(
         Conversation, on_delete=models.PROTECT, related_name='goals',
@@ -210,14 +228,36 @@ class ConversationGoal(OrganizationalModel):
     closed_at = models.DateTimeField(null=True, blank=True)
     closed_reason = models.CharField(max_length=80, blank=True, default='')
 
+    # ── Coordenadas del ciclo de vida (ADR p55 §3) ──────────────────────────
+    # DÓNDE se retoma un compromiso desviado. Una pausa sin dirección de
+    # retorno no es una pausa: es una interrupción que se sobrevivió por
+    # suerte — retomar obligaba a re-derivar la pregunta pendiente de la
+    # ventana de contexto, que es justo lo que falla (R4).
+    return_to = models.CharField(max_length=32, blank=True, default='')
+    # QUÉ tomó el frente cuando este compromiso quedó suspendido, para poder
+    # ofrecerlo de vuelta ("¿retomamos la cita de Luna?").
+    supplanted_by = models.CharField(max_length=40, blank=True, default='')
+    # POR QUÉ el dominio no puede cumplirlo (p.ej. `no_vet`). Solo con
+    # `status=blocked`; es lo que permite decirlo una vez y dejar de pedir.
+    blocked_reason = models.CharField(max_length=40, blank=True, default='')
+
     class Meta:
         constraints = [
-            # Un solo objetivo abierto por conversación (patrón espejo de
-            # `cashsession_one_open_per_user`).
+            # Como máximo un compromiso EN EL FRENTE por conversación (patrón
+            # espejo de `cashsession_one_open_per_user`). Los suspendidos no
+            # cuentan: la urgencia suplanta a la cita, y ambas coexisten.
             models.UniqueConstraint(
                 fields=['conversation'],
-                condition=models.Q(status__in=('active', 'paused')),
+                condition=models.Q(status__in=('active', 'deviated')),
                 name='conversationgoal_one_open_per_conversation',
+            ),
+            # …y como máximo uno suspendido. Límite deliberado (mismo alcance
+            # que el slot único de la Fase 1): no existe hoy un caso que
+            # necesite apilar dos, y una pila sin caso es sobre-diseño.
+            models.UniqueConstraint(
+                fields=['conversation'],
+                condition=models.Q(status='suspended'),
+                name='commitment_one_suspended_per_conversation',
             ),
         ]
         indexes = [

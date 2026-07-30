@@ -1,15 +1,20 @@
 """
 test_contracts.py — G3 · Contract Freeze (plan de gobernanza §9.1, Fase 1).
 
-Tres tipos son la API interna del sistema conversacional: `ToolOutcome`,
-`PolicyDecision`, `TurnDecision`. (El cuarto, `Commitment`, llega en Fase 3 —
-no existe todavía.) No pueden cambiar "porque sí".
+Cuatro tipos son la API interna del sistema conversacional: `ToolOutcome`,
+`PolicyDecision`, `TurnDecision` y el **compromiso** (`ConversationGoal`, que
+la Fase 3 EXTIENDE en vez de reemplazar — ADR p55 §3). No pueden cambiar
+"porque sí": la propiedad del contrato está declarada en
+[ADR p55 §8](../../../../docs/decisions/2026-07-30-p55-turn-authority-and-commitments.md)
+— todo cambio SEMÁNTICO del runtime conversacional entra por ese ADR.
 
 Mecanismo: snapshot de la forma real (nombres de campo) versionado en este
-archivo. Si el PR toca alguno de los tres, el diff de este test lo hace
+archivo. Si el PR toca alguno de los cuatro, el diff de este test lo hace
 VISIBLE — y debe venir acompañado de un ADR (cambio semántico: campo
-eliminado/renombrado/re-tipado) o ser claramente aditivo (campo opcional
-nuevo, sin ADR). Mismo patrón que `requirements.lock`: fuente pinneada.
+eliminado/renombrado/re-tipado, o significado cambiado) o ser claramente
+aditivo (campo opcional nuevo, valor de enum nuevo que pasa ortogonalidad y
+cardinalidad → basta el bump del snapshot). Mismo patrón que
+`requirements.lock`: fuente pinneada.
 
 Coste declarado: cualquier campo nuevo, aunque sea trivial, obliga a tocar
 este snapshot. Es el precio de que Fase 3 no pueda cambiar `ToolOutcome` en
@@ -19,7 +24,7 @@ import dataclasses
 
 from django.test import SimpleTestCase
 
-from apps.agent.models import TurnDecision
+from apps.agent.models import ConversationGoal, TurnDecision
 from apps.agent.policy import PolicyDecision
 from apps.agent.tools import ToolOutcome
 
@@ -51,3 +56,34 @@ class TurnDecisionContractTests(SimpleTestCase):
             'supplanted_by', 'tools_called', 'triggered_by_message',
             'updated_at', 'updated_by', 'verdict',
         ])
+
+
+class CommitmentContractTests(SimpleTestCase):
+    """El compromiso (`ConversationGoal` extendido, ADR p55 §3)."""
+
+    def test_fields_match_snapshot(self):
+        fields = sorted(f.name for f in ConversationGoal._meta.fields)
+        self.assertEqual(fields, [
+            'asked', 'blocked_reason', 'closed_at', 'closed_reason',
+            'conversation', 'created_at', 'created_by', 'id', 'is_active',
+            'last_progress_at', 'low_confidence', 'missing', 'name',
+            'organization', 'return_to', 'slots', 'stall_turns', 'status',
+            'supplanted_by', 'updated_at', 'updated_by',
+        ])
+
+    def test_lifecycle_states_match_the_adr(self):
+        """Los seis estados del ciclo de vida de ADR p55 §3, más `handoff` y
+        el `cancelled` deprecado que solo sostiene filas históricas."""
+        self.assertEqual(
+            sorted(s for s, _ in ConversationGoal.STATUS_CHOICES),
+            ['abandoned', 'active', 'blocked', 'cancelled', 'completed',
+             'deviated', 'handoff', 'suspended'],
+        )
+
+    def test_a_suspended_commitment_is_open_but_not_in_the_foreground(self):
+        """Es lo que permite que la urgencia suplante a la cita y ambas
+        coexistan — sin esto, `suplantar` y `abortar` vuelven a colapsar."""
+        self.assertIn(ConversationGoal.STATUS_SUSPENDED,
+                      ConversationGoal.OPEN_STATUSES)
+        self.assertNotIn(ConversationGoal.STATUS_SUSPENDED,
+                         ConversationGoal.FOREGROUND_STATUSES)

@@ -8,13 +8,15 @@ Lo que estos tests anclan:
 - el sistema es dueño del checklist (el modelo solo redacta la pregunta);
 - una llamada PARCIAL persiste lo válido en vez de tirarlo;
 - la confianza baja NO llena el slot: se confirma con el cliente;
-- una interrupción PAUSA el objetivo, no lo destruye (spec §2.7);
+- una interrupción DESVÍA el objetivo, no lo destruye (spec §2.7);
 - el estancamiento (semántico) sustituye al presupuesto contable;
-- el ciclo de vida queda medido (`completed/cancelled/handoff`).
+- el ciclo de vida queda medido (`completed/abandoned/blocked/handoff`);
+- **É-F4 Fase 3 (ADR p55)**: todo factor lleva un `why` decible en voz alta
+  (R9), y suplantar ≠ abortar (R4).
 """
 from datetime import timedelta
 
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from apps.agent import confirmations, goals, policy, tools
@@ -143,18 +145,34 @@ class SlotValidatorTests(GoalFixture):
 # ---------------------------------------------------------------------------
 
 class GoalLifecycleTests(GoalFixture):
-    def test_only_one_open_goal_per_conversation(self):
+    def test_only_one_foreground_goal_per_conversation(self):
         self._create(pet_handle="mascota_1")
         tools.cancel_appointment(self.conv, self.executor(),
                                  {"appointment_handle": "cita_9"})
-        abiertos = ConversationGoal.objects.filter(
+        al_frente = ConversationGoal.objects.filter(
             conversation=self.conv,
-            status__in=ConversationGoal.OPEN_STATUSES)
-        self.assertEqual(abiertos.count(), 1)
-        self.assertEqual(abiertos.first().name, goals.CANCEL)
-        # El anterior queda CANCELADO, no borrado: el embudo lo necesita.
+            status__in=ConversationGoal.FOREGROUND_STATUSES)
+        self.assertEqual(al_frente.count(), 1)
+        self.assertEqual(al_frente.first().name, goals.CANCEL)
+        # ADR p55 §3 (R4): el anterior queda SUSPENDIDO, no cancelado — abrir
+        # otro compromiso no es que el cliente abandonara el primero, y hay
+        # que poder ofrecerlo de vuelta ("¿retomamos la cita de Luna?").
         previo = ConversationGoal.objects.get(name=goals.SCHEDULE)
-        self.assertEqual(previo.status, ConversationGoal.STATUS_CANCELLED)
+        self.assertEqual(previo.status, ConversationGoal.STATUS_SUSPENDED)
+        self.assertEqual(previo.supplanted_by, goals.CANCEL)
+
+    def test_a_suspended_goal_can_be_resumed_with_its_slots(self):
+        self._create(pet_handle="mascota_1", date=self.day)
+        tools.cancel_appointment(self.conv, self.executor(),
+                                 {"appointment_handle": "cita_9"})
+        # El de agendar quedó suspendido; retomarlo conserva lo capturado.
+        goals.close_open_goal(self.conv, ConversationGoal.STATUS_COMPLETED)
+        retomado = goals.open_goal(self.conv, goals.SCHEDULE)
+        self.assertEqual(retomado.status, ConversationGoal.STATUS_ACTIVE)
+        self.assertEqual(goals.values(retomado)["date"], self.day)
+        self.assertEqual(
+            ConversationGoal.objects.filter(
+                conversation=self.conv, name=goals.SCHEDULE).count(), 1)
 
     def test_escalation_closes_the_goal_as_handoff(self):
         self._create(pet_handle="mascota_1")
@@ -163,12 +181,26 @@ class GoalLifecycleTests(GoalFixture):
         goal = ConversationGoal.objects.get(conversation=self.conv)
         self.assertEqual(goal.status, ConversationGoal.STATUS_HANDOFF)
 
-    def test_pause_keeps_the_captured_slots(self):
+    def test_deviating_keeps_the_captured_slots(self):
         self._create(pet_handle="mascota_1", date=self.day)
         goals.pause(self._goal())
         goal = self._goal()
-        self.assertEqual(goal.status, ConversationGoal.STATUS_PAUSED)
+        self.assertEqual(goal.status, ConversationGoal.STATUS_DEVIATED)
         self.assertEqual(goals.values(goal)["date"], self.day)
+
+    def test_deviating_always_records_where_to_come_back(self):
+        """R4 — una pausa sin dirección de retorno no es una pausa: es una
+        interrupción sobrevivida por suerte. Si el caller no la da, se deriva
+        del propio compromiso (el primer dato que falta), nunca de la ventana
+        de mensajes."""
+        self._create(pet_handle="mascota_1", date=self.day)
+        goals.pause(self._goal())
+        self.assertEqual(self._goal().return_to, "time")
+
+    def test_deviate_refuses_an_empty_return_direction(self):
+        self._create(pet_handle="mascota_1")
+        with self.assertRaises(ValueError):
+            goals.deviate(self._goal(), "")
 
     def test_resume_reactivates_the_same_goal(self):
         self._create(pet_handle="mascota_1", date=self.day)
@@ -259,3 +291,72 @@ class GoalMetricsTests(GoalFixture):
         self.assertEqual(data["completados"], 0)
         self.assertEqual(data["por_objetivo"][goals.SCHEDULE], 1)
         self.assertIn("time", data["slots_atorados"])
+
+
+# ---------------------------------------------------------------------------
+# É-F4 Fase 3 · R9 estructural — todo factor lleva su `why`
+# ---------------------------------------------------------------------------
+
+class FactorWhyTests(SimpleTestCase):
+    """Sin DB: el catálogo es una propiedad estática del módulo."""
+
+    def test_a_factor_without_why_does_not_compile(self):
+        with self.assertRaises(ValueError):
+            goals.Factor('digits', '')
+        with self.assertRaises(ValueError):
+            goals.Factor('digits', '   ')
+
+    def test_every_factor_of_every_goal_has_a_why(self):
+        for name, spec in goals.GOAL_SPECS.items():
+            for factor in spec.all_factors:
+                with self.subTest(goal=name, factor=factor.name):
+                    self.assertTrue(factor.why.strip())
+
+    def test_required_slots_and_validators_still_derive_from_factors(self):
+        """El contrato de slot (nombre + validador, ADR p54) no cambió: solo
+        ganó el `why`. Si esto se rompe, `capture`/`missing_slots` mienten."""
+        spec = goals.GOAL_SPECS[goals.REGISTER]
+        self.assertEqual(
+            spec.required_slots,
+            ('owner_name', 'pet_name', 'date', 'time', 'reason'))
+        self.assertEqual(spec.optional_slots, ('pet_species',))
+        for slot in spec.required_slots:
+            self.assertIn(slot, spec.validators)
+
+
+class WhyVoiceTests(SimpleTestCase):
+    """R6 — el cliente nunca debe satisfacer restricciones INTERNAS.
+
+    Precedente exacto (conv 12): *"Entiendo, pero el sistema me pide al menos
+    una fecha y hora para poder registrar a Luna"*. La restricción es legítima
+    —el alta va con la primera cita, decisión de producto del 2026-07-30— pero
+    enunciarla como schema es el defecto. Este gate no puede juzgar prosa; sí
+    puede impedir que el vocabulario del sistema se cuele en el motivo.
+    """
+
+    _SYSTEM_VOICE = (
+        'sistema', 'el campo', 'base de datos', 'schema', 'requisito',
+        'obligatorio', 'formulario', 'registro interno', 'api', 'validac',
+    )
+
+    def test_no_why_speaks_like_a_system(self):
+        for name, spec in goals.GOAL_SPECS.items():
+            for factor in spec.all_factors:
+                low = factor.why.lower()
+                for word in self._SYSTEM_VOICE:
+                    with self.subTest(goal=name, factor=factor.name, word=word):
+                        self.assertNotIn(word, low)
+
+    def test_the_alta_constraint_is_explained_as_clinic_policy(self):
+        """El caso de la conv 12: pedir fecha en un ALTA tiene que sonar a
+        cómo trabaja la clínica, no a lo que exige la tabla."""
+        why = goals.GOAL_SPECS[goals.REGISTER].why('date')
+        self.assertIn('primera cita', why)
+        self.assertEqual(why, goals.GOAL_SPECS[goals.REGISTER].why('time'))
+
+    def test_scheduling_and_registering_explain_the_same_slot_differently(self):
+        """El `why` es por FACTOR, no global: la fecha de una cita normal y la
+        de un alta se piden por motivos distintos."""
+        self.assertNotEqual(
+            goals.GOAL_SPECS[goals.SCHEDULE].why('date'),
+            goals.GOAL_SPECS[goals.REGISTER].why('date'))
