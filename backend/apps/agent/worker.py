@@ -306,7 +306,7 @@ def _escalate_after_failure(conversation):
         conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
         detail='turn_failed',
     )
-    enqueue_outbound(conversation, TURN_FAILURE_TEXT, author='agent')
+    enqueue_outbound(conversation, TURN_FAILURE_TEXT, author='system')
 
 
 def send_pending_outbound(batch=20, provider_factory=get_provider, now=None):

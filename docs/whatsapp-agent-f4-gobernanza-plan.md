@@ -2,7 +2,7 @@
 
 **Fecha**: 2026-07-29
 **Base**: [`whatsapp-agent-auditoria-rigidez-2026-07-29.md`](whatsapp-agent-auditoria-rigidez-2026-07-29.md)
-**Estado**: Fase 0 y Fase 1 **implementadas** (2026-07-30). Fases 2-5 siguen
+**Estado**: Fases 0, 1 y 2 **implementadas** (2026-07-30). Fases 3-5 siguen
 como propuesta, sin código.
 **Contexto de riesgo**: org 3 (`Clinica Bebe coche`) es la única clínica con agente encendido y
 canal real de WhatsApp. Todo lo que se despliegue lo prueba una persona real ese mismo día.
@@ -454,10 +454,21 @@ resuelve una interrupción o una queja.
 | `test_prompts.py` | con la ventana llena, los hechos de identidad siguen en `DATOS` (el caso exacto de la conv 13) |
 | `test_planner.py` | el aviso de horario no se antepone a una respuesta de desvío |
 
+**Corrección al escribir los tests**: el último renglón se ancló en
+`test_w1_experience.py::AfterHoursNoticeTests` (donde ya vive el
+comportamiento del aviso), no en `test_planner.py`. Y el caso no es "una
+respuesta de desvío": un desvío sale por `policy.REPLY` y **nunca** llega a
+`_after_hours_prefix`, que solo corre en el camino `planner_reply` — el test
+habría pasado sin arreglar nada. El caso real de la conv 13 es una **queja**
+(`"¿se te borró el contexto?"`), que sí cae en `RUN_PLANNER`. El test afirma
+además que el aviso **no se consume** al suprimirse.
+
 ### Terminado cuando
 
-- Reconstruida la ventana de la conv 13 en el turno de las 02:13:39, el hecho *"ya he ido varias
-  veces"* **está** disponible (como hecho anclado, aunque el mensaje ya no quepa).
+- [x] Reconstruida la ventana de la conv 13 en el turno de las 02:13:39, el hecho *"ya he ido varias
+  veces"* **está** disponible (como hecho anclado, aunque el mensaje ya no quepa) —
+  `AnchoredIdentityFactsTests.test_returning_client_fact_survives_the_window`.
+- [x] Suite del agente verde (**472 tests**, 1 skip preexistente — 2026-07-30).
 
 ---
 

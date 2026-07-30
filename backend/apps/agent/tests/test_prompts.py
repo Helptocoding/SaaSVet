@@ -4,19 +4,25 @@ test_prompts.py — Ensamblado de contexto del LLM.
 Bug real de piloto: el modelo alucinaba la fecha ("este viernes 21 de marzo"
 en julio) porque el contexto no incluía la fecha de hoy. Estos tests anclan
 que la fecha actual (en la zona de la org) SIEMPRE viaja al LLM.
+
+É-F4 Fase 2 añade dos anclas más, ambas nacidas de la conv 13: el modelo debe
+poder distinguir lo que escribió él de lo que escribió el router (§2.1), y no
+puede perder un hecho solo porque el mensaje que lo dijo salió de la ventana
+(§2.2).
 """
 import json
+from datetime import timedelta
 
 from django.test import TestCase
 from django.utils import timezone
 
 from apps.agent import prompts
 from apps.agent.models import ContactIdentity, Conversation
-from apps.channels.models import ChannelAccount
+from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
 
 
-class AssembleMessagesDateTests(TestCase):
+class PromptsTestCase(TestCase):
     def setUp(self):
         self.org = Organization.objects.create(
             name="Fecha Org", timezone="America/Mexico_City")
@@ -28,12 +34,31 @@ class AssembleMessagesDateTests(TestCase):
             organization=self.org, channel_account=self.channel,
             contact=self.contact)
 
+    def _inbound(self, body, available_at=None):
+        return Message.objects.create(
+            organization=self.org, channel_account=self.channel,
+            conversation=self.conv, direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT, body=body,
+            status=Message.STATUS_PROCESSED, available_at=available_at,
+        )
+
+    def _outbound(self, body, author_type=Message.AUTHOR_AGENT):
+        return Message.objects.create(
+            organization=self.org, channel_account=self.channel,
+            conversation=self.conv, direction=Message.DIRECTION_OUT,
+            author_type=author_type, body=body,
+            status=Message.STATUS_SENT,
+        )
+
     def _context_block(self):
         messages = prompts.assemble_messages(self.conv)
         self.assertEqual(messages[0]["role"], "system")
         # El primer bloque de sistema es el JSON de contexto.
         payload = messages[0]["content"].split("\n", 1)[1]
         return json.loads(payload)
+
+
+class AssembleMessagesDateTests(PromptsTestCase):
 
     def test_context_includes_today(self):
         ctx = self._context_block()
@@ -52,3 +77,151 @@ class AssembleMessagesDateTests(TestCase):
         self.conv.refresh_from_db()
         ctx = self._context_block()
         self.assertIn("fecha_hoy", ctx)
+
+
+class AuthorshipTests(PromptsTestCase):
+    """Fase 2 §2.1 (R11) — conv 13 / CR-6: el modelo veía como suyas las
+    plantillas que escribió el router y llegó a disculparse por ellas."""
+
+    def test_system_template_is_not_presented_as_the_agents_voice(self):
+        self._outbound("Ahorita estamos fuera de horario",
+                       author_type=Message.AUTHOR_SYSTEM)
+        messages = prompts.assemble_messages(self.conv)
+        rendered = messages[1:]
+        self.assertEqual(len(rendered), 1)
+        self.assertEqual(rendered[0]["role"], "system")
+        self.assertIn("no lo redactaste", rendered[0]["content"].lower())
+        # El texto sigue disponible (el cliente SÍ lo recibió: no repetirlo).
+        self.assertIn("fuera de horario", rendered[0]["content"])
+        # …pero ningún turno de assistant lo reclama como propio.
+        self.assertEqual(
+            [m for m in rendered if m["role"] == "assistant"], [])
+
+    def test_agent_text_stays_the_agents_voice(self):
+        self._outbound("La consulta cuesta *$350* 🐾")
+        rendered = prompts.assemble_messages(self.conv)[1:]
+        self.assertEqual(rendered, [
+            {"role": "assistant", "content": "La consulta cuesta *$350* 🐾"},
+        ])
+
+    def test_human_staff_message_is_kept_but_distinguished(self):
+        """Se CONSERVA como assistant (ignorarlo hacía que el agente
+        contradijera a su compañero) — solo se distingue."""
+        self._outbound("ok", author_type=Message.AUTHOR_HUMAN)
+        rendered = prompts.assemble_messages(self.conv)[1:]
+        self.assertEqual(len(rendered), 2)
+        self.assertEqual(rendered[0]["role"], "system")
+        self.assertIn("persona del equipo", rendered[0]["content"])
+        self.assertEqual(rendered[1],
+                         {"role": "assistant", "content": "ok"})
+
+
+class TurnWindowTests(PromptsTestCase):
+    """Fase 2 §2.2 (R2) — CR-3: la ventana contaba MENSAJES y una ráfaga de
+    WhatsApp se comía medio contexto."""
+
+    def test_a_burst_of_seven_is_one_turn(self):
+        stamp = timezone.now()
+        burst = [self._inbound(f"parte {i}", available_at=stamp)
+                 for i in range(7)]
+        turns = prompts._group_into_turns(burst)
+        self.assertEqual(len(turns), 1)
+        self.assertEqual(len(turns[0]), 7)
+
+    def test_separate_bursts_are_separate_turns(self):
+        first = timezone.now()
+        second = first + timedelta(minutes=5)
+        messages = [
+            self._inbound("hola", available_at=first),
+            self._inbound("buenas", available_at=first),
+            self._inbound("sigo aquí", available_at=second),
+        ]
+        turns = prompts._group_into_turns(messages)
+        self.assertEqual([len(t) for t in turns], [2, 1])
+
+    def test_inbound_without_available_at_never_groups(self):
+        """Fixtures y filas legacy no traen `available_at`: agrupar por la
+        AUSENCIA del dato inventaría turnos que nadie registró."""
+        messages = [self._inbound("uno"), self._inbound("dos")]
+        self.assertEqual(len(prompts._group_into_turns(messages)), 2)
+
+    def test_burst_survives_a_history_that_message_counting_would_have_cut(self):
+        """El contraste exacto de CR-3: 17 mensajes en 11 turnos.
+
+        Contando MENSAJES (12) la ráfaga quedaba partida — se perdían sus
+        primeros 5. Contando TURNOS (12) entra completa, que es lo que el
+        cliente escribió: un solo pensamiento.
+        """
+        stamp = timezone.now()
+        for i in range(7):
+            self._inbound(f"ráfaga {i}", available_at=stamp)
+        for i in range(5):                    # 5 × (saliente + entrante) = 10 turnos
+            self._outbound(f"respuesta {i}")
+            self._inbound(f"seguimiento {i}",
+                          available_at=stamp + timedelta(minutes=i + 1))
+
+        total_messages = Message.objects.filter(conversation=self.conv).count()
+        self.assertEqual(total_messages, 17)
+        self.assertLessEqual(
+            len(prompts._group_into_turns(
+                list(Message.objects.filter(conversation=self.conv)
+                     .order_by('created_at', 'id')))),
+            prompts.HISTORY_TURNS,
+        )
+
+        contents = [m["content"] for m in prompts.assemble_messages(self.conv)]
+        for i in range(7):
+            self.assertIn(f"ráfaga {i}", contents)
+
+    def test_oldest_turns_still_fall_out_of_the_window(self):
+        """La ventana sigue siendo una ventana: turnos ≠ historial infinito."""
+        stamp = timezone.now()
+        for i in range(prompts.HISTORY_TURNS + 3):
+            self._inbound(f"turno {i}", available_at=stamp + timedelta(minutes=i))
+        contents = [m["content"] for m in prompts.assemble_messages(self.conv)]
+        self.assertNotIn("turno 0", contents)
+        self.assertIn(f"turno {prompts.HISTORY_TURNS + 2}", contents)
+
+
+class AnchoredIdentityFactsTests(PromptsTestCase):
+    """Fase 2 §2.2 (R2) — el caso EXACTO de la conv 13: el cliente dijo "ya he
+    ido varias veces", el router lo clasificó bien y nunca se lo pasó al
+    modelo; al salir de la ventana el agente contestó "no me lo dijiste aún"."""
+
+    def _fill_the_window(self):
+        stamp = timezone.now()
+        for i in range(prompts.HISTORY_MESSAGE_CAP + 5):
+            self._inbound(f"relleno {i}",
+                          available_at=stamp + timedelta(minutes=i))
+
+    def test_returning_client_fact_survives_the_window(self):
+        self.conv.flow['identity_triage_done'] = 'returning'
+        self.conv.save(update_fields=['flow'])
+        self._fill_the_window()
+        ctx = self._context_block()
+        self.assertTrue(ctx["identidad"]["ya_dijo_que_es_cliente"])
+
+    def test_declared_titular_and_pending_factor_travel_too(self):
+        self.conv.flow['identity_triage_done'] = 'returning'
+        self.conv.flow['family_challenge'] = {
+            'stage': 'digits', 'candidate_ids': [1], 'titular': 'Ana',
+            'fails': 0,
+        }
+        self.conv.save(update_fields=['flow'])
+        ctx = self._context_block()
+        self.assertEqual(ctx["identidad"]["titular_declarado"], "Ana")
+        self.assertIn("4 dígitos", ctx["identidad"]["verificacion_pendiente"])
+
+    def test_suspended_challenge_still_counts_as_a_fact(self):
+        """Suspendido (Fase 1) ≠ inexistente: para el modelo el hecho es el
+        mismo — hay una verificación a medias con un titular declarado."""
+        self.conv.flow['suspended'] = {
+            'kind': 'family_challenge',
+            'state': {'stage': 'digits', 'titular': 'Ana', 'fails': 2},
+        }
+        self.conv.save(update_fields=['flow'])
+        ctx = self._context_block()
+        self.assertEqual(ctx["identidad"]["titular_declarado"], "Ana")
+
+    def test_no_identity_block_when_there_is_nothing_to_say(self):
+        self.assertNotIn("identidad", self._context_block())

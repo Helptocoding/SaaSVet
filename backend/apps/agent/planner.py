@@ -22,7 +22,16 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from . import confirmations, goals, guards, policy, prompts, tier0, tools
+from . import (
+    confirmations,
+    goals,
+    guards,
+    matchers,
+    policy,
+    prompts,
+    tier0,
+    tools,
+)
 from .executor import ToolExecutor
 from .llm import LLMError, estimate_cost, get_llm_client
 from .models import Conversation, HumanHandoff, LLMCall, TurnDecision
@@ -169,12 +178,12 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
         # haberlo recibido (el camino viejo, por el planner, sí lo emitía).
         if decision.meta.get('privacy_notice'):
             text = _privacy_prefix(conversation) + text
-        enqueue_outbound(conversation, text, author='agent')
+        enqueue_outbound(conversation, text, author='system')
         return {'decision': 'reply', 'llm_calls': 0, 'tools': 0,
                 'reason': decision.meta.get('reason')}
 
     if decision.kind == policy.CLOSE:
-        enqueue_outbound(conversation, decision.text, author='agent')
+        enqueue_outbound(conversation, decision.text, author='system')
         conversation.state = Conversation.STATE_CLOSED
         conversation.closed_at = timezone.now()
         conversation.save(update_fields=['state', 'closed_at'])
@@ -187,7 +196,7 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
             detail=decision.meta.get('handoff_detail', ''),
         )
         if decision.text:
-            enqueue_outbound(conversation, decision.text, author='agent')
+            enqueue_outbound(conversation, decision.text, author='system')
         return {'decision': 'escalate', 'llm_calls': 0, 'tools': 0,
                 'handoff_reason': decision.handoff_reason}
 
@@ -204,11 +213,12 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
     if llm_client is None:
         llm_client = get_llm_client('planner')
     return _run_planner(conversation, agent_settings, llm_client, executor,
-                        triggered_by)
+                        triggered_by,
+                        burst_text='\n'.join(texts) if texts else (text or ''))
 
 
 def _run_planner(conversation, agent_settings, llm_client, executor,
-                 triggered_by):
+                 triggered_by, *, burst_text=''):
     tool_specs = tools.as_openai_tools()
     base_messages = prompts.assemble_messages(conversation)
     # Hilo del turno: las llamadas del propio modelo y sus resultados (W1-3).
@@ -248,7 +258,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 detail='llm_error',
             )
             enqueue_outbound(conversation, tier0.T0_TECH_PROBLEM,
-                             author='agent')
+                             author='system')
             return {'decision': 'escalate', 'llm_calls': llm_calls,
                     'tools': tool_calls, 'reason': 'llm_error'}
 
@@ -278,7 +288,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     detail=guards.summarize(violations),
                 )
                 enqueue_outbound(conversation, tier0.T0_GUARD_BLOCKED,
-                                 author='agent')
+                                 author='system')
                 return {'decision': 'guard_blocked', 'llm_calls': llm_calls,
                         'tools': tool_calls,
                         'reason': guards.summarize(violations)}
@@ -294,14 +304,17 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     detail='goal_stalled',
                 )
                 enqueue_outbound(conversation, tier0.T0_GOAL_STALLED,
-                                 author='agent')
+                                 author='system')
                 return {'decision': 'goal_stalled', 'llm_calls': llm_calls,
                         'tools': tool_calls}
             if violations:
                 _log_guard(conversation, violations, action='sent')
+            # ÚNICO texto que el modelo redactó de verdad → voz propia del
+            # agente (R11, Fase 2 §2.1). Todo lo demás sale como 'system'.
             enqueue_outbound(
                 conversation,
-                _after_hours_prefix(conversation, agent_settings) + text,
+                _after_hours_prefix(conversation, agent_settings,
+                                    burst_text=burst_text) + text,
                 author='agent')
             return {'decision': 'planner_reply', 'llm_calls': llm_calls,
                     'tools': tool_calls}
@@ -340,6 +353,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 _privacy_prefix(conversation)
                 if result.tool_name == 'register_new_client_and_pet' else ''
             )
+            # Excepción deliberada a la regla de autoría: el parafraseo tier-2
+            # es plantilla, pero lo PROPUSO el modelo con su llamada a
+            # herramienta y el cliente le contesta a él. Se conserva como voz
+            # del agente — la confirmación tier-2 no se toca (§11 del plan).
             enqueue_outbound(conversation, prefix + outcome.confirmation_text,
                              author='agent')
             return {'decision': 'awaiting_confirmation',
@@ -348,7 +365,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         # La tool emitió una pregunta directa (p.ej. arranque del reto
         # familiar) → se envía y se cierra el turno, sin realimentar al LLM.
         if outcome.ok and outcome.reply_text:
-            enqueue_outbound(conversation, outcome.reply_text, author='agent')
+            enqueue_outbound(conversation, outcome.reply_text, author='system')
             return {'decision': 'awaiting_reply',
                     'llm_calls': llm_calls, 'tools': tool_calls}
 
@@ -361,7 +378,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     "Por seguridad, cancelar o mover una cita solo lo puede "
                     "hacer el titular o nuestro equipo. ¿Te comunico con una "
                     "persona? 🙂",
-                    author='agent')
+                    author='system')
                 return {'decision': 'family_restricted',
                         'llm_calls': llm_calls, 'tools': tool_calls}
             if outcome.client_error == 'verification_required':
@@ -383,7 +400,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                             reason_code=HumanHandoff.REASON_IDENTITY,
                             detail='triage_already_resolved')
                         enqueue_outbound(conversation, tier0.T0_CHALLENGE_FAILED,
-                                         author='agent')
+                                         author='system')
                         return {'decision': 'escalate', 'llm_calls': llm_calls,
                                 'tools': tool_calls,
                                 'reason': 'triage_already_resolved'}
@@ -391,13 +408,13 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     enqueue_outbound(
                         conversation,
                         _privacy_prefix(conversation) + triage,
-                        author='agent')
+                        author='system')
                     return {'decision': 'identity_triage',
                             'llm_calls': llm_calls, 'tools': tool_calls}
                 challenge = policy.start_identity_challenge(conversation)
                 enqueue_outbound(conversation,
                                  _privacy_prefix(conversation) + challenge,
-                                 author='agent')
+                                 author='system')
                 return {'decision': 'identity_challenge',
                         'llm_calls': llm_calls, 'tools': tool_calls}
 
@@ -426,7 +443,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
                 )
                 enqueue_outbound(conversation, tier0.T0_TECH_PROBLEM,
-                                 author='agent')
+                                 author='system')
                 return {'decision': 'escalate', 'llm_calls': llm_calls,
                         'tools': tool_calls, 'reason': 'tool_failure'}
             turn_messages.append(prompts.tool_result_message(result, {
@@ -443,7 +460,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             result, {'resultado': outcome.data}))
 
     # Agotó el presupuesto de tools del turno sin respuesta final.
-    enqueue_outbound(conversation, _fallback_text(), author='agent')
+    enqueue_outbound(conversation, _fallback_text(), author='system')
     return {'decision': 'tool_budget_exhausted', 'llm_calls': llm_calls,
             'tools': tool_calls}
 
@@ -464,14 +481,14 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             conversation,
             confirmations.EXPIRED_REPARAPHRASE.format(
                 paraphrase=pending['paraphrase']),
-            author='agent',
+            author='system',
         )
         return {'decision': 'confirm_expired', 'llm_calls': 0, 'tools': 0}
 
     handler = tools.COMMIT_HANDLERS.get(pending['tool'])
     if handler is None:  # defensivo: pending corrupto
         confirmations.clear_pending(conversation)
-        enqueue_outbound(conversation, _fallback_text(), author='agent')
+        enqueue_outbound(conversation, _fallback_text(), author='system')
         return {'decision': 'commit_unknown', 'llm_calls': 0, 'tools': 0}
 
     outcome = handler(conversation, executor, pending['args'],
@@ -483,7 +500,7 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             enqueue_outbound(
                 conversation,
                 "Uy, justo se ocupó ese horario 😅 ¿Buscamos otra opción?",
-                author='agent',
+                author='system',
             )
             return {'decision': 'commit_slot_taken', 'llm_calls': 0,
                     'tools': 1}
@@ -491,7 +508,7 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             enqueue_outbound(
                 conversation,
                 "Esa fecha ya pasó 😅 ¿Para qué día lo dejamos?",
-                author='agent',
+                author='system',
             )
             return {'decision': 'commit_past_date', 'llm_calls': 0, 'tools': 1}
         if outcome.client_error == 'invalid_data':
@@ -502,7 +519,7 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
                 conversation,
                 "No pude guardarlo con esos datos 🙈 ¿Me confirmas el día y la "
                 "hora que quieres?",
-                author='agent',
+                author='system',
             )
             logger.warning("AGENT_COMMIT_REJECTED", extra={
                 "event": "AGENT_COMMIT_REJECTED",
@@ -520,7 +537,7 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             conversation,
             "Tuve un problema para completar eso. Te comunico con una persona "
             "del equipo 🙏",
-            author='agent',
+            author='system',
         )
         return {'decision': 'escalate', 'llm_calls': 0, 'tools': 1,
                 'reason': 'commit_failed'}
@@ -533,7 +550,7 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
 
     enqueue_outbound(conversation,
                      _success_message(pending['tool'], outcome, conversation, executor),
-                     author='agent')
+                     author='system')
     return {'decision': 'committed', 'llm_calls': 0, 'tools': 1,
             'tool': pending['tool']}
 
@@ -663,14 +680,23 @@ def _settle_goal(conversation, *, goal_progressed, goal_attempted,
     return goals.bump_stall(goal)
 
 
-def _after_hours_prefix(conversation, agent_settings):
+def _after_hours_prefix(conversation, agent_settings, *, burst_text=''):
     """INT-03: avisar UNA vez por conversación que estamos cerrados.
 
     El agente sigue atendiendo (el valor es 24/7), pero el cliente merece saber
     que el equipo humano responde al abrir. Antes esto solo existía en el
     saludo del buzón F0 — con el agente encendido no se decía nunca.
+
+    **Con oportunidad** (Fase 2 §2.3): no se antepone cuando el cliente está
+    reclamando o preguntando por la conversación misma. En la conv 13 el aviso
+    cayó en medio de una queja por pérdida de contexto y **causó** el mensaje
+    siguiente ("no te pedí ningún horario"). Un aviso correcto en el momento
+    equivocado es ruido. Al suprimirlo NO se consume el flag: sigue disponible
+    para un turno mejor.
     """
     if agent_settings is None or conversation.flow.get('after_hours_notified'):
+        return ''
+    if matchers.is_complaint_or_meta(burst_text):
         return ''
     from . import clinic_context
     org = conversation.organization

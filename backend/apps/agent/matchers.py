@@ -299,6 +299,35 @@ def looks_like_question(text):
     return bool(n) and _has_any(n, _QUESTION_LEMMAS)
 
 
+# Queja o meta-pregunta SOBRE la conversación (no sobre la clínica). Es el
+# peor momento posible para anteponer un aviso automático: en la conv 13 el
+# aviso de fuera de horario cayó justo aquí y provocó el mensaje siguiente
+# ("no te pedí ningún horario"). Subconjunto deliberadamente ESTRECHO de
+# `_QUESTION_LEMMAS`: "¿cuánto cuesta?" también es pregunta y ahí el aviso
+# sí es pertinente — lo que se detecta es el reclamo, no la curiosidad.
+_COMPLAINT_META_LEMMAS = (
+    'que dije', 'que te dije', 'no te acuerdas', 'ya te dije',
+    'se te borro', 'que miras', 'no acabamos de', 'no me acabas de',
+    'no te entiendo', 'no me entiendes', 'no me estas entendiendo',
+    'no te pedi', 'no pedi', 'no pregunte', 'no te pregunte',
+    'ya te habia dicho', 'te lo dije', 'otra vez lo mismo',
+    'me estas repitiendo', 'estas repitiendo', 'ya me lo preguntaste',
+    'por que preguntas otra vez', 'perdiste el contexto',
+    'se perdio el contexto', 'no me estas ayudando', 'no sirves',
+    'que mal servicio', 'esto no funciona', 'no funciona esto',
+)
+
+
+def is_complaint_or_meta(text):
+    """¿El cliente está reclamando o hablando DE la conversación?
+
+    Señal de "mal momento para automatismos", no de intención. Su único
+    consumidor hoy es el aviso de fuera de horario (`_after_hours_prefix`).
+    """
+    n = normalize(text)
+    return bool(n) and _has_any(n, _COMPLAINT_META_LEMMAS)
+
+
 _ANSWER_SHAPES = {
     'digits': lambda n: re.search(r'\d{4}', n) is not None,
 }

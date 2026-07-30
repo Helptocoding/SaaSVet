@@ -98,6 +98,31 @@ class LooksLikeQuestionTests(SimpleTestCase):
         self.assertFalse(matchers.looks_like_question(""))
 
 
+class ComplaintOrMetaTests(SimpleTestCase):
+    """Fase 2 §2.3 — "mal momento para un automatismo". Deliberadamente
+    ESTRECHO: una duda normal no debe silenciar el aviso de horario."""
+
+    def test_detects_complaints_and_meta_questions(self):
+        for text in [
+            "¿qué te dije hace rato?", "se te borró el contexto?",
+            "no te acuerdas?", "ya te dije eso", "no te pedí ningún horario",
+            "me estás repitiendo lo mismo", "ya me lo preguntaste",
+            "esto no funciona", "no me estás ayudando",
+        ]:
+            with self.subTest(text=text):
+                self.assertTrue(matchers.is_complaint_or_meta(text), text)
+
+    def test_normal_questions_are_not_complaints(self):
+        """El aviso de fuera de horario SÍ es pertinente aquí — suprimirlo
+        con cualquier pregunta lo dejaría sin disparar nunca."""
+        for text in [
+            "¿cuánto cuesta la consulta?", "¿a qué hora abren?",
+            "quiero una cita para Luna", "¿dónde están?", "4586",
+        ]:
+            with self.subTest(text=text):
+                self.assertFalse(matchers.is_complaint_or_meta(text), text)
+
+
 class IsAnswerShapedTests(SimpleTestCase):
     def test_digits_true_with_four_digits_anywhere(self):
         for t in ["4586", "son 4586", "es el 4586 creo", "¿es 4586?"]:

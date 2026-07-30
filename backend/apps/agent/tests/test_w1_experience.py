@@ -416,6 +416,25 @@ class AfterHoursNoticeTests(AgentFixture):
             assert_clean=False)
         self.assertNotIn("fuera de horario", second[-1])
 
+    def test_notice_is_not_prepended_over_a_complaint(self):
+        """É-F4 Fase 2 §2.3 — conv 13: el aviso cayó en medio de una queja por
+        pérdida de contexto y CAUSÓ el mensaje siguiente ("no te pedí ningún
+        horario"). Se pospone SIN consumirse: el turno normal siguiente sí lo
+        lleva (un aviso correcto en mal momento sigue siendo ruido, pero el
+        cliente merece enterarse)."""
+        close_all_days(self.org)
+        first, _, _ = run_turn(
+            self, self.conv, self.agent_user, "¿se te borró el contexto?",
+            scripted_llm=[LLMResult(kind="text", text="Aquí sigo 🙂")],
+            assert_clean=False)
+        self.assertNotIn("fuera de horario", first[-1])
+
+        second, _, _ = run_turn(
+            self, self.conv, self.agent_user, "¿a qué hora abren?",
+            scripted_llm=[LLMResult(kind="text", text="Abrimos a las 9 🙂")],
+            assert_clean=False)
+        self.assertIn("fuera de horario", second[-1])
+
 
 # ---------------------------------------------------------------------------
 # W1-10 · Opt-out no destructivo

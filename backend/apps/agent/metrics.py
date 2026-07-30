@@ -59,6 +59,12 @@ def compute_quality_metrics(organization, date_from, date_to):
     # Latencia de respuesta: desde el ÚLTIMO entrante del cliente hasta que el
     # agente encola su respuesta. Se mide desde el último a propósito: la
     # ventana silenciosa del debounce (W1-4) es espera deseada, no lentitud.
+    #
+    # Cuenta `agent` Y `system`: desde Fase 2 (§2.1) las plantillas tier-0 se
+    # marcan como `system` para que el modelo no las lea como suyas — pero
+    # para el CLIENTE siguen siendo la respuesta que recibió, y son las más
+    # rápidas. Filtrar por `agent` a secas dejaría fuera justo esas y el p95
+    # se vería peor de lo que es.
     latencias = []
     last_inbound = {}
     for row in rows:
@@ -66,7 +72,7 @@ def compute_quality_metrics(organization, date_from, date_to):
         if row['direction'] == 'in':
             if row['status'] != 'discarded':
                 last_inbound[conv] = row['created_at']
-        elif (row['author_type'] == 'agent'
+        elif (row['author_type'] in ('agent', 'system')
                 and row['status'] != 'discarded'
                 and conv in last_inbound):
             delta = (row['created_at'] - last_inbound.pop(conv))

@@ -738,7 +738,7 @@ def nudge_abandoned_flows(now=None):
                 or not agent_settings.nudge_enabled
                 or getattr(conversation.organization, 'is_demo', False)):
             continue
-        enqueue_outbound(conversation, NUDGE_TEXT, author='agent')
+        enqueue_outbound(conversation, NUDGE_TEXT, author='system')
         conversation.flow['nudge_sent'] = True
         conversation.save(update_fields=['flow'])
         count += 1

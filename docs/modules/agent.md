@@ -2,10 +2,11 @@
 
 > **Estado**: É-F3 completa — el agente lee, **agenda** (crear/confirmar/cancelar/
 > reagendar + alta de cliente) y persigue **objetivos**, con guards de salida
-> vinculantes y medición de calidad. 457 tests en CI. É-F4 Fase 0 (gobernanza
-> conversacional — R1/R9, interrupciones durante un reto) y Fase 1 (R5/R8/R12
-> — suspender en vez de destruir, `release` resuelve el handoff, `TurnDecision`)
-> implementadas 2026-07-30, ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
+> vinculantes y medición de calidad. 472 tests en CI. É-F4 Fases 0, 1 y 2 de
+> gobernanza conversacional implementadas 2026-07-30 (R1/R9 interrupciones ·
+> R5/R8/R12 suspender-no-destruir + `TurnDecision` · R11/R2 autoría de
+> salientes + ventana por turnos), ver
+> [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
 > épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
@@ -260,6 +261,56 @@ las ~20 salidas de texto libre de hoy a los 12 valores ortogonales de
 
 Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md)
 §3 para el detalle de implementación.
+
+#### Que el modelo vea la verdad (É-F4 Fase 2, 2026-07-30)
+
+**Autoría de salientes (R11)**. `enqueue_outbound` tiene default
+`author='system'`: hay que **optar** por afirmar que un texto es voz propia del
+agente. La regla es una sola —
+
+| `author_type` | Qué es | Quién lo pasa |
+|---|---|---|
+| `agent` | lo redactó el modelo este turno | solo `planner_reply`, y el parafraseo tier-2 (lo **propuso** el modelo con su tool call; §11 del plan deja tier-2 intacto) |
+| `system` | plantilla tier-0 o texto fijo del router/planner | todo lo demás (default) |
+
+`prompts.assemble_messages` deja de mapear por `direction` y etiqueta por
+**autoría**: `system` → nota `role:'system'` (dato, con el texto, **sin** turno
+`assistant`: el cliente lo recibió pero el modelo no lo redactó), `human_staff`
+→ nota + el `assistant` de siempre (conservarlo evita que el agente contradiga
+a su compañero — eso ya estaba bien), `agent` → `assistant` a secas. El
+`SYSTEM_PROMPT` (**`reception-f4-v8`**) explica qué son esas notas; las notas
+en sí son hechos, nunca órdenes (G6). Sin esto el modelo se disculpaba por
+mensajes del router (conv 13, CR-6).
+
+> **Colateral obligatorio**: `metrics.py` cuenta la latencia de respuesta sobre
+> `agent` **y** `system`. Una plantilla tier-0 es la respuesta que el cliente
+> recibió —y la más rápida—; filtrar solo por `agent` dejaría fuera justo esas
+> y el p95 se vería peor de lo que es.
+
+**Ventana por TURNOS, no por mensajes (R2)**. `HISTORY_TURNS = 12` (+
+`HISTORY_MESSAGE_CAP = 40` como tope duro de filas leídas). Un turno corta al
+cambiar de dirección y entre dos entrantes que **no comparten `available_at`** —
+el worker ya asigna el mismo a toda una ráfaga, así que agrupar sale **sin
+estado nuevo** (los 7 mensajes de la conv 12 comparten `21:19:06`). Un entrante
+sin `available_at` (fixture o fila legacy) es su propio turno: nunca se agrupa
+por ausencia de dato. Antes, en la conv 13, 6 de los 12 huecos eran plantillas
+y uno el "ok" de un humano — los tres hechos centrales quedaron fuera (CR-3).
+
+**Hechos de identidad anclados (R2)**. El bloque `DATOS` lleva ahora
+`identidad: {ya_dijo_que_es_cliente | dijo_que_es_su_primera_vez,
+titular_declarado, verificacion_pendiente}`, derivado de lo que el router ya
+sabía (`identity_triage_done` + el reto **activo o suspendido**). Salir de la
+ventana hace perder el **fraseo**, nunca el **hecho**: es la otra mitad del
+"no me lo dijiste aún" de la conv 13 — el modelo decía la verdad sobre un
+contexto amputado.
+
+**Aviso de fuera de horario con oportunidad**. `_after_hours_prefix` recibe el
+`burst_text` y se calla si `matchers.is_complaint_or_meta` da positivo. La
+lista de lemas es **estrecha a propósito** (reclamo/meta-pregunta, no cualquier
+pregunta: ante "¿cuánto cuesta?" el aviso sí es pertinente). Al suprimirlo
+**no** se consume `flow['after_hours_notified']` — el turno normal siguiente sí
+lo lleva. En la conv 13 ese aviso cayó en medio de una queja por pérdida de
+contexto y **causó** el mensaje siguiente.
 
 ## Endurecimiento É-F3 W0 (2026-07-24)
 

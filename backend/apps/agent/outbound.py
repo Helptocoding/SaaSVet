@@ -10,8 +10,22 @@ from django.utils import timezone
 from apps.channels.models import Message
 
 
-def enqueue_outbound(conversation, body, *, author='agent'):
-    """Crea un Message saliente pendiente. `author`: 'agent' | 'system'."""
+def enqueue_outbound(conversation, body, *, author='system'):
+    """Crea un Message saliente pendiente. `author`: 'agent' | 'system'.
+
+    **El default es `'system'` a propósito** (É-F4 Fase 2 §2.1, R11): hay que
+    OPTAR por afirmar que el texto es voz propia del agente. La regla:
+
+      `agent`  → el texto lo produjo el modelo en este turno (o lo propuso él
+                 vía su llamada a herramienta, caso del parafraseo tier-2).
+      `system` → plantilla tier-0 o texto fijo del router/planner. El modelo
+                 no lo redactó y no debe responder por su redacción.
+
+    Antes TODO salía como `agent`, así que en el historial el modelo veía como
+    suyas plantillas que escribió el router — y se disculpaba por ellas
+    (auditoría de rigidez 2026-07-29, conv 13 / CR-6). `assemble_messages` es
+    quien consume esta distinción.
+    """
     author_type = (
         Message.AUTHOR_AGENT if author == 'agent' else Message.AUTHOR_SYSTEM
     )
