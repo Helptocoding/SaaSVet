@@ -3,7 +3,7 @@ test_policy.py — É-F1 PR-11: Policy Engine (orden del router, spec §3/§11.2
 """
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.agent import matchers, policy, tier0
@@ -79,12 +79,35 @@ class PriorityOrderTests(PolicyTestCase):
         self.assertEqual(d.handoff_priority, HumanHandoff.PRIORITY_URGENT)
         self.assertIn("55-1234-5678", d.text)
 
-    def test_emergency_discards_pending_action(self):
+    def test_emergency_escalates_leaving_pending_action_for_escalate_to_human(self):
+        """`evaluate()` ya no toca `pending_action` por su cuenta (Fase 1
+        §1.1): la urgencia SUPLANTA, no aborta (R4/R5) — quien lo suspende
+        es `escalate_to_human`, el único punto de escritura, llamado por el
+        dispatcher del planner tras recibir el veredicto ESCALATE."""
         self.conv.flow["pending_action"] = {"tool": "x"}
         self.conv.save()
-        self._eval("se está muriendo")
+        d = self._eval("se está muriendo")
+        self.assertEqual(d.kind, policy.ESCALATE)
+        self.conv.refresh_from_db()
+        self.assertIn("pending_action", self.conv.flow)   # intacto todavía
+
+    def test_emergency_suspends_pending_action_not_destroys(self):
+        """Extremo a extremo (evaluate + escalate_to_human, como lo
+        encadena el planner): la urgencia SUSPENDE el `pending_action`, no
+        lo destruye — se ofrece de vuelta al retomar (R4/R5)."""
+        self.conv.flow["pending_action"] = {"tool": "create_appointment"}
+        self.conv.save()
+        d = self._eval("se está muriendo")
+        policy.escalate_to_human(
+            self.conv, reason_code=d.handoff_reason,
+            priority=d.handoff_priority)
         self.conv.refresh_from_db()
         self.assertNotIn("pending_action", self.conv.flow)
+        self.assertEqual(
+            self.conv.flow["suspended"],
+            {"kind": "pending_action",
+             "state": {"tool": "create_appointment"}},
+        )
 
     def test_wants_human_escalates(self):
         d = self._eval("me pasas con una persona por favor")
@@ -508,6 +531,48 @@ class DeviationTests(IdentityTriageTests):
         self.assertNotIn("deviations", self.unknown_conv.flow)
 
 
+class SuspendResumeTests(DeviationTests):
+    """Fase 1 §1.1 — R5/R8: el compromiso se SUSPENDE, no se destruye. Es
+    el `4586` de la conv 13: correcto, pero llegado después de que el reto
+    escaló por 2 fallos REALES (no preguntas). Antes el reto se `pop`eaba
+    y el dato correcto caía al vacío; ahora sobrevive en
+    `flow['suspended']` y el siguiente turno lo retoma donde se quedó."""
+
+    def test_late_correct_digits_resume_and_verify_after_two_real_fails(self):
+        self._reach_digits_stage()
+        self._eval_unknown("0000")       # dígitos incorrectos → fails=1
+        d = self._eval_unknown("1111")   # 2º fallo real → ESCALATE, suspende
+        self.assertEqual(d.kind, policy.ESCALATE)
+        self.unknown_conv.refresh_from_db()
+        self.assertNotIn("family_challenge", self.unknown_conv.flow)
+        self.assertEqual(
+            self.unknown_conv.flow["suspended"]["kind"], "family_challenge")
+
+        # El reto ya no es un compromiso ACTIVO — pero sobrevive suspendido.
+        # El próximo turno (aquí simula el mensaje tras `release`, §1.2) lo
+        # retoma tal cual, sin volver al tamiz desde cero.
+        d = self._eval_unknown("8877")   # últimos 4 de 5511998877, correcto
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(d.meta.get("verified"))
+        self.unknown_conv.refresh_from_db()
+        self.assertNotIn("suspended", self.unknown_conv.flow)
+        self.unknown_contact.refresh_from_db()
+        self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
+
+    def test_unrelated_message_after_suspension_does_not_resume_falsely(self):
+        """Si el mensaje que llega no trae el dato, el reto suspendido
+        vuelve a fallar normal (misma lógica de siempre) — no se inventa
+        una verificación de la nada (G4)."""
+        self._reach_digits_stage()
+        self._eval_unknown("0000")
+        self._eval_unknown("1111")   # suspende
+        d = self._eval_unknown("9999")   # se reinstala, pero NO coincide
+        self.assertEqual(d.kind, policy.ESCALATE)
+        self.assertFalse(d.meta.get("verified"))
+        self.unknown_contact.refresh_from_db()
+        self.assertIsNone(self.unknown_contact.owner_id)
+
+
 class IdentityTriageDoneNotOverwrittenTests(IdentityTriageTests):
     """Fase 0 §0.4 — conv 13 S6: dos 'unclear' del tamiz no deben pisar un
     'returning' ya decidido (setdefault, no asignación directa)."""
@@ -586,3 +651,55 @@ class NudgeTests(PolicyTestCase):
     def test_no_nudge_when_too_recent(self):
         self._arm(minutes_ago=5)   # dentro de los 60 min → aún no
         self.assertEqual(policy.nudge_abandoned_flows(), 0)
+
+
+class SuspendNotDestroyGateTests(SimpleTestCase):
+    """Fase 1 §1.1/§9.3 — gate (a): ningún `flow.pop` de un compromiso debe
+    destruir progreso SIN dejar rastro. Precedente: conv 13/S2/CR-5 — el
+    `4586` correcto cayó al vacío porque el reto se tiraba sin más.
+
+    No es "cero pop" a secas: un reto RESUELTO (verificado, vinculado, o
+    declinado explícitamente por el cliente) se limpia sin necesidad de
+    suspender nada — eso también es correcto (R5 permite completado/
+    abandonado como terminales). El gate exige que cada pop caiga en una de
+    dos categorías: SUSPENDIDO (precedido por escribir `flow['suspended']`)
+    o RESUELTO (marcado en `_SAFE_MARKERS`, con su razón). Un pop nuevo que
+    no caiga en ninguna rompe este test — a propósito: o se suspende, o se
+    justifica aquí por qué no hace falta.
+    """
+
+    _COMPROMISE_KEYS = (
+        "'identity_challenge'", "'family_challenge'",
+        "'identity_triage'", "'pending_action'",
+    )
+    _SAFE_MARKERS = (
+        "suspended",              # se guardó el estado antes de popear
+        "verified",                # _clear_challenge: reto resuelto (sí/no)
+        "verdict == 'negative'",   # cliente declinó explícitamente
+        "verdict == 'new'",        # tamiz resuelto con claridad
+        "link_family",             # vínculo familiar completado
+        "identity_triage_done'] = 'returning'",  # supersede a family_challenge
+    )
+
+    def test_every_pop_is_suspended_or_resolved(self):
+        import apps.agent.policy as policy_module
+        with open(policy_module.__file__, encoding='utf-8') as fh:
+            lines = fh.readlines()
+
+        unaccounted = []
+        for i, line in enumerate(lines):
+            if '.pop(' not in line:
+                continue
+            if not any(key in line for key in self._COMPROMISE_KEYS):
+                continue
+            window = ''.join(lines[max(0, i - 5):i + 3])
+            if not any(marker in window for marker in self._SAFE_MARKERS):
+                unaccounted.append((i + 1, line.strip()))
+
+        self.assertEqual(
+            unaccounted, [],
+            "pop() de un compromiso sin suspender ni resolución reconocida "
+            f"(linea, texto): {unaccounted}. Si es legítimo, añade su "
+            "marcador a _SAFE_MARKERS con el porqué; si no, usa "
+            "flow['suspended'] antes de popear.",
+        )

@@ -22,7 +22,7 @@ from apps.core.permissions import make_permission
 from apps.core.sanitize import sanitize_text
 from apps.core.views import resolve_public_id
 
-from .models import AgentSettings, Conversation, HumanHandoff
+from .models import AgentSettings, ContactIdentity, Conversation, HumanHandoff
 from .serializers import (
     AgentSettingsSerializer,
     ConversationListSerializer,
@@ -355,7 +355,20 @@ def close_conversation(request, pk):
 @api_view(['POST'])
 @permission_classes([make_permission('agentinbox.claim')])
 def release_conversation(request, pk):
-    """Devuelve la conversación al agente/cola (state=active, sin claim)."""
+    """Devuelve la conversación al agente/cola (state=active, sin claim).
+
+    Fase 1 (R9 auditoría rigidez, §1.2): antes dejaba el `HumanHandoff`
+    formalmente sin resolver mientras el agente volvía a hablar (conv 13,
+    handoff 14 `resolved_at=None`, `state=active`) — el caso quedaba
+    "atendido" en la bandeja pero seguía en cola. Cierra ambos huecos:
+
+    1. Resuelve el `HumanHandoff` abierto (`resolved_at` + `resolution`).
+    2. Si el contacto YA quedó verificado (por el humano o por cualquier
+       otra vía) mientras estaba suspendido, el compromiso suspendido de
+       identidad se CANCELA — re-interrogar a alguien ya validado no tiene
+       sentido. Si no, se deja tal cual: `policy.evaluate` lo reanuda solo
+       con el próximo mensaje del cliente (resume perezoso, §1.1).
+    """
     conversation = _get_conversation(request, pk)
     if conversation.state == Conversation.STATE_CLOSED:
         return Response(
@@ -364,7 +377,33 @@ def release_conversation(request, pk):
     conversation.state = Conversation.STATE_ACTIVE
     conversation.claimed_by = None
     conversation.claimed_at = None
-    conversation.save(update_fields=['state', 'claimed_by', 'claimed_at'])
+    update_fields = ['state', 'claimed_by', 'claimed_at']
+
+    flow = conversation.flow
+    suspended = flow.get('suspended')
+    already_verified = conversation.contact.verification_level in (
+        ContactIdentity.VERIFICATION_CONFIRMED, ContactIdentity.VERIFICATION_STAFF,
+    )
+    if (suspended and already_verified and suspended.get('kind') in (
+            'identity_challenge', 'family_challenge', 'identity_triage')):
+        flow.pop('suspended', None)
+        update_fields.append('flow')
+
+    conversation.save(update_fields=update_fields)
+
+    handoff = HumanHandoff.objects.filter(
+        conversation=conversation, resolved_at__isnull=True,
+    ).order_by('-id').first()
+    if handoff is not None:
+        handoff.resolved_at = timezone.now()
+        handoff.resolution = HumanHandoff.RESOLUTION_RETURNED_TO_AGENT
+        handoff_fields = ['resolved_at', 'resolution']
+        if handoff.claimed_by_id is None:
+            handoff.claimed_by = request.user
+            handoff.claimed_at = timezone.now()
+            handoff_fields += ['claimed_by', 'claimed_at']
+        handoff.save(update_fields=handoff_fields)
+
     return Response(ConversationListSerializer(conversation).data)
 
 

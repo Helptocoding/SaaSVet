@@ -103,10 +103,10 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         )
 
     # 3. URGENCIA (prioridad 1, R16) — antes que todo, incluso a mitad de
-    #    flujo; descarta cualquier pending_action.
+    #    flujo. Un `pending_action` en curso NO se descarta aquí: la
+    #    urgencia SUPLANTA (no aborta, R4/R5) — `escalate_to_human` lo
+    #    suspende, nunca lo destruye (Fase 1 §1.1).
     if matchers.is_emergency(burst_text):
-        flow.pop('pending_action', None)
-        conversation.save(update_fields=['flow'])
         return PolicyDecision(
             kind=ESCALATE,
             text=tier0.render_emergency(agent_settings, org),
@@ -155,6 +155,24 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         conversation.save(update_fields=['flow'])
         return PolicyDecision(kind=REPLY, text=tier0.T0_HANDOFF_WAITING,
                               meta={'reason': 'handoff_ack'})
+
+    # 6c. Compromiso suspendido (R5/R8, Fase 1 §1.1): si no hay NINGÚN
+    #     compromiso activo en este momento pero sí uno suspendido, se
+    #     reinstala en su lugar antes de que los pasos normales (7/8/8b/8c)
+    #     lo procesen. Reutiliza esa lógica tal cual — no se duplica ningún
+    #     camino de avance. Es lo que resuelve el `4586` tardío de la
+    #     conv 13: antes el reto se destruía al escalar y el dato correcto
+    #     caía al vacío; ahora, en cuanto la conversación vuelve a estar
+    #     activa (release), el siguiente mensaje se evalúa contra el reto
+    #     real, no contra un tamiz reiniciado desde cero.
+    if (flow.get('suspended')
+            and not flow.get('pending_action')
+            and not flow.get('identity_challenge')
+            and not flow.get('family_challenge')
+            and not flow.get('identity_triage')):
+        suspended = flow.pop('suspended')
+        flow[suspended['kind']] = suspended['state']
+        conversation.save(update_fields=['flow'])
 
     # 7. Confirmación de un pending_action (ACTIVO en F2: las tools de
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
@@ -340,6 +358,12 @@ def _check_interruption(conversation, flow_key, stage, text, reask_text):
     flow = conversation.flow
     flow['deviations'] = flow.get('deviations', 0) + 1
     if flow['deviations'] >= 3:
+        # SUSPENDE, no destruye (R5/R8, Fase 1 §1.1): un cliente que topó
+        # el tope de desvíos no perdió su progreso, solo necesita un humano
+        # para desatorarse — el reto sigue ahí si vuelve a escribir.
+        state = flow.get(flow_key)
+        if state is not None:
+            flow['suspended'] = {'kind': flow_key, 'state': state}
         flow.pop(flow_key, None)
         flow.pop('deviations', None)
         conversation.save(update_fields=['flow'])
@@ -385,8 +409,11 @@ def _advance_challenge(conversation, contact, text, challenge):
             return _clear_challenge(conversation, verified=True)
         fails += 1
         challenge['fails'] = fails
-        conversation.save(update_fields=['flow'])
-        # 2 fallos REALES → E-06 (sin revelar por qué falló).
+        # 2 fallos REALES → E-06 (sin revelar por qué falló). Se SUSPENDE,
+        # no se destruye (R5/R8, Fase 1 §1.1): si al reanudar la conversación
+        # llega el dato correcto, `_advance_challenge` lo procesa normal.
+        conversation.flow['suspended'] = {
+            'kind': 'identity_challenge', 'state': challenge}
         conversation.flow.pop('identity_challenge', None)
         conversation.save(update_fields=['flow'])
         return PolicyDecision(
@@ -465,6 +492,11 @@ def _advance_identity_triage(conversation, contact, text, triage):
                               meta={'reason': 'identity_triage',
                                     'triage': 'retry',
                                     'privacy_notice': True})
+    # No se destruye (R5, Fase 1 §1.1): se SUSPENDE. Si un mensaje
+    # posterior sí contesta con claridad ("primera vez"/"ya soy cliente"),
+    # el paso 6c lo reinstala y `_advance_identity_triage` lo resuelve —
+    # en vez de quedar perdido para siempre tras el 2º "no entendí".
+    flow['suspended'] = {'kind': 'identity_triage', 'state': triage}
     flow.pop('identity_triage', None)
     # setdefault, no asignación directa: si el reto de familia ya resolvió
     # 'returning' mientras tanto, dos 'unclear' del tamiz no deben pisarlo
@@ -577,6 +609,12 @@ def _advance_family_challenge(conversation, contact, text, family):
 def _family_fail(conversation, family, reason_detail):
     family['fails'] = family.get('fails', 0) + 1
     if family['fails'] >= 2:
+        # SUSPENDE, no destruye (R5/R8, Fase 1 §1.1): es el caso exacto de
+        # la conv 13 — el `4586` correcto llegó tarde y cayó al vacío
+        # porque el reto ya no existía. Ahora sobrevive hasta que se
+        # resuelva o el humano lo cancele (release_conversation, §1.2).
+        conversation.flow['suspended'] = {
+            'kind': 'family_challenge', 'state': family}
         conversation.flow.pop('family_challenge', None)
         conversation.flow.pop('deviations', None)
         conversation.save(update_fields=['flow'])
@@ -631,9 +669,19 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
         existing.reason_code = reason_code
         existing.save(update_fields=['priority', 'reason_code'])
         escalated_now = True
-    conversation.flow.pop('pending_action', None)
+    flow = conversation.flow
+    if flow.get('pending_action'):
+        # SUSPENDE, no destruye (R4/R5, Fase 1 §1.1): una urgencia SUPLANTA
+        # el pending_action, no lo aborta — se ofrece de vuelta al retomar.
+        # No pisar una suspensión más específica que ya se haya guardado
+        # este mismo turno (p. ej. un identity_challenge que acaba de
+        # escalar por su cuenta): el slot único solo guarda una a la vez.
+        if not flow.get('suspended'):
+            flow['suspended'] = {
+                'kind': 'pending_action', 'state': flow['pending_action']}
+        flow.pop('pending_action', None)
     # El acuse al cliente que insiste se rearma con cada escalada nueva.
-    conversation.flow.pop('handoff_ack_sent', None)
+    flow.pop('handoff_ack_sent', None)
     conversation.state = Conversation.STATE_HANDOFF_PENDING
     conversation.save(update_fields=['state', 'flow'])
 

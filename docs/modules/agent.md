@@ -2,9 +2,10 @@
 
 > **Estado**: É-F3 completa — el agente lee, **agenda** (crear/confirmar/cancelar/
 > reagendar + alta de cliente) y persigue **objetivos**, con guards de salida
-> vinculantes y medición de calidad. 423 tests en CI. É-F4 Fase 0 (gobernanza
-> conversacional — R1/R9, interrupciones durante un reto) implementada
-> 2026-07-30, ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
+> vinculantes y medición de calidad. 457 tests en CI. É-F4 Fase 0 (gobernanza
+> conversacional — R1/R9, interrupciones durante un reto) y Fase 1 (R5/R8/R12
+> — suspender en vez de destruir, `release` resuelve el handoff, `TurnDecision`)
+> implementadas 2026-07-30, ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
 > épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
@@ -34,6 +35,7 @@ ref; `channels.views` importa `agent.services` perezoso.
 | `Conversation` | agent | `PublicIdMixin` (la bandeja navega por UUID); FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo); org fijada al crear e inmutable; `flow`/`summary` = scratchpad (filosofía ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo (serializa entre réplicas sin transacción abierta) |
 | `ConversationGoal` | agent | **Objetivo en curso** (É-F3 W2). Estado explícito `active/paused/completed/cancelled/handoff`; `slots` `{slot:{value,confidence}}` con el valor YA normalizado por el validador; `missing`, `low_confidence`, `asked`, `stall_turns`. Constraint parcial: **un objetivo abierto por conversación** |
 | `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `faq_facts` (solo hechos sin campo propio), `default_veterinarian`, `scheduling_mode`, `nudge_enabled` |
+| `TurnDecision` | agent | Rastro **append-only** de cada turno (R12, É-F4 Fase 1). **El runtime NUNCA la lee** — es solo para diagnóstico/regresión. `verdict` (string libre hoy — Fase 3 lo cierra a 5 valores), `because` (enum cerrado ORTOGONAL, ≤12 valores, `TurnDecision.Because`), `active_commitment`/`return_to`/`supplanted_by` (aún sin poblar — llegan con el modelo de compromisos de Fase 3), `facts_consumed`/`facts_produced` (JSON, cero PII). `planner_used`/`tools_called`/`duration_ms` son DIAGNÓSTICO — ningún test afirma sobre ellos |
 
 ## Flujo F0
 
@@ -206,6 +208,58 @@ honesto de Fase 0; Fase 1 lo convierte en reanudar el compromiso suspendido.
 Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md)
 §2 y [`whatsapp-agent-auditoria-rigidez-2026-07-29.md`](../whatsapp-agent-auditoria-rigidez-2026-07-29.md)
 para el diagnóstico completo.
+
+#### Suspender en vez de destruir + rastro del turno (É-F4 Fase 1, 2026-07-30)
+
+**Un compromiso de identidad nunca desaparece, se suspende** (R5/R8). Los 4
+sitios que antes hacían `flow.pop(...)` sobre un reto en curso ahora guardan
+su estado en el slot único `flow['suspended'] = {'kind': <clave>, 'state':
+<dict original>}` antes de popear: `_family_fail` (2 fallos reales),
+`_advance_challenge` (2 fallos reales), `_advance_identity_triage` (2
+"no entendí" sin resolver) y `escalate_to_human` (cualquier escalada con un
+`pending_action` en curso — la urgencia SUPLANTA, no aborta, R4). Un gate de
+test (`SuspendNotDestroyGateTests` en `test_policy.py`) exige que todo
+`.pop()` de estas 4 claves esté justificado: suspendido, o una resolución
+terminal reconocida (verificado, vinculado, declinado, tamiz resuelto).
+
+**Resume perezoso**: `policy.evaluate` (paso 6c) reinstala `flow['suspended']`
+en su clave original en cuanto NO hay ningún compromiso activo — el mensaje
+siguiente cae de forma natural en los pasos 7/8/8b/8c existentes, sin
+duplicar lógica de avance. Es lo que resuelve el `4586` tardío de la conv 13:
+antes el reto se destruía al escalar; ahora sobrevive hasta que el cliente lo
+retoma o un humano lo cancela.
+
+**`release_conversation` cierra el círculo** (antes: conv 13 S9 — el
+`HumanHandoff` quedaba con `resolved_at=None` mientras el agente ya volvía a
+hablar). Al liberar: resuelve el handoff abierto más reciente
+(`resolved_at` + `resolution=returned_to_agent`, `claimed_by` si nadie lo
+había tomado) y decide qué hacer con `flow['suspended']` si existe — si el
+contacto YA quedó verificado (`confirmed_in_chat`/`staff_verified`) por
+cualquier vía mientras estaba suspendido, el compromiso se CANCELA (no tiene
+sentido re-interrogar a alguien ya validado); si no, se deja intacto para
+que el resume perezoso de `policy.evaluate` lo retome con el próximo mensaje.
+
+**`HumanHandoff.reason_code`**: `'identity_ambiguous'` mintió en producción
+(conv 13: los 4 factores eran correctos, nada fue ambiguo — el sistema los
+tiró él solo). `REASON_IDENTITY` ahora vale `'identity'`;
+`'identity_ambiguous'` queda **deprecado** — sigue en `REASON_CHOICES` solo
+para no reescribir las filas históricas (migración `0011`, puramente
+aditiva). No usar `'identity_ambiguous'` en código nuevo.
+
+**`TurnDecision`** (ver tabla de modelos): un envoltorio único,
+`planner.handle_inbound`, registra el veredicto de CADA turno tras llamar al
+cuerpo real (renombrado a `planner._handle_inbound_inner`) — nunca puede
+tumbar el turno (`try/except` + log). El harness compartido de la suite de
+regresión (`tests/harness.py:run_turn`, usado por los 63 casos congelados +
+4 archivos más) afirma que cada turno deja EXACTAMENTE una fila — cobertura
+de exhaustividad "gratis" sobre el tráfico ya cubierto por esos tests. El
+mapeo `decision → because` (`planner._infer_because`) es deliberadamente
+GRUESO: Fase 1 no tiene árbitro todavía (llega en Fase 3), así que traduce
+las ~20 salidas de texto libre de hoy a los 12 valores ortogonales de
+`Because` con un `dict` de mapeo, no con lógica nueva de decisión.
+
+Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md)
+§3 para el detalle de implementación.
 
 ## Endurecimiento É-F3 W0 (2026-07-24)
 

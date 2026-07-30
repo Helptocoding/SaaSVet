@@ -336,7 +336,14 @@ class HumanHandoff(OrganizationalModel):
     REASON_POLICY = 'policy_block'
     REASON_LOW_CONFIDENCE = 'low_confidence'
     REASON_TOOL_FAILURE = 'tool_failure'
-    REASON_IDENTITY = 'identity_ambiguous'
+    # 'identity_ambiguous' mintió en producción (conv 13: los 4 factores
+    # eran correctos, nada fue "ambiguo" — el sistema los tiró él solo).
+    # Fase 1 §1.5: 'identity' es el valor correcto para escalados NUEVOS;
+    # 'identity_ambiguous' queda DEPRECADO — solo para no reescribir las
+    # filas viejas (histórico append-only). No usar 'identity_ambiguous'
+    # en código nuevo. Sunset documentado en docs/modules/agent.md.
+    REASON_IDENTITY = 'identity'
+    REASON_IDENTITY_AMBIGUOUS_DEPRECATED = 'identity_ambiguous'
     REASON_BUDGET = 'budget_exhausted'
     REASON_CHOICES = (
         (REASON_EXPLICIT, 'Pidió humano'),
@@ -344,7 +351,9 @@ class HumanHandoff(OrganizationalModel):
         (REASON_POLICY, 'Bloqueado por política'),
         (REASON_LOW_CONFIDENCE, 'Baja confianza'),
         (REASON_TOOL_FAILURE, 'Fallo de herramienta'),
-        (REASON_IDENTITY, 'Identidad ambigua'),
+        (REASON_IDENTITY, 'Identidad — verificación requerida o fallida'),
+        (REASON_IDENTITY_AMBIGUOUS_DEPRECATED,
+         'Identidad ambigua (deprecado — solo filas históricas)'),
         (REASON_BUDGET, 'Presupuesto agotado'),
     )
 
@@ -355,10 +364,13 @@ class HumanHandoff(OrganizationalModel):
         (PRIORITY_NORMAL, 'Normal'),
     )
 
+    RESOLUTION_HANDLED = 'handled'
+    RESOLUTION_RETURNED_TO_AGENT = 'returned_to_agent'
+    RESOLUTION_CLOSED = 'closed'
     RESOLUTION_CHOICES = (
-        ('handled', 'Atendido'),
-        ('returned_to_agent', 'Devuelto al agente'),
-        ('closed', 'Cerrado'),
+        (RESOLUTION_HANDLED, 'Atendido'),
+        (RESOLUTION_RETURNED_TO_AGENT, 'Devuelto al agente'),
+        (RESOLUTION_CLOSED, 'Cerrado'),
     )
 
     conversation = models.ForeignKey(
@@ -435,3 +447,74 @@ class AgentSettings(models.Model):
 
     def __str__(self):
         return f"AgentSettings — {self.organization.name} ({'ON' if self.enabled else 'OFF'})"
+
+
+class TurnDecision(OrganizationalModel):
+    """Rastro append-only de la decisión de cada turno (R12, É-F4 Fase 1).
+
+    INVARIANTE: el runtime NUNCA lee esta tabla. Si algún día la lógica del
+    turno la consulta, se vuelve una segunda fuente de verdad y viola R7
+    (una interacción, una fuente de verdad). Append-only, como `Payment` /
+    `VitalSigns` / `LLMCall`: la corrección es una fila nueva, jamás un UPDATE.
+
+    Frontera oráculo/diagnóstico (docs/whatsapp-agent-f4-gobernanza-plan.md
+    §1.5): `verdict`/`because`/`active_commitment`/`return_to`/
+    `supplanted_by`/`facts_consumed`/`facts_produced` son el ORÁCULO — los
+    tests SÍ pueden afirmar sobre estos campos, son deterministas dado el
+    mismo estado de entrada. `planner_used`/`tools_called`/`duration_ms` son
+    DIAGNÓSTICO — varían turno a turno con la latencia real; ningún test
+    afirma sobre ellos (harían la suite intermitente y acabaría apagada).
+
+    Fase 1 no tiene árbitro todavía (llega en Fase 3): `verdict` guarda el
+    `decision` de hoy tal cual (string libre, ~20 valores en `planner.py`);
+    `because` SÍ es el enum cerrado y ortogonal desde este primer commit
+    (regla de gobernanza §0.6: un presupuesto añadido después no se añade
+    nunca) — se deriva con un mapeo grueso y deliberadamente conservador en
+    `planner._infer_because`. Fase 3 sustituye el mapeo por el veredicto real
+    del árbitro; el enum de `because` no debería necesitar romperse para eso.
+    """
+
+    class Because(models.TextChoices):
+        """POR QUÉ pasó — hechos, nunca coordenadas (G1: ortogonal a los
+        nombres de compromiso/etapa; G2: cardinalidad ≤ 12)."""
+        SAFEGUARD = 'safeguard', 'Cortacircuito de seguridad'
+        HUMAN_REQUESTED = 'human_requested', 'Cliente pidió un humano'
+        CLIENT_QUESTIONED = 'client_questioned', 'Cliente preguntó en vez de responder'
+        CLIENT_CONFIRMED = 'client_confirmed', 'Cliente confirmó/afirmó'
+        CLIENT_DEFERRED = 'client_deferred', 'Cliente aplazó sin decidir'
+        CLIENT_ANSWERED = 'client_answered', 'Cliente aportó un dato'
+        VERIFICATION_REQUIRED = 'verification_required', 'Requería verificar identidad'
+        GOAL_STALLED = 'goal_stalled', 'Objetivo sin avance'
+        BUDGET_EXCEEDED = 'budget_exceeded', 'Presupuesto agotado'
+        SYSTEM_ERROR = 'system_error', 'Error de sistema/dominio'
+        OUT_OF_SCOPE = 'out_of_scope', 'Fuera de alcance'
+        PLANNER_HANDLED = 'planner_handled', 'Turno normal, sin condición especial'
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT, related_name='turn_decisions',
+    )
+    # ── ORÁCULO · determinista, testeable ────────────────────────────────
+    verdict = models.CharField(max_length=40)
+    because = models.CharField(max_length=24, choices=Because.choices)
+    active_commitment = models.CharField(max_length=32, blank=True, default='')
+    return_to = models.CharField(max_length=32, blank=True, default='')
+    supplanted_by = models.CharField(max_length=32, blank=True, default='')
+    # Solo enums/referencias — jamás el cuerpo del mensaje (cero PII, R15).
+    facts_consumed = models.JSONField(default=dict, blank=True)
+    facts_produced = models.JSONField(default=dict, blank=True)
+    # ── DIAGNÓSTICO · variable, NUNCA se afirma en tests ─────────────────
+    planner_used = models.BooleanField(default=False)
+    tools_called = models.PositiveSmallIntegerField(default=0)
+    duration_ms = models.PositiveIntegerField(null=True, blank=True)
+    triggered_by_message = models.ForeignKey(
+        'channels.Message', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'conversation', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"TurnDecision<{self.verdict} because={self.because}>"

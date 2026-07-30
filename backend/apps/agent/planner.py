@@ -16,6 +16,7 @@ Seguridad: el LLM nunca autoriza — el Policy Engine decidió ANTES si se
 invoca; el executor + run_tool revalidan tier/verificación/ownership.
 """
 import logging
+import time
 
 from django.conf import settings
 from django.db import transaction
@@ -24,7 +25,7 @@ from django.utils import timezone
 from . import confirmations, goals, guards, policy, prompts, tier0, tools
 from .executor import ToolExecutor
 from .llm import LLMError, estimate_cost, get_llm_client
-from .models import Conversation, HumanHandoff, LLMCall
+from .models import Conversation, HumanHandoff, LLMCall, TurnDecision
 from .outbound import enqueue_outbound
 
 logger = logging.getLogger('agent.events')
@@ -36,6 +37,103 @@ MAX_CONSECUTIVE_TOOL_FAILURES = 2
 def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
                    executor=None, triggered_by=None, burst=None,
                    payload_types=None):
+    """Envoltorio de `_handle_inbound_inner` que deja el rastro append-only
+    de la decisión del turno (R12, É-F4 Fase 1 §1.3).
+
+    Único punto de escritura: las ~20 salidas de texto libre de
+    `_handle_inbound_inner` desembocan TODAS aquí. El registro NUNCA puede
+    tumbar el turno (mismo patrón que `_persist_llm_call`) — si
+    `TurnDecision.objects.create` revienta, el turno responde igual y solo
+    se pierde el rastro de ESE turno.
+    """
+    started = time.monotonic()
+    result = _handle_inbound_inner(
+        conversation, agent_settings=agent_settings, llm_client=llm_client,
+        executor=executor, triggered_by=triggered_by, burst=burst,
+        payload_types=payload_types,
+    )
+    _record_turn_decision(conversation, result, started, triggered_by)
+    return result
+
+
+def _record_turn_decision(conversation, result, started, triggered_by):
+    try:
+        duration_ms = int((time.monotonic() - started) * 1000)
+        because = _infer_because(result)
+        TurnDecision.objects.create(
+            organization=conversation.organization,
+            conversation=conversation,
+            verdict=result.get('decision', ''),
+            because=because,
+            facts_produced=(
+                {'reason': result['reason']} if result.get('reason') else {}
+            ),
+            planner_used=result.get('llm_calls', 0) > 0,
+            tools_called=result.get('tools', 0),
+            duration_ms=duration_ms,
+            triggered_by_message=triggered_by,
+        )
+    except Exception:
+        logger.exception("AGENT_TURN_DECISION_RECORD_FAILED")
+
+
+# Mapeo GRUESO decision→Because (Fase 1, sin árbitro todavía — ver docstring
+# de `TurnDecision`). `reason`/`handoff_reason` son las únicas señales que
+# sobreviven hasta este envoltorio; las ~22 salidas internas no se tocan.
+_ESCALATE_BECAUSE = {
+    HumanHandoff.REASON_EMERGENCY: TurnDecision.Because.SAFEGUARD,
+    HumanHandoff.REASON_POLICY: TurnDecision.Because.SAFEGUARD,
+    HumanHandoff.REASON_EXPLICIT: TurnDecision.Because.HUMAN_REQUESTED,
+    HumanHandoff.REASON_BUDGET: TurnDecision.Because.BUDGET_EXCEEDED,
+    HumanHandoff.REASON_TOOL_FAILURE: TurnDecision.Because.SYSTEM_ERROR,
+    HumanHandoff.REASON_IDENTITY: TurnDecision.Because.VERIFICATION_REQUIRED,
+    HumanHandoff.REASON_LOW_CONFIDENCE: TurnDecision.Because.VERIFICATION_REQUIRED,
+}
+_REPLY_BECAUSE = {
+    'deviation': TurnDecision.Because.CLIENT_QUESTIONED,
+    'confirm_defer': TurnDecision.Because.CLIENT_DEFERRED,
+    'blocked': TurnDecision.Because.SAFEGUARD,
+    'human_active': TurnDecision.Because.SAFEGUARD,
+    'handoff_pending': TurnDecision.Because.SAFEGUARD,
+    'handoff_ack': TurnDecision.Because.SAFEGUARD,
+    'disabled': TurnDecision.Because.SAFEGUARD,
+    'media': TurnDecision.Because.OUT_OF_SCOPE,
+    'bot_question': TurnDecision.Because.OUT_OF_SCOPE,
+    'out_payment': TurnDecision.Because.OUT_OF_SCOPE,
+    'identity_triage': TurnDecision.Because.CLIENT_ANSWERED,
+}
+_DIRECT_BECAUSE = {
+    'silent': TurnDecision.Because.SAFEGUARD,
+    'close': TurnDecision.Because.SAFEGUARD,
+    'guard_blocked': TurnDecision.Because.SAFEGUARD,
+    'goal_stalled': TurnDecision.Because.GOAL_STALLED,
+    'tool_budget_exhausted': TurnDecision.Because.BUDGET_EXCEEDED,
+    'identity_challenge': TurnDecision.Because.VERIFICATION_REQUIRED,
+    'identity_triage': TurnDecision.Because.VERIFICATION_REQUIRED,
+    'family_restricted': TurnDecision.Because.VERIFICATION_REQUIRED,
+    'committed': TurnDecision.Because.CLIENT_CONFIRMED,
+    'confirm_expired': TurnDecision.Because.CLIENT_DEFERRED,
+    'commit_unknown': TurnDecision.Because.SYSTEM_ERROR,
+    'commit_slot_taken': TurnDecision.Because.SYSTEM_ERROR,
+    'commit_past_date': TurnDecision.Because.SYSTEM_ERROR,
+    'commit_invalid': TurnDecision.Because.SYSTEM_ERROR,
+}
+
+
+def _infer_because(result):
+    decision = result.get('decision', '')
+    if decision == 'escalate':
+        return _ESCALATE_BECAUSE.get(
+            result.get('handoff_reason', ''), TurnDecision.Because.SYSTEM_ERROR)
+    if decision == 'reply':
+        return _REPLY_BECAUSE.get(
+            result.get('reason'), TurnDecision.Because.PLANNER_HANDLED)
+    return _DIRECT_BECAUSE.get(decision, TurnDecision.Because.PLANNER_HANDLED)
+
+
+def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
+                          executor=None, triggered_by=None, burst=None,
+                          payload_types=None):
     """Procesa el turno de la conversación. Devuelve un dict de telemetría
     {decision, llm_calls, tools} para el worker/tests.
 

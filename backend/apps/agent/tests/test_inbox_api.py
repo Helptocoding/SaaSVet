@@ -8,7 +8,12 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.agent.models import AgentSettings, ContactIdentity, Conversation
+from apps.agent.models import (
+    AgentSettings,
+    ContactIdentity,
+    Conversation,
+    HumanHandoff,
+)
 from apps.channels.models import ChannelAccount, Message
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSIONS
@@ -218,6 +223,69 @@ class InboxFlowTests(InboxApiTestCase):
         self.conversation.refresh_from_db()
         self.assertEqual(self.conversation.state, Conversation.STATE_CLOSED)
         self.assertIsNotNone(self.conversation.closed_at)
+
+
+class InboxReleaseClosesTheCircleTests(InboxApiTestCase):
+    """Fase 1 §1.2 — conv 13 S9: `release` dejaba el `HumanHandoff` sin
+    resolver mientras el agente ya volvía a hablar (`resolved_at=None`,
+    `state=active`). Cierra ese hueco, y decide qué pasa con un compromiso
+    suspendido (§1.1) según si el contacto ya quedó verificado o no."""
+
+    def setUp(self):
+        self.conversation.flow = {
+            'suspended': {
+                'kind': 'family_challenge',
+                'state': {'stage': 'digits', 'candidate_ids': [], 'fails': 2},
+            },
+        }
+        self.conversation.state = Conversation.STATE_HANDOFF_PENDING
+        self.conversation.save(update_fields=['flow', 'state'])
+        self.handoff = HumanHandoff.objects.create(
+            organization=self.org, conversation=self.conversation,
+            reason_code=HumanHandoff.REASON_IDENTITY,
+        )
+
+    def _release(self):
+        self.client.force_authenticate(self.assistant)
+        return self.client.post(
+            f"/api/inbox/conversations/{self.conversation.public_id}/release/"
+        )
+
+    def test_release_resolves_the_open_handoff(self):
+        r = self._release()
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.handoff.refresh_from_db()
+        self.assertIsNotNone(self.handoff.resolved_at)
+        self.assertEqual(
+            self.handoff.resolution, HumanHandoff.RESOLUTION_RETURNED_TO_AGENT)
+        self.assertEqual(self.handoff.claimed_by, self.assistant)
+
+    def test_release_is_idempotent_on_the_handoff(self):
+        self._release()
+        r = self._release()
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            HumanHandoff.objects.filter(
+                conversation=self.conversation, resolved_at__isnull=False,
+            ).count(),
+            1,
+        )
+
+    def test_release_leaves_suspended_for_lazy_resume_when_not_verified(self):
+        """Sin verificación, el compromiso suspendido NO se cancela — lo
+        reanuda `policy.evaluate` con el próximo mensaje del cliente."""
+        self._release()
+        self.conversation.refresh_from_db()
+        self.assertIn('suspended', self.conversation.flow)
+
+    def test_release_cancels_suspended_when_contact_already_verified(self):
+        """Verificado por otra vía (staff u otra) mientras estaba suspendido:
+        re-interrogarlo no tiene sentido — se cancela en vez de reanudar."""
+        self.contact.verification_level = ContactIdentity.VERIFICATION_STAFF
+        self.contact.save(update_fields=['verification_level'])
+        self._release()
+        self.conversation.refresh_from_db()
+        self.assertNotIn('suspended', self.conversation.flow)
 
 
 class InboxResetIdentityTests(InboxApiTestCase):

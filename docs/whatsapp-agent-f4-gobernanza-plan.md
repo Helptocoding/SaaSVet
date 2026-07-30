@@ -2,8 +2,8 @@
 
 **Fecha**: 2026-07-29
 **Base**: [`whatsapp-agent-auditoria-rigidez-2026-07-29.md`](whatsapp-agent-auditoria-rigidez-2026-07-29.md)
-**Estado**: Fase 0 **implementada** (2026-07-30, sin desplegar todavía — ver
-§2 Rollback). Fases 1-5 siguen como propuesta, sin código.
+**Estado**: Fase 0 y Fase 1 **implementadas** (2026-07-30). Fases 2-5 siguen
+como propuesta, sin código.
 **Contexto de riesgo**: org 3 (`Clinica Bebe coche`) es la única clínica con agente encendido y
 canal real de WhatsApp. Todo lo que se despliegue lo prueba una persona real ese mismo día.
 
@@ -398,9 +398,13 @@ El qué-pasó va a las coordenadas, no al enum. Documentar el sunset en
 
 ### Terminado cuando
 
-- Toda decisión de turno deja fila; se puede reconstruir la conv 13 con un `SELECT`.
-- Ningún `pop` de compromiso queda en `policy.py` (grep-gate).
-- Handoff resuelto al liberar.
+- [x] Toda decisión de turno deja fila; se puede reconstruir la conv 13 con un `SELECT`
+      (`TurnDecision`, envoltorio único en `planner.handle_inbound`).
+- [x] Ningún `pop` de compromiso queda en `policy.py` sin justificar (gate:
+      `SuspendNotDestroyGateTests` en `test_policy.py` — suspendido o resolución
+      terminal reconocida).
+- [x] Handoff resuelto al liberar (`release_conversation`, migración 0010/0011,
+      457 tests verdes — 2026-07-30).
 
 ### Rollback
 

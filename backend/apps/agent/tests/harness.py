@@ -96,13 +96,15 @@ def run_turn(testcase, conversation, agent_user, text, *, scripted_llm,
     salientes producidos en el turno (en orden). Aplica las aserciones
     prohibidas a cada saliente si assert_clean."""
     from apps.agent.llm import StubLLMClient
-    from apps.agent.models import AgentSettings
+    from apps.agent.models import AgentSettings, TurnDecision
 
     before_ids = set(
         Message.objects.filter(
             conversation=conversation, direction=Message.DIRECTION_OUT,
         ).values_list('id', flat=True)
     )
+    turn_decisions_before = TurnDecision.objects.filter(
+        conversation=conversation).count()
 
     Message.objects.create(
         organization=conversation.organization,
@@ -121,6 +123,15 @@ def run_turn(testcase, conversation, agent_user, text, *, scripted_llm,
     result = planner.handle_inbound(
         conversation, agent_settings=agent_settings,
         llm_client=stub, executor=executor,
+    )
+
+    # Exhaustividad de TurnDecision, Capa 2 (§9.2 del plan de gobernanza):
+    # todo turno del harness compartido deja EXACTAMENTE una fila, incluidos
+    # los que responden SILENT (no mandan mensaje pero sí deciden algo).
+    testcase.assertEqual(
+        TurnDecision.objects.filter(conversation=conversation).count(),
+        turn_decisions_before + 1,
+        "cada turno debe dejar exactamente 1 TurnDecision (R12)",
     )
 
     new_outbound = list(
