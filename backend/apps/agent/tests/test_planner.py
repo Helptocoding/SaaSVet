@@ -46,6 +46,17 @@ def _seed_role(org, role_name):
     return role
 
 
+def _next_open_day(min_offset):
+    """Fecha ISO a >= `min_offset` días, saltando domingo (único día cerrado
+    del horario default, `DEFAULT_ORGANIZATION_SCHEDULE`). Sin esto, pruebas
+    con un offset fijo son intermitentes: si "hoy + N" cae en domingo,
+    `find_available_slots` devuelve `closed=True` sin capturar ningún slot."""
+    day = timezone.now().date() + timedelta(days=min_offset)
+    while day.isoweekday() == 7:
+        day += timedelta(days=1)
+    return day.isoformat()
+
+
 class TestClientTransport:
     def __call__(self, method, path, *, headers, params=None, json=None):
         client = APIClient()
@@ -222,6 +233,36 @@ class PlannerVerificationTests(PlannerTestCase):
         self.assertIn("mascota", self._last_outbound().body.lower())
 
 
+class PlannerTriageAlreadyResolvedTests(PlannerTestCase):
+    """Fase 0 §0.5 — conv 13 S6: `planner.py:274` sembraba SIEMPRE un tamiz
+    nuevo aunque `identity_triage_done` ya tuviera veredicto, y dos
+    meta-preguntas al tamiz nuevo pisaban un 'returning' correcto con
+    'unclear'. Con el tamiz ya resuelto, se escala en vez de re-triar."""
+
+    def setUp(self):
+        super().setUp()
+        self.contact.owner = None
+        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        self.contact.save()
+
+    def test_does_not_re_triage_when_already_resolved(self):
+        self.conv.flow = {"identity_triage_done": "returning"}
+        self.conv.save(update_fields=["flow"])
+        self._inbound("¿qué citas tengo?")
+        stub = StubLLMClient(scripted=[
+            LLMResult(kind="tool_call", tool_name="list_upcoming_appointments",
+                      tool_args={}),
+        ])
+        result = self._handle(stub)
+        self.assertEqual(result["decision"], "escalate")
+        self.assertEqual(result["reason"], "triage_already_resolved")
+        self.conv.refresh_from_db()
+        self.assertNotIn("identity_triage", self.conv.flow)
+        self.assertEqual(self.conv.state, Conversation.STATE_HANDOFF_PENDING)
+        self.assertEqual(
+            HumanHandoff.objects.filter(conversation=self.conv).count(), 1)
+
+
 class PlannerFailureTests(PlannerTestCase):
     def test_llm_error_escalates(self):
         # Texto con intención (un "hola" pelón lo resuelve la plantilla de
@@ -363,6 +404,53 @@ class PlannerGoalStallTests(PlannerTestCase):
         self.assertEqual(goal.slots["date"]["value"], "2026-08-06")
 
 
+class PlannerConcreteTimeCaptureTests(PlannerTestCase):
+    """Fase 0 §0.6: `preferred_time` concreto (HH:MM) llena el slot `time`
+    desde una lectura, igual que `date` (ADR de la auditoría — parcial: NO
+    cierra conv 12, donde el modelo nunca mandó `preferred_time`; ver §0.6)."""
+
+    def setUp(self):
+        super().setUp()
+        self.contact.owner = None
+        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        self.contact.save()
+        self.conv.flow = {"identity_triage_done": "new"}
+        self.conv.save(update_fields=["flow"])
+
+    def test_hhmm_preferred_time_fills_the_missing_time_slot(self):
+        from apps.agent import goals
+        day = _next_open_day(3)
+        self._inbound("regístrame, el jueves a las 9")
+        self._handle(StubLLMClient(scripted=[
+            LLMResult(kind="tool_call",
+                      tool_name="register_new_client_and_pet",
+                      tool_args={"owner_name": "Ana Torres",
+                                 "pet_name": "Luna", "reason": "consulta"}),
+            LLMResult(kind="tool_call", tool_name="find_available_slots",
+                      tool_args={"date": day, "preferred_time": "09:00"}),
+            LLMResult(kind="text", text="A las 9 tengo espacio 🙂"),
+        ]))
+        goal = goals.get_open_goal(self.conv)
+        self.assertEqual(goal.slots["time"]["value"], "09:00")
+        self.assertNotIn("time", goal.missing)
+
+    def test_bucket_preferred_time_does_not_fill_the_slot(self):
+        from apps.agent import goals
+        day = _next_open_day(3)
+        self._inbound("regístrame, el jueves en la mañana")
+        self._handle(StubLLMClient(scripted=[
+            LLMResult(kind="tool_call",
+                      tool_name="register_new_client_and_pet",
+                      tool_args={"owner_name": "Ana Torres",
+                                 "pet_name": "Luna", "reason": "consulta"}),
+            LLMResult(kind="tool_call", tool_name="find_available_slots",
+                      tool_args={"date": day, "preferred_time": "mañana"}),
+            LLMResult(kind="text", text="Tengo varios en la mañana 🙂"),
+        ]))
+        goal = goals.get_open_goal(self.conv)
+        self.assertIn("time", goal.missing)
+
+
 class PlannerSlotCaptureTests(PlannerTestCase):
     """Lo que el cliente ya dio no se vuelve a pedir — aunque el dato haya
     entrado por una tool de LECTURA (piloto conv 12: el agente resolvió
@@ -379,7 +467,7 @@ class PlannerSlotCaptureTests(PlannerTestCase):
 
     def test_availability_lookup_fills_the_missing_date(self):
         from apps.agent import goals
-        day = (timezone.now() + timedelta(days=3)).date().isoformat()
+        day = _next_open_day(3)
         self._inbound("regístrame, quiero ir el jueves")
         self._handle(StubLLMClient(scripted=[
             LLMResult(kind="tool_call",
@@ -412,6 +500,41 @@ class PlannerSlotCaptureTests(PlannerTestCase):
         ]))
         goal = goals.get_open_goal(self.conv)
         self.assertEqual(goal.slots["date"]["value"], chosen)
+
+    def test_probed_date_not_updated_by_a_later_probe(self):
+        """Deuda documentada (Fase 0 §0.7, introducida por el fix `103196e`):
+        `_capture_slot_from_read` solo rellena si el slot está VACÍO. Si el
+        modelo SONDEA el lunes (lo captura desde una lectura) y el cliente
+        elige el martes, una segunda lectura NO corrige — 'date' ya no está
+        en `missing`. Hoy lo salva que los args de ESCRITURA sí sobrescriben;
+        este test ancla el comportamiento actual (bug conocido) antes de que
+        Fase 3 lo reescriba (CR-7). NO es un cambio de código de Fase 0."""
+        from apps.agent import goals
+        monday = (timezone.now() + timedelta(days=1)).date().isoformat()
+        tuesday = (timezone.now() + timedelta(days=2)).date().isoformat()
+        self._inbound("regístrame, tal vez el lunes")
+        self._handle(StubLLMClient(scripted=[
+            LLMResult(kind="tool_call",
+                      tool_name="register_new_client_and_pet",
+                      tool_args={"owner_name": "Ana Torres",
+                                 "pet_name": "Luna", "reason": "consulta"}),
+            LLMResult(kind="tool_call", tool_name="find_available_slots",
+                      tool_args={"date": monday}),
+            LLMResult(kind="text", text="El lunes tengo espacio 🙂"),
+        ]))
+        goal = goals.get_open_goal(self.conv)
+        self.assertEqual(goal.slots["date"]["value"], monday)
+
+        self._inbound("mejor el martes")
+        self._handle(StubLLMClient(scripted=[
+            LLMResult(kind="tool_call", tool_name="find_available_slots",
+                      tool_args={"date": tuesday}),
+            LLMResult(kind="text", text="También tengo el martes 🙂"),
+        ]))
+        goal = goals.get_open_goal(self.conv)
+        # BUG conocido: se queda en el lunes porque 'date' ya no estaba
+        # `missing` cuando llegó el segundo sondeo.
+        self.assertEqual(goal.slots["date"]["value"], monday)
 
 
 class PlannerBudgetTests(PlannerTestCase):

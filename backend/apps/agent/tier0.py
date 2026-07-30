@@ -183,6 +183,18 @@ T0_CHALLENGE_FAILED = (
     "que te apoyen."
 )
 
+# Interrupción durante un reto (R1, R9): el por-qué de cada factor, para que
+# una pregunta ("¿para qué necesitas eso?") reciba motivo antes de repreguntar
+# en vez de contar como respuesta equivocada (conv 13). Compone con la
+# plantilla original del factor — cero copy nuevo por factor.
+FACTOR_WHY = {
+    'digits':  'confirmar que eres tú y proteger los datos del titular',
+    'pet':     'proteger el expediente: ese nombre solo lo sabes tú',
+    'owner':   'ubicar el expediente correcto',
+    'titular': 'buscar el registro con el nombre correcto',
+}
+T0_WHY_THEN_REASK = "Te lo pido para {why} 🙂\n\n{reask}"
+
 # Tamiz de identidad (UX-05) — número NO registrado que pide algo personal.
 #
 # El sistema JAMÁS asume que es un cliente nuevo: pregunta. Las dos ramas se

@@ -2,7 +2,9 @@
 
 > **Estado**: É-F3 completa — el agente lee, **agenda** (crear/confirmar/cancelar/
 > reagendar + alta de cliente) y persigue **objetivos**, con guards de salida
-> vinculantes y medición de calidad. 380 tests en CI. **Sin desplegar a prod.**
+> vinculantes y medición de calidad. 423 tests en CI. É-F4 Fase 0 (gobernanza
+> conversacional — R1/R9, interrupciones durante un reto) implementada
+> 2026-07-30, ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
 > épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
@@ -170,6 +172,40 @@ auditoría de 2026-07-24 había quitado esta regla del prompt asumiendo que
 `T0_NEW_CLIENT` ya la cubría desde el planner; cubría solo la ruta con rebote
 de tool. Pasar `numero_registrado` al contexto tampoco bastó: el modelo lo
 tenía y lo ignoró.
+
+#### Interrupciones durante un reto (É-F4 Fase 0, 2026-07-30)
+
+**Una pregunta del cliente durante `identity_challenge`/`family_challenge`/
+`identity_triage` (stage `titular`) nunca cuenta como respuesta equivocada.**
+`matchers.looks_like_question` + `matchers.is_answer_shaped(stage, text)`
+(`policy._is_interruption`) distinguen "no respondió" de "respondió mal": si
+el mensaje interroga y no trae la forma de la respuesta esperada (los 4
+dígitos son la única etapa con forma verificable; nombres no la tienen), el
+sistema responde el **por qué** (`tier0.FACTOR_WHY` + `T0_WHY_THEN_REASK`) y
+re-pregunta **sin tocar `fails`**. Corrige el caso más caro de la auditoría
+2026-07-29 (conv 13, `85a2a691`): un cliente con los 4 factores correctos
+preguntó "¿para qué necesitas eso?" antes de dar los últimos 4 dígitos y el
+sistema lo contó como 2 fallos y lo escaló, tirando un reto que estaba a
+punto de pasar.
+
+**Tope de 3 desvíos** (`flow['deviations']`, compartido por las 3 máquinas del
+mismo intento de verificación): contestar todo con preguntas nunca avanza el
+reto — al 3er desvío se escala (`handoff_detail='deviation_cap'`) en vez de
+preguntar para siempre. Se resetea al arrancar un reto nuevo o al resolverlo
+(verificado o escalado).
+
+**El planner no re-tría un tamiz ya resuelto.** Si `flow['identity_triage_done']`
+ya tiene veredicto y una tool personal vuelve a rebotar con
+`verification_required` sobre un contacto sin owner, el planner escala
+(`detail='triage_already_resolved'`) en vez de sembrar `start_identity_triage`
+de nuevo — antes lo hacía incondicionalmente, y dos meta-preguntas al tamiz
+nuevo podían pisar un `'returning'` correcto con `'unclear'`
+(`flow.setdefault`, no asignación directa, es la segunda barrera). Mínimo
+honesto de Fase 0; Fase 1 lo convierte en reanudar el compromiso suspendido.
+
+Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md)
+§2 y [`whatsapp-agent-auditoria-rigidez-2026-07-29.md`](../whatsapp-agent-auditoria-rigidez-2026-07-29.md)
+para el diagnóstico completo.
 
 ## Endurecimiento É-F3 W0 (2026-07-24)
 

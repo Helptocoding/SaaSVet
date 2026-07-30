@@ -445,6 +445,86 @@ class TriageMatcherTests(PolicyTestCase):
                 self.assertTrue(matchers.wants_personal_action(phrase))
 
 
+class DeviationTests(IdentityTriageTests):
+    """Fase 0 §0.2 — R1/R9: una pregunta durante un reto nunca es un fallo.
+
+    Reproduce el caso concreto de la conv 13 (`85a2a691`): el cliente dio los
+    4 factores correctos y preguntó "¿para qué necesitas eso?" antes de dar
+    los últimos 4 dígitos. Con el sistema viejo eso sumaba `fails` dos veces
+    y tiraba el reto que estaba a punto de pasar.
+    """
+
+    def _reach_digits_stage(self):
+        # `_seed_family_challenge` salta el factor de mascota si YA se nombró
+        # antes en la conversación (mismo patrón que
+        # `test_pet_already_named_skips_that_factor`): necesita el `Message`
+        # persistido, no solo el texto pasado a `policy.evaluate`.
+        from apps.channels.models import Message
+        Message.objects.create(
+            organization=self.org, channel_account=self.channel,
+            conversation=self.unknown_conv,
+            direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT,
+            body="quiero agendar cita para Luna",
+            status=Message.STATUS_PROCESSED,
+        )
+        self._eval_unknown("quiero agendar cita para Luna")
+        self._eval_unknown("ya soy cliente")
+        self._eval_unknown("Ana Torres")
+        self.unknown_conv.refresh_from_db()
+        self.assertEqual(
+            self.unknown_conv.flow["family_challenge"]["stage"], "digits")
+
+    def test_conv13_question_at_digits_gets_reason_not_fail(self):
+        self._reach_digits_stage()
+        d = self._eval_unknown("para que necesitas eso")
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertIn(tier0.FACTOR_WHY['digits'], d.text)
+        self.unknown_conv.refresh_from_db()
+        family = self.unknown_conv.flow["family_challenge"]
+        self.assertEqual(family.get("fails", 0), 0)
+
+        # el dato correcto, llegado después, verifica con normalidad.
+        d = self._eval_unknown("8877")   # últimos 4 de 5511998877
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(d.meta.get("verified"))
+
+    def test_digits_shaped_question_advances_no_deviation(self):
+        """"¿es 8877?" TRAE la respuesta: no es un desvío."""
+        self._reach_digits_stage()
+        d = self._eval_unknown("¿es 8877?")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(d.meta.get("verified"))
+
+    def test_three_deviations_escalate_with_deviation_cap(self):
+        self._reach_digits_stage()
+        self._eval_unknown("para que necesitas eso")
+        self._eval_unknown("por que me pides eso")
+        d = self._eval_unknown("no entiendo para que")
+        self.assertEqual(d.kind, policy.ESCALATE)
+        self.assertEqual(d.meta.get("handoff_detail"), "deviation_cap")
+        self.unknown_conv.refresh_from_db()
+        self.assertNotIn("family_challenge", self.unknown_conv.flow)
+        self.assertNotIn("deviations", self.unknown_conv.flow)
+
+
+class IdentityTriageDoneNotOverwrittenTests(IdentityTriageTests):
+    """Fase 0 §0.4 — conv 13 S6: dos 'unclear' del tamiz no deben pisar un
+    'returning' ya decidido (setdefault, no asignación directa)."""
+
+    def test_returning_survives_a_stray_unclear_resolution(self):
+        self.unknown_conv.flow['identity_triage_done'] = 'returning'
+        self.unknown_conv.flow['identity_triage'] = {'stage': 'ask', 'asks': 2}
+        self.unknown_conv.save(update_fields=['flow'])
+        d = policy._advance_identity_triage(
+            self.unknown_conv, self.unknown_contact, "que dijiste",
+            self.unknown_conv.flow['identity_triage'])
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.unknown_conv.refresh_from_db()
+        self.assertEqual(
+            self.unknown_conv.flow.get('identity_triage_done'), 'returning')
+
+
 class FsmTests(PolicyTestCase):
     def test_escalate_to_human_is_idempotent(self):
         policy.escalate_to_human(self.conv, reason_code=HumanHandoff.REASON_EXPLICIT)

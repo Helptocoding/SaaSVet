@@ -273,6 +273,49 @@ _TRIAGE_NEW = (
 )
 
 
+# --- Interrupción durante un reto (R1, R9) ---------------------------------
+# Una pregunta que NO trae la respuesta nunca debe contar como un fallo de
+# verificación (conv 13: "para que necesitas eso?" sumó `fails` dos veces).
+_QUESTION_LEMMAS = (
+    'para que', 'pa que', 'por que', 'pq', 'que necesitas',
+    'para que lo quieres', 'para que sirve', 'no entiendo', 'como asi',
+    'a que te refieres', 'que es eso', 'es seguro', 'es necesario',
+    'tengo que darte', 'y eso', 'que dije', 'que te dije',
+    'no te acuerdas', 'ya te dije', 'se te borro', 'que miras',
+    'no acabamos de', 'no me acabas de',
+)
+
+
+def looks_like_question(text):
+    """¿El mensaje interroga en vez de responder?
+
+    Ojo: `normalize()` borra la puntuación, así que los signos se miran sobre
+    el texto CRUDO antes de normalizar. Sin esto '¿para qué?' pierde el '?'.
+    """
+    raw = text or ''
+    if '?' in raw or '¿' in raw:
+        return True
+    n = normalize(raw)
+    return bool(n) and _has_any(n, _QUESTION_LEMMAS)
+
+
+_ANSWER_SHAPES = {
+    'digits': lambda n: re.search(r'\d{4}', n) is not None,
+}
+
+
+def is_answer_shaped(stage, text):
+    """True / False / **None**.
+
+    `None` = esta etapa no tiene forma verificable (los nombres no la tienen)
+    y es una respuesta honesta, no un fallo: el caller la trata como 'no sé'.
+    """
+    shape = _ANSWER_SHAPES.get(stage)
+    if shape is None:
+        return None
+    return shape(normalize(text))
+
+
 def classify_client_triage(text):
     """'new' | 'returning' | 'unclear' — respuesta al tamiz.
 

@@ -11,6 +11,7 @@ Reglas vinculantes:
   además re-verifica su propio piso (defensa en profundidad).
 - Cifras de stock, costos y PII financiera: PROHIBIDOS en proyecciones (G7).
 """
+import re
 import unicodedata
 from dataclasses import dataclass, field
 
@@ -578,6 +579,13 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     # `me_falta: [date]` y el agente la volvía a preguntar — cuatro veces.
     # El cliente ya la dio y el agente ya la dijo: no se vuelve a pedir.
     _capture_slot_from_read(conversation, 'date', date_str)
+    # `preferred_time` solo captura si es una hora CONCRETA (HH:MM), no un
+    # bucket coloquial ("mañana"/"tarde"). Parcial (Fase 0 §0.6, ver ADR de
+    # la auditoría): si el modelo nunca manda `preferred_time` — como en la
+    # conv 12, donde la hora dicha en prosa nunca llegó a una tool — esto no
+    # captura nada; ese cierre completo es de Fase 3 (CR-7).
+    if re.match(r'^\d{1,2}:\d{2}$', (preferred or '').strip()):
+        _capture_slot_from_read(conversation, 'time', preferred.strip())
 
     return ToolOutcome(ok=True, data=projection, summary={'slots': len(projection)})
 

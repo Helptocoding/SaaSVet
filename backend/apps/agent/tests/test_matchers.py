@@ -68,3 +68,48 @@ class GreetingTests(SimpleTestCase):
     def test_thanks(self):
         self.assertTrue(matchers.is_thanks("muchas gracias"))
         self.assertFalse(matchers.is_thanks("gracias, y una duda más"))
+
+
+class LooksLikeQuestionTests(SimpleTestCase):
+    """Fase 0 §0.1 — R1/R9: una pregunta nunca debe leerse como respuesta."""
+
+    def test_question_marks_on_raw_text(self):
+        # normalize() borra la puntuación; el chequeo de '?'/'¿' debe ir
+        # sobre el texto CRUDO, antes de normalizar.
+        for t in ["¿para qué?", "para que?", "¿4586?"]:
+            self.assertTrue(matchers.looks_like_question(t), t)
+
+    def test_question_lemmas(self):
+        lemmas = [
+            'para que', 'pa que', 'por que', 'pq', 'que necesitas',
+            'para que lo quieres', 'para que sirve', 'no entiendo',
+            'como asi', 'a que te refieres', 'que es eso', 'es seguro',
+            'es necesario', 'tengo que darte', 'y eso', 'que dije',
+            'que te dije', 'no te acuerdas', 'ya te dije', 'se te borro',
+            'que miras', 'no acabamos de', 'no me acabas de',
+        ]
+        for lemma in lemmas:
+            with self.subTest(lemma=lemma):
+                self.assertTrue(matchers.looks_like_question(lemma), lemma)
+
+    def test_answer_is_not_a_question(self):
+        self.assertFalse(matchers.looks_like_question("4586"))
+        self.assertFalse(matchers.looks_like_question("Ana Cruz"))
+        self.assertFalse(matchers.looks_like_question(""))
+
+
+class IsAnswerShapedTests(SimpleTestCase):
+    def test_digits_true_with_four_digits_anywhere(self):
+        for t in ["4586", "son 4586", "es el 4586 creo", "¿es 4586?"]:
+            self.assertTrue(matchers.is_answer_shaped('digits', t), t)
+
+    def test_digits_false_without_four_digits(self):
+        for t in ["no me acuerdo", "45", "para que necesitas eso"]:
+            self.assertFalse(matchers.is_answer_shaped('digits', t), t)
+
+    def test_stages_without_shape_return_none(self):
+        # Los nombres (mascota/titular) no tienen forma verificable: una
+        # respuesta honesta ("no sé") no puede distinguirse aquí de una
+        # pregunta por FORMA — el caller decide con looks_like_question.
+        for stage in ('pet', 'owner', 'titular'):
+            self.assertIsNone(matchers.is_answer_shaped(stage, "Ana Cruz"))

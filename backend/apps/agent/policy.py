@@ -301,13 +301,69 @@ def start_identity_challenge(conversation):
     """Inicia el reto (el planner lo llama cuando una tool personal devuelve
     verification_required). Devuelve el texto del reto."""
     conversation.flow['identity_challenge'] = {'stage': 'pet', 'fails': 0}
+    conversation.flow.pop('deviations', None)
     conversation.save(update_fields=['flow'])
     return tier0.T0_CHALLENGE_PET
+
+
+# ---------------------------------------------------------------------------
+# Interrupción durante un reto (R1, R9, Fase 0 §0.2)
+# ---------------------------------------------------------------------------
+# Una pregunta que NO trae la respuesta nunca es un fallo de verificación
+# (conv 13: "para que necesitas eso?" sumó `fails` dos veces y tiró un reto
+# que el cliente estaba a punto de pasar). Se llama al ENTRAR en las tres
+# máquinas de reto, antes de tocar `fails`/`asks`.
+
+def _is_interruption(stage, text):
+    """Pregunta que NO trae la respuesta → desvío. Nunca un fallo.
+
+    `is not True` cubre False y None: en una etapa sin forma verificable
+    (None) una pregunta es interrupción; en 'digits', '¿es 4586?' trae la
+    respuesta y NO lo es.
+    """
+    if not matchers.looks_like_question(text):
+        return False
+    return matchers.is_answer_shaped(stage, text) is not True
+
+
+def _check_interruption(conversation, flow_key, stage, text, reask_text):
+    """Si `text` es una interrupción para `stage`, devuelve la PolicyDecision
+    (REPLY con el motivo, o ESCALATE al topar el desvío). `None` si el mensaje
+    sí es una respuesta y el caller debe seguir su lógica normal.
+
+    Tope de desvíos obligatorio (3): sin él, Fase 0 sustituye un bucle de
+    fallos por un bucle de preguntas — contestar todo con preguntas nunca
+    avanza el reto, así que a los 3 desvíos se escala a un humano.
+    """
+    if not _is_interruption(stage, text):
+        return None
+    flow = conversation.flow
+    flow['deviations'] = flow.get('deviations', 0) + 1
+    if flow['deviations'] >= 3:
+        flow.pop(flow_key, None)
+        flow.pop('deviations', None)
+        conversation.save(update_fields=['flow'])
+        return PolicyDecision(
+            kind=ESCALATE, text=tier0.T0_CHALLENGE_FAILED,
+            handoff_reason=HumanHandoff.REASON_IDENTITY,
+            meta={'handoff_detail': 'deviation_cap'})
+    why = tier0.FACTOR_WHY.get(stage, '')
+    conversation.save(update_fields=['flow'])
+    return PolicyDecision(
+        kind=REPLY,
+        text=tier0.T0_WHY_THEN_REASK.format(why=why, reask=reask_text),
+        meta={'reason': 'deviation', 'stage': stage})
 
 
 def _advance_challenge(conversation, contact, text, challenge):
     stage = challenge.get('stage', 'pet')
     fails = challenge.get('fails', 0)
+
+    deviation = _check_interruption(
+        conversation, 'identity_challenge', stage, text,
+        tier0.T0_CHALLENGE_PET if stage == 'pet' else tier0.T0_CHALLENGE_OWNER)
+    if deviation is not None:
+        return deviation
 
     if stage == 'pet':
         if identity.try_verify_by_pet_answer(contact, text):
@@ -343,6 +399,7 @@ def _advance_challenge(conversation, contact, text, challenge):
 
 def _clear_challenge(conversation, verified):
     conversation.flow.pop('identity_challenge', None)
+    conversation.flow.pop('deviations', None)
     conversation.save(update_fields=['flow'])
     if verified:
         # Verificado: cede al planner para atender la petición original.
@@ -365,6 +422,7 @@ def start_identity_triage(conversation):
     `verification_required` sobre un número sin registro.
     """
     conversation.flow['identity_triage'] = {'stage': 'ask', 'asks': 1}
+    conversation.flow.pop('deviations', None)
     conversation.save(update_fields=['flow'])
     return tier0.render_triage(
         conversation.organization,
@@ -375,6 +433,11 @@ def start_identity_triage(conversation):
 def _advance_identity_triage(conversation, contact, text, triage):
     flow = conversation.flow
     if triage.get('stage') == 'titular':
+        deviation = _check_interruption(
+            conversation, 'identity_triage', 'titular', text,
+            tier0.T0_TRIAGE_TITULAR)
+        if deviation is not None:
+            return deviation
         return _seed_family_challenge(conversation, text)
 
     verdict = matchers.classify_client_triage(text)
@@ -403,7 +466,10 @@ def _advance_identity_triage(conversation, contact, text, triage):
                                     'triage': 'retry',
                                     'privacy_notice': True})
     flow.pop('identity_triage', None)
-    flow['identity_triage_done'] = 'unclear'
+    # setdefault, no asignación directa: si el reto de familia ya resolvió
+    # 'returning' mientras tanto, dos 'unclear' del tamiz no deben pisarlo
+    # (conv 13: la asignación directa pisó un 'returning' correcto).
+    flow.setdefault('identity_triage_done', 'unclear')
     conversation.save(update_fields=['flow'])
     return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'unclear'})
 
@@ -469,6 +535,13 @@ def _advance_family_challenge(conversation, contact, text, family):
     El sistema VERIFICA lo aportado; jamás revela qué dato falló (G4/E-06)."""
     from apps.patients.models import Owner
     stage = family.get('stage', 'pet')
+
+    deviation = _check_interruption(
+        conversation, 'family_challenge', stage, text,
+        tier0.T0_TRIAGE_PET if stage == 'pet' else tier0.T0_TRIAGE_DIGITS)
+    if deviation is not None:
+        return deviation
+
     owners = list(
         Owner.objects.for_organization(conversation.organization)
         .filter(pk__in=family.get('candidate_ids', []))
@@ -491,6 +564,7 @@ def _advance_family_challenge(conversation, contact, text, family):
     if len(matches) == 1:
         identity.link_family(contact, matches[0])
         conversation.flow.pop('family_challenge', None)
+        conversation.flow.pop('deviations', None)
         conversation.save(update_fields=['flow'])
         _log_family(conversation, 'AGENT_FAMILY_LINK_LINKED', 'linked')
         return PolicyDecision(kind=RUN_PLANNER,
@@ -504,6 +578,7 @@ def _family_fail(conversation, family, reason_detail):
     family['fails'] = family.get('fails', 0) + 1
     if family['fails'] >= 2:
         conversation.flow.pop('family_challenge', None)
+        conversation.flow.pop('deviations', None)
         conversation.save(update_fields=['flow'])
         _log_family(conversation, 'AGENT_FAMILY_LINK_FAILED', reason_detail)
         return PolicyDecision(

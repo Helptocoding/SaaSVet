@@ -272,6 +272,23 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 # mascota que confirmar: tamiz (¿nuevo o ya cliente?), que
                 # resuelve ambas ramas solo — nunca se asume el alta.
                 if conversation.contact.owner_id is None:
+                    # No re-triar un tamiz ya decidido (conv 13, S6): antes
+                    # esto sembraba SIEMPRE un tamiz nuevo aunque
+                    # `identity_triage_done` ya tuviera veredicto, y dos
+                    # meta-preguntas al tamiz nuevo pisaban un 'returning'
+                    # correcto con 'unclear'. Fase 0 (mínimo honesto):
+                    # escalar en vez de re-triar; Fase 1 lo convierte en
+                    # reanudar el compromiso suspendido.
+                    if conversation.flow.get('identity_triage_done'):
+                        policy.escalate_to_human(
+                            conversation,
+                            reason_code=HumanHandoff.REASON_IDENTITY,
+                            detail='triage_already_resolved')
+                        enqueue_outbound(conversation, tier0.T0_CHALLENGE_FAILED,
+                                         author='agent')
+                        return {'decision': 'escalate', 'llm_calls': llm_calls,
+                                'tools': tool_calls,
+                                'reason': 'triage_already_resolved'}
                     triage = policy.start_identity_triage(conversation)
                     enqueue_outbound(
                         conversation,
