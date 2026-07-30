@@ -15,7 +15,10 @@
 > (auditoría que lo originó).
 >
 > ADRs: **p51** identidad del actor · **p52** idempotencia de citas · **p53**
-> configuración de clínica · **p54** objetivos + conservación vinculante.
+> configuración de clínica · **p54** objetivos + conservación vinculante ·
+> **[p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md)**
+> autoridad del turno + compromisos (ACEPTADO, **aún sin implementar** — es el
+> contrato de la Fase 3).
 > Runbook operativo: [`runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
 
 ## Boundary (vinculante)

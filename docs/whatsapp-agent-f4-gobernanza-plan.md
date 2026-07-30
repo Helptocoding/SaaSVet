@@ -476,7 +476,24 @@ además que el aviso **no se consume** al suprimirse.
 
 **Cierra R3, R4, R7, R9 (estructural).** Cambio arquitectónico: tablas nuevas + cambio de contrato
 de `ToolOutcome` ⇒ **exige ADR** (criterio: contrato interno consumido por varios módulos +
-invariante nuevo). Siguiente número libre: **p55**.
+invariante nuevo).
+
+> **[ADR p55](decisions/2026-07-30-p55-turn-authority-and-commitments.md) — ESCRITO Y ACEPTADO
+> (2026-07-30), antes de implementar.** Decisión del PO: el ADR va *antes*, porque con cuatro
+> contratos cambiando a la vez un ADR posterior no decide, documenta. Contiene solo **autoridad,
+> contratos, responsabilidades e invariantes** — ningún detalle de implementación, que es lo que
+> envejece. Lo que sigue en esta sección es el **cómo**; la brújula del sprint es el ADR.
+>
+> Tres decisiones que el ADR fija y este plan no tenía:
+> 1. **Propiedad del contrato** (§8 del ADR): *todo cambio semántico del runtime conversacional
+>    entra por p55*. Evita que en seis meses "solo agregué un bool" cambie el significado de un
+>    compromiso.
+> 2. **Retención por UTILIDAD, no por tiempo** (§7): 90 días de `TurnDecision` en crudo porque a
+>    los 90 el uso pasa de *reconstruir un caso* a *mirar una tendencia*; el agregado mensual es
+>    indefinido. El número se deriva de la razón, no al revés.
+> 3. **Disciplina de alcance** (§9): de cada cambio propuesto durante el sprint, *¿es necesario
+>    para cerrar R3, R4, R7 o R9?* Si no, queda fuera. La línea base que dejó la Fase 1 pierde
+>    valor cuanto más se mezclen los cambios.
 
 ### 3.1 · Árbitro (`agent/arbiter.py`, nuevo)
 
@@ -738,16 +755,33 @@ tiene precedente aquí.
 
 ## 10. Decisiones que necesito antes de empezar
 
-1. **¿Fase 0 se despliega sola, ya?** Hay un cliente real bloqueado (`Ana Cruz` dio los 4 factores
-   correctos y quedó fuera). Mi recomendación: **sí, sola**.
-2. **¿Alta sin cita existe como producto?** Desbloquea Fase 5 y R6. Si la respuesta es no, Fase 3
-   igual mejora el trato (`bloqueado` en vez de pedir para siempre).
-3. **Retención de `TurnDecision`.** Una fila por turno. Propongo 90 días en crudo y agregado
-   mensual después.
-4. **¿ADR p55 antes de Fase 3, o al final?** Mi recomendación: **antes** — cambia el contrato de
-   `ToolOutcome`, que consumen 4 módulos.
-5. **¿Fase 2 antes o después de Fase 3?** Como está: antes. Es barata y hace medible el efecto de
-   Fase 3. Pero si urge la arquitectura, se puede posponer.
+**Estado al 2026-07-30**: resueltas 1, 3, 4 y 5. Sigue abierta la 2 (y con ella la Fase 5).
+
+1. ✅ **¿Fase 0 se despliega sola, ya?** → **Sí**. Implementada y en `develop` (`8346f1c`). El
+   despliegue al VPS quedó pendiente por un problema de credenciales de git en el servidor, ajeno
+   al código. Contexto revisado por el PO: las organizaciones activas son **demo y pruebas** — no
+   hay usuarios reales todavía, así que la cautela de "una fase, un despliegue avisando a la
+   clínica" se relaja mientras eso siga así.
+2. ⬜ **¿Alta sin cita existe como producto?** — **ABIERTA**. Bloquea Fase 5 y R6. Fase 3 igual
+   mejora el trato: `bloqueado` (decirlo una vez y dejar de pedir) en vez de exigir el dato para
+   siempre.
+3. ✅ **Retención de `TurnDecision`** → 90 días en crudo + agregado mensual, **con un principio
+   por encima del número**: *se retiene por **utilidad**, no por tiempo*. 90 no es mágico: es
+   donde el uso cambia de "reconstruir un caso" (regresión, depuración, incidentes) a "mirar una
+   tendencia" (KPIs, producto). Si el uso cambia, cambia el número — y eso es una decisión, no un
+   ajuste de configuración. Fijado en [ADR p55 §7](decisions/2026-07-30-p55-turn-authority-and-commitments.md).
+4. ✅ **¿ADR p55 antes de Fase 3, o al final?** → **ANTES**, y ya está escrito. Razón del PO: Fase
+   3 no es una implementación, es un cambio simultáneo de `ToolOutcome`, `Commitment`, árbitro,
+   `TurnResult` y control de flujo. Con eso en juego se toman decenas de microdecisiones; si el
+   ADR aparece después deja de ser una decisión y se vuelve documentación histórica. Alcance
+   deliberado: **autoridad, contratos, responsabilidades e invariantes** — nada de implementación.
+5. ✅ **¿Fase 2 antes o después de Fase 3?** → **Antes**, como estaba planeado. Hecha (`42dd994`).
+
+**Decisión añadida por el PO, que este plan no contemplaba**: *¿quién es dueño del contrato?* Fase
+3 introduce `TurnResult`, `ToolOutcome`, `Commitment` y `TurnDecision` — y nadie tenía autoridad
+declarada para modificarlos. Regla, en [ADR p55 §8](decisions/2026-07-30-p55-turn-authority-and-commitments.md):
+**todo cambio semántico del runtime conversacional entra por el ADR p55**. Sin ella, dentro de seis
+meses alguien "solo agrega un bool" y cambia el significado de un compromiso.
 
 ---
 
