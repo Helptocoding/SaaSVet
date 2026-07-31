@@ -26,4 +26,16 @@ paths = [
 # high-entropy value in that same file.
 regexes = [
   '''K9p_RxA2zVtwQ1f8hQwa3Q''',
+  # Mismo criterio para OTRO valor inventado: el marcador que usaba
+  # `test_turn_decision.NoPiiTests` para comprobar que el cuerpo del mensaje
+  # NUNCA llega a `TurnDecision` (É-F4 Fase 1). Era una cadena de alta
+  # entropía asignada a una variable llamada `secret`, así que
+  # `generic-api-key` la leyó como credencial. Nunca fue una: es un texto de
+  # prueba.
+  #
+  # El código ya se corrigió —el marcador ahora es legible y no parece una
+  # clave—, pero **gitleaks escanea el HISTORIAL**: el hallazgo sigue clavado
+  # en el commit 666273e, que es inmutable. Sin esta línea el gate quedaría
+  # rojo para siempre por algo que ya no existe en el código.
+  '''ZZQXPLONK9284''',
 ]
