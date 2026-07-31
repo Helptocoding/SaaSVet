@@ -240,6 +240,17 @@ class ConversationGoal(OrganizationalModel):
     # POR QUÉ el dominio no puede cumplirlo (p.ej. `no_vet`). Solo con
     # `status=blocked`; es lo que permite decirlo una vez y dejar de pedir.
     blocked_reason = models.CharField(max_length=40, blank=True, default='')
+    # Intentos FALLIDOS (una respuesta equivocada). Distinto de `stall_turns`,
+    # que cuenta turnos SIN AVANCE: preguntar no falla, y desde É-F4 Fase 0
+    # tampoco cuenta como fallo. Es el presupuesto de paciencia de los retos
+    # de identidad (2 fallos reales → humano, E-06).
+    attempts_failed = models.PositiveSmallIntegerField(default=0)
+    # Estado de trabajo LOCAL del mecanismo (candidatos que sobreviven a un
+    # factor, si ya se dio la repetición gratis, cuántas veces se re-preguntó
+    # el tamiz). Nunca se agrega ni se reporta: lo agregable son las columnas.
+    # Vive aquí y no en `Conversation.flow` porque el compromiso es la fuente
+    # única de la interacción (R7) — un blob por fuera era justo el problema.
+    working_state = models.JSONField(default=dict, blank=True)
 
     class Meta:
         constraints = [

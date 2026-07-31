@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from . import identity, matchers, tier0
+from . import goals, identity, matchers, tier0
 from .models import Conversation, HumanHandoff
 
 logger = logging.getLogger('agent.events')
@@ -156,23 +156,15 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         return PolicyDecision(kind=REPLY, text=tier0.T0_HANDOFF_WAITING,
                               meta={'reason': 'handoff_ack'})
 
-    # 6c. Compromiso suspendido (R5/R8, Fase 1 §1.1): si no hay NINGÚN
-    #     compromiso activo en este momento pero sí uno suspendido, se
-    #     reinstala en su lugar antes de que los pasos normales (7/8/8b/8c)
-    #     lo procesen. Reutiliza esa lógica tal cual — no se duplica ningún
-    #     camino de avance. Es lo que resuelve el `4586` tardío de la
-    #     conv 13: antes el reto se destruía al escalar y el dato correcto
-    #     caía al vacío; ahora, en cuanto la conversación vuelve a estar
-    #     activa (release), el siguiente mensaje se evalúa contra el reto
-    #     real, no contra un tamiz reiniciado desde cero.
-    if (flow.get('suspended')
-            and not flow.get('pending_action')
-            and not flow.get('identity_challenge')
-            and not flow.get('family_challenge')
-            and not flow.get('identity_triage')):
-        suspended = flow.pop('suspended')
-        flow[suspended['kind']] = suspended['state']
-        conversation.save(update_fields=['flow'])
+    # 6c. Compromiso de identidad SUSPENDIDO (R5/R8): si no hay ninguno al
+    #     frente pero sí uno suspendido, se retoma antes de que los pasos
+    #     normales (8/8b/8c) lo procesen — con su etapa y sus candidatos
+    #     intactos. Es lo que resuelve el `4586` tardío de la conv 13: antes
+    #     el reto se destruía al escalar y el dato correcto caía al vacío.
+    if goals.get_identity_commitment(conversation) is None:
+        suspended = goals.get_suspended_goal(conversation)
+        if suspended is not None and suspended.name in goals.IDENTITY_GOALS:
+            goals.resume(suspended)
 
     # 7. Confirmación de un pending_action (ACTIVO en F2: las tools de
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
@@ -191,23 +183,19 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
                                   meta={'confirm': 'affirmative'})
         # 'unclear' → cae al planner para clasificar (etapa 2, UX-02)
 
-    # 8. Reto de identidad en curso (spec §2.3): el mensaje es la respuesta.
-    challenge = flow.get('identity_challenge')
-    if challenge:
-        return _advance_challenge(conversation, contact, text, challenge)
-
-    # 8b. Reto de vinculación familiar en curso (UX-04, PR-17b): el mensaje es
-    #     un factor del reto triple (mascota → 4 dígitos).
-    family = flow.get('family_challenge')
-    if family:
-        return _advance_family_challenge(conversation, contact, text, family)
-
-    # 8c. Tamiz de identidad en curso (UX-05): el mensaje responde "¿nuevo o
-    #     ya registrado?", o aporta el nombre del titular. Determinista.
-    triage = flow.get('identity_triage')
-    if triage:
-        return _advance_identity_triage(conversation, contact, burst_text,
-                                        triage)
+    # 8/8b/8c. Reto de identidad en curso: el mensaje es la respuesta.
+    #   Los tres mecanismos (titular, familia, tamiz) son UN modelo desde
+    #   É-F4 Fase 3 (R7) — antes eran tres dicts sueltos en `flow` que no se
+    #   agregaban, no se medían y se destruían con un `pop`.
+    commitment = goals.get_identity_commitment(conversation)
+    if commitment is not None:
+        if commitment.name == goals.TITULAR_CHALLENGE:
+            return _advance_challenge(conversation, contact, text, commitment)
+        if commitment.name == goals.FAMILY:
+            return _advance_family_challenge(
+                conversation, contact, text, commitment)
+        return _advance_identity_triage(
+            conversation, contact, burst_text, commitment)
 
     # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
     #    (no cambia la decisión, habilita las tools personales del turno).
@@ -264,8 +252,10 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
             conversation.save(update_fields=['flow'])
             return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'new'})
         if verdict == 'returning':
-            flow['identity_triage'] = {'stage': 'titular', 'asks': 1}
-            conversation.save(update_fields=['flow'])
+            commitment = goals.start_identity(
+                conversation, goals.TRIAGE, first_factor='titular',
+                working_state={'asks': 1})
+            goals.satisfy(commitment, 'client_kind', 'returning')
             return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_TITULAR,
                                   meta={'reason': 'identity_triage',
                                         'triage': 'returning'})
@@ -318,9 +308,8 @@ def _mentions_payment(text):
 def start_identity_challenge(conversation):
     """Inicia el reto (el planner lo llama cuando una tool personal devuelve
     verification_required). Devuelve el texto del reto."""
-    conversation.flow['identity_challenge'] = {'stage': 'pet', 'fails': 0}
-    conversation.flow.pop('deviations', None)
-    conversation.save(update_fields=['flow'])
+    goals.start_identity(conversation, goals.TITULAR_CHALLENGE,
+                         first_factor='pet')
     return tier0.T0_CHALLENGE_PET
 
 
@@ -344,90 +333,86 @@ def _is_interruption(stage, text):
     return matchers.is_answer_shaped(stage, text) is not True
 
 
-def _check_interruption(conversation, flow_key, stage, text, reask_text):
-    """Si `text` es una interrupción para `stage`, devuelve la PolicyDecision
-    (REPLY con el motivo, o ESCALATE al topar el desvío). `None` si el mensaje
-    sí es una respuesta y el caller debe seguir su lógica normal.
+def _check_interruption(conversation, commitment, text, reask_text):
+    """Si `text` es una interrupción para el factor en curso, devuelve la
+    PolicyDecision (REPLY con el motivo, o ESCALATE al topar el desvío).
+    `None` si el mensaje sí es una respuesta y el caller sigue su lógica.
 
-    Tope de desvíos obligatorio (3): sin él, Fase 0 sustituye un bucle de
+    Tope de desvíos obligatorio (3): sin él, la Fase 0 sustituía un bucle de
     fallos por un bucle de preguntas — contestar todo con preguntas nunca
     avanza el reto, así que a los 3 desvíos se escala a un humano.
+
+    El motivo sale de `Factor.why` (R9 estructural): en la Fase 0 vivía en
+    `tier0.FACTOR_WHY`, un dict paralelo indexado por etapa. Ahora pertenece
+    al factor del compromiso y no puede faltar.
     """
-    if not _is_interruption(stage, text):
+    factor = commitment.return_to
+    if not _is_interruption(factor, text):
         return None
-    flow = conversation.flow
-    flow['deviations'] = flow.get('deviations', 0) + 1
-    if flow['deviations'] >= 3:
-        # SUSPENDE, no destruye (R5/R8, Fase 1 §1.1): un cliente que topó
-        # el tope de desvíos no perdió su progreso, solo necesita un humano
-        # para desatorarse — el reto sigue ahí si vuelve a escribir.
-        state = flow.get(flow_key)
-        if state is not None:
-            flow['suspended'] = {'kind': flow_key, 'state': state}
-        flow.pop(flow_key, None)
-        flow.pop('deviations', None)
-        conversation.save(update_fields=['flow'])
+
+    deviations = goals.scratch(commitment, 'deviations', 0) + 1
+    goals.set_scratch(commitment, deviations=deviations)
+    if deviations >= 3:
+        # SUSPENDE, no destruye (R5/R8): quien topó el tope de desvíos no
+        # perdió su progreso, solo necesita un humano para desatorarse.
+        goals.park_identity(conversation, commitment, going_to_human=True)
         return PolicyDecision(
             kind=ESCALATE, text=tier0.T0_CHALLENGE_FAILED,
             handoff_reason=HumanHandoff.REASON_IDENTITY,
             meta={'handoff_detail': 'deviation_cap'})
-    why = tier0.FACTOR_WHY.get(stage, '')
-    conversation.save(update_fields=['flow'])
     return PolicyDecision(
         kind=REPLY,
-        text=tier0.T0_WHY_THEN_REASK.format(why=why, reask=reask_text),
-        meta={'reason': 'deviation', 'stage': stage})
+        text=tier0.T0_WHY_THEN_REASK.format(
+            why=goals.why_for(commitment.name, factor), reask=reask_text),
+        meta={'reason': 'deviation', 'stage': factor})
 
 
-def _advance_challenge(conversation, contact, text, challenge):
-    stage = challenge.get('stage', 'pet')
-    fails = challenge.get('fails', 0)
+def _advance_challenge(conversation, contact, text, commitment):
+    stage = commitment.return_to or 'pet'
 
     deviation = _check_interruption(
-        conversation, 'identity_challenge', stage, text,
+        conversation, commitment, text,
         tier0.T0_CHALLENGE_PET if stage == 'pet' else tier0.T0_CHALLENGE_OWNER)
     if deviation is not None:
         return deviation
 
     if stage == 'pet':
         if identity.try_verify_by_pet_answer(contact, text):
-            return _clear_challenge(conversation, verified=True)
+            goals.satisfy(commitment, 'pet')
+            return _clear_challenge(conversation, commitment, verified=True)
         # 1er no-match: repetición SIN contar como fallo (UX-03).
-        if not challenge.get('retried'):
-            challenge['retried'] = True
-            conversation.save(update_fields=['flow'])
+        if not goals.scratch(commitment, 'retried'):
+            goals.set_scratch(commitment, retried=True)
             return PolicyDecision(kind=REPLY, text=tier0.T0_CHALLENGE_RETRY,
                                   meta={'challenge': 'retry'})
         # 2º intento fallido de mascota → 2º factor (titular).
-        challenge['stage'] = 'owner'
-        conversation.save(update_fields=['flow'])
+        goals.advance_to(commitment, 'owner')
         return PolicyDecision(kind=REPLY, text=tier0.T0_CHALLENGE_OWNER,
                               meta={'challenge': 'owner'})
 
     if stage == 'owner':
         if identity.try_verify_by_owner_name(contact, text):
-            return _clear_challenge(conversation, verified=True)
-        fails += 1
-        challenge['fails'] = fails
+            goals.satisfy(commitment, 'owner')
+            return _clear_challenge(conversation, commitment, verified=True)
         # 2 fallos REALES → E-06 (sin revelar por qué falló). Se SUSPENDE,
-        # no se destruye (R5/R8, Fase 1 §1.1): si al reanudar la conversación
-        # llega el dato correcto, `_advance_challenge` lo procesa normal.
-        conversation.flow['suspended'] = {
-            'kind': 'identity_challenge', 'state': challenge}
-        conversation.flow.pop('identity_challenge', None)
-        conversation.save(update_fields=['flow'])
+        # no se destruye (R5/R8): si al reanudar la conversación llega el dato
+        # correcto, `_advance_challenge` lo procesa con normalidad.
+        goals.register_failure(commitment)
+        goals.park_identity(conversation, commitment, going_to_human=True)
         return PolicyDecision(
             kind=ESCALATE, text=tier0.T0_CHALLENGE_FAILED,
             handoff_reason=HumanHandoff.REASON_IDENTITY,
         )
 
-    return _clear_challenge(conversation, verified=False)
+    return _clear_challenge(conversation, commitment, verified=False)
 
 
-def _clear_challenge(conversation, verified):
-    conversation.flow.pop('identity_challenge', None)
-    conversation.flow.pop('deviations', None)
-    conversation.save(update_fields=['flow'])
+def _clear_challenge(conversation, commitment, verified):
+    from .models import ConversationGoal
+    goals.finish_identity(
+        conversation, commitment,
+        ConversationGoal.STATUS_COMPLETED if verified
+        else ConversationGoal.STATUS_ABANDONED)
     if verified:
         # Verificado: cede al planner para atender la petición original.
         return PolicyDecision(kind=RUN_PLANNER, meta={'verified': True})
@@ -448,56 +433,56 @@ def start_identity_triage(conversation):
     Público: el planner también lo usa cuando una tool personal rebota con
     `verification_required` sobre un número sin registro.
     """
-    conversation.flow['identity_triage'] = {'stage': 'ask', 'asks': 1}
-    conversation.flow.pop('deviations', None)
-    conversation.save(update_fields=['flow'])
+    goals.start_identity(conversation, goals.TRIAGE,
+                         first_factor='client_kind', working_state={'asks': 1})
     return tier0.render_triage(
         conversation.organization,
         first_contact=not _has_outbound(conversation),
     )
 
 
-def _advance_identity_triage(conversation, contact, text, triage):
+def _advance_identity_triage(conversation, contact, text, commitment):
+    from .models import ConversationGoal
     flow = conversation.flow
-    if triage.get('stage') == 'titular':
+    if commitment.return_to == 'titular':
         deviation = _check_interruption(
-            conversation, 'identity_triage', 'titular', text,
-            tier0.T0_TRIAGE_TITULAR)
+            conversation, commitment, text, tier0.T0_TRIAGE_TITULAR)
         if deviation is not None:
             return deviation
-        return _seed_family_challenge(conversation, text)
+        return _seed_family_challenge(conversation, commitment, text)
 
     verdict = matchers.classify_client_triage(text)
 
     if verdict == 'returning':
-        triage['stage'] = 'titular'
-        conversation.save(update_fields=['flow'])
+        goals.satisfy(commitment, 'client_kind', 'returning')
+        goals.advance_to(commitment, 'titular')
         return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_TITULAR,
                               meta={'reason': 'identity_triage',
                                     'triage': 'returning',
                                     'privacy_notice': True})
 
     if verdict == 'new':
-        flow.pop('identity_triage', None)
+        goals.satisfy(commitment, 'client_kind', 'new')
+        goals.finish_identity(conversation, commitment,
+                              ConversationGoal.STATUS_COMPLETED, 'new')
         flow['identity_triage_done'] = 'new'
         conversation.save(update_fields=['flow'])
         return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'new'})
 
     # 'unclear' → una re-pregunta explícita sin costo (patrón del reto UX-03).
     # A la segunda se cede al planner: mejor que dejar al cliente en un bucle.
-    if triage.get('asks', 1) < 2:
-        triage['asks'] = triage.get('asks', 1) + 1
-        conversation.save(update_fields=['flow'])
+    asks = goals.scratch(commitment, 'asks', 1)
+    if asks < 2:
+        goals.set_scratch(commitment, asks=asks + 1)
         return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_RETRY,
                               meta={'reason': 'identity_triage',
                                     'triage': 'retry',
                                     'privacy_notice': True})
-    # No se destruye (R5, Fase 1 §1.1): se SUSPENDE. Si un mensaje
-    # posterior sí contesta con claridad ("primera vez"/"ya soy cliente"),
-    # el paso 6c lo reinstala y `_advance_identity_triage` lo resuelve —
-    # en vez de quedar perdido para siempre tras el 2º "no entendí".
-    flow['suspended'] = {'kind': 'identity_triage', 'state': triage}
-    flow.pop('identity_triage', None)
+    # No se destruye (R5): se SUSPENDE. Si un mensaje posterior sí contesta
+    # con claridad ("primera vez"/"ya soy cliente"), el paso 6c lo retoma y
+    # `_advance_identity_triage` lo resuelve — en vez de quedar perdido para
+    # siempre tras el 2º "no entendí".
+    goals.park_identity(conversation, commitment, going_to_human=False)
     # setdefault, no asignación directa: si el reto de familia ya resolvió
     # 'returning' mientras tanto, dos 'unclear' del tamiz no deben pisarlo
     # (conv 13: la asignación directa pisó un 'returning' correcto).
@@ -506,16 +491,21 @@ def _advance_identity_triage(conversation, contact, text, triage):
     return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'unclear'})
 
 
-def _seed_family_challenge(conversation, titular_name):
+def _seed_family_challenge(conversation, triage_commitment, titular_name):
     """Dice ser cliente y aporta el nombre del titular: se busca en `Owner` y
-    arranca el reto (mascota → últimos 4 dígitos). Es el MISMO estado que
+    arranca el reto (mascota → últimos 4 dígitos). Es el MISMO compromiso que
     siembra la tool `link_family_member`, pero sin depender del LLM."""
+    from .models import ConversationGoal
     titular = (titular_name or '').strip()
     candidates = identity.find_link_candidates(
         conversation.organization, titular)
     flow = conversation.flow
-    flow.pop('identity_triage', None)
+    if triage_commitment is not None:
+        goals.satisfy(triage_commitment, 'titular', titular)
+        goals.close(triage_commitment, ConversationGoal.STATUS_COMPLETED,
+                    'returning')
     flow['identity_triage_done'] = 'returning'
+    conversation.save(update_fields=['flow'])
 
     # Si el cliente YA nombró a la mascota antes en la conversación ("cita para
     # Luna"), ese factor está aportado: volver a pedirlo es la repregunta más
@@ -530,13 +520,13 @@ def _seed_family_challenge(conversation, titular_name):
 
     # Se siembra AUNQUE no haya candidatos: comportamiento uniforme, sin
     # oráculo de existencia (G4) — falla al final como cualquier dato malo.
-    flow['family_challenge'] = {
-        'stage': stage,
-        'candidate_ids': [o.pk for o in survivors],
-        'titular': titular,
-        'fails': 0,
-    }
-    conversation.save(update_fields=['flow'])
+    commitment = goals.start_identity(
+        conversation, goals.FAMILY, first_factor=stage,
+        working_state={'candidate_ids': [o.pk for o in survivors]})
+    goals.satisfy(commitment, 'titular', titular)
+    if stage == 'digits':
+        goals.satisfy(commitment, 'pet')
+
     text = tier0.T0_TRIAGE_DIGITS if stage == 'digits' else tier0.T0_TRIAGE_PET
     return PolicyDecision(kind=REPLY, text=text,
                           meta={'reason': 'identity_triage',
@@ -561,63 +551,59 @@ def _inbound_history(conversation, limit=12):
 # Reto de vinculación familiar (UX-04, PR-17b) — 3 factores, acceso RESTRINGIDO
 # ---------------------------------------------------------------------------
 
-def _advance_family_challenge(conversation, contact, text, family):
+def _advance_family_challenge(conversation, contact, text, commitment):
     """Avanza el reto triple. mascota (narrow de candidatos) → 4 dígitos (pin a
     uno). 3/3 ok → vínculo secundario. 2 fallos reales → handoff instrumentado.
     El sistema VERIFICA lo aportado; jamás revela qué dato falló (G4/E-06)."""
     from apps.patients.models import Owner
-    stage = family.get('stage', 'pet')
+    from .models import ConversationGoal
+    stage = commitment.return_to or 'pet'
 
     deviation = _check_interruption(
-        conversation, 'family_challenge', stage, text,
+        conversation, commitment, text,
         tier0.T0_TRIAGE_PET if stage == 'pet' else tier0.T0_TRIAGE_DIGITS)
     if deviation is not None:
         return deviation
 
     owners = list(
         Owner.objects.for_organization(conversation.organization)
-        .filter(pk__in=family.get('candidate_ids', []))
+        .filter(pk__in=goals.scratch(commitment, 'candidate_ids', []))
     )
 
     if stage == 'pet':
         survivors = [o.pk for o in owners if identity.owner_has_pet(o, text)]
         if survivors:
-            family['candidate_ids'] = survivors
-            family['stage'] = 'digits'
-            conversation.save(update_fields=['flow'])
+            goals.set_scratch(commitment, candidate_ids=survivors)
+            goals.satisfy(commitment, 'pet')
+            goals.advance_to(commitment, 'digits')
             return PolicyDecision(
                 kind=REPLY, meta={'family': 'digits'},
                 text="Gracias 🙂 Por último: ¿los últimos 4 dígitos del "
                      "teléfono que el titular tiene registrado con nosotros?")
-        return _family_fail(conversation, family, 'failed_other')
+        return _family_fail(conversation, commitment, 'failed_other')
 
     # stage == 'digits'
     matches = [o for o in owners if identity.owner_digits_match(o, text)]
     if len(matches) == 1:
         identity.link_family(contact, matches[0])
-        conversation.flow.pop('family_challenge', None)
-        conversation.flow.pop('deviations', None)
-        conversation.save(update_fields=['flow'])
+        goals.satisfy(commitment, 'digits')
+        goals.finish_identity(conversation, commitment,
+                              ConversationGoal.STATUS_COMPLETED, 'linked')
         _log_family(conversation, 'AGENT_FAMILY_LINK_LINKED', 'linked')
         return PolicyDecision(kind=RUN_PLANNER,
                               meta={'verified': True, 'family_linked': True})
     # 0 → dígitos incorrectos; >1 → homónimos indistinguibles (ambiguo).
-    return _family_fail(conversation, family,
+    return _family_fail(conversation, commitment,
                         'failed_digits' if not matches else 'failed_ambiguous')
 
 
-def _family_fail(conversation, family, reason_detail):
-    family['fails'] = family.get('fails', 0) + 1
-    if family['fails'] >= 2:
-        # SUSPENDE, no destruye (R5/R8, Fase 1 §1.1): es el caso exacto de
-        # la conv 13 — el `4586` correcto llegó tarde y cayó al vacío
-        # porque el reto ya no existía. Ahora sobrevive hasta que se
-        # resuelva o el humano lo cancele (release_conversation, §1.2).
-        conversation.flow['suspended'] = {
-            'kind': 'family_challenge', 'state': family}
-        conversation.flow.pop('family_challenge', None)
-        conversation.flow.pop('deviations', None)
-        conversation.save(update_fields=['flow'])
+def _family_fail(conversation, commitment, reason_detail):
+    if goals.register_failure(commitment):
+        # SUSPENDE, no destruye (R5/R8): es el caso exacto de la conv 13 — el
+        # `4586` correcto llegó tarde y cayó al vacío porque el reto ya no
+        # existía. Ahora sobrevive hasta que se resuelva o el humano lo
+        # cancele (`release_conversation`).
+        goals.park_identity(conversation, commitment, going_to_human=True)
         _log_family(conversation, 'AGENT_FAMILY_LINK_FAILED', reason_detail)
         return PolicyDecision(
             kind=ESCALATE,
@@ -625,7 +611,6 @@ def _family_fail(conversation, family, reason_detail):
                  "ayudarte con gusto 🙂",
             handoff_reason=HumanHandoff.REASON_IDENTITY,
             meta={'handoff_detail': f'family:{reason_detail}'})
-    conversation.save(update_fields=['flow'])
     return PolicyDecision(
         kind=REPLY, meta={'family': 'retry'},
         text="Mmm, ese dato no me coincide. ¿Puedes revisarlo? 🙂")
@@ -671,25 +656,32 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
         escalated_now = True
     flow = conversation.flow
     if flow.get('pending_action'):
-        # SUSPENDE, no destruye (R4/R5, Fase 1 §1.1): una urgencia SUPLANTA
-        # el pending_action, no lo aborta — se ofrece de vuelta al retomar.
-        # No pisar una suspensión más específica que ya se haya guardado
-        # este mismo turno (p. ej. un identity_challenge que acaba de
-        # escalar por su cuenta): el slot único solo guarda una a la vez.
-        if not flow.get('suspended'):
-            flow['suspended'] = {
-                'kind': 'pending_action', 'state': flow['pending_action']}
+        # SUSPENDE, no destruye (R4/R5): una urgencia SUPLANTA el
+        # pending_action, no lo aborta — se ofrece de vuelta al retomar.
+        #
+        # Sigue viviendo en `flow` y no en el modelo de compromisos: la
+        # confirmación tier-2 queda EXPLÍCITAMENTE fuera del alcance de la
+        # Fase 3 (§11 del plan — es lo mejor implementado del sistema y el
+        # patrón a imitar). Unificarla es trabajo de otro sprint, con su
+        # propia entrada en el ADR.
+        flow['suspended'] = {
+            'kind': 'pending_action', 'state': flow['pending_action']}
         flow.pop('pending_action', None)
     # El acuse al cliente que insiste se rearma con cada escalada nueva.
     flow.pop('handoff_ack_sent', None)
     conversation.state = Conversation.STATE_HANDOFF_PENDING
     conversation.save(update_fields=['state', 'flow'])
 
-    # El objetivo en curso pasa a manos del humano: queda cerrado como
-    # `handoff`, no como abandonado (W2 — importa para el embudo).
-    from . import goals
+    # La TAREA en curso pasa a manos del humano: queda cerrada como `handoff`,
+    # no como abandonada (W2 — importa para el embudo). Incluye la que un reto
+    # de identidad hubiera suspendido: si la conversación se va con una
+    # persona, la tarea se va con ella.
+    #
+    # Los compromisos de IDENTIDAD no se tocan aquí: se apartan solos
+    # (`park_identity`) para sobrevivir a la escalada — es lo que permite que
+    # un dato correcto llegado tarde resuelva la verificación (conv 13).
     from .models import ConversationGoal
-    goals.close_open_goal(
+    goals.close_task_commitments(
         conversation, ConversationGoal.STATUS_HANDOFF, reason_code)
 
     # Una urgencia no puede quedarse esperando a que alguien tenga la bandeja

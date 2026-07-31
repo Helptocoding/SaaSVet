@@ -6,13 +6,14 @@ from datetime import timedelta
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from apps.agent import matchers, policy, tier0
+from apps.agent import goals, matchers, policy, tier0
 from apps.agent.models import (
     AgentSettings,
     ContactIdentity,
     Conversation,
     HumanHandoff,
 )
+from apps.agent.tests.harness import identity_commitment
 from apps.channels.models import ChannelAccount
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
@@ -263,29 +264,25 @@ class IdentityTriageTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.REPLY)
         self.assertEqual(d.meta.get("triage"), "asked")
         self.assertIn("primera vez", d.text.lower())
-        self.unknown_conv.refresh_from_db()
-        self.assertIn("identity_triage", self.unknown_conv.flow)
+        self.assertIsNotNone(identity_commitment(self.unknown_conv))
 
     def test_price_question_does_not_trigger_triage(self):
         """Precio/horario se atienden en anónimo: el tamiz sería fricción."""
         d = self._eval_unknown("cuánto cuesta una cita?")
         self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.unknown_conv.refresh_from_db()
-        self.assertNotIn("identity_triage", self.unknown_conv.flow)
+        self.assertIsNone(identity_commitment(self.unknown_conv))
 
     def test_registered_number_skips_triage(self):
         d = self._eval("quiero agendar una cita")
         self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.conv.refresh_from_db()
-        self.assertNotIn("identity_triage", self.conv.flow)
+        self.assertIsNone(identity_commitment(self.conv))
 
     def test_new_client_answer_yields_to_planner(self):
         self._eval_unknown("quiero agendar una cita")
         d = self._eval_unknown("es mi primera vez")
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.assertEqual(d.meta.get("triage"), "new")
-        self.unknown_conv.refresh_from_db()
-        self.assertNotIn("identity_triage", self.unknown_conv.flow)
+        self.assertIsNone(identity_commitment(self.unknown_conv))
 
     def test_returning_client_is_found_and_verified_without_handoff(self):
         """El caso que el PO corrigió: "ya soy cliente" NO escala. Se busca en
@@ -298,15 +295,13 @@ class IdentityTriageTests(PolicyTestCase):
 
         d = self._eval_unknown("Ana Torres")
         self.assertEqual(d.kind, policy.REPLY)
-        self.unknown_conv.refresh_from_db()
-        family = self.unknown_conv.flow["family_challenge"]
-        self.assertEqual(family["stage"], "pet")
-        self.assertIn(self.owner.pk, family["candidate_ids"])
+        family = identity_commitment(self.unknown_conv)
+        self.assertEqual(family.return_to, "pet")
+        self.assertIn(self.owner.pk, family.working_state["candidate_ids"])
 
         self._eval_unknown("Luna")
-        self.unknown_conv.refresh_from_db()
         self.assertEqual(
-            self.unknown_conv.flow["family_challenge"]["stage"], "digits")
+            identity_commitment(self.unknown_conv).return_to, "digits")
 
         d = self._eval_unknown("8877")  # últimos 4 de 5511998877
         self.assertEqual(d.kind, policy.RUN_PLANNER)
@@ -328,16 +323,14 @@ class IdentityTriageTests(PolicyTestCase):
         d = self._eval_unknown("soy nuevo, quiero cita")
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.assertEqual(d.meta.get("triage"), "new")
-        self.unknown_conv.refresh_from_db()
-        self.assertNotIn("identity_triage", self.unknown_conv.flow)
+        self.assertIsNone(identity_commitment(self.unknown_conv))
 
     def test_already_says_returning_goes_straight_to_lookup(self):
         d = self._eval_unknown("ya soy cliente, quiero agendar una cita")
         self.assertEqual(d.kind, policy.REPLY)
         self.assertEqual(d.meta.get("triage"), "returning")
-        self.unknown_conv.refresh_from_db()
         self.assertEqual(
-            self.unknown_conv.flow["identity_triage"]["stage"], "titular")
+            identity_commitment(self.unknown_conv).return_to, "titular")
 
     def test_unclear_answer_re_asks_once_then_yields(self):
         self._eval_unknown("quiero agendar una cita")
@@ -378,10 +371,9 @@ class IdentityTriageTests(PolicyTestCase):
         self._eval_unknown("ya soy cliente")
         d = self._eval_unknown("Ana Torres")
 
-        self.unknown_conv.refresh_from_db()
-        family = self.unknown_conv.flow["family_challenge"]
-        self.assertEqual(family["stage"], "digits")
-        self.assertEqual(family["candidate_ids"], [self.owner.pk])
+        family = identity_commitment(self.unknown_conv)
+        self.assertEqual(family.return_to, "digits")
+        self.assertEqual(family.working_state["candidate_ids"], [self.owner.pk])
         self.assertIn("4 dígitos", d.text)
 
         d = self._eval_unknown("8877")
@@ -494,18 +486,17 @@ class DeviationTests(IdentityTriageTests):
         self._eval_unknown("quiero agendar cita para Luna")
         self._eval_unknown("ya soy cliente")
         self._eval_unknown("Ana Torres")
-        self.unknown_conv.refresh_from_db()
         self.assertEqual(
-            self.unknown_conv.flow["family_challenge"]["stage"], "digits")
+            identity_commitment(self.unknown_conv).return_to, "digits")
 
     def test_conv13_question_at_digits_gets_reason_not_fail(self):
         self._reach_digits_stage()
         d = self._eval_unknown("para que necesitas eso")
         self.assertEqual(d.kind, policy.REPLY)
-        self.assertIn(tier0.FACTOR_WHY['digits'], d.text)
-        self.unknown_conv.refresh_from_db()
-        family = self.unknown_conv.flow["family_challenge"]
-        self.assertEqual(family.get("fails", 0), 0)
+        # El motivo sale de `Factor.why` (R9 estructural desde Fase 3), no de
+        # un dict de copy indexado por etapa.
+        self.assertIn(goals.why_for(goals.FAMILY, "digits"), d.text)
+        self.assertEqual(identity_commitment(self.unknown_conv).attempts_failed, 0)
 
         # el dato correcto, llegado después, verifica con normalidad.
         d = self._eval_unknown("8877")   # últimos 4 de 5511998877
@@ -526,27 +517,27 @@ class DeviationTests(IdentityTriageTests):
         d = self._eval_unknown("no entiendo para que")
         self.assertEqual(d.kind, policy.ESCALATE)
         self.assertEqual(d.meta.get("handoff_detail"), "deviation_cap")
-        self.unknown_conv.refresh_from_db()
-        self.assertNotIn("family_challenge", self.unknown_conv.flow)
-        self.assertNotIn("deviations", self.unknown_conv.flow)
+        # Apartado, no destruido: sigue existiendo como compromiso suspendido.
+        self.assertIsNone(identity_commitment(self.unknown_conv))
+        self.assertIsNotNone(identity_commitment(self.unknown_conv, parked=True))
 
 
 class SuspendResumeTests(DeviationTests):
     """Fase 1 §1.1 — R5/R8: el compromiso se SUSPENDE, no se destruye. Es
     el `4586` de la conv 13: correcto, pero llegado después de que el reto
     escaló por 2 fallos REALES (no preguntas). Antes el reto se `pop`eaba
-    y el dato correcto caía al vacío; ahora sobrevive en
-    `flow['suspended']` y el siguiente turno lo retoma donde se quedó."""
+    y el dato correcto caía al vacío; ahora sobrevive como compromiso
+    SUSPENDIDO y el siguiente turno lo retoma donde se quedó."""
 
     def test_late_correct_digits_resume_and_verify_after_two_real_fails(self):
         self._reach_digits_stage()
         self._eval_unknown("0000")       # dígitos incorrectos → fails=1
         d = self._eval_unknown("1111")   # 2º fallo real → ESCALATE, suspende
         self.assertEqual(d.kind, policy.ESCALATE)
-        self.unknown_conv.refresh_from_db()
-        self.assertNotIn("family_challenge", self.unknown_conv.flow)
-        self.assertEqual(
-            self.unknown_conv.flow["suspended"]["kind"], "family_challenge")
+        self.assertIsNone(identity_commitment(self.unknown_conv))
+        parked = identity_commitment(self.unknown_conv, parked=True)
+        self.assertEqual(parked.name, goals.FAMILY)
+        self.assertEqual(parked.return_to, "digits")   # el punto exacto (R4)
 
         # El reto ya no es un compromiso ACTIVO — pero sobrevive suspendido.
         # El próximo turno (aquí simula el mensaje tras `release`, §1.2) lo
@@ -554,8 +545,7 @@ class SuspendResumeTests(DeviationTests):
         d = self._eval_unknown("8877")   # últimos 4 de 5511998877, correcto
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.assertTrue(d.meta.get("verified"))
-        self.unknown_conv.refresh_from_db()
-        self.assertNotIn("suspended", self.unknown_conv.flow)
+        self.assertIsNone(identity_commitment(self.unknown_conv, parked=True))
         self.unknown_contact.refresh_from_db()
         self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
 
@@ -579,11 +569,13 @@ class IdentityTriageDoneNotOverwrittenTests(IdentityTriageTests):
 
     def test_returning_survives_a_stray_unclear_resolution(self):
         self.unknown_conv.flow['identity_triage_done'] = 'returning'
-        self.unknown_conv.flow['identity_triage'] = {'stage': 'ask', 'asks': 2}
         self.unknown_conv.save(update_fields=['flow'])
+        commitment = goals.start_identity(
+            self.unknown_conv, goals.TRIAGE, first_factor='client_kind',
+            working_state={'asks': 2})
         d = policy._advance_identity_triage(
             self.unknown_conv, self.unknown_contact, "que dijiste",
-            self.unknown_conv.flow['identity_triage'])
+            commitment)
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.unknown_conv.refresh_from_db()
         self.assertEqual(
@@ -653,53 +645,40 @@ class NudgeTests(PolicyTestCase):
         self.assertEqual(policy.nudge_abandoned_flows(), 0)
 
 
-class SuspendNotDestroyGateTests(SimpleTestCase):
-    """Fase 1 §1.1/§9.3 — gate (a): ningún `flow.pop` de un compromiso debe
-    destruir progreso SIN dejar rastro. Precedente: conv 13/S2/CR-5 — el
-    `4586` correcto cayó al vacío porque el reto se tiraba sin más.
+class IdentityStateLivesInTheModelGateTests(SimpleTestCase):
+    """Gate (a) — R7: el estado de un reto de identidad NO vuelve a `flow`.
 
-    No es "cero pop" a secas: un reto RESUELTO (verificado, vinculado, o
-    declinado explícitamente por el cliente) se limpia sin necesidad de
-    suspender nada — eso también es correcto (R5 permite completado/
-    abandonado como terminales). El gate exige que cada pop caiga en una de
-    dos categorías: SUSPENDIDO (precedido por escribir `flow['suspended']`)
-    o RESUELTO (marcado en `_SAFE_MARKERS`, con su razón). Un pop nuevo que
-    no caiga en ninguna rompe este test — a propósito: o se suspende, o se
-    justifica aquí por qué no hace falta.
+    Precedente doble y real: la conv 13 perdió el `4586` correcto porque el
+    reto se destruía con un `pop` (S2/CR-5), y la auditoría encontró cinco
+    implementaciones del mismo objeto, cuatro de ellas en un blob JSON que no
+    se agrega, no se mide y se tira entero (§10.2). Desde É-F4 Fase 3 los
+    retos son compromisos; este gate impide la recaída.
+
+    Excepción declarada: `pending_action` (confirmación tier-2) SIGUE en
+    `flow` a propósito — queda fuera del alcance de la Fase 3 (§11 del plan)
+    y unificarlo es trabajo de otro sprint con su propia entrada en el ADR.
     """
 
-    _COMPROMISE_KEYS = (
-        "'identity_challenge'", "'family_challenge'",
-        "'identity_triage'", "'pending_action'",
+    _IDENTITY_KEYS = (
+        "'identity_challenge'", "'family_challenge'", "'identity_triage'",
+        '"identity_challenge"', '"family_challenge"', '"identity_triage"',
     )
-    _SAFE_MARKERS = (
-        "suspended",              # se guardó el estado antes de popear
-        "verified",                # _clear_challenge: reto resuelto (sí/no)
-        "verdict == 'negative'",   # cliente declinó explícitamente
-        "verdict == 'new'",        # tamiz resuelto con claridad
-        "link_family",             # vínculo familiar completado
-        "identity_triage_done'] = 'returning'",  # supersede a family_challenge
-    )
+    _RUNTIME_MODULES = ('policy', 'tools', 'planner', 'prompts', 'views')
 
-    def test_every_pop_is_suspended_or_resolved(self):
-        import apps.agent.policy as policy_module
-        with open(policy_module.__file__, encoding='utf-8') as fh:
-            lines = fh.readlines()
-
-        unaccounted = []
-        for i, line in enumerate(lines):
-            if '.pop(' not in line:
-                continue
-            if not any(key in line for key in self._COMPROMISE_KEYS):
-                continue
-            window = ''.join(lines[max(0, i - 5):i + 3])
-            if not any(marker in window for marker in self._SAFE_MARKERS):
-                unaccounted.append((i + 1, line.strip()))
-
+    def test_no_runtime_module_stores_challenge_state_in_flow(self):
+        import importlib
+        offenders = []
+        for name in self._RUNTIME_MODULES:
+            module = importlib.import_module(f'apps.agent.{name}')
+            with open(module.__file__, encoding='utf-8') as fh:
+                for number, line in enumerate(fh, start=1):
+                    if 'flow' not in line:
+                        continue
+                    if any(key in line for key in self._IDENTITY_KEYS):
+                        offenders.append((name, number, line.strip()))
         self.assertEqual(
-            unaccounted, [],
-            "pop() de un compromiso sin suspender ni resolución reconocida "
-            f"(linea, texto): {unaccounted}. Si es legítimo, añade su "
-            "marcador a _SAFE_MARKERS con el porqué; si no, usa "
-            "flow['suspended'] antes de popear.",
+            offenders, [],
+            "El estado de identidad volvió a `Conversation.flow` "
+            f"{offenders}. Vive en el compromiso (R7): usa "
+            "`goals.start_identity` / `get_identity_commitment`.",
         )

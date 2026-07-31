@@ -43,6 +43,23 @@ def set_schedule_day(organization, weekday_index, opens="09:00",
     )
 
 
+def identity_commitment(conversation, *, parked=False):
+    """El reto de identidad AL FRENTE (o el apartado, con `parked=True`).
+
+    Desde É-F4 Fase 3 (R7) los retos son compromisos, no dicts en
+    `Conversation.flow`. Los tests preguntan por su etapa a través de aquí
+    para no volver a acoplarse al contenedor.
+    """
+    from apps.agent import goals
+    from apps.agent.models import ConversationGoal
+    statuses = ((ConversationGoal.STATUS_SUSPENDED,) if parked
+                else ConversationGoal.FOREGROUND_STATUSES)
+    return ConversationGoal.objects.filter(
+        conversation=conversation, name__in=goals.IDENTITY_GOALS,
+        status__in=statuses,
+    ).first()
+
+
 def close_all_days(organization):
     """Clínica cerrada toda la semana (para probar el aviso de fuera de horario)."""
     from apps.organizations.models import OrganizationSchedule

@@ -64,11 +64,12 @@ class CommitmentContractTests(SimpleTestCase):
     def test_fields_match_snapshot(self):
         fields = sorted(f.name for f in ConversationGoal._meta.fields)
         self.assertEqual(fields, [
-            'asked', 'blocked_reason', 'closed_at', 'closed_reason',
-            'conversation', 'created_at', 'created_by', 'id', 'is_active',
-            'last_progress_at', 'low_confidence', 'missing', 'name',
-            'organization', 'return_to', 'slots', 'stall_turns', 'status',
-            'supplanted_by', 'updated_at', 'updated_by',
+            'asked', 'attempts_failed', 'blocked_reason', 'closed_at',
+            'closed_reason', 'conversation', 'created_at', 'created_by', 'id',
+            'is_active', 'last_progress_at', 'low_confidence', 'missing',
+            'name', 'organization', 'return_to', 'slots', 'stall_turns',
+            'status', 'supplanted_by', 'updated_at', 'updated_by',
+            'working_state',
         ])
 
     def test_lifecycle_states_match_the_adr(self):

@@ -1156,16 +1156,16 @@ def link_family_member(conversation, executor, args, triggered_by=None):
     if not titular:
         return ToolOutcome(ok=False, client_error='need_data')
 
+    from . import goals
     candidates = identity.find_link_candidates(conversation.organization, titular)
     # Se siembra el reto AUNQUE no haya candidatos → comportamiento uniforme,
     # sin oráculo de existencia (G4): fallará al final como cualquier dato malo.
-    conversation.flow['family_challenge'] = {
-        'stage': 'pet',
-        'candidate_ids': [o.pk for o in candidates],
-        'titular': titular,
-        'fails': 0,
-    }
-    conversation.save(update_fields=['flow'])
+    # Desde É-F4 Fase 3 es el MISMO compromiso que siembra el tamiz (R7): antes
+    # eran dos escrituras distintas del mismo dict en `flow`.
+    commitment = goals.start_identity(
+        conversation, goals.FAMILY, first_factor='pet',
+        working_state={'candidate_ids': [o.pk for o in candidates]})
+    goals.satisfy(commitment, 'titular', titular)
     executor.record_local(
         tool_name='link_family_member',
         args_redacted={'titular_provided': True},

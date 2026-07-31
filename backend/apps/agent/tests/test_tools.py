@@ -99,7 +99,11 @@ class ToolsThroughRealApiTests(TestCase):
             vaccine_name="Antirrábica", application_date="2026-01-15",
             next_due_date="2027-01-15",
         )
-        start = timezone.now() + timedelta(days=3)
+        # Hora FIJA del día: derivarla de `timezone.now()` hacía que la suite
+        # fallara solo entre las 23:30 y las 00:00 UTC — la cita terminaba al
+        # día siguiente y saltaba el CHECK `appointment_end_after_start`.
+        start = (timezone.now() + timedelta(days=3)).replace(
+            hour=10, minute=0, second=0, microsecond=0)
         Appointment.objects.create(
             organization=cls.org, pet=cls.pet_luna, veterinarian=cls.vet,
             date=start.date(), start_time=start.time(),

@@ -20,7 +20,11 @@ from apps.agent.llm import LLMResult
 from apps.agent.models import (
     AgentSettings, ContactIdentity, Conversation, HumanHandoff,
 )
-from apps.agent.tests.harness import RealApiTransport, run_turn
+from apps.agent.tests.harness import (
+    RealApiTransport,
+    identity_commitment,
+    run_turn,
+)
 from apps.appointments.models import Appointment
 from apps.channels.models import ChannelAccount
 from apps.core.models import Permission, Role, UserRole
@@ -97,13 +101,11 @@ class FamilyChallengeFlowTests(FamilyLinkBase):
             kind="tool_call", tool_name="link_family_member",
             tool_args={"titular_name": "Juan Perez"})])
         self.assertEqual(r1["decision"], "awaiting_reply")
-        self.conv.refresh_from_db()
-        self.assertEqual(self.conv.flow["family_challenge"]["stage"], "pet")
+        self.assertEqual(identity_commitment(self.conv).return_to, "pet")
 
         _, r2, _ = self._turn("Max", [])          # factor 2 (mascota) → dígitos
         self.assertEqual(r2["decision"], "reply")
-        self.conv.refresh_from_db()
-        self.assertEqual(self.conv.flow["family_challenge"]["stage"], "digits")
+        self.assertEqual(identity_commitment(self.conv).return_to, "digits")
 
         _, r3, _ = self._turn("2244", [LLMResult(   # factor 3 (4 dígitos) → link
             kind="text", text="¡Listo, validado! ¿En qué te ayudo? 🐾")])
@@ -131,8 +133,6 @@ class FamilyChallengeFlowTests(FamilyLinkBase):
             kind="tool_call", tool_name="link_family_member",
             tool_args={"titular_name": "Juan Perez"})])
         self._turn("Firulais", [])                   # mascota que no es del titular
-        self.conv.refresh_from_db()
-        fam = self.conv.flow.get("family_challenge")
         # sigue en 'pet' (no avanzó) o escaló; nunca vinculó
         self.contact.refresh_from_db()
         self.assertIsNone(self.contact.owner_id)

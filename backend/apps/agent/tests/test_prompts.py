@@ -202,24 +202,25 @@ class AnchoredIdentityFactsTests(PromptsTestCase):
         self.assertTrue(ctx["identidad"]["ya_dijo_que_es_cliente"])
 
     def test_declared_titular_and_pending_factor_travel_too(self):
+        from apps.agent import goals
         self.conv.flow['identity_triage_done'] = 'returning'
-        self.conv.flow['family_challenge'] = {
-            'stage': 'digits', 'candidate_ids': [1], 'titular': 'Ana',
-            'fails': 0,
-        }
         self.conv.save(update_fields=['flow'])
+        commitment = goals.start_identity(
+            self.conv, goals.FAMILY, first_factor='digits',
+            working_state={'candidate_ids': [1]})
+        goals.satisfy(commitment, 'titular', 'Ana')
         ctx = self._context_block()
         self.assertEqual(ctx["identidad"]["titular_declarado"], "Ana")
         self.assertIn("4 dígitos", ctx["identidad"]["verificacion_pendiente"])
 
-    def test_suspended_challenge_still_counts_as_a_fact(self):
-        """Suspendido (Fase 1) ≠ inexistente: para el modelo el hecho es el
-        mismo — hay una verificación a medias con un titular declarado."""
-        self.conv.flow['suspended'] = {
-            'kind': 'family_challenge',
-            'state': {'stage': 'digits', 'titular': 'Ana', 'fails': 2},
-        }
-        self.conv.save(update_fields=['flow'])
+    def test_parked_challenge_still_counts_as_a_fact(self):
+        """Apartado ≠ inexistente: para el modelo el hecho es el mismo — hay
+        una verificación a medias con un titular declarado."""
+        from apps.agent import goals
+        commitment = goals.start_identity(
+            self.conv, goals.FAMILY, first_factor='digits')
+        goals.satisfy(commitment, 'titular', 'Ana')
+        goals.park_identity(self.conv, commitment, going_to_human=True)
         ctx = self._context_block()
         self.assertEqual(ctx["identidad"]["titular_declarado"], "Ana")
 

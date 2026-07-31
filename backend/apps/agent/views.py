@@ -364,11 +364,14 @@ def release_conversation(request, pk):
 
     1. Resuelve el `HumanHandoff` abierto (`resolved_at` + `resolution`).
     2. Si el contacto YA quedó verificado (por el humano o por cualquier
-       otra vía) mientras estaba suspendido, el compromiso suspendido de
-       identidad se CANCELA — re-interrogar a alguien ya validado no tiene
-       sentido. Si no, se deja tal cual: `policy.evaluate` lo reanuda solo
-       con el próximo mensaje del cliente (resume perezoso, §1.1).
+       otra vía) mientras el reto estaba apartado, ese compromiso de
+       identidad se ABANDONA — re-interrogar a alguien ya validado no tiene
+       sentido. Si no, se deja tal cual: `policy.evaluate` lo retoma solo
+       con el próximo mensaje del cliente (resume perezoso).
     """
+    from . import goals
+    from .models import ConversationGoal
+
     conversation = _get_conversation(request, pk)
     if conversation.state == Conversation.STATE_CLOSED:
         return Response(
@@ -377,19 +380,20 @@ def release_conversation(request, pk):
     conversation.state = Conversation.STATE_ACTIVE
     conversation.claimed_by = None
     conversation.claimed_at = None
-    update_fields = ['state', 'claimed_by', 'claimed_at']
+    conversation.save(update_fields=['state', 'claimed_by', 'claimed_at'])
 
-    flow = conversation.flow
-    suspended = flow.get('suspended')
     already_verified = conversation.contact.verification_level in (
         ContactIdentity.VERIFICATION_CONFIRMED, ContactIdentity.VERIFICATION_STAFF,
     )
-    if (suspended and already_verified and suspended.get('kind') in (
-            'identity_challenge', 'family_challenge', 'identity_triage')):
-        flow.pop('suspended', None)
-        update_fields.append('flow')
-
-    conversation.save(update_fields=update_fields)
+    if already_verified:
+        parked = ConversationGoal.objects.filter(
+            conversation=conversation,
+            name__in=goals.IDENTITY_GOALS,
+            status=ConversationGoal.STATUS_SUSPENDED,
+        ).first()
+        if parked is not None:
+            goals.close(parked, ConversationGoal.STATUS_ABANDONED,
+                        'verificado por el equipo')
 
     handoff = HumanHandoff.objects.filter(
         conversation=conversation, resolved_at__isnull=True,

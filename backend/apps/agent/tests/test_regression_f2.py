@@ -358,7 +358,9 @@ class Int21Tests(RegF2Base):
         self.assertEqual(r["llm_calls"], 0)
         self.assertIn("primera vez", bodies[-1].lower())
         conv.refresh_from_db()
-        self.assertIn("identity_triage", conv.flow)
+        from apps.agent.tests.harness import identity_commitment
+        self.assertEqual(
+            identity_commitment(conv).name, "identity_triage")
         self.assertNotIn("identity_challenge", conv.flow)
         from apps.agent.models import HumanHandoff
         self.assertEqual(

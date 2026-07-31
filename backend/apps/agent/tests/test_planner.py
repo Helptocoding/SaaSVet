@@ -228,8 +228,9 @@ class PlannerVerificationTests(PlannerTestCase):
         ])
         result = self._handle(stub)
         self.assertEqual(result["decision"], "identity_challenge")
-        self.conv.refresh_from_db()
-        self.assertIn("identity_challenge", self.conv.flow)
+        from apps.agent.tests.harness import identity_commitment
+        self.assertEqual(
+            identity_commitment(self.conv).name, "identity_challenge")
         self.assertIn("mascota", self._last_outbound().body.lower())
 
 

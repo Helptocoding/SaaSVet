@@ -191,6 +191,9 @@ def _anchored_identity_facts(conversation):
     el mensaje salió de la ventana, el agente contestó "no me lo dijiste aún"
     — decía la verdad sobre un contexto amputado (CR-2/CR-3).
     """
+    from . import goals
+    from .models import ConversationGoal
+
     flow = conversation.flow or {}
     facts = {}
 
@@ -200,18 +203,23 @@ def _anchored_identity_facts(conversation):
     elif triage == 'new':
         facts['dijo_que_es_su_primera_vez'] = True
 
-    # El reto puede estar ACTIVO o SUSPENDIDO (Fase 1 §1.1): para el modelo el
-    # hecho es el mismo — este contacto declaró un titular y hay una
-    # verificación a medias.
-    challenge = flow.get('family_challenge')
-    if not challenge:
-        suspended = flow.get('suspended') or {}
-        if suspended.get('kind') == 'family_challenge':
-            challenge = suspended.get('state')
-    if isinstance(challenge, dict):
-        if challenge.get('titular'):
-            facts['titular_declarado'] = challenge['titular']
-        label = _FACTOR_LABEL.get(challenge.get('stage'))
+    # El reto puede estar ACTIVO o SUSPENDIDO: para el modelo el hecho es el
+    # mismo — este contacto declaró un titular y hay una verificación a
+    # medias. Desde É-F4 Fase 3 sale del compromiso (R7), no de un dict en
+    # `flow`.
+    commitment = (
+        goals.get_identity_commitment(conversation)
+        or ConversationGoal.objects.filter(
+            conversation=conversation,
+            name__in=goals.IDENTITY_GOALS,
+            status=ConversationGoal.STATUS_SUSPENDED,
+        ).first()
+    )
+    if commitment is not None:
+        titular = (commitment.slots.get('titular') or {}).get('value')
+        if titular:
+            facts['titular_declarado'] = titular
+        label = _FACTOR_LABEL.get(commitment.return_to)
         if label:
             facts['verificacion_pendiente'] = label
     return facts

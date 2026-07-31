@@ -232,14 +232,13 @@ class InboxReleaseClosesTheCircleTests(InboxApiTestCase):
     suspendido (§1.1) según si el contacto ya quedó verificado o no."""
 
     def setUp(self):
-        self.conversation.flow = {
-            'suspended': {
-                'kind': 'family_challenge',
-                'state': {'stage': 'digits', 'candidate_ids': [], 'fails': 2},
-            },
-        }
+        from apps.agent import goals
+        commitment = goals.start_identity(
+            self.conversation, goals.FAMILY, first_factor='digits')
+        goals.park_identity(self.conversation, commitment,
+                            going_to_human=True)
         self.conversation.state = Conversation.STATE_HANDOFF_PENDING
-        self.conversation.save(update_fields=['flow', 'state'])
+        self.conversation.save(update_fields=['state'])
         self.handoff = HumanHandoff.objects.create(
             organization=self.org, conversation=self.conversation,
             reason_code=HumanHandoff.REASON_IDENTITY,
@@ -271,21 +270,23 @@ class InboxReleaseClosesTheCircleTests(InboxApiTestCase):
             1,
         )
 
-    def test_release_leaves_suspended_for_lazy_resume_when_not_verified(self):
-        """Sin verificación, el compromiso suspendido NO se cancela — lo
-        reanuda `policy.evaluate` con el próximo mensaje del cliente."""
+    def test_release_leaves_the_parked_challenge_for_lazy_resume(self):
+        """Sin verificación, el reto apartado NO se cierra — lo retoma
+        `policy.evaluate` con el próximo mensaje del cliente."""
+        from apps.agent.tests.harness import identity_commitment
         self._release()
-        self.conversation.refresh_from_db()
-        self.assertIn('suspended', self.conversation.flow)
+        self.assertIsNotNone(
+            identity_commitment(self.conversation, parked=True))
 
-    def test_release_cancels_suspended_when_contact_already_verified(self):
-        """Verificado por otra vía (staff u otra) mientras estaba suspendido:
-        re-interrogarlo no tiene sentido — se cancela en vez de reanudar."""
+    def test_release_drops_the_parked_challenge_when_already_verified(self):
+        """Verificado por otra vía (el propio equipo, p.ej.) mientras el reto
+        estaba apartado: re-interrogarlo no tiene sentido."""
+        from apps.agent.tests.harness import identity_commitment
         self.contact.verification_level = ContactIdentity.VERIFICATION_STAFF
         self.contact.save(update_fields=['verification_level'])
         self._release()
-        self.conversation.refresh_from_db()
-        self.assertNotIn('suspended', self.conversation.flow)
+        self.assertIsNone(
+            identity_commitment(self.conversation, parked=True))
 
 
 class InboxResetIdentityTests(InboxApiTestCase):

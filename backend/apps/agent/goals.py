@@ -248,8 +248,69 @@ TOOL_GOALS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Compromisos de IDENTIDAD (É-F4 Fase 3, R7)
+# ---------------------------------------------------------------------------
+# Hasta aquí vivían como tres dicts sueltos en `Conversation.flow`
+# (`identity_triage`, `family_challenge`, `identity_challenge`): un blob que no
+# se agrega, no se mide y se destruía con un `pop`. Son compromisos como
+# cualquier otro —promesa, paso actual, lo ya reunido, presupuesto de paciencia
+# y salida terminal— así que viven en el mismo modelo.
+#
+# Sus `why` estaban en `tier0.FACTOR_WHY`, un dict paralelo que la Fase 0
+# introdujo como mínimo honesto. Aquí desaparece: el motivo pertenece al
+# factor (R9), no a una tabla de copy indexada por etapa.
+
+TRIAGE = 'identity_triage'
+FAMILY = 'family_challenge'
+TITULAR_CHALLENGE = 'identity_challenge'
+
+_WHY_DIGITS = 'confirmar que eres tú y proteger los datos del titular'
+_WHY_PET = 'proteger el expediente: ese nombre solo lo sabes tú'
+_WHY_TITULAR = 'buscar el registro con el nombre correcto'
+
+IDENTITY_SPECS = {
+    TRIAGE: GoalSpec(
+        name=TRIAGE,
+        factors=(
+            Factor('client_kind',
+                   'no pedirte datos de más ni abrirte un expediente '
+                   'duplicado si ya eres cliente'),
+        ),
+        max_stall_turns=2,
+    ),
+    FAMILY: GoalSpec(
+        name=FAMILY,
+        factors=(
+            Factor('titular', _WHY_TITULAR),
+            Factor('pet', _WHY_PET),
+            Factor('digits', _WHY_DIGITS),
+        ),
+        max_stall_turns=2,
+    ),
+    TITULAR_CHALLENGE: GoalSpec(
+        name=TITULAR_CHALLENGE,
+        factors=(
+            Factor('pet', _WHY_PET),
+            Factor('owner', 'ubicar el expediente correcto'),
+        ),
+        max_stall_turns=2,
+    ),
+}
+
+IDENTITY_GOALS = frozenset(IDENTITY_SPECS)
+
+ALL_SPECS = {**GOAL_SPECS, **IDENTITY_SPECS}
+
+
+def why_for(goal_name, factor_name):
+    """Motivo decible en voz alta de un factor (R9). '' si no aplica."""
+    spec = ALL_SPECS.get(goal_name)
+    return spec.why(factor_name) if spec else ''
+
+
 def spec_for(name):
-    return GOAL_SPECS.get(name)
+    return ALL_SPECS.get(name)
 
 
 # ---------------------------------------------------------------------------
@@ -257,13 +318,22 @@ def spec_for(name):
 # ---------------------------------------------------------------------------
 
 def get_open_goal(conversation):
-    """El compromiso EN EL FRENTE (activo o desviado). Un suspendido no está
-    al frente: se ofrece de vuelta, no se retoma solo."""
+    """El compromiso de TAREA en el frente (agendar, cancelar, reagendar…).
+
+    Un suspendido no está al frente: se ofrece de vuelta, no se retoma solo.
+
+    **Excluye los compromisos de identidad a propósito.** `context_block`
+    publica `me_falta` al modelo; si un reto de identidad apareciera ahí, el
+    sistema le estaría enumerando al cliente los factores que se le van a
+    pedir — justo lo que G4 prohíbe ("el cliente aporta, el sistema verifica";
+    jamás se enumeran datos para que los confirme). Los retos se consultan con
+    `get_identity_commitment`.
+    """
     from .models import ConversationGoal
     return ConversationGoal.objects.filter(
         conversation=conversation,
         status__in=ConversationGoal.FOREGROUND_STATUSES,
-    ).first()
+    ).exclude(name__in=IDENTITY_GOALS).first()
 
 
 def get_suspended_goal(conversation):
@@ -407,6 +477,165 @@ def _default_return_to(goal):
 
 def close_open_goal(conversation, status, reason=''):
     return close(get_open_goal(conversation), status, reason)
+
+
+def close_task_commitments(conversation, status, reason=''):
+    """Cierra los compromisos de TAREA vivos: el del frente y el suspendido.
+
+    Los de identidad quedan fuera a propósito — se apartan solos con
+    `park_identity` para sobrevivir a una escalada.
+    """
+    from .models import ConversationGoal
+    live = list(
+        ConversationGoal.objects.filter(
+            conversation=conversation,
+            status__in=ConversationGoal.OPEN_STATUSES,
+        ).exclude(name__in=IDENTITY_GOALS)
+    )
+    return [close(goal, status, reason) for goal in live]
+
+
+# ---------------------------------------------------------------------------
+# Compromisos de identidad — mismo modelo, accesores propios (R7)
+# ---------------------------------------------------------------------------
+
+def get_identity_commitment(conversation):
+    """El reto de identidad en curso, si lo hay."""
+    from .models import ConversationGoal
+    return ConversationGoal.objects.filter(
+        conversation=conversation,
+        name__in=IDENTITY_GOALS,
+        status__in=ConversationGoal.FOREGROUND_STATUSES,
+    ).first()
+
+
+def start_identity(conversation, name, *, first_factor, working_state=None):
+    """Arranca un reto de identidad y le da el FRENTE de la conversación.
+
+    Mientras el agente pregunta "¿los últimos 4 dígitos?", el frente es el
+    reto: la tarea que el cliente pidió sigue viva pero **suspendida**, y se
+    retoma sola al terminar (`finish_identity`). Antes la tarea seguía
+    marcada como activa en paralelo, que es la fragmentación que R7 retira.
+    """
+    from .models import ConversationGoal
+    live = get_identity_commitment(conversation)
+    if live is not None:
+        close(live, ConversationGoal.STATUS_ABANDONED,
+              'reiniciado' if live.name == name else 'otro reto')
+
+    # Un reto viejo suspendido queda superado por este (en el camino normal
+    # `evaluate` ya lo habría retomado antes de llegar aquí).
+    stale_identity = get_suspended_goal(conversation)
+    if stale_identity is not None and stale_identity.name in IDENTITY_GOALS:
+        close(stale_identity, ConversationGoal.STATUS_ABANDONED, 'reiniciado')
+
+    task = get_open_goal(conversation)
+    if task is not None:
+        stale = get_suspended_goal(conversation)
+        if stale is not None:
+            close(stale, ConversationGoal.STATUS_ABANDONED,
+                  'desplazado por otro compromiso')
+        suspend(task, supplanted_by=name)
+
+    commitment = ConversationGoal.objects.create(
+        organization=conversation.organization,
+        conversation=conversation,
+        name=name,
+        return_to=first_factor,
+        working_state=working_state or {},
+    )
+    _log(commitment, 'AGENT_GOAL_OPENED')
+    return commitment
+
+
+def park_identity(conversation, commitment, *, going_to_human):
+    """Aparta un reto de identidad SIN cerrarlo (R5/R8).
+
+    El slot de suspensión es **único**, así que antes hay que resolver qué
+    pasa con la TAREA que este reto había suspendido:
+
+    - `going_to_human=True` (2 fallos reales, tope de desvíos): la tarea se
+      cierra como `handoff` — se va con la persona que va a atender.
+    - `going_to_human=False` (el tamiz que no se entendió y cede al planner):
+      la tarea **vuelve al frente**, que es donde estaba antes del reto.
+
+    En ambos casos el slot queda libre para el reto, que es el que tiene que
+    sobrevivir: es lo que hace que un `4586` correcto llegado tarde resuelva
+    la verificación en vez de caer al vacío (conv 13).
+    """
+    from .models import ConversationGoal
+    task = get_suspended_goal(conversation)
+    if task is not None and task.name not in IDENTITY_GOALS:
+        if going_to_human:
+            close(task, ConversationGoal.STATUS_HANDOFF, 'handoff')
+        else:
+            resume(task)
+    return suspend(commitment,
+                   supplanted_by='handoff' if going_to_human else 'planner')
+
+
+def finish_identity(conversation, commitment, status, reason=''):
+    """Cierra el reto y devuelve el frente a la tarea suspendida.
+
+    El retorno es DETERMINISTA, no depende de que el modelo vuelva a llamar
+    una herramienta: el cliente nunca abandonó lo que estaba pidiendo, solo
+    tuvo que identificarse primero (R4).
+    """
+    close(commitment, status, reason)
+    return resume(get_suspended_goal(conversation))
+
+
+def advance_to(commitment, factor):
+    """Mueve el reto al siguiente factor. `return_to` ES la etapa actual: la
+    coordenada de dónde se retoma si algo interrumpe (R4)."""
+    if commitment is None:
+        return None
+    commitment.return_to = (factor or '')[:32]
+    commitment.save(update_fields=['return_to'])
+    return commitment
+
+
+def satisfy(commitment, factor, value=True):
+    """Da por aportado un factor del reto.
+
+    Guarda que el factor quedó SATISFECHO, no el secreto: de los 4 dígitos se
+    registra `True`, nunca los dígitos (hoy tampoco se guardan, y este modelo
+    no es excusa para empezar). Los nombres sí se guardan — el titular ya
+    viajaba en el estado y el embudo lo necesita.
+    """
+    if commitment is None:
+        return None
+    commitment.slots[factor] = {'value': value, 'confidence': DEFAULT_CONFIDENCE}
+    commitment.missing = missing_slots(commitment)
+    commitment.last_progress_at = timezone.now()
+    commitment.save(update_fields=['slots', 'missing', 'last_progress_at'])
+    return commitment
+
+
+def register_failure(commitment):
+    """Un intento FALLIDO (dato equivocado). Devuelve si se agotó la paciencia.
+
+    Preguntar no llega aquí nunca (É-F4 Fase 0): una no-respuesta no es una
+    respuesta equivocada.
+    """
+    if commitment is None:
+        return False
+    commitment.attempts_failed += 1
+    commitment.save(update_fields=['attempts_failed'])
+    spec = spec_for(commitment.name)
+    return commitment.attempts_failed >= (spec.max_stall_turns if spec else 2)
+
+
+def scratch(commitment, key, default=None):
+    return (commitment.working_state or {}).get(key, default) if commitment else default
+
+
+def set_scratch(commitment, **values):
+    if commitment is None:
+        return None
+    commitment.working_state = {**(commitment.working_state or {}), **values}
+    commitment.save(update_fields=['working_state'])
+    return commitment
 
 
 # ---------------------------------------------------------------------------
