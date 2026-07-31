@@ -15,6 +15,7 @@ Flujo:
 Seguridad: el LLM nunca autoriza — el Policy Engine decidió ANTES si se
 invoca; el executor + run_tool revalidan tier/verificación/ownership.
 """
+import copy
 import logging
 import time
 
@@ -329,6 +330,12 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         # El stub de tests no emite id: se sintetiza para poder correlacionar.
         result.tool_call_id = result.tool_call_id or f'call_{step}'
         turn_messages.append(prompts.tool_call_message(result))
+        # Foto de lo propuesto ANTES de la llamada. Desde ADR p55 §4 las tools
+        # no cierran turnos: PROPONEN un compromiso persistiéndolo, y el
+        # planner detecta la propuesta comparando. Un `pending` puede
+        # preexistir (policy paso 7 con veredicto 'unclear' cae al planner sin
+        # descartarlo), así que se compara el contenido, no la presencia.
+        proposals_before = _open_proposals(conversation)
         outcome = tools.run_tool(
             result.tool_name, result.tool_args,
             conversation=conversation, executor=executor,
@@ -343,10 +350,17 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             elif isinstance(outcome.data, dict) and outcome.data.get('capturado'):
                 goal_progressed = True
 
+        proposed = _new_proposal(proposals_before, conversation)
+
         # Tier-2: la tool PROPUSO (ya stageó el pending). Enviamos el
         # parafraseo y cerramos el turno — el "sí" del cliente lo ejecuta
         # (policy §7 → _commit_pending). NO se re-alimenta al LLM.
-        if outcome.needs_confirmation:
+        #
+        # Que el turno termine aquí lo decide el PLANNER al ver la propuesta,
+        # no una bandera que la tool trae encima (ADR p55 §4). La barrera es
+        # la misma de siempre: se ejecutan los args STAGED, jamás
+        # regenerados (TC-SEC-03).
+        if proposed == 'confirmation':
             # El alta de un cliente nuevo recolecta datos personales: el aviso
             # de privacidad va ANTES de persistirlos (just-in-time, spec §4).
             prefix = (
@@ -357,15 +371,17 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             # es plantilla, pero lo PROPUSO el modelo con su llamada a
             # herramienta y el cliente le contesta a él. Se conserva como voz
             # del agente — la confirmación tier-2 no se toca (§11 del plan).
-            enqueue_outbound(conversation, prefix + outcome.confirmation_text,
-                             author='agent')
+            paraphrase = (confirmations.get_pending(conversation) or {}).get(
+                'paraphrase', '')
+            enqueue_outbound(conversation, prefix + paraphrase, author='agent')
             return {'decision': 'awaiting_confirmation',
                     'llm_calls': llm_calls, 'tools': tool_calls}
 
-        # La tool emitió una pregunta directa (p.ej. arranque del reto
-        # familiar) → se envía y se cierra el turno, sin realimentar al LLM.
-        if outcome.ok and outcome.reply_text:
-            enqueue_outbound(conversation, outcome.reply_text, author='system')
+        # La tool propuso un RETO de identidad (p.ej. `link_family_member`):
+        # se pregunta el primer factor y se cierra el turno, sin realimentar
+        # al LLM. La pregunta la redacta el planner — una tool no escribe copy.
+        if proposed == 'identity':
+            enqueue_outbound(conversation, tier0.T0_FAMILY_LINK_START)
             return {'decision': 'awaiting_reply',
                     'llm_calls': llm_calls, 'tools': tool_calls}
 
@@ -678,6 +694,32 @@ def _settle_goal(conversation, *, goal_progressed, goal_attempted,
         goals.pause(goal)
         return False
     return goals.bump_stall(goal)
+
+
+def _open_proposals(conversation):
+    """Foto de los compromisos que una tool podría PROPONER en este turno.
+
+    Dos formas de propuesta, ambas persistidas por la propia tool: el
+    `pending_action` de tier-2 y un reto de identidad. Se fotografían para
+    poder distinguir "lo propuso esta llamada" de "ya estaba" — sin eso haría
+    falta que la tool lo dijera, que es la autoridad que ADR p55 §4 le quita.
+    """
+    commitment = goals.get_identity_commitment(conversation)
+    return (
+        copy.deepcopy(confirmations.get_pending(conversation)),
+        commitment.pk if commitment is not None else None,
+    )
+
+
+def _new_proposal(before, conversation):
+    """`'confirmation'` | `'identity'` | `None` — qué se propuso este turno."""
+    pending_before, identity_before = before
+    if confirmations.get_pending(conversation) not in (None, pending_before):
+        return 'confirmation'
+    commitment = goals.get_identity_commitment(conversation)
+    if commitment is not None and commitment.pk != identity_before:
+        return 'identity'
+    return None
 
 
 def _after_hours_prefix(conversation, agent_settings, *, burst_text=''):

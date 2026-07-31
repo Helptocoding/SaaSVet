@@ -62,7 +62,7 @@ class IncrementalSlotFillingTests(GoalFixture):
         self._create(pet_handle="mascota_1", date=self.day)
         out = self._create(time="10:00", reason="vacuna")
         self.assertTrue(out.ok, out.client_error)
-        self.assertTrue(out.needs_confirmation)
+        self.assertIsNotNone(confirmations.get_pending(self.conv))
         pending = confirmations.get_pending(self.conv)
         self.assertEqual(pending["tool"], "create_appointment")
         self.assertEqual(pending["args"]["date"], self.day)

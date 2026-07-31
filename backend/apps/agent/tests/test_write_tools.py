@@ -125,6 +125,12 @@ class WriteToolsTests(TestCase):
         return tools.run_tool(name, args, conversation=self.conv,
                               executor=self.executor)
 
+    def _paraphrase(self, conversation=None):
+        """El parafraseo tier-2 vive en el `pending_action` staged, no en el
+        `ToolOutcome`: desde ADR p55 §4 una tool devuelve hechos, no copy."""
+        pending = confirmations.get_pending(conversation or self.conv)
+        return (pending or {}).get('paraphrase', '')
+
     def _affirm(self, text="sí"):
         decision = policy.evaluate(self.conv, text, agent_settings=self.settings)
         return decision
@@ -141,8 +147,7 @@ class WriteToolsTests(TestCase):
             "pet_handle": self._pet_handle(), "date": self.day.isoformat(),
             "time": "10:00", "reason": "Vacunación"})
         self.assertTrue(out.ok, out.client_error)
-        self.assertTrue(out.needs_confirmation)
-        self.assertIn("Luna", out.confirmation_text)
+        self.assertIn("Luna", self._paraphrase())
         pending = confirmations.get_pending(self.conv)
         self.assertIsNotNone(pending)
         self.assertEqual(pending["tool"], "create_appointment")
@@ -199,7 +204,7 @@ class WriteToolsTests(TestCase):
         appt, handle = self._make_appt(status="scheduled")
         out = self._run("confirm_appointment", {"appointment_handle": handle})
         self.assertTrue(out.ok, out.client_error)
-        self.assertFalse(out.needs_confirmation)   # sin parafraseo
+        self.assertIsNone(confirmations.get_pending(self.conv))  # sin propuesta
         appt.refresh_from_db()
         self.assertEqual(appt.status, "confirmed")
 
@@ -208,8 +213,7 @@ class WriteToolsTests(TestCase):
         appt, handle = self._make_appt(status="confirmed")
         out = self._run("cancel_appointment", {
             "appointment_handle": handle, "reason": "se enfermó"})
-        self.assertTrue(out.needs_confirmation)
-        self.assertIn("Luna", out.confirmation_text)
+        self.assertIn("Luna", self._paraphrase())
 
         self._affirm("sí")
         res = planner._commit_pending(self.conv, self.executor)
@@ -235,7 +239,7 @@ class WriteToolsTests(TestCase):
         out = self._run("reschedule_appointment", {
             "appointment_handle": handle, "new_date": self.day.isoformat(),
             "new_time": "12:00"})
-        self.assertTrue(out.needs_confirmation)
+        self.assertIsNotNone(confirmations.get_pending(self.conv))
 
         self._affirm("sí")
         res = planner._commit_pending(self.conv, self.executor)
@@ -269,9 +273,8 @@ class WriteToolsTests(TestCase):
             "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
             conversation=conv, executor=ex)
         self.assertTrue(out.ok, out.client_error)
-        self.assertTrue(out.needs_confirmation)
-        self.assertIn("Carlos", out.confirmation_text)
-        self.assertIn("Rocky", out.confirmation_text)
+        self.assertIn("Carlos", self._paraphrase(conv))
+        self.assertIn("Rocky", self._paraphrase(conv))
         pending = confirmations.get_pending(conv)
         self.assertEqual(pending["args"]["owner_phone"], "5512345678")  # 10 díg
         self.assertEqual(Owner.objects.filter(phone="5512345678").count(), 0)

@@ -223,6 +223,14 @@ T0_TRIAGE_DIGITS = (
     "¡Gracias! Una última cosa por seguridad: ¿los últimos *4 dígitos* del "
     "teléfono que el titular tiene registrado con nosotros?"
 )
+# Arranque del reto por la vía de la herramienta `link_family_member` (el
+# cliente dijo ser familiar de alguien). Anuncia los tres factores porque aquí
+# no hubo tamiz previo — a diferencia de `T0_TRIAGE_PET`, que llega después de
+# que el cliente ya contestó "ya he venido antes".
+T0_FAMILY_LINK_START = (
+    "Para proteger los datos del titular necesito validar 3 cosas. Primero: "
+    "¿cómo se llama una de sus mascotas? 🐾"
+)
 
 
 def render_triage(organization, first_contact=False):

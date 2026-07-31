@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.agent import confirmations
 from apps.agent import executor as executor_module
 from apps.agent import tools
 from apps.agent.executor import ToolExecutor
@@ -196,7 +197,8 @@ class FamilyRestrictedAccessTests(FamilyLinkBase):
             "time": "10:00", "reason": "Consulta"},
             conversation=self.conv, executor=self._executor())
         self.assertTrue(out.ok, out.client_error)
-        self.assertTrue(out.needs_confirmation)   # agendar sí está permitido
+        # Agendar sí está permitido: la tool PROPUSO (dejó el pending staged).
+        self.assertIsNotNone(confirmations.get_pending(self.conv))
 
 
 class FamilyRevokeTests(FamilyLinkBase):

@@ -18,7 +18,8 @@ cardinalidad → basta el bump del snapshot). Mismo patrón que
 
 Coste declarado: cualquier campo nuevo, aunque sea trivial, obliga a tocar
 este snapshot. Es el precio de que Fase 3 no pueda cambiar `ToolOutcome` en
-silencio cuando le quite `reply_text`/`needs_confirmation` (§9.1).
+silencio cuando le quitó `reply_text`/`needs_confirmation` (§9.1) — ese
+cambio, el de mayor alcance de la Fase 3, tuvo que pasar por aquí.
 """
 import dataclasses
 
@@ -41,9 +42,18 @@ class ToolOutcomeContractTests(SimpleTestCase):
     def test_fields_match_snapshot(self):
         fields = sorted(f.name for f in dataclasses.fields(ToolOutcome))
         self.assertEqual(fields, [
-            'client_error', 'confirmation_text', 'data', 'detail',
-            'needs_confirmation', 'ok', 'reply_text', 'summary',
+            'client_error', 'data', 'detail', 'ok', 'summary',
         ])
+
+    def test_a_tool_cannot_write_copy_nor_end_a_turn(self):
+        """ADR p55 §4 — autoridad cero. Ordenar las tools al final de la
+        jerarquía no bastaba: mientras `ToolOutcome` pudiera encolar texto al
+        cliente o cerrar el turno, la jerarquía era decorativa."""
+        names = {f.name for f in dataclasses.fields(ToolOutcome)}
+        for removed in ('reply_text', 'needs_confirmation',
+                        'confirmation_text'):
+            with self.subTest(field=removed):
+                self.assertNotIn(removed, names)
 
 
 class TurnDecisionContractTests(SimpleTestCase):

@@ -2,9 +2,9 @@
 
 **Fecha**: 2026-07-29
 **Base**: [`whatsapp-agent-auditoria-rigidez-2026-07-29.md`](whatsapp-agent-auditoria-rigidez-2026-07-29.md)
-**Estado**: Fases 0, 1 y 2 **implementadas** (2026-07-30, en `develop`). Fase 3 con su
-[ADR p55](decisions/2026-07-30-p55-turn-authority-and-commitments.md) escrito y aceptado, sin
-código. Fase 4 pendiente. **Fase 5 cancelada** (§7).
+**Estado**: Fases 0, 1, 2 y **3 implementadas** (2026-07-30, en `develop`; 504 tests verdes), con
+su [ADR p55](decisions/2026-07-30-p55-turn-authority-and-commitments.md) escrito ANTES del código.
+Fase 4 pendiente. **Fase 5 cancelada** (§7).
 **Contexto de riesgo — revisado 2026-07-30**: el plan se escribió asumiendo que org 3
 (`Clinica Bebe coche`) era una clínica real probando el agente el mismo día. El PO aclaró que esa
 y las demás organizaciones activas son **demo y pruebas**: no hay usuarios reales todavía. La regla
@@ -43,8 +43,8 @@ Fase 0  R1 + R9(copy)        ── ✅ HECHA (8346f1c). Desbloquea al cliente r
    ├── Fase 2  R11 R2        ── ✅ HECHA (42dd994). Autoría + ventana.
    │      │
    │      ▼
-   └── Fase 3  R3 R4 R7 R9*  ── árbitro + compromisos. ADR p55 ✅ escrito (f0323ab).
-          │                     Necesita Fase 1 (línea base de TurnDecision).
+   └── Fase 3  R3 R4 R7 R9*  ── ✅ HECHA. Árbitro + compromisos, ADR p55 (f0323ab).
+          │                     3-A 66e9f4c · 3-B 3b3d686 · 3-C 5187fc4 · 3-D
           ▼
        Fase 4  R10 R2        ── guards conversacionales. Necesita Fase 3.
 
@@ -114,7 +114,7 @@ Tres consecuencias prácticas:
 | 0 | **M** (1-2 d) | bajo · lógica pura + copy | R1, R9 (copy) | ✅ hecha |
 | 1 | **M** (2 d) | medio · 1 migración, toca escalada | R5, R8, R12 | ✅ hecha |
 | 2 | **S** (1 d) | bajo · afecta contexto del modelo | R11, R2 (parcial) | ✅ hecha |
-| 3 | **XL** (sprint) | alto · contrato de `ToolOutcome` | R3, R4, R7, R9 (estructural) | ADR listo |
+| 3 | **XL** (sprint) | alto · contrato de `ToolOutcome` | R3, R4, R7, R9 (estructural) | ✅ hecha |
 | 4 | **M** (2 d) | medio · puede escalar de más | R10, R2 | pendiente |
 | 5 | ~~L (3-5 d)~~ | — | ~~R6~~ → se cierra en Fase 3 | ❌ cancelada |
 

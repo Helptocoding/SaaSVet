@@ -1,12 +1,12 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
-> **Estado**: É-F3 completa — el agente lee, **agenda** (crear/confirmar/cancelar/
-> reagendar + alta de cliente) y persigue **objetivos**, con guards de salida
-> vinculantes y medición de calidad. 472 tests en CI. É-F4 Fases 0, 1 y 2 de
-> gobernanza conversacional implementadas 2026-07-30 (R1/R9 interrupciones ·
-> R5/R8/R12 suspender-no-destruir + `TurnDecision` · R11/R2 autoría de
-> salientes + ventana por turnos), ver
-> [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
+> **Estado**: É-F3 completa. É-F4 (gobernanza conversacional) con Fases 0-3
+> implementadas 2026-07-30 — R1/R9 interrupciones · R5/R8/R12
+> suspender-no-destruir + `TurnDecision` · R11/R2 autoría de salientes +
+> ventana por turnos · **R3/R4/R7/R9 árbitro + compromiso unificado
+> ([ADR p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md))**.
+> 504 tests en CI. Queda la Fase 4 (guards conversacionales); la Fase 5 se
+> canceló. Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
 > épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
@@ -17,8 +17,8 @@
 > ADRs: **p51** identidad del actor · **p52** idempotencia de citas · **p53**
 > configuración de clínica · **p54** objetivos + conservación vinculante ·
 > **[p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md)**
-> autoridad del turno + compromisos (ACEPTADO, **aún sin implementar** — es el
-> contrato de la Fase 3).
+> autoridad del turno + compromisos (ACEPTADO e implementado; se escribió
+> ANTES del código, que es lo que lo hizo servir de brújula).
 > Runbook operativo: [`runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
 
 ## Boundary (vinculante)
@@ -37,9 +37,9 @@ ref; `channels.views` importa `agent.services` perezoso.
 | `Message` | channels | Tabla ÚNICA in/out. El inbox ES la cola y el outbox un filtro (`status`); dedup de reintentos: unique parcial `(channel_account, external_message_id)` solo inbound (patrón Payment/ADR p27); `available_at` = ventana silenciosa del debounce (cada entrante empuja la de TODO el hilo: 8 s, tope 25 s desde el más viejo); `process_attempts` = intentos de TURNO del entrante (≠ `attempts`, que cuenta envíos) → al agotar `MAX_PROCESS_ATTEMPTS` el mensaje se descarta y la conversación escala a humano |
 | `ContactIdentity` | agent | Identidad POR ORG (`unique org+channel+external_id` — el mismo cliente puede escribir a 2 clínicas); `verification_level` (unknown→phone_match→confirmed_in_chat→staff_verified); `phone_normalized` (Q5: últimos 10 dígitos, México-only); NO es un User — jamás recibe tokens |
 | `Conversation` | agent | `PublicIdMixin` (la bandeja navega por UUID); FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo); org fijada al crear e inmutable; `flow`/`summary` = scratchpad (filosofía ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo (serializa entre réplicas sin transacción abierta) |
-| `ConversationGoal` | agent | **Objetivo en curso** (É-F3 W2). Estado explícito `active/paused/completed/cancelled/handoff`; `slots` `{slot:{value,confidence}}` con el valor YA normalizado por el validador; `missing`, `low_confidence`, `asked`, `stall_turns`. Constraint parcial: **un objetivo abierto por conversación** |
+| `ConversationGoal` | agent | **El COMPROMISO** (É-F3 W2; extendido por ADR p55 §3 — un solo modelo para tarea e identidad, R7). Estados `active/deviated/suspended/blocked/completed/abandoned/handoff` (+`cancelled` deprecado); `slots` `{slot:{value,confidence}}` YA normalizado; `missing`, `low_confidence`, `asked`, `stall_turns`; coordenadas `return_to`/`supplanted_by`/`blocked_reason`; `attempts_failed` (fallos reales ≠ turnos sin avance) y `working_state` (estado local del mecanismo). Dos constraints parciales: **uno al frente** (`active|deviated`) y **uno suspendido** por conversación |
 | `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `faq_facts` (solo hechos sin campo propio), `default_veterinarian`, `scheduling_mode`, `nudge_enabled` |
-| `TurnDecision` | agent | Rastro **append-only** de cada turno (R12, É-F4 Fase 1). **El runtime NUNCA la lee** — es solo para diagnóstico/regresión. `verdict` (string libre hoy — Fase 3 lo cierra a 5 valores), `because` (enum cerrado ORTOGONAL, ≤12 valores, `TurnDecision.Because`), `active_commitment`/`return_to`/`supplanted_by` (aún sin poblar — llegan con el modelo de compromisos de Fase 3), `facts_consumed`/`facts_produced` (JSON, cero PII). `planner_used`/`tools_called`/`duration_ms` son DIAGNÓSTICO — ningún test afirma sobre ellos |
+| `TurnDecision` | agent | Rastro **append-only** de cada turno (R12, É-F4 Fase 1). **El runtime NUNCA la lee** — es solo para diagnóstico/regresión. `verdict` (string libre todavía — cerrarlo a los 5 veredictos exige que el árbitro sea dueño de las 22 salidas del planner, que excede R3/R4/R7/R9), `because` (enum cerrado ORTOGONAL, ≤12 valores, `TurnDecision.Because`), `active_commitment`/`return_to`/`supplanted_by` (aún sin poblar, mismo motivo), `facts_consumed`/`facts_produced` (JSON, cero PII). `planner_used`/`tools_called`/`duration_ms` son DIAGNÓSTICO — ningún test afirma sobre ellos |
 
 ## Flujo F0
 
@@ -321,6 +321,30 @@ Lo que el árbitro **no** decide, a propósito: escalar a un humano (es
 salvaguarda, y las salvaguardas lo preemptan) y el **tope de desvíos** — él
 juzga *un mensaje*, y que tres desvíos seguidos merezcan una persona es un
 juicio sobre el *patrón*, que vive en el ejecutor.
+
+**Tools con autoridad cero.** `ToolOutcome` pierde `reply_text`,
+`needs_confirmation` y `confirmation_text`: con ellos una herramienta podía
+**escribirle copy al cliente** y **cerrar el turno**. Ordenarlas al final de la
+jerarquía no bastaba — mientras conservaran la capacidad, la jerarquía era
+decorativa.
+
+Ahora una tool **propone** un compromiso persistiéndolo (`stage_pending` para
+tier-2, `goals.start_identity` para un reto) y devuelve **hechos**. El planner
+fotografía las propuestas abiertas *antes* de la llamada (`_open_proposals`) y
+compara después (`_new_proposal`): si apareció una nueva, él decide cerrar el
+turno y él redacta.
+
+> Se compara el **contenido**, no la presencia: un `pending_action` puede
+> preexistir al turno (policy paso 7 con veredicto `unclear` cae al planner sin
+> descartarlo), y preguntar "¿hay pending?" haría que el planner cerrara el
+> turno por una propuesta vieja.
+
+**La barrera tier-2 no se movió** (§11 del plan): la afirmativa sigue
+ejecutando los argumentos **staged**, jamás regenerados (TC-SEC-03).
+`confirmations.py` y `_commit_pending` quedaron intactos — lo único que se
+retiró es la capacidad de la tool de terminar el turno por su cuenta. El
+parafraseo ya vivía en el `pending_action`; la bandera del `ToolOutcome` era
+redundante.
 
 > **Pendiente declarado**: `TurnDecision.verdict` sigue guardando el `decision`
 > de texto libre (~20 valores). Cerrarlo a los 5 veredictos exige que el

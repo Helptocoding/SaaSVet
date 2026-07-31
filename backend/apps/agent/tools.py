@@ -48,13 +48,20 @@ class ToolOutcome:
     client_error: str = ''         # guía conversacional si falló (spec §2.5)
     detail: str = ''               # mensaje real del dominio (W1-8), ya legible
     summary: dict = field(default_factory=dict)  # redactado, para auditoría
-    # Tier-2 (É-F2): la tool PROPONE una mutación → el planner encola este
-    # texto de confirmación y NO ejecuta hasta la afirmativa del cliente.
-    needs_confirmation: bool = False
-    confirmation_text: str = ''
-    # La tool emite una pregunta/plantilla directa y cierra el turno (sin
-    # realimentar al LLM) — p.ej. el 1er paso del reto familiar (PR-17b).
-    reply_text: str = ''
+
+    # AUTORIDAD CERO (ADR p55 §4). Aquí vivían `reply_text`,
+    # `needs_confirmation` y `confirmation_text`: con ellos una herramienta
+    # podía **escribirle copy al cliente** y **cerrar el turno**, que son
+    # decisiones de conversación tomadas en la capa de menos autoridad.
+    # Ordenarlas al final de la jerarquía no bastaba — había que quitarles la
+    # capacidad, o la jerarquía era decorativa.
+    #
+    # Ahora una tool PROPONE un compromiso (lo persiste: `stage_pending` para
+    # tier-2, `goals.start_identity` para un reto) y devuelve HECHOS. El
+    # planner observa que hubo propuesta y redacta.
+    #
+    # Lo que esto NO cambia: la barrera tier-2 sigue igual — la afirmativa
+    # ejecuta los argumentos STAGED, jamás regenerados (TC-SEC-03).
 
 
 def _norm(text):
@@ -806,8 +813,9 @@ def create_appointment(conversation, executor, args, triggered_by=None):
     }
     confirmations.stage_pending(conversation, tool='create_appointment',
                                args=staged, paraphrase=paraphrase)
-    return ToolOutcome(ok=True, needs_confirmation=True,
-                       confirmation_text=paraphrase, summary={'proposed': 'create'})
+    # Propone y devuelve HECHOS: el pending ya quedó staged; que el turno
+    # termine esperando el "sí" lo decide el planner (ADR p55 §4).
+    return ToolOutcome(ok=True, summary={'proposed': 'create'})
 
 
 def commit_create_appointment(conversation, executor, args, triggered_by=None):
@@ -892,8 +900,9 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
     }
     confirmations.stage_pending(conversation, tool='cancel_appointment',
                                args=staged, paraphrase=paraphrase)
-    return ToolOutcome(ok=True, needs_confirmation=True,
-                       confirmation_text=paraphrase, summary={'proposed': 'cancel'})
+    # Propone y devuelve HECHOS: el pending ya quedó staged; que el turno
+    # termine esperando el "sí" lo decide el planner (ADR p55 §4).
+    return ToolOutcome(ok=True, summary={'proposed': 'cancel'})
 
 
 def commit_cancel_appointment(conversation, executor, args, triggered_by=None):
@@ -953,8 +962,9 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
     }
     confirmations.stage_pending(conversation, tool='reschedule_appointment',
                                args=staged, paraphrase=paraphrase)
-    return ToolOutcome(ok=True, needs_confirmation=True,
-                       confirmation_text=paraphrase, summary={'proposed': 'reschedule'})
+    # Propone y devuelve HECHOS: el pending ya quedó staged; que el turno
+    # termine esperando el "sí" lo decide el planner (ADR p55 §4).
+    return ToolOutcome(ok=True, summary={'proposed': 'reschedule'})
 
 
 def commit_reschedule_appointment(conversation, executor, args, triggered_by=None):
@@ -1088,8 +1098,9 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
     }
     confirmations.stage_pending(conversation, tool='register_new_client_and_pet',
                                args=staged, paraphrase=paraphrase)
-    return ToolOutcome(ok=True, needs_confirmation=True,
-                       confirmation_text=paraphrase, summary={'proposed': 'register'})
+    # Propone y devuelve HECHOS: el pending ya quedó staged; que el turno
+    # termine esperando el "sí" lo decide el planner (ADR p55 §4).
+    return ToolOutcome(ok=True, summary={'proposed': 'register'})
 
 
 def commit_register_new_client_and_pet(conversation, executor, args, triggered_by=None):
@@ -1171,10 +1182,9 @@ def link_family_member(conversation, executor, args, triggered_by=None):
         args_redacted={'titular_provided': True},
         policy_decision='auto', triggered_by_message=triggered_by,
         summary={'candidates': len(candidates)})
-    question = ("Para proteger los datos del titular necesito validar 3 cosas. "
-               "Primero: ¿cómo se llama una de sus mascotas? 🐾")
-    return ToolOutcome(ok=True, reply_text=question,
-                       summary={'family_challenge': 'started'})
+    # El reto ya quedó propuesto (es un compromiso persistido); la pregunta
+    # la redacta el planner — una tool no le escribe copy al cliente.
+    return ToolOutcome(ok=True, summary={'family_challenge': 'started'})
 
 
 def request_human(conversation, executor, args, triggered_by=None):
