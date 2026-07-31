@@ -62,7 +62,8 @@ def list_conversations(request):
             # clínica de una duda de horarios (É-F3 W0-4).
             Prefetch(
                 'handoffs',
-                queryset=HumanHandoff.objects.filter(resolved_at__isnull=True)
+                queryset=HumanHandoff.objects.for_organization(org)
+                .filter(resolved_at__isnull=True)
                 .order_by('-created_at')[:1],
                 to_attr='open_handoffs',
             ),
@@ -70,7 +71,7 @@ def list_conversations(request):
         # Las urgentes primero, siempre: una convulsión no puede quedar debajo
         # de una conversación más reciente sobre precios.
         .annotate(_urgent=Exists(
-            HumanHandoff.objects.filter(
+            HumanHandoff.objects.for_organization(org).filter(
                 conversation=OuterRef('pk'),
                 resolved_at__isnull=True,
                 priority=HumanHandoff.PRIORITY_URGENT,
@@ -386,7 +387,9 @@ def release_conversation(request, pk):
         ContactIdentity.VERIFICATION_CONFIRMED, ContactIdentity.VERIFICATION_STAFF,
     )
     if already_verified:
-        parked = ConversationGoal.objects.filter(
+        parked = ConversationGoal.objects.for_organization(
+            conversation.organization,
+        ).filter(
             conversation=conversation,
             name__in=goals.IDENTITY_GOALS,
             status=ConversationGoal.STATUS_SUSPENDED,
@@ -395,7 +398,9 @@ def release_conversation(request, pk):
             goals.close(parked, ConversationGoal.STATUS_ABANDONED,
                         'verificado por el equipo')
 
-    handoff = HumanHandoff.objects.filter(
+    handoff = HumanHandoff.objects.for_organization(
+        conversation.organization,
+    ).filter(
         conversation=conversation, resolved_at__isnull=True,
     ).order_by('-id').first()
     if handoff is not None:

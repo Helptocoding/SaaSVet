@@ -114,20 +114,24 @@ class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
 
 class NoPiiTests(TurnDecisionSetupMixin, TestCase):
     def test_no_field_contains_the_message_body(self):
-        secret = "ZZQXPLONK9284"  # marcador único, imposible de colar por azar
-        msg = self._inbound(f"hola {secret} quiero una cita")
+        # Marcador LEGIBLE a propósito: una cadena de alta entropía asignada a
+        # algo llamado `secret` hace que gitleaks la lea como una API key y
+        # bloquee el pipeline. El test necesita un texto que no pueda aparecer
+        # por azar, no uno que parezca una credencial.
+        marker = "texto-del-cliente-que-no-debe-viajar"
+        msg = self._inbound(f"hola {marker} quiero una cita")
         planner.handle_inbound(
             self.conv, agent_settings=self.settings, triggered_by=msg,
-            burst=[f"hola {secret} quiero una cita"],
+            burst=[f"hola {marker} quiero una cita"],
         )
         row = TurnDecision.objects.get(conversation=self.conv)
         for field in (
             'verdict', 'because', 'active_commitment', 'return_to',
             'supplanted_by',
         ):
-            self.assertNotIn(secret, getattr(row, field) or '')
-        self.assertNotIn(secret, str(row.facts_consumed))
-        self.assertNotIn(secret, str(row.facts_produced))
+            self.assertNotIn(marker, getattr(row, field) or '')
+        self.assertNotIn(marker, str(row.facts_consumed))
+        self.assertNotIn(marker, str(row.facts_produced))
 
 
 class ResilienceTests(TurnDecisionSetupMixin, TestCase):
