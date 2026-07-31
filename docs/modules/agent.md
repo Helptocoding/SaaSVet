@@ -5,8 +5,9 @@
 > suspender-no-destruir + `TurnDecision` · R11/R2 autoría de salientes +
 > ventana por turnos · **R3/R4/R7/R9 árbitro + compromiso unificado
 > ([ADR p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md))**.
-> 504 tests en CI. Queda la Fase 4 (guards conversacionales); la Fase 5 se
-> canceló. Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
+> · R10/R2 guards de conducta. **É-F4 completa**; la Fase 5 se canceló por
+> decisión de producto. 520 tests en CI. Ver
+> [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
 > épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
