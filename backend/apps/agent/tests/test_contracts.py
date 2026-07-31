@@ -58,6 +58,24 @@ class TurnDecisionContractTests(SimpleTestCase):
         ])
 
 
+class TurnVerdictContractTests(SimpleTestCase):
+    """La salida del árbitro (ADR p55 §2). Es control de flujo puro: si algún
+    día aparece aquí un campo de texto para el cliente, el árbitro se
+    convirtió en planner."""
+
+    def test_fields_match_snapshot(self):
+        from apps.agent.arbiter import TurnVerdict
+        fields = sorted(f.name for f in dataclasses.fields(TurnVerdict))
+        self.assertEqual(fields, ['commitment', 'return_to', 'verdict'])
+
+    def test_facts_match_snapshot(self):
+        from apps.agent.arbiter import TurnFacts
+        fields = sorted(f.name for f in dataclasses.fields(TurnFacts))
+        self.assertEqual(fields, [
+            'client_declined', 'interrupts', 'proposes_other_commitment',
+        ])
+
+
 class CommitmentContractTests(SimpleTestCase):
     """El compromiso (`ConversationGoal` extendido, ADR p55 §3)."""
 

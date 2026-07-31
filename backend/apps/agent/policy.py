@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from . import goals, identity, matchers, tier0
+from . import arbiter, goals, identity, matchers, tier0
 from .models import Conversation, HumanHandoff
 
 logger = logging.getLogger('agent.events')
@@ -334,20 +334,27 @@ def _is_interruption(stage, text):
 
 
 def _check_interruption(conversation, commitment, text, reask_text):
-    """Si `text` es una interrupción para el factor en curso, devuelve la
-    PolicyDecision (REPLY con el motivo, o ESCALATE al topar el desvío).
-    `None` si el mensaje sí es una respuesta y el caller sigue su lógica.
+    """EJECUTA el veredicto del árbitro sobre un reto en curso.
 
-    Tope de desvíos obligatorio (3): sin él, la Fase 0 sustituía un bucle de
-    fallos por un bucle de preguntas — contestar todo con preguntas nunca
-    avanza el reto, así que a los 3 desvíos se escala a un humano.
+    El árbitro juzga (`desviar` vs `continuar`); esto lo cumple: devuelve la
+    PolicyDecision (REPLY con el motivo, o ESCALATE al topar el desvío), o
+    `None` si el mensaje sí era una respuesta y el caller sigue su lógica.
+
+    **El tope de desvíos vive aquí, no en el árbitro** (ADR p55 §2): el
+    árbitro juzga UN mensaje —"esto interrumpe"—, mientras que "tres desvíos
+    seguidos merecen una persona" es un juicio sobre el PATRÓN. Sin el tope,
+    la Fase 0 habría sustituido un bucle de fallos por uno de preguntas.
 
     El motivo sale de `Factor.why` (R9 estructural): en la Fase 0 vivía en
     `tier0.FACTOR_WHY`, un dict paralelo indexado por etapa. Ahora pertenece
     al factor del compromiso y no puede faltar.
     """
     factor = commitment.return_to
-    if not _is_interruption(factor, text):
+    verdict = arbiter.decide(
+        arbiter.TurnFacts(interrupts=_is_interruption(factor, text)),
+        arbiter.CommitmentView(commitment.name, factor),
+    )
+    if verdict.verdict != arbiter.DEVIATE:
         return None
 
     deviations = goals.scratch(commitment, 'deviations', 0) + 1

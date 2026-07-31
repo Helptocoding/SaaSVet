@@ -265,6 +265,68 @@ las ~20 salidas de texto libre de hoy a los 12 valores ortogonales de
 Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md)
 §3 para el detalle de implementación.
 
+#### Autoridad del turno y compromisos (É-F4 Fase 3 · **ADR p55**, 2026-07-30)
+
+**Un solo modelo de compromiso (R7).** Los cinco mecanismos que representaban
+lo mismo —`identity_triage`, `family_challenge`, `identity_challenge` (dicts en
+`Conversation.flow`), `pending_action` y `ConversationGoal`— se reducen a uno:
+`ConversationGoal`, **extendido**, no reemplazado. Los tres primeros salieron
+de `flow` (gate: `IdentityStateLivesInTheModelGateTests` sobre 5 módulos de
+runtime). `pending_action` **sigue en `flow`**: la confirmación tier-2 queda
+fuera del alcance por decisión del plan (§11) y unificarla es otro sprint.
+
+Ciclo de vida (ADR p55 §3) — un compromiso **nunca desaparece**:
+
+| Estado | Significado | Coordenada |
+|---|---|---|
+| `active` | al frente | — |
+| `deviated` | el agente atiende otra cosa y **vuelve** | `return_to` (obligatorio) |
+| `suspended` | otro compromiso tomó el frente; se **ofrece** de vuelta | `supplanted_by` |
+| `blocked` | el **dominio no puede** (p.ej. `no_vet`) → se dice una vez y se deja de pedir | `blocked_reason` |
+| `completed` / `abandoned` / `handoff` | terminales | — |
+
+Dos distinciones que antes colapsaban y ahora no: **`suplantar` ≠ `abortar`**
+(un perro que convulsiona a mitad de agendar no abandonó la cita) y
+**`bloqueado` ≠ `abandonado`** (el dominio no puede vs. el cliente no quiere —
+quien pide alta sin cita cae en el segundo: es política de clínica, el dominio
+sí podía).
+
+**Todo factor lleva su `why` (R9 estructural).** `Factor(name, why, validator)`
+sustituye a `required_slots` + `validators`; **un factor sin `why` no compila**.
+El motivo se escribe en voz de clínica y hay gate (`WhyVoiceTests`) que prohíbe
+vocabulario de sistema — precedente: *"el sistema me pide al menos una fecha"*
+(conv 12). Como el `why` es por factor y no global, el alta explica su fecha
+distinto que una cita normal (*"el alta la hacemos junto con tu primera
+cita"*), que es lo que cierra R6 sin necesitar la fase cancelada.
+
+**El árbitro** (`agent/arbiter.py`): `decide(facts, commitment) → TurnVerdict`,
+función **pura**. Cinco veredictos cerrados (`continuar` · `desviar` ·
+`suplantar` · `abortar` · `responder`); un sexto exige ADR. Decide **control de
+flujo, nunca contenido** — prueba: *¿se puede renderizar el veredicto en otro
+idioma o canal sin tocar el árbitro?*
+
+Los cinco presupuestos son tests bloqueantes (`test_arbiter.py`), no buenas
+intenciones — el precedente es `policy.evaluate`, que nació como "un router de
+predicados" y llegó a 203 líneas y 20 pasos un sufijo `b` a la vez:
+
+| | Mecanismo |
+|---|---|
+| A1 | 5 veredictos, enum cerrado |
+| A2 | pura: corre en `SimpleTestCase` (sin DB), no muta sus entradas |
+| A3 | no importa matchers, modelos ni Django; `decide` solo construye su propio resultado |
+| A4 | presupuesto de **6 ramas** por `ast` + "cabe en una tabla" (≤40 líneas) |
+| A5 | no menciona salvaguardas; y se verifica que urgencia/bloqueo/humano/opt-out sigan corriendo **antes** en `policy.evaluate` |
+
+Lo que el árbitro **no** decide, a propósito: escalar a un humano (es
+salvaguarda, y las salvaguardas lo preemptan) y el **tope de desvíos** — él
+juzga *un mensaje*, y que tres desvíos seguidos merezcan una persona es un
+juicio sobre el *patrón*, que vive en el ejecutor.
+
+> **Pendiente declarado**: `TurnDecision.verdict` sigue guardando el `decision`
+> de texto libre (~20 valores). Cerrarlo a los 5 veredictos exige que el
+> árbitro sea dueño de las 22 salidas de turno, y eso excede lo que R3/R4/R7/R9
+> necesitan. Se hará cuando el árbitro absorba el resto del `planner`.
+
 #### Que el modelo vea la verdad (É-F4 Fase 2, 2026-07-30)
 
 **Autoría de salientes (R11)**. `enqueue_outbound` tiene default
