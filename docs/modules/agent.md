@@ -322,6 +322,25 @@ salvaguarda, y las salvaguardas lo preemptan) y el **tope de desvíos** — él
 juzga *un mensaje*, y que tres desvíos seguidos merezcan una persona es un
 juicio sobre el *patrón*, que vive en el ejecutor.
 
+**A6 · el ejecutor consume veredictos, no los reinterpreta.** El flanco que
+abre un árbitro puro: mover el comportamiento a la capa de al lado y quedarse
+con *árbitro mínimo → ejecutor enorme* no simplifica, solo desplaza. Reaccionar
+a una **secuencia** es legítimo (`desviar ×3 → handoff`); **reetiquetarla** no
+(`desviar → "en realidad era un fallo"`) — eso es exactamente la conv 13. Se
+sostiene por construcción: cada veredicto lleva **su propio contador**
+(`working_state['deviations']` vs `attempts_failed`) y ningún ejecutor toca el
+del otro. Gate estático (`ExecutorConsumesVerdictsTests`) + prueba de que dos
+desvíos y un dato equivocado dejan 2 y 1, nunca 3.
+
+> **Alcance del gate** (dicho para que no se asuma de más): cubre la única
+> frontera con veredictos ejecutándose hoy —el desvío en un reto de identidad—.
+> `suplantar`/`abortar`/`responder`/`continuar` no tienen ejecutor propio
+> mientras el árbitro no sea dueño de las 22 salidas del planner, y sobre ellos
+> el gate no dice nada. La obligación de crecer **es un test**
+> (`test_every_executed_verdict_declares_its_counter`): ejecutar un veredicto
+> sin declarar su contador se pone rojo — no depende de que alguien lea una
+> nota.
+
 **Tools con autoridad cero.** `ToolOutcome` pierde `reply_text`,
 `needs_confirmation` y `confirmation_text`: con ellos una herramienta podía
 **escribirle copy al cliente** y **cerrar el turno**. Ordenarlas al final de la

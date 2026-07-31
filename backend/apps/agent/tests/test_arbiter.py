@@ -192,6 +192,116 @@ class A5NoInternalPrecedenceTests(SimpleTestCase):
                 f"La salvaguarda {guard} dejó de correr antes del árbitro.")
 
 
+class ExecutorConsumesVerdictsTests(SimpleTestCase):
+    """La frontera árbitro↔ejecutor, en la dirección contraria (regla del PO,
+    2026-07-30).
+
+    Cuando un árbitro se vuelve puro aparece la tentación de mover el
+    comportamiento al ejecutor y quedarse con *árbitro mínimo → ejecutor
+    enorme*: eso solo desplaza la complejidad de sitio.
+
+    > **El ejecutor puede reaccionar a una SECUENCIA de veredictos, pero
+    > nunca REINTERPRETARLOS.** Consume decisiones; no cambia su significado.
+
+        ✓  DESVIAR · DESVIAR · DESVIAR  →  handoff
+        ✗  DESVIAR  →  "en realidad era un fallo"  →  FALLO
+
+    Lo segundo es exactamente la conv 13: una pregunta se contó como respuesta
+    equivocada, dos veces, y cerró la puerta a un cliente que tenía los cuatro
+    factores correctos. Reaccionar a la repetición es legítimo; reetiquetarla
+    no lo es nunca.
+
+    Se hace cumplir por construcción: **cada veredicto lleva su propio
+    contador**, y ningún ejecutor toca el de otro.
+
+    ## Alcance real de este gate — leer antes de confiar en él
+
+    Hoy cubre **la única frontera donde hay veredictos ejecutándose**: el
+    desvío durante un reto de identidad. El árbitro todavía no es dueño de las
+    22 salidas de turno del planner, así que `SUPPLANT`, `ABORT`, `ANSWER` y
+    `CONTINUE` **no tienen ejecutor propio** y este gate no dice nada sobre
+    ellos.
+
+    Eso NO queda cubierto por anticipado. Para que la deuda no se vuelva
+    silenciosa, el gate se obliga a crecer solo:
+    `test_every_executed_verdict_declares_its_counter` se pone rojo en cuanto
+    alguien ejecute un veredicto sin declarar de quién es el contador. La
+    obligación es un test, no una nota al pie que alguien tendría que
+    acordarse de leer.
+
+    Límite honesto que queda incluso así: declarar un contador **no demuestra**
+    que no haya reinterpretación, solo impide la forma conocida (mezclar
+    contadores). La forma nueva que aparezca necesitará su propia
+    comprobación — y el precedente para escribirla será, como siempre, un caso
+    real.
+    """
+
+    # Contador que PERTENECE a cada veredicto ejecutado. `None` = ese veredicto
+    # todavía no tiene ejecutor propio (el árbitro no es dueño del planner).
+    _COUNTER_BY_VERDICT = {
+        'DEVIATE': 'deviations',          # desvíos: los cuenta el ejecutor
+        'CONTINUE': 'attempts_failed',    # el fallo es RESULTADO de continuar
+        'SUPPLANT': None,
+        'ABORT': None,
+        'ANSWER': None,
+    }
+    _RUNTIME = ('policy', 'planner')
+
+    def _functions_of(self, module_name):
+        import importlib
+        module = importlib.import_module(f'apps.agent.{module_name}')
+        with open(module.__file__, encoding='utf-8') as fh:
+            tree = ast.parse(fh.read())
+        return [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+
+    def test_the_map_covers_every_verdict(self):
+        """Un veredicto nuevo (que exige ADR) tampoco puede colarse aquí."""
+        declared = {getattr(arbiter, name)
+                    for name in self._COUNTER_BY_VERDICT}
+        self.assertEqual(declared, set(arbiter.VERDICTS))
+
+    def test_every_executed_verdict_declares_its_counter(self):
+        """La obligación de crecer, hecha test.
+
+        En cuanto el árbitro absorba una salida más del planner, el veredicto
+        que se ejecute tendrá que declarar su contador aquí — o esto se pone
+        rojo. Es lo que evita que el alcance del gate se quede congelado
+        mientras la arquitectura avanza.
+        """
+        pending = []
+        for module_name in self._RUNTIME:
+            for func in self._functions_of(module_name):
+                body = ast.unparse(func)
+                for verdict, counter in self._COUNTER_BY_VERDICT.items():
+                    if f'arbiter.{verdict}' in body and counter is None:
+                        pending.append((module_name, func.name, verdict))
+        self.assertEqual(
+            pending, [],
+            f"Veredictos ya ejecutados sin contador declarado: {pending}. "
+            "Añádelos a `_COUNTER_BY_VERDICT` con el contador que les "
+            "pertenece — si no, A6 deja de estar comprobada para ellos.")
+
+    def test_no_executor_touches_another_verdicts_counter(self):
+        owned = {v: c for v, c in self._COUNTER_BY_VERDICT.items() if c}
+        offenders = []
+        for module_name in self._RUNTIME:
+            for func in self._functions_of(module_name):
+                body = ast.unparse(func)
+                for verdict, own_counter in owned.items():
+                    if f'arbiter.{verdict}' not in body:
+                        continue
+                    foreign = [c for v, c in owned.items()
+                               if v != verdict and c in body]
+                    if foreign:
+                        offenders.append(
+                            (module_name, func.name, verdict, foreign))
+        self.assertEqual(
+            offenders, [],
+            "Un ejecutor está reinterpretando veredictos en vez de "
+            f"consumirlos {offenders}: quien atiende un veredicto solo puede "
+            "contar EL SUYO. Convertir un desvío en un fallo es la conv 13.")
+
+
 class ArbiterVerdictTests(SimpleTestCase):
     """Que además decida bien. Cada caso es uno real de la auditoría."""
 

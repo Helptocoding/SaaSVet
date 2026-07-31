@@ -98,9 +98,55 @@ un presupuesto añadido después no se añade nunca:
 | A3 | Recibe **hechos ya calculados**; no llama matchers ni al ORM | su cuerpo es una tabla de decisión sobre un conjunto fijo, no una cadena de `if` |
 | A4 | **Presupuesto de ramas** con test bloqueante | sin esto, A1-A3 son recomendaciones |
 | A5 | **Cero precedencia interna** | la única precedencia real (urgencia primero) vive arriba, en las salvaguardas |
+| A6 | **El ejecutor no reinterpreta** | si no, la complejidad solo se muda de capa (ver abajo) |
 
 > **Métrica de salud, verificable en cualquier momento: si el árbitro no cabe
 > en una tabla, dejó de ser un árbitro.**
+
+#### A6 · El ejecutor consume veredictos; no los reinterpreta
+
+Añadido por el PO (2026-07-30) tras ver el árbitro ya puro, y cierra el flanco
+que A1-A5 dejaban abierto. Cuando una capa de decisión se vuelve pequeña
+aparece la tentación de mover el comportamiento a la de al lado, y se pasa de
+*árbitro pequeño + ejecutor pequeño* a **árbitro mínimo → ejecutor enorme**.
+Eso no simplifica nada: solo desplaza la complejidad.
+
+> **El ejecutor puede reaccionar a una SECUENCIA de veredictos, pero nunca
+> REINTERPRETARLOS.**
+
+```
+✓  desviar · desviar · desviar   →  handoff        (reacciona a la secuencia)
+✗  desviar  →  "en realidad era un fallo"  →  fallo (reinterpreta)
+```
+
+Lo segundo **es** la conv 13: una pregunta contada como respuesta equivocada,
+dos veces, con los cuatro factores correctos ya en la mano. Reaccionar a la
+repetición es legítimo —tres desvíos seguidos merecen una persona—; reetiquetar
+la repetición no lo es nunca.
+
+Se hace cumplir **por construcción, no por disciplina**: cada veredicto lleva
+**su propio contador** (`working_state['deviations']` para los desvíos,
+`attempts_failed` para los fallos reales) y ningún ejecutor toca el de otro.
+Gate estático + prueba de comportamiento (dos desvíos y un dato equivocado
+tienen que dejar 2 y 1, nunca 3).
+
+**Alcance real del gate, dicho antes de que alguien lo asuma.** Hoy cubre la
+**única** frontera donde hay veredictos ejecutándose: el desvío durante un reto
+de identidad. Como el árbitro todavía no es dueño de las 22 salidas de turno
+del planner, `suplantar`, `abortar`, `responder` y `continuar` no tienen
+ejecutor propio, y sobre ellos este gate **no dice nada**. Cuando el árbitro
+las absorba, tendrá que crecer con ellas.
+
+Para que esa deuda no se vuelva silenciosa —que es como mueren estas cosas— la
+obligación de crecer **es ella misma un test**: cada veredicto declara a quién
+pertenece su contador, y ejecutar uno sin declararlo pone el gate en rojo. Una
+nota al pie dependería de que alguien se acuerde de leerla; esto no.
+
+Límite que queda incluso así, y conviene tenerlo presente: declarar un contador
+**no demuestra** que no haya reinterpretación — solo impide la forma conocida
+(mezclar contadores). Una forma nueva necesitará su propia comprobación, y el
+precedente para escribirla será, como siempre, un caso real. Es la misma
+disciplina de §9.0: sin precedente, no se añade un gate.
 
 El precedente que justifica tanta disciplina es de esta misma casa:
 `policy.evaluate` nació como "un router de predicados en el orden exacto de la
@@ -113,6 +159,12 @@ presupuesto, el riesgo se muda al modelo de hechos: cuando una arquitectura
 descubre los *facts*, tiende a convertir todo en un fact. No es casualidad, es
 conservación — **la complejidad migra a la capa que no tiene presupuesto**. Por
 eso el modelo de hechos nace con su propia regla (§6).
+
+> **A6 es esa misma ley aplicada al vecino de al lado.** Yo había mirado hacia
+> abajo (los hechos) y no hacia el costado (el ejecutor), que tampoco tenía
+> presupuesto. La heurística de la próxima auditoría no cambia, pero se usa
+> mejor si se pregunta por **todas** las capas adyacentes a la que se acaba de
+> acotar, no solo por la siguiente.
 
 Y una distinción que evita sobrecorregir: **no toda migración es mala.** Cuando
 A3 empuje complejidad del árbitro hacia los matchers, eso es el diseño
@@ -295,6 +347,8 @@ comportamiento observado a la arquitectura nueva y no a un arreglo colado.
 1. El árbitro es **puro**: no toca DB, red ni estado.
 2. El árbitro **no produce contenido**: solo control de flujo.
 3. El conjunto de veredictos es **cerrado**; ampliarlo exige ADR.
+3-bis. El **ejecutor consume** veredictos: puede reaccionar a una secuencia,
+   nunca reinterpretarlos. Cada veredicto lleva su propio contador (A6).
 4. Las salvaguardas **preemptan** al árbitro, siempre.
 5. Una tool **no termina turnos y no escribe copy al cliente**.
 6. Un compromiso **nunca desaparece**: siempre está en uno de sus estados.

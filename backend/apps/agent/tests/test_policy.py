@@ -510,6 +510,26 @@ class DeviationTests(IdentityTriageTests):
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.assertTrue(d.meta.get("verified"))
 
+    def test_deviations_never_become_failures_even_in_sequence(self):
+        """Regla del ejecutor (PO, 2026-07-30): puede reaccionar a una
+        SECUENCIA de veredictos, nunca reinterpretarlos.
+
+        Dos desvíos y luego un dato equivocado tienen que dejar contadores
+        INDEPENDIENTES: 2 desvíos y 1 fallo. Si los desvíos se hubieran
+        colado en `attempts_failed`, el reto ya habría escalado — que es
+        literalmente lo que le pasó a la conv 13.
+        """
+        self._reach_digits_stage()
+        self._eval_unknown("para que necesitas eso")
+        self._eval_unknown("por que me pides eso")
+        d = self._eval_unknown("0000")            # ahora sí, dato equivocado
+
+        commitment = identity_commitment(self.unknown_conv)
+        self.assertEqual(commitment.attempts_failed, 1)
+        self.assertEqual(commitment.working_state.get("deviations"), 2)
+        # Con 1 solo fallo real el reto SIGUE vivo: se re-pregunta.
+        self.assertEqual(d.kind, policy.REPLY)
+
     def test_three_deviations_escalate_with_deviation_cap(self):
         self._reach_digits_stage()
         self._eval_unknown("para que necesitas eso")
