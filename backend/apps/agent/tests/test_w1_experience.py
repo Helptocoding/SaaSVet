@@ -77,6 +77,114 @@ class OutputGuardUnitTests(TestCase):
             guards.check_output("¡Listo! Te esperamos el martes 🐾"), [])
 
 
+# ---------------------------------------------------------------------------
+# É-F4 Fase 4 · Guards de CONDUCTA (R10, R2, BUG-AGENT-001)
+# ---------------------------------------------------------------------------
+
+class BehaviourGuardUnitTests(TestCase):
+    """Los léxicos juzgan lo que se DIJO; estos, cómo se está COMPORTANDO el
+    sistema. Ninguno de los fallos más caros de la auditoría era una palabra
+    prohibida, y por eso `check_output` no los veía.
+
+    Los tres nacen en SOFT: observan y corrigen, nunca escalan.
+    """
+
+    def test_asking_a_fourth_time_is_flagged(self):
+        """R10 — repetir es defecto del SISTEMA, nunca del cliente. `asked` lo
+        contaba desde W2 y solo se publicaba al modelo como dato."""
+        v = guards.check_behaviour("¿Para qué día te late? 🙂",
+                                   asked={'date': 3})
+        self.assertEqual([x.kind for x in v], ['repeated_question'])
+        self.assertFalse(guards.has_hard(v))
+
+    def test_asking_twice_is_not_flagged_yet(self):
+        self.assertEqual(
+            guards.check_behaviour("¿Para qué día?", asked={'date': 2}), [])
+
+    def test_a_statement_is_not_a_repeated_question(self):
+        """El contador alto solo importa si de verdad se está preguntando: si
+        el modelo por fin ofrece opciones, eso es salir del bucle."""
+        self.assertEqual(
+            guards.check_behaviour("Te propongo el martes a las 10.",
+                                   asked={'date': 5}), [])
+
+    def test_denying_what_the_client_said_is_flagged(self):
+        """R2 — el "no me lo dijiste aún" de la conv 13, con el hecho anclado
+        viajando en los DATOS de ese mismo turno."""
+        v = guards.check_behaviour(
+            "No me lo dijiste aún, por eso te pregunto 😊",
+            anchored_facts={'ya_dijo_que_es_cliente': True})
+        self.assertEqual([x.kind for x in v], ['contradicts_state'])
+
+    def test_asking_for_a_missing_slot_is_not_a_contradiction(self):
+        """Pedir lo que falta es legítimo aunque haya hechos anclados: lo que
+        se prohíbe es negar el HISTORIAL, no preguntar."""
+        self.assertEqual(
+            guards.check_behaviour(
+                "¿Me confirmas la hora? 🙂",
+                anchored_facts={'ya_dijo_que_es_cliente': True}), [])
+
+    def test_denial_without_anchored_facts_passes(self):
+        self.assertEqual(
+            guards.check_behaviour("No me lo dijiste aún", anchored_facts={}),
+            [])
+
+    def test_claiming_success_without_any_tool_is_flagged(self):
+        """BUG-AGENT-001 — el fallo más caro del piloto: recolectó todo en
+        texto, jamás llamó una herramienta y dio la cita por agendada."""
+        v = guards.check_behaviour("¡Listo! Ya quedó agendada tu cita 🐾",
+                                   tool_ran=False)
+        self.assertEqual([x.kind for x in v], ['unbacked_success'])
+
+    def test_confirming_after_a_read_tool_is_legitimate(self):
+        """Consultar las citas y confirmar lo que se leyó NO es inventar: la
+        señal es que no se ejecutó herramienta ALGUNA, no que no se escribió."""
+        self.assertEqual(
+            guards.check_behaviour("Sí, ya quedó agendada para el martes",
+                                   tool_ran=True), [])
+
+    def test_clean_turn_passes(self):
+        self.assertEqual(
+            guards.check_behaviour("¿Te va bien el martes? 🐾",
+                                   asked={'date': 1},
+                                   anchored_facts={'ya_dijo_que_es_cliente': True},
+                                   tool_ran=True),
+            [])
+
+    def test_every_behaviour_kind_has_a_correction(self):
+        """Un guard sin instrucción correctiva no puede pedir un reintento:
+        sería bloquear sin decir qué hacer en su lugar."""
+        for kind in ('repeated_question', 'contradicts_state',
+                     'unbacked_success'):
+            with self.subTest(kind=kind):
+                self.assertIn(kind, guards.CORRECTION_HINT)
+
+
+class Tier0TemplatesPassTheGuardsTests(TestCase):
+    """El camino tier-0 también se valida (Fase 4).
+
+    Las plantillas del router nunca pasaron por los guards porque son
+    constantes — y justamente por eso nadie comprueba lo que se edita en
+    ellas. Si alguien mete un precio, jerga interna o una promesa en una
+    plantilla, sale al cliente sin que nada lo mire.
+    """
+
+    def test_no_tier0_template_violates_a_hard_rule(self):
+        from apps.agent import tier0
+        offenders = []
+        for name in dir(tier0):
+            if not name.startswith('T0_'):
+                continue
+            value = getattr(tier0, name)
+            if not isinstance(value, str):
+                continue
+            # `{phone}`/`{clinic}` sin formatear no son importes: se limpian.
+            violations = guards.check_output(value, tool_facts=[])
+            if guards.has_hard(violations):
+                offenders.append((name, guards.summarize(violations)))
+        self.assertEqual(offenders, [], f"Plantillas tier-0 sucias: {offenders}")
+
+
 class OutputGuardPlannerTests(AgentFixture):
     account_id = "900000101"
 

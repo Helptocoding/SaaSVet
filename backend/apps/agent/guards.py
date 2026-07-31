@@ -141,6 +141,92 @@ def check_output(text, *, tool_facts=None):
     return violations
 
 
+# ---------------------------------------------------------------------------
+# Guards de CONDUCTA (É-F4 Fase 4) — R10, R2, BUG-AGENT-001
+# ---------------------------------------------------------------------------
+# Los de arriba juzgan **lo que se dijo** (léxico). Estos juzgan **cómo se está
+# comportando el sistema**, que es donde estaban los fallos más caros de la
+# auditoría de rigidez: ninguno de ellos es una palabra prohibida, y por eso
+# `check_output` no los veía.
+#
+# Nacen los tres en SOFT, en **modo observación** a propósito: un guard nuevo
+# en HARD escala conversaciones sanas, y una escalada de más le cuesta al
+# cliente mucho más que un log de más. Promover uno a HARD exige mirar antes
+# los `AGENT_OUTPUT_GUARD` que deje — con datos, no con intuición.
+
+# R10 · el sistema repitiendo la misma pregunta. Tres veces ya no es un tic:
+# es un bucle. `asked` lo cuenta desde W2 y hasta ahora solo se publicaba al
+# modelo como dato, sin cambiar la conducta de nadie.
+REPEATED_ASK_LIMIT = 3
+
+# R2 · negar lo que el cliente SÍ dijo. Patrones que niegan el HISTORIAL, no
+# que pidan un dato que falta: "¿me dices la hora?" es legítimo aunque haya
+# hechos anclados; "no me lo dijiste" con el hecho en el estado, no.
+DENIAL_PATTERNS = (
+    'no me lo dijiste', 'no me lo has dicho', 'no me habías dicho',
+    'no me habias dicho', 'no me has dicho nada', 'no me dijiste nada',
+    'aún no me lo has dicho', 'aun no me lo has dicho',
+    'todavía no me lo has dicho', 'todavia no me lo has dicho',
+    'no me lo habías mencionado', 'no me lo habias mencionado',
+    'es la primera vez que me lo mencionas',
+    'no recuerdo que me lo hayas dicho', 'no me lo dijiste aún',
+    'no me lo dijiste aun',
+)
+
+# BUG-AGENT-001 · dar por hecho algo que nunca se ejecutó. El fallo más caro
+# del piloto: el agente recolectó todo en texto, jamás llamó una herramienta y
+# dio por agendada una cita inexistente — dos veces, incluida la respuesta a un
+# "¿la cita se creó bien?" del cliente.
+SUCCESS_CLAIM_PATTERNS = (
+    'ya quedó agendada', 'ya quedo agendada', 'quedó agendada', 'quedo agendada',
+    'ya está agendada', 'ya esta agendada', 'ya te agendé', 'ya te agende',
+    'ya la agendé', 'ya la agende', 'ya quedó tu cita', 'ya quedo tu cita',
+    'cita agendada', 'ya quedó confirmada', 'ya quedo confirmada',
+    'ya la cancelé', 'ya la cancele', 'ya quedó cancelada', 'ya quedo cancelada',
+    'ya la moví', 'ya la movi', 'ya quedó reagendada', 'ya quedo reagendada',
+    'ya te registré', 'ya te registre', 'ya quedó registrado',
+    'ya quedo registrado',
+)
+
+
+def _first_match(low, patterns):
+    for pattern in patterns:
+        if pattern in low:
+            return pattern
+    return None
+
+
+def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True):
+    """Violaciones de CONDUCTA del turno (vacía si todo bien).
+
+    - `asked`: `{slot: veces_preguntado}` del compromiso en curso (R10).
+    - `anchored_facts`: los hechos que SÍ viajaron al modelo en este turno.
+      Si el texto niega haber sido informado y aquí hay algo, se contradice a
+      sí mismo (R2) — el "no me lo dijiste aún" de la conv 13.
+    - `tool_ran`: si se ejecutó ALGUNA herramienta en el turno. Confirmar una
+      cita tras una LECTURA es legítimo; afirmarla sin tocar nada, no.
+    """
+    violations = []
+    low = (text or '').lower()
+
+    worn = sorted(slot for slot, n in (asked or {}).items()
+                  if n >= REPEATED_ASK_LIMIT)
+    if worn and ('?' in (text or '') or '¿' in (text or '')):
+        violations.append(Violation('repeated_question', SOFT, worn[0]))
+
+    if anchored_facts:
+        denial = _first_match(low, DENIAL_PATTERNS)
+        if denial:
+            violations.append(Violation('contradicts_state', SOFT, denial))
+
+    if not tool_ran:
+        claim = _first_match(low, SUCCESS_CLAIM_PATTERNS)
+        if claim:
+            violations.append(Violation('unbacked_success', SOFT, claim))
+
+    return violations
+
+
 def has_hard(violations):
     return any(v.severity == HARD for v in violations)
 
@@ -164,6 +250,20 @@ CORRECTION_HINT = {
     ),
     'uuid': 'No incluyas identificadores técnicos.',
     'jargon': 'No uses términos internos del sistema; habla como recepción.',
+    'repeated_question': (
+        'Ese dato ya se lo pediste varias veces. No lo vuelvas a preguntar '
+        'igual: ofrécele opciones concretas para elegir, o dile que lo ves '
+        'con una persona del equipo.'
+    ),
+    'contradicts_state': (
+        'El cliente SÍ te lo dijo y lo tienes en los DATOS de contexto. No '
+        'digas que no te lo ha dicho: úsalo.'
+    ),
+    'unbacked_success': (
+        'No has ejecutado ninguna herramienta en este turno, así que no ha '
+        'pasado nada todavía. No des por hecha una cita, una cancelación ni '
+        'un registro: haz lo que falte o dilo con honestidad.'
+    ),
 }
 
 

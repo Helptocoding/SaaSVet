@@ -265,6 +265,38 @@ las ~20 salidas de texto libre de hoy a los 12 valores ortogonales de
 Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md)
 §3 para el detalle de implementación.
 
+#### Guards de conducta (É-F4 Fase 4, 2026-07-30)
+
+`guards.check_output` juzga **lo que se dijo** (léxico: precios sin respaldo,
+consejo médico, promesas, jerga). `guards.check_behaviour` juzga **cómo se está
+comportando el sistema** — donde estaban los fallos más caros de la auditoría,
+ninguno de los cuales era una palabra prohibida:
+
+| Guard | Regla | Señal | Precedente |
+|---|---|---|---|
+| `repeated_question` | R10 | un slot con `asked >= 3` **y** el texto pregunta | conv 12: la fecha pedida 4 veces |
+| `contradicts_state` | R2 | niega el historial teniendo hechos anclados | conv 13: *"no me lo dijiste aún"* |
+| `unbacked_success` | BUG-AGENT-001 | afirma cita/cancelación/alta con **cero** herramientas en el turno | piloto: dio por agendada una cita inexistente |
+
+Precisiones que evitan falsos positivos, que aquí cuestan una escalada:
+- `repeated_question` exige que el texto **pregunte**: si el modelo por fin
+  ofrece opciones, eso es salir del bucle, no repetirlo.
+- `contradicts_state` marca solo negaciones del **historial** ("no me lo
+  dijiste"), nunca peticiones de un dato que falta ("¿me confirmas la hora?").
+- `unbacked_success` mira si corrió **alguna** herramienta, no si se escribió:
+  confirmar tras una LECTURA es legítimo.
+
+**Los tres nacen en `SOFT`, en modo observación**: un reintento correctivo y,
+si persiste, se **envía** con log `AGENT_OUTPUT_GUARD`. Un guard nuevo en
+`HARD` escala conversaciones sanas, y una escalada de más le cuesta al cliente
+más que un log de más. Promover uno a `HARD` exige mirar antes esos logs — con
+datos, no con intuición.
+
+**El camino tier-0 también se valida**: las plantillas del router nunca pasaban
+por los guards por ser constantes, y justo por eso nadie miraba lo que se
+editaba en ellas. Un test recorre todas las `T0_*` y falla si alguna introduce
+un precio, una promesa o jerga interna.
+
 #### Autoridad del turno y compromisos (É-F4 Fase 3 · **ADR p55**, 2026-07-30)
 
 **Un solo modelo de compromiso (R7).** Los cinco mecanismos que representaban

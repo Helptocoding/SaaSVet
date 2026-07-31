@@ -181,7 +181,7 @@ def _now_context(org):
     }
 
 
-def _anchored_identity_facts(conversation):
+def anchored_identity_facts(conversation):
     """Hechos de identidad que el ROUTER ya sabe, anclados en DATOS (R2).
 
     El bloque de contexto viaja en cada turno, así que salir de la ventana
@@ -313,7 +313,7 @@ def assemble_messages(conversation):
 
     # Hechos de identidad ANCLADOS: viajan siempre, aunque el mensaje que los
     # originó ya no quepa en la ventana (R2, §2.2).
-    identity_facts = _anchored_identity_facts(conversation)
+    identity_facts = anchored_identity_facts(conversation)
     if identity_facts:
         context['identidad'] = identity_facts
 

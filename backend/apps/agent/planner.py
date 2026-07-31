@@ -275,6 +275,17 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         if result.kind == 'text':
             text = result.text or _fallback_text()
             violations = guards.check_output(text, tool_facts=tool_facts)
+            # …y los de CONDUCTA (É-F4 Fase 4). Los léxicos juzgan lo que se
+            # dijo; estos, cómo se está comportando el sistema — que es donde
+            # estaban los fallos más caros de la auditoría y ninguno era una
+            # palabra prohibida. Nacen en SOFT: observan y corrigen, no
+            # escalan.
+            violations += guards.check_behaviour(
+                text,
+                asked=_asked_counters(conversation),
+                anchored_facts=prompts.anchored_identity_facts(conversation),
+                tool_ran=tool_calls > 0,
+            )
             # Un solo reintento con instrucción correctiva: el modelo suele
             # obedecer a la segunda y el cliente no nota nada.
             if violations and correction is None:
@@ -694,6 +705,12 @@ def _settle_goal(conversation, *, goal_progressed, goal_attempted,
         goals.pause(goal)
         return False
     return goals.bump_stall(goal)
+
+
+def _asked_counters(conversation):
+    """`{slot: veces_preguntado}` del compromiso de tarea en curso (R10)."""
+    goal = goals.get_open_goal(conversation)
+    return dict(goal.asked or {}) if goal is not None else {}
 
 
 def _open_proposals(conversation):
