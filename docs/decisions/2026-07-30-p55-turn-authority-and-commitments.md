@@ -268,6 +268,14 @@ factor. Deja de depender de que alguien se acuerde en la revisión.
 
 ### 6. Modelo de hechos (R13)
 
+> ⚠️ **ENMENDADO por [ADR p56](2026-08-01-p56-perception-situation-and-turn-as-root.md) §3**
+> (2026-08-01). Lo que sigue describe los **hechos de CONTROL** y sigue vigente
+> tal cual para ellos. p56 añade una segunda clase —los **hechos de SITUACIÓN**,
+> que cambian *cómo se dice* y no *qué pasa*— con el gate **simétrico**: si una
+> función de decisión los lee, es un bug. Sin esa separación, el gate estático de
+> abajo los borraría por «código muerto» y la regla, literalmente, prohibiría la
+> empatía.
+
 **Un hecho solo existe si puede cambiar una decisión futura.** Si un dato jamás
 puede modificar el comportamiento del sistema, no pertenece al modelo de
 hechos: pertenece al historial de mensajes.

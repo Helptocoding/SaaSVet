@@ -19,7 +19,14 @@
 > configuración de clínica · **p54** objetivos + conservación vinculante ·
 > **[p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md)**
 > autoridad del turno + compromisos (ACEPTADO e implementado; se escribió
-> ANTES del código, que es lo que lo hizo servir de brújula).
+> ANTES del código, que es lo que lo hizo servir de brújula) ·
+> **[p56](../decisions/2026-08-01-p56-perception-situation-and-turn-as-root.md)**
+> percepción, situación y el turno como unidad de razonamiento (ACEPTADO
+> 2026-08-01, **sin implementar**; enmienda R13 de p55 §6).
+>
+> Rediseño en curso: [auditoría de arquitectura](../whatsapp-agent-auditoria-arquitectura-2026-07-31.md)
+> → [plan É-F5](../whatsapp-agent-f5-conversacion-plan.md). **Fase 0 hecha**
+> (corpus de regresión + línea base); Fase 1 arranca con p56 ya aceptado.
 > Runbook operativo: [`runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
 
 ## Boundary (vinculante)

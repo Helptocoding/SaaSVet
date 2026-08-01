@@ -1734,8 +1734,8 @@ se cierran como `handoff`** — nunca se dejan huérfanas.
 
 | ADR | Qué decide | Cuándo |
 |---|---|---|
-| **p56 · Percepción, situación y conducción conversacional** | La inversión preempción→contención; el criterio C5; qué queda como salvaguarda; el contrato de `identify_client` y sus tres invariantes de privacidad; **los hechos de situación y sus tres prohibiciones (§2bis.2)**; C10-C12 | **antes de Fase 1** — es un cambio de responsabilidades, y p55 §8 exige que los cambios semánticos del runtime entren por ADR antes de implementarse, no después |
-| **Enmienda a p55 · R13** | **Separa hecho de control de hecho de situación** y les da gates simétricos (§2bis.4). Sin esto, el gate estático de R13 borra la capa de situación por «código muerto» — la regla actual prohíbe la empatía | **antes de Fase 1**, junto con p56. No es un matiz de redacción |
+| ✅ **[p56](decisions/2026-08-01-p56-perception-situation-and-turn-as-root.md)** · Percepción, situación y el turno como unidad de razonamiento | La inversión preempción→contención; el criterio C5; qué queda como salvaguarda; el contrato de `identify_client` y sus tres invariantes de privacidad; **los hechos de situación y sus prohibiciones**; que la percepción **ocurre siempre**; C10-C12 | **ACEPTADO 2026-08-01**, antes de escribir código — p55 §8 |
+| ✅ **Enmienda a p55 · R13** | **Separa hecho de control de hecho de situación** y les da gates simétricos. Sin esto, el gate estático de R13 borra la capa de situación por «código muerto» — la regla actual prohíbe la empatía | **Aceptada dentro de p56 §3** (un solo documento: las tres decisiones son separables en código e inseparables en efecto). p55 §6 lleva el aviso de enmienda in situ |
 | **Enmienda a p55 · autoridad** | El árbitro pasa de autoridad del turno a autoridad del compromiso; la jerarquía de §1 se reordena; `TurnDecision.verdict` se cierra | antes de Fase 4 |
 
 Ambos son **cambios semánticos**, no aditivos, según la tabla de p55 §8. El
