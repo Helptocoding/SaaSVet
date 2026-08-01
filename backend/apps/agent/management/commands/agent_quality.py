@@ -23,7 +23,11 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.agent.metrics import compute_goal_metrics, compute_quality_metrics
+from apps.agent.metrics import (
+    compute_conversation_metrics,
+    compute_goal_metrics,
+    compute_quality_metrics,
+)
 from apps.agent.models import Conversation, ConversationGoal, HumanHandoff
 from apps.organizations.models import Organization
 
@@ -57,6 +61,8 @@ class Command(BaseCommand):
                 continue
             report.append({
                 'organizacion': org.name,
+                'conversacion': compute_conversation_metrics(
+                    org, date_from, date_to),
                 'calidad': compute_quality_metrics(org, date_from, date_to),
                 'objetivos': compute_goal_metrics(org, date_from, date_to),
                 'revisar': self._sample(org, date_from, date_to,
@@ -118,28 +124,58 @@ class Command(BaseCommand):
     def _render(self, item, days):
         quality = item['calidad']
         goals = item['objetivos']
+        conv = item['conversacion']
         latency = quality['latencia_respuesta_ms']
         turns = quality['turnos_por_resolucion']
+        words = conv['palabras_por_mensaje_agente']
+        recovered = conv['interrupciones_recuperadas']
 
         self.stdout.write(f"\n=== {item['organizacion']} — últimos {days} días ===")
+
+        # --- Conversación (É-F5 §9bis): va PRIMERO a propósito ---------------
+        # Estas cifras hablan de lo que vive el cliente; las de abajo, del
+        # motor. El orden del informe es el mismo argumento del plan.
+        self.stdout.write("  · conversación")
         self.stdout.write(
-            f"  latencia de respuesta   p50 {_ms(latency['p50'])} · "
-            f"p95 {_ms(latency['p95'])} ({latency['muestras']} respuestas)")
+            f"    redactado por el agente {_pct(conv['pct_redactado_por_agente'])}"
+            f"   (el resto son plantillas; el 100% NO es la meta)")
         self.stdout.write(
-            f"  turnos por resolución   prom {turns['promedio'] or '—'} · "
+            f"    palabras por mensaje    p50 {words['p50'] or '—'} · "
+            f"p90 {words['p90'] or '—'} ({words['muestras']} mensajes)"
+            f"   → vigilar la PENDIENTE, no el valor")
+        self.stdout.write(
+            f"    turnos sin modelo       {_pct(conv['pct_turnos_sin_modelo'])}")
+        self.stdout.write(
+            f"    salientes repetidos     {conv['salientes_repetidos']}"
+            f"{'   ⚠ el agente se repitió palabra por palabra' if conv['salientes_repetidos'] else ''}")
+        self.stdout.write(
+            f"    interrupciones          {recovered['recuperadas']}/"
+            f"{recovered['total']} recuperadas ({_pct(recovered['tasa'])})")
+
+        self.stdout.write("  · motor")
+        self.stdout.write(
+            f"    latencia de respuesta   p50 {_ms(latency['p50'])} · "
+            f"p95 {_ms(latency['p95'])} ({latency['muestras']} respuestas)"
+            f"   → es un UMBRAL, no algo a minimizar")
+        self.stdout.write(
+            f"    turnos por resolución   prom {turns['promedio'] or '—'} · "
             f"p95 {turns['p95'] or '—'} ({turns['muestras']} objetivos)")
-        self.stdout.write(f"  tasa de repregunta      {_pct(quality['tasa_repregunta'])}")
-        self.stdout.write(f"  tasa de handoff         {_pct(quality['tasa_handoff'])}")
         self.stdout.write(
-            f"  audio entrante          {_pct(quality['pct_audio'])}"
+            f"    tasa de repregunta      {_pct(quality['tasa_repregunta'])}"
+            f"   (ciega a las plantillas — ver «salientes repetidos»)")
+        self.stdout.write(
+            f"    tasa de handoff         {_pct(quality['tasa_handoff'])}"
+            f"   → diagnóstico, NUNCA un KPI a bajar")
+        self.stdout.write(
+            f"    audio entrante          {_pct(quality['pct_audio'])}"
             f"{'   ⚠ supera 15%: toca transcripción (UX-14)' if quality['pct_audio'] > 0.15 else ''}")
-        self.stdout.write(f"  respuestas descartadas  {quality['respuestas_descartadas']}")
+        self.stdout.write(f"    respuestas descartadas  {quality['respuestas_descartadas']}")
         self.stdout.write(
-            f"  objetivos               {goals['completados']}/{goals['abiertos']} "
+            f"    objetivos               {goals['completados']}/{goals['abiertos']} "
             f"completados ({_pct(goals['tasa_completado'])})")
         if goals['slots_atorados']:
             atorados = ', '.join(f"{k}×{v}" for k, v in goals['slots_atorados'].items())
-            self.stdout.write(f"  se atoran en            {atorados}")
+            self.stdout.write(f"    se atoran en            {atorados}")
 
         self.stdout.write("\n  Para leer en /inbox (muestra estratificada):")
         for row in item['revisar']:

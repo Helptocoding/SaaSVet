@@ -107,13 +107,23 @@ def assert_no_forbidden(testcase, text, *, decoy_terms=()):
                              f"FUGA CROSS-TENANT '{term}' en: {text}")
 
 
-def run_turn(testcase, conversation, agent_user, text, *, scripted_llm,
-             decoy_terms=(), assert_clean=True):
+def run_turn(testcase, conversation, agent_user, text=None, *, scripted_llm,
+             decoy_terms=(), assert_clean=True, burst=None):
     """Persiste el entrante, corre el pipeline y devuelve la lista de cuerpos
     salientes producidos en el turno (en orden). Aplica las aserciones
-    prohibidas a cada saliente si assert_clean."""
+    prohibidas a cada saliente si assert_clean.
+
+    `burst` = varios mensajes del cliente en UN solo turno, como los agrupa el
+    worker (`drain-on-pickup`, §7-C9). En WhatsApp-MX el cliente escribe en
+    ráfagas de 1-4 palabras y hay defectos que **solo** aparecen así: el nombre
+    que llega en el mismo grupo que la respuesta al tamiz y se descarta. Sin
+    esto, el corpus de É-F5 no puede reproducir la conversación que lo motivó.
+    `text` sigue siendo la forma corta de `burst=[text]`.
+    """
     from apps.agent.llm import StubLLMClient
     from apps.agent.models import AgentSettings, TurnDecision
+
+    bodies_in = list(burst) if burst is not None else [text]
 
     before_ids = set(
         Message.objects.filter(
@@ -123,13 +133,14 @@ def run_turn(testcase, conversation, agent_user, text, *, scripted_llm,
     turn_decisions_before = TurnDecision.objects.filter(
         conversation=conversation).count()
 
-    Message.objects.create(
-        organization=conversation.organization,
-        channel_account=conversation.channel_account,
-        conversation=conversation, direction=Message.DIRECTION_IN,
-        author_type=Message.AUTHOR_CLIENT, body=text,
-        status=Message.STATUS_PROCESSED,
-    )
+    for body in bodies_in:
+        Message.objects.create(
+            organization=conversation.organization,
+            channel_account=conversation.channel_account,
+            conversation=conversation, direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT, body=body,
+            status=Message.STATUS_PROCESSED,
+        )
 
     agent_settings = AgentSettings.objects.filter(
         organization=conversation.organization,
@@ -137,9 +148,15 @@ def run_turn(testcase, conversation, agent_user, text, *, scripted_llm,
     stub = StubLLMClient(scripted=scripted_llm)
     executor = ToolExecutor(conversation, agent_user,
                             transport=RealApiTransport())
+    # `burst` solo viaja cuando el caller lo pidió: con un único mensaje se
+    # conserva el camino de siempre (`_last_inbound_text`). Pasarlo siempre
+    # sería equivalente EXCEPTO con texto vacío, donde `policy` paso 2b lo
+    # leería como adjunto sin texto — un cambio de conducta encubierto en un
+    # helper de tests.
+    extra = {'burst': bodies_in} if burst is not None else {}
     result = planner.handle_inbound(
         conversation, agent_settings=agent_settings,
-        llm_client=stub, executor=executor,
+        llm_client=stub, executor=executor, **extra,
     )
 
     # Exhaustividad de TurnDecision, Capa 2 (§9.2 del plan de gobernanza):

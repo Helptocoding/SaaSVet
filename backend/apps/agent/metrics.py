@@ -141,6 +141,102 @@ def compute_quality_metrics(organization, date_from, date_to):
     }
 
 
+def compute_conversation_metrics(organization, date_from, date_to):
+    """Métrica de CONVERSACIÓN, no de software (É-F5 §9bis).
+
+    Lo que se medía hasta aquí —handoffs, tools, costo, latencia— describe el
+    motor. Ninguna de esas cifras se habría movido si el agente hubiera
+    atendido bien la conversación del brief, y ninguna se mueve si la atiende
+    mal con las mismas llamadas.
+
+    Todo se deriva de tablas existentes; **cero campos nuevos**.
+
+    Dos advertencias de método que cambian lo que significan estos números:
+
+    - **`palabras_por_mensaje` mira SOLO `author_type='agent'`.** A medida que
+      las fases retiran plantillas, un promedio sobre todos los salientes se
+      movería por composición y no por deriva — la métrica cambiaría de
+      significado a mitad del plan, que es justo el defecto de
+      `tasa_repregunta`.
+    - **`pct_redactado_por_agente` no puede llegar al 100 %** y no es un
+      objetivo: hay clases de mensajes cuya literalidad *es* una garantía del
+      sistema (urgencia, opt-out, handoff). El techo depende de la mezcla de
+      tráfico — una semana con más urgencias lo baja, y eso es correcto.
+    """
+    from apps.channels.models import Message
+
+    from .models import TurnDecision
+
+    salientes = list(
+        Message.objects.for_organization(organization)
+        .filter(direction=Message.DIRECTION_OUT,
+                created_at__gte=date_from, created_at__lt=date_to)
+        .exclude(status=Message.STATUS_DISCARDED)
+        .values('conversation_id', 'author_type', 'body', 'created_at', 'id')
+        .order_by('conversation_id', 'created_at', 'id')
+    )
+
+    del_agente = [m for m in salientes if m['author_type'] == 'agent']
+    automaticos = [m for m in salientes if m['author_type'] in ('agent', 'system')]
+
+    palabras = [len((m['body'] or '').split()) for m in del_agente]
+
+    # Salientes consecutivos IDÉNTICOS dentro de una misma conversación:
+    # proxy exacto de «turno que no aportó nada» (§9bis.2). Hoy es 100 %
+    # fiable porque los repetidos son plantillas literales.
+    repetidos, previo_conv, previo_body = 0, None, None
+    for message in automaticos:
+        cuerpo = (message['body'] or '').strip()
+        if message['conversation_id'] == previo_conv and cuerpo == previo_body:
+            repetidos += 1
+        previo_conv, previo_body = message['conversation_id'], cuerpo
+
+    decisiones = TurnDecision.objects.filter(
+        organization=organization,
+        created_at__gte=date_from, created_at__lt=date_to,
+    )
+    turnos = decisiones.count()
+    sin_modelo = decisiones.filter(planner_used=False).count()
+
+    # Interrupciones recuperadas: un compromiso con dirección de retorno
+    # (`return_to`, obligatorio al desviar desde p55) que además se completó.
+    # `resume()` NO borra `return_to`, así que la evidencia sobrevive.
+    from .models import ConversationGoal
+    desviados = ConversationGoal.objects.filter(
+        organization=organization,
+        created_at__gte=date_from, created_at__lt=date_to,
+    ).exclude(return_to='')
+    desviados_total = desviados.count()
+    desviados_ok = desviados.filter(
+        status=ConversationGoal.STATUS_COMPLETED).count()
+
+    return {
+        # Métrica insignia de É-F5. NO es un objetivo a maximizar.
+        'pct_redactado_por_agente': (
+            round(len(del_agente) / len(automaticos), 4) if automaticos else 0.0),
+        'palabras_por_mensaje_agente': {
+            'p50': _percentile(palabras, 50),
+            'p90': _percentile(palabras, 90),
+            'muestras': len(palabras),
+        },
+        'pct_turnos_sin_modelo': (
+            round(sin_modelo / turnos, 4) if turnos else 0.0),
+        'salientes_repetidos': repetidos,
+        'interrupciones_recuperadas': {
+            'total': desviados_total,
+            'recuperadas': desviados_ok,
+            'tasa': (round(desviados_ok / desviados_total, 4)
+                     if desviados_total else 0.0),
+        },
+        # Honestidad deliberada: «cambios de tema exitosos» NO es derivable
+        # hoy. `goals.resume()` limpia `supplanted_by`, así que la evidencia de
+        # que un compromiso fue suplantado desaparece al retomarlo. Antes que
+        # inventar un proxy malo, se declara ausente — necesitaría un campo
+        # nuevo y eso es otro sprint.
+        'cambios_de_tema_exitosos': None,
+    }
+
+
 def compute_goal_metrics(organization, date_from, date_to):
     """Embudo por OBJETIVO y por SLOT (É-F3 W2).
 
