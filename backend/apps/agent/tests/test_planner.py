@@ -46,15 +46,30 @@ def _seed_role(org, role_name):
     return role
 
 
+def _next_open_days(count, min_offset=1):
+    """`count` fechas ISO ABIERTAS, distintas y crecientes, desde
+    `hoy + min_offset`. Salta domingo (único día cerrado del horario default,
+    `DEFAULT_ORGANIZATION_SCHEDULE`).
+
+    Existe además de `_next_open_day` porque pedir dos días con offsets
+    independientes NO garantiza que sean distintos: en sábado, `+1` salta el
+    domingo y cae en lunes, y `+2` cae en lunes también. Un test que necesita
+    "un día y OTRO día" tiene que pedirlos juntos.
+    """
+    days, day = [], timezone.now().date() + timedelta(days=min_offset)
+    while len(days) < count:
+        if day.isoweekday() != 7:
+            days.append(day.isoformat())
+        day += timedelta(days=1)
+    return days
+
+
 def _next_open_day(min_offset):
     """Fecha ISO a >= `min_offset` días, saltando domingo (único día cerrado
     del horario default, `DEFAULT_ORGANIZATION_SCHEDULE`). Sin esto, pruebas
     con un offset fijo son intermitentes: si "hoy + N" cae en domingo,
     `find_available_slots` devuelve `closed=True` sin capturar ningún slot."""
-    day = timezone.now().date() + timedelta(days=min_offset)
-    while day.isoweekday() == 7:
-        day += timedelta(days=1)
-    return day.isoformat()
+    return _next_open_days(1, min_offset)[0]
 
 
 class TestClientTransport:
@@ -505,37 +520,40 @@ class PlannerSlotCaptureTests(PlannerTestCase):
     def test_probed_date_not_updated_by_a_later_probe(self):
         """Deuda documentada (Fase 0 §0.7, introducida por el fix `103196e`):
         `_capture_slot_from_read` solo rellena si el slot está VACÍO. Si el
-        modelo SONDEA el lunes (lo captura desde una lectura) y el cliente
-        elige el martes, una segunda lectura NO corrige — 'date' ya no está
-        en `missing`. Hoy lo salva que los args de ESCRITURA sí sobrescriben;
-        este test ancla el comportamiento actual (bug conocido) antes de que
-        Fase 3 lo reescriba (CR-7). NO es un cambio de código de Fase 0."""
+        modelo SONDEA un día (lo captura desde una lectura) y el cliente elige
+        otro, una segunda lectura NO corrige — 'date' ya no está en `missing`.
+        Hoy lo salva que los args de ESCRITURA sí sobrescriben; este test ancla
+        el comportamiento actual (bug conocido) antes de que Fase 3 lo reescriba
+        (CR-7). NO es un cambio de código de Fase 0."""
         from apps.agent import goals
-        monday = (timezone.now() + timedelta(days=1)).date().isoformat()
-        tuesday = (timezone.now() + timedelta(days=2)).date().isoformat()
-        self._inbound("regístrame, tal vez el lunes")
+        # Dos días ABIERTOS y distintos, pedidos juntos: con offsets fijos el
+        # test era intermitente (el sábado, "hoy+1" cae en domingo y no se
+        # captura nada) y con dos `_next_open_day` independientes los dos días
+        # podían colapsar en el mismo.
+        first_probe, second_probe = _next_open_days(2)
+        self._inbound("regístrame, tal vez ese día")
         self._handle(StubLLMClient(scripted=[
             LLMResult(kind="tool_call",
                       tool_name="register_new_client_and_pet",
                       tool_args={"owner_name": "Ana Torres",
                                  "pet_name": "Luna", "reason": "consulta"}),
             LLMResult(kind="tool_call", tool_name="find_available_slots",
-                      tool_args={"date": monday}),
-            LLMResult(kind="text", text="El lunes tengo espacio 🙂"),
+                      tool_args={"date": first_probe}),
+            LLMResult(kind="text", text="Ese día tengo espacio 🙂"),
         ]))
         goal = goals.get_open_goal(self.conv)
-        self.assertEqual(goal.slots["date"]["value"], monday)
+        self.assertEqual(goal.slots["date"]["value"], first_probe)
 
-        self._inbound("mejor el martes")
+        self._inbound("mejor el otro día")
         self._handle(StubLLMClient(scripted=[
             LLMResult(kind="tool_call", tool_name="find_available_slots",
-                      tool_args={"date": tuesday}),
-            LLMResult(kind="text", text="También tengo el martes 🙂"),
+                      tool_args={"date": second_probe}),
+            LLMResult(kind="text", text="También tengo ese otro día 🙂"),
         ]))
         goal = goals.get_open_goal(self.conv)
-        # BUG conocido: se queda en el lunes porque 'date' ya no estaba
+        # BUG conocido: se queda en el PRIMER día porque 'date' ya no estaba
         # `missing` cuando llegó el segundo sondeo.
-        self.assertEqual(goal.slots["date"]["value"], monday)
+        self.assertEqual(goal.slots["date"]["value"], first_probe)
 
 
 class PlannerBudgetTests(PlannerTestCase):
