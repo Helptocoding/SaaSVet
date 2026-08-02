@@ -14,11 +14,12 @@ Estos tests son a nivel serializer (sin DB/auth): blindan el contrato de campos
 mínimos sin acoplarse al endpoint. El aislamiento multi-tenant se cubre aparte en
 test_pet_create_minimal_api.py.
 """
-from datetime import date, timedelta
+from datetime import timedelta
 from types import SimpleNamespace
 
 from django.test import TestCase
 
+from apps.core.datetime_utils import org_today_local
 from apps.patients.serializers import PetSerializer
 
 
@@ -59,10 +60,26 @@ class PetMinimalFieldsTests(TestCase):
         self.assertIsNone(s.validated_data.get('birth_date'))
 
     def test_birth_date_future_rejected(self):
-        future = (date.today() + timedelta(days=1)).isoformat()
+        # "Futura" se mide contra el día local de la CLÍNICA, no del servidor
+        # (regla de calendario, backend/CLAUDE.md). Con `date.today()` este
+        # test fallaba en la ventana en que ambos relojes discrepan: el
+        # "mañana" del servidor ya era HOY para la organización.
+        org = _ctx()['request'].user.organization
+        future = (org_today_local(org) + timedelta(days=1)).isoformat()
         s = PetSerializer(data=_data(birth_date=future), context=_ctx())
         self.assertFalse(s.is_valid())
         self.assertIn('birth_date', s.errors)
+
+    def test_birth_date_today_accepted(self):
+        """El borde de la regla: HOY no es futuro.
+
+        Sin este caso, un validador que se pasara un día por exceso pasaría
+        desapercibido — que es exactamente el defecto que se corrigió.
+        """
+        org = _ctx()['request'].user.organization
+        s = PetSerializer(data=_data(birth_date=org_today_local(org).isoformat()),
+                          context=_ctx())
+        self.assertTrue(s.is_valid(), s.errors)
 
     # ── species opcional (pendiente) ─────────────────────────────────────
     def test_species_blank_means_pending(self):

@@ -116,6 +116,36 @@ Nunca confiar en frontend.
 
 ---
 
+# Fechas y calendario
+
+"Hoy" es el día local de la ORGANIZACIÓN, nunca el del servidor.
+
+Prohibido en lógica de negocio:
+
+date.today()
+datetime.now()      # sin zona
+
+Usar:
+
+org_today_local(org)        # apps.core.datetime_utils
+serializer_today(self)      # dentro de un validador de serializer
+
+Sí están permitidos, porque no son ambiguos:
+
+timezone.now()              # aware, UTC — Django
+datetime.now(tz)            # con zona explícita
+
+Motivo (hallazgo 2026-08-01): cinco sitios validaban con `date.today()`, que
+devuelve la fecha del sistema operativo. Con servidor en UTC y clínica en
+México, van un día desalineados seis horas cada noche — el validador de
+vacunas aceptaba registrar una aplicación con fecha de mañana en un
+expediente clínico.
+
+La regla la hace cumplir un gate:
+apps/core/tests/test_calendar_rule_audit.py (tolerancia cero, sin baseline).
+
+---
+
 # Estados
 
 No modificar estados directamente.

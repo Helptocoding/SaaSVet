@@ -19,6 +19,7 @@ import re
 from django.db import transaction
 from django.utils import timezone
 
+from apps.core.datetime_utils import org_today_local
 from apps.patients.models import Owner, Pet
 from apps.patients.serializers import NAME_REGEX
 
@@ -122,11 +123,16 @@ def _project_row(columns, mapping, row, imported_at=None):
     return data, owner_extra[:_EXTRA_MAX_ENTRIES], pet_extra[:_EXTRA_MAX_ENTRIES]
 
 
-def _parse_birth_date(raw):
+def _parse_birth_date(raw, org):
     """Devuelve (iso_date|None, ok). Acepta YYYY-MM-DD y DD/MM/YYYY.
 
     Fecha inválida ⇒ (None, False) → el caller la trata como WARNING (campo
     opcional y relajado): se importa la mascota sin fecha en lugar de fallar.
+
+    `org` es obligatorio: "no puede ser futura" se evalúa contra el día local
+    de la CLÍNICA, no contra el del servidor (regla de calendario del
+    proyecto). Con `date.today()`, una importación hecha de noche rechazaba —o
+    aceptaba— fechas de un día distinto al que ve la clínica.
     """
     import datetime
     value = (raw or '').strip()
@@ -135,7 +141,7 @@ def _parse_birth_date(raw):
     for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y', '%Y/%m/%d'):
         try:
             d = datetime.datetime.strptime(value, fmt).date()
-            if d > datetime.date.today():
+            if d > org_today_local(org):
                 return None, False
             return d.isoformat(), True
         except ValueError:
@@ -146,7 +152,7 @@ def _parse_birth_date(raw):
 # ---------------------------------------------------------------------------
 # Limpieza + validación pura de una fila (sin DB) — testeable aislada
 # ---------------------------------------------------------------------------
-def clean_owner_pet_row(data):
+def clean_owner_pet_row(data, org):
     """Valida y normaliza una fila owner_pet.
 
     Devuelve (clean: dict, errors: list[dict], warnings: list[dict]).
@@ -208,7 +214,7 @@ def clean_owner_pet_row(data):
     clean['pet_sex'] = normalize_sex(data.get('pet.sex'))
 
     raw_birth = (data.get('pet.birth_date') or '').strip()
-    iso_birth, ok = _parse_birth_date(raw_birth)
+    iso_birth, ok = _parse_birth_date(raw_birth, org)
     if raw_birth and not ok:
         warnings.append({'field': 'pet.birth_date', 'message': f'Fecha de nacimiento ignorada (formato inválido): "{raw_birth}".'})
     clean['pet_birth_date'] = iso_birth
@@ -414,7 +420,7 @@ def validate_job(job):
 
     for i, row in enumerate(job.rows, start=1):
         data, _owner_extra, _pet_extra = _project_row(columns, job.mapping, row)
-        clean, errors, warnings = clean_owner_pet_row(data)
+        clean, errors, warnings = clean_owner_pet_row(data, org)
         for w in warnings:
             result['warnings'].append({'row': i, **w})
         if errors:
@@ -616,7 +622,7 @@ def commit_job(job):
     with transaction.atomic():
         for i, row in enumerate(job.rows, start=1):
             data, owner_extra, pet_extra = _project_row(columns, job.mapping, row, imported_at)
-            clean, errors, warnings = clean_owner_pet_row(data)
+            clean, errors, warnings = clean_owner_pet_row(data, org)
             for w in warnings:
                 result['warnings'].append({'row': i, **w})
             if errors:

@@ -27,6 +27,27 @@ def org_today_local(org, *, now=None):
     return org_now_local(org, now=now).date()
 
 
+def serializer_today(serializer):
+    """Día local de la ORGANIZACIÓN del actor, para validadores de serializer.
+
+    Existe para que la regla del proyecto sea fácil de cumplir: en un
+    validador no hay `request` a mano salvo por el contexto, y sin un atajo la
+    gente escribe `date.today()` — que es la fecha del **sistema operativo**,
+    no la de la clínica. Un servidor en UTC y una clínica en México discrepan
+    seis horas cada noche.
+
+    Se accede con `.get('request')` + assert, no con `['request']`: si un día
+    alguien reusa el serializer sin contexto, el mensaje dice qué falta en vez
+    de reventar con un `KeyError` opaco.
+    """
+    request = serializer.context.get('request')
+    assert request is not None, (
+        f"{type(serializer).__name__} necesita `request` en el contexto para "
+        f"resolver el día local de la organización (regla de calendario)"
+    )
+    return org_today_local(request.user.organization)
+
+
 def local_day_bounds_utc(org, local_date):
     tz = get_context_timezone(org)
 

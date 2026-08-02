@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 
+from apps.core.datetime_utils import org_today_local
+
 from django.db.models import Count, Q
 from rest_framework import status
 from rest_framework.decorators import action
@@ -98,19 +100,21 @@ class PetViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
             qs = qs.filter(species__iregex=_FELINE_REGEX)
         if sex in ("male", "female", "unknown"):
             qs = qs.filter(sex=sex)
-        qs = self._apply_age_filter(qs, age)
+        qs = self._apply_age_filter(qs, age, org)
         if owner_lookup:
             # Día 6 Fase 3: resolver Owner por public_id antes del filtro.
             owner = resolve_public_id(Owner.objects.for_organization(org), owner_lookup)
             qs = qs.filter(owner=owner)
         return qs
 
-    def _apply_age_filter(self, qs, age):
+    def _apply_age_filter(self, qs, age, org):
         bucket = _AGE_BUCKETS.get(age)
         if not bucket:
             return qs
         younger_years, older_years = bucket
-        today = date.today()
+        # Día local de la clínica: `date.today()` es la fecha del servidor y
+        # desplazaría los cortes de edad un día durante la ventana de desfase.
+        today = org_today_local(org)
         # birth_date NULL queda excluido de todo bucket etario (comparación SQL
         # contra NULL = falso) — igual que getAgeGroup(null) → null en frontend.
         if younger_years is not None:

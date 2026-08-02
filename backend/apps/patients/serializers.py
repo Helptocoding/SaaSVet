@@ -2,6 +2,8 @@ import re
 
 from rest_framework import serializers
 
+from apps.core.datetime_utils import serializer_today
+
 from apps.core.validators import validate_mx_phone
 
 from .models import Pet, Owner, SPECIES_CHOICES
@@ -92,8 +94,8 @@ class PetSerializer(serializers.ModelSerializer):
         # Si viene un valor, no puede ser futura.
         if value is None:
             return None
-        from datetime import date
-        if value > date.today():
+        # Día local de la clínica, no del servidor (ver `serializer_today`).
+        if value > serializer_today(self):
             raise serializers.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
         return value
 

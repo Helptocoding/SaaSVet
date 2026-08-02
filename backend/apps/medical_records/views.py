@@ -1,6 +1,8 @@
 import logging
 from datetime import date
 
+from apps.core.datetime_utils import org_today_local
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -395,7 +397,9 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
         next_vaccine = (
             VaccineRecord.objects
             .for_organization(request.user.organization)
-            .filter(pet=mr.pet, next_due_date__gte=date.today())
+            .filter(pet=mr.pet,
+                    next_due_date__gte=org_today_local(
+                        request.user.organization))
             .order_by('next_due_date')
             .first()
         )

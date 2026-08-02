@@ -1,5 +1,7 @@
 import json
 from datetime import date, timedelta
+
+from apps.core.datetime_utils import serializer_today
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
@@ -444,7 +446,11 @@ class VaccineRecordSerializer(serializers.ModelSerializer):
         return clean
 
     def validate_application_date(self, value):
-        if value > date.today():
+        # Día local de la CLÍNICA, no del servidor: con `date.today()` un
+        # servidor en UTC va un día por delante de una clínica en México
+        # durante seis horas cada noche, y aceptaba registrar una vacuna con
+        # fecha de mañana en un expediente clínico.
+        if value > serializer_today(self):
             raise serializers.ValidationError("La fecha de aplicación no puede ser en el futuro.")
         return value
 
