@@ -56,6 +56,15 @@ class StaticBoundaryTests(SimpleTestCase):
         **es un bug**. Si esto se rompe, la empatía se convirtió en un gate y
         el subsistema ganó su tercera máquina de estados — que es exactamente
         lo que É-F5 viene a desmontar.
+
+        **Si esto falla por el camino PROACTIVO, el arreglo no es relajar el
+        gate.** La enmienda de p56 permite que un automatismo iniciado por el
+        sistema consulte la situación *solo para cancelarse*; lo que no puede
+        es vivir dentro de `policy.py`, que es el camino reactivo. Ese fallo es
+        la señal de que toca sacar el camino proactivo a su propio módulo —
+        deliberadamente diferido hasta que haya más de un consumidor, para no
+        diseñar su API alrededor del único que existe hoy
+        (`nudge_abandoned_flows`).
         """
         prohibidos = ('arbiter.py', 'policy.py', 'guards.py')
         for nombre in prohibidos:

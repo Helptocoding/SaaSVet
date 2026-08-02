@@ -190,13 +190,33 @@ interviene:
 > restricción a automatismos iniciados por el sistema, «situación» acaba
 > siendo una segunda política de control disfrazada de empatía.
 
-**Consecuencia estructural (implementación).** El gate estático actual prohíbe
-que `policy.py` lea situación, y el recordatorio automático vive ahí dentro.
-Para que la frontera sea mecánica y no un comentario, **el camino proactivo se
-separa del camino del turno**: los mensajes que el sistema inicia salen de su
-propio módulo, que sí puede leer situación —solo para **no** enviar—, mientras
-`policy.py`, `arbiter.py` y `guards.py` siguen sin poder tocarla. La regla deja
-de depender de que alguien recuerde en qué función está escribiendo.
+**El contrato, que es lo único que este ADR cierra:**
+
+| Camino | ¿Lee situación? |
+|---|---|
+| **Reactivo** — responder a un mensaje del cliente | **nunca** |
+| **Proactivo** — lo que el sistema inicia | **sí, y solo para cancelar un automatismo**. Nada más |
+
+**Lo que este ADR NO decide: dónde vive el camino proactivo.** Hoy el único
+consumidor conocido es `nudge_abandoned_flows`, dentro de `policy.py`. Extraer
+un módulo ahora significaría diseñar su API alrededor de un solo caso, y lo que
+viene no se conoce todavía: recordatorio de cita, seguimiento postoperatorio,
+refuerzo de vacuna, encuesta, aviso de laboratorio. La forma correcta se ve
+cuando se ven varios, no uno (decisión del PO, 2026-08-01).
+
+> **Quién dispara la extracción: el propio gate.** El gate estático prohíbe que
+> `policy.py` importe `situation` — y el camino proactivo vive ahí dentro. El
+> día que alguien implemente una supresión por situación, CI se pone en rojo, y
+> ese es exactamente el momento en que la presión arquitectónica existe. El
+> arreglo entonces **no es relajar el gate**: es sacar el camino proactivo de
+> `policy.py`.
+>
+> Así el pendiente no depende de que alguien lo recuerde ni envejece en una
+> nota al pie: se cobra solo, y en el momento correcto.
+
+Verificado al cerrar la Fase 1: `policy.py` tiene **cero** referencias a
+`situation`; el único consumidor es `prompts.py`, que la publica al modelo. La
+arquitectura no contradice este ADR en ningún commit.
 
 #### El modelo puede ignorar la situación por completo
 
