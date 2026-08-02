@@ -16,6 +16,26 @@ from apps.patients.models import Owner, Pet
 from apps.users.models import User
 
 
+# Hora FIJA para todos los huecos de prueba. Estos tests prueban idempotencia y
+# el guard de fecha pasada; la hora del día es irrelevante para ambos.
+#
+# Con la hora ACTUAL sí importaba, y mal: el hueco se armaba como
+# `now + N días` y `end_time = start + 30 min`, ambos formateados `%H:%M`. En
+# los últimos 30 minutos del día UTC eso envuelve —23:50 produce end 00:20— y
+# el serializer lo rechaza (`end_time <= start_time`, appointments/serializers
+# §96). La suite fallaba en una ventana de 30 minutos cada noche.
+SLOT_HOUR = 10
+
+
+def _slot(days):
+    """`(fecha_iso, inicio_hhmm, fin_hhmm)` a `days` días, a hora fija.
+
+    `days` negativo da una fecha pasada (para el guard de reprogramación).
+    """
+    day = (timezone.now() + timedelta(days=days)).date()
+    return day.isoformat(), f"{SLOT_HOUR:02d}:00", f"{SLOT_HOUR:02d}:30"
+
+
 def _seed_admin(org):
     wildcard, _ = Permission.objects.get_or_create(code="*.*")
     role, _ = Role.objects.get_or_create(
@@ -43,13 +63,13 @@ class IdempotencyTestBase(APITestCase):
         self.client.force_authenticate(self.admin)
 
     def _future(self, days=3):
-        start = timezone.now() + timedelta(days=days)
+        date, start, end = _slot(days)
         return {
             "pet": self.pet.id,
             "veterinarian": self.vet.id,
-            "date": start.date().isoformat(),
-            "start_time": start.strftime("%H:%M"),
-            "end_time": (start + timedelta(minutes=30)).strftime("%H:%M"),
+            "date": date,
+            "start_time": start,
+            "end_time": end,
             "reason": "vacuna",
         }
 
@@ -83,16 +103,16 @@ class CreateIdempotencyTests(IdempotencyTestBase):
 
 class CreateWithPatientIdempotencyTests(IdempotencyTestBase):
     def _payload(self):
-        start = timezone.now() + timedelta(days=3)
+        date, start, end = _slot(3)
         return {
             "owner_name": "Nuevo Cliente",
             "owner_phone": "5599887766",
             "pet_name": "Michi",
             "pet_species": "felino",
             "veterinarian": self.vet.id,
-            "date": start.date().isoformat(),
-            "start_time": start.strftime("%H:%M"),
-            "end_time": (start + timedelta(minutes=30)).strftime("%H:%M"),
+            "date": date,
+            "start_time": start,
+            "end_time": end,
             "reason": "revision",
         }
 
@@ -121,12 +141,10 @@ class PastDateGuardTests(IdempotencyTestBase):
         r = self.client.post("/api/appointments/", self._future())
         public_id = r.json()["public_id"]
 
-        past = timezone.now() - timedelta(days=2)
+        past_date, start, end = _slot(-2)
         patch = self.client.patch(
             f"/api/appointments/{public_id}/",
-            {"date": past.date().isoformat(),
-             "start_time": past.strftime("%H:%M"),
-             "end_time": (past + timedelta(minutes=30)).strftime("%H:%M")},
+            {"date": past_date, "start_time": start, "end_time": end},
         )
         self.assertEqual(patch.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -134,12 +152,10 @@ class PastDateGuardTests(IdempotencyTestBase):
         r = self.client.post("/api/appointments/", self._future())
         public_id = r.json()["public_id"]
 
-        future = timezone.now() + timedelta(days=5)
+        future_date, start, end = _slot(5)
         patch = self.client.patch(
             f"/api/appointments/{public_id}/",
-            {"date": future.date().isoformat(),
-             "start_time": future.strftime("%H:%M"),
-             "end_time": (future + timedelta(minutes=30)).strftime("%H:%M")},
+            {"date": future_date, "start_time": start, "end_time": end},
         )
         self.assertEqual(patch.status_code, status.HTTP_200_OK, patch.content)
 
