@@ -1132,12 +1132,12 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
         owner = Owner.objects.filter(
             organization=conversation.organization, public_id=owner_pid).first()
         if owner is not None:
-            contact.owner = owner
-            contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
-            contact.verified_at = timezone.now()
-            contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
-            contact.save(update_fields=[
-                'owner', 'verification_level', 'verified_at', 'linked_via'])
+            # Elevar el nivel de verificación ocurre ÚNICAMENTE en
+            # `identity.py` (ADR p56 inv. 5): es el único módulo que cotea
+            # contra la base, y la regla no admite excepciones o deja de ser
+            # una frontera.
+            from . import identity
+            identity.link_self_registered(contact, owner)
 
     _add_ref(conversation, 'cita', data.get('public_id'))
     _save_refs(conversation)
@@ -1185,6 +1185,126 @@ def link_family_member(conversation, executor, args, triggered_by=None):
     # El reto ya quedó propuesto (es un compromiso persistido); la pregunta
     # la redacta el planner — una tool no le escribe copy al cliente.
     return ToolOutcome(ok=True, summary={'family_challenge': 'started'})
+
+
+# ---------------------------------------------------------------------------
+# Identidad como HERRAMIENTA, no como máquina de estados (ADR p56 §5, É-F5 F1)
+# ---------------------------------------------------------------------------
+# Etiquetas de FACTOR en voz de negocio. Se devuelven al modelo en vez de los
+# valores: el modelo tiene que poder decir «me falta el nombre del titular»
+# sin poder decir «¿eres Ana Cruz?» — G4, el cliente aporta y el sistema
+# verifica, jamás al revés.
+_FACTOR_LABELS = {
+    'owner_name': 'el nombre del titular del registro',
+    'pet_name': 'el nombre de una de sus mascotas',
+    'phone_digits': 'los últimos 4 dígitos del teléfono registrado',
+}
+
+
+def identify_client(conversation, executor, args, triggered_by=None):
+    """Registra y VERIFICA lo que el cliente aportó sobre su identidad.
+
+    El modelo aporta el candidato; **el código dictamina** contra la base
+    (ADR p56 §5, invariante 5). `verification_level` lo siguen escribiendo
+    solo `identity._promote` y `identity.link_family`; esta herramienta no lo
+    toca por su cuenta.
+
+    Tres invariantes de privacidad, y los tres son de seguridad:
+
+    - **Nunca devuelve nombres ni conteos de candidatos.** El modelo no puede
+      enumerar lo que no sabe. Por eso `ya_tengo`/`falta` son ETIQUETAS de
+      factor, no valores.
+    - **Comportamiento uniforme exista o no el registro.** Pedir los 4 dígitos
+      no puede significar «encontré a alguien con ese nombre», o la
+      herramienta se vuelve un oráculo de existencia. `falta` se calcula de lo
+      que el cliente NO aportó, jamás de lo que hay en la base.
+    - **El vínculo familiar exige los tres factores contra UN solo owner.** Dos
+      homónimos que pasen mascota y dígitos ⇒ no se vincula nada.
+
+    Alcance de Fase 1 (aditivo, la FSM de identidad sigue corriendo): esta
+    herramienta **no crea ni destruye compromisos** — solo marca factores
+    satisfechos en el que ya exista, así que no puede interferir con el reto
+    que `policy.evaluate` esté conduciendo. Lo aportado sin compromiso vivo
+    aterriza en `flow['aportado']`, que es scratchpad (filosofía ADR p50) y que
+    **ninguna función de decisión lee**.
+    """
+    from . import goals, identity
+    from .models import ConversationGoal
+
+    contact = conversation.contact
+    org = conversation.organization
+    aportado = {
+        key: str(args.get(key) or '').strip()
+        for key in ('owner_name', 'pet_name', 'phone_digits')
+        if str(args.get(key) or '').strip()
+    }
+
+    # 1 · GUARDAR lo que llegó, se lo hayamos pedido o no (C2, modo push).
+    if aportado:
+        flow_store = dict(conversation.flow.get('aportado') or {})
+        flow_store.update(aportado)
+        conversation.flow['aportado'] = flow_store
+        conversation.save(update_fields=['flow'])
+
+    commitment = goals.get_identity_commitment(conversation)
+    if commitment is not None:
+        for key in aportado:
+            factor = {'owner_name': 'titular', 'pet_name': 'pet',
+                      'phone_digits': 'digits'}.get(key)
+            # Los nombres sí se guardan (el embudo los necesita); de los
+            # dígitos se guarda SATISFACCIÓN, nunca el secreto.
+            if factor == 'digits':
+                goals.satisfy(commitment, factor)
+            elif factor:
+                goals.satisfy(commitment, factor, aportado[key])
+
+    # 2 · VERIFICAR contra la base. Deterministo, y es quien dictamina.
+    verified = False
+    if contact.owner_id is not None:
+        # Número ya asociado a un titular: basta con un factor correcto.
+        if aportado.get('pet_name'):
+            verified = identity.try_verify_by_pet_answer(
+                contact, aportado['pet_name'])
+        if not verified and aportado.get('owner_name'):
+            verified = identity.try_verify_by_owner_name(
+                contact, aportado['owner_name'])
+    elif len(aportado) == 3:
+        # Número desconocido actuando por un titular: los TRES factores contra
+        # un mismo owner, o no se vincula nada (reto triple, UX-04).
+        survivors = [
+            owner for owner in identity.find_link_candidates(
+                org, aportado['owner_name'])
+            if identity.owner_has_pet(owner, aportado['pet_name'])
+            and identity.owner_digits_match(owner, aportado['phone_digits'])
+        ]
+        if len(survivors) == 1:
+            identity.link_family(contact, survivors[0])
+            verified = True
+
+    # Verificado con un reto en curso: el reto existía para esto, así que se
+    # cierra y la tarea suspendida vuelve al frente. No se deja colgando.
+    if verified and commitment is not None:
+        goals.finish_identity(conversation, commitment,
+                              ConversationGoal.STATUS_COMPLETED, 'identified')
+
+    # 3 · DEVOLVER HECHOS. Sin nombres, sin conteos, sin oráculo.
+    if contact.owner_id is not None and not verified:
+        pendientes = ['pet_name', 'owner_name']
+    else:
+        pendientes = ['owner_name', 'pet_name', 'phone_digits']
+    falta = [_FACTOR_LABELS[key] for key in pendientes if key not in aportado]
+
+    executor.record_local(
+        tool_name='identify_client',
+        args_redacted={'aporto': sorted(aportado)},   # claves, jamás valores
+        summary={'verificado': verified},
+        triggered_by_message=triggered_by,
+    )
+    return ToolOutcome(ok=True, summary={'verificado': verified}, data={
+        'verificado': verified,
+        'ya_tengo': [_FACTOR_LABELS[key] for key in sorted(aportado)],
+        'falta': [] if verified else falta,
+    })
 
 
 def request_human(conversation, executor, args, triggered_by=None):
@@ -1408,6 +1528,42 @@ TOOL_SPECS = {
                 'type': 'string',
                 'description': 'Nombre del cliente titular que dijo el contacto'}},
             'required': ['titular_name'],
+        },
+    },
+    'identify_client': {
+        'handler': identify_client,
+        'tier': '1',
+        # `unknown` a propósito: es la herramienta que EXISTE para los
+        # contactos sin verificar. Exigir verificación para poder verificarse
+        # sería circular.
+        'min_verification': 'unknown',
+        'description': (
+            'Registra y verifica lo que el cliente te haya dicho sobre quién '
+            'es. Llámala EN CUANTO te diga cualquiera de estos datos, aunque '
+            'sea uno solo y aunque no se lo hayas pedido: su nombre, el '
+            'nombre de su mascota, o los últimos 4 dígitos del teléfono con '
+            'el que está registrado. Te responde si ya quedó identificado y '
+            'qué falta. NO te devuelve datos del expediente: tú nunca le dices '
+            'un nombre al cliente para que lo confirme, es él quien los aporta.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'owner_name': {
+                    'type': 'string',
+                    'description': 'Nombre del titular, tal como lo dijo'},
+                'pet_name': {
+                    'type': 'string',
+                    'description': 'Nombre de una mascota, tal como lo dijo'},
+                'phone_digits': {
+                    'type': 'string',
+                    'description': 'Últimos 4 dígitos del teléfono registrado'},
+            },
+            # Vacío a propósito (mismo criterio que las tools de objetivo,
+            # ADR p54): tiene que poder llamarse con UN solo dato. Exigir el
+            # juego completo obligaría al modelo a esperar, y esperar es
+            # justamente lo que hace que el dato se pierda.
+            'required': [],
         },
     },
     'request_human': {

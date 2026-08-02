@@ -201,6 +201,29 @@ def owner_digits_match(owner, answer):
     return bool(phone) and len(given) >= 4 and phone[-4:] == given[-4:]
 
 
+def link_self_registered(contact, owner):
+    """Vincula el contacto al owner que ACABA de crear con sus propios datos.
+
+    Vivía dentro de `tools.commit_register_new_client_and_pet`, y ahí era el
+    tercer sitio del subsistema capaz de elevar el nivel a `confirmed_in_chat`
+    — el gate estático de ADR p56 (invariante 5) lo detectó. Se mueve aquí para
+    que la regla sea cierta sin excepciones: **elevar a `confirmed_in_chat`
+    ocurre únicamente en este módulo**, que es el único que cotea contra la
+    base.
+
+    Por qué es legítimo elevar aquí sin reto: el `Owner` se acaba de crear a
+    partir de este mismo contacto (probó control del número al escribir y
+    aportó sus datos). No hay expediente previo que suplantar — que es
+    exactamente lo que el reto existe para impedir.
+    """
+    contact.owner = owner
+    contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
+    contact.verified_at = timezone.now()
+    contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
+    contact.save(update_fields=[
+        'owner', 'verification_level', 'verified_at', 'linked_via'])
+
+
 def link_family(contact, owner):
     """Vincula el contacto como secundario del owner (tras el reto triple)."""
     contact.owner = owner

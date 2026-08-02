@@ -283,7 +283,7 @@ def _render_message(message):
     return [{'role': 'assistant', 'content': message.body}]
 
 
-def assemble_messages(conversation):
+def assemble_messages(conversation, *, burst_text=''):
     """Historial → mensajes rol/contenido para el LLM.
 
     La ventana cuenta TURNOS (§2.2) y cada mensaje se etiqueta por AUTORÍA
@@ -291,31 +291,57 @@ def assemble_messages(conversation):
 
     Los salientes `discarded` NO entran: son respuestas que se descartaron
     porque el cliente siguió escribiendo (W1-4) y el cliente nunca las vio.
-    """
-    org = conversation.organization
-    context = {
-        'clinica': org.name,
-        **_now_context(org),
-        'numero_registrado': conversation.contact.owner_id is not None,
-        'verificado': conversation.contact.verification_level
-        in ('confirmed_in_chat', 'staff_verified'),
-        'cliente': (
-            conversation.contact.owner.name
-            if conversation.contact.owner_id else None
-        ),
-    }
-    # Objetivo en curso (W2): el sistema es dueño del checklist y publica
-    # `me_falta`; CÓMO se pregunta es del modelo — aquí no viaja copy.
-    from . import goals
-    goal_block = goals.context_block(conversation)
-    if goal_block:
-        context['en_curso'] = goal_block
 
+    **El ORDEN del bloque de contexto es parte del diseño** (ADR p56 §1, É-F5
+    Fase 1): abre con la persona y cierra con las obligaciones del sistema. Un
+    bloque que empieza en `me_falta: [date, time]` encuadra el turno como un
+    formulario antes de que el modelo lea una sola palabra del cliente.
+
+        1. quién es · 2. cómo llega · 3. qué le debemos · 4. la clínica
+
+    `burst_text` es el mensaje (o la ráfaga) de ESTE turno; sin él no se puede
+    leer la situación. Es opcional para no romper a ningún caller: sin él, el
+    bloque 2 simplemente no viaja.
+    """
+    from . import goals, situation
+    org = conversation.organization
+    contact = conversation.contact
+
+    # ── 1 · QUIÉN ES ────────────────────────────────────────────────────────
+    context = {
+        'cliente': contact.owner.name if contact.owner_id else None,
+        'numero_registrado': contact.owner_id is not None,
+        'verificado': contact.verification_level
+        in ('confirmed_in_chat', 'staff_verified'),
+    }
     # Hechos de identidad ANCLADOS: viajan siempre, aunque el mensaje que los
     # originó ya no quepa en la ventana (R2, §2.2).
     identity_facts = anchored_identity_facts(conversation)
     if identity_facts:
         context['identidad'] = identity_facts
+
+    # ── 2 · CÓMO LLEGA (hechos de SITUACIÓN, ADR p56 §2) ────────────────────
+    # Información disponible, NO una obligación de respuesta: el modelo puede
+    # ignorarla por completo. Ninguna función de decisión la lee.
+    facts = situation.read(
+        conversation, burst_text,
+        goal=goals.get_open_goal(conversation),
+        first_contact=not _has_outbound(conversation),
+    )
+    if facts:
+        context['como_llega'] = facts
+
+    # ── 3 · QUÉ LE DEBEMOS ──────────────────────────────────────────────────
+    # El sistema es dueño del checklist y publica `me_falta`; CÓMO se pregunta
+    # es del modelo — aquí no viaja copy. Y el compromiso NO dicta el tema del
+    # turno (C12): esto es una deuda, no una agenda.
+    goal_block = goals.context_block(conversation)
+    if goal_block:
+        context['en_curso'] = goal_block
+
+    # ── 4 · LA CLÍNICA ──────────────────────────────────────────────────────
+    context['clinica'] = org.name
+    context.update(_now_context(org))
 
     messages = [{
         'role': 'system',
@@ -334,6 +360,13 @@ def assemble_messages(conversation):
         for message in turn:
             messages.extend(_render_message(message))
     return messages
+
+
+def _has_outbound(conversation):
+    """¿Ya le hemos escrito alguna vez? Señal de primer contacto (bloque 2)."""
+    return Message.objects.for_organization(conversation.organization).filter(
+        conversation=conversation, direction=Message.DIRECTION_OUT,
+    ).exists()
 
 
 def tool_call_message(result):

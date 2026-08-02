@@ -284,8 +284,24 @@ Los de p55 que se conservan no se repiten aquí; ver §Lo que NO cambia.
    perro no respira»* es urgencia, primero, siempre, sin pasar por el modelo.
 4. **La situación nunca lleva texto del cliente al rastro** — enums y booleanos
    (hereda la regla de PII de p55 inv. 11 / R15).
-5. **`verification_level` lo escribe el código evaluando contra la base**, jamás la
-   afirmación del modelo. Dos escritores, ambos en `identity.py`.
+5. **Elevar el nivel de verificación a `confirmed_in_chat` ocurre únicamente en
+   `identity.py`**, evaluando contra la base — jamás por afirmación del modelo.
+
+   > **Corrección (2026-08-01, misma fecha).** La redacción original decía «dos
+   > escritores, ambos en `identity.py`». Era imprecisa: el gate estático, en su
+   > primera corrida, encontró un **tercer** sitio que elevaba el nivel (el
+   > auto-vínculo del alta, en `tools.py`) y otros que escriben el campo sin
+   > afirmar identidad. Lo que importa es la **dirección**, no el número de
+   > asignaciones: fijar `phone_match` (`services.py`, resolución por teléfono)
+   > no habilita ninguna tool personal —`_verification_ok` exige
+   > `confirmed_in_chat`— y bajar a `unknown` (`views.py`, staff revocando un
+   > vínculo) va en la dirección segura.
+   >
+   > El tercer elevador se **movió a `identity.py`** (`link_self_registered`) en
+   > vez de añadirle una excepción al invariante: la idea es cerrar el hueco, no
+   > silenciar el gate que lo detecta. Es legítimo elevar ahí sin reto porque el
+   > `Owner` se acaba de crear a partir de ese mismo contacto — no hay
+   > expediente previo que suplantar, que es lo que el reto existe para impedir.
 6. **Una herramienta de identidad no revela nombres ni conteos**, y se comporta
    igual exista o no el registro.
 7. **`return_to` solo puede ser el nombre de un `Factor` declarado** del

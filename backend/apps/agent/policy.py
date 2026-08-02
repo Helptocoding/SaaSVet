@@ -172,6 +172,15 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     if flow.get('pending_action'):
         verdict = _burst_confirmation(burst)
         if verdict == 'defer':
+            # El cliente pidió tiempo y le contestamos «aquí queda pendiente —
+            # me dices». Eso es una PROMESA de esperar, así que se registra
+            # para que el recordatorio automático no la contradiga una hora
+            # después (ADR p56 §7 / C13: los mensajes que el sistema INICIA
+            # también tienen que cumplir un propósito). Es un hecho de
+            # CONTROL —el veredicto de una confirmación—, no de situación:
+            # `nudge_abandoned_flows` puede leerlo sin violar el invariante 1.
+            flow['deferred_at'] = timezone.now().isoformat()
+            conversation.save(update_fields=['flow'])
             return PolicyDecision(kind=REPLY, text=tier0.T0_DEFER,
                                   meta={'reason': 'confirm_defer'})
         if verdict == 'negative':
@@ -731,6 +740,14 @@ def nudge_abandoned_flows(now=None):
         if flow.get('nudge_sent'):                 # una sola vez por conversación
             continue
         if not flow.get('pending_action'):         # solo un flujo a medias
+            continue
+        if flow.get('deferred_at'):
+            # El cliente dijo «déjame pensarlo» y le respondimos que aquí
+            # quedaba pendiente. Insistir a los 60 minutos contradice esa
+            # promesa — y no es un caso extremo, es el flujo normal del
+            # producto: `T0_DEFER` conserva el `pending_action` a propósito,
+            # así que hasta ahora TODO cliente que pedía tiempo recibía el
+            # recordatorio igual.
             continue
         agent_settings = _agent_settings(conversation)
         if (agent_settings is None or not agent_settings.enabled

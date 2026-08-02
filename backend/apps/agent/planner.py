@@ -221,7 +221,8 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
 def _run_planner(conversation, agent_settings, llm_client, executor,
                  triggered_by, *, burst_text=''):
     tool_specs = tools.as_openai_tools()
-    base_messages = prompts.assemble_messages(conversation)
+    base_messages = prompts.assemble_messages(conversation,
+                                              burst_text=burst_text)
     # Hilo del turno: las llamadas del propio modelo y sus resultados (W1-3).
     # Antes solo viajaba el ÚLTIMO resultado, como bloque de sistema, y el
     # modelo no veía que ya había llamado a la herramienta.
@@ -306,7 +307,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                         'reason': guards.summarize(violations)}
             if _settle_goal(conversation, goal_progressed=goal_progressed,
                             goal_attempted=goal_attempted,
-                            other_tool_used=other_tool_used):
+                            other_tool_used=other_tool_used,
+                            client_asked=matchers.looks_like_question(
+                                burst_text)):
                 # Estancamiento semántico: 3 turnos sin llenar un solo dato.
                 # Sustituye al presupuesto contable como disparador — "no
                 # avanzamos" es una señal real; "gastaste N llamadas" no.
@@ -682,7 +685,7 @@ def _soft_error_hint(client_error):
 
 
 def _settle_goal(conversation, *, goal_progressed, goal_attempted,
-                 other_tool_used):
+                 other_tool_used, client_asked=False):
     """Cierra el turno desde el punto de vista del objetivo (W2).
 
     Devuelve True si el objetivo se estancó y toca escalar. Un cliente que
@@ -695,9 +698,31 @@ def _settle_goal(conversation, *, goal_progressed, goal_attempted,
     productivo, así que un modelo repreguntando el mismo dato en bucle
     mantenía `stall_turns` en 0 indefinidamente — el detector era ciego
     justamente al caso que existe para cazar.
+
+    **`client_asked` (C11 · ADR p56 §7).** Un turno en el que el cliente
+    PREGUNTÓ no incrementa el estancamiento. Hasta aquí sí lo hacía: una
+    pregunta no llena ningún slot, así que sumaba a `stall_turns`, y tres de
+    esos mandaban al cliente con un humano diciéndole «creo que por aquí nos
+    estamos enredando». **El sistema contaba la conversación del cliente como
+    su propio atasco.** Es el mismo error que É-F4 Fase 0 corrigió para los
+    retos de identidad (R1) sin aplicarlo aquí, y el corolario de R10 que la
+    auditoría de rigidez dejó escrito y nadie implementó: *preguntar nunca
+    puede acercar al cliente a una escalada*.
+
+    Estancamiento pasa a significar lo que dice su nombre: **el sistema no está
+    logrando avanzar** — el modelo llamando la misma herramienta con los mismos
+    datos, vuelta tras vuelta— no *«el cliente no me dio lo que le pedí»*.
+
+    Ojo con el alcance: `client_asked` es un hecho de **control** (es el mismo
+    predicado que alimenta `TurnFacts.interrupts`, que el árbitro lee). Los
+    turnos puramente sociales —una disculpa, una broma— son hechos de
+    SITUACIÓN y **no** entran aquí: ninguna función de decisión puede leerlos
+    (ADR p56, invariante 1).
     """
     goal = goals.get_open_goal(conversation)
     if goal is None or goal_progressed:
+        return False
+    if client_asked:
         return False
     if goal_attempted:
         return goals.bump_stall(goal)
