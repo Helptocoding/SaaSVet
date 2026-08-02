@@ -145,6 +145,59 @@ primer mensaje de una conversación —cuando por definición no hay compromiso�
 justamente el turno donde el cliente suele decir más cosas de golpe. Es el turno
 1 del caso del brief.
 
+#### La válvula de un solo sentido: inhibir un automatismo
+
+> **Enmienda aprobada por el PO, 2026-08-01**, con la formulación y las tres
+> condiciones que siguen. No amplía la capa de situación: le da nombre a una
+> propiedad que el sistema **ya ejercía** sin tenerlo.
+
+> **La situación puede impedir que el sistema INICIE una conversación cuya
+> oportunidad haya desaparecido. Nunca puede impedir que el sistema RESPONDA
+> una conversación iniciada por el cliente, ni omitir una validación,
+> salvaguarda o decisión de negocio.**
+
+El precedente ya existe y lleva meses en producción: `_after_hours_prefix`
+suprime el aviso de fuera de horario cuando detecta una queja. No toca
+permisos, tools, handoffs, RBAC ni compromisos — solo dice *«este automatismo
+ya no es oportuno»*. Es exactamente la misma clase de decisión.
+
+Los dos casos que la motivan tienen la misma naturaleza:
+
+| | El cliente dice | El sistema iba a | Por qué no |
+|---|---|---|---|
+| 1 | «déjame pensarlo» | recordarle la cita a los 60 min | le prometimos esperar |
+| 2 | «mi mascota murió» | «¿Seguimos con tu cita?» | el turno dejó de tener sentido |
+
+En ninguno de los dos se deja de atender al cliente: se deja de **iniciar** un
+turno que ya no procede.
+
+**Tres condiciones, y hacen falta LAS TRES.** Si falta una, la situación no
+interviene:
+
+1. **No fue provocado por un mensaje nuevo del cliente.**
+2. **Lo inicia el sistema**, no la conversación.
+3. **Su ausencia nunca empeora la seguridad ni rompe una garantía
+   contractual.**
+
+> **La deriva que estas condiciones existen para impedir** (planteada por el
+> PO): con solo *«la situación puede callar automatismos»*, dentro de seis
+> meses alguien escribe *«está muy molesto → no le pidamos verificar
+> identidad»* o *«está desesperado → agenda sin confirmar»*.
+>
+> Eso violaría el ADR **no por habilitar algo, sino por dejar de ejecutar una
+> regla**. Es el modo de fallo que el invariante 2 no cubría: se vigilaba que
+> la situación no *abriera* puertas y no que *apagara* controles. Sin la
+> restricción a automatismos iniciados por el sistema, «situación» acaba
+> siendo una segunda política de control disfrazada de empatía.
+
+**Consecuencia estructural (implementación).** El gate estático actual prohíbe
+que `policy.py` lea situación, y el recordatorio automático vive ahí dentro.
+Para que la frontera sea mecánica y no un comentario, **el camino proactivo se
+separa del camino del turno**: los mensajes que el sistema inicia salen de su
+propio módulo, que sí puede leer situación —solo para **no** enviar—, mientras
+`policy.py`, `arbiter.py` y `guards.py` siguen sin poder tocarla. La regla deja
+de depender de que alguien recuerde en qué función está escribiendo.
+
 #### El modelo puede ignorar la situación por completo
 
 Que solo el modelo la lea no significa que deba responder a ella.
@@ -277,6 +330,15 @@ Los de p55 que se conservan no se repiten aquí; ver §Lo que NO cambia.
 2. **La situación nunca gatea.** Ninguna capacidad, tool, escalada ni permiso
    depende de ella. **Y tampoco obliga al modelo**: es información disponible, no
    una obligación de respuesta — si no, el gate se reconstruye socialmente.
+2-ter. **Válvula de un solo sentido** (enmienda del PO, 2026-08-01): la
+   situación **puede inhibir un automatismo iniciado por el sistema** cuya
+   oportunidad desapareció. **Nunca** puede impedir responder a un mensaje del
+   cliente, ni omitir una validación, salvaguarda o decisión de negocio. Las
+   tres condiciones son acumulativas: no provocado por un mensaje nuevo del
+   cliente · iniciado por el sistema · su ausencia no empeora la seguridad ni
+   rompe una garantía. **El modo de fallo que cierra no es la permisividad sino
+   la OMISIÓN**: «está molesto ⇒ no le pidamos verificar» viola este ADR aunque
+   no habilite nada.
 2-bis. **Todo mensaje atraviesa percepción**, exista o no un compromiso abierto,
    y **antes** de consultar si lo hay. Percibir solo cuando hay algo que llenar
    es extracción con otro nombre.
