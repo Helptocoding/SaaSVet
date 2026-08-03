@@ -1152,39 +1152,11 @@ COMMIT_HANDLERS = {
     'reschedule_appointment': commit_reschedule_appointment,
     'register_new_client_and_pet': commit_register_new_client_and_pet,
 }
-
-
-def link_family_member(conversation, executor, args, triggered_by=None):
-    """Arranca el reto TRIPLE de vinculación familiar (UX-04, PR-17b). NO
-    vincula nada: valida candidatos por nombre del titular y pide el 1er factor
-    (mascota). El resto del reto lo conduce el Policy Engine, sin LLM."""
-    from . import identity
-    contact = conversation.contact
-    # E-05: un número que YA es de un cliente no se vincula a otro titular.
-    if contact.owner_id is not None:
-        return ToolOutcome(ok=False, client_error='already_a_client')
-    titular = (args.get('titular_name') or '').strip()
-    if not titular:
-        return ToolOutcome(ok=False, client_error='need_data')
-
-    from . import goals
-    candidates = identity.find_link_candidates(conversation.organization, titular)
-    # Se siembra el reto AUNQUE no haya candidatos → comportamiento uniforme,
-    # sin oráculo de existencia (G4): fallará al final como cualquier dato malo.
-    # Desde É-F4 Fase 3 es el MISMO compromiso que siembra el tamiz (R7): antes
-    # eran dos escrituras distintas del mismo dict en `flow`.
-    commitment = goals.start_identity(
-        conversation, goals.FAMILY, first_factor='pet',
-        working_state={'candidate_ids': [o.pk for o in candidates]})
-    goals.satisfy(commitment, 'titular', titular)
-    executor.record_local(
-        tool_name='link_family_member',
-        args_redacted={'titular_provided': True},
-        policy_decision='auto', triggered_by_message=triggered_by,
-        summary={'candidates': len(candidates)})
-    # El reto ya quedó propuesto (es un compromiso persistido); la pregunta
-    # la redacta el planner — una tool no le escribe copy al cliente.
-    return ToolOutcome(ok=True, summary={'family_challenge': 'started'})
+# `link_family_member` vivía aquí (retirada en É-F5 Fase 2). Sembraba el reto
+# triple y devolvía; su propio docstring decía «el resto del reto lo conduce el
+# Policy Engine, sin LLM» — ese conductor ya no existe, así que la tool
+# proponía algo que nadie terminaba. `identify_client` cubre el mismo caso en
+# una sola llamada, y quien pide lo que falta es el modelo.
 
 
 # ---------------------------------------------------------------------------
@@ -1510,24 +1482,6 @@ TOOL_SPECS = {
                 'reason': {'type': 'string'},
             },
             'required': ['owner_name', 'pet_name', 'date', 'time', 'reason'],
-        },
-    },
-    'link_family_member': {
-        'handler': link_family_member,
-        'tier': '1',
-        'min_verification': 'unknown',
-        'description': (
-            'Inicia la validación para vincular a un FAMILIAR/autorizado de un '
-            'cliente existente (p.ej. "soy la esposa de Juan", "hablo por la '
-            'mascota de mi mamá"). Pásale el nombre del titular. Inicia un reto '
-            'de seguridad de 3 datos; NO vincula nada por sí solo.'
-        ),
-        'parameters': {
-            'type': 'object',
-            'properties': {'titular_name': {
-                'type': 'string',
-                'description': 'Nombre del cliente titular que dijo el contacto'}},
-            'required': ['titular_name'],
         },
     },
     'identify_client': {

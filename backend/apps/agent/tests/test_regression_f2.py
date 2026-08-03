@@ -338,33 +338,29 @@ class Int21Tests(RegF2Base):
         self.assertEqual(
             confirmations.get_pending(conv)["args"]["owner_phone"], "5512349999")
 
-    def test_unknown_number_gets_triage_not_challenge_nor_handoff(self):
-        """Número NO registrado que quiere agendar → tamiz "¿nuevo o ya
-        cliente?" (no reto de identidad que rebota, no handoff, y sin asumir
-        el alta). Corrige el sobre-escalado del piloto.
+    def test_unknown_number_reaches_the_model_without_escalating(self):
+        """Número NO registrado que quiere agendar: ni handoff, ni asumir el
+        alta, ni una plantilla — **llega al modelo**.
 
-        El tamiz lo resuelve el ROUTER: ni siquiera se llega al LLM — por eso
-        el guion de abajo queda sin consumir. Ése es justo el arreglo: antes
-        dependía de que el modelo llamara una tool personal para reaccionar.
+        Reescrito en É-F5 Fase 2. El tamiz determinista que lo interceptaba se
+        retiró: nació para corregir el sobre-escalado del piloto y lo consiguió,
+        pero al precio de responder por plantilla antes de que nadie leyera el
+        mensaje. Lo que se conserva es el resultado que importaba —no escalar y
+        no inventar un alta— con el modelo conduciendo.
         """
         conv = self._unknown_conv("5215512340000")
         bodies, r, _ = run_turn(
             self, conv, self.agent_user, "quiero agendar una cita",
-            scripted_llm=[LLMResult(kind="tool_call",
-                                    tool_name="list_upcoming_appointments",
-                                    tool_args={})])
-        self.assertEqual(r["decision"], "reply")
-        self.assertEqual(r.get("reason"), "identity_triage")
-        self.assertEqual(r["llm_calls"], 0)
-        self.assertIn("primera vez", bodies[-1].lower())
-        conv.refresh_from_db()
-        from apps.agent.tests.harness import identity_commitment
-        self.assertEqual(
-            identity_commitment(conv).name, "identity_triage")
-        self.assertNotIn("identity_challenge", conv.flow)
+            scripted_llm=[LLMResult(
+                kind="text",
+                text="¡Claro! ¿Cómo se llama tu peludo? 🐾")])
+
+        self.assertEqual(r["decision"], "planner_reply")
+        self.assertGreater(r["llm_calls"], 0, "el modelo no vio el turno")
         from apps.agent.models import HumanHandoff
-        self.assertEqual(
-            HumanHandoff.objects.filter(conversation=conv).count(), 0)
+        self.assertFalse(
+            HumanHandoff.objects.filter(conversation=conv).exists(),
+            "un número desconocido pidiendo cita no debe escalar")
 
     def test_ux05_prior_visit_no_registration(self):
         """TC-UX-05: 'ya nos han atendido' + contacto con owner → cero altas."""

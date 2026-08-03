@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from . import arbiter, goals, identity, matchers, tier0
+from . import goals, identity, matchers, tier0
 from .models import Conversation, HumanHandoff
 
 logger = logging.getLogger('agent.events')
@@ -192,19 +192,24 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
                                   meta={'confirm': 'affirmative'})
         # 'unclear' → cae al planner para clasificar (etapa 2, UX-02)
 
-    # 8/8b/8c. Reto de identidad en curso: el mensaje es la respuesta.
-    #   Los tres mecanismos (titular, familia, tamiz) son UN modelo desde
-    #   É-F4 Fase 3 (R7) — antes eran tres dicts sueltos en `flow` que no se
-    #   agregaban, no se medían y se destruían con un `pop`.
-    commitment = goals.get_identity_commitment(conversation)
-    if commitment is not None:
-        if commitment.name == goals.TITULAR_CHALLENGE:
-            return _advance_challenge(conversation, contact, text, commitment)
-        if commitment.name == goals.FAMILY:
-            return _advance_family_challenge(
-                conversation, contact, text, commitment)
-        return _advance_identity_triage(
-            conversation, contact, burst_text, commitment)
+    # 8/8b/8c. RETIRADOS (É-F5 Fase 2, ADR p56 §4).
+    #
+    #   Aquí vivían los tres retos de identidad —titular, familia, tamiz— y
+    #   con ellos ~370 líneas que decidían QUÉ FRASE tocaba en cada etapa. El
+    #   router intervenía antes de que hubiera conversación: la del piloto que
+    #   abrió É-F5 se resolvió con CERO llamadas al modelo, y sus cinco
+    #   respuestas eran constantes de `tier0.py`.
+    #
+    #   Criterio que los retira (C5): **preempción solo donde la contención es
+    #   imposible**. La barrera de datos personales nunca fue este router —
+    #   es `_verification_ok` dentro de `run_tool`, que se evalúa por debajo
+    #   del modelo. Un planner conversando libremente sobre identidad NO puede
+    #   ejecutar una tool personal: la llamada rebota sin tocar nada. Preempción
+    #   y contención cumplían lo mismo; solo la primera costaba humanidad.
+    #
+    #   El compromiso de identidad SIGUE existiendo (qué falta, el porqué de
+    #   cada factor, dónde iba) — lo que desaparece es la máquina que decidía
+    #   la frase. Se publica al modelo como estado y él conduce.
 
     # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
     #    (no cambia la decisión, habilita las tools personales del turno).
@@ -240,38 +245,20 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         return PolicyDecision(kind=REPLY, text=tier0.T0_OUT_PAYMENT,
                               meta={'reason': 'out_payment'})
 
-    # 12b. Número SIN registro que pide algo PERSONAL (agendar / sus citas /
-    #      cancelar): nunca se asume que es nuevo — se pregunta, y si dice que
-    #      ya es cliente el reto lo busca en la tabla y lo verifica para seguir
-    #      atendiéndolo.
+    # 12b. RETIRADO (É-F5 Fase 2).
     #
-    #      Vive aquí, en el router determinista, y no en el planner: antes esto
-    #      solo reaccionaba si el MODELO llamaba una tool personal y ésta
-    #      rebotaba con verification_required. Un modelo que se ponía a
-    #      recolectar nombre/mascota/fecha en texto plano (piloto 2026-07-28)
-    #      nunca disparaba nada — y terminó "agendando" una cita inexistente.
-    if (contact.owner_id is None
-            and not flow.get('identity_triage_done')
-            and matchers.wants_personal_action(burst_text)):
-        # Si el propio mensaje ya lo contesta ("soy nuevo, quiero cita"), no se
-        # pregunta lo que el cliente acaba de decir (`tasa_repregunta`).
-        verdict = matchers.classify_client_triage(burst_text)
-        if verdict == 'new':
-            flow['identity_triage_done'] = 'new'
-            conversation.save(update_fields=['flow'])
-            return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'new'})
-        if verdict == 'returning':
-            commitment = goals.start_identity(
-                conversation, goals.TRIAGE, first_factor='titular',
-                working_state={'asks': 1})
-            goals.satisfy(commitment, 'client_kind', 'returning')
-            return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_TITULAR,
-                                  meta={'reason': 'identity_triage',
-                                        'triage': 'returning'})
-        return PolicyDecision(
-            kind=REPLY, text=start_identity_triage(conversation),
-            meta={'reason': 'identity_triage', 'triage': 'asked',
-                  'privacy_notice': True})
+    #      El tamiz de identidad interceptaba a todo número sin registro que
+    #      pidiera algo personal, ANTES de que el modelo viera el mensaje. Nació
+    #      para tapar un fallo real (piloto 2026-07-28: un modelo recolectando
+    #      datos en texto plano "agendó" una cita inexistente), pero la cura
+    #      correcta de aquello no era preemptar: es que la escritura pase por
+    #      una herramienta y la herramienta revalide — que es lo que ya ocurre.
+    #
+    #      Su coste quedó documentado en la conversación que abrió É-F5: el
+    #      cliente escribió "ya he ido, mi nombre es Ana" y el tamiz le
+    #      preguntó por ese mismo nombre medio segundo después, porque
+    #      `classify_client_triage` solo buscaba lemas de tamiz y nada en el
+    #      router extraía un dato.
 
     # 13. Nada aplicó → el planner decide (lecturas INT-10..14).
     return PolicyDecision(kind=RUN_PLANNER)
@@ -308,337 +295,28 @@ _PAYMENT_LEMMAS = (
 def _mentions_payment(text):
     n = matchers.normalize(text)
     return any(lemma in n for lemma in _PAYMENT_LEMMAS)
-
-
 # ---------------------------------------------------------------------------
-# Reto de identidad explícito (spec §2.3, UX-03)
+# FSM de identidad — RETIRADA (É-F5 Fase 2, ADR p56)
 # ---------------------------------------------------------------------------
-
-def start_identity_challenge(conversation):
-    """Inicia el reto (el planner lo llama cuando una tool personal devuelve
-    verification_required). Devuelve el texto del reto."""
-    goals.start_identity(conversation, goals.TITULAR_CHALLENGE,
-                         first_factor='pet')
-    return tier0.T0_CHALLENGE_PET
-
-
-# ---------------------------------------------------------------------------
-# Interrupción durante un reto (R1, R9, Fase 0 §0.2)
-# ---------------------------------------------------------------------------
-# Una pregunta que NO trae la respuesta nunca es un fallo de verificación
-# (conv 13: "para que necesitas eso?" sumó `fails` dos veces y tiró un reto
-# que el cliente estaba a punto de pasar). Se llama al ENTRAR en las tres
-# máquinas de reto, antes de tocar `fails`/`asks`.
-
-def _is_interruption(stage, text):
-    """Pregunta que NO trae la respuesta → desvío. Nunca un fallo.
-
-    `is not True` cubre False y None: en una etapa sin forma verificable
-    (None) una pregunta es interrupción; en 'digits', '¿es 4586?' trae la
-    respuesta y NO lo es.
-    """
-    if not matchers.looks_like_question(text):
-        return False
-    return matchers.is_answer_shaped(stage, text) is not True
+# Aquí vivían 11 funciones y ~370 líneas que conducían los tres retos de
+# identidad decidiendo, etapa por etapa, qué frase le tocaba al cliente:
+# start_identity_challenge, _is_interruption, _check_interruption,
+# _advance_challenge, _clear_challenge, start_identity_triage,
+# _advance_identity_triage, _seed_family_challenge, _inbound_history,
+# _advance_family_challenge, _family_fail.
+#
+# Lo que se conserva vive en otras capas y no se ha tocado:
+#   - la BARRERA: `_verification_ok` dentro de `run_tool` (tools.py).
+#   - el DICTAMEN: `identity.try_verify_by_*` / `link_family`, que cotean
+#     contra la base — el modelo aporta el candidato, el código decide.
+#   - el COMPROMISO: qué falta, el `why` de cada factor y dónde iba
+#     (`goals.py`), ahora publicado al modelo como estado en vez de consumido
+#     por una máquina de estados.
+#
+# Quien conduce la conversación es el planner. Ver ADR p56 §4 (preempción vs.
+# contención) y el plan É-F5 §4.1.
 
 
-def _check_interruption(conversation, commitment, text, reask_text):
-    """EJECUTA el veredicto del árbitro sobre un reto en curso.
-
-    El árbitro juzga (`desviar` vs `continuar`); esto lo cumple: devuelve la
-    PolicyDecision (REPLY con el motivo, o ESCALATE al topar el desvío), o
-    `None` si el mensaje sí era una respuesta y el caller sigue su lógica.
-
-    **El tope de desvíos vive aquí, no en el árbitro** (ADR p55 §2): el
-    árbitro juzga UN mensaje —"esto interrumpe"—, mientras que "tres desvíos
-    seguidos merecen una persona" es un juicio sobre el PATRÓN. Sin el tope,
-    la Fase 0 habría sustituido un bucle de fallos por uno de preguntas.
-
-    El motivo sale de `Factor.why` (R9 estructural): en la Fase 0 vivía en
-    `tier0.FACTOR_WHY`, un dict paralelo indexado por etapa. Ahora pertenece
-    al factor del compromiso y no puede faltar.
-    """
-    factor = commitment.return_to
-    verdict = arbiter.decide(
-        arbiter.TurnFacts(interrupts=_is_interruption(factor, text)),
-        arbiter.CommitmentView(commitment.name, factor),
-    )
-    if verdict.verdict != arbiter.DEVIATE:
-        return None
-
-    deviations = goals.scratch(commitment, 'deviations', 0) + 1
-    goals.set_scratch(commitment, deviations=deviations)
-    if deviations >= 3:
-        # SUSPENDE, no destruye (R5/R8): quien topó el tope de desvíos no
-        # perdió su progreso, solo necesita un humano para desatorarse.
-        goals.park_identity(conversation, commitment, going_to_human=True)
-        return PolicyDecision(
-            kind=ESCALATE, text=tier0.T0_CHALLENGE_FAILED,
-            handoff_reason=HumanHandoff.REASON_IDENTITY,
-            meta={'handoff_detail': 'deviation_cap'})
-    return PolicyDecision(
-        kind=REPLY,
-        text=tier0.T0_WHY_THEN_REASK.format(
-            why=goals.why_for(commitment.name, factor), reask=reask_text),
-        meta={'reason': 'deviation', 'stage': factor})
-
-
-def _advance_challenge(conversation, contact, text, commitment):
-    stage = commitment.return_to or 'pet'
-
-    deviation = _check_interruption(
-        conversation, commitment, text,
-        tier0.T0_CHALLENGE_PET if stage == 'pet' else tier0.T0_CHALLENGE_OWNER)
-    if deviation is not None:
-        return deviation
-
-    if stage == 'pet':
-        if identity.try_verify_by_pet_answer(contact, text):
-            goals.satisfy(commitment, 'pet')
-            return _clear_challenge(conversation, commitment, verified=True)
-        # 1er no-match: repetición SIN contar como fallo (UX-03).
-        if not goals.scratch(commitment, 'retried'):
-            goals.set_scratch(commitment, retried=True)
-            return PolicyDecision(kind=REPLY, text=tier0.T0_CHALLENGE_RETRY,
-                                  meta={'challenge': 'retry'})
-        # 2º intento fallido de mascota → 2º factor (titular).
-        goals.advance_to(commitment, 'owner')
-        return PolicyDecision(kind=REPLY, text=tier0.T0_CHALLENGE_OWNER,
-                              meta={'challenge': 'owner'})
-
-    if stage == 'owner':
-        if identity.try_verify_by_owner_name(contact, text):
-            goals.satisfy(commitment, 'owner')
-            return _clear_challenge(conversation, commitment, verified=True)
-        # 2 fallos REALES → E-06 (sin revelar por qué falló). Se SUSPENDE,
-        # no se destruye (R5/R8): si al reanudar la conversación llega el dato
-        # correcto, `_advance_challenge` lo procesa con normalidad.
-        goals.register_failure(commitment)
-        goals.park_identity(conversation, commitment, going_to_human=True)
-        return PolicyDecision(
-            kind=ESCALATE, text=tier0.T0_CHALLENGE_FAILED,
-            handoff_reason=HumanHandoff.REASON_IDENTITY,
-        )
-
-    return _clear_challenge(conversation, commitment, verified=False)
-
-
-def _clear_challenge(conversation, commitment, verified):
-    from .models import ConversationGoal
-    goals.finish_identity(
-        conversation, commitment,
-        ConversationGoal.STATUS_COMPLETED if verified
-        else ConversationGoal.STATUS_ABANDONED)
-    if verified:
-        # Verificado: cede al planner para atender la petición original.
-        return PolicyDecision(kind=RUN_PLANNER, meta={'verified': True})
-    return PolicyDecision(kind=RUN_PLANNER)
-
-
-# ---------------------------------------------------------------------------
-# Tamiz de identidad (UX-05) — ¿cliente nuevo, o ya registrado?
-# ---------------------------------------------------------------------------
-# Decisión de producto: el sistema NUNCA asume que un número sin registro es un
-# cliente nuevo. Pregunta; y si dice que ya es cliente, lo BUSCA en `Owner` y lo
-# verifica con el reto de 3 factores para seguir atendiéndolo él mismo. Decir
-# "ya vine antes" no escala a nadie — solo escala una verificación FALLIDA.
-
-def start_identity_triage(conversation):
-    """Siembra el tamiz y devuelve la pregunta.
-
-    Público: el planner también lo usa cuando una tool personal rebota con
-    `verification_required` sobre un número sin registro.
-    """
-    goals.start_identity(conversation, goals.TRIAGE,
-                         first_factor='client_kind', working_state={'asks': 1})
-    return tier0.render_triage(
-        conversation.organization,
-        first_contact=not _has_outbound(conversation),
-    )
-
-
-def _advance_identity_triage(conversation, contact, text, commitment):
-    from .models import ConversationGoal
-    flow = conversation.flow
-    if commitment.return_to == 'titular':
-        deviation = _check_interruption(
-            conversation, commitment, text, tier0.T0_TRIAGE_TITULAR)
-        if deviation is not None:
-            return deviation
-        return _seed_family_challenge(conversation, commitment, text)
-
-    verdict = matchers.classify_client_triage(text)
-
-    if verdict == 'returning':
-        goals.satisfy(commitment, 'client_kind', 'returning')
-        goals.advance_to(commitment, 'titular')
-        return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_TITULAR,
-                              meta={'reason': 'identity_triage',
-                                    'triage': 'returning',
-                                    'privacy_notice': True})
-
-    if verdict == 'new':
-        goals.satisfy(commitment, 'client_kind', 'new')
-        goals.finish_identity(conversation, commitment,
-                              ConversationGoal.STATUS_COMPLETED, 'new')
-        flow['identity_triage_done'] = 'new'
-        conversation.save(update_fields=['flow'])
-        return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'new'})
-
-    # 'unclear' → una re-pregunta explícita sin costo (patrón del reto UX-03).
-    # A la segunda se cede al planner: mejor que dejar al cliente en un bucle.
-    asks = goals.scratch(commitment, 'asks', 1)
-    if asks < 2:
-        goals.set_scratch(commitment, asks=asks + 1)
-        return PolicyDecision(kind=REPLY, text=tier0.T0_TRIAGE_RETRY,
-                              meta={'reason': 'identity_triage',
-                                    'triage': 'retry',
-                                    'privacy_notice': True})
-    # No se destruye (R5): se SUSPENDE. Si un mensaje posterior sí contesta
-    # con claridad ("primera vez"/"ya soy cliente"), el paso 6c lo retoma y
-    # `_advance_identity_triage` lo resuelve — en vez de quedar perdido para
-    # siempre tras el 2º "no entendí".
-    goals.park_identity(conversation, commitment, going_to_human=False)
-    # setdefault, no asignación directa: si el reto de familia ya resolvió
-    # 'returning' mientras tanto, dos 'unclear' del tamiz no deben pisarlo
-    # (conv 13: la asignación directa pisó un 'returning' correcto).
-    flow.setdefault('identity_triage_done', 'unclear')
-    conversation.save(update_fields=['flow'])
-    return PolicyDecision(kind=RUN_PLANNER, meta={'triage': 'unclear'})
-
-
-def _seed_family_challenge(conversation, triage_commitment, titular_name):
-    """Dice ser cliente y aporta el nombre del titular: se busca en `Owner` y
-    arranca el reto (mascota → últimos 4 dígitos). Es el MISMO compromiso que
-    siembra la tool `link_family_member`, pero sin depender del LLM."""
-    from .models import ConversationGoal
-    titular = (titular_name or '').strip()
-    candidates = identity.find_link_candidates(
-        conversation.organization, titular)
-    flow = conversation.flow
-    if triage_commitment is not None:
-        goals.satisfy(triage_commitment, 'titular', titular)
-        goals.close(triage_commitment, ConversationGoal.STATUS_COMPLETED,
-                    'returning')
-    flow['identity_triage_done'] = 'returning'
-    conversation.save(update_fields=['flow'])
-
-    # Si el cliente YA nombró a la mascota antes en la conversación ("cita para
-    # Luna"), ese factor está aportado: volver a pedirlo es la repregunta más
-    # torpe posible. No debilita el reto — el dato lo dio él, sin que el
-    # sistema enumerara nada (G4), y de hecho antes de saber que se le pediría.
-    stage, survivors = 'pet', candidates
-    if candidates:
-        named = [o for o in candidates
-                 if identity.owner_has_pet(o, _inbound_history(conversation))]
-        if len(named) == 1:
-            stage, survivors = 'digits', named
-
-    # Se siembra AUNQUE no haya candidatos: comportamiento uniforme, sin
-    # oráculo de existencia (G4) — falla al final como cualquier dato malo.
-    commitment = goals.start_identity(
-        conversation, goals.FAMILY, first_factor=stage,
-        working_state={'candidate_ids': [o.pk for o in survivors]})
-    goals.satisfy(commitment, 'titular', titular)
-    if stage == 'digits':
-        goals.satisfy(commitment, 'pet')
-
-    text = tier0.T0_TRIAGE_DIGITS if stage == 'digits' else tier0.T0_TRIAGE_PET
-    return PolicyDecision(kind=REPLY, text=text,
-                          meta={'reason': 'identity_triage',
-                                'triage': f'family_seeded_{stage}',
-                                'privacy_notice': True})
-
-
-def _inbound_history(conversation, limit=12):
-    """Texto de los entrantes recientes — para saber qué datos ya aportó el
-    cliente por su cuenta y no volver a pedírselos."""
-    from apps.channels.models import Message
-    bodies = (
-        Message.objects.for_organization(conversation.organization)
-        .filter(conversation=conversation, direction=Message.DIRECTION_IN)
-        .order_by('-created_at', '-id')
-        .values_list('body', flat=True)[:limit]
-    )
-    return '\n'.join(b for b in bodies if b)
-
-
-# ---------------------------------------------------------------------------
-# Reto de vinculación familiar (UX-04, PR-17b) — 3 factores, acceso RESTRINGIDO
-# ---------------------------------------------------------------------------
-
-def _advance_family_challenge(conversation, contact, text, commitment):
-    """Avanza el reto triple. mascota (narrow de candidatos) → 4 dígitos (pin a
-    uno). 3/3 ok → vínculo secundario. 2 fallos reales → handoff instrumentado.
-    El sistema VERIFICA lo aportado; jamás revela qué dato falló (G4/E-06)."""
-    from apps.patients.models import Owner
-    from .models import ConversationGoal
-    stage = commitment.return_to or 'pet'
-
-    deviation = _check_interruption(
-        conversation, commitment, text,
-        tier0.T0_TRIAGE_PET if stage == 'pet' else tier0.T0_TRIAGE_DIGITS)
-    if deviation is not None:
-        return deviation
-
-    owners = list(
-        Owner.objects.for_organization(conversation.organization)
-        .filter(pk__in=goals.scratch(commitment, 'candidate_ids', []))
-    )
-
-    if stage == 'pet':
-        survivors = [o.pk for o in owners if identity.owner_has_pet(o, text)]
-        if survivors:
-            goals.set_scratch(commitment, candidate_ids=survivors)
-            goals.satisfy(commitment, 'pet')
-            goals.advance_to(commitment, 'digits')
-            return PolicyDecision(
-                kind=REPLY, meta={'family': 'digits'},
-                text="Gracias 🙂 Por último: ¿los últimos 4 dígitos del "
-                     "teléfono que el titular tiene registrado con nosotros?")
-        return _family_fail(conversation, commitment, 'failed_other')
-
-    # stage == 'digits'
-    matches = [o for o in owners if identity.owner_digits_match(o, text)]
-    if len(matches) == 1:
-        identity.link_family(contact, matches[0])
-        goals.satisfy(commitment, 'digits')
-        goals.finish_identity(conversation, commitment,
-                              ConversationGoal.STATUS_COMPLETED, 'linked')
-        _log_family(conversation, 'AGENT_FAMILY_LINK_LINKED', 'linked')
-        return PolicyDecision(kind=RUN_PLANNER,
-                              meta={'verified': True, 'family_linked': True})
-    # 0 → dígitos incorrectos; >1 → homónimos indistinguibles (ambiguo).
-    return _family_fail(conversation, commitment,
-                        'failed_digits' if not matches else 'failed_ambiguous')
-
-
-def _family_fail(conversation, commitment, reason_detail):
-    if goals.register_failure(commitment):
-        # SUSPENDE, no destruye (R5/R8): es el caso exacto de la conv 13 — el
-        # `4586` correcto llegó tarde y cayó al vacío porque el reto ya no
-        # existía. Ahora sobrevive hasta que se resuelva o el humano lo
-        # cancele (`release_conversation`).
-        goals.park_identity(conversation, commitment, going_to_human=True)
-        _log_family(conversation, 'AGENT_FAMILY_LINK_FAILED', reason_detail)
-        return PolicyDecision(
-            kind=ESCALATE,
-            text="No pude validar esos datos. Te comunico con el equipo para "
-                 "ayudarte con gusto 🙂",
-            handoff_reason=HumanHandoff.REASON_IDENTITY,
-            meta={'handoff_detail': f'family:{reason_detail}'})
-    return PolicyDecision(
-        kind=REPLY, meta={'family': 'retry'},
-        text="Mmm, ese dato no me coincide. ¿Puedes revisarlo? 🙂")
-
-
-def _log_family(conversation, event, reason_detail=''):
-    logger.info(event, extra={
-        'event': event,
-        'organization_id': conversation.organization_id,
-        'conversation_id': conversation.pk,
-        'reason_detail': reason_detail,
-    })
 
 
 # ---------------------------------------------------------------------------

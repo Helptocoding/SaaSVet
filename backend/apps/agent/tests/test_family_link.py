@@ -97,55 +97,59 @@ class FamilyLinkBase(TestCase):
 
 
 class FamilyChallengeFlowTests(FamilyLinkBase):
-    def test_full_triple_challenge_links(self):
-        _, r1, _ = self._turn("soy la esposa de Juan Perez", [LLMResult(
-            kind="tool_call", tool_name="link_family_member",
-            tool_args={"titular_name": "Juan Perez"})])
-        self.assertEqual(r1["decision"], "awaiting_reply")
-        self.assertEqual(identity_commitment(self.conv).return_to, "pet")
+    """El reto triple, ahora conducido por el modelo (É-F5 Fase 2).
 
-        _, r2, _ = self._turn("Max", [])          # factor 2 (mascota) → dígitos
-        self.assertEqual(r2["decision"], "reply")
-        self.assertEqual(identity_commitment(self.conv).return_to, "digits")
+    La FSM que lo llevaba etapa por etapa se retiró junto con
+    `link_family_member`. Lo que NO cambia es la garantía de seguridad: hacen
+    falta los tres factores contra un mismo titular, y cualquier factor
+    equivocado deja el contacto sin vincular.
 
-        _, r3, _ = self._turn("2244", [LLMResult(   # factor 3 (4 dígitos) → link
-            kind="text", text="¡Listo, validado! ¿En qué te ayudo? 🐾")])
-        self.contact.refresh_from_db()
-        self.assertEqual(self.contact.owner_id, self.titular.id)
-        self.assertEqual(self.contact.linked_via, "family_challenge")
-        self.assertEqual(self.contact.verification_level, "confirmed_in_chat")
+    El caso feliz vive en `test_f5_fase1.IdentifyClientTests`; aquí se
+    conservan los caminos de FALLO, que son los que protegen el expediente de
+    un tercero.
+    """
 
-    def test_wrong_digits_twice_handoff_no_link(self):
-        self._turn("familiar de Juan Perez", [LLMResult(
-            kind="tool_call", tool_name="link_family_member",
-            tool_args={"titular_name": "Juan Perez"})])
-        self._turn("Max", [])
-        self._turn("0000", [])                       # fallo 1 → reintento
-        _, r, _ = self._turn("1111", [])             # fallo 2 → handoff
-        self.assertEqual(r["decision"], "escalate")
-        hh = HumanHandoff.objects.filter(conversation=self.conv).first()
-        self.assertIsNotNone(hh)
-        self.assertIn("failed_digits", hh.reason_detail)   # instrumentación P3
-        self.contact.refresh_from_db()
-        self.assertIsNone(self.contact.owner_id)           # cero vínculo
+    def _identify(self, **args):
+        return tools.run_tool('identify_client', args, conversation=self.conv,
+                              executor=self._executor())
 
-    def test_wrong_pet_never_reaches_digits(self):
-        self._turn("familiar de Juan Perez", [LLMResult(
-            kind="tool_call", tool_name="link_family_member",
-            tool_args={"titular_name": "Juan Perez"})])
-        self._turn("Firulais", [])                   # mascota que no es del titular
-        # sigue en 'pet' (no avanzó) o escaló; nunca vinculó
+    def test_wrong_digits_no_link(self):
+        """Un conocido casual sabe «Juan y Max»; los 4 dígitos no."""
+        out = self._identify(titular_name=None, owner_name="Juan Perez",
+                             pet_name="Max", phone_digits="0000")
+        self.assertFalse(out.data['verificado'])
         self.contact.refresh_from_db()
         self.assertIsNone(self.contact.owner_id)
 
-    def test_e05_already_client_refuses_challenge(self):
+    def test_wrong_pet_no_link(self):
+        out = self._identify(owner_name="Juan Perez", pet_name="Firulais",
+                             phone_digits="2244")
+        self.assertFalse(out.data['verificado'])
+        self.contact.refresh_from_db()
+        self.assertIsNone(self.contact.owner_id)
+
+    def test_e05_un_numero_que_ya_es_de_un_cliente_no_se_revincula(self):
+        """E-05 · el número de un cliente no puede pasar a otro titular.
+
+        Antes lo rechazaba `link_family_member` con `already_a_client`. Ahora
+        es estructural: con `contact.owner_id` puesto, `identify_client` toma
+        la rama de verificación del titular y **nunca** llega a vincular a un
+        tercero — no hay error que devolver porque no hay camino.
+        """
+        otro = Owner.objects.create(organization=self.org, name="Otra Persona",
+                                    phone="5599990000")
+        Pet.objects.create(organization=self.org, owner=otro, name="Rex",
+                           species="perro", birth_date="2020-01-01")
         self.contact.owner = self.titular
         self.contact.verification_level = "confirmed_in_chat"
         self.contact.save()
-        out = tools.link_family_member(
-            self.conv, self._executor(), {"titular_name": "Juan Perez"})
-        self.assertFalse(out.ok)
-        self.assertEqual(out.client_error, "already_a_client")
+
+        self._identify(owner_name="Otra Persona", pet_name="Rex",
+                       phone_digits="0000")
+
+        self.contact.refresh_from_db()
+        self.assertEqual(self.contact.owner_id, self.titular.id,
+                         "el contacto se revinculó a otro titular")
 
 
 class FamilyRestrictedAccessTests(FamilyLinkBase):

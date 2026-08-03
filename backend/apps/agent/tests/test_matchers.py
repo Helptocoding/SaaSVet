@@ -123,18 +123,9 @@ class ComplaintOrMetaTests(SimpleTestCase):
                 self.assertFalse(matchers.is_complaint_or_meta(text), text)
 
 
-class IsAnswerShapedTests(SimpleTestCase):
-    def test_digits_true_with_four_digits_anywhere(self):
-        for t in ["4586", "son 4586", "es el 4586 creo", "¿es 4586?"]:
-            self.assertTrue(matchers.is_answer_shaped('digits', t), t)
-
-    def test_digits_false_without_four_digits(self):
-        for t in ["no me acuerdo", "45", "para que necesitas eso"]:
-            self.assertFalse(matchers.is_answer_shaped('digits', t), t)
-
-    def test_stages_without_shape_return_none(self):
-        # Los nombres (mascota/titular) no tienen forma verificable: una
-        # respuesta honesta ("no sé") no puede distinguirse aquí de una
-        # pregunta por FORMA — el caller decide con looks_like_question.
-        for stage in ('pet', 'owner', 'titular'):
-            self.assertIsNone(matchers.is_answer_shaped(stage, "Ana Cruz"))
+# `IsAnswerShapedTests` vivía aquí (retirada en É-F5 Fase 2). Probaba
+# `is_answer_shaped`, que contestaba "¿este mensaje responde la etapa que yo
+# esperaba?". No se porta nada: **el concepto era el defecto.** Solo conocía
+# una forma —cuatro dígitos—, así que en las otras cuatro etapas cualquier
+# mensaje con "?" contaba como interrupción; y presuponía que un mensaje es
+# respuesta O pregunta, nunca las dos, que es justo lo que C6 prohíbe.

@@ -165,117 +165,25 @@ def is_thanks(text):
 # cancelar) obliga a saber quién es. Preguntas de precio/horario NO: ésas se
 # atienden en anónimo (tier 1) y meterles un tamiz sería fricción gratis.
 
-_PERSONAL_ACTION_STRONG = (
-    'agendar', 'agendame', 'agendarme', 'agenda una', 'agendas una',
-    'programar una cita', 'sacar cita', 'sacar una cita', 'hacer una cita',
-    'apartar una cita', 'reservar una cita', 'quiero una cita', 'quiero cita',
-    'quisiera una cita', 'necesito una cita', 'necesito cita',
-    'dame una cita', 'me das una cita', 'me puedes dar una cita',
-    'mis citas', 'mi cita', 'que citas tengo', 'cuando es mi cita',
-    'tengo alguna cita', 'mi proxima cita',
-    'cancelar mi cita', 'cancelar la cita', 'reagendar', 'mover mi cita',
-    'cambiar mi cita', 'recorrer mi cita',
-    'cuando le toca', 'sus vacunas', 'vacunas de mi',
-    'quiero llevar a', 'puedo llevar a', 'quiero llevarlo', 'quiero llevarla',
-    # Alta explícita: es la petición personal por excelencia y faltaba. Sin
-    # ella, "hola regístrame en el sistema" no disparaba el tamiz y el agente
-    # se ponía a recolectar datos de un desconocido (piloto conv 12).
-    'registrame', 'registrarme', 'registranos', 'me registras',
-    'quiero registrar', 'necesito registrar', 'dar de alta', 'darme de alta',
-    'darnos de alta', 'me das de alta', 'quiero darme de alta', 'inscribirme',
-    'alta en el sistema', 'registrar a mi', 'registrar mi',
-)
-_PERSONAL_ACTION_WEAK = (
-    'una cita', 'la cita', 'cita para', 'consulta para',
-)
-# Pregunta sobre la POLÍTICA de citas ("¿hace falta cita?"), no una petición.
-# Gana incluso a los lemas fuertes: "¿necesito cita o puedo llegar así?" es
-# información pública, no un trámite personal.
-_APPOINTMENT_POLICY_QUESTION = (
-    'necesito cita o', 'necesito una cita o', 'se necesita cita',
-    'hay que hacer cita', 'hay que agendar', 'es necesario agendar',
-    'se puede sin cita', 'atienden sin cita', 'aceptan sin cita',
-    'puedo llegar sin cita', 'sin cita previa',
-)
-_INFO_ONLY_LEMMAS = (
-    'cuanto cuesta', 'cuanto sale', 'cuanto vale', 'cuanto cobran',
-    'cuanto tarda', 'cuanto dura', 'cuanto tiempo',
-    'que precio', 'precio de', 'tienen precio', 'costo de',
-    'que incluye', 'que necesito', 'que se necesita', 'que requisitos',
-    'necesito llevar', 'tengo que llevar', 'que debo llevar',
-    'a que hora abren', 'a que hora cierran', 'que horario', 'horario de',
-    'estan abiertos', 'donde estan', 'donde queda', 'como llego',
-)
+# ---------------------------------------------------------------------------
+# Tamiz de identidad y detección de acción personal — RETIRADOS (É-F5 Fase 2)
+# ---------------------------------------------------------------------------
+# Aquí vivían `wants_personal_action` (con sus cuatro listas de lemas) y las
+# constantes `_TRIAGE_*` que alimentaban `classify_client_triage`. Servían al
+# paso 12b de `policy.evaluate`, que interceptaba a todo número sin registro
+# antes de que el modelo viera el mensaje.
+#
+# Su límite era estructural, no de cobertura: clasificaban "¿de qué tipo es
+# este cliente?" y NUNCA podían devolver un dato. En la conversación que abrió
+# É-F5 el cliente escribió "ya he ido, mi nombre es Ana"; el tamiz acertó la
+# clasificación y perdió el nombre, porque no tenía dónde ponerlo.
 
 
-def wants_personal_action(text):
-    """¿La petición EXIGE saber quién es el cliente?
-
-    Orden deliberado: una pregunta sobre la política de citas gana a todo
-    (es info pública); un lema fuerte gana a los informativos; los débiles
-    ('una cita') ceden ante cualquier pregunta de precio/horario/requisitos.
-    """
-    n = normalize(text)
-    if _has_any(n, _APPOINTMENT_POLICY_QUESTION):
-        return False
-    if _has_any(n, _PERSONAL_ACTION_STRONG):
-        return True
-    if _has_any(n, _INFO_ONLY_LEMMAS):
-        return False
-    return _has_any(n, _PERSONAL_ACTION_WEAK)
-
-
-# Negaciones EXPLÍCITAS. Se evalúan antes que las listas positivas porque las
-# contienen: "no soy cliente" contiene "soy cliente"; "no es la primera vez"
-# contiene "primera vez". Sin este orden, ambas se clasificaban al revés.
-_TRIAGE_NEGATED_NEW = (          # niega ser nuevo → ya es cliente
-    'no es la primera', 'no es mi primera', 'no es primera vez',
-    'no soy nuevo', 'no somos nuevos', 'no es nuevo', 'no es nueva',
-    'no es la primera vez',
-)
-_TRIAGE_NEGATED_RETURNING = (    # niega ser cliente → es nuevo
-    'no soy cliente', 'no somos clientes', 'no soy paciente',
-    'no estoy registrado', 'no estoy registrada', 'no estamos registrados',
-    'no tengo registro', 'no tengo expediente', 'no tenemos expediente',
-    'no he ido', 'no hemos ido', 'no he venido', 'no hemos venido',
-    'no me han atendido', 'no nos han atendido', 'no los conozco',
-    'no me conocen', 'no nos conocen',
-)
-_TRIAGE_RETURNING = (
-    'ya he ido', 'ya he venido', 'ya hemos ido', 'ya hemos venido',
-    'ya vine', 'ya venimos', 'ya habia venido', 'ya habiamos venido',
-    'ya fui', 'ya fuimos', 'ya iba', 'ya lleve', 'ya la lleve', 'ya lo lleve',
-    'ya he llevado', 'ya hemos llevado',
-    'ya me atendieron', 'ya nos atendieron', 'ya la atendieron',
-    'ya lo atendieron', 'ya me han atendido', 'ya nos han atendido',
-    'ya la han atendido', 'ya lo han atendido', 'ya me habian atendido',
-    'ya soy cliente', 'ya somos clientes', 'soy cliente', 'somos clientes',
-    'ya soy paciente', 'soy paciente',
-    'ya estoy registrado', 'ya estoy registrada', 'ya estamos registrados',
-    'ya tengo registro', 'ya tengo expediente', 'ya tenemos expediente',
-    'ya me conocen', 'ya nos conocen', 'ya los conozco', 'ya te conozco',
-    'si he ido', 'si he venido', 'si ya', 'si soy cliente',
-    'siempre voy con', 'siempre los visito', 'somos de ahi',
-    'cambie de numero', 'cambie mi numero', 'cambie el numero',
-    'numero nuevo', 'nuevo numero', 'otro numero', 'con otro numero',
-    'desde otro numero', 'este numero es nuevo',
-)
-_TRIAGE_NEW = (
-    'primera vez', 'primera visita', 'primer vez', 'es la primera',
-    'seria la primera', 'seria mi primera', 'la primera vez',
-    'soy nuevo', 'soy nueva', 'somos nuevos', 'somos nuevas',
-    'cliente nuevo', 'clienta nueva', 'nuevo cliente', 'es nuevo', 'es nueva',
-    'nunca he ido', 'nunca hemos ido', 'nunca he venido', 'nunca hemos venido',
-    'nunca los he', 'nunca la he llevado', 'nunca lo he llevado',
-    'nunca la he traido', 'nunca lo he traido', 'nunca he traido',
-    'apenas voy', 'apenas la voy', 'apenas lo voy', 'apenas me estoy',
-    'es mi primera', 'es nuestra primera',
-)
-
-
-# --- Interrupción durante un reto (R1, R9) ---------------------------------
-# Una pregunta que NO trae la respuesta nunca debe contar como un fallo de
-# verificación (conv 13: "para que necesitas eso?" sumó `fails` dos veces).
+# Lemas de pregunta. SOBREVIVEN a la Fase 2 aunque la FSM de identidad se haya
+# retirado: `looks_like_question` tiene un consumidor nuevo desde la Fase 1 —
+# `planner._settle_goal`, que impide que preguntar acerque al cliente a una
+# escalada (C11/R10). Es un hecho de CONTROL, el mismo que alimentaba
+# `TurnFacts.interrupts`.
 _QUESTION_LEMMAS = (
     'para que', 'pa que', 'por que', 'pq', 'que necesitas',
     'para que lo quieres', 'para que sirve', 'no entiendo', 'como asi',
@@ -328,41 +236,9 @@ def is_complaint_or_meta(text):
     return bool(n) and _has_any(n, _COMPLAINT_META_LEMMAS)
 
 
-_ANSWER_SHAPES = {
-    'digits': lambda n: re.search(r'\d{4}', n) is not None,
-}
-
-
-def is_answer_shaped(stage, text):
-    """True / False / **None**.
-
-    `None` = esta etapa no tiene forma verificable (los nombres no la tienen)
-    y es una respuesta honesta, no un fallo: el caller la trata como 'no sé'.
-    """
-    shape = _ANSWER_SHAPES.get(stage)
-    if shape is None:
-        return None
-    return shape(normalize(text))
-
-
-def classify_client_triage(text):
-    """'new' | 'returning' | 'unclear' — respuesta al tamiz.
-
-    NUNCA se adivina: 'unclear' vuelve a preguntar. Un falso 'new' abre un
-    expediente duplicado sobre alguien que ya existe; un falso 'returning'
-    manda a un cliente nuevo a un reto que no puede pasar. Por eso un "sí" o
-    un "no" pelones se quedan en 'unclear': ante "¿primera vez o ya has
-    venido?" son genuinamente ambiguos y el costo de errar es alto.
-    """
-    n = normalize(text)
-    if not n:
-        return 'unclear'
-    if _has_any(n, _TRIAGE_NEGATED_NEW):
-        return 'returning'
-    if _has_any(n, _TRIAGE_NEGATED_RETURNING):
-        return 'new'
-    if _has_any(n, _TRIAGE_RETURNING):
-        return 'returning'
-    if _has_any(n, _TRIAGE_NEW):
-        return 'new'
-    return 'unclear'
+# `_ANSWER_SHAPES` / `is_answer_shaped` y `classify_client_triage` vivían aquí
+# (É-F5 Fase 2). El primero contestaba "¿este mensaje responde la etapa que yo
+# esperaba?" para una FSM que ya no existe, y solo conocía UNA forma —cuatro
+# dígitos—: en las otras cuatro etapas, cualquier mensaje con "?" contaba como
+# interrupción. Era el falso dilema que C6 prohíbe: un mensaje puede ser
+# respuesta Y pregunta a la vez.

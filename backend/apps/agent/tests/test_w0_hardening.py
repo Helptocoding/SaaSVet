@@ -357,14 +357,34 @@ class PrivacyNoticeTests(AgentFixture):
         sistema lanza el reto de identidad (primera recolección de datos)."""
         return run_turn(
             self, self.conv, self.agent_user, "¿qué citas tengo?",
-            scripted_llm=[LLMResult(kind="tool_call",
-                                    tool_name="list_upcoming_appointments",
-                                    tool_args={})],
+            scripted_llm=[
+                LLMResult(kind="tool_call",
+                          tool_name="list_upcoming_appointments",
+                          tool_args={}),
+                # La tool rebota con `verification_required` y el modelo pide
+                # el dato. Antes esta segunda vuelta no existía: el router
+                # emitía la plantilla del reto y cerraba el turno (É-F5 F2).
+                LLMResult(kind="text",
+                          text="Para consultarlas necesito confirmar quién "
+                               "eres. ¿Cómo se llama tu mascota? 🙂"),
+            ],
             assert_clean=False)
 
-    def test_privacy_notice_precedes_first_identity_challenge(self):
+    def test_privacy_notice_precedes_first_request_for_personal_data(self):
+        """LFPDPPP just-in-time (spec §4): el aviso va ANTES de pedir datos.
+
+        Reescrito en É-F5 Fase 2 — ya no hay «reto de identidad» que preceder,
+        porque quien pide el dato es el modelo. Lo que se protege es lo mismo
+        y es lo que importa: **el aviso encabeza el turno en el que el sistema
+        decide que hace falta identificar a alguien**, y lo antepone el
+        sistema, no el modelo (es un literal legal).
+
+        Este test encontró una regresión real: al retirar el paso 12b del
+        router desapareció el único productor del aviso para este caso, y
+        pedir nombre o dígitos dejó de ir precedido de él.
+        """
         bodies, result, _ = self._ask_for_personal_data()
-        self.assertEqual(result["decision"], "identity_challenge")
+        self.assertEqual(result["decision"], "planner_reply")
         self.assertIn("aviso de privacidad", bodies[-1].lower())
         self.contact.refresh_from_db()
         self.assertIsNotNone(self.contact.privacy_notice_sent_at)
@@ -373,10 +393,19 @@ class PrivacyNoticeTests(AgentFixture):
         self._ask_for_personal_data()
         first_sent_at = ContactIdentity.objects.get(
             pk=self.contact.pk).privacy_notice_sent_at
-        # Segundo reto (el cliente falla el nombre) → sin repetir el aviso.
+        # Segunda petición de datos en la misma conversación → sin repetir el
+        # aviso (`privacy_notice_sent_at` es idempotente por contacto).
         bodies, _, _ = run_turn(
             self, self.conv, self.agent_user, "Firulais",
-            scripted_llm=[], assert_clean=False)
+            scripted_llm=[
+                LLMResult(kind="tool_call",
+                          tool_name="list_upcoming_appointments",
+                          tool_args={}),
+                LLMResult(kind="text",
+                          text="Mmm, ese no me coincide. ¿Me lo repites "
+                               "tal como lo registraron? 🙂"),
+            ],
+            assert_clean=False)
         self.assertNotIn("aviso de privacidad", " ".join(bodies).lower())
         self.assertEqual(
             ContactIdentity.objects.get(pk=self.contact.pk).privacy_notice_sent_at,

@@ -229,6 +229,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     turn_messages = []
     tool_facts = []          # lo que las tools devolvieron ESTE turno (G1)
     correction = None        # instrucción correctiva del guard (un intento)
+    # ¿Este turno descubrió que hay que identificar a alguien? Si sí, el aviso
+    # de privacidad encabeza la respuesta (LFPDPPP just-in-time). Lo pone el
+    # sistema porque es un literal legal, no algo que el modelo redacte.
+    needs_privacy_notice = False
     # W2 — tres señales distintas, antes colapsadas en una sola (`goal_touched`)
     # que solo decía "se llamó una tool de objetivo". Un modelo atascado la
     # llama en CADA vuelta, así que el estancamiento nunca se detectaba.
@@ -326,10 +330,22 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 _log_guard(conversation, violations, action='sent')
             # ÚNICO texto que el modelo redactó de verdad → voz propia del
             # agente (R11, Fase 2 §2.1). Todo lo demás sale como 'system'.
+            #
+            # El aviso de privacidad va DELANTE si en este turno el sistema
+            # descubrió que necesita identificar a alguien (É-F5 Fase 2).
+            # Antes lo anteponía el paso 12b del router, que se retiró; sin
+            # esto, pedir nombre, mascota o dígitos —que ES recolección de
+            # datos personales— dejaba de ir precedido del aviso (LFPDPPP,
+            # spec §4 just-in-time).
+            #
+            # Lo pone el sistema, no el modelo, y a propósito: es un literal
+            # legal. `_privacy_prefix` ya es idempotente por contacto, así que
+            # no se repite aunque la verificación se pida varias veces.
             enqueue_outbound(
                 conversation,
-                _after_hours_prefix(conversation, agent_settings,
-                                    burst_text=burst_text) + text,
+                (_privacy_prefix(conversation) if needs_privacy_notice else '')
+                + _after_hours_prefix(conversation, agent_settings,
+                                      burst_text=burst_text) + text,
                 author='agent')
             return {'decision': 'planner_reply', 'llm_calls': llm_calls,
                     'tools': tool_calls}
@@ -391,13 +407,14 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             return {'decision': 'awaiting_confirmation',
                     'llm_calls': llm_calls, 'tools': tool_calls}
 
-        # La tool propuso un RETO de identidad (p.ej. `link_family_member`):
-        # se pregunta el primer factor y se cierra el turno, sin realimentar
-        # al LLM. La pregunta la redacta el planner — una tool no escribe copy.
-        if proposed == 'identity':
-            enqueue_outbound(conversation, tier0.T0_FAMILY_LINK_START)
-            return {'decision': 'awaiting_reply',
-                    'llm_calls': llm_calls, 'tools': tool_calls}
+        # Aquí una tool podía PROPONER un reto de identidad: el planner emitía
+        # la plantilla del primer factor y cerraba el turno sin realimentar al
+        # LLM. Retirado en É-F5 Fase 2 junto con `link_family_member`, su único
+        # productor — el docstring de aquella tool lo decía sin querer: «el
+        # resto del reto lo conduce el Policy Engine, sin LLM». Ese conductor
+        # ya no existe, así que la tool sembraba un reto que nadie avanzaba.
+        # Su función la cumple `identify_client` en una sola llamada, y quien
+        # pregunta lo que falta es el modelo.
 
         if not outcome.ok:
             # Acceso restringido del familiar (PR-17b): no es un fallo de
@@ -411,49 +428,17 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     author='system')
                 return {'decision': 'family_restricted',
                         'llm_calls': llm_calls, 'tools': tool_calls}
-            if outcome.client_error == 'verification_required':
-                # Número YA registrado (phone_match) → reto de identidad para
-                # confirmar que es el titular. Número NO registrado → no tiene
-                # mascota que confirmar: tamiz (¿nuevo o ya cliente?), que
-                # resuelve ambas ramas solo — nunca se asume el alta.
-                if conversation.contact.owner_id is None:
-                    # No re-triar un tamiz ya decidido (conv 13, S6): antes
-                    # esto sembraba SIEMPRE un tamiz nuevo aunque
-                    # `identity_triage_done` ya tuviera veredicto, y dos
-                    # meta-preguntas al tamiz nuevo pisaban un 'returning'
-                    # correcto con 'unclear'. Fase 0 (mínimo honesto):
-                    # escalar en vez de re-triar; Fase 1 lo convierte en
-                    # reanudar el compromiso suspendido.
-                    if conversation.flow.get('identity_triage_done'):
-                        policy.escalate_to_human(
-                            conversation,
-                            reason_code=HumanHandoff.REASON_IDENTITY,
-                            detail='triage_already_resolved')
-                        enqueue_outbound(conversation, tier0.T0_CHALLENGE_FAILED,
-                                         author='system')
-                        return {'decision': 'escalate', 'llm_calls': llm_calls,
-                                'tools': tool_calls,
-                                'reason': 'triage_already_resolved'}
-                    triage = policy.start_identity_triage(conversation)
-                    enqueue_outbound(
-                        conversation,
-                        _privacy_prefix(conversation) + triage,
-                        author='system')
-                    return {'decision': 'identity_triage',
-                            'llm_calls': llm_calls, 'tools': tool_calls}
-                challenge = policy.start_identity_challenge(conversation)
-                enqueue_outbound(conversation,
-                                 _privacy_prefix(conversation) + challenge,
-                                 author='system')
-                return {'decision': 'identity_challenge',
-                        'llm_calls': llm_calls, 'tools': tool_calls}
-
             # Errores SUAVES (faltan datos, fecha inválida, hueco tomado…):
             # NO son fallos de sistema. Se realimentan al LLM con una guía para
             # que PREGUNTE o AJUSTE — jamás rebotan a un humano. Solo un
             # 'tool_failure' real (HTTP 5xx/transporte) escala.
             if outcome.client_error != 'tool_failure':
                 consecutive_failures = 0
+                if outcome.client_error == 'verification_required':
+                    # El sistema acaba de decidir que necesita identificar a
+                    # quien escribe: lo que el modelo pida a continuación son
+                    # datos personales, así que el aviso encabeza la respuesta.
+                    needs_privacy_notice = True
                 payload = {
                     'error': outcome.client_error,
                     'detalle': outcome.detail,
@@ -648,6 +633,23 @@ def _soft_error_hint(client_error):
     """Guía para el LLM cuando una tool devuelve un error 'suave' → que
     PREGUNTE o AJUSTE en vez de rebotar a un humano."""
     return {
+        # É-F5 Fase 2: la verificación deja de ser una rama que TERMINA el
+        # turno con una plantilla y pasa a ser un error suave como los demás.
+        # Antes, este código secuestraba el turno: el router sembraba un reto,
+        # emitía su plantilla y el modelo no volvía a ver la conversación
+        # hasta que el reto se resolviera o muriera. Ahora el modelo se entera
+        # de que falta verificar y lo pide él, conversando.
+        #
+        # La barrera NO se toca: `run_tool` sigue revalidando y la llamada
+        # rebota sin ejecutar nada. Lo que cambia es quién redacta la
+        # respuesta, no quién autoriza.
+        'verification_required': 'Todavía no sabes con certeza quién te '
+                                 'escribe, y eso hace falta para tocar datos '
+                                 'personales. Pídele lo que falte —su nombre, '
+                                 'el de su mascota o los últimos 4 dígitos del '
+                                 'teléfono registrado— y di para qué es. '
+                                 'Cuando te lo diga, llama a la herramienta de '
+                                 'identificación.',
         'need_data': 'Faltan datos para agendar. Pregúntale al cliente lo que '
                      'falte (fecha y HORA concreta, y el motivo) antes de usar '
                      'la herramienta de nuevo.',

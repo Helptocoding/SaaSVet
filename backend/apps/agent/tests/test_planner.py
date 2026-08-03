@@ -233,51 +233,47 @@ class PlannerPolicyShortCircuitTests(PlannerTestCase):
 
 
 class PlannerVerificationTests(PlannerTestCase):
-    def test_unverified_personal_tool_triggers_challenge(self):
+    def test_unverified_personal_tool_executes_nothing(self):
+        """La BARRERA, que es lo que de verdad protege los datos.
+
+        Reescrito en É-F5 Fase 2: antes se afirmaba que el rebote arrancaba un
+        reto conducido por el router (`decision == 'identity_challenge'`). Ese
+        conductor se retiró y ahora el turno vuelve al modelo, que pregunta él.
+
+        Lo que NO cambió —y es lo único que impide una fuga— es que la llamada
+        rebota SIN ejecutarse: `_verification_ok` se evalúa dentro de
+        `run_tool`, por debajo del modelo. Por eso es seguro dejarlo conversar
+        sobre identidad.
+        """
         self.contact.verification_level = ContactIdentity.VERIFICATION_PHONE_MATCH
         self.contact.save()
         self._inbound("¿qué citas tengo?")
         stub = StubLLMClient(scripted=[
             LLMResult(kind="tool_call", tool_name="list_upcoming_appointments",
                       tool_args={}),
+            LLMResult(kind="text",
+                      text="Para verlas necesito confirmar quién eres 🙂"),
         ])
         result = self._handle(stub)
-        self.assertEqual(result["decision"], "identity_challenge")
-        from apps.agent.tests.harness import identity_commitment
-        self.assertEqual(
-            identity_commitment(self.conv).name, "identity_challenge")
-        self.assertIn("mascota", self._last_outbound().body.lower())
+
+        self.assertEqual(result["decision"], "planner_reply")
+        # La garantía: la tool NO se ejecutó con éxito. Se afirma así —y no
+        # sobre la existencia de una fila— porque lo que protege los datos es
+        # que la llamada rebote, no cómo se instrumente el rebote.
+        from apps.agent.models import ToolExecution
+        self.assertFalse(
+            ToolExecution.objects.filter(
+                conversation=self.conv,
+                tool_name='list_upcoming_appointments',
+                error_code='').exists(),
+            "una tool personal se ejecutó sin verificación")
 
 
-class PlannerTriageAlreadyResolvedTests(PlannerTestCase):
-    """Fase 0 §0.5 — conv 13 S6: `planner.py:274` sembraba SIEMPRE un tamiz
-    nuevo aunque `identity_triage_done` ya tuviera veredicto, y dos
-    meta-preguntas al tamiz nuevo pisaban un 'returning' correcto con
-    'unclear'. Con el tamiz ya resuelto, se escala en vez de re-triar."""
-
-    def setUp(self):
-        super().setUp()
-        self.contact.owner = None
-        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
-        self.contact.save()
-
-    def test_does_not_re_triage_when_already_resolved(self):
-        self.conv.flow = {"identity_triage_done": "returning"}
-        self.conv.save(update_fields=["flow"])
-        self._inbound("¿qué citas tengo?")
-        stub = StubLLMClient(scripted=[
-            LLMResult(kind="tool_call", tool_name="list_upcoming_appointments",
-                      tool_args={}),
-        ])
-        result = self._handle(stub)
-        self.assertEqual(result["decision"], "escalate")
-        self.assertEqual(result["reason"], "triage_already_resolved")
-        self.conv.refresh_from_db()
-        self.assertNotIn("identity_triage", self.conv.flow)
-        self.assertEqual(self.conv.state, Conversation.STATE_HANDOFF_PENDING)
-        self.assertEqual(
-            HumanHandoff.objects.filter(conversation=self.conv).count(), 1)
-
+# `PlannerTriageAlreadyResolvedTests` vivía aquí (É-F5 Fase 2). Protegía una
+# guarda —"no re-triar un tamiz ya resuelto"— de una máquina de estados que ya
+# no existe: sin tamiz no hay nada que re-triar. No se porta ninguna
+# aserción; el defecto que la motivó (la conv 13 perdiendo un veredicto
+# correcto) lo cubre ahora el corpus, sobre conducta observable.
 
 class PlannerFailureTests(PlannerTestCase):
     def test_llm_error_escalates(self):

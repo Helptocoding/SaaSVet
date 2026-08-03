@@ -120,9 +120,15 @@ class NoPiiTests(TurnDecisionSetupMixin, TestCase):
         # por azar, no uno que parezca una credencial.
         marker = "texto-del-cliente-que-no-debe-viajar"
         msg = self._inbound(f"hola {marker} quiero una cita")
+        # Guion explícito: desde É-F5 Fase 2 este turno ya no lo intercepta el
+        # router (el tamiz de identidad se retiró), así que llega al planner y
+        # sin stub intentaría hablar con un proveedor real.
+        from apps.agent.llm import LLMResult, StubLLMClient
         planner.handle_inbound(
             self.conv, agent_settings=self.settings, triggered_by=msg,
             burst=[f"hola {marker} quiero una cita"],
+            llm_client=StubLLMClient(scripted=[
+                LLMResult(kind="text", text="¡Claro! ¿Para qué día? 🙂")]),
         )
         row = TurnDecision.objects.get(conversation=self.conv)
         for field in (

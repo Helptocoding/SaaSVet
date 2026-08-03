@@ -195,78 +195,99 @@ class BriefConversationTests(CorpusBase):
     """
 
     def _play(self):
-        conversation = self._new_conversation(external_id="5215500001111")
-        self._turn(conversation, burst=["hola", "quiero una cita para mi mascota"])
-        self._turn(conversation, burst=["ya he ido", "mi nombre es Ana"])
-        self._turn(conversation, burst=["ya te dije", "Ana"])
-        self._turn(conversation, burst=["¿qué?"])
-        self._turn(conversation, burst=["¿qué es eso?"])
-        return conversation
+        """La misma conversación, ya conducida por el modelo (Fase 2).
 
-    @unittest.expectedFailure          # ← lo cierra la Fase 2
-    def test_no_pide_el_nombre_que_el_cliente_acaba_de_dar(self):
-        """C2/C7 · el dato llegó en la MISMA ráfaga y se descartó.
-
-        Hoy `classify_client_triage` solo busca lemas de tamiz; nada en el
-        router extrae un nombre. El agente pregunta por «Ana» medio segundo
-        después de que el cliente escribiera «mi nombre es Ana».
+        El guion NO es la prueba: es el mínimo para que el turno avance. Las
+        aserciones miran ESTADO y AUTORÍA, que es lo que el guion no puede
+        falsear — afirmar sobre un texto que yo mismo escribo sería circular.
         """
         conversation = self._new_conversation(external_id="5215500001111")
-        self._turn(conversation, burst=["hola", "quiero una cita para mi mascota"])
-        self._turn(conversation, burst=["ya he ido", "mi nombre es Ana"])
+        self._turn(conversation,
+                   burst=["hola", "quiero una cita para mi mascota"],
+                   scripted=[LLMResult(
+                       kind="text",
+                       text="¡Claro! ¿Cómo se llama tu peludo? 🐾")])
+        self._turn(conversation, burst=["ya he ido", "mi nombre es Ana"],
+                   scripted=[LLMResult(
+                       kind="tool_call", tool_name="identify_client",
+                       tool_args={"owner_name": "Ana"}),
+                       LLMResult(kind="text",
+                                 text="Gracias, Ana. ¿Cómo se llama tu "
+                                      "mascota? Es para abrir su ficha 🙂")])
+        self._turn(conversation, burst=["ya te dije", "Ana"],
+                   scripted=[LLMResult(
+                       kind="text",
+                       text="Sí, perdón — me falta el nombre de tu mascota "
+                            "para encontrar el expediente 🙂")])
+        return conversation
 
-        self.assertNotIn(
-            "¿A nombre de quién está el registro?",
-            self._agent_bodies(conversation)[-1],
-            "el cliente acaba de decir su nombre y el agente lo vuelve a pedir",
+    def test_guarda_el_nombre_que_el_cliente_dio_por_su_cuenta(self):
+        """C2 · el dato llegó en la MISMA ráfaga que otra cosa.
+
+        Es el defecto que abrió É-F5: el cliente escribió «ya he ido» y «mi
+        nombre es Ana» juntos, el router clasificó bien la primera mitad y la
+        segunda **no tenía dónde ir** — `goals.capture` solo se alimentaba de
+        argumentos de tool, y ninguna tool se llamó.
+
+        Se afirma sobre el ESTADO, no sobre el texto: el dato quedó guardado.
+        """
+        conversation = self._play()
+        conversation.refresh_from_db()
+        self.assertEqual(
+            (conversation.flow.get('aportado') or {}).get('owner_name'), "Ana",
+            "el cliente dijo su nombre y el sistema no lo guardó",
         )
 
-    @unittest.expectedFailure          # ← lo cierra la Fase 2
     def test_ninguna_peticion_sale_sin_motivo(self):
-        """R9 · el `why` de la etapa `titular` del tamiz no existe.
+        """R9 · guarda de regresión contra `Te lo pido para  🙂`.
 
-        `IDENTITY_SPECS['identity_triage']` declara un solo factor
-        (`client_kind`), pero el router avanza a `return_to='titular'`, que no
-        es un `Factor` — así que `why_for()` devuelve ''. La garantía «un
-        factor sin why no compila» no cubre las etapas que la FSM usa de
-        verdad.
+        La plantilla que lo producía ya no existe, así que hoy esto pasa por
+        construcción. Se conserva porque lo que protege no es el bug: es que
+        no vuelva a introducirse un `format()` con un hueco que pueda quedar
+        vacío sin que nadie lo note.
         """
         self.assert_no_empty_why(self._play())
 
-    @unittest.expectedFailure          # ← lo cierra la Fase 2
-    def test_no_repite_el_mismo_mensaje(self):
-        """C7 · dos salientes idénticos carácter por carácter.
+    def test_el_sistema_no_repite_una_plantilla(self):
+        """C7 · en la conversación real el agente repitió la MISMA plantilla
+        tres veces, carácter por carácter.
 
-        La respuesta al desvío es re-emitir la MISMA plantilla, lo que
-        garantiza que el siguiente mensaje del cliente sea otra queja. El
-        bucle no es un caso raro: es el punto fijo de la transición.
+        Se mira solo lo que emite el SISTEMA (`author_type='system'`), no lo
+        que redacta el modelo: el texto del modelo lo pone el guion y afirmar
+        sobre él no probaría nada.
         """
-        self.assert_no_repeated_message(self._play())
+        conversation = self._play()
+        plantillas = list(
+            Message.objects.filter(
+                conversation=conversation,
+                direction=Message.DIRECTION_OUT,
+                author_type=Message.AUTHOR_SYSTEM,
+            ).exclude(status=Message.STATUS_DISCARDED)
+            .order_by("id").values_list("body", flat=True)
+        )
+        for previous, current in zip(plantillas, plantillas[1:]):
+            self.assertNotEqual(previous.strip(), current.strip(),
+                                f"plantilla repetida verbatim:\n{current}")
 
-    @unittest.expectedFailure          # ← lo cierra la Fase 2
     def test_no_termina_con_una_persona_por_culpa_del_cliente(self):
-        """El mensaje de cierre miente: «no logro validar tus datos» cuando
+        """El mensaje de cierre mentía: «no logro validar tus datos» cuando
         nada se validó — el cliente nunca dio un dato equivocado. Lo que se
         agotó fue el tope de desvíos, no los intentos fallidos."""
-        conversation = self._play()
-        self.assert_not_escalated_by_identity(conversation)
+        self.assert_not_escalated_by_identity(self._play())
 
-    def test_la_conversacion_no_llega_al_modelo(self):
-        """Línea base, y **no** es expectedFailure: documenta el hecho que
-        motivó É-F5 y tiene que seguir siendo cierto *hasta* la Fase 2.
+    def test_la_conversacion_llega_al_modelo(self):
+        """La métrica del experimento, invertida respecto de la Fase 0.
 
-        Si este test empieza a fallar, es que el modelo ya conduce — buena
-        noticia, y toca actualizarlo junto con los cuatro de arriba.
+        Antes este test afirmaba lo contrario —los cinco turnos se resolvían
+        SIN LLM— y su docstring decía que empezar a fallar sería buena
+        noticia. Aquí está la buena noticia.
         """
         conversation = self._play()
         from apps.agent.models import TurnDecision
-        sin_modelo = TurnDecision.objects.filter(
-            conversation=conversation, planner_used=False,
-        ).count()
-        total = TurnDecision.objects.filter(conversation=conversation).count()
-        self.assertEqual(
-            sin_modelo, total,
-            "línea base É-F5: hoy los 5 turnos se resuelven sin LLM",
+        decisiones = TurnDecision.objects.filter(conversation=conversation)
+        self.assertGreater(
+            decisiones.filter(planner_used=True).count(), 0,
+            "el modelo no vio ni uno de los turnos",
         )
 
 
@@ -329,27 +350,73 @@ class FamilyChallengeInterruptionTests(CorpusBase):
     Su único «error» fue preguntar *«¿para qué necesitas eso?»* antes de dar
     los dígitos: se contó como respuesta equivocada, dos veces.
 
-    **Este caso ya lo cerró É-F4** (Fase 0: una no-respuesta no es una
-    respuesta equivocada; Fase 1: el reto se suspende en vez de destruirse).
-    Vive aquí en VERDE para proteger el arreglo — es la mitad del corpus que
-    no puede volver a romperse.
+    Lo cerró É-F4 (Fase 0: una no-respuesta no es una respuesta equivocada;
+    Fase 1: el reto se suspende en vez de destruirse) y vivía aquí en verde
+    como regresión protectora.
+
+    **REESCRITO EN LA FASE 2, y el motivo importa más que el test.** La
+    garantía cambió de naturaleza:
+
+        antes:  4 factores correctos → verificado.  Lo garantizaba la FSM.
+        ahora:  4 factores correctos → verificado SI el modelo llama a
+                `identify_client`.
+
+    No es una regresión de SEGURIDAD —`_verification_ok` sigue impidiendo el
+    acceso indebido y nadie entra sin verificar— sino de SERVICIO: un familiar
+    legítimo podría no quedar vinculado si el modelo no llama la herramienta.
+    Es exactamente el riesgo §11.4 del plan, que ahora tiene un caso concreto
+    en vez de ser una hipótesis, y que **ninguna suite con stub puede
+    resolver**: el guion de aquí abajo demuestra que la vía FUNCIONA, no que
+    el modelo la USE. Eso lo dice el eval con LLM real, midiendo llamadas a
+    `identify_client` por conversación.
     """
 
     def _play(self):
+        """El mismo cliente, ahora conducido por el modelo.
+
+        Los cuatro factores llegan igual que en la conversación real —en
+        varios turnos y con una pregunta de por medio—; lo que cambia es quién
+        los recoge. En el turno 4 el cliente pregunta el porqué en vez de
+        contestar: no se penaliza, y el modelo sigue.
+        """
         conversation = self._new_conversation(external_id="5215500002222")
-        self._turn(conversation, burst=["quiero una cita para Oliver"])
-        self._turn(conversation, burst=["ya he ido varias veces"])
-        self._turn(conversation, burst=["Ana Cruz"])
-        self._turn(conversation, burst=["para que necesitas eso"])
-        self._turn(
-            conversation, burst=["4586"],
-            scripted=[LLMResult(kind="text",
-                                text="¡Gracias! ¿Para qué día te late? 🙂")],
-        )
+        self._turn(conversation, burst=["quiero una cita para Oliver"],
+                   scripted=[LLMResult(
+                       kind="tool_call", tool_name="identify_client",
+                       tool_args={"pet_name": "Oliver"}),
+                       LLMResult(kind="text",
+                                 text="¡Claro! ¿A nombre de quién está? 🙂")])
+        self._turn(conversation, burst=["ya he ido varias veces", "Ana Cruz"],
+                   scripted=[LLMResult(
+                       kind="tool_call", tool_name="identify_client",
+                       tool_args={"owner_name": "Ana Cruz",
+                                  "pet_name": "Oliver"}),
+                       LLMResult(kind="text",
+                                 text="Gracias. ¿Me confirmas los últimos 4 "
+                                      "dígitos del teléfono registrado? Es "
+                                      "para abrir la ficha correcta 🙂")])
+        self._turn(conversation, burst=["para que necesitas eso"],
+                   scripted=[LLMResult(
+                       kind="text",
+                       text="Para asegurarme de abrir la ficha correcta y "
+                            "proteger los datos del titular 🙂")])
+        self._turn(conversation, burst=["4586"],
+                   scripted=[LLMResult(
+                       kind="tool_call", tool_name="identify_client",
+                       tool_args={"owner_name": "Ana Cruz",
+                                  "pet_name": "Oliver",
+                                  "phone_digits": "4586"}),
+                       LLMResult(kind="text",
+                                 text="¡Listo! ¿Para qué día te late? 🙂")])
         return conversation
 
     def test_preguntar_no_rompe_la_verificacion(self):
-        """R1 · una no-respuesta nunca es una respuesta equivocada."""
+        """R1 · una no-respuesta nunca es una respuesta equivocada.
+
+        La propiedad que se protege es la MISMA que antes; solo cambió quién
+        conduce. Cuatro factores correctos, una pregunta de por medio, y el
+        cliente acaba atendido en vez de con un humano.
+        """
         conversation = self._play()
         conversation.contact.refresh_from_db()
         self.assertEqual(
@@ -361,22 +428,25 @@ class FamilyChallengeInterruptionTests(CorpusBase):
             ContactIdentity.VERIFICATION_CONFIRMED,
         )
         self.assert_not_escalated_by_identity(conversation)
+        self.assert_no_repeated_message(conversation)
 
-    def test_la_pregunta_recibe_su_motivo(self):
-        """R9 · «¿para qué necesitas eso?» tiene que obtener una respuesta.
+    def test_preguntar_el_porque_no_cuenta_como_atasco(self):
+        """C11 · el turno 4 es una pregunta, no un fallo.
 
-        Contraste con el caso A: aquí la etapa (`digits` del reto familiar) SÍ
-        es un `Factor` declarado, así que el motivo existe y se dice. El
-        defecto del brief no es que R9 no exista — es que no cubre las etapas
-        que la FSM inventa fuera del catálogo.
+        En la conversación real ese turno se contó como respuesta equivocada
+        —dos veces— y acabó en handoff. Aquí se comprueba sobre el ESTADO, que
+        es lo que no depende del guion: el objetivo no acumula estancamiento
+        por haber preguntado.
         """
         conversation = self._play()
-        bodies = self._agent_bodies(conversation)
-        self.assertTrue(
-            any("proteger los datos del titular" in b for b in bodies),
-            "el cliente preguntó el porqué y nadie se lo dijo",
-        )
-        self.assert_no_empty_why(conversation)
+        goal = ConversationGoal.objects.filter(
+            conversation=conversation).order_by('-id').first()
+        if goal is not None:
+            self.assertEqual(
+                goal.stall_turns, 0,
+                "preguntar el porqué no puede acercar al cliente a una escalada",
+            )
+        self.assert_not_escalated_by_identity(conversation)
 
 
 # ---------------------------------------------------------------------------
@@ -391,38 +461,44 @@ class BaselineMetricsTests(CorpusBase):
     la señal correcta — se actualiza junto con el resultado del experimento.
     """
 
-    def test_linea_base_de_la_conversacion_del_brief(self):
+    def test_el_agente_redacta_y_el_modelo_ve_los_turnos(self):
+        """Mide el efecto de la Fase 2 sobre la métrica insignia.
+
+        La versión de la Fase 0 congelaba los valores de ENTONCES —0.0
+        redactado por el agente, 1.0 de turnos sin modelo— y decía que tenían
+        que cambiar aquí. Cambiaron.
+
+        Se afirma la DIRECCIÓN, no un número: fijar un objetivo concreto sería
+        el Goodhart contra el que este mismo plan advierte (§9bis.1), y el
+        techo real depende de cuántas salvaguardas dispare el tráfico.
+        """
         from datetime import timedelta
 
         from apps.agent.metrics import compute_conversation_metrics
 
         conversation = self._new_conversation(external_id="5215500003333")
-        for burst in (["hola", "quiero una cita para mi mascota"],
-                      ["ya he ido", "mi nombre es Ana"],
-                      ["ya te dije", "Ana"],
-                      ["¿qué?"],
-                      ["¿qué es eso?"]):
-            self._turn(conversation, burst=burst)
+        for burst, script in (
+            (["hola", "quiero una cita"],
+             [LLMResult(kind="text", text="¡Claro! ¿Cómo se llama tu peludo?")]),
+            (["se llama Oliver"],
+             [LLMResult(kind="text", text="Perfecto. ¿Para qué día lo quieres?")]),
+        ):
+            self._turn(conversation, burst=burst, scripted=script)
 
         now = timezone.now()
         metrics = compute_conversation_metrics(
             self.org, now - timedelta(hours=1), now + timedelta(hours=1))
 
-        self.assertEqual(
+        self.assertGreater(
             metrics['pct_redactado_por_agente'], 0.0,
-            "línea base: el agente no redactó UN SOLO mensaje — los cinco son "
-            "plantillas de tier0.py",
+            "el agente no redactó un solo mensaje: la Fase 2 no movió nada",
         )
-        self.assertEqual(
+        self.assertLess(
             metrics['pct_turnos_sin_modelo'], 1.0,
-            "línea base: los cinco turnos se resolvieron sin llamar al modelo",
+            "ningún turno llegó al modelo",
         )
-        self.assertGreaterEqual(
-            metrics['salientes_repetidos'], 1,
-            "línea base: el agente repitió al menos un mensaje palabra por "
-            "palabra",
+        self.assertEqual(metrics['salientes_repetidos'], 0)
+        self.assertGreater(
+            metrics['palabras_por_mensaje_agente']['muestras'], 0,
+            "sin mensajes del agente la métrica de verbosidad no dice nada",
         )
-        # Sin mensajes del agente no hay muestra de palabras: es coherente con
-        # un 0 % redactado, y es exactamente por qué esa métrica no dice nada
-        # útil hasta que la Fase 2 la levante.
-        self.assertEqual(metrics['palabras_por_mensaje_agente']['muestras'], 0)

@@ -278,11 +278,17 @@ class SecurityTests(RegressionBase):
             scripted=[
                 LLMResult(kind="tool_call", tool_name="list_my_pets",
                           tool_args={}),  # el LLM intenta, pero…
+                LLMResult(kind="text",
+                          text="Por seguridad no puedo darte ese dato. "
+                               "¿Cómo se llama tu mascota? 🙂"),
             ],
         )
-        # …list_my_pets exige confirmed_in_chat → verification_required →
-        # reto de identidad, jamás el nombre.
-        self.assertEqual(result["decision"], "identity_challenge")
+        # …list_my_pets exige confirmed_in_chat → verification_required, y la
+        # llamada rebota SIN ejecutarse. Desde É-F5 Fase 2 el turno vuelve al
+        # modelo en vez de terminar en la plantilla de un reto; lo que NO
+        # cambia —y es lo que este caso protege— es que el nombre registrado
+        # jamás sale.
+        self.assertEqual(result["decision"], "planner_reply")
         for body in bodies:
             self.assertNotIn("Ana Torres", body)
 

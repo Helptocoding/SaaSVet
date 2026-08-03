@@ -169,80 +169,24 @@ T0_OUT_MEDICAL = (
 T0_DEFER = "Va, aquí queda pendiente — me dices 🙌"
 
 # Reto de identidad (G4: nunca enumera).
-T0_CHALLENGE_PET = (
-    "Para proteger tus datos, ¿me confirmas el nombre de tu mascota?"
-)
-T0_CHALLENGE_RETRY = (
-    "Mmm, no me coincide. ¿Me lo repites tal como lo registraron?"
-)
-T0_CHALLENGE_OWNER = (
-    "¿A nombre de quién está el registro?"
-)
-T0_CHALLENGE_FAILED = (
-    "No logro validar tus datos por aquí 🙏 Te comunico con el equipo para "
-    "que te apoyen."
-)
-
-# Interrupción durante un reto (R1, R9): una pregunta ("¿para qué necesitas
-# eso?") recibe el motivo antes de repreguntar, en vez de contar como respuesta
-# equivocada (conv 13). Compone con la plantilla original del factor — cero
-# copy nuevo por factor.
+# ---------------------------------------------------------------------------
+# Plantillas de identidad — RETIRADAS (É-F5 Fase 2, ADR p56)
+# ---------------------------------------------------------------------------
+# Aquí vivían las 13 plantillas que conducían los retos: T0_CHALLENGE_*,
+# T0_TRIAGE_*, T0_FAMILY_LINK_START, render_triage… y `T0_WHY_THEN_REASK`.
 #
-# El MOTIVO ya no vive aquí: la Fase 0 lo puso en un dict `FACTOR_WHY` indexado
-# por etapa, como mínimo honesto, y la Fase 3 lo movió a `Factor.why` del
-# compromiso (R9 estructural, ADR p55 §5) — un factor sin motivo no compila.
-# Lo que queda aquí es la plantilla, que sí es copy.
-T0_WHY_THEN_REASK = "Te lo pido para {why} 🙂\n\n{reask}"
-
-# Tamiz de identidad (UX-05) — número NO registrado que pide algo personal.
+# Esa última merece el epitafio, porque es el argumento entero de É-F5 en una
+# línea de código:
 #
-# El sistema JAMÁS asume que es un cliente nuevo: pregunta. Las dos ramas se
-# atienden solas — "primera vez" va al alta; "ya soy cliente" arranca el reto
-# que lo BUSCA en la tabla y lo verifica, y el agente sigue trabajando. A un
-# humano solo se llega si la verificación falla de verdad.
-T0_TRIAGE_BODY = (
-    "Para ayudarte rápido y no pedirte datos de más: ¿es la *primera vez* "
-    "que nos visitan, o *ya has venido antes* con nosotros?"
-)
-# El reintento NO dice "no te entendí": pide elegir una de dos frases, y ambas
-# están en el diccionario del clasificador — la 2ª vuelta casi siempre resuelve.
-T0_TRIAGE_RETRY = (
-    "Perdón, me expliqué mal 🙂 Dime cuál de las dos: *«soy nuevo»* o "
-    "*«ya he venido»*."
-)
-T0_TRIAGE_TITULAR = (
-    "¡Perfecto! ¿A nombre de quién está el registro? Así lo busco 🙂"
-)
-T0_TRIAGE_PET = (
-    "Gracias. Para proteger los datos del titular necesito validar un par de "
-    "cosas: ¿cómo se llama una de sus mascotas? 🐾"
-)
-# Cuando la mascota YA se nombró antes en la conversación no se vuelve a pedir
-# (se usa como factor tal cual la aportó el cliente) y se salta a los dígitos.
-T0_TRIAGE_DIGITS = (
-    "¡Gracias! Una última cosa por seguridad: ¿los últimos *4 dígitos* del "
-    "teléfono que el titular tiene registrado con nosotros?"
-)
-# Arranque del reto por la vía de la herramienta `link_family_member` (el
-# cliente dijo ser familiar de alguien). Anuncia los tres factores porque aquí
-# no hubo tamiz previo — a diferencia de `T0_TRIAGE_PET`, que llega después de
-# que el cliente ya contestó "ya he venido antes".
-T0_FAMILY_LINK_START = (
-    "Para proteger los datos del titular necesito validar 3 cosas. Primero: "
-    "¿cómo se llama una de sus mascotas? 🐾"
-)
+#     T0_WHY_THEN_REASK = "Te lo pido para {why} 🙂" + salto + "{reask}"
+#
+# Con `why=''` producía literalmente «Te lo pido para  🙂» — dos espacios y un
+# emoji— y salió así DOS VECES seguidas en producción. Ningún test lo vio:
+# **una plantilla es un `format()` que no puede fallar visiblemente.** Un hecho
+# ausente en un bloque de estado es diagnosticable; un hueco de formato vacío,
+# no. Ahora el porqué de cada factor viaja como HECHO publicado y lo redacta
+# quien está leyendo al cliente.
 
-
-def render_triage(organization, first_contact=False):
-    """Tamiz UX-05 (¿nuevo o ya registrado?).
-
-    En un primer contacto abre con la bienvenida institucional: ese mensaje es
-    lo PRIMERO que lee alguien que nunca ha escrito, y arrancar con "este
-    número no está registrado" era hablarle de la base de datos (§2.1).
-    """
-    if first_contact:
-        return f"¡Hola! Bienvenido a {organization.name} 🐾 {T0_TRIAGE_BODY}"
-    return f"¡Claro que sí! 🐾 {T0_TRIAGE_BODY}"
 
 T0_THANKS = "¡Con gusto! Aquí estoy si necesitas algo más 🐾"
 

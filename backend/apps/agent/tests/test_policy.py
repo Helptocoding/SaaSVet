@@ -163,43 +163,6 @@ class ConfirmationFlowTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.RUN_PLANNER)
 
 
-class IdentityChallengeTests(PolicyTestCase):
-    def test_challenge_flow_success(self):
-        policy.start_identity_challenge(self.conv)
-        d = self._eval("Luna")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.contact.refresh_from_db()
-        self.assertEqual(
-            self.contact.verification_level,
-            ContactIdentity.VERIFICATION_CONFIRMED,
-        )
-
-    def test_challenge_retry_then_owner_then_fail(self):
-        policy.start_identity_challenge(self.conv)
-        # 1er no-match → repetición (no cuenta).
-        d1 = self._eval("Firulais")
-        self.assertEqual(d1.text, tier0.T0_CHALLENGE_RETRY)
-        # 2º no-match → 2º factor (titular).
-        d2 = self._eval("Solovino")
-        self.assertEqual(d2.text, tier0.T0_CHALLENGE_OWNER)
-        # titular incorrecto → E-06.
-        d3 = self._eval("Pedro Gómez")
-        self.assertEqual(d3.kind, policy.ESCALATE)
-        self.assertEqual(d3.handoff_reason, HumanHandoff.REASON_IDENTITY)
-
-    def test_challenge_owner_second_factor_success(self):
-        policy.start_identity_challenge(self.conv)
-        self._eval("Firulais")   # retry
-        self._eval("Rex")        # → owner stage
-        d = self._eval("Ana Torres")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.contact.refresh_from_db()
-        self.assertEqual(
-            self.contact.verification_level,
-            ContactIdentity.VERIFICATION_CONFIRMED,
-        )
-
-
 class ImplicitVerificationTests(PolicyTestCase):
     def test_naming_pet_verifies_passively(self):
         self._eval("hola, quiero cita para Luna")
@@ -236,433 +199,55 @@ class BudgetAndScopeTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.RUN_PLANNER)
 
 
-class IdentityTriageTests(PolicyTestCase):
-    """Tamiz UX-05: un número sin registro NUNCA se asume cliente nuevo.
+class IdentityIsNoLongerPreemptedTests(PolicyTestCase):
+    """El contrato NUEVO del router en identidad (É-F5 Fase 2, ADR p56 §4).
 
-    Y decir "ya soy cliente" no manda a nadie con un humano: arranca el reto
-    que lo busca en `Owner` y lo verifica, para que el agente siga atendiendo.
-    Solo una verificación FALLIDA escala (eso ya lo cubre `_family_fail`).
+    Aquí vivían cuatro clases —IdentityChallengeTests, IdentityTriageTests,
+    TriageMatcherTests, DeviationTests e IdentityTriageDoneNotOverwrittenTests—
+    con ~430 líneas que verificaban etapa por etapa una máquina de estados
+    retirada: qué plantilla tocaba, cuándo se avanzaba de factor, cuántos
+    desvíos caben antes de escalar.
+
+    Sus garantías NO se perdieron; cambiaron de capa y de dueño:
+
+    - «datos correctos → verificado» y «datos incorrectos → sin vínculo» viven
+      en `test_f5_fase1.IdentifyClientTests` y `test_family_link`, sobre la
+      herramienta que ahora dictamina.
+    - «no se revela nada bajo el nivel requerido» sigue siendo
+      `_verification_ok` en `run_tool`, y lo cubre la suite adversarial.
+
+    Lo que SÍ se perdió, y conviene que esté escrito en vez de desaparecer con
+    los tests: la escalada tras dos datos equivocados era **estructural** —la
+    conducía el router— y ahora depende de que el modelo decida pedir ayuda.
+    La seguridad no cambia (nadie entra sin verificar); lo que deja de estar
+    garantizado es que un cliente atascado llegue a un humano. Es el riesgo
+    §11.4 del plan, y se mide con el eval real, no con esta suite.
     """
 
-    def setUp(self):
-        super().setUp()
-        self.unknown_contact = ContactIdentity.objects.create(
-            organization=self.org, external_id="5215500001111",
-            phone_normalized="5500001111",
-        )
-        self.unknown_conv = Conversation.objects.create(
-            organization=self.org, channel_account=self.channel,
-            contact=self.unknown_contact,
-        )
+    def test_un_numero_sin_registro_llega_al_modelo(self):
+        """Antes lo interceptaba el tamiz (paso 12b) antes de que el modelo
+        viera el mensaje. Ese era el defecto que abrió É-F5."""
+        self.contact.owner = None
+        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        self.contact.save()
 
-    def _eval_unknown(self, text):
-        return policy.evaluate(self.unknown_conv, text,
-                               agent_settings=self.settings)
+        decision = self._eval("quiero una cita para mi mascota")
 
-    def test_personal_action_from_unregistered_number_asks_triage(self):
-        d = self._eval_unknown("quiero agendar una cita")
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.meta.get("triage"), "asked")
-        self.assertIn("primera vez", d.text.lower())
-        self.assertIsNotNone(identity_commitment(self.unknown_conv))
+        self.assertEqual(decision.kind, policy.RUN_PLANNER)
 
-    def test_price_question_does_not_trigger_triage(self):
-        """Precio/horario se atienden en anónimo: el tamiz sería fricción."""
-        d = self._eval_unknown("cuánto cuesta una cita?")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertIsNone(identity_commitment(self.unknown_conv))
+    def test_el_router_no_emite_ninguna_plantilla_de_identidad(self):
+        """Guarda de regresión: si alguien vuelve a meter un reto en el
+        router, esto lo caza aunque los tests de arriba sigan verdes."""
+        self.contact.owner = None
+        self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        self.contact.save()
 
-    def test_registered_number_skips_triage(self):
-        d = self._eval("quiero agendar una cita")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertIsNone(identity_commitment(self.conv))
-
-    def test_new_client_answer_yields_to_planner(self):
-        self._eval_unknown("quiero agendar una cita")
-        d = self._eval_unknown("es mi primera vez")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertEqual(d.meta.get("triage"), "new")
-        self.assertIsNone(identity_commitment(self.unknown_conv))
-
-    def test_returning_client_is_found_and_verified_without_handoff(self):
-        """El caso que el PO corrigió: "ya soy cliente" NO escala. Se busca en
-        la tabla, se verifica (mascota + 4 dígitos) y el agente continúa."""
-        self._eval_unknown("quiero agendar una cita")
-
-        d = self._eval_unknown("ya soy cliente, cambié de número")
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.meta.get("triage"), "returning")
-
-        d = self._eval_unknown("Ana Torres")
-        self.assertEqual(d.kind, policy.REPLY)
-        family = identity_commitment(self.unknown_conv)
-        self.assertEqual(family.return_to, "pet")
-        self.assertIn(self.owner.pk, family.working_state["candidate_ids"])
-
-        self._eval_unknown("Luna")
-        self.assertEqual(
-            identity_commitment(self.unknown_conv).return_to, "digits")
-
-        d = self._eval_unknown("8877")  # últimos 4 de 5511998877
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertTrue(d.meta.get("verified"))
-        self.unknown_contact.refresh_from_db()
-        self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
-        self.assertEqual(
-            self.unknown_contact.verification_level,
-            ContactIdentity.VERIFICATION_CONFIRMED,
-        )
-        self.assertEqual(
-            HumanHandoff.objects.filter(conversation=self.unknown_conv).count(),
-            0,
-        )
-
-    def test_already_answered_in_the_same_message_is_not_re_asked(self):
-        """"soy nuevo, quiero cita" ya contesta el tamiz: preguntarlo sería la
-        repregunta robótica que la métrica `tasa_repregunta` persigue."""
-        d = self._eval_unknown("soy nuevo, quiero cita")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertEqual(d.meta.get("triage"), "new")
-        self.assertIsNone(identity_commitment(self.unknown_conv))
-
-    def test_already_says_returning_goes_straight_to_lookup(self):
-        d = self._eval_unknown("ya soy cliente, quiero agendar una cita")
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.meta.get("triage"), "returning")
-        self.assertEqual(
-            identity_commitment(self.unknown_conv).return_to, "titular")
-
-    def test_unclear_answer_re_asks_once_then_yields(self):
-        self._eval_unknown("quiero agendar una cita")
-        d = self._eval_unknown("mmm pues no sé")
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.meta.get("triage"), "retry")
-        d = self._eval_unknown("pues eso")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertEqual(d.meta.get("triage"), "unclear")
-
-    def test_first_contact_opens_with_the_clinic_welcome(self):
-        """Sin salientes previos el tamiz es lo PRIMERO que lee el cliente:
-        abre con bienvenida, no hablándole de la base de datos (§2.1)."""
-        d = self._eval_unknown("quiero agendar una cita")
-        self.assertIn(self.org.name, d.text)
-        self.assertNotIn("registrado", d.text.lower())
-
-    def test_triage_replies_carry_the_privacy_notice_flag(self):
-        """UX-01: el aviso just-in-time va antes de pedir datos personales."""
-        d = self._eval_unknown("quiero agendar una cita")
-        self.assertTrue(d.meta.get("privacy_notice"))
-        d = self._eval_unknown("ya soy cliente")
-        self.assertTrue(d.meta.get("privacy_notice"))
-
-    def test_pet_already_named_skips_that_factor(self):
-        """Nombró a Luna en el primer mensaje: pedírsela otra vez sería la
-        repregunta más torpe. Se salta al último factor."""
-        from apps.channels.models import Message
-        Message.objects.create(
-            organization=self.org, channel_account=self.channel,
-            conversation=self.unknown_conv,
-            direction=Message.DIRECTION_IN,
-            author_type=Message.AUTHOR_CLIENT,
-            body="quiero agendar cita para Luna",
-            status=Message.STATUS_PROCESSED,
-        )
-        self._eval_unknown("quiero agendar cita para Luna")
-        self._eval_unknown("ya soy cliente")
-        d = self._eval_unknown("Ana Torres")
-
-        family = identity_commitment(self.unknown_conv)
-        self.assertEqual(family.return_to, "digits")
-        self.assertEqual(family.working_state["candidate_ids"], [self.owner.pk])
-        self.assertIn("4 dígitos", d.text)
-
-        d = self._eval_unknown("8877")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.unknown_contact.refresh_from_db()
-        self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
-
-    def test_triage_is_asked_once_per_conversation(self):
-        self._eval_unknown("quiero agendar una cita")
-        self._eval_unknown("es mi primera vez")
-        d = self._eval_unknown("quiero agendar una cita")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-
-    def test_emergency_still_beats_triage(self):
-        """El tamiz vive DESPUÉS de urgencia: nunca la retrasa."""
-        d = self._eval_unknown("quiero una cita, mi perro convulsiona")
-        self.assertEqual(d.kind, policy.ESCALATE)
-        self.assertEqual(d.handoff_reason, HumanHandoff.REASON_EMERGENCY)
-
-
-class TriageMatcherTests(PolicyTestCase):
-    """D4/D5: recall del clasificador y falsos positivos de la puerta.
-
-    Cada frase es es-MX que un cliente escribe de verdad; el diccionario se
-    amplió porque muchas caían en 'unclear' y disparaban un reintento que se
-    lee como "no te entendí".
-    """
-
-    def test_returning_phrasings(self):
-        for phrase in [
-            "ya vine antes", "sí, ya había venido", "ya fui el año pasado",
-            "ya llevé a mi perro con ustedes", "ya me atendieron ahí",
-            "ya soy cliente", "soy paciente de ahí", "ya tengo expediente",
-            "ya me conocen", "no es la primera vez", "no soy nuevo",
-            "cambié de número", "es que tengo otro número",
-        ]:
-            with self.subTest(phrase=phrase):
-                self.assertEqual(
-                    matchers.classify_client_triage(phrase), "returning")
-
-    def test_new_phrasings(self):
-        for phrase in [
-            "primera vez", "es mi primera vez", "sí, primera visita",
-            "soy nuevo", "somos nuevos", "nunca he ido",
-            "nunca lo he llevado", "apenas voy a llevarlo",
-            "no soy cliente", "no tengo expediente", "no estoy registrado",
-        ]:
-            with self.subTest(phrase=phrase):
-                self.assertEqual(
-                    matchers.classify_client_triage(phrase), "new")
-
-    def test_negations_are_not_read_backwards(self):
-        """"no soy cliente" contiene "soy cliente"; "no es la primera" contiene
-        "primera". Sin evaluar las negaciones primero, ambas salían al revés."""
-        self.assertEqual(
-            matchers.classify_client_triage("no soy cliente"), "new")
-        self.assertEqual(
-            matchers.classify_client_triage("no es la primera vez"), "returning")
-
-    def test_bare_yes_no_stays_unclear(self):
-        """Adivinar aquí abre expedientes duplicados: mejor re-preguntar."""
-        for phrase in ["sí", "no", "ajá", "pues no sé"]:
-            with self.subTest(phrase=phrase):
-                self.assertEqual(
-                    matchers.classify_client_triage(phrase), "unclear")
-
-    def test_info_questions_do_not_need_identity(self):
-        for phrase in [
-            "¿cuánto tarda una cita?", "¿qué incluye la cita?",
-            "¿necesito cita o puedo llegar así?", "¿atienden sin cita?",
-            "¿cuánto cuesta una cita?", "¿qué horario tienen?",
-            "¿dónde están?", "¿qué necesito para la primera consulta?",
-        ]:
-            with self.subTest(phrase=phrase):
-                self.assertFalse(matchers.wants_personal_action(phrase))
-
-    def test_real_requests_still_need_identity(self):
-        for phrase in [
-            "quiero agendar una cita", "me das una cita para mañana",
-            "¿qué citas tengo?", "quiero cancelar mi cita",
-            "necesito una cita para mi perro", "¿cuándo le toca la vacuna?",
-        ]:
-            with self.subTest(phrase=phrase):
-                self.assertTrue(matchers.wants_personal_action(phrase))
-
-
-class DeviationTests(IdentityTriageTests):
-    """Fase 0 §0.2 — R1/R9: una pregunta durante un reto nunca es un fallo.
-
-    Reproduce el caso concreto de la conv 13 (`85a2a691`): el cliente dio los
-    4 factores correctos y preguntó "¿para qué necesitas eso?" antes de dar
-    los últimos 4 dígitos. Con el sistema viejo eso sumaba `fails` dos veces
-    y tiraba el reto que estaba a punto de pasar.
-    """
-
-    def _reach_digits_stage(self):
-        # `_seed_family_challenge` salta el factor de mascota si YA se nombró
-        # antes en la conversación (mismo patrón que
-        # `test_pet_already_named_skips_that_factor`): necesita el `Message`
-        # persistido, no solo el texto pasado a `policy.evaluate`.
-        from apps.channels.models import Message
-        Message.objects.create(
-            organization=self.org, channel_account=self.channel,
-            conversation=self.unknown_conv,
-            direction=Message.DIRECTION_IN,
-            author_type=Message.AUTHOR_CLIENT,
-            body="quiero agendar cita para Luna",
-            status=Message.STATUS_PROCESSED,
-        )
-        self._eval_unknown("quiero agendar cita para Luna")
-        self._eval_unknown("ya soy cliente")
-        self._eval_unknown("Ana Torres")
-        self.assertEqual(
-            identity_commitment(self.unknown_conv).return_to, "digits")
-
-    def test_conv13_question_at_digits_gets_reason_not_fail(self):
-        self._reach_digits_stage()
-        d = self._eval_unknown("para que necesitas eso")
-        self.assertEqual(d.kind, policy.REPLY)
-        # El motivo sale de `Factor.why` (R9 estructural desde Fase 3), no de
-        # un dict de copy indexado por etapa.
-        self.assertIn(goals.why_for(goals.FAMILY, "digits"), d.text)
-        self.assertEqual(identity_commitment(self.unknown_conv).attempts_failed, 0)
-
-        # el dato correcto, llegado después, verifica con normalidad.
-        d = self._eval_unknown("8877")   # últimos 4 de 5511998877
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertTrue(d.meta.get("verified"))
-
-    def test_digits_shaped_question_advances_no_deviation(self):
-        """"¿es 8877?" TRAE la respuesta: no es un desvío."""
-        self._reach_digits_stage()
-        d = self._eval_unknown("¿es 8877?")
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertTrue(d.meta.get("verified"))
-
-    def test_deviations_never_become_failures_even_in_sequence(self):
-        """Regla del ejecutor (PO, 2026-07-30): puede reaccionar a una
-        SECUENCIA de veredictos, nunca reinterpretarlos.
-
-        Dos desvíos y luego un dato equivocado tienen que dejar contadores
-        INDEPENDIENTES: 2 desvíos y 1 fallo. Si los desvíos se hubieran
-        colado en `attempts_failed`, el reto ya habría escalado — que es
-        literalmente lo que le pasó a la conv 13.
-        """
-        self._reach_digits_stage()
-        self._eval_unknown("para que necesitas eso")
-        self._eval_unknown("por que me pides eso")
-        d = self._eval_unknown("0000")            # ahora sí, dato equivocado
-
-        commitment = identity_commitment(self.unknown_conv)
-        self.assertEqual(commitment.attempts_failed, 1)
-        self.assertEqual(commitment.working_state.get("deviations"), 2)
-        # Con 1 solo fallo real el reto SIGUE vivo: se re-pregunta.
-        self.assertEqual(d.kind, policy.REPLY)
-
-    def test_three_deviations_escalate_with_deviation_cap(self):
-        self._reach_digits_stage()
-        self._eval_unknown("para que necesitas eso")
-        self._eval_unknown("por que me pides eso")
-        d = self._eval_unknown("no entiendo para que")
-        self.assertEqual(d.kind, policy.ESCALATE)
-        self.assertEqual(d.meta.get("handoff_detail"), "deviation_cap")
-        # Apartado, no destruido: sigue existiendo como compromiso suspendido.
-        self.assertIsNone(identity_commitment(self.unknown_conv))
-        self.assertIsNotNone(identity_commitment(self.unknown_conv, parked=True))
-
-
-class SuspendResumeTests(DeviationTests):
-    """Fase 1 §1.1 — R5/R8: el compromiso se SUSPENDE, no se destruye. Es
-    el `4586` de la conv 13: correcto, pero llegado después de que el reto
-    escaló por 2 fallos REALES (no preguntas). Antes el reto se `pop`eaba
-    y el dato correcto caía al vacío; ahora sobrevive como compromiso
-    SUSPENDIDO y el siguiente turno lo retoma donde se quedó."""
-
-    def test_late_correct_digits_resume_and_verify_after_two_real_fails(self):
-        self._reach_digits_stage()
-        self._eval_unknown("0000")       # dígitos incorrectos → fails=1
-        d = self._eval_unknown("1111")   # 2º fallo real → ESCALATE, suspende
-        self.assertEqual(d.kind, policy.ESCALATE)
-        self.assertIsNone(identity_commitment(self.unknown_conv))
-        parked = identity_commitment(self.unknown_conv, parked=True)
-        self.assertEqual(parked.name, goals.FAMILY)
-        self.assertEqual(parked.return_to, "digits")   # el punto exacto (R4)
-
-        # El reto ya no es un compromiso ACTIVO — pero sobrevive suspendido.
-        # El próximo turno (aquí simula el mensaje tras `release`, §1.2) lo
-        # retoma tal cual, sin volver al tamiz desde cero.
-        d = self._eval_unknown("8877")   # últimos 4 de 5511998877, correcto
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.assertTrue(d.meta.get("verified"))
-        self.assertIsNone(identity_commitment(self.unknown_conv, parked=True))
-        self.unknown_contact.refresh_from_db()
-        self.assertEqual(self.unknown_contact.owner_id, self.owner.pk)
-
-    def test_unrelated_message_after_suspension_does_not_resume_falsely(self):
-        """Si el mensaje que llega no trae el dato, el reto suspendido
-        vuelve a fallar normal (misma lógica de siempre) — no se inventa
-        una verificación de la nada (G4)."""
-        self._reach_digits_stage()
-        self._eval_unknown("0000")
-        self._eval_unknown("1111")   # suspende
-        d = self._eval_unknown("9999")   # se reinstala, pero NO coincide
-        self.assertEqual(d.kind, policy.ESCALATE)
-        self.assertFalse(d.meta.get("verified"))
-        self.unknown_contact.refresh_from_db()
-        self.assertIsNone(self.unknown_contact.owner_id)
-
-
-class IdentityTriageDoneNotOverwrittenTests(IdentityTriageTests):
-    """Fase 0 §0.4 — conv 13 S6: dos 'unclear' del tamiz no deben pisar un
-    'returning' ya decidido (setdefault, no asignación directa)."""
-
-    def test_returning_survives_a_stray_unclear_resolution(self):
-        self.unknown_conv.flow['identity_triage_done'] = 'returning'
-        self.unknown_conv.save(update_fields=['flow'])
-        commitment = goals.start_identity(
-            self.unknown_conv, goals.TRIAGE, first_factor='client_kind',
-            working_state={'asks': 2})
-        d = policy._advance_identity_triage(
-            self.unknown_conv, self.unknown_contact, "que dijiste",
-            commitment)
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
-        self.unknown_conv.refresh_from_db()
-        self.assertEqual(
-            self.unknown_conv.flow.get('identity_triage_done'), 'returning')
-
-
-class FsmTests(PolicyTestCase):
-    def test_escalate_to_human_is_idempotent(self):
-        policy.escalate_to_human(self.conv, reason_code=HumanHandoff.REASON_EXPLICIT)
-        policy.escalate_to_human(self.conv, reason_code=HumanHandoff.REASON_EXPLICIT)
-        self.assertEqual(
-            HumanHandoff.objects.filter(conversation=self.conv).count(), 1,
-        )
-        self.conv.refresh_from_db()
-        self.assertEqual(self.conv.state, Conversation.STATE_HANDOFF_PENDING)
-
-    def test_close_inactive(self):
-        self.conv.last_activity_at = timezone.now() - timedelta(hours=25)
-        self.conv.save()
-        closed = policy.close_inactive_conversations()
-        self.assertEqual(closed, 1)
-        self.conv.refresh_from_db()
-        self.assertEqual(self.conv.state, Conversation.STATE_CLOSED)
-
-
-class NudgeTests(PolicyTestCase):
-    """UX-08 (PR-18): recordatorio único de flujo abandonado."""
-
-    def _arm(self, minutes_ago=90):
-        self.conv.last_inbound_at = timezone.now() - timedelta(minutes=minutes_ago)
-        self.conv.flow = {'pending_action': {
-            'tool': 'create_appointment', 'args': {}, 'paraphrase': 'x'}}
-        self.conv.save(update_fields=['last_inbound_at', 'flow'])
-
-    def test_nudges_abandoned_pending_once(self):
-        self._arm()
-        self.assertEqual(policy.nudge_abandoned_flows(), 1)
-        self.conv.refresh_from_db()
-        self.assertTrue(self.conv.flow.get('nudge_sent'))
-        self.assertEqual(policy.nudge_abandoned_flows(), 0)   # no repite
-
-    def test_no_nudge_without_pending(self):
-        self.conv.last_inbound_at = timezone.now() - timedelta(minutes=90)
-        self.conv.save(update_fields=['last_inbound_at'])
-        self.assertEqual(policy.nudge_abandoned_flows(), 0)
-
-    def test_no_nudge_after_optout(self):
-        self._arm()
-        self.contact.proactive_opt_out = True
-        self.contact.save(update_fields=['proactive_opt_out'])
-        self.assertEqual(policy.nudge_abandoned_flows(), 0)
-
-    def test_no_nudge_when_blocked(self):
-        self._arm()
-        self.contact.is_blocked = True
-        self.contact.save(update_fields=['is_blocked'])
-        self.assertEqual(policy.nudge_abandoned_flows(), 0)
-
-    def test_no_nudge_when_disabled(self):
-        self._arm()
-        self.settings.nudge_enabled = False
-        self.settings.save(update_fields=['nudge_enabled'])
-        self.assertEqual(policy.nudge_abandoned_flows(), 0)
-
-    def test_no_nudge_when_too_recent(self):
-        self._arm(minutes_ago=5)   # dentro de los 60 min → aún no
-        self.assertEqual(policy.nudge_abandoned_flows(), 0)
+        for text in ("quiero una cita", "ya he ido antes", "soy nuevo",
+                     "quiero cancelar mi cita", "¿qué citas tengo?"):
+            with self.subTest(text=text):
+                decision = self._eval(text)
+                self.assertNotEqual(decision.meta.get('reason'),
+                                    'identity_triage')
 
 
 class IdentityStateLivesInTheModelGateTests(SimpleTestCase):

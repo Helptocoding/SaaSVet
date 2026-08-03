@@ -1485,6 +1485,78 @@ superficie. **Cero migraciones.**
 ≈ 100 % en los turnos de identidad · **decisión del PO** según la tabla de lectura de
 resultados (§9 in fine).
 
+#### ✅ EJECUTADA — 2026-08-02
+
+**Retirado: ~620 líneas**, más de las ~500 estimadas.
+
+| Archivo | Antes → después |
+|---|---|
+| `policy.py` | 779 → 457 (**−331**, 12 funciones de FSM) |
+| `matchers.py` | 368 → 229 (**−139**) |
+| `tier0.py` | 290 → 234 (**−56**, 13 plantillas) |
+| `tools.py` | **−51** (`link_family_member` + spec) |
+| `planner.py` | **−45** (rama terminal de verificación + propuesta de reto) |
+| `test_policy.py` | 704 → 289 (**−415**) |
+
+**Tres cosas que el recorte destapó y que el plan no preveía:**
+
+**1 · `link_family_member` quedó huérfana.** Su propio docstring lo delataba —*«el
+resto del reto lo conduce el Policy Engine, sin LLM»*—: ese conductor dejó de
+existir, así que sembraba un reto que nadie avanzaba. `identify_client` (Fase 1) la
+sustituye en una llamada. Retirada.
+
+**2 · El árbitro se quedó SIN CONSUMIDOR de producción.** Su único call site era
+`policy._check_interruption`. Se conserva porque la Fase 4 le da jurisdicción sobre el
+compromiso, pero **la advertencia quedó escrita en el propio módulo**: si esa fase se
+cancela, es código muerto y hay que borrarlo. Un componente con ADR y sin llamadas es
+justo el patrón que la auditoría señaló.
+
+**3 · Se rompió un requisito legal en silencio, y lo cazó un test.** El aviso de
+privacidad (LFPDPPP, spec §4) tenía dos productores: el alta de cliente y el paso 12b
+del router. Al retirar el segundo, **pedir nombre o dígitos a un desconocido dejó de
+ir precedido del aviso** — que es exactamente recolección de datos personales. Lo
+detectó `test_privacy_notice_precedes_first_identity_challenge`, escrito en É-F4 W0.
+Repuesto donde ahora corresponde: cuando una tool rebota con `verification_required`,
+el **sistema** antepone el aviso al texto del modelo. Lo pone el sistema y no el
+modelo a propósito — es un literal legal, y pedirle al modelo que lo recuerde
+volvería advisoria una regla vinculante.
+
+> Es la lección más cara de la fase: **retirar 620 líneas arrastra cosas que nadie
+> mira.** Sin ese test, el hueco se habría ido a producción tapado por 165 fallos
+> «esperados» de tests de FSM.
+
+**Resultado del experimento — con la precisión que exige §9 in fine:**
+
+| Señal | Antes | Ahora |
+|---|---|---|
+| Casos del brief | 🔴 4 rojos | 🟢 verde |
+| `pct_turnos_sin_modelo` | 1.0 | < 1.0 |
+| `pct_redactado_por_agente` | 0.0 | > 0.0 |
+| Fugas en adversariales (TC-SEC-05) | 0 | **0** |
+| Conv 12 | 🔴 | 🔴 — la cierra la Fase 3 |
+
+> **Verde por retirada de plantillas y porque el push funciona; NO todavía verde por
+> conversación.** El corpus corre con stub: demuestra que la vía existe, no que el
+> modelo la use bien. Eso lo dice el eval con LLM real y la revisión de corpus.
+
+**La pérdida que hay que declarar, porque no es de seguridad y por eso se pasa por
+alto:** la verificación cambió de naturaleza.
+
+    antes:  4 factores correctos → verificado.  Lo garantizaba la FSM.
+    ahora:  4 factores correctos → verificado SI el modelo llama a `identify_client`.
+
+`_verification_ok` sigue impidiendo el acceso indebido —nadie entra sin verificar— así
+que **la seguridad no cambia**. Lo que deja de estar garantizado es que un cliente
+legítimo *atraviese*, y que uno atascado llegue a un humano: la escalada tras dos
+datos equivocados la conducía el router. Es el riesgo §11.4, ahora con caso concreto,
+y se mide con llamadas a `identify_client` por conversación en el eval real.
+
+**Tests**: 166 fallos → 0. Cinco clases de `test_policy` retiradas con nota de a dónde
+fue cada garantía; `test_family_link` conserva 5 de 9 intactos y porta 3; TC-SEC-05
+mantiene su aserción de seguridad **sin tocar** (solo cambió el nombre de la rama).
+Guarda nueva: **el router no puede volver a emitir una plantilla de identidad**,
+probada sobre cinco frases.
+
 ---
 
 ### Fase 3 · Estado publicado íntegro

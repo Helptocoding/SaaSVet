@@ -194,17 +194,23 @@ class AnchoredIdentityFactsTests(PromptsTestCase):
             self._inbound(f"relleno {i}",
                           available_at=stamp + timedelta(minutes=i))
 
-    def test_returning_client_fact_survives_the_window(self):
-        self.conv.flow['identity_triage_done'] = 'returning'
+    def test_lo_que_el_cliente_aporto_sobrevive_a_la_ventana(self):
+        """R2 · salir de la ventana pierde el FRASEO, nunca el HECHO.
+
+        Reescrito en É-F5 Fase 2. Antes el hecho anclado era el VEREDICTO de
+        un tamiz determinista (`identity_triage_done='returning'` → «ya dijo
+        que es cliente»); ahora es el DATO que el cliente aportó, que es lo
+        que de verdad hacía falta: la conv 13 clasificó bien y aun así perdió
+        el nombre.
+        """
+        self.conv.flow['aportado'] = {'owner_name': 'Ana Cruz'}
         self.conv.save(update_fields=['flow'])
         self._fill_the_window()
         ctx = self._context_block()
-        self.assertTrue(ctx["identidad"]["ya_dijo_que_es_cliente"])
+        self.assertEqual(ctx["identidad"]["dijo_llamarse"], "Ana Cruz")
 
     def test_declared_titular_and_pending_factor_travel_too(self):
         from apps.agent import goals
-        self.conv.flow['identity_triage_done'] = 'returning'
-        self.conv.save(update_fields=['flow'])
         commitment = goals.start_identity(
             self.conv, goals.FAMILY, first_factor='digits',
             working_state={'candidate_ids': [1]})

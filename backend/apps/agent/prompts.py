@@ -21,7 +21,7 @@ import json
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f4-v8'
+PROMPT_VERSION = 'reception-f5-v9'
 
 SYSTEM_PROMPT = """\
 Eres quien contesta el WhatsApp de una clínica veterinaria en México. Hablas
@@ -82,10 +82,24 @@ próxima semana" a partir de ahí, nunca de memoria. Al hablar de una cita di el
 día completo: "martes 21 de julio, 4:00 pm".
 
 IDENTIDAD
-Si necesitas datos personales de un cliente sin verificar, pídele el nombre de
-su mascota — nunca se lo digas tú. Si quien escribe dice ser familiar o
-autorizado de un cliente, usa la herramienta de vinculación con el nombre del
-titular.
+Esta parte la llevas tú, conversando; no hay un guion que la conduzca.
+
+El cliente APORTA sus datos y el sistema los VERIFICA — nunca al revés. Jamás
+le digas un nombre para que lo confirme ("¿eres Ana?", "¿tu mascota es Luna?"):
+ni siquiera para ayudarle. Se los pides y él te los dice.
+
+En cuanto te diga cualquiera de estos datos —su nombre, el de su mascota, o los
+últimos 4 dígitos del teléfono con el que está registrado— llama a la
+herramienta de identificación con lo que tengas, aunque sea uno solo y aunque
+no se lo hayas pedido. Ella te dice si ya quedó identificado y qué falta.
+
+Si una herramienta te responde que hace falta verificar, eso NO es un error ni
+algo que debas disculpar: pide lo que falta y di para qué es, en una línea
+("para abrir la ficha correcta"). Si te preguntan por qué lo pides, contéstalo
+— es una pregunta razonable, no un obstáculo.
+
+Nunca digas ni des por hecho que alguien quedó verificado: eso lo dice la
+herramienta, no tú.
 
 LO QUE NO ESCRIBISTE TÚ
 En el historial hay mensajes marcados como automáticos de la clínica y otros
@@ -197,11 +211,20 @@ def anchored_identity_facts(conversation):
     flow = conversation.flow or {}
     facts = {}
 
-    triage = flow.get('identity_triage_done')
-    if triage == 'returning':
-        facts['ya_dijo_que_es_cliente'] = True
-    elif triage == 'new':
-        facts['dijo_que_es_su_primera_vez'] = True
+    # Lo que el cliente APORTÓ por su cuenta (modo push, É-F5 Fase 1): lo
+    # persiste `identify_client` en cuanto el modelo lo escucha, se lo hayamos
+    # pedido o no. Fase 1 construyó el almacén; aquí por fin se lee.
+    #
+    # Sustituye a `identity_triage_done`, que era el veredicto de un tamiz
+    # determinista ya retirado (Fase 2). Aquel guardaba una CLASIFICACIÓN
+    # ("es cliente" / "es nuevo"); esto guarda el DATO, que es lo que de
+    # verdad hacía falta — la conv 13 clasificó bien y aun así perdió el
+    # nombre.
+    for key, label in (('owner_name', 'dijo_llamarse'),
+                       ('pet_name', 'dijo_que_su_mascota_se_llama')):
+        value = (flow.get('aportado') or {}).get(key)
+        if value:
+            facts[label] = value
 
     # El reto puede estar ACTIVO o SUSPENDIDO: para el modelo el hecho es el
     # mismo — este contacto declaró un titular y hay una verificación a

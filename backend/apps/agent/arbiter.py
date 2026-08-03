@@ -1,6 +1,25 @@
 """
 agent/arbiter.py — Autoridad del turno (É-F4 Fase 3, ADR p55 §2).
 
+⚠️  **SIN CONSUMIDOR DE PRODUCCIÓN desde É-F5 Fase 2 (2026-08-02).**
+
+Su único call site era `policy._check_interruption`, dentro de la FSM de
+identidad que la Fase 2 retiró. Hoy este módulo solo lo ejercitan sus propios
+tests. Se conserva —en vez de borrarlo— por dos razones, y conviene que estén
+escritas para que nadie lo tome por olvido:
+
+1. El diagnóstico de É-F5 fue que el árbitro no estaba mal construido: recibía
+   un hecho mal calculado. Con percepción (Fase 1) existen por fin
+   `proposes_other_commitment` y `client_declined`, así que tres de sus cinco
+   veredictos dejan de ser inalcanzables.
+2. La Fase 4 le da jurisdicción sobre el COMPROMISO —qué le pasó a la promesa
+   en este turno— en vez del turno entero. Es un cambio de contrato y entra
+   por enmienda a p55 (§8).
+
+Si la Fase 4 se cancela o cambia de forma, esto es código muerto y debe
+borrarse. No dejarlo envejecer en silencio: un módulo con ADR y sin llamadas es
+exactamente el patrón que la auditoría de arquitectura señaló.
+
 Responde UNA pregunta: *¿qué debe pasar con este turno?* No clasifica el
 mensaje (eso es un insumo), no redacta (eso es el planner/LLM) y no ejecuta
 (eso es quien recibe el veredicto).
