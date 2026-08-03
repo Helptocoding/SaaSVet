@@ -1582,6 +1582,67 @@ tokens → medido contra la línea base; el bloque es pequeño frente al histori
 **Criterio de salida.** `anchored_identity_facts` eliminado sin regresión · guards
 cubren salientes de plantilla · corpus verde.
 
+#### ✅ EJECUTADA — 2026-08-03
+
+**1 · C7 deja de ser un dato y pasa a ser conducta.** Faltaba una distinción que la
+auditoría de rigidez ya había escrito (§P5) y que nadie implementó: **dos umbrales,
+no uno.**
+
+    2 preguntas → el sistema CAMBIA DE ESTRATEGIA. `_goal_gate` devuelve
+                  `change_approach` (código y guía distintos) y deja de
+                  incrementar `asked`.
+    3 preguntas → es un bucle; el guard lo marca sobre el texto ya generado.
+
+Solo existía el segundo (`REPEATED_ASK_LIMIT = 3`), así que `asked` subía sin tope y
+el modelo repetía. En el piloto llegó a `{'date': 4, 'time': 4}` y el cliente se fue.
+
+> **Por qué dejar de contar no es maquillar el contador.** `asked` cuenta
+> PREGUNTAS; a partir del segundo intento el sistema ya no pregunta igual —
+> devuelve otra instrucción. Capar el número sin cambiar la conducta habría puesto
+> el test en verde dejando la conversación igual de mala.
+
+**2 · Guard simétrico en el punto de salida.** `enqueue_outbound` es por donde pasa
+**todo** —plantillas y texto del modelo— y ahí se detecta el saliente repetido. Hasta
+aquí los guards de conducta solo miraban al modelo: **se vigilaba al sospechoso
+equivocado**, porque quien repitió tres veces la misma plantilla en la conversación
+del brief fue el router, y ningún contador subió.
+
+Detecta y registra; **no bloquea**, y es deliberado: un saliente repetido es un
+defecto del sistema que hay que ver, no un texto peligroso que retener — retenerlo
+dejaría al cliente sin respuesta.
+
+**3 · C3/C8 — el estado se publica en español, con su porqué.**
+
+```
+antes   objetivo: schedule_appointment · estado: active · me_falta: ['date','time']
+
+ahora   le_prometi: agendarle una cita
+        me_falta:  [{dato: el día de la cita,
+                     para: apartar el día en la agenda del veterinario}, …]
+```
+
+`Factor` gana `label` **junto a `why`**, no en un mapa aparte: un mapa obliga a tocar
+dos sitios por factor nuevo, que es el «camino nuevo por cada hecho» que esta fase
+existe para eliminar. Los 20 factores quedaron etiquetados; si falta uno, `as_fact()`
+cae al nombre interno y se ve.
+
+Efecto lateral que era el objetivo de C8: **el `why` por fin llega al modelo.** Vivía
+en el `Factor` desde p55 y solo salía por una plantilla (la que produjo
+`Te lo pido para  🙂`). Ahora viaja con cada dato que falta.
+
+Y `ya_preguntado_2_veces` pasó de dato a instrucción —
+`ya_lo_pediste_dos_veces_no_lo_repitas`—: era el ejemplo que la auditoría usaba para
+«se publica y no hace nada».
+
+**Frontera que NO se movió, y hay un test que la ancla:** el objetivo publica el dato
+y su motivo; **la pregunta la sigue redactando el modelo** (contrato p54). Sin esa
+mitad, «publicar en español» degeneraría en que el dominio escriba copy y el
+compromiso volvería a ser un motor de diálogo.
+
+**Resultado: el corpus queda COMPLETAMENTE VERDE.** Las tres conversaciones —brief,
+conv 12 y conv 13— sin ningún `expectedFailure`. El gate autolimpiante disparó por
+segunda vez y se retiró el último decorador.
+
 ---
 
 ### Fase 4 · El árbitro gobierna el compromiso

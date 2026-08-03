@@ -721,10 +721,29 @@ def _goal_gate(conversation, tool_name, args, executor=None,
     calculaba y se tiraba: cada turno empezaba de cero.
     """
     from . import goals
+    from . import guards
     goal = goals.open_goal(conversation, goals.TOOL_GOALS[tool_name])
     state = goals.capture(goal, args, conversation)
     if state['missing'] or state['low_confidence'] or state['rejected']:
-        goals.mark_asked(goal, state['missing'])
+        # C7 · repetir es defecto del SISTEMA, no del cliente (R10).
+        #
+        # Un dato pedido ya dos veces sin éxito no se vuelve a pedir igual: se
+        # cambia de estrategia. Por eso tampoco se incrementa `asked` — el
+        # contador cuenta PREGUNTAS, y a partir de aquí el sistema deja de
+        # preguntar de la misma forma.
+        #
+        # Hasta É-F5 Fase 3 esto solo se registraba: `mark_asked` subía sin
+        # tope y el modelo volvía a preguntar lo mismo. En el piloto (conv 12)
+        # llegó a `asked={'date': 4, 'time': 4}` y el cliente se fue. La
+        # auditoría de rigidez ya lo había escrito —«la repetición debe cambiar
+        # la CONDUCTA del sistema, no solo aparecer en un bloque de datos»— y
+        # nadie lo implementó.
+        gastados = sorted(
+            slot for slot in state['missing']
+            if (goal.asked or {}).get(slot, 0) >= guards.CHANGE_APPROACH_AFTER
+        )
+        if not gastados:
+            goals.mark_asked(goal, state['missing'])
         # Rastro de la llamada PARCIAL. Antes esta salida temprana no generaba
         # `ToolExecution`, así que 4 intentos de escritura del piloto (conv 12)
         # eran invisibles y la telemetría hacía creer que el modelo casi no
@@ -739,10 +758,15 @@ def _goal_gate(conversation, tool_name, args, executor=None,
             )
         return goal, ToolOutcome(
             ok=False,
-            client_error=_goal_error(state),
+            # Preguntar dos veces lo mismo cambia el CÓDIGO, no solo el
+            # contador: el modelo recibe otra instrucción (ver
+            # `_soft_error_hint`), no la misma repetida.
+            client_error=('change_approach' if gastados
+                          else _goal_error(state)),
             data={
                 'ya_tengo': goals.values(goal),
                 'me_falta': state['missing'],
+                'ya_preguntado_sin_exito': gastados,
                 'por_confirmar': state['low_confidence'],
                 'rechazado': state['rejected'],
                 # Si esta llamada llenó algo, hubo progreso real. El planner lo

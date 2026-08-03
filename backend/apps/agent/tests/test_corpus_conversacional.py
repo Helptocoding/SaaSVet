@@ -28,8 +28,6 @@ Mapa de casos:
 | B · conv 12 | `0d56b976` 2026-07-28 | 🔴 rojo | Fase 3 (C7 actúa) |
 | C · conv 13 | `85a2a691` 2026-07-30 | 🟢 verde | ya lo cerró É-F4 — aquí protege el fix |
 """
-import unittest
-
 from django.test import TestCase
 from django.utils import timezone
 
@@ -313,9 +311,14 @@ class RepeatedAskTests(CorpusBase):
             LLMResult(kind="text", text="¿Para qué día te late? 🙂"),
         ]
 
-    @unittest.expectedFailure          # ← lo cierra la Fase 3 (C7 actúa)
     def test_no_pide_el_mismo_dato_mas_de_dos_veces(self):
         """C7 · a la segunda hay que cambiar de estrategia, no repetir.
+
+        **Cerrado por la Fase 3.** El modelo llama la herramienta cuatro veces
+        con los mismos datos incompletos —igual que en el piloto— y el sistema
+        deja de pedir a la segunda: `_goal_gate` cambia el código de error a
+        `change_approach` y no vuelve a incrementar `asked`, porque a partir de
+        ahí ya no está preguntando.
 
         Se afirma sobre ESTADO (`goal.asked`), no sobre el texto: el texto lo
         escribe el guion del stub y afirmar sobre él sería circular.

@@ -154,9 +154,19 @@ def check_output(text, *, tool_facts=None):
 # cliente mucho más que un log de más. Promover uno a HARD exige mirar antes
 # los `AGENT_OUTPUT_GUARD` que deje — con datos, no con intuición.
 
-# R10 · el sistema repitiendo la misma pregunta. Tres veces ya no es un tic:
-# es un bucle. `asked` lo cuenta desde W2 y hasta ahora solo se publicaba al
-# modelo como dato, sin cambiar la conducta de nadie.
+# R10 · el sistema repitiendo la misma pregunta. Dos umbrales, no uno, porque
+# describen respuestas distintas al mismo problema (auditoría de rigidez §P5):
+#
+#   2 preguntas → el sistema CAMBIA DE ESTRATEGIA. Deja de pedir igual y
+#                 ofrece opciones concretas o reformula. Lo aplica
+#                 `tools._goal_gate`, que a partir de aquí ya no incrementa
+#                 `asked`: el contador cuenta PREGUNTAS, y esto ya no lo es.
+#   3 preguntas → es un bucle. El guard lo marca sobre el texto ya generado.
+#
+# Hasta É-F5 Fase 3 solo existía el segundo: `asked` subía sin tope y el modelo
+# volvía a preguntar lo mismo. En el piloto (conv 12) llegó a
+# `asked={'date': 4, 'time': 4}` y el cliente se fue.
+CHANGE_APPROACH_AFTER = 2
 REPEATED_ASK_LIMIT = 3
 
 # R2 · negar lo que el cliente SÍ dijo. Patrones que niegan el HISTORIAL, no

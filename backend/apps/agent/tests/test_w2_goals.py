@@ -74,13 +74,25 @@ class IncrementalSlotFillingTests(GoalFixture):
         self.assertFalse(out.ok)
         self.assertEqual(goals.values(self._goal()), {"reason": "vacuna"})
 
-    def test_missing_slots_are_counted_for_anti_repetition(self):
-        self._create(pet_handle="mascota_1")
-        self._create(pet_handle="mascota_1")
+    def test_a_la_tercera_el_sistema_deja_de_pedir_igual(self):
+        """C7 · repetir es defecto del SISTEMA, no del cliente (R10).
+
+        Reescrito en É-F5 Fase 3. Antes esto solo comprobaba que el contador
+        subiera; ahora comprueba que la CONDUCTA cambie: a la tercera llamada
+        con el mismo hueco, `asked` ya no sube —el sistema dejó de preguntar
+        igual— y el bloque lo dice como instrucción, no como dato.
+        """
+        for _ in range(3):
+            self._create(pet_handle="mascota_1")
         goal = self._goal()
-        self.assertGreaterEqual(goal.asked.get("date", 0), 2)
+
+        self.assertEqual(
+            goal.asked.get("date", 0), 2,
+            "el sistema siguió pidiendo el mismo dato una tercera vez")
+
         block = goals.context_block(self.conv)
-        self.assertIn("date", block["ya_preguntado_2_veces"])
+        self.assertIn("el día de la cita",
+                      block["ya_lo_pediste_dos_veces_no_lo_repitas"])
 
 
 # ---------------------------------------------------------------------------
@@ -231,16 +243,35 @@ class GoalLifecycleTests(GoalFixture):
 # ---------------------------------------------------------------------------
 
 class GoalContextTests(GoalFixture):
-    def test_context_block_has_no_copy_only_data(self):
+    def test_context_block_publica_hechos_no_claves_ni_preguntas(self):
+        """C3 · el estado se publica en lenguaje semántico, no en jerga.
+
+        Reescrito en É-F5 Fase 3. Antes el bloque viajaba con las claves
+        internas (`objetivo: schedule_appointment`, `me_falta: ['date']`) y el
+        modelo aprendía a nombrar los datos como los nombra la base.
+
+        Lo que NO cambia —y es la mitad importante del test original— es que
+        el objetivo **sigue sin saber preguntar**: publica el dato y su
+        motivo; la pregunta la redacta el modelo (contrato p54).
+        """
         self._create(pet_handle="mascota_1", date=self.day)
         block = goals.context_block(self.conv)
-        self.assertEqual(block["objetivo"], goals.SCHEDULE)
-        self.assertIn("date", block["ya_tengo"])
-        self.assertCountEqual(block["me_falta"], ["time", "reason"])
+
+        # Nada de claves internas.
+        serialized = str(block)
+        for internal in (goals.SCHEDULE, "'date'", "'time'", "pet_handle"):
+            self.assertNotIn(internal, serialized)
+
+        # Sí el dato y su porqué, en español.
+        faltan = {f["dato"] for f in block["me_falta"]}
+        self.assertIn("la hora de la cita", faltan)
+        self.assertTrue(all(f["para"] for f in block["me_falta"]),
+                        "un dato pedido sin motivo decible (R9)")
+
         # Ni una pregunta redactada: el objetivo no sabe conversar.
-        serialized = str(block).lower()
+        low = serialized.lower()
         for word in ("¿", "?", "por favor", "dime"):
-            self.assertNotIn(word, serialized)
+            self.assertNotIn(word, low)
 
     def test_context_reaches_the_prompt(self):
         from apps.agent import prompts

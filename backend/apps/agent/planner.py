@@ -650,6 +650,16 @@ def _soft_error_hint(client_error):
                                  'teléfono registrado— y di para qué es. '
                                  'Cuando te lo diga, llama a la herramienta de '
                                  'identificación.',
+        # C7 · ya se pidió dos veces y no funcionó. El sistema deja de pedir
+        # igual y le dice al modelo que cambie de estrategia — repetir la
+        # misma pregunta es lo que hizo que el cliente de la conv 12 se fuera.
+        'change_approach': 'Ya le pediste ese dato dos veces y no ha '
+                           'funcionado: NO se lo vuelvas a preguntar igual. '
+                           'Cambia de estrategia — ofrécele opciones '
+                           'concretas (consulta disponibilidad y propón dos o '
+                           'tres horarios), o pregúntaselo de otra forma. Si '
+                           'aun así no avanzan, ofrécele pasar con una '
+                           'persona.',
         'need_data': 'Faltan datos para agendar. Pregúntale al cliente lo que '
                      'falte (fecha y HORA concreta, y el motivo) antes de usar '
                      'la herramienta de nuevo.',

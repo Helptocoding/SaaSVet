@@ -127,6 +127,13 @@ class Factor:
     name: str
     why: str
     validator: object = None
+    # Cómo se NOMBRA el dato al publicarlo al modelo (É-F5 Fase 3, C3). Sin
+    # esto el bloque de estado viajaba con la clave interna —`me_falta:
+    # ['date', 'pet_handle']`— y el modelo aprendía a hablar en jerga del
+    # sistema. Vive aquí, junto al `why`, y no en un mapa aparte: un mapa
+    # obliga a tocar DOS sitios por factor nuevo, que es exactamente el
+    # "camino nuevo por cada hecho" que esta fase viene a eliminar.
+    label: str = ''
 
     def __post_init__(self):
         if not (self.why or '').strip():
@@ -134,6 +141,10 @@ class Factor:
                 f"Factor '{self.name}' sin `why`. R9 (ADR p55 §5): todo dato "
                 f"que se le pide al cliente lleva un motivo decible en voz alta."
             )
+
+    def as_fact(self):
+        """El factor como HECHO publicable: qué falta y para qué."""
+        return {'dato': self.label or self.name, 'para': self.why}
 
 
 @dataclass(frozen=True)
@@ -190,32 +201,42 @@ GOAL_SPECS = {
         name=SCHEDULE,
         factors=(
             Factor('pet_handle', 'saber a cuál de tus mascotas vamos a atender',
-                   _v_handle('mascota')),
+                   _v_handle('mascota'),
+                   label='la mascota que vamos a atender'),
             Factor('date', 'apartar el día en la agenda del veterinario',
-                   _v_date),
+                   _v_date,
+                   label='el día de la cita'),
             Factor('time', 'apartarte la hora y que no se empalme con otra cita',
-                   _v_time),
+                   _v_time,
+                   label='la hora de la cita'),
             Factor('reason',
                    'que el veterinario sepa qué revisar y le reserve el tiempo '
-                   'que necesita', _v_text()),
+                   'que necesita', _v_text(),
+                   label='el motivo de la consulta'),
         ),
     ),
     REGISTER: GoalSpec(
         name=REGISTER,
         factors=(
             Factor('owner_name', 'abrir tu expediente en la clínica',
-                   _v_text(2)),
-            Factor('pet_name', 'abrir el expediente de tu mascota', _v_text()),
-            Factor('date', _WHY_ALTA_CON_CITA, _v_date),
-            Factor('time', _WHY_ALTA_CON_CITA, _v_time),
+                   _v_text(2),
+                   label='tu nombre'),
+            Factor('pet_name', 'abrir el expediente de tu mascota', _v_text(),
+                   label='el nombre de tu mascota'),
+            Factor('date', _WHY_ALTA_CON_CITA, _v_date,
+                   label='el día de la cita'),
+            Factor('time', _WHY_ALTA_CON_CITA, _v_time,
+                   label='la hora de la cita'),
             Factor('reason',
                    'que el veterinario sepa qué revisar en esa primera visita',
-                   _v_text()),
+                   _v_text(),
+                   label='el motivo de la consulta'),
         ),
         optional_factors=(
             Factor('pet_species',
                    'que el veterinario prepare lo adecuado para tu mascota',
-                   _v_species),
+                   _v_species,
+                   label='qué tipo de mascota es'),
         ),
     ),
     CANCEL: GoalSpec(
@@ -223,7 +244,8 @@ GOAL_SPECS = {
         factors=(
             Factor('appointment_handle',
                    'asegurarme de que cancelo la cita correcta',
-                   _v_handle('cita')),
+                   _v_handle('cita'),
+                   label='cuál de tus citas'),
         ),
     ),
     RESCHEDULE: GoalSpec(
@@ -231,10 +253,13 @@ GOAL_SPECS = {
         factors=(
             Factor('appointment_handle',
                    'asegurarme de que muevo la cita correcta',
-                   _v_handle('cita')),
-            Factor('new_date', 'apartar el día nuevo en la agenda', _v_date),
+                   _v_handle('cita'),
+                   label='cuál de tus citas'),
+            Factor('new_date', 'apartar el día nuevo en la agenda', _v_date,
+                   label='el día nuevo'),
             Factor('new_time',
-                   'apartarte la hora nueva con el veterinario', _v_time),
+                   'apartarte la hora nueva con el veterinario', _v_time,
+                   label='la hora nueva'),
         ),
     ),
 }
@@ -275,24 +300,30 @@ IDENTITY_SPECS = {
         factors=(
             Factor('client_kind',
                    'no pedirte datos de más ni abrirte un expediente '
-                   'duplicado si ya eres cliente'),
+                   'duplicado si ya eres cliente',
+                   label='si ya has venido antes o es tu primera vez'),
         ),
         max_stall_turns=2,
     ),
     FAMILY: GoalSpec(
         name=FAMILY,
         factors=(
-            Factor('titular', _WHY_TITULAR),
-            Factor('pet', _WHY_PET),
-            Factor('digits', _WHY_DIGITS),
+            Factor('titular', _WHY_TITULAR,
+                   label='el nombre del titular del registro'),
+            Factor('pet', _WHY_PET,
+                   label='el nombre de una de sus mascotas'),
+            Factor('digits', _WHY_DIGITS,
+                   label='los últimos 4 dígitos del teléfono registrado'),
         ),
         max_stall_turns=2,
     ),
     TITULAR_CHALLENGE: GoalSpec(
         name=TITULAR_CHALLENGE,
         factors=(
-            Factor('pet', _WHY_PET),
-            Factor('owner', 'ubicar el expediente correcto'),
+            Factor('pet', _WHY_PET,
+                   label='el nombre de una de sus mascotas'),
+            Factor('owner', 'ubicar el expediente correcto',
+                   label='el nombre del titular'),
         ),
         max_stall_turns=2,
     ),
@@ -752,23 +783,69 @@ def bump_stall(goal):
 # Contexto para el modelo — DATOS, sin una sola palabra de copy
 # ---------------------------------------------------------------------------
 
+# Qué le PROMETIMOS al cliente, en su idioma. La clave interna
+# (`schedule_appointment`) no viaja: el modelo no debe aprender a hablar en
+# jerga del sistema (C3, É-F5 Fase 3).
+_GOAL_PROMISE = {
+    SCHEDULE: 'agendarle una cita',
+    REGISTER: 'darlo de alta y agendarle su primera cita',
+    CANCEL: 'cancelarle una cita',
+    RESCHEDULE: 'moverle una cita',
+    TRIAGE: 'saber si ya es cliente para poder atenderlo',
+    FAMILY: 'verificar que puede gestionar las citas del titular',
+    TITULAR_CHALLENGE: 'confirmar que es el titular del registro',
+}
+
+
 def context_block(conversation):
+    """Qué le debemos a esta persona, publicado como HECHOS.
+
+    Antes viajaban las claves internas —`objetivo: schedule_appointment`,
+    `me_falta: ['date', 'time']`, `estado: active`— y el modelo aprendía a
+    nombrar los datos como los nombra la base. C3 lo prohíbe: el estado se
+    publica en lenguaje semántico o no se publica.
+
+    Cada dato que falta viaja con su MOTIVO (R9), que hasta aquí solo existía
+    dentro del `Factor` y no llegaba al modelo salvo por una plantilla. Ahora
+    el agente puede contestar «¿y eso para qué?» sin que nadie se lo prepare.
+    """
     goal = get_open_goal(conversation)
     if goal is None:
         return None
+    spec = spec_for(goal.name)
+    by_name = {f.name: f for f in spec.all_factors} if spec else {}
+
+    def _fact(slot):
+        factor = by_name.get(slot)
+        return factor.as_fact() if factor else {'dato': slot, 'para': ''}
+
+    def _label(slot):
+        factor = by_name.get(slot)
+        return factor.label if (factor and factor.label) else slot
+
     block = {
-        'objetivo': goal.name,
-        'estado': goal.status,
-        'ya_tengo': values(goal),
-        'me_falta': missing_slots(goal),
+        'le_prometi': _GOAL_PROMISE.get(goal.name, goal.name),
+        # También lo YA reunido va con etiqueta: el gate lo cazó cuando solo
+        # se habían etiquetado los huecos. Los VALORES no se traducen —un
+        # handle (`mascota_1`) es el vocabulario con el que el modelo llama a
+        # las herramientas y tiene que viajar tal cual.
+        'ya_tengo': {_label(slot): value
+                     for slot, value in values(goal).items()},
+        'me_falta': [_fact(slot) for slot in missing_slots(goal)],
     }
     if goal.low_confidence:
         # Valores que el modelo propuso con poca seguridad: se confirman con
         # el cliente, jamás se asumen.
-        block['por_confirmar'] = goal.low_confidence
-    repeated = [slot for slot, n in (goal.asked or {}).items() if n >= 2]
-    if repeated:
-        block['ya_preguntado_2_veces'] = repeated
+        block['por_confirmar'] = {_label(slot): value
+                                  for slot, value in goal.low_confidence.items()}
+    gastados = [slot for slot, n in (goal.asked or {}).items()
+                if n >= 2]
+    if gastados:
+        # C7 · no es un dato más: es una instrucción de conducta. Repetir por
+        # tercera vez es defecto del sistema, no del cliente.
+        block['ya_lo_pediste_dos_veces_no_lo_repitas'] = [
+            _label(s) for s in gastados
+        ]
     return block
 
 
