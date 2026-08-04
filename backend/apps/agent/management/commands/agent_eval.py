@@ -25,6 +25,54 @@ class _Rollback(Exception):
     pass
 
 
+class InProcessTransport:
+    """Loopback por el Django test client, en el MISMO proceso.
+
+    Sin esto el eval no podía medir NINGÚN escenario con herramienta, y el
+    motivo es sutil: `handle` siembra org, agente, mascota y servicio dentro de
+    una `transaction.atomic()` que revierte al final. El transporte por defecto
+    (`RequestsTransport`) hace HTTP real contra `AGENT_INTERNAL_API_URL`, que
+    es OTRO proceso con su propia conexión — y un proceso no ve las filas sin
+    commitear de otro.
+
+    Resultado: el JWT apuntaba a un usuario del agente que el servidor no
+    encontraba (401) y las lecturas no veían los fixtures. Como sin servidor
+    levantado el transporte fallaba antes con 599, el 401 quedaba tapado y el
+    defecto nunca salió — ni siquiera en Docker, donde `backend:8000` también
+    es otro proceso.
+
+    Misma pieza que usa la suite (`tests/harness.RealApiTransport`): API y RBAC
+    reales, transacción visible. Se define aquí y no se importa de `tests/`
+    para no meter código de pruebas en un comando de producción.
+    """
+
+    def __call__(self, method, path, *, headers, params=None, json=None):
+        from django.conf import settings as dj_settings
+        from rest_framework.test import APIClient
+        client = APIClient()
+        # El test client usa `testserver` como host, y Django solo lo añade a
+        # ALLOWED_HOSTS cuando corre la SUITE. Desde un management command no,
+        # así que toda llamada moría con `DisallowedHost` → 400 con cuerpo
+        # vacío, indistinguible de un error de validación del dominio.
+        extra = {'SERVER_NAME': (dj_settings.ALLOWED_HOSTS or ['localhost'])[0]}
+        for key, value in (headers or {}).items():
+            if key.lower() == 'authorization':
+                extra['HTTP_AUTHORIZATION'] = value
+            else:
+                extra['HTTP_' + key.upper().replace('-', '_')] = value
+        if json is not None:
+            response = getattr(client, method.lower())(
+                path, data=json, format='json', **extra)
+        else:
+            response = getattr(client, method.lower())(
+                path, data=params or {}, **extra)
+        try:
+            payload = response.json() if response.content else {}
+        except ValueError:
+            payload = {}
+        return response.status_code, payload
+
+
 # Escenario: (mensaje del cliente, [obligatorios], [prohibidos]).
 # El texto del LLM se valida por ELEMENTOS, jamás por igualdad (spec §1.3).
 SCENARIOS = [
@@ -170,8 +218,12 @@ class Command(BaseCommand):
             status=Message.STATUS_PROCESSED,
         )
         settings_obj = AgentSettings.objects.get(organization=ctx["org"])
+        from apps.agent.executor import ToolExecutor
+        executor = ToolExecutor(conv, ctx["agent_user"],
+                                transport=InProcessTransport())
         try:
-            planner.handle_inbound(conv, agent_settings=settings_obj)
+            planner.handle_inbound(conv, agent_settings=settings_obj,
+                                   executor=executor)
         except Exception as exc:  # el LLM real puede fallar — se reporta
             return {"message": message, "reply": "", "pass": False,
                     "fail_reason": f"excepción: {exc.__class__.__name__}"}
