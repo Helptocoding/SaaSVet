@@ -238,12 +238,33 @@ class ExecutorConsumesVerdictsTests(SimpleTestCase):
 
     # Contador que PERTENECE a cada veredicto ejecutado. `None` = ese veredicto
     # todavía no tiene ejecutor propio (el árbitro no es dueño del planner).
+    # Transición ÚNICA: se ejecuta, pero no acumula nada. A6 existe para que
+    # un ejecutor no reinterprete el contador de OTRO veredicto; un veredicto
+    # que no cuenta no tiene nada que reinterpretar. Inventarle un contador
+    # sería maquinaria falsa — y `None` significa otra cosa ("todavía no se
+    # ejecuta"), así que conflarlos dejaría el gate sin capacidad de forzar.
+    _ONE_SHOT = '(transición única, sin contador)'
+    # Aparece en el código solo para EXCLUIRSE. Se declara aparte de `None`
+    # porque `None` significa "todavía no se ejecuta" y es lo que fuerza a
+    # volver aquí cuando eso cambie.
+    #
+    # Límite declarado, el mismo que reconoce p55 A6: esto obliga a PENSAR,
+    # no demuestra ausencia de reinterpretación. Si alguien le da un efecto
+    # real a un veredicto marcado así, el gate no lo nota — igual que declarar
+    # un contador no prueba que nadie toque el ajeno.
+    _NO_EFFECT = '(se nombra para excluirse)'
+
     _COUNTER_BY_VERDICT = {
         'DEVIATE': 'deviations',          # desvíos: los cuenta el ejecutor
         'CONTINUE': 'attempts_failed',    # el fallo es RESULTADO de continuar
-        'SUPPLANT': None,
-        'ABORT': None,
-        'ANSWER': None,
+        # Ejecutados desde É-F5 Fase 4 (`planner._apply_verdict`): suspenden o
+        # abandonan el compromiso de una vez. No hay secuencia que vigilar.
+        'SUPPLANT': _ONE_SHOT,
+        'ABORT': _ONE_SHOT,
+        # Se NOMBRA en `_apply_verdict` solo para excluirse (early-return):
+        # no hay compromiso en juego, así que no hay nada que aplicar. Es lo
+        # contrario de ejecutarlo.
+        'ANSWER': _NO_EFFECT,
     }
     _RUNTIME = ('policy', 'planner')
 
@@ -282,7 +303,9 @@ class ExecutorConsumesVerdictsTests(SimpleTestCase):
             "pertenece — si no, A6 deja de estar comprobada para ellos.")
 
     def test_no_executor_touches_another_verdicts_counter(self):
-        owned = {v: c for v, c in self._COUNTER_BY_VERDICT.items() if c}
+        owned = {v: c for v, c in self._COUNTER_BY_VERDICT.items()
+                 if c and c not in (self._ONE_SHOT,
+                                    self._NO_EFFECT)}
         offenders = []
         for module_name in self._RUNTIME:
             for func in self._functions_of(module_name):

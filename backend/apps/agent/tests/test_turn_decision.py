@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from apps.agent import planner
+from apps.agent import arbiter, planner
 from apps.agent.models import (
     AgentSettings,
     ContactIdentity,
@@ -75,7 +75,18 @@ class TurnDecisionSetupMixin:
 class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
     """Capa 2 (parcial, directa): decisiones tomadas ANTES de tocar al LLM
     —incluida SILENT, la rama que un chequeo anclado al saliente se saltaría
-    (no manda mensaje, pero sí decide algo — nota del §9.2)."""
+    (no manda mensaje, pero sí decide algo — nota del §9.2).
+
+    **Reescrito en É-F5 Fase 4.** `verdict` guarda ahora el veredicto del
+    ÁRBITRO (enum cerrado de cinco); el desenlace operativo del planner
+    —`reply`, `silent`, `escalate`— bajó a `facts_produced['salida']`, que es
+    diagnóstico. Era la deuda declarada en el docstring del modelo desde
+    É-F4 Fase 1: «Fase 1 no tiene árbitro todavía; `verdict` guarda el
+    `decision` de hoy tal cual».
+
+    Lo que estos casos protegen NO cambia y es lo que importa: **todo turno
+    deja exactamente una fila**, incluidos los que no mandan mensaje.
+    """
 
     def test_silent_leaves_a_row(self):
         self.conv.state = Conversation.STATE_HUMAN_ACTIVE
@@ -87,7 +98,10 @@ class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
         )
         self.assertEqual(result['decision'], 'silent')
         row = TurnDecision.objects.get(conversation=self.conv)
-        self.assertEqual(row.verdict, 'silent')
+        # El veredicto es del árbitro: sin compromiso en juego, `responder`.
+        self.assertEqual(row.verdict, arbiter.ANSWER)
+        # La salida del planner sigue registrada, como diagnóstico.
+        self.assertEqual(row.facts_produced['salida'], 'silent')
         self.assertEqual(row.because, TurnDecision.Because.SAFEGUARD)
         self.assertEqual(row.triggered_by_message_id, msg.pk)
 
@@ -98,7 +112,10 @@ class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
             burst=["mi perro convulsiona!!"],
         )
         row = TurnDecision.objects.get(conversation=self.conv)
-        self.assertEqual(row.verdict, 'escalate')
+        # El veredicto es del árbitro: sin compromiso en juego, `responder`.
+        self.assertEqual(row.verdict, arbiter.ANSWER)
+        # La salida del planner sigue registrada, como diagnóstico.
+        self.assertEqual(row.facts_produced['salida'], 'escalate')
         self.assertEqual(row.because, TurnDecision.Because.SAFEGUARD)
 
     def test_reply_leaves_a_row(self):
@@ -108,7 +125,10 @@ class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
             burst=["gracias"],
         )
         row = TurnDecision.objects.get(conversation=self.conv)
-        self.assertEqual(row.verdict, 'reply')
+        # El veredicto es del árbitro: sin compromiso en juego, `responder`.
+        self.assertEqual(row.verdict, arbiter.ANSWER)
+        # La salida del planner sigue registrada, como diagnóstico.
+        self.assertEqual(row.facts_produced['salida'], 'reply')
         self.assertEqual(row.because, TurnDecision.Because.PLANNER_HANDLED)
 
 

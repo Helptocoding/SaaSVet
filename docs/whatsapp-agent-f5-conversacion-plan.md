@@ -1645,7 +1645,7 @@ segunda vez y se retiró el último decorador.
 
 ---
 
-### Fase 4 · El árbitro gobierna el compromiso
+### Fase 4 · El árbitro clasifica el desenlace del compromiso
 **Cierra**: C9 completo · cierra la deuda declarada de É-F4 (`TurnDecision.verdict`
 con texto libre).
 
@@ -1665,6 +1665,64 @@ veredictos, no solo textos.
 
 **Criterio de salida.** Gate A6 extendido a los 5 veredictos · cero filas con oráculo
 incompleto.
+
+#### ✅ EJECUTADA — 2026-08-04
+
+**Contrato primero** (p55 §8): la enmienda vive en
+[p56 §5-bis](decisions/2026-08-01-p56-perception-situation-and-turn-as-root.md),
+escrita y aprobada **antes** de tocar código. Tres precisiones del PO la
+mejoraron sustancialmente:
+
+1. **«Clasifica», no «gobierna».** Gobernar implica autoridad; lo que hace es
+   *interpretar* el desenlace. Aplicar los efectos es del ejecutor — la
+   separación que p55 A6 ya exigía. Nombrarlo mal reintroducía por la puerta de
+   atrás la autoridad que la enmienda le quita.
+2. **Invariante nuevo**: los efectos de un veredicto tocan **solo el estado
+   persistente del compromiso, jamás el mensaje ya emitido**. Sin esa frase,
+   dentro de seis meses alguien lee `SUPPLANT` y «reemplaza la respuesta». Ese
+   turno ya ocurrió.
+3. **La propiedad que esto habilita**: con el árbitro puro **y** post-hoc, sus
+   veredictos se **recalculan sobre conversaciones históricas** sin llamar al
+   LLM — comparar versiones del árbitro, validar una regla nueva contra tráfico
+   real, medir un cambio arquitectónico. Antes era imposible porque el árbitro
+   *intervenía*: recalcularlo habría cambiado la conversación que se pretendía
+   medir.
+
+**Implementación.** El árbitro corre en `handle_inbound`, **después** de encolar
+el saliente. Se llenan por fin los cuatro campos de oráculo que llevaban vacíos
+desde É-F4 (`active_commitment`, `return_to`, `supplanted_by`,
+`facts_consumed`), y `TurnDecision.verdict` pasa a ser el veredicto del árbitro;
+el desenlace operativo del planner baja a `facts_produced['salida']`.
+
+El hecho que faltaba para que `suplantar` fuera alcanzable ya existía y nadie lo
+calculaba: **el modelo llamó la herramienta de un compromiso distinto al que
+está en curso**.
+
+**Los gates rechazaron mi primera versión, y tenían razón.** Escribí `observe()`
+y `apply()` dentro de `arbiter.py`; A2 y A3 los tumbaron en la primera corrida:
+producir hechos exige llamar matchers y aplicar efectos exige tocar el ORM. Las
+dos cosas habrían roto lo único que hace valioso al módulo —**su pureza es lo
+que permite el recálculo histórico**— así que viven en `planner.py`. La nota de
+por qué NO están ahí quedó escrita en `arbiter.py`.
+
+**A6 obligó a una distinción que no había pensado.** El mapa de contadores
+conflaba tres cosas bajo `None`:
+
+| Marca | Significa |
+|---|---|
+| `'deviations'` | acumula: el ejecutor reacciona a la **secuencia** |
+| `_ONE_SHOT` | se ejecuta, pero es **transición única** — no hay patrón |
+| `_NO_EFFECT` | se **nombra para excluirse**; lo contrario de ejecutarlo |
+| `None` | **todavía no se ejecuta** — lo que fuerza a volver al mapa |
+
+Inventarle un contador a `SUPPLANT`/`ABORT` habría sido maquinaria falsa; dejar
+`None` habría dejado el gate sin capacidad de forzar. Se le añadió además su
+**límite declarado**, el mismo que p55 A6 reconoce de sí mismo: *obliga a
+pensar, no demuestra ausencia de reinterpretación*.
+
+**El árbitro deja de ser código muerto.** Llevaba desde la Fase 2 sin un solo
+call site de producción, con la advertencia escrita en su módulo. Tres de sus
+cinco veredictos eran inalcanzables; ahora los cinco tienen productor y ejecutor.
 
 ---
 

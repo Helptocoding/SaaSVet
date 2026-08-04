@@ -24,6 +24,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import (
+    arbiter,
     confirmations,
     goals,
     guards,
@@ -62,22 +63,120 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
         executor=executor, triggered_by=triggered_by, burst=burst,
         payload_types=payload_types,
     )
-    _record_turn_decision(conversation, result, started, triggered_by)
+    # El árbitro corre AQUÍ, con el saliente ya encolado (É-F5 Fase 4, p56
+    # §5-bis): clasifica qué le pasó al compromiso y el ejecutor aplica los
+    # efectos SOBRE EL COMPROMISO. Ese turno ya ocurrió — el cliente ya leyó
+    # el mensaje y nada de esto puede tocarlo.
+    verdict = _settle_commitment(conversation, result, burst)
+    _record_turn_decision(conversation, result, started, triggered_by,
+                          verdict=verdict)
     return result
 
 
-def _record_turn_decision(conversation, result, started, triggered_by):
+def _settle_commitment(conversation, result, burst):
+    """Clasifica el desenlace del compromiso y aplica sus efectos.
+
+    Nunca puede tumbar el turno: si algo revienta aquí, el cliente ya tiene su
+    respuesta y lo único que se pierde es el rastro (mismo criterio que
+    `_record_turn_decision`).
+    """
+    try:
+        raw = [b for b in (burst or []) if b]
+        burst_text = "\n".join(raw)
+        commitment = (goals.get_open_goal(conversation)
+                      or goals.get_identity_commitment(conversation))
+        view = (arbiter.CommitmentView(commitment.name, commitment.return_to)
+                if commitment is not None else None)
+        facts = _observe_turn_facts(
+            burst_text,
+            goal_advanced=bool(result.get('goal_advanced')),
+            other_goal_proposed=result.get('other_goal_proposed', ''),
+        )
+        verdict = arbiter.decide(facts, view)
+        _apply_verdict(conversation, verdict,
+                       supplanted_by=result.get('other_goal_proposed', ''))
+        return verdict, facts
+    except Exception:
+        logger.exception("AGENT_ARBITER_FAILED")
+        return None, None
+
+
+def _observe_turn_facts(burst_text, *, goal_advanced, other_goal_proposed):
+    """Los hechos del turno, YA calculados (p55 A3).
+
+    Vive aquí y no en `arbiter.py` porque producir hechos exige llamar
+    matchers, y el árbitro tiene que seguir siendo puro: su pureza es lo que
+    permite recalcular veredictos sobre conversaciones históricas sin base de
+    datos ni proveedor (p56 §5-bis). El gate A3 rechazó la primera versión,
+    que los producía dentro del módulo.
+
+    **Ninguno viene del modelo, y es estructural**: si un hecho lo generara el
+    LLM, reproducir un veredicto exigiría volver a llamarlo y la propiedad de
+    recálculo se perdería.
+    """
+    return arbiter.TurnFacts(
+        proposes_other_commitment=bool(other_goal_proposed),
+        client_declined=matchers.classify_confirmation(burst_text) == 'negative',
+        interrupts=(matchers.looks_like_question(burst_text)
+                    and not goal_advanced),
+    )
+
+
+def _apply_verdict(conversation, verdict, *, supplanted_by=''):
+    """Aplica al COMPROMISO lo que el veredicto dice que le pasó.
+
+    **INVARIANTE (p56 §5-bis).** Los efectos tocan únicamente el estado
+    persistente del compromiso, **nunca el mensaje ya emitido en ese turno**.
+    Esto corre DESPUÉS de encolar el saliente: ese turno ya ocurrió y el
+    cliente ya lo leyó. Un `SUPPLANT` no "reemplaza la respuesta"; anota que
+    la promesa quedó suspendida para el turno siguiente.
+
+    A6 de p55: cada veredicto lleva su propio contador y ninguno toca el de
+    otro. Reetiquetar un desvío como fallo es lo que produjo el handoff de la
+    conv 13.
+    """
+    if verdict.verdict in (arbiter.ANSWER, arbiter.CONTINUE):
+        return
+    goal = (goals.get_open_goal(conversation)
+            or goals.get_identity_commitment(conversation))
+    if goal is None:
+        return
+    if verdict.verdict == arbiter.DEVIATE:
+        goals.deviate(goal, verdict.return_to)
+    elif verdict.verdict == arbiter.SUPPLANT:
+        goals.suspend(goal, supplanted_by=supplanted_by or 'otro compromiso')
+    elif verdict.verdict == arbiter.ABORT:
+        goals.abandon(goal, 'el cliente lo descartó')
+
+
+def _record_turn_decision(conversation, result, started, triggered_by,
+                          *, verdict=None):
     try:
         duration_ms = int((time.monotonic() - started) * 1000)
         because = _infer_because(result)
+        turn_verdict, facts = verdict or (None, None)
+        # `verdict` guarda el veredicto del ÁRBITRO (enum cerrado de cinco).
+        # Hasta É-F5 Fase 4 guardaba el nombre interno de la salida del planner
+        # —`planner_reply`, `escalate`…— porque no había árbitro; era deuda
+        # declarada en el propio docstring del modelo. Ese desenlace operativo
+        # no se pierde: baja a `facts_produced`, que es diagnóstico.
+        produced = {'reason': result['reason']} if result.get('reason') else {}
+        produced['salida'] = result.get('decision', '')
         TurnDecision.objects.create(
             organization=conversation.organization,
             conversation=conversation,
-            verdict=result.get('decision', ''),
+            verdict=(turn_verdict.verdict if turn_verdict
+                     else result.get('decision', '')),
             because=because,
-            facts_produced=(
-                {'reason': result['reason']} if result.get('reason') else {}
-            ),
+            active_commitment=(turn_verdict.commitment if turn_verdict else ''),
+            return_to=(turn_verdict.return_to if turn_verdict else ''),
+            supplanted_by=result.get('other_goal_proposed', ''),
+            facts_consumed=({
+                'propone_otro_compromiso': facts.proposes_other_commitment,
+                'el_cliente_dijo_que_no': facts.client_declined,
+                'interrumpe': facts.interrupts,
+            } if facts else {}),
+            facts_produced=produced,
             planner_used=result.get('llm_calls', 0) > 0,
             tools_called=result.get('tools', 0),
             duration_ms=duration_ms,
@@ -238,6 +337,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     # llama en CADA vuelta, así que el estancamiento nunca se detectaba.
     goal_attempted = False   # se llamó una tool de objetivo
     goal_progressed = False  # …y de verdad llenó algo
+    other_goal_proposed = ''  # el modelo llamó la tool de OTRO compromiso
     other_tool_used = False  # se usó una tool ajena al objetivo (interrupción)
     llm_calls = 0
     tool_calls = 0
@@ -348,13 +448,23 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                                       burst_text=burst_text) + text,
                 author='agent')
             return {'decision': 'planner_reply', 'llm_calls': llm_calls,
-                    'tools': tool_calls}
+                    'tools': tool_calls,
+                    'goal_advanced': goal_progressed,
+                    'other_goal_proposed': other_goal_proposed}
 
         # tool_call
         tool_calls += 1
         is_goal_tool = result.tool_name in goals.TOOL_GOALS
         if is_goal_tool:
             goal_attempted = True
+            # ¿El modelo llamó una herramienta de un compromiso DISTINTO al que
+            # está en curso? Es el hecho que hacía falta para que el veredicto
+            # `suplantar` fuera alcanzable: el cliente cambió de tema a algo
+            # que el sistema sí sabe hacer (É-F5 Fase 4).
+            propuesto = goals.TOOL_GOALS[result.tool_name]
+            en_curso = goals.get_open_goal(conversation)
+            if en_curso is not None and en_curso.name != propuesto:
+                other_goal_proposed = propuesto
         else:
             other_tool_used = True
         # El stub de tests no emite id: se sintetiza para poder correlacionar.

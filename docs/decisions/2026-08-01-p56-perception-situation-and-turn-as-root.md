@@ -307,6 +307,112 @@ Se hace explícito lo que hasta hoy era implícito:
   (`_seed_family_challenge` siembra aunque no haya candidatos); aquí se eleva a
   invariante.
 
+### 5-bis. Enmienda a p55 · el árbitro CLASIFICA el desenlace del compromiso
+
+> **Sobre el verbo, que no es cosmética** (precisión del PO): no *gobierna* el
+> compromiso — lo **clasifica**. «Gobernar» implica autoridad; lo que hace es
+> **interpretar** qué fue de la promesa en este turno. Aplicar los efectos que
+> se derivan de esa interpretación es del **ejecutor**, y esa separación ya
+> estaba en p55 A6 («el ejecutor consume veredictos; no los reinterpreta»).
+> Nombrarlo «gobernar» reintroducía por la puerta de atrás la autoridad que
+> esta enmienda le quita.
+
+> **Estado: PROPUESTA — pendiente de aceptación del PO.** Requisito de la Fase 4
+> del plan É-F5; p55 §8 exige que entre por ADR **antes** de implementarse.
+
+**El problema, medido.** `arbiter.decide` tiene hoy **cero call sites de
+producción**: el único era `policy._check_interruption`, dentro de la FSM que la
+Fase 2 retiró. Antes de eso tenía uno, alimentado por **un solo hecho**
+(`interrupts`), así que una capa entera —módulo, ADR, presupuesto de ramas y
+suite propia— funcionaba efectivamente como `bool → {DEVIATE, CONTINUE}` y tres
+de sus cinco veredictos eran inalcanzables.
+
+El diagnóstico de É-F5 fue que el árbitro no está mal construido: **recibía un
+hecho mal calculado**. Con percepción (Fase 1) existen por fin
+`proposes_other_commitment` y `client_declined`.
+
+**Qué cambia:**
+
+| | p55 (vigente) | Enmienda |
+|---|---|---|
+| Pregunta que responde | *¿qué debe pasar con este turno?* | ***¿qué le pasó al compromiso en este turno?*** |
+| Cuándo corre | **antes**, como puerta | **al final**, sobre lo que ya ocurrió |
+| Qué hace con ello | decide | **clasifica**; el ejecutor aplica |
+
+**La consecuencia de mover el «cuándo» es la que importa: deja de ser un gate y
+pasa a ser una clasificación *post-hoc*.** Ya no decide si el cliente recibe una
+plantilla o una respuesta del modelo —eso lo decidió el planner— sino qué quedó
+de la promesa: continuó, se desvió, la suplantó otra, la abandonaron.
+
+Eso **refuerza** los invariantes de p55 en vez de relajarlos: el árbitro sigue
+siendo puro (§1), sigue sin producir contenido (§2), y ahora es literalmente
+incapaz de afectar lo que el cliente lee, porque corre después de que el texto
+esté escrito.
+
+> **Invariante nuevo, y cierra la puerta que quedaba abierta** (aportación del
+> PO): **los efectos derivados de un veredicto aplican únicamente al estado
+> persistente del compromiso, y NUNCA al mensaje ya emitido en ese turno.**
+>
+> Sin esta frase, dentro de seis meses alguien escribe:
+>
+> ```
+> planner → el LLM responde → el árbitro dice SUPPLANT
+>        → «ah, entonces reemplazo la respuesta»
+> ```
+>
+> No. **Ese turno ya ocurrió.** El cliente ya leyó el mensaje. Lo único que el
+> veredicto puede tocar es qué queda registrado del compromiso para el turno
+> siguiente.
+
+#### La propiedad que esto habilita: el árbitro se puede volver a correr
+
+Consecuencia señalada por el PO, y es la más valiosa de la enmienda. Con el
+árbitro **puro** (p55 A1) **y post-hoc**, sus veredictos se pueden **recalcular
+sobre conversaciones históricas**:
+
+```
+Conversation → mensajes ya guardados → hechos recomputados → árbitro NUEVO
+                                                                  ↓
+                                                    comparación con lo que dijo
+                                                    el árbitro de entonces
+```
+
+Sin volver a llamar al LLM, sin coste y en milisegundos. Antes era imposible
+porque el árbitro **intervenía**: recalcularlo habría cambiado la conversación
+que se pretendía medir.
+
+Habilita tres cosas que hoy no existen: **comparar versiones del árbitro** ·
+**validar una regla nueva contra tráfico real antes de desplegarla** · **medir
+el efecto de un cambio arquitectónico** sobre conversaciones ya ocurridas. Es lo
+que p55 §Consecuencias prometía —«el tráfico real se vuelve suite de
+regresión»— y que no podía cumplirse del todo mientras el árbitro fuera una
+puerta.
+
+> **Y de rebote impone una disciplina útil: los hechos deben seguir
+> produciéndose de forma determinista.** El día que un `TurnFact` venga del
+> modelo, la reproducción exige volver a llamarlo y la propiedad se pierde. La
+> replicabilidad deja de ser un beneficio y pasa a ser una razón estructural
+> para que los productores de hechos sigan siendo matchers y no generación.
+
+**Qué NO cambia:** el conjunto cerrado de cinco veredictos · `CommitmentView` y
+`TurnFacts` como fotos inmutables (A2/A3) · el presupuesto de ramas (A4) · la
+regla A6 —el ejecutor consume veredictos, cada uno con su propio contador—, que
+ahora **por fin cubre los cinco** en vez de la única frontera que existía.
+
+**`TurnDecision.verdict` se cierra** al enum de cinco. Hoy guarda el nombre
+interno de la salida del planner (`planner_reply`, `escalate`, `silent`…) porque
+Fase 1 no tenía árbitro; era deuda declarada en el propio docstring del modelo.
+El desenlace operativo del turno no se pierde: pasa a `facts_produced`, que ya
+existe y es diagnóstico. Las filas históricas **no se reescriben** (append-only,
+invariante 10 de p55): el enum aplica a filas nuevas y el reporte trata los
+valores viejos como `legacy`, mismo patrón que `STATUS_CANCELLED_DEPRECATED`.
+
+**Riesgo declarado.** Un árbitro post-hoc puede volverse decorativo por segunda
+vez si nadie consume sus veredictos. La defensa es el criterio de salida de la
+Fase 4 —los cinco veredictos con productor **y** ejecutor, cero filas con
+oráculo incompleto— y la advertencia que ya vive en `arbiter.py`: si esto no se
+cumple, es código muerto y se borra.
+
 ### 6. Extensión del invariante 8: `return_to` referencia un Factor declarado
 
 p55 invariante 8: *un `Factor` sin `why` no compila* — `Factor.__post_init__`

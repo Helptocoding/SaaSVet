@@ -1,28 +1,29 @@
 """
-agent/arbiter.py — Autoridad del turno (É-F4 Fase 3, ADR p55 §2).
+agent/arbiter.py — Desenlace del compromiso (É-F4 Fase 3 · enmienda p56 §5-bis).
 
-⚠️  **SIN CONSUMIDOR DE PRODUCCIÓN desde É-F5 Fase 2 (2026-08-02).**
+Responde UNA pregunta: ***¿qué le pasó al compromiso en este turno?*** No
+clasifica el mensaje (eso es un insumo), no redacta (eso es el planner/LLM) y
+no aplica los efectos (eso es del planner — ver al final).
 
-Su único call site era `policy._check_interruption`, dentro de la FSM de
-identidad que la Fase 2 retiró. Hoy este módulo solo lo ejercitan sus propios
-tests. Se conserva —en vez de borrarlo— por dos razones, y conviene que estén
-escritas para que nadie lo tome por olvido:
+**CLASIFICA, no gobierna** (precisión del PO, É-F5 Fase 4). «Gobernar» implica
+autoridad; lo que hace es INTERPRETAR el desenlace. Aplicar lo que se deriva de
+esa interpretación es del ejecutor — la misma separación que p55 A6 ya exigía.
 
-1. El diagnóstico de É-F5 fue que el árbitro no estaba mal construido: recibía
-   un hecho mal calculado. Con percepción (Fase 1) existen por fin
-   `proposes_other_commitment` y `client_declined`, así que tres de sus cinco
-   veredictos dejan de ser inalcanzables.
-2. La Fase 4 le da jurisdicción sobre el COMPROMISO —qué le pasó a la promesa
-   en este turno— en vez del turno entero. Es un cambio de contrato y entra
-   por enmienda a p55 (§8).
+**Corre AL FINAL del turno, no antes.** Hasta É-F5 Fase 2 era una puerta:
+`policy._check_interruption` lo consultaba a mitad de camino y su veredicto
+decidía qué leía el cliente. Ahora corre cuando el saliente ya está encolado, y
+eso lo vuelve **incapaz por construcción** de afectar lo que el cliente lee.
 
-Si la Fase 4 se cancela o cambia de forma, esto es código muerto y debe
-borrarse. No dejarlo envejecer en silencio: un módulo con ADR y sin llamadas es
-exactamente el patrón que la auditoría de arquitectura señaló.
+Dos propiedades que salen de ahí y que antes eran imposibles:
 
-Responde UNA pregunta: *¿qué debe pasar con este turno?* No clasifica el
-mensaje (eso es un insumo), no redacta (eso es el planner/LLM) y no ejecuta
-(eso es quien recibe el veredicto).
+- **Los efectos tocan solo el estado persistente del compromiso**, jamás el
+  mensaje ya emitido (invariante de p56 §5-bis). Un `SUPPLANT` no reemplaza la
+  respuesta: anota que la promesa quedó suspendida para el turno siguiente.
+- **Los veredictos se pueden RECALCULAR sobre conversaciones históricas** sin
+  volver a llamar al LLM: comparar versiones del árbitro, validar una regla
+  nueva contra tráfico real, medir un cambio arquitectónico. Antes era
+  imposible porque el árbitro intervenía — recalcularlo habría cambiado la
+  conversación que se pretendía medir.
 
 **El árbitro nunca decide contenido, solo control de flujo.** Prueba para
 distinguirlos: ¿se puede renderizar el veredicto en otro idioma, otro tono u
@@ -123,3 +124,18 @@ def decide(facts, commitment):
     if facts.interrupts:
         return TurnVerdict(DEVIATE, commitment.name, commitment.return_to)
     return TurnVerdict(CONTINUE, commitment.name, commitment.return_to)
+
+
+# ---------------------------------------------------------------------------
+# Lo que NO vive aquí, y por qué
+# ---------------------------------------------------------------------------
+# La producción de hechos (`_observe_turn_facts`) y la aplicación de efectos
+# (`_apply_verdict`) viven en `planner.py`, no en este módulo.
+#
+# Se escribieron aquí primero y los gates A2/A3 los rechazaron en la primera
+# corrida: producir hechos exige llamar matchers, y aplicar efectos exige tocar
+# el ORM. Las dos cosas romperían lo que hace valioso a este módulo — la pureza
+# es lo que permite recalcular veredictos sobre conversaciones históricas sin
+# base de datos ni proveedor (p56 §5-bis).
+#
+# El árbitro recibe hechos ya calculados y devuelve un veredicto. Nada más.
