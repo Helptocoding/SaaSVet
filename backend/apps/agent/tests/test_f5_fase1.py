@@ -261,6 +261,43 @@ class IdentifyClientTests(Fase1Base):
         conversation.contact.refresh_from_db()
         self.assertEqual(conversation.contact.owner_id, self.owner.pk)
 
+    def test_los_tres_factores_pueden_llegar_en_turnos_distintos(self):
+        """C2 · el cliente aporta a SU ritmo, no en un solo mensaje.
+
+        Defecto encontrado por el eval multi-turno con modelo real (É-F5): la
+        herramienta acumulaba en `flow['aportado']` y luego exigía los tres
+        factores juntos en un mismo `args`, así que un familiar legítimo que
+        los daba en tres turnos —que es como conversa un modelo real— nunca
+        quedaba vinculado.
+
+        **Y la suite no lo veía porque mi guion pasaba los tres a la vez**: el
+        test de arriba pasaba porque yo escribí la llamada, no porque el flujo
+        funcionara. Exigir que lleguen juntos es modo pull con otro nombre.
+        """
+        conversation = self._conversation(external_id="5215500008888")
+
+        self._identify(conversation, owner_name="Ana Cruz")
+        self._identify(conversation, pet_name="Oliver")
+        outcome = self._identify(conversation, phone_digits="4586")
+
+        self.assertTrue(outcome.data['verificado'],
+                        "los tres factores llegaron: debió vincular")
+        conversation.contact.refresh_from_db()
+        self.assertEqual(conversation.contact.owner_id, self.owner.pk)
+
+    def test_lo_que_falta_se_mide_sobre_lo_reunido(self):
+        """Corolario: tras aportar dos factores, solo falta el tercero."""
+        conversation = self._conversation(external_id="5215500009999")
+
+        self._identify(conversation, owner_name="Ana Cruz")
+        outcome = self._identify(conversation, pet_name="Oliver")
+
+        self.assertEqual(
+            outcome.data['falta'],
+            ['los últimos 4 dígitos del teléfono registrado'],
+            "vuelve a pedir datos que el cliente ya dio en turnos anteriores",
+        )
+
     def test_dos_homonimos_que_pasan_los_tres_factores_no_vinculan(self):
         """Ambigüedad = no se elige. El sistema nunca adivina un expediente."""
         gemela = Owner.objects.create(organization=self.org, name="Ana Cruz",

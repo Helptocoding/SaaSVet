@@ -390,6 +390,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 asked=_asked_counters(conversation),
                 anchored_facts=prompts.anchored_identity_facts(conversation),
                 tool_ran=tool_calls > 0,
+                # Estado REAL al cerrar el turno. El guard recibe el hecho, no
+                # el objeto: no consulta la base (mismo criterio que los demás).
+                verified=conversation.contact.verification_level in (
+                    'confirmed_in_chat', 'staff_verified'),
             )
             # Un solo reintento con instrucción correctiva: el modelo suele
             # obedecer a la segunda y el cliente no nota nada.

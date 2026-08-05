@@ -1236,11 +1236,15 @@ def identify_client(conversation, executor, args, triggered_by=None):
     }
 
     # 1 · GUARDAR lo que llegó, se lo hayamos pedido o no (C2, modo push).
+    flow_store = dict(conversation.flow.get('aportado') or {})
     if aportado:
-        flow_store = dict(conversation.flow.get('aportado') or {})
         flow_store.update(aportado)
         conversation.flow['aportado'] = flow_store
         conversation.save(update_fields=['flow'])
+    # Lo REUNIDO en toda la conversación, no solo en esta llamada. El cliente
+    # aporta a su ritmo y en el orden que quiere; exigir que los factores
+    # lleguen juntos sería volver al modo pull con otro nombre.
+    reunido = flow_store
 
     commitment = goals.get_identity_commitment(conversation)
     if commitment is not None:
@@ -1258,20 +1262,30 @@ def identify_client(conversation, executor, args, triggered_by=None):
     verified = False
     if contact.owner_id is not None:
         # Número ya asociado a un titular: basta con un factor correcto.
-        if aportado.get('pet_name'):
+        if reunido.get('pet_name'):
             verified = identity.try_verify_by_pet_answer(
-                contact, aportado['pet_name'])
-        if not verified and aportado.get('owner_name'):
+                contact, reunido['pet_name'])
+        if not verified and reunido.get('owner_name'):
             verified = identity.try_verify_by_owner_name(
-                contact, aportado['owner_name'])
-    elif len(aportado) == 3:
+                contact, reunido['owner_name'])
+    elif len(reunido) == 3:
         # Número desconocido actuando por un titular: los TRES factores contra
         # un mismo owner, o no se vincula nada (reto triple, UX-04).
+        #
+        # Se verifica contra lo REUNIDO en la conversación, no contra lo que
+        # llegó en ESTA llamada. Es la corrección del defecto que encontró el
+        # eval multi-turno (É-F5): la tool acumulaba en `flow['aportado']` y
+        # luego exigía los tres juntos en un solo `args`, así que un familiar
+        # legítimo que daba nombre, mascota y dígitos en tres turnos —que es
+        # como se comporta un modelo real— NUNCA quedaba vinculado.
+        #
+        # La suite no lo vio porque su guion pasa los tres a la vez: el test
+        # pasaba porque yo escribí la llamada, no porque el flujo funcionara.
         survivors = [
             owner for owner in identity.find_link_candidates(
-                org, aportado['owner_name'])
-            if identity.owner_has_pet(owner, aportado['pet_name'])
-            and identity.owner_digits_match(owner, aportado['phone_digits'])
+                org, reunido['owner_name'])
+            if identity.owner_has_pet(owner, reunido['pet_name'])
+            and identity.owner_digits_match(owner, reunido['phone_digits'])
         ]
         if len(survivors) == 1:
             identity.link_family(contact, survivors[0])
@@ -1288,7 +1302,7 @@ def identify_client(conversation, executor, args, triggered_by=None):
         pendientes = ['pet_name', 'owner_name']
     else:
         pendientes = ['owner_name', 'pet_name', 'phone_digits']
-    falta = [_FACTOR_LABELS[key] for key in pendientes if key not in aportado]
+    falta = [_FACTOR_LABELS[key] for key in pendientes if key not in reunido]
 
     executor.record_local(
         tool_name='identify_client',
@@ -1298,7 +1312,7 @@ def identify_client(conversation, executor, args, triggered_by=None):
     )
     return ToolOutcome(ok=True, summary={'verificado': verified}, data={
         'verificado': verified,
-        'ya_tengo': [_FACTOR_LABELS[key] for key in sorted(aportado)],
+        'ya_tengo': [_FACTOR_LABELS[key] for key in sorted(reunido)],
         'falta': [] if verified else falta,
     })
 

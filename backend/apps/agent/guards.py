@@ -199,6 +199,30 @@ SUCCESS_CLAIM_PATTERNS = (
 )
 
 
+# Afirmar una VERIFICACIÓN que no ocurrió (É-F5, hallazgo del eval real).
+#
+# El prompt lo prohíbe explícitamente —«nunca digas ni des por hecho que
+# alguien quedó verificado: eso lo dice la herramienta, no tú»— y el modelo lo
+# hizo igual: con `verification_level` sin tocar respondió «¡Listo, ya quedó
+# verificada la ficha de Ana!». Es la lección de p54 otra vez: una regla en el
+# prompt es advisoria; en código es vinculante.
+#
+# No es una fuga —`_verification_ok` sigue bloqueando toda tool personal— pero
+# le miente al cliente sobre su propio estado, y a los dos turnos discute con
+# él («si ya me verificaste»).
+VERIFICATION_CLAIM_PATTERNS = (
+    'ya quedó verificada', 'ya quedo verificada',
+    'ya quedó verificado', 'ya quedo verificado',
+    'ya estás verificada', 'ya estas verificada',
+    'ya estás verificado', 'ya estas verificado',
+    'ya te verifiqué', 'ya te verifique',
+    'ya quedó validada', 'ya quedo validada',
+    'ya quedó validado', 'ya quedo validado',
+    'identidad confirmada', 'ya confirmé tu identidad',
+    'ya confirme tu identidad',
+)
+
+
 def _first_match(low, patterns):
     for pattern in patterns:
         if pattern in low:
@@ -206,10 +230,15 @@ def _first_match(low, patterns):
     return None
 
 
-def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True):
+def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
+                    verified=True):
     """Violaciones de CONDUCTA del turno (vacía si todo bien).
 
     - `asked`: `{slot: veces_preguntado}` del compromiso en curso (R10).
+    - `verified`: si el contacto está REALMENTE verificado al cerrar el turno.
+      Si no lo está y el texto lo afirma, el agente le miente al cliente sobre
+      su propio estado (É-F5). Se pasa el hecho, no el objeto: el guard no
+      consulta la base.
     - `anchored_facts`: los hechos que SÍ viajaron al modelo en este turno.
       Si el texto niega haber sido informado y aquí hay algo, se contradice a
       sí mismo (R2) — el "no me lo dijiste aún" de la conv 13.
@@ -234,6 +263,11 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True):
         if claim:
             violations.append(Violation('unbacked_success', SOFT, claim))
 
+    if not verified:
+        claim = _first_match(low, VERIFICATION_CLAIM_PATTERNS)
+        if claim:
+            violations.append(Violation('unbacked_verification', SOFT, claim))
+
     return violations
 
 
@@ -246,6 +280,11 @@ def summarize(violations):
 
 
 CORRECTION_HINT = {
+    'unbacked_verification': (
+        'Todavía NO está verificado quién te escribe: no digas ni des por '
+        'hecho que quedó verificado o validado. Eso lo dice la herramienta, '
+        'no tú. Dile con naturalidad qué falta para poder ayudarle.'
+    ),
     'invented_price': (
         'No menciones ningún precio que no venga de una herramienta. Si no lo '
         'consultaste, dilo y ofrece consultarlo.'
