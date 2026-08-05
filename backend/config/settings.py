@@ -357,6 +357,17 @@ DATABASES = {
 }
 
 # ---------------------------------------------------------------------------
+# Test runner
+#
+# `DiscoverRunner` + una precondición: si el paralelismo es real y falta
+# `tblib`, los tracebacks no son serializables entre procesos y el PRIMER test
+# que falle aborta la corrida completa sin decir cuál fue (~1500 resultados
+# perdidos). El runner lo detecta antes de crear las bases de datos.
+# Ver el docstring de apps/core/test_runner.py.
+# ---------------------------------------------------------------------------
+TEST_RUNNER = 'apps.core.test_runner.VetCareTestRunner'
+
+# ---------------------------------------------------------------------------
 # Caches — Redis (P1-1, ADR p41)
 #
 # Redis exists here for exactly two reasons, and only these:
