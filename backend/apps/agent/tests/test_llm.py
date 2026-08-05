@@ -142,7 +142,19 @@ class EstimateCostTests(SimpleTestCase):
     def test_cost_from_env_pricing(self):
         self.assertEqual(estimate_cost(500_000, 250_000), Decimal('1.500000'))
 
+    @override_settings(AGENT_LLM_COST_PER_MTOK_INPUT=0.0,
+                       AGENT_LLM_COST_PER_MTOK_OUTPUT=0.0)
     def test_zero_without_pricing(self):
+        """El pricing se fija EXPLÍCITAMENTE a 0, no se asume ausente.
+
+        Antes dependía de que el `.env` local no tuviera precios configurados:
+        cualquier dev que apuntara el agente a un proveedor real —lo primero
+        que hace falta para correr `agent_eval`— rompía este test con un
+        `1.370000 != 0.000000` que no tenía nada que ver con su cambio.
+
+        Misma familia que la regla de calendario: un test no debe depender de
+        estado ambiental que no declara.
+        """
         self.assertEqual(estimate_cost(1_000_000, 1_000_000), Decimal('0.000000'))
 
     @override_settings(AGENT_LLM_COST_PER_MTOK_INPUT=0.27,

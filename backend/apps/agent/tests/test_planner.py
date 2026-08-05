@@ -374,14 +374,19 @@ class PlannerGoalStallTests(PlannerTestCase):
         self.assertEqual(self._goal().stall_turns, 1)
 
         # Este turno SÍ aporta un dato nuevo → el contador vuelve a cero.
-        self._inbound("el 4 de agosto")
+        # Fecha RELATIVA: la hardcodeada (2026-08-04) caducó el día que pasó a
+        # ser pasado — `_v_date` la rechazaba, el slot no se llenaba y el
+        # contador nunca se reseteaba. Cuarto test dependiente del reloj de la
+        # misma familia (ver `_next_open_days`).
+        day = _next_open_day(2)
+        self._inbound("ese día")
         self._handle(StubLLMClient(scripted=[
-            self._reg_call(date="2026-08-04"),
+            self._reg_call(date=day),
             LLMResult(kind="text", text="¿A qué hora?"),
         ]))
         goal = self._goal()
         self.assertEqual(goal.stall_turns, 0)
-        self.assertEqual(goal.slots["date"]["value"], "2026-08-04")
+        self.assertEqual(goal.slots["date"]["value"], day)
 
     def test_partial_write_attempt_leaves_an_audit_row(self):
         """Una llamada de escritura incompleta debe verse en la telemetría.
@@ -401,19 +406,21 @@ class PlannerGoalStallTests(PlannerTestCase):
     def test_correcting_a_value_counts_as_progress(self):
         """"mejor el jueves" mueve la conversación aunque el slot ya tuviera
         valor: es avance, no repetición."""
+        primero, segundo = _next_open_days(2, min_offset=2)
         self._inbound("regístrame")
         self._handle(StubLLMClient(scripted=[
-            self._reg_call(date="2026-08-04"),
+            self._reg_call(date=primero),
             LLMResult(kind="text", text="¿A qué hora?"),
         ]))
-        self._inbound("mejor el 6")
+        self._inbound("mejor el otro día")
         self._handle(StubLLMClient(scripted=[
-            self._reg_call(date="2026-08-06"),
+            self._reg_call(date=segundo),
             LLMResult(kind="text", text="¿A qué hora?"),
         ]))
         goal = self._goal()
         self.assertEqual(goal.stall_turns, 0)
-        self.assertEqual(goal.slots["date"]["value"], "2026-08-06")
+        # La corrección PISA el valor anterior: es avance, no repetición.
+        self.assertEqual(goal.slots["date"]["value"], segundo)
 
 
 class PlannerConcreteTimeCaptureTests(PlannerTestCase):
