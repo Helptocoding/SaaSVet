@@ -58,12 +58,9 @@ class ConfirmationTests(SimpleTestCase):
 
 
 class GreetingTests(SimpleTestCase):
-    def test_bare_greeting(self):
-        for t in ["hola", "buenas tardes", "qué tal"]:
-            self.assertTrue(matchers.is_bare_greeting(t), t)
-
-    def test_greeting_with_intent_is_not_bare(self):
-        self.assertFalse(matchers.is_bare_greeting("hola quiero una cita"))
+    # `test_bare_greeting` / `test_greeting_with_intent_is_not_bare` se fueron
+    # con `is_bare_greeting` (É-F5 Fase 5): el saludo pelón ya no se despacha
+    # con plantilla, así que no queda nada que distinguir.
 
     def test_thanks(self):
         self.assertTrue(matchers.is_thanks("muchas gracias"))

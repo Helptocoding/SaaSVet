@@ -272,11 +272,11 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     return PolicyDecision(kind=RUN_PLANNER)
 
 
-def _has_outbound(conversation):
-    from apps.channels.models import Message
-    return Message.objects.for_organization(conversation.organization).filter(
-        conversation=conversation, direction=Message.DIRECTION_OUT,
-    ).exists()
+# `_has_outbound` vivía aquí para la rama de saludo. Al retirarla (É-F5 Fase 5)
+# quedó sin un solo llamador: el router ya no necesita saber si es la primera
+# vez que le escribimos a alguien. Quien sí lo necesita es `prompts.py`, que
+# tiene el suyo, porque ahí es un HECHO que viaja al modelo
+# (`es_su_primer_mensaje_con_nosotros`) y no el insumo de una decisión.
 
 
 def _burst_confirmation(burst):

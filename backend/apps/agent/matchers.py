@@ -154,17 +154,11 @@ def _starts_with_phrase(n, phrases):
     return any(n == p or n.startswith(p + ' ') for p in phrases)
 
 
-# --- Saludo / intent trivial (INT-00 / tier-0 sin LLM) ---------------------
-_GREETING = {
-    'hola', 'buenas', 'buenos dias', 'buenas tardes', 'buenas noches',
-    'que tal', 'hey', 'holi', 'holaa', 'buenas!', 'saludos',
-}
-
-
-def is_bare_greeting(text):
-    """Solo saludo, sin intención adjunta (para no tragarse "hola quiero cita")."""
-    n = normalize(text).rstrip('.!¡¿?')
-    return n in _GREETING
+# `is_bare_greeting` y su lista `_GREETING` se retiraron con la rama de saludo
+# (É-F5 Fase 5). Existían para que el router distinguiera "hola" de "hola
+# quiero cita" y despachara el primero con una plantilla; ya no hay nada que
+# despachar. Se van con sus tests: un matcher sin consumidor es código muerto,
+# y uno CON tests es peor, porque los tests lo hacen parecer vivo.
 
 
 _THANKS = {'gracias', 'muchas gracias', 'mil gracias', 'gracias', 'ok gracias',
