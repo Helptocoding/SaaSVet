@@ -119,17 +119,20 @@ class ExhaustivenessTests(TurnDecisionSetupMixin, TestCase):
         self.assertEqual(row.because, TurnDecision.Because.SAFEGUARD)
 
     def test_reply_leaves_a_row(self):
-        msg = self._inbound("gracias")
+        msg = self._inbound("¿eres una persona?")
         planner.handle_inbound(
             self.conv, agent_settings=self.settings, triggered_by=msg,
-            burst=["gracias"],
+            burst=["¿eres una persona?"],
         )
         row = TurnDecision.objects.get(conversation=self.conv)
         # El veredicto es del árbitro: sin compromiso en juego, `responder`.
         self.assertEqual(row.verdict, arbiter.ANSWER)
         # La salida del planner sigue registrada, como diagnóstico.
         self.assertEqual(row.facts_produced['salida'], 'reply')
-        self.assertEqual(row.because, TurnDecision.Because.PLANNER_HANDLED)
+        # El disparador era "gracias" hasta É-F5 Fase 5, que lo pasó al modelo;
+        # ahora es una de las plantillas que SÍ sobreviven, y ésa sí tiene
+        # `because` propio.
+        self.assertEqual(row.because, TurnDecision.Because.OUT_OF_SCOPE)
 
 
 class NoPiiTests(TurnDecisionSetupMixin, TestCase):
@@ -166,14 +169,14 @@ class ResilienceTests(TurnDecisionSetupMixin, TestCase):
     recibe su respuesta."""
 
     def test_turn_responds_even_if_recording_blows_up(self):
-        msg = self._inbound("gracias")
+        msg = self._inbound("¿eres una persona?")
         with patch(
             'apps.agent.planner.TurnDecision.objects.create',
             side_effect=RuntimeError("boom"),
         ):
             result = planner.handle_inbound(
                 self.conv, agent_settings=self.settings, triggered_by=msg,
-                burst=["gracias"],
+                burst=["¿eres una persona?"],
             )
         self.assertEqual(result['decision'], 'reply')
         self.assertEqual(TurnDecision.objects.filter(conversation=self.conv).count(), 0)

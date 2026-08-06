@@ -195,10 +195,12 @@ class BurstSafetyTests(AgentFixture):
         self.assertEqual(decision.meta.get("confirm"), "affirmative")
 
     def test_single_message_behaviour_unchanged(self):
-        decision = policy.evaluate(self.conv, "gracias",
+        # "gracias" dejó de ser plantilla (É-F5 Fase 5); este test mide el
+        # camino de UN mensaje suelto, así que usa una que siga siéndolo.
+        decision = policy.evaluate(self.conv, "¿eres una persona?",
                                    agent_settings=self.settings)
         self.assertEqual(decision.kind, policy.REPLY)
-        self.assertEqual(decision.meta.get("reason"), "thanks")
+        self.assertEqual(decision.meta.get("reason"), "bot_question")
 
 
 class WorkerFaultIsolationTests(AgentFixture):

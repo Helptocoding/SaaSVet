@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from apps.agent import goals, matchers, policy, tier0
+from apps.agent import goals, matchers, policy, situation, tier0
 from apps.agent.models import (
     AgentSettings,
     ContactIdentity,
@@ -184,15 +184,29 @@ class BudgetAndScopeTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.ESCALATE)
         self.assertEqual(d.handoff_reason, HumanHandoff.REASON_BUDGET)
 
-    def test_thanks_closes_cordially(self):
-        d = self._eval("muchas gracias")
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.text, tier0.T0_THANKS)
+    def test_thanks_reaches_the_model(self):
+        """É-F5 Fase 5. Antes: `REPLY` con `T0_THANKS`.
 
-    def test_payment_out_of_scope(self):
-        d = self._eval("te puedo pagar por aquí con transferencia?")
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.meta.get("reason"), "out_payment")
+        Un "gracias" es de las mejores ocasiones de sonar humano y era justo
+        donde el sistema contestaba con una constante.
+        """
+        d = self._eval("muchas gracias")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(situation.read(self.conv, "muchas gracias")["agradece"])
+
+    def test_payment_reaches_the_model_with_the_limit_as_a_fact(self):
+        """É-F5 Fase 5. Antes: `REPLY` con `T0_OUT_PAYMENT`.
+
+        Lo que impide cobrar por WhatsApp no era esa plantilla: es que no
+        existe ninguna herramienta de cobro. La frase pasa al modelo; el
+        límite se queda donde siempre estuvo.
+        """
+        text = "te puedo pagar por aquí con transferencia?"
+        d = self._eval(text)
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(
+            situation.read(self.conv, text)
+            ["quiere_pagar_por_aqui_y_aqui_no_se_cobra"])
 
     def test_normal_query_runs_planner(self):
         d = self._eval("cuánto cuesta la consulta")

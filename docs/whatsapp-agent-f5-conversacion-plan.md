@@ -1741,6 +1741,58 @@ no técnica.
 **Criterio de salida.** ≤ 6 plantillas vivas, todas de salvaguarda · costo por
 conversación dentro del presupuesto que fije el PO.
 
+#### ✅ EJECUTADA — 2026-08-05
+
+**El criterio de salida se cumplió a medias, y el desvío es el hallazgo.**
+
+Al ir a retirar las plantillas apareció que "conveniencia" y "salvaguarda" no
+se separan por lo que la plantilla *dice*, sino por si **hay alguien a quien
+preguntar**. El criterio que quedó, y que ahora protege un gate:
+
+> Sobrevive la plantilla solo donde llamar al modelo es **imposible**, está
+> **prohibido**, o se **contradice a sí mismo**.
+
+**Retiradas** (5 constantes + 1 render + 3 ramas del router): `T0_THANKS`,
+`T0_OUT_PAYMENT`, `T0_OUT_MEDICAL`, `T0_MEDIA_AUDIO`, `T0_MEDIA_OTHER`,
+`render_media_reply`, y el saludo pelón con el agente encendido. Cada una dejó
+un hecho en su lugar — `agradece`, `quiere_pagar_por_aqui_y_aqui_no_se_cobra`,
+`mando_algo_que_no_puedo_leer`, `es_su_primer_mensaje_con_nosotros`—; tres de
+los cuatro ya existían desde la Fase 1 y solo faltaba dejar llegar el turno.
+
+**`_soft_error_hint` → `_error_fact`**, y la clave `guia` → `que_paso`. Los 16
+errores suaves de agenda dejaron de terminar en una orden ("Ofrécele una fecha
+futura") y ahora dicen qué pasó. Excepción deliberada: `verification_required`
+y `change_approach` siguen imperativos porque no describen el mundo — corrigen
+la conducta del propio modelo, y ahí el imperativo *es* el contenido. Los
+límites del negocio (60 días, "por aquí no se puede") siguen viajando: quitar
+la orden no podía quitar el dato.
+
+**NO retirada, contra el plan: `T0_BOTQ`.** El plan la listaba entre las
+conveniencias ("saludo, gracias, bot, pagos"). Al quitarla se comprobó que es
+**lo único en todo el sistema** que garantiza una respuesta honesta a "¿eres
+una persona?": no hay regla en el prompt ni guard de salida que impidan al
+modelo decir que es humano. Se verificó, no se supuso. Dejar eso a la
+improvisación no es sonar más humano — es arriesgar una respuesta falsa a la
+única pregunta cuya respuesta es una obligación de transparencia. Retirarla
+exige primero la regla **y** el guard que la verifique: trabajo propio, no un
+efecto colateral de esta fase.
+
+**Tampoco retiradas: las escaladas** (`T0_HANDOFF*`, `T0_GOAL_STALLED`) y
+`T0_DEFER`. Que el modelo redacte una escalada exige una forma de pipeline que
+hoy no existe —escalar y *luego* planificar—, y su modo de fallo es contradecir
+una promesa justo cuando el sistema decidió dejar de confiar en el modelo. El
+plan no las nombraba; quedan fuera con su razón escrita, no por olvido.
+
+**Inventario final: 15 constantes**, no ≤6. La cuenta del plan se escribió
+cuando había 31 y antes de que la Fase 2 retirara 13 de identidad; y sobre
+todo, contaba `T0_BOTQ`, las escaladas y el saludo del buzón F0 como
+conveniencias, que es justo lo que este trabajo desmintió. `test_f5_fase5.py`
+fija el inventario: añadir una constante obliga a tocar el gate y justificar
+bajo cuál de los tres supuestos cae.
+
+**Coste.** Un "hola", un "gracias" o un audio pasan de 0 a 1 llamada. Era la
+decisión de producto de esta fase y estaba aceptada antes de empezar.
+
 ---
 
 ### Cómo leer el resultado de la Fase 2

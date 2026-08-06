@@ -206,9 +206,9 @@ _REPLY_BECAUSE = {
     'handoff_pending': TurnDecision.Because.SAFEGUARD,
     'handoff_ack': TurnDecision.Because.SAFEGUARD,
     'disabled': TurnDecision.Because.SAFEGUARD,
-    'media': TurnDecision.Because.OUT_OF_SCOPE,
+    # `media` y `out_payment` salieron con sus ramas (É-F5 Fase 5): esos turnos
+    # ahora los resuelve el planner y su `because` es PLANNER_HANDLED.
     'bot_question': TurnDecision.Because.OUT_OF_SCOPE,
-    'out_payment': TurnDecision.Because.OUT_OF_SCOPE,
     'identity_triage': TurnDecision.Because.CLIENT_ANSWERED,
 }
 _DIRECT_BECAUSE = {
@@ -314,14 +314,18 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
         llm_client = get_llm_client('planner')
     return _run_planner(conversation, agent_settings, llm_client, executor,
                         triggered_by,
-                        burst_text='\n'.join(texts) if texts else (text or ''))
+                        burst_text='\n'.join(texts) if texts else (text or ''),
+                        # Sin texto legible, el tipo de adjunto ES el mensaje
+                        # (É-F5 Fase 5): viaja como hecho de situación.
+                        media_kinds=payload_types if not texts else None)
 
 
 def _run_planner(conversation, agent_settings, llm_client, executor,
-                 triggered_by, *, burst_text=''):
+                 triggered_by, *, burst_text='', media_kinds=None):
     tool_specs = tools.as_openai_tools()
     base_messages = prompts.assemble_messages(conversation,
-                                              burst_text=burst_text)
+                                              burst_text=burst_text,
+                                              media_kinds=media_kinds)
     # Hilo del turno: las llamadas del propio modelo y sus resultados (W1-3).
     # Antes solo viajaba el ÚLTIMO resultado, como bloque de sistema, y el
     # modelo no veía que ya había llamado a la herramienta.
@@ -556,7 +560,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 payload = {
                     'error': outcome.client_error,
                     'detalle': outcome.detail,
-                    'guia': _soft_error_hint(outcome.client_error),
+                    'que_paso': _error_fact(outcome.client_error),
                 }
                 if outcome.data:
                     # Estado del objetivo (W2): qué ya tengo, qué falta y qué
@@ -577,7 +581,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                         'tools': tool_calls, 'reason': 'tool_failure'}
             turn_messages.append(prompts.tool_result_message(result, {
                 'error': 'tool_failure',
-                'guia': _soft_error_hint('tool_failure'),
+                'que_paso': _error_fact('tool_failure'),
             }))
             continue
 
@@ -743,9 +747,16 @@ def _commit_success_text(tool, outcome):
     return "¡Listo! ✅"
 
 
-def _soft_error_hint(client_error):
-    """Guía para el LLM cuando una tool devuelve un error 'suave' → que
-    PREGUNTE o AJUSTE en vez de rebotar a un humano."""
+def _error_fact(client_error):
+    """QUÉ PASÓ cuando una tool devuelve un error 'suave'.
+
+    Se llamaba `_soft_error_hint` y devolvía una guía —"pregúntale", "ofrécele"—
+    bajo la clave `guia`. É-F5 Fase 5 lo pasa de guion a hecho: aquí se describe
+    el mundo y el modelo decide qué hacer con él. Dos entradas siguen siendo
+    imperativas a propósito (`verification_required`, `change_approach`): no
+    describen el mundo, corrigen la conducta del propio modelo, y ahí el
+    imperativo es justamente el contenido.
+    """
     return {
         # É-F5 Fase 2: la verificación deja de ser una rama que TERMINA el
         # turno con una plantilla y pasa a ser un error suave como los demás.
@@ -774,40 +785,38 @@ def _soft_error_hint(client_error):
                            'tres horarios), o pregúntaselo de otra forma. Si '
                            'aun así no avanzan, ofrécele pasar con una '
                            'persona.',
-        'need_data': 'Faltan datos para agendar. Pregúntale al cliente lo que '
-                     'falte (fecha y HORA concreta, y el motivo) antes de usar '
-                     'la herramienta de nuevo.',
-        'need_date': 'Falta el día. Pregúntale al cliente para qué fecha quiere.',
-        'bad_date': 'No entendí la fecha. Pídesela al cliente en concreto '
-                    '(por ejemplo "el viernes" o una fecha).',
-        'past_date': 'Esa fecha ya pasó. Ofrécele una fecha futura.',
-        'slot_taken': 'Ese horario se acaba de ocupar. Ofrécele otro horario.',
-        'no_vet': 'La clínica no tiene veterinarios activos para agendar. '
-                  'Discúlpate y ofrece pasar con una persona.',
-        'unknown_handle': 'No ubico esa cita o mascota. Pídele al cliente que '
-                          'te dé más detalle (nombre de la mascota o del día).',
-        'not_cancelable': 'Esa cita ya no se puede cancelar por aquí. Ofrece '
-                          'pasar con una persona.',
-        'not_reschedulable': 'Esa cita ya no se puede mover por aquí. Ofrece '
-                             'pasar con una persona.',
-        'already_a_client': 'Este número ya está registrado. Trátalo como '
-                            'cliente existente.',
-        'ambiguous_identity': 'Hay varios registros con este número. Ofrece '
-                              'pasar con una persona para validar.',
-        'invalid_data': 'El sistema rechazó esos datos. Revisa lo que falta o '
-                        'está mal (mira el detalle) y pregúntaselo al cliente '
-                        'con naturalidad.',
-        'invalid_slot': 'Alguno de los datos no es válido (mira `rechazado`). '
-                        'Pídeselo de nuevo al cliente, sin tecnicismos.',
-        'confirm_slot': 'Hay un dato que entendiste con poca seguridad (mira '
-                        '`por_confirmar`). Confírmalo con el cliente antes de '
-                        'seguir; no lo des por bueno.',
-        'out_of_horizon': 'Esa fecha está demasiado lejos (solo agendamos '
-                          'hasta 60 días). Ofrécele una más cercana.',
-        'tool_failure': 'Hubo un problema técnico consultando el sistema. Si '
-                        'vuelve a fallar, ofrece pasar con una persona.',
-    }.get(client_error, 'No se pudo completar. Pregúntale al cliente o '
-          'reformula lo que necesitas.')
+        # ── De aquí abajo: HECHOS, no guiones (É-F5 Fase 5) ─────────────────
+        # Antes cada uno terminaba en una orden — "Ofrécele una fecha futura",
+        # "Discúlpate y ofrece pasar con una persona"— y el modelo obedecía la
+        # orden en vez de atender al cliente: por eso todos los tropiezos de
+        # agenda sonaban igual, con la misma frase, viniera de donde viniera.
+        #
+        # Ahora dicen QUÉ PASÓ y ya. Qué hacer con eso depende de la
+        # conversación, y eso lo sabe quien la está leyendo, no este dict. Los
+        # límites duros siguen siendo parte del hecho (60 días, "por aquí no se
+        # puede") porque son verdad del negocio, no consejo de redacción.
+        'need_data': 'Para agendar faltan la fecha, la hora concreta y el '
+                     'motivo.',
+        'need_date': 'Falta el día.',
+        'bad_date': 'La fecha que dijo no se entiende.',
+        'past_date': 'Esa fecha ya pasó.',
+        'slot_taken': 'Ese horario se acaba de ocupar.',
+        'no_vet': 'La clínica no tiene veterinarios activos para agendar.',
+        'unknown_handle': 'No aparece ninguna cita ni mascota que corresponda '
+                          'con eso.',
+        'not_cancelable': 'Esa cita ya no se puede cancelar por WhatsApp.',
+        'not_reschedulable': 'Esa cita ya no se puede mover por WhatsApp.',
+        'already_a_client': 'Este número ya está registrado como cliente.',
+        'ambiguous_identity': 'Hay varios registros distintos con este número, '
+                              'y desde aquí no se puede saber cuál es.',
+        'invalid_data': 'El sistema rechazó esos datos; el detalle dice cuáles.',
+        'invalid_slot': 'Alguno de los datos no es válido (mira `rechazado`).',
+        'confirm_slot': 'Uno de los datos se entendió con poca seguridad (mira '
+                        '`por_confirmar`): todavía no es un dato firme.',
+        'out_of_horizon': 'Esa fecha queda fuera: solo se agenda hasta 60 días '
+                          'adelante.',
+        'tool_failure': 'Falló la consulta al sistema.',
+    }.get(client_error, 'La operación no se completó.')
 
 
 def _settle_goal(conversation, *, goal_progressed, goal_attempted,

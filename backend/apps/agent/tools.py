@@ -760,7 +760,7 @@ def _goal_gate(conversation, tool_name, args, executor=None,
             ok=False,
             # Preguntar dos veces lo mismo cambia el CÓDIGO, no solo el
             # contador: el modelo recibe otra instrucción (ver
-            # `_soft_error_hint`), no la misma repetida.
+            # `_error_fact`), no la misma repetida.
             client_error=('change_approach' if gastados
                           else _goal_error(state)),
             data={

@@ -9,9 +9,10 @@ W1-1  guards de salida: precio inventado, consejo médico y promesas no salen.
 W1-4  debounce real: la ráfaga humana se agrupa en UN turno.
 W1-5  el cliente que insiste tras un handoff recibe un acuse, una sola vez.
 W1-6  el reto acepta el nombre de pila; el teléfono se re-matchea.
-W1-7  audio/imagen se responden con plantilla, sin gastar una llamada al LLM.
+W1-7  audio/imagen llegan al modelo con el hecho (É-F5 Fase 5 retiró su
+      plantilla: era correcta y no sabía de qué se venía hablando).
 W1-8  un 400 del dominio se traduce por lo que dice, no siempre a "se ocupó".
-W1-9  el saludo institucional vuelve a existir con el agente encendido.
+W1-9  el saludo institucional queda SOLO donde no hay modelo (buzón F0).
 W1-10 la baja corta proactivos; no silencia al cliente para siempre.
 """
 from datetime import timedelta
@@ -20,7 +21,9 @@ from unittest import mock
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.agent import guards, identity, policy, services, tier0, tools
+from apps.agent import (
+    guards, identity, policy, services, situation, tier0, tools,
+)
 from apps.agent.llm import LLMResult, StubLLMClient
 from apps.agent.models import (
     ContactIdentity,
@@ -421,22 +424,30 @@ class ContactRematchTests(AgentFixture):
 class IncomingMediaTests(AgentFixture):
     account_id = "900000107"
 
-    def test_audio_gets_a_template_without_calling_the_model(self):
-        ingest_inbound_message(
-            self.channel, wamid="wamid.M1", wa_id="5215511110000",
-            body="", payload_type="audio")
-        process_pending_conversations(now=_later())
-        outbound = Message.objects.get(conversation=self.conv,
-                                       direction=Message.DIRECTION_OUT)
-        self.assertEqual(outbound.body, tier0.T0_MEDIA_AUDIO)
-        self.assertEqual(LLMCall.objects.filter(conversation=self.conv).count(), 0)
+    def test_media_reaches_the_model_instead_of_a_template(self):
+        """É-F5 Fase 5: media sin texto ya NO se despacha con una constante.
 
-    def test_image_gets_the_generic_template(self):
+        Antes este test exigía lo contrario (`T0_MEDIA_AUDIO`, cero llamadas al
+        modelo). La constante era correcta y era inútil: "no alcanzo a ver lo
+        que me mandaste" no sabe de qué se venía hablando. El turno llega al
+        modelo con el hecho y con el historial, que es lo que permite responder
+        algo que continúe la conversación.
+        """
         d = policy.evaluate(self.conv, "", burst=[""],
                             payload_types=["image"],
                             agent_settings=self.settings)
-        self.assertEqual(d.kind, policy.REPLY)
-        self.assertEqual(d.text, tier0.T0_MEDIA_OTHER)
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+
+    def test_the_kind_of_attachment_travels_as_a_fact(self):
+        """El modelo tiene que poder distinguir una nota de voz de un archivo:
+        son disculpas distintas ("no puedo oírla" vs "no puedo abrirlo")."""
+        audio = situation.read(self.conv, "", media_kinds=["audio"])
+        self.assertEqual(audio["mando_algo_que_no_puedo_leer"], "una nota de voz")
+        other = situation.read(self.conv, "", media_kinds=["image"])
+        self.assertEqual(other["mando_algo_que_no_puedo_leer"], "un archivo")
+        # Sin adjunto no se inventa el hecho.
+        self.assertNotIn("mando_algo_que_no_puedo_leer",
+                         situation.read(self.conv, "hola"))
 
     def test_text_alongside_media_is_processed_normally(self):
         d = policy.evaluate(self.conv, "¿a qué hora abren?",
@@ -479,18 +490,33 @@ class DomainErrorMappingTests(TestCase):
 class GreetingTests(AgentFixture):
     account_id = "900000108"
 
-    def test_bare_greeting_uses_the_template_without_the_model(self):
-        ingest_inbound_message(
-            self.channel, wamid="wamid.G1", wa_id="5215511110000", body="hola")
-        process_pending_conversations(now=_later())
-        outbound = Message.objects.get(conversation=self.conv,
-                                       direction=Message.DIRECTION_OUT)
-        # `startswith`: fuera del horario de la clínica el saludo lleva además
-        # el aviso de fuera de horario (INT-03), y el horario por defecto lo
-        # siembra el alta de la organización.
-        self.assertTrue(outbound.body.startswith(
-            tier0.T0_GREET.format(clinic=self.org.name)), outbound.body)
-        self.assertEqual(LLMCall.objects.filter(conversation=self.conv).count(), 0)
+    def test_bare_greeting_now_reaches_the_model(self):
+        """É-F5 Fase 5: el "hola" pelón deja de despacharse con la plantilla.
+
+        Este test exigía lo contrario, y el cambio es deliberado: la primera
+        impresión es justo donde una constante institucional cuesta más. El
+        hecho de que es su primer mensaje ya viajaba desde la Fase 1; lo que
+        faltaba era dejar que el turno llegara.
+
+        COSTE: este turno pasa de 0 a 1 llamada al modelo. Aceptado por el PO.
+        """
+        d = policy.evaluate(self.conv, "hola", agent_settings=self.settings)
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(
+            situation.read(self.conv, "hola", first_contact=True)
+            ["es_su_primer_mensaje_con_nosotros"])
+
+    def test_the_greeting_survives_where_there_is_no_model_to_ask(self):
+        """El buzón F0 (agente apagado) SIGUE siendo literal.
+
+        Es la mitad que no se retira y el criterio de toda la fase: la
+        plantilla sobrevive donde llamar al modelo es imposible.
+        """
+        self.settings.enabled = False
+        self.settings.save(update_fields=["enabled"])
+        d = policy.evaluate(self.conv, "hola", agent_settings=self.settings)
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertIn(self.org.name, d.text)
 
     def test_greeting_with_intent_goes_to_the_planner(self):
         d = policy.evaluate(self.conv, "hola, quiero una cita",

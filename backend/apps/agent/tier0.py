@@ -137,33 +137,22 @@ T0_GOAL_STALLED = (
     "del equipo para que lo resuelva contigo rapidito."
 )
 
-# GB-1 · media entrante sin transcripción. Se mide el volumen (`payload_type`)
-# para decidir si toca transcribir (UX-14, umbral 15 %).
-T0_MEDIA_AUDIO = (
-    "Por ahora no puedo escuchar las notas de voz 🙈 ¿Me lo escribes? Así te "
-    "ayudo de inmediato."
-)
-T0_MEDIA_OTHER = (
-    "No alcanzo a ver lo que me mandaste 🙈 ¿Me lo cuentas por escrito? Así te "
-    "ayudo de inmediato."
-)
-
-
-def render_media_reply(payload_types=None):
-    """Plantilla según el tipo de adjunto (audio vs. lo demás)."""
-    if payload_types and 'audio' in set(payload_types):
-        return T0_MEDIA_AUDIO
-    return T0_MEDIA_OTHER
-
-# INT-05 · fuera de alcance.
-T0_OUT_PAYMENT = (
-    "Los pagos se realizan directamente en la clínica 🙂 Si tienes una duda "
-    "de un cobro, con gusto te comunico con el equipo."
-)
-T0_OUT_MEDICAL = (
-    "Eso mejor que lo valore el veterinario 🙏 ¿Te agendo una consulta? Y si "
-    "es algo urgente, acude de inmediato a la clínica."
-)
+# ---------------------------------------------------------------------------
+# Conveniencias — RETIRADAS (É-F5 Fase 5)
+# ---------------------------------------------------------------------------
+# Aquí vivían T0_MEDIA_AUDIO, T0_MEDIA_OTHER, render_media_reply, T0_OUT_PAYMENT
+# y T0_OUT_MEDICAL. Ninguna protegía nada: contestaban con una constante y
+# cerraban el turno sin que el modelo leyera el mensaje.
+#
+# El caso que mejor las retrata es el de media. "No alcanzo a ver lo que me
+# mandaste" es correcto y es inútil: no sabe que veníamos hablando de la receta
+# de Luna. El modelo, con el mismo hecho y el historial, puede decir algo que
+# de verdad continúe la conversación. La plantilla no era una garantía; era una
+# respuesta que no podía mejorar.
+#
+# Los pagos merecen su nota, porque el límite parecía vivir aquí y no vivía
+# aquí: lo sostiene que NO EXISTA ninguna herramienta de cobro. Ninguna frase
+# que el modelo escriba puede mover dinero.
 
 # UX-16 · falsa afirmativa a un pending_action (no ejecuta, no cierra).
 T0_DEFER = "Va, aquí queda pendiente — me dices 🙌"
@@ -188,7 +177,9 @@ T0_DEFER = "Va, aquí queda pendiente — me dices 🙌"
 # quien está leyendo al cliente.
 
 
-T0_THANKS = "¡Con gusto! Aquí estoy si necesitas algo más 🐾"
+# `T0_THANKS` se retiró en la Fase 5 junto con el resto de conveniencias: un
+# "gracias" es una de las mejores oportunidades de sonar humano y era
+# exactamente donde el sistema contestaba con una constante.
 
 
 def render_emergency(agent_settings, organization):

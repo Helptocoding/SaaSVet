@@ -21,7 +21,7 @@ import json
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f5-v9'
+PROMPT_VERSION = 'reception-f5-v10'
 
 SYSTEM_PROMPT = """\
 Eres quien contesta el WhatsApp de una clínica veterinaria en México. Hablas
@@ -306,7 +306,7 @@ def _render_message(message):
     return [{'role': 'assistant', 'content': message.body}]
 
 
-def assemble_messages(conversation, *, burst_text=''):
+def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     """Historial → mensajes rol/contenido para el LLM.
 
     La ventana cuenta TURNOS (§2.2) y cada mensaje se etiqueta por AUTORÍA
@@ -350,6 +350,7 @@ def assemble_messages(conversation, *, burst_text=''):
         conversation, burst_text,
         goal=goals.get_open_goal(conversation),
         first_contact=not _has_outbound(conversation),
+        media_kinds=media_kinds,
     )
     if facts:
         context['como_llega'] = facts

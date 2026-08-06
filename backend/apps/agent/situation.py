@@ -63,7 +63,8 @@ _INSISTENCE_LEMMAS = (
 )
 
 
-def read(conversation, burst_text, *, goal=None, first_contact=None):
+def read(conversation, burst_text, *, goal=None, first_contact=None,
+         media_kinds=None):
     """Qué está haciendo esta persona con este mensaje. **Función PURA.**
 
     No escribe estado, no decide nada, no llama a nadie. Devuelve un dict
@@ -88,6 +89,27 @@ def read(conversation, burst_text, *, goal=None, first_contact=None):
         facts['insiste_porque_ya_lo_habia_dicho'] = True
     if matchers.is_thanks(text):
         facts['agradece'] = True
+
+    # É-F5 Fase 5 — hechos que ANTES eran plantillas de conveniencia. Cada uno
+    # sustituye a una rama del router que contestaba con una constante y
+    # terminaba el turno sin que el modelo viera el mensaje. El hecho dice qué
+    # pasa; la frase es del modelo, que además ve el historial: puede
+    # responder "¿eres persona?" en mitad de un agendado sin perder el hilo,
+    # cosa que una constante no podía hacer.
+    # (No hay hecho para "¿eres una persona?": esa sigue siendo plantilla
+    # literal — ver policy.evaluate paso 6. Publicar un hecho que ningún turno
+    # puede leer sería código muerto.)
+    if matchers.mentions_payment(text):
+        # El límite no lo pone esta línea: no existe ninguna herramienta de
+        # cobro. Esto solo evita que el modelo lo descubra improvisando.
+        facts['quiere_pagar_por_aqui_y_aqui_no_se_cobra'] = True
+    if media_kinds:
+        # Mandó audio/foto/sticker sin texto. El turno llega igual al modelo
+        # porque el historial sí le dice de qué venían hablando: "no alcanzo a
+        # oír la nota" es peor respuesta que "¿la receta de Luna? no puedo
+        # abrirla, ¿me la escribes?".
+        facts['mando_algo_que_no_puedo_leer'] = (
+            'una nota de voz' if 'audio' in set(media_kinds) else 'un archivo')
 
     if first_contact:
         facts['es_su_primer_mensaje_con_nosotros'] = True

@@ -90,17 +90,12 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     if conversation.state == Conversation.STATE_HUMAN_ACTIVE:
         return PolicyDecision(kind=SILENT, meta={'reason': 'human_active'})
 
-    # 2b. Media sin texto (audio, foto, sticker, ubicación): no hay nada que
-    #     leer. Antes esto llegaba al modelo como "[mensaje sin texto]" y
-    #     producía una respuesta confusa gastando una llamada; la spec GB-1
-    #     pedía plantilla. En México el audio es una fracción enorme del
-    #     tráfico: esta rama se mide (`payload_type`) para decidir si toca
-    #     transcripción (UX-14).
-    if raw_burst and not any((b or '').strip() for b in raw_burst):
-        return PolicyDecision(
-            kind=REPLY, text=tier0.render_media_reply(payload_types),
-            meta={'reason': 'media'},
-        )
+    # 2b. RETIRADO (É-F5 Fase 5). Media sin texto seguía contestando con una
+    #     constante ("no alcanzo a ver lo que me mandaste") que ignoraba de qué
+    #     venían hablando. El turno ahora llega al modelo con el hecho
+    #     `mando_algo_que_no_puedo_leer` y el historial, que es justo lo que
+    #     convierte esa frase en una respuesta. Se sigue midiendo el volumen por
+    #     `payload_type` para decidir si toca transcribir (UX-14).
 
     # 3. URGENCIA (prioridad 1, R16) — antes que todo, incluso a mitad de
     #    flujo. Un `pending_action` en curso NO se descarta aquí: la
@@ -138,6 +133,18 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         )
 
     # 6. "¿Eres una persona?" — responde SIN descartar pending (INT-06).
+    #
+    #    É-F5 Fase 5 la listaba entre las conveniencias a retirar. NO se retiró,
+    #    y el motivo corrige al plan: al ir a quitarla se comprobó que esta
+    #    plantilla es **lo único** en todo el sistema que garantiza una respuesta
+    #    honesta a esta pregunta. No hay regla en el prompt ni guard de salida
+    #    que impidan al modelo decir que es humano. Dejarlo improvisar aquí no
+    #    es "más humano": es arriesgar una respuesta falsa a la única pregunta
+    #    cuya respuesta es una obligación de transparencia, no una preferencia
+    #    de estilo. Misma familia que urgencia y aviso de privacidad.
+    #
+    #    Para retirarla haría falta primero la regla en el prompt Y un guard que
+    #    la verifique — trabajo propio, no un efecto colateral de esta fase.
     if matchers.is_bot_question(text):
         return PolicyDecision(kind=REPLY, text=tier0.T0_BOTQ,
                               meta={'reason': 'bot_question'})
@@ -223,27 +230,28 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
             handoff_reason=HumanHandoff.REASON_BUDGET,
         )
 
-    # 10b. Saludo pelón en el primer turno → bienvenida institucional, sin
-    #      LLM. La plantilla estaba escrita y aprobada por el PO pero solo
-    #      corría con el agente APAGADO: con el agente encendido la primera
-    #      impresión la improvisaba el modelo.
-    if matchers.is_bare_greeting(text) and not _has_outbound(conversation):
-        return PolicyDecision(
-            kind=REPLY,
-            text=tier0.render_first_reply(agent_settings, org),
-            meta={'reason': 'greeting'},
-        )
-
-    # 11. Agradecimiento trivial → cierre cordial sin LLM.
-    if matchers.is_thanks(text):
-        return PolicyDecision(kind=REPLY, text=tier0.T0_THANKS,
-                              meta={'reason': 'thanks'})
-
-    # 12. Fuera de alcance — pagos (matcher; consejo médico/queja los
-    #     clasifica el planner, spec §3).
-    if _mentions_payment(text):
-        return PolicyDecision(kind=REPLY, text=tier0.T0_OUT_PAYMENT,
-                              meta={'reason': 'out_payment'})
+    # 10b / 11 / 12. RETIRADOS (É-F5 Fase 5) — saludo, gracias y pagos.
+    #
+    #   Las tres eran conveniencias: contestaban con una constante y cerraban el
+    #   turno sin que el modelo leyera el mensaje. Entre las tres se comían los
+    #   turnos más frecuentes de una conversación real, y son la mayor parte de
+    #   la distancia entre "≈5 % de mensajes escritos por el agente" y una
+    #   conversación que no se siente un formulario.
+    #
+    #   Lo que las sustituye ya existía desde la Fase 1: `situation.read`
+    #   publica `es_su_primer_mensaje_con_nosotros`, `agradece` y
+    #   `quiere_pagar_por_aqui_y_aqui_no_se_cobra`. El hecho dice qué pasa; la
+    #   frase la escribe quien está leyendo al cliente.
+    #
+    #   El límite de los pagos NO lo sostenía la plantilla: lo sostiene que no
+    #   exista ninguna herramienta de cobro. Nada que el modelo escriba puede
+    #   mover dinero.
+    #
+    #   COSTE ACEPTADO POR EL PO: un "hola" o un "gracias" pasan de 0 a 1
+    #   llamada al modelo. Es el precio de la fase, y era decisión de producto.
+    #
+    #   Sigue literal el saludo del buzón F0 (`render_first_reply` en
+    #   `worker.py` y en el paso 0): ahí NO hay modelo al que preguntar.
 
     # 12b. RETIRADO (É-F5 Fase 2).
     #
@@ -285,16 +293,9 @@ def _burst_confirmation(burst):
     return 'unclear'
 
 
-_PAYMENT_LEMMAS = (
-    'te puedo pagar por aqui', 'te pago por aqui', 'pagar por whatsapp',
-    'transferencia', 'tu clabe', 'numero de tarjeta', 'deposito', 'te deposito',
-    'pago en linea', 'link de pago', 'me pasas tu cuenta',
-)
-
-
-def _mentions_payment(text):
-    n = matchers.normalize(text)
-    return any(lemma in n for lemma in _PAYMENT_LEMMAS)
+# `_PAYMENT_LEMMAS` / `_mentions_payment` se mudaron a `matchers.py`
+# (É-F5 Fase 5): dejaron de ser el insumo de una decisión del router para ser
+# el insumo de un HECHO que lee el modelo.
 # ---------------------------------------------------------------------------
 # FSM de identidad — RETIRADA (É-F5 Fase 2, ADR p56)
 # ---------------------------------------------------------------------------

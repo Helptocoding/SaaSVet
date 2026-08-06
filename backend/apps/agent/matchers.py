@@ -84,6 +84,21 @@ def is_bot_question(text):
     return _has_any(normalize(text), _BOTQ_LEMMAS)
 
 
+# Quiere pagar POR AQUÍ. Fuera de alcance: en la clínica se cobra en caja, y
+# el agente no toca dinero. Vivía en `policy.py` como parte de una decisión;
+# desde É-F5 Fase 5 es un HECHO que se le publica al modelo — la frase la
+# redacta él, el límite lo sigue poniendo el sistema (no hay tool de cobro).
+_PAYMENT_LEMMAS = (
+    'te puedo pagar por aqui', 'te pago por aqui', 'pagar por whatsapp',
+    'transferencia', 'tu clabe', 'numero de tarjeta', 'deposito', 'te deposito',
+    'pago en linea', 'link de pago', 'me pasas tu cuenta',
+)
+
+
+def mentions_payment(text):
+    return _has_any(normalize(text), _PAYMENT_LEMMAS)
+
+
 # --- Confirmación en dos etapas (UX-02, spec §2.4) -------------------------
 # Etapa 1: matcher. Etapa 2 (clasificación LLM) vive en el planner (PR-12).
 _AFFIRMATIVE = {
