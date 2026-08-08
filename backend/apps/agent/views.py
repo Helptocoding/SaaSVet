@@ -252,9 +252,10 @@ def reset_contact_identity(request, pk):
     contact.verified_at = None
     contact.linked_via = ''
     contact.is_ambiguous = False
+    contact.rematch_blocked = True
     contact.save(update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
-        'is_ambiguous'])
+        'is_ambiguous', 'rematch_blocked'])
 
     now = timezone.now()
     open_conversations = Conversation.objects.for_organization(

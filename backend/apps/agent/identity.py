@@ -165,7 +165,9 @@ def try_verify_by_owner_name(contact, answer):
 def _promote(contact):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
-    contact.save(update_fields=['verification_level', 'verified_at'])
+    contact.rematch_blocked = False
+    contact.save(update_fields=[
+        'verification_level', 'verified_at', 'rematch_blocked'])
 
 
 # ---------------------------------------------------------------------------
@@ -220,8 +222,10 @@ def link_self_registered(contact, owner):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
+    contact.rematch_blocked = False
     contact.save(update_fields=[
-        'owner', 'verification_level', 'verified_at', 'linked_via'])
+        'owner', 'verification_level', 'verified_at', 'linked_via',
+        'rematch_blocked'])
 
 
 def link_family(contact, owner):
@@ -230,5 +234,7 @@ def link_family(contact, owner):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_FAMILY
+    contact.rematch_blocked = False
     contact.save(update_fields=[
-        'owner', 'verification_level', 'verified_at', 'linked_via'])
+        'owner', 'verification_level', 'verified_at', 'linked_via',
+        'rematch_blocked'])

@@ -91,3 +91,52 @@ class IdentityTests(TestCase):
         self.assertTrue(identity._levenshtein_le_1("kira", "kir"))    # del
         self.assertTrue(identity._levenshtein_le_1("kira", "kiraa"))  # ins
         self.assertFalse(identity._levenshtein_le_1("kira", "milo"))  # lejos
+
+
+class RematchBlockedClearingTests(TestCase):
+    """`rematch_blocked` (levantado por `reset_contact_identity`) solo debe
+    bajarse por una vía confiable: verificación completa o vinculación
+    manual — nunca porque el contacto volvió a escribir."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.org = Organization.objects.create(name="Clear Flag Org", timezone="UTC")
+        cls.owner = Owner.objects.create(
+            organization=cls.org, name="Ana Torres", phone="5511229900",
+        )
+        Pet.objects.create(
+            organization=cls.org, owner=cls.owner, name="Kira",
+            species="perro", birth_date="2021-01-01",
+        )
+
+    def _blocked_contact(self, **extra):
+        return ContactIdentity.objects.create(
+            organization=self.org, external_id="5215511229900",
+            verification_level=ContactIdentity.VERIFICATION_PHONE_MATCH,
+            rematch_blocked=True, **extra,
+        )
+
+    def test_promote_clears_the_flag_on_full_verification(self):
+        contact = self._blocked_contact(owner=self.owner)
+        self.assertTrue(
+            identity.try_verify_by_pet_name(contact, "cita para Kira")
+        )
+        contact.refresh_from_db()
+        self.assertEqual(
+            contact.verification_level, ContactIdentity.VERIFICATION_CONFIRMED,
+        )
+        self.assertFalse(contact.rematch_blocked)
+
+    def test_link_self_registered_clears_the_flag(self):
+        contact = self._blocked_contact()
+        identity.link_self_registered(contact, self.owner)
+        contact.refresh_from_db()
+        self.assertEqual(contact.owner_id, self.owner.pk)
+        self.assertFalse(contact.rematch_blocked)
+
+    def test_link_family_clears_the_flag(self):
+        contact = self._blocked_contact()
+        identity.link_family(contact, self.owner)
+        contact.refresh_from_db()
+        self.assertEqual(contact.owner_id, self.owner.pk)
+        self.assertFalse(contact.rematch_blocked)
