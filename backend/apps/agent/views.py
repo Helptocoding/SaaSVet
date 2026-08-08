@@ -238,11 +238,16 @@ def reset_contact_identity(request, pk):
     esta acción resetea CUALQUIER vínculo (`phone_match`, `confirmed_in_chat`,
     `self_register`, `staff_verified`) — pensada para soporte/QA cuando un
     número quedó ligado por error, o para reprobar el flujo de identidad
-    desde cero con el mismo número real (`resolve_contact_identity` solo
-    matchea teléfono→Owner al CREAR la fila; nunca la re-deriva después).
-    Solo ADMIN (`agentinbox.config`, el mismo permiso del kill switch y el
-    token de WhatsApp — acción igual de sensible: desligar una identidad ya
-    verificada es la mitad del vector que el diseño original evita)."""
+    desde cero con el mismo número real. Levanta `auto_rematch_blocked`, que
+    bloquea CUALQUIER auto-enlace posterior por coincidencia de teléfono —
+    tanto `services._rematch_owner` (mensaje entrante normal) como
+    `tools.commit_register_new_client_and_pet` (alta de cliente nuevo que
+    termina reutilizando este mismo Owner vía `get_or_create`); sin la
+    segunda cobertura, el reset era deshacible con un simple "quiero
+    registrarme" en el mismo hilo. Solo ADMIN (`agentinbox.config`, el mismo
+    permiso del kill switch y el token de WhatsApp — acción igual de
+    sensible: desligar una identidad ya verificada es la mitad del vector
+    que el diseño original evita)."""
     from .models import ContactIdentity
     conversation = _get_conversation(request, pk)
     contact = conversation.contact
@@ -252,9 +257,10 @@ def reset_contact_identity(request, pk):
     contact.verified_at = None
     contact.linked_via = ''
     contact.is_ambiguous = False
+    contact.auto_rematch_blocked = True
     contact.save(update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
-        'is_ambiguous'])
+        'is_ambiguous', 'auto_rematch_blocked'])
 
     now = timezone.now()
     open_conversations = Conversation.objects.for_organization(

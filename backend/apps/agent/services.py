@@ -158,10 +158,18 @@ def _rematch_owner(contact):
     mostrador, y al volver a escribir el sistema seguía diciendo que su número
     no está registrado — empujándolo a un alta duplicada. Solo aplica a
     contactos sin owner y sin verificación: nunca reasigna un vínculo hecho.
+
+    Excepción: `auto_rematch_blocked` (levantado por `reset_contact_identity`)
+    apaga este reintento — un reset de soporte/QA no debe deshacerse solo en
+    el siguiente mensaje del mismo número. No es la única ruta de auto-enlace
+    que respeta el flag — ver también
+    `tools.commit_register_new_client_and_pet`.
     """
     if contact.owner_id is not None or not contact.phone_normalized:
         return
     if contact.verification_level != ContactIdentity.VERIFICATION_UNKNOWN:
+        return
+    if contact.auto_rematch_blocked:
         return
     owners = list(
         Owner.objects.for_organization(contact.organization)

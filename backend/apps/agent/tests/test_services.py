@@ -119,6 +119,63 @@ class ResolveContactIdentityTests(TestCase):
         self.assertEqual(second.display_name, "Ana T.")
 
 
+class RematchOwnerTests(TestCase):
+    """`_rematch_owner` corre en CADA resolve de un contacto existente sin
+    owner ni verificación — cubre el alta tardía (el cliente escribió antes
+    de estar dado de alta) pero, sin el flag, también deshacía un
+    `reset_contact_identity` en el siguiente mensaje del mismo número."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.org = Organization.objects.create(name="Rematch Org", timezone="UTC")
+        cls.channel = ChannelAccount.objects.create(
+            organization=cls.org, external_account_id="900300900",
+        )
+
+    def test_new_contact_without_reset_keeps_auto_match(self):
+        """Comportamiento previo, intacto: un contacto sin `auto_rematch_blocked`
+        (el default) sí debe engancharse al Owner que se dio de alta después
+        del primer mensaje — si no, empuja a un alta duplicada."""
+        contact = resolve_contact_identity(self.channel, "5215500000101")
+        self.assertIsNone(contact.owner)
+        self.assertFalse(contact.auto_rematch_blocked)
+
+        owner = Owner.objects.create(
+            organization=self.org, name="Alta Tardía", phone="5500000101",
+        )
+        again = resolve_contact_identity(self.channel, "5215500000101")
+        self.assertEqual(again.owner_id, owner.pk)
+        self.assertEqual(
+            again.verification_level, ContactIdentity.VERIFICATION_PHONE_MATCH,
+        )
+
+    def test_reset_contact_does_not_rematch_by_phone(self):
+        """El bug real: `reset_contact_identity` limpiaba el vínculo, pero el
+        siguiente mensaje del mismo número lo volvía a encender solo."""
+        owner = Owner.objects.create(
+            organization=self.org, name="Resetear", phone="5500000102",
+        )
+        contact = resolve_contact_identity(self.channel, "5215500000102")
+        self.assertEqual(contact.owner_id, owner.pk)
+
+        contact.owner = None
+        contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        contact.verified_at = None
+        contact.linked_via = ""
+        contact.auto_rematch_blocked = True
+        contact.save(update_fields=[
+            "owner", "verification_level", "verified_at", "linked_via",
+            "auto_rematch_blocked",
+        ])
+
+        again = resolve_contact_identity(self.channel, "5215500000102")
+        self.assertIsNone(again.owner)
+        self.assertEqual(
+            again.verification_level, ContactIdentity.VERIFICATION_UNKNOWN,
+        )
+        self.assertTrue(again.auto_rematch_blocked)
+
+
 class ConversationLifecycleTests(TestCase):
     @classmethod
     def setUpTestData(cls):

@@ -31,13 +31,35 @@ entre sí — se pueden implementar y revisar por separado.
 
 ## Item 1 — El reset de identidad debe persistir
 
+> **Enmienda (2026-08-08, tras revisión OCR multi-agente sobre la
+> implementación).** El plan original acotaba el flag a `_rematch_owner`
+> (fila 2 de la tabla de auditoría) y marcaba `identity.link_self_registered`
+> (fila 7) "fuera del problema" porque asumía que ese camino siempre crea un
+> `Owner` **nuevo**. Esa premisa es falsa: `create-with-patient` hace
+> `Owner.objects.get_or_create(phone=...)`, así que un contacto reseteado
+> que completa el alta de "cliente nuevo" en la misma conversación puede
+> reutilizar el `Owner` que un ADMIN acaba de desvincular — con **cero**
+> factores de verificación, más débil que el reto implícito de un
+> `phone_match` cualquiera. El revisor de seguridad de la ronda OCR lo
+> confirmó con trazas de código reales (`tools.py::commit_register_new_client_and_pet`
+> → `appointments/views.py::create_with_patient` →
+> `identity.link_self_registered`, esta última invocada sin consultar el
+> flag). La sección "Qué debe hacer" y la tabla de auditoría de abajo quedan
+> actualizadas para reflejar el alcance real: el bloqueo cubre **cualquier**
+> auto-enlace posterior por teléfono, no solo el de `_rematch_owner`.
+
 ### Qué debe hacer
 
 Al ejecutar "Reiniciar identidad", el contacto no solo pierde `owner`/
-`verification_level` — queda **marcado para que el auto-match por teléfono no
-vuelva a aplicarle**. El siguiente mensaje de ese número, aunque coincida
-exactamente con un `Owner.phone` real, debe pasar por el reto de identidad
-completo, no re-vincularse en silencio.
+`verification_level` — queda **marcado para que ningún flujo automático
+vuelva a enlazarlo con un Owner existente por coincidencia de teléfono**,
+sea cual sea la ruta. Esto incluye tanto un mensaje entrante normal
+(`services.py::_rematch_owner`) como el alta de cliente nuevo
+(`tools.py::register_new_client_and_pet` → `create-with-patient` →
+`identity.link_self_registered`, que puede terminar reutilizando ese mismo
+`Owner` vía `get_or_create`). El siguiente mensaje de ese número, aunque
+coincida exactamente con un `Owner.phone` real, debe pasar por el reto de
+identidad completo, no re-vincularse en silencio por ninguna vía.
 
 ### Quién la usa
 
@@ -48,18 +70,19 @@ cliente final en su siguiente conversación por WhatsApp.
 
 Antes de decidir cuándo limpiar el flag, se mapearon los 7 sitios del código
 que pueden dejar a un `ContactIdentity` con `owner` asignado o con
-`verification_level` elevado. Es la única forma de saber con certeza cuál es
-el ÚNICO camino legítimo para revertir la supresión:
+`verification_level` elevado. Es la única forma de saber con certeza cuáles
+son los caminos legítimos para revertir la supresión (enmienda 2026-08-08:
+son tres — ver "Reglas de negocio" abajo — no uno solo):
 
 | # | Función | Requiere `owner_id` ya puesto? | Alcanzable con `owner_id=None`? | ¿Toca el flag nuevo? |
 |---|---|---|---|---|
 | 1 | `services.py::resolve_contact_identity` (creación de fila) | No — la crea | Solo una vez, al crear la fila (nunca en un contacto ya reseteado) | No aplica — no puede volver a ejecutarse sobre una fila existente |
-| 2 | `services.py::_rematch_owner` | No | **Sí — es la causa del bug** | **Debe respetar el flag (skip si está activo)** |
-| 3 | `identity.try_verify_by_pet_name` | Sí (`owner_id is None → return False`) | No | Bloqueado indirectamente: nunca corre si #2 no puso `owner_id` primero |
+| 2 | `services.py::_rematch_owner` | No | **Sí — es la causa del bug original** | **Respeta el flag (skip si está activo)** |
+| 3 | `identity.try_verify_by_pet_name` | Sí (`owner_id is None → return False`) | No | Bloqueado indirectamente: nunca corre si #2/#7 no pusieron `owner_id` primero. Limpia el flag vía `_promote` — inocuo porque es inalcanzable con el flag activo |
 | 4 | `identity.try_verify_by_pet_answer` | Sí | No | Igual que #3 |
 | 5 | `identity.try_verify_by_owner_name` | Sí | No | Igual que #3 |
-| 6 | `identity.link_family` (reto triple: titular+mascota+dígitos) | **No — funciona exactamente con `owner_id=None`** | Sí | **Es la única función que limpia el flag (ver regla abajo)** |
-| 7 | `identity.link_self_registered` (alta de cliente nuevo) | No, pero crea un Owner **nuevo** — no re-vincula uno existente | Sí, pero no es un "rematch" | No aplica — mecanismo distinto, fuera del problema que este item corrige |
+| 6 | `identity.link_family` (reto triple: titular+mascota+dígitos) | **No — funciona exactamente con `owner_id=None`** | Sí | **Limpia el flag** — representa la re-verificación de tres factores que este item exige |
+| 7 | `identity.link_self_registered` (alta de cliente nuevo, vía `tools.commit_register_new_client_and_pet`) | No — `create-with-patient` hace `get_or_create(phone=...)`, así que **puede recibir un `Owner` YA EXISTENTE**, no necesariamente uno nuevo | **Sí — enmienda 2026-08-08: era la causa de un segundo bypass, no detectado en la auditoría original** | El **caller** (`tools.commit_register_new_client_and_pet`) respeta el flag: no invoca esta función si `contact.auto_rematch_blocked` es `True`. La función en sí limpia el flag al final, bajo la precondición de que el caller ya superó ese guard (documentada en su propio docstring) |
 
 Adicional (fuera de alcance, documentado en TODOS.md): `views.py::unlink_family`
 deja al contacto en el mismo estado vulnerable (`owner=None`,
@@ -85,15 +108,26 @@ camino implementado.
   `contact.auto_rematch_blocked` es `True`, retorna sin tocar nada — el
   contacto se queda `unknown` indefinidamente hasta que se re-verifique por
   el reto completo.
-- **El flag se limpia únicamente cuando `identity.link_family` tiene éxito**
-  (tabla arriba: es la única función alcanzable con `owner_id=None`, y
-  representa exactamente la re-verificación de tres factores que este item
-  quiere forzar). `link_family` gana un `contact.auto_rematch_blocked = False`
-  en su bloque de escritura existente.
+- `tools.commit_register_new_client_and_pet` gana la misma guarda antes de
+  invocar `identity.link_self_registered`: si `contact.auto_rematch_blocked`
+  es `True`, NO vincula el contacto al `Owner` que `create-with-patient`
+  resolvió (nuevo o reutilizado) — la mascota y la cita se crean igual
+  (el endpoint compartido no cambia), solo se suprime el auto-enlace de LA
+  IDENTIDAD del contacto de WhatsApp.
+- **El flag se limpia en `identity._promote` (verificación implícita/
+  explícita en chat), `identity.link_self_registered` y
+  `identity.link_family`** — las tres únicas funciones que elevan a
+  `confirmed_in_chat`/`staff_verified` (ADR p56 inv. 5). `_promote` y
+  `link_self_registered` solo son alcanzables con el flag ya en `False`
+  (por el guard de sus respectivos callers) — limpiarlo ahí es una
+  operación idempotente, no la primera línea de defensa. `link_family` es
+  la única de las tres alcanzable con `owner_id=None`/flag en `True`, y
+  representa la re-verificación de tres factores que este item exige.
 - El auto-match por teléfono **sigue existiendo para su caso original**
-  (cliente nunca antes visto que se da de alta en mostrador) — la supresión
-  aplica solo a contactos que pasaron por un reset explícito, no a contactos
-  nuevos (`auto_rematch_blocked` nace en `False`).
+  (cliente nunca antes visto que se da de alta en mostrador o vía el
+  asistente) — la supresión aplica solo a contactos que pasaron por un
+  reset explícito, no a contactos nuevos (`auto_rematch_blocked` nace en
+  `False`).
 - El cierre del hilo activo al resetear (comportamiento actual) no cambia.
 
 ### Pantallas / API afectadas
@@ -102,14 +136,17 @@ camino implementado.
   migración aditiva.
 - `agent/services.py::_rematch_owner` — guarda nueva al inicio de la
   función.
+- `agent/tools.py::commit_register_new_client_and_pet` — guarda nueva antes
+  de invocar `identity.link_self_registered`.
 - `agent/views.py::reset_contact_identity` — agrega `auto_rematch_blocked`
   al `update_fields` existente.
-- `agent/identity.py::link_family` — agrega `auto_rematch_blocked` al
-  `update_fields` existente (ya escribe `owner`/`verification_level`/
-  `verified_at`/`linked_via` en el mismo `save()`, es un campo más en la
-  misma escritura — no una transacción nueva).
+- `agent/identity.py::_promote`, `link_self_registered`, `link_family` —
+  agregan `auto_rematch_blocked` a sus `update_fields` existentes (mismo
+  `save()`, no transacción nueva).
 - Sin cambios de frontend (mismo botón, mismo endpoint
-  `POST .../reset-identity/`).
+  `POST .../reset-identity/`); sin cambios en `appointments/create-with-patient`
+  (la reutilización de `Owner` por teléfono es comportamiento correcto para
+  sus otros callers, p.ej. recepción).
 
 ### Criterios de aceptación
 
@@ -117,13 +154,19 @@ camino implementado.
   `auto_rematch_blocked=True`.
 - Mismo número escribe de nuevo → **no** se re-vincula automáticamente aunque
   el teléfono coincida (`_rematch_owner` retorna temprano).
+- Mismo número, misma conversación, ejecuta `register_new_client_and_pet`
+  contra un `Owner` existente (el que se acaba de resetear) → **no** se
+  re-vincula (`commit_register_new_client_and_pet` no invoca
+  `link_self_registered`); el contacto sigue `owner=None`,
+  `verification=unknown`, `auto_rematch_blocked=True`.
 - Ese mismo número pidiendo algo personal → pasa por tamiz + reto completo,
   como número nunca visto.
 - El mismo contacto completa el reto triple (`link_family`) exitosamente →
   `auto_rematch_blocked` vuelve a `False`.
 - Regresión: un contacto **nuevo** (sin reset previo, `auto_rematch_blocked`
-  en su default `False`) sigue beneficiándose del auto-match normal — no
-  romper el caso que `_rematch_owner` fue diseñado a resolver.
+  en su default `False`) sigue beneficiándose del auto-match normal, tanto
+  por mensaje entrante como por alta de cliente nuevo — no romper ninguno
+  de los dos casos que el auto-enlace fue diseñado a resolver.
 
 ---
 
