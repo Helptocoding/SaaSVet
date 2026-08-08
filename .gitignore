@@ -61,3 +61,8 @@ svgcomponentes/
 frontend/standalone/
 .kiro/
 .agents/
+.codebase-memory/
+
+# Estado local de agtx. La configuración de proyecto sí se comparte.
+.agtx/*
+!.agtx/config.toml
