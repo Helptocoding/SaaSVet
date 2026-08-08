@@ -70,8 +70,9 @@ cliente final en su siguiente conversación por WhatsApp.
 
 Antes de decidir cuándo limpiar el flag, se mapearon los 7 sitios del código
 que pueden dejar a un `ContactIdentity` con `owner` asignado o con
-`verification_level` elevado. Es la única forma de saber con certeza cuál es
-el ÚNICO camino legítimo para revertir la supresión:
+`verification_level` elevado. Es la única forma de saber con certeza cuáles
+son los caminos legítimos para revertir la supresión (enmienda 2026-08-08:
+son tres — ver "Reglas de negocio" abajo — no uno solo):
 
 | # | Función | Requiere `owner_id` ya puesto? | Alcanzable con `owner_id=None`? | ¿Toca el flag nuevo? |
 |---|---|---|---|---|
