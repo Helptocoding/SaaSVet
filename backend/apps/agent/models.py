@@ -67,13 +67,18 @@ class ContactIdentity(OrganizationalModel):
     # ≥2 owners con el mismo teléfono en la org (D1): el sistema nunca
     # "elige" — intenciones personales escalan a humano (E-05).
     is_ambiguous = models.BooleanField(default=False)
-    # Levantado por `reset_contact_identity` (soporte/QA): impide que
-    # `_rematch_owner` vuelva a vincular por teléfono al mismo Owner en el
-    # siguiente mensaje entrante — si no, el reset se deshacía solo. Se baja
-    # ÚNICAMENTE al alcanzar `confirmed_in_chat`/`staff_verified` por una vía
-    # confiable (identity._promote, link_self_registered, link_family):
-    # nunca por el mero hecho de volver a escribir.
-    rematch_blocked = models.BooleanField(default=False)
+    # Levantado por `reset_contact_identity` (soporte/QA): impide CUALQUIER
+    # auto-enlace posterior a un Owner existente por coincidencia de teléfono
+    # — no solo `_rematch_owner` (mensaje entrante normal), también el alta
+    # de cliente nuevo (`tools.commit_register_new_client_and_pet`, que
+    # puede terminar reutilizando ese mismo Owner vía `get_or_create` en
+    # `create-with-patient`). Si no, el reset se deshacía solo por cualquiera
+    # de las dos rutas. Se baja ÚNICAMENTE al alcanzar `confirmed_in_chat`/
+    # `staff_verified` por una vía confiable (identity._promote, y
+    # link_self_registered/link_family, ambas solo alcanzables ya con el
+    # guard correspondiente superado — ver sus docstrings): nunca por el
+    # mero hecho de volver a escribir.
+    auto_rematch_blocked = models.BooleanField(default=False)
     # Procedencia del vínculo contacto→owner (É-F2). '' = sin vínculo /
     # phone_match implícito. Sirve para señalizar y REVOCAR en bandeja un
     # vínculo secundario (self_register hoy; family_challenge en PR-17b).

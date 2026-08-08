@@ -296,6 +296,42 @@ class WriteToolsTests(TestCase):
         self.assertEqual(conv.contact.verification_level, "confirmed_in_chat")
         self.assertEqual(conv.contact.linked_via, "self_register")
 
+    def test_register_after_reset_does_not_relink_existing_owner(self):
+        """Item 1 (regla de seguridad ampliada, auditoría OCR 2026-08-08): un
+        contacto reseteado (`reset_contact_identity`) que completa el alta de
+        "cliente nuevo" en la MISMA conversación no debe re-vincularse al
+        Owner existente que comparte su teléfono, aunque `create-with-patient`
+        lo reutilice vía `get_or_create`. Antes de este fix,
+        `commit_register_new_client_and_pet` llamaba a
+        `identity.link_self_registered` sin consultar el flag — deshaciendo
+        el reset con cero factores de verificación."""
+        existing_owner = Owner.objects.create(
+            organization=self.org, name="Cliente Previo", phone="5512345678")
+        conv, ex = self._unknown_conv()   # wa_id normaliza a phone 5512345678
+        conv.contact.auto_rematch_blocked = True
+        conv.contact.save(update_fields=["auto_rematch_blocked"])
+
+        tools.run_tool("register_new_client_and_pet", {
+            "owner_name": "Carlos", "pet_name": "Rocky",
+            "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
+            conversation=conv, executor=ex)
+        policy.evaluate(conv, "sí", agent_settings=self.settings)
+        res = planner._commit_pending(conv, ex)
+        self.assertEqual(res["decision"], "committed")
+
+        # create-with-patient reutilizó el Owner existente por teléfono (no
+        # se creó un segundo Owner, ni se sobrescribió su nombre real).
+        self.assertEqual(Owner.objects.filter(phone="5512345678").count(), 1)
+        reused = Owner.objects.get(phone="5512345678")
+        self.assertEqual(reused.pk, existing_owner.pk)
+        self.assertEqual(reused.name, "Cliente Previo")
+
+        conv.contact.refresh_from_db()
+        self.assertIsNone(conv.contact.owner_id)
+        self.assertEqual(conv.contact.verification_level, "unknown")
+        self.assertEqual(conv.contact.linked_via, "")
+        self.assertTrue(conv.contact.auto_rematch_blocked)
+
     def test_register_refused_for_existing_client(self):
         out = self._run("register_new_client_and_pet", {
             "owner_name": "X", "pet_name": "Y", "date": self.day.isoformat(),

@@ -133,12 +133,12 @@ class RematchOwnerTests(TestCase):
         )
 
     def test_new_contact_without_reset_keeps_auto_match(self):
-        """Comportamiento previo, intacto: un contacto sin `rematch_blocked`
+        """Comportamiento previo, intacto: un contacto sin `auto_rematch_blocked`
         (el default) sí debe engancharse al Owner que se dio de alta después
         del primer mensaje — si no, empuja a un alta duplicada."""
         contact = resolve_contact_identity(self.channel, "5215500000101")
         self.assertIsNone(contact.owner)
-        self.assertFalse(contact.rematch_blocked)
+        self.assertFalse(contact.auto_rematch_blocked)
 
         owner = Owner.objects.create(
             organization=self.org, name="Alta Tardía", phone="5500000101",
@@ -162,10 +162,10 @@ class RematchOwnerTests(TestCase):
         contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
         contact.verified_at = None
         contact.linked_via = ""
-        contact.rematch_blocked = True
+        contact.auto_rematch_blocked = True
         contact.save(update_fields=[
             "owner", "verification_level", "verified_at", "linked_via",
-            "rematch_blocked",
+            "auto_rematch_blocked",
         ])
 
         again = resolve_contact_identity(self.channel, "5215500000102")
@@ -173,7 +173,7 @@ class RematchOwnerTests(TestCase):
         self.assertEqual(
             again.verification_level, ContactIdentity.VERIFICATION_UNKNOWN,
         )
-        self.assertTrue(again.rematch_blocked)
+        self.assertTrue(again.auto_rematch_blocked)
 
 
 class ConversationLifecycleTests(TestCase):

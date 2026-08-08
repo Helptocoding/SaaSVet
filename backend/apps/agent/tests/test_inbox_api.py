@@ -321,7 +321,7 @@ class InboxResetIdentityTests(InboxApiTestCase):
         self.assertEqual(self.contact.linked_via, "")
         # No debe volver a vincularse solo por teléfono en el siguiente
         # mensaje del mismo número (ver RematchOwnerTests en test_services.py).
-        self.assertTrue(self.contact.rematch_blocked)
+        self.assertTrue(self.contact.auto_rematch_blocked)
 
         self.conversation.refresh_from_db()
         self.assertEqual(self.conversation.state, Conversation.STATE_CLOSED)

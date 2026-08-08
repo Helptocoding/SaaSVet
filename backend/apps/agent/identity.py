@@ -165,9 +165,9 @@ def try_verify_by_owner_name(contact, answer):
 def _promote(contact):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
-    contact.rematch_blocked = False
+    contact.auto_rematch_blocked = False
     contact.save(update_fields=[
-        'verification_level', 'verified_at', 'rematch_blocked'])
+        'verification_level', 'verified_at', 'auto_rematch_blocked'])
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +204,7 @@ def owner_digits_match(owner, answer):
 
 
 def link_self_registered(contact, owner):
-    """Vincula el contacto al owner que ACABA de crear con sus propios datos.
+    """Vincula el contacto al owner resuelto por su propia alta de cliente.
 
     Vivía dentro de `tools.commit_register_new_client_and_pet`, y ahí era el
     tercer sitio del subsistema capaz de elevar el nivel a `confirmed_in_chat`
@@ -213,19 +213,31 @@ def link_self_registered(contact, owner):
     ocurre únicamente en este módulo**, que es el único que cotea contra la
     base.
 
-    Por qué es legítimo elevar aquí sin reto: el `Owner` se acaba de crear a
-    partir de este mismo contacto (probó control del número al escribir y
-    aportó sus datos). No hay expediente previo que suplantar — que es
-    exactamente lo que el reto existe para impedir.
+    CUIDADO — por qué NO es legítimo asumir "Owner recién creado, sin
+    expediente previo que suplantar": `create-with-patient` hace
+    `Owner.objects.get_or_create(phone=...)`, así que `owner` puede ser un
+    registro EXISTENTE reutilizado por coincidencia de teléfono, no uno
+    nuevo (auditoría OCR 2026-08-08, ver Item 1 del plan). Por eso este
+    módulo YA NO decide por sí solo si es seguro vincular: el caller
+    (`tools.commit_register_new_client_and_pet`) es responsable de no
+    invocar esta función cuando `contact.auto_rematch_blocked` es `True`
+    (contacto reseteado — el `Owner` reutilizado sí tiene expediente previo,
+    exactamente el que un ADMIN acaba de desvincular).
+
+    Precondición (no verificada aquí, la garantiza el único caller): al
+    llegar a este punto, `contact.auto_rematch_blocked` ya vale `False` —
+    o porque el contacto nunca fue reseteado, o porque el caller superó su
+    propio guard. Bajarlo aquí es entonces una operación idempotente sobre
+    un valor que ya era `False`, nunca la primera línea de defensa.
     """
     contact.owner = owner
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
-    contact.rematch_blocked = False
+    contact.auto_rematch_blocked = False
     contact.save(update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
-        'rematch_blocked'])
+        'auto_rematch_blocked'])
 
 
 def link_family(contact, owner):
@@ -234,7 +246,7 @@ def link_family(contact, owner):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_FAMILY
-    contact.rematch_blocked = False
+    contact.auto_rematch_blocked = False
     contact.save(update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
-        'rematch_blocked'])
+        'auto_rematch_blocked'])

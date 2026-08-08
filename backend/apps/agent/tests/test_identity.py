@@ -94,7 +94,7 @@ class IdentityTests(TestCase):
 
 
 class RematchBlockedClearingTests(TestCase):
-    """`rematch_blocked` (levantado por `reset_contact_identity`) solo debe
+    """`auto_rematch_blocked` (levantado por `reset_contact_identity`) solo debe
     bajarse por una vía confiable: verificación completa o vinculación
     manual — nunca porque el contacto volvió a escribir."""
 
@@ -113,7 +113,7 @@ class RematchBlockedClearingTests(TestCase):
         return ContactIdentity.objects.create(
             organization=self.org, external_id="5215511229900",
             verification_level=ContactIdentity.VERIFICATION_PHONE_MATCH,
-            rematch_blocked=True, **extra,
+            auto_rematch_blocked=True, **extra,
         )
 
     def test_promote_clears_the_flag_on_full_verification(self):
@@ -125,18 +125,18 @@ class RematchBlockedClearingTests(TestCase):
         self.assertEqual(
             contact.verification_level, ContactIdentity.VERIFICATION_CONFIRMED,
         )
-        self.assertFalse(contact.rematch_blocked)
+        self.assertFalse(contact.auto_rematch_blocked)
 
     def test_link_self_registered_clears_the_flag(self):
         contact = self._blocked_contact()
         identity.link_self_registered(contact, self.owner)
         contact.refresh_from_db()
         self.assertEqual(contact.owner_id, self.owner.pk)
-        self.assertFalse(contact.rematch_blocked)
+        self.assertFalse(contact.auto_rematch_blocked)
 
     def test_link_family_clears_the_flag(self):
         contact = self._blocked_contact()
         identity.link_family(contact, self.owner)
         contact.refresh_from_db()
         self.assertEqual(contact.owner_id, self.owner.pk)
-        self.assertFalse(contact.rematch_blocked)
+        self.assertFalse(contact.auto_rematch_blocked)

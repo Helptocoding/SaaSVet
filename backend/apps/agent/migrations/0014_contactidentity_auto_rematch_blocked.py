@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='contactidentity',
-            name='rematch_blocked',
+            name='auto_rematch_blocked',
             field=models.BooleanField(default=False),
         ),
     ]

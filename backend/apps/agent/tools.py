@@ -1147,11 +1147,23 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
     if status_code >= 400:
         return ToolOutcome(ok=False, client_error='tool_failure')
 
-    # Auto-vínculo: el número queda ligado al owner recién creado (probó
-    # control del número al escribir + aportó sus datos → confirmed_in_chat).
+    # Auto-vínculo: el número queda ligado al owner resuelto (probó control
+    # del número al escribir + aportó sus datos → confirmed_in_chat).
+    #
+    # GUARD DE SEGURIDAD (auditoría OCR 2026-08-08, Item 1 del plan): `POST
+    # create-with-patient` hace `Owner.objects.get_or_create(phone=...)` —
+    # si este contacto fue reseteado (`reset_contact_identity`) y su propio
+    # teléfono coincide con un Owner YA EXISTENTE (la razón misma por la que
+    # se reseteó), `owner_pid` no apunta a un cliente nuevo, sino al mismo
+    # expediente que un ADMIN acaba de desvincular. Vincularlo aquí sin más
+    # deshacía el reset por completo, sin ningún reto de identidad — por eso
+    # `contact.auto_rematch_blocked` (levantado por el reset) también
+    # bloquea esta ruta, no solo `services._rematch_owner`. El contacto
+    # queda sin vincular (la cita/mascota igual se crea vía el endpoint
+    # compartido; solo se suprime el auto-enlace de LA IDENTIDAD).
     owner_pid = data.get('owner_public_id')
     contact = conversation.contact
-    if owner_pid and contact.owner_id is None:
+    if owner_pid and contact.owner_id is None and not contact.auto_rematch_blocked:
         from apps.patients.models import Owner
         owner = Owner.objects.filter(
             organization=conversation.organization, public_id=owner_pid).first()
