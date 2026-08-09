@@ -230,6 +230,14 @@ inexistente, fecha/hora no parseables) → `400 validation_error`. Enviarla a
 `walk-in`) → `400`: no hay estado previo que comparar, y tragársela en silencio
 anunciaría una garantía que nadie aplica.
 
+**Omitir la clave ≠ mandarla en `null`.** Omitirla es el opt-in del rollout y
+la escritura procede como siempre. `expected_state: null` explícito es
+`400 validation_error` con **cero escrituras**, en las siete vías: quien manda
+`null` cree que está mandando una precondición, y dejar pasar esa escritura sin
+comparar nada es el fail-open que INV-A cierra. Vale igual por JSON que por
+form-data — en form-data la clave presente llega como cadena (`""`, `"null"`) y
+se rechaza por forma, así que no hay codificación que sirva de puerta trasera.
+
 #### Matriz de mutaciones — no hay categoría implícita
 
 | Mutación | Lock de fila | `expected_state` | INV-D |

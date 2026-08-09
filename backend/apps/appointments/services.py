@@ -32,6 +32,27 @@ EXPECTED_STATE_KEYS = ('status', 'date', 'start_time')
 EXPECTED_STATE_FIELD = 'expected_state'
 
 
+class _Missing:
+    """Centinela: «la clave no vino» ≠ «la clave vino con `null`».
+
+    Sin él, `data.get('expected_state')` devuelve `None` en los dos casos y el
+    dominio no puede distinguirlos: un `expected_state: null` explícito se
+    trataría como ausencia y la escritura pasaría **sin precondición**. Ausencia
+    es el opt-in del rollout (§1.2); `null` explícito es un llamador que CREE
+    estar mandando una precondición y no la manda — el fail-open que INV-A
+    existe para cerrar. Los dos no pueden compartir representación.
+    """
+
+    def __repr__(self):  # pragma: no cover - ayuda de depuración
+        return '<missing>'
+
+    def __bool__(self):
+        return False
+
+
+MISSING = _Missing()
+
+
 class AppointmentChanged(APIException):
     """409 — la cita cambió desde que se confirmó la intención (INV-A).
 
@@ -63,15 +84,28 @@ def current_state(appointment):
 def parse_expected_state(raw):
     """Valida la FORMA de `expected_state` y la normaliza.
 
-    Devuelve `{'status': str, 'date': date, 'start_time': time}` o `None` si el
-    llamador no envió precondición (opt-in, §1.2).
+    Devuelve `{'status': str, 'date': date, 'start_time': time}`, o `None` si la
+    clave **no vino** (`MISSING`) — el opt-in del rollout (§1.2).
+
+    `null` explícito **NO** es ausencia: es `400 validation_error`, cero
+    escrituras. Quien manda `expected_state: null` cree que está mandando una
+    precondición; tratarlo como opt-in dejaría pasar la escritura sin
+    comparar nada — fail-open, justo lo que INV-A cierra. El llamador que no
+    quiera precondición omite la clave.
 
     Una precondición mal formada es un error del llamador, no un conflicto:
     400 `validation_error`. Fallar aquí es deliberado — aceptar una tupla que no
     se puede comparar sería el mismo fail-open que P0-4 persigue.
     """
-    if raw is None:
+    if raw is MISSING:
         return None
+    if raw is None:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: [
+                'No puede ser null. Omite la clave si no quieres enviar '
+                'precondición de estado.'
+            ]
+        })
     if not isinstance(raw, dict):
         raise ValidationError({
             EXPECTED_STATE_FIELD: [
@@ -153,11 +187,17 @@ def expected_state_from_request(request):
     El `PATCH` de detalle lo recibe DECLARADO en el serializer; las FBVs no
     pasan por él, así que leen del body con esta misma función — una sola
     definición de la forma, no dos.
+
+    Usa `MISSING` como default del `get`: pasar `None` colapsaría «ausente» y
+    «null explícito» en el mismo valor. Vale igual para un `dict` de JSON que
+    para el `QueryDict` de form-data (ambos implementan `in`/`get`); en
+    form-data la clave presente llega como cadena y `parse_expected_state` la
+    rechaza por forma.
     """
     data = getattr(request, 'data', None)
     if not isinstance(data, dict):
         return None
-    return parse_expected_state(data.get(EXPECTED_STATE_FIELD))
+    return parse_expected_state(data.get(EXPECTED_STATE_FIELD, MISSING))
 
 
 def reject_expected_state_on_create(request):
@@ -168,9 +208,12 @@ def reject_expected_state_on_create(request):
     fail-open que P0-4 persigue en el serializer. `POST /appointments/` lo
     rechaza dentro del serializer; `create-with-patient` y `walk-in` arman el
     payload a mano, así que lo rechazan aquí.
+
+    Se rechaza por **presencia de la clave**, no por su valor: `null` explícito
+    también es un llamador que cree estar mandando precondición.
     """
     data = getattr(request, 'data', None)
-    if isinstance(data, dict) and data.get(EXPECTED_STATE_FIELD) is not None:
+    if isinstance(data, dict) and EXPECTED_STATE_FIELD in data:
         raise ValidationError({
             EXPECTED_STATE_FIELD: [
                 'No aplica al crear una cita: no hay estado previo que comparar.'

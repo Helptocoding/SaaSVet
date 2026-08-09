@@ -222,6 +222,146 @@ class ExpectedStateIsDeclaredTests(PreconditionTestBase):
                 self.assertEqual(Appointment.objects.count(), before)
 
 
+class AbsentVersusExplicitNullTests(PreconditionTestBase):
+    """Ausencia ≠ `null` explícito (hallazgo OCR sobre F0).
+
+    Los dos llegaban al dominio como `None`, así que un
+    `expected_state: null` se trataba como opt-in y la escritura pasaba **sin
+    precondición**. Quien manda `null` cree que manda una precondición: dejarle
+    pasar la escritura es exactamente el fail-open que INV-A cierra.
+
+    Contrato: **omitir la clave** es el opt-in del rollout; mandarla en `null`
+    es `400 validation_error` con cero escrituras. En las siete vías.
+    """
+
+    # ---- Mutaciones: ausencia = opt-in, null = 400 --------------------------
+
+    def test_absent_precondition_is_allowed_on_every_mutation(self):
+        """El opt-in del rollout sigue intacto (P2-4 en su forma explícita)."""
+        appt = self._create_appt(days=3, hour=7)
+
+        patch = self.client.patch(
+            f"/api/appointments/{appt.public_id}/", {"reason": "sin precondición"},
+            format="json")
+        self.assertEqual(patch.status_code, status.HTTP_200_OK, patch.content)
+
+        st = self.client.patch(
+            f"/api/appointments/{appt.public_id}/status/", {"status": "confirmed"},
+            format="json")
+        self.assertEqual(st.status_code, status.HTTP_200_OK, st.content)
+
+        gone = self.client.delete(f"/api/appointments/{appt.public_id}/")
+        self.assertEqual(gone.status_code, status.HTTP_200_OK, gone.content)
+
+    def test_explicit_null_is_rejected_on_every_mutation(self):
+        appt = self._create_appt(days=3, hour=20)
+        original = (appt.status, appt.date, appt.start_time, appt.reason)
+        audit_before = AppointmentStatusChange.objects.filter(appointment=appt).count()
+
+        # `assign-patient` va sobre una cita con paciente GENÉRICO: así, sin el
+        # `null`, la llamada sería un 200 y el 400 solo puede venir de la
+        # precondición. Con un paciente real el endpoint rechazaría igual, pero
+        # por otro motivo — y el test pasaría sin probar nada.
+        from apps.patients.utils import get_or_create_generic_patient
+        _, generic_pet = get_or_create_generic_patient(self.org)
+        assignable = self._create_appt(days=5, hour=20)
+        Appointment.objects.filter(pk=assignable.pk).update(pet=generic_pet)
+
+        cases = (
+            ("patch", f"/api/appointments/{appt.public_id}/",
+             {"reason": "no debe guardarse", "expected_state": None}),
+            ("status", f"/api/appointments/{appt.public_id}/status/",
+             {"status": "confirmed", "expected_state": None}),
+            ("assign", f"/api/appointments/{assignable.public_id}/assign-patient/",
+             {"pet": self.pet.id, "expected_state": None}),
+        )
+        for name, url, payload in cases:
+            with self.subTest(endpoint=name):
+                response = self.client.patch(url, payload, format="json")
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                                 response.content)
+                body = response.json()
+                self.assertEqual(body["code"], "validation_error")
+                self.assertIn("expected_state", body["errors"])
+
+        with self.subTest(endpoint="delete"):
+            response = self.client.delete(
+                f"/api/appointments/{appt.public_id}/",
+                {"expected_state": None}, format="json")
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                             response.content)
+            self.assertIn("expected_state", response.json()["errors"])
+
+        # Cero escrituras en las cuatro vías.
+        appt.refresh_from_db()
+        self.assertEqual(
+            (appt.status, appt.date, appt.start_time, appt.reason), original)
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(),
+            audit_before)
+
+    # ---- Creación: null también se rechaza, y no crea nada ------------------
+
+    def test_explicit_null_is_rejected_on_every_creation_path(self):
+        date, start, end = _slot(days=11)
+        creations = {
+            "/api/appointments/": {
+                "pet": self.pet.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            },
+            "/api/appointments/create-with-patient/": {
+                "owner_name": "Cliente Nulo", "owner_phone": "5599887755",
+                "pet_name": "Nube", "pet_species": "felino",
+                "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            },
+            "/api/appointments/walk-in/": {
+                "pet": self.pet.id, "veterinarian": self.vet.id, "reason": "urgencia",
+            },
+        }
+        for url, payload in creations.items():
+            with self.subTest(url=url):
+                before = Appointment.objects.count()
+                response = self.client.post(
+                    url, {**payload, "expected_state": None}, format="json")
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                                 response.content)
+                self.assertIn("expected_state", response.json().get("errors", {}))
+                self.assertEqual(Appointment.objects.count(), before)
+
+    # ---- El `null` no puede colarse por otra codificación -------------------
+
+    def test_null_cannot_sneak_in_through_form_encoding(self):
+        """form-data / QueryDict no puede expresar `null`, y no debe simularlo.
+
+        Un `expected_state=` vacío o el literal `"null"` llegan como CADENA. Si
+        alguna de las dos se interpretara como ausencia, form-data sería un
+        bypass del contrato que JSON respeta.
+        """
+        appt = self._create_appt(days=3, hour=21)
+        for raw in ("", "null", "None"):
+            with self.subTest(raw=raw):
+                response = self.client.patch(
+                    f"/api/appointments/{appt.public_id}/status/",
+                    {"status": "confirmed", "expected_state": raw},
+                    format="multipart",
+                )
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                                 response.content)
+                appt.refresh_from_db()
+                self.assertEqual(appt.status, "scheduled")
+
+    def test_form_encoded_without_the_key_still_works(self):
+        """La contraparte: form-data SIN la clave sigue siendo opt-in válido."""
+        appt = self._create_appt(days=3, hour=22)
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/status/",
+            {"status": "confirmed"}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "confirmed")
+
+
 class PreconditionAppliesToAnyActorTests(PreconditionTestBase):
     """P0-7 — INV-A no es un privilegio del agente."""
 

@@ -9,6 +9,7 @@ from .models import Appointment, AppointmentStatusChange
 from .services import (
     ACTIVE_STATUSES,
     EXPECTED_STATE_FIELD,
+    MISSING,
     SlotTaken,
     enforce_expected_state,
     parse_expected_state,
@@ -25,6 +26,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
     # `JSONField` y no un serializer anidado: la forma la valida
     # `parse_expected_state` (fuente única, compartida con las FBVs de
     # /status/, DELETE y assign-patient, que no pasan por este serializer).
+    #
+    # `allow_null=True` NO es permisividad: es lo que hace que un `null`
+    # explícito LLEGUE a `validate()` en vez de morir con el mensaje genérico
+    # en inglés de DRF. Ahí se rechaza con `400` y un mensaje que dice qué
+    # hacer (omitir la clave). Con `allow_null=False` el desenlace también
+    # sería 400, pero el dominio perdería el control del contrato.
     expected_state = serializers.JSONField(
         write_only=True, required=False, allow_null=True,
     )
@@ -105,16 +112,23 @@ class AppointmentSerializer(serializers.ModelSerializer):
         # modelo). Se compara aquí porque el caller ya tomó el lock de la fila y
         # nos pasó la instancia bloqueada: la comparación queda dentro de la
         # misma transacción que escribe (§3.2 exigencia 2).
-        expected_raw = attrs.pop(EXPECTED_STATE_FIELD, None)
-        expected = parse_expected_state(expected_raw)
-        if expected is not None and instance is None:
-            # POST no tiene estado previo que comparar (matriz §3.3). Aceptarlo
-            # en silencio sería anunciar una garantía que nadie aplica.
+        #
+        # El default del `pop` es `MISSING`, no `None`: con `required=False` la
+        # clave ausente no llega a `attrs`, pero con `allow_null=True` un `null`
+        # explícito SÍ llega como `None`. Usar `None` de default fusionaría los
+        # dos casos y el `null` explícito pasaría como opt-in.
+        expected_raw = attrs.pop(EXPECTED_STATE_FIELD, MISSING)
+        if expected_raw is not MISSING and instance is None:
+            # POST no tiene estado previo que comparar (matriz §3.3). Se rechaza
+            # por PRESENCIA de la clave —igual que `create-with-patient` y
+            # `walk-in`—, así que el mensaje es el mismo en las tres vías de
+            # creación, valga lo que valga el campo (incluido `null`).
             raise serializers.ValidationError({
                 EXPECTED_STATE_FIELD: [
                     'No aplica al crear una cita: no hay estado previo que comparar.'
                 ]
             })
+        expected = parse_expected_state(expected_raw)
         if expected is not None:
             enforce_expected_state(instance, expected)
 

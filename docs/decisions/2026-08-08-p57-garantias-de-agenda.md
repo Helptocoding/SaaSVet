@@ -80,6 +80,18 @@ también es `400`: no hay estado previo que comparar. Las tres, no solo la
 obvia — `create-with-patient` y `walk-in` arman su payload a mano, así que sin
 un rechazo explícito el campo se perdía sin ruido.
 
+**Ausencia de la clave ≠ `null` explícito.** Solo la **ausencia** es el opt-in
+del rollout. `expected_state: null` es `400 validation_error` con cero
+escrituras, en las siete vías. El motivo es el mismo fail-closed del punto 1:
+quien manda `null` cree que está mandando una precondición, y si el dominio lo
+lee como «no vino», la escritura pasa **sin comparar nada** — con la etiqueta
+de estar protegida. Los dos casos no pueden compartir representación, así que
+el dominio los distingue con un centinela (`MISSING`) en vez de con `None`:
+`data.get(campo)` devuelve `None` para ambos y era exactamente ahí donde se
+perdía la diferencia. Aplica igual a JSON, form-data y `QueryDict` — en
+form-data la clave presente llega como cadena y se rechaza por forma, así que
+ninguna codificación sirve de puerta trasera.
+
 #### Matriz de mutaciones (no hay categoría implícita)
 
 | Mutación | Lock de fila | `expected_state` | INV-D |
