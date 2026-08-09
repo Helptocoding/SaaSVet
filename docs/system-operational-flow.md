@@ -26,7 +26,7 @@ contexto de trabajo ligero y preciso:
 | `organizations` | Tenant. Una clínica = una organización. Perfil, timezone, tax_rate. Tres agregados: `Organization` (identidad/contacto/ubicación), `OrganizationSettings` (reglas operativas, toggles), `OrganizationSchedule` (horario semanal, 7 filas por organización). Ver ADR p53. |
 | `users` | Cuentas y roles (ADMIN_SAAS, ADMIN, VET, ASSISTANT). RBAC dinámico. |
 | `patients` | Propietarios (Owner) + mascotas (Pet). Punto de entrada a todos los flujos clínicos. |
-| `appointments` | Agenda. Estados, walk-in, asignación de paciente, registro rápido. |
+| `appointments` | Agenda. Estados, walk-in, asignación de paciente, registro rápido. Dueño de dos garantías de dominio (ADR p57): **INV-A** (precondición atómica de estado, `expected_state` → `409 appointment_changed`) e **INV-D** (no-solapamiento por veterinario, restricción de exclusión en PostgreSQL → `400 slot_taken`). |
 | `medical_records` | Acto clínico: consulta, vitales, productos consumidos, servicios prestados, receta. |
 | `inventory` | Catálogo (Product) + presentaciones (Presentation) + stock + movimientos. |
 | `billing` | Facturación: invoice, items, ledger de pagos, notas de crédito, refunds, attestation rx externa, dispensación. |

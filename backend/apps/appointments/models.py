@@ -1,8 +1,23 @@
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Func, Q
 from apps.patients.models import Pet
 from apps.users.models import User
 from apps.core.models import OrganizationalModel, PublicIdMixin
+
+
+class TsTzRange(Func):
+    """`tstzrange(start, end, '[)')` — el intervalo ocupado por una cita.
+
+    Semiabierto por la derecha a propósito: una cita de 10:00–10:30 y otra de
+    10:30–11:00 NO se solapan. Es exactamente el criterio del pre-chequeo del
+    serializer (`start__lt=end AND end__gt=start`), para que la garantía de la
+    base y el mensaje legible no puedan discrepar.
+    """
+    function = 'TSTZRANGE'
+    output_field = DateTimeRangeField()
 
 
 class Appointment(PublicIdMixin, OrganizationalModel):
@@ -90,6 +105,41 @@ class Appointment(PublicIdMixin, OrganizationalModel):
                 fields=['organization', 'idempotency_key'],
                 condition=models.Q(idempotency_key__isnull=False),
                 name='appointment_unique_idempotency_key_per_org',
+            ),
+            # INV-D (ADR p57, decisión §3.4) — un veterinario no tiene dos
+            # citas ACTIVAS solapadas. La garantía vive en la tabla, no en un
+            # endpoint: cubre creación, reprogramación, atención sin cita y
+            # reactivación, y a cualquier actor presente o futuro (frontend,
+            # importador, script de soporte, integración), sin rollout por
+            # fases.
+            #
+            # Fuera del predicado, a propósito:
+            #   - `done`/`canceled`/`no_show`: una cita cancelada NO bloquea el
+            #     hueco — es la regla de negocio vigente.
+            #   - citas sin veterinario (`veterinarian` es nullable): no hay
+            #     recurso que reservar. Coherente con el pre-chequeo actual,
+            #     que también exige veterinario.
+            #   - filas sin instantes UTC (datos legacy pre-0003).
+            #
+            # Requiere la extensión `btree_gist` (los componentes de igualdad
+            # no son indexables por GiST sin ella); la crea la migración 0014,
+            # igual que `TrigramExtension` en patients/0012.
+            ExclusionConstraint(
+                name='appointment_no_overlap_per_vet',
+                expressions=[
+                    ('organization', RangeOperators.EQUAL),
+                    ('veterinarian', RangeOperators.EQUAL),
+                    (
+                        TsTzRange('start_datetime', 'end_datetime', RangeBoundary()),
+                        RangeOperators.OVERLAPS,
+                    ),
+                ],
+                condition=(
+                    Q(status__in=['scheduled', 'confirmed', 'in_progress'])
+                    & Q(veterinarian__isnull=False)
+                    & Q(start_datetime__isnull=False)
+                    & Q(end_datetime__isnull=False)
+                ),
             ),
         ]
 

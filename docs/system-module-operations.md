@@ -213,6 +213,32 @@ no_show   → scheduled  (solo si fecha futura)
 done      → (terminal, sin transiciones)
 ```
 
+### Garantías transversales del módulo (ADR p57)
+
+Dos invariantes aplican a **todas** las acciones de agenda que siguen. Se
+enuncian una vez aquí para no repetirlos en cada acción.
+
+**INV-A — precondición atómica de estado.** Toda mutación sobre una cita
+existente (`PATCH` de detalle, `PATCH /status/`, `DELETE`, `assign-patient`)
+acepta `expected_state = {status, date, start_time}` y la compara contra la fila
+tomada con `select_for_update()`, dentro de la transacción que escribe. Si
+difiere: **`409 appointment_changed`** con `current` (el estado real) y **cero
+escrituras** — ni la cita, ni `AppointmentStatusChange`. El 409 no es un error
+técnico: es un resultado de negocio. Es **opt-in**: sin `expected_state` el
+comportamiento es el de siempre. Excluida con justificación:
+`complete_appointment_on_record_close` (transición interna que ya falla cerrada
+y evita un orden de locks `Appointment↔MedicalRecord`).
+
+**INV-D — no-solapamiento.** Un veterinario no puede tener dos citas **activas**
+(`scheduled`, `confirmed`, `in_progress`) con intervalos solapados. Lo garantiza
+una restricción de exclusión de PostgreSQL sobre `(organization, veterinarian,
+[start_datetime, end_datetime))`, así que cubre a **cualquier actor** y a todas
+las vías, incluidas las que antes no validaban cupo. El desenlace es siempre
+**`400 slot_taken`**, lo detecte el pre-chequeo o lo rechace la base. **No
+existe bandera de forzado**, y nada se desplaza automáticamente.
+
+---
+
 ### Acción: Crear cita (scheduled)
 
 **Requiere**
@@ -228,7 +254,8 @@ done      → (terminal, sin transiciones)
 - Confirmar (opcional), iniciar (`in_progress`), cancelar o marcar como no-show.
 
 **Bloquea**
-- La creación de una cita que se superponga en la misma franja horaria para el mismo veterinario.
+- La creación de una cita que se superponga en la misma franja horaria para el mismo veterinario → `400 slot_taken`. Ya no depende de ganar una carrera: si dos creaciones concurrentes apuntan al mismo hueco, exactamente una persiste (INV-D).
+- `expected_state` en el body → `400`: no hay estado previo que comparar.
 
 **Módulos involucrados**
 `appointments`, `patients`, `users`.
@@ -242,8 +269,10 @@ done      → (terminal, sin transiciones)
 - `pet` obligatorio, salvo que `allow_anonymous_walkin=True` — en ese caso se usa la mascota genérica.
 - `reason` (texto sanitizado, máximo 255 caracteres, no puede quedar vacío tras sanitizar).
 
+- Que el veterinario **no** tenga una cita activa solapada con los 30 minutos de la atención (INV-D, ADR p57).
+
 **Resultado**
-- Se crea un `Appointment` directamente en estado `in_progress`, con `walk_in=True`, duración de 30 minutos y sin verificación de conflicto de horario.
+- Se crea un `Appointment` directamente en estado `in_progress`, con `walk_in=True` y duración de 30 minutos.
 
 **Desbloquea**
 - La apertura inmediata de una consulta médica.
@@ -251,6 +280,7 @@ done      → (terminal, sin transiciones)
 
 **Bloquea**
 - La cancelación de la cita ya no aplica las transiciones propias de `scheduled`/`confirmed` (porque ya está en `in_progress`).
+- **La atención sobre un veterinario ocupado → `400 slot_taken`, cero citas creadas** (cambio de comportamiento aprobado, ADR p57 / decisión §9.14). Antes se creaba sin comprobar solapes y la agenda mostraba dos atenciones simultáneas del mismo veterinario, que nunca fueron reales. Recepción escoge alternativa: otro veterinario u otro horario. **No hay bandera de forzado ni sobrecupo.**
 
 **Módulos involucrados**
 `appointments`, `patients`.
@@ -263,6 +293,7 @@ done      → (terminal, sin transiciones)
 - Permiso `appointment.update`.
 - Una transición válida según la máquina de estados.
 - Si `require_confirmation_before_start=True` → bloquea el salto directo `scheduled → in_progress` (exige pasar por `confirmed` primero).
+- Opcional: `expected_state` (INV-A). **Toda** la decisión —precondición, transición, toggles, guard de fecha— se evalúa sobre la fila **bloqueada**, dentro del `atomic()` que escribe.
 
 **Resultado**
 - El estado se actualiza.
@@ -280,6 +311,8 @@ done      → (terminal, sin transiciones)
 **Bloquea**
 - Transiciones inválidas → 400 con `error` descriptivo.
 - `done` es terminal: no admite ninguna transición posterior.
+- `expected_state` desfasado → `409 appointment_changed` con `current`, sin transición y **sin** `AppointmentStatusChange`.
+- **Reactivación `canceled|no_show → scheduled` sobre un hueco ya reasignado → `400 slot_taken`** (cambio de comportamiento aprobado, ADR p57 / decisión §9.15). La cita **sigue** en su estado terminal y hay que programarla de nuevo; nada se desplaza ni se reubica automáticamente. Es coherente con el guard de fecha pasada que ya vivía en esta transición.
 
 **Módulos involucrados**
 `appointments`, `medical_records` (si toggle), `billing` (si toggle).
@@ -295,22 +328,31 @@ done      → (terminal, sin transiciones)
 **Resultado**
 - El estado pasa a `canceled` y se registra un `AppointmentStatusChange`.
 - Tanto el PATCH `/status/` como el DELETE producen el mismo event lineage.
+- El hueco queda **libre**: `canceled` está fuera del predicado de INV-D.
 
 **Desbloquea**
-- Reprogramar la cita si la fecha original no ha pasado (`canceled → scheduled`).
+- Reprogramar la cita si la fecha original no ha pasado **y el hueco sigue libre** (`canceled → scheduled`).
 
 **Bloquea**
 - Cancelar desde `done` (no está permitido).
 - Reprogramar si la fecha original ya pasó (en ese caso debe crearse una cita nueva).
+- Reprogramar si el hueco ya se reasignó → `400 slot_taken` (INV-D).
+
+**Nota de deprecación (ADR p57)**: `DELETE /api/appointments/<id>/` está
+**deprecado** a favor de `PATCH /<id>/status/`. Sigue funcionando y respeta
+INV-A, pero emite `Deprecation`/`Sunset` (RFC 8594, Sunset 2026-11-06) y el log
+`DEPRECATED_ENDPOINT_HIT`. Bajo conflicto de precondición **no** produce una
+segunda fila de auditoría.
 
 ---
 
 ### Acción: Asignar paciente real (vincular desde genérico)
 
 **Requiere**
-- Una cita walk-in cuya mascota actual sea `pet.is_generic=True`.
+- Una cita walk-in cuya mascota actual sea `pet.is_generic=True`. La comprobación se re-evalúa sobre la fila **bloqueada**: entre la lectura y el lock, otro actor pudo haber vinculado ya el paciente real.
 - Que el estado de la cita **no** sea `done`.
 - Un nuevo `pet` válido (misma organización, no genérico).
+- Opcional: `expected_state` (INV-A). Entra al contrato porque muta la cita y escribe auditoría; queda **fuera** de INV-D porque no toca `veterinarian`, `date`, `start_time` ni `end_time`.
 
 **Resultado**
 - `appointment.pet` se actualiza al paciente real.
@@ -320,6 +362,7 @@ done      → (terminal, sin transiciones)
 **Bloquea**
 - Vincular otra mascota genérica → 400.
 - Vincular sobre una cita que ya está en `done`.
+- `expected_state` desfasado → `409 appointment_changed`, sin cambio de paciente y sin fila de auditoría.
 
 ---
 

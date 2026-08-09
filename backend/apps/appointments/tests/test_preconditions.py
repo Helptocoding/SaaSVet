@@ -1,0 +1,469 @@
+"""
+test_preconditions.py — INV-A: precondición atómica de estado (ADR p57, F0·a).
+
+Cubre las pruebas de aceptación P0-4, P0-7, P0-9ᵃ, P1-14, P1-23 y P2-4 de la
+decisión de Item 2 (§8).
+
+Lo que estas pruebas defienden, en una frase cada una:
+
+  P0-4  el campo está DECLARADO — si alguien lo borra del serializer, DRF lo
+        descarta en silencio y el PATCH pasa incondicionalmente (fail-open).
+  P0-7  la garantía es del dominio, no un privilegio del agente: cualquier
+        actor autenticado recibe el mismo 409.
+  P0-9ᵃ una precondición fallida no escribe NADA, ni siquiera auditoría.
+  P1-14 hay LOCK, no solo comparación (PostgreSQL, dos conexiones reales).
+  P1-23 `DELETE` respeta la precondición y trae cabeceras de deprecación.
+  P2-4  REGRESIÓN iron rule: sin `expected_state`, todo funciona como hoy.
+"""
+import threading
+from datetime import timedelta
+
+from django.db import connection, connections
+from django.test import TransactionTestCase
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
+
+from apps.appointments.models import Appointment, AppointmentStatusChange
+from apps.core.models import Permission, Role, UserRole
+from apps.organizations.models import Organization
+from apps.patients.models import Owner, Pet
+from apps.users.models import User
+
+SLOT_HOUR = 11
+
+
+def _slot(days=3, hour=SLOT_HOUR):
+    """`(fecha_iso, inicio_hhmm, fin_hhmm)` a `days` días, a hora fija.
+
+    Hora fija por el mismo motivo que en test_idempotency: con la hora actual,
+    los últimos 30 minutos del día UTC envuelven el `end_time` al día siguiente
+    y el serializer rechaza por `end_time <= start_time`.
+    """
+    day = (timezone.now() + timedelta(days=days)).date()
+    return day.isoformat(), f"{hour:02d}:00", f"{hour:02d}:30"
+
+
+def _seed_wildcard_role(org):
+    wildcard, _ = Permission.objects.get_or_create(code="*.*")
+    role, _ = Role.objects.get_or_create(
+        name="ADMIN", organization=org, defaults={"is_system_role": True})
+    role.permissions.set([wildcard])
+    return role
+
+
+def _seed_org(name, suffix):
+    """Organización con ADMIN, VET (con rol) y una mascota."""
+    org = Organization.objects.create(name=name, timezone="UTC")
+    role = _seed_wildcard_role(org)
+    admin = User.objects.create_user(
+        username=f"pre_admin_{suffix}", password="p", organization=org, role="ADMIN")
+    UserRole.objects.get_or_create(user=admin, role=role)
+    vet = User.objects.create_user(
+        username=f"pre_vet_{suffix}", password="p", organization=org, role="VET")
+    UserRole.objects.get_or_create(user=vet, role=role)
+    owner = Owner.objects.create(organization=org, name="Ana", phone="5511110001")
+    pet = Pet.objects.create(
+        organization=org, owner=owner, name="Luna",
+        species="perro", birth_date="2021-01-01")
+    return org, admin, vet, pet
+
+
+class PreconditionTestBase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.org, cls.admin, cls.vet, cls.pet = _seed_org("Precondicion Org", "a")
+
+    def setUp(self):
+        self.client.force_authenticate(self.admin)
+
+    def _create_appt(self, days=3, hour=SLOT_HOUR):
+        date, start, end = _slot(days, hour)
+        response = self.client.post("/api/appointments/", {
+            "pet": self.pet.id,
+            "veterinarian": self.vet.id,
+            "date": date,
+            "start_time": start,
+            "end_time": end,
+            "reason": "vacuna",
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        return Appointment.objects.get(public_id=response.json()["public_id"])
+
+    @staticmethod
+    def _state_of(appt):
+        return {
+            "status": appt.status,
+            "date": appt.date.isoformat(),
+            "start_time": appt.start_time.strftime("%H:%M"),
+        }
+
+    @staticmethod
+    def _stale_state(appt):
+        """Una tupla que ya no describe la realidad."""
+        return {
+            "status": "scheduled",
+            "date": (appt.date - timedelta(days=1)).isoformat(),
+            "start_time": "08:00",
+        }
+
+
+class ExpectedStateIsDeclaredTests(PreconditionTestBase):
+    """P0-4 — el fail-open invisible de DRF."""
+
+    def test_stale_precondition_on_patch_detail_is_409(self):
+        appt = self._create_appt()
+        date, start, end = _slot(days=6)
+
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/", {
+            "date": date, "start_time": start, "end_time": end,
+            "expected_state": self._stale_state(appt),
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.content)
+        body = response.json()
+        self.assertEqual(body["code"], "appointment_changed")
+        # R3: el estado REAL viaja en la respuesta.
+        self.assertEqual(body["current"], self._state_of(appt))
+
+        appt.refresh_from_db()
+        self.assertEqual(appt.date.isoformat(), self._state_of(appt)["date"])
+
+    def test_stale_precondition_on_status_endpoint_is_409(self):
+        appt = self._create_appt()
+
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/status/", {
+            "status": "confirmed",
+            "expected_state": self._stale_state(appt),
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.content)
+        self.assertEqual(response.json()["code"], "appointment_changed")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+
+    def test_matching_precondition_passes(self):
+        appt = self._create_appt()
+
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/status/", {
+            "status": "confirmed",
+            "expected_state": self._state_of(appt),
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "confirmed")
+
+    def test_field_is_declared_on_the_serializer(self):
+        """El corazón de P0-4: si el campo no está declarado, DRF lo descarta.
+
+        Sin esta aserción, borrar la línea del serializer dejaría los tests de
+        arriba en verde por la razón equivocada… no: los dejaría en ROJO. Ésta
+        además nombra la causa, para que quien lo rompa lea por qué existe.
+        """
+        from apps.appointments.serializers import AppointmentSerializer
+        self.assertIn("expected_state", AppointmentSerializer().fields)
+
+    def test_malformed_precondition_is_a_client_error_not_a_silent_pass(self):
+        appt = self._create_appt()
+        for bad in (
+            "no-soy-un-objeto",
+            {"status": "scheduled"},                                   # incompleto
+            {"status": "inventado", "date": "2026-01-01", "start_time": "10:00"},
+            {"status": "scheduled", "date": "01/01/2026", "start_time": "10:00"},
+            {"status": "scheduled", "date": "2026-01-01", "start_time": "veinticinco"},
+            {"status": "scheduled", "date": "2026-01-01", "start_time": "10:00", "x": 1},
+        ):
+            with self.subTest(bad=bad):
+                response = self.client.patch(
+                    f"/api/appointments/{appt.public_id}/status/",
+                    {"status": "confirmed", "expected_state": bad},
+                    format="json",
+                )
+                self.assertEqual(
+                    response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+                appt.refresh_from_db()
+                self.assertEqual(appt.status, "scheduled")
+
+    def test_precondition_is_rejected_on_every_creation_path(self):
+        """Crear no tiene estado previo: tragárselo en silencio sería fail-open.
+
+        Las TRES vías de creación de la matriz §3.3, no solo la obvia: el
+        payload de `create-with-patient` y el de `walk-in` se arman a mano, así
+        que sin un rechazo explícito el campo se perdía sin ruido.
+        """
+        date, start, end = _slot(days=9)
+        stale = {"status": "scheduled", "date": date, "start_time": start}
+
+        creations = {
+            "/api/appointments/": {
+                "pet": self.pet.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            },
+            "/api/appointments/create-with-patient/": {
+                "owner_name": "Cliente Nuevo", "owner_phone": "5599887766",
+                "pet_name": "Michi", "pet_species": "felino",
+                "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            },
+            "/api/appointments/walk-in/": {
+                "pet": self.pet.id, "veterinarian": self.vet.id, "reason": "urgencia",
+            },
+        }
+
+        for url, payload in creations.items():
+            with self.subTest(url=url):
+                before = Appointment.objects.count()
+                response = self.client.post(
+                    url, {**payload, "expected_state": stale}, format="json")
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                                 response.content)
+                self.assertIn("expected_state", response.json().get("errors", {}))
+                self.assertEqual(Appointment.objects.count(), before)
+
+
+class PreconditionAppliesToAnyActorTests(PreconditionTestBase):
+    """P0-7 — INV-A no es un privilegio del agente."""
+
+    def test_admin_and_vet_get_the_same_409(self):
+        for actor in (self.admin, self.vet):
+            with self.subTest(actor=actor.username):
+                appt = self._create_appt(days=3, hour=8 + actor.pk % 6)
+                client = APIClient()
+                client.force_authenticate(actor)
+
+                response = client.patch(
+                    f"/api/appointments/{appt.public_id}/status/",
+                    {"status": "confirmed", "expected_state": self._stale_state(appt)},
+                    format="json",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_409_CONFLICT,
+                                 response.content)
+                self.assertEqual(response.json()["code"], "appointment_changed")
+                appt.refresh_from_db()
+                self.assertEqual(appt.status, "scheduled")
+
+    def test_assign_patient_honors_the_precondition(self):
+        """`assign-patient` entra al contrato (matriz §3.3)."""
+        from apps.patients.utils import get_or_create_generic_patient
+        _, generic_pet = get_or_create_generic_patient(self.org)
+        appt = self._create_appt(days=4, hour=15)
+        Appointment.objects.filter(pk=appt.pk).update(pet=generic_pet)
+        appt.refresh_from_db()
+
+        before = AppointmentStatusChange.objects.filter(appointment=appt).count()
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/assign-patient/",
+            {"pet": self.pet.id, "expected_state": self._stale_state(appt)},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.pet_id, generic_pet.id)
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), before)
+
+        # Con la precondición correcta, la vinculación procede como siempre.
+        ok = self.client.patch(
+            f"/api/appointments/{appt.public_id}/assign-patient/",
+            {"pet": self.pet.id, "expected_state": self._state_of(appt)},
+            format="json",
+        )
+        self.assertEqual(ok.status_code, status.HTTP_200_OK, ok.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.pet_id, self.pet.id)
+
+
+class PreconditionNeverPartiallyWritesTests(PreconditionTestBase):
+    """P0-9ᵃ — regla R1: cero escrituras parciales."""
+
+    def test_conflict_on_reschedule_leaves_appointment_and_audit_intact(self):
+        appt = self._create_appt(days=3, hour=9)
+        original = (appt.date, appt.start_time, appt.status)
+        audit_before = AppointmentStatusChange.objects.filter(appointment=appt).count()
+
+        date, start, end = _slot(days=7)
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/", {
+            "date": date, "start_time": start, "end_time": end,
+            "reason": "motivo nuevo que tampoco debe guardarse",
+            "expected_state": self._stale_state(appt),
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.content)
+        appt.refresh_from_db()
+        self.assertEqual((appt.date, appt.start_time, appt.status), original)
+        self.assertEqual(appt.reason, "vacuna")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), audit_before)
+
+    def test_conflict_on_status_writes_no_audit_row(self):
+        appt = self._create_appt(days=3, hour=10)
+        audit_before = AppointmentStatusChange.objects.filter(appointment=appt).count()
+
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/status/", {
+            "status": "canceled",
+            "cancellation_reason": "no debe persistir",
+            "expected_state": self._stale_state(appt),
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+        self.assertEqual(appt.cancellation_reason, "")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), audit_before)
+
+
+class DeleteIsDeprecatedAndHonorsPreconditionTests(PreconditionTestBase):
+    """P1-23 — `DELETE` entra al contrato y queda deprecado."""
+
+    def test_stale_precondition_blocks_delete_and_writes_no_second_audit_row(self):
+        appt = self._create_appt(days=3, hour=12)
+        audit_before = AppointmentStatusChange.objects.filter(appointment=appt).count()
+
+        response = self.client.delete(
+            f"/api/appointments/{appt.public_id}/",
+            {"expected_state": self._stale_state(appt)},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), audit_before)
+
+    def test_delete_without_precondition_still_cancels_and_is_flagged_deprecated(self):
+        appt = self._create_appt(days=3, hour=13)
+
+        response = self.client.delete(f"/api/appointments/{appt.public_id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        self.assertEqual(response["Deprecation"], "true")
+        self.assertIn("Sunset", response)
+        # El Link (RFC 8288) apunta a la URI REAL del sucesor de ESTA cita, no a
+        # una plantilla con `{id}`: una plantilla no es dereferenciable.
+        self.assertEqual(
+            response["Link"],
+            f'</api/appointments/{appt.public_id}/status/>; rel="successor-version"',
+        )
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "canceled")
+        self.assertTrue(
+            AppointmentStatusChange.objects.filter(
+                appointment=appt, to_status="canceled").exists())
+
+    def test_delete_emits_deprecation_log(self):
+        appt = self._create_appt(days=3, hour=14)
+        with self.assertLogs('core.deprecation', level='WARNING') as logs:
+            self.client.delete(f"/api/appointments/{appt.public_id}/")
+        self.assertTrue(any('DEPRECATED_ENDPOINT_HIT' in line for line in logs.output))
+
+
+class FrontendCompatibilityTests(PreconditionTestBase):
+    """P2-4 — REGRESIÓN iron rule: sin `expected_state`, nada cambia."""
+
+    def test_patch_detail_without_precondition_unchanged(self):
+        appt = self._create_appt(days=3, hour=16)
+        date, start, end = _slot(days=8)
+
+        response = self.client.patch(f"/api/appointments/{appt.public_id}/", {
+            "date": date, "start_time": start, "end_time": end,
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.date.isoformat(), date)
+
+    def test_status_transitions_without_precondition_unchanged(self):
+        appt = self._create_appt(days=3, hour=17)
+        for target in ("confirmed", "in_progress", "done"):
+            with self.subTest(target=target):
+                response = self.client.patch(
+                    f"/api/appointments/{appt.public_id}/status/", {"status": target})
+                self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "done")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), 3)
+
+    def test_invalid_transition_still_400(self):
+        appt = self._create_appt(days=3, hour=18)
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/status/", {"status": "done"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_edit_reason_without_precondition_unchanged(self):
+        appt = self._create_appt(days=3, hour=19)
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/", {"reason": "otro motivo"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        appt.refresh_from_db()
+        self.assertEqual(appt.reason, "otro motivo")
+
+
+class ConcurrentWritersTests(TransactionTestCase):
+    """P1-14 — hay LOCK, no solo comparación. PostgreSQL, dos conexiones.
+
+    Dos escrituras concurrentes con el MISMO `expected_state` (ambas correctas
+    en el momento de leer): exactamente una escribe, la otra recibe 409. Sin el
+    `select_for_update()` las dos compararían contra el estado viejo y las dos
+    escribirían — que es el bug que INV-A existe para cerrar.
+    """
+    reset_sequences = True
+
+    def setUp(self):
+        self.org, self.admin, self.vet, self.pet = _seed_org("Concurrencia INV-A", "c")
+        date, start, end = _slot(days=3, hour=9)
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        response = client.post("/api/appointments/", {
+            "pet": self.pet.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": start, "end_time": end, "reason": "vacuna",
+        })
+        assert response.status_code == status.HTTP_201_CREATED, response.content
+        self.appt = Appointment.objects.get(public_id=response.json()["public_id"])
+        self.expected = {
+            "status": self.appt.status,
+            "date": self.appt.date.isoformat(),
+            "start_time": self.appt.start_time.strftime("%H:%M"),
+        }
+
+    def tearDown(self):
+        connection.close()
+
+    def test_two_writers_same_expected_state_only_one_wins(self):
+        barrier = threading.Barrier(2)
+        results = {}
+
+        def writer(name, target):
+            client = APIClient()
+            client.force_authenticate(self.admin)
+            try:
+                barrier.wait(timeout=10)
+                response = client.patch(
+                    f"/api/appointments/{self.appt.public_id}/status/",
+                    {"status": target, "expected_state": self.expected},
+                    format="json",
+                )
+                results[name] = response.status_code
+            finally:
+                connections.close_all()
+
+        threads = [
+            threading.Thread(target=writer, args=("a", "confirmed")),
+            threading.Thread(target=writer, args=("b", "canceled")),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+
+        codes = sorted(results.values())
+        self.assertEqual(codes, [status.HTTP_200_OK, status.HTTP_409_CONFLICT], results)
+
+        # Una sola transición efectiva y una sola fila de auditoría.
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=self.appt).count(), 1)

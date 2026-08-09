@@ -165,9 +165,18 @@ instance.save()` directo, bypaseando el audit log y destruyendo el
 event lineage usado por analytics. Ahora ambos paths crean la row en
 mismo `transaction.atomic()`.
 
+**`DELETE` está DEPRECADO** (ADR p57). Sigue funcionando y respeta INV-A, pero
+emite cabeceras `Deprecation`/`Sunset` (RFC 8594, Sunset **2026-11-06**) y el log
+`DEPRECATED_ENDPOINT_HIT`. El sucesor es `PATCH /<id>/status/` con
+`status: "canceled"`. La retirada (`410 endpoint_sunset`) llega cuando el
+frontend deje de usarlo.
+
 Reprogramacion:
 - si la fecha original no paso: `canceled → scheduled` restaura la cita
 - si la fecha ya paso: se debe crear una cita nueva. El sistema retorna `400` con mensaje explicito
+- si el hueco original ya se reasignó a otra cita activa del mismo veterinario:
+  `400 slot_taken` y la cita **sigue** `canceled`/`no_show` (INV-D, ADR p57).
+  Nada se desplaza automáticamente: hay que programarla de nuevo
 
 ## Reglas de creacion
 
@@ -176,7 +185,117 @@ Reprogramacion:
 - si el frontend envia `owner_id` en el body, el backend valida que la mascota pertenezca a ese propietario (guardia de integridad, no constraint de modelo)
 - la hora de inicio no puede ser en el pasado (comparacion de datetime completo en UTC)
 - hora fin debe ser mayor a hora inicio (constraint en DB)
-- no puede haber dos citas solapadas para el mismo veterinario en estados `scheduled`, `confirmed` o `in_progress`
+- no puede haber dos citas solapadas para el mismo veterinario en estados `scheduled`, `confirmed` o `in_progress` (**INV-D**, garantizado en PostgreSQL — ver § Garantías de agenda)
+
+---
+
+## Garantías de agenda (ADR p57)
+
+Dos invariantes del dominio, no del llamador. Ambos viven en `appointments` y
+aplican a **cualquier actor**: frontend, agente de WhatsApp, importador, script
+de soporte.
+
+### INV-A — Precondición atómica de estado (`expected_state`)
+
+Toda mutación sobre una cita **existente** acepta `expected_state`: la tupla que
+el llamador vio cuando decidió mutar.
+
+```json
+{ "expected_state": { "status": "scheduled", "date": "2026-08-12", "start_time": "10:00" } }
+```
+
+El dominio la compara contra la fila tomada con `select_for_update()`, **dentro
+de la misma transacción que escribe**. Si difiere, `409` y **cero escrituras**
+(ni la cita, ni `AppointmentStatusChange`):
+
+```json
+{ "code": "appointment_changed",
+  "message": "La cita cambió desde que se propuso.",
+  "current": { "status": "confirmed", "date": "2026-08-13", "start_time": "16:00" } }
+```
+
+`current` viaja siempre: quien reintente lo hace informado. El `409` **no es un
+error técnico** — es un resultado de negocio (el mundo cambió). El consumidor
+recarga y vuelve a preguntar; **nunca** reintenta sin precondición ni degrada a
+último-escritor-gana. Si la cita ya está en el estado deseado (cancelar algo ya
+cancelado), `current` permite reconocerlo como éxito idempotente.
+
+**Opt-in hasta F5**: sin `expected_state` el comportamiento es idéntico al
+anterior. Cuando el frontend la envíe, pasará a obligatoria
+(`400 precondition_required`).
+
+Forma inválida (no es objeto, claves faltantes o desconocidas, estado
+inexistente, fecha/hora no parseables) → `400 validation_error`. Enviarla a
+**cualquiera** de las tres vías de creación (`POST /`, `create-with-patient`,
+`walk-in`) → `400`: no hay estado previo que comparar, y tragársela en silencio
+anunciaría una garantía que nadie aplica.
+
+#### Matriz de mutaciones — no hay categoría implícita
+
+| Mutación | Lock de fila | `expected_state` | INV-D |
+|---|---|---|---|
+| `PATCH /api/appointments/<public_id>/` | sí | acepta | sí |
+| `PATCH /<public_id>/status/` | sí | acepta | sí (reactivación) |
+| `DELETE /<public_id>/` | sí | acepta (en el body) | n/a |
+| `PATCH /<public_id>/assign-patient/` | sí | acepta | **no** (no mueve la tupla de agenda) |
+| `POST /api/appointments/` | n/a | **rechaza (400)** | sí |
+| `POST /create-with-patient/` | n/a | **rechaza (400)** | sí |
+| `POST /walk-in/` | n/a | **rechaza (400)** | **sí** |
+| `services.complete_appointment_on_record_close` | no | **no** (excluida) | no |
+
+`complete_appointment_on_record_close` está **excluida con justificación**: es
+una transición interna que ya falla cerrada (UPDATE condicional) y evita a
+propósito un orden de locks `Appointment↔MedicalRecord` que generaría ABBA con
+`assign-patient`.
+
+**Regla binding**: ninguna vía nueva puede mutar una cita sin lock de fila. Si
+aparece una, entra en esta matriz antes de mergear.
+
+### INV-D — Un veterinario no tiene dos citas activas solapadas
+
+Lo garantiza una **restricción de exclusión de PostgreSQL**
+(`appointment_no_overlap_per_vet`, migración `appointments/0014` + extensión
+`btree_gist`) sobre `(organization, veterinarian, [start_datetime,
+end_datetime))` con predicado parcial de estados activos.
+
+Vive en la tabla, no en un endpoint: cubre creación, reprogramación, atención
+sin cita y reactivación, y a cualquier actor. `done`/`canceled`/`no_show` quedan
+fuera del predicado (una cita cancelada **no** bloquea el hueco), igual que las
+citas sin veterinario asignado.
+
+Intervalo semiabierto `[inicio, fin)`: 10:00–10:30 y 10:30–11:00 son contiguas,
+**no** solapadas.
+
+**Contrato de error** — el pre-chequeo del serializer se conserva y produce el
+mensaje; la restricción es la garantía. Los dos caminos dan el **mismo**
+resultado, y el llamador no puede distinguirlos:
+
+```json
+{ "code": "slot_taken",
+  "message": "Ya existe una cita para este veterinario en ese horario",
+  "errors": { "error": ["Ya existe una cita para este veterinario en ese horario"] } }
+```
+
+`400`, no `409`: el `409` está reservado a precondiciones vencidas. El cuerpo es
+un superset del anterior — ningún consumidor se rompe.
+
+**Dos comportamientos cambiaron el día 1** (decisión de producto aprobada):
+
+| Camino | Antes | Ahora |
+|---|---|---|
+| **Atención sin cita** con el veterinario ocupado | creaba en `in_progress` sin comprobar solapes | `400 slot_taken`, **cero** citas creadas → recepción escoge otro veterinario u otro horario |
+| **Reactivación** `canceled\|no_show → scheduled` sobre hueco ocupado | resucitaba la cita sobre un hueco reasignado | `400 slot_taken`, la cita sigue en su estado terminal → hay que programar de nuevo |
+
+**No existe bandera de forzado** (`force`, `allow_overlap`, permiso que lo
+salte) y nada se desplaza automáticamente. Espera, sobrecupo y múltiples
+recursos son feature separada con su propio ADR.
+
+**Antes de desplegar la migración**: correr
+`python manage.py audit_appointment_overlaps` (exit 0 limpio / 1 con hallazgos /
+2 error), remediar **a mano** por clínica lo que reporte, aplicar la migración
+en ventana de deploy y re-auditar. PostgreSQL no admite exclusiones `NOT VALID`:
+con un solape histórico vivo, la migración falla. El comando queda como red de
+seguridad permanente.
 
 ## Visibilidad
 
@@ -299,7 +418,7 @@ Esto evita dos problemas:
 | `POST`   | `/api/appointments/walk-in/` | Registrar walk-in (crea en `in_progress`) |
 | `GET`    | `/api/appointments/<id>/` | Detalle de cita |
 | `PUT`    | `/api/appointments/<id>/` | Editar cita (campos clinicos) |
-| `DELETE` | `/api/appointments/<id>/` | Cancelar cita (soft cancel, solo desde `scheduled` o `confirmed`) |
+| `DELETE` | `/api/appointments/<id>/` | **DEPRECADO** — cancelar cita (soft cancel, solo desde `scheduled` o `confirmed`). Sucesor: `PATCH /<id>/status/` |
 | `PATCH`  | `/api/appointments/<id>/status/` | Cambiar estado con validacion de transicion |
 | `GET`    | `/api/appointments/<id>/history/` | Historial de cambios de estado |
 | `PATCH`  | `/api/appointments/<id>/assign-patient/` | Vincular paciente real a cita con paciente generico |

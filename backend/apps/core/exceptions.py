@@ -42,6 +42,17 @@ def custom_exception_handler(exc, context):
       - Ejemplo: {'__force_weight_required': True} → {'meta': {'force_weight_required': True}}
       - NUNCA usar '__' como prefijo en nombres de campos reales del serializer
 
+    Contrato para datos de dominio en el cuerpo del error:
+      - Una APIException puede exponer un dict `error_payload`; sus claves se
+        fusionan en el cuerpo del error, junto a {code, message}.
+      - Sirve para los errores que el contrato define con payload propio, sin
+        que cada dominio reimplemente el shape canónico. Ejemplos:
+        `409 appointment_changed` viaja con `current` (INV-A, ADR p57) y
+        `400 slot_taken` con `errors` (INV-D).
+      - NUNCA sobrescribe `code`: el código del error lo fija la excepción.
+      - Precedente del mismo patrón: `_handle_protected_error` (409 con
+        `protected_count`/`protected_sample`), que ya arma un cuerpo ampliado.
+
     Usar request_id para correlacionar con Railway logs:
       grep '<request_id>' en stdout de Railway.
     """
@@ -87,6 +98,14 @@ def custom_exception_handler(exc, context):
             output_code = 'validation_error' if isinstance(exc, DRFValidationError) else code
             message = _clean_message(str(data[0])) if data else 'Error inesperado.'
             response.data = {'code': output_code, 'message': message}
+
+        # Payload de dominio declarado por la excepción (ver docstring).
+        # Se aplica después de armar el shape canónico y nunca pisa `code`.
+        extra = getattr(exc, 'error_payload', None)
+        if isinstance(extra, dict) and isinstance(response.data, dict):
+            response.data.update(
+                {k: v for k, v in extra.items() if k != 'code'}
+            )
 
     else:
         # Reusar el request_id de correlación (RequestIDMiddleware). Solo

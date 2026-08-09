@@ -139,7 +139,7 @@ Si fue un error → botón "Revertir" → RefundReversal + ajuste positivo + sum
 ## 2. Flujos válidos (resumen)
 
 1. Cita programada: `scheduled → (confirmed) → in_progress → done` (done es terminal).
-2. Cancelación de cita: `scheduled|confirmed → canceled` (se puede reprogramar solo si la fecha original no ha pasado).
+2. Cancelación de cita: `scheduled|confirmed → canceled` (se puede reprogramar solo si la fecha original no ha pasado **y** el hueco sigue libre — INV-D, ADR p57).
 3. Consulta médica: `open → closed` (terminal, irreversible y garantiza la existencia de factura).
 4. Factura de consulta: `draft → confirmed → paid` (cobro por el total exacto).
 5. Venta directa: `draft → paid` de forma atómica mediante `direct-pay`.
@@ -169,6 +169,9 @@ Si fue un error → botón "Revertir" → RefundReversal + ajuste positivo + sum
 - Borrar un `MedicalRecord` con recetas, facturas o signos vitales asociados → 403 (guard) o 409 (PROTECT).
 - Crear un walk-in sin `pet` cuando `allow_anonymous_walkin=False` → 400.
 - Realizar transiciones de cita inválidas (`scheduled → done`, `done → *`, etc.).
+- Crear, reprogramar o reactivar una cita que deje a un veterinario con dos citas activas solapadas → `400 slot_taken` (INV-D, ADR p57). Aplica también a la **atención sin cita** (§9.14) y a la **reactivación** `canceled|no_show → scheduled` (§9.15), que antes no validaban cupo. No existe bandera de forzado.
+- Mutar una cita con `expected_state` desfasado → `409 appointment_changed` con `current` (INV-A, ADR p57). Cero escrituras, ni siquiera `AppointmentStatusChange`.
+- Enviar `expected_state` al **crear** una cita → `400`: no hay estado previo que comparar.
 - Confirmar una factura sin ítems activos → 400.
 - Agregar dos veces la misma presentación o servicio a la misma factura → unique constraint.
 - Dispensar una receta sobre una factura en `confirmed` o `paid` → solo se permite en `draft`.

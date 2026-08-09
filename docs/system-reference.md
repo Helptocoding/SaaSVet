@@ -34,6 +34,11 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | 400 al agregar producto en cobro de consulta | Ítem manual de presentación en factura `consultation` (no liquidaría stock, ADR p37). | Los productos entran por insumos de la consulta o dispensando la receta; aquí solo servicios. |
 | `closed_at` genera log `ANCHOR_LATE_ARRIVAL` | El cierre de consulta cayó en un bucket frozen (>T+2). | Es solo una advertencia (warn-only); revisar la latencia operativa. |
 | `RBAC_DENIED` recurrente para el mismo endpoint | El frontend está usando un endpoint que el rol no tiene permitido. | Revisar `can()` antes de mostrar el CTA correspondiente. |
+| `409 appointment_changed` al mutar una cita | INV-A (ADR p57): la cita cambió entre que el llamador la leyó y quiso escribir. **No es un bug ni un 5xx.** | El cuerpo trae `current` con el estado real. Recargar y volver a decidir. **Nunca** reintentar sin `expected_state` ni con el mismo `idempotency_key` forzado. |
+| `400 slot_taken` en una atención sin cita | INV-D (ADR p57, §9.14): el veterinario tiene una cita activa que solapa esos 30 minutos. Comportamiento **aprobado**, no regresión. | Escoger otro veterinario u otro horario. No existe bandera de forzado; sobrecupo es feature separada. |
+| `400 slot_taken` al reactivar una cita cancelada | INV-D (ADR p57, §9.15): el hueco se reasignó mientras estaba cancelada. | Programar de nuevo en un hueco libre. Nada se desplaza automáticamente. |
+| La migración `appointments/0014` falla al desplegar | Hay solapes históricos vivos. PostgreSQL no admite exclusiones `NOT VALID` → fail-closed deliberado. | `python manage.py audit_appointment_overlaps`, remediación **humana** por clínica, re-auditar y reintentar. Correrlo el mismo día del deploy. |
+| `DEPRECATED_ENDPOINT_HIT` sobre `/api/appointments/<id>/` | Alguien sigue cancelando con `DELETE` (deprecado, ADR p57). | Migrar el llamador a `PATCH /<id>/status/`. El log es el gate para cortar a `410` en F5. |
 
 ---
 
@@ -45,10 +50,13 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - Los anchors (`paid_at`, `confirmed_at`, `cancelled_at`, `closed_at`) solo se escriben dentro de `services.py`.
 - Los eventos financieros (`Payment`, `RefundPayment`, `RefundReversal`) solo se crean en `billing/services.py`.
 - El orden global de locks es: `CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct`.
+- **`Appointment` precede a `MedicalRecord`** (ADR p57). Desde F0, cuatro endpoints lockean la fila de la cita explícitamente (`PATCH` detalle, `/status/`, `DELETE`, `assign-patient`) y dos de ellos tocan después el `MedicalRecord` vinculado. El único camino que va en sentido contrario —`complete_appointment_on_record_close`, invocado con el lock del `MedicalRecord` ya tomado— usa un **UPDATE condicional** justamente para no invertir el orden con un `select_for_update`. Ese UPDATE toma igualmente el row lock implícito de la cita, así que la ventana `assign-patient` ↔ `close_medical_record` sobre el mismo par sigue siendo la única con orden cruzado: es preexistente, estrecha (exige vincular paciente y cerrar consulta en el mismo instante) y PostgreSQL la resuelve abortando una de las dos, no corrompiendo nada. **No añadir un `select_for_update` a `complete_appointment_on_record_close`**: lo convertiría en un ABBA garantizado en vez de una carrera improbable.
 - `recalculate_totals()` solo se invoca bajo lock de la Invoice.
 - `seed_permissions` se ejecuta en cada deploy (Procfile).
 - El frontend usa `public_id` en URLs y deep links; los PKs solo se usan en campos FK del body y en despliegues de pantalla.
 - El header `X-Idempotency-Key` debe figurar en `CORS_ALLOW_HEADERS` para que el navegador no bloquee la petición preflight.
+- La extensión `btree_gist` es requisito de la restricción de no-solapamiento (`appointments/0014`): sin ella, los componentes de igualdad no son indexables por GiST y la migración no aplica.
+- Una `APIException` puede llevar `error_payload` (dict) y `custom_exception_handler` lo fusiona en el cuerpo del error, junto a `{code, message}`. Es el mecanismo de `409 appointment_changed` (`current`) y `400 slot_taken` (`errors`). Nunca pisa `code`.
 
 ---
 
@@ -75,6 +83,8 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 19. **El administrador de una clínica no puede provisionar otras organizaciones** (no es `ADMIN_SAAS`; el payload no permite escalar privilegios).
 20. **`InvoiceItem.dispensed_from_prescription_item`** es el discriminador único para determinar qué ítems descuentan stock en una factura de consulta (no existe una segunda función de stock).
 21. **Dispensado ≤ recetado** (ADR p37): por ítem de receta, `Σ(quantity × conversion_factor)` de las líneas dispensadas activas de la factura no excede `PrescriptionItem.quantity` (unidades base). Cubre dispensación, edición de línea (PATCH) y bloquea ítems de presentación manuales en facturas `consultation`. El cliente puede llevar menos; nunca más.
+22. **INV-A — precondición atómica de estado de cita** (ADR p57): si el llamador envía `expected_state = {status, date, start_time}`, el dominio lo compara contra la fila bajo `select_for_update()` **en la misma transacción que escribe**. Al fallar: `409 appointment_changed` con `current` y **cero escrituras** (ni cita ni `AppointmentStatusChange`). Vale para **cualquier actor**, no solo el agente. Es opt-in hasta que el frontend la adopte; el opt-in es del *envío*, nunca de la *comparación*.
+23. **INV-D — un veterinario no tiene dos citas activas solapadas** (ADR p57): garantizado por una restricción de exclusión de PostgreSQL sobre `(organization, veterinarian, [start_datetime, end_datetime))` con predicado de estados activos. **Sin excepciones**: cubre creación, reprogramación, atención sin cita y reactivación. El desenlace es `400 slot_taken`, lo detecte el pre-chequeo o lo rechace la base. **No existe ninguna bandera de forzado** (`force`, `allow_overlap`, permiso que lo salte).
 
 ---
 
@@ -96,6 +106,11 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - Jamás borrar `Organization`, `Pet`, `Owner` o `MedicalRecord` que tengan dependencias (PROTECT + 409).
 - Jamás colocar `for_organization()` después de `select_related()` o `prefetch_related()` en la cadena del queryset.
 - Jamás leer `localStorage` directamente para obtener `access_token`, `refresh_token` o `user` fuera de `tokenStorage.js`.
+- **Jamás mutar una cita sin lock de fila** (ADR p57). Toda vía que escriba sobre un `Appointment` existente entra en la matriz de mutaciones de `docs/modules/appointments.md` **antes** de mergear. Una vía nueva sin lock reintroduce el último-escritor-gana que INV-A cierra.
+- Jamás borrar la declaración de `expected_state` en `AppointmentSerializer`: DRF descarta en silencio las claves desconocidas y la precondición desaparecería sin error visible (fail-open). El gate es P0-4.
+- Jamás capturar `IntegrityError` a ciegas para producir `slot_taken`: se compara el **nombre** de la restricción (`appointment_no_overlap_per_vet`). Capturar todo convierte un bug en un `slot_taken` mentiroso.
+- Jamás añadir una bandera de forzado del solape (`force`, `allow_overlap`, permiso que lo salte). Sobrecupo, lista de espera y múltiples recursos son una feature separada con su propio ADR.
+- Jamás aplicar `appointments/0014` sin correr `audit_appointment_overlaps` y remediar a mano lo que reporte: la migración falla con solapes históricos vivos.
 
 ---
 

@@ -98,6 +98,11 @@ class Command(BaseCommand):
         self.rnd = random.Random(1808)
         self.tz = ZoneInfo(DEMO_TIMEZONE)
         self.now = timezone.now()
+        # INV-D (ADR p57): huecos ACTIVOS ya reservados, por veterinario. El
+        # demo siembra decenas de citas al azar para un único VET; antes una
+        # colisión era solo un dato feo, ahora es un IntegrityError que tumba el
+        # seed — y con él, el reset automático del tenant demo (ADR p49).
+        self._busy_slots = {}
 
         if opts["delete"]:
             self._delete_demo(opts["yes"])
@@ -433,7 +438,11 @@ class Command(BaseCommand):
         for i, pet in enumerate(open_pets):
             tmpl = CONSULTATION_TEMPLATES[i % len(CONSULTATION_TEMPLATES)]
             if i < 2:
-                start_local = now_local - timedelta(minutes=self.rnd.randint(5, 40))
+                # Las dos se separan 45 min (INV-D: 30 min de slot por cita del
+                # mismo VET). Siguen siendo de HOY y en `in_progress`, así que
+                # el dashboard las sigue mostrando como "En consulta".
+                start_local = now_local - timedelta(
+                    minutes=self.rnd.randint(5, 40) + i * 45)
                 if start_local < day_start + timedelta(minutes=1):
                     start_local = day_start + timedelta(minutes=1)  # mantener HOY
                 when = start_local
@@ -503,6 +512,32 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ #
     # Helpers de construcción
     # ------------------------------------------------------------------ #
+    # INV-D: estados que ocupan el hueco del veterinario. `done`, `canceled` y
+    # `no_show` quedan fuera del predicado de la restricción → no reservan nada.
+    ACTIVE_STATUSES = ("scheduled", "confirmed", "in_progress")
+    SLOT = timedelta(minutes=30)
+
+    def _reserve_slot(self, vet_pk, start_dt, tries=64):
+        """Primer hueco de 30 min libre desde `start_dt`, ya reservado.
+
+        Avanza de media hora en media hora. `tries` acota la búsqueda: si una
+        agenda demo llegara a estar tan llena que no cabe, es mejor fallar
+        ruidosamente aquí que sembrar una colisión que rompa la migración de
+        cualquier entorno donde se restaure este dump.
+        """
+        taken = self._busy_slots.setdefault(vet_pk, [])
+        for _ in range(tries):
+            end_dt = start_dt + self.SLOT
+            if all(start_dt >= busy_end or end_dt <= busy_start
+                   for busy_start, busy_end in taken):
+                taken.append((start_dt, end_dt))
+                return start_dt
+            start_dt += self.SLOT
+        raise CommandError(
+            "seed_demo_clinic: no se encontró hueco libre para el veterinario "
+            f"{vet_pk} (INV-D). Revisa el volumen de citas sembradas."
+        )
+
     def _make_appointment(self, org, pet, vet, when, status, reason, start_override=None):
         # start_override (datetime tz-aware): ancla la cita a un instante exacto
         # (p.ej. "ahora" para las consultas en curso → el tag "Ahora" del dashboard
@@ -512,7 +547,9 @@ class Command(BaseCommand):
         else:
             hour = 9 + (self.rnd.randint(0, 8))
             start_dt = datetime.combine(when.date(), time(hour, 0), tzinfo=self.tz)
-        end_dt = start_dt + timedelta(minutes=30)
+        if status in self.ACTIVE_STATUSES:
+            start_dt = self._reserve_slot(vet.pk, start_dt)
+        end_dt = start_dt + self.SLOT
         # No cruzar medianoche: start_time/end_time son TimeField naive y hay un
         # CHECK end_time > start_time. Si +30min cae al día siguiente, clamp a 23:59.
         if end_dt.date() != start_dt.date():

@@ -247,6 +247,19 @@ class WalkInRBACTests(APITestCase):
             self.assertLessEqual(len(response.data.get("reason", "")), 255)
 
     def test_walkin_dedup_does_not_reuse_different_pet(self):
+        """El dedup de 10s NO puede colapsar dos pacientes en una misma cita.
+
+        Lo que ESTA prueba defiende sigue siendo lo mismo que el día que se
+        escribió: una segunda atención sin cita, con OTRO paciente, jamás debe
+        devolver la cita del primero como si fuera suya.
+
+        Lo que cambió es el desenlace, por decisión de producto aprobada
+        (INV-D, §9.14, ADR p57): el mismo veterinario no puede atender dos
+        pacientes en el mismo instante, así que la segunda ya no se crea —
+        se rechaza con `slot_taken` y recepción escoge alternativa (otro
+        veterinario u otro horario). Antes de INV-D se creaban las dos y la
+        agenda mostraba un solape imposible.
+        """
         self.auth(self.admin)
 
         first = self.client.post("/api/appointments/walk-in/", {
@@ -261,7 +274,31 @@ class WalkInRBACTests(APITestCase):
         })
 
         self.assertEqual(first.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(second.status_code, status.HTTP_201_CREATED)
+        # Nunca un replay del dedup: el paciente es otro.
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST, second.content)
+        self.assertEqual(second.json()["code"], "slot_taken")
+        self.assertEqual(
+            Appointment.objects.filter(organization=self.org, walk_in=True).count(), 1)
+
+    def test_walkin_with_a_free_vet_still_creates_for_another_pet(self):
+        """La alternativa que recepción tiene a mano tras un `slot_taken`."""
+        self.auth(self.admin)
+        other_vet = _create_role_with_permission(
+            "vet_free_slot", self.org, "appointment.create_walkin")
+
+        first = self.client.post("/api/appointments/walk-in/", {
+            "pet": self.pet.id,
+            "veterinarian": self.vet_with_perm.id,
+            "reason": "Walkin uno",
+        })
+        second = self.client.post("/api/appointments/walk-in/", {
+            "pet": self.pet_b.id,
+            "veterinarian": other_vet.id,
+            "reason": "Walkin dos",
+        })
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
         self.assertNotEqual(first.data["id"], second.data["id"])
 
     def test_walkin_dedup_does_not_reuse_non_walkin_appointment(self):

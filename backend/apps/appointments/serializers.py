@@ -6,9 +6,29 @@ from apps.core.datetime_utils import get_context_timezone, local_date_time_to_ut
 from apps.core.sanitize import sanitize_text
 
 from .models import Appointment, AppointmentStatusChange
+from .services import (
+    ACTIVE_STATUSES,
+    EXPECTED_STATE_FIELD,
+    SlotTaken,
+    enforce_expected_state,
+    parse_expected_state,
+)
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    # INV-A (ADR p57, §3.2 exigencia 1) — la precondición atómica de estado va
+    # DECLARADA. DRF descarta en silencio las claves desconocidas: un
+    # `expected_state` no declarado se perdería y el PATCH pasaría
+    # INCONDICIONALMENTE. Es el fail-open invisible que P0-4 vigila; borrar
+    # esta línea desactiva la garantía sin romper ningún test de forma obvia.
+    #
+    # `JSONField` y no un serializer anidado: la forma la valida
+    # `parse_expected_state` (fuente única, compartida con las FBVs de
+    # /status/, DELETE y assign-patient, que no pasan por este serializer).
+    expected_state = serializers.JSONField(
+        write_only=True, required=False, allow_null=True,
+    )
+
     pet_name = serializers.CharField(source='pet.name', read_only=True)
     pet_is_generic = serializers.BooleanField(source='pet.is_generic', read_only=True)
     # Día 6 B2: pet_public_id para deep links sin PK
@@ -45,6 +65,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             'id', 'public_id',
+            'expected_state',
             'pet', 'pet_name', 'pet_public_id', 'pet_is_generic',
             'owner_id', 'owner_public_id', 'owner_name',
             'veterinarian', 'veterinarian_name', 'veterinarian_public_id',
@@ -78,11 +99,29 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         request = self.context.get('request')
+        instance = getattr(self, 'instance', None)
+
+        # INV-A: la precondición se saca de `attrs` SIEMPRE (no es un campo del
+        # modelo). Se compara aquí porque el caller ya tomó el lock de la fila y
+        # nos pasó la instancia bloqueada: la comparación queda dentro de la
+        # misma transacción que escribe (§3.2 exigencia 2).
+        expected_raw = attrs.pop(EXPECTED_STATE_FIELD, None)
+        expected = parse_expected_state(expected_raw)
+        if expected is not None and instance is None:
+            # POST no tiene estado previo que comparar (matriz §3.3). Aceptarlo
+            # en silencio sería anunciar una garantía que nadie aplica.
+            raise serializers.ValidationError({
+                EXPECTED_STATE_FIELD: [
+                    'No aplica al crear una cita: no hay estado previo que comparar.'
+                ]
+            })
+        if expected is not None:
+            enforce_expected_state(instance, expected)
+
         if not request or not request.user.is_authenticated:
             return attrs
 
         org = request.user.organization
-        instance = getattr(self, 'instance', None)
 
         local_date = attrs.get('date', instance.date if instance else None)
         start_time = attrs.get('start_time', instance.start_time if instance else None)
@@ -114,7 +153,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         conflicts = Appointment.objects.filter(
             organization=org,
             veterinarian_id=vet_pk,
-            status__in=['scheduled', 'confirmed', 'in_progress'],
+            status__in=ACTIVE_STATUSES,
         )
 
         if instance:
@@ -124,10 +163,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
             Q(start_datetime__lt=end_utc, end_datetime__gt=start_utc)
         )
 
-        if target_status in ('scheduled', 'confirmed', 'in_progress') and conflicts.exists():
-            raise serializers.ValidationError(
-                {'error': 'Ya existe una cita para este veterinario en ese horario'}
-            )
+        # INV-D — pre-chequeo. SE CONSERVA: es quien produce el mensaje legible
+        # y el desenlace de negocio. La GARANTÍA es la restricción de exclusión
+        # de PostgreSQL (§3.4); si este `exists()` pierde la carrera, la base
+        # rechaza y el caller traduce al MISMO `400 slot_taken`.
+        if target_status in ACTIVE_STATUSES and conflicts.exists():
+            raise SlotTaken()
 
         pet = attrs.get('pet', instance.pet if instance else None)
         raw_owner = self.context['request'].data.get('owner_id')

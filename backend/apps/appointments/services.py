@@ -1,4 +1,282 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
+from django.utils.dateparse import parse_date, parse_time
+from rest_framework.exceptions import APIException, NotFound, ValidationError
+
 from .models import Appointment, AppointmentStatusChange
+
+
+# ---------------------------------------------------------------------------
+# INV-A — Precondición atómica de estado (ADR p57, decisión §3.2/§3.3)
+#
+# `expected_state` es la tupla semántica que el llamador vio cuando decidió
+# mutar la cita: {status, date, start_time}. El dominio compara esa tupla
+# contra la fila REAL, bajo `select_for_update()` y dentro de la MISMA
+# transacción que escribe. Si difiere → 409 `appointment_changed` con el
+# estado real (`current`) y CERO escrituras (regla R1 de §5.1).
+#
+# Tres cosas que este módulo existe para garantizar:
+#   1. La comparación no es una lectura previa: sin lock no es compare-and-swap.
+#   2. La precondición es del DOMINIO, no del agente: cualquier actor que mute
+#      una cita puede enviarla y recibe el mismo 409 (P0-7).
+#   3. El campo va DECLARADO en el serializer. Un `expected_state` no declarado
+#      lo descartaría DRF en silencio y el PATCH pasaría incondicionalmente:
+#      un fail-open perfecto e invisible (P0-4).
+#
+# Opt-in hasta F5 (§1.2): sin `expected_state` el comportamiento es idéntico
+# al actual (P2-4). En F5 pasa a obligatoria (`400 precondition_required`).
+# ---------------------------------------------------------------------------
+
+EXPECTED_STATE_KEYS = ('status', 'date', 'start_time')
+
+EXPECTED_STATE_FIELD = 'expected_state'
+
+
+class AppointmentChanged(APIException):
+    """409 — la cita cambió desde que se confirmó la intención (INV-A).
+
+    NO es un error técnico (regla R2 de §5.1): es un resultado de negocio.
+    El cuerpo lleva `current` para que quien reintente lo haga informado
+    (regla R3) — nunca se responde «falló» sin decir qué cambió.
+    """
+    status_code = 409
+    default_detail = 'La cita cambió desde que se propuso.'
+    default_code = 'appointment_changed'
+
+    def __init__(self, appointment, detail=None):
+        super().__init__(detail)
+        # `error_payload` lo fusiona custom_exception_handler en el cuerpo.
+        self.error_payload = {'current': current_state(appointment)}
+
+
+def current_state(appointment):
+    """La tupla semántica vigente de la cita, en el formato del contrato."""
+    return {
+        'status': appointment.status,
+        'date': appointment.date.isoformat() if appointment.date else None,
+        'start_time': (
+            appointment.start_time.strftime('%H:%M') if appointment.start_time else None
+        ),
+    }
+
+
+def parse_expected_state(raw):
+    """Valida la FORMA de `expected_state` y la normaliza.
+
+    Devuelve `{'status': str, 'date': date, 'start_time': time}` o `None` si el
+    llamador no envió precondición (opt-in, §1.2).
+
+    Una precondición mal formada es un error del llamador, no un conflicto:
+    400 `validation_error`. Fallar aquí es deliberado — aceptar una tupla que no
+    se puede comparar sería el mismo fail-open que P0-4 persigue.
+    """
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: [
+                'Debe ser un objeto con status, date y start_time.'
+            ]
+        })
+
+    unknown = sorted(set(raw) - set(EXPECTED_STATE_KEYS))
+    if unknown:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: [
+                f'Claves no reconocidas: {", ".join(unknown)}. '
+                f'Solo se aceptan {", ".join(EXPECTED_STATE_KEYS)}.'
+            ]
+        })
+    missing = [k for k in EXPECTED_STATE_KEYS if k not in raw]
+    if missing:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: [
+                f'Faltan claves: {", ".join(missing)}.'
+            ]
+        })
+
+    valid_statuses = {choice for choice, _ in Appointment.STATUS_CHOICES}
+    status_value = raw['status']
+    if status_value not in valid_statuses:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: [f'Estado inválido: {status_value}.']
+        })
+
+    date_value = raw['date']
+    parsed_date = parse_date(date_value) if isinstance(date_value, str) else None
+    if parsed_date is None:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: ['`date` debe tener formato YYYY-MM-DD.']
+        })
+
+    time_value = raw['start_time']
+    parsed_time = parse_time(time_value) if isinstance(time_value, str) else None
+    if parsed_time is None:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: ['`start_time` debe tener formato HH:MM.']
+        })
+
+    return {
+        'status': status_value,
+        'date': parsed_date,
+        'start_time': parsed_time,
+    }
+
+
+def enforce_expected_state(appointment, expected):
+    """Compara la precondición contra la fila REAL. Debe correr bajo lock.
+
+    `appointment` tiene que venir de un `select_for_update()` dentro de la
+    transacción que escribe: fuera de ahí esto sería una lectura optimista,
+    no una garantía (exigencia 2 de §3.2).
+
+    No-op si `expected` es None (precondición opt-in, §1.2).
+    """
+    if expected is None:
+        return
+    same = (
+        appointment.status == expected['status']
+        and appointment.date == expected['date']
+        # Comparación al minuto: la tupla que viaja es wall-clock del usuario
+        # (HH:MM), no el instante UTC. Los segundos nunca son significativos
+        # en la agenda (el schema los ignora en toda la UI).
+        and appointment.start_time.replace(second=0, microsecond=0)
+        == expected['start_time'].replace(second=0, microsecond=0)
+    )
+    if not same:
+        raise AppointmentChanged(appointment)
+
+
+def expected_state_from_request(request):
+    """Lee y valida `expected_state` del body de una FBV (status/assign/delete).
+
+    El `PATCH` de detalle lo recibe DECLARADO en el serializer; las FBVs no
+    pasan por él, así que leen del body con esta misma función — una sola
+    definición de la forma, no dos.
+    """
+    data = getattr(request, 'data', None)
+    if not isinstance(data, dict):
+        return None
+    return parse_expected_state(data.get(EXPECTED_STATE_FIELD))
+
+
+def reject_expected_state_on_create(request):
+    """Las vías de CREACIÓN no aceptan precondición de estado (matriz §3.3).
+
+    No hay estado previo que comparar, así que tragarse un `expected_state` en
+    silencio sería anunciar una garantía que nadie aplica — la misma familia de
+    fail-open que P0-4 persigue en el serializer. `POST /appointments/` lo
+    rechaza dentro del serializer; `create-with-patient` y `walk-in` arman el
+    payload a mano, así que lo rechazan aquí.
+    """
+    data = getattr(request, 'data', None)
+    if isinstance(data, dict) and data.get(EXPECTED_STATE_FIELD) is not None:
+        raise ValidationError({
+            EXPECTED_STATE_FIELD: [
+                'No aplica al crear una cita: no hay estado previo que comparar.'
+            ]
+        })
+
+
+def lock_appointment(appointment):
+    """Re-lee la cita con `select_for_update()`. Debe correr dentro de atomic().
+
+    Sin `select_related`: `FOR UPDATE` sobre el lado nullable de un LEFT JOIN
+    (veterinarian) es un error de PostgreSQL. Aquí solo se necesita la fila de
+    la cita; las relaciones se resuelven después, ya serializando.
+
+    Si la fila desapareció entre la resolución del `public_id` y el lock, la
+    respuesta honesta es 404 — no un 500 por `DoesNotExist` sin manejar.
+    """
+    try:
+        return (
+            Appointment.objects
+            .for_organization(appointment.organization_id)
+            .select_for_update()
+            .get(pk=appointment.pk)
+        )
+    except Appointment.DoesNotExist:
+        raise NotFound('El recurso solicitado no existe.')
+
+
+# ---------------------------------------------------------------------------
+# INV-D — No-solapamiento garantizado por PostgreSQL (decisión §3.4)
+#
+# La disponibilidad la garantiza una restricción de exclusión sobre
+# (organization, veterinarian, [start_datetime, end_datetime)) con predicado
+# parcial de estados activos. El pre-chequeo del serializer SE CONSERVA: es
+# quien produce el mensaje legible. Lo que cambia es que perder la carrera ya
+# no significa escribir.
+#
+# El error de integridad se traduce POR NOMBRE de restricción, nunca capturando
+# `IntegrityError` a ciegas — capturar todo convertiría un bug en un
+# `slot_taken` mentiroso. Cualquier otro IntegrityError se propaga.
+# ---------------------------------------------------------------------------
+
+NO_OVERLAP_CONSTRAINT = 'appointment_no_overlap_per_vet'
+
+ACTIVE_STATUSES = ('scheduled', 'confirmed', 'in_progress')
+
+SLOT_TAKEN_MESSAGE = 'Ya existe una cita para este veterinario en ese horario'
+
+
+class SlotTaken(APIException):
+    """400 `slot_taken` — el hueco del veterinario está ocupado (INV-D).
+
+    Mismo desenlace tanto si lo detecta el pre-chequeo del serializer como si
+    lo rechaza la restricción de la base: el llamador no puede —ni debe—
+    distinguir «ya estaba ocupado» de «lo ocuparon hace 3 ms». La acción a
+    tomar es idéntica (§3.4).
+
+    El cuerpo es un SUPERSET del 400 que este caso devolvía antes
+    (`errors: {error: [...]}`), más el `code` que la convención del proyecto
+    pide: ningún consumidor actual se rompe (`map_domain_400` del agente y
+    `apiError` del frontend siguen encontrando el mensaje).
+    """
+    status_code = 400
+    default_detail = SLOT_TAKEN_MESSAGE
+    default_code = 'slot_taken'
+
+    def __init__(self, detail=None):
+        super().__init__(detail)
+        self.error_payload = {'errors': {'error': [str(self.detail)]}}
+
+
+def is_no_overlap_violation(exc):
+    """True solo si la excepción es la violación de INV-D, POR NOMBRE.
+
+    La violación llega por DOS caminos y ambos cuentan:
+
+      - `DjangoValidationError`, cuando `OrganizationalModel.save()` invoca
+        `full_clean()` y `ExclusionConstraint.validate()` la detecta con una
+        consulta previa. Es un pre-chequeo: cómodo, pero no es la garantía.
+      - `IntegrityError`, cuando ese pre-chequeo pasó y la BASE rechazó. Ésta
+        sí es la garantía, y es la única que cubre la carrera (P0-18).
+
+    En ninguno de los dos se captura a ciegas: se compara el nombre de la
+    restricción. Cualquier otra violación se propaga — convertir un bug en un
+    `slot_taken` mentiroso sería peor que el 500.
+    """
+    if isinstance(exc, DjangoValidationError):
+        return any(
+            NO_OVERLAP_CONSTRAINT in str(message)
+            for message in exc.messages
+        )
+
+    cause = getattr(exc, '__cause__', None)
+    diag = getattr(cause, 'diag', None)
+    constraint = getattr(diag, 'constraint_name', None)
+    if constraint:
+        return constraint == NO_OVERLAP_CONSTRAINT
+    # Fallback para backends/drivers que no exponen `diag`: sigue siendo por
+    # nombre de restricción, nunca «cualquier IntegrityError».
+    return NO_OVERLAP_CONSTRAINT in str(exc)
+
+
+# Las dos excepciones que puede levantar una escritura que viola INV-D. Los
+# callers capturan esta tupla y delegan la clasificación en
+# `is_no_overlap_violation`.
+NO_OVERLAP_EXCEPTIONS = (IntegrityError, DjangoValidationError)
 
 
 # ---------------------------------------------------------------------------
@@ -26,21 +304,15 @@ def replay_appointment(organization, idempotency_key):
     )
 
 
-def create_appointment(user, data):
-    # eliminar organization de los datos enviados para evitar inyecciones
-    data.pop("organization", None)
-
-    # evitar doble reserva (usando for_user si está disponible, o filter seguro)
-    exists = Appointment.objects.for_organization(user.organization).filter(
-        veterinarian=data.get("veterinarian"),
-        datetime=data.get("datetime"),
-        status="scheduled"
-    ).exists()
-
-    if exists:
-        raise Exception("Horario ocupado")
-
-    return Appointment.objects.create(organization=user.organization, **data)
+# `create_appointment(user, data)` se RETIRÓ en F0 (decisión §3.3).
+#
+# No tenía llamadores de producción y estaba roto de hecho (filtraba por un
+# campo `datetime` que el modelo ya no tiene), pero conservaba el patrón
+# `exists()` + `create()` que INV-D prohíbe: una vía read-then-write lista para
+# reutilizarse por error. La creación de citas entra por
+# `POST /api/appointments/` (o `create-with-patient` / `walk-in`), donde la
+# restricción de exclusión es la garantía. Si alguna vez hiciera falta un
+# helper, se reescribe delegando en el endpoint.
 
 
 def complete_appointment_on_record_close(appointment, actor):
@@ -67,6 +339,14 @@ def complete_appointment_on_record_close(appointment, actor):
     ABBA con assign_patient (que lockea Appt→MR). Appointment no está en la
     cadena canónica de locks (CashSession → MR → Invoice → Presentation →
     InvoiceItem → MRP).
+
+    EXCLUIDA de INV-A con justificación (decisión §3.3, matriz de mutaciones):
+    no es un llamador externo con una expectativa que declarar, sino una
+    transición interna `in_progress → done` que YA falla cerrada — el UPDATE
+    condicional no aplica si el estado cambió. Ponerle `select_for_update()`
+    introduciría exactamente el orden de locks Appointment↔MedicalRecord que
+    este diseño evita. Tampoco entra en INV-D: `done` sale del predicado de la
+    restricción (libera el hueco), nunca lo ocupa.
     """
     if appointment is None:
         return None

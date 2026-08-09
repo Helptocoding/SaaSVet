@@ -1,0 +1,389 @@
+"""
+test_no_overlap.py — INV-D: un veterinario no tiene dos citas activas
+solapadas (ADR p57, F0·b).
+
+Cubre P0-18 (concurrencia) y P0-20 (atención sin cita + reactivación) de §8.
+
+**Estas pruebas SOLO valen en PostgreSQL.** La garantía es una restricción de
+exclusión de la base, no el pre-chequeo del serializer: en SQLite la
+restricción no existe y toda esta suite pasaría sin probar nada. El proyecto
+corre sobre PostgreSQL en todos los entornos, incluido CI.
+
+Lo que estas pruebas anclan, además del invariante: que **no existe ninguna
+bandera de forzado**. Un invariante con puerta trasera es un aviso, no una
+garantía (§9.14, §9.15).
+"""
+import threading
+from datetime import timedelta
+
+from django.db import connections
+from django.test import TransactionTestCase
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
+
+from apps.appointments.models import Appointment, AppointmentStatusChange
+from apps.core.models import Permission, Role, UserRole
+from apps.organizations.models import Organization
+from apps.patients.models import Owner, Pet
+from apps.users.models import User
+
+
+def _slot(days=3, hour=10):
+    day = (timezone.now() + timedelta(days=days)).date()
+    return day.isoformat(), f"{hour:02d}:00", f"{hour:02d}:30"
+
+
+def _seed(name, suffix):
+    """Org con ADMIN (wildcard), un VET con wildcard y dos mascotas."""
+    org = Organization.objects.create(name=name, timezone="UTC")
+    wildcard, _ = Permission.objects.get_or_create(code="*.*")
+    role, _ = Role.objects.get_or_create(
+        name="ADMIN", organization=org, defaults={"is_system_role": True})
+    role.permissions.set([wildcard])
+
+    admin = User.objects.create_user(
+        username=f"ovl_admin_{suffix}", password="p", organization=org, role="ADMIN")
+    UserRole.objects.get_or_create(user=admin, role=role)
+    # El vet necesita `appointment.create_walkin` para ser asignable a un
+    # walk-in (RBAC estricto en la view); el wildcard se lo da.
+    vet = User.objects.create_user(
+        username=f"ovl_vet_{suffix}", password="p", organization=org, role="VET")
+    UserRole.objects.get_or_create(user=vet, role=role)
+
+    owner = Owner.objects.create(organization=org, name="Ana", phone="5511110002")
+    pet_a = Pet.objects.create(
+        organization=org, owner=owner, name="Luna",
+        species="perro", birth_date="2021-01-01")
+    pet_b = Pet.objects.create(
+        organization=org, owner=owner, name="Rocky",
+        species="perro", birth_date="2021-01-01")
+    return org, admin, vet, pet_a, pet_b
+
+
+class NoOverlapBase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.org, cls.admin, cls.vet, cls.pet_a, cls.pet_b = _seed("INV-D Org", "b")
+
+    def setUp(self):
+        self.client.force_authenticate(self.admin)
+
+    def _post_appt(self, pet, days=3, hour=10, client=None):
+        date, start, end = _slot(days, hour)
+        return (client or self.client).post("/api/appointments/", {
+            "pet": pet.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": start, "end_time": end, "reason": "consulta",
+        })
+
+
+class OverlapIsRejectedTests(NoOverlapBase):
+    """La restricción cubre creación y reprogramación."""
+
+    def test_second_appointment_on_the_same_slot_is_slot_taken(self):
+        first = self._post_appt(self.pet_a, hour=10)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.content)
+
+        second = self._post_appt(self.pet_b, hour=10)
+
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST, second.content)
+        self.assertEqual(second.json()["code"], "slot_taken")
+        self.assertEqual(Appointment.objects.filter(organization=self.org).count(), 1)
+
+    def test_adjacent_slots_do_not_overlap(self):
+        """10:00–10:30 y 10:30–11:00 son contiguas, no solapadas."""
+        first = self._post_appt(self.pet_a, hour=10)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.content)
+
+        date = (timezone.now() + timedelta(days=3)).date().isoformat()
+        second = self.client.post("/api/appointments/", {
+            "pet": self.pet_b.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": "10:30", "end_time": "11:00", "reason": "x",
+        })
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
+
+    def test_canceled_appointment_frees_the_slot(self):
+        first = self._post_appt(self.pet_a, hour=10)
+        appt = Appointment.objects.get(public_id=first.json()["public_id"])
+        self.client.patch(f"/api/appointments/{appt.public_id}/status/",
+                          {"status": "canceled"})
+
+        second = self._post_appt(self.pet_b, hour=10)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
+
+    def test_appointment_without_veterinarian_never_blocks(self):
+        """Sin veterinario no hay recurso que reservar (fuera del predicado)."""
+        date, start, end = _slot(days=3, hour=10)
+        Appointment.objects.create(
+            organization=self.org, pet=self.pet_a, veterinarian=None,
+            date=date, start_time=start, end_time=end,
+            start_datetime=timezone.now() + timedelta(days=3),
+            end_datetime=timezone.now() + timedelta(days=3, minutes=30),
+            reason="sin vet", status="scheduled",
+        )
+        response = self._post_appt(self.pet_b, hour=10)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+
+
+class WalkInRespectsNoOverlapTests(NoOverlapBase):
+    """P0-20 (a) — atención sin cita, SIN excepción (§9.14, aprobado)."""
+
+    def _occupy_now(self, pet):
+        """Cita activa del vet que cubre el instante actual."""
+        now = timezone.now()
+        return Appointment.objects.create(
+            organization=self.org, pet=pet, veterinarian=self.vet,
+            date=now.date(), start_time=now.time().replace(second=0, microsecond=0),
+            end_time=(now + timedelta(hours=1)).time().replace(second=0, microsecond=0),
+            start_datetime=now - timedelta(minutes=5),
+            end_datetime=now + timedelta(hours=1),
+            reason="consulta en curso", status="in_progress",
+        )
+
+    def test_walk_in_on_a_busy_vet_is_slot_taken_and_writes_nothing(self):
+        occupied = self._occupy_now(self.pet_a)
+        before_appts = Appointment.objects.filter(organization=self.org).count()
+        before_audit = AppointmentStatusChange.objects.filter(
+            organization=self.org).count()
+
+        response = self.client.post("/api/appointments/walk-in/", {
+            "pet": self.pet_b.id, "veterinarian": self.vet.id, "reason": "urgencia",
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+        self.assertEqual(response.json()["code"], "slot_taken")
+        # Cero citas creadas, cero auditoría, la cita existente intacta.
+        self.assertEqual(
+            Appointment.objects.filter(organization=self.org).count(), before_appts)
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(organization=self.org).count(),
+            before_audit)
+        occupied.refresh_from_db()
+        self.assertEqual(occupied.status, "in_progress")
+
+    def test_walk_in_on_a_free_vet_still_works(self):
+        response = self.client.post("/api/appointments/walk-in/", {
+            "pet": self.pet_b.id, "veterinarian": self.vet.id, "reason": "urgencia",
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertTrue(
+            Appointment.objects.filter(
+                organization=self.org, walk_in=True, status="in_progress").exists())
+
+    def test_no_force_flag_can_bypass_the_slot(self):
+        """§9.14/§9.15: no existe `force`, `allow_overlap` ni permiso que lo salte."""
+        self._occupy_now(self.pet_a)
+        for payload_extra in (
+            {"force": True},
+            {"allow_overlap": True},
+            {"force": True, "allow_overlap": True},
+        ):
+            with self.subTest(extra=payload_extra):
+                response = self.client.post("/api/appointments/walk-in/", {
+                    "pet": self.pet_b.id, "veterinarian": self.vet.id,
+                    "reason": "urgencia", **payload_extra,
+                })
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(response.json()["code"], "slot_taken")
+
+
+class ReactivationRespectsNoOverlapTests(NoOverlapBase):
+    """P0-20 (b) — reactivación sin desplazamiento (§9.15, aprobado)."""
+
+    def _canceled_appt_at(self, hour):
+        response = self._post_appt(self.pet_a, hour=hour)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        appt = Appointment.objects.get(public_id=response.json()["public_id"])
+        self.client.patch(f"/api/appointments/{appt.public_id}/status/",
+                          {"status": "canceled"})
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "canceled")
+        return appt
+
+    def test_reactivation_over_a_reassigned_slot_is_slot_taken(self):
+        canceled = self._canceled_appt_at(hour=10)
+        # El hueco se le dio a otro paciente mientras estaba cancelada.
+        taken = self._post_appt(self.pet_b, hour=10)
+        self.assertEqual(taken.status_code, status.HTTP_201_CREATED, taken.content)
+        audit_before = AppointmentStatusChange.objects.filter(
+            appointment=canceled).count()
+
+        response = self.client.patch(
+            f"/api/appointments/{canceled.public_id}/status/", {"status": "scheduled"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
+        self.assertEqual(response.json()["code"], "slot_taken")
+        # Nada se desplaza ni se reubica: la cita sigue cancelada, la otra intacta.
+        canceled.refresh_from_db()
+        self.assertEqual(canceled.status, "canceled")
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=canceled).count(),
+            audit_before)
+        self.assertEqual(
+            Appointment.objects.get(public_id=taken.json()["public_id"]).status,
+            "scheduled")
+
+    def test_reactivation_over_a_free_slot_still_works(self):
+        canceled = self._canceled_appt_at(hour=12)
+        response = self.client.patch(
+            f"/api/appointments/{canceled.public_id}/status/", {"status": "scheduled"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        canceled.refresh_from_db()
+        self.assertEqual(canceled.status, "scheduled")
+
+    def test_no_force_flag_on_reactivation(self):
+        canceled = self._canceled_appt_at(hour=13)
+        self._post_appt(self.pet_b, hour=13)
+        response = self.client.patch(
+            f"/api/appointments/{canceled.public_id}/status/",
+            {"status": "scheduled", "force": True, "allow_overlap": True},
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()["code"], "slot_taken")
+        canceled.refresh_from_db()
+        self.assertEqual(canceled.status, "canceled")
+
+
+class ConcurrentSlotTests(TransactionTestCase):
+    """P0-18 — el cupo es una GARANTÍA, no un mensaje. PostgreSQL.
+
+    Dos escrituras que apuntan al mismo hueco al mismo tiempo: el pre-chequeo
+    `exists()` puede pasar en ambas (ninguna ve a la otra todavía). Sin la
+    restricción de exclusión, las dos persisten. Con ella, exactamente una.
+    """
+    reset_sequences = True
+
+    def setUp(self):
+        self.org, self.admin, self.vet, self.pet_a, self.pet_b = _seed(
+            "INV-D Concurrencia", "cc")
+
+    def tearDown(self):
+        connections.close_all()
+
+    def _run_parallel(self, fn_a, fn_b):
+        barrier = threading.Barrier(2)
+        results = {}
+
+        def runner(name, fn):
+            client = APIClient()
+            client.force_authenticate(self.admin)
+            try:
+                barrier.wait(timeout=15)
+                results[name] = fn(client)
+            finally:
+                connections.close_all()
+
+        threads = [
+            threading.Thread(target=runner, args=("a", fn_a)),
+            threading.Thread(target=runner, args=("b", fn_b)),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=45)
+        return results
+
+    def test_two_concurrent_creations_leave_one_active_appointment(self):
+        date, start, end = _slot(days=3, hour=10)
+
+        def create(pet):
+            def _call(client):
+                response = client.post("/api/appointments/", {
+                    "pet": pet.id, "veterinarian": self.vet.id,
+                    "date": date, "start_time": start, "end_time": end,
+                    "reason": "consulta",
+                })
+                return response.status_code, response.json()
+            return _call
+
+        results = self._run_parallel(create(self.pet_a), create(self.pet_b))
+
+        codes = sorted(code for code, _ in results.values())
+        self.assertEqual(
+            codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST], results)
+        loser = next(body for code, body in results.values() if code == 400)
+        self.assertEqual(loser["code"], "slot_taken")
+        self.assertEqual(
+            Appointment.objects.filter(
+                organization=self.org, veterinarian=self.vet,
+                status__in=("scheduled", "confirmed", "in_progress"),
+            ).count(),
+            1,
+        )
+
+    def test_two_concurrent_reschedules_into_the_same_slot(self):
+        """Dos citas distintas se mueven a la vez al mismo hueco libre."""
+        far_a, far_b = 15, 17
+        appts = []
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        for pet, hour in ((self.pet_a, far_a), (self.pet_b, far_b)):
+            date, start, end = _slot(days=3, hour=hour)
+            response = client.post("/api/appointments/", {
+                "pet": pet.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            })
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+            appts.append(response.json()["public_id"])
+
+        target_date, target_start, target_end = _slot(days=4, hour=9)
+
+        def reschedule(public_id):
+            def _call(client):
+                response = client.patch(f"/api/appointments/{public_id}/", {
+                    "date": target_date, "start_time": target_start,
+                    "end_time": target_end,
+                })
+                return response.status_code, response.json()
+            return _call
+
+        results = self._run_parallel(reschedule(appts[0]), reschedule(appts[1]))
+
+        codes = sorted(code for code, _ in results.values())
+        self.assertEqual(
+            codes, [status.HTTP_200_OK, status.HTTP_400_BAD_REQUEST], results)
+        self.assertEqual(
+            Appointment.objects.filter(
+                organization=self.org, veterinarian=self.vet,
+                start_time=target_start,
+                status__in=("scheduled", "confirmed", "in_progress"),
+            ).count(),
+            1,
+        )
+
+    def test_concurrent_reactivation_and_creation_leave_one_active(self):
+        """Reactivar `canceled → scheduled` mientras otro ocupa el mismo hueco."""
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        date, start, end = _slot(days=3, hour=11)
+        response = client.post("/api/appointments/", {
+            "pet": self.pet_a.id, "veterinarian": self.vet.id,
+            "date": date, "start_time": start, "end_time": end, "reason": "x",
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        canceled_id = response.json()["public_id"]
+        client.patch(f"/api/appointments/{canceled_id}/status/", {"status": "canceled"})
+
+        def reactivate(client):
+            r = client.patch(f"/api/appointments/{canceled_id}/status/",
+                             {"status": "scheduled"})
+            return r.status_code, r.json()
+
+        def create(client):
+            r = client.post("/api/appointments/", {
+                "pet": self.pet_b.id, "veterinarian": self.vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "y",
+            })
+            return r.status_code, r.json()
+
+        results = self._run_parallel(reactivate, create)
+
+        active = Appointment.objects.filter(
+            organization=self.org, veterinarian=self.vet, start_time=start,
+            status__in=("scheduled", "confirmed", "in_progress"),
+        )
+        self.assertEqual(active.count(), 1, results)
+        # Quien perdió recibió el desenlace de negocio, no un 500.
+        losers = [body for code, body in results.values() if code >= 400]
+        for body in losers:
+            self.assertEqual(body.get("code"), "slot_taken", body)
