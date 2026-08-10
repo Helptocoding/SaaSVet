@@ -30,6 +30,7 @@ from .services import (
     expected_state_from_request,
     is_no_overlap_violation,
     lock_appointment,
+    lock_veterinarians,
     reject_expected_state_on_create,
 )
 
@@ -49,6 +50,20 @@ _DELETE_SUNSET_DATE = 'Fri, 06 Nov 2026 23:59:59 GMT'
 DASHBOARD_STATUS_ORDER = [
     "scheduled", "confirmed", "in_progress", "done", "canceled", "no_show"
 ]
+
+def _raw_pk(value):
+    """PK entero de un campo FK crudo del body, o `None` si no lo es.
+
+    Se usa para tomar el lock del veterinario ANTES de que el serializer
+    valide: el lock tiene que ir primero (orden global), y si el valor
+    resultara inválido el serializer lo rechazará después — bloquear un pk
+    inexistente es un no-op.
+    """
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
 
 ALLOWED_TRANSITIONS = {
     'scheduled':   {'confirmed', 'in_progress', 'canceled', 'no_show'},
@@ -110,8 +125,13 @@ class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        vet = serializer.validated_data.get('veterinarian')
         try:
             with transaction.atomic():
+                # INV-D: serializar por veterinario ANTES de escribir. Sin esto,
+                # dos creaciones al mismo hueco hacen deadlock comprobando la
+                # exclusión y el perdedor se lleva un 500 en vez de slot_taken.
+                lock_veterinarians(org.pk, getattr(vet, 'pk', None))
                 serializer.save(organization=org, idempotency_key=key)
         except NO_OVERLAP_EXCEPTIONS as exc:
             # INV-D: el pre-chequeo del serializer perdió la carrera y la
@@ -152,8 +172,19 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
         # get_object() resuelve public_id + tenant + permisos de objeto. La
         # lectura AUTORITATIVA es la de dentro del atomic, no ésta.
         instance = self.get_object()
+        org = request.user.organization
         try:
             with transaction.atomic():
+                # ORDEN GLOBAL: veterinario(s) → cita. Aquí pueden estar en
+                # juego DOS veterinarios (reasignación), y `lock_veterinarians`
+                # los toma por PK: dos PATCH cruzados (A→B y B→A) los piden en
+                # la misma secuencia y no hacen ABBA. El veterinario nuevo se
+                # lee del body crudo porque el lock va antes de validar.
+                lock_veterinarians(
+                    org.pk,
+                    instance.veterinarian_id,
+                    _raw_pk(request.data.get('veterinarian')),
+                )
                 locked = lock_appointment(instance)
                 serializer = self.get_serializer(locked, data=request.data, partial=partial)
                 serializer.is_valid(raise_exception=True)
@@ -178,6 +209,10 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
         expected = expected_state_from_request(request)
 
         with transaction.atomic():
+            # Cancelar SACA la cita del predicado de INV-D: cambia el estado
+            # activo, así que entra en la serialización por veterinario igual
+            # que las que lo ocupan (orden global: veterinario → cita).
+            lock_veterinarians(instance.organization_id, instance.veterinarian_id)
             locked = lock_appointment(instance)
             # Bajo lock y ANTES de cualquier escritura: un 409 no deja rastro
             # (regla R1 de §5.1).
@@ -267,6 +302,13 @@ def update_status(request, pk):
     try:
         # Atomic: el log de estado y el save van juntos; si uno falla, el otro se revierte
         with transaction.atomic():
+            # ORDEN GLOBAL: veterinario → cita. Toda transición de estado entra
+            # o sale del predicado de INV-D (o reescribe la entrada del índice
+            # parcial al quedarse dentro), así que todas se serializan por
+            # veterinario, no solo la reactivación. El id se lee de la cita aún
+            # sin lockear: el lock del veterinario tiene que ir PRIMERO para que
+            # ninguna vía invierta el orden.
+            lock_veterinarians(appointment.organization_id, appointment.veterinarian_id)
             appointment = lock_appointment(appointment)
 
             # INV-A primero: un conflicto no debe producir ni siquiera el 400 de
@@ -534,6 +576,10 @@ def create_with_patient(request):
     from apps.patients.models import Owner
     try:
         with transaction.atomic():
+            # INV-D: serializar por veterinario antes de crear nada. Va primero
+            # dentro del atomic, así que el rollback por cupo tampoco deja
+            # Owner/Pet huérfanos.
+            lock_veterinarians(org.pk, _raw_pk(request.data.get('veterinarian')))
             owner, _ = Owner.objects.get_or_create(
                 organization=org,
                 phone=owner_phone,
@@ -644,8 +690,11 @@ def walk_in(request):
     # múltiples recursos son una feature separada con su propio ADR.
     try:
         with transaction.atomic():
-            # Lock en la fila del vet para serializar walk-ins concurrentes del mismo vet
-            User.objects.select_for_update().get(pk=vet.pk)
+            # Lock en la fila del vet: serializa walk-ins concurrentes del mismo
+            # veterinario (ya existía) Y, desde INV-D, también contra las demás
+            # vías de escritura de agenda. Ahora pasa por el helper compartido
+            # para que el orden sea el mismo en todas partes.
+            lock_veterinarians(org.pk, vet.pk)
             existing = Appointment.objects.filter(
                 organization=org,
                 veterinarian=vet,

@@ -198,9 +198,57 @@ en producción que funciona.
 
 La violación se traduce **por nombre de restricción**, nunca capturando
 `IntegrityError` a ciegas — capturar todo convertiría un bug en un `slot_taken`
-mentiroso. Llega por dos caminos y ambos se traducen: `ValidationError` de
-modelo (`full_clean()` → `ExclusionConstraint.validate()`, un pre-chequeo más) e
-`IntegrityError` de la base (la garantía, la única que cubre la carrera).
+mentiroso. Llega por **dos** caminos y los dos se traducen:
+
+1. `ValidationError` de modelo (`full_clean()` → `ExclusionConstraint.validate()`,
+   un pre-chequeo más).
+2. `IntegrityError` de la base — la garantía, la única que cubre la carrera.
+
+### La garantía tiene dos piezas: exclusión **más** serialización preventiva
+
+Medir la carrera real destapó un tercer desenlace que no estaba previsto: dos
+`INSERT` simultáneos sobre el mismo hueco **se esperan mutuamente** mientras
+PostgreSQL comprueba la exclusión, y el motor rompe el ciclo abortando a uno con
+`OperationalError` **SQLSTATE `40P01`** (`deadlock detected`,
+`CONTEXT: while checking exclusion constraint`). El perdedor recibía un
+`500 server_error` en vez de `slot_taken`: contención de negocio normal
+disfrazada de avería, con su alerta de Sentry por cada vez, justo en el
+escenario para el que existe INV-D.
+
+**Un `40P01` NO se traduce a `slot_taken`, y esa es la decisión.** Un deadlock
+dice «PostgreSQL rompió un ciclo de esperas», no «el hueco está ocupado»: no
+prueba nada sobre el cupo. Se intentó traducirlo re-consultando el hueco tras el
+rollback y la idea era falsa por diseño — el re-chequeo puede correr **antes**
+de que el competidor confirme (y ver el hueco libre) o después de que lo
+cancele. Medido: con esa traducción, la suite en paralelo seguía devolviendo
+500 en ~1 de cada 10 corridas.
+
+La solución es **prevenir el deadlock, no interpretarlo**: toda escritura que
+pueda entrar o salir del predicado de INV-D toma antes un
+`select_for_update()` sobre la fila del **veterinario**
+(`services.lock_veterinarians`). Con la agenda serializada por veterinario, el
+segundo escritor entra cuando el primero ya confirmó, su pre-chequeo ve el hueco
+ocupado y responde `slot_taken` por la vía normal. La restricción sigue siendo
+la garantía; el lock solo evita que se cobre en forma de avería.
+
+- **Dos veterinarios en juego** (un `PATCH` que reasigna la cita): se bloquean
+  **ambos, en orden de PK**. Dos peticiones cruzadas (A→B y B→A) los pedirían en
+  orden opuesto y volverían a hacer ABBA; ordenando por PK, la segunda espera.
+  Se bloquea de uno en uno y explícitamente: un `filter(pk__in=…)` delega el
+  orden al plan de ejecución, que no es un contrato.
+- **Si un `40P01` reaparece, sale como error visible.** Es la señal de que la
+  prevención tiene un agujero, y disfrazarla de resultado de negocio la
+  volvería indiagnosticable.
+
+**Orden global de locks**: `User (veterinario) → Appointment → MedicalRecord`.
+El lock de `Appointment` se mantiene donde protege `expected_state` (INV-A); lo
+que cambia es que el del veterinario va **antes**, y ninguna vía lo invierte.
+`assign-patient` queda fuera de la serialización porque solo cambia `pet`: no
+toca veterinario, fecha, horas ni estado, así que no puede entrar ni salir del
+predicado — hay prueba que lo comprueba campo por campo, no es una afirmación.
+`complete_appointment_on_record_close` también queda fuera: `in_progress → done`
+solo **saca** la cita del índice parcial y sigue usando su UPDATE condicional
+para no invertir el orden con el lock del `MedicalRecord`.
 
 #### Los dos comportamientos que cambian el día 1 (aprobados)
 

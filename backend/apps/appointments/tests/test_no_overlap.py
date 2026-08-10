@@ -14,15 +14,21 @@ bandera de forzado**. Un invariante con puerta trasera es un aviso, no una
 garantía (§9.14, §9.15).
 """
 import threading
+import traceback
+from collections import Counter
 from datetime import timedelta
 
-from django.db import connections
+from unittest import mock
+
+from django.db import OperationalError, connections
 from django.test import TransactionTestCase
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from rest_framework.views import APIView
 
 from apps.appointments.models import Appointment, AppointmentStatusChange
+from apps.appointments.services import NO_OVERLAP_EXCEPTIONS, is_no_overlap_violation
 from apps.core.models import Permission, Role, UserRole
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
@@ -244,6 +250,88 @@ class ReactivationRespectsNoOverlapTests(NoOverlapBase):
         self.assertEqual(canceled.status, "canceled")
 
 
+class DeadlockIsNeverASlotTakenTests(NoOverlapBase):
+    """Un deadlock NO es prueba de que el hueco esté ocupado (rev. F0).
+
+    Hubo un intento de traducir el SQLSTATE 40P01 a `slot_taken` re-consultando
+    el hueco después del rollback. Era falso por diseño: el re-chequeo puede
+    correr **antes** de que el competidor confirme (y ver el hueco libre) o
+    después de que lo cancele. Bajo `--parallel` fallaba ~1 de cada 10 corridas
+    devolviendo un 500.
+
+    El deadlock ahora se **previene** serializando por veterinario. Si aun así
+    apareciera, tiene que salir como error visible: es la señal de que la
+    prevención tiene un agujero, y disfrazarla de resultado de negocio la
+    volvería indiagnosticable.
+    """
+
+    def _deadlock_error(self):
+        from psycopg import errors as pg_errors
+        exc = OperationalError("deadlock detected")
+        exc.__cause__ = pg_errors.DeadlockDetected("deadlock detected")
+        return exc
+
+    def test_a_deadlock_is_not_classified_as_no_overlap(self):
+        self.assertFalse(is_no_overlap_violation(self._deadlock_error()))
+
+    def test_deadlock_is_not_caught_by_the_business_translation(self):
+        """No basta con no clasificarlo: tampoco debe capturarse.
+
+        Si `OperationalError` volviera a la tupla que capturan las vistas, un
+        deadlock quedaría a un `if` de distancia de convertirse en `slot_taken`.
+        """
+        self.assertNotIsInstance(self._deadlock_error(), NO_OVERLAP_EXCEPTIONS)
+
+    def test_the_constraint_violation_is_still_a_business_400(self):
+        """La traducción legítima —por nombre de restricción— sigue viva."""
+        from django.db import IntegrityError as DjangoIntegrityError
+
+        class _Diag:
+            constraint_name = 'appointment_no_overlap_per_vet'
+
+        class _Cause(Exception):
+            diag = _Diag()
+
+        exc = DjangoIntegrityError("conflicting key value violates exclusion constraint")
+        exc.__cause__ = _Cause()
+        self.assertTrue(is_no_overlap_violation(exc))
+
+
+class AssignPatientStaysOutOfInvDTests(NoOverlapBase):
+    """`assign-patient` queda fuera de la serialización, y aquí está la prueba.
+
+    La exclusión se define sobre (organización, veterinario, intervalo) con
+    predicado de estado. `assign-patient` solo cambia `pet`: si no toca ninguno
+    de esos campos, no puede entrar ni salir del predicado, y por tanto no
+    necesita el lock del veterinario. Esto lo comprueba en vez de afirmarlo.
+    """
+
+    def test_assign_patient_touches_no_agenda_field(self):
+        from apps.patients.utils import get_or_create_generic_patient
+
+        _, generic_pet = get_or_create_generic_patient(self.org)
+        created = self._post_appt(self.pet_a, hour=9)
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED, created.content)
+        appt = Appointment.objects.get(public_id=created.json()["public_id"])
+        Appointment.objects.filter(pk=appt.pk).update(pet=generic_pet)
+        appt.refresh_from_db()
+
+        before = (appt.veterinarian_id, appt.date, appt.start_time,
+                  appt.end_time, appt.status, appt.start_datetime, appt.end_datetime)
+
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/assign-patient/",
+            {"pet": self.pet_b.id}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+
+        appt.refresh_from_db()
+        after = (appt.veterinarian_id, appt.date, appt.start_time,
+                 appt.end_time, appt.status, appt.start_datetime, appt.end_datetime)
+        # Recurso, horario y estado de agenda: intactos. Solo cambió el paciente.
+        self.assertEqual(before, after)
+        self.assertEqual(appt.pet_id, self.pet_b.id)
+
+
 class ConcurrentSlotTests(TransactionTestCase):
     """P0-18 — el cupo es una GARANTÍA, no un mensaje. PostgreSQL.
 
@@ -253,6 +341,15 @@ class ConcurrentSlotTests(TransactionTestCase):
     """
     reset_sequences = True
 
+    # Timeouts de DIAGNÓSTICO, no de rendimiento. Medido: la barrera se cruza
+    # en ~1 ms (máx. 25 ms) y el request tarda ~80 ms (máx. 1.4 s) incluso con
+    # el runner en `--parallel`. Estos márgenes existen para que la prueba no
+    # se cuelgue para siempre si algo se rompe, no para vigilar la velocidad:
+    # apretarlos convertiría la lentitud de una máquina cargada en un fallo
+    # falso, que es justo lo que esta prueba dejó de hacer.
+    BARRIER_TIMEOUT = 30
+    JOIN_TIMEOUT = 60
+
     def setUp(self):
         self.org, self.admin, self.vet, self.pet_a, self.pet_b = _seed(
             "INV-D Concurrencia", "cc")
@@ -261,27 +358,75 @@ class ConcurrentSlotTests(TransactionTestCase):
         connections.close_all()
 
     def _run_parallel(self, fn_a, fn_b):
+        """Ejecuta dos llamadas en paralelo y devuelve `{'a': ..., 'b': ...}`.
+
+        El harness anterior perdía información en silencio: una excepción en un
+        hilo solo se notaba como una clave que faltaba en el diccionario, y la
+        aserción de la prueba fallaba con un `[201] != [201, 400]` que no decía
+        NADA de la causa. Fue lo que convirtió un bug real de producción
+        (deadlock en la restricción de exclusión) en «un test flaky».
+
+        Reglas de este harness:
+
+        - **Todo hilo reporta**: o su resultado, o el traceback que lo mató.
+          Nada se traga.
+        - **Un hilo que muere rompe la barrera** (`abort()`), así que el otro no
+          se queda esperando el timeout completo por un compañero que ya no va
+          a llegar. Sin esto, la muerte de un hilo costaba el timeout entero y
+          producía dos fallos en vez de uno con causa.
+        - **Los timeouts son de diagnóstico, no de carrera**: son holgados a
+          propósito (la barrera real tarda milisegundos) y, si se agotan, la
+          prueba falla diciendo QUÉ se colgó, en vez de seguir con resultados
+          parciales.
+        - **Sin reintentos.** Si el dominio se comporta mal, la prueba se pone
+          roja; no se le dan segundas oportunidades hasta que salga verde.
+        """
         barrier = threading.Barrier(2)
-        results = {}
+        outcomes = {}
 
         def runner(name, fn):
-            client = APIClient()
-            client.force_authenticate(self.admin)
             try:
-                barrier.wait(timeout=15)
-                results[name] = fn(client)
+                # El cliente se construye DENTRO del try: si fallara aquí, el
+                # hilo moriría antes de la barrera y dejaría al otro colgado.
+                client = APIClient()
+                client.force_authenticate(self.admin)
+                barrier.wait(timeout=self.BARRIER_TIMEOUT)
+                outcomes[name] = ('ok', fn(client))
+            except BaseException:  # noqa: BLE001 — capturar y reportar, no tragar
+                barrier.abort()
+                outcomes[name] = ('error', traceback.format_exc())
             finally:
                 connections.close_all()
 
-        threads = [
-            threading.Thread(target=runner, args=("a", fn_a)),
-            threading.Thread(target=runner, args=("b", fn_b)),
-        ]
-        for t in threads:
+        threads = {
+            name: threading.Thread(target=runner, args=(name, fn), name=f"slot-{name}")
+            for name, fn in (("a", fn_a), ("b", fn_b))
+        }
+        for t in threads.values():
             t.start()
-        for t in threads:
-            t.join(timeout=45)
-        return results
+
+        stuck = []
+        for name, t in threads.items():
+            t.join(timeout=self.JOIN_TIMEOUT)
+            if t.is_alive():
+                stuck.append(name)
+        if stuck:
+            self.fail(
+                f"Hilos sin terminar tras {self.JOIN_TIMEOUT}s: {sorted(stuck)}. "
+                f"Reportado hasta ahora: {sorted(outcomes)}. "
+                "No se evalúa el invariante con resultados parciales."
+            )
+
+        errors = {n: tb for n, (kind, tb) in outcomes.items() if kind == 'error'}
+        if errors:
+            detail = "\n\n".join(f"--- hilo {n} ---\n{tb}" for n, tb in sorted(errors.items()))
+            self.fail(f"Un hilo falló en vez de devolver una respuesta HTTP:\n\n{detail}")
+
+        missing = set(threads) - set(outcomes)
+        if missing:
+            self.fail(f"Hilos que terminaron sin reportar nada: {sorted(missing)}.")
+
+        return {n: value for n, (_, value) in outcomes.items()}
 
     def test_two_concurrent_creations_leave_one_active_appointment(self):
         date, start, end = _slot(days=3, hour=10)
@@ -299,10 +444,18 @@ class ConcurrentSlotTests(TransactionTestCase):
         results = self._run_parallel(create(self.pet_a), create(self.pet_b))
 
         codes = sorted(code for code, _ in results.values())
+        # Un 500 aquí NO es ruido de concurrencia: es el deadlock de la
+        # restricción de exclusión escapándose sin traducir (ver
+        # `is_no_overlap_violation`). El perdedor de una carrera por el mismo
+        # hueco recibe `slot_taken`, nunca una avería.
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"El perdedor recibió un 500 en vez de slot_taken: {results}",
+        )
         self.assertEqual(
             codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST], results)
         loser = next(body for code, body in results.values() if code == 400)
-        self.assertEqual(loser["code"], "slot_taken")
+        self.assertEqual(loser["code"], "slot_taken", results)
         self.assertEqual(
             Appointment.objects.filter(
                 organization=self.org, veterinarian=self.vet,
@@ -378,6 +531,11 @@ class ConcurrentSlotTests(TransactionTestCase):
 
         results = self._run_parallel(reactivate, create)
 
+        codes = [code for code, _ in results.values()]
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"Reactivación contra creación terminó en 500: {results}",
+        )
         active = Appointment.objects.filter(
             organization=self.org, veterinarian=self.vet, start_time=start,
             status__in=("scheduled", "confirmed", "in_progress"),
@@ -387,3 +545,154 @@ class ConcurrentSlotTests(TransactionTestCase):
         losers = [body for code, body in results.values() if code >= 400]
         for body in losers:
             self.assertEqual(body.get("code"), "slot_taken", body)
+
+    def test_concurrent_vet_swap_does_not_deadlock(self):
+        """Dos PATCH cruzados que intercambian veterinarios (orden de locks).
+
+        A pasa de V1 a V2 mientras B pasa de V2 a V1, a la vez. Si cada
+        petición bloqueara «su» veterinario primero y el otro después, los
+        órdenes serían opuestos y PostgreSQL abortaría una por deadlock. Con el
+        lock tomado en orden de PK, ambas piden V1 antes que V2 y la segunda
+        solo espera.
+
+        La aserción es exigente a propósito: ninguna de las dos puede terminar
+        en 500. El desenlace legítimo es que ambas se reasignen, o que una
+        choque con el cupo y reciba `slot_taken`.
+        """
+        vet2 = User.objects.create_user(
+            username="ovl_vet_swap", password="p", organization=self.org, role="VET")
+        wildcard, _ = Permission.objects.get_or_create(code="*.*")
+        role = Role.objects.get(name="ADMIN", organization=self.org)
+        UserRole.objects.get_or_create(user=vet2, role=role)
+
+        client = APIClient()
+        client.force_authenticate(self.admin)
+        appts = {}
+        for label, pet, vet, hour in (("a", self.pet_a, self.vet, 8),
+                                      ("b", self.pet_b, vet2, 20)):
+            date, start, end = _slot(days=3, hour=hour)
+            r = client.post("/api/appointments/", {
+                "pet": pet.id, "veterinarian": vet.id,
+                "date": date, "start_time": start, "end_time": end, "reason": "x",
+            })
+            self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.content)
+            appts[label] = r.json()["public_id"]
+
+        def swap(public_id, new_vet_id):
+            def _call(cli):
+                r = cli.patch(f"/api/appointments/{public_id}/",
+                              {"veterinarian": new_vet_id}, format="json")
+                return r.status_code, r.json()
+            return _call
+
+        results = self._run_parallel(
+            swap(appts["a"], vet2.id),
+            swap(appts["b"], self.vet.id),
+        )
+
+        codes = [code for code, _ in results.values()]
+        self.assertNotIn(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, codes,
+            f"Un intercambio cruzado de veterinarios terminó en 500 "
+            f"(deadlock por orden de locks): {results}",
+        )
+        for code, body in results.values():
+            if code >= 400:
+                self.assertEqual(body.get("code"), "slot_taken", body)
+
+
+class RepeatedConcurrentCreationTests(TransactionTestCase):
+    """500 carreras seguidas al mismo hueco: SIEMPRE `[201, slot_taken]`.
+
+    Una sola carrera no prueba nada — el deadlock que motivó todo esto aparecía
+    ~1 de cada 250. Esta prueba repite la carrera lo suficiente como para que
+    su ausencia signifique algo, y falla al PRIMER 500 con el cuerpo completo
+    de ambas respuestas.
+
+    Cada iteración usa un hueco distinto, así que no hace falta limpiar entre
+    vueltas y la carrera sigue siendo por el mismo hueco entre los dos hilos.
+    """
+    reset_sequences = True
+
+    ITERATIONS = 500
+    BARRIER_TIMEOUT = 30
+    JOIN_TIMEOUT = 60
+
+    def setUp(self):
+        self.org, self.admin, self.vet, self.pet_a, self.pet_b = _seed(
+            "INV-D 500 carreras", "rep")
+        # 1000 peticiones seguidas superan el `user: 500/hour` y el throttle
+        # devolvería 429, tapando justo lo que se quiere medir. El límite de
+        # tasa protege de clientes abusivos; no forma parte de INV-D.
+        #
+        # Se parchea `throttle_classes` y NO se usa `override_settings`: DRF
+        # resuelve `APIView.throttle_classes` desde `api_settings` en tiempo de
+        # importación, así que cambiar `REST_FRAMEWORK` en caliente no afecta a
+        # las vistas ya definidas (probado: seguía devolviendo 429).
+        patcher = mock.patch.object(APIView, 'throttle_classes', [])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        connections.close_all()
+
+    def test_five_hundred_races_never_produce_a_500(self):
+        seen = Counter()
+
+        for i in range(self.ITERATIONS):
+            day = (timezone.now() + timedelta(days=5 + i // 12)).date().isoformat()
+            hour = 8 + (i % 12)
+            start, end = f"{hour:02d}:00", f"{hour:02d}:30"
+
+            barrier = threading.Barrier(2)
+            outcomes = {}
+
+            def runner(name, pet):
+                try:
+                    client = APIClient()
+                    client.force_authenticate(self.admin)
+                    barrier.wait(timeout=self.BARRIER_TIMEOUT)
+                    r = client.post("/api/appointments/", {
+                        "pet": pet.id, "veterinarian": self.vet.id,
+                        "date": day, "start_time": start, "end_time": end,
+                        "reason": "consulta",
+                    })
+                    outcomes[name] = ('ok', r.status_code, r.json())
+                except BaseException:  # noqa: BLE001
+                    barrier.abort()
+                    outcomes[name] = ('error', None, traceback.format_exc())
+                finally:
+                    connections.close_all()
+
+            threads = [
+                threading.Thread(target=runner, args=("a", self.pet_a)),
+                threading.Thread(target=runner, args=("b", self.pet_b)),
+            ]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(timeout=self.JOIN_TIMEOUT)
+                if t.is_alive():
+                    self.fail(f"iteración {i}: un hilo no terminó en "
+                              f"{self.JOIN_TIMEOUT}s. Reportado: {sorted(outcomes)}")
+
+            crashed = {n: tb for n, (kind, _, tb) in outcomes.items() if kind == 'error'}
+            if crashed:
+                detail = "\n\n".join(f"--- hilo {n} ---\n{tb}" for n, tb in crashed.items())
+                self.fail(f"iteración {i}: un hilo murió:\n\n{detail}")
+
+            codes = sorted(code for _, code, _ in outcomes.values())
+            if status.HTTP_500_INTERNAL_SERVER_ERROR in codes:
+                self.fail(
+                    f"iteración {i}: alguien recibió un 500 en una carrera por "
+                    f"el cupo. Respuestas: { {n: (c, b) for n, (_, c, b) in outcomes.items()} }"
+                )
+            self.assertEqual(
+                codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST],
+                f"iteración {i}: { {n: (c, b) for n, (_, c, b) in outcomes.items()} }",
+            )
+            loser = next(b for _, c, b in outcomes.values() if c == 400)
+            self.assertEqual(loser.get("code"), "slot_taken", loser)
+            seen[tuple(codes)] += 1
+
+        self.assertEqual(sum(seen.values()), self.ITERATIONS)

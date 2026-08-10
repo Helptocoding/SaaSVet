@@ -251,9 +251,18 @@ def lock_appointment(appointment):
 # quien produce el mensaje legible. Lo que cambia es que perder la carrera ya
 # no significa escribir.
 #
+# La garantía tiene DOS piezas y hacen falta las dos:
+#
+#   1. La restricción de exclusión — dice la verdad sobre el cupo, siempre.
+#   2. La serialización preventiva por veterinario (`lock_veterinarians`) —
+#      hace que esa verdad se cobre como `slot_taken` y no como un deadlock.
+#      Sin ella la restricción sigue siendo correcta, pero el perdedor de una
+#      carrera puede recibir un 500 en vez de su desenlace de negocio.
+#
 # El error de integridad se traduce POR NOMBRE de restricción, nunca capturando
 # `IntegrityError` a ciegas — capturar todo convertiría un bug en un
-# `slot_taken` mentiroso. Cualquier otro IntegrityError se propaga.
+# `slot_taken` mentiroso. Cualquier otro IntegrityError se propaga, y el
+# deadlock (40P01) también: no prueba que el hueco esté ocupado.
 # ---------------------------------------------------------------------------
 
 NO_OVERLAP_CONSTRAINT = 'appointment_no_overlap_per_vet'
@@ -296,7 +305,17 @@ def is_no_overlap_violation(exc):
       - `IntegrityError`, cuando ese pre-chequeo pasó y la BASE rechazó. Ésta
         sí es la garantía, y es la única que cubre la carrera (P0-18).
 
-    En ninguno de los dos se captura a ciegas: se compara el nombre de la
+    **El deadlock (SQLSTATE 40P01) NO entra aquí, a propósito.** Un deadlock
+    dice «PostgreSQL rompió un ciclo de esperas», no «el hueco está ocupado»:
+    no prueba nada sobre el cupo. Traducirlo a `slot_taken` —con o sin
+    re-chequeo posterior— es afirmar algo que no se sabe: el re-chequeo puede
+    correr antes de que el competidor confirme y ver el hueco libre, o después
+    de que lo cancele. El deadlock se **previene** serializando por
+    veterinario (ver `lock_veterinarians`); si aun así apareciera, debe salir
+    como error visible para poder diagnosticarlo, no disfrazado de resultado
+    de negocio.
+
+    En ninguno de los dos casos se captura a ciegas: se compara el nombre de la
     restricción. Cualquier otra violación se propaga — convertir un bug en un
     `slot_taken` mentiroso sería peor que el 500.
     """
@@ -318,8 +337,44 @@ def is_no_overlap_violation(exc):
 
 # Las dos excepciones que puede levantar una escritura que viola INV-D. Los
 # callers capturan esta tupla y delegan la clasificación en
-# `is_no_overlap_violation`.
+# `is_no_overlap_violation`. `OperationalError` NO está: un deadlock no es un
+# desenlace de negocio (ver arriba).
 NO_OVERLAP_EXCEPTIONS = (IntegrityError, DjangoValidationError)
+
+
+def lock_veterinarians(organization_id, *veterinarian_ids):
+    """Serializa la agenda POR VETERINARIO antes de tocarla. Dentro de atomic().
+
+    Ésta es la **prevención** del deadlock de la restricción de exclusión. Sin
+    ella, dos `INSERT` simultáneos sobre el mismo hueco se esperan mutuamente
+    mientras PostgreSQL comprueba la exclusión y el motor aborta a uno con
+    SQLSTATE 40P01 — medido: ~1 de cada 10 corridas de la suite en paralelo.
+    Con el lock tomado antes de escribir, el segundo entra cuando el primero ya
+    confirmó, su pre-chequeo ve el hueco ocupado y responde `slot_taken` por la
+    vía normal. La restricción sigue siendo la garantía; esto solo evita que la
+    garantía se cobre en forma de avería.
+
+    **Orden determinista por PK** (rule 2): cuando hay dos veterinarios en
+    juego —un `PATCH` que reasigna la cita de un vet a otro— dos peticiones
+    cruzadas (A→B y B→A) tomarían los locks en orden opuesto y volverían a
+    hacer ABBA. Ordenando por PK, ambas los toman en la misma secuencia y la
+    segunda simplemente espera.
+
+    Se lockea de una en una y en orden explícito: un solo `filter(pk__in=...)`
+    delega el orden de bloqueo al plan de ejecución, que no es un contrato.
+
+    Los ids nulos se ignoran: una cita sin veterinario no reserva recurso y
+    queda fuera del predicado de INV-D.
+    """
+    from apps.users.models import User
+
+    for pk in sorted({pk for pk in veterinarian_ids if pk}):
+        (
+            User.objects
+            .select_for_update()
+            .filter(pk=pk, organization_id=organization_id)
+            .first()
+        )
 
 
 # ---------------------------------------------------------------------------

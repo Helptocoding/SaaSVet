@@ -287,6 +287,18 @@ resultado, y el llamador no puede distinguirlos:
 `400`, no `409`: el `409` está reservado a precondiciones vencidas. El cuerpo es
 un superset del anterior — ningún consumidor se rompe.
 
+**La garantía tiene dos piezas.** La restricción dice la verdad sobre el cupo;
+la **serialización preventiva por veterinario** hace que esa verdad se cobre
+como `slot_taken` y no como avería. Toda escritura que pueda entrar o salir del
+predicado de INV-D toma antes un `select_for_update()` sobre la fila del
+veterinario (`services.lock_veterinarians`); si hay reasignación, sobre **los
+dos** veterinarios en orden de PK. Sin eso, dos escrituras simultáneas al mismo
+hueco hacen deadlock comprobando la exclusión y el perdedor recibe un 500.
+
+Un `deadlock detected` (SQLSTATE `40P01`) **no** se traduce a `slot_taken`: no
+prueba que el hueco esté ocupado. Si aparece, es un bug de cobertura del lock y
+debe verse como error.
+
 **Dos comportamientos cambiaron el día 1** (decisión de producto aprobada):
 
 | Camino | Antes | Ahora |
