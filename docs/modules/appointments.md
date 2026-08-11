@@ -108,13 +108,39 @@ Campos requeridos:
 | `end_time` | Hora fin |
 | `reason` | Motivo |
 
-Campos opcionales: `pet_sex` (default `unknown`), `pet_birth_date`, `notes`.
+Campos opcionales: `pet_sex` (default `unknown`), `pet_birth_date`, `notes`,
+`require_new_owner` (bool, default `false` — ver abajo).
 
 Lógica interna con `transaction.atomic()`:
 
-1. `Owner.objects.get_or_create(organization=org, phone=owner_phone)` — si el teléfono ya existe en la organización se reutiliza el owner (cliente que regresa con mascota nueva), de lo contrario se crea con el nombre enviado.
+1. `patients.services.resolve_owner_for_phone(...)` — resuelve el expediente **bajo el lock de deduplicación** `(organización, teléfono normalizado)`, dentro de la misma transacción que crea la cita (INV-C, ADR p57). El lock de aviso se toma **antes** del lock de fila del veterinario, según el orden global de `system-reference.md` §2.
 2. `Pet.objects.create(...)` — siempre crea una mascota nueva (incluso si el owner ya existía).
 3. `AppointmentSerializer(...).is_valid(raise_exception=True)` — reutiliza toda la validación existente: conflictos de horario, fecha pasada, conversión de timezone.
+
+#### Identidad del expediente (INV-B / INV-C)
+
+Antes esta vía usaba `Owner.objects.get_or_create(phone=…)`: sin lock, dos altas
+concurrentes del mismo número creaban **dos** expedientes, y comparaba el
+teléfono en crudo, así que no encontraba al cliente cuyo número se capturó con
+espacios y le fabricaba un duplicado.
+
+| Expedientes con ese teléfono | `require_new_owner` | Resultado |
+|---|---|---|
+| 0 | cualquiera | crea Owner + Pet + cita |
+| 1 | ausente / `false` | **reutiliza** el expediente y crea Pet + cita |
+| 1 | `true` | **`409 owner_exists`** con `candidate` (`public_id`, `name`) |
+| ≥ 2 | cualquiera | **`409 owner_ambiguous`** con `candidate_count` |
+
+- `require_new_owner` es **INV-B aplicado**: lo envía quien **no** tiene
+  identidad verificada —el agente— para que el dominio se niegue a colgar una
+  mascota nueva de un expediente ajeno. Es **opt-in**: sin él, recepción sigue
+  reutilizando el expediente del cliente que vuelve.
+- Se parsea **fail-closed**: solo `true`/`false` (o sus cadenas), cualquier otro
+  valor es `400`. Tratar `"yes"` como `false` relajaría la protección justo para
+  quien la pide, y sin dejar rastro.
+- `owner_ambiguous` **no** es opt-in: aplica también a recepción.
+- Los dos 409 dejan **cero escrituras** (ni Owner, ni Pet, ni Appointment) y
+  **no modifican** el expediente encontrado.
 
 Si cualquier paso falla (validación, conflicto de horario, teléfono inválido), toda la transacción se revierte. No quedan owners ni mascotas huérfanas.
 

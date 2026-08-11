@@ -148,10 +148,10 @@ históricos se listan (`audit_owner_phone_duplicates`) y los ordena una persona;
 
 El `Owner` genérico queda fuera de todo esto: `phone_normalized = NULL` siempre.
 
-**Excluida con evidencia, hoy**: `POST /api/appointments/create-with-patient/`
-sigue resolviendo con `get_or_create(phone=…)`. Deriva la clave correctamente
-(lo garantiza `Owner.save()`) pero **no** toma el lock ni produce estos
-desenlaces. Es deuda declarada, no una exención de diseño.
+`require_new_owner` (opt-in, solo en el registro rápido) es **INV-B aplicado**:
+quien no tiene identidad verificada pide expediente nuevo y recibe
+`409 owner_exists` si el número ya tiene uno, en vez de colgar una mascota de un
+expediente ajeno.
 
 ---
 
@@ -243,10 +243,11 @@ desenlaces. Es deuda declarada, no una exención de diseño.
 **Requiere**
 - Permiso `appointment.create`.
 - Datos completos: `owner_name`, `owner_phone` (10 dígitos), `pet_name`, `pet_species` y los datos de la cita.
+- Opcional: `require_new_owner` (bool, default `false`). Solo `true`/`false`; cualquier otro valor → **400** (interpretarlo como `false` relajaría INV-B en silencio, justo para el llamador que la necesita).
 
-**Resultado** (atómico)
-- Si el `phone` ya existe en la organización → reutiliza el Owner (el cliente regresa con una nueva mascota).
-- Si no existe → crea el Owner.
+**Resultado** (atómico — el expediente lo resuelve el servicio único de `patients` bajo el lock de deduplicación, dentro de la misma transacción que crea la cita)
+- Sin expediente con ese teléfono → crea el Owner.
+- Con **un** expediente y sin `require_new_owner` → lo reutiliza (el cliente regresa con una nueva mascota).
 - Crea siempre una Pet nueva.
 - Crea el Appointment con toda la validación habitual (detección de conflictos, fecha pasada, timezone).
 
@@ -254,6 +255,10 @@ desenlaces. Es deuda declarada, no una exención de diseño.
 - El flujo normal de atención a partir de la cita creada.
 
 **Bloquea**
+- **Un expediente existente con `require_new_owner=true`** → **409 `owner_exists`** con el candidato (INV-B: el teléfono localiza, no autoriza).
+- **Dos o más expedientes** → **409 `owner_ambiguous`**, con o sin el flag (INV-C no es opt-in).
+- Los dos 409 no dejan **nada**: ni Owner, ni Pet, ni Appointment, y **no modifican** el expediente que encontraron.
+- Dos altas concurrentes con el mismo teléfono normalizado no pueden fabricar dos expedientes: el lock las serializa.
 - Si cualquier paso falla, hay rollback completo (no quedan huérfanos).
 
 **Módulos involucrados**

@@ -439,11 +439,18 @@ prueba estática enumera cada sitio que construye un `Owner` y falla si aparece
 uno sin clasificar. Regla de proceso: una vía nueva entra en la tabla **antes de
 mergear**.
 
-**Deuda declarada**: `POST /api/appointments/create-with-patient/` (familia
-A1·B2) todavía resuelve con `get_or_create(phone=…)`. La clave sí queda derivada
-—`Owner.save()` lo garantiza siempre—, pero esa vía no toma el lock, no produce
-`owner_exists`/`owner_ambiguous` y no soporta `require_new_owner`. Está en el
-allowlist del gate estático **con ese motivo escrito**, no excluida por diseño.
+**El registro rápido cierra la familia A1·B2.**
+`POST /api/appointments/create-with-patient/` resuelve el expediente con el
+servicio, bajo el lock, dentro de la misma transacción que crea la cita, y gana
+`require_new_owner` (opt-in, default `false`) como aplicación de INV-B. El lock
+de aviso se toma **antes** del lock de fila del veterinario, según el orden
+global; no introduce un ABBA porque ninguna otra vía toma ambos recursos.
+
+`require_new_owner` se parsea **fail-closed**: solo `true`/`false`, cualquier
+otro valor es `400`. Aceptar `"yes"` o `1` como «falso» relajaría la protección
+justo para el llamador que la pide —quien no tiene identidad verificada— y el
+fallo sería invisible: la mascota quedaría colgada de un expediente ajeno sin
+que nadie viera un error.
 
 ### El `Owner` genérico
 
@@ -552,6 +559,8 @@ existen.
 | P0-26 | `agent/tests/test_identity_readers.py` | los lectores del agente con un duplicado **distinguible solo tras normalizar**: cero vínculo, `is_ambiguous`, nivel sin subir, `auto_rematch_blocked` intacto. Con un único candidato de formato distinto → `phone_match` |
 | P0-27 | `imports/tests/test_owner_phone_ambiguity.py` | preview y commit coinciden en `owner_ambiguous`; el conteo de importables ya excluye la fila; ninguna pasada usa `.first()` |
 | P0-28 | `patients/tests/test_owner_phone_identity.py` | `Owner` genérico creado por el signal y por `patients.utils` → `phone_normalized = NULL`; no cuenta, no bloquea, ningún contacto puede vincularse a él por teléfono |
+| A1·B2 | `appointments/tests/test_create_with_patient_identity.py` | registro rápido: 0 → crea · 1 sin flag → reutiliza (iron rule) · 1 con `require_new_owner` → `owner_exists` con candidato · ≥2 → `owner_ambiguous` con y sin flag · cero escrituras en ambos 409 · el expediente encontrado **no** se modifica · parseo fail-closed del flag |
+| A1·B2 (carrera) | ídem (`TransactionTestCase`, **PostgreSQL**) | dos registros rápidos simultáneos con el mismo teléfono normalizado → **un** expediente y dos mascotas (horas distintas, para que el único punto de contención sea el teléfono y no el cupo) |
 | P2-12 | ídem (`InventoryStaticGateTests`) | gate **doble**: funcional (todas las vías producen los desenlaces del servicio) y **estático** (todo sitio que construya un `Owner` está en el inventario, y nadie asigna `.phone` fuera del servicio) |
 | P2-14 | ídem (*iron rule*) | el flujo aprobado de staff **no cambia**: cliente nuevo → crea; mismo cliente → reutiliza (incluso con acentos distintos) |
 | P2-15 | ídem | el relleno del genérico no colisiona con un cliente real que tenga ese mismo número |

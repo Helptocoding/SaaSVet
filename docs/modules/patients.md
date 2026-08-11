@@ -140,7 +140,7 @@ cumplir enumerando cada sitio que construye un `Owner`.
 | Importador (preview / dry-run) | E3 | modo lectura, mismo contrato |
 | `agent/services` — creación de `ContactIdentity` | E1 | modo lectura sobre `phone_normalized` |
 | `agent/services._rematch_owner` | E2 | modo lectura sobre `phone_normalized` |
-| `POST /api/appointments/create-with-patient/` | A1·B2 | **PENDIENTE** — deriva la clave (lo garantiza `Owner.save()`) pero **no** toma el lock ni produce `owner_exists`/`owner_ambiguous` |
+| `POST /api/appointments/create-with-patient/` | A1·B2 | usa el servicio + `require_new_owner` (opt-in) — ver § Alta rápida desde citas |
 | `OwnerViewSet ?search` | E4 | excluida: búsqueda para que una **persona** elija (ya filtra `is_generic=False`) |
 | `patients.utils`, `organizations.signals` | A5 | excluidas: `Owner` genérico, clave `NULL`, fuera del conteo |
 | `seed_demo_clinic`, `agent_eval` | A6 | excluidas: siembra single-writer sobre tenants propios |
@@ -343,14 +343,21 @@ El serializer valida explicitamente que la organizacion del usuario este asignad
 El endpoint `POST /api/appointments/create-with-patient/` crea owner + pet + cita en una sola
 transacción atómica sin pasar por el módulo de mascotas.
 
-- Si el teléfono del dueño ya existe en la organización, se reutiliza el owner (cliente que
-  regresa con mascota nueva).
+- El expediente lo resuelve el **servicio único** (A1·B2 del inventario), bajo el
+  lock de deduplicación y dentro de la misma transacción que crea la cita.
+- Si el teléfono ya tiene **un** expediente en la organización se reutiliza
+  (cliente que regresa con mascota nueva) — salvo que el llamador envíe
+  `require_new_owner`.
 - La mascota siempre se crea nueva.
-- **Deuda declarada (INV-C)**: esta vía (A1·B2 del inventario) todavía usa
-  `Owner.objects.get_or_create(phone=…)`. La **clave** sí queda derivada
-  (`Owner.save()` lo garantiza siempre), pero no toma el lock de deduplicación
-  ni produce `owner_exists` / `owner_ambiguous`, y sigue sin soportar
-  `require_new_owner`. Migrarla es trabajo pendiente de F1 sobre `appointments`.
+- **`require_new_owner`** (bool, opt-in, default `false`): INV-B aplicado. Lo
+  envía quien **no** tiene identidad verificada —el agente— para que el dominio
+  se niegue a colgar una mascota nueva de un expediente ajeno. Con un
+  expediente existente responde `409 owner_exists` **con el candidato** y cero
+  escrituras. Un valor que no sea `true`/`false` es `400`: interpretarlo como
+  `false` relajaría la protección justo para quien la necesita, y en silencio.
+- **`409 owner_ambiguous`** con dos o más expedientes, **con o sin el flag**.
+- Los dos 409 no dejan **nada**: ni `Owner`, ni `Pet`, ni `Appointment`, y no
+  modifican el expediente que encontraron.
 - Toda la validación de la cita (conflictos, fecha pasada, timezone) se delega al
   `AppointmentSerializer` existente dentro del mismo `transaction.atomic()`.
 

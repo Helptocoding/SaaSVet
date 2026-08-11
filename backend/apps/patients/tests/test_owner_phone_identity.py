@@ -705,10 +705,6 @@ class InventoryStaticGateTests(SimpleTestCase):
             'A6 — siembra single-writer sobre el tenant demo.',
         'apps/agent/management/commands/agent_eval.py':
             'A6 — siembra single-writer sobre el tenant de evaluación.',
-        'apps/appointments/views.py':
-            'A1 — create-with-patient: PENDIENTE de migrar al servicio. Deriva '
-            'la clave (Owner.save lo garantiza) pero NO toma el lock de '
-            'deduplicación ni produce owner_exists/owner_ambiguous.',
     }
 
     #: Sitios donde una asignación a `.phone` es legítima. Mover la clave es

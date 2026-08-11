@@ -529,13 +529,53 @@ def assign_patient(request, pk):
     return Response(AppointmentSerializer(appointment, context={'request': request}).data)
 
 
+def _parse_require_new_owner(raw):
+    """`require_new_owner` del body → bool. Ausente = `False` (opt-in).
+
+    **Fail-closed a propósito**: un valor que no se reconoce es un `400`, nunca
+    un `False` silencioso. Interpretar `"yes"` o `1` como «no exijas expediente
+    nuevo» relajaría INV-B justo para el llamador que la necesita —quien no
+    tiene identidad verificada— y el fallo sería invisible: la mascota quedaría
+    colgada de un expediente ajeno y nadie vería un error.
+    """
+    if raw is None:
+        return False
+    if isinstance(raw, bool):
+        return raw
+    # Los formularios (multipart / form-urlencoded) no tienen tipo booleano.
+    if isinstance(raw, str) and raw.strip().lower() in ('true', 'false'):
+        return raw.strip().lower() == 'true'
+    raise ValueError('Debe ser true o false.')
+
+
 @api_view(['POST'])
 @permission_classes([make_permission("appointment.create")])
 def create_with_patient(request):
     """
-    Crea atómicamente: owner (get_or_create por teléfono+org) + pet + cita.
-    Si el teléfono ya existe en la org, reutiliza el owner y crea solo la mascota nueva.
+    Crea atómicamente: owner (por el servicio único de `patients`) + pet + cita.
     Cualquier error revierte toda la transacción: no quedan registros huérfanos.
+
+    **Resolución del expediente (INV-C, ADR p57)**. El teléfono lo resuelve
+    `patients.services.resolve_owner_for_phone`, bajo el lock de deduplicación
+    `(organización, teléfono normalizado)` y dentro de la MISMA transacción que
+    escribe. Cuatro desenlaces, sin rama que elija:
+
+    | Expedientes con ese teléfono | `require_new_owner` | Resultado |
+    |---|---|---|
+    | 0 | cualquiera | crea Owner + Pet + cita |
+    | 1 | ausente / `false` | **reutiliza** el expediente y crea Pet + cita |
+    | 1 | `true` | **409 `owner_exists`** con el candidato, cero escrituras |
+    | ≥ 2 | cualquiera | **409 `owner_ambiguous`**, cero escrituras |
+
+    `require_new_owner` es **INV-B aplicado** (el teléfono localiza, no
+    autoriza): lo envía quien NO tiene identidad verificada —el agente— para
+    que el dominio se niegue a colgar una mascota nueva de un expediente ajeno.
+    Es **opt-in**: sin el flag, recepción sigue reutilizando el expediente del
+    cliente que vuelve con otra mascota, que es el flujo aprobado y el que
+    protege P2-14.
+
+    `owner_ambiguous` **no** es opt-in: si el dominio no sabe cuál es el
+    expediente, ningún actor puede fingir que sí.
     """
     org = request.user.organization
     if not org:
@@ -566,6 +606,11 @@ def create_with_patient(request):
         errors['owner_name'] = 'El nombre del dueño es requerido.'
     if not re.match(r'^\d{10}$', owner_phone):
         errors['owner_phone'] = 'El teléfono debe tener exactamente 10 dígitos.'
+    try:
+        require_new_owner = _parse_require_new_owner(request.data.get('require_new_owner'))
+    except ValueError as exc:
+        errors['require_new_owner'] = str(exc)
+        require_new_owner = True  # irrelevante: `errors` ya aborta abajo
     if not pet_name:
         errors['pet_name'] = 'El nombre de la mascota es requerido.'
     # Especie OPCIONAL (datos mínimos): vacía => '' ("pendiente"). Si se captura,
@@ -595,18 +640,29 @@ def create_with_patient(request):
         'status':       'scheduled',
     }
 
-    from apps.patients.models import Owner
+    from apps.patients.services import resolve_owner_for_phone
     try:
         with transaction.atomic():
-            # INV-D: serializar por veterinario antes de crear nada. Va primero
+            # INV-C (ADR p57): el expediente lo resuelve el servicio único de
+            # `patients`, bajo el lock de deduplicación `(org, teléfono
+            # normalizado)`. Antes esta vía usaba `get_or_create(phone=…)`: sin
+            # lock, dos altas concurrentes del mismo número creaban dos
+            # expedientes, y un teléfono con duplicados históricos elegía uno.
+            #
+            # El lock de aviso va ANTES del lock de fila del veterinario, como
+            # manda el orden global (`system-reference.md` §2). No introduce un
+            # ABBA: ninguna otra vía toma ambos recursos, y las que tocan el
+            # veterinario no resuelven expedientes.
+            owner, _outcome = resolve_owner_for_phone(
+                org,
+                phone=owner_phone,
+                name=owner_name,
+                require_new=require_new_owner,
+            )
+            # INV-D: serializar por veterinario antes de crear nada. Sigue
             # dentro del atomic, así que el rollback por cupo tampoco deja
             # Owner/Pet huérfanos.
             lock_veterinarians(org.pk, _raw_pk(request.data.get('veterinarian')))
-            owner, _ = Owner.objects.get_or_create(
-                organization=org,
-                phone=owner_phone,
-                defaults={'name': owner_name},
-            )
             pet = Pet.objects.create(
                 name=pet_name,
                 species=pet_species,
