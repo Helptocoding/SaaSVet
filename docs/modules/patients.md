@@ -14,7 +14,8 @@ Es el punto de entrada a todos los flujos clinicos del sistema.
 Campos:
 - `public_id` — UUID v4 expuesto en URLs y deep links (ADR p18 Día 6)
 - `name` — nombre del propietario
-- `phone` — telefono de contacto (10 digitos en alta manual; `blank=True` a nivel modelo — ver excepción del importador abajo)
+- `phone` — telefono de contacto (10 digitos en alta manual; `blank=True` a nivel modelo — ver excepción del importador abajo). **Texto libre**: se guarda como lo tecleó cada quien (`"55 1234 5678"`, `"(55) 1234-5678"`)
+- `phone_normalized` — **clave de identidad y deduplicación** (INV-C, ADR p57). 10 dígitos o `NULL`. La deriva **siempre** el dominio en `Owner.save()`, nunca el cliente (`editable=False`, fuera de los serializers). Ver § Identidad de expediente por teléfono
 - `is_generic` — marca al propietario sintetico "Publico General" creado por organizacion
 - `legacy_id` — identificador del sistema/clínica de origen (nº de cliente del software viejo), agregado en el Sprint import. `blank=True, default=''`. Único por organización **solo cuando está presente** (constraint parcial que excluye `''`). NO es PK ni reemplaza `public_id` — solo referencia. La UI lo muestra como "Número de expediente anterior", nunca "legacy_id".
 - `extra_data` — `JSONField(default=list, blank=True)`: datos históricos del sistema anterior (Sprint import Fase D, ADR p43). Lista de `{label, value, source_column, imported_at}`. **Read-only** (lo escribe solo el importador; `read_only` en el serializer). Ver § Datos del sistema anterior.
@@ -68,9 +69,150 @@ No se almacena como `choices` en el campo del modelo para evitar migraciones al 
 
 ### Telefono
 
-Regex: `^\d{10}$`
+Regla **única** del dominio: `apps.core.validators.validate_mx_phone` — 10
+dígitos MX + rechazo de relleno evidente (`0000000000`, `1234567890`). No se
+valida para propietarios con `is_generic = True`.
 
-Solo digitos, exactamente 10. No se valida para propietarios con `is_generic = True`.
+Desde F1 (ADR p57) **no queda ninguna segunda regla de forma**: el
+`PHONE_REGEX` local de `patients/serializers.py` —que la escritura anidada de
+`PetSerializer` usaba y que **aceptaba rellenos**— se retiró. El alta de mascota
+valida el teléfono con la misma regla que el alta de cliente.
+
+## Identidad de expediente por teléfono (INV-C — ADR p57)
+
+> **INV-C** — Un teléfono normalizado identifica **como máximo un expediente**
+> dentro de una organización. Si hay más de uno, el resultado es
+> `owner_ambiguous` y el caso escala a una persona. El sistema **nunca** fusiona
+> registros ni elige uno automáticamente.
+
+> **INV-B** — El teléfono **localiza**, no autoriza. Que un número coincida no
+> habilita escribir sobre el expediente que encontró.
+
+### El servicio único (`apps/patients/services.py`)
+
+Todo camino que resuelva un expediente a partir de un teléfono pasa por aquí.
+Tres operaciones, una sola verdad:
+
+| Operación | Lock | Para qué |
+|---|---|---|
+| `lookup_owner_by_phone(org, phone)` | **no** | Modo lectura: saber sin decidir. Lo usan los lectores de identidad del agente y las pasadas de preview/dry-run del importador |
+| `resolve_owner_for_phone(org, …)` | sí | Resolver para escribir. **Debe llamarse dentro de la transacción que escribe** |
+| `change_owner_phone(owner, phone)` | sí (dos claves) | Mover la clave: bloquea la anterior y la nueva en **orden total**, comprueba y guarda sin ventana |
+
+**Desenlaces de `resolve_owner_for_phone`** (exhaustivos — no existe una rama
+que «elija»):
+
+| Expedientes con la clave | `require_new` | `match_name` | Resultado |
+|---|---|---|---|
+| sin clave (vacío o < 10 dígitos) | — | — | `created` |
+| 0 | cualquiera | — | `created` |
+| 1 | `False` | nombre coincide, o `False` | `reused` |
+| 1 | `False` | nombre distinto | **`409 owner_exists`** con el candidato |
+| 1 | `True` | — | **`409 owner_exists`** |
+| ≥ 2 | cualquiera | — | **`409 owner_ambiguous`**, cero escrituras |
+
+`owner_ambiguous` **no es opt-in**: aplica también a recepción. Si el dominio no
+sabe cuál es el expediente, ningún actor puede fingir que sí.
+
+**Por qué un lock de aviso y no `UNIQUE (organization, phone)`**: la restricción
+única exigiría limpiar o fusionar los duplicados históricos, y eso es justo lo
+que INV-C prohíbe. El lock (`core.db_locks.advisory_xact_lock`, a nivel de
+transacción) cubre además el caso que un lock de fila no puede cubrir: **la fila
+todavía no existe**. Es **PostgreSQL-only y ruidoso**: en otro motor lanza
+`AdvisoryLockUnsupported` en vez de degradarse a no-op, y exige transacción
+abierta (en autocommit el lock se soltaría en la misma sentencia).
+
+### Inventario de vías (contrato del módulo — §4.7.4 de la decisión)
+
+Toda vía **usa el servicio** o queda **excluida con evidencia**. No hay
+categoría implícita, y «cualquier vía futura» **no** es cobertura válida: una
+vía nueva entra en esta tabla antes de mergear. El gate
+`patients/tests/test_owner_phone_identity.py::InventoryStaticGateTests` lo hace
+cumplir enumerando cada sitio que construye un `Owner`.
+
+| Vía | Familia | Estado |
+|---|---|---|
+| `POST /api/owners/` | A2 | usa el servicio (`match_name=True`) |
+| `POST /api/pets/` | A3·B1 | usa el servicio — contrato nuevo abajo |
+| `PATCH/PUT /api/owners/<id>/` | C1 | `change_owner_phone` |
+| `PATCH/PUT /api/pets/<id>/` (teléfono anidado) | C2 | `change_owner_phone` |
+| Importador (commit) | A4·B3 | usa el servicio, por fila |
+| Importador (preview / dry-run) | E3 | modo lectura, mismo contrato |
+| `agent/services` — creación de `ContactIdentity` | E1 | modo lectura sobre `phone_normalized` |
+| `agent/services._rematch_owner` | E2 | modo lectura sobre `phone_normalized` |
+| `POST /api/appointments/create-with-patient/` | A1·B2 | **PENDIENTE** — deriva la clave (lo garantiza `Owner.save()`) pero **no** toma el lock ni produce `owner_exists`/`owner_ambiguous` |
+| `OwnerViewSet ?search` | E4 | excluida: búsqueda para que una **persona** elija (ya filtra `is_generic=False`) |
+| `patients.utils`, `organizations.signals` | A5 | excluidas: `Owner` genérico, clave `NULL`, fuera del conteo |
+| `seed_demo_clinic`, `agent_eval` | A6 | excluidas: siembra single-writer sobre tenants propios |
+| `PATCH /api/appointments/<id>/assign-patient/` | B5 | excluida: cambia `Appointment.pet`, no `Pet.owner` |
+| Django admin | C4 | excluida: `Owner` **no está registrado**. Registrarlo lo devuelve a C1 |
+
+### `POST /api/pets/` — dos modos explícitos
+
+El alta de mascota **ya no infiere identidad por teléfono**. Antes resolvía el
+cliente con `get_or_create(name, phone, organization)`: una segunda regla de
+deduplicación que colgaba mascotas de expedientes localizados solo por
+coincidencia de número (INV-B) y **fabricaba** un segundo `Owner` cuando el
+teléfono coincidía pero el nombre no ("Ana López" vs "Ana Lopez").
+
+| Modo | Cómo se pide | Qué hace |
+|---|---|---|
+| **referencia** | `owner_public_id` (UUID) | asocia la mascota a **ese** expediente. Elegirlo es un acto del staff, no una inferencia |
+| **alta** | `owner: {name, phone}` | pasa por el servicio, bajo el lock |
+
+Enviar ambos o ninguno → `400`. Un `owner_public_id` de otra organización →
+`400` (no existe para este endpoint). En **edición** (`PATCH /api/pets/<id>/`)
+`owner_public_id` está prohibido: mover una mascota de cliente es otra
+operación.
+
+Desenlaces del modo alta: 0 → crea · 1 con nombre coincidente (comparado sin
+acentos ni mayúsculas) → reutiliza, **igual que hoy** · 1 con nombre distinto →
+`409 owner_exists` con el candidato · ≥2 → `409 owner_ambiguous`.
+
+La resolución del `Owner` y la creación de la `Pet` son **una sola
+transacción**: no existe el estado «cliente creado, mascota no».
+
+### Cambiar el teléfono
+
+Mueve la clave de deduplicación. Bloquea la anterior y la nueva en orden total
+—sin ese orden, dos cambios cruzados (A→B y B→A) se abortan por deadlock— y
+comprueba y guarda en el mismo bloque. Con la clave nueva ocupada por 1 →
+`409 owner_exists`; por ≥2 → `409 owner_ambiguous`.
+
+Un `409` en la vía anidada (`PATCH /api/pets/`) **no deja ni el teléfono
+cambiado ni los campos de la mascota guardados**: antes eran dos `save()`
+sueltos.
+
+Reformatear el mismo número (`"5512345678"` → `"55 1234 5678"`) no mueve la
+clave: es una edición corriente.
+
+### El `Owner` genérico
+
+| Aspecto | Regla |
+|---|---|
+| `phone_normalized` | **`NULL`**, siempre. Nunca `''` ni `'0000000000'` |
+| Deduplicación y conteo | excluido de las cuatro decisiones |
+| Locks | no participa (sin clave no hay clave que bloquear) |
+| Lectores de identidad | excluido: un contacto de WhatsApp jamás puede quedar vinculado al genérico por teléfono |
+| Búsqueda `?search` | excluido (sigue accesible por `?is_generic=true`, venta directa / ADR p25) |
+| Su `phone` de texto | se conserva tal cual |
+
+**El teléfono del `Owner` genérico nunca es identidad.**
+
+### Duplicados históricos
+
+INV-C los convierte en un caso **soportado**, no en un error a erradicar.
+
+- `python manage.py audit_owner_phone_duplicates [--org N] [--json]` los lista
+  por organización (exit 0 limpio / 1 con hallazgos / 2 error). **Diagnóstico,
+  no remediación**: no fusiona, no borra, no elige y no propone.
+- **Ninguna migración fusiona ni borra duplicados**, ni ahora ni después. Los
+  ordena una persona de la clínica con las herramientas que ya existen.
+- Consecuencia aceptada: una clínica con duplicados verá `owner_ambiguous` en
+  las altas contra esos teléfonos —también en su alta manual— hasta que ordene
+  el dato. Mezclar dos expedientes clínicos es peor que pedir una decisión
+  humana.
+- **No se añade una restricción única** en ningún momento del plan.
 
 ### Datos mínimos en captura manual (regla de producto piloto)
 
@@ -158,6 +300,12 @@ ya no escala con las filas (blindado en `test_pet_list_pagination.py`).
 El frontend usa `?is_generic=true` para obtener el propietario "Publico General" al cargar la vista de cobros.
 El frontend usa `?is_generic=false` en el buscador de propietarios para excluir el generico de los resultados.
 
+Desde F1 (ADR p57, E4 del inventario) el backend **también** excluye al genérico
+de `?search` por su cuenta, salvo que el llamador lo pida por su condición
+(`?is_generic=true`). La búsqueda existe para que una **persona** elija un
+cliente; el genérico no es un cliente al que se le pueda colgar una mascota, y
+su teléfono de relleno no es identidad de nadie.
+
 ### Paginación (ADR p42)
 
 `OwnerViewSet` pagina el **listado completo** (PageNumber 25 → envelope
@@ -198,6 +346,11 @@ transacción atómica sin pasar por el módulo de mascotas.
 - Si el teléfono del dueño ya existe en la organización, se reutiliza el owner (cliente que
   regresa con mascota nueva).
 - La mascota siempre se crea nueva.
+- **Deuda declarada (INV-C)**: esta vía (A1·B2 del inventario) todavía usa
+  `Owner.objects.get_or_create(phone=…)`. La **clave** sí queda derivada
+  (`Owner.save()` lo garantiza siempre), pero no toma el lock de deduplicación
+  ni produce `owner_exists` / `owner_ambiguous`, y sigue sin soportar
+  `require_new_owner`. Migrarla es trabajo pendiente de F1 sobre `appointments`.
 - Toda la validación de la cita (conflictos, fecha pasada, timezone) se delega al
   `AppointmentSerializer` existente dentro del mismo `transaction.atomic()`.
 

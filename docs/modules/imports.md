@@ -78,8 +78,17 @@ Interface `parse_file()` → `CSVParser` | `ExcelParser`.
 ## Reglas de negocio (`owner_pet`)
 
 - `owner.name` **requerido** (NAME_REGEX). `pet.name` **requerido**.
-- `owner.phone` **opcional**: con teléfono → dedup `(org, phone)`; sin teléfono → se
+- `owner.phone` **opcional**: con teléfono → dedup `(org, teléfono normalizado)`
+  resuelta por el **servicio único de `patients`** (INV-C, ADR p57); sin teléfono → se
   importa igual (warning), dedup interna por nombre normalizado dentro del archivo.
+  El importador **no endurece** su regla a `(nombre, teléfono)`: sigue deduplicando
+  por teléfono, y un cliente existente se reutiliza aunque el nombre del archivo
+  difiera.
+- **`owner_ambiguous`** (INV-C): si el teléfono normalizado de una fila tiene
+  **dos o más** expedientes en la organización, la fila **no se importa** y se
+  reporta como error de fila (`{field: 'owner.phone', code: 'owner_ambiguous'}`).
+  Antes el importador hacía `.first()` y **elegía** una de las filas duplicadas —
+  exactamente lo que INV-C prohíbe. Ver § Duplicados de teléfono.
 - `pet.species` **opcional**: si falta o no se reconoce → se importa pendiente (`''`)
   con warning (nunca bloquea, nunca asigna especie por defecto en masa).
 - `pet.birth_date` opcional (formatos `YYYY-MM-DD`, `DD/MM/YYYY`…; inválida → warning,
@@ -357,8 +366,44 @@ como aviso, indicadores "Mostrando N de M", estados vacíos, CTA),
 `MappingStep.test.jsx`, `ResultStep.test.jsx`, `UploadStep.test.jsx`,
 `ImportedDataSection.test.jsx`, `groupImportIssues.test.js`.
 
+## Duplicados de teléfono (INV-C — ADR p57)
+
+El importador tiene **tres** lecturas por teléfono, no una: la pasada de
+validación/preview, la de dry-run y la del commit. Las **tres** usan el mismo
+resolvedor (`patients.services`) y el mismo contrato de cuatro desenlaces
+(`0` → alta nueva · `1` → reutiliza · `owner_exists` · `owner_ambiguous`).
+
+Cambiar solo la última habría dejado un fallo de producto silencioso: **la vista
+previa diría «se reutilizará el cliente X» y el commit rechazaría esa misma fila**.
+El usuario aprueba una cosa y obtiene otra. En concreto:
+
+- El preview **no puede mostrar una elección que la escritura rechazaría**. Una
+  fila cuyo teléfono normalizado tenga dos o más expedientes aparece **desde el
+  principio** como fila con error, dentro del bloque de omitidas que la UI ya
+  sabe presentar.
+- El `.first()` desaparece de las tres pasadas: **ni el preview elige**.
+- El conteo de «se importarán N filas» ya incluye esas exclusiones, así que
+  coincide con el resultado real del commit.
+- La política de fila **no cambia**: una fila problemática no aborta el import;
+  se salta y se reporta.
+
+Consecuencia aceptada: en una clínica con dato sucio, el **conteo de filas
+importadas baja** — filas que hoy reutilizan la primera coincidencia pasan a
+reportarse. Elegir una fila arbitraria era el bug, no la función.
+`audit_owner_phone_duplicates` (ver `modules/patients.md`) lista los duplicados
+para que alguien los ordene.
+
+Nota de escala: el lock de deduplicación es a nivel de transacción y el commit
+del job es **una** transacción, así que los locks se acumulan hasta el final (uno
+por teléfono nuevo). `parsers.MAX_ROWS = 2000` acota el máximo; subir ese tope
+obliga a revisar `max_locks_per_transaction` de PostgreSQL.
+
 ## Relación con otros módulos
 
 - **patients**: crea `Owner` + `Pet`; razón de `phone`/`species` `blank=True`,
-  `legacy_id` y `extra_data`. Ver `modules/patients.md`.
+  `legacy_id` y `extra_data`. Desde F1 (ADR p57) **comparte la resolución de
+  expediente por teléfono**: `imports/services._resolve_owner` delega en
+  `patients.services.resolve_owner_for_phone`, y la normalización converge a
+  `core.validators.phone_digits` (conservando su excepción de teléfono vacío).
+  Ver `modules/patients.md` § Identidad de expediente por teléfono.
 - Resto de dominios: sin acoplamiento (migración aislada).

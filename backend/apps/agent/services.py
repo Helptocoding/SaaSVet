@@ -18,7 +18,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.channels.models import Message
-from apps.patients.models import Owner
+from apps.patients.services import lookup_owner_by_phone
 
 from .models import ContactIdentity, Conversation
 
@@ -89,6 +89,19 @@ def resolve_contact_identity(channel_account, wa_id, profile_name=''):
       ``is_ambiguous`` (el sistema jamás "elige" — D1: Owner.phone no es
       unique por org; las intenciones personales escalan, E-05).
 
+    **La comparación va normalizado ↔ normalizado** (E1 del inventario, INV-C,
+    decisión §4.11). Antes comparaba el valor normalizado del ``wa_id`` contra
+    ``Owner.phone`` EN CRUDO: un expediente guardado como ``"55 1234 5678"`` y
+    otro como ``"5512345678"`` son la misma clave, pero la igualdad cruda solo
+    encontraba el segundo — el lector veía **una** coincidencia donde INV-C
+    dice **ambigua** y vinculaba el contacto a esa fila. Era una elección
+    automática entre duplicados históricos, por una puerta que el inventario de
+    escrituras no miraba.
+
+    Que el nivel resultante sea ``phone_match`` (que no autoriza nada por sí
+    solo) no lo hacía inocuo: ese vínculo es el punto de partida de la
+    promoción a ``confirmed_in_chat``, y arrastraba el expediente equivocado.
+
     ``display_name`` (perfil de WhatsApp) se refresca en cada mensaje pero
     es dato NO confiable — solo display de bandeja, jamás verificación.
     """
@@ -111,14 +124,12 @@ def resolve_contact_identity(channel_account, wa_id, profile_name=''):
     ambiguous = False
     level = ContactIdentity.VERIFICATION_UNKNOWN
     if phone:
-        owners = list(
-            Owner.objects.for_organization(org)
-            .filter(phone=phone, is_generic=False)[:2]
-        )
-        if len(owners) == 1:
-            owner = owners[0]
+        lookup = lookup_owner_by_phone(org, phone)
+        if lookup.owner is not None:
+            owner = lookup.owner
             level = ContactIdentity.VERIFICATION_PHONE_MATCH
-        elif len(owners) > 1:
+        elif lookup.is_ambiguous:
+            # Sin vínculo y sin subir de nivel: el dato se ordena primero.
             ambiguous = True
 
     contact = ContactIdentity(
@@ -164,6 +175,18 @@ def _rematch_owner(contact):
     el siguiente mensaje del mismo número. No es la única ruta de auto-enlace
     que respeta el flag — ver también
     `tools.commit_register_new_client_and_pet`.
+
+    E2 del inventario (INV-C, decisión §4.11): resuelve sobre
+    `Owner.phone_normalized`, no sobre `Owner.phone` crudo — mismo bypass que
+    E1, y éste corre en CADA mensaje de un contacto aún `unknown`.
+
+    Ante ambigüedad: `is_ambiguous=True`, **cero vínculo**, el nivel NO sube y
+    `auto_rematch_blocked` **no se toca ni se limpia** — ese flag solo lo limpia
+    una de las vías de promoción auditadas, y un lector no es ninguna de ellas.
+    Un contacto ambiguo tampoco se «desambigua» solo: esta función vuelve a
+    correr en mensajes posteriores y, si el dato quedó ordenado y hay un único
+    candidato, entonces sí vincula. Que el conteo cambie es información del
+    dominio, no una decisión del lector.
     """
     if contact.owner_id is not None or not contact.phone_normalized:
         return
@@ -171,12 +194,9 @@ def _rematch_owner(contact):
         return
     if contact.auto_rematch_blocked:
         return
-    owners = list(
-        Owner.objects.for_organization(contact.organization)
-        .filter(phone=contact.phone_normalized, is_generic=False)[:2]
-    )
-    if len(owners) == 1:
-        contact.owner = owners[0]
+    lookup = lookup_owner_by_phone(contact.organization, contact.phone_normalized)
+    if lookup.owner is not None:
+        contact.owner = lookup.owner
         contact.verification_level = ContactIdentity.VERIFICATION_PHONE_MATCH
         contact.is_ambiguous = False
         contact.save(update_fields=[
@@ -186,7 +206,7 @@ def _rematch_owner(contact):
             "organization_id": contact.organization_id,
             "contact_id": contact.pk,
         })
-    elif len(owners) > 1 and not contact.is_ambiguous:
+    elif lookup.is_ambiguous and not contact.is_ambiguous:
         contact.is_ambiguous = True
         contact.save(update_fields=['is_ambiguous'])
 

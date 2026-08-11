@@ -35,6 +35,12 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | `closed_at` genera log `ANCHOR_LATE_ARRIVAL` | El cierre de consulta cayó en un bucket frozen (>T+2). | Es solo una advertencia (warn-only); revisar la latencia operativa. |
 | `RBAC_DENIED` recurrente para el mismo endpoint | El frontend está usando un endpoint que el rol no tiene permitido. | Revisar `can()` antes de mostrar el CTA correspondiente. |
 | `409 appointment_changed` al mutar una cita | INV-A (ADR p57): la cita cambió entre que el llamador la leyó y quiso escribir. **No es un bug ni un 5xx.** | El cuerpo trae `current` con el estado real. Recargar y volver a decidir. **Nunca** reintentar sin `expected_state` ni con el mismo `idempotency_key` forzado. |
+| `409 owner_ambiguous` al dar de alta un cliente, una mascota o al importar | INV-C (ADR p57): ese teléfono normalizado tiene **dos o más** expedientes en la organización. **No es un bug**: el sistema falla cerrado en vez de elegir uno. | `python manage.py audit_owner_phone_duplicates --org <id>` lista los pares con su `public_id`. Los ordena una **persona** de la clínica (`/pets`, edición de cliente). El sistema no fusiona ni ahora ni después. |
+| `409 owner_exists` al dar de alta una mascota | INV-B/§4.9: el teléfono ya tiene expediente **con otro nombre**. Crear un segundo fabricaría el duplicado que INV-C obliga a tratar como ambiguo. | El cuerpo trae `candidate` (`public_id`, nombre). La UI pregunta «¿es este cliente?» y reenvía en **modo referencia** (`owner_public_id`), o corrige el teléfono. Nunca se decide por el usuario. |
+| `409 owner_exists` al cambiar el teléfono de un cliente | §4.10: la clave nueva ya está ocupada; moverse ahí fabricaría un duplicado. | Cero escrituras (ni el teléfono ni, en la vía anidada de `PATCH /api/pets/`, los campos de la mascota). Corregir el número o resolver cuál es el expediente bueno. |
+| Un contacto de WhatsApp deja de ser reconocido tras el deploy de F1 | INV-C (§4.11): dos expedientes que solo coinciden **tras normalizar** ahora dan `ambiguous`; antes la igualdad cruda veía uno y vinculaba a ciegas. | Conducta correcta, no regresión. `audit_owner_phone_duplicates`; en cuanto quede un solo candidato, `_rematch_owner` vincula en el mensaje siguiente. |
+| El importador reporta menos filas importadas que antes | Filas que reutilizaban la primera coincidencia (`.first()`) pasan a `owner_ambiguous`. | Esperado (INV-C). El preview ya muestra el mismo desenlace que el commit, así que el conteo aprobado coincide con el real. |
+| `RuntimeError: advisory_xact_lock() requiere una transacción abierta` | Alguien llamó al resolvedor de escritura fuera de un `atomic()`. | Es la guarda funcionando: en autocommit el lock se soltaría en la misma sentencia y no serializaría nada. Abrir la transacción en el llamador, que además debe cubrir toda la escritura. |
 | `400 slot_taken` en una atención sin cita | INV-D (ADR p57, §9.14): el veterinario tiene una cita activa que solapa esos 30 minutos. Comportamiento **aprobado**, no regresión. | Escoger otro veterinario u otro horario. No existe bandera de forzado; sobrecupo es feature separada. |
 | `400 slot_taken` al reactivar una cita cancelada | INV-D (ADR p57, §9.15): el hueco se reasignó mientras estaba cancelada. | Programar de nuevo en un hueco libre. Nada se desplaza automáticamente. |
 | La migración `appointments/0014` falla al desplegar | Hay solapes históricos vivos. PostgreSQL no admite exclusiones `NOT VALID` → fail-closed deliberado. | `python manage.py audit_appointment_overlaps`, remediación **humana** por clínica, re-auditar y reintentar. Correrlo el mismo día del deploy. |
@@ -53,6 +59,7 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - El orden global de locks es: `CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct`.
 - **`User` (veterinario) precede a `Appointment`** (ADR p57). Toda escritura que pueda entrar o salir del predicado de INV-D —crear, `create-with-patient`, atención sin cita, `PATCH` de detalle, `/status/` incluida la reactivación, y `DELETE`— toma antes un `select_for_update()` sobre la fila del veterinario vía `services.lock_veterinarians`. Con dos veterinarios (reasignación) se bloquean **ambos en orden de PK**, o dos reasignaciones cruzadas harían ABBA. Sin esta serialización la restricción de exclusión sigue siendo correcta, pero dos escrituras simultáneas al mismo hueco hacen deadlock (`40P01`) y el perdedor recibe un 500 en vez de `slot_taken`.
 - **`Appointment` precede a `MedicalRecord`** (ADR p57). Desde F0, cuatro endpoints lockean la fila de la cita explícitamente (`PATCH` detalle, `/status/`, `DELETE`, `assign-patient`) y dos de ellos tocan después el `MedicalRecord` vinculado. El único camino que va en sentido contrario —`complete_appointment_on_record_close`, invocado con el lock del `MedicalRecord` ya tomado— usa un **UPDATE condicional** justamente para no invertir el orden con un `select_for_update`. Ese UPDATE toma igualmente el row lock implícito de la cita, así que la ventana `assign-patient` ↔ `close_medical_record` sobre el mismo par sigue siendo la única con orden cruzado: es preexistente, estrecha (exige vincular paciente y cerrar consulta en el mismo instante) y PostgreSQL la resuelve abortando una de las dos, no corrompiendo nada. **No añadir un `select_for_update` a `complete_appointment_on_record_close`**: lo convertiría en un ABBA garantizado en vez de una carrera improbable.
+- **El lock de deduplicación de teléfono se toma antes de cualquier lock de fila del alta** (ADR p57, INV-C) y se libera con el commit de la transacción del llamador. No introduce ciclo con el orden global (`CashSession → MedicalRecord → Invoice → …`) porque precede a todos. En el **cambio de teléfono** se bloquean las **dos** claves (anterior y nueva) en **orden total** por el valor normalizado: sin ese orden, dos cambios cruzados (A→B y B→A) se abortan por deadlock.
 - `recalculate_totals()` solo se invoca bajo lock de la Invoice.
 - `seed_permissions` se ejecuta en cada deploy (Procfile).
 - El frontend usa `public_id` en URLs y deep links; los PKs solo se usan en campos FK del body y en despliegues de pantalla.
@@ -86,6 +93,28 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 20. **`InvoiceItem.dispensed_from_prescription_item`** es el discriminador único para determinar qué ítems descuentan stock en una factura de consulta (no existe una segunda función de stock).
 21. **Dispensado ≤ recetado** (ADR p37): por ítem de receta, `Σ(quantity × conversion_factor)` de las líneas dispensadas activas de la factura no excede `PrescriptionItem.quantity` (unidades base). Cubre dispensación, edición de línea (PATCH) y bloquea ítems de presentación manuales en facturas `consultation`. El cliente puede llevar menos; nunca más.
 22. **INV-A — precondición atómica de estado de cita** (ADR p57): si el llamador envía `expected_state = {status, date, start_time}`, el dominio lo compara contra la fila bajo `select_for_update()` **en la misma transacción que escribe**. Al fallar: `409 appointment_changed` con `current` y **cero escrituras** (ni cita ni `AppointmentStatusChange`). Vale para **cualquier actor**, no solo el agente. Es opt-in hasta que el frontend la adopte; el opt-in es del *envío*, nunca de la *comparación*.
+22b. **INV-B — el teléfono localiza, no autoriza** (ADR p57): que un número
+    coincida con un `Owner` **no** habilita escribir sobre ese expediente.
+    Reutilizar un expediente existente exige identidad verificada por el
+    mecanismo que corresponda al actor; quien no la tiene pide expediente nuevo
+    (`require_new`) y recibe `409 owner_exists` si el número ya tiene uno. El
+    alta de mascota lo aplica también al staff: asociar una mascota exige que el
+    usuario **haya elegido** el expediente (modo referencia), no que el número
+    coincida.
+
+22c. **INV-C — un teléfono normalizado ⇒ como máximo un expediente por
+    organización** (ADR p57): toda vía que cree un `Owner`, le asocie una `Pet`,
+    mute su teléfono **o lea identidad por teléfono** pasa por el servicio único
+    de `patients`, que normaliza con la función única del dominio, toma un lock
+    de aviso transaccional sobre `(organización, teléfono normalizado)` y cuenta
+    bajo él. Cuatro desenlaces exhaustivos: `created` / `reused` /
+    `409 owner_exists` / `409 owner_ambiguous`. **No existe una rama que elija
+    entre duplicados**, ni siquiera para recepción, ni siquiera en la vista
+    previa del importador. Los duplicados históricos **nunca** se fusionan: se
+    listan (`audit_owner_phone_duplicates`) y los ordena una persona. El
+    `Owner` genérico tiene `phone_normalized = NULL` siempre — su teléfono de
+    relleno no es identidad de nadie.
+
 23. **INV-D — un veterinario no tiene dos citas activas solapadas** (ADR p57): garantizado por una restricción de exclusión de PostgreSQL sobre `(organization, veterinarian, [start_datetime, end_datetime))` con predicado de estados activos. **Sin excepciones**: cubre creación, reprogramación, atención sin cita y reactivación. El desenlace es `400 slot_taken`, lo detecte el pre-chequeo o lo rechace la base. **No existe ninguna bandera de forzado** (`force`, `allow_overlap`, permiso que lo salte).
 
 ---
@@ -114,6 +143,11 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - Jamás capturar `IntegrityError` a ciegas para producir `slot_taken`: se compara el **nombre** de la restricción (`appointment_no_overlap_per_vet`). Capturar todo convierte un bug en un `slot_taken` mentiroso.
 - Jamás añadir una bandera de forzado del solape (`force`, `allow_overlap`, permiso que lo salte). Sobrecupo, lista de espera y múltiples recursos son una feature separada con su propio ADR.
 - Jamás aplicar `appointments/0014` sin correr `audit_appointment_overlaps` y remediar a mano lo que reporte: la migración falla con solapes históricos vivos.
+- **Jamás crear un `Owner`, asociarle una `Pet` ni modificar su teléfono fuera del servicio único de `patients`** (ADR p57, INV-C). `get_or_create(...phone...)` y `get_or_create(...name..., ...phone...)` quedan prohibidos como forma de resolver identidad. Y una regla de **proceso**, porque el fallo de la primera versión fue de método: una vía nueva **no** se «considera cubierta» por la fórmula «cualquier vía futura». Entra en el inventario de `docs/modules/patients.md` —usando el servicio o **excluida con evidencia**— antes de mergear; el gate `patients/tests/test_owner_phone_identity.py::InventoryStaticGateTests` enumera cada sitio que construye un `Owner` y falla si aparece uno sin clasificar.
+- **Jamás resolver identidad comparando contra `Owner.phone` en crudo.** La unión es normalizado ↔ normalizado (`ContactIdentity.phone_normalized` ↔ `Owner.phone_normalized`). Comparar un valor normalizado contra la columna cruda ve **una** coincidencia donde INV-C dice **ambigua**, y de ahí sale un vínculo de identidad a un expediente elegido a ciegas. **Leer también es decidir**: `.first()` y `[:2]` como forma de elegir entre candidatos están prohibidos en todas las vías, incluida la vista previa del importador.
+- **Jamás degradar el lock de deduplicación a un no-op.** `advisory_xact_lock` es PostgreSQL-only y exige transacción abierta: en otro motor lanza, y en autocommit lanza. Un lock que no bloquea es un fail-open invisible, que es la clase de bug que INV-C existe para cerrar.
+- **Jamás derivar `Owner.phone_normalized` desde el cliente ni fuera de `Owner.save()`**, y jamás darle un valor al `Owner` genérico: `NULL` es la representación de «no tiene clave de cliente» (ADR p57 §4.12).
+- **Jamás añadir una restricción única de teléfono por organización**: está descartada, no aplazada. Sería incompatible con INV-C (exigiría fusionar duplicados históricos) y es otra decisión, con su propia migración y su propia limpieza.
 
 ---
 

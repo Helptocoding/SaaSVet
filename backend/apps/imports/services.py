@@ -4,9 +4,14 @@ imports/services.py — Núcleo del importador (validación dry-run + commit at�
 Reglas de negocio (entity_type=owner_pet), ver docs/project_import_sprint.md §6:
 
 - owner.name  requerido (NAME_REGEX, reusado de patients).
-- owner.phone OPCIONAL. Con teléfono → dedup por (org, phone). Sin teléfono →
-  se importa igual (dedup_key=null); dedup interna por nombre normalizado dentro
-  del MISMO archivo (no se inventan errores por falta de teléfono).
+- owner.phone OPCIONAL. Con teléfono → dedup por (org, teléfono normalizado),
+  resuelta por `patients.services` (INV-C, ADR p57): el importador NUNCA elige
+  entre expedientes duplicados. Dos o más con el mismo teléfono normalizado →
+  error de fila `owner_ambiguous`, y lo mismo en la vista previa (§4.8: el
+  preview no puede mostrar una reutilización que el commit rechazaría). Sin
+  teléfono → se importa igual (sin clave de deduplicación); dedup interna por
+  nombre normalizado dentro del MISMO archivo (no se inventan errores por falta
+  de teléfono).
 - pet.name    requerido (NAME_REGEX).
 - pet.species requerida → normalize_species; no resoluble → error de fila.
 - pet dedup   por (owner, normalize(name), species) — normalizado, NO string exacto.
@@ -14,14 +19,18 @@ Reglas de negocio (entity_type=owner_pet), ver docs/project_import_sprint.md §6
 - Una fila inválida NO aborta el import: se salta con savepoint y se reporta
   (evita "500 filas → 120 errores → nada se importa").
 """
-import re
-
 from django.db import transaction
 from django.utils import timezone
 
 from apps.core.datetime_utils import org_today_local
+from apps.core.validators import phone_digits
 from apps.patients.models import Owner, Pet
 from apps.patients.serializers import NAME_REGEX
+from apps.patients.services import (
+    OwnerIdentityConflict,
+    lookup_owner_by_phone,
+    resolve_owner_for_phone,
+)
 
 from .models import ImportJob
 from .normalization import (
@@ -33,7 +42,6 @@ from .normalization import (
     valid_target_fields,
 )
 
-_PHONE_DIGITS = re.compile(r'\D')
 _LEGACY_MAX = 64
 # Datos del sistema anterior (Fase D): tope por registro y por valor (ajuste PO).
 _EXTRA_MAX_ENTRIES = 50
@@ -173,7 +181,10 @@ def clean_owner_pet_row(data, org):
     raw_phone = (data.get('owner.phone') or '').strip()
     phone = ''
     if raw_phone:
-        digits = _PHONE_DIGITS.sub('', raw_phone)
+        # D3 del inventario: la normalización converge a la del dominio
+        # (`core.validators.phone_digits`). El importador conserva SU excepción
+        # —teléfono vacío permitido— pero no su propia definición de "dígitos".
+        digits = phone_digits(raw_phone)
         if len(digits) == 10:
             phone = digits
         else:
@@ -305,6 +316,33 @@ def _append_conflict(result, conflict):
     result['conflicts'].append(conflict)
 
 
+# INV-C: el desenlace `owner_ambiguous` es el MISMO en las tres pasadas
+# (preview, dry-run y commit). Un solo mensaje para que el usuario lea lo mismo
+# antes y después de aprobar el import.
+_AMBIGUOUS_OWNER_ERROR = {
+    'field': 'owner.phone',
+    'code': 'owner_ambiguous',
+    'message': (
+        'Hay más de un cliente con este teléfono. Revisa los expedientes '
+        'duplicados antes de importar esta fila.'
+    ),
+}
+
+
+def _append_row_error(result, row_num, error):
+    """Marca la fila como no importable (política vigente: se salta y se reporta).
+
+    Una fila problemática NUNCA aborta el import. Al contarla aquí, el
+    «se importarán N filas» que ve el usuario ya la excluye — que es la
+    condición para que el preview coincida con el resultado real del commit.
+    """
+    result['blocking_rows'] += 1
+    result['error_rows'] += 1
+    entry = {'row': row_num, **error}
+    result['blocking'].append(entry)
+    result['errors'].append(entry)
+
+
 def _preview_row(row_num, clean):
     """Helper: devuelve dict de preview con los campos de la fila importable."""
     return {
@@ -432,17 +470,22 @@ def validate_job(job):
             continue
 
         # --- 1. Resolver identidad del owner SOLO por lectura (sin contar) ---
+        # E3 del inventario (INV-C, §4.8): el MISMO resolvedor que usa el
+        # commit, en modo lectura. Antes esta pasada hacía `.first()` sobre los
+        # duplicados: el preview decía "se reutilizará el cliente X" y el commit
+        # rechazaba esa misma fila. El usuario aprobaba una cosa y obtenía otra.
         phone = clean['owner_phone']
         if phone:
             owner_key = ('phone', phone)
             if owner_key in owner_keys_existing or owner_key in owner_keys_new:
                 owner_is_new = False
             else:
-                existing = Owner.objects.for_organization(org).filter(
-                    phone=phone, is_generic=False,
-                ).first()
-                if existing:
-                    owner_keys_existing[owner_key] = existing.pk
+                lookup = lookup_owner_by_phone(org, phone)
+                if lookup.is_ambiguous:
+                    _append_row_error(result, i, _AMBIGUOUS_OWNER_ERROR)
+                    continue
+                if lookup.owner is not None:
+                    owner_keys_existing[owner_key] = lookup.owner.pk
                     owner_is_new = False
                 else:
                     owner_is_new = True
@@ -634,16 +677,22 @@ def commit_job(job):
                 continue
 
             # --- 1. Resolver identidad del owner SOLO por lectura (sin INSERT) ---
+            # Modo lectura del resolvedor único (INV-C): el owner todavía no se
+            # materializa aquí — solo se necesita saber si existe para decidir
+            # el duplicado de mascota. La resolución REAL, con el lock de
+            # deduplicación, ocurre en el paso 4 (`_resolve_owner`).
             phone = clean['owner_phone']
             if phone:
                 if phone in owners_by_phone:
                     owner = owners_by_phone[phone]
                     owner_is_new = False
                 else:
-                    owner = Owner.objects.for_organization(org).filter(
-                        phone=phone, is_generic=False,
-                    ).first()
-                    if owner:
+                    lookup = lookup_owner_by_phone(org, phone)
+                    if lookup.is_ambiguous:
+                        _append_row_error(result, i, _AMBIGUOUS_OWNER_ERROR)
+                        continue
+                    owner = lookup.owner
+                    if owner is not None:
                         owners_by_phone[phone] = owner
                         owner_is_new = False
                     else:
@@ -759,14 +808,20 @@ def commit_job(job):
                         org, clean, owners_by_phone, owners_by_name,
                         owner_extra=owner_extra,
                     )
-            except Exception as exc:  # noqa: BLE001 — fila aislada por savepoint
-                result['blocking_rows'] += 1
-                result['error_rows'] += 1
-                result['blocking'].append({
-                    'row': i, 'field': 'owner', 'message': _humanize_exc(exc),
+            except OwnerIdentityConflict as exc:
+                # Desenlace de NEGOCIO (INV-C), no avería: el teléfono tiene más
+                # de un expediente. Se reporta con el mismo mensaje que mostró
+                # la vista previa y la fila se salta — política vigente del
+                # importador para filas problemáticas.
+                _append_row_error(result, i, {
+                    'field': 'owner.phone',
+                    'code': exc.default_code,
+                    'message': str(exc.detail),
                 })
-                result['errors'].append({
-                    'row': i, 'field': 'owner', 'message': _humanize_exc(exc),
+                continue
+            except Exception as exc:  # noqa: BLE001 — fila aislada por savepoint
+                _append_row_error(result, i, {
+                    'field': 'owner', 'message': _humanize_exc(exc),
                 })
                 continue
             if owner_status == 'created':
@@ -796,13 +851,8 @@ def commit_job(job):
                     seen_pet_legacy.add(pet_legacy)
                 result['created_pets'] += 1
             except Exception as exc:  # noqa: BLE001 — fila aislada por savepoint
-                result['blocking_rows'] += 1
-                result['error_rows'] += 1
-                result['blocking'].append({
-                    'row': i, 'field': 'pet', 'message': _humanize_exc(exc),
-                })
-                result['errors'].append({
-                    'row': i, 'field': 'pet', 'message': _humanize_exc(exc),
+                _append_row_error(result, i, {
+                    'field': 'pet', 'message': _humanize_exc(exc),
                 })
 
     return result
@@ -814,40 +864,50 @@ def _resolve_owner(org, clean, owners_by_phone, owners_by_name, owner_extra=None
     'created' la primera vez que se materializa un owner nuevo; 'reused' si ya
     existía en DB o si una fila previa de este mismo archivo ya lo resolvió.
     owner_extra solo se persiste al crear (no se mezcla en owners reusados).
+
+    A4·B3 del inventario (INV-C, ADR p57): delega en el servicio único de
+    `patients`, que toma el lock de deduplicación `(organización, teléfono
+    normalizado)` y cuenta bajo él. El `.first()` que había aquí **elegía** una
+    fila entre los duplicados históricos — exactamente lo que INV-C prohíbe.
+    Ahora ese caso levanta `OwnerAmbiguous` y el commit lo convierte en error
+    de fila.
+
+    `match_name=False` a propósito: la regla documentada del importador es
+    dedup **por teléfono**, no por `(nombre, teléfono)`. Endurecerla partiría
+    archivos que hoy importan bien, y esa no es una decisión de F1.
+
+    Nota de escala: el lock es a nivel de transacción y el commit del job es
+    UNA transacción, así que los locks se acumulan hasta el final —uno por
+    teléfono nuevo—. `parsers.MAX_ROWS = 2000` acota el máximo; subir ese tope
+    obliga a revisar `max_locks_per_transaction`.
     """
     phone = clean['owner_phone']
-    if phone:
-        if phone in owners_by_phone:
-            return owners_by_phone[phone], 'reused'
-        existing = Owner.objects.for_organization(org).filter(
-            phone=phone, is_generic=False,
-        ).first()
-        if existing:
-            owners_by_phone[phone] = existing
-            return existing, 'reused'
-        owner = _create_owner(org, clean, phone=phone, owner_extra=owner_extra)
-        owners_by_phone[phone] = owner
-        return owner, 'created'
+    if phone and phone in owners_by_phone:
+        return owners_by_phone[phone], 'reused'
+    if not phone:
+        # Sin teléfono no hay clave de deduplicación: dedup interna por nombre
+        # normalizado dentro del MISMO archivo (regla vigente del importador).
+        name_key = normalize_text(clean['owner_name'])
+        if name_key in owners_by_name:
+            return owners_by_name[name_key], 'reused'
 
-    # Sin teléfono: dedup interna por nombre normalizado dentro del archivo.
-    name_key = normalize_text(clean['owner_name'])
-    if name_key in owners_by_name:
-        return owners_by_name[name_key], 'reused'
-    owner = _create_owner(org, clean, phone='', owner_extra=owner_extra)
-    owners_by_name[name_key] = owner
-    return owner, 'created'
-
-
-def _create_owner(org, clean, *, phone, owner_extra=None):
-    owner = Owner(
-        organization=org,
-        name=clean['owner_name'],
+    owner, status = resolve_owner_for_phone(
+        org,
         phone=phone,
-        legacy_id=clean['owner_legacy_id'],
-        extra_data=owner_extra or [],
+        name=clean['owner_name'],
+        defaults={
+            'legacy_id': clean['owner_legacy_id'],
+            # `owner_extra` solo se persiste al CREAR; el servicio ignora los
+            # defaults cuando reutiliza, así que un owner existente conserva su
+            # extra_data de creación.
+            'extra_data': owner_extra or [],
+        },
     )
-    owner.save()  # OrganizationalModel.save() → full_clean()
-    return owner
+    if phone:
+        owners_by_phone[phone] = owner
+    else:
+        owners_by_name[normalize_text(clean['owner_name'])] = owner
+    return owner, status
 
 
 def _pet_exists(org, owner, clean):

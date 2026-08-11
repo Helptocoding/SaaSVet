@@ -197,6 +197,14 @@ class OwnerViewSet(PublicIdLookupMixin, TenantQueryMixin, ModelViewSet):
                 | Q(phone__icontains=search)
                 | Q(legacy_id__icontains=search)
             )
+            if not is_generic:
+                # E4 del inventario (decisión §4.7.4, §4.12): la búsqueda existe
+                # para que una PERSONA elija un cliente — el genérico no es un
+                # cliente al que se le pueda colgar una mascota, y su teléfono
+                # de relleno no es identidad de nadie. Se excluye salvo que el
+                # llamador lo pida por su condición de genérico (`?is_generic=true`,
+                # venta directa / ADR p25), nunca por coincidencia de número.
+                qs = qs.filter(is_generic=False)
         # Owner no declara Meta.ordering → orden de heap. Orden estable para
         # paginación (name + id desempate).
         qs = qs.order_by("name", "id")

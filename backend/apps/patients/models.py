@@ -2,6 +2,7 @@ from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.core.exceptions import ValidationError
 from django.db import models
 from apps.core.models import OrganizationalModel, PublicIdMixin
+from apps.core.validators import phone_key
 
 SPECIES_CHOICES = ['canino', 'felino', 'equino', 'ave', 'reptil', 'exótico', 'otro']
 
@@ -13,6 +14,22 @@ class Owner(PublicIdMixin, OrganizationalModel):
     # dígitos en el alta manual (UI) — solo el importador, que crea vía .save()
     # directo, puede dejarlo vacío (dedup_key null, sin teléfono).
     phone = models.CharField(max_length=20, blank=True)
+    # INV-C (ADR p57 / decisión §4.7.2): clave de deduplicación e IDENTIDAD del
+    # expediente. `phone` es texto libre y se guarda como lo tecleó cada quien
+    # ("55 1234 5678" vs "5512345678"); esta columna es el valor comparable.
+    #
+    # NULL = "no tiene clave de cliente" (sin teléfono, menos de 10 dígitos, o
+    # `is_generic=True` — §4.12: el teléfono de relleno del genérico NUNCA es
+    # identidad de nadie). NULL queda fuera de todo conteo, lock y comparación
+    # de igualdad sin que haya que recordarlo en cada consulta.
+    #
+    # La deriva SIEMPRE el dominio en `save()`, nunca el cliente (`editable=False`
+    # + fuera de los serializers). NO lleva restricción única: INV-C admite
+    # duplicados históricos y obliga a tratarlos como `owner_ambiguous`, no a
+    # fusionarlos (§4.7.1).
+    phone_normalized = models.CharField(
+        max_length=10, null=True, blank=True, editable=False,
+    )
     is_generic = models.BooleanField(default=False)
     # Sprint import: identificador del sistema/clínica de origen (nº de cliente
     # del software viejo). NO es PK ni reemplaza public_id — solo referencia.
@@ -26,6 +43,26 @@ class Owner(PublicIdMixin, OrganizationalModel):
     # orden original y labels repetidos. Ver docs/project_import_sprint.md §Fase D.
     extra_data = models.JSONField(default=list, blank=True)
 
+    def save(self, *args, update_fields=None, **kwargs):
+        """Deriva `phone_normalized` en TODA escritura, sin excepción.
+
+        Vive aquí y no en el servicio a propósito: el servicio garantiza la
+        *deduplicación* (lock + conteo), pero la *consistencia* del campo no
+        puede depender de que cada vía lo recuerde. Un `Owner` creado por una
+        siembra, un comando o una vía nueva sigue teniendo su clave correcta;
+        lo que esa vía se pierde es el lock, no la verdad del dato.
+        """
+        derived = None if self.is_generic else phone_key(self.phone)
+        if derived != self.phone_normalized:
+            self.phone_normalized = derived
+            if update_fields is not None:
+                # Un `save(update_fields=['phone'])` dejaría la clave sin
+                # persistir: el dato quedaría mintiendo respecto al teléfono.
+                update_fields = set(update_fields) | {'phone_normalized'}
+        if update_fields is not None:
+            kwargs['update_fields'] = update_fields
+        return super().save(*args, **kwargs)
+
     class Meta:
         indexes = [
             # Búsqueda de owners por nombre/teléfono/expediente usa icontains
@@ -34,6 +71,12 @@ class Owner(PublicIdMixin, OrganizationalModel):
             GinIndex(OpClass('name', name='gin_trgm_ops'), name='owner_name_trgm'),
             GinIndex(OpClass('phone', name='gin_trgm_ops'), name='owner_phone_trgm'),
             GinIndex(OpClass('legacy_id', name='gin_trgm_ops'), name='owner_legacy_trgm'),
+            # INV-C: el conteo de deduplicación es una igualdad por
+            # (organización, clave), no un icontains sobre el GIN de trigramas.
+            models.Index(
+                fields=['organization', 'phone_normalized'],
+                name='owner_phone_key_idx',
+            ),
         ]
         constraints = [
             models.UniqueConstraint(

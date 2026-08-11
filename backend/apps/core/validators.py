@@ -50,6 +50,29 @@ def is_filler_phone(digits):
     return steps in ({1}, {9})  # 9 == −1 mod 10 (descendente)
 
 
+def phone_key(value):
+    """Clave de deduplicación de teléfono: los 10 dígitos, o `None`.
+
+    Normalización **única** del dominio (D1 del inventario, decisión §4.7.2).
+    `Owner.phone_normalized`, el importador y los lectores de identidad del
+    agente derivan de aquí: dos normalizaciones distintas son dos verdades
+    distintas, y esa divergencia fue el bypass que la revisión OCR encontró
+    (un valor normalizado comparado contra `Owner.phone` en crudo).
+
+    `None` significa **«no tiene clave de cliente»**, no «teléfono vacío»:
+    sin 10 dígitos no hay identidad por teléfono que deducir, así que la fila
+    queda fuera de todo conteo, lock y comparación.
+
+    NO rechaza rellenos: `is_filler_phone` es una regla de *captura* (qué se
+    admite escribir), no de *identidad* (qué expedientes son el mismo). Un
+    `'0000000000'` histórico de un cliente real sí tiene clave, y si hay dos
+    el desenlace correcto es `owner_ambiguous`, no invisibilidad. El genérico
+    queda fuera por `is_generic`, no por su número (§4.12).
+    """
+    digits = phone_digits(value)
+    return digits if len(digits) == PHONE_DIGITS else None
+
+
 def is_valid_mx_phone(value):
     """Predicado sin excepciones: ¿`value` es un teléfono MX utilizable?
 

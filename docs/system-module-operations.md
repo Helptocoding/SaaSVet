@@ -129,23 +129,75 @@ negocio dentro del SaaS** para cada dominio.
 
 ## 2. Pacientes (Owner + Pet)
 
+### Garantía transversal del módulo: identidad por teléfono (INV-C, ADR p57)
+
+Aplica a **todas** las acciones que siguen y se enuncia una vez aquí.
+
+Todo camino que cree un `Owner`, le asocie una `Pet`, mute su teléfono o **lea
+identidad por teléfono** pasa por el servicio único de `patients`, que normaliza
+el número, toma un **lock de aviso transaccional** sobre `(organización,
+teléfono normalizado)` —que cubre el caso «la fila todavía no existe», donde un
+lock de fila no llega— y cuenta bajo él.
+
+Cuatro desenlaces, exhaustivos: `created` · `reused` · **`409 owner_exists`** ·
+**`409 owner_ambiguous`**. No hay rama que elija entre duplicados.
+`owner_ambiguous` **no es opt-in**: aplica también a recepción, porque si el
+dominio no sabe cuál es el expediente nadie puede fingir que sí. Los duplicados
+históricos se listan (`audit_owner_phone_duplicates`) y los ordena una persona;
+**nunca** se fusionan.
+
+El `Owner` genérico queda fuera de todo esto: `phone_normalized = NULL` siempre.
+
+**Excluida con evidencia, hoy**: `POST /api/appointments/create-with-patient/`
+sigue resolviendo con `get_or_create(phone=…)`. Deriva la clave correctamente
+(lo garantiza `Owner.save()`) pero **no** toma el lock ni produce estos
+desenlaces. Es deuda declarada, no una exención de diseño.
+
+---
+
 ### Acción: Crear Owner
 
 **Requiere**
 - Un usuario con permiso `patient.create`.
 - Un `name` válido (el regex admite letras, números, acentos, espacios, apóstrofes y guiones).
-- Un `phone` de exactamente 10 dígitos (formato de México).
+- Un `phone` de exactamente 10 dígitos (formato de México), que además no sea un relleno evidente.
 
-**Resultado**
-- Se crea el `Owner` en la organización, con `public_id` (UUID v4).
+**Resultado** (bajo el lock de deduplicación)
+- Sin expediente con ese teléfono → se crea el `Owner`, con `public_id` (UUID v4).
+- **Con un expediente y el mismo nombre** (comparado sin acentos ni mayúsculas) → se **reutiliza** ese expediente: es el cliente que recepción quería, y crear un segundo fabricaría un duplicado.
+- El `phone_normalized` lo deriva el dominio; nunca se acepta del cliente.
 
 **Desbloquea**
 - Registrar mascotas asociadas a este propietario.
 - Facturar ventas directas con un owner real (ADR p25).
 
 **Bloquea**
+- **Un expediente existente con OTRO nombre** → **409 `owner_exists`** con el candidato (`public_id`, nombre), cero escrituras.
+- **Dos o más expedientes con ese teléfono** → **409 `owner_ambiguous`**, cero escrituras y **sin** candidato en el cuerpo (publicarlo sería sugerir la elección que INV-C prohíbe).
 - Su eliminación si tiene mascotas asociadas → **409 `resource_has_dependencies`** (FK con PROTECT, ADR p16).
 - La eliminación del owner genérico → **409 `generic_resource_protected`**.
+
+**Módulos involucrados**
+`patients`.
+
+---
+
+### Acción: Cambiar el teléfono de un Owner
+
+**Requiere**
+- Permiso de edición del cliente. Dos vías equivalentes: `PATCH /api/owners/<public_id>/` y la escritura **anidada** desde `PATCH /api/pets/<public_id>/` (la ficha de la mascota).
+- Un `phone` válido.
+
+**Resultado**
+- Cambiar el teléfono **mueve la clave de deduplicación**: libera una y ocupa otra. La operación bloquea **ambas** claves en **orden total** por el valor normalizado, y comprueba y escribe en el mismo bloque (la comprobación no puede vivir en `Serializer.validate`: DRF valida y guarda en pasos separados, y esa es la ventana que esto elimina).
+- Reformatear el mismo número (`"5512345678"` → `"55 1234 5678"`) no mueve la clave: es una edición corriente.
+
+**Bloquea**
+- Clave nueva ocupada por **un** expediente → **409 `owner_exists`**: moverse ahí fabricaría un duplicado nuevo.
+- Ocupada por **dos o más** → **409 `owner_ambiguous`**.
+- En la vía anidada, un `409` **no deja ni el teléfono cambiado ni los campos de la mascota guardados**: la operación entera es una transacción.
+
+**Lo que NO cambia**: el staff sigue pudiendo corregir un teléfono mal capturado, desde Clientes y desde la ficha de la mascota. Lo único que ya no puede es mover un cliente **encima** de otro sin que nadie lo note.
 
 **Módulos involucrados**
 `patients`.
@@ -158,16 +210,28 @@ negocio dentro del SaaS** para cada dominio.
 - Un `Owner` existente (no necesariamente real; puede ser el genérico en un escenario walk-in).
 - `name`, `species` (de la lista cerrada `SPECIES_CHOICES`) y `birth_date` obligatorios.
 - `sex` es opcional (por defecto `unknown`).
+- **Uno de dos modos explícitos** (INV-B, ADR p57), nunca ambos ni ninguno:
+  - **referencia** — `owner_public_id`: el cliente lo eligió una persona, y por eso es legítimo colgarle la mascota;
+  - **alta** — `owner: {name, phone}`: pasa por el servicio único, bajo el lock.
+
+  El alta **ya no infiere identidad por teléfono**: antes resolvía con `get_or_create(name, phone, organization)` —una segunda regla de deduplicación— que colgaba mascotas de expedientes localizados solo por coincidencia de número y fabricaba un segundo `Owner` cuando el teléfono coincidía pero el nombre no.
 
 **Resultado**
 - Se crea la `Pet` en la organización, con `public_id`; la FK al `owner` es PROTECT.
+- La resolución del `Owner` y la creación de la `Pet` ocurren en **una sola transacción**, con el lock tomado antes de ambas: no existe el estado «cliente creado, mascota no».
 
 **Desbloquea**
 - Agendar citas, abrir consultas, emitir recetas, registrar vacunas y facturar (consultation) sobre esta mascota.
 
 **Bloquea**
+- **Modo alta con un expediente existente de OTRO nombre** → **409 `owner_exists`** con el candidato: la UI pregunta «¿es este cliente?» y reenvía en modo referencia, o corrige el teléfono. **Nunca** se crea un segundo expediente con el mismo número, y **nunca** se decide por el usuario.
+- **Modo alta con dos o más expedientes** → **409 `owner_ambiguous`**: cero escrituras, se ordena el dato primero.
+- Un `owner_public_id` de otra organización → 400 (no existe para este endpoint).
+- Cambiar el cliente de una mascota existente (`owner_public_id` en `PATCH`) → 400: re-parentar es otra operación.
 - Su eliminación si tiene registros médicos, vacunas, recetas, citas o facturas asociadas → **409**.
 - La eliminación de la mascota genérica → **409 `generic_resource_protected`**.
+
+**Lo que NO cambia**: cliente nuevo → crea; cliente conocido con el mismo nombre → reutiliza, igual que hoy. Lo único nuevo es que el caso ambiguo **pregunta en vez de inventar**.
 
 **Módulos involucrados**
 `patients`.

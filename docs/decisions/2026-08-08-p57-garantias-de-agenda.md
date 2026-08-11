@@ -1,12 +1,13 @@
-# ADR p57 — Garantías de agenda: precondición atómica (INV-A) y no-solapamiento (INV-D)
+# ADR p57 — Garantías de agenda e identidad: precondición atómica (INV-A), no-solapamiento (INV-D) e identidad de expediente (INV-B/INV-C)
 
-**Fecha**: 2026-08-08
-**Estado**: ACEPTADO (F0 implementado; INV-A queda opt-in hasta F5)
+**Fecha**: 2026-08-08 (rev. 2026-08-11 — F1 añade INV-B e INV-C)
+**Estado**: ACEPTADO (F0 y F1 implementados; INV-A queda opt-in hasta F5)
 **Decisión de origen**: [`item-2-decision.md`](item-2-decision.md) §3.2, §3.3,
-§3.4, §5.1, §9.14, §9.15. Plan de ejecución:
-[`item-2-implementation-plan.md`](item-2-implementation-plan.md) §3 (F0).
-**Alcance de este ADR**: F0. Los invariantes de identidad (INV-B, INV-C) y el
-caso de verificación (FLUJO-C) llegan en F1 y F4 y **amplían** este documento.
+§3.4, §4.7–§4.12, §5.1, §9.14, §9.15. Plan de ejecución:
+[`item-2-implementation-plan.md`](item-2-implementation-plan.md) §3 (F0) y §4 (F1).
+**Alcance de este ADR**: F0 (agenda) y F1 (identidad de expediente por
+teléfono). El caso de verificación (FLUJO-C) llega en F4 y **amplía** este
+documento.
 
 ---
 
@@ -333,8 +334,185 @@ forma en que se enteran.
   `select_for_update` a `complete_appointment_on_record_close` la convertiría en
   un ABBA garantizado en vez de una carrera improbable.
 
+---
+
+## INV-B / INV-C — La identidad de expediente por teléfono (F1)
+
+### Contexto
+
+La misma pregunta tenía cuatro respuestas distintas.
+
+**1. Cada vía deduplicaba a su manera.** `create-with-patient` resolvía por
+teléfono; `POST /api/pets/` por `(nombre, teléfono)` —una segunda regla de
+identidad, propia y no documentada—; el importador tomaba `.first()` sobre los
+duplicados; y `POST /api/owners/` no deduplicaba en absoluto. Ninguna tomaba un
+lock: dos altas concurrentes del mismo número creaban dos expedientes, porque
+nada en la base lo impedía.
+
+**2. `POST /api/pets/` fabricaba los duplicados que el sistema debía tratar como
+ambiguos.** Si el teléfono coincidía pero el nombre no ("Ana López" vs "Ana
+Lopez"), creaba un **segundo** `Owner` con el mismo número. Y si coincidían
+ambos, colgaba la mascota nueva de ese expediente: un vínculo de identidad
+decidido por coincidencia de cadena.
+
+**3. Cambiar el teléfono no era una operación de identidad.** `PATCH
+/api/owners/` y la escritura anidada de `PATCH /api/pets/` movían la clave sin
+lock ni comprobación — y la segunda, desde una pantalla que parece de mascota.
+
+**4. Leer también era decidir, y ahí estaba el bypass.** Los dos lectores de
+identidad del agente comparaban un valor **normalizado** (el del `wa_id`) contra
+`Owner.phone` **en crudo**. Un expediente guardado como `"55 1234 5678"` y otro
+como `"5512345678"` son la misma clave, pero la igualdad cruda solo encontraba
+el segundo: el lector veía **una** coincidencia donde hay **dos** y vinculaba el
+contacto a esa fila. Una elección automática entre duplicados históricos, por
+una puerta que un inventario de escrituras no mira.
+
+### Decisión
+
+> **INV-B — El teléfono localiza, no autoriza.** Cualquier modificación sobre un
+> `Owner` existente requiere identidad verificada por el mecanismo que
+> corresponda al actor. Si no está verificada, el flujo escala a humano o
+> rechaza la operación de forma segura.
+
+> **INV-C — Un teléfono normalizado identifica como máximo un expediente dentro
+> de una organización.** Con dos o más: `owner_ambiguous` y escalada. El sistema
+> **nunca** fusiona registros ni elige uno automáticamente.
+
+**Un servicio único** (`apps/patients/services.py`) con tres operaciones que
+comparten normalización, conteo, exclusión del genérico y desenlaces: resolver
+para escribir (con lock), **cambiar el teléfono** (dos claves en orden total) y
+**modo lectura** (sin lock, sin escribir). Separarlas volvería a producir dos
+verdades, que es justo lo que la revisión encontró.
+
+**El teléfono normalizado, persistido.** `Owner.phone_normalized` (10 dígitos o
+`NULL`) lo deriva **siempre** el dominio en `Owner.save()`, nunca el cliente.
+Es la **clave de lectura y de escritura**: toda comparación va normalizado ↔
+normalizado. `ContactIdentity.phone_normalized` ya existía desde el día 1; lo que
+faltaba era el lado del expediente.
+
+**Cuatro desenlaces exhaustivos**, sin rama que elija:
+
+| Expedientes con la clave | `require_new` | `match_name` | Resultado |
+|---|---|---|---|
+| sin clave | — | — | `created` |
+| 0 | cualquiera | — | `created` |
+| 1 | `False` | coincide o `False` | `reused` |
+| 1 | `False` | distinto | `409 owner_exists` **con el candidato** |
+| 1 | `True` | — | `409 owner_exists` |
+| ≥ 2 | cualquiera | — | `409 owner_ambiguous`, cero escrituras |
+
+`owner_ambiguous` **no es opt-in**: aplica también a recepción y al importador.
+
+### Un lock de aviso, no una restricción única
+
+`UNIQUE (organization, phone)` está **descartada, no aplazada**: aplicarla
+exigiría limpiar o fusionar los duplicados históricos, y INV-C prohíbe
+exactamente eso. Crearla «solo para filas nuevas» exigiría un estado implícito
+—qué fila está dentro del índice y cuál no— que nadie podría razonar seis meses
+después.
+
+El lock de aviso a nivel de **transacción** sobre `(organización, clave)` cubre
+además lo que un lock de fila no puede cubrir: **la fila todavía no existe**. Se
+libera con el commit o el rollback; no hay que acordarse de soltarlo.
+
+Dos guardas, ambas ruidosas y ambas deliberadas: es **PostgreSQL-only** (en otro
+motor lanza en vez de devolver «adquirido», porque un no-op aquí convierte la
+garantía en decoración) y **exige transacción abierta** (en autocommit
+`pg_advisory_xact_lock` toma y suelta el lock dentro de su propia sentencia: el
+llamador cree estar serializado y no lo está — el mismo fail-open con otra cara).
+
+No altera el orden global de locks: precede a cualquier lock de fila del alta.
+En el **cambio de teléfono** se bloquean las dos claves en **orden total** por su
+valor normalizado; sin ese orden, dos cambios cruzados (A→B y B→A) se abortan
+por deadlock.
+
+### El inventario cerrado por familias
+
+El fallo de la primera versión fue **de método**: enumeraba tres caminos y
+añadía «cualquier vía futura». No bastaba — dos vías *actuales* eludían el
+servicio. La cobertura de una garantía vale lo que valga su camino más débil.
+
+Toda vía **usa el servicio** o queda **excluida con evidencia** de que no puede
+alterar identidad. La tabla vive en
+[`modules/patients.md`](../modules/patients.md) como contrato del módulo, y una
+prueba estática enumera cada sitio que construye un `Owner` y falla si aparece
+uno sin clasificar. Regla de proceso: una vía nueva entra en la tabla **antes de
+mergear**.
+
+**Deuda declarada**: `POST /api/appointments/create-with-patient/` (familia
+A1·B2) todavía resuelve con `get_or_create(phone=…)`. La clave sí queda derivada
+—`Owner.save()` lo garantiza siempre—, pero esa vía no toma el lock, no produce
+`owner_exists`/`owner_ambiguous` y no soporta `require_new_owner`. Está en el
+allowlist del gate estático **con ese motivo escrito**, no excluida por diseño.
+
+### El `Owner` genérico
+
+`phone_normalized = NULL` **siempre** (nunca `''` ni `'0000000000'`), backfill
+incluido. `NULL` es la representación de «no tiene clave de cliente» y lo deja
+fuera de todo índice parcial y de toda comparación por igualdad sin que haya que
+recordarlo en cada consulta. Excluido de conteo, locks, búsqueda de identidad y
+de los lectores del agente. **El teléfono del `Owner` genérico nunca es
+identidad.**
+
+### Duplicados históricos: se ven, no se tocan
+
+Migración **aditiva y derivada** (columna + índice + backfill por lotes desde
+`phone`); no toca `phone`, no añade restricción única, no fusiona ni borra nada.
+`audit_owner_phone_duplicates` los lista (exit 0/1/2) como **diagnóstico, no
+remediación**. Los ordena una persona de la clínica con las herramientas que ya
+existen.
+
+### Consecuencias (F1)
+
+**A favor**
+
+- Una sola definición de «este teléfono ya tiene expediente», compartida por
+  `patients`, el importador y el agente.
+- El alta de mascota deja de fabricar duplicados y de vincular por coincidencia.
+- El cambio de teléfono deja de ser una escritura ciega, también desde la ficha
+  de la mascota.
+- El preview del importador dice lo mismo que el commit.
+- Un `Owner` creado por cualquier vía —incluidas las excluidas— tiene su clave
+  correcta, porque la derivación vive en `save()` y no en el servicio.
+
+**En contra / aceptado**
+
+- Una clínica con duplicados verá `owner_ambiguous` en altas que hoy «funcionan»
+  reutilizando un expediente arbitrario, y su conteo de filas importadas bajará.
+  Es el resultado pedido: mezclar dos expedientes clínicos es peor.
+- Un contacto vinculado hoy puede quedar ambiguo cuando dos expedientes
+  coincidan tras normalizar. El vínculo actual apunta a un expediente elegido a
+  ciegas; dejarlo sería mantener el bypass.
+- **El modo lectura no toma el lock**: un alta concurrente puede volver ambiguo
+  lo que se acaba de leer como único. Aceptado — un `phone_match` no autoriza
+  nada por sí solo y el siguiente mensaje reevalúa. Lo que se cierra no es la
+  carrera: es la **elección**.
+- El lock del importador se acumula durante todo el commit (una transacción).
+  `MAX_ROWS = 2000` lo acota; subir ese tope obliga a revisar
+  `max_locks_per_transaction`.
+- El alta de mascota **pregunta donde antes inventaba**: teléfono conocido con
+  otro nombre → `409` con candidato. El caso «mismo cliente, mismo nombre» sigue
+  siendo silencioso.
+- `Owner` no está registrado en el admin de Django: la exclusión C4 vale
+  mientras nadie lo registre. Registrarlo es un cambio de una línea que reabre el
+  vector.
+
 ## Alternativas descartadas
 
+- **Restricción única de teléfono por organización**: incompatible con INV-C
+  (exigiría fusionar duplicados históricos). Descartada, no aplazada.
+- **Fusión de expedientes duplicados**, automática o asistida: es una decisión de
+  producto contraria a INV-C, no una mejora pendiente.
+- **Deduplicar por `(nombre, teléfono)`** (la regla que tenía `/api/pets/`): dos
+  capturas del mismo nombre con acento distinto producen dos expedientes con el
+  mismo número — fabrica el problema que INV-C obliga a tratar.
+- **Poner la comprobación del cambio de teléfono en `Serializer.validate`**: DRF
+  valida y guarda en pasos separados; el chequeo allí y el `save()` después es
+  precisamente la ventana que el servicio elimina.
+- **Derivar la clave solo en el servicio**: dejaría a las vías excluidas
+  (siembras, genérico, `create-with-patient`) escribiendo un `phone` sin clave
+  consistente. La deduplicación es del servicio; la **consistencia del dato** es
+  del modelo.
 - **`updated_at` como token de versión**: `auto_now` se dispara con cualquier
   `save()` (una nota, un cambio de motivo) y produciría conflictos donde no hubo
   ninguno.
@@ -360,5 +538,23 @@ forma en que se enteran.
 | P0-20 | ídem | atención sin cita y reactivación sobre hueco ocupado → `slot_taken`, cero escrituras; con hueco libre siguen funcionando; **ninguna bandera de forzado** |
 | — | `appointments/tests/test_audit_overlaps.py` | el comando detecta, no corrige, y respeta el criterio exacto de la restricción |
 
+### F1 — identidad de expediente
+
+| Prueba | Archivo | Qué acredita |
+|---|---|---|
+| P0-16 | `patients/tests/test_owner_phone_identity.py` (`TransactionTestCase`, **PostgreSQL**) | dos conexiones, misma org y teléfono → exactamente **un** expediente o un 409 cerrado. Repetido mezclando actor agente (`require_new`) y recepción |
+| P0-17 | ídem | dos expedientes históricos con la misma clave → `owner_ambiguous` para **todos** los actores; cero escrituras; jamás se elige uno |
+| P0-21 | ídem | `POST /api/pets/` contra `POST /api/owners/`, mismo teléfono, dos conexiones → ningún duplicado fabricado por la vía de mascotas |
+| P0-22 | ídem | dos cambios de teléfono al mismo número nuevo (gana uno) **y** el caso cruzado A→B / B→A → **ningún deadlock**, gracias al orden total de claves |
+| P0-23 | ídem | cambio de teléfono contra alta nueva sobre el mismo número → exactamente una operación persiste |
+| P0-24 | ídem + `imports/tests/test_owner_phone_ambiguity.py` | duplicado histórico frente a **todas** las vías del inventario; ninguna elige una fila |
+| P0-25 | `patients/tests/test_owner_phone_identity.py` | aislamiento por tenant (el mismo teléfono en otra org ni cuenta, ni bloquea, ni aparece) y **cero escrituras parciales** ante 409, tampoco los campos de la mascota en la vía anidada |
+| P0-26 | `agent/tests/test_identity_readers.py` | los lectores del agente con un duplicado **distinguible solo tras normalizar**: cero vínculo, `is_ambiguous`, nivel sin subir, `auto_rematch_blocked` intacto. Con un único candidato de formato distinto → `phone_match` |
+| P0-27 | `imports/tests/test_owner_phone_ambiguity.py` | preview y commit coinciden en `owner_ambiguous`; el conteo de importables ya excluye la fila; ninguna pasada usa `.first()` |
+| P0-28 | `patients/tests/test_owner_phone_identity.py` | `Owner` genérico creado por el signal y por `patients.utils` → `phone_normalized = NULL`; no cuenta, no bloquea, ningún contacto puede vincularse a él por teléfono |
+| P2-12 | ídem (`InventoryStaticGateTests`) | gate **doble**: funcional (todas las vías producen los desenlaces del servicio) y **estático** (todo sitio que construya un `Owner` está en el inventario, y nadie asigna `.phone` fuera del servicio) |
+| P2-14 | ídem (*iron rule*) | el flujo aprobado de staff **no cambia**: cliente nuevo → crea; mismo cliente → reutiliza (incluso con acentos distintos) |
+| P2-15 | ídem | el relleno del genérico no colisiona con un cliente real que tenga ese mismo número |
+
 Las pruebas de concurrencia **no valen en SQLite**: sin la restricción de
-exclusión toda la suite pasaría sin probar nada.
+exclusión ni los locks de aviso, toda la suite pasaría sin probar nada.

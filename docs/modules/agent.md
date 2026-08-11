@@ -54,7 +54,8 @@ ref; `channels.views` importa `agent.services` perezoso.
 ```
 Cliente → WhatsApp → POST /hooks/whatsapp/ (firma HMAC, fail-closed)
   → routing phone_number_id → ChannelAccount → org (R1)
-  → dedup wamid → ContactIdentity (match Owner: 0/1/≥2=ambiguous)
+  → dedup wamid → ContactIdentity (match Owner: 0/1/≥2=ambiguous — ver §Identidad
+    por teléfono: la resolución la hace `patients.services`, no una query propia)
   → Conversation abierta (o nueva) → Message(in, pending, available_at=+8s;
     cada entrante nuevo empuja la ventana de todo el hilo, tope 25 s)
 Worker (run_agent_worker, SKIP LOCKED por conversación):
@@ -64,6 +65,64 @@ Sender: outbox → Meta Cloud API (backoff 30s·2^n cap 1h, máx 5; ventana 24h
   se valida ANTES de intentar HTTP) → acuses sent/delivered/read forward-only
 Staff → /inbox (bandeja): responder = tomar (human_active + claim).
 ```
+
+## Identidad por teléfono: leer también es decidir (INV-C — ADR p57)
+
+El agente tiene **dos lectores** de identidad por teléfono y ninguno es dueño de
+la regla: ambos consumen el resolvedor de `patients` en **modo lectura**
+(`lookup_owner_by_phone`). Ver `modules/patients.md` § Identidad de expediente
+por teléfono — este documento **referencia** la garantía, no la redefine.
+
+| Lector | Cuándo corre |
+|---|---|
+| Creación de `ContactIdentity` (`resolve_contact_identity`) | primer mensaje de un número |
+| `_rematch_owner` | **cada** mensaje posterior de un contacto aún `unknown` |
+
+**El bypass que esto cerró** (bloqueador de la revisión OCR): ambos comparaban
+el valor **normalizado** del `wa_id` contra `Owner.phone` **en crudo**. Un
+expediente guardado como `"55 1234 5678"` y otro como `"5512345678"` normalizan
+a la misma clave —INV-C dice **ambiguo**— pero la igualdad cruda solo encontraba
+el segundo: el lector veía **una** coincidencia y vinculaba el contacto a esa
+fila. Una **elección automática entre duplicados históricos**. Que el nivel
+resultante fuera `phone_match` (que no autoriza nada por sí solo:
+`tools._verification_ok` exige además `owner_id`) no lo hacía inocuo — ese
+vínculo es el punto de partida de la promoción a `confirmed_in_chat`, y
+arrastraba el expediente equivocado.
+
+| Aspecto | Contrato |
+|---|---|
+| Clave | `Owner.phone_normalized`, **nunca** `Owner.phone` crudo |
+| Unión | `ContactIdentity.phone_normalized` ↔ `Owner.phone_normalized` |
+| Alcance | `for_organization(...)` primero + `is_generic=False` |
+| Selección | **ninguna**: el resolvedor cuenta, no elige. `.first()` y `[:2]` como forma de decidir quedan prohibidos |
+
+Desenlaces:
+
+| Candidatos | Resultado |
+|---|---|
+| 0 | `unknown`, sin `owner` — sin cambio |
+| 1 | vínculo `phone_match` — sin cambio (y ahora también encuentra al expediente guardado con espacios, que antes daba un falso «no registrado») |
+| ≥ 2 | **`owner_ambiguous`**: **cero vínculo**, `is_ambiguous=True`, el nivel **no** sube y **`auto_rematch_blocked` no se toca ni se limpia** |
+
+Reglas que impiden que la corrección se deshaga sola:
+
+- **La ambigüedad nunca limpia `auto_rematch_blocked`.** Ese flag solo lo limpia
+  una de las vías de promoción auditadas; un lector no es ninguna de ellas.
+- **Un contacto ambiguo no se «desambigua» solo**, pero tampoco queda preso:
+  `_rematch_owner` vuelve a correr en mensajes posteriores y, si alguien ordenó
+  el dato y queda un único candidato, entonces sí vincula. Que el conteo cambie
+  es información del dominio, no una decisión del lector.
+- **El modo lectura no toma el lock de deduplicación**: no crea ni mueve claves.
+  Su peor caso es un resultado que envejece (un alta concurrente puede volver
+  ambiguo lo que se leyó único) y se corrige en el mensaje siguiente. Lo que este
+  cambio cierra no es la carrera: es la **elección**.
+
+Cambio de conducta a vigilar en el despliegue: un contacto que hoy queda
+vinculado (porque solo una fila coincide en crudo) pasará a quedar
+`is_ambiguous` cuando dos expedientes coincidan tras normalizar. Es la conducta
+correcta —el vínculo actual apunta a un expediente elegido a ciegas—, pero para
+esa clínica el cliente deja de ser reconocido hasta que alguien ordene el dato.
+Se despliega con el reporte de `audit_owner_phone_duplicates` a la vista.
 
 ## Endpoints
 
