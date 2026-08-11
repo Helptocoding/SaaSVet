@@ -295,6 +295,22 @@ veterinario (`services.lock_veterinarians`); si hay reasignación, sobre **los
 dos** veterinarios en orden de PK. Sin eso, dos escrituras simultáneas al mismo
 hueco hacen deadlock comprobando la exclusión y el perdedor recibe un 500.
 
+**El veterinario a bloquear nunca sale de una lectura previa al `atomic()` que
+escribe.** `PATCH` de detalle, `/status/` y `DELETE` resuelven la cita con
+`get_object()`/`resolve_public_id()` antes de RBAC y de todo lo demás; si una
+reasignación de esa MISMA cita confirma en esa ventana, bloquear el snapshot
+viejo deja la escritura sin serializar contra el veterinario real — el hueco
+por el que se colaba el deadlock que `lock_veterinarians` existe para
+prevenir (bloqueador conocido de F0). `services.lock_appointment_and_veterinarians`
+relee el veterinario vigente **dentro** de la transacción y verifica el
+resultado contra la fila ya bloqueada; si el peek perdió la carrera, señala
+`VeterinarianLockRace` y `retry_on_vet_lock_race` reintenta el intento completo
+desde una transacción limpia (nunca agrega el lock que falta sobre una cita
+que ya tiene el suyo — invertiría el orden global). Las tres vías lo usan;
+`assign-patient` sigue con `lock_appointment` solo (no toca INV-D) y las vías
+de creación siguen con `lock_veterinarians` directo (el veterinario viene del
+body de la request, no de una lectura previa).
+
 Un `deadlock detected` (SQLSTATE `40P01`) **no** se traduce a `slot_taken`: no
 prueba que el hueco esté ocupado. Si aparece, es un bug de cobertura del lock y
 debe verse como error.

@@ -378,6 +378,119 @@ def lock_veterinarians(organization_id, *veterinarian_ids):
 
 
 # ---------------------------------------------------------------------------
+# Bloqueador conocido de F0 — el veterinario a bloquear no puede venir de un
+# snapshot pre-atomic (ADR p57)
+#
+# `PATCH` de detalle, `/status/` y `DELETE` resolvían el `Appointment` con
+# `get_object()`/`resolve_public_id()` ANTES de abrir el `atomic()` que
+# escribe — antes de RBAC, de instanciar el serializer, de todo lo que hace
+# la vista antes de tocar la base. Luego llamaban a `lock_veterinarians` con
+# el `veterinarian_id` de ESA lectura vieja. Si una reasignación concurrente
+# de la MISMA cita confirmaba en esa ventana, el lock caía sobre el
+# veterinario VIEJO: la escritura que seguía (aunque no tocara
+# `veterinarian`, p.ej. un cambio de estado) quedaba SIN serializar contra el
+# veterinario REAL — el hueco exacto por el que se cuela el deadlock de la
+# restricción de exclusión (40P01) que `lock_veterinarians` existe para
+# cerrar.
+#
+# La corrección: releer el veterinario vigente lo más cerca posible del
+# lock — DENTRO de esta transacción — y verificar DESPUÉS de bloquear la
+# cita (ya inmutable mientras dure el lock) que el veterinario real fue
+# bloqueado. Sigue siendo una lectura optimista (el peek en sí no es la
+# garantía), así que el chequeo posterior es lo que cierra el hueco: si no
+# coincide, se señala con `VeterinarianLockRace` y el caller reintenta el
+# intento COMPLETO desde una transacción limpia — nunca agrega el lock que
+# falta sobre una cita que ya tiene el suyo, porque eso invertiría el orden
+# global (veterinario(s) → cita) y dos reintentos simétricos sobre la MISMA
+# cita podrían deadlockear esperándose el lock que a cada uno le falta.
+# ---------------------------------------------------------------------------
+
+class VeterinarianLockRace(Exception):
+    """Señal interna: el peek de veterinario(s) perdió la carrera contra una
+    reasignación concurrente de la MISMA cita, confirmada entre la lectura y
+    el lock. Nunca se traduce a un resultado de negocio ni se atrapa
+    silenciosamente — es una anomalía de timing, no un desenlace del
+    dominio (mismo criterio que el deadlock 40P01: debe verse como error si
+    persiste). El caller reintenta el intento completo con
+    `retry_on_vet_lock_race`.
+    """
+
+
+def _peek_veterinarian_id(appointment_pk, organization_id):
+    """Lectura PLANA (sin lock) del veterinario vigente de la cita.
+
+    Deliberadamente optimista: solo decide qué locks pedir. La garantía la da
+    `lock_appointment_and_veterinarians`, que verifica este valor contra la
+    fila YA bloqueada.
+    """
+    return (
+        Appointment.objects
+        .filter(pk=appointment_pk, organization_id=organization_id)
+        .values_list('veterinarian_id', flat=True)
+        .first()
+    )
+
+
+def lock_appointment_and_veterinarians(appointment, organization_id, *extra_veterinarian_ids):
+    """Bloquea, en el ORDEN GLOBAL correcto (veterinario(s) → cita), lo
+    necesario para mutar `appointment` sin el riesgo de deadlock que
+    `lock_veterinarians` existe para prevenir — sin fiarse de un
+    `veterinarian_id` leído antes de esta transacción.
+
+    `appointment` solo necesita `pk` y `organization_id` válidos: es el
+    ancla de identidad (típicamente el resultado de `get_object()` /
+    `resolve_public_id()` de la vista, potencialmente obsoleto). Nunca se lee
+    `appointment.veterinarian_id` — el vigente se relee aquí dentro.
+
+    `extra_veterinarian_ids` es para el veterinario NUEVO cuando la petición
+    reasigna (viene del body de la request, no de una lectura previa de la
+    cita, así que no tiene este problema).
+
+    Devuelve la cita re-leída y bloqueada (`select_for_update()`), lista para
+    escribir. Levanta `VeterinarianLockRace` si el veterinario real —ya
+    inmutable mientras dure este lock— no quedó entre los bloqueados.
+    """
+    current_vet_id = _peek_veterinarian_id(appointment.pk, organization_id)
+    candidates = {v for v in (current_vet_id, *extra_veterinarian_ids) if v}
+    lock_veterinarians(organization_id, *candidates)
+
+    locked = lock_appointment(appointment)
+
+    if locked.veterinarian_id and locked.veterinarian_id not in candidates:
+        raise VeterinarianLockRace(
+            f'veterinarian_id cambió de {sorted(candidates)} a '
+            f'{locked.veterinarian_id} entre el peek y el lock.'
+        )
+    return locked
+
+
+MAX_VET_LOCK_ATTEMPTS = 2  # 1 intento + 1 reintento — mismo patrón que R3 (§5.6)
+
+
+def retry_on_vet_lock_race(fn):
+    """Reintenta `fn()` una vez si perdió la carrera de `VeterinarianLockRace`.
+
+    `fn` debe abrir y cerrar SU PROPIA `transaction.atomic()` en cada
+    llamada: un reintento tiene que partir de una transacción limpia, nunca
+    de la misma con locks ya sostenidos (ver docstring de
+    `VeterinarianLockRace` sobre por qué agregar un lock a medio camino sería
+    peligroso).
+
+    Al segundo fallo se deja propagar: dos peeks seguidos perdiendo la misma
+    carrera es una anomalía, no un resultado de negocio — debe verse como
+    error, igual que un deadlock 40P01 persistente.
+    """
+    last_exc = None
+    for _ in range(MAX_VET_LOCK_ATTEMPTS):
+        try:
+            return fn()
+        except VeterinarianLockRace as exc:
+            last_exc = exc
+            continue
+    raise last_exc
+
+
+# ---------------------------------------------------------------------------
 # A2-1 — Idempotencia de creación de citas (ADR appointment-idempotency)
 # ---------------------------------------------------------------------------
 

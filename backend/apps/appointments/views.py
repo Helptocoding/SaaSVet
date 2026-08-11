@@ -30,8 +30,10 @@ from .services import (
     expected_state_from_request,
     is_no_overlap_violation,
     lock_appointment,
+    lock_appointment_and_veterinarians,
     lock_veterinarians,
     reject_expected_state_on_create,
+    retry_on_vet_lock_race,
 )
 
 _deprecation_logger = logging.getLogger('core.deprecation')
@@ -170,29 +172,37 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
         """
         partial = kwargs.pop('partial', False)
         # get_object() resuelve public_id + tenant + permisos de objeto. La
-        # lectura AUTORITATIVA es la de dentro del atomic, no ésta.
+        # lectura AUTORITATIVA es la de dentro del atomic, no ésta — ni
+        # siquiera para decidir qué veterinario bloquear (ver
+        # `lock_appointment_and_veterinarians`: el bug conocido de F0 era
+        # justo usar `instance.veterinarian_id`, un snapshot de ESTA línea,
+        # como target del lock).
         instance = self.get_object()
         org = request.user.organization
-        try:
-            with transaction.atomic():
-                # ORDEN GLOBAL: veterinario(s) → cita. Aquí pueden estar en
-                # juego DOS veterinarios (reasignación), y `lock_veterinarians`
-                # los toma por PK: dos PATCH cruzados (A→B y B→A) los piden en
-                # la misma secuencia y no hacen ABBA. El veterinario nuevo se
-                # lee del body crudo porque el lock va antes de validar.
-                lock_veterinarians(
-                    org.pk,
-                    instance.veterinarian_id,
-                    _raw_pk(request.data.get('veterinarian')),
-                )
-                locked = lock_appointment(instance)
-                serializer = self.get_serializer(locked, data=request.data, partial=partial)
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-        except NO_OVERLAP_EXCEPTIONS as exc:
-            if is_no_overlap_violation(exc):
-                raise SlotTaken() from exc
-            raise
+        # El veterinario NUEVO sí viene del body de ESTA request, no de una
+        # lectura previa de la cita — no tiene el problema de snapshot.
+        requested_vet = _raw_pk(request.data.get('veterinarian'))
+
+        def _do():
+            try:
+                with transaction.atomic():
+                    # ORDEN GLOBAL: veterinario(s) → cita. Con reasignación
+                    # hay DOS veterinarios en juego; `lock_veterinarians` los
+                    # toma por PK, así que dos PATCH cruzados (A→B y B→A) los
+                    # piden en la misma secuencia y no hacen ABBA.
+                    locked = lock_appointment_and_veterinarians(
+                        instance, org.pk, requested_vet,
+                    )
+                    serializer = self.get_serializer(locked, data=request.data, partial=partial)
+                    serializer.is_valid(raise_exception=True)
+                    self.perform_update(serializer)
+            except NO_OVERLAP_EXCEPTIONS as exc:
+                if is_no_overlap_violation(exc):
+                    raise SlotTaken() from exc
+                raise
+            return serializer
+
+        serializer = retry_on_vet_lock_race(_do)
 
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
@@ -208,39 +218,47 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
         instance = self.get_object()
         expected = expected_state_from_request(request)
 
-        with transaction.atomic():
-            # Cancelar SACA la cita del predicado de INV-D: cambia el estado
-            # activo, así que entra en la serialización por veterinario igual
-            # que las que lo ocupan (orden global: veterinario → cita).
-            lock_veterinarians(instance.organization_id, instance.veterinarian_id)
-            locked = lock_appointment(instance)
-            # Bajo lock y ANTES de cualquier escritura: un 409 no deja rastro
-            # (regla R1 de §5.1).
-            enforce_expected_state(locked, expected)
+        def _do():
+            with transaction.atomic():
+                # Cancelar SACA la cita del predicado de INV-D: cambia el
+                # estado activo, así que entra en la serialización por
+                # veterinario igual que las que lo ocupan (orden global:
+                # veterinario → cita). El veterinario a bloquear se relee
+                # DENTRO de la transacción, no desde `instance` (snapshot
+                # pre-atomic, ver `lock_appointment_and_veterinarians`).
+                locked = lock_appointment_and_veterinarians(
+                    instance, instance.organization_id,
+                )
+                # Bajo lock y ANTES de cualquier escritura: un 409 no deja
+                # rastro (regla R1 de §5.1).
+                enforce_expected_state(locked, expected)
 
-            if locked.status not in ('scheduled', 'confirmed'):
-                return self._deprecated(Response(
-                    {'error': 'Solo se pueden cancelar citas programadas o confirmadas'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                ), request)
+                if locked.status not in ('scheduled', 'confirmed'):
+                    return self._deprecated(Response(
+                        {'error': 'Solo se pueden cancelar citas programadas o confirmadas'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    ), request)
 
-            # Authoritative event lineage: la cancelación vía DELETE debe quedar
-            # registrada en AppointmentStatusChange igual que la cancelación vía
-            # PATCH /update-status. Sin esto las cancelaciones por DELETE quedan
-            # invisibles a cualquier métrica analítica derivada del audit log.
-            # Ver docs/analytics-schema-audit.md §2.1.
-            previous_status = locked.status
-            locked.status = 'canceled'
-            locked.save(update_fields=['status'])
-            AppointmentStatusChange.objects.create(
-                appointment=locked,
-                from_status=previous_status,
-                to_status='canceled',
-                changed_by=request.user,
-                reason='Cancelación por DELETE /appointments/<id>/',
-                organization=locked.organization,
-            )
-        return self._deprecated(Response(status=status.HTTP_200_OK), request)
+                # Authoritative event lineage: la cancelación vía DELETE debe
+                # quedar registrada en AppointmentStatusChange igual que la
+                # cancelación vía PATCH /update-status. Sin esto las
+                # cancelaciones por DELETE quedan invisibles a cualquier
+                # métrica analítica derivada del audit log.
+                # Ver docs/analytics-schema-audit.md §2.1.
+                previous_status = locked.status
+                locked.status = 'canceled'
+                locked.save(update_fields=['status'])
+                AppointmentStatusChange.objects.create(
+                    appointment=locked,
+                    from_status=previous_status,
+                    to_status='canceled',
+                    changed_by=request.user,
+                    reason='Cancelación por DELETE /appointments/<id>/',
+                    organization=locked.organization,
+                )
+            return self._deprecated(Response(status=status.HTTP_200_OK), request)
+
+        return retry_on_vet_lock_race(_do)
 
     def _deprecated(self, response, request):
         """Cabeceras RFC 8594 + log de adopción, solo para DELETE.
@@ -299,96 +317,100 @@ def update_status(request, pk):
     if new_status == 'canceled':
         cancellation_reason = sanitize_text(request.data.get('cancellation_reason') or '', max_length=100)
 
-    try:
-        # Atomic: el log de estado y el save van juntos; si uno falla, el otro se revierte
-        with transaction.atomic():
-            # ORDEN GLOBAL: veterinario → cita. Toda transición de estado entra
-            # o sale del predicado de INV-D (o reescribe la entrada del índice
-            # parcial al quedarse dentro), así que todas se serializan por
-            # veterinario, no solo la reactivación. El id se lee de la cita aún
-            # sin lockear: el lock del veterinario tiene que ir PRIMERO para que
-            # ninguna vía invierta el orden.
-            lock_veterinarians(appointment.organization_id, appointment.veterinarian_id)
-            appointment = lock_appointment(appointment)
-
-            # INV-A primero: un conflicto no debe producir ni siquiera el 400 de
-            # una transición evaluada sobre un estado que ya no es el que el
-            # llamador vio.
-            enforce_expected_state(appointment, expected)
-
-            from_status = appointment.status
-            allowed = ALLOWED_TRANSITIONS.get(from_status, set())
-            if new_status not in allowed:
-                return Response(
-                    {'error': f'No se puede pasar de "{from_status}" a "{new_status}"'},
-                    status=status.HTTP_400_BAD_REQUEST,
+    def _do():
+        try:
+            # Atomic: el log de estado y el save van juntos; si uno falla, el otro se revierte
+            with transaction.atomic():
+                # ORDEN GLOBAL: veterinario → cita. Toda transición de estado
+                # entra o sale del predicado de INV-D (o reescribe la entrada
+                # del índice parcial al quedarse dentro), así que todas se
+                # serializan por veterinario, no solo la reactivación. El
+                # veterinario a bloquear se relee DENTRO de la transacción, no
+                # desde `appointment` (snapshot pre-atomic tomado por
+                # `resolve_public_id` antes de RBAC y de todo lo demás — ver
+                # `lock_appointment_and_veterinarians`).
+                locked = lock_appointment_and_veterinarians(
+                    appointment, appointment.organization_id,
                 )
 
-            # Toggle: require_confirmation_before_start
-            # Aplica a CUALQUIER transición hacia in_progress, no solo desde scheduled
-            if new_status == 'in_progress':
-                if get_org_setting(appointment.organization, 'require_confirmation_before_start'):
-                    if from_status != 'confirmed':
-                        raise ValidationError({
-                            "status": "Esta clínica requiere confirmar la cita antes de iniciarla. "
-                                      "Cambia el estado a 'confirmed' primero."
-                        })
+                # INV-A primero: un conflicto no debe producir ni siquiera el 400 de
+                # una transición evaluada sobre un estado que ya no es el que el
+                # llamador vio.
+                enforce_expected_state(locked, expected)
 
-            if new_status == 'scheduled' and from_status in ('canceled', 'no_show'):
-                today = org_today_local(request.user.organization)
-                if appointment.date < today:
+                from_status = locked.status
+                allowed = ALLOWED_TRANSITIONS.get(from_status, set())
+                if new_status not in allowed:
                     return Response(
-                        {'error': 'La fecha original ya pasó. Crea una nueva cita.'},
+                        {'error': f'No se puede pasar de "{from_status}" a "{new_status}"'},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                # INV-D — reactivación (§9.15, comportamiento APROBADO). Esta
-                # transición devuelve la cita al predicado de la restricción:
-                # si el hueco se reasignó mientras estaba cancelada, la base
-                # rechaza y la cita SIGUE `canceled`/`no_show`. Nada se desplaza
-                # ni se reubica automáticamente; hay que programar de nuevo.
-                # El pre-chequeo aquí solo produce el mensaje: la garantía es la
-                # restricción, que también cubre la carrera.
-                _reject_if_slot_taken(appointment)
 
-            update_fields = ['status']
-            appointment.status = new_status
-            if new_status == 'canceled' and cancellation_reason:
-                appointment.cancellation_reason = cancellation_reason
-                update_fields.append('cancellation_reason')
+                # Toggle: require_confirmation_before_start
+                # Aplica a CUALQUIER transición hacia in_progress, no solo desde scheduled
+                if new_status == 'in_progress':
+                    if get_org_setting(locked.organization, 'require_confirmation_before_start'):
+                        if from_status != 'confirmed':
+                            raise ValidationError({
+                                "status": "Esta clínica requiere confirmar la cita antes de iniciarla. "
+                                          "Cambia el estado a 'confirmed' primero."
+                            })
 
-            # Toggle: auto_create_medical_record — debe ejecutarse ANTES de save()
-            # para que el signal create_draft_invoice_on_done encuentre el MR y lo linkee.
-            if new_status == 'done':
-                if get_org_setting(appointment.organization, SETTING_AUTO_MEDICAL_RECORD):
-                    from apps.medical_records.models import MedicalRecord
-                    MedicalRecord.objects.get_or_create(
-                        appointment=appointment,
-                        defaults={
-                            'pet': appointment.pet,
-                            'veterinarian': appointment.veterinarian,
-                            'organization': appointment.organization,
-                            'diagnosis': '',
-                            'treatment': '',
-                        }
-                    )
+                if new_status == 'scheduled' and from_status in ('canceled', 'no_show'):
+                    today = org_today_local(request.user.organization)
+                    if locked.date < today:
+                        return Response(
+                            {'error': 'La fecha original ya pasó. Crea una nueva cita.'},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    # INV-D — reactivación (§9.15, comportamiento APROBADO). Esta
+                    # transición devuelve la cita al predicado de la restricción:
+                    # si el hueco se reasignó mientras estaba cancelada, la base
+                    # rechaza y la cita SIGUE `canceled`/`no_show`. Nada se desplaza
+                    # ni se reubica automáticamente; hay que programar de nuevo.
+                    # El pre-chequeo aquí solo produce el mensaje: la garantía es la
+                    # restricción, que también cubre la carrera.
+                    _reject_if_slot_taken(locked)
 
-            appointment.save(update_fields=update_fields)
+                update_fields = ['status']
+                locked.status = new_status
+                if new_status == 'canceled' and cancellation_reason:
+                    locked.cancellation_reason = cancellation_reason
+                    update_fields.append('cancellation_reason')
 
-            AppointmentStatusChange.objects.create(
-                appointment=appointment,
-                from_status=from_status,
-                to_status=new_status,
-                changed_by=request.user,
-                reason=cancellation_reason,
-                organization=appointment.organization,
-            )
-    except NO_OVERLAP_EXCEPTIONS as exc:
-        if is_no_overlap_violation(exc):
-            raise SlotTaken() from exc
-        raise
+                # Toggle: auto_create_medical_record — debe ejecutarse ANTES de save()
+                # para que el signal create_draft_invoice_on_done encuentre el MR y lo linkee.
+                if new_status == 'done':
+                    if get_org_setting(locked.organization, SETTING_AUTO_MEDICAL_RECORD):
+                        from apps.medical_records.models import MedicalRecord
+                        MedicalRecord.objects.get_or_create(
+                            appointment=locked,
+                            defaults={
+                                'pet': locked.pet,
+                                'veterinarian': locked.veterinarian,
+                                'organization': locked.organization,
+                                'diagnosis': '',
+                                'treatment': '',
+                            }
+                        )
 
-    serializer = AppointmentSerializer(appointment, context={'request': request})
-    return Response(serializer.data)
+                locked.save(update_fields=update_fields)
+
+                AppointmentStatusChange.objects.create(
+                    appointment=locked,
+                    from_status=from_status,
+                    to_status=new_status,
+                    changed_by=request.user,
+                    reason=cancellation_reason,
+                    organization=locked.organization,
+                )
+        except NO_OVERLAP_EXCEPTIONS as exc:
+            if is_no_overlap_violation(exc):
+                raise SlotTaken() from exc
+            raise
+        return Response(AppointmentSerializer(locked, context={'request': request}).data)
+
+    return retry_on_vet_lock_race(_do)
 
 
 def _reject_if_slot_taken(appointment):
