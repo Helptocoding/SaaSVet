@@ -416,17 +416,21 @@ class WitnessTests(ReleaseServiceBase):
         self.assertIsNotNone(handoff.resolved_at)
 
     def test_a_pre_existing_foreign_claim_is_still_released(self):
-        """**Límite conocido**, no regresión: el testigo protege la VENTANA
-        R1–R3, no la propiedad del claim.
+        """El claim ajeno PREEXISTENTE se libera. **Decisión, no omisión.**
 
-        Si otra persona ya tenía la conversación reclamada ANTES de que se
-        pulsara liberar, el release se la quita — igual que antes de F3, que no
-        miraba el claim en absoluto. Convertirlo en un `409` sería una regla de
-        producto nueva («solo quien reclama puede liberar») y tiene su propio
-        coste: alguien que se va con una conversación reclamada la dejaría
-        bloqueada para el resto del equipo.
+        El testigo protege la ventana R1–R3, no la propiedad del claim: si otra
+        persona ya tenía la conversación reclamada ANTES de pulsar liberar, el
+        release se la quita.
 
-        Se ancla aquí para que el día que se decida, se decida a propósito.
+        Ratificado para el piloto (producto, 2026-08-12) por un motivo
+        operativo: si quien reclamó se ausenta, la conversación no puede quedar
+        bloqueada para el resto del equipo. Es además el comportamiento previo
+        a F3, que no miraba el claim en absoluto.
+
+        La evolución prevista es «solo el titular o un supervisor libera» — no
+        un 409 a secas, que reintroduciría el bloqueo por ausencia sin salida.
+        Este test es el que hay que cambiar cuando eso se decida; que falle
+        entonces es la señal de que la política nueva está entrando de verdad.
         """
         appt = self._appt(status="scheduled")
         self._suspend('cancel_appointment',

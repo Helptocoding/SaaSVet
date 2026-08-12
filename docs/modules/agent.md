@@ -292,12 +292,27 @@ comparar contra algo que otro camino escribe sin lock.
    esperar hecha al cliente no la revoca un botón de staff. `nudge_sent` solo se
    limpia **en su ausencia**.
 
-**Límite conocido, anclado con prueba**: el testigo protege la ventana R1–R3, no
-la *propiedad* del claim. Si otra persona ya tenía la conversación reclamada
-**antes** de pulsar liberar, el release se la quita — igual que antes de F3, que
-no miraba el claim en absoluto. Convertirlo en un `409` sería una regla nueva
-(«solo quien reclama puede liberar») con su propio coste: alguien que se va con
-una conversación reclamada la dejaría bloqueada para el equipo.
+#### El claim ajeno preexistente se libera — decisión, no omisión
+
+El testigo protege la ventana R1–R3, **no la propiedad del claim**. Si otra
+persona ya tenía la conversación reclamada **antes** de que se pulsara liberar,
+el release se la quita.
+
+**Ratificado para el piloto** (decisión de producto, 2026-08-12): se mantiene
+así. El motivo es operativo — si quien reclamó una conversación se ausenta, esa
+conversación no puede quedar bloqueada para el resto del equipo, y en una
+clínica pequeña eso pasa a diario. Es además el comportamiento previo a F3, que
+no miraba el claim en absoluto: no hay cambio de conducta que comunicar.
+
+Lo que sí protege el testigo: un claim que aparece **durante** la ventana aborta
+ese intento y fuerza el reintento (`claim_changed`).
+
+Cuando el piloto lo justifique, la evolución prevista es una política de
+**«solo el titular o un supervisor libera»** — no un `409` a secas, porque eso
+reintroduce el bloqueo por ausencia sin darle salida a nadie. Exige decidir
+quién es «supervisor» (¿rol, permiso propio?), y por eso no se hace de paso.
+
+Anclado en `test_a_pre_existing_foreign_claim_is_still_released`.
 
 ### Tamiz de identidad (UX-05) — nuevo vs. ya registrado
 
