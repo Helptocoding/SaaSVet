@@ -134,6 +134,14 @@ PERMISSION_CODES = [
     "agentinbox.claim",
     "agentinbox.send",
     "agentinbox.config",
+    # FLUJO-C (ADR p57, F4): verificar la identidad de un contacto y autorizar
+    # su vínculo con un expediente EXISTENTE. Código propio, no `config`:
+    # verificar identidad es una función de mostrador, no de administración del
+    # canal — delegarla en una recepcionista de confianza no debe entregarle
+    # también el kill switch del agente. Y simetría con `reset_contact_identity`
+    # (desvincular, ADMIN): vincular es la operación inversa y no puede ser
+    # menos exigente. Solo ADMIN de entrada.
+    "agentinbox.identity_verify",
 ]
 
 # ---------------------------------------------------------------------------

@@ -473,7 +473,7 @@ def _capture_witness(conversation):
             raise TurnInProgress()
 
         handoff_id = (
-            HumanHandoff.objects.filter(
+            HumanHandoff.objects.for_organization(convo.organization).filter(
                 conversation=convo, resolved_at__isnull=True,
             ).order_by('-id').values_list('pk', flat=True).first()
         )
@@ -643,7 +643,7 @@ def _apply_release(conversation, witness, suspension, verdict, reason, actor):
         convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
 
         current_handoff = (
-            HumanHandoff.objects.filter(
+            HumanHandoff.objects.for_organization(convo.organization).filter(
                 conversation=convo, resolved_at__isnull=True,
             ).order_by('-id').values_list('pk', flat=True).first()
         )
@@ -702,8 +702,9 @@ def _apply_release(conversation, witness, suspension, verdict, reason, actor):
         # pueden no ser el mismo, y uno ya resuelto por otra persona no
         # autoriza a resolverlo de nuevo.
         if witness['handoff_id'] is not None:
-            handoff = HumanHandoff.objects.filter(
-                pk=witness['handoff_id'], resolved_at__isnull=True).first()
+            handoff = HumanHandoff.objects.for_organization(
+                convo.organization).filter(
+                    pk=witness['handoff_id'], resolved_at__isnull=True).first()
             if handoff is not None:
                 handoff.resolved_at = timezone.now()
                 handoff.resolution = HumanHandoff.RESOLUTION_RETURNED_TO_AGENT
@@ -721,6 +722,212 @@ def _apply_release(conversation, witness, suspension, verdict, reason, actor):
 
     _log_release(convo, verdict, reason, suspension)
     return {'verdict': verdict or 'none', 'reason': reason}
+
+
+# ===========================================================================
+# FLUJO-C — verificación humana de identidad (Item 2, F4 — ADR p57 §5.5)
+#
+# La única ruta por la que un contacto NO verificado puede terminar operando
+# sobre un `Owner` existente, y toda ella pasa por una persona.
+#
+# **Verificar (3) y autorizar (4) son actos distintos y separados**, no un
+# endpoint con un booleano: el primero registra un juicio humano, el segundo
+# ejecuta una consecuencia. Separarlos es lo que permite auditar el juicio
+# aunque nadie llegue a autorizar, y lo que impide que un solo clic haga las
+# dos cosas sin dejar constancia de la primera.
+#
+# **Liberar no autoriza**: si el staff libera sin verificar, el release
+# restaura la intención vencida, el cliente reconfirma, el commit vuelve a
+# fallar con `owner_exists` y el caso se abre de nuevo. Es lo correcto.
+# ===========================================================================
+class IdentityCaseError(Exception):
+    """Base de los rechazos de FLUJO-C. Cada uno lleva su `code` de contrato."""
+
+    code = 'identity_case_error'
+    message = 'No se pudo completar la verificación de identidad.'
+
+
+class NoOpenIdentityCase(IdentityCaseError):
+    code = 'no_identity_case'
+    message = 'Esta conversación no tiene un caso de identidad abierto.'
+
+
+class VerificationRequired(IdentityCaseError):
+    code = 'verification_required'
+    message = ('Hace falta registrar una verificación aprobada de este mismo '
+               'caso y candidato antes de autorizar.')
+
+
+class OwnerChanged(IdentityCaseError):
+    code = 'owner_changed'
+    message = 'El cliente candidato ya no existe en esta clínica.'
+
+
+class AlreadyLinked(IdentityCaseError):
+    code = 'already_linked'
+    message = 'Este contacto ya quedó vinculado a un cliente.'
+
+
+#: `reason_detail` de los hand-offs que FLUJO-C sabe resolver.
+IDENTITY_CASE_DETAILS = ('owner_exists', 'owner_ambiguous')
+
+
+def open_identity_case(conversation):
+    """El `HumanHandoff` de identidad ABIERTO de esta conversación, o `None`.
+
+    Se resuelve desde la conversación, nunca por un id del body: aceptar un
+    hand-off del request permitiría auditar contra un caso ajeno.
+    """
+    from .models import HumanHandoff
+
+    return (
+        HumanHandoff.objects.for_organization(conversation.organization).filter(
+            conversation=conversation,
+            resolved_at__isnull=True,
+            reason_code=HumanHandoff.REASON_IDENTITY,
+            reason_detail__in=IDENTITY_CASE_DETAILS,
+        ).order_by('-id').first()
+    )
+
+
+def resolve_owner_candidate(conversation, owner_public_id):
+    """El `Owner` candidato, resuelto SOLO dentro de la org de la conversación.
+
+    Nunca desde un id del request sin re-scopear, y nunca por PK entero: el
+    identificador público es el único que viaja del cliente al servidor (ADR
+    p18). Fuera de la organización, no existe.
+    """
+    from apps.patients.models import Owner
+
+    if not owner_public_id:
+        return None
+    try:
+        return Owner.objects.for_organization(
+            conversation.organization).filter(
+                public_id=owner_public_id, is_generic=False).first()
+    except (ValidationError, ValueError, TypeError):
+        return None      # UUID mal formado: no existe, y no se filtra el motivo
+
+
+def record_identity_verification(conversation, *, owner_public_id, decision,
+                                 evidence_kind, evidence_note, actor):
+    """Paso 3/3' — registra el juicio humano. **NO vincula nada.**
+
+    Verificar no autoriza: este registro no toca `ContactIdentity`, no toca el
+    `Owner` y no resuelve el caso. Solo deja constancia, append-only, de que
+    una persona identificada afirmó haber comprobado algo.
+
+    El sistema **no juzga la evidencia**. `evidence_kind` es una etiqueta de
+    auditoría; ninguna de sus opciones se basa en el teléfono, porque el
+    teléfono ya se sabe que coincide —es lo que creó el caso— y usarlo como
+    prueba sería circular.
+
+    Un rechazo posterior invalida una aprobación previa del mismo
+    `(contact, owner_candidate)`: la autorización lee siempre **el último**.
+    """
+    from .models import ContactIdentityVerification
+
+    handoff = open_identity_case(conversation)
+    if handoff is None:
+        raise NoOpenIdentityCase()
+    owner = resolve_owner_candidate(conversation, owner_public_id)
+    if owner is None:
+        raise OwnerChanged()
+
+    record = ContactIdentityVerification(
+        organization=conversation.organization,
+        contact=conversation.contact,
+        owner_candidate=owner,
+        conversation=conversation,
+        handoff=handoff,
+        decision=decision,
+        evidence_kind=evidence_kind,
+        evidence_note=evidence_note,
+        actor=actor,
+    )
+    record.save()      # OrganizationalModel.save() → full_clean() → clean()
+    logger.info("AGENT_IDENTITY_VERIFICATION_RECORDED", extra={
+        'event': 'AGENT_IDENTITY_VERIFICATION_RECORDED',
+        'organization_id': conversation.organization_id,
+        'conversation_id': conversation.pk,
+        'handoff_id': handoff.pk,
+        'decision': decision,
+        'evidence_kind': evidence_kind,   # la NOTA no se loguea (PII)
+    })
+    return record
+
+
+def authorize_identity_link(conversation, *, owner_public_id, actor):
+    """Paso 4 — vincula el contacto al `Owner`. Exige verificación vigente.
+
+    Las cuatro precondiciones se comprueban en el MISMO `atomic()`, con
+    `select_for_update()` sobre `ContactIdentity` **y** sobre el `HumanHandoff`
+    (§5.5.2). Comprobarlas fuera sería un TOCTOU: dos personas autorizando a la
+    vez, o un rechazo que entra entre la lectura y la escritura.
+
+    1. Hay un caso de identidad **abierto** en esta conversación.
+    2. El **último** registro de `(contact, owner_candidate)` es `approved`, y
+       es de ESTE hand-off y de ESTA conversación. Frescura acotada por el
+       caso, no por reloj: evita inventar un TTL arbitrario y evita que una
+       aprobación de hace tres meses habilite una acción de hoy.
+    3. El candidato sigue existiendo en la organización.
+    4. El contacto no está ya vinculado.
+
+    Resolver el caso es parte del mismo commit: autorizar cierra el trabajo.
+    """
+    from . import identity
+    from .models import ContactIdentity, ContactIdentityVerification, HumanHandoff
+
+    with transaction.atomic():
+        contact = (ContactIdentity.objects.select_for_update()
+                   .get(pk=conversation.contact_id))
+
+        case = open_identity_case(conversation)
+        if case is None:
+            raise NoOpenIdentityCase()
+        handoff = (HumanHandoff.objects.select_for_update()
+                   .filter(pk=case.pk, resolved_at__isnull=True).first())
+        if handoff is None:
+            raise NoOpenIdentityCase()
+
+        owner = resolve_owner_candidate(conversation, owner_public_id)
+        if owner is None:
+            raise OwnerChanged()
+
+        if contact.owner_id is not None:
+            raise AlreadyLinked()
+
+        latest = (
+            ContactIdentityVerification.objects
+            .for_organization(conversation.organization)
+            .filter(contact=contact, owner_candidate=owner)
+            .order_by('-id').first()
+        )
+        if (latest is None
+                or latest.decision != ContactIdentityVerification.DECISION_APPROVED
+                or latest.handoff_id != handoff.pk
+                or latest.conversation_id != conversation.pk):
+            raise VerificationRequired()
+
+        identity.link_staff_verified(contact, owner)
+
+        handoff.resolved_at = timezone.now()
+        handoff.resolution = HumanHandoff.RESOLUTION_HANDLED
+        fields = ['resolved_at', 'resolution']
+        if handoff.claimed_by_id is None:
+            handoff.claimed_by = actor
+            handoff.claimed_at = timezone.now()
+            fields += ['claimed_by', 'claimed_at']
+        handoff.save(update_fields=fields)
+
+    logger.info("AGENT_IDENTITY_LINK_AUTHORIZED", extra={
+        'event': 'AGENT_IDENTITY_LINK_AUTHORIZED',
+        'organization_id': conversation.organization_id,
+        'conversation_id': conversation.pk,
+        'handoff_id': handoff.pk,
+        'owner_public_id': str(owner.public_id),
+    })
+    return contact
 
 
 def _log_release(convo, verdict, reason, suspension):

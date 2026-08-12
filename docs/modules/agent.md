@@ -229,6 +229,100 @@ pierde. No hay lista global: un `owner_exists` es negocio en el alta y sería un
 anomalía en cualquier otra tool. Lo no declarado conserva su comportamiento; el
 silencio por defecto sería el fail-open de la observabilidad.
 
+### FLUJO-C — verificación humana de identidad (F4 — ADR p57 §5.5)
+
+La **única** ruta por la que un contacto no verificado puede terminar operando
+sobre un `Owner` existente, y toda ella pasa por una persona. Cierra el hueco
+que INV-B dejaba al descubierto: `LINKED_STAFF` existía en el enum desde el día
+1 **sin ningún escritor**, así que un `409 owner_exists` terminaba en un
+hand-off que el staff resolvía fuera del sistema.
+
+**El caso no es un modelo nuevo**: es el `HumanHandoff` que ya existe, con
+`reason_code='identity'` y `reason_detail ∈ {owner_exists, owner_ambiguous}`.
+La bandeja ya lo mostraba y lo ordenaba por urgencia. Lo que se añade es el
+registro de verificación y las dos acciones.
+
+| Paso | Acción | Permiso | Toca el dominio |
+|---|---|---|---|
+| 1 | el commit falla con `owner_exists`/`owner_ambiguous` → caso abierto + intención suspendida | — | **no** |
+| 2 | staff reclama (`claim`) | `agentinbox.claim` | no |
+| 3 / 3' | **verificar**: registra el juicio (aprobado o rechazado) | `agentinbox.identity_verify` | **no** |
+| 4 | **autorizar**: vincula el contacto al `Owner` | `agentinbox.identity_verify` + verificación vigente | sí — `link_staff_verified` |
+| 5 | staff libera (`release`) | `agentinbox.claim` | no |
+| 6 | el cliente reconfirma → la escritura ocurre aquí, revalidando C1–C5 | el cliente | sí |
+
+**Verificar y autorizar son dos endpoints, no uno con un booleano.** El primero
+registra un juicio humano; el segundo ejecuta su consecuencia. Separarlos es lo
+que permite auditar el juicio aunque nadie llegue a autorizar, y lo que impide
+que un clic haga las dos cosas sin dejar constancia de la primera.
+
+**Liberar no autoriza.** Si el staff libera sin verificar, el release restaura
+la intención vencida, el cliente reconfirma y el commit vuelve a fallar con
+`owner_exists` — y el caso se abre otra vez. Es lo correcto.
+
+#### El registro (`ContactIdentityVerification`, append-only)
+
+`ContactIdentity` guarda `verified_at` pero **no guarda quién verificó**, y no
+puede representar un **rechazo**: no existe un «nivel de verificación negativo».
+De ahí el modelo propio, con `organization`, `contact`, `owner_candidate`,
+`conversation`, **`handoff`**, `decision`, `evidence_kind`, `evidence_note` y
+`actor`. Sin `PATCH` ni `DELETE`: una decisión equivocada se corrige
+registrando otra, y la autorización lee **el último** registro.
+
+- **El sistema no juzga la evidencia**: registra que una persona identificada
+  afirmó haberla comprobado. `evidence_kind` es una etiqueta de auditoría, no
+  un puntaje.
+- **La evidencia es externa al teléfono**: el número ya se sabe que coincide
+  —es lo que creó el caso— y usarlo como prueba sería circular. Las cuatro
+  opciones son `in_person_id`, `known_record`, `callback` (al teléfono **del
+  expediente**) y `other`. Ninguna se basa en el número que escribe.
+- `evidence_note` es una nota **operativa**, no un sitio para documentos. Los
+  logs llevan ids; la nota **nunca** se loguea.
+
+#### Enlace estricto (por qué cuatro FKs no bastan)
+
+Tener las FKs no prueba que apunten al mismo caso: sin más reglas, una
+aprobación emitida para el Owner A podría autorizar el vínculo con el Owner B.
+Todo se deriva del servidor:
+
+| Dato | De dónde sale |
+|---|---|
+| `organization` | `conversation.organization` |
+| `conversation` | la ruta, vía `_get_conversation` (tenant-scoped → cross-tenant es **404**) |
+| `contact` | `conversation.contact` |
+| `owner_candidate` | `Owner.objects.for_organization(conversation.organization)` por `public_id` |
+| `handoff` | el hand-off de identidad **abierto** de esa conversación |
+| `actor` | `request.user` — si viene en el body, se ignora |
+
+Autorizar comprueba las cuatro precondiciones **en el mismo `atomic()`**, con
+`select_for_update()` sobre `ContactIdentity` **y** sobre el `HumanHandoff`:
+caso abierto · último registro `approved` **de este hand-off y esta
+conversación** · candidato aún existente · contacto sin vincular. Sus rechazos:
+`no_identity_case`, `verification_required`, `owner_changed`, `already_linked`
+(409). El invariante de organización se valida además **en el modelo**: una vía
+futura que escriba el registro sin pasar por el endpoint no puede saltárselo.
+
+**Frescura acotada por el caso, no por reloj**: la aprobación vale mientras
+*este mismo* hand-off siga abierto. Evita inventar un TTL arbitrario y evita
+que una aprobación de hace tres meses habilite una acción de hoy.
+
+#### `link_staff_verified` — la cuarta vía de promoción
+
+Es la **más fuerte** de las cuatro que elevan el nivel de verificación, y la
+única forma legítima de deshacer un `reset_contact_identity`: por eso limpia
+`auto_rematch_blocked`. Ese flag apaga el auto-enlace porque **nadie había
+verificado nada**; aquí alguien lo hizo, con nombre y evidencia. Sigue sin
+existir ningún camino automático que deshaga un reset.
+
+#### Fuera de alcance, explícitamente (§5.5.6)
+
+Nada de heurísticas, puntajes ni coincidencia difusa. Nada de que el modelo
+«decida» que una identidad es suficiente. Nada de OTP/SMS, biometría, lectura
+de documentos ni proveedores externos. Nada de auto-aprobación por antigüedad,
+inactividad o reintento. Nada de re-verificación automática al re-escribir:
+`auto_rematch_blocked` sigue mandando. Cualquiera de esas piezas sería un
+diseño nuevo con su propio ADR y su propia revisión de seguridad.
+
 ### Liberar una conversación: el veredicto sobre lo suspendido (F3 — ADR p57)
 
 Liberar no es «poner `state=active`»: es aplicar un **veredicto** sobre la

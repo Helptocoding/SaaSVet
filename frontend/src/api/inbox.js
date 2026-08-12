@@ -30,6 +30,22 @@ export const unlinkFamily = (publicId) =>
 export const resetContactIdentity = (publicId) =>
   api.post(`inbox/conversations/${publicId}/reset-identity/`).then((r) => r.data);
 
+// FLUJO-C (ADR p57 §5.5): verificar y autorizar son DOS acciones, no una con
+// un booleano. La primera registra el juicio humano (no vincula nada); la
+// segunda ejecuta la consecuencia y exige una verificación aprobada de ESTE
+// mismo caso y candidato. Ambas piden `agentinbox.identity_verify`.
+export const verifyContactIdentity = (publicId, data) =>
+  api
+    .post(`inbox/conversations/${publicId}/verify-identity/`, data)
+    .then((r) => r.data);
+
+export const authorizeIdentityLink = (publicId, ownerPublicId) =>
+  api
+    .post(`inbox/conversations/${publicId}/authorize-identity/`, {
+      owner_public_id: ownerPublicId,
+    })
+    .then((r) => r.data);
+
 export const getAgentSettings = () =>
   api.get("inbox/settings/").then((r) => r.data);
 

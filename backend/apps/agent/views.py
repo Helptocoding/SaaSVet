@@ -21,6 +21,7 @@ from apps.channels.models import Message
 from apps.core.permissions import make_permission
 from apps.core.sanitize import sanitize_text
 from apps.core.views import resolve_public_id
+from apps.patients.services import lookup_owner_by_phone
 
 from .models import AgentSettings, ContactIdentity, Conversation, HumanHandoff
 from .serializers import (
@@ -197,7 +198,64 @@ def conversation_messages(request, pk):
     return Response({
         'conversation': ConversationListSerializer(conversation).data,
         'messages': MessageSerializer(messages, many=True).data,
+        # FLUJO-C: el caso de identidad, si lo hay. `None` en la inmensa
+        # mayoría de conversaciones — la bandeja solo lo pinta cuando existe.
+        'identity_case': _identity_case_payload(conversation),
     })
+
+
+def _identity_case_payload(conversation):
+    """Proyección del caso de identidad abierto para la bandeja (§5.5).
+
+    Muestra **qué pidió el cliente** —proyectado desde el staged, no el `flow`
+    crudo— para que el staff no tenga que leer el transcript entero antes de
+    decidir. Sin volcar el pendiente completo: lo que se necesita para juzgar,
+    nada más.
+    """
+    from . import services
+
+    handoff = services.open_identity_case(conversation)
+    if handoff is None:
+        return None
+
+    staged = ((conversation.flow.get('suspended') or {}).get('state') or {})
+    args = staged.get('args') or {}
+    latest = (
+        conversation.identity_verifications.order_by('-id')
+        .select_related('actor', 'owner_candidate').first()
+    )
+
+    # El candidato solo existe cuando el teléfono resuelve a UN expediente
+    # (`owner_exists`). Con `owner_ambiguous` es `None` a propósito: ofrecer uno
+    # sería sugerir la elección que INV-C prohíbe, y el caso se resuelve
+    # ordenando los expedientes, no eligiendo desde aquí.
+    lookup = lookup_owner_by_phone(
+        conversation.organization, conversation.contact.phone_normalized)
+    candidate = lookup.owner
+
+    return {
+        'kind': handoff.reason_detail,          # owner_exists | owner_ambiguous
+        'opened_at': handoff.created_at,
+        'candidate': {
+            'public_id': str(candidate.public_id),
+            'name': candidate.name,
+        } if candidate is not None else None,
+        'requested': {
+            'owner_name': args.get('owner_name', ''),
+            'pet_name': args.get('pet_name', ''),
+            'pet_species': args.get('pet_species', ''),
+            'date': args.get('date', ''),
+            'start_time': args.get('start_time', ''),
+        } if staged.get('tool') == 'register_new_client_and_pet' else None,
+        'last_verification': {
+            'decision': latest.decision,
+            'evidence_kind': latest.evidence_kind,
+            'actor': latest.actor.get_full_name() or latest.actor.username,
+            'created_at': latest.created_at,
+            # Solo cuenta para autorizar si es de ESTE caso (§5.5.3).
+            'applies_to_this_case': latest.handoff_id == handoff.pk,
+        } if latest is not None else None,
+    }
 
 
 @api_view(['POST'])
@@ -242,12 +300,19 @@ def reset_contact_identity(request, pk):
     bloquea CUALQUIER auto-enlace posterior por coincidencia de teléfono —
     tanto `services._rematch_owner` (mensaje entrante normal) como
     `tools.commit_register_new_client_and_pet` (alta de cliente nuevo que
-    termina reutilizando este mismo Owner vía `get_or_create`); sin la
-    segunda cobertura, el reset era deshacible con un simple "quiero
-    registrarme" en el mismo hilo. Solo ADMIN (`agentinbox.config`, el mismo
-    permiso del kill switch y el token de WhatsApp — acción igual de
-    sensible: desligar una identidad ya verificada es la mitad del vector
-    que el diseño original evita)."""
+    termina reutilizando este mismo Owner); sin la segunda cobertura, el reset
+    era deshacible con un simple "quiero registrarme" en el mismo hilo. Solo
+    ADMIN (`agentinbox.config`, el mismo permiso del kill switch y el token de
+    WhatsApp — acción igual de sensible: desligar una identidad ya verificada
+    es la mitad del vector que el diseño original evita).
+
+    **Cómo se deshace, desde F4**: el reset ya no es irreversible salvo por el
+    reto triple. `identity.link_staff_verified` —la vía auditada de FLUJO-C
+    (ADR p57 §5.5)— limpia `auto_rematch_blocked` y vincula el contacto, pero
+    solo después de que una persona con `agentinbox.identity_verify` registre
+    una verificación aprobada con evidencia **externa al teléfono**. Es la
+    única ruta legítima: sigue sin existir ningún camino automático que
+    deshaga un reset."""
     from .models import ContactIdentity
     conversation = _get_conversation(request, pk)
     contact = conversation.contact
@@ -421,6 +486,91 @@ def release_conversation(request, pk):
     data = ConversationListSerializer(conversation).data
     data['release'] = result
     return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('agentinbox.identity_verify')])
+def verify_contact_identity(request, pk):
+    """Paso 3/3' de FLUJO-C — registra el juicio humano. **No vincula nada.**
+
+    Verificar y autorizar son **dos endpoints, no uno con un booleano**: el
+    primero registra lo que una persona comprobó; el segundo ejecuta la
+    consecuencia. Así queda auditado el juicio aunque nadie llegue a autorizar.
+
+    La evidencia es **externa al teléfono**: el número ya se sabe que coincide
+    —es lo que creó el caso—, así que usarlo como prueba sería circular. Por eso
+    ninguna opción de `evidence_kind` se basa en él.
+    """
+    from . import services
+    from .models import ContactIdentityVerification
+
+    conversation = _get_conversation(request, pk)
+
+    decision = (request.data.get('decision') or '').strip()
+    valid_decisions = dict(ContactIdentityVerification.DECISION_CHOICES)
+    if decision not in valid_decisions:
+        return Response({
+            'code': 'validation_error',
+            'errors': {'decision': [
+                f"Debe ser uno de: {', '.join(valid_decisions)}."]},
+        }, status=400)
+
+    evidence_kind = (request.data.get('evidence_kind') or '').strip()
+    valid_kinds = dict(ContactIdentityVerification.EVIDENCE_CHOICES)
+    if evidence_kind not in valid_kinds:
+        return Response({
+            'code': 'validation_error',
+            'errors': {'evidence_kind': [
+                f"Debe ser uno de: {', '.join(valid_kinds)}."]},
+        }, status=400)
+
+    note = sanitize_text(request.data.get('evidence_note') or '', max_length=280)
+
+    try:
+        record = services.record_identity_verification(
+            conversation,
+            owner_public_id=request.data.get('owner_public_id'),
+            decision=decision,
+            evidence_kind=evidence_kind,
+            evidence_note=note,
+            actor=request.user,
+        )
+    except services.IdentityCaseError as exc:
+        return Response({'code': exc.code, 'message': exc.message}, status=409)
+
+    return Response({
+        'public_id': str(record.public_id),
+        'decision': record.decision,
+        'evidence_kind': record.evidence_kind,
+        'created_at': record.created_at,
+    }, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('agentinbox.identity_verify')])
+def authorize_identity_link(request, pk):
+    """Paso 4 de FLUJO-C — vincula el contacto al `Owner` verificado.
+
+    Exige una verificación **aprobada del mismo caso y del mismo candidato**
+    (frescura acotada por el caso, no por reloj). Todo se deriva del servidor:
+    la organización y el contacto salen de la conversación, el candidato se
+    resuelve dentro de esa organización y el actor es `request.user` — si algo
+    de eso viniera en el body, se ignora.
+    """
+    from . import services
+
+    conversation = _get_conversation(request, pk)
+    try:
+        services.authorize_identity_link(
+            conversation,
+            owner_public_id=request.data.get('owner_public_id'),
+            actor=request.user,
+        )
+    except services.IdentityCaseError as exc:
+        return Response({'code': exc.code, 'message': exc.message}, status=409)
+
+    conversation.refresh_from_db()
+    return Response(ConversationListSerializer(conversation).data)
 
 
 @api_view(['GET', 'PATCH'])

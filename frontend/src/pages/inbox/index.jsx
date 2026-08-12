@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
+    authorizeIdentityLink,
     claimConversation,
     closeConversation,
     getAgentSettings,
@@ -16,6 +17,7 @@ import {
     setWhatsappToken,
     unlinkFamily,
     updateAgentSettings,
+    verifyContactIdentity,
 } from "../../api/inbox";
 import { useAuth } from "../../auth/authContext";
 import { useConfirm } from "../../components/useConfirm";
@@ -94,6 +96,78 @@ const MetricsBar = ({ metrics }) => {
     );
 };
 
+/** Tipos de evidencia — espejo del enum del backend (ADR p57 §5.5.3).
+ *
+ * Ninguna opción se basa en el número que escribe: ese ya se sabe que coincide
+ * —es lo que creó el caso— y usarlo como prueba sería circular. `callback` es
+ * llamar al teléfono DEL EXPEDIENTE, que es otra cosa.
+ */
+const EVIDENCE_KINDS = [
+    { value: "in_person_id", label: "Identificación en mostrador" },
+    { value: "known_record", label: "Datos del expediente que solo el titular sabe" },
+    { value: "callback", label: "Llamada al teléfono del expediente" },
+    { value: "other", label: "Otra (detállala en la nota)" },
+];
+
+/** Caso de identidad abierto: qué pidió el cliente y las dos acciones.
+ *
+ * Presentacional: no conoce RBAC ni llama a la API. El caller le pasa
+ * `canVerify` ya resuelto y los handlers — mismo patrón que `EmptyState`.
+ */
+const IdentityCaseBanner = ({
+    identityCase, canVerify, acting, onVerify, onAuthorize,
+}) => {
+    const { kind, requested, candidate, last_verification: last } = identityCase;
+    const approvedHere = last?.decision === "approved" && last?.applies_to_this_case;
+
+    return (
+        <div className={styles.identityCase}>
+            <div>
+                <strong>Verificación de identidad requerida</strong>
+                <p className={styles.identityCaseBody}>
+                    {kind === "owner_ambiguous"
+                        ? "Este teléfono tiene varios expedientes. Hay que ordenarlos antes de vincular a nadie."
+                        : `Este número ya pertenece a un cliente registrado${candidate ? ` (${candidate.name})` : ""}. El teléfono localiza, no autoriza: confirma quién es antes de vincular.`}
+                </p>
+                {requested && (
+                    <p className={styles.identityCaseBody}>
+                        Pidió: <strong>{requested.owner_name}</strong> · {requested.pet_name}
+                        {requested.pet_species ? ` (${requested.pet_species})` : ""}
+                        {requested.date ? ` · ${requested.date} ${requested.start_time}` : ""}
+                    </p>
+                )}
+                {last && (
+                    <p className={styles.identityCaseBody}>
+                        Última verificación: <strong>{last.decision === "approved" ? "aprobada" : "rechazada"}</strong>
+                        {" · "}{last.actor}
+                        {!last.applies_to_this_case && " (de un caso anterior — no cuenta aquí)"}
+                    </p>
+                )}
+            </div>
+            {canVerify && (
+                <div className={styles.chatActions}>
+                    <button className="btn btn-secondary btn-xs"
+                        disabled={acting || !candidate}
+                        title={candidate
+                            ? "Registra que comprobaste la identidad con evidencia externa al teléfono"
+                            : "Con varios expedientes no hay candidato: hay que ordenarlos primero"}
+                        onClick={onVerify}>
+                        Registrar verificación
+                    </button>
+                    <button className="btn btn-primary btn-xs"
+                        disabled={acting || !approvedHere || !candidate}
+                        title={approvedHere
+                            ? "Vincula este número al cliente verificado"
+                            : "Primero registra una verificación aprobada de este caso"}
+                        onClick={onAuthorize}>
+                        Autorizar vínculo
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const Inbox = () => {
     const { can } = useAuth();
     const confirm = useConfirm();
@@ -117,6 +191,10 @@ const Inbox = () => {
     const canSend = can?.("agentinbox.send");
     const canClaim = can?.("agentinbox.claim");
     const canConfig = can?.("agentinbox.config");
+    // Permiso PROPIO (ADR p57 §5.5.2): verificar identidad es una función de
+    // mostrador, no de administración del canal — quien la tenga no recibe con
+    // ella el kill switch del agente.
+    const canVerifyIdentity = can?.("agentinbox.identity_verify");
 
     const loadList = useCallback(async () => {
         try {
@@ -266,6 +344,59 @@ const Inbox = () => {
         });
         if (!ok) return;
         await runAction(resetContactIdentity, "Identidad reseteada");
+    };
+
+    const handleVerifyIdentity = async () => {
+        const ownerPublicId = thread?.identity_case?.candidate?.public_id;
+        if (!ownerPublicId) {
+            toast.error("No hay un cliente candidato para verificar. Ábrelo en Clientes y vuelve.");
+            return;
+        }
+        const ok = await confirm({
+            message:
+                "Vas a registrar que comprobaste la identidad de esta persona con evidencia "
+                + "EXTERNA al teléfono (identificación, datos del expediente o llamada al número "
+                + "registrado). Registrar la verificación no vincula nada todavía.",
+            confirmText: "Registrar verificación",
+        });
+        if (!ok) return;
+        setActing(true);
+        try {
+            await verifyContactIdentity(selectedId, {
+                owner_public_id: ownerPublicId,
+                decision: "approved",
+                evidence_kind: EVIDENCE_KINDS[0].value,
+                evidence_note: "",
+            });
+            toast.success("Verificación registrada");
+            await loadThread(selectedId);
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo registrar la verificación"));
+        } finally {
+            setActing(false);
+        }
+    };
+
+    const handleAuthorizeIdentity = async () => {
+        const ownerPublicId = thread?.identity_case?.candidate?.public_id;
+        const ok = await confirm({
+            message:
+                "¿Vincular este número al cliente verificado? A partir de ahora podrá consultar y "
+                + "gestionar sus citas por WhatsApp. Queda registrado quién lo autorizó.",
+            confirmText: "Autorizar vínculo",
+        });
+        if (!ok) return;
+        setActing(true);
+        try {
+            await authorizeIdentityLink(selectedId, ownerPublicId);
+            toast.success("Contacto vinculado");
+            await loadThread(selectedId);
+            await loadList();
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo autorizar el vínculo"));
+        } finally {
+            setActing(false);
+        }
     };
 
     const handleToggleAgent = async () => {
@@ -462,6 +593,16 @@ const Inbox = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {thread?.identity_case && (
+                                <IdentityCaseBanner
+                                    identityCase={thread.identity_case}
+                                    canVerify={canVerifyIdentity}
+                                    acting={acting}
+                                    onVerify={handleVerifyIdentity}
+                                    onAuthorize={handleAuthorizeIdentity}
+                                />
+                            )}
 
                             <div className={styles.thread}>
                                 {(thread?.messages || []).map((m) => (

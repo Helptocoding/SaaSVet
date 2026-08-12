@@ -14,6 +14,7 @@ Principios (contrato: docs/whatsapp-agent-implementation-plan.md §8):
 - `ContactIdentity` NO es un User: jamás se le emiten tokens (ADR p51
   separa actor-agente de identidad-de-contacto).
 """
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -581,3 +582,108 @@ class TurnDecision(OrganizationalModel):
 
     def __str__(self):
         return f"TurnDecision<{self.verdict} because={self.because}>"
+
+
+class ContactIdentityVerification(PublicIdMixin, OrganizationalModel):
+    """Registro APPEND-ONLY del juicio humano sobre la identidad de un contacto.
+
+    FLUJO-C (ADR p57 §5.5.3, F4). Es la unica vía por la que un contacto no
+    verificado puede terminar operando sobre un `Owner` EXISTENTE, y toda ella
+    pasa por una persona.
+
+    Por que hace falta un modelo y no basta `ContactIdentity`: esa tabla guarda
+    `verified_at` pero **no guarda quien verifico**, y no puede representar un
+    **rechazo** — no existe un "nivel de verificacion negativo". El flujo
+    aprobado exige quien, cuando y con que resultado.
+
+    **El sistema no juzga la evidencia**: registra que una persona identificada
+    afirmo haberla comprobado. `evidence_kind` es una etiqueta de auditoria, no
+    un puntaje ni una validacion. Y la evidencia es **externa al telefono**: el
+    numero ya se sabe que coincide —es lo que creo el caso—, asi que usarlo como
+    prueba seria circular. Por eso ninguna opcion del enum se basa en el.
+
+    Append-only como el resto de la auditoria del sistema: sin PATCH, sin
+    DELETE. Una decision equivocada se corrige registrando otra, no borrando la
+    anterior — la autorizacion lee **el ultimo** registro.
+    """
+
+    DECISION_APPROVED = 'approved'
+    DECISION_REJECTED = 'rejected'
+    DECISION_CHOICES = (
+        (DECISION_APPROVED, 'Aprobada'),
+        (DECISION_REJECTED, 'Rechazada'),
+    )
+
+    # Ninguna opcion basada en el telefono, a proposito (§5.5.3).
+    EVIDENCE_IN_PERSON = 'in_person_id'
+    EVIDENCE_KNOWN_RECORD = 'known_record'
+    EVIDENCE_CALLBACK = 'callback'
+    EVIDENCE_OTHER = 'other'
+    EVIDENCE_CHOICES = (
+        (EVIDENCE_IN_PERSON, 'Identificacion en mostrador'),
+        (EVIDENCE_KNOWN_RECORD, 'Datos del expediente que solo el titular sabe'),
+        (EVIDENCE_CALLBACK, 'Llamada al telefono del expediente'),
+        (EVIDENCE_OTHER, 'Otra (detallar en la nota)'),
+    )
+
+    contact = models.ForeignKey(
+        ContactIdentity, on_delete=models.PROTECT,
+        related_name='identity_verifications',
+    )
+    owner_candidate = models.ForeignKey(
+        'patients.Owner', on_delete=models.PROTECT, related_name='+',
+    )
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT,
+        related_name='identity_verifications',
+    )
+    # Ata la aprobacion al CASO concreto (hallazgo W de la revision). Sin este
+    # campo, "la aprobacion es del caso abierto" seria una intencion, no una
+    # regla: una aprobacion de hace tres meses habilitaria una accion de hoy.
+    handoff = models.ForeignKey(
+        HumanHandoff, on_delete=models.PROTECT,
+        related_name='identity_verifications',
+    )
+    decision = models.CharField(max_length=16, choices=DECISION_CHOICES)
+    evidence_kind = models.CharField(max_length=24, choices=EVIDENCE_CHOICES)
+    # Nota OPERATIVA ("coincide expediente 2214, vino a mostrador"), no un sitio
+    # para numeros de documento. Los logs asociados llevan ids, nunca esto.
+    evidence_note = models.CharField(max_length=280, blank=True, default='')
+    actor = models.ForeignKey(
+        'users.User', on_delete=models.PROTECT, related_name='+',
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'contact', 'owner_candidate']),
+            models.Index(fields=['organization', 'handoff']),
+        ]
+
+    def clean(self):
+        """El invariante de tenant se valida AQUI, no solo en la vista.
+
+        Cuatro FKs no prueban que apunten al mismo caso. Una via futura que
+        escriba el registro sin pasar por el endpoint no puede saltarselo, y un
+        desajuste es un error de programacion —no un 400 de usuario—: falla
+        ruidosamente y no persiste nada.
+        """
+        super().clean()
+        if not self.organization_id:
+            return
+        mismatched = [
+            name for name, obj in (
+                ('contact', self.contact_id and self.contact),
+                ('owner_candidate', self.owner_candidate_id and self.owner_candidate),
+                ('conversation', self.conversation_id and self.conversation),
+                ('handoff', self.handoff_id and self.handoff),
+            )
+            if obj and obj.organization_id != self.organization_id
+        ]
+        if mismatched:
+            raise ValidationError(
+                'Registro de verificacion con FKs de otra organizacion: '
+                + ', '.join(mismatched)
+            )
+
+    def __str__(self):
+        return f"ContactIdentityVerification<{self.decision} contact={self.contact_id}>"

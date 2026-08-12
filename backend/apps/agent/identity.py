@@ -240,6 +240,35 @@ def link_self_registered(contact, owner):
         'auto_rematch_blocked'])
 
 
+def link_staff_verified(contact, owner):
+    """Vincula el contacto a un `Owner` EXISTENTE tras verificación humana.
+
+    **Cuarta —y última— vía que eleva el nivel de verificación** (FLUJO-C, ADR
+    p57 §5.5). Es la más fuerte de todas: una persona identificada, con permiso
+    propio (`agentinbox.identity_verify`), respondió por el cliente y dejó
+    registro append-only de qué comprobó.
+
+    Es también la única forma legítima de deshacer un
+    `reset_contact_identity`: por eso limpia `auto_rematch_blocked`. Ese flag
+    apaga el auto-enlace precisamente porque nadie había verificado nada; aquí
+    alguien lo hizo, con nombre y evidencia, así que la premisa del bloqueo
+    dejó de valer. Ninguna otra ruta puede bajarlo.
+
+    **No comprueba las precondiciones**: eso es del servicio
+    (`services.authorize_identity_link`), que lo hace bajo `select_for_update()`
+    del contacto y del hand-off, en la misma transacción que escribe. Llamar a
+    esta función sin esas comprobaciones vincula a ciegas.
+    """
+    contact.owner = owner
+    contact.verification_level = ContactIdentity.VERIFICATION_STAFF
+    contact.verified_at = timezone.now()
+    contact.linked_via = ContactIdentity.LINKED_STAFF
+    contact.auto_rematch_blocked = False
+    contact.save(update_fields=[
+        'owner', 'verification_level', 'verified_at', 'linked_via',
+        'auto_rematch_blocked'])
+
+
 def link_family(contact, owner):
     """Vincula el contacto como secundario del owner (tras el reto triple)."""
     contact.owner = owner

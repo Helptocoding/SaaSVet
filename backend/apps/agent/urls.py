@@ -22,6 +22,13 @@ urlpatterns = [
          name='inbox-unlink-family'),
     path('conversations/<str:pk>/reset-identity/', views.reset_contact_identity,
          name='inbox-reset-identity'),
+    # FLUJO-C (ADR p57 §5.5): verificar y autorizar son DOS acciones, no una
+    # con un booleano — la primera registra un juicio humano, la segunda
+    # ejecuta su consecuencia.
+    path('conversations/<str:pk>/verify-identity/', views.verify_contact_identity,
+         name='inbox-verify-identity'),
+    path('conversations/<str:pk>/authorize-identity/', views.authorize_identity_link,
+         name='inbox-authorize-identity'),
     path('settings/', views.agent_settings_view, name='inbox-settings'),
     path('metrics/', views.metrics_view, name='inbox-metrics'),
     path('whatsapp-token/', views.whatsapp_token_view, name='inbox-whatsapp-token'),

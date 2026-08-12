@@ -5,9 +5,9 @@
 **Decisión de origen**: [`item-2-decision.md`](item-2-decision.md) §3.2, §3.3,
 §3.4, §4.7–§4.12, §5.1, §9.14, §9.15. Plan de ejecución:
 [`item-2-implementation-plan.md`](item-2-implementation-plan.md) §3 (F0) y §4 (F1).
-**Alcance de este ADR**: F0 (agenda) y F1 (identidad de expediente por
-teléfono). El caso de verificación (FLUJO-C) llega en F4 y **amplía** este
-documento.
+**Alcance de este ADR**: F0 (agenda), F1 (identidad de expediente por
+teléfono) y F4 (FLUJO-C, verificación humana). F2 y F3 son consumo de estas
+garantías por parte del agente y no cambian el contrato del dominio.
 
 ---
 
@@ -504,8 +504,85 @@ existen.
   mientras nadie lo registre. Registrarlo es un cambio de una línea que reabre el
   vector.
 
+---
+
+## FLUJO-C — la salida del `owner_exists` (F4)
+
+### Contexto
+
+INV-B cierra un vector, pero el `409 owner_exists` que produce era un callejón
+sin salida operativo: **`LINKED_STAFF` existía en el enum de `ContactIdentity`
+desde el día 1 sin ningún escritor**. No había forma de que una persona del
+equipo verificara manualmente a un contacto, así que el caso terminaba en un
+hand-off que el staff resolvía fuera del sistema — o no resolvía.
+
+### Decisión
+
+> **Ningún `phone_match` habilita la acción por sí solo, y nada de la
+> verificación de identidad se automatiza.** El sistema **registra** el juicio
+> humano; no lo valida, no lo puntúa y no lo sustituye.
+
+**Verificar y autorizar son dos actos distintos**, con dos endpoints. El primero
+registra lo que una persona comprobó; el segundo ejecuta la consecuencia.
+Unificarlos en uno con un booleano haría que un solo clic hiciera las dos cosas
+sin dejar constancia de la primera.
+
+**El caso no es un modelo nuevo**: es el `HumanHandoff` existente con
+`reason_code='identity'` y un `reason_detail` discriminador. Lo nuevo es
+`ContactIdentityVerification`, **append-only**, porque `ContactIdentity` no
+guarda quién verificó y no puede representar un rechazo.
+
+**La evidencia es externa al teléfono.** El número ya se sabe que coincide —es
+lo que creó el caso—, así que reutilizarlo como prueba sería circular. Ninguna
+opción de `evidence_kind` se basa en el número que escribe.
+
+**Enlace estricto**: tener cuatro FKs no prueba que apunten al mismo caso. Todo
+se deriva del servidor (organización y contacto desde la conversación, candidato
+re-scopeado a esa organización, actor desde `request.user`), y autorizar exige
+que el **último** registro sea `approved` **de este mismo hand-off**. Frescura
+acotada por el caso, no por reloj: ni TTL arbitrario, ni aprobaciones de hace
+tres meses habilitando acciones de hoy. El invariante de organización se valida
+también **en el modelo**, para que una vía futura no pueda saltárselo.
+
+**Permiso propio `agentinbox.identity_verify`**, no `agentinbox.config`:
+verificar identidad es una función de mostrador, no de administración del canal
+— delegarla no debe entregar también el kill switch. Y simetría con
+`reset_contact_identity`: vincular es la operación inversa de desvincular y no
+puede ser menos exigente.
+
+`link_staff_verified` es la **cuarta** vía de promoción y la única forma
+legítima de deshacer un reset: por eso limpia `auto_rematch_blocked`. Ese flag
+apaga el auto-enlace porque nadie había verificado nada; aquí alguien lo hizo,
+con nombre y evidencia.
+
+### Consecuencias (F4)
+
+**A favor**
+
+- El `409 owner_exists` deja de ser un callejón sin salida: tiene resolución
+  dentro del sistema, auditada y con RBAC.
+- Toda vinculación a un expediente existente tiene nombre, caso y fecha.
+- `LINKED_STAFF` deja de ser un valor muerto en el enum.
+
+**En contra / aceptado**
+
+- **Trabajo manual nuevo**: un cliente conocido que escribe con una mascota
+  nueva ya no tiene ruta automatizada (§4.6). Lo resuelve el staff creando la
+  mascota; recuperar la automatización sería una tool nueva gateada a
+  `confirmed_in_chat`, fuera de este Item.
+- **La verificación vale lo que valga la persona.** Automatizar el juicio es
+  justo lo que §5.5.6 prohíbe; la mitigación es la trazabilidad.
+- Con `owner_ambiguous` **no hay candidato** que ofrecer: el caso se resuelve
+  ordenando los expedientes, no eligiendo desde la bandeja.
+
 ## Alternativas descartadas
 
+- **Un endpoint con `approve: true/false`** en vez de dos: haría invisible el
+  juicio cuando nadie llega a autorizar, y convierte dos decisiones en un clic.
+- **TTL de la aprobación por reloj** (24 h, 7 días…): número arbitrario que no
+  describe nada. El caso abierto es la unidad natural de frescura.
+- **OTP/SMS al número del contacto** como evidencia: circular — ese número es
+  precisamente lo que está en disputa.
 - **Restricción única de teléfono por organización**: incompatible con INV-C
   (exigiría fusionar duplicados históricos). Descartada, no aplazada.
 - **Fusión de expedientes duplicados**, automática o asistida: es una decisión de
@@ -564,6 +641,19 @@ existen.
 | P2-12 | ídem (`InventoryStaticGateTests`) | gate **doble**: funcional (todas las vías producen los desenlaces del servicio) y **estático** (todo sitio que construya un `Owner` está en el inventario, y nadie asigna `.phone` fuera del servicio) |
 | P2-14 | ídem (*iron rule*) | el flujo aprobado de staff **no cambia**: cliente nuevo → crea; mismo cliente → reutiliza (incluso con acentos distintos) |
 | P2-15 | ídem | el relleno del genérico no colisiona con un cliente real que tenga ese mismo número |
+
+### F4 — FLUJO-C
+
+| Prueba | Archivo | Qué acredita |
+|---|---|---|
+| Verificar no autoriza | `agent/tests/test_identity_verification.py` | registrar el juicio no toca `ContactIdentity`, ni el `Owner`, ni resuelve el caso |
+| Autorizar exige evidencia del mismo caso | ídem | sin verificación, con aprobación de **otro candidato**, tras un **rechazo** posterior, o con la aprobación de un caso ya cerrado → `409 verification_required`, cero vínculo |
+| Enlace estricto y tenant | ídem | actor y organización del **servidor** (se ignoran los del body); candidato ajeno → `owner_changed`; conversación ajena → **404 sin auditoría ni vínculo**; el **modelo** rechaza FKs cross-tenant |
+| RBAC propio | ídem | ASSISTANT (con `agentinbox.claim`) recibe 403 en ambas acciones |
+| Liberar no autoriza | ídem | el release restaura la intención vencida y el contacto sigue sin vincular |
+| Append-only | ídem | no hay ruta de mutación; corregir es registrar otro; el original queda intacto. `Owner` con verificaciones no se puede borrar (PROTECT) |
+| Enum de evidencia | ídem | lista blanca de las cuatro opciones aprobadas: una nueva basada en el número tiene que romper el test, no colarse |
+| El caso en la bandeja | ídem | expone qué pidió el cliente y si la última verificación **aplica a este caso**; la nota (PII) no viaja |
 
 Las pruebas de concurrencia **no valen en SQLite**: sin la restricción de
 exclusión ni los locks de aviso, toda la suite pasaría sin probar nada.

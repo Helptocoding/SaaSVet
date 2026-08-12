@@ -77,7 +77,13 @@ BASELINE = {
     ('appointments', 'views.py', 'Appointment', 'filter'),
     ('appointments', 'views.py', 'MedicalRecord', 'filter'),
     ('appointments', 'views.py', 'MedicalRecord', 'get_or_create'),
-    ('appointments', 'views.py', 'Owner', 'get_or_create'),
+    # Revisado 2026-08-12 (ADR p57 F0, `services._peek_veterinarian_id`): el
+    # filtro lleva `organization_id=` EXPLÍCITO en el lookup — tenant-scoped por
+    # construcción, mismo patrón que `inventory.StockLot.get_or_create`. Es una
+    # lectura deliberadamente optimista que solo decide QUÉ locks pedir; la
+    # garantía la da después `lock_appointment_and_veterinarians`, que verifica
+    # el valor contra la fila ya bloqueada.
+    ('appointments', 'services.py', 'Appointment', 'filter'),
     ('billing', 'serializers.py', 'InvoiceItem', 'filter'),
     ('billing', 'services.py', 'Invoice', 'get_or_create'),
     ('inventory', 'serializers.py', 'Product', 'filter'),
@@ -105,7 +111,12 @@ BASELINE = {
     # Revisado 2026-07-15 (medical_records/services.py:136): scoped por FK padre
     # medical_record, obtenido org-scoped y bajo lock por el caller (cierre).
     ('medical_records', 'services.py', 'MedicalRecordProduct', 'filter'),
-    ('patients', 'serializers.py', 'Owner', 'get_or_create'),
+    # `('patients', 'serializers.py', 'Owner', 'get_or_create')` y
+    # `('appointments', 'views.py', 'Owner', 'get_or_create')` salieron del
+    # baseline en F1 (ADR p57, INV-C): esas dos vías resolvían identidad con
+    # `get_or_create(phone=…)` y ahora pasan por el servicio único de
+    # `patients`, que scopea por organización y toma el lock de deduplicación.
+    # El ratchet las marcó como STALE — que es exactamente para lo que sirve.
 }
 
 

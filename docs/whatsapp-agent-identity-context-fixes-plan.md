@@ -115,14 +115,25 @@ camino implementado.
   (el endpoint compartido no cambia), solo se suprime el auto-enlace de LA
   IDENTIDAD del contacto de WhatsApp.
 - **El flag se limpia en `identity._promote` (verificación implícita/
-  explícita en chat), `identity.link_self_registered` y
-  `identity.link_family`** — las tres únicas funciones que elevan a
-  `confirmed_in_chat`/`staff_verified` (ADR p56 inv. 5). `_promote` y
-  `link_self_registered` solo son alcanzables con el flag ya en `False`
-  (por el guard de sus respectivos callers) — limpiarlo ahí es una
-  operación idempotente, no la primera línea de defensa. `link_family` es
-  la única de las tres alcanzable con `owner_id=None`/flag en `True`, y
-  representa la re-verificación de tres factores que este item exige.
+  explícita en chat), `identity.link_self_registered`,
+  `identity.link_family` y `identity.link_staff_verified`** — las **cuatro**
+  únicas funciones que elevan a `confirmed_in_chat`/`staff_verified`
+  (ADR p56 inv. 5). `_promote` y `link_self_registered` solo son alcanzables
+  con el flag ya en `False` (por el guard de sus respectivos callers) —
+  limpiarlo ahí es una operación idempotente, no la primera línea de defensa.
+  `link_family` y `link_staff_verified` son las dos alcanzables con
+  `owner_id=None`/flag en `True`: la primera representa la re-verificación de
+  tres factores que este item exige; la segunda, la verificación **humana**
+  de FLUJO-C.
+- **`link_staff_verified` (ADR p57 §5.5, F4) es la vía más fuerte de las
+  cuatro, y la única forma legítima de deshacer un reset.** Una persona
+  identificada, con permiso propio (`agentinbox.identity_verify`), respondió
+  por el cliente y dejó registro append-only (`ContactIdentityVerification`)
+  de qué comprobó. Por eso limpia `auto_rematch_blocked`: ese flag apaga el
+  auto-enlace porque **nadie había verificado nada**, y aquí alguien lo hizo
+  con nombre y evidencia externa al teléfono. Cuando se escribió este item,
+  `LINKED_STAFF` existía en el enum sin ningún escritor: un `409 owner_exists`
+  terminaba en un hand-off que el staff resolvía fuera del sistema.
 - El auto-match por teléfono **sigue existiendo para su caso original**
   (cliente nunca antes visto que se da de alta en mostrador o vía el
   asistente) — la supresión aplica solo a contactos que pasaron por un
