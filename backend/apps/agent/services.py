@@ -10,8 +10,10 @@ Regla de tenancy: la organización nace del ChannelAccount receptor (R1) y
 de ahí NUNCA se re-deriva; todo acceso a modelos tenant-scoped va con
 `for_organization()`.
 """
+import copy
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -363,3 +365,383 @@ def record_status_update(channel_account, wamid, provider_status,
     message.status = new_status
     message.save(update_fields=['status'])
     return message
+
+
+# ===========================================================================
+# Servicio de release (Item 2, F3 — ADR p57 §2, §3.1, §5.6, §7)
+#
+# Liberar una conversación es aplicar un VEREDICTO sobre una propuesta que el
+# cliente dejó a medias. Tres pasos, y el orden es el punto:
+#
+#   R1  tx corta: lock de la fila, se captura el TESTIGO y una copia de lo
+#       suspendido. Se libera el lock.
+#   R2  chequeo de dominio FUERA de toda transacción (una lectura HTTP, con
+#       timeout): ¿el humano ya hizo el trabajo?
+#   R3  tx corta: se re-lee el testigo y SOLO si coincide en los cinco campos
+#       se aplica el veredicto junto con las mutaciones de release, en un
+#       commit.
+#
+# Por qué R2 va fuera del lock: una llamada de red dentro de una transacción
+# la mantiene abierta lo que tarde el otro extremo (invariante 7 del módulo).
+# Y por qué hace falta el testigo: durante esa ventana el worker puede tomar
+# el turno, otra persona puede reclamar la conversación o puede aparecer una
+# suspensión nueva. Liberar, quitar el claim y resolver el hand-off **son**
+# mutaciones: aplicarlas sobre un mundo que nadie verificó puede resolver el
+# caso equivocado y dejar la intención perdida.
+#
+# Lo que este servicio NO hace, por decisión de producto:
+#   · **No añade ningún TTL nuevo ni mensajes automáticos** (§9.4). La pérdida
+#     silenciosa a ~24 h por `close_inactive_conversations` es preexistente y
+#     sigue tal cual; convertirla en una baja con razón auditable
+#     (`conversation_inactive`) es una mejora SEPARADA, fuera de F3.
+#   · **No avisa al cliente cuando descarta** (§9.5): si el dominio prueba que
+#     el objetivo ya quedó resuelto, se descarta en silencio. Un «ya lo había
+#     hecho el equipo» no aporta nada y reabre una conversación cerrada.
+#   · **No toca `deferred_at`** (D7): una promesa de esperar hecha al cliente
+#     no la revoca un botón de staff.
+# ===========================================================================
+RELEASE_RESTORE = 'restore'
+RELEASE_DISCARD = 'discard'
+
+#: Motivos de `409 release_conflict`, uno por campo del testigo (§5.6).
+CONFLICT_SUSPENSION = 'suspension_changed'
+CONFLICT_STATE = 'state_changed'
+CONFLICT_CLAIM = 'claim_changed'
+CONFLICT_TURN = 'turn_in_progress'
+CONFLICT_HANDOFF = 'handoff_changed'
+
+#: Estados de cita que prueban que la creación propuesta ya ocurrió.
+_LIVE_OR_DONE = ('scheduled', 'confirmed', 'in_progress', 'done')
+_ACTIVE = ('scheduled', 'confirmed', 'in_progress')
+
+
+class ReleaseConflict(Exception):
+    """El mundo cambió entre R1 y R3. No se mutó nada."""
+
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.reason = reason
+
+
+class TurnInProgress(Exception):
+    """Hay un turno del worker en vuelo: no se pisa (409, reintentable)."""
+
+
+class ConversationClosed(Exception):
+    """Una conversación cerrada no se libera."""
+
+
+def release_conversation(conversation, actor):
+    """Libera la conversación aplicando el veredicto sobre lo suspendido.
+
+    Devuelve `{'verdict': 'restore'|'discard'|'none', 'reason': str}`. Lanza
+    `TurnInProgress`, `ConversationClosed` o `ReleaseConflict`; ninguna de las
+    tres muta nada.
+
+    **Un solo reintento, no un bucle** (§5.6): si en dos vueltas el mundo sigue
+    moviéndose, hay alguien más operando y la respuesta correcta es decírselo a
+    quien pulsó el botón, no insistir hasta ganar.
+    """
+    last_reason = None
+    for _attempt in (1, 2):
+        witness, suspension = _capture_witness(conversation)
+        verdict, reason = _domain_verdict(conversation, suspension)
+        try:
+            return _apply_release(conversation, witness, suspension,
+                                  verdict, reason, actor)
+        except ReleaseConflict as conflict:
+            last_reason = conflict.reason
+            logger.info("AGENT_RELEASE_CONFLICT", extra={
+                'event': 'AGENT_RELEASE_CONFLICT',
+                'organization_id': conversation.organization_id,
+                'conversation_id': conversation.pk,
+                'reason': conflict.reason,
+            })
+    raise ReleaseConflict(last_reason)
+
+
+def _capture_witness(conversation):
+    """R1 — bajo lock: valida, captura el testigo y copia lo suspendido."""
+    from .models import HumanHandoff
+
+    with transaction.atomic():
+        convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
+        if convo.state == Conversation.STATE_CLOSED:
+            raise ConversationClosed()
+        # El worker pudo tomar el turno: no se le pisa a mitad de camino.
+        if convo.processing_until and convo.processing_until > timezone.now():
+            raise TurnInProgress()
+
+        handoff_id = (
+            HumanHandoff.objects.filter(
+                conversation=convo, resolved_at__isnull=True,
+            ).order_by('-id').values_list('pk', flat=True).first()
+        )
+        suspension = copy.deepcopy(convo.flow.get('suspended')) or None
+        witness = {
+            'suspension_id': (suspension or {}).get('suspension_id'),
+            'state': convo.state,
+            'claimed_by_id': convo.claimed_by_id,
+            'processing_until': convo.processing_until,
+            'handoff_id': handoff_id,
+        }
+    return witness, suspension
+
+
+def _suspension_shape(suspension):
+    """¿Se puede confiar en lo guardado? Devuelve `valid` | `legacy` | `invalid`.
+
+    Un `suspended` malformado se consume **sin llamar al dominio y sin
+    restaurar** (§7). Restaurarlo «para que el planner lo arregle» solo lo
+    descarta DESPUÉS de que el cliente mande una afirmativa, y para entonces ya
+    vio una propuesta que nadie va a cumplir.
+    """
+    from . import tools
+
+    if not isinstance(suspension, dict):
+        return 'invalid'
+    if suspension.get('kind') != 'pending_action':
+        return 'invalid'
+    state = suspension.get('state')
+    if not isinstance(state, dict) or not isinstance(state.get('args'), dict):
+        return 'invalid'
+    if not all(state.get(k) for k in ('tool', 'args', 'paraphrase')):
+        return 'invalid'
+    if state['tool'] not in tools.COMMIT_HANDLERS:
+        return 'invalid'
+
+    if not (suspension.get('suspension_id') and suspension.get('suspended_at')):
+        # Legacy `{kind, state}` íntegro: se restaura igual. NUNCA se infiere
+        # vigencia por la ausencia del sello — el dato es viejo, no inválido.
+        return 'legacy'
+    try:
+        stamped = datetime.fromisoformat(suspension['suspended_at'])
+    except (TypeError, ValueError):
+        return 'invalid'
+    if timezone.is_naive(stamped):
+        stamped = stamped.replace(tzinfo=dt_timezone.utc)
+    if stamped > timezone.now() + timedelta(minutes=5):
+        return 'invalid'   # sello en el futuro: el dato no es de fiar
+    return 'valid'
+
+
+def _domain_verdict(conversation, suspension):
+    """R2 — ¿el humano ya hizo el trabajo? Fuera de toda transacción.
+
+    **Solo el match exacto descarta** (§7). Toda ambigüedad, error o timeout
+    restaura: descartar de más deja al cliente esperando algo que nadie hará.
+    """
+    if suspension is None:
+        return None, 'no_suspension'
+
+    shape = _suspension_shape(suspension)
+    if shape == 'invalid':
+        return RELEASE_DISCARD, 'suspension_invalid'
+
+    state = suspension['state']
+    tool, args = state['tool'], state['args']
+
+    # El alta NUNCA se descarta automáticamente (§3.1): sus controles son de
+    # identidad, y sobre eso no hay lectura de agenda que pruebe nada.
+    if tool == 'register_new_client_and_pet':
+        return RELEASE_RESTORE, ('legacy' if shape == 'legacy' else 'not_resolved')
+
+    executor = _release_executor(conversation)
+    if executor is None:
+        return RELEASE_RESTORE, 'no_executor'
+
+    try:
+        resolved, reason = _check_resolved(executor, tool, args)
+    except Exception:            # noqa: BLE001 — el chequeo jamás tumba el release
+        logger.exception("AGENT_RELEASE_DOMAIN_CHECK_FAILED")
+        return RELEASE_RESTORE, 'domain_check_failed'
+    if resolved is None:
+        return RELEASE_DISCARD, reason      # 404: el recurso ya no existe
+    if resolved:
+        return RELEASE_DISCARD, reason
+    return RELEASE_RESTORE, ('legacy' if shape == 'legacy' else reason)
+
+
+def _release_executor(conversation):
+    """`ToolExecutor` del usuario AGENT de la organización de la conversación.
+
+    Nunca `request.user`: la lectura del chequeo debe tener exactamente el
+    alcance del agente, no el de quien pulsó el botón en la bandeja.
+    """
+    from .executor import ToolExecutor
+    from .models import AgentSettings
+
+    settings_obj = AgentSettings.objects.filter(
+        organization=conversation.organization).first()
+    if settings_obj is None or settings_obj.agent_user_id is None:
+        return None
+    return ToolExecutor(conversation, settings_obj.agent_user)
+
+
+def _check_resolved(executor, tool, args):
+    """Una sola lectura HTTP por `public_id` (§3.1). `None` = 404."""
+    if tool == 'create_appointment':
+        pet_pid = args.get('pet_public_id')
+        if not pet_pid:
+            # Staged anterior a F2, sin identificador público: no se consulta
+            # por PK (fallaría con ALLOW_LEGACY_ID_LOOKUP=False). Se restaura.
+            return False, 'no_pet_public_id'
+        status_code, data = executor.call(
+            'GET', '/api/appointments/', tool_name='release_check',
+            params={'date': args.get('date'), 'pet': pet_pid},
+            args_redacted={'date': args.get('date')},
+        )
+        if status_code >= 400:
+            return False, 'domain_check_failed'
+        rows = data.get('results') if isinstance(data, dict) else data
+        want = (args.get('start_time') or '')[:5]
+        for row in rows or []:
+            if ((row.get('start_time') or '')[:5] == want
+                    and row.get('status') in _LIVE_OR_DONE):
+                return True, 'already_created'
+        return False, 'not_resolved'
+
+    appt_pid = args.get('appointment_public_id')
+    if not appt_pid:
+        return False, 'no_appointment_public_id'
+    status_code, appt = executor.call(
+        'GET', f'/api/appointments/{appt_pid}/', tool_name='release_check',
+        args_redacted={},
+    )
+    if status_code == 404:
+        # Restaurar garantizaría un fallo posterior frente al cliente sobre una
+        # cita que ya no existe.
+        return None, 'unresolvable'
+    if status_code >= 400:
+        return False, 'domain_check_failed'
+
+    if tool == 'cancel_appointment':
+        if appt.get('status') in ('canceled', 'done'):
+            return True, 'already_canceled'
+        return False, 'not_resolved'
+
+    if tool == 'reschedule_appointment':
+        same = (appt.get('date') == args.get('date')
+                and (appt.get('start_time') or '')[:5]
+                == (args.get('start_time') or '')[:5])
+        if same and appt.get('status') in _ACTIVE:
+            return True, 'already_rescheduled'
+        # Incluido el «tercer horario»: el humano la movió a otra parte. Se
+        # restaura para que el cliente se entere, en vez de decidirlo un
+        # heurístico a sus espaldas; la precondición de F2 resuelve el resto.
+        return False, 'not_resolved'
+
+    return False, 'unknown_tool'
+
+
+def _apply_release(conversation, witness, suspension, verdict, reason, actor):
+    """R3 — compare-and-set: o coincide el testigo entero, o no se muta nada."""
+    from . import goals
+    from .models import ConversationGoal, HumanHandoff
+
+    with transaction.atomic():
+        convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
+
+        current_handoff = (
+            HumanHandoff.objects.filter(
+                conversation=convo, resolved_at__isnull=True,
+            ).order_by('-id').values_list('pk', flat=True).first()
+        )
+        current = {
+            'suspension_id': (convo.flow.get('suspended') or {}).get('suspension_id'),
+            'state': convo.state,
+            'claimed_by_id': convo.claimed_by_id,
+            'processing_until': convo.processing_until,
+            'handoff_id': current_handoff,
+        }
+        for field, conflict in (
+            ('suspension_id', CONFLICT_SUSPENSION),
+            ('state', CONFLICT_STATE),
+            ('claimed_by_id', CONFLICT_CLAIM),
+            ('processing_until', CONFLICT_TURN),
+            ('handoff_id', CONFLICT_HANDOFF),
+        ):
+            if current[field] != witness[field]:
+                raise ReleaseConflict(conflict)
+
+        flow = convo.flow
+        if verdict == RELEASE_RESTORE:
+            restored = copy.deepcopy(suspension['state'])
+            # Restaurado VENCIDO (D1): el primer «sí» posterior cae SIEMPRE en
+            # la rama de TTL vencido y re-parafrasea sin escribir. Ningún «sí»
+            # viejo ejecuta nada por su cuenta.
+            restored['expires_at'] = (
+                timezone.now() - timedelta(seconds=1)).isoformat()
+            flow['pending_action'] = restored
+            # El nudge se rearma, pero una promesa de esperar hecha al cliente
+            # no la revoca un botón de staff (D7).
+            if not flow.get('deferred_at'):
+                flow.pop('nudge_sent', None)
+        flow.pop('suspended', None)
+
+        convo.state = Conversation.STATE_ACTIVE
+        convo.claimed_by = None
+        convo.claimed_at = None
+        convo.save(update_fields=['state', 'claimed_by', 'claimed_at', 'flow'])
+
+        if convo.contact.verification_level in (
+            ContactIdentity.VERIFICATION_CONFIRMED,
+            ContactIdentity.VERIFICATION_STAFF,
+        ):
+            parked = ConversationGoal.objects.for_organization(
+                convo.organization,
+            ).filter(
+                conversation=convo, name__in=goals.IDENTITY_GOALS,
+                status=ConversationGoal.STATUS_SUSPENDED,
+            ).first()
+            if parked is not None:
+                goals.close(parked, ConversationGoal.STATUS_ABANDONED,
+                            'verificado por el equipo')
+
+        # Se resuelve EL hand-off observado en R1, no «el último abierto»:
+        # pueden no ser el mismo, y uno ya resuelto por otra persona no
+        # autoriza a resolverlo de nuevo.
+        if witness['handoff_id'] is not None:
+            handoff = HumanHandoff.objects.filter(
+                pk=witness['handoff_id'], resolved_at__isnull=True).first()
+            if handoff is not None:
+                handoff.resolved_at = timezone.now()
+                handoff.resolution = HumanHandoff.RESOLUTION_RETURNED_TO_AGENT
+                fields = ['resolved_at', 'resolution']
+                if handoff.claimed_by_id is None:
+                    handoff.claimed_by = actor
+                    handoff.claimed_at = timezone.now()
+                    fields += ['claimed_by', 'claimed_at']
+                handoff.save(update_fields=fields)
+
+    conversation.flow = convo.flow
+    conversation.state = convo.state
+    conversation.claimed_by_id = None
+    conversation.claimed_at = None
+
+    _log_release(convo, verdict, reason, suspension)
+    return {'verdict': verdict or 'none', 'reason': reason}
+
+
+def _log_release(convo, verdict, reason, suspension):
+    """Auditoría del release. Sin PII: ids internos, veredicto y motivo."""
+    if verdict is None:
+        return
+    if reason == 'suspension_invalid':
+        event = 'AGENT_RELEASE_SUSPENSION_INVALID'
+    elif reason == 'unresolvable':
+        event = 'AGENT_RELEASE_PENDING_UNRESOLVABLE'
+    elif verdict == RELEASE_DISCARD:
+        event = 'AGENT_RELEASE_PENDING_DISCARDED'
+    else:
+        event = 'AGENT_RELEASE_PENDING_RESTORED'
+    payload = {
+        'event': event,
+        'organization_id': convo.organization_id,
+        'conversation_id': convo.pk,
+        'reason': reason,
+        'tool': ((suspension or {}).get('state') or {}).get('tool', ''),
+    }
+    if reason == 'legacy':
+        payload['legacy'] = True
+    logger.info(event, extra=payload)

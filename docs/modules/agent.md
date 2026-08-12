@@ -229,6 +229,76 @@ pierde. No hay lista global: un `owner_exists` es negocio en el alta y sería un
 anomalía en cualquier otra tool. Lo no declarado conserva su comportamiento; el
 silencio por defecto sería el fail-open de la observabilidad.
 
+### Liberar una conversación: el veredicto sobre lo suspendido (F3 — ADR p57)
+
+Liberar no es «poner `state=active`»: es aplicar un **veredicto** sobre la
+propuesta que el cliente dejó a medias. `services.release_conversation`, en tres
+pasos:
+
+| Paso | Qué hace | Dónde |
+|---|---|---|
+| **R1** | lock de la fila, valida la suspensión y captura el **testigo** | tx corta |
+| **R2** | una lectura HTTP al dominio: ¿el humano ya hizo el trabajo? | **fuera** de toda transacción |
+| **R3** | re-lee el testigo y, **solo si coincide**, aplica veredicto + release | tx corta, un commit |
+
+R2 va fuera del lock porque una llamada de red dentro de una transacción la
+mantiene abierta lo que tarde el otro extremo (invariante 7). El **testigo**
+existe por eso: durante esa ventana el worker puede tomar el turno, otra persona
+puede reclamar, o puede aparecer una suspensión nueva. Sus cinco campos:
+`suspension_id`, `state`, `claimed_by_id`, `processing_until` y el **id del
+hand-off abierto observado** — se resuelve **ese** caso, no «el último abierto».
+
+**Veredicto** (§3.1 — *solo el match exacto descarta*):
+
+| Tool | Descarta si | Todo lo demás |
+|---|---|---|
+| `create_appointment` | existe cita ese día para esa mascota a esa hora, en estado vivo o `done` | restaura |
+| `cancel_appointment` | la cita está `canceled` o `done` | restaura |
+| `reschedule_appointment` | la cita ya vive en el destino y sigue activa | restaura — **incluido el «tercer horario»** |
+| `register_new_client_and_pet` | **nunca** | siempre restaura |
+
+Un 404 del recurso consume la suspensión sin restaurar (restaurar garantizaría
+un fallo posterior ante el cliente sobre algo que ya no existe). Error, timeout
+o suspensión ambigua → **restauran**: descartar de más deja al cliente esperando
+algo que nadie hará.
+
+**Restaurado vencido** (D1): el `pending_action` vuelve con `expires_at` en el
+pasado, así que el primer «sí» posterior cae siempre en la rama de TTL vencido,
+**re-parafrasea y no escribe**. Ningún «sí» viejo ejecuta nada por su cuenta.
+
+**Sin reintentos silenciosos.** Si el testigo difiere se repite el ciclo **una
+sola vez**; si vuelve a diferir → `409 release_conflict` con su `reason`
+(`suspension_changed` · `state_changed` · `claim_changed` · `turn_in_progress` ·
+`handoff_changed`). Dos vueltas con el mundo moviéndose significan que hay
+alguien más operando, y eso lo decide una persona, no un bucle. Con un turno del
+worker en vuelo: `409 turn_in_progress`, sin mutar nada.
+
+`claim`, `release` y `close` se **serializan sobre la misma fila**
+(`select_for_update`). Sin eso el testigo no significaría nada: no se puede
+comparar contra algo que otro camino escribe sin lock.
+
+#### Tres decisiones de producto que F3 deja explícitas
+
+1. **Sin TTL nuevo ni mensajes automáticos** (§9.4). F3 no añade vencimiento
+   propio a la suspensión. La pérdida silenciosa a ~24 h de
+   `close_inactive_conversations` es **preexistente** y sigue igual: una
+   conversación cerrada no se reabre, así que el `flow` muere con el hilo sin
+   evento ni aviso. Convertirla en una baja con **razón auditable
+   `conversation_inactive`** es una mejora **separada**, fuera de este alcance.
+2. **Descarte silencioso** (§9.5). Cuando el chequeo prueba que el objetivo ya
+   quedó resuelto, se descarta **sin avisar al cliente**. Un «esto ya lo había
+   hecho el equipo» no aporta nada y reabre una conversación cerrada.
+3. **`deferred_at` se conserva** (D7). El release no lo toca: una promesa de
+   esperar hecha al cliente no la revoca un botón de staff. `nudge_sent` solo se
+   limpia **en su ausencia**.
+
+**Límite conocido, anclado con prueba**: el testigo protege la ventana R1–R3, no
+la *propiedad* del claim. Si otra persona ya tenía la conversación reclamada
+**antes** de pulsar liberar, el release se la quita — igual que antes de F3, que
+no miraba el claim en absoluto. Convertirlo en un `409` sería una regla nueva
+(«solo quien reclama puede liberar») con su propio coste: alguien que se va con
+una conversación reclamada la dejaría bloqueada para el equipo.
+
 ### Tamiz de identidad (UX-05) — nuevo vs. ya registrado
 
 **El sistema nunca asume que un número sin registro es un cliente nuevo.** Un

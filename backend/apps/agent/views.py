@@ -331,95 +331,96 @@ def send_message(request, pk):
 @api_view(['POST'])
 @permission_classes([make_permission('agentinbox.claim')])
 def claim_conversation(request, pk):
-    conversation = _get_conversation(request, pk)
-    if (
-        conversation.claimed_by_id is not None
-        and conversation.claimed_by_id != request.user.pk
-    ):
-        return Response({
-            'code': 'already_claimed',
-            'message': 'Otra persona ya está atendiendo esta conversación.',
-        }, status=409)
+    """Reclama la conversación. **Serializado sobre la fila** (§5.6).
 
-    conversation.claimed_by = request.user
-    conversation.claimed_at = timezone.now()
-    conversation.state = Conversation.STATE_HUMAN_ACTIVE
-    conversation.save(update_fields=['claimed_by', 'claimed_at', 'state'])
-    return Response(ConversationListSerializer(conversation).data)
+    Antes era un read-modify-write sin lock: dos personas podían reclamar «a la
+    vez» y el release podía pisar un claim legítimo. Es la condición sin la
+    cual el testigo del release no significa nada — no se puede comparar contra
+    algo que otro camino escribe sin lock.
+    """
+    from django.db import transaction
+
+    conversation = _get_conversation(request, pk)
+    with transaction.atomic():
+        convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
+        if (
+            convo.claimed_by_id is not None
+            and convo.claimed_by_id != request.user.pk
+        ):
+            return Response({
+                'code': 'already_claimed',
+                'message': 'Otra persona ya está atendiendo esta conversación.',
+            }, status=409)
+
+        convo.claimed_by = request.user
+        convo.claimed_at = timezone.now()
+        convo.state = Conversation.STATE_HUMAN_ACTIVE
+        convo.save(update_fields=['claimed_by', 'claimed_at', 'state'])
+    return Response(ConversationListSerializer(convo).data)
 
 
 @api_view(['POST'])
 @permission_classes([make_permission('agentinbox.claim')])
 def close_conversation(request, pk):
+    """Cierra la conversación. Serializado sobre la misma fila que claim/release."""
+    from django.db import transaction
+
     conversation = _get_conversation(request, pk)
-    if conversation.state != Conversation.STATE_CLOSED:
-        conversation.state = Conversation.STATE_CLOSED
-        conversation.closed_at = timezone.now()
-        conversation.save(update_fields=['state', 'closed_at'])
-    return Response(ConversationListSerializer(conversation).data)
+    with transaction.atomic():
+        convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
+        if convo.state != Conversation.STATE_CLOSED:
+            convo.state = Conversation.STATE_CLOSED
+            convo.closed_at = timezone.now()
+            convo.save(update_fields=['state', 'closed_at'])
+    return Response(ConversationListSerializer(convo).data)
 
 
 @api_view(['POST'])
 @permission_classes([make_permission('agentinbox.claim')])
 def release_conversation(request, pk):
-    """Devuelve la conversación al agente/cola (state=active, sin claim).
+    """Devuelve la conversación al agente/cola y decide qué pasa con lo suspendido.
 
-    Fase 1 (R9 auditoría rigidez, §1.2): antes dejaba el `HumanHandoff`
-    formalmente sin resolver mientras el agente volvía a hablar (conv 13,
-    handoff 14 `resolved_at=None`, `state=active`) — el caso quedaba
-    "atendido" en la bandeja pero seguía en cola. Cierra ambos huecos:
+    La lógica vive en `services.release_conversation` (F3, ADR p57 §5.6): R1
+    captura el testigo bajo lock, R2 pregunta al dominio fuera de toda
+    transacción y R3 aplica el veredicto **solo** si el testigo sigue igual.
+    Aquí queda el transporte: traducir sus desenlaces a HTTP.
 
-    1. Resuelve el `HumanHandoff` abierto (`resolved_at` + `resolution`).
-    2. Si el contacto YA quedó verificado (por el humano o por cualquier
-       otra vía) mientras el reto estaba apartado, ese compromiso de
-       identidad se ABANDONA — re-interrogar a alguien ya validado no tiene
-       sentido. Si no, se deja tal cual: `policy.evaluate` lo retoma solo
-       con el próximo mensaje del cliente (resume perezoso).
+    Fase 1 (R9 auditoría rigidez, §1.2): resuelve el `HumanHandoff` abierto y,
+    si el contacto YA quedó verificado mientras el reto estaba apartado,
+    abandona ese compromiso de identidad — re-interrogar a alguien ya validado
+    no tiene sentido. Ambas cosas siguen ocurriendo, ahora dentro del commit de
+    R3 y sobre el hand-off que R1 observó, no «el último abierto».
     """
-    from . import goals
-    from .models import ConversationGoal
+    from . import services
 
     conversation = _get_conversation(request, pk)
-    if conversation.state == Conversation.STATE_CLOSED:
+    try:
+        result = services.release_conversation(conversation, request.user)
+    except services.ConversationClosed:
         return Response(
             {'error': 'La conversación está cerrada.'}, status=400,
         )
-    conversation.state = Conversation.STATE_ACTIVE
-    conversation.claimed_by = None
-    conversation.claimed_at = None
-    conversation.save(update_fields=['state', 'claimed_by', 'claimed_at'])
+    except services.TurnInProgress:
+        # Hay un turno en vuelo: el staff reintenta en segundos. No se pisa al
+        # worker a mitad de una respuesta al cliente.
+        return Response({
+            'code': 'turn_in_progress',
+            'message': 'El asistente está respondiendo justo ahora. '
+                       'Vuelve a intentarlo en unos segundos.',
+        }, status=409)
+    except services.ReleaseConflict as conflict:
+        # Dos vueltas y el mundo seguía moviéndose: lo decide una persona con
+        # el caso recargado, no un bucle de reintentos.
+        return Response({
+            'code': 'release_conflict',
+            'reason': conflict.reason,
+            'message': 'La conversación cambió mientras la liberabas. '
+                       'Recárgala y vuelve a decidir.',
+        }, status=409)
 
-    already_verified = conversation.contact.verification_level in (
-        ContactIdentity.VERIFICATION_CONFIRMED, ContactIdentity.VERIFICATION_STAFF,
-    )
-    if already_verified:
-        parked = ConversationGoal.objects.for_organization(
-            conversation.organization,
-        ).filter(
-            conversation=conversation,
-            name__in=goals.IDENTITY_GOALS,
-            status=ConversationGoal.STATUS_SUSPENDED,
-        ).first()
-        if parked is not None:
-            goals.close(parked, ConversationGoal.STATUS_ABANDONED,
-                        'verificado por el equipo')
-
-    handoff = HumanHandoff.objects.for_organization(
-        conversation.organization,
-    ).filter(
-        conversation=conversation, resolved_at__isnull=True,
-    ).order_by('-id').first()
-    if handoff is not None:
-        handoff.resolved_at = timezone.now()
-        handoff.resolution = HumanHandoff.RESOLUTION_RETURNED_TO_AGENT
-        handoff_fields = ['resolved_at', 'resolution']
-        if handoff.claimed_by_id is None:
-            handoff.claimed_by = request.user
-            handoff.claimed_at = timezone.now()
-            handoff_fields += ['claimed_by', 'claimed_at']
-        handoff.save(update_fields=handoff_fields)
-
-    return Response(ConversationListSerializer(conversation).data)
+    data = ConversationListSerializer(conversation).data
+    data['release'] = result
+    return Response(data)
 
 
 @api_view(['GET', 'PATCH'])
