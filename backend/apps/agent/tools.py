@@ -663,6 +663,86 @@ def map_domain_400(data):
     return 'invalid_data', (messages[0][:160] if messages else '')
 
 
+# --------------------------------------------------------------------------
+# INV-A — la precondición de estado, del lado del agente (ADR p57, §3.2)
+#
+# El dominio compara `expected_state` contra la fila BLOQUEADA, dentro de la
+# transacción que escribe. Aquí solo se captura la tupla en el momento de
+# PROPONER y se reenvía al confirmar. El re-parafraseo protege la intención del
+# cliente; esto protege el recurso.
+# --------------------------------------------------------------------------
+EXPECTED_STATE_KEYS = ('expected_status', 'expected_date', 'expected_start_time')
+
+
+def _expected_state_of(appt):
+    """Claves staged con la tupla semántica vigente de la cita leída."""
+    return {
+        'expected_status': appt.get('status'),
+        'expected_date': appt.get('date'),
+        'expected_start_time': (appt.get('start_time') or '')[:5],
+    }
+
+
+def _expected_state_body(args):
+    """`{'expected_state': {...}}` para el body, o `{}` si el staged es viejo.
+
+    Un `pending_action` staged ANTES de este cambio no trae las claves. Se
+    envía sin precondición —comportamiento actual— en vez de inventar una
+    tupla: fabricar el estado esperado a partir de la lectura de ahora sería
+    exactamente el fail-open que INV-A cierra.
+    """
+    if any(args.get(k) is None for k in EXPECTED_STATE_KEYS):
+        return {}
+    return {'expected_state': {
+        'status': args['expected_status'],
+        'date': args['expected_date'],
+        'start_time': args['expected_start_time'],
+    }}
+
+
+# Desenlaces de NEGOCIO declarados de las escrituras de agenda/alta (§5.4).
+# Se declaran por llamada, no globalmente: fuera de estas tools los mismos
+# códigos serían una anomalía y deben seguir alertando.
+BUSINESS_OUTCOMES = (
+    'appointment_changed', 'owner_exists', 'owner_ambiguous',
+    'slot_taken', 'past_date', 'validation_error',
+)
+
+
+def _precondition_outcome(data, *, already_done_when):
+    """Traduce un `409 appointment_changed` a desenlace conversacional.
+
+    Dos lecturas posibles del mismo 409, y confundirlas cuesta caro:
+
+    - **`already_done`** — la cita YA está como el cliente la quería. No es un
+      conflicto, es éxito idempotente: cancelar algo ya cancelado no debería
+      escalar a una persona (§3.2, exigencia 4).
+    - **`appointment_changed`** — cambió a otra cosa. Se le cuenta al cliente
+      con el estado REAL y se le deja decidir (R3). **Nunca** se reintenta sin
+      precondición: eso es la sobrescritura que INV-A prohíbe (§5.3).
+    """
+    current = (data or {}).get('current') or {}
+    if already_done_when(current):
+        return ToolOutcome(ok=False, client_error='already_done',
+                           data={'current': current})
+    return ToolOutcome(ok=False, client_error='appointment_changed',
+                       data={'current': current})
+
+
+def _cancel_already_done(current):
+    """Cancelar: ya está hecho si la cita está cancelada."""
+    return current.get('status') == 'canceled'
+
+
+def _reschedule_already_done(current, args):
+    """Reprogramar: ya está hecho si la cita vive en el destino y sigue activa."""
+    return (
+        current.get('status') in ('scheduled', 'confirmed')
+        and current.get('date') == args.get('date')
+        and (current.get('start_time') or '')[:5] == (args.get('start_time') or '')[:5]
+    )
+
+
 def _appt_end_time(time_str, minutes=SLOT_MINUTES):
     from datetime import datetime, timedelta
     t = datetime.strptime(time_str[:5], '%H:%M')
@@ -830,6 +910,11 @@ def create_appointment(conversation, executor, args, triggered_by=None):
     )
     staged = {
         'pet': pet.get('id'), 'veterinarian': vet.pk,
+        # `pet_public_id` es para LEER (el chequeo de release consulta la
+        # agenda por identificador público, ADR p18); el PK sigue siendo el
+        # del body del POST. Se guarda al PROPONER, no al liberar: al liberar
+        # ya no sería "lo que el cliente vio" (§6.1).
+        'pet_public_id': pet_pid,
         'date': date_str, 'start_time': time_str,
         'end_time': _appt_end_time(time_str), 'reason': reason,
         'notes': f"Agendada por asistente virtual · conv {conversation.public_id}",
@@ -921,6 +1006,11 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
     staged = {
         'appointment_public_id': appt_pid,
         'cancellation_reason': (f"{reason} · {annotation}" if reason else annotation)[:100],
+        # INV-A: la tupla que el cliente vio parafraseada. Viaja como
+        # `expected_state` en el commit para que el dominio compare bajo lock
+        # (§6.1). Se captura al PROPONER — calcularla al confirmar sería
+        # describir el mundo de después, y la precondición no diría nada.
+        **_expected_state_of(appt),
     }
     confirmations.stage_pending(conversation, tool='cancel_appointment',
                                args=staged, paraphrase=paraphrase)
@@ -931,13 +1021,21 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
 
 def commit_cancel_appointment(conversation, executor, args, triggered_by=None):
     appt_pid = args['appointment_public_id']
-    status_code, _ = executor.call(
+    status_code, data = executor.call(
         'PATCH', f'/api/appointments/{appt_pid}/status/',
         tool_name='cancel_appointment',
-        json={'status': 'canceled', 'cancellation_reason': args.get('cancellation_reason', '')},
+        json={'status': 'canceled',
+              'cancellation_reason': args.get('cancellation_reason', ''),
+              **_expected_state_body(args)},
         policy_tier='2', policy_decision='confirmed',
         triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
+        business_outcomes=BUSINESS_OUTCOMES,
     )
+    if status_code == 409:
+        return _precondition_outcome(data, already_done_when=_cancel_already_done)
+    if status_code == 400:
+        client_error, detail = map_domain_400(data)
+        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
     if status_code >= 400:
         return ToolOutcome(ok=False, client_error='tool_failure')
     return ToolOutcome(ok=True, data={'canceled': True}, summary={'canceled': True})
@@ -983,6 +1081,9 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
     staged = {
         'appointment_public_id': appt_pid, 'date': new_date,
         'start_time': new_time, 'end_time': _appt_end_time(new_time),
+        # INV-A (§0-C): `from_*` deja de ser dato de triage y pasa a ser
+        # PRECONDICIÓN — el origen que el cliente vio en el parafraseo.
+        **_expected_state_of(appt),
     }
     confirmations.stage_pending(conversation, tool='reschedule_appointment',
                                args=staged, paraphrase=paraphrase)
@@ -996,10 +1097,16 @@ def commit_reschedule_appointment(conversation, executor, args, triggered_by=Non
     status_code, data = executor.call(
         'PATCH', f'/api/appointments/{appt_pid}/', tool_name='reschedule_appointment',
         json={'date': args['date'], 'start_time': args['start_time'],
-              'end_time': args['end_time']},
+              'end_time': args['end_time'], **_expected_state_body(args)},
         policy_tier='2', policy_decision='confirmed',
         triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
+        business_outcomes=BUSINESS_OUTCOMES,
     )
+    if status_code == 409:
+        return _precondition_outcome(
+            data,
+            already_done_when=lambda current: _reschedule_already_done(current, args),
+        )
     if status_code == 400:
         client_error, detail = map_domain_400(data)
         return ToolOutcome(ok=False, client_error=client_error, detail=detail)
@@ -1127,11 +1234,58 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
     return ToolOutcome(ok=True, summary={'proposed': 'register'})
 
 
-def commit_register_new_client_and_pet(conversation, executor, args, triggered_by=None):
+def _contact_if_identity_unchanged(conversation, args):
+    """C1–C4 de §4.3: el contacto FRESCO si sigue siendo el que propuso, o `None`.
+
+    Se ejecutan **siempre**, no solo tras un hand-off: INV-B es una regla del
+    sistema, y el release solo fue el escenario que la hizo evidente. Entre que
+    el cliente vio el parafraseo y contestó «sí» pueden haber pasado minutos —
+    o un hand-off entero en el que una persona resolvió la identidad.
+
+    `None` significa que la premisa «cliente nuevo» dejó de ser cierta; NO es un
+    error (§4.5): es la buena noticia de que el humano ya lo registró, y la
+    conversación sigue por la vía de cliente conocido.
+
+    Devuelve la instancia porque el auto-vínculo posterior **necesita leer
+    `auto_rematch_blocked` fresco**: con la instancia cacheada, un reset de
+    identidad ocurrido durante el hand-off pasaría inadvertido y el vínculo
+    automático lo desharía — exactamente lo que Item 1 cierra.
+    """
     from .models import ContactIdentity
+
+    # C1 — re-leer desde la BASE. La instancia cacheada en
+    # `conversation.contact` puede ser de hace varios minutos, y justo lo que
+    # se comprueba aquí es si cambió mientras tanto.
+    contact = ContactIdentity.objects.filter(pk=conversation.contact_id).first()
+    if contact is None:
+        return None
+    # C2/C3 — ya tiene expediente, o el teléfono se volvió ambiguo.
+    if contact.owner_id is not None or contact.is_ambiguous:
+        return None
+    # C4 — el número que propuso es el número que confirma. La comparación usa
+    # la MISMA función que armó el staged, así que no puede divergir por
+    # formato.
+    if _wa_id_to_local10(contact.external_id) != args.get('owner_phone'):
+        return None
+    return contact
+
+
+def commit_register_new_client_and_pet(conversation, executor, args, triggered_by=None):
+    contact = _contact_if_identity_unchanged(conversation, args)
+    if contact is None:
+        # Ni siquiera se llama al dominio: no hay nada que escribir y el
+        # cliente ya está registrado (§5.2).
+        return ToolOutcome(ok=False, client_error='identity_changed')
+
     body = {k: args[k] for k in (
         'owner_name', 'owner_phone', 'pet_name', 'pet_species',
         'veterinarian', 'date', 'start_time', 'end_time', 'reason', 'notes')}
+    # C5 — INV-B en el dominio: el alta del agente SIEMPRE pide expediente
+    # nuevo, porque en este flujo la premisa es literalmente «cliente nuevo».
+    # Si el teléfono ya tiene expediente, la premisa era falsa y la decisión es
+    # de una persona. No se pre-consulta desde aquí a propósito: sería un
+    # `icontains` acotado a 20 filas con una ventana TOCTOU hasta el POST.
+    body['require_new_owner'] = True
     status_code, data = executor.call(
         'POST', '/api/appointments/create-with-patient/',
         tool_name='register_new_client_and_pet', json=body,
@@ -1140,7 +1294,16 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
         triggered_by_message=triggered_by,
         idempotency_key=args.get('idempotency_key'),
         extract_domain_id=lambda d: d.get('public_id'),
-        result_summarizer=lambda d: {'status': d.get('status')})
+        result_summarizer=lambda d: {'status': d.get('status')},
+        business_outcomes=BUSINESS_OUTCOMES)
+    if status_code == 409:
+        # El teléfono ya tiene expediente (uno: `owner_exists`; varios:
+        # `owner_ambiguous`). CERO escrituras — ni Owner, ni Pet, ni cita — y
+        # la decisión pasa a una persona con la intención preservada (§5.5).
+        code = (data or {}).get('code')
+        if code in ('owner_exists', 'owner_ambiguous'):
+            return ToolOutcome(ok=False, client_error=code)
+        return ToolOutcome(ok=False, client_error='tool_failure')
     if status_code == 400:
         client_error, detail = map_domain_400(data)
         return ToolOutcome(ok=False, client_error=client_error, detail=detail)
@@ -1150,19 +1313,27 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
     # Auto-vínculo: el número queda ligado al owner resuelto (probó control
     # del número al escribir + aportó sus datos → confirmed_in_chat).
     #
-    # GUARD DE SEGURIDAD (auditoría OCR 2026-08-08, Item 1 del plan): `POST
-    # create-with-patient` hace `Owner.objects.get_or_create(phone=...)` —
-    # si este contacto fue reseteado (`reset_contact_identity`) y su propio
-    # teléfono coincide con un Owner YA EXISTENTE (la razón misma por la que
-    # se reseteó), `owner_pid` no apunta a un cliente nuevo, sino al mismo
-    # expediente que un ADMIN acaba de desvincular. Vincularlo aquí sin más
-    # deshacía el reset por completo, sin ningún reto de identidad — por eso
-    # `contact.auto_rematch_blocked` (levantado por el reset) también
-    # bloquea esta ruta, no solo `services._rematch_owner`. El contacto
-    # queda sin vincular (la cita/mascota igual se crea vía el endpoint
-    # compartido; solo se suprime el auto-enlace de LA IDENTIDAD).
+    # GUARD DE SEGURIDAD (auditoría OCR 2026-08-08, Item 1 del plan): si este
+    # contacto fue reseteado (`reset_contact_identity`) y su propio teléfono
+    # coincide con un Owner YA EXISTENTE (la razón misma por la que se
+    # reseteó), vincularlo aquí desharía el reset por completo, sin ningún
+    # reto de identidad — por eso `contact.auto_rematch_blocked` (levantado
+    # por el reset) también bloquea esta ruta, no solo
+    # `services._rematch_owner`. El contacto queda sin vincular (la
+    # cita/mascota igual se crea vía el endpoint compartido; solo se suprime
+    # el auto-enlace de LA IDENTIDAD).
+    #
+    # Desde F2 es la SEGUNDA defensa, y ahora independiente de la primera
+    # (§4.4): con `require_new_owner=True` el dominio ya rechaza el alta
+    # contra un expediente existente (409), así que `owner_pid` solo puede
+    # apuntar a un `Owner` recién creado. Que `link_self_registered` sea
+    # seguro deja de ser un supuesto y pasa a ser una garantía verificada
+    # dentro de la transacción — pero el guard se queda: una garantía con una
+    # sola capa es una garantía que nadie vuelve a comprobar.
     owner_pid = data.get('owner_public_id')
-    contact = conversation.contact
+    # `contact` viene de C1 (lectura FRESCA), no de `conversation.contact`: el
+    # guard de abajo depende de `auto_rematch_blocked`, y leerlo de una
+    # instancia cacheada antes del hand-off sería no leerlo.
     if owner_pid and contact.owner_id is None and not contact.auto_rematch_blocked:
         from apps.patients.models import Owner
         owner = Owner.objects.filter(

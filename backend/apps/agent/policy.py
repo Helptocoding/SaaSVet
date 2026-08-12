@@ -332,14 +332,24 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
         conversation=conversation, resolved_at__isnull=True,
     ).first()
     created = existing is None
-    if created:
-        HumanHandoff.objects.create(
-            organization=conversation.organization,
-            conversation=conversation,
-            reason_code=reason_code,
-            reason_detail=detail[:200],
-            priority=priority,
-        )
+
+    # SUSPENDE, no destruye (R4/R5): una urgencia SUPLANTA el pending_action,
+    # no lo aborta — se ofrece de vuelta al retomar.
+    #
+    # La suspensión, el hand-off y el cambio de estado van en UN commit, por el
+    # helper único (§5.5.4). Antes esto eran dos escrituras separadas y la
+    # rama de identidad no podía reutilizarlas sin perder la intención por el
+    # camino; ahora no hay dos formas de suspender.
+    #
+    # El pendiente sigue viviendo en `flow` y no en el modelo de compromisos:
+    # la confirmación tier-2 queda EXPLÍCITAMENTE fuera del alcance de la
+    # Fase 3 (§11 del plan — es lo mejor implementado del sistema y el patrón
+    # a imitar). Unificarla es trabajo de otro sprint, con su propia entrada
+    # en el ADR.
+    from . import confirmations
+    confirmations.suspend_pending(
+        conversation, reason_code=reason_code, detail=detail, priority=priority)
+
     escalated_now = created
     if (not created and priority == HumanHandoff.PRIORITY_URGENT
             and existing.priority != HumanHandoff.PRIORITY_URGENT):
@@ -349,23 +359,6 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
         existing.reason_code = reason_code
         existing.save(update_fields=['priority', 'reason_code'])
         escalated_now = True
-    flow = conversation.flow
-    if flow.get('pending_action'):
-        # SUSPENDE, no destruye (R4/R5): una urgencia SUPLANTA el
-        # pending_action, no lo aborta — se ofrece de vuelta al retomar.
-        #
-        # Sigue viviendo en `flow` y no en el modelo de compromisos: la
-        # confirmación tier-2 queda EXPLÍCITAMENTE fuera del alcance de la
-        # Fase 3 (§11 del plan — es lo mejor implementado del sistema y el
-        # patrón a imitar). Unificarla es trabajo de otro sprint, con su
-        # propia entrada en el ADR.
-        flow['suspended'] = {
-            'kind': 'pending_action', 'state': flow['pending_action']}
-        flow.pop('pending_action', None)
-    # El acuse al cliente que insiste se rearma con cada escalada nueva.
-    flow.pop('handoff_ack_sent', None)
-    conversation.state = Conversation.STATE_HANDOFF_PENDING
-    conversation.save(update_fields=['state', 'flow'])
 
     # La TAREA en curso pasa a manos del humano: queda cerrada como `handoff`,
     # no como abandonada (W2 — importa para el embudo). Incluye la que un reto

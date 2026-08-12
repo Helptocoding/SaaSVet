@@ -73,3 +73,78 @@ def clear_pending(conversation):
     if 'pending_action' in conversation.flow:
         conversation.flow.pop('pending_action', None)
         conversation.save(update_fields=['flow'])
+
+
+def suspend_pending(conversation, *, reason_code, detail='', priority='normal'):
+    """Suspende la intención y abre/retiene su hand-off — **en un solo commit**.
+
+    Es el hallazgo Q de la revisión de plan, y el más peligroso del Item porque
+    falla en silencio y destruye justo lo que existe para proteger: suspender
+    con `clear_pending()` + `escalate_to_human()` son **dos** `save()`, y entre
+    ellos caben una excepción, un reinicio del worker o una carrera. El
+    resultado es una conversación sin pendiente y sin suspensión, con el 409 ya
+    devuelto y el cliente esperando algo que nadie va a hacer.
+
+    Bajo `select_for_update()` de `Conversation` y en una transacción:
+
+    1. Re-lee `flow` **bajo el lock** (read-modify-write; nunca sobre una
+       instancia vieja que otro turno ya invalidó).
+    2. Copia el `pending_action` **íntegro** a `flow['suspended']` con
+       `suspension_id`, `suspended_at` y `handoff_reason`. El staged no se
+       reescribe ni se recorta — TC-SEC-03 sigue valiendo.
+    3. Elimina `flow['pending_action']`.
+    4. Crea **o retiene** el `HumanHandoff` abierto (no se abren dos casos por
+       el mismo hecho).
+    5. Deja `state = HANDOFF_PENDING`.
+
+    Idempotente: llamarlo dos veces no duplica el caso ni pisa la suspensión ya
+    escrita. Devuelve `(handoff, suspension)` — `suspension` es `None` si no
+    había ninguna intención que preservar.
+
+    **Es el único escritor legítimo de `flow['suspended']`.** Escribirlo a mano
+    vuelve a abrir el hueco.
+    """
+    from django.db import transaction
+
+    from .models import Conversation, HumanHandoff
+
+    with transaction.atomic():
+        convo = (Conversation.objects.select_for_update()
+                 .get(pk=conversation.pk))
+
+        handoff = HumanHandoff.objects.filter(
+            conversation=convo, resolved_at__isnull=True,
+        ).first()
+        if handoff is None:
+            handoff = HumanHandoff.objects.create(
+                organization=convo.organization,
+                conversation=convo,
+                reason_code=reason_code,
+                reason_detail=detail[:200],
+                priority=priority,
+            )
+
+        flow = convo.flow
+        pending = flow.get('pending_action')
+        suspension = flow.get('suspended')
+        if pending:
+            suspension = {
+                'suspension_id': uuid.uuid4().hex,
+                'kind': 'pending_action',
+                'state': pending,
+                'suspended_at': timezone.now().isoformat(),
+                'handoff_reason': reason_code,
+            }
+            flow['suspended'] = suspension
+            flow.pop('pending_action', None)
+        # El acuse al cliente que insiste se rearma con cada escalada nueva.
+        flow.pop('handoff_ack_sent', None)
+
+        convo.state = Conversation.STATE_HANDOFF_PENDING
+        convo.save(update_fields=['state', 'flow'])
+
+    # El caller sigue trabajando sobre su instancia: se sincroniza para que no
+    # escriba encima con un `flow` anterior al lock.
+    conversation.flow = convo.flow
+    conversation.state = convo.state
+    return handoff, suspension

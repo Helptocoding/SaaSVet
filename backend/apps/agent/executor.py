@@ -92,10 +92,22 @@ class ToolExecutor:
              args_redacted=None, policy_tier='', policy_decision='auto',
              triggered_by_message=None, result_summarizer=None,
              domain_object_public_id=None, extract_domain_id=None,
-             idempotency_key=None):
+             idempotency_key=None, business_outcomes=()):
         """Un request autenticado + una fila de auditoría. Devuelve
         ``(status_code, data)`` — el mapeo a comportamiento conversacional
         (spec §2.5) es del caller (planner/policy), no de aquí.
+
+        ``business_outcomes``: códigos que ESTA llamada declara como
+        **desenlaces de negocio esperados** (§5.4, hallazgo X). Un
+        ``owner_exists`` es negocio en el alta y sería una anomalía en
+        cualquier otra tool, así que no hay lista global: la declara quien
+        llama. Los declarados registran ``AGENT_TOOL_BUSINESS_CONFLICT``
+        (INFO, redactado) en lugar de ``AGENT_TOOL_HTTP_ERROR`` (WARNING) y no
+        cuentan como fallo de integración. **La fila de ``ToolExecution`` se
+        sigue creando con su ``error_code``**: es la traza y no se pierde.
+
+        Lo NO declarado conserva su comportamiento: el silencio por defecto
+        sería el fail-open de la observabilidad.
         """
         request_id = str(uuid.uuid4())
         headers = {
@@ -159,15 +171,25 @@ class ToolExecutor:
         ).save()
 
         if status_code >= 400:
-            logger.warning("AGENT_TOOL_HTTP_ERROR", extra={
-                "event": "AGENT_TOOL_HTTP_ERROR",
+            is_business = error_code in business_outcomes
+            event = ("AGENT_TOOL_BUSINESS_CONFLICT" if is_business
+                     else "AGENT_TOOL_HTTP_ERROR")
+            payload = {
+                "event": event,
                 "organization_id": self.conversation.organization_id,
                 "conversation_id": self.conversation.pk,
                 "tool_name": tool_name,
                 "status_code": status_code,
                 "error_code": error_code,
                 "request_id": request_id,
-            })
+            }
+            # Un conflicto de negocio frecuente no es un bug: es la señal de
+            # que staff y agente operan sobre lo mismo a la vez, y produce
+            # decisiones. Mezclarlo con las averías esconde las dos señales.
+            if is_business:
+                logger.info(event, extra=payload)
+            else:
+                logger.warning(event, extra=payload)
         return status_code, data
 
     def record_local(self, *, tool_name, args_redacted=None, policy_tier='',

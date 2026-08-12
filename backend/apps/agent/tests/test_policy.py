@@ -95,7 +95,14 @@ class PriorityOrderTests(PolicyTestCase):
     def test_emergency_suspends_pending_action_not_destroys(self):
         """Extremo a extremo (evaluate + escalate_to_human, como lo
         encadena el planner): la urgencia SUSPENDE el `pending_action`, no
-        lo destruye — se ofrece de vuelta al retomar (R4/R5)."""
+        lo destruye — se ofrece de vuelta al retomar (R4/R5).
+
+        El `state` viaja **íntegro** (TC-SEC-03: la propuesta no se reescribe
+        ni se recorta al suspenderla). Desde F2 la suspensión lleva además
+        `suspension_id`, `suspended_at` y `handoff_reason` (§6.1) — el primero
+        es la clave de idempotencia que el release necesita para no aplicar su
+        veredicto sobre una suspensión distinta de la que verificó.
+        """
         self.conv.flow["pending_action"] = {"tool": "create_appointment"}
         self.conv.save()
         d = self._eval("se está muriendo")
@@ -104,11 +111,13 @@ class PriorityOrderTests(PolicyTestCase):
             priority=d.handoff_priority)
         self.conv.refresh_from_db()
         self.assertNotIn("pending_action", self.conv.flow)
-        self.assertEqual(
-            self.conv.flow["suspended"],
-            {"kind": "pending_action",
-             "state": {"tool": "create_appointment"}},
-        )
+
+        suspended = self.conv.flow["suspended"]
+        self.assertEqual(suspended["kind"], "pending_action")
+        self.assertEqual(suspended["state"], {"tool": "create_appointment"})
+        self.assertTrue(suspended["suspension_id"])
+        self.assertTrue(suspended["suspended_at"])
+        self.assertEqual(suspended["handoff_reason"], d.handoff_reason)
 
     def test_wants_human_escalates(self):
         d = self._eval("me pasas con una persona por favor")

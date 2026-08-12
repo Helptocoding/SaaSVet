@@ -626,6 +626,23 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
 
     outcome = handler(conversation, executor, pending['args'],
                       triggered_by=triggered_by)
+
+    # La limpieza del pendiente ya NO ocurre a ciegas aquí (§5.5.4, hallazgo
+    # Q). Pasa a ser responsabilidad de cada desenlace: los que limpiaban
+    # siguen limpiando —mismo comportamiento observable, P2-11 lo ancla— y los
+    # que SUSPENDEN lo hacen dentro de su transición atómica. Limpiar antes de
+    # evaluar el resultado dejaba a la rama de identidad sin nada que
+    # suspender, y la intención del cliente se perdía en silencio.
+    if not outcome.ok:
+        if outcome.client_error in ('owner_exists', 'owner_ambiguous'):
+            return _suspend_for_identity(conversation, outcome, pending)
+        if outcome.client_error == 'identity_changed':
+            return _resolved_identity(conversation, pending)
+        if outcome.client_error == 'already_done':
+            return _already_done(conversation, pending, outcome)
+        if outcome.client_error == 'appointment_changed':
+            return _appointment_changed(conversation, pending, outcome)
+
     confirmations.clear_pending(conversation)
 
     if not outcome.ok:
@@ -686,6 +703,139 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
                      author='system')
     return {'decision': 'committed', 'llm_calls': 0, 'tools': 1,
             'tool': pending['tool']}
+
+
+# --------------------------------------------------------------------------
+# Desenlaces de las precondiciones (§5.2). Ninguno es una avería: los cuatro
+# son resultados de negocio, y por eso ninguno escala por `tool_failure` ni
+# reintenta (R2/R5).
+# --------------------------------------------------------------------------
+IDENTITY_HANDOFF_TEXT = (
+    "Necesito que alguien del equipo confirme tus datos antes de registrarte 🙏 "
+    "Ya les avisé — en un momento te contactan."
+)
+IDENTITY_RESOLVED_TEXT = (
+    "Ya te tengo registrado ✅ ¿Te agendo la cita?"
+)
+ALREADY_CANCELED_TEXT = "Ya estaba cancelada ✅ ¿Te ayudo con algo más?"
+ALREADY_RESCHEDULED_TEXT = "Ya estaba movida a ese horario ✅ ¿Te ayudo con algo más?"
+
+
+def _suspend_for_identity(conversation, outcome, pending):
+    """`owner_exists` / `owner_ambiguous`: preservar la intención y escalar.
+
+    **Cero escrituras en el dominio** (el 409 llegó antes de crear nada) y una
+    sola transición atómica aquí: suspender el pendiente, abrir el caso de
+    identidad y pasar a HANDOFF_PENDING en un commit (§5.5.4).
+
+    Esta rama tiene **prohibido** usar `clear_pending` + `escalate_to_human`
+    por separado: son justo las dos llamadas cuya separación pierde la
+    intención. El staff verá qué pidió el cliente sin leer el transcript.
+
+    La diferencia entre «uno» y «varios» expedientes le importa al staff, no al
+    cliente: recibe el mismo mensaje. Lo que cambia es el `reason_detail` del
+    caso.
+    """
+    from .models import HumanHandoff
+
+    confirmations.suspend_pending(
+        conversation,
+        reason_code=HumanHandoff.REASON_IDENTITY,
+        detail=outcome.client_error,
+    )
+    enqueue_outbound(conversation, IDENTITY_HANDOFF_TEXT, author='system')
+    logger.info("AGENT_COMMIT_%s" % outcome.client_error.upper(), extra={
+        "event": "AGENT_COMMIT_%s" % outcome.client_error.upper(),
+        "organization_id": conversation.organization_id,
+        "conversation_id": conversation.pk,
+        "tool": pending['tool'],
+    })
+    return {'decision': 'escalate', 'llm_calls': 0, 'tools': 1,
+            'reason': outcome.client_error}
+
+
+def _resolved_identity(conversation, pending):
+    """`identity_changed`: el humano ya resolvió la identidad (§4.5).
+
+    No es un error y no escala. Se descarta la propuesta —ya no describe la
+    realidad— pero el objetivo sigue abierto: con `contact.owner_id` asignado,
+    el modelo puede agendar sin dar de alta a nadie.
+    """
+    confirmations.clear_pending(conversation)
+    enqueue_outbound(conversation, IDENTITY_RESOLVED_TEXT, author='system')
+    logger.info("AGENT_COMMIT_IDENTITY_CHANGED", extra={
+        "event": "AGENT_COMMIT_IDENTITY_CHANGED",
+        "organization_id": conversation.organization_id,
+        "conversation_id": conversation.pk,
+        "tool": pending['tool'],
+    })
+    return {'decision': 'commit_identity_changed', 'llm_calls': 0, 'tools': 1}
+
+
+def _already_done(conversation, pending, outcome):
+    """`already_done`: la cita ya estaba como el cliente la quería.
+
+    Éxito idempotente, no conflicto: el objetivo se cierra como CUMPLIDO. Antes
+    este caso devolvía 400 («canceled no admite transición a canceled») y
+    terminaba escalando a una persona para nada.
+    """
+    from .models import ConversationGoal
+
+    confirmations.clear_pending(conversation)
+    goals.close_open_goal(
+        conversation, ConversationGoal.STATUS_COMPLETED, pending['tool'])
+    text = (ALREADY_CANCELED_TEXT if pending['tool'] == 'cancel_appointment'
+            else ALREADY_RESCHEDULED_TEXT)
+    enqueue_outbound(conversation, text, author='system')
+    logger.info("AGENT_COMMIT_ALREADY_DONE", extra={
+        "event": "AGENT_COMMIT_ALREADY_DONE",
+        "organization_id": conversation.organization_id,
+        "conversation_id": conversation.pk,
+        "tool": pending['tool'],
+    })
+    return {'decision': 'commit_already_done', 'llm_calls': 0, 'tools': 1}
+
+
+def _appointment_changed(conversation, pending, outcome):
+    """`appointment_changed`: alguien movió la cita mientras hablábamos.
+
+    Se le cuenta al cliente con el estado REAL y se le deja decidir (R3). NO se
+    reintenta sin precondición —esa es la sobrescritura que INV-A prohíbe— y NO
+    se escala: es información para el cliente, que está escribiendo justo ahora
+    (R2). La propuesta se descarta; el objetivo sigue abierto para volver a
+    proponer sobre el estado nuevo (R4).
+    """
+    confirmations.clear_pending(conversation)
+    current = (outcome.data or {}).get('current') or {}
+    enqueue_outbound(
+        conversation, _appointment_changed_text(conversation, current),
+        author='system')
+    logger.info("AGENT_COMMIT_PRECONDITION_FAILED", extra={
+        "event": "AGENT_COMMIT_PRECONDITION_FAILED",
+        "organization_id": conversation.organization_id,
+        "conversation_id": conversation.pk,
+        "tool": pending['tool'],
+        "current_status": current.get('status', ''),
+    })
+    return {'decision': 'commit_appointment_changed', 'llm_calls': 0,
+            'tools': 1}
+
+
+def _appointment_changed_text(conversation, current):
+    """Nunca «falló, reintenta»: siempre QUÉ cambió (R3)."""
+    status = current.get('status')
+    if status in ('canceled', 'no_show'):
+        return ("Tu cita se canceló mientras hablábamos con el equipo 😕 "
+                "¿Quieres que agendemos una nueva?")
+    if status == 'done':
+        return ("Esa cita ya se atendió ✅ ¿Te ayudo a agendar otra?")
+    cuando = tools.format_local_wallclock(
+        current.get('date'), (current.get('start_time') or '')[:5])
+    if cuando:
+        return (f"Tu cita cambió mientras hablabas con el equipo: ahora está "
+                f"el *{cuando}*. ¿La dejamos así o la movemos?")
+    return ("Tu cita cambió mientras hablabas con el equipo 😕 "
+            "¿La revisamos juntos?")
 
 
 def _success_message(tool, outcome, conversation, executor):

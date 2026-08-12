@@ -300,11 +300,17 @@ class WriteToolsTests(TestCase):
         """Item 1 (regla de seguridad ampliada, auditoría OCR 2026-08-08): un
         contacto reseteado (`reset_contact_identity`) que completa el alta de
         "cliente nuevo" en la MISMA conversación no debe re-vincularse al
-        Owner existente que comparte su teléfono, aunque `create-with-patient`
-        lo reutilice vía `get_or_create`. Antes de este fix,
-        `commit_register_new_client_and_pet` llamaba a
-        `identity.link_self_registered` sin consultar el flag — deshaciendo
-        el reset con cero factores de verificación."""
+        Owner existente que comparte su teléfono.
+
+        **Con F2 la garantía se refuerza y el desenlace cambia** (INV-B): el
+        alta del agente viaja con `require_new_owner=true`, así que el dominio
+        rechaza con `409 owner_exists` ANTES de escribir nada. Ya no es que se
+        reutilice el Owner y se suprima el vínculo: es que no se toca el
+        expediente, no se crea la cita y la decisión pasa a una persona.
+
+        El guard `auto_rematch_blocked` sigue en su sitio como segunda defensa
+        (§4.4) y, sobre todo, **sigue levantado**: nada de este camino lo
+        limpia."""
         existing_owner = Owner.objects.create(
             organization=self.org, name="Cliente Previo", phone="5512345678")
         conv, ex = self._unknown_conv()   # wa_id normaliza a phone 5512345678
@@ -317,18 +323,21 @@ class WriteToolsTests(TestCase):
             conversation=conv, executor=ex)
         policy.evaluate(conv, "sí", agent_settings=self.settings)
         res = planner._commit_pending(conv, ex)
-        self.assertEqual(res["decision"], "committed")
+        self.assertEqual(res["decision"], "escalate")
+        self.assertEqual(res["reason"], "owner_exists")
 
-        # create-with-patient reutilizó el Owner existente por teléfono (no
-        # se creó un segundo Owner, ni se sobrescribió su nombre real).
+        # CERO escrituras: ni un segundo Owner, ni el nombre real pisado, ni
+        # una cita colgada de un expediente ajeno.
         self.assertEqual(Owner.objects.filter(phone="5512345678").count(), 1)
-        reused = Owner.objects.get(phone="5512345678")
-        self.assertEqual(reused.pk, existing_owner.pk)
-        self.assertEqual(reused.name, "Cliente Previo")
+        untouched = Owner.objects.get(phone="5512345678")
+        self.assertEqual(untouched.pk, existing_owner.pk)
+        self.assertEqual(untouched.name, "Cliente Previo")
+        self.assertEqual(Appointment.objects.filter(pet__owner=untouched).count(), 0)
 
         conv.contact.refresh_from_db()
         self.assertIsNone(conv.contact.owner_id)
         self.assertEqual(conv.contact.verification_level, "unknown")
+        self.assertTrue(conv.contact.auto_rematch_blocked)   # el reset sigue en pie
         self.assertEqual(conv.contact.linked_via, "")
         self.assertTrue(conv.contact.auto_rematch_blocked)
 

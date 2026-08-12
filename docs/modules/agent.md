@@ -176,6 +176,59 @@ Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`
 (bloqueante) + fixture trampa cross-tenant + aserciones prohibidas globales
 (`agent/tests/harness.py`).
 
+### El agente consume las garantías del dominio (F2 — ADR p57)
+
+Las escrituras del agente viajan con su **precondición** y traducen el conflicto
+a conversación. Ninguno de estos desenlaces es una avería (§5.1 R2): no son
+5xx, no producen `tool_failure` y **nunca se reintentan** — reintentar es pelear
+con la decisión de otro.
+
+**INV-A — precondición de estado.** `cancel_appointment` y
+`reschedule_appointment` capturan al **proponer** la tupla que el cliente vio
+parafraseada (`expected_status`/`expected_date`/`expected_start_time`) y la
+envían como `expected_state` al confirmar. Capturarla al confirmar describiría
+el mundo de después, y la precondición no diría nada.
+
+| Desenlace | Cuándo | Qué hace el agente |
+|---|---|---|
+| `appointment_changed` | la cita cambió a otra cosa | cuenta al cliente **qué** cambió (estado real) y le deja decidir. No escala: es información, y el cliente está escribiendo ahora |
+| `already_done` | la cita ya está como la pedía | éxito idempotente: cierra el objetivo como cumplido. Antes rebotaba a una persona para nada |
+
+**INV-B — el alta exige expediente nuevo.**
+`register_new_client_and_pet` envía **siempre** `require_new_owner=true`: en ese
+flujo la premisa es literalmente «cliente nuevo», así que si el teléfono ya
+tiene expediente la premisa era falsa y la decisión es de una persona. No se
+pre-consulta desde el agente (sería `icontains` acotado a 20 filas con una
+ventana TOCTOU hasta el POST).
+
+Antes de llamar al dominio se comprueban **C1–C4** sobre el contacto releído de
+la base: sin expediente, no ambiguo, y el mismo número que propuso. Si algo
+cambió → `identity_changed`: ni se llama al dominio. No es un error, es la
+buena noticia de que el humano ya lo resolvió (§4.5); la conversación sigue por
+la vía de cliente conocido.
+
+| Desenlace | Efecto en el dominio | Efecto en la conversación |
+|---|---|---|
+| `owner_exists` (un expediente) | **ninguno** | intención suspendida íntegra + caso de identidad en Inbox |
+| `owner_ambiguous` (dos o más) | **ninguno** | idéntico para el cliente; el `reason_detail` del caso distingue |
+| `identity_changed` (C1–C4) | ninguno (no se llama) | «Ya te tengo registrado ✅ ¿Te agendo la cita?» |
+
+**La intención no se pierde.** Suspender el pendiente, abrir/retener el
+`HumanHandoff` de identidad y pasar a `HANDOFF_PENDING` ocurre en **una sola
+transición atómica** (`confirmations.suspend_pending`), bajo
+`select_for_update()` de la conversación. Es el único escritor legítimo de
+`flow['suspended']`, y `escalate_to_human` lo usa también: no hay dos formas de
+suspender. Antes eran dos `save()` separados —limpiar el pendiente y escalar— y
+entre ellos cabía perder la propuesta del cliente en silencio.
+
+**Telemetría (§5.4).** Cada llamada declara sus `business_outcomes`: los códigos
+declarados registran `AGENT_TOOL_BUSINESS_CONFLICT` (INFO, redactado) en vez de
+`AGENT_TOOL_HTTP_ERROR` (WARNING) y **no cuentan como fallo de integración**. La
+fila de `ToolExecution` se sigue creando con su `error_code` — la traza no se
+pierde. No hay lista global: un `owner_exists` es negocio en el alta y sería una
+anomalía en cualquier otra tool. Lo no declarado conserva su comportamiento; el
+silencio por defecto sería el fail-open de la observabilidad.
+
 ### Tamiz de identidad (UX-05) — nuevo vs. ya registrado
 
 **El sistema nunca asume que un número sin registro es un cliente nuevo.** Un
@@ -711,3 +764,16 @@ lectura humana no hay ciclo de mejora, solo intuición.
    pregunta. Ningún slot se llena con un valor que no pasó validador, y
    ninguno se llena con confianza por debajo del umbral.
 10. Como máximo un `ConversationGoal` abierto por conversación (constraint DB).
+11. **Toda escritura del agente sobre una cita existente viaja con su
+    precondición** (INV-A), y un `409` **jamás** se reintenta sin ella: eso es
+    exactamente la sobrescritura que la precondición cierra. Tampoco se degrada
+    a último-escritor-gana tras N conflictos, ni se silencia el 409
+    confirmándole al cliente que quedó hecho (§5.3).
+12. **El alta del agente siempre pide expediente nuevo** (`require_new_owner`).
+    Un teléfono coincidente localiza, nunca autoriza (INV-B): sin identidad
+    verificada, escribir sobre un `Owner` existente es de una persona.
+13. **`flow['suspended']` tiene un solo escritor**:
+    `confirmations.suspend_pending`, que suspende, abre/retiene el hand-off y
+    cambia el estado en **un commit**. Escribirlo a mano —o combinar
+    `clear_pending` + `escalate_to_human` por separado— reabre el hueco por el
+    que la intención del cliente se perdía en silencio.
