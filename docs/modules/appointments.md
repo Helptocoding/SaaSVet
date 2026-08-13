@@ -223,8 +223,8 @@ de soporte.
 
 ### INV-A — Precondición atómica de estado (`expected_state`)
 
-Toda mutación sobre una cita **existente** acepta `expected_state`: la tupla que
-el llamador vio cuando decidió mutar.
+Toda mutación sobre una cita **existente** **exige** `expected_state`: la tupla
+que el llamador vio cuando decidió mutar.
 
 ```json
 { "expected_state": { "status": "scheduled", "date": "2026-08-12", "start_time": "10:00" } }
@@ -246,9 +246,21 @@ recarga y vuelve a preguntar; **nunca** reintenta sin precondición ni degrada a
 último-escritor-gana. Si la cita ya está en el estado deseado (cancelar algo ya
 cancelado), `current` permite reconocerlo como éxito idempotente.
 
-**Opt-in hasta F5**: sin `expected_state` el comportamiento es idéntico al
-anterior. Cuando el frontend la envíe, pasará a obligatoria
-(`400 precondition_required`).
+**Obligatoria desde la Fase 3** (antes era opt-in mientras el frontend la
+adoptaba). Omitirla es `400 precondition_required`:
+
+```json
+{ "code": "precondition_required",
+  "message": "Para modificar una cita hay que declarar cómo estaba cuando se leyó (expected_state con status, date y start_time)." }
+```
+
+No es una formalidad: mientras fue opcional, una escritura sin precondición era
+indistinguible de una con precondición satisfecha, así que un llamador que
+nunca la mandó **parecía** cumplir INV-A. Al volverla obligatoria aparecieron
+dos escritores ciegos reales que ninguna prueba señalaba —la herramienta
+`confirm_appointment` del agente y el «▶ Atender ahora» del frontend—, ambos
+capaces de pisar un cambio humano sin dejar rastro. Ese es el valor de la fase:
+convierte «nadie la manda» de silencio en error.
 
 Forma inválida (no es objeto, claves faltantes o desconocidas, estado
 inexistente, fecha/hora no parseables) → `400 validation_error`. Enviarla a
@@ -256,22 +268,25 @@ inexistente, fecha/hora no parseables) → `400 validation_error`. Enviarla a
 `walk-in`) → `400`: no hay estado previo que comparar, y tragársela en silencio
 anunciaría una garantía que nadie aplica.
 
-**Omitir la clave ≠ mandarla en `null`.** Omitirla es el opt-in del rollout y
-la escritura procede como siempre. `expected_state: null` explícito es
-`400 validation_error` con **cero escrituras**, en las siete vías: quien manda
-`null` cree que está mandando una precondición, y dejar pasar esa escritura sin
-comparar nada es el fail-open que INV-A cierra. Vale igual por JSON que por
-form-data — en form-data la clave presente llega como cadena (`""`, `"null"`) y
-se rechaza por forma, así que no hay codificación que sirva de puerta trasera.
+**Omitir la clave ≠ mandarla en `null`.** Los dos fallan, pero por motivos
+distintos y con `code` distinto: omitirla es `precondition_required` (falta la
+precondición), `expected_state: null` explícito es `validation_error` (la
+precondición está mal formada). Ambos con **cero escrituras**, en las siete
+vías. Se distinguen porque quien omite no sabía que hacía falta, y quien manda
+`null` cree que está mandando una precondición — dejar pasar cualquiera de las
+dos sin comparar nada es el fail-open que INV-A cierra. Vale igual por JSON que
+por form-data: en form-data la clave presente llega como cadena (`""`,
+`"null"`) y se rechaza por forma, así que no hay codificación que sirva de
+puerta trasera.
 
 #### Matriz de mutaciones — no hay categoría implícita
 
 | Mutación | Lock de fila | `expected_state` | INV-D |
 |---|---|---|---|
-| `PATCH /api/appointments/<public_id>/` | sí | acepta | sí |
-| `PATCH /<public_id>/status/` | sí | acepta | sí (reactivación) |
-| `DELETE /<public_id>/` | sí | acepta (en el body) | n/a |
-| `PATCH /<public_id>/assign-patient/` | sí | acepta | **no** (no mueve la tupla de agenda) |
+| `PATCH /api/appointments/<public_id>/` | sí | **exige** | sí |
+| `PATCH /<public_id>/status/` | sí | **exige** | sí (reactivación) |
+| `DELETE /<public_id>/` | sí | **exige** (en el body) | n/a |
+| `PATCH /<public_id>/assign-patient/` | sí | **exige** | **no** (no mueve la tupla de agenda) |
 | `POST /api/appointments/` | n/a | **rechaza (400)** | sí |
 | `POST /create-with-patient/` | n/a | **rechaza (400)** | sí |
 | `POST /walk-in/` | n/a | **rechaza (400)** | **sí** |

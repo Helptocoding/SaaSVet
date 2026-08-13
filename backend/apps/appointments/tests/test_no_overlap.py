@@ -40,6 +40,17 @@ def _slot(days=3, hour=10):
     return day.isoformat(), f"{hour:02d}:00", f"{hour:02d}:30"
 
 
+def _precondition(public_id):
+    """`expected_state` leído de la fila real — la precondición es obligatoria
+    desde la Fase 3 de INV-A, así que todo PATCH de estos tests la declara."""
+    appt = Appointment.objects.get(public_id=public_id)
+    return {
+        "status": appt.status,
+        "date": appt.date.isoformat(),
+        "start_time": appt.start_time.strftime("%H:%M"),
+    }
+
+
 def _seed(name, suffix):
     """Org con ADMIN (wildcard), un VET con wildcard y dos mascotas."""
     org = Organization.objects.create(name=name, timezone="UTC")
@@ -112,7 +123,9 @@ class OverlapIsRejectedTests(NoOverlapBase):
         first = self._post_appt(self.pet_a, hour=10)
         appt = Appointment.objects.get(public_id=first.json()["public_id"])
         self.client.patch(f"/api/appointments/{appt.public_id}/status/",
-                          {"status": "canceled"})
+                          {"status": "canceled",
+                           "expected_state": _precondition(appt.public_id)},
+                          format="json")
 
         second = self._post_appt(self.pet_b, hour=10)
         self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
@@ -201,7 +214,9 @@ class ReactivationRespectsNoOverlapTests(NoOverlapBase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
         appt = Appointment.objects.get(public_id=response.json()["public_id"])
         self.client.patch(f"/api/appointments/{appt.public_id}/status/",
-                          {"status": "canceled"})
+                          {"status": "canceled",
+                           "expected_state": _precondition(appt.public_id)},
+                          format="json")
         appt.refresh_from_db()
         self.assertEqual(appt.status, "canceled")
         return appt
@@ -215,7 +230,10 @@ class ReactivationRespectsNoOverlapTests(NoOverlapBase):
             appointment=canceled).count()
 
         response = self.client.patch(
-            f"/api/appointments/{canceled.public_id}/status/", {"status": "scheduled"})
+            f"/api/appointments/{canceled.public_id}/status/",
+            {"status": "scheduled",
+             "expected_state": _precondition(canceled.public_id)},
+            format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
         self.assertEqual(response.json()["code"], "slot_taken")
@@ -232,7 +250,10 @@ class ReactivationRespectsNoOverlapTests(NoOverlapBase):
     def test_reactivation_over_a_free_slot_still_works(self):
         canceled = self._canceled_appt_at(hour=12)
         response = self.client.patch(
-            f"/api/appointments/{canceled.public_id}/status/", {"status": "scheduled"})
+            f"/api/appointments/{canceled.public_id}/status/",
+            {"status": "scheduled",
+             "expected_state": _precondition(canceled.public_id)},
+            format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
         canceled.refresh_from_db()
         self.assertEqual(canceled.status, "scheduled")
@@ -242,7 +263,9 @@ class ReactivationRespectsNoOverlapTests(NoOverlapBase):
         self._post_appt(self.pet_b, hour=13)
         response = self.client.patch(
             f"/api/appointments/{canceled.public_id}/status/",
-            {"status": "scheduled", "force": True, "allow_overlap": True},
+            {"status": "scheduled", "force": True, "allow_overlap": True,
+             "expected_state": _precondition(canceled.public_id)},
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json()["code"], "slot_taken")
@@ -321,7 +344,9 @@ class AssignPatientStaysOutOfInvDTests(NoOverlapBase):
 
         response = self.client.patch(
             f"/api/appointments/{appt.public_id}/assign-patient/",
-            {"pet": self.pet_b.id}, format="json")
+            {"pet": self.pet_b.id,
+             "expected_state": _precondition(appt.public_id)},
+            format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
 
         appt.refresh_from_db()
@@ -486,7 +511,8 @@ class ConcurrentSlotTests(TransactionTestCase):
                 response = client.patch(f"/api/appointments/{public_id}/", {
                     "date": target_date, "start_time": target_start,
                     "end_time": target_end,
-                })
+                    "expected_state": _precondition(public_id),
+                }, format="json")
                 return response.status_code, response.json()
             return _call
 
@@ -515,11 +541,15 @@ class ConcurrentSlotTests(TransactionTestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
         canceled_id = response.json()["public_id"]
-        client.patch(f"/api/appointments/{canceled_id}/status/", {"status": "canceled"})
+        client.patch(f"/api/appointments/{canceled_id}/status/",
+                     {"status": "canceled",
+                      "expected_state": _precondition(canceled_id)}, format="json")
 
         def reactivate(client):
             r = client.patch(f"/api/appointments/{canceled_id}/status/",
-                             {"status": "scheduled"})
+                             {"status": "scheduled",
+                              "expected_state": _precondition(canceled_id)},
+                             format="json")
             return r.status_code, r.json()
 
         def create(client):
@@ -581,7 +611,9 @@ class ConcurrentSlotTests(TransactionTestCase):
         def swap(public_id, new_vet_id):
             def _call(cli):
                 r = cli.patch(f"/api/appointments/{public_id}/",
-                              {"veterinarian": new_vet_id}, format="json")
+                              {"veterinarian": new_vet_id,
+                               "expected_state": _precondition(public_id)},
+                              format="json")
                 return r.status_code, r.json()
             return _call
 

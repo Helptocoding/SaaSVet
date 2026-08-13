@@ -687,9 +687,16 @@ def _expected_state_body(args):
     """`{'expected_state': {...}}` para el body, o `{}` si el staged es viejo.
 
     Un `pending_action` staged ANTES de este cambio no trae las claves. Se
-    envía sin precondición —comportamiento actual— en vez de inventar una
-    tupla: fabricar el estado esperado a partir de la lectura de ahora sería
-    exactamente el fail-open que INV-A cierra.
+    envía sin precondición en vez de inventar una tupla: fabricar el estado
+    esperado a partir de la lectura de ahora sería exactamente el fail-open
+    que INV-A cierra.
+
+    Desde la Fase 3 esa llamada sin precondición ya no pasa: el dominio
+    responde `400 precondition_required` y el agente le dice al cliente que
+    vuelva a pedirlo. Es el desenlace correcto para una propuesta staged al
+    otro lado de un deploy — se perdió la foto de cómo estaba la cita, y sin
+    ella nadie está autorizado a escribirla. Afecta solo a las propuestas en
+    vuelo durante el despliegue; las nuevas nacen con las claves.
     """
     if any(args.get(k) is None for k in EXPECTED_STATE_KEYS):
         return {}
@@ -952,17 +959,43 @@ def commit_create_appointment(conversation, executor, args, triggered_by=None):
 
 
 def confirm_appointment(conversation, executor, args, triggered_by=None):
-    """Tier-1 (INT-22): scheduled→confirmed, sin parafraseo (benigno)."""
+    """Tier-1 (INT-22): scheduled→confirmed, sin parafraseo (benigno).
+
+    Benigno **no** quiere decir sin precondición (INV-A). Confirmar es una
+    escritura, y sin declarar cómo se vio la cita este camino podía confirmar
+    una que alguien acababa de cancelar — resucitándola por la puerta de atrás
+    mientras `cancel`/`reschedule` sí lo comprobaban.
+
+    La lectura previa es lo que hace honesta a la precondición aquí: se envía
+    el estado que el dominio ACABA de devolver, no uno recordado de antes.
+    """
     appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
     if appt_pid is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
+
+    read_code, appt = executor.call(
+        'GET', f'/api/appointments/{appt_pid}/', tool_name='confirm_appointment',
+        args_redacted={'appointment_handle': args.get('appointment_handle')},
+        triggered_by_message=triggered_by,
+    )
+    if read_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+
     status_code, data = executor.call(
         'PATCH', f'/api/appointments/{appt_pid}/status/',
-        tool_name='confirm_appointment', json={'status': 'confirmed'},
+        tool_name='confirm_appointment',
+        json={'status': 'confirmed', **_expected_state_body(_expected_state_of(appt))},
         policy_tier='1', args_redacted={'appointment_handle': args.get('appointment_handle')},
         triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
         result_summarizer=lambda d: {'status': d.get('status')},
+        business_outcomes=BUSINESS_OUTCOMES,
     )
+    if status_code == 409:
+        # Cambió entre la lectura y la escritura: NO se reintenta. Para el
+        # cliente es lo mismo que un "ya estaba" — la tool es benigna y el
+        # modelo sigue la conversación con el estado real.
+        return ToolOutcome(ok=True, data={'already_or_invalid': True},
+                           summary={'noop': True})
     if status_code == 400:
         return ToolOutcome(ok=True, data={'already_or_invalid': True}, summary={'noop': True})
     if status_code >= 400:

@@ -85,13 +85,15 @@ def parse_expected_state(raw):
     """Valida la FORMA de `expected_state` y la normaliza.
 
     Devuelve `{'status': str, 'date': date, 'start_time': time}`, o `None` si la
-    clave **no vino** (`MISSING`) — el opt-in del rollout (§1.2).
+    clave **no vino** (`MISSING`). Desde la Fase 3, ese `None` ya no significa
+    «adelante sin comparar»: `enforce_expected_state` lo convierte en
+    `400 precondition_required`. Aquí se sigue distinguiendo de un valor mal
+    formado porque el llamador merece saber cuál de las dos cosas hizo.
 
     `null` explícito **NO** es ausencia: es `400 validation_error`, cero
     escrituras. Quien manda `expected_state: null` cree que está mandando una
-    precondición; tratarlo como opt-in dejaría pasar la escritura sin
-    comparar nada — fail-open, justo lo que INV-A cierra. El llamador que no
-    quiera precondición omite la clave.
+    precondición, y quien la omite no sabía que hacía falta; son dos errores
+    distintos del llamador y por eso llevan `code` distinto.
 
     Una precondición mal formada es un error del llamador, no un conflicto:
     400 `validation_error`. Fallar aquí es deliberado — aceptar una tupla que no
@@ -157,6 +159,26 @@ def parse_expected_state(raw):
     }
 
 
+class PreconditionRequired(APIException):
+    """400 — mutar una cita exige declarar cómo se la vio (INV-A, Fase 3).
+
+    Hasta la Fase 3 la precondición era **opt-in**: quien la enviaba quedaba
+    protegido y quien no, escribía a ciegas. Eso hacía que la garantía dependiera
+    de que cada llamador se acordara — y el que se olvida nunca es el que ya
+    existe, sino el que se escribe con prisa un viernes por la mañana.
+
+    Ahora el dominio se niega. El coste es que un llamador nuevo falla en su
+    primera llamada, ruidosamente, en vez de sobrescribir en silencio la
+    decisión de otra persona.
+    """
+    status_code = 400
+    default_detail = (
+        'Para modificar una cita hay que declarar cómo estaba cuando se leyó '
+        '(expected_state con status, date y start_time).'
+    )
+    default_code = 'precondition_required'
+
+
 def enforce_expected_state(appointment, expected):
     """Compara la precondición contra la fila REAL. Debe correr bajo lock.
 
@@ -164,10 +186,12 @@ def enforce_expected_state(appointment, expected):
     transacción que escribe: fuera de ahí esto sería una lectura optimista,
     no una garantía (exigencia 2 de §3.2).
 
-    No-op si `expected` es None (precondición opt-in, §1.2).
+    Desde la Fase 3, su ausencia es `400 precondition_required` — ya no un
+    no-op. La lista de exentos vive en la vista, no aquí: este helper solo
+    conoce «hay precondición o no la hay».
     """
     if expected is None:
-        return
+        raise PreconditionRequired()
     same = (
         appointment.status == expected['status']
         and appointment.date == expected['date']

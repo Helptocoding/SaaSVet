@@ -289,12 +289,14 @@ enuncian una vez aquí para no repetirlos en cada acción.
 
 **INV-A — precondición atómica de estado.** Toda mutación sobre una cita
 existente (`PATCH` de detalle, `PATCH /status/`, `DELETE`, `assign-patient`)
-acepta `expected_state = {status, date, start_time}` y la compara contra la fila
-tomada con `select_for_update()`, dentro de la transacción que escribe. Si
+**exige** `expected_state = {status, date, start_time}` y lo compara contra la
+fila tomada con `select_for_update()`, dentro de la transacción que escribe. Si
 difiere: **`409 appointment_changed`** con `current` (el estado real) y **cero
 escrituras** — ni la cita, ni `AppointmentStatusChange`. El 409 no es un error
-técnico: es un resultado de negocio. Es **opt-in**: sin `expected_state` el
-comportamiento es el de siempre. Excluida con justificación:
+técnico: es un resultado de negocio. Si falta: **`400 precondition_required`**
+(obligatoria desde la Fase 3 — antes era opt-in mientras el frontend la
+adoptaba; volverla obligatoria destapó dos escritores ciegos que el opt-in
+hacía indistinguibles de los que sí cumplían). Excluida con justificación:
 `complete_appointment_on_record_close` (transición interna que ya falla cerrada
 y evita un orden de locks `Appointment↔MedicalRecord`).
 
@@ -362,7 +364,7 @@ existe bandera de forzado**, y nada se desplaza automáticamente.
 - Permiso `appointment.update`.
 - Una transición válida según la máquina de estados.
 - Si `require_confirmation_before_start=True` → bloquea el salto directo `scheduled → in_progress` (exige pasar por `confirmed` primero).
-- Opcional: `expected_state` (INV-A). **Toda** la decisión —precondición, transición, toggles, guard de fecha— se evalúa sobre la fila **bloqueada**, dentro del `atomic()` que escribe.
+- Obligatorio: `expected_state` (INV-A; su ausencia → `400 precondition_required`). **Toda** la decisión —precondición, transición, toggles, guard de fecha— se evalúa sobre la fila **bloqueada**, dentro del `atomic()` que escribe.
 
 **Resultado**
 - El estado se actualiza.
@@ -421,7 +423,7 @@ segunda fila de auditoría.
 - Una cita walk-in cuya mascota actual sea `pet.is_generic=True`. La comprobación se re-evalúa sobre la fila **bloqueada**: entre la lectura y el lock, otro actor pudo haber vinculado ya el paciente real.
 - Que el estado de la cita **no** sea `done`.
 - Un nuevo `pet` válido (misma organización, no genérico).
-- Opcional: `expected_state` (INV-A). Entra al contrato porque muta la cita y escribe auditoría; queda **fuera** de INV-D porque no toca `veterinarian`, `date`, `start_time` ni `end_time`.
+- Obligatorio: `expected_state` (INV-A). Entra al contrato porque muta la cita y escribe auditoría; queda **fuera** de INV-D porque no toca `veterinarian`, `date`, `start_time` ni `end_time`.
 
 **Resultado**
 - `appointment.pet` se actualiza al paciente real.

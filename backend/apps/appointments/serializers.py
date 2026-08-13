@@ -129,7 +129,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 ]
             })
         expected = parse_expected_state(expected_raw)
-        if expected is not None:
+        if instance is not None:
+            # Fase 3 de INV-A: mutar una cita EXIGE la precondición. Su
+            # ausencia ya no es opt-in, es `400 precondition_required` — el
+            # propio `enforce_expected_state` lo decide, así que no hay una
+            # segunda definición de «cuándo hace falta» viviendo aquí.
             enforce_expected_state(instance, expected)
 
         if not request or not request.user.is_authenticated:

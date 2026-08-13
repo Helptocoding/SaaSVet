@@ -157,8 +157,15 @@ class AppointmentDeleteAuditAuthorityTests(TestCase):
 
         client = APIClient()
         client.force_authenticate(user=self.user)
-        response = client.delete(f"/api/appointments/{appt.public_id}/")
-        self.assertEqual(response.status_code, 200)
+        # INV-A Fase 3: el DELETE deprecado también exige precondición — si la
+        # vía en sunset quedara exenta, sería la puerta trasera del gate.
+        response = client.delete(
+            f"/api/appointments/{appt.public_id}/",
+            {"expected_state": {"status": "scheduled", "date": "2026-05-20",
+                                "start_time": "10:00"}},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
 
         appt.refresh_from_db()
         self.assertEqual(appt.status, 'canceled')

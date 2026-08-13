@@ -13,7 +13,11 @@ Lo que estas pruebas defienden, en una frase cada una:
   P0-9ᵃ una precondición fallida no escribe NADA, ni siquiera auditoría.
   P1-14 hay LOCK, no solo comparación (PostgreSQL, dos conexiones reales).
   P1-23 `DELETE` respeta la precondición y trae cabeceras de deprecación.
-  P2-4  REGRESIÓN iron rule: sin `expected_state`, todo funciona como hoy.
+
+P2-4 («sin `expected_state`, todo funciona como hoy») era del **rollout**, no
+del diseño, y la Fase 3 lo sustituye: omitir la precondición es ahora `400
+precondition_required` en las cuatro vías. Lo defiende
+`PreconditionIsMandatoryTests`.
 """
 import threading
 from datetime import timedelta
@@ -230,28 +234,43 @@ class AbsentVersusExplicitNullTests(PreconditionTestBase):
     precondición**. Quien manda `null` cree que manda una precondición: dejarle
     pasar la escritura es exactamente el fail-open que INV-A cierra.
 
-    Contrato: **omitir la clave** es el opt-in del rollout; mandarla en `null`
-    es `400 validation_error` con cero escrituras. En las siete vías.
+    Contrato desde la Fase 3: las dos fallan con cero escrituras, en las siete
+    vías, pero con `code` distinto — omitirla es `precondition_required` y
+    mandarla en `null` es `validation_error`. Que el desenlace coincida no
+    autoriza a fusionarlas: el centinela `MISSING` es lo que impide que
+    `data.get()` las colapse, y sin él volvería el fail-open del párrafo de
+    arriba en cuanto la ausencia dejara de ser un error.
     """
 
-    # ---- Mutaciones: ausencia = opt-in, null = 400 --------------------------
+    # ---- Mutaciones: ausencia = 400 precondición, null = 400 forma ----------
 
-    def test_absent_precondition_is_allowed_on_every_mutation(self):
-        """El opt-in del rollout sigue intacto (P2-4 en su forma explícita)."""
+    def test_absent_precondition_is_rejected_on_every_mutation(self):
+        """Fase 3: la ausencia dejó de ser opt-in y es `400` en las tres vías.
+
+        Ausencia y `null` explícito ya no se diferencian en el DESENLACE —las
+        dos son 400— pero sí en el MENSAJE: a quien la omite se le dice que
+        hace falta; a quien manda `null`, que ese valor no vale. La distinción
+        sigue importando para quien depura.
+        """
         appt = self._create_appt(days=3, hour=7)
+        original = (appt.status, appt.reason)
 
         patch = self.client.patch(
             f"/api/appointments/{appt.public_id}/", {"reason": "sin precondición"},
             format="json")
-        self.assertEqual(patch.status_code, status.HTTP_200_OK, patch.content)
+        self.assertEqual(patch.status_code, status.HTTP_400_BAD_REQUEST, patch.content)
+        self.assertEqual(patch.json().get("code"), "precondition_required")
 
         st = self.client.patch(
             f"/api/appointments/{appt.public_id}/status/", {"status": "confirmed"},
             format="json")
-        self.assertEqual(st.status_code, status.HTTP_200_OK, st.content)
+        self.assertEqual(st.status_code, status.HTTP_400_BAD_REQUEST, st.content)
 
         gone = self.client.delete(f"/api/appointments/{appt.public_id}/")
-        self.assertEqual(gone.status_code, status.HTTP_200_OK, gone.content)
+        self.assertEqual(gone.status_code, status.HTTP_400_BAD_REQUEST, gone.content)
+
+        appt.refresh_from_db()
+        self.assertEqual((appt.status, appt.reason), original)
 
     def test_explicit_null_is_rejected_on_every_mutation(self):
         appt = self._create_appt(days=3, hour=20)
@@ -351,15 +370,17 @@ class AbsentVersusExplicitNullTests(PreconditionTestBase):
                 appt.refresh_from_db()
                 self.assertEqual(appt.status, "scheduled")
 
-    def test_form_encoded_without_the_key_still_works(self):
-        """La contraparte: form-data SIN la clave sigue siendo opt-in válido."""
+    def test_form_encoded_without_the_key_is_also_rejected(self):
+        """El gate no se esquiva cambiando el content-type (Fase 3)."""
         appt = self._create_appt(days=3, hour=22)
         response = self.client.patch(
             f"/api/appointments/{appt.public_id}/status/",
             {"status": "confirmed"}, format="multipart")
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                         response.content)
+        self.assertEqual(response.json().get("code"), "precondition_required")
         appt.refresh_from_db()
-        self.assertEqual(appt.status, "confirmed")
+        self.assertEqual(appt.status, "scheduled")
 
 
 class PreconditionAppliesToAnyActorTests(PreconditionTestBase):
@@ -475,10 +496,18 @@ class DeleteIsDeprecatedAndHonorsPreconditionTests(PreconditionTestBase):
         self.assertEqual(
             AppointmentStatusChange.objects.filter(appointment=appt).count(), audit_before)
 
-    def test_delete_without_precondition_still_cancels_and_is_flagged_deprecated(self):
+    def test_delete_with_precondition_cancels_and_is_flagged_deprecated(self):
+        """El `DELETE` sigue vivo hasta su Sunset, pero ya no se salta el gate.
+
+        Dejarlo exento habría convertido la vía deprecada en la puerta de atrás
+        de la Fase 3: cancelar sin declarar nada seguiría siendo posible, solo
+        que por otra URL.
+        """
         appt = self._create_appt(days=3, hour=13)
 
-        response = self.client.delete(f"/api/appointments/{appt.public_id}/")
+        response = self.client.delete(
+            f"/api/appointments/{appt.public_id}/",
+            {"expected_state": self._state_of(appt)}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
         self.assertEqual(response["Deprecation"], "true")
@@ -498,50 +527,129 @@ class DeleteIsDeprecatedAndHonorsPreconditionTests(PreconditionTestBase):
     def test_delete_emits_deprecation_log(self):
         appt = self._create_appt(days=3, hour=14)
         with self.assertLogs('core.deprecation', level='WARNING') as logs:
-            self.client.delete(f"/api/appointments/{appt.public_id}/")
+            self.client.delete(
+                f"/api/appointments/{appt.public_id}/",
+                {"expected_state": self._state_of(appt)}, format="json")
         self.assertTrue(any('DEPRECATED_ENDPOINT_HIT' in line for line in logs.output))
 
+    def test_delete_without_precondition_is_rejected_too(self):
+        appt = self._create_appt(days=3, hour=15)
+        response = self.client.delete(f"/api/appointments/{appt.public_id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                         response.content)
+        self.assertEqual(response.json().get("code"), "precondition_required")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
 
-class FrontendCompatibilityTests(PreconditionTestBase):
-    """P2-4 — REGRESIÓN iron rule: sin `expected_state`, nada cambia."""
 
-    def test_patch_detail_without_precondition_unchanged(self):
+class PreconditionIsMandatoryTests(PreconditionTestBase):
+    """Fase 3 de INV-A: mutar una cita EXIGE declarar cómo se la vio.
+
+    Esta clase **sustituye** a la que blindaba el opt-in (`P2-4`, «sin
+    `expected_state`, nada cambia»). Ese contrato era del rollout, no del
+    diseño: mientras la precondición fue opcional, la garantía dependía de que
+    cada llamador se acordara — y el que se olvida nunca es el que ya existe,
+    sino el que se escribe con prisa un viernes por la mañana.
+
+    Ahora el dominio se niega, y falla **ruidosamente en la primera llamada**
+    en vez de sobrescribir en silencio la decisión de otra persona.
+    """
+
+    def _assert_precondition_required(self, response):
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                         response.content)
+        self.assertEqual(response.json().get("code"), "precondition_required")
+
+    def test_patch_detail_without_precondition_is_rejected(self):
         appt = self._create_appt(days=3, hour=16)
         date, start, end = _slot(days=8)
+        original_date = appt.date
 
         response = self.client.patch(f"/api/appointments/{appt.public_id}/", {
             "date": date, "start_time": start, "end_time": end,
         })
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        self._assert_precondition_required(response)
         appt.refresh_from_db()
-        self.assertEqual(appt.date.isoformat(), date)
+        self.assertEqual(appt.date, original_date)      # cero escrituras
 
-    def test_status_transitions_without_precondition_unchanged(self):
+    def test_status_change_without_precondition_is_rejected(self):
         appt = self._create_appt(days=3, hour=17)
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/status/", {"status": "confirmed"})
+
+        self._assert_precondition_required(response)
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+        # Ni la transición ni su rastro de auditoría.
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), 0)
+
+    def test_edit_reason_without_precondition_is_rejected(self):
+        """Ni siquiera un campo inofensivo: el gate es de la vía, no del campo.
+
+        Distinguir «campos peligrosos» de «campos inocuos» sería una segunda
+        regla que mantener, y el primer campo mal clasificado reabriría el
+        hueco entero.
+        """
+        appt = self._create_appt(days=3, hour=19)
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/", {"reason": "otro motivo"})
+
+        self._assert_precondition_required(response)
+        appt.refresh_from_db()
+        self.assertEqual(appt.reason, "vacuna")   # el motivo original, intacto
+
+    def test_with_the_precondition_everything_still_works(self):
+        """La contraparte: quien la declara opera con normalidad."""
+        appt = self._create_appt(days=3, hour=18)
         for target in ("confirmed", "in_progress", "done"):
             with self.subTest(target=target):
+                appt.refresh_from_db()
                 response = self.client.patch(
-                    f"/api/appointments/{appt.public_id}/status/", {"status": target})
-                self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+                    f"/api/appointments/{appt.public_id}/status/",
+                    {"status": target, "expected_state": self._state_of(appt)},
+                    format="json")
+                self.assertEqual(response.status_code, status.HTTP_200_OK,
+                                 response.content)
         appt.refresh_from_db()
         self.assertEqual(appt.status, "done")
         self.assertEqual(
             AppointmentStatusChange.objects.filter(appointment=appt).count(), 3)
 
-    def test_invalid_transition_still_400(self):
-        appt = self._create_appt(days=3, hour=18)
-        response = self.client.patch(
-            f"/api/appointments/{appt.public_id}/status/", {"status": "done"})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    # El `DELETE` deprecado también exige precondición — dejarlo exento lo
+    # convertiría en la puerta trasera del gate hasta su sunset. Lo cubre
+    # `DeleteIsDeprecatedAndHonorsPreconditionTests`
+    # ::test_delete_without_precondition_is_rejected_too,
+    # junto al resto del contrato de esa vía; no se duplica aquí.
 
-    def test_edit_reason_without_precondition_unchanged(self):
-        appt = self._create_appt(days=3, hour=19)
+    def test_assign_patient_without_precondition_is_rejected(self):
+        """Vincular paciente muta la cita y escribe auditoría → entra al gate,
+        aunque no mueva la tupla de agenda (por eso está fuera de INV-D)."""
+        from apps.patients.utils import get_or_create_generic_patient
+
+        _, generic_pet = get_or_create_generic_patient(self.org)
+        appt = self._create_appt(days=3, hour=22)
+        Appointment.objects.filter(pk=appt.pk).update(pet=generic_pet)
+
         response = self.client.patch(
-            f"/api/appointments/{appt.public_id}/", {"reason": "otro motivo"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+            f"/api/appointments/{appt.public_id}/assign-patient/",
+            {"pet": self.pet.id}, format="json")
+
+        self._assert_precondition_required(response)
         appt.refresh_from_db()
-        self.assertEqual(appt.reason, "otro motivo")
+        self.assertEqual(appt.pet_id, generic_pet.pk)   # cero escrituras
+        self.assertEqual(
+            AppointmentStatusChange.objects.filter(appointment=appt).count(), 0)
+
+    def test_invalid_transition_still_400_when_declared(self):
+        """La precondición no sustituye a las reglas de negocio."""
+        appt = self._create_appt(days=3, hour=20)
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/status/",
+            {"status": "done", "expected_state": self._state_of(appt)}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotEqual(response.json().get("code"), "precondition_required")
 
 
 class ConcurrentWritersTests(TransactionTestCase):

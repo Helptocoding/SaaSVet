@@ -15,8 +15,11 @@ import api from "./client";
  * no diría nada.
  *
  * Devuelve `{}` si la cita no trae la tupla completa, para no fabricar una
- * precondición falsa — enviar `expected_state: null` es un `400` deliberado en
- * el backend, y omitir la clave es el opt-in del rollout (§1.2).
+ * precondición falsa (diría que la cita estaba como no la vimos). Desde la
+ * Fase 3 la precondición es **obligatoria**: omitirla es `400
+ * precondition_required` y `expected_state: null` es `400 validation_error`.
+ * Los dos fallan a propósito — el llamador que no sabe cómo estaba la cita no
+ * está autorizado a sobrescribirla (§1.2).
  */
 export const expectedStateOf = (appt) => {
     if (!appt) return {};

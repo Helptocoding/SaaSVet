@@ -224,12 +224,15 @@ import { updateAppointmentStatus, expectedStateOf } from "../api/appointments";
 await updateAppointmentStatus(token, appt.public_id, "canceled", appt);
 ```
 
+**Desde la Fase 3 es OBLIGATORIA**: omitirla es `400 precondition_required` y
+cero escrituras. Ya no hay un modo «sin precondición» al que caer.
+
 **Se construye desde la cita ya cargada, nunca releyéndola justo antes de
 guardar.** Releer produciría el estado de *después* y la precondición no diría
 nada — sería un compare-and-swap contra uno mismo. `expectedStateOf` devuelve
-`{}` si la cita no trae la tupla completa: **no se fabrica** una precondición a
-medias (enviar `expected_state: null` es un `400` deliberado del backend, y
-omitir la clave es el opt-in del rollout).
+`{}` si la cita no trae la tupla completa; con el gate activo eso ya no «pasa
+sin precondición», sino que **falla ruidosamente**, que es lo que se quiere:
+una pantalla que no sabe qué estaba mostrando no debería poder escribir.
 
 Lo envían: `updateAppointment`, `updateAppointmentStatus` y `assignPatient`.
 `POST` y `walk-in` no (no hay estado previo que comparar).

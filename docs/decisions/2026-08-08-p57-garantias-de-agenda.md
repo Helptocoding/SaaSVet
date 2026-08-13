@@ -1,12 +1,14 @@
 # ADR p57 — Garantías de agenda e identidad: precondición atómica (INV-A), no-solapamiento (INV-D) e identidad de expediente (INV-B/INV-C)
 
 **Fecha**: 2026-08-08 (rev. 2026-08-11 — F1 añade INV-B e INV-C)
-**Estado**: ACEPTADO. F0–F4 implementadas, más la **Fase 2 del rollout de
-INV-A** (el frontend envía y maneja la precondición; `deleteAppointment`
-retirado). La precondición sigue siendo **opt-in**: hacerla obligatoria
-(`400 precondition_required`) y cortar `DELETE` a `410 endpoint_sunset` es la
-**Fase 3**, que espera la fecha de §9.9 y no puede adelantarse al Sunset
-publicado (2026-11-06).
+**Estado**: ACEPTADO. F0–F4 implementadas y **INV-A cerrado**: la precondición
+de estado es **obligatoria** para toda mutación de cita (`400
+precondition_required`), en las cuatro vías de §3.3. Lo único que resta de la
+Fase 3 es la **retirada** de `DELETE /appointments/<id>/` a `410
+endpoint_sunset`, que no puede adelantarse al Sunset publicado a los clientes
+(**2026-11-06**, RFC 8594). Mientras tanto ese endpoint sigue vivo pero **ya no
+exento**: también exige la precondición, para que la vía deprecada no sea la
+puerta trasera del gate.
 **Decisión de origen**: [`item-2-decision.md`](item-2-decision.md) §3.2, §3.3,
 §3.4, §4.7–§4.12, §5.1, §9.14, §9.15. Plan de ejecución:
 [`item-2-implementation-plan.md`](item-2-implementation-plan.md) §3 (F0) y §4 (F1).
@@ -72,11 +74,23 @@ Cuatro propiedades que la hacen una garantía y no una decoración:
 4. **El 409 no es un error técnico.** Es un resultado de negocio: el mundo
    cambió. No es 5xx, no es `tool_failure`, no genera hand-off por avería.
 
-**Opt-in hasta F5.** Sin `expected_state`, el comportamiento es idéntico al
-actual (P2-4, regresión *iron rule*). F5 la vuelve obligatoria
-(`400 precondition_required`) una vez que el frontend la envíe; hasta entonces
-INV-A protege al agente y a cualquier llamador que la adopte, no a dos pestañas
-del frontend entre sí. Es una limitación declarada, no un olvido.
+**Obligatoria desde la Fase 3** (2026-08-13). Omitir `expected_state` en una
+mutación de cita es `400 precondition_required` y cero escrituras, en las
+cuatro vías de §3.3 — incluido el `DELETE` deprecado, para que la vía en
+sunset no sea la puerta trasera del gate.
+
+Fue opt-in mientras duró el rollout (P2-4, la regresión que blindaba «sin
+`expected_state`, nada cambia»), y ese contrato queda **sustituido**: era del
+rollout, no del diseño. Mientras la precondición fue opcional, la garantía
+dependía de que cada llamador se acordara — y el que se olvida nunca es el que
+ya existe, sino el que se escribe con prisa.
+
+Que esa dependencia era real lo demostró el propio gate al activarse: encontró
+**dos** llamadores que escribían a ciegas y que nadie había advertido —
+`confirm_appointment` del agente (confirmaba una cita sin comprobar si alguien
+acababa de cancelarla, mientras `cancel`/`reschedule` sí lo hacían) y el botón
+«▶ Atender ahora» del frontend. Ninguno de los dos habría fallado nunca: solo
+habrían sobrescrito en silencio.
 
 Una precondición **mal formada** (no es objeto, claves faltantes o
 desconocidas, estado inexistente, fecha u hora no parseables) es `400
@@ -86,9 +100,11 @@ también es `400`: no hay estado previo que comparar. Las tres, no solo la
 obvia — `create-with-patient` y `walk-in` arman su payload a mano, así que sin
 un rechazo explícito el campo se perdía sin ruido.
 
-**Ausencia de la clave ≠ `null` explícito.** Solo la **ausencia** es el opt-in
-del rollout. `expected_state: null` es `400 validation_error` con cero
-escrituras, en las siete vías. El motivo es el mismo fail-closed del punto 1:
+**Ausencia de la clave ≠ `null` explícito.** Desde la Fase 3 ambas fallan, pero
+con `code` distinto y a propósito: la ausencia es `precondition_required` (no
+sabía que hacía falta) y `expected_state: null` es `validation_error` (la mandó
+mal), con cero escrituras en las siete vías. El motivo es el mismo fail-closed
+del punto 1:
 quien manda `null` cree que está mandando una precondición, y si el dominio lo
 lee como «no vino», la escritura pasa **sin comparar nada** — con la etiqueta
 de estar protegida. Los dos casos no pueden compartir representación, así que

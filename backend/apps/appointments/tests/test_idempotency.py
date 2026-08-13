@@ -136,33 +136,57 @@ class CreateWithPatientIdempotencyTests(IdempotencyTestBase):
 
 
 class PastDateGuardTests(IdempotencyTestBase):
+    @staticmethod
+    def _precondition(created):
+        """INV-A Fase 3: el PATCH exige declarar cómo se vio la cita.
+
+        Se arma con el cuerpo de la creación, que es literalmente lo que el
+        llamador tiene delante.
+        """
+        return {"expected_state": {
+            "status": created["status"],
+            "date": created["date"],
+            "start_time": created["start_time"],
+        }}
+
     def test_reschedule_to_past_is_rejected(self):
         """Fix PR-14: antes el PATCH podía mover una cita al pasado."""
         r = self.client.post("/api/appointments/", self._future())
-        public_id = r.json()["public_id"]
+        created = r.json()
 
         past_date, start, end = _slot(-2)
         patch = self.client.patch(
-            f"/api/appointments/{public_id}/",
-            {"date": past_date, "start_time": start, "end_time": end},
+            f"/api/appointments/{created['public_id']}/",
+            {"date": past_date, "start_time": start, "end_time": end,
+             **self._precondition(created)},
+            format="json",
         )
         self.assertEqual(patch.status_code, status.HTTP_400_BAD_REQUEST)
+        # El 400 tiene que venir del guard de fecha, NO de la precondición: sin
+        # esta comprobación el test seguiría verde aunque el guard se hubiera
+        # caído, porque `precondition_required` también es 400.
+        self.assertIn("date", patch.json().get("errors", {}))
 
     def test_reschedule_to_future_ok(self):
         r = self.client.post("/api/appointments/", self._future())
-        public_id = r.json()["public_id"]
+        created = r.json()
 
         future_date, start, end = _slot(5)
         patch = self.client.patch(
-            f"/api/appointments/{public_id}/",
-            {"date": future_date, "start_time": start, "end_time": end},
+            f"/api/appointments/{created['public_id']}/",
+            {"date": future_date, "start_time": start, "end_time": end,
+             **self._precondition(created)},
+            format="json",
         )
         self.assertEqual(patch.status_code, status.HTTP_200_OK, patch.content)
 
     def test_edit_reason_on_future_appt_not_blocked(self):
         """Un update que NO toca la fecha no dispara el guard."""
         r = self.client.post("/api/appointments/", self._future())
-        public_id = r.json()["public_id"]
+        created = r.json()
         patch = self.client.patch(
-            f"/api/appointments/{public_id}/", {"reason": "otro motivo"})
+            f"/api/appointments/{created['public_id']}/",
+            {"reason": "otro motivo", **self._precondition(created)},
+            format="json",
+        )
         self.assertEqual(patch.status_code, status.HTTP_200_OK, patch.content)

@@ -232,7 +232,14 @@ class LazyInvoiceCreationTests(APITestCase):
         )
 
         # Marcar como done (esto crea MedicalRecord y factura)
-        r = self.client.patch(f'/api/appointments/{appt.public_id}/status/', {'status': 'done'}, format='json')
+        # INV-A Fase 3: mutar una cita exige declarar cómo se la vio.
+        r = self.client.patch(
+            f'/api/appointments/{appt.public_id}/status/',
+            {'status': 'done', 'expected_state': {
+                'status': appt.status,
+                'date': appt.date.isoformat(),
+                'start_time': appt.start_time.strftime('%H:%M'),
+            }}, format='json')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
         # Verificar que existe MedicalRecord
@@ -265,7 +272,14 @@ class LazyInvoiceCreationTests(APITestCase):
         )
 
         # Marcar como done
-        r = self.client.patch(f'/api/appointments/{appt.public_id}/status/', {'status': 'done'}, format='json')
+        # INV-A Fase 3: mutar una cita exige declarar cómo se la vio.
+        r = self.client.patch(
+            f'/api/appointments/{appt.public_id}/status/',
+            {'status': 'done', 'expected_state': {
+                'status': appt.status,
+                'date': appt.date.isoformat(),
+                'start_time': appt.start_time.strftime('%H:%M'),
+            }}, format='json')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
         mr = MedicalRecord.objects.filter(appointment=appt).first()

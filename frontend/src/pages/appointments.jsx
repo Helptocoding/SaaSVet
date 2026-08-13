@@ -1162,7 +1162,9 @@ const Appointments = () => {
         }
 
         try {
-            await updateAppointmentStatus(token, current.public_id, "in_progress");
+            // `current` viene de releer la cita justo arriba (o de la que se
+            // abrió): es lo que el usuario tiene delante al pulsar "Atender".
+            await updateAppointmentStatus(token, current.public_id, "in_progress", current);
             window.dispatchEvent(new Event("dashboard:refresh"));
             loadAppointments();
         } catch {

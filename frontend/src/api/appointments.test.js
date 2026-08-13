@@ -41,8 +41,10 @@ describe("expectedStateOf", () => {
 
   it("omite la clave si la cita no trae la tupla completa", () => {
     // Enviar `expected_state: null` es un 400 deliberado en el backend, y
-    // fabricar una tupla a medias sería una precondición falsa. Omitir es el
-    // opt-in del rollout.
+    // fabricar una tupla a medias sería una precondición falsa: diría que la
+    // cita estaba como NO la vimos. Omitir también falla (400
+    // `precondition_required` desde la Fase 3), y esa es justo la gracia —
+    // falla ruidosamente en vez de escribir a ciegas.
     expect(expectedStateOf(null)).toEqual({});
     expect(expectedStateOf({ status: "scheduled" })).toEqual({});
     expect(expectedStateOf({ ...APPT, date: undefined })).toEqual({});
@@ -74,7 +76,11 @@ describe("las mutaciones viajan con la precondición", () => {
   });
 
   it("sin cita en pantalla NO inventa una precondición", async () => {
-    // Compatibilidad del rollout: la precondición es opt-in hasta la Fase 3.
+    // Desde la Fase 3 el backend rechaza esta llamada con 400
+    // `precondition_required`. Se mantiene el contrato del cliente igual: si
+    // no hay estado en pantalla, no se fabrica uno. El error es el desenlace
+    // correcto — inventarlo convertiría el fallo visible en una sobrescritura
+    // silenciosa, que es exactamente lo que INV-A existe para impedir.
     await updateAppointmentStatus("t", "abc", "confirmed");
     const [, body] = api.patch.mock.calls[0];
     expect(body).toEqual({ status: "confirmed" });

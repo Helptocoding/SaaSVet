@@ -244,6 +244,22 @@ class ViewLevelRaceRecoveryTests(APITransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
         return Appointment.objects.get(public_id=response.json()["public_id"])
 
+    def _precondition(self, appt):
+        """INV-A: la precondición es obligatoria en las tres vías (Fase 3).
+
+        Se construye desde la cita tal como la vio el llamador. La carrera que
+        estas pruebas inyectan reasigna el **veterinario**, que NO forma parte
+        de la tupla (`status`, `date`, `start_time`): la precondición sigue
+        siendo válida y la escritura procede. Es el comportamiento buscado —
+        INV-A protege la decisión de agenda del usuario, no la asignación
+        interna de recursos, que es justo lo que INV-D serializa aparte.
+        """
+        return {"expected_state": {
+            "status": appt.status,
+            "date": appt.date.isoformat(),
+            "start_time": appt.start_time.strftime("%H:%M"),
+        }}
+
     def _race_once(self, appt_pk, new_vet_id):
         """Parchea `lock_veterinarians` para que, la PRIMERA vez que se
         invoque dentro de la request bajo prueba, otra transacción reasigne
@@ -271,7 +287,8 @@ class ViewLevelRaceRecoveryTests(APITransactionTestCase):
         with self._race_once(appt.pk, self.vet2.pk):
             response = self.client.patch(
                 f"/api/appointments/{appt.public_id}/",
-                {"reason": "motivo actualizado"}, format="json",
+                {"reason": "motivo actualizado", **self._precondition(appt)},
+                format="json",
             )
 
         self.assertNotEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -301,7 +318,8 @@ class ViewLevelRaceRecoveryTests(APITransactionTestCase):
         with self._race_once(appt.pk, self.vet2.pk):
             response = self.client.patch(
                 f"/api/appointments/{appt.public_id}/status/",
-                {"status": "confirmed"}, format="json",
+                {"status": "confirmed", **self._precondition(appt)},
+                format="json",
             )
 
         self.assertNotEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -318,7 +336,10 @@ class ViewLevelRaceRecoveryTests(APITransactionTestCase):
         appt = self._create_appt(self.vet1, hour=12)
 
         with self._race_once(appt.pk, self.vet2.pk):
-            response = self.client.delete(f"/api/appointments/{appt.public_id}/")
+            response = self.client.delete(
+                f"/api/appointments/{appt.public_id}/",
+                self._precondition(appt), format="json",
+            )
 
         self.assertNotEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
                              response.content)
