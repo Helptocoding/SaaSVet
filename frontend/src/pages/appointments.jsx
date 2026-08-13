@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/useConfirm";
+import { isAppointmentChanged, appointmentChangedCurrent } from "../utils/apiError";
+import { statusLabel } from "../utils/appointmentStatus";
 import { toast } from "sonner";
 import {
     getAppointments, createAppointment,
@@ -219,7 +221,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
         if (!newPetItem) { toast.error("Selecciona una mascota"); return; }
         setSavingAssign(true);
         try {
-            const updated = await assignPatient(appt.public_id, newPetItem.id);
+            const updated = await assignPatient(appt.public_id, newPetItem.id, appt);
             onRefresh(updated);
             setAssigningPatient(false);
             setNewPetItem(null);
@@ -382,19 +384,19 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                     <button className="btn btn-info btn-md" style={{ flex: 1 }}
                                         onClick={() => onEdit(appt)}>Editar</button>
                                     <button className="btn btn-purple btn-md" style={{ flex: 1 }}
-                                        onClick={() => onStatusChange(appt.public_id, "confirmed")}>Confirmar</button>
+                                        onClick={() => onStatusChange(appt.public_id, "confirmed", appt)}>Confirmar</button>
                                 </div>
                             )}
                             <div style={{ display: "flex", gap: "6px", width: "100%" }}>
                                 <button className="btn btn-secondary btn-md" style={{ flex: 1 }}
                                     onClick={async () => {
                                         if (await confirm({ message: "¿Marcar como no presentado?", confirmText: "No se presentó" }))
-                                            onStatusChange(appt.public_id, "no_show");
+                                            onStatusChange(appt.public_id, "no_show", appt);
                                     }}>No se presentó</button>
                                 <button className="btn btn-danger btn-md" style={{ flex: 1 }}
                                     onClick={async () => {
                                         if (await confirm({ message: "¿Cancelar esta cita?", confirmText: "Cancelar cita", dangerMode: true }))
-                                            onStatusChange(appt.public_id, "canceled");
+                                            onStatusChange(appt.public_id, "canceled", appt);
                                     }}>Cancelar</button>
                             </div>
                         </>
@@ -421,12 +423,12 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                             message: "La cita se marcará como completada. Después podrás crear o abrir la consulta médica y continuar con el flujo clínico y de cobro.",
                                             confirmText: "Completar consulta",
                                         });
-                                        if (ok) onStatusChange(appt.public_id,"done");
+                                        if (ok) onStatusChange(appt.public_id, "done", appt);
                                     }}>Completar consulta</button>
                                 <button className="btn btn-danger btn-md" style={{flex:1}}
                                     onClick={async ()=>{
                                         if(await confirm({ message:"¿Cancelar esta consulta en progreso?", confirmText:"Cancelar", dangerMode:true }))
-                                            onStatusChange(appt.public_id,"canceled");
+                                            onStatusChange(appt.public_id, "canceled", appt);
                                     }}>Cancelar</button>
                             </div>
                         </>
@@ -459,7 +461,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     {/* canceled → reschedule (if date still valid) or new appt */}
                     {canReschedule && canEdit && (
                         <button className="btn btn-info btn-md" style={{width:"100%"}}
-                            onClick={()=>onStatusChange(appt.public_id,"scheduled")}>Reprogramar</button>
+                            onClick={()=>onStatusChange(appt.public_id, "scheduled", appt)}>Reprogramar</button>
                     )}
                     {showNewAppt && canEdit && (
                         <button className="btn btn-info btn-md" style={{width:"100%"}}
@@ -1060,6 +1062,22 @@ const Appointments = () => {
         loadAppointments();
     };
 
+    /** Qué decirle al usuario cuando el dominio rechaza por INV-A.
+     *
+     * Nunca «error al guardar»: el mensaje dice QUÉ cambió, porque quien lo lee
+     * tiene que decidir otra vez con el estado real delante. */
+    const conflictMessage = (err) => {
+        const current = appointmentChangedCurrent(err);
+        // Fuente única de etiquetas de estado — no re-crear el mapa aquí.
+        const label = current?.status ? statusLabel(current.status) : "";
+        const cuando = current?.date && current?.start_time
+            ? ` (${current.date} ${String(current.start_time).slice(0, 5)})`
+            : "";
+        return label
+            ? `Esta cita cambió mientras la tenías abierta: ahora está "${label}"${cuando}. Se recargó la agenda.`
+            : "Esta cita cambió mientras la tenías abierta. Se recargó la agenda.";
+    };
+
     const STATUS_MSG = {
         confirmed:   "Cita confirmada",
         in_progress: "Consulta iniciada",
@@ -1069,21 +1087,31 @@ const Appointments = () => {
         scheduled:   "Cita reprogramada",
     };
 
-    const handleStatusChange = async (id, newStatus) => {
-        const p = (async () => {
-            const updated = await updateAppointmentStatus(token, id, newStatus);
-            window.dispatchEvent(new Event("dashboard:refresh"));
-            refreshAppointment(updated);
-            await loadAppointments();
-            return updated;
-        })();
-        return toast.promise(p, {
-            loading: 'Actualizando estado...',
-            success: () => {
-                return STATUS_MSG[newStatus] || "Estado actualizado";
-            },
-            error: (err) => apiError(err, "Error al cambiar estado")
-        });
+    const handleStatusChange = async (id, newStatus, expected = null) => {
+        try {
+            const p = (async () => {
+                const updated = await updateAppointmentStatus(token, id, newStatus, expected);
+                window.dispatchEvent(new Event("dashboard:refresh"));
+                refreshAppointment(updated);
+                await loadAppointments();
+                return updated;
+            })();
+            toast.promise(p, {
+                loading: 'Actualizando estado...',
+                success: () => STATUS_MSG[newStatus] || "Estado actualizado",
+                error: (err) => (isAppointmentChanged(err)
+                    ? conflictMessage(err)
+                    : apiError(err, "Error al cambiar estado")),
+            });
+            return await p;
+        } catch (err) {
+            // INV-A: la cita cambió mientras el usuario la miraba. NO se
+            // reintenta —reintentar sin precondición es la sobrescritura que
+            // esto existe para impedir—: se recarga la agenda para que vea el
+            // estado real y vuelva a decidir.
+            if (isAppointmentChanged(err)) await loadAppointments();
+            return null;
+        }
     };
 
     const handleAttendNow = async (appt) => {
@@ -1179,7 +1207,9 @@ const Appointments = () => {
             reason:       form.reason,
             notes:        form.notes,
             status:       editingAppt.status,
-        });
+        // INV-A: la cita tal como se abrió el formulario. Si alguien la movió
+        // mientras tanto, el dominio rechaza en vez de pisar su decisión.
+        }, editingAppt);
         window.dispatchEvent(new Event("dashboard:refresh"));
         setEditingAppt(null);
         loadAppointments();

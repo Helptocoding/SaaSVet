@@ -7,8 +7,26 @@ import { updateAppointmentStatus } from "../../api/appointments";
 import { useConfirm } from "../useConfirm";
 import { Icon } from "../icons";
 import StatusBadge from "../StatusBadge";
-import { apiError } from "../../utils/apiError";
+import {
+  apiError, appointmentChangedCurrent, isAppointmentChanged,
+} from "../../utils/apiError";
+import { statusLabel } from "../../utils/appointmentStatus";
 import api from "../../api/client";
+
+/** INV-A (ADR p57): un `409 appointment_changed` no es «no se pudo».
+ *
+ * Alguien movió la cita entre que se abrió el modal y se pulsó la acción. Se
+ * dice QUÉ pasó —el modal se cierra y el dashboard se refresca solo— y **no se
+ * reintenta**: reintentar sin precondición es sobrescribir la decisión ajena.
+ */
+const conflictOr = (err, fallback) => {
+  if (!isAppointmentChanged(err)) return apiError(err, fallback);
+  const current = appointmentChangedCurrent(err);
+  const label = current?.status ? statusLabel(current.status) : "";
+  return label
+    ? `Esta cita cambió mientras la mirabas: ahora está "${label}". Vuelve a abrirla para decidir.`
+    : "Esta cita cambió mientras la mirabas. Vuelve a abrirla para decidir.";
+};
 
 export default function AppointmentQuickModal({ publicId, onClose }) {
   const navigate = useNavigate();
@@ -59,7 +77,7 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
         consultation_type: "general",
       });
       try {
-        await updateAppointmentStatus(token, appt.public_id, "in_progress");
+        await updateAppointmentStatus(token, appt.public_id, "in_progress", appt);
         window.dispatchEvent(new Event("dashboard:refresh"));
       } catch {
         toast.info("Hubo un problema menor al abrir la cita, pero puedes continuar normalmente.");
@@ -90,12 +108,16 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
     if (!ok) return;
     setUpdating(true);
     try {
-      await updateAppointmentStatus(token, appt.public_id, "no_show");
+      await updateAppointmentStatus(token, appt.public_id, "no_show", appt);
       window.dispatchEvent(new Event("dashboard:refresh"));
       toast.success("Cita marcada como no asistió");
       onClose();
     } catch (err) {
-      toast.error(apiError(err, "No se pudo actualizar la cita"));
+      toast.error(conflictOr(err, "No se pudo actualizar la cita"));
+      if (isAppointmentChanged(err)) {
+        window.dispatchEvent(new Event("dashboard:refresh"));
+        onClose();
+      }
     } finally {
       setUpdating(false);
     }
@@ -110,12 +132,16 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
     if (!appt) return;
     setUpdating(true);
     try {
-      await updateAppointmentStatus(token, appt.public_id, "confirmed");
+      await updateAppointmentStatus(token, appt.public_id, "confirmed", appt);
       window.dispatchEvent(new Event("dashboard:refresh"));
       toast.success("Cita confirmada");
       onClose();
     } catch (err) {
-      toast.error(apiError(err, "No se pudo confirmar la cita"));
+      toast.error(conflictOr(err, "No se pudo confirmar la cita"));
+      if (isAppointmentChanged(err)) {
+        window.dispatchEvent(new Event("dashboard:refresh"));
+        onClose();
+      }
     } finally {
       setUpdating(false);
     }
@@ -131,12 +157,16 @@ export default function AppointmentQuickModal({ publicId, onClose }) {
     if (!ok) return;
     setUpdating(true);
     try {
-      await updateAppointmentStatus(token, appt.public_id, "canceled");
+      await updateAppointmentStatus(token, appt.public_id, "canceled", appt);
       window.dispatchEvent(new Event("dashboard:refresh"));
       toast.success("Cita cancelada");
       onClose();
     } catch (err) {
-      toast.error(apiError(err, "No se pudo cancelar la cita"));
+      toast.error(conflictOr(err, "No se pudo cancelar la cita"));
+      if (isAppointmentChanged(err)) {
+        window.dispatchEvent(new Event("dashboard:refresh"));
+        onClose();
+      }
     } finally {
       setUpdating(false);
     }

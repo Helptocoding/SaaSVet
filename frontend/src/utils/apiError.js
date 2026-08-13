@@ -99,3 +99,25 @@ export function apiError(err, fallback = "Error inesperado") {
     const first = Object.values(data).flat()[0];
     return first ? String(first) : fallback;
 }
+
+/**
+ * INV-A (ADR p57) — ¿este error es «la cita cambió mientras la editabas»?
+ *
+ * `409 appointment_changed` **no es una avería**: es un resultado de negocio.
+ * Alguien —otra persona del equipo, o el asistente de WhatsApp— movió la cita
+ * entre que se cargó la pantalla y se pulsó guardar, y el dominio se negó a
+ * sobrescribir esa decisión.
+ *
+ * La regla al consumirlo es corta y no admite atajos: **recargar y volver a
+ * preguntar, jamás reintentar**. Reintentar sin `expected_state` es
+ * exactamente la sobrescritura que la precondición existe para impedir.
+ */
+export function isAppointmentChanged(err) {
+    return err?.response?.status === 409
+        && err?.response?.data?.code === "appointment_changed";
+}
+
+/** El estado REAL que viaja en el 409, para poder decir QUÉ cambió. */
+export function appointmentChangedCurrent(err) {
+    return err?.response?.data?.current || null;
+}

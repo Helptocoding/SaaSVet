@@ -100,7 +100,12 @@ const MedicalRecords = () => {
         if (token) {
           api.get(`appointments/${appointmentParam}/`).then((r) => {
             if (r.data && r.data.status !== "in_progress" && r.data.status !== "done") {
-              updateAppointmentStatus(token, appointmentParam, "in_progress")
+              // INV-A: la cita recién leída viaja como precondición. Sin ella,
+              // esta auto-sanación podía revivir una cita que alguien acababa
+              // de cancelar en la ventana entre el GET y el PATCH. Si cambió,
+              // el dominio devuelve 409 y aquí no se insiste: se sigue con la
+              // consulta, que es lo que el usuario vino a hacer.
+              updateAppointmentStatus(token, appointmentParam, "in_progress", r.data)
                 .then(() => window.dispatchEvent(new Event("dashboard:refresh")))
                 .catch(() => {});
             }

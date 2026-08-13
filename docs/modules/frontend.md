@@ -181,7 +181,7 @@ el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))
 - No encontrado (404): `{code: 'not_found', message}`
 - Conflicto de estado/integridad (409): `{code: 'resource_has_dependencies', message, protected_count: int, protected_count_truncated: bool, protected_sample: [{type, id, public_id}]}` (cuando el backend bloquea por FK PROTECT)
 - Conflicto de recurso genérico (409): `{code: 'generic_resource_protected', message}` (cuando se intenta borrar Owner/Pet genérico)
-- **Precondición de cita vencida (409)**: `{code: 'appointment_changed', message, current: {status, date, start_time}}` (INV-A, ADR p57). La cita cambió desde que se leyó. **No es un error técnico**: la UI recarga la cita, muestra «esta cita cambió mientras la editabas» y deja al usuario decidir. **Nunca** auto-reintentar ni reenviar sin `expected_state`. Hoy el frontend **no** envía `expected_state` (opt-in) — enviarlo es trabajo de F5
+- **Precondición de cita vencida (409)**: `{code: 'appointment_changed', message, current: {status, date, start_time}}` (INV-A, ADR p57). La cita cambió desde que se leyó. **No es un error técnico**: la UI recarga la cita, muestra qué cambió y deja al usuario decidir. **Nunca** auto-reintentar ni reenviar sin `expected_state`. **Desde F5 Fase 2 el frontend SÍ la envía** — ver § Precondición de estado en citas
 - **Cliente ya existente (409)**: `{code: 'owner_exists', message, candidate: {public_id, name}}` (INV-B/INV-C, ADR p57). El teléfono ya tiene expediente y ese camino no puede reutilizarlo. **No es un error técnico.** El **registro rápido de citas** (`create-with-patient`) solo lo produce si envía `require_new_owner` — hoy el frontend **no** lo envía, así que su comportamiento no cambia: sigue reutilizando el expediente del cliente que vuelve. En el **alta de mascota** (`POST /api/pets/`) la UI debe preguntar «¿es este cliente?» con `candidate.name` y, si el usuario confirma, **reenviar en modo referencia** (`{owner_public_id: candidate.public_id}` en vez de `{owner: {name, phone}}`); si no, corregir el teléfono. Al **cambiar un teléfono** significa que ese número ya es de otro cliente: cero escrituras (tampoco los campos de la mascota, si venía por `PATCH /api/pets/`). **Nunca** reintentar el mismo payload
 - **Cliente ambiguo (409)**: `{code: 'owner_ambiguous', message, candidate_count: int}` (INV-C, ADR p57). Ese teléfono tiene **dos o más** expedientes y el sistema **no elige**. **No hay candidato en el cuerpo a propósito** — ofrecerlo sería sugerir la elección prohibida. La UI muestra que el dato está por ordenar y no ofrece ninguna acción de «continuar igual»; la salida es corregir los expedientes duplicados desde Clientes
 - **Caso de identidad (409)**: `{code, message}` con `code` ∈ `no_identity_case` · `verification_required` · `owner_changed` · `already_linked` (FLUJO-C, ADR p57 §5.5). Los produce la bandeja al **verificar** o **autorizar**. `verification_required` es el más frecuente y **no es un error del usuario**: falta registrar una verificación aprobada *de ese mismo caso y candidato* antes de poder vincular — por eso el botón «Autorizar vínculo» sale deshabilitado hasta que la haya
@@ -207,6 +207,55 @@ Frontend debe distinguir por `code` field, no por status code. El handler `apiEr
 Implementación pragmática en CI:
 - El script `scripts/check-handle-errors.sh` detecta archivos con `catch(` en `frontend/src` y filtra aquellos que no importan `handleFormError`.
 - Mejoras futuras: pasar a análisis AST para evitar falsos positivos (recomendado a mediano plazo).
+
+### Precondición de estado en citas (INV-A — ADR p57, F5 Fase 2)
+
+Toda mutación de una cita existente viaja con **`expected_state`**: la tupla
+`{status, date, start_time}` que el usuario tenía **en pantalla** cuando decidió
+actuar. El dominio la compara contra la fila bloqueada, dentro de la misma
+transacción que escribe, y responde `409 appointment_changed` si difiere. Es lo
+que impide que dos personas —o una persona y el asistente de WhatsApp— se pisen
+en silencio: sin ella, gana quien guarda último.
+
+```javascript
+import { updateAppointmentStatus, expectedStateOf } from "../api/appointments";
+
+// La cita YA CARGADA es el último argumento — no se relee antes de guardar.
+await updateAppointmentStatus(token, appt.public_id, "canceled", appt);
+```
+
+**Se construye desde la cita ya cargada, nunca releyéndola justo antes de
+guardar.** Releer produciría el estado de *después* y la precondición no diría
+nada — sería un compare-and-swap contra uno mismo. `expectedStateOf` devuelve
+`{}` si la cita no trae la tupla completa: **no se fabrica** una precondición a
+medias (enviar `expected_state: null` es un `400` deliberado del backend, y
+omitir la clave es el opt-in del rollout).
+
+Lo envían: `updateAppointment`, `updateAppointmentStatus` y `assignPatient`.
+`POST` y `walk-in` no (no hay estado previo que comparar).
+
+**Al recibir el 409** — dos utilidades en `utils/apiError.js`:
+
+```javascript
+if (isAppointmentChanged(err)) {
+    const current = appointmentChangedCurrent(err);   // el estado REAL
+    await loadAppointments();                          // recargar
+    // …y decirle al usuario QUÉ cambió, para que vuelva a decidir
+}
+```
+
+Regla corta y sin atajos: **recargar y volver a preguntar, jamás reintentar**.
+Reintentar sin `expected_state` es exactamente la sobrescritura que la
+precondición existe para impedir. Tampoco se degrada a último-escritor-gana
+tras N conflictos, ni se silencia el 409 confirmando que quedó hecho.
+
+El mensaje nunca es «error al guardar»: dice el estado real (vía `statusLabel`,
+la fuente única de etiquetas), porque quien lo lee tiene que decidir otra vez.
+
+**`deleteAppointment` se retiró.** `DELETE /appointments/<id>/` está deprecado a
+favor de `PATCH /<id>/status/`, que es la vía con auditoría y precondición. No
+tenía consumidores, así que dejar la función viva solo invitaba a reintroducir
+la vía deprecada.
 
 ### IDs en llamadas a la API (ADR p18 — Día 6)
 

@@ -1,7 +1,12 @@
 # ADR p57 — Garantías de agenda e identidad: precondición atómica (INV-A), no-solapamiento (INV-D) e identidad de expediente (INV-B/INV-C)
 
 **Fecha**: 2026-08-08 (rev. 2026-08-11 — F1 añade INV-B e INV-C)
-**Estado**: ACEPTADO (F0 y F1 implementados; INV-A queda opt-in hasta F5)
+**Estado**: ACEPTADO. F0–F4 implementadas, más la **Fase 2 del rollout de
+INV-A** (el frontend envía y maneja la precondición; `deleteAppointment`
+retirado). La precondición sigue siendo **opt-in**: hacerla obligatoria
+(`400 precondition_required`) y cortar `DELETE` a `410 endpoint_sunset` es la
+**Fase 3**, que espera la fecha de §9.9 y no puede adelantarse al Sunset
+publicado (2026-11-06).
 **Decisión de origen**: [`item-2-decision.md`](item-2-decision.md) §3.2, §3.3,
 §3.4, §4.7–§4.12, §5.1, §9.14, §9.15. Plan de ejecución:
 [`item-2-implementation-plan.md`](item-2-implementation-plan.md) §3 (F0) y §4 (F1).
