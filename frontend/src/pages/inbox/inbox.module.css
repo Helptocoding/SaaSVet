@@ -287,3 +287,26 @@
     color: var(--c-text-muted);
     max-width: 62ch;
 }
+
+/* Por qué el caso llegó a una persona. Informativo, no accionable: sin el
+   borde de aviso del caso de identidad, que sí pide una decisión. */
+.handoffReason {
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    border: 1px solid var(--c-border);
+    background: var(--c-surface-2);
+    border-radius: var(--radius-md, 8px);
+    margin: 0 0 var(--space-3, 12px);
+}
+
+.handoffReasonBody {
+    margin: var(--space-1, 4px) 0 0;
+    font-size: 13px;
+    color: var(--c-text-muted);
+    max-width: 62ch;
+}
+
+.handoffHint {
+    font-size: 11.5px;
+    color: var(--c-text-muted);
+    margin-top: 2px;
+}

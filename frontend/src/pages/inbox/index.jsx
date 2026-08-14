@@ -168,6 +168,59 @@ const IdentityCaseBanner = ({
     );
 };
 
+/* Por qué el caso llegó a una persona.
+ *
+ * `reason` clasifica y `detail` informa: el backend manda los dos porque
+ * "baja confianza" no le dice nada a recepción y "se atascó pidiendo datos"
+ * sí. El texto se compone aquí —no en la API— por la misma razón que
+ * `APPT_STATUS_LABEL`: las etiquetas de UI son del frontend. Lo que sí viene
+ * del dominio son los `label` de cada dato, que viven junto al dato en
+ * `goals.py` para que no haya dos vocabularios.
+ */
+const HANDOFF_REASON = {
+    explicit_request: "El cliente pidió hablar con una persona.",
+    emergency: "Posible urgencia clínica.",
+    policy_block: "El asistente tiene prohibido resolver esto solo.",
+    low_confidence: "El asistente no pudo avanzar.",
+    tool_failure: "Falló una operación del sistema.",
+    identity: "Hay que verificar la identidad antes de continuar.",
+    budget_exhausted: "La conversación se alargó demasiado sin resolverse.",
+};
+
+const HANDOFF_DETAIL = {
+    goal_stalled: "Pidió el mismo dato tres veces sin obtenerlo.",
+    llm_error: "El servicio de IA no respondió.",
+    commit_failed: "La operación falló justo al confirmarla.",
+    owner_exists: "El teléfono ya pertenece a un cliente registrado.",
+    owner_ambiguous: "El teléfono tiene varios expedientes.",
+};
+
+const HandoffReasonBanner = ({ handoff }) => {
+    const { reason, detail, goal } = handoff;
+    const headline = HANDOFF_REASON[reason] || "El asistente pasó el caso al equipo.";
+    const nuance = HANDOFF_DETAIL[detail];
+
+    return (
+        <div className={styles.handoffReason}>
+            <strong>{headline}</strong>
+            {nuance && <p className={styles.handoffReasonBody}>{nuance}</p>}
+            {goal?.promise && (
+                <p className={styles.handoffReasonBody}>
+                    Quería <strong>{goal.promise}</strong>.
+                    {goal.captured.length > 0 && (
+                        <> Ya tenía: {goal.captured.map((c) => `${c.label} (${c.value})`).join(" · ")}.</>
+                    )}
+                </p>
+            )}
+            {goal?.missing?.length > 0 && (
+                <p className={styles.handoffReasonBody}>
+                    Le faltaba: <strong>{goal.missing.map((m) => m.label).join(" · ")}</strong>.
+                </p>
+            )}
+        </div>
+    );
+};
+
 const Inbox = () => {
     const { can } = useAuth();
     const confirm = useConfirm();
@@ -519,11 +572,21 @@ const Inbox = () => {
                                             </span>
                                         )}
                                     </div>
-                                    {c.handoff_priority === "urgent" && (
+                                    {c.handoff_priority === "urgent" ? (
                                         <div className={styles.urgentHint}>
                                             Posible emergencia — atiende de inmediato
                                         </div>
-                                    )}
+                                    ) : (c.handoff_reason && (
+                                        // Por qué está esperando, sin tener que
+                                        // abrirla. El detalle fino gana al código
+                                        // grueso: "se atascó pidiendo datos" ubica,
+                                        // "baja confianza" no.
+                                        <div className={styles.handoffHint}>
+                                            {HANDOFF_DETAIL[c.handoff_detail]
+                                                || HANDOFF_REASON[c.handoff_reason]
+                                                || "Esperando a una persona"}
+                                        </div>
+                                    ))}
                                 </button>
                             ))
                         )}
@@ -602,6 +665,13 @@ const Inbox = () => {
                                     onVerify={handleVerifyIdentity}
                                     onAuthorize={handleAuthorizeIdentity}
                                 />
+                            )}
+
+                            {/* Los casos de identidad ya se explican arriba, con
+                                sus acciones; este banner cubre el resto — que
+                                hasta aquí llegaba sin ninguna explicación. */}
+                            {thread?.handoff && !thread?.identity_case && (
+                                <HandoffReasonBanner handoff={thread.handoff} />
                             )}
 
                             <div className={styles.thread}>

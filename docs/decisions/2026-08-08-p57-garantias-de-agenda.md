@@ -678,3 +678,106 @@ con nombre y evidencia.
 
 Las pruebas de concurrencia **no valen en SQLite**: sin la restricción de
 exclusión ni los locks de aviso, toda la suite pasaría sin probar nada.
+
+---
+
+## Addendum (2026-08-14) — alta de mascota para un cliente ya identificado
+
+**Estado**: ACEPTADO. Implementado. No cambia INV-A/B/C/D; **aplica** INV-B a
+una vía que no existía.
+
+### El hueco, y por qué se vio tarde
+
+F4 cerró con la instrucción explícita de no añadir herramientas de mascotas, y
+fue la decisión correcta para el alcance de entonces. El piloto le puso precio
+tres semanas después: un cliente **ya registrado** llegó con una mascota nueva
+y el asistente no tenía ningún camino.
+
+- `register_new_client_and_pet` se niega en cuanto el contacto tiene
+  expediente (`already_client`) — su premisa es «cliente nuevo».
+- `create_appointment` exige un `pet_handle`, y los handles salen de
+  `list_my_pets`, donde la mascota nueva por definición no está.
+
+No era un callejón: era un muro. Y lo grave no fue el hueco funcional sino que
+**el modelo no sabía que existía**: prometió *«registro a Koler y le agendo la
+cita»*, no encontró qué llamar, repitió preguntas y el guardián de
+estancamiento acabó mandando el caso a una persona. Cinco turnos para llegar a
+«se me enredó», con el cliente preguntando *«¿cuál fue el error?»*.
+
+Contribuyó un fallo silencioso propio: la herramienta devolvía
+`client_error='already_client'` y el diccionario de copy del planner tenía la
+clave escrita `already_a_client`. Nunca casaban, así que el modelo recibía el
+genérico «la operación no se completó» y no podía explicar nada. Un dict
+indexado por código es exactamente donde una errata no rompe nada y solo
+empobrece; ahora hay un test que compara ambas listas.
+
+### Qué se añade
+
+Dos herramientas tier-2, `register_pet_and_schedule` (con cita) y
+`register_pet_only` (sin ella), ambas con `min_verification =
+confirmed_in_chat`.
+
+**Dos y no una con bandera**, por dos razones. `GoalSpec` es estático por
+diseño —los slots requeridos no se calculan en tiempo de ejecución— y separar
+los compromisos hace que «se quedó sin cita» sea un acto explícito y medible en
+`ToolExecution`, en vez de un slot que nadie llenó. El camino que se **ofrece**
+es siempre con cita, coherente con la política de la clínica del 2026-07-30
+(«el alta va con la primera cita»); sin cita solo si el cliente ya dijo que no
+quiere agendar todavía.
+
+### INV-B aplicado: quién autoriza la escritura
+
+El expediente sale de **`contact.owner_id`** —el vínculo que ya existe y superó
+verificación—, nunca de resolver el teléfono en el momento. El `POST
+/api/pets/` va en **modo referencia** (`owner_public_id`), que es el modo que
+INV-B reserva para «alguien eligió este expediente»: aquí quien eligió fue la
+verificación de identidad.
+
+De ahí las tres negativas del contrato:
+
+| Situación | Desenlace | Por qué |
+|---|---|---|
+| Contacto sin expediente | `verification_required` | sin vínculo no hay verificación posible; el gate corta antes del handler (el `not_a_client` del código queda como guarda defensiva de una llamada directa) |
+| Vínculo **familiar** | `family_restricted` | un familiar consulta y mueve citas; abrir expedientes en la ficha del titular es otra cosa. Mismo criterio que `reschedule_appointment` |
+| Solo `phone_match` | `verification_required` | escribir en el historial de alguien exige `confirmed_in_chat`, igual que agendar o cancelar |
+
+Y una cuarta, que no es negativa sino atajo: si el cliente ya tiene una mascota
+activa con ese nombre (comparado sin acentos ni mayúsculas), se devuelve
+`pet_exists` **con el handle de la que hay**, para que el modelo ofrezca
+agendarle a ésa. Negarse sin alternativa habría sido otro callejón.
+
+### Por qué NO hace falta un endpoint compuesto
+
+El primer diseño extendía `create-with-patient` con modo referencia, para que
+mascota y cita nacieran en una transacción. La decisión del PO de permitir el
+alta sin cita lo volvió innecesario: si la mascota se crea y la cita choca con
+`slot_taken`, el estado resultante —**mascota registrada sin cita**— es uno de
+los dos desenlaces aprobados, no un huérfano. El cliente se entera
+(`pet_saved_appointment_failed`, que **no escala**: se lo cuenta y ofrece otro
+horario) y se recupera agendando con el handle nuevo.
+
+Esto **no** relaja la regla de que el agente no orquesta atomicidad: la sigue
+aplicando el alta de cliente nuevo, donde un `Owner` sin mascota sí sería
+basura. Lo que cambia es que aquí el estado intermedio es válido, y el
+principio existe para evitar estados inválidos, no llamadas múltiples.
+
+### Inventario de vías (§4.7.4)
+
+No entra ninguna vía nueva: las herramientas **consumen** `POST /api/pets/` en
+modo referencia, que ya está inventariado y pasa por el serializer con su
+resolución de expediente. Ningún código nuevo construye un `Owner` ni asigna
+`.phone`, así que `InventoryStaticGateTests` sigue verde sin tocar su
+allowlist — comprobado, no supuesto.
+
+### Pruebas
+
+| Qué acredita | Archivo |
+|---|---|
+| Propone sin volver a pedir el nombre del cliente; no escribe hasta el «sí» | `agent/tests/test_write_tools.py::AddPetForExistingClientTests` |
+| El commit crea mascota **y** cita, colgando del expediente vinculado (INV-B) | ídem |
+| Alta sin cita: registra y no agenda nada | ídem |
+| Nombre repetido → `pet_exists` con el handle de la existente; cero escrituras | ídem |
+| Contacto sin expediente y vínculo familiar → cortados, con el código correcto | ídem |
+| `phone_match` no basta | ídem |
+| Hueco perdido tras crear la mascota → se le dice que quedó registrada, **sin escalar** | ídem |
+| Todo `client_error` que emite una herramienta tiene copy propio (el gate de la errata) | `ToolErrorCopyIsReachableTests` |

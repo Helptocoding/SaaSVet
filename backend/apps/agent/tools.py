@@ -1385,12 +1385,256 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
         'cuando': format_local_wallclock(args['date'], args['start_time'])})
 
 
+# ---------------------------------------------------------------------------
+# Mascota nueva de un cliente YA identificado
+#
+# El hueco que cerró esto: `register_new_client_and_pet` se niega en cuanto el
+# contacto tiene expediente (`already_client`) y `create_appointment` exige un
+# `pet_handle` que solo sale de `list_my_pets`. Un cliente conocido que llega
+# con OTRA mascota no tenía ningún camino — el modelo prometía registrarla, no
+# encontraba qué llamar, repetía preguntas y el guardián de estancamiento
+# acababa mandando el caso a una persona (conv 17 del piloto).
+#
+# INV-B, que es lo que gobierna este flujo: el expediente sale de
+# `contact.owner_id` —el vínculo que YA existe y superó verificación—, jamás de
+# resolver el teléfono en el momento. Que un número coincida no autoriza a
+# escribir en el historial de nadie.
+# ---------------------------------------------------------------------------
+
+def _writable_owner(conversation):
+    """`(owner, None)` si el agente puede escribir en ese expediente.
+
+    Dos negativas, por motivos distintos:
+
+    - `not_a_client`: no hay vínculo. El camino es
+      `register_new_client_and_pet`, no éste.
+    - `family_restricted`: el vínculo es familiar (secundario). Un familiar
+      puede consultar y mover citas, pero **no abrir expedientes nuevos** en la
+      ficha del titular. Mismo criterio que `reschedule_appointment`.
+    """
+    from .models import ContactIdentity
+    contact = conversation.contact
+    if contact.owner_id is None:
+        return None, 'not_a_client'
+    if contact.linked_via == ContactIdentity.LINKED_FAMILY:
+        return None, 'family_restricted'
+    return contact.owner, None
+
+
+def _existing_pet_named(conversation, executor, owner, pet_name,
+                        tool_name, triggered_by=None):
+    """Handle de una mascota activa del cliente con ese nombre, o `None`.
+
+    Evita el duplicado del cliente que repite («Koler», «koler»). Devuelve el
+    handle para que el modelo pueda ofrecer agendarle a ESA en vez de crear
+    una segunda: negarse sin alternativa sería otro callejón.
+    """
+    from apps.patients.services import normalize_owner_name
+    status_code, data = executor.call(
+        'GET', '/api/pets/', tool_name=tool_name,
+        params={'owner': str(owner.public_id)}, args_redacted={},
+        triggered_by_message=triggered_by,
+    )
+    if status_code >= 400:
+        return None
+    pets = data if isinstance(data, list) else (data or {}).get('results', [])
+    target = normalize_owner_name(pet_name)
+    for pet in pets:
+        if normalize_owner_name(pet.get('name', '')) == target:
+            return _add_ref(conversation, 'mascota', pet['public_id'])
+    return None
+
+
+def _stage_add_pet(conversation, executor, args, *, with_appointment,
+                   triggered_by=None):
+    """Tronco común de las dos altas: valida, arma el staged y propone.
+
+    Las dos herramientas son el MISMO acto con distinto alcance; separarlas en
+    el registro es lo que hace explícito «se quedó sin cita», pero duplicar
+    aquí la validación sería pedir que diverjan.
+    """
+    from . import confirmations, goals
+    from .models import AgentSettings
+    org = conversation.organization
+
+    owner, err = _writable_owner(conversation)
+    if err:
+        return ToolOutcome(ok=False, client_error=err)
+
+    tool_name = ('register_pet_and_schedule' if with_appointment
+                 else 'register_pet_only')
+    goal, pending_outcome = _goal_gate(conversation, tool_name, args,
+                                       executor=executor,
+                                       triggered_by=triggered_by)
+    if pending_outcome is not None:
+        return pending_outcome
+    slots = goals.values(goal)
+    pet_name = slots['pet_name']
+    species = slots.get('pet_species') or ''
+
+    duplicate = _existing_pet_named(conversation, executor, owner, pet_name,
+                                    tool_name, triggered_by=triggered_by)
+    if duplicate is not None:
+        _save_refs(conversation)
+        # No es un fallo: el cliente ya la tiene registrada. Se devuelve el
+        # handle para que el modelo siga por la vía normal de agendar.
+        return ToolOutcome(ok=False, client_error='pet_exists',
+                           data={'mascota_handle': duplicate,
+                                 'nombre': pet_name})
+
+    staged = {
+        'owner_public_id': str(owner.public_id),
+        'pet_name': pet_name, 'pet_species': species,
+    }
+    if with_appointment:
+        date_str, time_str, reason = slots['date'], slots['time'], slots['reason']
+        err = _future_or_error(org, date_str, time_str)
+        if err:
+            return ToolOutcome(ok=False, client_error=err)
+        agent_settings = AgentSettings.objects.filter(organization=org).first()
+        vets = _scheduling_vets(org, agent_settings)
+        if not vets:
+            return ToolOutcome(ok=False, client_error='no_vet')
+        vet = pick_free_vet(org, executor, date_str, time_str, vets,
+                            triggered_by=triggered_by, tool_name=tool_name)
+        if vet is None:
+            return ToolOutcome(ok=False, client_error='slot_taken')
+        staged.update({
+            'veterinarian': vet.pk, 'date': date_str, 'start_time': time_str,
+            'end_time': _appt_end_time(time_str), 'reason': reason,
+            'notes': f"Agendada por asistente virtual · conv {conversation.public_id}",
+        })
+        paraphrase = confirmations.CONFIRM_ADD_PET.format(
+            pet=pet_name, especie=species or 'sin especificar',
+            fecha=format_local_wallclock(date_str, time_str), reason=reason)
+    else:
+        paraphrase = confirmations.CONFIRM_ADD_PET_ONLY.format(
+            pet=pet_name, especie=species or 'sin especificar')
+
+    import uuid
+    staged['idempotency_key'] = uuid.uuid4().hex
+    confirmations.stage_pending(conversation, tool=tool_name, args=staged,
+                                paraphrase=paraphrase)
+    return ToolOutcome(ok=True, summary={'proposed': tool_name})
+
+
+def register_pet_and_schedule(conversation, executor, args, triggered_by=None):
+    """Mascota nueva de un cliente identificado + su primera cita (tier-2)."""
+    return _stage_add_pet(conversation, executor, args,
+                          with_appointment=True, triggered_by=triggered_by)
+
+
+def register_pet_only(conversation, executor, args, triggered_by=None):
+    """Alta sin cita. NO se ofrece: solo para el cliente que ya la rechazó."""
+    return _stage_add_pet(conversation, executor, args,
+                          with_appointment=False, triggered_by=triggered_by)
+
+
+def _commit_add_pet(conversation, executor, args, *, with_appointment,
+                    triggered_by=None):
+    """Crea la mascota en modo REFERENCIA y, si toca, su cita.
+
+    Modo referencia (`owner_public_id`) y no alta por teléfono: INV-B exige que
+    el expediente lo haya ELEGIDO alguien, y aquí quien lo eligió fue la
+    verificación de identidad que vinculó el contacto. Resolver el número aquí
+    sería dejar que el teléfono autorice.
+
+    **Dos llamadas, y eso es aceptable en este flujo concreto.** Si la mascota
+    se crea y la cita choca (`slot_taken`), el estado resultante —mascota
+    registrada sin cita— es exactamente uno de los dos desenlaces que el PO
+    aprobó, no un huérfano. El cliente se entera y se recupera agendando. Por
+    eso este camino NO necesita endpoint compuesto, a diferencia del alta de
+    cliente nuevo, donde un Owner sin mascota sí sería basura.
+    """
+    tool_name = ('register_pet_and_schedule' if with_appointment
+                 else 'register_pet_only')
+    pet_body = {
+        'owner_public_id': args['owner_public_id'],
+        'name': args['pet_name'],
+    }
+    if args.get('pet_species'):
+        pet_body['species'] = args['pet_species']
+
+    status_code, pet = executor.call(
+        'POST', '/api/pets/', tool_name=tool_name, json=pet_body,
+        args_redacted={'pet_name': args['pet_name']},
+        policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by,
+        idempotency_key=args.get('idempotency_key'),
+        extract_domain_id=lambda d: d.get('public_id'),
+        business_outcomes=BUSINESS_OUTCOMES)
+    if status_code == 409:
+        # El expediente dejó de ser inequívoco entre la propuesta y el «sí».
+        code = (pet or {}).get('code')
+        if code in ('owner_exists', 'owner_ambiguous'):
+            return ToolOutcome(ok=False, client_error=code)
+        return ToolOutcome(ok=False, client_error='tool_failure')
+    if status_code == 400:
+        client_error, detail = map_domain_400(pet)
+        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
+    if status_code >= 400:
+        return ToolOutcome(ok=False, client_error='tool_failure')
+
+    pet_handle = _add_ref(conversation, 'mascota', pet.get('public_id'))
+    _save_refs(conversation)
+    if not with_appointment:
+        return ToolOutcome(ok=True, summary={'registered': True},
+                           data={'mascota_handle': pet_handle,
+                                 'nombre': args['pet_name']})
+
+    appt_body = {
+        'pet': pet.get('id'), 'veterinarian': args['veterinarian'],
+        'date': args['date'], 'start_time': args['start_time'],
+        'end_time': args['end_time'], 'reason': args['reason'],
+        'notes': args['notes'],
+    }
+    status_code, appt = executor.call(
+        'POST', '/api/appointments/', tool_name=tool_name, json=appt_body,
+        args_redacted={'date': args['date'], 'time': args['start_time']},
+        policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by,
+        extract_domain_id=lambda d: d.get('public_id'),
+        result_summarizer=lambda d: {'status': d.get('status')},
+        business_outcomes=BUSINESS_OUTCOMES)
+    if status_code >= 400:
+        client_error = 'tool_failure'
+        if status_code == 400:
+            client_error, _ = map_domain_400(appt)
+        # La mascota SÍ quedó registrada. Decirlo es obligatorio: callarlo
+        # dejaría al cliente creyendo que no pasó nada y al siguiente intento
+        # chocando con `pet_exists`.
+        return ToolOutcome(ok=False, client_error='pet_saved_appointment_failed',
+                           detail=client_error,
+                           data={'mascota_handle': pet_handle,
+                                 'nombre': args['pet_name']})
+
+    _add_ref(conversation, 'cita', appt.get('public_id'))
+    _save_refs(conversation)
+    return ToolOutcome(ok=True, summary={'registered': True, 'scheduled': True},
+                       data={'mascota_handle': pet_handle,
+                             'cuando': format_local_wallclock(
+                                 args['date'], args['start_time'])})
+
+
+def commit_register_pet_and_schedule(conversation, executor, args,
+                                     triggered_by=None):
+    return _commit_add_pet(conversation, executor, args,
+                           with_appointment=True, triggered_by=triggered_by)
+
+
+def commit_register_pet_only(conversation, executor, args, triggered_by=None):
+    return _commit_add_pet(conversation, executor, args,
+                           with_appointment=False, triggered_by=triggered_by)
+
+
 # Ejecutores del pending_action confirmado (el planner los invoca).
 COMMIT_HANDLERS = {
     'create_appointment': commit_create_appointment,
     'cancel_appointment': commit_cancel_appointment,
     'reschedule_appointment': commit_reschedule_appointment,
     'register_new_client_and_pet': commit_register_new_client_and_pet,
+    'register_pet_and_schedule': commit_register_pet_and_schedule,
+    'register_pet_only': commit_register_pet_only,
 }
 # `link_family_member` vivía aquí (retirada en É-F5 Fase 2). Sembraba el reto
 # triple y devolvía; su propio docstring decía «el resto del reto lo conduce el
@@ -1719,7 +1963,9 @@ TOOL_SPECS = {
         'description': (
             'Registra a un cliente NUEVO (que aún no está en el sistema) junto '
             'con su primera mascota y agenda su primera cita, en un solo paso. '
-            'Úsalo SOLO cuando el contacto no es un cliente existente. PROPONE '
+            'Úsalo SOLO cuando el contacto no es un cliente existente; si YA '
+            'es cliente y trae otra mascota, la herramienta es '
+            'register_pet_and_schedule. PROPONE '
             'y espera el "sí". El teléfono se toma del propio WhatsApp — NO lo '
             'pidas. Fecha YYYY-MM-DD, hora HH:MM.'
         ),
@@ -1736,6 +1982,57 @@ TOOL_SPECS = {
                 'reason': {'type': 'string'},
             },
             'required': ['owner_name', 'pet_name', 'date', 'time', 'reason'],
+        },
+    },
+    # Las dos altas de mascota de un cliente EXISTENTE. Sus descripciones se
+    # escriben contra `register_new_client_and_pet` a propósito: el fallo del
+    # piloto no fue que faltara la herramienta, fue que el modelo no sabía que
+    # faltaba y prometió igual. Una frontera difusa reproduce ese fallo.
+    'register_pet_and_schedule': {
+        'handler': register_pet_and_schedule,
+        'tier': '2',
+        # Escribe en el expediente de una persona: misma barra que agendar o
+        # cancelar. `phone_match` NO basta (INV-B).
+        'min_verification': 'confirmed_in_chat',
+        'description': (
+            'Registra OTRA mascota de un cliente que YA está en el sistema y '
+            'le agenda su primera cita. Úsalo cuando el cliente ya está '
+            'identificado y la mascota que menciona NO aparece en '
+            'list_my_pets. NO pidas el nombre del cliente: ya lo tienes. '
+            'PROPONE y espera el "sí". Fecha YYYY-MM-DD, hora HH:MM.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'pet_name': {'type': 'string'},
+                'pet_species': {'type': 'string',
+                                'description': 'perro/gato/… (opcional)'},
+                'date': {'type': 'string', 'description': 'YYYY-MM-DD'},
+                'time': {'type': 'string', 'description': 'HH:MM (24h)'},
+                'reason': {'type': 'string'},
+            },
+            'required': ['pet_name', 'date', 'time', 'reason'],
+        },
+    },
+    'register_pet_only': {
+        'handler': register_pet_only,
+        'tier': '2',
+        'min_verification': 'confirmed_in_chat',
+        'description': (
+            'Registra OTRA mascota de un cliente existente SIN agendarle '
+            'cita. NO lo ofrezcas: el camino normal es registrarla junto con '
+            'su primera cita (register_pet_and_schedule). Úsalo solo si el '
+            'cliente ya dijo que no quiere agendar todavía. PROPONE y espera '
+            'el "sí".'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'pet_name': {'type': 'string'},
+                'pet_species': {'type': 'string',
+                                'description': 'perro/gato/… (opcional)'},
+            },
+            'required': ['pet_name'],
         },
     },
     'identify_client': {

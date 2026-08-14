@@ -396,3 +396,154 @@ class WriteToolsTests(TestCase):
         # el pending se re-armó con nueva expiración futura
         pending = confirmations.get_pending(self.conv)
         self.assertFalse(confirmations.is_expired(pending))
+
+
+class AddPetForExistingClientTests(WriteToolsTests):
+    """Mascota nueva de un cliente YA identificado.
+
+    El hueco que cierra: `register_new_client_and_pet` se niega con
+    `already_client` y `create_appointment` exige un `pet_handle` que solo sale
+    de `list_my_pets`. Un cliente conocido con OTRA mascota no tenía camino, y
+    el modelo lo prometía igual: en el piloto acabó en hand-off por
+    estancamiento tras cinco turnos (conv 17).
+    """
+
+    def test_proposes_without_asking_the_client_name_again(self):
+        out = self._run("register_pet_and_schedule", {
+            "pet_name": "Koler", "pet_species": "perro",
+            "date": self.day.isoformat(), "time": "10:00", "reason": "baño"})
+        self.assertTrue(out.ok, out.client_error)
+        paraphrase = self._paraphrase()
+        self.assertIn("Koler", paraphrase)
+        # Ya es cliente: volver a decirle "te registro como cliente" es lo que
+        # hace sentir que el sistema no lo reconoce.
+        self.assertNotIn("te registro como cliente", paraphrase)
+        self.assertEqual(Pet.objects.filter(name="Koler").count(), 0)
+
+    def test_commit_creates_pet_and_appointment(self):
+        self._run("register_pet_and_schedule", {
+            "pet_name": "Koler", "pet_species": "perro",
+            "date": self.day.isoformat(), "time": "10:00", "reason": "baño"})
+        self._affirm("sí")
+        res = planner._commit_pending(self.conv, self.executor)
+        self.assertEqual(res["decision"], "committed", res)
+
+        pet = Pet.objects.get(name="Koler")
+        # INV-B: cuelga del expediente VINCULADO, no de uno resuelto ahora por
+        # teléfono.
+        self.assertEqual(pet.owner, self.owner)
+        self.assertEqual(Appointment.objects.filter(pet=pet).count(), 1)
+
+    def test_pet_only_registers_without_appointment(self):
+        out = self._run("register_pet_only", {
+            "pet_name": "Koler", "pet_species": "perro"})
+        self.assertTrue(out.ok, out.client_error)
+        self.assertIn("sin cita", self._paraphrase())
+        self._affirm("sí")
+        planner._commit_pending(self.conv, self.executor)
+
+        self.assertEqual(Pet.objects.filter(name="Koler").count(), 1)
+        self.assertEqual(Appointment.objects.count(), 0)
+
+    def test_duplicate_name_offers_the_existing_pet_instead(self):
+        """No crea una segunda «Luna»; devuelve el handle de la que hay.
+
+        Negarse sin alternativa sería otro callejón — el modelo necesita poder
+        seguir por la vía normal de agendar.
+        """
+        out = self._run("register_pet_and_schedule", {
+            "pet_name": "luna",  # sin mayúscula: la comparación normaliza
+            "date": self.day.isoformat(), "time": "10:00", "reason": "baño"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "pet_exists")
+        self.assertTrue(out.data.get("mascota_handle"))
+        self.assertEqual(Pet.objects.filter(owner=self.owner).count(), 1)
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
+    def test_a_contact_without_record_never_reaches_the_tool(self):
+        """Sin expediente no hay verificación posible, y el gate corta antes.
+
+        `_verification_ok` devuelve False en cuanto `owner_id is None`, así que
+        el `not_a_client` del handler no se alcanza por esta vía — queda como
+        guarda defensiva para una llamada directa. Se afirma lo que de verdad
+        pasa, no lo que uno esperaría leyendo solo el handler: un test que
+        afirmara `not_a_client` estaría documentando una rama muerta.
+        """
+        self.contact.owner = None
+        self.contact.save(update_fields=["owner"])
+        out = self._run("register_pet_and_schedule", {
+            "pet_name": "Koler", "date": self.day.isoformat(),
+            "time": "10:00", "reason": "baño"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "verification_required")
+        self.assertEqual(Pet.objects.filter(name="Koler").count(), 0)
+
+    def test_a_family_link_cannot_open_records_on_the_titular(self):
+        """Un familiar consulta y mueve citas, pero no abre expedientes."""
+        self.contact.linked_via = ContactIdentity.LINKED_FAMILY
+        self.contact.save(update_fields=["linked_via"])
+        out = self._run("register_pet_and_schedule", {
+            "pet_name": "Koler", "date": self.day.isoformat(),
+            "time": "10:00", "reason": "baño"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "family_restricted")
+
+    def test_phone_match_alone_is_not_enough(self):
+        """INV-B: escribir en el expediente exige `confirmed_in_chat`."""
+        self.contact.verification_level = "phone_match"
+        self.contact.save(update_fields=["verification_level"])
+        out = self._run("register_pet_and_schedule", {
+            "pet_name": "Koler", "date": self.day.isoformat(),
+            "time": "10:00", "reason": "baño"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "verification_required")
+
+    def test_when_the_slot_dies_the_pet_still_says_it_was_saved(self):
+        """Callarlo dejaría al cliente creyendo que no pasó nada, y al
+        siguiente intento chocando con `pet_exists`."""
+        self._run("register_pet_and_schedule", {
+            "pet_name": "Koler", "date": self.day.isoformat(),
+            "time": "10:00", "reason": "baño"})
+        # El hueco se ocupa entre la propuesta y el «sí».
+        self._make_appt(hhmm="10:00")
+        self._affirm("sí")
+        planner._commit_pending(self.conv, self.executor)
+
+        self.assertEqual(Pet.objects.filter(name="Koler").count(), 1)
+        self.assertIn("Koler", self._last_out())
+
+
+class ToolErrorCopyIsReachableTests(TestCase):
+    """Todo `client_error` que una herramienta devuelve tiene texto para el
+    modelo.
+
+    Existía `already_a_client` en el diccionario y `already_client` en la
+    herramienta: no casaban, así que el modelo recibía el genérico «no se
+    completó» y no podía explicarle nada al cliente. Una errata en un dict de
+    copy indexado por código no rompe nada — solo empobrece en silencio.
+    """
+
+    def test_no_client_error_falls_back_to_the_generic_text(self):
+        import re
+        from pathlib import Path
+        from apps.agent import planner
+
+        source = Path(tools.__file__).read_text(encoding="utf-8")
+        emitted = set(re.findall(r"client_error='([a-z_]+)'", source))
+        # Los que el planner maneja como flujo propio (suspender, escalar,
+        # cerrar) en vez de contárselos al modelo, y los puramente internos
+        # que ninguna conversación puede provocar.
+        handled_elsewhere = {
+            "identity_changed", "owner_exists", "owner_ambiguous",
+            "appointment_changed", "already_done",
+            "pet_saved_appointment_failed",   # el planner redacta el suyo
+            "bad_phone",     # el wa_id lo pone WhatsApp, no el cliente
+            "unknown_tool",  # el modelo pidió algo que no existe
+        }
+        generic = planner._error_fact("__inexistente__")
+        for code in sorted(emitted - handled_elsewhere):
+            with self.subTest(client_error=code):
+                self.assertNotEqual(
+                    planner._error_fact(code), generic,
+                    f"`{code}` no tiene texto propio: el modelo recibirá el "
+                    f"genérico y no podrá decirle al cliente qué pasó.")

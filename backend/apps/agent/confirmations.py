@@ -32,6 +32,17 @@ CONFIRM_CREATE_NEW_CLIENT = (
     "Te confirmo: te registro como cliente (*{owner}*) y agendo cita para "
     "*{pet}* ({especie}) el *{fecha}*, motivo: {reason}. ¿Es correcto?"
 )
+# Mascota nueva de un cliente que YA está registrado: no se le vuelve a decir
+# "te registro como cliente" — ya lo es, y repetirlo suena a que el sistema no
+# lo reconoce (que es justo lo que el cliente reclamó en el piloto).
+CONFIRM_ADD_PET = (
+    "Te confirmo: registro a *{pet}* ({especie}) en tu expediente y le agendo "
+    "cita el *{fecha}*, motivo: {reason}. ¿Es correcto?"
+)
+CONFIRM_ADD_PET_ONLY = (
+    "Te confirmo: registro a *{pet}* ({especie}) en tu expediente, sin cita "
+    "por ahora. ¿Es correcto?"
+)
 
 EXPIRED_REPARAPHRASE = "Pasó un rato — te confirmo de nuevo:\n{paraphrase}"
 

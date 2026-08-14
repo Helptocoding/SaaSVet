@@ -226,6 +226,9 @@ _DIRECT_BECAUSE = {
     'commit_slot_taken': TurnDecision.Because.SYSTEM_ERROR,
     'commit_past_date': TurnDecision.Because.SYSTEM_ERROR,
     'commit_invalid': TurnDecision.Because.SYSTEM_ERROR,
+    # La mascota quedó registrada; solo faltó el horario. `SYSTEM_ERROR` como
+    # los de arriba: el turno no cumplió lo prometido, aunque parte sí.
+    'commit_pet_without_appointment': TurnDecision.Because.SYSTEM_ERROR,
 }
 
 
@@ -661,6 +664,23 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
                 author='system',
             )
             return {'decision': 'commit_past_date', 'llm_calls': 0, 'tools': 1}
+        if outcome.client_error == 'pet_saved_appointment_failed':
+            # Alta de mascota + cita: la mascota SÍ se guardó y la cita no.
+            # **No escala**, porque no hay nada roto que arreglar: «mascota
+            # registrada sin cita» es uno de los dos desenlaces aprobados, y
+            # el cliente puede seguir desde aquí.
+            #
+            # Callarlo sería lo peor de los dos mundos: creería que no pasó
+            # nada y su siguiente intento chocaría con `pet_exists`.
+            nombre = (outcome.data or {}).get('nombre', 'tu mascota')
+            enqueue_outbound(
+                conversation,
+                f"Ya dejé registrada a *{nombre}* 🐾 Lo que no pude fue "
+                "apartarle el horario. ¿Buscamos otro?",
+                author='system',
+            )
+            return {'decision': 'commit_pet_without_appointment',
+                    'llm_calls': 0, 'tools': 1}
         if outcome.client_error == 'invalid_data':
             # El dominio rechazó por otra razón (dato faltante, valor
             # inválido). No es un fallo de sistema: se pide el dato, no se
@@ -956,7 +976,24 @@ def _error_fact(client_error):
                           'con eso.',
         'not_cancelable': 'Esa cita ya no se puede cancelar por WhatsApp.',
         'not_reschedulable': 'Esa cita ya no se puede mover por WhatsApp.',
-        'already_a_client': 'Este número ya está registrado como cliente.',
+        # La clave decía `already_a_client` y la herramienta devuelve
+        # `already_client`: no casaban, así que el modelo recibía el genérico
+        # «no se completó» y se quedaba sin saber POR QUÉ no podía registrar.
+        # Un dict de copy indexado por código es exactamente donde una errata
+        # no falla, solo empobrece — por eso hay un test que compara las dos
+        # listas.
+        'already_client': 'Este número ya está registrado como cliente: para '
+                          'otra mascota suya usa register_pet_and_schedule.',
+        'not_a_client': 'Este número todavía no tiene expediente: el alta va '
+                        'por register_new_client_and_pet.',
+        'family_restricted': 'Este número está vinculado como familiar, y un '
+                             'familiar no puede abrir expedientes nuevos.',
+        'pet_exists': 'Ese cliente ya tiene una mascota registrada con ese '
+                      'nombre (mira `mascota_handle`): no hace falta '
+                      'registrarla otra vez.',
+        'pet_saved_appointment_failed': 'La mascota SÍ quedó registrada, pero '
+                                        'la cita no se pudo crear. Díselo y '
+                                        'ofrece otro horario.',
         'ambiguous_identity': 'Hay varios registros distintos con este número, '
                               'y desde aquí no se puede saber cuál es.',
         'invalid_data': 'El sistema rechazó esos datos; el detalle dice cuáles.',

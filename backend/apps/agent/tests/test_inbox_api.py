@@ -455,3 +455,82 @@ class InboxSettingsTests(InboxApiTestCase):
             {"faq_facts": {"estacionamiento": "Sí, gratuito"}}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+
+
+class HandoffReasonIsVisibleTests(InboxApiTestCase):
+    """El equipo tiene que saber POR QUÉ le llegó el caso.
+
+    El dato existía desde siempre en `HumanHandoff` y se quedaba en la base:
+    la API publicaba solo `reason_code` (que clasifica) y descartaba
+    `reason_detail` (que es el que informa). Recepción veía «Esperando» y
+    tenía que leer el transcript entero para deducir qué había pasado.
+
+    El caso real que lo destapó: conversación con `low_confidence` /
+    `goal_stalled` — el asistente llevaba tres turnos pidiendo la mascota y
+    nadie podía saberlo sin leer 29 mensajes.
+    """
+
+    def _stall(self):
+        from apps.agent.models import ConversationGoal
+        handoff = HumanHandoff.objects.create(
+            organization=self.org, conversation=self.conversation,
+            reason_code=HumanHandoff.REASON_LOW_CONFIDENCE,
+            reason_detail="goal_stalled",
+        )
+        goal = ConversationGoal.objects.create(
+            organization=self.org, conversation=self.conversation,
+            name="schedule_appointment",
+            status=ConversationGoal.STATUS_HANDOFF,
+            slots={"date": {"value": "2026-08-14"}, "time": {"value": "12:00"}},
+        )
+        return handoff, goal
+
+    def test_list_exposes_the_fine_grained_detail(self):
+        self._stall()
+        self.client.force_authenticate(self.assistant)
+        r = self.client.get("/api/inbox/conversations/")
+        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+        row = next(c for c in r.json()
+                   if c["public_id"] == str(self.conversation.public_id))
+        self.assertEqual(row["handoff_reason"], "low_confidence")
+        # Lo que de verdad ubica a quien atiende.
+        self.assertEqual(row["handoff_detail"], "goal_stalled")
+
+    def test_thread_explains_what_the_client_wanted_and_what_was_missing(self):
+        self._stall()
+        self.client.force_authenticate(self.assistant)
+        r = self.client.get(
+            f"/api/inbox/conversations/{self.conversation.public_id}/messages/")
+        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+        handoff = r.json()["handoff"]
+        self.assertEqual(handoff["reason"], "low_confidence")
+        self.assertEqual(handoff["detail"], "goal_stalled")
+
+        goal = handoff["goal"]
+        self.assertEqual(goal["promise"], "agendarle una cita")
+        # Etiquetas de negocio, NUNCA nombres de slot: quien lee esto es una
+        # recepcionista, no quien escribió el modelo.
+        capturado = {c["label"]: c["value"] for c in goal["captured"]}
+        self.assertEqual(capturado["el día de la cita"], "2026-08-14")
+        self.assertEqual(capturado["la hora de la cita"], "12:00")
+        faltaba = [m["label"] for m in goal["missing"]]
+        self.assertIn("la mascota que vamos a atender", faltaba)
+        self.assertIn("el motivo de la consulta", faltaba)
+        self.assertNotIn("pet_handle", str(goal))
+
+    def test_a_conversation_without_handoff_says_nothing(self):
+        """`None`, no un objeto vacío: la bandeja solo pinta lo que existe."""
+        self.client.force_authenticate(self.assistant)
+        r = self.client.get(
+            f"/api/inbox/conversations/{self.conversation.public_id}/messages/")
+        self.assertIsNone(r.json()["handoff"])
+
+    def test_a_resolved_handoff_stops_being_shown(self):
+        from django.utils import timezone
+        handoff, _ = self._stall()
+        handoff.resolved_at = timezone.now()
+        handoff.save(update_fields=["resolved_at"])
+        self.client.force_authenticate(self.assistant)
+        r = self.client.get(
+            f"/api/inbox/conversations/{self.conversation.public_id}/messages/")
+        self.assertIsNone(r.json()["handoff"])

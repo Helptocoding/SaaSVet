@@ -183,6 +183,8 @@ class GoalSpec:
 
 SCHEDULE = 'schedule_appointment'
 REGISTER = 'register_and_schedule'
+ADD_PET = 'add_pet_and_schedule'
+ADD_PET_ONLY = 'add_pet_only'
 CANCEL = 'cancel_appointment'
 RESCHEDULE = 'reschedule_appointment'
 
@@ -239,6 +241,45 @@ GOAL_SPECS = {
                    label='qué tipo de mascota es'),
         ),
     ),
+    # Mascota NUEVA de un cliente que YA está registrado. Distinto de REGISTER:
+    # aquí el expediente existe y el vínculo ya se verificó, así que no se pide
+    # el nombre del cliente — pedirlo otra vez sería tratarlo como desconocido.
+    ADD_PET: GoalSpec(
+        name=ADD_PET,
+        factors=(
+            Factor('pet_name', 'abrir el expediente de tu otra mascota',
+                   _v_text(), label='el nombre de tu mascota'),
+            Factor('date', 'apartar el día en la agenda del veterinario',
+                   _v_date, label='el día de la cita'),
+            Factor('time', 'apartarte la hora y que no se empalme con otra cita',
+                   _v_time, label='la hora de la cita'),
+            Factor('reason',
+                   'que el veterinario sepa qué revisar en esa primera visita',
+                   _v_text(), label='el motivo de la consulta'),
+        ),
+        optional_factors=(
+            Factor('pet_species',
+                   'que el veterinario prepare lo adecuado para tu mascota',
+                   _v_species, label='qué tipo de mascota es'),
+        ),
+    ),
+    # Alta SIN cita. Existe porque el PO decidió permitirla, pero **nunca se
+    # ofrece**: el camino que se propone es siempre con cita (política de la
+    # clínica, igual que en REGISTER). Es un compromiso aparte —y no una
+    # bandera de ADD_PET— para que quedarse sin cita sea un acto explícito en
+    # `ToolExecution` y se pueda medir, en vez de un slot que nadie llenó.
+    ADD_PET_ONLY: GoalSpec(
+        name=ADD_PET_ONLY,
+        factors=(
+            Factor('pet_name', 'abrir el expediente de tu otra mascota',
+                   _v_text(), label='el nombre de tu mascota'),
+        ),
+        optional_factors=(
+            Factor('pet_species',
+                   'que su expediente quede completo desde el principio',
+                   _v_species, label='qué tipo de mascota es'),
+        ),
+    ),
     CANCEL: GoalSpec(
         name=CANCEL,
         factors=(
@@ -268,6 +309,8 @@ GOAL_SPECS = {
 TOOL_GOALS = {
     'create_appointment': SCHEDULE,
     'register_new_client_and_pet': REGISTER,
+    'register_pet_and_schedule': ADD_PET,
+    'register_pet_only': ADD_PET_ONLY,
     'cancel_appointment': CANCEL,
     'reschedule_appointment': RESCHEDULE,
 }
@@ -758,6 +801,62 @@ def values(goal):
             if data.get('value') not in (None, '')}
 
 
+def promise_for(name):
+    """Lo que le prometimos al cliente, en voz de clínica. '' si no aplica.
+
+    Accesor público de `_GOAL_PROMISE`, que ya existía para hablarle al
+    cliente. La bandeja lo reusa para contarle al STAFF qué venía haciendo el
+    agente cuando escaló: la promesa es la misma, cambia quién la lee.
+    """
+    return _GOAL_PROMISE.get(name, '')
+
+
+def last_task_goal(conversation):
+    """El compromiso de TAREA que estaba en juego, viva o no.
+
+    `get_open_goal` solo mira los estados de primer plano porque decide qué
+    hacer AHORA. Esto es para explicar algo que ya pasó: cuando el agente
+    escala, el objetivo queda en `handoff`, `blocked` o `abandoned` —
+    justamente los estados que aquel excluye. Sin esto, la bandeja no puede
+    contar por qué llegó el caso, que es el 90 % de su valor.
+    """
+    from .models import ConversationGoal
+    return (ConversationGoal.objects
+            .filter(conversation=conversation)
+            .exclude(name__in=IDENTITY_GOALS)
+            .order_by('-id')
+            .first())
+
+
+def describe(goal):
+    """Proyección legible por una persona: qué se buscaba, qué había, qué faltaba.
+
+    Devuelve etiquetas, nunca nombres de slot. La recepcionista no tiene por
+    qué saber qué es un `pet_handle`; el `label` del `Factor` ya dice «la
+    mascota que vamos a atender», y vive junto al dato precisamente para que
+    no haya un segundo diccionario de copy que se desincronice.
+    """
+    spec = spec_for(goal.name)
+    if spec is None:
+        return None
+    faltan = set(missing_slots(goal))
+    captured, missing = [], []
+    for factor in spec.all_factors:
+        label = factor.label or factor.name
+        value = (goal.slots.get(factor.name) or {}).get('value')
+        if value:
+            captured.append({'label': label, 'value': str(value)})
+        elif factor.name in faltan:
+            missing.append({'label': label, 'why': factor.why})
+    return {
+        'name': goal.name,
+        'promise': promise_for(goal.name),
+        'status': goal.status,
+        'captured': captured,
+        'missing': missing,
+    }
+
+
 def mark_asked(goal, slots):
     """Cuenta cuántas veces se ha pedido cada slot (anti-repetición)."""
     for slot in slots:
@@ -789,6 +888,8 @@ def bump_stall(goal):
 _GOAL_PROMISE = {
     SCHEDULE: 'agendarle una cita',
     REGISTER: 'darlo de alta y agendarle su primera cita',
+    ADD_PET: 'registrar a su otra mascota y agendarle su primera cita',
+    ADD_PET_ONLY: 'registrar a su otra mascota',
     CANCEL: 'cancelarle una cita',
     RESCHEDULE: 'moverle una cita',
     TRIAGE: 'saber si ya es cliente para poder atenderlo',

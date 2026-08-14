@@ -73,6 +73,7 @@ class ConversationListSerializer(serializers.ModelSerializer):
     # urgencia clínica y una duda de horarios.
     handoff_priority = serializers.SerializerMethodField()
     handoff_reason = serializers.SerializerMethodField()
+    handoff_detail = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -82,7 +83,7 @@ class ConversationListSerializer(serializers.ModelSerializer):
             'contact_display_name', 'contact_phone', 'contact_verification',
             'linked_via', 'owner_name', 'claimed_by_name',
             'last_message_preview', 'has_unanswered',
-            'handoff_priority', 'handoff_reason',
+            'handoff_priority', 'handoff_reason', 'handoff_detail',
         ]
 
     def _open_handoff(self, obj):
@@ -98,6 +99,17 @@ class ConversationListSerializer(serializers.ModelSerializer):
     def get_handoff_reason(self, obj):
         handoff = self._open_handoff(obj)
         return handoff.reason_code if handoff else None
+
+    def get_handoff_detail(self, obj):
+        """El motivo FINO (`goal_stalled`, `commit_failed`, `owner_exists`…).
+
+        `reason_code` clasifica para la máquina; `reason_detail` es el que le
+        dice algo a una persona. Publicar solo el primero dejaba a la bandeja
+        eligiendo entre no mostrar nada o mostrar «baja confianza», que en
+        recepción no significa nada.
+        """
+        handoff = self._open_handoff(obj)
+        return handoff.reason_detail if handoff else None
 
     def get_owner_name(self, obj):
         if obj.contact.owner_id is None:

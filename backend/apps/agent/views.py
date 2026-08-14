@@ -23,6 +23,7 @@ from apps.core.sanitize import sanitize_text
 from apps.core.views import resolve_public_id
 from apps.patients.services import lookup_owner_by_phone
 
+from . import goals
 from .models import AgentSettings, ContactIdentity, Conversation, HumanHandoff
 from .serializers import (
     AgentSettingsSerializer,
@@ -201,7 +202,41 @@ def conversation_messages(request, pk):
         # FLUJO-C: el caso de identidad, si lo hay. `None` en la inmensa
         # mayoría de conversaciones — la bandeja solo lo pinta cuando existe.
         'identity_case': _identity_case_payload(conversation),
+        # Por qué llegó este caso a una persona. Los de identidad ya se
+        # explican arriba, con sus acciones; esto cubre TODO lo demás, que
+        # hasta aquí llegaba a la bandeja sin decir nada.
+        'handoff': _handoff_payload(conversation),
     })
+
+
+def _handoff_payload(conversation):
+    """Por qué esta conversación está esperando a una persona.
+
+    El dato existía desde siempre (`reason_code` + `reason_detail`) y se
+    quedaba en la base: la API publicaba solo el código grueso y la bandeja no
+    pintaba ninguno de los dos. El resultado práctico era que recepción veía
+    «Esperando» y tenía que leer el transcript entero para deducir qué pasó —
+    o preguntarle al cliente algo que el sistema ya sabía.
+
+    `reason_code` clasifica (`low_confidence`); `reason_detail` es el que
+    informa (`goal_stalled`). Y ninguno de los dos dice qué quería el cliente,
+    así que va también el compromiso en juego con sus datos: lo que ya había
+    dado y lo que faltaba. Esa es la diferencia entre «el bot se atascó» y «se
+    atascó pidiendo la mascota, ya tenía día y hora».
+    """
+    handoff = (conversation.handoffs
+               .filter(resolved_at__isnull=True)
+               .order_by('-id').first())
+    if handoff is None:
+        return None
+    goal = goals.last_task_goal(conversation)
+    return {
+        'reason': handoff.reason_code,
+        'detail': handoff.reason_detail,
+        'priority': handoff.priority,
+        'opened_at': handoff.created_at,
+        'goal': goals.describe(goal) if goal is not None else None,
+    }
 
 
 def _identity_case_payload(conversation):

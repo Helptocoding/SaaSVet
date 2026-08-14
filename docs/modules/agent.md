@@ -165,8 +165,9 @@ tier/verificación/ownership. Proveedor LLM = elección del operador
 Tools de **lectura** (tier 1): list_my_pets, get_vaccine_status,
 list_upcoming_appointments, get_clinic_info, get_service_catalog,
 check_product_availability, find_available_slots. De **escritura**: 
-create_appointment, cancel_appointment, reschedule_appointment y
-register_new_client_and_pet (tier 2 — proponen y esperan el "sí"),
+create_appointment, cancel_appointment, reschedule_appointment,
+register_new_client_and_pet y **register_pet_and_schedule** /
+**register_pet_only** (tier 2 — proponen y esperan el "sí"),
 confirm_appointment (tier 1, benigna), link_family_member (arranca el reto
 triple). request_human siempre disponible. Handles efímeros en `flow.refs`
 con resolver+ownership server-side (handle desconocido = denegación dura).
@@ -212,6 +213,29 @@ la vía de cliente conocido.
 | `owner_exists` (un expediente) | **ninguno** | intención suspendida íntegra + caso de identidad en Inbox |
 | `owner_ambiguous` (dos o más) | **ninguno** | idéntico para el cliente; el `reason_detail` del caso distingue |
 | `identity_changed` (C1–C4) | ninguno (no se llama) | «Ya te tengo registrado ✅ ¿Te agendo la cita?» |
+
+**Mascota nueva de un cliente YA identificado** (addendum 2026-08-14 del ADR
+p57). `register_pet_and_schedule` cubre el hueco que el piloto encontró: un
+cliente conocido que llega con otra mascota no tenía ningún camino
+(`register_new_client_and_pet` se niega con `already_client`;
+`create_appointment` exige un handle que solo sale de `list_my_pets`), y el
+modelo lo prometía igual hasta acabar en hand-off por estancamiento.
+
+El expediente sale de **`contact.owner_id`** —el vínculo verificado—, nunca de
+resolver el teléfono en el momento: el `POST /api/pets/` va en **modo
+referencia** (`owner_public_id`), que es lo que INV-B reserva para «alguien
+eligió este expediente». Exige `confirmed_in_chat`; un vínculo **familiar** no
+puede abrir expedientes en la ficha del titular (`family_restricted`).
+
+`register_pet_only` existe porque el PO permitió el alta sin cita, pero **no se
+ofrece**: el camino que se propone es siempre con cita. Son dos herramientas y
+no una con bandera para que «se quedó sin cita» sea explícito y medible en
+`ToolExecution`.
+
+| Desenlace | Efecto | Conversación |
+|---|---|---|
+| `pet_exists` | ninguno | ya tiene una mascota con ese nombre; se devuelve su handle para agendarle a **ésa** |
+| `pet_saved_appointment_failed` | mascota creada, cita no | **no escala**: «ya la registré, no pude apartar el horario, ¿otro?». El estado es válido, no un huérfano |
 
 **La intención no se pierde.** Suspender el pendiente, abrir/retener el
 `HumanHandoff` de identidad y pasar a `HANDOFF_PENDING` ocurre en **una sola
@@ -322,6 +346,31 @@ de documentos ni proveedores externos. Nada de auto-aprobación por antigüedad,
 inactividad o reintento. Nada de re-verificación automática al re-escribir:
 `auto_rematch_blocked` sigue mandando. Cualquiera de esas piezas sería un
 diseño nuevo con su propio ADR y su propia revisión de seguridad.
+
+### Por qué llegó el caso: el motivo del hand-off es visible (2026-08-14)
+
+`HumanHandoff` guardaba desde siempre `reason_code` (clasifica) y
+`reason_detail` (informa), y **ninguno de los dos llegaba a la bandeja**: la
+API publicaba solo el código grueso y el frontend no pintaba ninguno. Quien
+recibía el caso veía «Esperando» y tenía que leer el transcript entero para
+deducir qué había pasado — o preguntarle al cliente algo que el sistema ya
+sabía.
+
+- `GET /api/inbox/conversations/` añade **`handoff_detail`** junto a
+  `handoff_reason`. La lista muestra el fino y cae al grueso: «se atascó
+  pidiendo datos» ubica, «baja confianza» no.
+- `GET .../messages/` añade el bloque **`handoff`**: `reason`, `detail`,
+  `priority`, `opened_at` y el **compromiso en juego** — qué prometió el
+  agente, qué datos ya tenía y **cuáles le faltaban**, con las etiquetas de
+  negocio de `goals.py` (`la mascota que vamos a atender`), nunca nombres de
+  slot.
+- Los casos de **identidad** siguen usando `identity_case`, que además trae
+  acciones; este bloque cubre todo lo demás. La bandeja pinta uno u otro, no
+  los dos.
+
+El objetivo se busca con `goals.last_task_goal`, que **no** filtra por estados
+de primer plano: al escalar, el compromiso queda en `handoff`/`blocked`, que es
+justo lo que `get_open_goal` excluye. Sin eso no habría nada que contar.
 
 ### Liberar una conversación: el veredicto sobre lo suspendido (F3 — ADR p57)
 
