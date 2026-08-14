@@ -914,6 +914,17 @@ def _commit_success_text(tool, outcome):
     if tool == 'cancel_appointment':
         return ("Listo, cancelé tu cita. Si quieres agendar otra, con gusto te "
                 "ayudo 🙂")
+    if tool == 'register_pet_and_schedule':
+        return (f"¡Listo! ✅ Registré a tu mascota y quedó agendada para el "
+                f"{cuando}. Te esperamos 🐾")
+    if tool == 'register_pet_only':
+        return ("¡Listo! ✅ Ya quedó registrada en tu expediente. Cuando "
+                "quieras agendarle cita, aquí estoy 🐾")
+    # El genérico es una RED, no un destino. Un `¡Listo! ✅` a secas no dice
+    # qué pasó, y el modelo lee el hilo para saber en qué estado está: en la
+    # conv 18 del piloto, tras ese mensaje mudo, volvió a intentar agendar lo
+    # que acababa de agendar. Toda herramienta de COMMIT_HANDLERS necesita su
+    # frase; hay un test que lo exige.
     return "¡Listo! ✅"
 
 
@@ -971,6 +982,10 @@ def _error_fact(client_error):
         'bad_date': 'La fecha que dijo no se entiende.',
         'past_date': 'Esa fecha ya pasó.',
         'slot_taken': 'Ese horario se acaba de ocupar.',
+        # Se separó de `slot_taken` porque decirle «se ocupó» a quien ocupa el
+        # hueco es sencillamente falso, y lo empuja a agendar dos veces.
+        'already_scheduled': 'Esa mascota YA tiene cita a esa hora: el horario '
+                             'lo ocupa su propia cita, no otra persona.',
         'no_vet': 'La clínica no tiene veterinarios activos para agendar.',
         'unknown_handle': 'No aparece ninguna cita ni mascota que corresponda '
                           'con eso.',

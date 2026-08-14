@@ -547,3 +547,67 @@ class ToolErrorCopyIsReachableTests(TestCase):
                     planner._error_fact(code), generic,
                     f"`{code}` no tiene texto propio: el modelo recibirá el "
                     f"genérico y no podrá decirle al cliente qué pasó.")
+
+
+class NeverLieAboutTheSlotTests(WriteToolsTests):
+    """Nunca decirle «se ocupó» a quien ocupa el hueco.
+
+    Conv 18 del piloto: el agente creó la cita, respondió «¡Listo! ✅» y, al
+    recibir un «gracias», volvió a intentar agendar y anunció que las 11:00
+    «se acababan de ocupar». Era **su propia cita**, de un minuto antes. La
+    respuesta no solo era falsa: empujaba al cliente a agendar dos veces.
+    """
+
+    def test_the_clients_own_appointment_is_not_reported_as_taken(self):
+        self._make_appt(hhmm="10:00")           # cita de Luna, 10:00
+        out = self._run("create_appointment", {
+            "pet_handle": self._pet_handle(), "date": self.day.isoformat(),
+            "time": "10:00", "reason": "otra vez"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "already_scheduled")
+        self.assertIn("cuando", out.data)
+
+    def test_someone_elses_appointment_is_still_slot_taken(self):
+        """La verdad en el otro sentido: si el hueco es ajeno, se dice."""
+        otro_owner = Owner.objects.create(
+            organization=self.org, name="Otro", phone="5599990000")
+        otro_pet = Pet.objects.create(
+            organization=self.org, owner=otro_owner, name="Rex",
+            species="perro", birth_date="2020-01-01")
+        start = datetime.strptime("10:00", "%H:%M").time()
+        end = datetime.strptime("10:30", "%H:%M").time()
+        Appointment.objects.create(
+            organization=self.org, pet=otro_pet, veterinarian=self.vet,
+            date=self.day, start_time=start, end_time=end, reason="x",
+            status="scheduled",
+            start_datetime=datetime.combine(self.day, start, tzinfo=dt_tz.utc),
+            end_datetime=datetime.combine(self.day, end, tzinfo=dt_tz.utc))
+
+        out = self._run("create_appointment", {
+            "pet_handle": self._pet_handle(), "date": self.day.isoformat(),
+            "time": "10:00", "reason": "baño"})
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "slot_taken")
+
+
+class CommitSuccessTextIsSpecificTests(TestCase):
+    """Toda herramienta que compromete dice QUÉ hizo.
+
+    El genérico «¡Listo! ✅» es una red, no un destino: el modelo lee el hilo
+    para saber en qué estado está la conversación, y un acuse mudo lo dejó
+    reintentando una cita ya creada (conv 18). Una herramienta nueva sin frase
+    propia reproduce el fallo, así que el gate la caza al añadirla.
+    """
+
+    def test_every_commit_handler_has_its_own_success_text(self):
+        from apps.agent import planner
+        from apps.agent.tools import COMMIT_HANDLERS, ToolOutcome
+
+        outcome = ToolOutcome(ok=True, data={"cuando": "sábado 15, 11:00"})
+        generic = planner._commit_success_text("__inexistente__", outcome)
+        for tool in sorted(COMMIT_HANDLERS):
+            with self.subTest(tool=tool):
+                self.assertNotEqual(
+                    planner._commit_success_text(tool, outcome), generic,
+                    f"`{tool}` confirma con el acuse genérico: el cliente no "
+                    f"sabe qué quedó hecho y el modelo tampoco.")

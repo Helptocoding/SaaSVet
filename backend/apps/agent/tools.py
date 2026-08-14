@@ -432,6 +432,62 @@ def _day_occupancy(org, executor, day, *, tool_name, triggered_by=None,
     return occupancy
 
 
+def _own_appointment_at(org, executor, day, pet_public_id, hhmm, *,
+                        tool_name, triggered_by=None):
+    """La cita ACTIVA de ESA misma mascota a esa hora, o `None`.
+
+    Se consulta **solo cuando no queda veterinario libre**, es decir justo
+    antes de decir «se ocupó ese horario». Sin esto el agente le dijo a un
+    cliente que las 11:00 se acababan de ocupar cuando quien las ocupaba era
+    **su propia cita**, creada un minuto antes (conv 18 del piloto): una
+    respuesta que además de falsa lo empujaba a agendar dos veces.
+
+    El coste vive en el camino de error, no en el feliz: si hay hueco, esta
+    llamada no ocurre.
+    """
+    date_str = day.isoformat()
+    status_code, data = executor.call(
+        'GET', '/api/appointments/', tool_name=tool_name,
+        params={'date': date_str},
+        args_redacted={'date': date_str},
+        triggered_by_message=triggered_by,
+    )
+    if status_code >= 400:
+        return None
+    rows = data if isinstance(data, list) else (data or {}).get('results', [])
+    for row in rows:
+        if row.get('status') not in ('scheduled', 'confirmed', 'in_progress'):
+            continue
+        if str(row.get('pet_public_id') or '') != str(pet_public_id):
+            continue
+        if (row.get('start_time') or '')[:5] == hhmm:
+            return row
+    return None
+
+
+def _slot_taken_or_already_scheduled(org, executor, date_str, hhmm,
+                                     pet_public_id, *, tool_name,
+                                     triggered_by=None):
+    """Desenlace honesto cuando no queda veterinario libre.
+
+    `slot_taken` es verdad solo si el hueco lo ocupa **otro**. Si lo ocupa la
+    cita de este mismo paciente, lo que hay que decir es que ya la tiene — no
+    inventarle una carrera que no existió.
+    """
+    from datetime import datetime
+    try:
+        day = datetime.strptime(str(date_str)[:10], '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return ToolOutcome(ok=False, client_error='slot_taken')
+    own = _own_appointment_at(org, executor, day, pet_public_id, hhmm,
+                              tool_name=tool_name, triggered_by=triggered_by)
+    if own is None:
+        return ToolOutcome(ok=False, client_error='slot_taken')
+    return ToolOutcome(ok=False, client_error='already_scheduled', data={
+        'cuando': format_local_wallclock(date_str, hhmm),
+    })
+
+
 def _any_vet_free(vets, occupancy, hhmm):
     return any(hhmm not in occupancy.get(vet.pk, ()) for vet in vets)
 
@@ -908,7 +964,9 @@ def create_appointment(conversation, executor, args, triggered_by=None):
     vet = pick_free_vet(org, executor, date_str, time_str, vets,
                         triggered_by=triggered_by)
     if vet is None:
-        return ToolOutcome(ok=False, client_error='slot_taken')
+        return _slot_taken_or_already_scheduled(
+            org, executor, date_str, time_str, pet_pid,
+            tool_name='create_appointment', triggered_by=triggered_by)
 
     import uuid
     fecha = format_local_wallclock(date_str, time_str)
@@ -1498,6 +1556,11 @@ def _stage_add_pet(conversation, executor, args, *, with_appointment,
         vet = pick_free_vet(org, executor, date_str, time_str, vets,
                             triggered_by=triggered_by, tool_name=tool_name)
         if vet is None:
+            # Aquí `slot_taken` SÍ es verdad: la mascota es nueva (el caso del
+            # nombre repetido ya salió arriba por `pet_exists`), así que el
+            # hueco no puede ser suyo. La comprobación de dueño vive en
+            # `create_appointment`, que es donde se reagenda sobre una mascota
+            # que ya existe.
             return ToolOutcome(ok=False, client_error='slot_taken')
         staged.update({
             'veterinarian': vet.pk, 'date': date_str, 'start_time': time_str,
