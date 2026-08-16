@@ -269,6 +269,30 @@ def check_product_availability(conversation, executor, args, triggered_by=None):
             'disponible': _product_available(product),
             'requiere_receta': bool(product.get('requires_prescription')),
         })
+
+    # Memoria de producto (plan de continuidad, F4): fila PROPIA con el producto
+    # RESUELTO, no el texto del cliente.
+    #
+    # Dos motivos, y el segundo pesa más. (1) `executor.call` persiste su fila
+    # ANTES de que esto exista, así que la proyección no quedaba en ninguna
+    # parte. (2) `args_redacted` guarda la consulta literal
+    # (`{'query': <lo que escribió el cliente>}`) pese a que el contrato del
+    # modelo la declara «proyecciones SIN PII cruda — los cuerpos viven solo en
+    # Message, regla R15». Construir memoria permanente sobre esa violación la
+    # cementaría; se registra aparte lo que sí es un hecho: qué producto se
+    # resolvió.
+    #
+    # `tool_name` propio y no `check_product_availability`: dos filas con el
+    # mismo nombre contarían DOS ejecuciones por una sola búsqueda y falsearían
+    # las métricas por tool.
+    for entry in projection:
+        executor.record_local(
+            tool_name='product_query_resolved',
+            args_redacted={},
+            summary={'producto': entry['producto'],
+                     'disponible': entry['disponible']},
+            triggered_by_message=triggered_by,
+        )
     return ToolOutcome(ok=True, data=projection,
                        summary={'matches': len(projection)})
 
@@ -1915,6 +1939,146 @@ def _burst_messages(conversation, triggered_by):
     return list(reversed(burst))
 
 
+# ---------------------------------------------------------------------------
+# Memoria estructurada (plan de continuidad, F4)
+# ---------------------------------------------------------------------------
+# Un hilo continuo no es memoria: la ventana sigue siendo 12 turnos / 40
+# mensajes, así que lo que se habló hace tres semanas se pierde igual. Estas
+# tools le dan al modelo el equivalente a subir a leer, pero acotado a HECHOS,
+# no a texto libre: menos superficie de fuga y ya auditado.
+#
+# Reglas comunes:
+#   · **Solo ejecuciones exitosas.** Una llamada fallida o revertida no es un
+#     hecho y no se le cuenta al cliente como si lo fuera.
+#   · **Para agenda manda el dominio.** El log dice qué se intentó; `Appointment`
+#     dice qué es verdad hoy.
+#   · Alcance `(contact, channel_account)`, y `min_verification` de tool personal.
+
+def _successful_executions(conversation, tool_names, limit):
+    """Ejecuciones que de verdad salieron bien, del hilo de ESTE contacto.
+
+    `ToolExecution` no tiene campo `success` (hay `http_status`, `error_code` y
+    `policy_decision`), así que el predicado se escribe aquí en vez de suponerlo:
+    HTTP 2xx/3xx **o** local sin HTTP, y `error_code` vacío. `policy_decision`
+    denegada o escalada tampoco cuenta: no llegó a ocurrir nada.
+    """
+    from django.db.models import Q
+
+    from .models import ToolExecution
+
+    return list(
+        ToolExecution.objects
+        .for_organization(conversation.organization)
+        .filter(
+            conversation__contact=conversation.contact_id,
+            conversation__channel_account=conversation.channel_account_id,
+            tool_name__in=tool_names,
+            error_code='',
+        )
+        .filter(Q(http_status__isnull=True) | Q(http_status__lt=400))
+        .exclude(policy_decision__in=(ToolExecution.DECISION_DENIED,
+                                      ToolExecution.DECISION_ESCALATED))
+        .order_by('-created_at', '-id')[:limit]
+    )
+
+
+def get_recent_product_queries(conversation, executor, args, triggered_by=None):
+    """Qué productos preguntó antes este cliente.
+
+    Sale de la proyección propia (`product_query_resolved`), no de
+    `args_redacted`: ahí vive el texto crudo del cliente, y construir memoria
+    permanente sobre esa violación de R15 la cementaría.
+    """
+    limit = min(int(args.get('limit') or 3), MAX_ITEMS)
+    seen, projection = set(), []
+    for execution in _successful_executions(
+            conversation, ['product_query_resolved'], limit * 4):
+        summary = execution.result_summary_redacted or {}
+        product = summary.get('producto')
+        if not product or product in seen:
+            continue
+        seen.add(product)
+        projection.append({
+            'producto': product,
+            'cuando': format_local_datetime(execution.created_at,
+                                            conversation.organization),
+        })
+        if len(projection) >= limit:
+            break
+    executor.record_local(
+        tool_name='get_recent_product_queries',
+        summary={'consultas': len(projection)},
+        triggered_by_message=triggered_by,
+    )
+    return ToolOutcome(ok=True, data=projection,
+                       summary={'consultas': len(projection)})
+
+
+def get_past_visits(conversation, executor, args, triggered_by=None):
+    """Visitas que YA ocurrieron. «¿Cuándo vine la última vez?»
+
+    Mismo permiso y mismo endpoint que las citas próximas: son la misma lista con
+    el filtro invertido. **No lee `MedicalRecord`** — el rol AGENT no tiene
+    `medicalrecord.*` por decisión escrita, y el diagnóstico no sale por WhatsApp.
+    La cita da el MOTIVO, que es lo que el cliente dijo al agendar.
+    """
+    pet_handle = args.get('pet_handle')
+    if pet_handle:
+        public_id = resolve_handle(conversation, pet_handle)
+        if public_id is None:
+            return ToolOutcome(ok=False, client_error='unknown_handle')
+        pet_ids = [public_id]
+    else:
+        pets_outcome = list_my_pets(conversation, executor, {},
+                                    triggered_by=triggered_by)
+        if not pets_outcome.ok:
+            return pets_outcome
+        pet_ids = [resolve_handle(conversation, p['handle'])
+                   for p in pets_outcome.data]
+
+    now = timezone.now()
+    past = []
+    for pet_id in pet_ids:
+        status, data = executor.call(
+            'GET', '/api/appointments/', tool_name='get_past_visits',
+            params={'pet': pet_id},
+            args_redacted={'pet_handle': pet_handle or '(todas)'},
+            triggered_by_message=triggered_by,
+            result_summarizer=lambda d: {
+                'appointments': len(d) if isinstance(d, list) else 0},
+        )
+        if status >= 400:
+            return ToolOutcome(ok=False, client_error='tool_failure')
+        rows = data if isinstance(data, list) else data.get('results', [])
+        for appointment in rows:
+            if appointment.get('status') != 'done':
+                continue
+            start = appointment.get('start_datetime') or (
+                f"{appointment.get('date')}T{appointment.get('start_time')}"
+            )
+            try:
+                from datetime import datetime
+                from datetime import timezone as dt_timezone
+                start_dt = datetime.fromisoformat(
+                    str(start).replace('Z', '+00:00'))
+                if timezone.is_naive(start_dt):
+                    start_dt = timezone.make_aware(start_dt, dt_timezone.utc)
+            except ValueError:
+                continue
+            if start_dt >= now:
+                continue
+            past.append((start_dt, appointment))
+
+    past.sort(key=lambda pair: pair[0], reverse=True)
+    projection = [{
+        'mascota': appointment.get('pet_name', ''),
+        'cuando': format_local_datetime(start_dt, conversation.organization),
+        'motivo': appointment.get('reason', ''),
+    } for start_dt, appointment in past[:MAX_ITEMS]]
+    return ToolOutcome(ok=True, data=projection,
+                       summary={'visitas': len(projection)})
+
+
 def request_human(conversation, executor, args, triggered_by=None):
     """LOCAL: crea el handoff y silencia al agente (E-02; disponible SIEMPRE)."""
     handoff = HumanHandoff(
@@ -2001,6 +2165,35 @@ TOOL_SPECS = {
         'parameters': {
             'type': 'object',
             'properties': {'pet_handle': {'type': 'string'}},
+            'required': [],
+        },
+    },
+    # Memoria estructurada (F4). Las dos son tools PERSONALES: el historial es
+    # lo que este cliente preguntó y cuándo vino, así que exigen el mismo nivel
+    # que `list_my_pets`.
+    'get_past_visits': {
+        'handler': get_past_visits,
+        'tier': '1',
+        'min_verification': 'confirmed_in_chat',
+        'description': ('Visitas anteriores del cliente («¿cuándo vine la '
+                        'última vez?»): fecha y motivo. NO incluye diagnóstico '
+                        'ni nada del expediente clínico.'),
+        'parameters': {
+            'type': 'object',
+            'properties': {'pet_handle': {'type': 'string'}},
+            'required': [],
+        },
+    },
+    'get_recent_product_queries': {
+        'handler': get_recent_product_queries,
+        'tier': '1',
+        'min_verification': 'confirmed_in_chat',
+        'description': ('Productos que este cliente preguntó en conversaciones '
+                        'anteriores. Útil cuando dice «el producto que te '
+                        'pregunté la otra vez».'),
+        'parameters': {
+            'type': 'object',
+            'properties': {'limit': {'type': 'integer'}},
             'required': [],
         },
     },

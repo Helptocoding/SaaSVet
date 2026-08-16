@@ -1,10 +1,10 @@
 # Plan — continuidad conversacional e identidad del agente
 
 **Fecha**: 2026-08-16 (rev. 14 tras decimotercera revisión externa)
-**Estado**: **F0** (`9df40b8`) · **F1a** (`8cab9c5`) · **F2 + F3 IMPLEMENTADAS**
-(2026-08-16) — el contexto ya se lee por contacto · **No se despliega sin correr
-antes la remediación en producción** (D16) · F1b/F4/F5 pendientes; el **inbox
-agrupado (§4)** queda como trabajo propio
+**Estado**: **F0** (`9df40b8`) · **F1a** (`8cab9c5`) · **F2+F3** (`778bb15`) ·
+**F1b** (`1b59fc4`) · **F4 IMPLEMENTADA** (2026-08-16) · **No se despliega sin
+correr antes la remediación en producción** (D16) · Pendientes: **F5** (fase
+contract) y el **inbox agrupado (§4)**, ambos trabajo propio
 
 > **Qué quedó hecho en F0** — suite del agente en verde (669 tests):
 > `agent/identity_evidence.py` (servicio único: gramática cerrada, procedencia
@@ -52,6 +52,21 @@ agrupado (§4)** queda como trabajo propio
 > `test_f2_continuity.py` (16 casos: continuidad, aislamiento por contacto y por
 > cuenta, gate de verificación, `failed` fuera del historial, hechos de contacto y
 > carrera de sesiones).
+>
+> **Qué quedó hecho en F1b + F4** — 748 tests verdes: `guards.check_behaviour`
+> gana `has_history` y la violación `denies_history` (SOFT) — «no tengo contexto
+> de lo anterior» era honesto cuando el contexto moría con el hilo y desde F2
+> contradice el estado propio · `get_past_visits` (mismo `appointment.list`,
+> filtro invertido; **nunca `MedicalRecord`**) y `get_recent_product_queries`,
+> ambas `min_verification: confirmed_in_chat` y con alcance
+> `(contact, channel_account)` · proyección propia `product_query_resolved` con
+> el producto **resuelto** —no `args_redacted`, que guarda el texto crudo del
+> cliente pese a declararse libre de PII (R15)— y con `tool_name` propio para no
+> contar dos ejecuciones por búsqueda · predicado explícito de «exitosa»
+> (`http_status` < 400 o local, `error_code` vacío, `policy_decision` no denegada
+> ni escalada), porque `ToolExecution` no tiene campo `success` ·
+> `test_f4_memory.py` (11 casos: cruce de sesiones, aislamiento por contacto y
+> cuenta, y las tres formas de no-éxito).
 >
 > **Fuera de F2, a propósito**: el **inbox agrupado** (§4). Necesita `public_id`
 > en `ContactIdentity` y `ChannelAccount`, ruta compuesta y trabajo de frontend;
