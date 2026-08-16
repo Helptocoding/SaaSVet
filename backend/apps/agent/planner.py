@@ -464,6 +464,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 # el objeto: no consulta la base (mismo criterio que los demás).
                 verified=conversation.contact.verification_level in (
                     'confirmed_in_chat', 'staff_verified'),
+                # F1b · ¿este contacto ya había hablado con la clínica? Negar el
+                # hilo era honesto cuando el contexto moría con la conversación;
+                # desde F2 el modelo lo recibe, así que decirlo se contradice.
+                has_history=prompts.has_previous_history(conversation),
             )
             # Un solo reintento con instrucción correctiva: el modelo suele
             # obedecer a la segunda y el cliente no nota nada.

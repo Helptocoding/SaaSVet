@@ -201,6 +201,20 @@ DENIAL_PATTERNS = (
     'no me lo dijiste aun',
 )
 
+# F1b · negar el HILO, no un dato suelto. En producción (conv 20) el agente
+# contestó «Esta es una conversación nueva para mí, no tengo contexto de lo
+# anterior» a un cliente con 19 conversaciones previas. Entonces era verdad —el
+# contexto moría con el hilo—; desde F2 ya no lo es, así que decirlo pasa de
+# descripción honesta a contradicción de su propio estado.
+HISTORY_DENIAL_PATTERNS = (
+    'no tengo contexto', 'sin contexto de lo anterior',
+    'es una conversación nueva para mí', 'es una conversacion nueva para mi',
+    'no tengo registro de conversaciones', 'no recuerdo conversaciones',
+    'no tengo historial', 'no guardo el historial',
+    'es la primera vez que hablamos', 'no habíamos hablado antes',
+    'no habiamos hablado antes',
+)
+
 # BUG-AGENT-001 · dar por hecho algo que nunca se ejecutó. El fallo más caro
 # del piloto: el agente recolectó todo en texto, jamás llamó una herramienta y
 # dio por agendada una cita inexistente — dos veces, incluida la respuesta a un
@@ -272,7 +286,7 @@ def _protected_name_leak(text, protected_name, grounded_names):
 
 
 def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
-                    verified=True):
+                    verified=True, has_history=False):
     """Violaciones de CONDUCTA del turno (vacía si todo bien).
 
     - `asked`: `{slot: veces_preguntado}` del compromiso en curso (R10).
@@ -285,6 +299,10 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
       sí mismo (R2) — el "no me lo dijiste aún" de la conv 13.
     - `tool_ran`: si se ejecutó ALGUNA herramienta en el turno. Confirmar una
       cita tras una LECTURA es legítimo; afirmarla sin tocar nada, no.
+    - `has_history`: si este contacto ya había hablado con la clínica (F1b).
+      Negar el HILO —«no tengo contexto de lo anterior»— era una descripción
+      honesta cuando el contexto moría con la conversación; desde F2 el modelo
+      recibe el hilo del contacto, así que decirlo contradice su propio estado.
     """
     violations = []
     low = (text or '').lower()
@@ -298,6 +316,11 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
         denial = _first_match(low, DENIAL_PATTERNS)
         if denial:
             violations.append(Violation('contradicts_state', SOFT, denial))
+
+    if has_history:
+        denial = _first_match(low, HISTORY_DENIAL_PATTERNS)
+        if denial:
+            violations.append(Violation('denies_history', SOFT, denial))
 
     if not tool_ran:
         claim = _first_match(low, SUCCESS_CLAIM_PATTERNS)

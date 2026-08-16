@@ -474,6 +474,16 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     return messages
 
 
+def has_previous_history(conversation):
+    """¿Este contacto ya había hablado con la clínica? (F1b)
+
+    Es el mismo hecho que publica `ya_hablamos_antes`, expuesto para el guard de
+    conducta: se pasa el HECHO, no el objeto, para que `guards` siga sin tocar la
+    base (mismo criterio que el resto de sus entradas).
+    """
+    return bool(_contact_history_facts(conversation))
+
+
 def _contact_history_facts(conversation, now=None):
     """`ya_hablamos_antes` / `ultima_vez` / `ultimo_mensaje_hace` (F3).
 

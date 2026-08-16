@@ -261,3 +261,46 @@ class CloseReasonTests(ContinuityTestCase):
         )
         self.assertIsNotNone(message.contact_id)
         self.assertEqual(message.contact_id, message.conversation.contact_id)
+
+
+class HistoryDenialGuardTests(ContinuityTestCase):
+    """F1b · negar el hilo pasa de descripción honesta a contradicción.
+
+    Conv 20 de producción: «Esta es una conversación nueva para mí, no tengo
+    contexto de lo anterior» a un cliente con 19 conversaciones previas.
+    Entonces era verdad; desde F2 el modelo recibe el hilo del contacto.
+    """
+
+    def test_denying_the_thread_is_a_violation_when_there_is_history(self):
+        from apps.agent import guards
+        self._msg(self.old, "hablamos la semana pasada")
+        violations = guards.check_behaviour(
+            "Esta es una conversación nueva para mí, no tengo contexto de lo "
+            "anterior. ¿En qué te ayudo?",
+            has_history=prompts.has_previous_history(self.new),
+        )
+        self.assertIn('denies_history', [v.kind for v in violations])
+
+    def test_a_genuinely_new_contact_may_say_it(self):
+        from apps.agent import guards
+        fresh_contact = ContactIdentity.objects.create(
+            organization=self.org, external_id="5215500007777")
+        fresh_conv = Conversation.objects.create(
+            organization=self.org, channel_account=self.channel,
+            contact=fresh_contact)
+        violations = guards.check_behaviour(
+            "Es la primera vez que hablamos, ¿en qué te ayudo?",
+            has_history=prompts.has_previous_history(fresh_conv),
+        )
+        self.assertNotIn('denies_history', [v.kind for v in violations])
+
+    def test_the_violation_is_soft(self):
+        """Se corrige y se reintenta; no se le niega la respuesta al cliente por
+        una frase desafortunada."""
+        from apps.agent import guards
+        self._msg(self.old, "hola")
+        violations = guards.check_behaviour(
+            "no tengo historial de lo que hablamos",
+            has_history=prompts.has_previous_history(self.new),
+        )
+        self.assertFalse(guards.has_hard(violations))
