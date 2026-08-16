@@ -363,10 +363,15 @@ IDENTITY_SPECS = {
     TITULAR_CHALLENGE: GoalSpec(
         name=TITULAR_CHALLENGE,
         factors=(
+            # SOLO `pet` (plan de continuidad, D20). `owner` salió porque el
+            # nombre del titular dejó de ser factor de verificación (D4b): el
+            # sistema lo conoce y se lo muestra al staff en la bandeja, así que
+            # no prueba nada sobre quien escribe. Cambiar solo `falta` en
+            # `identify_client` no habría bastado — `context_block` seguiría
+            # publicando que falta «el nombre del titular» y el modelo lo
+            # pediría.
             Factor('pet', _WHY_PET,
                    label='el nombre de una de sus mascotas'),
-            Factor('owner', 'ubicar el expediente correcto',
-                   label='el nombre del titular'),
         ),
         max_stall_turns=2,
     ),
@@ -374,7 +379,42 @@ IDENTITY_SPECS = {
 
 IDENTITY_GOALS = frozenset(IDENTITY_SPECS)
 
+# Tres conjuntos, no uno (plan de continuidad, D37). «Pertenece a IDENTITY_GOALS»
+# respondía a la vez a tres preguntas distintas —¿es de identidad? ¿se puede
+# iniciar? ¿se puede reanudar?— y por eso `policy` resucitaba al frente filas de
+# una máquina retirada. Producción tenía una `identity_triage` suspendida.
+HISTORICAL_IDENTITY_GOALS = frozenset({TRIAGE, FAMILY, TITULAR_CHALLENGE})
+STARTABLE_IDENTITY_GOALS = frozenset({FAMILY, TITULAR_CHALLENGE})
+RESUMABLE_IDENTITY_GOAL_NAMES = frozenset({FAMILY, TITULAR_CHALLENGE})
+
 ALL_SPECS = {**GOAL_SPECS, **IDENTITY_SPECS}
+
+
+def is_resumable_identity_goal(goal, now=None):
+    """PREDICADO sobre la fila, no pertenencia a un conjunto de nombres.
+
+    `TRIAGE` es identidad **histórica**: nunca iniciable, nunca reanudable, y
+    nunca tratada como tarea normal. Sin este predicado, un reto de la FSM
+    retirada volvía al frente y arrastraba un `GoalSpec` que ya no conduce nadie.
+    """
+    if goal is None:
+        return False
+    from .models import ConversationGoal
+    if goal.name not in RESUMABLE_IDENTITY_GOAL_NAMES:
+        return False
+    return goal.status in ConversationGoal.OPEN_STATUSES
+
+
+def is_orphan_identity_goal(goal, now=None):
+    """Huérfano = reto de identidad que ya no puede conducirse.
+
+    Predicado formal, no adjetivo: sin él la remediación era ambigua en los dos
+    sentidos (cerrar de más destruye un reto válido; cerrar solo la fila
+    observada deja viva la vía que resucitaría otra).
+    """
+    if goal is None or goal.name not in HISTORICAL_IDENTITY_GOALS:
+        return False
+    return not is_resumable_identity_goal(goal, now=now)
 
 
 def why_for(goal_name, factor_name):
@@ -429,8 +469,18 @@ def open_goal(conversation, name):
 
     Si ya había uno suspendido, ese sí se da por **abandonado**: el slot es
     único (ver constraint) y apilar compromisos no tiene caso de uso hoy.
+
+    **No crea retos de identidad** (plan de continuidad, D36): ésos tienen un
+    escritor único, `start_identity`, invocado desde un solo sitio productivo. Sin
+    este rechazo, un refactor futuro produce de verdad el estado que
+    `finish_identity` tiene que reparar.
     """
     from .models import ConversationGoal
+    if name in HISTORICAL_IDENTITY_GOALS:
+        raise ValueError(
+            f'open_goal no crea retos de identidad ({name}); '
+            'usa start_identity, que es el escritor único'
+        )
     current = get_open_goal(conversation)
     if current is not None:
         if current.name == name:
@@ -622,6 +672,71 @@ def start_identity(conversation, name, *, first_factor, working_state=None):
     return commitment
 
 
+# ---------------------------------------------------------------------------
+# La pregunta del reto: ligar al encolar, sellar al enviar (D36)
+# ---------------------------------------------------------------------------
+# Tres escritores distintos y ninguno hace el trabajo del otro: `start_identity`
+# CREA el reto, `bind_identity_question_enqueued` LIGA el saliente que lleva la
+# pregunta, y `mark_identity_question_emitted` sella que salió de verdad.
+#
+# Sin el sellado, un `pet_asked_at` suelto solo probaría la INTENCIÓN de
+# preguntar: un saliente que quedó `pending` o `failed` habría habilitado el
+# régimen tolerante sin que el cliente viera nada.
+
+def bind_identity_question_enqueued(commitment, message, *, pet_pending,
+                                    deterministic_clause):
+    """`none → enqueued`. Solo la respuesta final normal del planner.
+
+    Nunca desde `guard_blocked`, fallbacks ni errores técnicos: esos salientes no
+    son la pregunta del reto.
+    """
+    if commitment is None or message is None:
+        return None
+    state = dict(commitment.working_state or {})
+    state['identity_question'] = {
+        'message_id': message.pk,
+        'asked_state': 'enqueued',
+        'pet_pending': bool(pet_pending),
+        'deterministic_clause': bool(deterministic_clause),
+    }
+    commitment.working_state = state
+    commitment.save(update_fields=['working_state'])
+    return commitment
+
+
+def mark_identity_question_emitted(message, *, now=None):
+    """`enqueued → emitted`, estampando `pet_asked_at` en el ENVÍO real.
+
+    Lo llama el sender, **por PK del mensaje** — nunca «el goal actual». Si el
+    reto se cerró o fue reemplazado, no sella nada.
+
+    Nunca revierte el envío: si esto falla con el mensaje ya aceptado por
+    WhatsApp, el caller registra la anomalía y se cae a modo pasivo. Un rollback
+    aquí duplicaría un WhatsApp ya entregado.
+    """
+    from .models import ConversationGoal
+
+    now = now or timezone.now()
+    commitment = ConversationGoal.objects.filter(
+        conversation_id=message.conversation_id,
+        name__in=IDENTITY_GOALS,
+        status__in=ConversationGoal.FOREGROUND_STATUSES,
+        working_state__identity_question__message_id=message.pk,
+    ).first()
+    if commitment is None:
+        return None
+    state = dict(commitment.working_state or {})
+    question = dict(state.get('identity_question') or {})
+    if question.get('asked_state') != 'enqueued':
+        return None
+    question['asked_state'] = 'emitted'
+    question['asked_at'] = now.isoformat()
+    state['identity_question'] = question
+    commitment.working_state = state
+    commitment.save(update_fields=['working_state'])
+    return commitment
+
+
 def park_identity(conversation, commitment, *, going_to_human):
     """Aparta un reto de identidad SIN cerrarlo (R5/R8).
 
@@ -654,9 +769,31 @@ def finish_identity(conversation, commitment, status, reason=''):
     El retorno es DETERMINISTA, no depende de que el modelo vuelva a llamar
     una herramienta: el cliente nunca abandonó lo que estaba pidiendo, solo
     tuvo que identificarse primero (R4).
+
+    **Invariante semántico** (plan de continuidad, D32/D34): lo que se reanuda
+    tiene que ser una TAREA, no otro reto de identidad. Los constraints
+    garantizan cardinalidad —como máximo un suspendido— pero no significado, y
+    reanudar un reto de identidad aquí significaría volver a pedir identidad
+    justo después de haberla verificado. El caso llega por la resurrección de
+    filas legacy (`policy`), no por el flujo normal: `start_identity` limpia las
+    suyas.
     """
+    from .models import ConversationGoal
+
     close(commitment, status, reason)
-    return resume(get_suspended_goal(conversation))
+    suspended = get_suspended_goal(conversation)
+    if suspended is not None and suspended.name in IDENTITY_GOALS:
+        close(suspended, ConversationGoal.STATUS_ABANDONED,
+              'duplicate_identity_goal')
+        logger.error('AGENT_IDENTITY_GOAL_ANOMALY', extra={
+            'event': 'AGENT_IDENTITY_GOAL_ANOMALY',
+            'organization_id': conversation.organization_id,
+            'conversation_id': conversation.pk,
+            'goal': suspended.pk,
+            'goal_name': suspended.name,   # `name` es atributo de LogRecord
+        })
+        return None
+    return resume(suspended)
 
 
 def advance_to(commitment, factor):
@@ -669,17 +806,39 @@ def advance_to(commitment, factor):
     return commitment
 
 
-def satisfy(commitment, factor, value=True):
+def satisfy(commitment, factor, value=True, *, provenance=None):
     """Da por aportado un factor del reto.
 
     Guarda que el factor quedó SATISFECHO, no el secreto: de los 4 dígitos se
     registra `True`, nunca los dígitos (hoy tampoco se guardan, y este modelo
     no es excusa para empezar). Los nombres sí se guardan — el titular ya
     viajaba en el estado y el embudo lo necesita.
+
+    **CHOKE POINT de procedencia** (plan de continuidad, D15): un factor de
+    identidad con valor solo se guarda si viene con su `provenance` (el mensaje
+    del cliente que lo aportó, sellado por `identity_evidence`). Bloquear aquí
+    —en el ESCRITOR— y no al publicar es lo que hace la regla cierta para
+    cualquier vía futura: `anchored_identity_facts` publica `titular_declarado`
+    desde estos slots, así que filtrar solo `flow['aportado']` dejaba entrar por
+    aquí el nombre que el modelo copió de una fuga.
+
+    El alcance es **solo factores de identidad**: el nombre de la función es
+    genérico y otros goals la usan para slots de negocio (fecha, hora, motivo),
+    que no tienen procedencia que exigir.
     """
     if commitment is None:
         return None
-    commitment.slots[factor] = {'value': value, 'confidence': DEFAULT_CONFIDENCE}
+    if (commitment.name in IDENTITY_GOALS and value is not True
+            and provenance is None):
+        raise ValueError(
+            f'satisfy({factor!r}) en un reto de identidad exige provenance: '
+            'un valor sin mensaje origen no es un aporte del cliente'
+        )
+    commitment.slots[factor] = {'value': value,
+                                'confidence': DEFAULT_CONFIDENCE}
+    if provenance is not None:
+        commitment.slots[factor]['from_message'] = provenance.get('from_message')
+        commitment.slots[factor]['match_mode'] = provenance.get('match_mode')
     commitment.missing = missing_slots(commitment)
     commitment.last_progress_at = timezone.now()
     commitment.save(update_fields=['slots', 'missing', 'last_progress_at'])

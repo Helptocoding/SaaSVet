@@ -115,6 +115,30 @@ T0_HANDOFF_WAITING = (
     "desocupe continúa contigo por aquí."
 )
 
+# Anti-eco de identidad (plan de continuidad, D33): el nombre con el que el
+# cliente intentó identificarse lo había dicho el sistema o el staff ANTES que
+# él, así que no prueba que sea quien dice ser.
+#
+# GENÉRICO A PROPÓSITO: no repite el nombre ni insinúa que el cliente falló.
+# Confirmarlo sería la misma fuga que este camino existe para cerrar. Y no se le
+# pide otra vez: repetirlo seguiría siendo eco hasta que caduque la ventana, así
+# que la salida es una persona, no otro intento.
+T0_IDENTITY_ECHO = (
+    "Por seguridad, prefiero que recepción continúe contigo con la "
+    "verificación 🙏 Ya les avisé."
+)
+
+# La pregunta del reto de identidad la pone el SISTEMA (D38), no el modelo. Sin
+# esto, el modelo podía preguntar por los últimos 4 dígitos y ese saliente
+# quedaba sellado como si fuera la pregunta por la mascota — y una respuesta
+# «Luna» recibía el régimen tolerante sobre una pregunta que nunca se hizo.
+# Mismo patrón que el aviso de privacidad: el modelo redacta, el sistema añade
+# la parte que sostiene una garantía.
+T0_IDENTITY_QUESTION = (
+    "\n\nPara verificarte antes de consultar esos datos, ¿cómo se llama tu "
+    "mascota?"
+)
+
 # W1-1 · el guard de salida bloqueó el texto generado. El cliente nunca ve el
 # motivo técnico: ve a alguien que prefiere que lo atienda una persona.
 T0_GUARD_BLOCKED = (

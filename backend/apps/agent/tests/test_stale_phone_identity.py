@@ -229,16 +229,15 @@ class IdentityVerificationAfterUnlinkTests(TestCase):
         Ningún dato suyo iba a coincidir jamás — por eso el bot preguntaba una
         y otra vez hasta escalar. No era un fallo de redacción: era un bucle
         sin salida por construcción.
+
+        Se comprueba sobre el matcher (D4b retiró la vía que promovía con el
+        nombre del titular): lo que se protege es que un nombre ajeno no case
+        con el expediente vinculado, no cuál era la función que lo usaba.
         """
-        self.assertFalse(
-            identity.try_verify_by_owner_name(self.contact, "Felipe"))
+        self.assertFalse(identity._name_matches("Felipe", self.andres.name))
 
     def test_after_the_phone_changes_the_contact_starts_clean(self):
         change_owner_phone(self.andres, OTHER)
         self.contact.refresh_from_db()
         # Ya no se le compara contra un expediente que no es suyo.
         self.assertIsNone(self.contact.owner_id)
-        self.assertFalse(
-            identity.try_verify_by_owner_name(self.contact, "Felipe"),
-            "Sin expediente vinculado no hay contra qué verificar — y eso es "
-            "correcto: el alta lo resolverá, no un reto imposible.")

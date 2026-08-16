@@ -179,10 +179,30 @@ class Fase1Base(TestCase):
             organization=self.org, channel_account=self.channel,
             contact=contact)
 
-    def _identify(self, conversation, **args):
+    def _identify(self, conversation, said=None, **args):
+        """`said` = lo que el cliente ESCRIBIÓ en este turno.
+
+        Desde F0 del plan de continuidad la verificación por mascota exige
+        procedencia: el servidor busca el factor en un mensaje real del cliente
+        (D24). Sin `said`, la tool registra lo que el modelo dice haber oído pero
+        no verifica nada — que es justo el bypass de la conv 18: el modelo pasó
+        un nombre que el cliente nunca escribió.
+        """
         from apps.agent import tools
+        from apps.channels.models import Message
+
+        triggered_by = None
+        if said is not None:
+            triggered_by = Message.objects.create(
+                organization=conversation.organization,
+                channel_account=conversation.channel_account,
+                conversation=conversation, direction=Message.DIRECTION_IN,
+                author_type=Message.AUTHOR_CLIENT, body=said,
+                status=Message.STATUS_PENDING,
+            )
         return tools.run_tool(
             'identify_client', args, conversation=conversation,
+            triggered_by=triggered_by,
             executor=ToolExecutor(conversation, self.agent_user,
                                   transport=RealApiTransport()))
 
@@ -234,12 +254,31 @@ class IdentifyClientTests(Fase1Base):
     def test_verifica_por_mascota_cuando_el_numero_ya_tiene_titular(self):
         conversation = self._conversation(external_id="5215511994586",
                                           owner=self.owner)
-        outcome = self._identify(conversation, pet_name="Oliver")
+        outcome = self._identify(conversation, said="cita para Oliver",
+                                 pet_name="Oliver")
 
         self.assertTrue(outcome.data['verificado'])
         conversation.contact.refresh_from_db()
         self.assertEqual(conversation.contact.verification_level,
                          ContactIdentity.VERIFICATION_CONFIRMED)
+
+    def test_no_verifica_un_nombre_que_el_cliente_nunca_escribio(self):
+        """La conv 18 de producción, como test.
+
+        El modelo leyó «Oliver» del contexto y lo pasó a la tool; el cliente
+        jamás lo escribió. Antes eso verificaba —el sistema se comprobaba contra
+        un dato que él mismo había suministrado— y de ahí salió el bypass.
+        """
+        conversation = self._conversation(external_id="5215511994587",
+                                          owner=self.owner)
+        outcome = self._identify(conversation,
+                                 said="entonces para qué me lo preguntas",
+                                 pet_name="Oliver")
+
+        self.assertFalse(outcome.data['verificado'])
+        conversation.contact.refresh_from_db()
+        self.assertEqual(conversation.contact.verification_level,
+                         ContactIdentity.VERIFICATION_PHONE_MATCH)
 
     def test_el_vinculo_familiar_exige_los_tres_factores(self):
         """Seguridad: con dos de tres NO se vincula nada.

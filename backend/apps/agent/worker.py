@@ -26,6 +26,7 @@ from django.utils import timezone
 from apps.channels.models import Message
 from apps.channels.providers import ProviderError, get_provider
 
+from . import goals
 from .models import AgentSettings, Conversation
 from .tier0 import render_first_reply
 
@@ -167,8 +168,13 @@ def _run_turn(conversation, pending, now):
             triggered_by=pending[-1],
             # La ráfaga COMPLETA va al Policy Engine: la urgencia puede venir
             # en cualquier mensaje del grupo, no solo en el último (W0-2).
-            burst=[m.body for m in pending],
-            payload_types=[m.payload_type for m in pending],
+            #
+            # Viajan los OBJETOS, no los cuerpos (plan de continuidad, D24): sin
+            # PK no hay procedencia de identidad que sellar, y `triggered_by`
+            # solo apunta al último de la ráfaga. Antes iban dos listas
+            # paralelas (`burst` y `payload_types`) que podían desalinearse;
+            # ahora se derivan dentro, de la misma fuente.
+            burst_messages=pending,
         )
         _discard_if_superseded(conversation, pending, before_ids, result)
         return
@@ -392,3 +398,20 @@ def _send_one(message, provider_factory, now):
     message.status = Message.STATUS_SENT
     message.external_message_id = wamid or None
     message.save(update_fields=['status', 'external_message_id', 'attempts'])
+
+    # Sellado de la pregunta del reto (plan de continuidad, D36): `enqueued →
+    # emitted`, con `pet_asked_at` estampado en el ENVÍO real. Es lo que
+    # distingue «el sistema quiso preguntar» de «el cliente pudo verlo»: un
+    # saliente que quedó `pending` o `failed` nunca llega aquí.
+    #
+    # Nunca revierte el envío: si esto falla con el WhatsApp ya aceptado, se
+    # registra la anomalía y el turno siguiente cae a modo pasivo. Un `raise`
+    # aquí haría rollback de `STATUS_SENT` y el sender reenviaría un mensaje que
+    # el cliente ya recibió.
+    try:
+        goals.mark_identity_question_emitted(message, now=now)
+    except Exception:                                    # noqa: BLE001
+        logger.exception("AGENT_IDENTITY_QUESTION_SEAL_FAILED", extra={
+            "event": "AGENT_IDENTITY_QUESTION_SEAL_FAILED",
+            "message_id": message.pk,
+        })

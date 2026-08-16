@@ -52,6 +52,27 @@ class PolicyTestCase(TestCase):
     def _eval(self, text):
         return policy.evaluate(self.conv, text, agent_settings=self.settings)
 
+    def _inbound(self, text):
+        """Un entrante REAL del cliente.
+
+        La evidencia de identidad exige objetos `Message`, no cuerpos (plan de
+        continuidad, D24): sin PK no hay procedencia que sellar. Un test que
+        solo pasa texto obtiene, correctamente, cero evidencia.
+        """
+        from apps.channels.models import Message
+        return Message.objects.create(
+            organization=self.org, channel_account=self.channel,
+            conversation=self.conv, direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT, body=text,
+            status=Message.STATUS_PENDING,
+        )
+
+    def _eval_burst(self, *texts):
+        messages = [self._inbound(text) for text in texts]
+        return policy.evaluate(self.conv, texts[-1],
+                               agent_settings=self.settings,
+                               burst_messages=messages)
+
 
 class KillSwitchTests(PolicyTestCase):
     def test_disabled_returns_t0_disabled(self):
@@ -174,12 +195,53 @@ class ConfirmationFlowTests(PolicyTestCase):
 
 class ImplicitVerificationTests(PolicyTestCase):
     def test_naming_pet_verifies_passively(self):
-        self._eval("hola, quiero cita para Luna")
+        self._eval_burst("hola, quiero cita para Luna")
         self.contact.refresh_from_db()
         self.assertEqual(
             self.contact.verification_level,
             ContactIdentity.VERIFICATION_CONFIRMED,
         )
+
+    def test_a_bare_mention_does_not_verify(self):
+        """§2.3.1 · la gramática cerrada, no una lista de ejemplos.
+
+        Con una mascota llamada «Luna», «anoche vi la luna» promovía: el código
+        partía el texto en tokens y aceptaba cualquier coincidencia.
+        """
+        self._eval_burst("anoche vi la luna")
+        self.contact.refresh_from_db()
+        self.assertEqual(
+            self.contact.verification_level,
+            ContactIdentity.VERIFICATION_PHONE_MATCH,
+        )
+
+    def test_identity_negation_does_not_verify(self):
+        self._eval_burst("no es Luna")
+        self.contact.refresh_from_db()
+        self.assertEqual(
+            self.contact.verification_level,
+            ContactIdentity.VERIFICATION_PHONE_MATCH,
+        )
+
+    def test_clinical_negation_does_verify(self):
+        """«Luna no come» es de los mensajes más importantes que manda un
+        cliente: una regla ciega sobre `no` lo tiraba."""
+        self._eval_burst("Luna no come desde ayer")
+        self.contact.refresh_from_db()
+        self.assertEqual(
+            self.contact.verification_level,
+            ContactIdentity.VERIFICATION_CONFIRMED,
+        )
+
+    def test_passive_verification_satisfies_the_commitment_slot(self):
+        """Antes la ruta pasiva promovía sin tocar el compromiso, así que
+        `me_falta` seguía pidiendo la mascota DESPUÉS de haber verificado con
+        ella."""
+        commitment = goals.start_identity(
+            self.conv, goals.TITULAR_CHALLENGE, first_factor='pet')
+        self._eval_burst("cita para Luna")
+        commitment.refresh_from_db()
+        self.assertEqual(commitment.slots.get('pet', {}).get('value'), 'Luna')
 
 
 class BudgetAndScopeTests(PolicyTestCase):

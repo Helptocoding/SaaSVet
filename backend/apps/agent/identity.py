@@ -24,12 +24,29 @@ from .models import ContactIdentity
 
 VERIFICATION_TTL = timedelta(days=182)  # ~6 meses (spec §2.3)
 _ARTICLES = {'la', 'el', 'mi', 'mis', 'los', 'las', 'un', 'una'}
+# Puntuación que vive DENTRO de un nombre y no lo parte ("O'Brien", "Ana-Sofía").
+_KEEP_PUNCT = {"'", '-'}
 
 
 def _norm(text):
+    """Normaliza para comparar nombres: NFD, minúsculas, sin diacríticos, sin
+    artículos, y con la PUNTUACIÓN como límite de token.
+
+    Lo último se añadió con el servicio de evidencia (plan de continuidad,
+    §2.3.1): sin ello «cita para Luna, por favor» dejaba el token `luna,`, que
+    no es igual a `luna` — y el modo pasivo exige igualdad de token completo,
+    nunca substring. Un cliente escribiendo con coma quedaba sin verificar.
+    """
     text = unicodedata.normalize('NFD', (text or '').lower().strip())
-    text = ''.join(ch for ch in text if unicodedata.category(ch) != 'Mn')
-    tokens = [t for t in text.split() if t not in _ARTICLES]
+    kept = []
+    for ch in text:
+        category = unicodedata.category(ch)
+        if category == 'Mn':
+            continue                                  # diacrítico
+        if category.startswith('P') and ch not in _KEEP_PUNCT:
+            ch = ' '        # LÍMITE, no borrado: borrarla pegaría dos palabras
+        kept.append(ch)
+    tokens = [t for t in ''.join(kept).split() if t not in _ARTICLES]
     return ' '.join(tokens)
 
 
@@ -121,45 +138,47 @@ def _pet_names(owner):
     )
 
 
-def try_verify_by_pet_name(contact, text):
-    """Verificación IMPLÍCITA: ¿el texto nombra una mascota registrada?
+def matches_pet_name_tolerant(candidate, registered):
+    """MATCHER PURO del modo `challenge_response`: tolerante (typo, subconjunto).
 
-    Sube a confirmed_in_chat si hay match Y el contacto tiene owner
-    (phone_match). Devuelve True si verificó. No enumera nada."""
-    if contact.owner_id is None:
+    Legítimo solo cuando el cliente **responde a la pregunta** por el nombre: ahí
+    sabemos que está intentando decirlo, y tolerar una letra evita mandar a
+    handoff a quien dice la verdad. Ver `identity_evidence.derive_match_mode`.
+    """
+    return _name_matches(candidate, registered)
+
+
+def matches_pet_name_exact(candidate, registered):
+    """MATCHER PURO del modo `passive_free_text`: igualdad de token completo.
+
+    Sin distancia de edición y sin substring. Acepta el nombre completo
+    normalizado o **uno de sus tokens completos** de ≥3 caracteres: con «Luna
+    Bella» registrada, «cita para Luna» tiene que funcionar — el subconjunto de
+    tokens existe porque el reto rechazaba el nombre de pila y mandaba a handoff
+    a clientes legítimos. Lo que se elimina aquí es la tolerancia a typos, que
+    es de donde salían los falsos positivos en texto libre.
+    """
+    cand, reg = _norm(candidate), _norm(registered)
+    if not cand or not reg:
         return False
-    tokens = _norm(text).split()
-    registered = _pet_names(contact.owner)
-    for reg in registered:
-        reg_norm = _norm(reg)
-        # Match del nombre completo o de cualquier token del mensaje.
-        if _name_matches(text, reg) or any(
-            _name_matches(tok, reg) for tok in tokens
-        ):
-            _promote(contact)
-            return True
-    return False
-
-
-def try_verify_by_pet_answer(contact, answer):
-    """Reto EXPLÍCITO paso 1: el cliente responde con el nombre de su mascota."""
-    if contact.owner_id is None:
-        return False
-    for reg in _pet_names(contact.owner):
-        if _name_matches(answer, reg):
-            _promote(contact)
-            return True
-    return False
-
-
-def try_verify_by_owner_name(contact, answer):
-    """Reto EXPLÍCITO 2º factor (UX-03): nombre del titular registrado."""
-    if contact.owner_id is None:
-        return False
-    if _name_matches(answer, contact.owner.name):
-        _promote(contact)
+    if cand == reg:
         return True
-    return False
+    return cand in [tok for tok in reg.split() if len(tok) >= 3]
+
+
+# `try_verify_by_pet_name`, `try_verify_by_pet_answer` y
+# `try_verify_by_owner_name` fueron RETIRADAS (plan de continuidad, D21/D28).
+#
+# Las dos primeras promovían por su cuenta desde dos sitios distintos, así que
+# el anti-eco y la actualización del compromiso dependían de que cada caller se
+# acordara. Ahora son matchers puros y `_promote` tiene **exactamente un
+# llamador**: `identity_evidence.verify_pet_evidence`. Es un invariante que se
+# verifica estáticamente (`test_identity_evidence.py`).
+#
+# La tercera se retiró porque `owner_name` dejó de ser factor de verificación
+# (D4b): el sistema conoce ese nombre y se lo enseña al staff en la bandeja, así
+# que no prueba nada sobre quien escribe. Sigue usándose como CLAVE DE BÚSQUEDA
+# en el reto familiar (`find_link_candidates`), donde no hay owner que filtrar.
 
 
 def _promote(contact):

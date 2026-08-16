@@ -17,8 +17,10 @@ from dataclasses import dataclass, field
 
 from django.utils import timezone
 
+from apps.channels.models import Message
 from apps.core.datetime_utils import org_now_local, org_today_local
 
+from . import identity_evidence
 from .executor import format_local_datetime, format_local_wallclock
 from .models import ContactIdentity, Conversation, HumanHandoff
 
@@ -1783,14 +1785,37 @@ def identify_client(conversation, executor, args, triggered_by=None):
 
     # 2 · VERIFICAR contra la base. Deterministo, y es quien dictamina.
     verified = False
-    if contact.owner_id is not None:
-        # Número ya asociado a un titular: basta con un factor correcto.
-        if reunido.get('pet_name'):
-            verified = identity.try_verify_by_pet_answer(
-                contact, reunido['pet_name'])
-        if not verified and reunido.get('owner_name'):
-            verified = identity.try_verify_by_owner_name(
-                contact, reunido['owner_name'])
+    echo_rejected = None
+    if identity.is_verification_current(contact):
+        # Ya está verificado —típicamente por la ruta pasiva, en el turno en que
+        # nombró a su mascota— y la evidencia se sella al capturarla, no se
+        # re-presenta. Sin esta rama la tool contestaría `verificado: False` a
+        # alguien ya identificado y el modelo volvería a pedirle el nombre: el
+        # bucle que este trabajo existe para cerrar.
+        verified = True
+    elif contact.owner_id is not None:
+        # Número ya asociado a un titular: el ÚNICO factor de autoservicio es el
+        # nombre de una mascota (plan de continuidad, D4b). `owner_name` se
+        # retiró —el sistema lo conoce y se lo enseña al staff en la bandeja, así
+        # que no prueba nada sobre quien escribe— y los 4 dígitos son circulares
+        # para quien escribe desde su propio número.
+        #
+        # Y la verificación pasa por el SERVICIO ÚNICO, con el mismo régimen que
+        # la ruta pasiva: el modelo aporta el valor, pero el servidor deriva la
+        # procedencia (qué mensaje del cliente lo contiene), el `match_mode` y el
+        # anti-eco. Si el modelo pudiera elegir cualquiera de los tres, elegiría
+        # las reglas con que se le juzga.
+        resolution = identity_evidence.resolve_pet_evidence(
+            conversation, _burst_messages(conversation, triggered_by))
+        if isinstance(resolution, identity_evidence.EchoRejected):
+            echo_rejected = resolution
+        elif isinstance(resolution, identity_evidence.SealedPetEvidence):
+            result = identity_evidence.verify_pet_evidence(
+                conversation, resolution)
+            conversation.contact = result.contact_identity
+            conversation.flow = result.conversation_flow
+            contact = result.contact_identity
+            verified = True
     elif len(reunido) == 3:
         # Número desconocido actuando por un titular: los TRES factores contra
         # un mismo owner, o no se vincula nada (reto triple, UX-04).
@@ -1814,15 +1839,40 @@ def identify_client(conversation, executor, args, triggered_by=None):
             identity.link_family(contact, survivors[0])
             verified = True
 
-    # Verificado con un reto en curso: el reto existía para esto, así que se
-    # cierra y la tarea suspendida vuelve al frente. No se deja colgando.
-    if verified and commitment is not None:
-        goals.finish_identity(conversation, commitment,
-                              ConversationGoal.STATUS_COMPLETED, 'identified')
+    # El reto lo cierra `verify_pet_evidence` DENTRO de su commit (D32); en la
+    # vía familiar, que no pasa por él, se cierra aquí.
+    if verified and commitment is not None and contact.owner_id is not None:
+        commitment.refresh_from_db()
+        if commitment.status in ConversationGoal.FOREGROUND_STATUSES:
+            goals.finish_identity(conversation, commitment,
+                                  ConversationGoal.STATUS_COMPLETED,
+                                  'identified')
+
+    if echo_rejected is not None:
+        # D33 · las DOS rutas terminan igual: sin promoción, sin factor, sin
+        # slot, hand-off de identidad y ejecución detenida. Repetir el dato no
+        # sirve —seguiría siendo eco hasta que caduque la ventana— así que no se
+        # le pide otra vez.
+        from . import policy
+        policy.escalate_to_human(
+            conversation, reason_code=HumanHandoff.REASON_IDENTITY,
+            detail=('El dato con el que intentó identificarse ya lo habíamos '
+                    'mencionado nosotros antes que él, así que no confirma '
+                    'quién es. Verifícalo tú y registra la verificación.'),
+        )
+        executor.record_local(
+            tool_name='identify_client',
+            args_redacted={'aporto': sorted(aportado), 'eco': True},
+            summary={'verificado': False, 'eco': True},
+            triggered_by_message=triggered_by,
+        )
+        return ToolOutcome(ok=False, client_error='identity_echo')
 
     # 3 · DEVOLVER HECHOS. Sin nombres, sin conteos, sin oráculo.
     if contact.owner_id is not None and not verified:
-        pendientes = ['pet_name', 'owner_name']
+        # Solo `pet_name`: pedirle el nombre del titular ya no sirve de nada
+        # (D4b) y pedirle sus propios 4 dígitos es circular.
+        pendientes = ['pet_name']
     else:
         pendientes = ['owner_name', 'pet_name', 'phone_digits']
     falta = [_FACTOR_LABELS[key] for key in pendientes if key not in reunido]
@@ -1838,6 +1888,31 @@ def identify_client(conversation, executor, args, triggered_by=None):
         'ya_tengo': [_FACTOR_LABELS[key] for key in sorted(reunido)],
         'falta': [] if verified else falta,
     })
+
+
+def _burst_messages(conversation, triggered_by):
+    """Los entrantes del cliente de ESTE turno, para derivar la procedencia.
+
+    `identify_client` corre dentro del tool loop y no recibe la ráfaga, así que
+    la reconstruye desde el mensaje disparador hacia atrás: los entrantes
+    consecutivos del cliente que terminan en él. Nunca la piden los argumentos
+    de la tool — si el modelo pudiera señalar su propia prueba, la procedencia
+    sería teatro (D24).
+    """
+    if triggered_by is None:
+        return []
+    from apps.channels.selectors import visible_messages
+    recent = list(visible_messages(
+        Message.objects.filter(conversation=conversation,
+                               created_at__lte=triggered_by.created_at)
+    ).order_by('-created_at', '-id')[:10])
+    burst = []
+    for message in recent:
+        if (message.direction != Message.DIRECTION_IN
+                or message.author_type != Message.AUTHOR_CLIENT):
+            break
+        burst.append(message)
+    return list(reversed(burst))
 
 
 def request_human(conversation, executor, args, triggered_by=None):

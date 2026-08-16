@@ -51,6 +51,22 @@ SALVAGUARDAS = {
     # El saludo del buzón F0 y su sufijo: el camino SIN modelo.
     'T0_GREET',
     'T0_AFTER_HOURS_SUFFIX',
+    # Identidad (plan de continuidad, F0). Las dos caen en el supuesto de
+    # «llamar al modelo está prohibido», y por el mismo motivo que `T0_PRIVACY`:
+    #
+    # - `T0_IDENTITY_QUESTION` es la pregunta que SOSTIENE el régimen probatorio.
+    #   Si la redactara el modelo, podría preguntar por otra cosa —los últimos 4
+    #   dígitos, por ejemplo— y ese saliente quedaría sellado como si fuera el
+    #   reto de la mascota: una respuesta «Luna» recibiría el matcher tolerante
+    #   sobre una pregunta que nunca se hizo. El modelo redacta el resto del
+    #   mensaje; esta línea la pone el sistema.
+    # - `T0_IDENTITY_ECHO` sale cuando el dato con el que el cliente intentó
+    #   identificarse lo habíamos dicho nosotros primero. Es genérico A
+    #   PROPÓSITO: repetir el nombre sería la fuga que este camino cierra, y
+    #   dejar al modelo redactarlo es pedirle que hable de un dato que no puede
+    #   nombrar.
+    'T0_IDENTITY_QUESTION',
+    'T0_IDENTITY_ECHO',
 }
 
 # Las que retiró esta fase. Que no vuelvan por la puerta de atrás.

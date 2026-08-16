@@ -102,15 +102,33 @@ def _facts_numbers(tool_facts):
     return {v for v in values if v is not None}
 
 
-def check_output(text, *, tool_facts=None):
+def check_output(text, *, tool_facts=None, protected_name=None,
+                 grounded_names=()):
     """Devuelve la lista de violaciones del texto generado (vacía si limpio).
 
     `tool_facts` = lo que las herramientas devolvieron en ESTE turno. Un
     importe que no aparezca ahí es un precio inventado (G1): el caso más caro
     de todos, porque el cliente llega a la clínica con una cifra que nadie dijo.
+
+    `protected_name` = el nombre del titular registrado, cuando el contacto **no
+    está verificado**. Emitirlo es fuga: es exactamente lo que ocurrió en la
+    conv 18 de producción («Claro, Andrés 😊» a alguien que no había probado ser
+    Andrés), y de ahí salió el bypass — el modelo leyó el nombre del contexto y
+    el sistema lo verificó contra sí mismo.
+
+    `grounded_names` = lo que el cliente escribió **recientemente** (burst actual
+    o entrantes posteriores a la última respuesta del agente). Repetir lo que
+    acaba de decir no es fuga. La ventana es corta a propósito: «alguna vez en el
+    historial» convertía la repetición de una fuga vieja en autorización
+    permanente.
     """
     violations = []
     low = (text or '').lower()
+
+    if protected_name:
+        leaked = _protected_name_leak(text, protected_name, grounded_names)
+        if leaked:
+            violations.append(Violation('identity_leak', HARD, leaked))
 
     if UUID_RE.search(text or ''):
         violations.append(Violation('uuid', HARD))
@@ -228,6 +246,29 @@ def _first_match(low, patterns):
         if pattern in low:
             return pattern
     return None
+
+
+def _protected_name_leak(text, protected_name, grounded_names):
+    """¿El saliente dice el nombre registrado sin que el cliente lo haya dicho?
+
+    Compara por **tokens completos**, no por substring: con un titular llamado
+    «Sol», buscar la cadena dentro del texto marcaría «hay sol hoy» y, como esto
+    es HARD, `has_hard` descartaría una respuesta legítima al cliente.
+    """
+    from . import identity
+
+    tokens = set(identity._norm(text).split())
+    if not tokens:
+        return ''
+    grounded = set()
+    for said in grounded_names or ():
+        grounded.update(identity._norm(said).split())
+    for part in identity._norm(protected_name).split():
+        if len(part) < 3:
+            continue                      # partículas: «de», «la», iniciales
+        if part in tokens and part not in grounded:
+            return part
+    return ''
 
 
 def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,

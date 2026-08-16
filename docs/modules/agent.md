@@ -124,6 +124,85 @@ correcta —el vínculo actual apunta a un expediente elegido a ciegas—, pero 
 esa clínica el cliente deja de ser reconocido hasta que alguien ordene el dato.
 Se despliega con el reporte de `audit_owner_phone_duplicates` a la vista.
 
+## Verificación en el chat: el factor único y su régimen probatorio (F0)
+
+> Plan completo, con las trece revisiones que lo cerraron:
+> [`docs/agent-continuity-plan.md`](../agent-continuity-plan.md).
+
+**El nombre del titular ya NO verifica a nadie** (D4b). Con un contacto
+`phone_match`, el **único** factor de autoservicio es el **nombre de una
+mascota**. Los otros dos candidatos no prueban nada:
+
+| Factor | ¿Prueba quién escribe? |
+|---|---|
+| `owner_name` | **No.** El sistema lo conoce y lo enseña —al modelo en el contexto, al staff en la bandeja (`serializers.get_owner_name`)—, y es lo menos secreto de una persona |
+| `phone_digits` | **No, y es circular**: el contacto llegó *por ese número*. Mismo criterio que `ContactIdentityVerification.EVIDENCE_CHOICES`, cuyo enum ya excluye toda evidencia telefónica (ADR p57 §5.5.3) |
+| `pet_name` | **Sí.** Exige conocer el expediente y no se deduce del canal |
+
+Por qué se retiró: en producción (conv 18) el nombre del titular viajaba al
+modelo con solo `phone_match`, el modelo lo pasó a `identify_client` y el sistema
+lo verificó **contra el dato que él mismo había suministrado**. No era un fallo de
+redacción: el segundo factor no existía.
+
+**Consecuencia aceptada por el PO (2026-08-15)**: un `Owner` **sin mascotas
+registradas** —posible, se crean desde el POS— no tiene factor de autoservicio y
+va a verificación humana, con un `reason_detail` que dice qué pasó y qué hacer. Si
+esos escalados resultan frecuentes, la respuesta **no** es reponer `owner_name`:
+es revisar por qué existen esos `Owner`.
+
+### Todo pasa por un solo servicio
+
+`agent/identity_evidence.py`. `identity._promote` tiene **exactamente un
+llamador** —invariante con gate estático en `test_identity_evidence.py`— y las
+funciones de mascota son **matchers puros**. Antes había dos caminos que
+promovían (`policy` y `identify_client`) y ninguno comprobaba el eco; el pasivo
+además no satisfacía el slot, así que el agente volvía a pedir la mascota después
+de haber verificado con ella.
+
+| Pieza | Regla |
+|---|---|
+| **Candidato** | Lo extrae el servicio con una **gramática cerrada** (sustantivo clínico + `para/de`, posesivo de mascota, verbo de estado). Un token suelto nunca es evidencia: con una mascota «Sol», «¿va a haber sol mañana?» promovía |
+| **Negación** | Por **función sintáctica**: se rechaza la de identidad («no es Luna»), se acepta la clínica («Luna no come») |
+| **Procedencia** | `from_message` lo deriva el **servidor** desde la ráfaga, exigiendo `direction='in'`, `author_type='client'` y **misma conversación**. Nunca llega en los argumentos de una tool |
+| **Régimen** | `passive_free_text` (exacto: nombre completo o token completo ≥3, sin lev) vs `challenge_response` (tolerante). **Lo deriva el servidor**, nunca el caller: si dependiera del call site, el modelo elegiría con qué reglas se le juzga llamando a `identify_client` |
+| **La pregunta** | La añade el **sistema** (`T0_IDENTITY_QUESTION`), y solo ese saliente se liga al reto. Si la redactara el modelo podría preguntar por los dígitos y sellar eso como si fuera el reto de la mascota |
+| **Emisión** | `bind_identity_question_enqueued` (al encolar) → `mark_identity_question_emitted` (al **enviar**, `worker._send_one`). Un saliente `pending`/`failed` nunca habilita el régimen tolerante: el cliente no lo vio |
+| **Anti-eco** | **Primera mención gana**, dentro del TTL, sobre mensajes **realmente emitidos**, y con el matcher **tolerante** — staff escribiendo «Lunna» tiene que contar como revelación |
+| **Rechazo por eco** | `HumanHandoff(identity)` + `T0_IDENTITY_ECHO`, **nunca reintento**: repetir el dato seguiría siendo eco hasta que caduque la ventana |
+| **Caducidad** | `IDENTITY_EVIDENCE_TTL` (60 min) sobre el mensaje origen. La sesión **no** sirve como ventana: `close_inactive_conversations` mide inactividad, y en producción hay sesiones de 29 h y 47 h |
+| **Transacción** | `_promote` + `flow` + slot + **cierre del reto y reanudación** en un solo commit, con locks `ContactIdentity → Conversation → ConversationGoal` (por id) |
+
+**El caller reasigna lo que mutó** (`contact`, `flow` y cualquier variable local).
+Hasta F0 funcionaba por coincidencia de instancia compartida; con
+`select_for_update` esa coincidencia desaparece y la DB quedaría promovida con el
+turno viéndose sin verificar.
+
+**Orden del turno, que es contrato**: reconciliar vencidos → sellar la evidencia
+de la ráfaga → resto de `policy.evaluate` → ensamblar el prompt. Por eso quien
+escribe «cita para Luna» verifica **y** recibe su contexto en el **mismo** turno.
+
+### Goals de identidad: tres conjuntos, no uno
+
+`HISTORICAL` ⊃ `STARTABLE` ⊃ `RESUMABLE`. `policy` ya no reanima un suspendido
+por pertenecer a `IDENTITY_GOALS` sino por el **predicado**
+`is_resumable_identity_goal`: `identity_triage` es maquinaria retirada en É-F5
+Fase 2 y producción tenía una fila suspendida que volvía al frente arrastrando un
+`GoalSpec` que ya no conduce nadie.
+
+`start_identity` es el **único creador**, y su único llamador productivo es la
+rama `verification_required` de `planner._run_planner`. `open_goal` **rechaza**
+nombres de identidad.
+
+### Remediación de datos (precondición, no limpieza posterior)
+
+`python manage.py remediate_identity_f0 [--org N] [--apply]` — dry-run por
+defecto, idempotente, con conteos antes/después. Degrada los contactos
+`confirmed_in_chat` sin `linked_via` (los que solo pudo verificar el reto
+conversacional) y cierra los retos huérfanos. **Se corre antes de desplegar la
+conducta del caso verificado**: instruir al modelo a confiar en
+`verificado: true` antes de degradar consolidaría un estado obtenido por el
+bypass.
+
 ## Endpoints
 
 | Superficie | Auth | Notas |

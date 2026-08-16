@@ -28,6 +28,7 @@ from . import (
     confirmations,
     goals,
     guards,
+    identity,
     matchers,
     policy,
     prompts,
@@ -47,7 +48,7 @@ MAX_CONSECUTIVE_TOOL_FAILURES = 2
 
 def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
                    executor=None, triggered_by=None, burst=None,
-                   payload_types=None):
+                   payload_types=None, burst_messages=None):
     """Envoltorio de `_handle_inbound_inner` que deja el rastro append-only
     de la decisión del turno (R12, É-F4 Fase 1 §1.3).
 
@@ -61,7 +62,7 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
     result = _handle_inbound_inner(
         conversation, agent_settings=agent_settings, llm_client=llm_client,
         executor=executor, triggered_by=triggered_by, burst=burst,
-        payload_types=payload_types,
+        payload_types=payload_types, burst_messages=burst_messages,
     )
     # El árbitro corre AQUÍ, con el saliente ya encolado (É-F5 Fase 4, p56
     # §5-bis): clasifica qué le pasó al compromiso y el ejecutor aplica los
@@ -71,6 +72,52 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
     _record_turn_decision(conversation, result, started, triggered_by,
                           verdict=verdict)
     return result
+
+
+def _protected_owner_name(conversation):
+    """El nombre que NO puede salir en este turno, o `''` si no hay ninguno.
+
+    Solo protege mientras la verificación no está vigente: una vez verificado, el
+    cliente **es** esa persona y llamarlo por su nombre es lo correcto.
+    """
+    contact = conversation.contact
+    if contact.owner_id is None:
+        return ''
+    if identity.is_verification_current(contact):
+        return ''
+    return contact.owner.name or ''
+
+
+def _ensure_identity_challenge(conversation):
+    """Abre el reto de identidad si no lo hay. **Escritor productivo único.**
+
+    `goals.start_identity` es el único creador y este es su único llamador
+    autorizado (D36): `open_goal` rechaza los nombres de identidad, así que no
+    hay una segunda puerta. Devuelve `None` si el contacto no tiene con qué
+    autoservirse — ese caso lo resuelve el caller escalando (§2.2.2).
+    """
+    if _no_self_service_factor(conversation):
+        return None
+    commitment = goals.get_identity_commitment(conversation)
+    if commitment is not None:
+        return commitment
+    return goals.start_identity(
+        conversation, goals.TITULAR_CHALLENGE, first_factor='pet')
+
+
+def _no_self_service_factor(conversation):
+    """¿El contacto se quedó sin ningún factor que pueda aportar él?
+
+    Con `owner_name` retirado como factor (D4b) y los dígitos sin valor
+    probatorio para quien escribe desde su propio número, el único factor de
+    autoservicio es el nombre de una mascota. Un `Owner` sin mascotas
+    registradas —posible: se crean desde el POS en una venta de mostrador— no
+    tiene ninguno.
+    """
+    contact = conversation.contact
+    if contact.owner_id is None:
+        return False        # el reto familiar tiene sus propios tres factores
+    return not identity._pet_names(contact.owner)
 
 
 def _settle_commitment(conversation, result, burst):
@@ -245,14 +292,15 @@ def _infer_because(result):
 
 def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
                           executor=None, triggered_by=None, burst=None,
-                          payload_types=None):
+                          payload_types=None, burst_messages=None):
     """Procesa el turno de la conversación. Devuelve un dict de telemetría
     {decision, llm_calls, tools} para el worker/tests.
 
-    `burst` = cuerpos de TODOS los entrantes drenados en este turno, en orden
-    (el worker los agrupa). El Policy Engine evalúa la ráfaga completa para
-    urgencia/humano/opt-out/confirmación; el modelo ya veía todos los mensajes
-    en el historial.
+    `burst_messages` = los `Message` entrantes drenados en este turno, en orden
+    (el worker los agrupa); `burst` y `payload_types` se derivan de ellos y se
+    conservan como parámetros para los tests que solo tienen texto. El Policy
+    Engine evalúa la ráfaga completa para urgencia/humano/opt-out/confirmación;
+    el modelo ya veía todos los mensajes en el historial.
     """
     from .models import AgentSettings
     if agent_settings is None:
@@ -260,6 +308,10 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
             organization=conversation.organization,
         ).first()
 
+    burst_messages = list(burst_messages or [])
+    if burst_messages:
+        burst = [m.body for m in burst_messages]
+        payload_types = [m.payload_type for m in burst_messages]
     raw_burst = list(burst) if burst is not None else []
     texts = [b for b in raw_burst if b]
     text = texts[-1] if texts else (
@@ -268,7 +320,8 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
         raw_burst = [text] if text else []
     decision = policy.evaluate(conversation, text, burst=raw_burst,
                                payload_types=payload_types,
-                               agent_settings=agent_settings)
+                               agent_settings=agent_settings,
+                               burst_messages=burst_messages)
 
     if decision.kind == policy.SILENT:
         return {'decision': 'silent', 'llm_calls': 0, 'tools': 0}
@@ -339,6 +392,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     # de privacidad encabeza la respuesta (LFPDPPP just-in-time). Lo pone el
     # sistema porque es un literal legal, no algo que el modelo redacte.
     needs_privacy_notice = False
+    identity_commitment = None
     # W2 — tres señales distintas, antes colapsadas en una sola (`goal_touched`)
     # que solo decía "se llamó una tool de objetivo". Un modelo atascado la
     # llama en CADA vuelta, así que el estancamiento nunca se detectaba.
@@ -386,7 +440,14 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
 
         if result.kind == 'text':
             text = result.text or _fallback_text()
-            violations = guards.check_output(text, tool_facts=tool_facts)
+            violations = guards.check_output(
+                text, tool_facts=tool_facts,
+                # Fuga de identidad (D13): con el contacto sin verificar, el
+                # nombre del titular NO sale, salvo que el cliente acabe de
+                # escribirlo. Es la conv 18 exacta.
+                protected_name=_protected_owner_name(conversation),
+                grounded_names=(burst_text,),
+            )
             # …y los de CONDUCTA (É-F4 Fase 4). Los léxicos juzgan lo que se
             # dijo; estos, cómo se está comportando el sistema — que es donde
             # estaban los fallos más caros de la auditoría y ninguno era una
@@ -452,12 +513,33 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             # Lo pone el sistema, no el modelo, y a propósito: es un literal
             # legal. `_privacy_prefix` ya es idempotente por contacto, así que
             # no se repite aunque la verificación se pida varias veces.
-            enqueue_outbound(
+            #
+            # Y por el MISMO motivo va detrás la pregunta del reto de identidad
+            # (D38): el modelo redacta la respuesta, el sistema añade la parte
+            # que sostiene una garantía. Sin esto el modelo podía preguntar por
+            # los últimos 4 dígitos y ese saliente quedaba sellado como si fuera
+            # la pregunta por la mascota — y un «Luna» posterior recibía el
+            # régimen tolerante sobre una pregunta que nunca se hizo.
+            message = enqueue_outbound(
                 conversation,
                 (_privacy_prefix(conversation) if needs_privacy_notice else '')
                 + _after_hours_prefix(conversation, agent_settings,
-                                      burst_text=burst_text) + text,
+                                      burst_text=burst_text) + text
+                + (tier0.T0_IDENTITY_QUESTION if identity_commitment else ''),
                 author='agent')
+            if identity_commitment is not None:
+                # Ligar SOLO la respuesta final normal: ni guard_blocked, ni
+                # fallbacks, ni errores técnicos son la pregunta del reto.
+                goals.bind_identity_question_enqueued(
+                    identity_commitment, message,
+                    # DERIVADO del spec, no del campo: `ConversationGoal.missing`
+                    # nace `[]` (default del modelo) y solo lo escribe `satisfy`,
+                    # así que en un reto recién abierto —justo cuando se hace la
+                    # pregunta— habría dicho que `pet` no estaba pendiente y el
+                    # régimen tolerante nunca se habría activado.
+                    pet_pending='pet' in goals.missing_slots(
+                        identity_commitment),
+                    deterministic_clause=True)
             return {'decision': 'planner_reply', 'llm_calls': llm_calls,
                     'tools': tool_calls,
                     'goal_advanced': goal_progressed,
@@ -560,6 +642,35 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     # quien escribe: lo que el modelo pida a continuación son
                     # datos personales, así que el aviso encabeza la respuesta.
                     needs_privacy_notice = True
+                    # ESTE es el único punto productivo que abre un reto de
+                    # identidad (plan de continuidad, D36). Sin un escritor
+                    # declarado, o el régimen tolerante quedaba inalcanzable, o
+                    # alguien introducía un segundo escritor informal para
+                    # hacerlo funcionar.
+                    identity_commitment = _ensure_identity_challenge(
+                        conversation)
+                    if identity_commitment is None and _no_self_service_factor(
+                            conversation):
+                        # §2.2.2 · el cliente no tiene mascotas registradas, así
+                        # que no hay dato del expediente que él pueda darnos.
+                        # No es un estado de espera: es un escalado, y con un
+                        # motivo que recepción entienda. Sin esto, `falta`
+                        # quedaría vacío y el modelo pediría… nada.
+                        policy.escalate_to_human(
+                            conversation,
+                            reason_code=HumanHandoff.REASON_IDENTITY,
+                            detail=(
+                                'Este número corresponde a un cliente sin '
+                                'mascotas registradas, así que no hay dato del '
+                                'expediente que él pueda darnos para confirmar '
+                                'que es él. Verifícalo tú y registra la '
+                                'verificación.'
+                            ),
+                        )
+                        enqueue_outbound(conversation, tier0.T0_IDENTITY_ECHO,
+                                         author='system')
+                        return {'decision': 'identity_no_factor',
+                                'llm_calls': llm_calls, 'tools': tool_calls}
                 payload = {
                     'error': outcome.client_error,
                     'detalle': outcome.detail,
@@ -949,13 +1060,25 @@ def _error_fact(client_error):
         # La barrera NO se toca: `run_tool` sigue revalidando y la llamada
         # rebota sin ejecutar nada. Lo que cambia es quién redacta la
         # respuesta, no quién autoriza.
+        # El texto NO enumera factores (plan de continuidad, D4b/D38): el nombre
+        # del titular dejó de verificar —el sistema lo conoce y se lo enseña al
+        # staff, así que no prueba nada— y los 4 dígitos no prueban nada a quien
+        # escribe desde su propio número. Enumerarlos invitaba al modelo a pedir
+        # un dato que no sirve, y esa pregunta quedaba sellada como si fuera el
+        # reto. La pregunta concreta la añade el sistema (`T0_IDENTITY_QUESTION`).
         'verification_required': 'Todavía no sabes con certeza quién te '
                                  'escribe, y eso hace falta para tocar datos '
-                                 'personales. Pídele lo que falte —su nombre, '
-                                 'el de su mascota o los últimos 4 dígitos del '
-                                 'teléfono registrado— y di para qué es. '
-                                 'Cuando te lo diga, llama a la herramienta de '
-                                 'identificación.',
+                                 'personales. Dile en una línea para qué lo '
+                                 'necesitas y pídele solo eso; la pregunta '
+                                 'concreta la añade el sistema al final de tu '
+                                 'mensaje. Cuando te conteste, llama a la '
+                                 'herramienta de identificación.',
+        # Anti-eco (D33): el turno ya escaló, así que esto es lo que el modelo
+        # ve si vuelve a mirar. No le pide reintentar — repetir el dato seguiría
+        # siendo eco hasta que caduque la ventana.
+        'identity_echo': 'Ese dato ya lo habíamos mencionado nosotros antes que '
+                         'él, así que no confirma quién es. Ya lo pasé con una '
+                         'persona del equipo: no se lo vuelvas a pedir.',
         # C7 · ya se pidió dos veces y no funcionó. El sistema deja de pedir
         # igual y le dice al modelo que cambie de estrategia — repetir la
         # misma pregunta es lo que hizo que el cliente de la conv 12 se fuera.

@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from . import goals, identity, matchers, tier0
+from . import goals, identity, identity_evidence, matchers, tier0
 from .models import Conversation, HumanHandoff
 
 logger = logging.getLogger('agent.events')
@@ -55,21 +55,31 @@ def _agent_settings(conversation):
 
 
 def evaluate(conversation, text, *, burst=None, payload_types=None,
-             agent_settings=None):
+             agent_settings=None, burst_messages=None):
     """Pipeline pre-planner. Devuelve PolicyDecision.
 
-    `text` = último entrante. `burst` = TODOS los entrantes drenados en este
-    turno (el worker los agrupa). Los matchers de seguridad —urgencia, petición
-    de humano, opt-out y confirmación— corren sobre la ráfaga COMPLETA: con
-    "mi perro convulsiona" + "ayúdenme por favor" el detector solo veía el
-    segundo mensaje y la urgencia se perdía. Los matchers de conveniencia
-    (gracias, pagos) siguen mirando el último mensaje, que es su semántica.
+    `text` = último entrante. `burst_messages` = los `Message` entrantes drenados
+    en este turno (el worker los agrupa); `burst`/`payload_types` se DERIVAN de
+    ellos. Los matchers de seguridad —urgencia, petición de humano, opt-out y
+    confirmación— corren sobre la ráfaga COMPLETA: con "mi perro convulsiona" +
+    "ayúdenme por favor" el detector solo veía el segundo mensaje y la urgencia
+    se perdía. Los matchers de conveniencia (gracias, pagos) siguen mirando el
+    último mensaje, que es su semántica.
+
+    **Los objetos, no solo los cuerpos** (plan de continuidad, D24): sin PK no
+    hay procedencia que sellar, y mantener listas paralelas de cuerpos y tipos
+    —que es lo que había— invita a que se desalineen.
     """
     if agent_settings is None:
         agent_settings = _agent_settings(conversation)
     contact = conversation.contact
     flow = conversation.flow
-    raw_burst = list(burst) if burst is not None else [text]
+    burst_messages = list(burst_messages or [])
+    if burst_messages:
+        raw_burst = [m.body for m in burst_messages]
+        payload_types = [m.payload_type for m in burst_messages]
+    else:
+        raw_burst = list(burst) if burst is not None else [text]
     burst = [b for b in raw_burst if b]
     burst_text = '\n'.join(burst) if burst else (text or '')
 
@@ -89,6 +99,17 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     # 2. Humano ya atiende → el agente calla (spec §7.2, invariante duro).
     if conversation.state == Conversation.STATE_HUMAN_ACTIVE:
         return PolicyDecision(kind=SILENT, meta={'reason': 'human_active'})
+
+    # 2c. D29 · el orden del turno es CONTRATO: reconciliar la evidencia vencida
+    #     ANTES de capturar la nueva. Al revés, el reconciliador limpiaría lo que
+    #     se acaba de sellar. Va detrás de los guards a propósito: en un turno
+    #     que el agente no atiende (kill switch, contacto bloqueado, humano al
+    #     frente) no se escribe nada.
+    #
+    #     El reducer es PURO y este es el único punto que escribe, una vez por
+    #     turno: `missing_slots` y el ensamblado del prompt son lectores.
+    identity_evidence.reconcile_identity_facts(conversation)
+    flow = conversation.flow
 
     # 2b. RETIRADO (É-F5 Fase 5). Media sin texto seguía contestando con una
     #     constante ("no alcanzo a ver lo que me mandaste") que ignoraba de qué
@@ -168,9 +189,15 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #     normales (8/8b/8c) lo procesen — con su etapa y sus candidatos
     #     intactos. Es lo que resuelve el `4586` tardío de la conv 13: antes
     #     el reto se destruía al escalar y el dato correcto caía al vacío.
+    #
+    #     Se reanuda por PREDICADO, no por pertenencia al conjunto de nombres
+    #     (plan de continuidad, D37): `identity_triage` es identidad HISTÓRICA
+    #     —maquinaria retirada en É-F5 Fase 2— y producción tenía una fila
+    #     suspendida que esta rama devolvía al frente, arrastrando un `GoalSpec`
+    #     que ya no conduce nadie.
     if goals.get_identity_commitment(conversation) is None:
         suspended = goals.get_suspended_goal(conversation)
-        if suspended is not None and suspended.name in goals.IDENTITY_GOALS:
+        if goals.is_resumable_identity_goal(suspended):
             goals.resume(suspended)
 
     # 7. Confirmación de un pending_action (ACTIVO en F2: las tools de
@@ -220,8 +247,29 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
 
     # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
     #    (no cambia la decisión, habilita las tools personales del turno).
-    if contact.verification_level == contact.VERIFICATION_PHONE_MATCH:
-        identity.try_verify_by_pet_name(contact, burst_text)
+    #
+    #    Va por el SERVICIO ÚNICO (plan de continuidad, D17). Antes llamaba
+    #    directo a `identity.try_verify_by_pet_name`, que promovía sin anti-eco
+    #    —staff decía «¿cómo está Luna?» y el cliente repitiendo el nombre
+    #    quedaba verificado— y sin satisfacer el slot, así que el agente volvía a
+    #    pedir la mascota después de haber verificado con ella.
+    if (contact.verification_level == contact.VERIFICATION_PHONE_MATCH
+            and burst_messages):
+        resolution = identity_evidence.resolve_pet_evidence(
+            conversation, burst_messages)
+        if isinstance(resolution, identity_evidence.EchoRejected):
+            # D33 · el eco no se recupera reintentando: repetir el nombre sigue
+            # siendo eco hasta que caduque el TTL. Se escala y se para.
+            return _escalate_identity_echo(conversation, resolution)
+        if isinstance(resolution, identity_evidence.SealedPetEvidence):
+            result = identity_evidence.verify_pet_evidence(
+                conversation, resolution)
+            # D31 · se reasigna TODO lo que mutó, incluida la variable local:
+            # `conversation.contact = …` no actualiza un `contact` ya tomado.
+            conversation.contact = result.contact_identity
+            conversation.flow = result.conversation_flow
+            contact = result.contact_identity
+            flow = conversation.flow
 
     # 10. Presupuesto agotado (R11, E-09).
     if _budget_exhausted(conversation):
@@ -318,6 +366,39 @@ def _burst_confirmation(burst):
 # contención) y el plan É-F5 §4.1.
 
 
+
+
+def _escalate_identity_echo(conversation, resolution):
+    """Rechazo por anti-eco ⇒ escalado, nunca reintento (D33).
+
+    Las dos rutas —ésta y `identify_client`— terminan en el MISMO estado: sin
+    promoción, sin factor en `flow`, sin slot satisfecho, hand-off de identidad,
+    agente silenciado y ejecución detenida.
+
+    El `reason_detail` es lo que lee recepción: dice qué pasó y qué hacer, sin
+    repetir el nombre. `reason_code='identity'` — nunca el deprecado
+    `identity_ambiguous`, que aquí además mentiría: no hay nada ambiguo.
+    """
+    logger.info('AGENT_IDENTITY_ECHO_REJECTED', extra={
+        'event': 'AGENT_IDENTITY_ECHO_REJECTED',
+        'organization_id': conversation.organization_id,
+        'conversation_id': conversation.pk,
+        'source_message_id': resolution.from_message_id,
+        'disclosure_message_id': resolution.disclosure_message_id,
+    })
+    return PolicyDecision(
+        kind=ESCALATE,
+        text=tier0.T0_IDENTITY_ECHO,
+        handoff_reason=HumanHandoff.REASON_IDENTITY,
+        meta={
+            'reason': 'identity_echo',
+            'handoff_detail': (
+                'El dato con el que intentó identificarse ya lo habíamos '
+                'mencionado nosotros antes que él, así que no confirma quién '
+                'es. Verifícalo tú y registra la verificación.'
+            ),
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

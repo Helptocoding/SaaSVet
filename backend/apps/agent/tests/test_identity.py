@@ -30,51 +30,48 @@ class IdentityTests(TestCase):
             owner=self.owner, verification_level=level,
         )
 
-    def test_implicit_verification_on_exact_pet_name(self):
-        contact = self._contact()
-        self.assertTrue(
-            identity.try_verify_by_pet_name(contact, "quiero cita para Kira")
-        )
-        contact.refresh_from_db()
-        self.assertEqual(
-            contact.verification_level, ContactIdentity.VERIFICATION_CONFIRMED,
-        )
-        self.assertIsNotNone(contact.verified_at)
+    # Los matchers son PUROS desde el plan de continuidad (D28): devuelven un
+    # booleano y no tocan estado. `_promote` tiene un solo llamador, el servicio
+    # de evidencia — ver `test_identity_evidence.py`.
 
-    def test_implicit_with_article(self):
-        contact = self._contact()
-        self.assertTrue(
-            identity.try_verify_by_pet_name(contact, "es para la Kira")
-        )
+    def test_exact_matcher_accepts_the_registered_name(self):
+        self.assertTrue(identity.matches_pet_name_exact("Kira", "Kira"))
 
-    def test_typo_distance_one_matches(self):
-        contact = self._contact()
-        # "Kyra" ≈ "Kira" (sustitución), nombre ≥4 letras.
-        self.assertTrue(
-            identity.try_verify_by_pet_answer(contact, "Kyra")
-        )
+    def test_exact_matcher_accepts_a_complete_token_of_a_compound_name(self):
+        # «cita para Luna» con «Luna Bella» registrada tiene que funcionar: el
+        # subconjunto de tokens existe porque el reto rechazaba el nombre de pila
+        # y mandaba a handoff a clientes legítimos.
+        self.assertTrue(identity.matches_pet_name_exact("Luna", "Luna Bella"))
 
-    def test_wrong_name_does_not_verify(self):
+    def test_exact_matcher_rejects_a_typo(self):
+        # Lo que se elimina del modo pasivo es la distancia de edición: de ahí
+        # salían los falsos positivos en texto libre.
+        self.assertFalse(identity.matches_pet_name_exact("Kyra", "Kira"))
+
+    def test_tolerant_matcher_accepts_a_typo(self):
+        # Legítimo solo cuando el cliente RESPONDE a la pregunta por el nombre.
+        self.assertTrue(identity.matches_pet_name_tolerant("Kyra", "Kira"))
+
+    def test_matchers_never_touch_state(self):
         contact = self._contact()
-        self.assertFalse(
-            identity.try_verify_by_pet_answer(contact, "Firulais")
-        )
+        identity.matches_pet_name_tolerant("Kira", "Kira")
+        identity.matches_pet_name_exact("Kira", "Kira")
         contact.refresh_from_db()
         self.assertEqual(
             contact.verification_level, ContactIdentity.VERIFICATION_PHONE_MATCH,
         )
 
-    def test_owner_name_second_factor(self):
-        contact = self._contact()
-        self.assertTrue(
-            identity.try_verify_by_owner_name(contact, "Ana Torres")
-        )
+    def test_owner_name_is_no_longer_a_verification_factor(self):
+        # D4b · el sistema conoce ese nombre y se lo enseña al staff en la
+        # bandeja, así que no prueba nada sobre quien escribe. La función se
+        # eliminó para que un cambio futuro no reabra el factor por accidente.
+        self.assertFalse(hasattr(identity, 'try_verify_by_owner_name'))
 
-    def test_unknown_contact_never_verifies(self):
-        contact = ContactIdentity.objects.create(
-            organization=self.org, external_id="5215599990000",
-        )  # sin owner
-        self.assertFalse(identity.try_verify_by_pet_name(contact, "Kira"))
+    def test_punctuation_is_a_token_boundary(self):
+        # «cita para Kira, por favor» dejaba el token `kira,`, que no es igual a
+        # `kira` — y el modo pasivo exige igualdad de token completo.
+        self.assertEqual(identity._norm("cita para Kira, por favor"),
+                         "cita para kira por favor")
 
     def test_verification_expiry(self):
         contact = self._contact(ContactIdentity.VERIFICATION_CONFIRMED)
@@ -118,9 +115,7 @@ class RematchBlockedClearingTests(TestCase):
 
     def test_promote_clears_the_flag_on_full_verification(self):
         contact = self._blocked_contact(owner=self.owner)
-        self.assertTrue(
-            identity.try_verify_by_pet_name(contact, "cita para Kira")
-        )
+        identity._promote(contact)
         contact.refresh_from_db()
         self.assertEqual(
             contact.verification_level, ContactIdentity.VERIFICATION_CONFIRMED,

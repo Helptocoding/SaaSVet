@@ -255,7 +255,10 @@ class QuietWindowTests(AgentFixture):
         seen = {}
 
         def fake_turn(conversation, **kwargs):
-            seen['burst'] = kwargs.get('burst')
+            # Viajan los OBJETOS, no los cuerpos (plan de continuidad, D24):
+            # sin PK no hay procedencia de identidad que sellar, y `burst` +
+            # `payload_types` eran dos listas paralelas que podían desalinearse.
+            seen['messages'] = kwargs.get('burst_messages')
             from apps.agent.outbound import enqueue_outbound
             enqueue_outbound(conversation, "una sola respuesta", author='agent')
             return {'decision': 'planner_reply', 'llm_calls': 1, 'tools': 0}
@@ -263,7 +266,9 @@ class QuietWindowTests(AgentFixture):
         with mock.patch("apps.agent.planner.handle_inbound", fake_turn):
             process_pending_conversations(now=_later())
 
-        self.assertEqual(seen['burst'], ["hola", "quiero agendar", "para mañana"])
+        self.assertEqual([m.body for m in seen['messages']],
+                         ["hola", "quiero agendar", "para mañana"])
+        self.assertTrue(all(m.pk for m in seen['messages']))
         self.assertEqual(
             Message.objects.filter(conversation=self.conv,
                                    direction=Message.DIRECTION_OUT).count(), 1)
@@ -383,13 +388,16 @@ class IdentityToleranceTests(AgentFixture):
     def test_unrelated_name_still_fails(self):
         self.assertFalse(identity._name_matches("Pedro", "Ana Torres"))
 
-    def test_owner_challenge_accepts_first_name(self):
-        self.contact.verification_level = ContactIdentity.VERIFICATION_PHONE_MATCH
-        self.contact.save(update_fields=['verification_level'])
-        self.assertTrue(identity.try_verify_by_owner_name(self.contact, "Ana"))
-        self.contact.refresh_from_db()
-        self.assertEqual(self.contact.verification_level,
-                         ContactIdentity.VERIFICATION_CONFIRMED)
+    def test_the_owner_name_no_longer_verifies_anyone(self):
+        """El match tolerante del nombre del titular sigue existiendo —lo usa el
+        reto FAMILIAR como clave de búsqueda— pero ya no verifica a nadie.
+
+        D4b: el sistema conoce ese nombre y se lo enseña al staff en la bandeja,
+        así que no prueba nada sobre quien escribe. La función que lo convertía
+        en factor se eliminó para que un cambio futuro no lo reabra.
+        """
+        self.assertTrue(identity._name_matches("Ana", "Ana Torres"))
+        self.assertFalse(hasattr(identity, 'try_verify_by_owner_name'))
 
 
 class ContactRematchTests(AgentFixture):

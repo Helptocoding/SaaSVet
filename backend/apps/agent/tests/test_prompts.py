@@ -202,30 +202,65 @@ class AnchoredIdentityFactsTests(PromptsTestCase):
         que es cliente»); ahora es el DATO que el cliente aportó, que es lo
         que de verdad hacía falta: la conv 13 clasificó bien y aun así perdió
         el nombre.
+
+        Reescrito otra vez en F0 del plan de continuidad: el dato viaja **con su
+        procedencia**. Sin ella no se publica (D15), porque un valor suelto puede
+        ser el nombre que el modelo copió de una fuga — que es exactamente cómo
+        se verificó a sí mismo el sistema en la conv 18 de producción.
         """
-        self.conv.flow['aportado'] = {'owner_name': 'Ana Cruz'}
+        from apps.agent.identity_evidence import FLOW_KEY
+        message = self._inbound("cita para Luna")
+        self.conv.flow[FLOW_KEY] = {'pet_name': {
+            'value': 'Luna', 'from_message': message.pk,
+            'match_mode': 'passive_free_text',
+            'captured_at': timezone.now().isoformat(),
+        }}
         self.conv.save(update_fields=['flow'])
         self._fill_the_window()
         ctx = self._context_block()
-        self.assertEqual(ctx["identidad"]["dijo_llamarse"], "Ana Cruz")
+        self.assertEqual(ctx["identidad"]["dijo_que_su_mascota_se_llama"],
+                         "Luna")
+
+    def test_an_unsourced_fact_never_travels(self):
+        """D15 · el punto de control está en el ESCRITOR, pero el lector también
+        se protege de las filas escritas antes del gate."""
+        from apps.agent.identity_evidence import FLOW_KEY
+        self.conv.flow[FLOW_KEY] = {'owner_name': 'Ana Cruz'}   # forma vieja
+        self.conv.save(update_fields=['flow'])
+        self.assertNotIn("identidad", self._context_block())
 
     def test_declared_titular_and_pending_factor_travel_too(self):
         from apps.agent import goals
+        message = self._inbound("soy Ana")
         commitment = goals.start_identity(
             self.conv, goals.FAMILY, first_factor='digits',
             working_state={'candidate_ids': [1]})
-        goals.satisfy(commitment, 'titular', 'Ana')
+        goals.satisfy(commitment, 'titular', 'Ana',
+                      provenance={'from_message': message.pk,
+                                  'match_mode': 'challenge_response'})
         ctx = self._context_block()
         self.assertEqual(ctx["identidad"]["titular_declarado"], "Ana")
         self.assertIn("4 dígitos", ctx["identidad"]["verificacion_pendiente"])
+
+    def test_satisfy_refuses_an_identity_value_without_provenance(self):
+        """El choke point (D15): bloquear en el escritor hace la regla cierta
+        para cualquier vía futura de publicación."""
+        from apps.agent import goals
+        commitment = goals.start_identity(
+            self.conv, goals.FAMILY, first_factor='digits')
+        with self.assertRaises(ValueError):
+            goals.satisfy(commitment, 'titular', 'Ana')
 
     def test_parked_challenge_still_counts_as_a_fact(self):
         """Apartado ≠ inexistente: para el modelo el hecho es el mismo — hay
         una verificación a medias con un titular declarado."""
         from apps.agent import goals
+        message = self._inbound("soy Ana")
         commitment = goals.start_identity(
             self.conv, goals.FAMILY, first_factor='digits')
-        goals.satisfy(commitment, 'titular', 'Ana')
+        goals.satisfy(commitment, 'titular', 'Ana',
+                      provenance={'from_message': message.pk,
+                                  'match_mode': 'challenge_response'})
         goals.park_identity(self.conv, commitment, going_to_human=True)
         ctx = self._context_block()
         self.assertEqual(ctx["identidad"]["titular_declarado"], "Ana")

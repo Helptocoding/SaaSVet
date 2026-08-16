@@ -239,11 +239,19 @@ def anchored_identity_facts(conversation):
     # ("es cliente" / "es nuevo"); esto guarda el DATO, que es lo que de
     # verdad hacía falta — la conv 13 clasificó bien y aun así perdió el
     # nombre.
+    # **Sin procedencia no viaja** (plan de continuidad, D15). La forma vieja
+    # —valor plano en vez de `{value, from_message}`— vive en conversaciones de
+    # producción y se tolera para auditoría, pero no se publica: si no consta qué
+    # mensaje del cliente lo aportó, puede ser el nombre que el modelo copió de
+    # una fuga. Retirarlo de `context['cliente']` y dejarlo entrar por aquí no
+    # habría cerrado nada.
+    from .identity_evidence import FLOW_KEY
+    sealed = flow.get(FLOW_KEY) or {}
     for key, label in (('owner_name', 'dijo_llamarse'),
                        ('pet_name', 'dijo_que_su_mascota_se_llama')):
-        value = (flow.get('aportado') or {}).get(key)
-        if value:
-            facts[label] = value
+        fact = sealed.get(key)
+        if isinstance(fact, dict) and fact.get('from_message'):
+            facts[label] = fact.get('value')
 
     # El reto puede estar ACTIVO o SUSPENDIDO: para el modelo el hecho es el
     # mismo — este contacto declaró un titular y hay una verificación a
@@ -258,9 +266,12 @@ def anchored_identity_facts(conversation):
         ).first()
     )
     if commitment is not None:
-        titular = (commitment.slots.get('titular') or {}).get('value')
-        if titular:
-            facts['titular_declarado'] = titular
+        slot = commitment.slots.get('titular') or {}
+        # Mismo criterio que arriba (D15): un slot sin `from_message` no consta
+        # que lo aportara el cliente. `goals.satisfy` ya lo bloquea en el
+        # escritor; esto cubre las filas escritas antes de ese gate.
+        if slot.get('value') and slot.get('from_message'):
+            facts['titular_declarado'] = slot['value']
         label = _FACTOR_LABEL.get(commitment.return_to)
         if label:
             facts['verificacion_pendiente'] = label
@@ -350,8 +361,19 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     contact = conversation.contact
 
     # ── 1 · QUIÉN ES ────────────────────────────────────────────────────────
+    from . import identity
+
     context = {
-        'cliente': contact.owner.name if contact.owner_id else None,
+        # El nombre del titular NO viaja sin verificación vigente (plan de
+        # continuidad, D4). Con solo `phone_match` esto publicaba el nombre del
+        # expediente a quien todavía no había probado ser esa persona: el modelo
+        # lo leyó, lo pasó a `identify_client` y el sistema lo verificó contra sí
+        # mismo (conv 18 de producción). Un teléfono reciclado, un familiar con
+        # el celular o una SIM robada bastaban.
+        'cliente': (contact.owner.name
+                    if contact.owner_id
+                    and identity.is_verification_current(contact)
+                    else None),
         'numero_registrado': contact.owner_id is not None,
         'verificado': contact.verification_level
         in ('confirmed_in_chat', 'staff_verified'),
