@@ -164,6 +164,20 @@ class Message(OrganizationalModel):
         'agent.Conversation', on_delete=models.PROTECT,
         null=True, blank=True, related_name='messages',
     )
+    # A QUIÉN pertenece el mensaje, independientemente del episodio (plan de
+    # continuidad, F2). Denormalizado a propósito: el contexto del agente y la
+    # bandeja leen por persona, y hacerlo por `conversation__contact` obligaría a
+    # un JOIN en la consulta más caliente del turno.
+    #
+    # `null=True` NO es transitorio: `conversation` ya es nullable para los
+    # payloads que no resuelven hilo (media huérfana, errores de parseo), y esos
+    # tampoco tienen contacto resoluble. Contrato: se llena SIEMPRE que haya
+    # `conversation`; los huérfanos quedan con ambos nulos y no entran ni al
+    # contexto ni a la bandeja.
+    contact = models.ForeignKey(
+        'agent.ContactIdentity', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='messages',
+    )
     direction = models.CharField(max_length=3, choices=DIRECTION_CHOICES)
     author_type = models.CharField(max_length=12, choices=AUTHOR_CHOICES)
     # Staff que respondió desde la bandeja (solo author_type='human_staff').
@@ -215,6 +229,10 @@ class Message(OrganizationalModel):
             models.Index(fields=['organization', 'conversation', 'created_at']),
             # Cola del worker (inbox pendiente) y outbox del sender.
             models.Index(fields=['direction', 'status']),
+            # Contexto del agente por CONTACTO y cuenta (plan de continuidad,
+            # F2): el modelo lee el hilo de la persona, no el del episodio.
+            models.Index(fields=['organization', 'contact', 'channel_account',
+                                 'created_at']),
         ]
 
     def __str__(self):

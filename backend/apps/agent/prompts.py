@@ -29,6 +29,8 @@ que ahora la añade el sistema.
 """
 import json
 
+from django.utils import timezone
+
 from apps.channels.models import Message
 
 PROMPT_VERSION = 'reception-f5-v11'
@@ -420,6 +422,12 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
         'verificado': contact.verification_level
         in ('confirmed_in_chat', 'staff_verified'),
     }
+    # Hechos de CONTACTO (F3): el sistema los calcula y se los dice al modelo en
+    # cada turno, sin que nadie los pida. `ya_hablamos_antes` evita el
+    # «¡Bienvenido!» a un cliente de 19 conversaciones, y `ultimo_mensaje_hace`
+    # evita que lea una cola vieja como si fuera de hoy — que es el riesgo real
+    # de leer el hilo completo del contacto.
+    context.update(_contact_history_facts(conversation))
     # Hechos de identidad ANCLADOS: viajan siempre, aunque el mensaje que los
     # originó ya no quepa en la ventana (R2, §2.2).
     identity_facts = anchored_identity_facts(conversation)
@@ -457,10 +465,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     }]
 
     recent = list(
-        Message.objects.for_organization(org)
-        .filter(conversation=conversation)
-        .exclude(direction=Message.DIRECTION_OUT,
-                 status=Message.STATUS_DISCARDED)
+        _history_queryset(conversation)
         .order_by('-created_at', '-id')[:HISTORY_MESSAGE_CAP]
     )[::-1]
     for turn in _group_into_turns(recent)[-HISTORY_TURNS:]:
@@ -469,10 +474,105 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     return messages
 
 
+def _contact_history_facts(conversation, now=None):
+    """`ya_hablamos_antes` / `ultima_vez` / `ultimo_mensaje_hace` (F3).
+
+    **Se calculan EXCLUYENDO la ráfaga en curso.** El entrante ya está persistido
+    cuando el worker arma el prompt, así que medir «última actividad» sin
+    excluirlo diría `hace unos segundos` SIEMPRE — el campo diría justo lo
+    contrario de lo que quiere decir. La referencia es el mensaje anterior al
+    turno actual.
+    """
+    from apps.channels.selectors import visible_messages
+
+    now = now or timezone.now()
+    previous = visible_messages(
+        Message.objects.for_organization(conversation.organization).filter(
+            contact=conversation.contact,
+            channel_account=conversation.channel_account,
+        )
+    ).exclude(
+        # El turno en curso: los entrantes que el worker acaba de tomar.
+        direction=Message.DIRECTION_IN, status=Message.STATUS_PENDING,
+    ).order_by('-created_at', '-id').first()
+    if previous is None:
+        return {}
+
+    gap = now - previous.created_at
+    return {
+        'ya_hablamos_antes': True,
+        'ultima_vez': previous.created_at.date().isoformat(),
+        'ultimo_mensaje_hace': _humanize_gap(gap),
+    }
+
+
+def _humanize_gap(gap):
+    """En voz de negocio, no en unidades de máquina."""
+    minutes = int(gap.total_seconds() // 60)
+    if minutes < 60:
+        return 'unos minutos'
+    hours = minutes // 60
+    if hours < 24:
+        return f'{hours} h'
+    days = hours // 24
+    if days < 30:
+        return f'{days} días'
+    months = days // 30
+    return f'{months} meses' if months > 1 else 'un mes'
+
+
+def _history_queryset(conversation):
+    """De dónde sale el historial que ve el modelo (plan de continuidad, F2/D19).
+
+    **Con verificación vigente**: todo el hilo del contacto en esta cuenta, no
+    solo el episodio. Es la queja que abrió este trabajo — una conversación
+    cerrada abría otra y el agente empezaba de cero, con 19 hilos del mismo
+    cliente en la bandeja.
+
+    **Sin ella**: solo la conversación actual, exactamente como antes de F2. El
+    transcript viejo puede contener el nombre de una mascota, que ahora es **la
+    respuesta del reto**; entregárselo al modelo antes de saber quién escribe es
+    la misma clase de error que el nombre del titular en el bloque de contexto.
+    Reduce la superficie, no la elimina —la sesión actual ya puede contenerlo—:
+    el bypass lo cierra el anti-eco, esto cierra la fuga.
+
+    El alcance es `(contact, channel_account)`, no solo el contacto: dos números
+    de la misma clínica pueden ser dos flujos distintos (agenda y mostrador), y
+    mezclar sus hilos mete al modelo en una conversación que no es la suya.
+
+    La bandeja humana no pasa por aquí: recepción ve el historial completo con su
+    propio permiso.
+    """
+    from . import identity
+    from apps.channels.selectors import visible_messages
+
+    base = Message.objects.for_organization(conversation.organization)
+    if identity.is_verification_current(conversation.contact):
+        scoped = base.filter(contact=conversation.contact,
+                             channel_account=conversation.channel_account)
+    else:
+        scoped = base.filter(conversation=conversation)
+    # `visible_messages` en vez de excluir solo `discarded`: los salientes
+    # `failed` son los que el proveedor NO entregó (ventana de 24 h cerrada), y
+    # el modelo los veía como dichos.
+    return visible_messages(scoped)
+
+
 def _has_outbound(conversation):
-    """¿Ya le hemos escrito alguna vez? Señal de primer contacto (bloque 2)."""
-    return Message.objects.for_organization(conversation.organization).filter(
-        conversation=conversation, direction=Message.DIRECTION_OUT,
+    """¿Ya le hemos escrito alguna vez? Señal de primer contacto (bloque 2).
+
+    Por CONTACTO y cuenta, no por conversación (F2): derivarlo del hilo hacía
+    que un cliente con 19 conversaciones recibiera «¡Bienvenido!» en cada una.
+    Y con `visible_messages`, un saliente que nunca salió no cuenta como haberle
+    escrito.
+    """
+    from apps.channels.selectors import visible_messages
+    return visible_messages(
+        Message.objects.for_organization(conversation.organization).filter(
+            contact=conversation.contact,
+            channel_account=conversation.channel_account,
+            direction=Message.DIRECTION_OUT,
+        )
     ).exists()
 
 

@@ -527,6 +527,8 @@ def close_inactive_conversations(idle_hours=24, now=None):
     for conversation in stale:
         conversation.state = Conversation.STATE_CLOSED
         conversation.closed_at = now
-        conversation.save(update_fields=['state', 'closed_at'])
+        conversation.close_reason = Conversation.CLOSE_IDLE
+        conversation.save(update_fields=['state', 'closed_at',
+                                         'close_reason'])
         count += 1
     return count

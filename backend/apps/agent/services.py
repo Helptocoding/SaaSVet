@@ -218,30 +218,94 @@ def get_or_create_open_conversation(contact, channel_account):
 
     Spec §2.8: una conversación CLOSED no se reabre — un mensaje posterior
     abre un hilo NUEVO que hereda la ContactIdentity (y su nivel de
-    verificación persistido).
+    verificación persistido). **Eso NO significa empezar de cero**: desde F2 el
+    contexto que ve el modelo es el del CONTACTO, no el del episodio
+    (`prompts._history_queryset`). La sesión sigue siendo por episodio porque de
+    ella cuelgan métricas, presupuesto, claim, hand-off y compromisos.
+
+    **La creación se serializa sobre el contacto** (plan de continuidad, F2): el
+    `select_for_update` de una conversación no protege la AUSENCIA de fila, así
+    que dos webhooks simultáneos del mismo número podían crear dos sesiones. Se
+    bloquea `ContactIdentity`, que siempre existe. Mismo patrón que ya usaba
+    `resolve_contact_identity` contra su unique.
     """
     org = channel_account.organization
-    conv = (
-        Conversation.objects
-        .for_organization(org)
-        .filter(contact=contact)
-        .exclude(state=Conversation.STATE_CLOSED)
-        .order_by('-created_at')
-        .first()
-    )
-    if conv is None:
-        conv = Conversation(
-            organization=org,
-            channel_account=channel_account,
-            contact=contact,
+    with transaction.atomic():
+        ContactIdentity.objects.select_for_update().get(pk=contact.pk)
+        open_convs = list(
+            Conversation.objects
+            .for_organization(org)
+            .filter(contact=contact, channel_account=channel_account)
+            .exclude(state=Conversation.STATE_CLOSED)
+            .order_by('-created_at')
         )
-        conv.save()
-        logger.info("AGENT_CONVERSATION_OPENED", extra={
-            "event": "AGENT_CONVERSATION_OPENED",
-            "organization_id": org.pk,
-            "conversation_id": conv.pk,
-        })
+        conv = _resolve_duplicate_sessions(open_convs) if open_convs else None
+        if conv is None:
+            conv = Conversation(
+                organization=org,
+                channel_account=channel_account,
+                contact=contact,
+            )
+            conv.save()
+            logger.info("AGENT_CONVERSATION_OPENED", extra={
+                "event": "AGENT_CONVERSATION_OPENED",
+                "organization_id": org.pk,
+                "conversation_id": conv.pk,
+            })
     return conv
+
+
+# Qué sesión sobrevive si hay más de una abierta. **No es «la más reciente»**:
+# eso podía cerrar una que una persona está atendiendo y dejar viva una `active`
+# más nueva, sacándole la conversación de las manos.
+_SESSION_PRECEDENCE = {
+    Conversation.STATE_HUMAN_ACTIVE: 3,
+    Conversation.STATE_HANDOFF_PENDING: 2,
+    Conversation.STATE_ACTIVE: 1,
+}
+
+
+def _resolve_duplicate_sessions(open_convs):
+    """Deja una sola sesión abierta y cierra el resto. Devuelve la superviviente.
+
+    El estado heredado existe: la carrera que este código cierra pudo crear dos
+    filas antes de arreglarse. Se resuelve por PRECEDENCIA y, a igualdad, por
+    recencia.
+    """
+    if len(open_convs) == 1:
+        return open_convs[0]
+
+    ranked = sorted(
+        open_convs,
+        key=lambda c: (_SESSION_PRECEDENCE.get(c.state, 0), c.created_at),
+        reverse=True,
+    )
+    survivor, duplicates = ranked[0], ranked[1:]
+    human = [c for c in open_convs
+             if c.state in (Conversation.STATE_HUMAN_ACTIVE,
+                            Conversation.STATE_HANDOFF_PENDING)]
+    if len(human) > 1:
+        # Dos personas operando: elegir por reloj no es una decisión de script.
+        logger.error("AGENT_DUPLICATE_HUMAN_SESSIONS", extra={
+            "event": "AGENT_DUPLICATE_HUMAN_SESSIONS",
+            "organization_id": survivor.organization_id,
+            "conversations": [c.pk for c in human],
+        })
+        return survivor
+
+    now = timezone.now()
+    for duplicate in duplicates:
+        duplicate.state = Conversation.STATE_CLOSED
+        duplicate.closed_at = now
+        duplicate.close_reason = Conversation.CLOSE_DUPLICATE
+        duplicate.save(update_fields=['state', 'closed_at', 'close_reason'])
+        logger.warning("AGENT_DUPLICATE_SESSION_CLOSED", extra={
+            "event": "AGENT_DUPLICATE_SESSION_CLOSED",
+            "organization_id": duplicate.organization_id,
+            "conversation_id": duplicate.pk,
+            "survivor_id": survivor.pk,
+        })
+    return survivor
 
 
 def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
@@ -272,6 +336,7 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
         organization=org,
         channel_account=channel_account,
         conversation=conversation,
+        contact=contact,          # F2 · el mensaje es de la PERSONA, no del hilo
         direction=Message.DIRECTION_IN,
         author_type=Message.AUTHOR_CLIENT,
         payload_type=payload_type,

@@ -38,6 +38,7 @@ def enqueue_outbound(conversation, body, *, author='system'):
         organization=conversation.organization,
         channel_account=conversation.channel_account,
         conversation=conversation,
+        contact_id=conversation.contact_id,   # F2 · el mensaje es de la PERSONA
         direction=Message.DIRECTION_OUT,
         author_type=author_type,
         body=body,

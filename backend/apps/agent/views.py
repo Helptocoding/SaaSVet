@@ -369,7 +369,8 @@ def reset_contact_identity(request, pk):
     for conv in open_conversations:
         conv.state = Conversation.STATE_CLOSED
         conv.closed_at = now
-        conv.save(update_fields=['state', 'closed_at'])
+        conv.close_reason = Conversation.CLOSE_IDENTITY_RESET
+        conv.save(update_fields=['state', 'closed_at', 'close_reason'])
 
     logger.info("AGENT_CONTACT_IDENTITY_RESET", extra={
         "event": "AGENT_CONTACT_IDENTITY_RESET",
@@ -403,6 +404,7 @@ def send_message(request, pk):
         organization=org,
         channel_account=conversation.channel_account,
         conversation=conversation,
+        contact_id=conversation.contact_id,   # F2
         direction=Message.DIRECTION_OUT,
         author_type=Message.AUTHOR_HUMAN,
         human_author=request.user,
@@ -471,7 +473,8 @@ def close_conversation(request, pk):
         if convo.state != Conversation.STATE_CLOSED:
             convo.state = Conversation.STATE_CLOSED
             convo.closed_at = timezone.now()
-            convo.save(update_fields=['state', 'closed_at'])
+            convo.close_reason = Conversation.CLOSE_STAFF
+            convo.save(update_fields=['state', 'closed_at', 'close_reason'])
     return Response(ConversationListSerializer(convo).data)
 
 

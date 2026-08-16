@@ -144,6 +144,27 @@ class Conversation(PublicIdMixin, OrganizationalModel):
         max_length=20, choices=STATE_CHOICES, default=STATE_ACTIVE,
     )
     closed_at = models.DateTimeField(null=True, blank=True)
+    # POR QUÉ se cerró (plan de continuidad, F2). Antes ningún cierre lo
+    # registraba, así que «se cerró por inactividad» y «lo cerró recepción» eran
+    # indistinguibles en los datos. `legacy_unknown` es el valor de las filas ya
+    # cerradas: no se les inventa una razón.
+    CLOSE_IDLE = 'idle'
+    CLOSE_STAFF = 'staff'
+    CLOSE_OPT_OUT = 'opt_out'
+    CLOSE_IDENTITY_RESET = 'identity_reset'
+    CLOSE_DUPLICATE = 'duplicate_session'
+    CLOSE_LEGACY = 'legacy_unknown'
+    CLOSE_REASON_CHOICES = (
+        (CLOSE_IDLE, 'Inactividad'),
+        (CLOSE_STAFF, 'Cerrada por recepción'),
+        (CLOSE_OPT_OUT, 'Baja del cliente'),
+        (CLOSE_IDENTITY_RESET, 'Reset de identidad'),
+        (CLOSE_DUPLICATE, 'Sesión duplicada'),
+        (CLOSE_LEGACY, 'Desconocida (fila previa al campo)'),
+    )
+    close_reason = models.CharField(
+        max_length=20, choices=CLOSE_REASON_CHOICES, blank=True, default='',
+    )
     # Ventana de 24 h de WhatsApp: fuera de ella solo plantillas (F3). La
     # valida el Sender, no el LLM.
     last_inbound_at = models.DateTimeField(null=True, blank=True)

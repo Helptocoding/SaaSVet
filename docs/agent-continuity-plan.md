@@ -1,10 +1,10 @@
 # Plan — continuidad conversacional e identidad del agente
 
 **Fecha**: 2026-08-16 (rev. 14 tras decimotercera revisión externa)
-**Estado**: **F0 IMPLEMENTADA** (2026-08-16, `9df40b8`) · **F1a IMPLEMENTADA**
-(prompt `reception-f5-v11`) — **no se despliega sin correr antes la remediación en
-producción** (D16) · F2/F3/F4/F5 requieren los contratos del §6 antes de
-implementar
+**Estado**: **F0** (`9df40b8`) · **F1a** (`8cab9c5`) · **F2 + F3 IMPLEMENTADAS**
+(2026-08-16) — el contexto ya se lee por contacto · **No se despliega sin correr
+antes la remediación en producción** (D16) · F1b/F4/F5 pendientes; el **inbox
+agrupado (§4)** queda como trabajo propio
 
 > **Qué quedó hecho en F0** — suite del agente en verde (669 tests):
 > `agent/identity_evidence.py` (servicio único: gramática cerrada, procedencia
@@ -37,6 +37,26 @@ implementar
 > `verificado` es false. **Lo que NO prueban: que el modelo obedezca.** Eso
 > necesita un eval contra el proveedor real; un `assertIn` sobre una plantilla no
 > lo decide.
+>
+> **Qué quedó hecho en F2 + F3** — 734 tests verdes (agent + channels):
+> `Message.contact` denormalizado con migración **expand-first en tres pasos**
+> (campo nullable → backfill por lotes → índice `CONCURRENTLY`) ·
+> `Conversation.close_reason`, estampado en los cuatro sitios que cierran ·
+> `prompts._history_queryset`: el transcript sale de `(contact, channel_account)`
+> **si la verificación está vigente**, y de la conversación actual si no (D19) ·
+> `_has_outbound` y los hechos `ya_hablamos_antes`/`ultima_vez`/
+> `ultimo_mensaje_hace` derivados del contacto, **excluyendo la ráfaga en curso**
+> · creación de sesión serializada sobre `ContactIdentity` (el `select_for_update`
+> de una conversación no protege la ausencia de fila) con resolución de
+> duplicados **por precedencia**, que se detiene si hay dos sesiones humanas ·
+> `test_f2_continuity.py` (16 casos: continuidad, aislamiento por contacto y por
+> cuenta, gate de verificación, `failed` fuera del historial, hechos de contacto y
+> carrera de sesiones).
+>
+> **Fuera de F2, a propósito**: el **inbox agrupado** (§4). Necesita `public_id`
+> en `ContactIdentity` y `ChannelAccount`, ruta compuesta y trabajo de frontend;
+> es una superficie distinta y merece su propio cambio. Lo que arreglaba la queja
+> del agente ya está.
 **Origen**: queja de piloto — «cada conversación que se cierra arranca de cero» +
 «me pide el nombre en el mismo mensaje donde me llama por mi nombre».
 

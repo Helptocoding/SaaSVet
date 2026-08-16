@@ -124,6 +124,60 @@ correcta —el vínculo actual apunta a un expediente elegido a ciegas—, pero 
 esa clínica el cliente deja de ser reconocido hasta que alguien ordene el dato.
 Se despliega con el reporte de `audit_owner_phone_duplicates` a la vista.
 
+## Continuidad: la sesión es del episodio, el contexto es de la persona (F2)
+
+**`CLOSED` sigue siendo terminal** —un mensaje posterior abre un hilo nuevo— pero
+eso **ya no significa empezar de cero**. Lo que el modelo lee sale de
+`(contact, channel_account)`, no de la conversación.
+
+Por qué la sesión no se volvió permanente: de ella cuelgan las métricas de
+negocio (`compute_business_metrics` cuenta por `Conversation.created_at`), el
+presupuesto de llamadas, el claim de la bandeja, los `HumanHandoff`, los
+`ConversationGoal` y el `flow`. Hacerla eterna habría roto todo eso para arreglar
+el transcript.
+
+| Concepto | Alcance |
+|---|---|
+| Transcript que ve el LLM, hechos de contacto | `(contact, channel_account)` — dos números de la misma clínica pueden ser dos flujos |
+| `verification_level`, `owner`, `privacy_notice_sent_at` | `contact` — es un hecho sobre la persona dentro de la organización |
+| Sesión, presupuesto, claim, hand-off, goals, `flow` | `Conversation` — sin cambios |
+
+**El historial cruzado exige verificación vigente.** Sin ella, el contexto se
+limita a la conversación actual, exactamente como antes: el transcript viejo
+puede contener el nombre de una mascota, que es la respuesta del reto. Los hechos
+de contacto sí viajan siempre porque no son PII:
+
+```json
+{"ya_hablamos_antes": true, "ultima_vez": "2026-07-28",
+ "ultimo_mensaje_hace": "18 días"}
+```
+
+Se calculan **excluyendo la ráfaga en curso**: el entrante ya está persistido
+cuando el worker arma el prompt, así que sin excluirlo `ultimo_mensaje_hace`
+diría «unos minutos» siempre.
+
+`Message.contact` es denormalizado (migración expand-first: campo → backfill por
+lotes → índice `CONCURRENTLY`). Contrato: se llena siempre que haya
+`conversation`; los huérfanos (media sin hilo, errores de parseo) quedan con
+ambos nulos y **no entran ni al contexto ni a la bandeja**.
+
+La creación de sesión se serializa sobre `ContactIdentity` —el
+`select_for_update` de una conversación no protege la ausencia de fila— y si
+encuentra duplicados abiertos los resuelve **por precedencia**
+(`human_active` > `handoff_pending` > `active`, y a igualdad el más reciente),
+cerrando el resto con `close_reason='duplicate_session'`. Con **dos** sesiones
+humanas se detiene y lo registra: elegir por reloj entre dos personas operando no
+es decisión de un script.
+
+`Conversation.close_reason` registra por qué se cerró (`idle` · `staff` ·
+`opt_out` · `identity_reset` · `duplicate_session` · `legacy_unknown`). Antes
+ningún cierre lo decía, así que en los datos «lo cerró el barredor» y «lo cerró
+recepción» eran indistinguibles.
+
+> **Pendiente, y es trabajo propio**: la bandeja sigue mostrando una fila por
+> sesión. Agruparla por contacto necesita `public_id` en `ContactIdentity` y
+> `ChannelAccount`, ruta compuesta y frontend — ver §4 del plan de continuidad.
+
 ## Verificación en el chat: el factor único y su régimen probatorio (F0)
 
 > Plan completo, con las trece revisiones que lo cerraron:

@@ -238,6 +238,7 @@ def _first_reply_fallback(conversation, agent_settings, now):
         organization=org,
         channel_account=conversation.channel_account,
         conversation=conversation,
+        contact_id=conversation.contact_id,   # F2
         direction=Message.DIRECTION_OUT,
         author_type=Message.AUTHOR_SYSTEM,
         body=render_first_reply(agent_settings, org),

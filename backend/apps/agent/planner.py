@@ -342,7 +342,9 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
         enqueue_outbound(conversation, decision.text, author='system')
         conversation.state = Conversation.STATE_CLOSED
         conversation.closed_at = timezone.now()
-        conversation.save(update_fields=['state', 'closed_at'])
+        conversation.close_reason = Conversation.CLOSE_OPT_OUT
+        conversation.save(update_fields=['state', 'closed_at',
+                                         'close_reason'])
         return {'decision': 'close', 'llm_calls': 0, 'tools': 0}
 
     if decision.kind == policy.ESCALATE:
