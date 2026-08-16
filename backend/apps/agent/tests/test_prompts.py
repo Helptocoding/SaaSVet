@@ -267,3 +267,83 @@ class AnchoredIdentityFactsTests(PromptsTestCase):
 
     def test_no_identity_block_when_there_is_nothing_to_say(self):
         self.assertNotIn("identidad", self._context_block())
+
+
+class VerifiedBehaviourPromptTests(PromptsTestCase):
+    """F1a · el prompt tiene conducta para el caso VERIFICADO.
+
+    En producción (conv 20) un contacto ya `confirmed_in_chat` recibió «Todavía
+    no [sé quién eres], Andrés»: el modelo tenía el nombre en los DATOS y el
+    bloque IDENTIDAD dedicaba ~30 líneas a pedir datos sin una sola regla para
+    cuando el sistema ya sabe quién escribe.
+
+    **Lo que estos tests NO prueban**: que el modelo obedezca. Eso no lo decide
+    un `assertIn` sobre una plantilla — hace falta un eval contra el proveedor
+    real. Lo que sí anclan es que las reglas y los ejemplos siguen ahí, que la
+    prohibición no volvió a su forma absoluta, y que el dato que las activa
+    (`verificado`) llega al modelo.
+    """
+
+    def _owner_contact(self, *, verified):
+        from apps.patients.models import Owner
+        owner = Owner.objects.create(
+            organization=self.org, name="Andrés Ruiz", phone="5511667788")
+        self.contact.owner = owner
+        self.contact.verification_level = (
+            ContactIdentity.VERIFICATION_CONFIRMED if verified
+            else ContactIdentity.VERIFICATION_PHONE_MATCH)
+        self.contact.verified_at = timezone.now() if verified else None
+        self.contact.save(update_fields=[
+            'owner', 'verification_level', 'verified_at'])
+        self.conv.contact = self.contact
+        return owner
+
+    def test_the_prompt_has_a_rule_for_the_verified_case(self):
+        prompt = prompts.SYSTEM_PROMPT
+        self.assertIn('CUANDO `verificado` ES TRUE', prompt)
+        self.assertIn('no le pidas que se identifique otra vez',
+                      prompt.lower())
+
+    def test_the_ban_stopped_being_absolute(self):
+        """Antes: «Nunca digas ni des por hecho que alguien quedó verificado»,
+        que empujaba al modelo a desconfiar de un dato que el sistema le daba
+        como cierto. Sigue prohibido AFIRMARLO por su cuenta; usarlo, no."""
+        prompt = prompts.SYSTEM_PROMPT
+        self.assertNotIn('Nunca digas ni des por hecho que alguien quedó '
+                         'verificado', prompt)
+        self.assertIn('úsalo con naturalidad', prompt)
+
+    def test_the_prompt_no_longer_enumerates_retired_factors(self):
+        """v10 pedía «su nombre, el de su mascota o los últimos 4 dígitos». Los
+        dos primeros ya no verifican (D4b) y pedirlos manda al cliente a dar un
+        dato que no sirve."""
+        self.assertNotIn('o los\núltimos 4 dígitos del teléfono con el que está '
+                         'registrado', prompts.SYSTEM_PROMPT)
+
+    def test_the_prompt_explains_the_expiry_instead_of_pretending(self):
+        self.assertIn('la\nverificación caduca', prompts.SYSTEM_PROMPT)
+
+    def test_both_cases_have_a_worked_example(self):
+        prompt = prompts.SYSTEM_PROMPT
+        self.assertIn('(`verificado: true`, cliente Andrés)', prompt)
+        self.assertIn('(`verificado: false`, `numero_registrado: true`)', prompt)
+
+    def test_the_verified_flag_reaches_the_model_with_the_name(self):
+        self._owner_contact(verified=True)
+        ctx = self._context_block()
+        self.assertTrue(ctx['verificado'])
+        self.assertEqual(ctx['cliente'], "Andrés Ruiz")
+
+    def test_an_unverified_contact_gets_the_flag_without_the_name(self):
+        """La otra mitad: la regla del caso false solo es honesta si el nombre
+        de verdad no viaja."""
+        self._owner_contact(verified=False)
+        ctx = self._context_block()
+        self.assertFalse(ctx['verificado'])
+        self.assertTrue(ctx['numero_registrado'])
+        self.assertIsNone(ctx['cliente'])
+
+    def test_prompt_version_was_bumped(self):
+        """`PROMPT_VERSION` viaja en cada `LLMCall`: sin bumpearlo no se puede
+        correlacionar calidad con versión, que es para lo que existe."""
+        self.assertEqual(prompts.PROMPT_VERSION, 'reception-f5-v11')

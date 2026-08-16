@@ -1,9 +1,10 @@
 # Plan — continuidad conversacional e identidad del agente
 
 **Fecha**: 2026-08-16 (rev. 14 tras decimotercera revisión externa)
-**Estado**: **F0 IMPLEMENTADA** (2026-08-16, sin commitear) · **F1a** exige correr
-la remediación en producción antes de desplegarse (D16) · F2/F3/F4/F5 requieren
-los contratos del §6 antes de implementar
+**Estado**: **F0 IMPLEMENTADA** (2026-08-16, `9df40b8`) · **F1a IMPLEMENTADA**
+(prompt `reception-f5-v11`) — **no se despliega sin correr antes la remediación en
+producción** (D16) · F2/F3/F4/F5 requieren los contratos del §6 antes de
+implementar
 
 > **Qué quedó hecho en F0** — suite del agente en verde (669 tests):
 > `agent/identity_evidence.py` (servicio único: gramática cerrada, procedencia
@@ -24,6 +25,18 @@ los contratos del §6 antes de implementar
 > `test_identity_evidence.py` (43 casos: gramática adversarial, anti-eco,
 > `match_mode`, transacción, caducidad, remediación y **gate estático** de
 > `_promote`).
+>
+> **Qué quedó hecho en F1a** — suite del agente en verde (684 tests):
+> `prompts.py` v11 — el bloque IDENTIDAD se parte por el valor de `verificado`;
+> la prohibición pasa de «no afirmes que quedó verificado» a «no lo afirmes tú,
+> pero si los DATOS lo traen, úsalo»; deja de enumerar los factores retirados y
+> de formular la pregunta del reto (la añade el sistema); explica la caducidad en
+> vez de disimularla; y lleva un ejemplo trabajado por cada rama.
+> `test_prompts.VerifiedBehaviourPromptTests` ancla las reglas, los ejemplos, el
+> bump de versión y —la otra mitad— que el nombre **de verdad** no viaja cuando
+> `verificado` es false. **Lo que NO prueban: que el modelo obedezca.** Eso
+> necesita un eval contra el proveedor real; un `assertIn` sobre una plantilla no
+> lo decide.
 **Origen**: queja de piloto — «cada conversación que se cierra arranca de cero» +
 «me pide el nombre en el mismo mensaje donde me llama por mi nombre».
 
