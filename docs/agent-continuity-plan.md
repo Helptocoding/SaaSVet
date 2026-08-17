@@ -1,10 +1,20 @@
 # Plan — continuidad conversacional e identidad del agente
 
 **Fecha**: 2026-08-16 (rev. 14 tras decimotercera revisión externa)
-**Estado**: **F0** (`9df40b8`) · **F1a** (`8cab9c5`) · **F2+F3** (`778bb15`) ·
-**F1b** (`1b59fc4`) · **F4 IMPLEMENTADA** (2026-08-16) · **No se despliega sin
-correr antes la remediación en producción** (D16) · Pendientes: **F5** (fase
-contract) y el **inbox agrupado (§4)**, ambos trabajo propio
+**Estado**: **COMPLETO Y EN PRODUCCIÓN** (`a00afb6`, desplegado 2026-08-17).
+F0 (`9df40b8`) · F1a (`8cab9c5`) · F2+F3 (`778bb15`) · F1b (`1b59fc4`) ·
+F4 (`3301114`) · inbox agrupado (`bf897d4`, `a9e7043`) · retiro de los endpoints
+por episodio (`1376c3f`, `1034db5`) · **F5** (retiro de `Conversation.summary`).
+
+> **La remediación corrió en el despliegue** y encontró exactamente lo que la
+> auditoría predijo: 1 contacto degradado (`contact 1`, `verified_at` =
+> `2026-08-14 20:55:48`, el instante del `ToolExecution 81` donde el sistema se
+> verificó contra un nombre que él mismo filtró) y 1 reto `identity_triage`
+> cerrado como `retired_machinery`. Backfill de `Message.contact`: 470/470.
+>
+> **Lo único que sigue sin verificar es la obediencia del modelo a F1a.** Los
+> tests anclan que las reglas y los ejemplos están; que el modelo las siga
+> necesita un eval contra el proveedor real.
 
 > **Qué quedó hecho en F0** — suite del agente en verde (669 tests):
 > `agent/identity_evidence.py` (servicio único: gramática cerrada, procedencia

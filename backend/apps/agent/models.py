@@ -178,8 +178,15 @@ class Conversation(PublicIdMixin, OrganizationalModel):
     # Estado del flujo activo (F1): slots, tabla de refs, pending_action.
     # Whitelist de keys + tope de tamaño se enforcen en É-F1 (patrón ADR p50).
     flow = models.JSONField(default=dict, blank=True)
-    # Resumen rodante (F1) — compresión conversacional, jamás datos clínicos.
-    summary = models.TextField(blank=True, default='')
+    # `summary` (resumen rodante) se RETIRÓ en F5 del plan de continuidad. Se
+    # declaró en É-F1 y nunca se escribió ni se leyó: 20 filas en producción, 0
+    # con contenido. La continuidad se resolvió por otro camino —el transcript se
+    # lee por contacto (F2) y los hechos duraderos salen de tools (F4)—, así que
+    # un resumen generado por el LLM habría sido una segunda fuente de verdad
+    # (justo lo que prohíbe ADR p50) con su propia superficie de fuga.
+    #
+    # Si algún día hace falta comprimir, se diseña entonces: un campo muerto no
+    # es una decisión aplazada, es una invitación a llenarlo sin pensarlo.
     # Presupuesto (spec §2.6): al alcanzar el tope global la conversación
     # degrada a plantilla + handoff (E-09). Solo lo incrementa el planner.
     total_llm_calls = models.PositiveIntegerField(default=0)

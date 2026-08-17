@@ -81,3 +81,21 @@ class AgentSettingsTests(TestCase):
         settings_obj = AgentSettings.objects.create(organization=org)
         self.assertFalse(settings_obj.enabled)
         self.assertEqual(settings_obj.faq_facts, {})
+
+
+class RetiredFieldsTests(TestCase):
+    """F5 · lo que se retiró no vuelve por descuido.
+
+    `Conversation.summary` vivió desde É-F1 sin que nadie lo escribiera ni lo
+    leyera. La continuidad se resolvió por otro camino —el transcript se lee por
+    contacto (F2), los hechos duraderos salen de tools (F4)— y un resumen
+    generado por el LLM habría sido una segunda fuente de verdad (ADR p50).
+
+    Este test existe porque un campo muerto no es una decisión aplazada: es una
+    invitación a llenarlo sin pensarlo. Si alguien lo reintroduce, que sea
+    discutiéndolo, no de paso.
+    """
+
+    def test_conversation_has_no_summary_field(self):
+        field_names = {f.name for f in Conversation._meta.get_fields()}
+        self.assertNotIn('summary', field_names)
