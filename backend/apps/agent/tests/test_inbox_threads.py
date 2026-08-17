@@ -32,7 +32,7 @@ class ThreadsTestCase(APITestCase):
             verification_level=ContactIdentity.VERIFICATION_CONFIRMED,
             verified_at=timezone.now())
         self.user = User.objects.create_user(
-            username="recepcion", password="Recepcion12345",
+            username="recepcion", password="pass",
             organization=self.org, role="ADMIN")
         self.client.force_authenticate(self.user)
 
@@ -198,7 +198,7 @@ class ThreadDetailTests(ThreadsTestCase):
     def test_another_org_gets_404(self):
         other_org = Organization.objects.create(name="Ajena", timezone="UTC")
         intruder = User.objects.create_user(
-            username="ajeno", password="Ajeno12345678",
+            username="ajeno", password="pass",
             organization=other_org, role="ADMIN")
         self.client.force_authenticate(intruder)
         response = self.client.get(self._url('inbox-thread-messages'))

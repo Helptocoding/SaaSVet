@@ -38,4 +38,15 @@ regexes = [
   # en el commit 666273e, que es inmutable. Sin esta línea el gate quedaría
   # rojo para siempre por algo que ya no existe en el código.
   '''ZZQXPLONK9284''',
+  # Y otra vez lo mismo, por la misma razón y con la misma solución: dos
+  # contraseñas de USUARIO DE PRUEBA en `test_inbox_threads.py` (bandeja
+  # agrupada). Los tests autentican con `force_authenticate`, así que la
+  # contraseña ni se usa — pero eran lo bastante largas para que
+  # `generic-api-key` las leyera como credenciales por entropía.
+  #
+  # El código ya se corrigió al `password="pass"` que usa el resto de la suite,
+  # justamente porque no tiene entropía. Estas dos líneas cubren el commit
+  # bf897d4, que es inmutable.
+  '''Recepcion12345''',
+  '''Ajeno12345678''',
 ]
