@@ -225,20 +225,31 @@ def metrics_view(request):
 @api_view(['GET'])
 @permission_classes([make_permission('agentinbox.view')])
 def conversation_messages(request, pk):
+    """DEPRECADO — el transcript del HILO (`threads/<c>/<a>/messages/`).
+
+    Devuelve un solo episodio, y la bandeja dejó de pedirlos por separado: leer
+    a una persona a trozos era justo el problema.
+
+    Y no solo está sin consumidores: filtra distinto que el sucesor. Excluye los
+    salientes `discarded` pero **no los `failed`** —los que el proveedor nunca
+    entregó porque la ventana de 24 h estaba cerrada— así que le mostraría a
+    recepción mensajes que el cliente jamás recibió. Se deprecó en vez de
+    arreglarlo: el sucesor ya filtra bien con `visible_messages`, y mantener dos
+    lecturas del mismo transcript que no coinciden es peor que tener una.
+    """
+    from apps.channels.selectors import visible_messages
+
     conversation = _get_conversation(request, pk)
     org = request.user.organization
     messages = list(
-        Message.objects.for_organization(org)
-        .filter(conversation=conversation)
-        # Un saliente `discarded` nunca se envió (se descartó porque el cliente
-        # siguió escribiendo, W1-4): mostrarlo haría que recepción leyera un
-        # mensaje que el cliente jamás vio. Queda en DB para auditoría.
-        .exclude(direction=Message.DIRECTION_OUT,
-                 status=Message.STATUS_DISCARDED)
+        visible_messages(
+            Message.objects.for_organization(org)
+            .filter(conversation=conversation)
+        )
         .select_related('human_author')
         .order_by('-created_at', '-id')[:TRANSCRIPT_CAP]
     )[::-1]  # cap por los más recientes, entregados en orden cronológico
-    return Response({
+    return _deprecated_conversations(Response({
         'conversation': ConversationListSerializer(conversation).data,
         'messages': MessageSerializer(messages, many=True).data,
         # FLUJO-C: el caso de identidad, si lo hay. `None` en la inmensa
@@ -248,7 +259,7 @@ def conversation_messages(request, pk):
         # explican arriba, con sus acciones; esto cubre TODO lo demás, que
         # hasta aquí llegaba a la bandeja sin decir nada.
         'handoff': _handoff_payload(conversation),
-    })
+    }), request)
 
 
 def _handoff_payload(conversation):
