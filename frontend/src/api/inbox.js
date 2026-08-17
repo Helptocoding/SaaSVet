@@ -9,6 +9,28 @@ export const getConversations = (params = {}) =>
 export const getConversationMessages = (publicId) =>
   api.get(`inbox/conversations/${publicId}/messages/`).then((r) => r.data);
 
+// Bandeja AGRUPADA por persona (plan de continuidad §4). Una fila por
+// `(contacto, cuenta)`: en producción un mismo cliente tenía 19 conversaciones
+// y la bandeja las pintaba como 19 filas distintas.
+//
+// La ruta es COMPUESTA a propósito: con solo el contacto, una clínica con dos
+// números tendría dos filas colisionando en un id.
+export const getThreads = (params = {}) =>
+  api.get("inbox/threads/", { params }).then((r) => r.data);
+
+// Transcript del hilo COMPLETO (cruza sesiones) + la sesión vigente, que es
+// contra la que se actúa. `before` es el cursor hacia atrás.
+export const getThreadMessages = (contactId, accountId, params = {}) =>
+  api
+    .get(`inbox/threads/${contactId}/${accountId}/messages/`, { params })
+    .then((r) => r.data);
+
+// Los episodios del hilo, del más reciente al más viejo.
+export const getThreadSessions = (contactId, accountId, params = {}) =>
+  api
+    .get(`inbox/threads/${contactId}/${accountId}/sessions/`, { params })
+    .then((r) => r.data);
+
 export const sendInboxMessage = (publicId, body) =>
   api.post(`inbox/conversations/${publicId}/send/`, { body }).then((r) => r.data);
 

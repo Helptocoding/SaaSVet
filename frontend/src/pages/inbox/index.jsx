@@ -7,8 +7,8 @@ import {
     claimConversation,
     closeConversation,
     getAgentSettings,
-    getConversationMessages,
-    getConversations,
+    getThreadMessages,
+    getThreads,
     getInboxMetrics,
     getWhatsappToken,
     releaseConversation,
@@ -47,10 +47,11 @@ const STATE_BADGE = {
     closed: "badge-default",
 };
 
+// El HILO no tiene estado —lo tiene su sesión vigente—, así que el filtro es
+// otro: o hay algo abierto, o el hilo está archivado.
 const FILTERS = [
-    { value: "", label: "Abiertas" },
-    { value: "human_active", label: "Atendidas" },
-    { value: "closed", label: "Cerradas" },
+    { value: "", label: "Activas" },
+    { value: "archived", label: "Archivadas" },
 ];
 
 const fmtTime = (iso) => {
@@ -229,8 +230,11 @@ const Inbox = () => {
     const [conversations, setConversations] = useState([]);
     const [loadingList, setLoadingList] = useState(true);
     const [filter, setFilter] = useState("");
-    const [selectedId, setSelectedId] = useState(null);
-    const [thread, setThread] = useState(null); // { conversation, messages }
+    // La selección es el HILO —la persona—, no el episodio: `{contact, account}`.
+    // Las ACCIONES siguen apuntando a la sesión vigente (`thread.conversation`),
+    // porque de ella cuelgan el claim, el hand-off y los compromisos.
+    const [selectedThread, setSelectedThread] = useState(null);
+    const [thread, setThread] = useState(null); // { conversation, messages, ... }
     const [body, setBody] = useState("");
     const [sending, setSending] = useState(false);
     const [acting, setActing] = useState(false);
@@ -249,9 +253,12 @@ const Inbox = () => {
     // ella el kill switch del agente.
     const canVerifyIdentity = can?.("agentinbox.identity_verify");
 
-    const loadList = useCallback(async () => {
+    const loadList = useCallback(async ({ silent = true } = {}) => {
+        if (!silent) setLoadingList(true);
         try {
-            const data = await getConversations(filter ? { state: filter } : {});
+            // `archived` en vez de `state`: el hilo no tiene estado propio — lo
+            // tiene su sesión vigente, y si no hay ninguna está archivado.
+            const data = await getThreads(filter === "archived" ? { archived: 1 } : {});
             setConversations(toList(data));
         } catch (err) {
             console.error(apiError(err));
@@ -260,10 +267,10 @@ const Inbox = () => {
         }
     }, [filter]);
 
-    const loadThread = useCallback(async (publicId) => {
-        if (!publicId) return;
+    const loadThread = useCallback(async (target) => {
+        if (!target) return;
         try {
-            const data = await getConversationMessages(publicId);
+            const data = await getThreadMessages(target.contact, target.account);
             setThread(data);
         } catch (err) {
             toast.error(apiError(err, "No se pudo cargar la conversación"));
@@ -272,19 +279,18 @@ const Inbox = () => {
 
     // Lista: carga inicial + polling.
     useEffect(() => {
-        setLoadingList(true);
-        loadList();
+        loadList({ silent: false });
         const t = setInterval(loadList, LIST_POLL_MS);
         return () => clearInterval(t);
     }, [loadList]);
 
     // Transcript del seleccionado: carga + polling.
     useEffect(() => {
-        if (!selectedId) { setThread(null); return; }
-        loadThread(selectedId);
-        const t = setInterval(() => loadThread(selectedId), THREAD_POLL_MS);
+        if (!selectedThread) return;
+        loadThread(selectedThread);
+        const t = setInterval(() => loadThread(selectedThread), THREAD_POLL_MS);
         return () => clearInterval(t);
-    }, [selectedId, loadThread]);
+    }, [selectedThread, loadThread]);
 
     // Kill switch: solo si puede configurarlo.
     useEffect(() => {
@@ -329,8 +335,18 @@ const Inbox = () => {
         threadEndRef.current?.scrollIntoView({ block: "end" });
     }, [thread?.messages?.length]);
 
+    // La sesión contra la que se ACTÚA. `null` = hilo archivado: se lee, se
+    // recorre, y no ofrece acciones — escribir sobre una sesión cerrada devuelve
+    // 400, así que no se pinta el botón.
+    const sessionId = thread?.conversation?.public_id || null;
+    const isSelected = (row) => (
+        selectedThread
+        && row.contact_public_id === selectedThread.contact
+        && row.channel_account_public_id === selectedThread.account
+    );
+
     const refreshAll = async () => {
-        await Promise.all([loadList(), selectedId ? loadThread(selectedId) : null]);
+        await Promise.all([loadList(), selectedThread ? loadThread(selectedThread) : null]);
     };
 
     const handleSend = async () => {
@@ -338,7 +354,7 @@ const Inbox = () => {
         if (!text) { toast.error("Escribe un mensaje"); return; }
         setSending(true);
         try {
-            await sendInboxMessage(selectedId, text);
+            await sendInboxMessage(sessionId, text);
             setBody("");
             await refreshAll();
         } catch (err) {
@@ -351,7 +367,7 @@ const Inbox = () => {
     const runAction = async (fn, successMsg) => {
         setActing(true);
         try {
-            await fn(selectedId);
+            await fn(sessionId);
             if (successMsg) toast.success(successMsg);
             await refreshAll();
         } catch (err) {
@@ -386,8 +402,7 @@ const Inbox = () => {
     };
 
     const handleResetIdentity = async () => {
-        const conv = conversations.find((c) => c.public_id === selectedId);
-        const owner = conv?.owner_name;
+        const owner = thread?.conversation?.owner_name;
         const ok = await confirm({
             message: owner
                 ? `¿Resetear la identidad de este contacto? Deja de estar vinculado a ${owner} y esta conversación se cierra — el siguiente mensaje se tratará como contacto nuevo.`
@@ -415,14 +430,14 @@ const Inbox = () => {
         if (!ok) return;
         setActing(true);
         try {
-            await verifyContactIdentity(selectedId, {
+            await verifyContactIdentity(sessionId, {
                 owner_public_id: ownerPublicId,
                 decision: "approved",
                 evidence_kind: EVIDENCE_KINDS[0].value,
                 evidence_note: "",
             });
             toast.success("Verificación registrada");
-            await loadThread(selectedId);
+            await loadThread(selectedThread);
         } catch (err) {
             toast.error(apiError(err, "No se pudo registrar la verificación"));
         } finally {
@@ -441,9 +456,9 @@ const Inbox = () => {
         if (!ok) return;
         setActing(true);
         try {
-            await authorizeIdentityLink(selectedId, ownerPublicId);
+            await authorizeIdentityLink(sessionId, ownerPublicId);
             toast.success("Contacto vinculado");
-            await loadThread(selectedId);
+            await loadThread(selectedThread);
             await loadList();
         } catch (err) {
             toast.error(apiError(err, "No se pudo autorizar el vínculo"));
@@ -471,7 +486,6 @@ const Inbox = () => {
     };
 
     const conv = thread?.conversation;
-    const isClosed = conv?.state === "closed";
 
     return (
         <div>
@@ -547,29 +561,48 @@ const Inbox = () => {
                         ) : (
                             conversations.map((c) => (
                                 <button
-                                    key={c.public_id}
+                                    key={`${c.contact_public_id}:${c.channel_account_public_id}`}
                                     className={[
                                         styles.convItem,
-                                        c.public_id === selectedId ? styles.convItemActive : "",
+                                        isSelected(c) ? styles.convItemActive : "",
                                         c.handoff_priority === "urgent" ? styles.convItemUrgent : "",
                                     ].filter(Boolean).join(" ")}
-                                    onClick={() => setSelectedId(c.public_id)}
+                                    onClick={() => {
+                                        // Limpiar aquí y no en un efecto: es la
+                                        // consecuencia de un clic, y hacerlo en
+                                        // el efecto encadena renders.
+                                        setThread(null);
+                                        setSelectedThread({
+                                            contact: c.contact_public_id,
+                                            account: c.channel_account_public_id,
+                                        });
+                                    }}
                                 >
                                     <div className={styles.convTop}>
                                         <span className={styles.convName}>
                                             {c.has_unanswered && <span className={styles.unansweredDot} />}
                                             {contactLabel(c)}
                                         </span>
-                                        <span className={styles.convTime}>{fmtTime(c.last_activity_at)}</span>
+                                        <span className={styles.convTime}>
+                                            {c.session_count > 1 && (
+                                                <span className={styles.sessionCount}
+                                                    title={`${c.session_count} conversaciones con esta persona`}>
+                                                    {c.session_count}
+                                                </span>
+                                            )}
+                                            {fmtTime(c.last_activity_at)}
+                                        </span>
                                     </div>
                                     <div className={styles.convTop}>
                                         <span className={styles.convPreview}>{c.last_message_preview || "—"}</span>
                                         {c.handoff_priority === "urgent" ? (
                                             <span className="badge badge-danger">Urgente</span>
-                                        ) : (
+                                        ) : c.state ? (
                                             <span className={`badge ${STATE_BADGE[c.state] || "badge-default"}`}>
                                                 {STATE_LABEL[c.state] || c.state}
                                             </span>
+                                        ) : (
+                                            <span className="badge badge-default">Archivada</span>
                                         )}
                                     </div>
                                     {c.handoff_priority === "urgent" ? (
@@ -595,7 +628,7 @@ const Inbox = () => {
 
                 {/* -------- Transcript -------- */}
                 <div className={styles.chatPane}>
-                    {!conv ? (
+                    {!thread ? (
                         <div className={styles.emptyPane}>
                             Selecciona una conversación para ver los mensajes.
                         </div>
@@ -603,47 +636,57 @@ const Inbox = () => {
                         <>
                             <div className={styles.chatHeader}>
                                 <div>
-                                    <strong>{contactLabel(conv)}</strong>
-                                    {conv.contact_phone && (
+                                    <strong>{contactLabel(thread)}</strong>
+                                    {conv?.contact_phone && (
                                         <span style={{ color: "var(--c-text-muted, #64748b)", marginLeft: 8, fontSize: 12.5 }}>
                                             {conv.contact_phone}
                                         </span>
                                     )}
-                                    <span className={`badge ${STATE_BADGE[conv.state]}`} style={{ marginLeft: 8 }}>
-                                        {STATE_LABEL[conv.state]}
-                                    </span>
-                                    {conv.linked_via === "family_challenge" && (
+                                    {conv ? (
+                                        <span className={`badge ${STATE_BADGE[conv.state]}`} style={{ marginLeft: 8 }}>
+                                            {STATE_LABEL[conv.state]}
+                                        </span>
+                                    ) : (
+                                        // Sin sesión vigente: se lee el historial,
+                                        // no se responde. El hilo revive solo
+                                        // cuando el cliente vuelve a escribir.
+                                        <span className="badge badge-default" style={{ marginLeft: 8 }}
+                                            title="Sin conversación abierta — se puede leer, no responder">
+                                            Archivada
+                                        </span>
+                                    )}
+                                    {conv?.linked_via === "family_challenge" && (
                                         <span className="badge badge-purple" style={{ marginLeft: 8 }}>
                                             Vínculo familiar
                                         </span>
                                     )}
-                                    {conv.claimed_by_name && (
+                                    {conv?.claimed_by_name && (
                                         <span style={{ color: "var(--c-text-muted, #64748b)", marginLeft: 8, fontSize: 12 }}>
                                             Atiende: {conv.claimed_by_name}
                                         </span>
                                     )}
                                 </div>
-                                {canClaim && !isClosed && (
+                                {canClaim && sessionId && (
                                     <div className={styles.chatActions}>
-                                        {conv.state !== "human_active" && (
+                                        {conv?.state !== "human_active" && (
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={() => runAction(claimConversation)}>
                                                 Tomar
                                             </button>
                                         )}
-                                        {conv.state === "human_active" && (
+                                        {conv?.state === "human_active" && (
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={() => runAction(releaseConversation, "Conversación liberada")}>
                                                 Liberar
                                             </button>
                                         )}
-                                        {conv.linked_via === "family_challenge" && (
+                                        {conv?.linked_via === "family_challenge" && (
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={handleUnlinkFamily}>
                                                 Revocar vínculo
                                             </button>
                                         )}
-                                        {canConfig && conv.contact_verification && conv.contact_verification !== "unknown" && (
+                                        {canConfig && conv?.contact_verification && conv.contact_verification !== "unknown" && (
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={handleResetIdentity}
                                                 title="Desliga este número de cualquier cliente y cierra el hilo — útil para volver a probar el flujo de identidad">
@@ -706,7 +749,7 @@ const Inbox = () => {
                                 <div ref={threadEndRef} />
                             </div>
 
-                            {canSend && !isClosed && (
+                            {canSend && sessionId && (
                                 <div className={styles.composer}>
                                     <textarea
                                         className={styles.composerInput}

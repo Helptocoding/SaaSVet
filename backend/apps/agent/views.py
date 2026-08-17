@@ -836,12 +836,30 @@ def thread_messages(request, contact_pid, account_pid):
             return Response({'error': 'Cursor inválido.'}, status=400)
 
     page = list(queryset.order_by('-created_at', '-id')[:THREAD_MESSAGES_PAGE])
+
+    # La sesión VIGENTE viaja con el transcript. La bandeja necesita las dos
+    # cosas en el mismo sitio —el hilo para leer, la sesión para actuar— y
+    # pedirlas por separado sería dos round-trips por cada clic en la lista.
+    current = (
+        Conversation.objects.for_organization(org)
+        .filter(contact=contact, channel_account=account)
+        .exclude(state=Conversation.STATE_CLOSED)
+        .select_related('contact', 'contact__owner', 'claimed_by')
+        .order_by('-last_activity_at')
+        .first()
+    )
     return Response({
         'contact_public_id': contact.public_id,
         'channel_account_public_id': account.public_id,
         'owner_name': contact.owner.name if contact.owner_id else None,
         'contact_display_name': contact.display_name,
         'contact_verification': contact.verification_level,
+        # `null` = hilo archivado: se lee, no se actúa.
+        'conversation': (ConversationListSerializer(current).data
+                         if current else None),
+        'identity_case': (_identity_case_payload(current)
+                          if current else None),
+        'handoff': _handoff_payload(current) if current else None,
         # Para pedir la página anterior: el id más viejo de ésta.
         'next_before': (page[-1].id
                         if len(page) == THREAD_MESSAGES_PAGE else None),

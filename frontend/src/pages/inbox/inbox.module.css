@@ -310,3 +310,18 @@
     color: var(--c-text-muted);
     margin-top: 2px;
 }
+
+/* Cuántos episodios hay detrás de esta fila. Hace visible que la bandeja
+   agrupa: sin el número, «una fila» y «una conversación» se confunden. */
+.sessionCount {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 5px;
+    margin-right: 6px;
+    border-radius: 9px;
+    background: var(--c-surface-2, #f1f5f9);
+    color: var(--c-text-muted, #64748b);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+}
