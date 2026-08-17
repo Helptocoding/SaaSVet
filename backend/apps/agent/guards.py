@@ -231,6 +231,48 @@ SUCCESS_CLAIM_PATTERNS = (
 )
 
 
+# NEGAR lo que el dominio SÍ devolvió — el guard simétrico (ADR p59 §6).
+#
+# `unbacked_success` impide afirmar lo que no pasó. Nada impedía lo contrario, y
+# ése fue el fallo más caro del piloto: conv 21, el agente dijo CUATRO veces «no
+# tengo ninguna cita agendada» mientras las tools devolvían una, y el cliente
+# respondía «estoy viendo el sistema y si hay» · «deberías buscar bien».
+#
+# Toda la gobernanza vigilaba que el agente no prometiera de más. Nada vigilaba
+# que no negara lo que el sistema le estaba enseñando.
+#
+# Determinista: el conteo lo trae el propio `ToolOutcome`, así que la señal de
+# «había algo» no se interpreta.
+#
+# El TEXTO sí se compara contra una lista, y esa lista comparte la debilidad que
+# p59 le reprocha a la gramática de identidad: no se pueden enumerar todas las
+# formas de negar algo en español. La diferencia está en la DIRECCIÓN del fallo, y
+# es la que hace aceptable el método aquí:
+#
+#   - un fraseo no cubierto ⇒ no hay corrección. Fail-OPEN: se pierde una
+#     oportunidad de mejora, nadie queda bloqueado.
+#   - la gramática de identidad fallaba al revés: un fraseo no cubierto dejaba a
+#     un cliente legítimo sin poder identificarse nunca. Fail-CLOSED.
+#
+# Por eso esta lista crece con el tráfico real sin culpa, y aquella tenía que
+# desaparecer. La primera persona («no TENGO ninguna cita») está aquí porque es
+# la que usó el agente en conv 21 y mi primera versión de la lista no la tenía.
+EXISTENCE_DENIAL_PATTERNS = (
+    # segunda/tercera persona: sobre lo que el CLIENTE tiene
+    'no tienes ninguna cita', 'no tiene ninguna cita', 'no tienes citas',
+    'no tiene citas', 'no hay ninguna cita', 'no hay citas',
+    'no tienes mascotas registradas', 'no tiene mascotas registradas',
+    'no tienes ninguna mascota', 'no tienes registrada',
+    # primera persona: sobre lo que el AGENTE ve. La de conv 21.
+    'no tengo ninguna cita', 'no tengo citas', 'no tengo registrada',
+    'no tengo registrado', 'no me aparece ninguna cita',
+    'no aparece ninguna cita', 'no me aparece ninguna mascota',
+    'no encuentro ninguna cita', 'no encuentro citas',
+    'no encontré ninguna cita', 'no encontre ninguna cita',
+    'no veo ninguna cita', 'no veo citas',
+)
+
+
 # Afirmar una VERIFICACIÓN que no ocurrió (É-F5, hallazgo del eval real).
 #
 # El prompt lo prohíbe explícitamente —«nunca digas ni des por hecho que
@@ -286,7 +328,7 @@ def _protected_name_leak(text, protected_name, grounded_names):
 
 
 def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
-                    verified=True, has_history=False):
+                    verified=True, has_history=False, rows_read=0):
     """Violaciones de CONDUCTA del turno (vacía si todo bien).
 
     - `asked`: `{slot: veces_preguntado}` del compromiso en curso (R10).
@@ -303,6 +345,10 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
       Negar el HILO —«no tengo contexto de lo anterior»— era una descripción
       honesta cuando el contexto moría con la conversación; desde F2 el modelo
       recibe el hilo del contacto, así que decirlo contradice su propio estado.
+    - `rows_read`: cuántas filas devolvieron las LECTURAS del turno (p59 §6). Si
+      devolvieron algo y el texto niega que exista, el modelo está negando lo que
+      el sistema le acaba de enseñar. Es el simétrico de `unbacked_success`, y su
+      ausencia costó la conversación 21 completa.
     """
     violations = []
     low = (text or '').lower()
@@ -326,6 +372,11 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
         claim = _first_match(low, SUCCESS_CLAIM_PATTERNS)
         if claim:
             violations.append(Violation('unbacked_success', SOFT, claim))
+
+    if rows_read:
+        denial = _first_match(low, EXISTENCE_DENIAL_PATTERNS)
+        if denial:
+            violations.append(Violation('denies_domain_state', SOFT, denial))
 
     if not verified:
         claim = _first_match(low, VERIFICATION_CLAIM_PATTERNS)

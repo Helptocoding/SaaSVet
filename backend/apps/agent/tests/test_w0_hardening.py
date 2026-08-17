@@ -361,7 +361,7 @@ class PrivacyNoticeTests(AgentFixture):
             self, self.conv, self.agent_user, "¿qué citas tengo?",
             scripted_llm=[
                 LLMResult(kind="tool_call",
-                          tool_name="list_upcoming_appointments",
+                          tool_name="get_appointments",
                           tool_args={}),
                 # La tool rebota con `verification_required` y el modelo pide
                 # el dato. Antes esta segunda vuelta no existía: el router
@@ -401,7 +401,7 @@ class PrivacyNoticeTests(AgentFixture):
             self, self.conv, self.agent_user, "Firulais",
             scripted_llm=[
                 LLMResult(kind="tool_call",
-                          tool_name="list_upcoming_appointments",
+                          tool_name="get_appointments",
                           tool_args={}),
                 LLMResult(kind="text",
                           text="Mmm, ese no me coincide. ¿Me lo repites "

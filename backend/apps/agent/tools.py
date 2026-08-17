@@ -30,10 +30,18 @@ MAX_PETS = 10
 _MONTHS = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
            'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre')
 
+# Los SEIS estados, no solo los que el filtro viejo dejaba pasar. Que faltaran
+# `done`/`canceled`/`no_show` era el mismo defecto por otra vía: el mapa cubría
+# exactamente lo que la tool había decidido de antemano que el cliente podía
+# preguntar, así que una cita perdida ni siquiera tenía nombre que enseñarle al
+# modelo.
 _APPT_STATE_LABEL = {
     'scheduled': 'programada',
     'confirmed': 'confirmada',
     'in_progress': 'en consulta',
+    'done': 'atendida',
+    'canceled': 'cancelada',
+    'no_show': 'no asistió',
 }
 
 _VACCINE_STATE_LABEL = {
@@ -312,7 +320,36 @@ def _product_available(product):
     return False
 
 
-def list_upcoming_appointments(conversation, executor, args, triggered_by=None):
+def get_appointments(conversation, executor, args, triggered_by=None):
+    """TODAS las citas del cliente, etiquetadas — el modelo elige cuáles aplican.
+
+    Reemplaza a `list_upcoming_appointments` y `get_past_visits`, que eran el
+    mismo código con el filtro invertido y **cada una una pregunta congelada**:
+    una asumía que el cliente pregunta por el futuro, la otra que pregunta por
+    visitas cerradas. Entre las dos dejaban un hueco del tamaño del caso más
+    común de una clínica.
+
+    Lo que pasó en el piloto (conv 21, 2026-08-17): el cliente abrió con «no
+    pude acudir a mi cita». Su cita existía —hoy 09:00, `scheduled`— y él la
+    estaba viendo en el sistema. La API la devolvía en cada llamada
+    (`{"appointments": 1}`, diez veces en `ToolExecution`), y estos dos filtros
+    la tiraban:
+
+        list_upcoming_appointments:  if start_dt < now: continue
+        get_past_visits:             if status != 'done': continue
+
+    Una cita perdida es pasada Y no `done`: caía por los dos. El modelo recibía
+    `0` y decía `0`, honestamente, mientras el cliente insistía «deberías buscar
+    bien». Y como los handles de cita solo los emitía la primera, reagendarla
+    era imposible por construcción — con «no pude acudir» siendo probablemente
+    la razón número uno por la que alguien le escribe a su veterinario.
+
+    De ahí el contrato: **esta tool no decide qué es relevante**. Devuelve cada
+    cita con su estado y con `ya_paso` ya resuelto contra el reloj de la
+    clínica, y quien eligió qué responder es quien leyó la conversación. El
+    único recorte es el volumen (`MAX_ITEMS`), y se hace por CERCANÍA a ahora
+    para que sobrevivan a la vez la que se perdió esta mañana y la próxima.
+    """
     pet_handle = args.get('pet_handle')
     if pet_handle:
         public_id = resolve_handle(conversation, pet_handle)
@@ -328,53 +365,66 @@ def list_upcoming_appointments(conversation, executor, args, triggered_by=None):
                    for p in pets_outcome.data]
 
     now = timezone.now()
-    upcoming = []
+    found = []
     for pet_id in pet_ids:
         status, data = executor.call(
-            'GET', '/api/appointments/', tool_name='list_upcoming_appointments',
+            'GET', '/api/appointments/', tool_name='get_appointments',
             params={'pet': pet_id},
             args_redacted={'pet_handle': pet_handle or '(todas)'},
             triggered_by_message=triggered_by,
-            result_summarizer=lambda d: {'appointments': len(d) if isinstance(d, list) else 0},
+            result_summarizer=lambda d: {
+                'appointments': len(d) if isinstance(d, list) else 0},
         )
         if status >= 400:
             return ToolOutcome(ok=False, client_error='tool_failure')
         rows = data if isinstance(data, list) else data.get('results', [])
         for appointment in rows:
-            if appointment.get('status') not in ('scheduled', 'confirmed'):
+            start_dt = _appointment_start(appointment)
+            if start_dt is None:
+                # Fecha ilegible: se descarta porque no se puede situar en el
+                # tiempo, no porque su estado no nos guste.
                 continue
-            start = appointment.get('start_datetime') or (
-                f"{appointment.get('date')}T{appointment.get('start_time')}"
-            )
-            try:
-                from datetime import datetime
-                from datetime import timezone as dt_timezone
-                start_dt = datetime.fromisoformat(
-                    str(start).replace('Z', '+00:00')
-                )
-                if timezone.is_naive(start_dt):
-                    start_dt = timezone.make_aware(start_dt, dt_timezone.utc)
-            except ValueError:
-                continue
-            if start_dt < now:
-                continue
-            upcoming.append((start_dt, appointment))
+            found.append((start_dt, appointment))
 
-    upcoming.sort(key=lambda pair: pair[0])
+    # El recorte por volumen elige por CERCANÍA (|start - ahora|) y luego se
+    # emite en orden cronológico: ordenar y cortar por fecha dejaría fuera lo
+    # que el cliente tiene delante en cuanto haya varias citas al otro lado.
+    found.sort(key=lambda pair: abs((pair[0] - now).total_seconds()))
+    visible = sorted(found[:MAX_ITEMS], key=lambda pair: pair[0])
+
     projection = []
-    for start_dt, appointment in upcoming[:MAX_ITEMS]:
+    for start_dt, appointment in visible:
+        # Handle para TODAS, no solo las futuras: es lo que permite cancelar o
+        # reagendar la que se perdió.
         handle = _add_ref(conversation, 'cita', appointment['public_id'])
+        raw_status = appointment.get('status', '')
         projection.append({
             'handle': handle,
             'mascota': appointment.get('pet_name', ''),
             'cuando': format_local_datetime(start_dt, conversation.organization),
-            'estado': _APPT_STATE_LABEL.get(
-                appointment.get('status'), appointment.get('status', ''),
-            ),
+            'estado': _APPT_STATE_LABEL.get(raw_status, raw_status),
+            'ya_paso': start_dt < now,
+            'motivo': (appointment.get('reason') or '')[:120],
         })
     _save_refs(conversation)
     return ToolOutcome(ok=True, data=projection,
-                       summary={'upcoming': len(projection)})
+                       summary={'citas': len(projection)})
+
+
+def _appointment_start(appointment):
+    """Instante aware de inicio, o `None` si el dato no es interpretable."""
+    from datetime import datetime
+    from datetime import timezone as dt_timezone
+    raw = appointment.get('start_datetime') or (
+        f"{appointment.get('date')}T{appointment.get('start_time')}"
+    )
+    try:
+        start_dt = datetime.fromisoformat(str(raw).replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    if timezone.is_naive(start_dt):
+        start_dt = timezone.make_aware(start_dt, dt_timezone.utc)
+    return start_dt
 
 
 SLOT_MINUTES = 30  # duración de cita estándar (misma que el walk-in del dominio)
@@ -1824,13 +1874,17 @@ def identify_client(conversation, executor, args, triggered_by=None):
         # que no prueba nada sobre quien escribe— y los 4 dígitos son circulares
         # para quien escribe desde su propio número.
         #
-        # Y la verificación pasa por el SERVICIO ÚNICO, con el mismo régimen que
-        # la ruta pasiva: el modelo aporta el valor, pero el servidor deriva la
-        # procedencia (qué mensaje del cliente lo contiene), el `match_mode` y el
-        # anti-eco. Si el modelo pudiera elegir cualquiera de los tres, elegiría
-        # las reglas con que se le juzga.
+        # Y la verificación pasa por el SERVICIO ÚNICO. El modelo propone la
+        # LECTURA —«el cliente acaba de decirme que su mascota es Koler»— y el
+        # servidor la comprueba contra el texto real: procedencia (qué mensaje
+        # DEL CLIENTE lo contiene), anti-eco y TTL (ADR p59). Puede equivocarse
+        # interpretando; no puede inventar el aporte.
+        #
+        # Ésta es la ÚNICA vía desde p59. La pasiva de `policy` se retiró: sin la
+        # gramática cerrada, un escaneo sin propuesta del modelo promovía con
+        # cualquier coincidencia de token.
         resolution = identity_evidence.resolve_pet_evidence(
-            conversation, _burst_messages(conversation, triggered_by))
+            conversation, reunido.get('pet_name', ''))
         if isinstance(resolution, identity_evidence.EchoRejected):
             echo_rejected = resolution
         elif isinstance(resolution, identity_evidence.SealedPetEvidence):
@@ -1878,11 +1932,10 @@ def identify_client(conversation, executor, args, triggered_by=None):
         # sirve —seguiría siendo eco hasta que caduque la ventana— así que no se
         # le pide otra vez.
         from . import policy
+        identity_evidence.log_echo_rejected(conversation, echo_rejected)
         policy.escalate_to_human(
             conversation, reason_code=HumanHandoff.REASON_IDENTITY,
-            detail=('El dato con el que intentó identificarse ya lo habíamos '
-                    'mencionado nosotros antes que él, así que no confirma '
-                    'quién es. Verifícalo tú y registra la verificación.'),
+            detail=identity_evidence.ECHO_HANDOFF_DETAIL,
         )
         executor.record_local(
             tool_name='identify_client',
@@ -1912,31 +1965,6 @@ def identify_client(conversation, executor, args, triggered_by=None):
         'ya_tengo': [_FACTOR_LABELS[key] for key in sorted(reunido)],
         'falta': [] if verified else falta,
     })
-
-
-def _burst_messages(conversation, triggered_by):
-    """Los entrantes del cliente de ESTE turno, para derivar la procedencia.
-
-    `identify_client` corre dentro del tool loop y no recibe la ráfaga, así que
-    la reconstruye desde el mensaje disparador hacia atrás: los entrantes
-    consecutivos del cliente que terminan en él. Nunca la piden los argumentos
-    de la tool — si el modelo pudiera señalar su propia prueba, la procedencia
-    sería teatro (D24).
-    """
-    if triggered_by is None:
-        return []
-    from apps.channels.selectors import visible_messages
-    recent = list(visible_messages(
-        Message.objects.filter(conversation=conversation,
-                               created_at__lte=triggered_by.created_at)
-    ).order_by('-created_at', '-id')[:10])
-    burst = []
-    for message in recent:
-        if (message.direction != Message.DIRECTION_IN
-                or message.author_type != Message.AUTHOR_CLIENT):
-            break
-        burst.append(message)
-    return list(reversed(burst))
 
 
 # ---------------------------------------------------------------------------
@@ -2012,71 +2040,6 @@ def get_recent_product_queries(conversation, executor, args, triggered_by=None):
     )
     return ToolOutcome(ok=True, data=projection,
                        summary={'consultas': len(projection)})
-
-
-def get_past_visits(conversation, executor, args, triggered_by=None):
-    """Visitas que YA ocurrieron. «¿Cuándo vine la última vez?»
-
-    Mismo permiso y mismo endpoint que las citas próximas: son la misma lista con
-    el filtro invertido. **No lee `MedicalRecord`** — el rol AGENT no tiene
-    `medicalrecord.*` por decisión escrita, y el diagnóstico no sale por WhatsApp.
-    La cita da el MOTIVO, que es lo que el cliente dijo al agendar.
-    """
-    pet_handle = args.get('pet_handle')
-    if pet_handle:
-        public_id = resolve_handle(conversation, pet_handle)
-        if public_id is None:
-            return ToolOutcome(ok=False, client_error='unknown_handle')
-        pet_ids = [public_id]
-    else:
-        pets_outcome = list_my_pets(conversation, executor, {},
-                                    triggered_by=triggered_by)
-        if not pets_outcome.ok:
-            return pets_outcome
-        pet_ids = [resolve_handle(conversation, p['handle'])
-                   for p in pets_outcome.data]
-
-    now = timezone.now()
-    past = []
-    for pet_id in pet_ids:
-        status, data = executor.call(
-            'GET', '/api/appointments/', tool_name='get_past_visits',
-            params={'pet': pet_id},
-            args_redacted={'pet_handle': pet_handle or '(todas)'},
-            triggered_by_message=triggered_by,
-            result_summarizer=lambda d: {
-                'appointments': len(d) if isinstance(d, list) else 0},
-        )
-        if status >= 400:
-            return ToolOutcome(ok=False, client_error='tool_failure')
-        rows = data if isinstance(data, list) else data.get('results', [])
-        for appointment in rows:
-            if appointment.get('status') != 'done':
-                continue
-            start = appointment.get('start_datetime') or (
-                f"{appointment.get('date')}T{appointment.get('start_time')}"
-            )
-            try:
-                from datetime import datetime
-                from datetime import timezone as dt_timezone
-                start_dt = datetime.fromisoformat(
-                    str(start).replace('Z', '+00:00'))
-                if timezone.is_naive(start_dt):
-                    start_dt = timezone.make_aware(start_dt, dt_timezone.utc)
-            except ValueError:
-                continue
-            if start_dt >= now:
-                continue
-            past.append((start_dt, appointment))
-
-    past.sort(key=lambda pair: pair[0], reverse=True)
-    projection = [{
-        'mascota': appointment.get('pet_name', ''),
-        'cuando': format_local_datetime(start_dt, conversation.organization),
-        'motivo': appointment.get('reason', ''),
-    } for start_dt, appointment in past[:MAX_ITEMS]]
-    return ToolOutcome(ok=True, data=projection,
-                       summary={'visitas': len(projection)})
 
 
 def request_human(conversation, executor, args, triggered_by=None):
@@ -2157,33 +2120,28 @@ TOOL_SPECS = {
             'required': ['query'],
         },
     },
-    'list_upcoming_appointments': {
-        'handler': list_upcoming_appointments,
+    'get_appointments': {
+        'handler': get_appointments,
         'tier': '1',
         'min_verification': 'confirmed_in_chat',
-        'description': 'Próximas citas del cliente verificado (todas o por mascota).',
+        'description': (
+            'TODAS las citas del cliente verificado: próximas, pasadas, '
+            'atendidas, canceladas y las que no alcanzó a venir. Cada una trae '
+            'su estado, si ya pasó y su motivo — decide tú cuáles responden a '
+            'lo que preguntó. Úsala también cuando dice que perdió una cita o '
+            'que no pudo acudir: esas también salen aquí, con handle para '
+            'reagendarlas o cancelarlas.'),
         'parameters': {
             'type': 'object',
             'properties': {'pet_handle': {'type': 'string'}},
             'required': [],
         },
     },
-    # Memoria estructurada (F4). Las dos son tools PERSONALES: el historial es
-    # lo que este cliente preguntó y cuándo vino, así que exigen el mismo nivel
-    # que `list_my_pets`.
-    'get_past_visits': {
-        'handler': get_past_visits,
-        'tier': '1',
-        'min_verification': 'confirmed_in_chat',
-        'description': ('Visitas anteriores del cliente («¿cuándo vine la '
-                        'última vez?»): fecha y motivo. NO incluye diagnóstico '
-                        'ni nada del expediente clínico.'),
-        'parameters': {
-            'type': 'object',
-            'properties': {'pet_handle': {'type': 'string'}},
-            'required': [],
-        },
-    },
+    # Memoria estructurada (F4). Tool PERSONAL: lo que este cliente preguntó es
+    # su historial, así que exige el mismo nivel que `list_my_pets`. La otra
+    # mitad de F4 —las visitas anteriores— la absorbió `get_appointments`: eran
+    # las mismas citas con el filtro invertido, y separarlas fue justamente lo
+    # que dejó a una cita perdida sin ninguna tool que la viera.
     'get_recent_product_queries': {
         'handler': get_recent_product_queries,
         'tier': '1',

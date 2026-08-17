@@ -249,7 +249,7 @@ class PlannerVerificationTests(PlannerTestCase):
         self.contact.save()
         self._inbound("¿qué citas tengo?")
         stub = StubLLMClient(scripted=[
-            LLMResult(kind="tool_call", tool_name="list_upcoming_appointments",
+            LLMResult(kind="tool_call", tool_name="get_appointments",
                       tool_args={}),
             LLMResult(kind="text",
                       text="Para verlas necesito confirmar quién eres 🙂"),
@@ -264,7 +264,7 @@ class PlannerVerificationTests(PlannerTestCase):
         self.assertFalse(
             ToolExecution.objects.filter(
                 conversation=self.conv,
-                tool_name='list_upcoming_appointments',
+                tool_name='get_appointments',
                 error_code='').exists(),
             "una tool personal se ejecutó sin verificación")
 

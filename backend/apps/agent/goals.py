@@ -673,68 +673,23 @@ def start_identity(conversation, name, *, first_factor, working_state=None):
 
 
 # ---------------------------------------------------------------------------
-# La pregunta del reto: ligar al encolar, sellar al enviar (D36)
+# La pregunta del reto (ADR p59)
 # ---------------------------------------------------------------------------
-# Tres escritores distintos y ninguno hace el trabajo del otro: `start_identity`
-# CREA el reto, `bind_identity_question_enqueued` LIGA el saliente que lleva la
-# pregunta, y `mark_identity_question_emitted` sella que salió de verdad.
+# `bind_identity_question_enqueued` y `mark_identity_question_emitted` se
+# RETIRARON. Existían solo para alimentar `derive_match_mode`: probar que el
+# sistema había preguntado de verdad —y que el cliente lo había visto— era la
+# condición para aplicar el régimen tolerante en vez del estricto.
 #
-# Sin el sellado, un `pet_asked_at` suelto solo probaría la INTENCIÓN de
-# preguntar: un saliente que quedó `pending` o `failed` habría habilitado el
-# régimen tolerante sin que el cliente viera nada.
+# Con un solo régimen no hay nada que decidir, así que tres escritores, un campo
+# en `working_state` y un write dentro de la transacción del sender se vuelven
+# maquinaria sin destino. El sender ya no escribe nada al enviar la pregunta, que
+# de paso retira el único write que podía fallar con un WhatsApp ya entregado.
+#
+# **La pregunta la sigue poniendo el sistema** (`T0_IDENTITY_QUESTION`, D38): el
+# modelo demostró en producción que pide los 4 dígitos si le dejas, y ése es un
+# factor retirado por circular. Lo que desaparece es el registro de que se hizo,
+# no la práctica de hacerla.
 
-def bind_identity_question_enqueued(commitment, message, *, pet_pending,
-                                    deterministic_clause):
-    """`none → enqueued`. Solo la respuesta final normal del planner.
-
-    Nunca desde `guard_blocked`, fallbacks ni errores técnicos: esos salientes no
-    son la pregunta del reto.
-    """
-    if commitment is None or message is None:
-        return None
-    state = dict(commitment.working_state or {})
-    state['identity_question'] = {
-        'message_id': message.pk,
-        'asked_state': 'enqueued',
-        'pet_pending': bool(pet_pending),
-        'deterministic_clause': bool(deterministic_clause),
-    }
-    commitment.working_state = state
-    commitment.save(update_fields=['working_state'])
-    return commitment
-
-
-def mark_identity_question_emitted(message, *, now=None):
-    """`enqueued → emitted`, estampando `pet_asked_at` en el ENVÍO real.
-
-    Lo llama el sender, **por PK del mensaje** — nunca «el goal actual». Si el
-    reto se cerró o fue reemplazado, no sella nada.
-
-    Nunca revierte el envío: si esto falla con el mensaje ya aceptado por
-    WhatsApp, el caller registra la anomalía y se cae a modo pasivo. Un rollback
-    aquí duplicaría un WhatsApp ya entregado.
-    """
-    from .models import ConversationGoal
-
-    now = now or timezone.now()
-    commitment = ConversationGoal.objects.filter(
-        conversation_id=message.conversation_id,
-        name__in=IDENTITY_GOALS,
-        status__in=ConversationGoal.FOREGROUND_STATUSES,
-        working_state__identity_question__message_id=message.pk,
-    ).first()
-    if commitment is None:
-        return None
-    state = dict(commitment.working_state or {})
-    question = dict(state.get('identity_question') or {})
-    if question.get('asked_state') != 'enqueued':
-        return None
-    question['asked_state'] = 'emitted'
-    question['asked_at'] = now.isoformat()
-    state['identity_question'] = question
-    commitment.working_state = state
-    commitment.save(update_fields=['working_state'])
-    return commitment
 
 
 def park_identity(conversation, commitment, *, going_to_human):

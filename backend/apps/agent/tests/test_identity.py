@@ -34,28 +34,25 @@ class IdentityTests(TestCase):
     # booleano y no tocan estado. `_promote` tiene un solo llamador, el servicio
     # de evidencia — ver `test_identity_evidence.py`.
 
-    def test_exact_matcher_accepts_the_registered_name(self):
-        self.assertTrue(identity.matches_pet_name_exact("Kira", "Kira"))
+    def test_the_matcher_accepts_the_registered_name(self):
+        self.assertTrue(identity.matches_pet_name_tolerant("Kira", "Kira"))
 
-    def test_exact_matcher_accepts_a_complete_token_of_a_compound_name(self):
+    def test_the_matcher_accepts_a_complete_token_of_a_compound_name(self):
         # «cita para Luna» con «Luna Bella» registrada tiene que funcionar: el
         # subconjunto de tokens existe porque el reto rechazaba el nombre de pila
         # y mandaba a handoff a clientes legítimos.
-        self.assertTrue(identity.matches_pet_name_exact("Luna", "Luna Bella"))
+        self.assertTrue(
+            identity.matches_pet_name_tolerant("Luna", "Luna Bella"))
 
-    def test_exact_matcher_rejects_a_typo(self):
-        # Lo que se elimina del modo pasivo es la distancia de edición: de ahí
-        # salían los falsos positivos en texto libre.
-        self.assertFalse(identity.matches_pet_name_exact("Kyra", "Kira"))
-
-    def test_tolerant_matcher_accepts_a_typo(self):
-        # Legítimo solo cuando el cliente RESPONDE a la pregunta por el nombre.
+    def test_the_matcher_tolerates_a_typo(self):
+        # Único matcher desde p59. La barrera no es la ortografía: es que el
+        # valor esté en un mensaje del cliente y no lo hayamos dicho nosotros
+        # primero (procedencia + anti-eco, en `identity_evidence`).
         self.assertTrue(identity.matches_pet_name_tolerant("Kyra", "Kira"))
 
     def test_matchers_never_touch_state(self):
         contact = self._contact()
         identity.matches_pet_name_tolerant("Kira", "Kira")
-        identity.matches_pet_name_exact("Kira", "Kira")
         contact.refresh_from_db()
         self.assertEqual(
             contact.verification_level, ContactIdentity.VERIFICATION_PHONE_MATCH,

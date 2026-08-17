@@ -27,7 +27,12 @@
 > **[p58](../decisions/2026-08-17-p58-continuidad-e-identidad-del-agente.md)**
 > continuidad conversacional e identidad (ACEPTADO 2026-08-16, **implementado y
 > en producción**): el nombre del titular deja de verificar, la autoridad sobre
-> la prueba es del servidor, y el contexto pasa a leerse por contacto.
+> la prueba es del servidor, y el contexto pasa a leerse por contacto ·
+> **[p59](../decisions/2026-08-17-p59-interpretacion-al-modelo.md)** la
+> interpretación vuelve al modelo (ACEPTADO 2026-08-17): **enmienda p58 §2** —
+> el servidor conserva la autorización (procedencia, anti-eco, TTL) y suelta la
+> comprensión del lenguaje, que era lo único que en producción rechazó a un
+> cliente legítimo.
 >
 > Rediseño en curso: [auditoría de arquitectura](../whatsapp-agent-auditoria-arquitectura-2026-07-31.md)
 > → [plan É-F5](../whatsapp-agent-f5-conversacion-plan.md). **Fase 0 hecha**
@@ -225,16 +230,27 @@ promovían (`policy` y `identify_client`) y ninguno comprobaba el eco; el pasivo
 además no satisfacía el slot, así que el agente volvía a pedir la mascota después
 de haber verificado con ella.
 
+> **ADR p59 (2026-08-17) retiró la gramática cerrada y los dos regímenes.** Se
+> desplegaron con p58 y 15 h después rechazaron a un cliente legítimo que había
+> contestado bien: se le preguntó el nombre de su mascota, escribió «koler», y el
+> modo pasivo lo rechazó por venir «sin marco». Seis mensajes, 18 minutos, y se
+> fue sin su cita. Enumeraban formas de nombrar una mascota y formas de negar
+> identidad — dos espacios infinitos, así que cada fraseo nuevo era un bug nuevo.
+>
+> **La línea correcta**: el servidor decide si algo **autoriza**; el modelo decide
+> qué **quiso decir** el cliente. Ver [ADR p59](../decisions/2026-08-17-p59-interpretacion-al-modelo.md).
+
 | Pieza | Regla |
 |---|---|
-| **Candidato** | Lo extrae el servicio con una **gramática cerrada** (sustantivo clínico + `para/de`, posesivo de mascota, verbo de estado). Un token suelto nunca es evidencia: con una mascota «Sol», «¿va a haber sol mañana?» promovía |
-| **Negación** | Por **función sintáctica**: se rechaza la de identidad («no es Luna»), se acepta la clínica («Luna no come») |
-| **Procedencia** | `from_message` lo deriva el **servidor** desde la ráfaga, exigiendo `direction='in'`, `author_type='client'` y **misma conversación**. Nunca llega en los argumentos de una tool |
-| **Régimen** | `passive_free_text` (exacto: nombre completo o token completo ≥3, sin lev) vs `challenge_response` (tolerante). **Lo deriva el servidor**, nunca el caller: si dependiera del call site, el modelo elegiría con qué reglas se le juzga llamando a `identify_client` |
-| **La pregunta** | La añade el **sistema** (`T0_IDENTITY_QUESTION`), y solo ese saliente se liga al reto. Si la redactara el modelo podría preguntar por los dígitos y sellar eso como si fuera el reto de la mascota |
-| **Emisión** | `bind_identity_question_enqueued` (al encolar) → `mark_identity_question_emitted` (al **enviar**, `worker._send_one`). Un saliente `pending`/`failed` nunca habilita el régimen tolerante: el cliente no lo vio |
-| **Anti-eco** | **Primera mención gana**, dentro del TTL, sobre mensajes **realmente emitidos**, y con el matcher **tolerante** — staff escribiendo «Lunna» tiene que contar como revelación |
-| **Rechazo por eco** | `HumanHandoff(identity)` + `T0_IDENTITY_ECHO`, **nunca reintento**: repetir el dato seguiría siendo eco hasta que caduque la ventana |
+| **Quién propone** | El **modelo**, llamando `identify_client(pet_name=…)`. Es la **única vía**: la ruta pasiva de `policy` se retiró porque sin gramática promovía con cualquier coincidencia de token |
+| **LA BARRERA** | El valor propuesto tiene que aparecer en un mensaje **entrante del cliente** de esta conversación, dentro del TTL. El modelo puede leer mal; **no puede inventar el aporte** |
+| **Procedencia** | La deriva el **servidor**: localiza el mensaje origen él mismo, exigiendo `direction='in'`, `author_type='client'` y **misma conversación**. Nunca llega en los argumentos de una tool |
+| **Matcher** | Uno solo, **tolerante** (typo, subconjunto de tokens). Se acepta contra lo que el modelo transcribió **o** contra el nombre registrado: con «Luna Bella» en el expediente, «cita para Luna» tiene que funcionar |
+| **Candidato ambiguo** | Si la propuesta encaja con **dos** mascotas de nombre distinto, no se elige — mismo criterio que INV-C en su dominio |
+| **La pregunta** | La añade el **sistema** (`T0_IDENTITY_QUESTION`): el modelo demostró en producción que pide los 4 dígitos si le dejas, y ése es un factor retirado por circular. Lo que p59 retiró es **ligar** ese saliente al reto, no la práctica de ponerlo |
+| **Anti-eco** | **Primera mención gana**, dentro del TTL, sobre mensajes **realmente emitidos**, y con el matcher tolerante — staff escribiendo «Lunna» tiene que contar como revelación |
+| **Rechazo por eco** | `HumanHandoff(identity)` + `T0_IDENTITY_ECHO`, **nunca reintento**: repetir el dato seguiría siendo eco hasta que caduque la ventana. El **planner** corta el turno y pone la plantilla — dejar redactar al modelo tras haber escalado le permitía repetir el nombre, que es la fuga que este camino cierra |
+| **Nada que escalar** | Si el cliente **no dijo nada** y el modelo leyó su propio mensaje, es `NoEvidence`, no eco: se le pregunta y el turno sigue. El escalado se reserva para cuando el CLIENTE repite un dato que nosotros filtramos |
 | **Caducidad** | `IDENTITY_EVIDENCE_TTL` (60 min) sobre el mensaje origen. La sesión **no** sirve como ventana: `close_inactive_conversations` mide inactividad, y en producción hay sesiones de 29 h y 47 h |
 | **Transacción** | `_promote` + `flow` + slot + **cierre del reto y reanudación** en un solo commit, con locks `ContactIdentity → Conversation → ConversationGoal` (por id) |
 
@@ -311,19 +327,105 @@ autoriza**: policy decide antes, run_tool/executor revalidan
 tier/verificación/ownership. Proveedor LLM = elección del operador
 (`AGENT_LLM_*` por env, cliente OpenAI-compatible en `agent/llm.py`).
 Tools de **lectura** (tier 1): list_my_pets, get_vaccine_status,
-list_upcoming_appointments, get_clinic_info, get_service_catalog,
-check_product_availability, find_available_slots. De **escritura**: 
+**get_appointments**, get_clinic_info, get_service_catalog,
+check_product_availability, find_available_slots,
+get_recent_product_queries. De **escritura**: 
 create_appointment, cancel_appointment, reschedule_appointment,
 register_new_client_and_pet y **register_pet_and_schedule** /
 **register_pet_only** (tier 2 — proponen y esperan el "sí"),
 confirm_appointment (tier 1, benigna), link_family_member (arranca el reto
 triple). request_human siempre disponible. Handles efímeros en `flow.refs`
 con resolver+ownership server-side (handle desconocido = denegación dura).
-Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03 +
-tamiz UX-05 (abajo).
+Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03.
 Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`
 (bloqueante) + fixture trampa cross-tenant + aserciones prohibidas globales
 (`agent/tests/harness.py`).
+
+### Una tool no decide qué es relevante (`get_appointments`, 2026-08-17)
+
+`get_appointments` **reemplaza** a `list_upcoming_appointments` y
+`get_past_visits`. Eran el mismo código con el filtro invertido, y cada una una
+**pregunta congelada**: una asumía que el cliente pregunta por el futuro, la
+otra que pregunta por visitas cerradas. Entre las dos dejaban un hueco del
+tamaño del caso más común de una clínica.
+
+Conv 21 en producción: el cliente abrió con «no pude acudir a mi cita». La cita
+existía —ese día, 09:00, `scheduled`— y él la veía en el sistema. La API la
+devolvía en las diez llamadas (`{"appointments": 1}` en `ToolExecution`), y
+estos dos filtros la tiraban:
+
+```python
+list_upcoming_appointments:  if start_dt < now: continue
+get_past_visits:             if status != 'done': continue
+```
+
+Una cita perdida es pasada **y** no `done`: caía por los dos, así que **ninguna
+de las 18 tools podía verla**. El modelo recibía `0` y decía `0`, honestamente,
+mientras el cliente insistía «deberías buscar bien». Y como los handles de cita
+solo los emitía la primera, **reagendarla era imposible por construcción**.
+
+Contrato nuevo, y es la regla general, no un parche:
+
+| | |
+|---|---|
+| Devuelve | **todas** las citas del cliente, cada una con `estado`, `ya_paso` (resuelto contra el reloj de la clínica) y `motivo` |
+| Filtra por estado o fecha | **no** — quien elige qué responde a la pregunta es quien leyó la conversación |
+| Handle | para **todas**, no solo las futuras: es lo que permite cancelar o reagendar la que se perdió |
+| Único recorte | volumen (`MAX_ITEMS`), y por **cercanía a ahora**, para que sobrevivan a la vez la que se perdió esta mañana y la próxima |
+
+`_APPT_STATE_LABEL` pasó a cubrir los **seis** estados. Que faltaran
+`done`/`canceled`/`no_show` era el mismo defecto por otra vía: el mapa cubría
+exactamente lo que la tool había decidido de antemano que el cliente podía
+preguntar.
+
+**Regla que esto deja**, y la distinción es la parte útil: un filtro que
+**reafirma una regla del dominio** está bien; un filtro que **adivina la
+pregunta** es el defecto.
+
+| Tipo de filtro | Ejemplo | Veredicto |
+|---|---|---|
+| Reformula un invariante | `status in (scheduled, confirmed, in_progress)` en `_day_occupancy` / `_own_appointment_at` — es el predicado de **INV-D** | **Legítimo.** Debe citar el invariante |
+| Integridad del dato | fecha ilegible, dedup, `_confidence` | Legítimo |
+| **Adivina qué preguntó el cliente** | `start_dt < now`, `status != 'done'` | **El defecto.** Retirados |
+
+Revisados los 8 `continue` que quedan en `tools.py`: **ninguno es del tercer
+tipo**. Los dos retirados eran los únicos. (Una revisión previa dijo «quedan ~11
+del mismo patrón»; era falso, y retirar por error el predicado de INV-D
+rompería la detección de solapes.)
+
+### Las remediaciones de datos NO van en `release.sh`
+
+`remediate_identity_f0` estuvo un día en `release.sh` y causó el peor incidente
+del piloto. Dos motivos, y el segundo aplica a cualquier comando futuro:
+
+1. **`release.sh` no corre «una vez por deploy».** El cron de la demo
+   (`10,40 * * * *`) invoca `docker compose run --rm backend …`, y `run` arranca
+   las dependencias del servicio — entre ellas `release`. En producción son
+   **48 corridas al día**.
+2. **Una remediación es de un solo uso; ese script no lo es.** Su predicado
+   describe un estado histórico. En cuanto el código nuevo produce estados
+   legítimos parecidos, el predicado los alcanza.
+
+Y los alcanzó: el predicado era `confirmed_in_chat AND linked_via=''`, que **no
+describe el estado comprometido sino el CORRECTO** — `identity._promote`, la
+única vía del reto conversacional, nunca escribe `linked_via`. Log de la corrida
+de las 17:40:
+
+```
+ANTES · contactos a degradar: 1
+        contacto 1 org=3 verified_at=2026-08-17 17:27:41.865888+00:00
+```
+
+Ese instante es el de una verificación legítima, sellada en
+`challenge_response`, destruida 13 minutos después. Y como el historial cruzado
+se gatea en `is_verification_current` (D19), **la amnesia que p58 arregló volvía
+cada media hora**.
+
+Corrección: el comando exige **`--before <instante ISO>`** —la frontera del
+despliegue de F0, que es cuando el bypass dejó de existir— y sin él no degrada
+nada. Un gate (`ReleaseScriptTests`) falla si `remediate` reaparece en
+`release.sh`. `migrate`/`collectstatic`/`seed_permissions` se quedan porque son
+**convergentes**: su resultado no depende de cuándo corrieron.
 
 ### El agente consume las garantías del dominio (F2 — ADR p57)
 

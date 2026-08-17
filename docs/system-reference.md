@@ -127,15 +127,20 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 
 23. **INV-D — un veterinario no tiene dos citas activas solapadas** (ADR p57): garantizado por una restricción de exclusión de PostgreSQL sobre `(organization, veterinarian, [start_datetime, end_datetime))` con predicado de estados activos. **Sin excepciones**: cubre creación, reprogramación, atención sin cita y reactivación. El desenlace es `400 slot_taken`, lo detecte el pre-chequeo o lo rechace la base. **No existe ninguna bandera de forzado** (`force`, `allow_overlap`, permiso que lo salte).
 
-24. **INV-E — el modelo aporta el valor; el sistema decide qué lo prueba**
-    (ADR p58): en la verificación de identidad del chat, el servidor deriva
-    **la procedencia** (qué mensaje del cliente contiene el dato), **el régimen
-    probatorio** (`match_mode`) y **la pregunta** que abre el reto. Ninguno de
-    los tres se deduce del call site ni llega en los argumentos de una tool. Si
-    el modelo pudiera elegir con qué reglas se le juzga, bastaría con que
-    llamara a `identify_client` para saltarse la gramática estricta. Corolario
-    verificado con gate estático: **`identity._promote` tiene exactamente un
-    llamador**, el servicio de evidencia.
+24. **INV-E — el modelo propone la lectura; el servidor comprueba que el
+    cliente lo dijo** (ADR p58, **enmendado por p59**): en la verificación de
+    identidad del chat, el servidor deriva **la procedencia** —qué mensaje
+    entrante *del cliente*, en *esta* conversación y dentro del TTL, contiene el
+    valor— y añade **la pregunta** que abre el reto. Ninguna de las dos llega en
+    los argumentos de una tool.
+
+    p59 retiró el **régimen probatorio** (`match_mode`) y la gramática cerrada
+    que decidía si el cliente «quiso decirlo»: eso es comprensión de lenguaje, no
+    una decisión de autorización, y enumerar fraseos es un espacio sin fondo que
+    en producción rechazó a un cliente legítimo. La frontera que queda es la que
+    de verdad cerraba el bypass: **el modelo puede leer mal; no puede inventar el
+    aporte.** Corolario verificado con gate estático: **`identity._promote` tiene
+    exactamente un llamador**, el servicio de evidencia.
 
 25. **INV-F — un dato que el sistema reveló no prueba identidad** (ADR p58): un
     factor solo cuenta si el cliente lo aportó **primero**. Si el sistema o el
@@ -183,9 +188,15 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - **Jamás derivar `Owner.phone_normalized` desde el cliente ni fuera de `Owner.save()`**, y jamás darle un valor al `Owner` genérico: `NULL` es la representación de «no tiene clave de cliente» (ADR p57 §4.12).
 - **Jamás añadir una restricción única de teléfono por organización**: está descartada, no aplazada. Sería incompatible con INV-C (exigiría fusionar duplicados históricos) y es otra decisión, con su propia migración y su propia limpieza.
 - **Jamás dejar que el modelo elija su propia prueba de identidad** (ADR p58):
-  ni el mensaje que la respalda, ni la tolerancia con que se compara, ni la
-  pregunta que abre el reto. Una vía nueva que acepte cualquiera de los tres
-  desde los argumentos de una tool reintroduce el bypass que p58 cierra.
+  ni el mensaje que la respalda, ni la pregunta que abre el reto. Una vía nueva
+  que acepte cualquiera de los dos desde los argumentos de una tool reintroduce
+  el bypass que p58 cierra. La **tolerancia** del matcher salió de esta lista en
+  p59: no es una decisión de autorización.
+- **Jamás reponer una gramática de intención sobre el lenguaje del cliente**
+  (ADR p59, con gate estático). Si un fraseo legítimo no verifica, la respuesta
+  no es añadir un caso a una lista: el espacio no tiene fondo, y el fallo es
+  fail-closed — deja al cliente sin poder identificarse. La barrera correcta es
+  la procedencia, que es un hecho comprobable y no una interpretación.
 - **Jamás añadir un segundo llamador a `identity._promote`.** Hay un gate
   estático; si falla, la respuesta no es ampliar la lista permitida sino pasar
   por el servicio de evidencia, que es quien aplica el anti-eco y satisface el

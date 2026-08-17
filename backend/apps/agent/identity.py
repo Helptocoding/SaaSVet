@@ -139,31 +139,20 @@ def _pet_names(owner):
 
 
 def matches_pet_name_tolerant(candidate, registered):
-    """MATCHER PURO del modo `challenge_response`: tolerante (typo, subconjunto).
+    """MATCHER PURO, tolerante (typo, subconjunto de tokens).
 
-    Legítimo solo cuando el cliente **responde a la pregunta** por el nombre: ahí
-    sabemos que está intentando decirlo, y tolerar una letra evita mandar a
-    handoff a quien dice la verdad. Ver `identity_evidence.derive_match_mode`.
+    Es el único desde p59: tolerar una letra evita mandar a handoff a quien dice
+    la verdad, y la barrera real no es la ortografía sino la PROCEDENCIA —que el
+    valor esté en un mensaje del cliente y no lo hayamos dicho nosotros primero.
+    Lo usan la comprobación del aporte y la detección de eco.
     """
     return _name_matches(candidate, registered)
 
 
-def matches_pet_name_exact(candidate, registered):
-    """MATCHER PURO del modo `passive_free_text`: igualdad de token completo.
-
-    Sin distancia de edición y sin substring. Acepta el nombre completo
-    normalizado o **uno de sus tokens completos** de ≥3 caracteres: con «Luna
-    Bella» registrada, «cita para Luna» tiene que funcionar — el subconjunto de
-    tokens existe porque el reto rechazaba el nombre de pila y mandaba a handoff
-    a clientes legítimos. Lo que se elimina aquí es la tolerancia a typos, que
-    es de donde salían los falsos positivos en texto libre.
-    """
-    cand, reg = _norm(candidate), _norm(registered)
-    if not cand or not reg:
-        return False
-    if cand == reg:
-        return True
-    return cand in [tok for tok in reg.split() if len(tok) >= 3]
+# `matches_pet_name_exact` se RETIRÓ (ADR p59): era el matcher del modo
+# `passive_free_text`, y con la gramática cerrada fuera no queda quién lo
+# llame. Dejarlo vivo —nombrado por un régimen que ya no existe— es una
+# invitación a reintroducirlo.
 
 
 # `try_verify_by_pet_name`, `try_verify_by_pet_answer` y

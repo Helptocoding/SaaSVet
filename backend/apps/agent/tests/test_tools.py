@@ -179,15 +179,71 @@ class ToolsThroughRealApiTests(TestCase):
         self.assertFalse(outcome.ok)
         self.assertEqual(outcome.client_error, "unknown_handle")
 
-    def test_list_upcoming_appointments(self):
-        outcome = self._run("list_upcoming_appointments")
+    def test_get_appointments_lists_the_future_one(self):
+        outcome = self._run("get_appointments")
         self.assertTrue(outcome.ok, outcome.client_error)
-        self.assertEqual(len(outcome.data), 1)
-        appointment = outcome.data[0]
-        self.assertEqual(appointment["mascota"], "Luna")
+        appointment = next(a for a in outcome.data if a["mascota"] == "Luna")
         self.assertEqual(appointment["estado"], "programada")
         self.assertTrue(appointment["handle"].startswith("cita_"))
         self.assertTrue(appointment["cuando"])  # fecha absoluta legible (G5)
+        self.assertFalse(appointment["ya_paso"])
+        self.assertEqual(appointment["motivo"], "vacunación")
+
+    def test_get_appointments_sees_the_one_the_client_missed(self):
+        """Regresión de conv 21 (2026-08-17), el fallo más caro del piloto.
+
+        El cliente abrió con «no pude acudir a mi cita». Su cita existía —ese
+        mismo día, `scheduled`— y la API la devolvía en cada llamada. Pero
+        `list_upcoming_appointments` hacía `if start_dt < now: continue` y
+        `get_past_visits` hacía `if status != 'done': continue`, así que una cita
+        perdida (pasada Y no atendida) no la veía NINGUNA de las 18 tools. El
+        agente le dijo cuatro veces que no tenía citas mientras él respondía
+        «estoy viendo el sistema y si hay».
+        """
+        missed = (timezone.now() - timedelta(hours=3)).replace(
+            minute=0, second=0, microsecond=0)
+        Appointment.objects.create(
+            organization=self.org, pet=self.pet_luna, veterinarian=self.vet,
+            date=missed.date(), start_time=missed.time(),
+            end_time=(missed + timedelta(minutes=30)).time(),
+            start_datetime=missed, end_datetime=missed + timedelta(minutes=30),
+            reason="revisión", status="scheduled",
+        )
+
+        outcome = self._run("get_appointments")
+
+        self.assertTrue(outcome.ok, outcome.client_error)
+        perdida = [a for a in outcome.data if a["ya_paso"]]
+        self.assertEqual(len(perdida), 1, outcome.data)
+        self.assertEqual(perdida[0]["motivo"], "revisión")
+        self.assertEqual(perdida[0]["estado"], "programada")
+        # Y con handle: sin él, reagendarla o cancelarla es imposible por
+        # construcción, que es la mitad del defecto que nadie vio.
+        self.assertTrue(perdida[0]["handle"].startswith("cita_"))
+
+    def test_get_appointments_labels_every_status(self):
+        """El mapa de etiquetas solo cubría los 3 estados que el filtro dejaba
+        pasar: una cita cancelada o no asistida ni tenía nombre que enseñar."""
+        base = timezone.now() - timedelta(days=5)
+        for offset, status in enumerate(("done", "canceled", "no_show")):
+            start = (base + timedelta(hours=offset)).replace(
+                minute=0, second=0, microsecond=0)
+            Appointment.objects.create(
+                organization=self.org, pet=self.pet_luna,
+                veterinarian=self.vet, date=start.date(),
+                start_time=start.time(),
+                end_time=(start + timedelta(minutes=30)).time(),
+                start_datetime=start,
+                end_datetime=start + timedelta(minutes=30),
+                reason="x", status=status,
+            )
+
+        outcome = self._run("get_appointments")
+
+        etiquetas = {a["estado"] for a in outcome.data}
+        self.assertTrue({"atendida", "cancelada", "no asistió"} <= etiquetas,
+                        etiquetas)
+        self.assertNotIn("done", etiquetas)  # nunca el enum crudo al modelo
 
     def test_get_service_catalog_exact_price(self):
         outcome = self._run("get_service_catalog", {"query": "consulta"})

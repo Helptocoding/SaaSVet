@@ -193,21 +193,36 @@ class ConfirmationFlowTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.RUN_PLANNER)
 
 
-class ImplicitVerificationTests(PolicyTestCase):
-    def test_naming_pet_verifies_passively(self):
+class NoPassiveVerificationTests(PolicyTestCase):
+    """ADR p59 · `policy` ya NO verifica identidad por su cuenta.
+
+    Aquí se probaba la ruta pasiva: `policy` escaneaba la ráfaga y promovía si
+    encontraba el nombre de una mascota del expediente. Funcionaba porque una
+    gramática cerrada decidía si el cliente «había querido decirlo» — y era esa
+    gramática la que, en producción, rechazó a un cliente legítimo que había
+    contestado bien.
+
+    Retirada la gramática, este escaneo promovería con cualquier coincidencia de
+    token («anoche vi la luna» con una mascota llamada Luna), que es exactamente
+    el bug que la gramática existía para tapar. Así que la ruta pasiva cae con
+    ella y queda **una sola vía**: `identify_client`, donde el modelo propone la
+    lectura y el servidor la comprueba contra el texto real del cliente.
+    """
+
+    def test_naming_the_pet_no_longer_verifies_in_the_router(self):
+        """El caso que ANTES verificaba. Ahora se verifica un paso más adelante:
+        la tool personal rebota, el modelo llama a `identify_client` y reintenta,
+        todo dentro del mismo turno."""
         self._eval_burst("hola, quiero cita para Luna")
         self.contact.refresh_from_db()
         self.assertEqual(
             self.contact.verification_level,
-            ContactIdentity.VERIFICATION_CONFIRMED,
+            ContactIdentity.VERIFICATION_PHONE_MATCH,
         )
 
-    def test_a_bare_mention_does_not_verify(self):
-        """§2.3.1 · la gramática cerrada, no una lista de ejemplos.
-
-        Con una mascota llamada «Luna», «anoche vi la luna» promovía: el código
-        partía el texto en tokens y aceptaba cualquier coincidencia.
-        """
+    def test_a_bare_mention_does_not_verify_either(self):
+        """Lo que la gramática protegía sigue protegido, y sin gramática: nadie
+        promueve sin que el modelo lo proponga."""
         self._eval_burst("anoche vi la luna")
         self.contact.refresh_from_db()
         self.assertEqual(
@@ -215,33 +230,23 @@ class ImplicitVerificationTests(PolicyTestCase):
             ContactIdentity.VERIFICATION_PHONE_MATCH,
         )
 
-    def test_identity_negation_does_not_verify(self):
-        self._eval_burst("no es Luna")
-        self.contact.refresh_from_db()
-        self.assertEqual(
-            self.contact.verification_level,
-            ContactIdentity.VERIFICATION_PHONE_MATCH,
-        )
-
-    def test_clinical_negation_does_verify(self):
-        """«Luna no come» es de los mensajes más importantes que manda un
-        cliente: una regla ciega sobre `no` lo tiraba."""
-        self._eval_burst("Luna no come desde ayer")
-        self.contact.refresh_from_db()
-        self.assertEqual(
-            self.contact.verification_level,
-            ContactIdentity.VERIFICATION_CONFIRMED,
-        )
-
-    def test_passive_verification_satisfies_the_commitment_slot(self):
-        """Antes la ruta pasiva promovía sin tocar el compromiso, así que
-        `me_falta` seguía pidiendo la mascota DESPUÉS de haber verificado con
-        ella."""
+    def test_the_router_never_touches_the_commitment_slot(self):
+        """Satisfacer el slot es parte del commit de `verify_pet_evidence`, y
+        `policy` ya no lo llama."""
         commitment = goals.start_identity(
             self.conv, goals.TITULAR_CHALLENGE, first_factor='pet')
         self._eval_burst("cita para Luna")
         commitment.refresh_from_db()
-        self.assertEqual(commitment.slots.get('pet', {}).get('value'), 'Luna')
+        self.assertIsNone(commitment.slots.get('pet', {}).get('value'))
+
+    def test_the_router_does_not_import_the_evidence_service(self):
+        """Gate estático: una vía nueva en el router reintroduciría la promoción
+        sin propuesta del modelo, que es lo que p59 cierra."""
+        from pathlib import Path
+        source = (Path(__file__).resolve().parent.parent
+                  / 'policy.py').read_text(encoding='utf-8')
+        for gone in ('resolve_pet_evidence', 'verify_pet_evidence'):
+            self.assertNotIn(gone, source, f'{gone} volvió a `policy`: ver p59')
 
 
 class BudgetAndScopeTests(PolicyTestCase):

@@ -389,6 +389,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     # modelo no veía que ya había llamado a la herramienta.
     turn_messages = []
     tool_facts = []          # lo que las tools devolvieron ESTE turno (G1)
+    rows_read = 0            # filas que el dominio SÍ devolvió (p59 §6)
     correction = None        # instrucción correctiva del guard (un intento)
     # ¿Este turno descubrió que hay que identificar a alguien? Si sí, el aviso
     # de privacidad encabeza la respuesta (LFPDPPP just-in-time). Lo pone el
@@ -468,6 +469,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 # hilo era honesto cuando el contexto moría con la conversación;
                 # desde F2 el modelo lo recibe, así que decirlo se contradice.
                 has_history=prompts.has_previous_history(conversation),
+                # p59 §6 · el simétrico de `unbacked_success`. Conv 21: el agente
+                # dijo cuatro veces «no tengo ninguna cita» mientras las tools
+                # devolvían una. Nada lo vigilaba.
+                rows_read=rows_read,
             )
             # Un solo reintento con instrucción correctiva: el modelo suele
             # obedecer a la segunda y el cliente no nota nada.
@@ -533,19 +538,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                                       burst_text=burst_text) + text
                 + (tier0.T0_IDENTITY_QUESTION if identity_commitment else ''),
                 author='agent')
-            if identity_commitment is not None:
-                # Ligar SOLO la respuesta final normal: ni guard_blocked, ni
-                # fallbacks, ni errores técnicos son la pregunta del reto.
-                goals.bind_identity_question_enqueued(
-                    identity_commitment, message,
-                    # DERIVADO del spec, no del campo: `ConversationGoal.missing`
-                    # nace `[]` (default del modelo) y solo lo escribe `satisfy`,
-                    # así que en un reto recién abierto —justo cuando se hace la
-                    # pregunta— habría dicho que `pet` no estaba pendiente y el
-                    # régimen tolerante nunca se habría activado.
-                    pet_pending='pet' in goals.missing_slots(
-                        identity_commitment),
-                    deterministic_clause=True)
+            # La cláusula del sistema se queda (D38): el modelo pide los 4
+            # dígitos si le dejas, y ése es un factor retirado por circular.
+            # Lo que se retiró en p59 es LIGAR ese saliente al reto: existía
+            # para decidir el régimen probatorio, y ya solo hay uno.
             return {'decision': 'planner_reply', 'llm_calls': llm_calls,
                     'tools': tool_calls,
                     'goal_advanced': goal_progressed,
@@ -643,6 +639,22 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             # 'tool_failure' real (HTTP 5xx/transporte) escala.
             if outcome.client_error != 'tool_failure':
                 consecutive_failures = 0
+                if outcome.client_error == 'identity_echo':
+                    # El aporte era un eco de algo que dijimos nosotros. La tool
+                    # ya abrió el hand-off; lo que faltaba era **callar al
+                    # modelo**: dejarle redactar aquí le permite repetir el
+                    # nombre, que es exactamente la fuga que este camino cierra.
+                    # La plantilla es genérica a propósito y no se le vuelve a
+                    # pedir el dato: repetirlo seguiría siendo eco hasta que
+                    # caduque la ventana.
+                    #
+                    # Antes salía por la ruta pasiva de `policy`, que sí ponía la
+                    # plantilla. Al quedar `identify_client` como única vía (p59)
+                    # el hueco se volvió el camino principal.
+                    enqueue_outbound(conversation, tier0.T0_IDENTITY_ECHO,
+                                     author='system')
+                    return {'decision': 'identity_echo',
+                            'llm_calls': llm_calls, 'tools': tool_calls}
                 if outcome.client_error == 'verification_required':
                     # El sistema acaba de decidir que necesita identificar a
                     # quien escribe: lo que el modelo pida a continuación son
@@ -709,6 +721,11 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         if outcome.data is not None:
             tool_facts.append({'tool': result.tool_name,
                                'resultado': outcome.data})
+            # Cuántas filas devolvió el dominio este turno (p59 §6). Alimenta el
+            # guard simétrico: si esto es > 0 y el texto niega que exista algo, el
+            # modelo está negando lo que el sistema le acaba de enseñar.
+            if isinstance(outcome.data, (list, tuple)):
+                rows_read += len(outcome.data)
         turn_messages.append(prompts.tool_result_message(
             result, {'resultado': outcome.data}))
 

@@ -400,19 +400,11 @@ def _send_one(message, provider_factory, now):
     message.external_message_id = wamid or None
     message.save(update_fields=['status', 'external_message_id', 'attempts'])
 
-    # Sellado de la pregunta del reto (plan de continuidad, D36): `enqueued →
-    # emitted`, con `pet_asked_at` estampado en el ENVÍO real. Es lo que
-    # distingue «el sistema quiso preguntar» de «el cliente pudo verlo»: un
-    # saliente que quedó `pending` o `failed` nunca llega aquí.
+    # El sellado de la pregunta del reto se RETIRÓ (ADR p59). Servía para
+    # derivar el régimen probatorio, y con uno solo no hay nada que decidir.
     #
-    # Nunca revierte el envío: si esto falla con el WhatsApp ya aceptado, se
-    # registra la anomalía y el turno siguiente cae a modo pasivo. Un `raise`
-    # aquí haría rollback de `STATUS_SENT` y el sender reenviaría un mensaje que
-    # el cliente ya recibió.
-    try:
-        goals.mark_identity_question_emitted(message, now=now)
-    except Exception:                                    # noqa: BLE001
-        logger.exception("AGENT_IDENTITY_QUESTION_SEAL_FAILED", extra={
-            "event": "AGENT_IDENTITY_QUESTION_SEAL_FAILED",
-            "message_id": message.pk,
-        })
+    # Se gana algo aparte de código menos: era el único write que corría DESPUÉS
+    # de que el proveedor aceptara el mensaje, dentro de la misma transacción que
+    # guarda `STATUS_SENT`. Necesitaba un `try/except` propio precisamente porque
+    # un `raise` ahí habría hecho rollback de un WhatsApp ya entregado y el
+    # sender lo habría reenviado.

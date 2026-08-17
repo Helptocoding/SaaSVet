@@ -132,7 +132,7 @@ class MemoryScopeTests(MemoryTestCase):
     def test_both_memory_tools_require_a_verified_contact(self):
         """El historial es lo que este cliente preguntó y cuándo vino: con solo
         `phone_match` devolverlo es una fuga."""
-        for name in ('get_recent_product_queries', 'get_past_visits'):
+        for name in ('get_recent_product_queries', 'get_appointments'):
             self.assertEqual(
                 tools.TOOL_SPECS[name]['min_verification'],
                 'confirmed_in_chat', name)

@@ -245,31 +245,24 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #   cada factor, dónde iba) — lo que desaparece es la máquina que decidía
     #   la frase. Se publica al modelo como estado y él conduce.
 
-    # 9. Verificación IMPLÍCITA pasiva: si nombra su mascota, sube el nivel
-    #    (no cambia la decisión, habilita las tools personales del turno).
+    # 9. RETIRADA (ADR p59) — verificación IMPLÍCITA pasiva.
     #
-    #    Va por el SERVICIO ÚNICO (plan de continuidad, D17). Antes llamaba
-    #    directo a `identity.try_verify_by_pet_name`, que promovía sin anti-eco
-    #    —staff decía «¿cómo está Luna?» y el cliente repitiendo el nombre
-    #    quedaba verificado— y sin satisfacer el slot, así que el agente volvía a
-    #    pedir la mascota después de haber verificado con ella.
-    if (contact.verification_level == contact.VERIFICATION_PHONE_MATCH
-            and burst_messages):
-        resolution = identity_evidence.resolve_pet_evidence(
-            conversation, burst_messages)
-        if isinstance(resolution, identity_evidence.EchoRejected):
-            # D33 · el eco no se recupera reintentando: repetir el nombre sigue
-            # siendo eco hasta que caduque el TTL. Se escala y se para.
-            return _escalate_identity_echo(conversation, resolution)
-        if isinstance(resolution, identity_evidence.SealedPetEvidence):
-            result = identity_evidence.verify_pet_evidence(
-                conversation, resolution)
-            # D31 · se reasigna TODO lo que mutó, incluida la variable local:
-            # `conversation.contact = …` no actualiza un `contact` ya tomado.
-            conversation.contact = result.contact_identity
-            conversation.flow = result.conversation_flow
-            contact = result.contact_identity
-            flow = conversation.flow
+    #    Escaneaba la ráfaga y promovía si encontraba el nombre de una mascota
+    #    del expediente. Funcionaba porque una gramática cerrada decidía si el
+    #    cliente «había querido decirlo»; retirada esa gramática, este escaneo
+    #    promovería con cualquier coincidencia de token —«¿va a haber sol
+    #    mañana?» con una mascota llamada Sol—, que es el bug que la gramática
+    #    existía para tapar.
+    #
+    #    Ahora hay UNA sola vía: `identify_client`, donde el modelo propone la
+    #    lectura y el servidor la comprueba contra el texto real del cliente
+    #    (procedencia + anti-eco + TTL, intactos).
+    #
+    #    Consecuencia aceptada: quien escribe «cita para Luna» se verifica
+    #    DENTRO del tool loop del mismo turno —la tool personal rebota, el modelo
+    #    llama a `identify_client`, reintenta— así que recibe su respuesta igual.
+    #    Lo que llega un turno tarde es el TRANSCRIPT cruzado, porque el prompt
+    #    ya se había ensamblado. Es mucho mejor que no verificarse nunca.
 
     # 10. Presupuesto agotado (R11, E-09).
     if _budget_exhausted(conversation):
@@ -366,39 +359,6 @@ def _burst_confirmation(burst):
 # contención) y el plan É-F5 §4.1.
 
 
-
-
-def _escalate_identity_echo(conversation, resolution):
-    """Rechazo por anti-eco ⇒ escalado, nunca reintento (D33).
-
-    Las dos rutas —ésta y `identify_client`— terminan en el MISMO estado: sin
-    promoción, sin factor en `flow`, sin slot satisfecho, hand-off de identidad,
-    agente silenciado y ejecución detenida.
-
-    El `reason_detail` es lo que lee recepción: dice qué pasó y qué hacer, sin
-    repetir el nombre. `reason_code='identity'` — nunca el deprecado
-    `identity_ambiguous`, que aquí además mentiría: no hay nada ambiguo.
-    """
-    logger.info('AGENT_IDENTITY_ECHO_REJECTED', extra={
-        'event': 'AGENT_IDENTITY_ECHO_REJECTED',
-        'organization_id': conversation.organization_id,
-        'conversation_id': conversation.pk,
-        'source_message_id': resolution.from_message_id,
-        'disclosure_message_id': resolution.disclosure_message_id,
-    })
-    return PolicyDecision(
-        kind=ESCALATE,
-        text=tier0.T0_IDENTITY_ECHO,
-        handoff_reason=HumanHandoff.REASON_IDENTITY,
-        meta={
-            'reason': 'identity_echo',
-            'handoff_detail': (
-                'El dato con el que intentó identificarse ya lo habíamos '
-                'mencionado nosotros antes que él, así que no confirma quién '
-                'es. Verifícalo tú y registra la verificación.'
-            ),
-        },
-    )
 
 
 # ---------------------------------------------------------------------------

@@ -66,90 +66,129 @@ class EvidenceTestCase(TestCase):
             author_type=author, body=text, status=status,
         )
 
-    def _resolve(self, *texts):
-        messages = [self._in(text) for text in texts]
-        return identity_evidence.resolve_pet_evidence(self.conv, messages)
+    def _resolve(self, *texts, claimed='Luna'):
+        """Persiste lo que dijo el cliente y pregunta por la LECTURA del modelo.
+
+        `claimed` es lo que el modelo afirma haber entendido; los `texts` son lo
+        que el cliente escribió de verdad. Separarlos es el contrato de p59: el
+        servidor comprueba la propuesta contra el texto, no al revés.
+        """
+        for text in texts:
+            self._in(text)
+        return identity_evidence.resolve_pet_evidence(self.conv, claimed)
 
 
-class GrammarTests(EvidenceTestCase):
-    """§2.3.1 · gramática cerrada. Lo que no reconoce, NO promueve."""
+class ModelClaimTests(EvidenceTestCase):
+    """ADR p59 · el modelo propone la lectura, el servidor la comprueba.
 
-    def test_clinical_frame_is_evidence(self):
-        resolution = self._resolve("quiero una cita para Luna")
+    Aquí vivían 14 casos de gramática cerrada (marcos clínicos, posesivos,
+    negaciones de identidad, metalingüísticas). Se retiraron con la gramática:
+    enumeraban formas de nombrar una mascota y formas de negar identidad, dos
+    espacios sin fondo, y en producción rechazaron a un cliente legítimo que
+    había contestado bien.
+
+    La barrera ya no es «¿venía enmarcado?» sino **«¿lo dijo el cliente?»**.
+    """
+
+    # ── la barrera ──────────────────────────────────────────────────────────
+    def test_the_model_cannot_invent_the_contribution(self):
+        """LA prueba. El modelo puede leer mal; no puede inventar el aporte."""
+        resolution = self._resolve("quiero una cita", claimed='Luna')
+        self.assertIsInstance(resolution, identity_evidence.NoEvidence)
+        self.assertEqual(resolution.reason, 'el cliente no lo dijo')
+
+    def test_a_name_that_is_not_a_registered_pet_is_rejected(self):
+        resolution = self._resolve("mi mascota es Rocky", claimed='Rocky')
+        self.assertIsInstance(resolution, identity_evidence.NoEvidence)
+        self.assertEqual(resolution.reason, 'no es una de sus mascotas')
+
+    def test_an_empty_claim_is_rejected(self):
+        self.assertIsInstance(self._resolve("Luna", claimed=''),
+                              identity_evidence.NoEvidence)
+
+    def test_the_source_message_is_the_client_message_that_said_it(self):
+        said = self._in("Luna")
+        resolution = identity_evidence.resolve_pet_evidence(self.conv, 'Luna')
         self.assertIsInstance(resolution, identity_evidence.SealedPetEvidence)
-        self.assertEqual(resolution.registered_name, "Luna")
+        self.assertEqual(resolution.from_message_id, said.pk)
 
-    def test_possessive_frame_is_evidence(self):
-        self.assertIsInstance(self._resolve("mi perrita se llama Luna"),
+    def test_an_outbound_mention_is_not_a_client_contribution(self):
+        """Que el nombre esté en la conversación no basta: tiene que haberlo
+        dicho ÉL. Es la mitad de procedencia que el bypass de p58 saltaba.
+
+        Y el desenlace es `NoEvidence`, **no** `EchoRejected`: el eco escala a una
+        persona, y aquí no hay nada que escalar — el cliente no ha dicho nada, el
+        modelo leyó su propio mensaje. Se le pregunta y sigue. El escalado se
+        reserva para cuando el CLIENTE repite un dato que nosotros filtramos, que
+        es el caso con consecuencia de seguridad."""
+        self._out("¿Cómo sigue Luna?")
+        resolution = self._resolve(claimed='Luna')
+        self.assertIsInstance(resolution, identity_evidence.NoEvidence)
+        self.assertEqual(resolution.reason, 'el cliente no lo dijo')
+
+    # ── lo que p59 desbloquea, y era el fallo de conv 21 ────────────────────
+    def test_a_bare_name_is_evidence(self):
+        """El caso literal de producción: se le preguntó el nombre de su
+        mascota, contestó «koler», y la gramática lo rechazó por venir «sin
+        marco». Seis mensajes y 18 minutos, y se fue sin su cita."""
+        self.assertIsInstance(self._resolve("Luna"),
                               identity_evidence.SealedPetEvidence)
 
-    def test_state_verb_frame_is_evidence(self):
-        self.assertIsInstance(self._resolve("Luna necesita revisión"),
+    def test_an_identity_negation_that_reveals_the_pet_is_evidence(self):
+        """«yo no soy koler» — el cliente corrige al agente y de paso demuestra
+        que conoce a su mascota. La lista de negaciones no cubría `no soy`, y
+        añadirlo habría sido repetir el método que produjo el problema."""
+        self.assertIsInstance(self._resolve("yo no soy Luna, Luna es mi perra"),
                               identity_evidence.SealedPetEvidence)
 
-    def test_clinical_negation_is_still_evidence(self):
-        """«Luna no come» es de los mensajes clínicos más importantes que manda
-        un cliente. Una regla ciega sobre `no` lo tiraba."""
-        self.assertIsInstance(self._resolve("Luna no come desde ayer"),
+    def test_a_clinical_negation_is_still_evidence(self):
+        self.assertIsInstance(self._resolve("Luna no come"),
                               identity_evidence.SealedPetEvidence)
 
-    def test_bare_token_is_not_evidence(self):
-        self.assertIsInstance(self._resolve("anoche vi la luna"),
-                              identity_evidence.NoEvidence)
-
-    def test_loose_para_without_clinical_noun_is_not_evidence(self):
-        """El marco laxo aceptaba «¿venden lentes para sol?» con una mascota
-        llamada Sol. «Match exacto» prueba qué palabra apareció, no por qué."""
-        self.assertIsInstance(self._resolve("¿venden lentes para Luna?"),
-                              identity_evidence.NoEvidence)
-
-    def test_identity_negation_is_not_evidence(self):
-        self.assertIsInstance(self._resolve("no es Luna"),
-                              identity_evidence.NoEvidence)
-
-    def test_metalinguistic_question_is_not_evidence(self):
-        self.assertIsInstance(self._resolve("¿es luna llena?"),
-                              identity_evidence.NoEvidence)
-
-    def test_third_party_se_llama_is_not_evidence(self):
-        """`se llama` suelto aceptaba «el producto se llama Luna»."""
-        self.assertIsInstance(self._resolve("el producto se llama Luna"),
-                              identity_evidence.NoEvidence)
-
-    def test_punctuation_does_not_break_the_token(self):
+    def test_a_framed_mention_still_works(self):
         self.assertIsInstance(self._resolve("cita para Luna, por favor"),
                               identity_evidence.SealedPetEvidence)
 
-    def test_short_name_of_a_compound_registered_pet(self):
-        """Con «Luna Bella» registrada, «cita para Luna» tiene que funcionar: el
-        reto rechazaba el nombre de pila y mandaba a handoff a quien decía la
-        verdad."""
+    def test_a_typo_from_the_client_still_matches(self):
+        self.assertIsInstance(self._resolve("mi perrita Lunna"),
+                              identity_evidence.SealedPetEvidence)
+
+    def test_the_short_name_of_a_compound_pet_works(self):
         self.pet.name = "Luna Bella"
-        self.pet.save(update_fields=["name"])
+        self.pet.save(update_fields=['name'])
         resolution = self._resolve("cita para Luna")
         self.assertIsInstance(resolution, identity_evidence.SealedPetEvidence)
         self.assertEqual(resolution.registered_name, "Luna Bella")
 
+    # ── lo que sigue sin elegirse ───────────────────────────────────────────
+    def test_two_distinct_registered_names_are_not_resolved(self):
+        """Si la propuesta encaja con dos mascotas distintas, no se elige: sería
+        la decisión automática entre candidatos que INV-C prohíbe."""
+        Pet.objects.create(organization=self.org, owner=self.owner,
+                           name="Luna Clara", species="gato",
+                           birth_date="2022-01-01")
+        self.pet.name = "Luna Bella"
+        self.pet.save(update_fields=['name'])
+        self.assertIsInstance(self._resolve("Luna", claimed='Luna'),
+                              identity_evidence.NoEvidence)
+
     def test_two_pets_with_the_same_name_do_not_invalidate(self):
-        """Candidato único = un NOMBRE distinto, no una fila `Pet`."""
-        Pet.objects.create(
-            organization=self.org, owner=self.owner, name="Luna",
-            species="gato", birth_date="2022-01-01",
-        )
-        self.assertIsInstance(self._resolve("cita para Luna"),
+        Pet.objects.create(organization=self.org, owner=self.owner,
+                           name="Luna", species="gato",
+                           birth_date="2022-01-01")
+        self.assertIsInstance(self._resolve("Luna"),
                               identity_evidence.SealedPetEvidence)
 
-    def test_two_distinct_names_are_ambiguous(self):
-        Pet.objects.create(
-            organization=self.org, owner=self.owner, name="Toby",
-            species="perro", birth_date="2022-01-01",
-        )
-        self.assertIsInstance(self._resolve("cita para Luna y para Toby"),
-                              identity_evidence.NoEvidence)
+    def test_an_owner_without_pets_has_no_factor(self):
+        self.pet.delete()
+        resolution = self._resolve("Luna")
+        self.assertIsInstance(resolution, identity_evidence.NoEvidence)
+        self.assertEqual(resolution.reason, 'owner sin mascotas')
 
-    def test_typo_is_not_evidence_in_free_text(self):
-        self.assertIsInstance(self._resolve("cita para Lunna"),
-                              identity_evidence.NoEvidence)
+    def test_the_sealed_evidence_records_who_proposed_it(self):
+        resolution = self._resolve("Luna")
+        self.assertEqual(resolution.match_mode,
+                         identity_evidence.MATCHED_BY_MODEL_CLAIM)
 
 
 class AntiEchoTests(EvidenceTestCase):
@@ -200,102 +239,6 @@ class AntiEchoTests(EvidenceTestCase):
                          ContactIdentity.VERIFICATION_PHONE_MATCH)
         self.conv.refresh_from_db()
         self.assertNotIn(identity_evidence.FLOW_KEY, self.conv.flow)
-
-
-class MatchModeTests(EvidenceTestCase):
-    """D35 · el régimen probatorio lo deriva el SERVIDOR, nunca el caller."""
-
-    def _challenge(self, *, asked_state='emitted', pet_pending=True,
-                   clause=True, status=Message.STATUS_SENT, asked_at=None):
-        commitment = goals.start_identity(
-            self.conv, goals.TITULAR_CHALLENGE, first_factor='pet')
-        question = self._out("¿cómo se llama tu mascota?", status=status)
-        commitment.working_state = {'identity_question': {
-            'message_id': question.pk,
-            'asked_state': asked_state,
-            'pet_pending': pet_pending,
-            'deterministic_clause': clause,
-            'asked_at': (asked_at or timezone.now()).isoformat(),
-        }}
-        commitment.save(update_fields=['working_state'])
-        return commitment, question
-
-    def test_without_challenge_the_mode_is_passive(self):
-        message = self._in("¿es luna llena?")
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_PASSIVE,
-        )
-
-    def test_emitted_question_enables_the_tolerant_mode(self):
-        self._challenge()
-        message = self._in("Lunna")
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_CHALLENGE,
-        )
-
-    def test_a_question_that_never_went_out_stays_passive(self):
-        """Un `pet_asked_at` suelto solo probaría la INTENCIÓN de preguntar."""
-        self._challenge(asked_state='enqueued', status=Message.STATUS_PENDING)
-        message = self._in("Lunna")
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_PASSIVE,
-        )
-
-    def test_a_failed_question_stays_passive(self):
-        self._challenge(status=Message.STATUS_FAILED)
-        message = self._in("Lunna")
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_PASSIVE,
-        )
-
-    def test_a_question_without_the_deterministic_clause_stays_passive(self):
-        """El modelo preguntando por los dígitos por su cuenta no sella el reto
-        de la mascota."""
-        self._challenge(clause=False)
-        message = self._in("Lunna")
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_PASSIVE,
-        )
-
-    def test_an_answer_older_than_the_question_stays_passive(self):
-        message = self._in("Lunna")
-        self._challenge(asked_at=timezone.now() + timedelta(minutes=1))
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_PASSIVE,
-        )
-
-    def test_an_expired_question_stays_passive(self):
-        self._challenge(
-            asked_at=timezone.now()
-            - identity_evidence.IDENTITY_EVIDENCE_TTL - timedelta(minutes=1))
-        message = self._in("Lunna")
-        self.assertEqual(
-            identity_evidence.derive_match_mode(self.conv, message),
-            identity_evidence.MODE_PASSIVE,
-        )
-
-    def test_a_fresh_challenge_reports_pet_as_pending(self):
-        """`ConversationGoal.missing` nace `[]` (default del modelo) y solo lo
-        escribe `satisfy`. Leerlo del campo en vez de derivarlo del spec dejaba
-        `pet_pending=False` justo cuando se hace la pregunta — y con eso el modo
-        tolerante era inalcanzable para siempre."""
-        commitment = goals.start_identity(
-            self.conv, goals.TITULAR_CHALLENGE, first_factor='pet')
-        self.assertEqual(commitment.missing, [])
-        self.assertIn('pet', goals.missing_slots(commitment))
-
-    def test_the_tool_cannot_choose_the_regime(self):
-        """El modelo no elige `from_message`… pero tampoco puede elegir con qué
-        reglas se le juzga. Sin reto, «¿es luna llena?» no verifica ni aunque la
-        llamada venga de `identify_client`."""
-        resolution = self._resolve("¿es luna llena?")
-        self.assertIsInstance(resolution, identity_evidence.NoEvidence)
 
 
 class VerificationTransactionTests(EvidenceTestCase):
@@ -421,74 +364,144 @@ class AlreadyVerifiedTests(EvidenceTestCase):
 
 
 class RemediationCommandTests(EvidenceTestCase):
-    """D16/D37 · precondición de F1a, e idempotente."""
+    """D16/D37 · precondición de F1a, idempotente y **acotada en el tiempo**.
 
-    def test_degrades_a_contact_verified_by_the_bypass(self):
-        from django.core.management import call_command
+    La versión anterior de esta clase daba por bueno el bug: afirmaba que un
+    contacto con `verified_at = now()` se degradaba. Eso es justo lo que NO debe
+    pasar — `linked_via=''` es el resultado normal del reto conversacional, no la
+    huella del bypass, así que sin frontera temporal el comando borra las
+    verificaciones legítimas. En producción lo hizo cada 30 minutos.
+    """
+
+    F0_DEPLOY = '2026-08-17T02:35:51Z'
+
+    def _confirmed(self, verified_at):
         self.contact.verification_level = (
             ContactIdentity.VERIFICATION_CONFIRMED)
-        self.contact.verified_at = timezone.now()
+        self.contact.verified_at = verified_at
         self.contact.save(update_fields=['verification_level', 'verified_at'])
 
+    def _run(self, *extra):
+        from django.core.management import call_command
         call_command('remediate_identity_f0', '--org', str(self.org.pk),
-                     '--apply', verbosity=0)
+                     *extra, verbosity=0)
 
+    def _level(self):
         self.contact.refresh_from_db()
-        self.assertEqual(self.contact.verification_level,
+        return self.contact.verification_level
+
+    # ── la frontera temporal ────────────────────────────────────────────────
+    def test_a_verification_after_the_cutoff_survives(self):
+        """EL test que faltaba. El bypass murió al desplegar F0: lo verificado
+        después salió del servicio único, con anti-eco y procedencia."""
+        self._confirmed(timezone.now())
+        self._run('--apply', '--before', self.F0_DEPLOY)
+        self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
+        self.assertIsNotNone(self.contact.verified_at)
+
+    def test_a_verification_before_the_cutoff_is_degraded(self):
+        self._confirmed(timezone.now() - timedelta(days=3))
+        self._run('--apply', '--before', self.F0_DEPLOY)
+        self.assertEqual(self._level(),
                          ContactIdentity.VERIFICATION_PHONE_MATCH)
         self.assertIsNone(self.contact.verified_at)
 
+    def test_a_confirmed_row_without_date_counts_as_legacy(self):
+        """`_promote` siempre estampa `verified_at`, así que un nulo con
+        `confirmed_in_chat` no lo produce el código nuevo."""
+        self._confirmed(None)
+        self._run('--apply', '--before', self.F0_DEPLOY)
+        self.assertEqual(self._level(),
+                         ContactIdentity.VERIFICATION_PHONE_MATCH)
+
+    def test_without_the_cutoff_nothing_is_degraded(self):
+        """Correrlo por accidente —o desde un script que corre cada 30 min— ya
+        no puede tocar una verificación vigente."""
+        self._confirmed(timezone.now() - timedelta(days=3))
+        self._run('--apply')
+        self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
+
+    def test_a_malformed_cutoff_is_an_error_not_a_silent_none(self):
+        from django.core.management import CommandError
+        self._confirmed(timezone.now() - timedelta(days=3))
+        for bad in ('ayer', '2026-13-45T99:99:99Z'):
+            with self.assertRaises(CommandError):
+                self._run('--apply', '--before', bad)
+
+    def test_a_naive_cutoff_is_rejected(self):
+        """Sin zona, la frontera se mueve con el reloj del contenedor."""
+        from django.core.management import CommandError
+        with self.assertRaises(CommandError):
+            self._run('--apply', '--before', '2026-08-17T02:35:51')
+
+    # ── lo que no cambió ────────────────────────────────────────────────────
     def test_leaves_audited_links_alone(self):
         """Familiar, staff y auto-registro pasaron por su propio guard."""
-        from django.core.management import call_command
-        self.contact.verification_level = (
-            ContactIdentity.VERIFICATION_CONFIRMED)
+        self._confirmed(timezone.now() - timedelta(days=30))
         self.contact.linked_via = ContactIdentity.LINKED_STAFF
-        self.contact.save(update_fields=['verification_level', 'linked_via'])
+        self.contact.save(update_fields=['linked_via'])
+        self._run('--apply', '--before', self.F0_DEPLOY)
+        self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
 
-        call_command('remediate_identity_f0', '--org', str(self.org.pk),
-                     '--apply', verbosity=0)
-
-        self.contact.refresh_from_db()
-        self.assertEqual(self.contact.verification_level,
-                         ContactIdentity.VERIFICATION_CONFIRMED)
-
-    def test_closes_retired_machinery_goals(self):
-        from django.core.management import call_command
+    def test_closes_retired_machinery_goals_without_any_cutoff(self):
+        """El predicado de orfandad es intrínseco (maquinaria retirada), no
+        histórico: no necesita frontera y no puede alcanzar un reto vigente."""
         stale = ConversationGoal.objects.create(
             organization=self.org, conversation=self.conv,
             name=goals.TRIAGE, status=ConversationGoal.STATUS_SUSPENDED,
         )
-        call_command('remediate_identity_f0', '--org', str(self.org.pk),
-                     '--apply', verbosity=0)
+        self._run('--apply')
         stale.refresh_from_db()
         self.assertEqual(stale.status, ConversationGoal.STATUS_ABANDONED)
 
     def test_is_idempotent(self):
-        from django.core.management import call_command
         ConversationGoal.objects.create(
             organization=self.org, conversation=self.conv,
             name=goals.TRIAGE, status=ConversationGoal.STATUS_SUSPENDED,
         )
-        call_command('remediate_identity_f0', '--org', str(self.org.pk),
-                     '--apply', verbosity=0)
-        before = list(ConversationGoal.objects.values_list('status', flat=True))
-        call_command('remediate_identity_f0', '--org', str(self.org.pk),
-                     '--apply', verbosity=0)
+        self._confirmed(timezone.now() - timedelta(days=3))
+        self._run('--apply', '--before', self.F0_DEPLOY)
+        snapshot = (self._level(),
+                    list(ConversationGoal.objects
+                         .values_list('status', flat=True)))
+        self._run('--apply', '--before', self.F0_DEPLOY)
         self.assertEqual(
-            list(ConversationGoal.objects.values_list('status', flat=True)),
-            before)
+            (self._level(),
+             list(ConversationGoal.objects.values_list('status', flat=True))),
+            snapshot)
 
     def test_dry_run_writes_nothing(self):
-        from django.core.management import call_command
-        self.contact.verification_level = (
-            ContactIdentity.VERIFICATION_CONFIRMED)
-        self.contact.save(update_fields=['verification_level'])
-        call_command('remediate_identity_f0', '--org', str(self.org.pk),
-                     verbosity=0)
-        self.contact.refresh_from_db()
-        self.assertEqual(self.contact.verification_level,
-                         ContactIdentity.VERIFICATION_CONFIRMED)
+        self._confirmed(timezone.now() - timedelta(days=3))
+        self._run('--before', self.F0_DEPLOY)
+        self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
+
+
+class ReleaseScriptTests(SimpleTestCase):
+    """El incidente no fue solo del predicado: fue de DÓNDE corría.
+
+    `release.sh` no corre «una vez por deploy». El cron de la demo invoca
+    `docker compose run --rm backend`, y `run` arranca las dependencias del
+    servicio — entre ellas `release`. En producción eso son 48 corridas al día.
+    """
+
+    def _release_sh(self):
+        from pathlib import Path
+        path = (Path(__file__).resolve().parents[3]
+                / 'scripts' / 'release.sh')
+        return path.read_text(encoding='utf-8')
+
+    def test_no_data_remediation_runs_on_release(self):
+        body = [line for line in self._release_sh().splitlines()
+                if line.strip() and not line.lstrip().startswith('#')]
+        offenders = [line for line in body if 'remediate' in line]
+        self.assertEqual(offenders, [], (
+            'Una remediación es de un solo uso y este script corre cada 30 min. '
+            'Va a mano, con --before y dry-run previo.'))
+
+    def test_it_still_runs_the_convergent_steps(self):
+        body = self._release_sh()
+        for command in ('migrate', 'collectstatic', 'seed_permissions'):
+            self.assertIn(command, body)
 
 
 class PromoteSingleCallerGateTests(SimpleTestCase):
@@ -512,13 +525,23 @@ class PromoteSingleCallerGateTests(SimpleTestCase):
         self.assertEqual(len(callers), 1, message)
         self.assertTrue(callers[0].startswith('identity_evidence.py'), message)
 
-    def test_the_pet_matchers_are_pure(self):
+    def test_the_pet_matcher_is_pure(self):
+        """Uno solo desde p59: `matches_pet_name_exact` era del régimen pasivo."""
         source = (Path(__file__).resolve().parent.parent
                   / 'identity.py').read_text(encoding='utf-8')
-        for name in ('matches_pet_name_exact', 'matches_pet_name_tolerant'):
-            body = source.split(f'def {name}(')[1].split('\ndef ')[0]
-            for mutation in ('.save(', '.update(', '_promote('):
-                self.assertNotIn(
-                    mutation, body,
-                    f'{name} tiene que ser un matcher PURO: sin {mutation}',
-                )
+        body = source.split('def matches_pet_name_tolerant(')[1].split('\ndef ')[0]
+        for mutation in ('.save(', '.update(', '_promote('):
+            self.assertNotIn(
+                mutation, body,
+                f'el matcher tiene que ser PURO: sin {mutation}',
+            )
+
+    def test_the_retired_grammar_does_not_come_back(self):
+        """p59 · la gramática cerrada y los dos regímenes se retiraron porque
+        enumeraban espacios infinitos. Reponer una pieza con otro nombre
+        reintroduce el fallo: un fraseo nuevo vuelve a ser un bug nuevo."""
+        source = (Path(__file__).resolve().parent.parent
+                  / 'identity_evidence.py').read_text(encoding='utf-8')
+        for gone in ('def extract_pet_candidate', 'def derive_match_mode',
+                     '_IDENTITY_NEGATIONS', '_CLINICAL_NOUNS', '_STATE_STARTS'):
+            self.assertNotIn(gone, source, f'{gone} volvió: ver ADR p59')

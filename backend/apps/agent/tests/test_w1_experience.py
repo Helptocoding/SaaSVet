@@ -18,7 +18,7 @@ W1-10 la baja corta proactivos; no silencia al cliente para siempre.
 from datetime import timedelta
 from unittest import mock
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.agent import (
@@ -597,3 +597,40 @@ class OptOutTests(AgentFixture):
             self.channel, wamid="wamid.O1", wa_id="5215511110000",
             body="mejor sí quiero cita")
         self.assertEqual(message.status, Message.STATUS_PENDING)
+
+
+class DeniesDomainStateGuardTests(SimpleTestCase):
+    """ADR p59 §6 · el guard simétrico, y el fallo que lo hizo falta.
+
+    `unbacked_success` impedía afirmar lo que no pasó. Nada impedía lo contrario,
+    y ése fue el fallo más caro del piloto: conv 21, el agente dijo CUATRO veces
+    «no tengo ninguna cita agendada» mientras las tools devolvían una, y el
+    cliente respondía «estoy viendo el sistema y si hay».
+    """
+
+    def test_denying_what_the_domain_returned_is_a_violation(self):
+        violations = guards.check_behaviour(
+            "Revisé y no tengo ninguna cita agendada para Koler hoy.",
+            rows_read=1)
+        self.assertIn('denies_domain_state', [v.kind for v in violations])
+
+    def test_it_stays_quiet_when_the_domain_returned_nothing(self):
+        """Si de verdad no hay nada, decirlo es correcto — y es lo más honesto
+        que puede hacer el agente. El guard no puede castigar la verdad."""
+        violations = guards.check_behaviour(
+            "Revisé y no tengo ninguna cita agendada para Koler hoy.",
+            rows_read=0)
+        self.assertNotIn('denies_domain_state', [v.kind for v in violations])
+
+    def test_reporting_what_was_read_is_not_a_violation(self):
+        violations = guards.check_behaviour(
+            "Tienes una cita el lunes a las 9. ¿La movemos?", rows_read=1)
+        self.assertNotIn('denies_domain_state', [v.kind for v in violations])
+
+    def test_the_violation_is_soft(self):
+        """Se corrige y se reintenta. Un guard nuevo en HARD escala
+        conversaciones sanas, y eso le cuesta más al cliente que un log de más.
+        Promoverlo exige mirar antes los `AGENT_OUTPUT_GUARD` que deje."""
+        violations = guards.check_behaviour(
+            "no hay citas a tu nombre", rows_read=3)
+        self.assertFalse(guards.has_hard(violations))

@@ -8,15 +8,18 @@ nombre lo había dicho el sistema primero, y el pasivo ni siquiera satisfacía e
 slot del compromiso — así que el agente podía pedir la mascota justo después de
 haber verificado con ella.
 
-Reglas que este módulo hace cumplir, todas del plan:
+**El modelo interpreta; el servidor comprueba** (ADR p59). La gramática cerrada
+y los dos regímenes probatorios se retiraron: enumeraban formas de nombrar una
+mascota y de negar identidad, dos espacios infinitos, y en producción rechazaron
+a un cliente legítimo que había contestado bien (conv 21). Lo que queda es la
+barrera que de verdad cerraba el bypass: el valor que el modelo propone tiene que
+aparecer en un mensaje **del cliente**. Puede equivocarse leyendo; no puede
+inventar el aporte.
 
-- **El candidato lo extrae el servicio** (D30, §2.3.1), con una gramática cerrada:
-  un token suelto nunca es evidencia. Con una mascota llamada «Sol», «¿va a haber
-  sol mañana?» promovía.
-- **`match_mode` lo deriva el servidor** (D35). Si dependiera del call site, el
-  modelo elegiría el régimen probatorio llamando a `identify_client`.
-- **La procedencia la deriva el servidor** (D24): el mensaje origen sale del
-  burst, nunca de los argumentos de una tool.
+Reglas que este módulo hace cumplir:
+
+- **La procedencia la deriva el servidor**: el mensaje origen lo localiza este
+  módulo dentro de la ventana, nunca llega en los argumentos de una tool.
 - **Anti-eco por primera mención** (D7c) con el matcher TOLERANTE (D6): aceptar
   exige estricto, detectar un eco exige laxo. Con un solo matcher, «Lunna» dicho
   por staff no se detectaba y «Luna» del cliente promovía.
@@ -43,6 +46,13 @@ logger = logging.getLogger('agent.events')
 # conversaciones de 29 h y 47 h (plan D7b).
 IDENTITY_EVIDENCE_TTL = timedelta(minutes=60)
 
+# Un solo régimen desde p59: lo propone el modelo y el servidor lo comprueba
+# contra el texto real. Se conserva el nombre del campo (`match_mode`) para no
+# romper la lectura de los `flow` y slots ya escritos; ahora dice QUIÉN propuso.
+MATCHED_BY_MODEL_CLAIM = 'model_claim'
+
+# Regímenes de p58, retirados en p59. Se dejan como constantes muertas SOLO para
+# que un `flow` sellado antes del despliegue siga siendo legible en auditoría.
 MODE_PASSIVE = 'passive_free_text'
 MODE_CHALLENGE = 'challenge_response'
 
@@ -84,221 +94,148 @@ class EchoRejected:
 
 
 # ---------------------------------------------------------------------------
-# Gramática cerrada de marco fuerte (§2.3.1)
+# Resolución: el modelo interpreta, el servidor comprueba (ADR p59)
 # ---------------------------------------------------------------------------
-# Lo que la gramática no reconoce NO promueve. Falla segura: el modelo pregunta,
-# un turno de más. Un marco laxo, en cambio, acepta «¿venden lentes para sol?».
-
-_CLINICAL_NOUNS = {
-    'cita', 'citas', 'consulta', 'consultas', 'vacuna', 'vacunas',
-    'vacunacion', 'revision', 'urgencia', 'emergencia', 'bano', 'banio',
-    'cirugia', 'operacion', 'desparasitacion', 'chequeo', 'control',
-}
-_PET_NOUNS = {
-    'mascota', 'perro', 'perra', 'perrito', 'perrita', 'gato', 'gata',
-    'gatito', 'gatita', 'cachorro', 'cachorra', 'michi', 'firulais',
-}
-_LINK_WORDS = {'para', 'de'}
-# Verbos/estados que solo tienen sentido dicho de un ser vivo del cliente.
-_STATE_STARTS = (
-    ('necesita',), ('tiene',), ('presenta',), ('esta',), ('anda',),
-    ('se', 'puso'), ('le', 'duele'), ('no', 'come'), ('no', 'quiere'),
-    ('no', 'camina'), ('vomito',), ('vomita',), ('amanecio',),
-)
-# Negación de IDENTIDAD (rechaza). La de ESTADO CLÍNICO no: «Luna no come» es de
-# los mensajes más importantes que manda un cliente, y una regla ciega sobre `no`
-# lo tiraba.
-_IDENTITY_NEGATIONS = (('no', 'es'), ('no', 'se', 'llama'), ('ni',))
-
-
-def _tokens(text):
-    return identity._norm(text).split()
+# Aquí vivía una **gramática cerrada** (sustantivo clínico + `para/de`, posesivo
+# de mascota, verbo de estado) más una lista de negaciones de identidad y dos
+# regímenes probatorios derivados por el servidor. Retirado todo en p59, con el
+# motivo medido en producción:
+#
+#   'koler'  -> None    en passive_free_text
+#   'koler'  -> 'Koler' en challenge_response
+#
+# Conv 21: el cliente contestó exactamente lo que se le preguntó, con el nombre
+# correcto de su mascota, y se rechazó por llegar «sin marco». Seis mensajes y 18
+# minutos, y se fue sin su cita. La gramática enumeraba formas de nombrar una
+# mascota y la lista de negaciones enumeraba formas de negar identidad: dos
+# espacios infinitos, así que cada fraseo nuevo era un bug nuevo.
+#
+# Lo que NO cambia, y es lo que de verdad cerraba el bypass de p58:
+#
+#   1. PROCEDENCIA — el servidor localiza qué mensaje *del cliente*, en *esta*
+#      conversación, contiene el valor. Nunca llega en los argumentos de la tool.
+#   2. ANTI-ECO — primera mención gana, sobre mensajes realmente emitidos.
+#   3. TTL — 60 min sobre el mensaje origen.
+#
+# El modelo pasa de elegir el régimen con que se le juzga (el agujero fino de
+# D35) a **proponer una lectura que el servidor comprueba contra el texto real**.
+# Puede equivocarse interpretando; no puede inventar el aporte.
 
 
-def _spans(tokens, registered):
-    """Posiciones donde `registered` aparece como token(s) COMPLETO(s)."""
-    target = identity._norm(registered).split()
-    if not target:
-        return []
-    found = []
-    for start in range(len(tokens) - len(target) + 1):
-        if tokens[start:start + len(target)] == target:
-            found.append((start, start + len(target)))
-    if found:
-        return found
-    # Nombre compuesto nombrado por una de sus partes: «Luna» por «Luna Bella».
-    for part in (tok for tok in target if len(tok) >= 3):
-        for index, token in enumerate(tokens):
-            if token == part:
-                found.append((index, index + 1))
-    return found
+def resolve_pet_evidence(conversation, claimed, *, now=None):
+    """`NoEvidence` | `SealedPetEvidence` | `EchoRejected`.
 
+    `claimed` es el valor que el modelo afirma que aportó el cliente. El
+    servidor lo resuelve contra las mascotas registradas y **exige encontrarlo
+    en un mensaje entrante del cliente** dentro de la ventana: ésa es la
+    barrera, y es la que impide que el modelo se invente el aporte.
 
-def _framed(tokens, start, end):
-    """¿El nombre aparece dentro de un marco fuerte? (gramática cerrada)"""
-    before = tokens[:start]
-    after = tokens[end:]
-
-    for negation in _IDENTITY_NEGATIONS:
-        if tuple(before[-len(negation):]) == negation:
-            return False
-
-    # <mascota> necesita|tiene|no come…
-    for state in _STATE_STARTS:
-        if tuple(after[:len(state)]) == state:
-            return True
-
-    # (cita|consulta|vacuna…) … (para|de) <mascota>
-    if before and before[-1] in _LINK_WORDS:
-        if any(word in _CLINICAL_NOUNS for word in before[:-1]):
-            return True
-
-    # mi (mascota|perro|gato…) [se llama] <mascota>
-    #
-    # `se llama` EXIGE ese sujeto posesivo: suelto aceptaba «el producto se llama
-    # Luna». `_norm` ya se come el artículo «mi», así que el sustantivo de
-    # mascota inmediatamente antes (con o sin «se llama») es la señal.
-    tail = before[-3:]
-    if tail and tail[-1] in _PET_NOUNS:
-        return True
-    if tuple(tail[-2:]) == ('se', 'llama') and any(
-        word in _PET_NOUNS for word in before[:-2]
-    ):
-        return True
-    return False
-
-
-def extract_pet_candidate(text, registered_names, *, mode):
-    """Nombre de mascota que el cliente aportó, o `None`.
-
-    En `challenge_response` no hace falta marco: el sistema **acaba de
-    preguntar** por el nombre, así que «Luna» a secas es la respuesta natural.
-    En `passive_free_text` manda la gramática.
-
-    Candidato único = un solo nombre normalizado DISTINTO (dos mascotas del
-    mismo dueño llamadas «Luna» no invalidan identidad), y en compuestos gana el
-    **longest-match**.
-    """
-    tokens = _tokens(text)
-    if not tokens:
-        return None
-
-    matched = {}
-    for registered in registered_names:
-        if mode == MODE_CHALLENGE:
-            if identity.matches_pet_name_tolerant(text, registered):
-                matched[identity._norm(registered)] = registered
-            continue
-        for start, end in _spans(tokens, registered):
-            if _framed(tokens, start, end):
-                matched[identity._norm(registered)] = registered
-                break
-
-    if not matched:
-        return None
-    if len(matched) > 1:
-        # Longest-match ANTES de evaluar unicidad: «Luna Bella» gana a «Luna».
-        longest = max(matched, key=lambda name: len(name.split()))
-        rivals = [name for name in matched
-                  if len(name.split()) == len(longest.split())]
-        if len(rivals) > 1:
-            return None
-        return matched[longest]
-    return next(iter(matched.values()))
-
-
-# ---------------------------------------------------------------------------
-# Régimen probatorio: lo decide el SERVIDOR (D35)
-# ---------------------------------------------------------------------------
-
-def derive_match_mode(conversation, inbound_message, *, now=None):
-    """`challenge_response` solo si el sistema preguntó de verdad y el cliente
-    pudo verlo. Cualquier duda ⇒ `passive_free_text`.
-
-    Ni los argumentos de la tool, ni el nombre de la tool, ni el caller pueden
-    seleccionarlo: si pudieran, el modelo saltaría la gramática pasiva llamando a
-    `identify_client` y elegiría con qué reglas se le juzga.
-    """
-    from . import goals
-
-    now = now or timezone.now()
-    commitment = goals.get_identity_commitment(conversation)
-    if commitment is None:
-        return MODE_PASSIVE
-
-    asked = (commitment.working_state or {}).get('identity_question') or {}
-    if asked.get('asked_state') != 'emitted':
-        return MODE_PASSIVE                     # pending/failed/discarded: no la vio
-    if not asked.get('deterministic_clause'):
-        return MODE_PASSIVE                     # la pregunta no la puso el sistema
-    if not asked.get('pet_pending'):
-        return MODE_PASSIVE                     # no se preguntó por la mascota
-
-    asked_at = _parse_dt(asked.get('asked_at'))
-    if asked_at is None or now - asked_at > IDENTITY_EVIDENCE_TTL:
-        return MODE_PASSIVE
-
-    question = Message.objects.filter(pk=asked.get('message_id')).first()
-    if question is None or question.conversation_id != conversation.pk:
-        return MODE_PASSIVE
-    if question.direction != Message.DIRECTION_OUT:
-        return MODE_PASSIVE
-    if question.status not in (Message.STATUS_SENT, Message.STATUS_DELIVERED,
-                               Message.STATUS_READ):
-        return MODE_PASSIVE
-    # `asked_at` se estampa en el ENVÍO real, no al encolar: `Message.created_at`
-    # no prueba el orden de emisión (el sender usa skip_locked con réplicas).
-    if inbound_message is not None and asked_at >= inbound_message.created_at:
-        return MODE_PASSIVE
-    return MODE_CHALLENGE
-
-
-# ---------------------------------------------------------------------------
-# Resolución: extraer + sellar procedencia + anti-eco
-# ---------------------------------------------------------------------------
-
-def resolve_pet_evidence(conversation, burst_messages, *, now=None):
-    """Devuelve `NoEvidence` | `SealedPetEvidence` | `EchoRejected`.
-
-    `burst_messages` son los `Message` entrantes de este turno — objetos, no
-    cuerpos: sin PK no hay procedencia que sellar (D24).
+    Ya no hay ruta pasiva. Sin gramática, un escaneo sin propuesta del modelo
+    promovería con cualquier coincidencia de token —«¿va a haber sol mañana?»
+    con una mascota llamada Sol— que es exactamente el bug que la gramática
+    existía para tapar. Con una sola vía, la intención del modelo ES el marco.
     """
     now = now or timezone.now()
     contact = conversation.contact
     if contact.owner_id is None:
         return NoEvidence('sin owner')
 
-    registered = identity._pet_names(contact.owner)
-    if not registered:
+    registered_names = identity._pet_names(contact.owner)
+    if not registered_names:
         return NoEvidence('owner sin mascotas')
 
-    for message in burst_messages:
-        if message.direction != Message.DIRECTION_IN:
-            continue
-        if message.author_type != Message.AUTHOR_CLIENT:
-            continue
-        if message.conversation_id != conversation.pk:
-            # Ni «misma organización» ni «misma cuenta» bastan: podría ser el
-            # mensaje de otro contacto de la misma clínica.
-            continue
-        mode = derive_match_mode(conversation, message, now=now)
-        candidate = extract_pet_candidate(message.body or '', registered,
-                                          mode=mode)
-        if candidate is None:
-            continue
-        disclosure = _first_disclosure(conversation, candidate, message, now=now)
-        if disclosure is not None:
-            return EchoRejected(from_message_id=message.pk,
-                                disclosure_message_id=disclosure.pk)
-        return SealedPetEvidence(
-            value=(message.body or '').strip()[:120],
-            registered_name=candidate,
-            from_message_id=message.pk,
-            match_mode=mode,
-            captured_at=now,
-        )
-    return NoEvidence('sin mención de mascota')
+    # 1 · ¿lo que el modelo afirma corresponde a una mascota de ESTE expediente?
+    candidate = _registered_match(claimed, registered_names)
+    if candidate is None:
+        return NoEvidence('no es una de sus mascotas')
 
+    # 2 · LA BARRERA · ¿lo dijo el cliente, de verdad, en esta conversación?
+    #
+    # Ventana = entrantes del cliente dentro del TTL, del más viejo al más
+    # nuevo: la primera mención es la que cuenta, que es lo que hace
+    # comprobable el anti-eco del paso 3.
+    window = now - IDENTITY_EVIDENCE_TTL
+    said_by_client = visible_messages(
+        Message.objects.filter(
+            conversation=conversation,
+            direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT,
+            created_at__gte=window,
+        )
+    ).order_by('created_at', 'id')
+
+    source = next(
+        (message for message in said_by_client
+         if _says_the_pet(message.body or '', claimed, candidate)),
+        None,
+    )
+    if source is None:
+        return NoEvidence('el cliente no lo dijo')
+
+    # 3 · anti-eco: ¿lo dijimos NOSOTROS antes que él?
+    disclosure = _first_disclosure(conversation, candidate, source, now=now)
+    if disclosure is not None:
+        return EchoRejected(from_message_id=source.pk,
+                            disclosure_message_id=disclosure.pk)
+
+    return SealedPetEvidence(
+        value=(source.body or '').strip()[:120],
+        registered_name=candidate,
+        from_message_id=source.pk,
+        match_mode=MATCHED_BY_MODEL_CLAIM,
+        captured_at=now,
+    )
+
+
+# Lo que lee recepción cuando el aporte resultó ser un eco. Vive aquí, con el
+# detector, y no en el call site: cuando había dos rutas cada una tenía su copia.
+ECHO_HANDOFF_DETAIL = (
+    'El dato con el que intentó identificarse ya lo habíamos mencionado '
+    'nosotros antes que él, así que no confirma quién es. Verifícalo tú y '
+    'registra la verificación.'
+)
+
+
+def log_echo_rejected(conversation, resolution):
+    """Deja el rastro del rechazo. Sin cuerpos de mensaje: solo ids (R15)."""
+    logger.info('AGENT_IDENTITY_ECHO_REJECTED', extra={
+        'event': 'AGENT_IDENTITY_ECHO_REJECTED',
+        'organization_id': conversation.organization_id,
+        'conversation_id': conversation.pk,
+        'source_message_id': resolution.from_message_id,
+        'disclosure_message_id': resolution.disclosure_message_id,
+    })
+
+
+def _says_the_pet(body, claimed, candidate):
+    """¿Este mensaje del cliente nombra a la mascota?
+
+    Se acepta contra **lo que el modelo transcribió** o contra **el nombre
+    registrado**: con «Luna Bella» en el expediente, el cliente escribe «cita
+    para Luna» y el modelo propone «Luna». Exigir el nombre completo en el texto
+    rechazaría a quien llama a su perra como la llama siempre.
+    """
+    return (identity.matches_pet_name_tolerant(body, claimed)
+            or identity.matches_pet_name_tolerant(body, candidate))
+
+
+def _registered_match(claimed, registered_names):
+    """La mascota registrada que corresponde a lo que el modelo afirmó.
+
+    Tolerante (typo, nombre de pila de un compuesto), porque el modelo puede
+    reescribir lo que leyó. Si encajan DOS nombres distintos no se elige: eso
+    sería la decisión automática entre candidatos que INV-C prohíbe en su
+    dominio, y aquí tampoco corresponde.
+    """
+    if not (claimed or '').strip():
+        return None
+    matched = {}
+    for registered in registered_names:
+        if identity.matches_pet_name_tolerant(claimed, registered):
+            matched[identity._norm(registered)] = registered
+    if len(matched) != 1:
+        return None
+    return next(iter(matched.values()))
 
 def _first_disclosure(conversation, candidate, inbound, *, now):
     """El saliente que reveló el nombre ANTES de que el cliente lo aportara.
