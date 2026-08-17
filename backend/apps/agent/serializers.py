@@ -190,3 +190,54 @@ class AgentSettingsSerializer(serializers.ModelSerializer):
                     f"{key}: cada dato es texto de máximo 500 caracteres."
                 )
         return value
+
+
+class ThreadSerializer(serializers.Serializer):
+    """Una fila de la bandeja AGRUPADA: la persona, no el episodio.
+
+    En producción un solo contacto acumuló 19 conversaciones y la bandeja las
+    mostraba como 19 filas. La conversación sigue existiendo —de ella cuelgan
+    métricas, claim, hand-off y compromisos— pero recepción ve una fila por
+    `(contacto, cuenta)`.
+
+    El estado, el claim y la escalada que se muestran son los de la **sesión
+    vigente**. Si no hay ninguna abierta, la fila está ARCHIVADA: se ve, se lee,
+    y no ofrece acciones de respuesta — escribir crea sesión por el camino
+    normal, cuando el cliente vuelva a escribir.
+    """
+    contact_public_id = serializers.UUIDField()
+    channel_account_public_id = serializers.UUIDField()
+    contact_display_name = serializers.CharField()
+    contact_phone = serializers.CharField()
+    contact_verification = serializers.CharField()
+    linked_via = serializers.CharField()
+    owner_name = serializers.CharField(allow_null=True)
+    # Sesión vigente (o `null` si el hilo está archivado).
+    conversation_public_id = serializers.UUIDField(allow_null=True)
+    state = serializers.CharField(allow_null=True)
+    claimed_by_name = serializers.CharField(allow_null=True)
+    handoff_priority = serializers.CharField(allow_null=True)
+    handoff_reason = serializers.CharField(allow_null=True)
+    handoff_detail = serializers.CharField(allow_null=True)
+    # Hilo completo, no solo la sesión: es lo que hace útil la agrupación.
+    last_activity_at = serializers.DateTimeField(allow_null=True)
+    last_message_preview = serializers.CharField(allow_null=True)
+    has_unanswered = serializers.BooleanField()
+    session_count = serializers.IntegerField()
+
+
+class SessionSerializer(serializers.ModelSerializer):
+    """Un episodio dentro del hilo. Para recorrer el historial de la persona."""
+    claimed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conversation
+        fields = [
+            'public_id', 'state', 'created_at', 'closed_at', 'close_reason',
+            'last_activity_at', 'claimed_by_name',
+        ]
+
+    def get_claimed_by_name(self, obj):
+        if obj.claimed_by_id is None:
+            return None
+        return obj.claimed_by.get_full_name() or obj.claimed_by.username

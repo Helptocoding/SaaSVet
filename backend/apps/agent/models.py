@@ -21,7 +21,7 @@ from django.utils import timezone
 from apps.core.models import OrganizationalModel, PublicIdMixin
 
 
-class ContactIdentity(OrganizationalModel):
+class ContactIdentity(PublicIdMixin, OrganizationalModel):
     """Quién habla por el canal, por organización — con nivel de confianza.
 
     La verificación sube por reto ("el cliente aporta, el sistema verifica",

@@ -14,10 +14,10 @@ el outbox son los `direction='out', status='pending'`.
 """
 from django.db import models
 
-from apps.core.models import OrganizationalModel
+from apps.core.models import OrganizationalModel, PublicIdMixin
 
 
-class ChannelAccount(OrganizationalModel):
+class ChannelAccount(PublicIdMixin, OrganizationalModel):
     """Un número/canal de una clínica.
 
     El enrutamiento número→organización es EL control anti cross-tenant del

@@ -29,6 +29,14 @@ urlpatterns = [
          name='inbox-verify-identity'),
     path('conversations/<str:pk>/authorize-identity/', views.authorize_identity_link,
          name='inbox-authorize-identity'),
+    # Bandeja AGRUPADA por persona (plan de continuidad, §4). La ruta es
+    # COMPUESTA porque la fila es por `(contacto, cuenta)`: con solo el contacto,
+    # una clínica con dos números tendría dos filas colisionando en un id.
+    path('threads/', views.list_threads, name='inbox-threads'),
+    path('threads/<str:contact_pid>/<str:account_pid>/sessions/',
+         views.thread_sessions, name='inbox-thread-sessions'),
+    path('threads/<str:contact_pid>/<str:account_pid>/messages/',
+         views.thread_messages, name='inbox-thread-messages'),
     path('settings/', views.agent_settings_view, name='inbox-settings'),
     path('metrics/', views.metrics_view, name='inbox-metrics'),
     path('whatsapp-token/', views.whatsapp_token_view, name='inbox-whatsapp-token'),
