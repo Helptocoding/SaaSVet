@@ -3,8 +3,10 @@ import api from "./client";
 // Bandeja del agente WhatsApp (É-F0 PR-7). `publicId` = Conversation.public_id
 // (ADR p18: UUID en URLs, jamás PK).
 
-export const getConversations = (params = {}) =>
-  api.get("inbox/conversations/", { params }).then((r) => r.data);
+// `getConversations` se retiró: la bandeja agrupa por persona (`getThreads`).
+// Devolvía una fila por EPISODIO, que es lo que hacía que un cliente con 19
+// conversaciones apareciera 19 veces. El endpoint sigue vivo hasta su Sunset
+// (2026-11-30) por si algún cliente desconocido lo llama — pero no desde aquí.
 
 export const getConversationMessages = (publicId) =>
   api.get(`inbox/conversations/${publicId}/messages/`).then((r) => r.data);

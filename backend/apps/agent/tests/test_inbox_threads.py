@@ -225,3 +225,36 @@ class UrgentOrderingTests(ThreadsTestCase):
         rows = self._threads()
         self.assertEqual(rows[0]['handoff_priority'],
                          HumanHandoff.PRIORITY_URGENT)
+
+
+class DeprecatedConversationListTests(ThreadsTestCase):
+    """El listado por episodio queda deprecado, no borrado (RFC 8594).
+
+    La bandeja ya no lo llama; el Sunset existe para los clientes que no
+    conocemos. El log es el gate para cortarlo a 410 — sin él, «¿lo usa
+    alguien?» se contesta con una opinión.
+    """
+
+    def test_it_still_works(self):
+        session = self._session()
+        self._msg(session, "hola")
+        response = self.client.get(reverse('inbox-conversations'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+    def test_it_announces_its_retirement(self):
+        response = self.client.get(reverse('inbox-conversations'))
+        self.assertEqual(response['Deprecation'], 'true')
+        self.assertIn('2026', response['Sunset'])
+        self.assertIn('/api/inbox/threads/', response['Link'])
+        self.assertIn('successor-version', response['Link'])
+
+    def test_the_hit_is_logged(self):
+        with self.assertLogs('core.deprecation', level='WARNING') as captured:
+            self.client.get(reverse('inbox-conversations'))
+        self.assertTrue(
+            any('DEPRECATED_ENDPOINT_HIT' in line for line in captured.output))
+
+    def test_the_successor_is_not_deprecated(self):
+        response = self.client.get(reverse('inbox-threads'))
+        self.assertNotIn('Deprecation', response)

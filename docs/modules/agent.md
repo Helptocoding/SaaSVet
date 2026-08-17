@@ -262,7 +262,10 @@ bypass.
 | Superficie | Auth | Notas |
 |---|---|---|
 | `GET/POST /hooks/whatsapp/` | Firma del proveedor (SIN JWT, fuera de `/api/`) | Handshake + eventos; sin firma válida no se toca la DB; siempre 200 tras firma válida |
-| `GET /api/inbox/conversations/` (+`?state=`) | `agentinbox.view` | Default excluye cerradas; cap 100 |
+| `GET /api/inbox/threads/` (+`?archived=1`) | `agentinbox.view` | **Bandeja agrupada por persona**: una fila por `(contacto, cuenta)`, con el estado/claim/escalada de la **sesión vigente** y la actividad del **hilo completo**. Cap 100 |
+| `GET /api/inbox/threads/<contacto>/<cuenta>/sessions/` | `agentinbox.view` | Los episodios del hilo, del más reciente al más viejo. Paginado |
+| `GET /api/inbox/threads/<contacto>/<cuenta>/messages/` | `agentinbox.view` | Transcript del hilo **cruzando sesiones**, con cursor `?before=`. Devuelve además la sesión vigente, su caso de identidad y su hand-off |
+| ~~`GET /api/inbox/conversations/` (+`?state=`)~~ | `agentinbox.view` | **DEPRECADO** (RFC 8594, Sunset **2026-11-30**) → `GET /api/inbox/threads/`. Devolvía una fila por EPISODIO: un cliente con 19 conversaciones aparecía 19 veces. Sigue funcionando y emite `DEPRECATED_ENDPOINT_HIT`, que es el gate para cortarlo a `410` |
 | `GET /api/inbox/conversations/<uuid>/messages/` | `agentinbox.view` | Transcript cronológico, cap 200 |
 | `POST …/send/` | `agentinbox.send` | Sanitizado, máx 4000; deja la conversación en `human_active` + claim |
 | `POST …/claim/` · `…/close/` · `…/release/` | `agentinbox.claim` | Claim exclusivo → 409 `already_claimed` |

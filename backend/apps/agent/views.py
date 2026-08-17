@@ -49,9 +49,27 @@ def _get_conversation(request, pk):
     )
 
 
+# RFC 8594. Tres meses y medio, mismo criterio que el `DELETE` de citas
+# (ADR p57): tiempo para que un cliente desconocido aparezca en el log antes de
+# cortar a 410. La bandeja ya no la llama — el sunset existe para los que no
+# conocemos, no para el nuestro.
+_CONVERSATIONS_SUNSET_DATE = 'Mon, 30 Nov 2026 23:59:59 GMT'
+_deprecation_logger = logging.getLogger('core.deprecation')
+
+
 @api_view(['GET'])
 @permission_classes([make_permission('agentinbox.view')])
 def list_conversations(request):
+    """DEPRECADO — la bandeja agrupa por persona (`GET /api/inbox/threads/`).
+
+    Devolvía una fila por EPISODIO, que es lo que hacía que un cliente con 19
+    conversaciones apareciera 19 veces. El sucesor no es un renombre: agrupa por
+    `(contacto, cuenta)` y publica el estado de la sesión vigente junto a la
+    actividad del hilo completo.
+
+    Sigue funcionando hasta el Sunset. El log mide si alguien la llama todavía:
+    es el gate para cortarla a `410`, no un adorno.
+    """
     org = request.user.organization
     queryset = (
         Conversation.objects.for_organization(org)
@@ -93,9 +111,31 @@ def list_conversations(request):
         # Default de bandeja: lo operable (las cerradas se piden explícito).
         queryset = queryset.exclude(state=Conversation.STATE_CLOSED)
 
-    return Response(
+    response = Response(
         ConversationListSerializer(queryset[:100], many=True).data
     )
+    return _deprecated_conversations(response, request)
+
+
+def _deprecated_conversations(response, request):
+    """Cabeceras RFC 8594 + log de adopción del listado por conversación."""
+    successor = '/api/inbox/threads/'
+    response['Deprecation'] = 'true'
+    response['Sunset'] = _CONVERSATIONS_SUNSET_DATE
+    response['Link'] = f'<{successor}>; rel="successor-version"'
+    _deprecation_logger.warning(
+        "DEPRECATED_ENDPOINT_HIT",
+        extra={
+            "event": "DEPRECATED_ENDPOINT_HIT",
+            "endpoint": request.path,
+            "method": request.method,
+            "user_id": getattr(request.user, 'pk', None),
+            "org_id": getattr(request.user, 'organization_id', None),
+            "successor": f"GET {successor}",
+            "sunset": _CONVERSATIONS_SUNSET_DATE,
+        },
+    )
+    return response
 
 
 @api_view(['GET', 'POST'])
