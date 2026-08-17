@@ -127,6 +127,30 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 
 23. **INV-D — un veterinario no tiene dos citas activas solapadas** (ADR p57): garantizado por una restricción de exclusión de PostgreSQL sobre `(organization, veterinarian, [start_datetime, end_datetime))` con predicado de estados activos. **Sin excepciones**: cubre creación, reprogramación, atención sin cita y reactivación. El desenlace es `400 slot_taken`, lo detecte el pre-chequeo o lo rechace la base. **No existe ninguna bandera de forzado** (`force`, `allow_overlap`, permiso que lo salte).
 
+24. **INV-E — el modelo aporta el valor; el sistema decide qué lo prueba**
+    (ADR p58): en la verificación de identidad del chat, el servidor deriva
+    **la procedencia** (qué mensaje del cliente contiene el dato), **el régimen
+    probatorio** (`match_mode`) y **la pregunta** que abre el reto. Ninguno de
+    los tres se deduce del call site ni llega en los argumentos de una tool. Si
+    el modelo pudiera elegir con qué reglas se le juzga, bastaría con que
+    llamara a `identify_client` para saltarse la gramática estricta. Corolario
+    verificado con gate estático: **`identity._promote` tiene exactamente un
+    llamador**, el servicio de evidencia.
+
+25. **INV-F — un dato que el sistema reveló no prueba identidad** (ADR p58): un
+    factor solo cuenta si el cliente lo aportó **primero**. Si el sistema o el
+    staff lo dijeron antes —y la bandeja le muestra el nombre del titular a
+    recepción—, repetirlo es un eco, no un aporte. Por eso el nombre del titular
+    dejó de ser factor: el sistema lo conoce y lo enseña. Mismo criterio que
+    `ContactIdentityVerification.EVIDENCE_CHOICES` (p57 §5.5.3), que ya excluía
+    toda evidencia basada en el teléfono por circular.
+
+26. **INV-G — un saliente que el cliente no recibió no existe** (ADR p58): los
+    mensajes `failed` (ventana de 24 h cerrada) y `discarded` (el cliente siguió
+    escribiendo) no entran al contexto del modelo, ni al anti-eco, ni a la
+    bandeja. El selector es único (`channels.selectors.visible_messages`): dos
+    lecturas del mismo transcript que no coinciden es peor que una.
+
 ---
 
 ## 4. Reglas que nunca deben romperse
@@ -158,6 +182,21 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 - **Jamás degradar el lock de deduplicación a un no-op.** `advisory_xact_lock` es PostgreSQL-only y exige transacción abierta: en otro motor lanza, y en autocommit lanza. Un lock que no bloquea es un fail-open invisible, que es la clase de bug que INV-C existe para cerrar.
 - **Jamás derivar `Owner.phone_normalized` desde el cliente ni fuera de `Owner.save()`**, y jamás darle un valor al `Owner` genérico: `NULL` es la representación de «no tiene clave de cliente» (ADR p57 §4.12).
 - **Jamás añadir una restricción única de teléfono por organización**: está descartada, no aplazada. Sería incompatible con INV-C (exigiría fusionar duplicados históricos) y es otra decisión, con su propia migración y su propia limpieza.
+- **Jamás dejar que el modelo elija su propia prueba de identidad** (ADR p58):
+  ni el mensaje que la respalda, ni la tolerancia con que se compara, ni la
+  pregunta que abre el reto. Una vía nueva que acepte cualquiera de los tres
+  desde los argumentos de una tool reintroduce el bypass que p58 cierra.
+- **Jamás añadir un segundo llamador a `identity._promote`.** Hay un gate
+  estático; si falla, la respuesta no es ampliar la lista permitida sino pasar
+  por el servicio de evidencia, que es quien aplica el anti-eco y satisface el
+  compromiso.
+- **Jamás describir `pet_name` como autenticación fuerte** (ADR p58, riesgo
+  residual): es un factor de conocimiento de baja entropía, aceptado para lo que
+  el agente hace hoy. Si sube la sensibilidad de lo que puede hacer, se revisa.
+- **Jamás mostrar al modelo —ni a la bandeja— un saliente `failed` o
+  `discarded`**: el cliente no lo recibió. El selector es
+  `channels.selectors.visible_messages`, y filtrar a mano en un consumidor nuevo
+  vuelve a crear dos verdades sobre el mismo transcript.
 
 ---
 

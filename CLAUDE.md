@@ -139,6 +139,13 @@ Cargar solo el contexto mínimo necesario según el tipo de cambio:
   Identifica el módulo afectado (billing, inventory, appointments, etc.)
   y carga solo ese archivo.
 
+- Cambio en el agente de WhatsApp o su bandeja:
+  @docs/modules/agent.md   (cubre `agent` + `channels`)
+  Si tocas identidad, verificación o continuidad conversacional, carga además
+  @docs/decisions/2026-08-17-p58-continuidad-e-identidad-del-agente.md
+  El plan @docs/agent-continuity-plan.md solo si necesitas el POR QUÉ de una
+  decisión concreta o las alternativas que se descartaron: es largo a propósito.
+
 - Cambio cross-módulo (afecta varios dominios, APIs compartidas):
   @docs/system-operational-flow.md (índice + mapa de módulos)
   Según necesidad, complementar con:

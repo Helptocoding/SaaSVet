@@ -34,6 +34,8 @@ contexto de trabajo ligero y preciso:
 | `analytics` | Snapshots diarios + dashboards (operacional + financiero). Read-only sobre eventos. |
 | `imports` | Migración CSV/Excel: alta por lote de Clientes + Mascotas desde el sistema anterior. Escribe `patients` vía `.save()` directo. ADR p43. Ver [`modules/imports.md`](modules/imports.md). |
 | `logs` | Eventos estructurados JSON a stdout (RBAC, tenant, anchors, deprecation, integridad). |
+| `channels` | **Frontera de mensajería**: `ChannelAccount` (un número = una organización, por constraint global) y `Message` (entrantes y salientes en una tabla). Ningún módulo de dominio lo importa. Ver [`modules/agent.md`](modules/agent.md). |
+| `agent` | Asistente de WhatsApp: identidad del contacto, conversación, compromisos, herramientas y bandeja. **Escribe dominio solo por la API, con su propio rol `AGENT`** — nunca por ORM directo. ADRs p51-p58. |
 | `backup` | **Infra/ops (host-level, no es app Django)**: backup nightly cifrado offsite + restore + drill DR. ADR p40. Ver [`modules/backup.md`](modules/backup.md). |
 
 ### Dependencias funcionales

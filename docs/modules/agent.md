@@ -1,13 +1,14 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
-> **Estado**: É-F3 completa. É-F4 (gobernanza conversacional) con Fases 0-3
-> implementadas 2026-07-30 — R1/R9 interrupciones · R5/R8/R12
-> suspender-no-destruir + `TurnDecision` · R11/R2 autoría de salientes +
-> ventana por turnos · **R3/R4/R7/R9 árbitro + compromiso unificado
-> ([ADR p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md))**.
-> · R10/R2 guards de conducta. **É-F4 completa**; la Fase 5 se canceló por
-> decisión de producto. 520 tests en CI. Ver
-> [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
+> **Estado**: É-F3 y É-F4 completas (gobernanza conversacional: interrupciones,
+> suspender-no-destruir + `TurnDecision`, autoría de salientes, ventana por
+> turnos, árbitro + compromiso unificado
+> [ADR p55](../decisions/2026-07-30-p55-turn-authority-and-commitments.md), y
+> guards de conducta). É-F5 con Fases 0-5 implementadas.
+> **Continuidad e identidad (ADR p58) completa y en producción** desde el
+> 2026-08-17: el bypass de verificación cerrado, el contexto leído por contacto
+> y la bandeja agrupada por persona. ~766 tests solo en `agent` + `channels`.
+> Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
 > épicas) · [`whatsapp-agent-functional-spec.md`](../whatsapp-agent-functional-spec.md)
@@ -22,11 +23,22 @@
 > ANTES del código, que es lo que lo hizo servir de brújula) ·
 > **[p56](../decisions/2026-08-01-p56-perception-situation-and-turn-as-root.md)**
 > percepción, situación y el turno como unidad de razonamiento (ACEPTADO
-> 2026-08-01, **sin implementar**; enmienda R13 de p55 §6).
+> 2026-08-01) ·
+> **[p58](../decisions/2026-08-17-p58-continuidad-e-identidad-del-agente.md)**
+> continuidad conversacional e identidad (ACEPTADO 2026-08-16, **implementado y
+> en producción**): el nombre del titular deja de verificar, la autoridad sobre
+> la prueba es del servidor, y el contexto pasa a leerse por contacto.
 >
 > Rediseño en curso: [auditoría de arquitectura](../whatsapp-agent-auditoria-arquitectura-2026-07-31.md)
 > → [plan É-F5](../whatsapp-agent-f5-conversacion-plan.md). **Fase 0 hecha**
 > (corpus de regresión + línea base); Fase 1 arranca con p56 ya aceptado.
+>
+> **Continuidad e identidad (p58)**: plan de implementación con las catorce
+> revisiones y el motivo de cada decisión en
+> [`agent-continuity-plan.md`](../agent-continuity-plan.md). Se lee cuando la
+> pregunta es «¿por qué está hecho así?» — el ADR da la regla, el plan da el
+> camino y las alternativas que se descartaron.
+>
 > Runbook operativo: [`runbooks/agent-whatsapp.md`](../runbooks/agent-whatsapp.md).
 
 ## Boundary (vinculante)
@@ -593,75 +605,47 @@ quién es «supervisor» (¿rol, permiso propio?), y por eso no se hace de paso.
 
 Anclado en `test_a_pre_existing_foreign_claim_is_still_released`.
 
-### Tamiz de identidad (UX-05) — nuevo vs. ya registrado
+### Identidad de un número desconocido — RETIRADO el tamiz, vive el reto
 
-**El sistema nunca asume que un número sin registro es un cliente nuevo.** Un
-contacto con `owner_id IS NULL` que pide algo **personal** (agendar, ver sus
-citas, cancelar/mover — `matchers.wants_personal_action`) recibe primero el
-tamiz `T0_TRIAGE`: *"¿primera vez, o ya eres cliente y escribes desde otro
-número?"*. Preguntas de precio/horario **no** lo disparan: se atienden en
-anónimo (tier 1) y meterles un tamiz sería fricción gratuita.
+> **Aquí había 70 líneas describiendo el tamiz `T0_TRIAGE`** (*«¿primera vez, o
+> ya eres cliente y escribes desde otro número?»*) con sus ramas `new` /
+> `returning` / `unclear`, sus lemas negados y su costo de 4 turnos. **Esa
+> máquina se retiró en É-F5 Fase 2** (ADR p56 §4): el router decidía qué frase
+> tocaba en cada etapa, y la conversación que abrió É-F5 se resolvió con **cero
+> llamadas al modelo**. La documentación siguió describiéndola año y medio de
+> commits después de que dejara de existir, que es la peor clase de doc: la que
+> se lee como vigente.
 
-Las dos ramas las resuelve el propio agente (`matchers.classify_client_triage`):
+Lo que hay hoy, y quién hace cada cosa:
 
-| Respuesta | Efecto |
+| Situación | Quién la conduce |
 |---|---|
-| `new` | `RUN_PLANNER` → el modelo debe llamar `register_new_client_and_pet` (alta + cita en una transacción) |
-| `returning` | Pide el nombre del titular → `identity.find_link_candidates` lo **busca en `Owner`** → siembra `family_challenge` → reto de 3 factores (titular → mascota → últimos 4 dígitos) → `link_family` → `RUN_PLANNER` verificado, y el agente **sigue atendiendo** |
-| `unclear` | Una re-pregunta explícita sin costo; a la segunda cede al planner |
+| Número **desconocido** que pide algo personal | El **modelo**, conversando. La barrera no es el router: es `_verification_ok` dentro de `run_tool`, que se evalúa por debajo del modelo — una tool personal rebota sin tocar nada |
+| El cliente aporta un dato de identidad | `identify_client`, que **registra y dictamina**. El modelo aporta el valor; el servidor deriva la procedencia, el régimen y el anti-eco (ADR p58 §2) |
+| Número **ya vinculado** (`phone_match`) que necesita verificarse | Reto de un solo factor: **el nombre de una mascota**. `owner_name` se retiró como factor en p58 §1 y los 4 dígitos son circulares para quien escribe desde su propio número |
+| Número desconocido actuando por un titular existente | Reto **familiar** de tres factores contra un mismo `Owner` (`find_link_candidates` + `owner_has_pet` + `owner_digits_match`). Ahí el nombre del titular es **clave de búsqueda**, no prueba: el sistema todavía no conoce al `Owner`, así que no puede filtrarlo |
+| Nada de lo anterior alcanza | Verificación **humana** (FLUJO-C, ADR p57 §5.5) |
 
-Detalles que evitan que el tamiz se sienta robótico (revisión UX 2026-07-28):
+Lo que **sigue vigente** de aquella sección, porque no dependía del tamiz:
 
-- **Negaciones primero**: `"no soy cliente"` contiene `"soy cliente"` y
-  `"no es la primera"` contiene `"primera"`. Las listas negadas se evalúan
-  antes que las positivas o ambas se clasifican al revés.
-- **`sí`/`no` pelones se quedan en `unclear`** y se re-preguntan. Adivinar es
-  peor que preguntar: un falso `new` abre un expediente **duplicado** sobre
-  alguien que ya existe.
-- **El reintento no dice "no te entendí"**: pide elegir entre *«soy nuevo»* y
-  *«ya he venido»* — dos frases que el diccionario reconoce, así que la 2ª
-  vuelta casi siempre resuelve.
-- **Si el dato ya vino en el mismo mensaje** (`"soy nuevo, quiero cita"`) no se
-  pregunta nada — es la repregunta que persigue `tasa_repregunta`.
-- **Si la mascota ya se nombró** antes en el hilo (`"cita para Luna"`), ese
-  factor del reto se da por aportado y se salta al de los dígitos. No debilita
-  nada: el dato lo dio el cliente sin que el sistema enumerara (G4), y de hecho
-  antes de saber que se le pediría.
-- **Preguntas de política de citas e información** (`"¿necesito cita o puedo
-  llegar así?"`, `"¿cuánto tarda una cita?"`, horarios, ubicación) **no** pasan
-  por el tamiz: son tier-1 anónimo y meterles una puerta era fricción gratuita.
-- **Aviso de privacidad (UX-01)**: las respuestas del tamiz llevan
-  `meta['privacy_notice']` y el planner antepone `_privacy_prefix` en la rama
-  `REPLY`. Sin eso, un cliente nuevo daba su nombre sin haber recibido el aviso
-  just-in-time — el camino viejo sí lo emitía.
-- **Primer contacto**: `tier0.render_triage(org, first_contact=True)` abre con
-  la bienvenida institucional. Ese mensaje es lo primero que lee alguien que
-  nunca ha escrito; arrancar con "este número no está registrado" era hablarle
-  de la base de datos (§2.1).
+- **El sistema nunca asume que un número sin registro es un cliente nuevo.** Lo
+  que cambió es que ya no lo pregunta con una plantilla: lo conversa.
+- **Decir «ya vine antes» NO escala a un humano** (decisión del PO,
+  2026-07-28): se busca, se verifica y se atiende. A un humano se llega si la
+  verificación **falla** de verdad, o si no queda ningún factor que el cliente
+  pueda aportar (§2.2.2 del plan de continuidad).
+- **Aviso de privacidad just-in-time (UX-01)**: lo antepone el planner cuando el
+  turno descubre que necesita identificar a alguien. Es un literal legal que
+  pone el **sistema**, no el modelo — mismo patrón que la pregunta del reto
+  (p58 §2).
+- **Preguntas de precio, horario o ubicación no piden identidad**: son tier-1
+  anónimo, y meterles una puerta era fricción gratuita.
 
-**Costo conocido y aceptado**: un cliente ya registrado que escribe desde un
-número nuevo paga **4 turnos** de verificación antes de avanzar (tamiz →
-titular → mascota → 4 dígitos; 3 si ya nombró a la mascota). El tercer factor
-—últimos 4 dígitos del teléfono registrado— se diseñó para un **familiar**, no
-para el titular que cambió de número, así que puede fallar por memoria y acabar
-en humano. Revisado con el PO el 2026-07-28: **se deja así**; la alternativa
-(un tercer factor más débil) no compensa el riesgo.
-
-**Decir "ya vine antes" NO escala a un humano** (decisión del PO, 2026-07-28):
-se busca, se verifica y se atiende. A un humano solo se llega si la
-verificación **falla** de verdad (2 fallos reales → `_family_fail`, E-06).
-
-**Vive en el router determinista** (`policy.evaluate` paso 12b), no en el
-planner. Antes solo reaccionaba si el **modelo** llamaba una tool personal y
-ésta rebotaba con `verification_required` — un modelo que se ponía a recolectar
-nombre/mascota/fecha en texto plano no disparaba nada. Fue exactamente el fallo
-del piloto (2026-07-28, conv. 10 de `Clinica Bebe coche`): recolectó todo en
-texto, jamás llamó una tool, y dio por agendada una cita inexistente — dos
-veces, incluida la respuesta a un "¿la cita se creó bien?" del cliente. La
-auditoría de 2026-07-24 había quitado esta regla del prompt asumiendo que
-`T0_NEW_CLIENT` ya la cubría desde el planner; cubría solo la ruta con rebote
-de tool. Pasar `numero_registrado` al contexto tampoco bastó: el modelo lo
-tenía y lo ignoró.
+**Costo que sigue en pie**: un cliente registrado que escribe desde un número
+nuevo paga los tres factores del reto familiar. El tercero —los 4 dígitos del
+teléfono registrado— se diseñó para un **familiar**, no para el titular que
+cambió de número, así que puede fallar por memoria y acabar en humano. Revisado
+con el PO el 2026-07-28: **se deja así**.
 
 #### Interrupciones durante un reto (É-F4 Fase 0, 2026-07-30)
 
