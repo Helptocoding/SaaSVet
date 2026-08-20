@@ -186,6 +186,37 @@ class ConfirmationFlowTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.assertEqual(d.meta.get("confirm"), "affirmative")
 
+    def test_reaffirmation_with_words_commits_once(self):
+        """Un reclamo que reafirma el sí no puede abrir otra propuesta."""
+        d = self._eval("que sí te dije")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.meta.get("confirm"), "affirmative")
+
+    def test_emphatic_short_reaffirmation_commits_once(self):
+        d = self._eval("QUE SÍ")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.meta.get("confirm"), "affirmative")
+
+    def test_reaffirmation_with_complaint_commits_once(self):
+        d = self._eval("no entiendes que es sí?")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.meta.get("confirm"), "affirmative")
+
+    def test_question_keeps_pending_without_repeating_proposal(self):
+        d = self._eval("¿qué día era?")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(d.meta.get("pending_context"))
+        self.assertNotIn("confirm", d.meta)
+        self.conv.refresh_from_db()
+        self.assertIn("pending_action", self.conv.flow)
+
+    def test_unrelated_question_does_not_supersede_pending(self):
+        d = self._eval("tengo otra pregunta: ¿abren los domingos?")
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertTrue(d.meta.get("pending_context"))
+        self.conv.refresh_from_db()
+        self.assertIn("pending_action", self.conv.flow)
+
     def test_negative_discards_and_continues(self):
         d = self._eval("no, mejor no")
         self.conv.refresh_from_db()

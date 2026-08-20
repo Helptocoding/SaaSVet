@@ -376,15 +376,34 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
                         burst_text='\n'.join(texts) if texts else (text or ''),
                         # Sin texto legible, el tipo de adjunto ES el mensaje
                         # (É-F5 Fase 5): viaja como hecho de situación.
-                        media_kinds=payload_types if not texts else None)
+                        media_kinds=payload_types if not texts else None,
+                        pending_context=decision.meta.get('pending_context', False))
 
 
 def _run_planner(conversation, agent_settings, llm_client, executor,
-                 triggered_by, *, burst_text='', media_kinds=None):
+                 triggered_by, *, burst_text='', media_kinds=None,
+                 pending_context=False):
     tool_specs = tools.as_openai_tools()
     base_messages = prompts.assemble_messages(conversation,
                                               burst_text=burst_text,
                                               media_kinds=media_kinds)
+    active_pending = (confirmations.get_pending(conversation)
+                      if pending_context else None)
+    if active_pending:
+        # La propuesta ya se mostró con una plantilla y el cliente aún no la
+        # acepta ni la cambia. Esta instrucción evita que una pregunta a mitad
+        # de la espera vuelva a llamar la misma tool y genere otra plantilla.
+        base_messages = base_messages + [{
+            'role': 'system',
+            'content': (
+                'Hay una propuesta pendiente de confirmación. Atiende con '
+                'naturalidad el mensaje actual del cliente, pero no repitas '
+                'la propuesta ni llames otra vez la misma herramienta de '
+                'escritura con los mismos datos. Solo una propuesta nueva, '
+                'originada por un cambio concreto del cliente, puede sustituir '
+                'a la anterior.'
+            ),
+        }]
     # Hilo del turno: las llamadas del propio modelo y sus resultados (W1-3).
     # Antes solo viajaba el ÚLTIMO resultado, como bloque de sistema, y el
     # modelo no veía que ya había llamado a la herramienta.
@@ -548,6 +567,30 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                     'other_goal_proposed': other_goal_proposed}
 
         # tool_call
+        # El stub de tests no emite id: se sintetiza para poder correlacionar.
+        result.tool_call_id = result.tool_call_id or f'call_{step}'
+        turn_messages.append(prompts.tool_call_message(result))
+
+        # Mientras una propuesta sigue vigente, una pregunta o comentario no
+        # puede volver a stagear exactamente la misma escritura. No ejecutamos
+        # la tool: le devolvemos al modelo el hecho para que responda lo que se
+        # le preguntó, y la propuesta original permanece intacta.
+        if (active_pending
+                and result.tool_name == active_pending.get('tool')
+                and result.tool_name in tools.COMMIT_HANDLERS):
+            turn_messages.append(prompts.tool_result_message(result, {
+                'error': 'proposal_still_pending',
+                'detalle': (
+                    'La propuesta anterior sigue esperando la decisión del '
+                    'cliente; no se ejecutó ni se creó otra.'
+                ),
+            }))
+            correction = (
+                'Ya existe una propuesta pendiente. Responde el mensaje '
+                'actual sin repetirla ni volver a llamar esa herramienta.'
+            )
+            continue
+
         tool_calls += 1
         is_goal_tool = result.tool_name in goals.TOOL_GOALS
         if is_goal_tool:
@@ -562,9 +605,6 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 other_goal_proposed = propuesto
         else:
             other_tool_used = True
-        # El stub de tests no emite id: se sintetiza para poder correlacionar.
-        result.tool_call_id = result.tool_call_id or f'call_{step}'
-        turn_messages.append(prompts.tool_call_message(result))
         # Foto de lo propuesto ANTES de la llamada. Desde ADR p55 §4 las tools
         # no cierran turnos: PROPONEN un compromiso persistiéndolo, y el
         # planner detecta la propuesta comparando. Un `pending` puede

@@ -10,6 +10,7 @@ afirmativa jamás amplía el alcance).
 
 El `pending_action` vive en `Conversation.flow['pending_action']`.
 """
+import re
 import uuid
 from datetime import timedelta
 
@@ -34,22 +35,21 @@ _FAMILY_STEMS = {
     'reschedule': ('reagend', 'muev', 'mov', 'cambi'),
     'register': ('registr', 'agreg', 'alta'),
 }
-_CONFIRMATION_FILLERS = {
-    'si', 'sii', 'siii', 'sip', 'simon', 'claro', 'confirmo', 'confirmar',
-    'confirmado', 'correcto', 'exacto', 'sale', 'va', 'vale', 'ok', 'okey',
-    'oki', 'okis', 'dale', 'listo', 'perfecto', 'andale', 'orale',
-    'adelante', 'hazlo', 'hagamoslo', 'procede', 'proceder', 'por', 'porfa',
-    'favor', 'gracias', 'muchas', 'mil', 'y', 'ya', 'eso', 'esta', 'bien',
-    'asi', 'es', 'de', 'una', 'me', 'sirve',
-}
 _BENIGN_ACKNOWLEDGEMENTS = {
     'gracias', 'muchas gracias', 'mil gracias', 'ok gracias',
     'perfecto gracias',
 }
-_SCOPE_CHANGE_MARKERS = {
-    'pero', 'otra', 'otro', 'diferente', 'distinta', 'distinto', 'cambiame',
-    'cambiala', 'cambialo', 'muevela', 'muevelo',
+_SCOPE_CHANGE_PHRASES = (
+    'otra mascota', 'otro perro', 'otro gato', 'otro paciente', 'otra cita',
+    'otro dia', 'otra fecha', 'otra hora', 'otro horario',
+    'diferente horario', 'horario diferente', 'distinta hora', 'hora distinta',
+)
+_RESCHEDULE_CHANGE_STEMS = ('cambi', 'muev', 'mov', 'reagend')
+_SCHEDULE_PARAMETER_TOKENS = {
+    'hoy', 'manana', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes',
+    'sabado', 'domingo', 'mediodia', 'tarde', 'noche',
 }
+_TIME_OR_DATE = re.compile(r'\b\d{1,2}(?::\d{2})?\b')
 
 # Parafraseos LITERALES (una plantilla por acción). Fechas absolutas (G5).
 CONFIRM_CREATE = (
@@ -188,28 +188,27 @@ def classify_pending_reply(pending, burst):
     )
     if any(_mentions_different_operation(part, family) for part in messages):
         return 'supersede'
-    if any(_mentions_scope_change(part) for part in messages):
+    if any(_mentions_scope_change(part, family) for part in messages):
         return 'supersede'
 
     verdicts = [matchers.classify_confirmation(part) for part in messages]
+    affirmative_parts = [
+        _is_affirmation_emphasis(part, matchers)
+        or _is_benign_acknowledgement(part, matchers)
+        for part in messages
+    ]
+    if all(affirmative_parts) and any(
+            _is_affirmation_emphasis(part, matchers) for part in messages):
+        return 'affirmative'
     if 'negative' in verdicts:
         return 'negative'
     if 'defer' in verdicts:
         return 'defer'
 
-    safe_parts = [
-        _is_unambiguous_confirmation(part, family, matchers)
-        or _is_benign_acknowledgement(part, matchers)
-        for part in messages
-    ]
-    if 'affirmative' in verdicts and all(safe_parts):
-        return 'affirmative'
-
-    # An affirmative with extra content must not accept old parameters. The
-    # planner will ask or propose again from the current message.
-    if 'affirmative' in verdicts:
-        return 'supersede'
-    return 'unclear'
+    # A question or an unrelated message pauses the proposal while the planner
+    # answers it. It must not re-send the same confirmation or escalate merely
+    # because the customer is conversing before deciding.
+    return 'context'
 
 
 def _mentions_different_operation(text, pending_family):
@@ -224,29 +223,41 @@ def _mentions_different_operation(text, pending_family):
     return False
 
 
-def _mentions_scope_change(text):
+def _mentions_scope_change(text, family):
     from . import matchers
 
-    return bool(set(matchers.normalize(text).split()) & _SCOPE_CHANGE_MARKERS)
-
-
-def _is_unambiguous_confirmation(text, family, matchers):
-    if text.strip() == '👍':
-        return True
-    if matchers.classify_confirmation(text) != 'affirmative':
-        return False
-
     normalized = matchers.normalize(text)
-    if normalized in getattr(matchers, '_AFFIRMATIVE', set()):
+    tokens = set(normalized.split())
+    if any(phrase in normalized for phrase in _SCOPE_CHANGE_PHRASES):
         return True
-
-    allowed_stems = _FAMILY_STEMS.get(family, ())
-    tokens = normalized.split()
-    return bool(tokens) and all(
-        token in _CONFIRMATION_FILLERS
-        or any(token.startswith(stem) for stem in allowed_stems)
-        for token in tokens
+    if family not in ('schedule', 'reschedule'):
+        return False
+    if any(token.startswith(stem) for token in tokens
+           for stem in _RESCHEDULE_CHANGE_STEMS):
+        return True
+    # "¿Abren el domingo?" no modifica una cita pendiente. En cambio,
+    # "domingo" o "a las 12" sin forma interrogativa sí puede ser el dato
+    # nuevo que sustituye la propuesta anterior.
+    if '?' in text or '¿' in text:
+        return False
+    return bool(tokens & _SCHEDULE_PARAMETER_TOKENS) or bool(
+        _TIME_OR_DATE.search(normalized)
     )
+
+
+def _is_affirmation_emphasis(text, matchers):
+    normalized = matchers.normalize(text)
+    explicit_reaffirmation = (
+        'que si' in normalized
+        or 'es si' in normalized
+        or 'te dije' in normalized
+        or 'no entiendes' in normalized
+    )
+    if '?' in text and not explicit_reaffirmation:
+        return False
+    if text.strip() == '👍' or matchers.classify_confirmation(text) == 'affirmative':
+        return True
+    return explicit_reaffirmation and 'si' in normalized.split()
 
 
 def _is_benign_acknowledgement(text, matchers):

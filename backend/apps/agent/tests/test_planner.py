@@ -209,6 +209,53 @@ class PlannerHappyPathTests(PlannerTestCase):
         self.assertIn("2027", tool_msg["content"])
 
 
+class PlannerPendingContextTests(PlannerTestCase):
+    def test_question_does_not_restage_the_same_pending_action(self):
+        """Una duda durante la espera conserva la propuesta y se contesta."""
+        self.conv.flow['pending_action'] = {
+            'tool': 'reschedule_appointment',
+            'operation_family': 'reschedule',
+            'args': {'appointment_handle': 'cita_1'},
+            'paraphrase': 'Muevo la cita de Luna. ¿Confirmas?',
+        }
+        self.conv.save(update_fields=['flow'])
+        self._inbound("¿qué día era?")
+        stub = StubLLMClient(scripted=[
+            LLMResult(kind='tool_call', tool_name='reschedule_appointment',
+                      tool_args={'appointment_handle': 'cita_1'}),
+            LLMResult(kind='text',
+                      text='La propuesta es para el martes a las 11:30 🙂'),
+        ])
+
+        result = self._handle(stub)
+
+        self.assertEqual(result['decision'], 'planner_reply')
+        self.assertEqual(result['tools'], 0)
+        self.assertTrue(self._last_outbound().body.endswith(
+            'La propuesta es para el martes a las 11:30 🙂'))
+        self.assertEqual(len(stub.calls), 2)
+        self.conv.refresh_from_db()
+        self.assertEqual(
+            self.conv.flow['pending_action']['tool'],
+            'reschedule_appointment',
+        )
+
+    def test_write_promise_is_retried_before_it_reaches_the_client(self):
+        self._inbound('mueve la cita de Luna')
+        stub = StubLLMClient(scripted=[
+            LLMResult(kind='text', text='Va, muevo la cita de Luna 🙂'),
+            LLMResult(kind='text',
+                      text='Dime qué horario prefieres para moverla 🙂'),
+        ])
+
+        result = self._handle(stub)
+
+        self.assertEqual(result['decision'], 'planner_reply')
+        self.assertEqual(len(stub.calls), 2)
+        self.assertTrue(self._last_outbound().body.endswith(
+            'Dime qué horario prefieres para moverla 🙂'))
+
+
 class PlannerPolicyShortCircuitTests(PlannerTestCase):
     def test_emergency_never_calls_llm(self):
         self._inbound("mi perro convulsiona!!")

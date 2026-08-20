@@ -204,6 +204,7 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
     #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
     pending = confirmations.get_pending(conversation)
+    planner_meta = {}
     if pending:
         verdict = confirmations.classify_pending_reply(pending, burst)
         if verdict == 'defer':
@@ -232,7 +233,11 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         elif verdict == 'affirmative':
             return PolicyDecision(kind=RUN_PLANNER,
                                   meta={'confirm': 'affirmative'})
-        # 'unclear' → cae al planner para clasificar (etapa 2, UX-02)
+        elif verdict == 'context':
+            # La propuesta sigue vigente, pero el cliente está conversando
+            # antes de decidir. El planner debe contestar el mensaje actual
+            # sin volver a proponer ni ejecutar la misma operación.
+            planner_meta['pending_context'] = True
 
     # 8/8b/8c. RETIRADOS (É-F5 Fase 2, ADR p56 §4).
     #
@@ -318,7 +323,7 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #      router extraía un dato.
 
     # 13. Nada aplicó → el planner decide (lecturas INT-10..14).
-    return PolicyDecision(kind=RUN_PLANNER)
+    return PolicyDecision(kind=RUN_PLANNER, meta=planner_meta)
 
 
 # `_has_outbound` vivía aquí para la rama de saludo. Al retirarla (É-F5 Fase 5)

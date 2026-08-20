@@ -230,6 +230,18 @@ SUCCESS_CLAIM_PATTERNS = (
     'ya quedo registrado',
 )
 
+# Una propuesta tier-2 solo existe después de llamar una tool y persistir el
+# `pending_action`. Por eso una frase como "va, muevo la cita" no es una
+# respuesta inocente: hace creer que ya quedó preparada una confirmación que
+# todavía no existe. Se bloquea incluso si antes hubo una lectura; leer no
+# autoriza a anunciar una escritura.
+UNBACKED_WRITE_PROMISE_PATTERNS = (
+    'voy a agendar', 'voy a programar', 'agendo la cita', 'te agendo la cita',
+    'voy a mover', 'te muevo la cita', 'muevo la cita',
+    'voy a cambiar la cita', 'cambio la cita',
+    'voy a cancelar', 'te cancelo la cita', 'cancelo la cita',
+)
+
 
 # NEGAR lo que el dominio SÍ devolvió — el guard simétrico (ADR p59 §6).
 #
@@ -373,6 +385,11 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
         if claim:
             violations.append(Violation('unbacked_success', SOFT, claim))
 
+    write_promise = _first_match(low, UNBACKED_WRITE_PROMISE_PATTERNS)
+    if write_promise:
+        violations.append(
+            Violation('unbacked_write_promise', SOFT, write_promise))
+
     if rows_read:
         denial = _first_match(low, EXISTENCE_DENIAL_PATTERNS)
         if denial:
@@ -427,6 +444,11 @@ CORRECTION_HINT = {
         'No has ejecutado ninguna herramienta en este turno, así que no ha '
         'pasado nada todavía. No des por hecha una cita, una cancelación ni '
         'un registro: haz lo que falte o dilo con honestidad.'
+    ),
+    'unbacked_write_promise': (
+        'No anuncies que vas a agendar, mover o cancelar: todavía no existe '
+        'una propuesta real. Si los datos ya están listos, llama la '
+        'herramienta para crearla; si no, responde o pregunta lo que falte.'
     ),
 }
 

@@ -146,6 +146,12 @@ class BehaviourGuardUnitTests(TestCase):
             guards.check_behaviour("Sí, ya quedó agendada para el martes",
                                    tool_ran=True), [])
 
+    def test_promising_a_write_without_a_real_proposal_is_flagged(self):
+        """No puede salir un «va, muevo» antes de persistir la propuesta."""
+        v = guards.check_behaviour(
+            "Va, muevo la cita de Luna a las 11:30 🙂", tool_ran=False)
+        self.assertEqual([x.kind for x in v], ['unbacked_write_promise'])
+
     def test_clean_turn_passes(self):
         self.assertEqual(
             guards.check_behaviour("¿Te va bien el martes? 🐾",
@@ -158,7 +164,7 @@ class BehaviourGuardUnitTests(TestCase):
         """Un guard sin instrucción correctiva no puede pedir un reintento:
         sería bloquear sin decir qué hacer en su lugar."""
         for kind in ('repeated_question', 'contradicts_state',
-                     'unbacked_success'):
+                     'unbacked_success', 'unbacked_write_promise'):
             with self.subTest(kind=kind):
                 self.assertIn(kind, guards.CORRECTION_HINT)
 
