@@ -8,7 +8,7 @@ sistema le había filtrado, y la ruta pasiva promovía con «¿va a haber sol
 mañana?» si la mascota se llamaba Sol.
 """
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from pathlib import Path
 
 from django.test import SimpleTestCase, TestCase
@@ -374,6 +374,16 @@ class RemediationCommandTests(EvidenceTestCase):
     """
 
     F0_DEPLOY = '2026-08-17T02:35:51Z'
+    F0_DEPLOY_AT = datetime(2026, 8, 17, 2, 35, 51, tzinfo=dt_timezone.utc)
+
+    @classmethod
+    def _before_cutoff(cls):
+        """Instante legacy fijo; nunca depende del día que corra CI."""
+        return cls.F0_DEPLOY_AT - timedelta(seconds=1)
+
+    @classmethod
+    def _after_cutoff(cls):
+        return cls.F0_DEPLOY_AT + timedelta(seconds=1)
 
     def _confirmed(self, verified_at):
         self.contact.verification_level = (
@@ -394,13 +404,13 @@ class RemediationCommandTests(EvidenceTestCase):
     def test_a_verification_after_the_cutoff_survives(self):
         """EL test que faltaba. El bypass murió al desplegar F0: lo verificado
         después salió del servicio único, con anti-eco y procedencia."""
-        self._confirmed(timezone.now())
+        self._confirmed(self._after_cutoff())
         self._run('--apply', '--before', self.F0_DEPLOY)
         self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
         self.assertIsNotNone(self.contact.verified_at)
 
     def test_a_verification_before_the_cutoff_is_degraded(self):
-        self._confirmed(timezone.now() - timedelta(days=3))
+        self._confirmed(self._before_cutoff())
         self._run('--apply', '--before', self.F0_DEPLOY)
         self.assertEqual(self._level(),
                          ContactIdentity.VERIFICATION_PHONE_MATCH)
@@ -417,13 +427,13 @@ class RemediationCommandTests(EvidenceTestCase):
     def test_without_the_cutoff_nothing_is_degraded(self):
         """Correrlo por accidente —o desde un script que corre cada 30 min— ya
         no puede tocar una verificación vigente."""
-        self._confirmed(timezone.now() - timedelta(days=3))
+        self._confirmed(self._before_cutoff())
         self._run('--apply')
         self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
 
     def test_a_malformed_cutoff_is_an_error_not_a_silent_none(self):
         from django.core.management import CommandError
-        self._confirmed(timezone.now() - timedelta(days=3))
+        self._confirmed(self._before_cutoff())
         for bad in ('ayer', '2026-13-45T99:99:99Z'):
             with self.assertRaises(CommandError):
                 self._run('--apply', '--before', bad)
@@ -437,7 +447,7 @@ class RemediationCommandTests(EvidenceTestCase):
     # ── lo que no cambió ────────────────────────────────────────────────────
     def test_leaves_audited_links_alone(self):
         """Familiar, staff y auto-registro pasaron por su propio guard."""
-        self._confirmed(timezone.now() - timedelta(days=30))
+        self._confirmed(self.F0_DEPLOY_AT - timedelta(days=30))
         self.contact.linked_via = ContactIdentity.LINKED_STAFF
         self.contact.save(update_fields=['linked_via'])
         self._run('--apply', '--before', self.F0_DEPLOY)
@@ -459,7 +469,7 @@ class RemediationCommandTests(EvidenceTestCase):
             organization=self.org, conversation=self.conv,
             name=goals.TRIAGE, status=ConversationGoal.STATUS_SUSPENDED,
         )
-        self._confirmed(timezone.now() - timedelta(days=3))
+        self._confirmed(self._before_cutoff())
         self._run('--apply', '--before', self.F0_DEPLOY)
         snapshot = (self._level(),
                     list(ConversationGoal.objects
@@ -471,7 +481,7 @@ class RemediationCommandTests(EvidenceTestCase):
             snapshot)
 
     def test_dry_run_writes_nothing(self):
-        self._confirmed(timezone.now() - timedelta(days=3))
+        self._confirmed(self._before_cutoff())
         self._run('--before', self.F0_DEPLOY)
         self.assertEqual(self._level(), ContactIdentity.VERIFICATION_CONFIRMED)
 

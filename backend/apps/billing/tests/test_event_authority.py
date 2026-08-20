@@ -146,12 +146,14 @@ class AppointmentDeleteAuditAuthorityTests(TestCase):
 
     def test_destroy_creates_status_change_row(self):
         from apps.appointments.models import Appointment, AppointmentStatusChange
-        from datetime import date, time
+        from datetime import time, timedelta
+        from django.utils import timezone
         from rest_framework.test import APIClient
 
+        appointment_date = timezone.now().date() + timedelta(days=1)
         appt = Appointment.objects.create(
             organization=self.org, pet=self.pet, veterinarian=self.user,
-            date=date(2026, 5, 20), start_time=time(10, 0), end_time=time(10, 30),
+            date=appointment_date, start_time=time(10, 0), end_time=time(10, 30),
             reason="anti-regression", status='scheduled',
         )
 
@@ -161,7 +163,7 @@ class AppointmentDeleteAuditAuthorityTests(TestCase):
         # vía en sunset quedara exenta, sería la puerta trasera del gate.
         response = client.delete(
             f"/api/appointments/{appt.public_id}/",
-            {"expected_state": {"status": "scheduled", "date": "2026-05-20",
+            {"expected_state": {"status": "scheduled", "date": appointment_date.isoformat(),
                                 "start_time": "10:00"}},
             format="json",
         )

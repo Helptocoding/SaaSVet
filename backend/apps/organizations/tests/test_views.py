@@ -114,37 +114,37 @@ class OrganizationLegacyViewTests(APITestCase):
         self.assertIn('successor-version', response.get('Link', ''))
         self.assertIn('/api/organizations/me/', response.get('Link', ''))
 
-    def test_legacy_pk_matches_returns_200(self):
+    def _assert_sunset_response(self, response):
+        self.assertEqual(response.status_code, status.HTTP_410_GONE)
+        self.assertEqual(response.data['code'], 'endpoint_sunset')
+        self.assertIn('removido', response.data['message'])
+        self._assert_deprecation_headers(response)
+
+    def test_legacy_pk_matches_returns_410_after_sunset(self):
         r = self.client.get(f'/api/organizations/{self.org_a.pk}/')
-        self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self.assertEqual(r.data['id'], self.org_a.pk)
-        self._assert_deprecation_headers(r)
+        self._assert_sunset_response(r)
 
-    def test_legacy_pk_mismatch_returns_404_not_other_org(self):
-        """Crítico: pk de otra org NO debe devolver 'tu propia org' silenciosamente.
-        Debe retornar 404."""
+    def test_legacy_pk_mismatch_returns_410_after_sunset(self):
         r = self.client.get(f'/api/organizations/{self.org_b.pk}/')
-        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
-        self._assert_deprecation_headers(r)
+        self._assert_sunset_response(r)
 
-    def test_legacy_pk_inexistente_returns_404(self):
+    def test_legacy_unknown_pk_returns_410_after_sunset(self):
         r = self.client.get('/api/organizations/999999/')
-        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
-        self._assert_deprecation_headers(r)
+        self._assert_sunset_response(r)
 
-    def test_legacy_patch_own_pk_succeeds(self):
+    def test_legacy_patch_is_rejected_after_sunset(self):
         r = self.client.patch(
             f'/api/organizations/{self.org_a.pk}/',
             {'name': 'Legacy Patched'},
             format='json',
         )
-        self.assertEqual(r.status_code, status.HTTP_200_OK)
-        self._assert_deprecation_headers(r)
+        self._assert_sunset_response(r)
+        self.org_a.refresh_from_db()
+        self.assertEqual(self.org_a.name, 'Org Legacy A')
 
-    def test_legacy_delete_returns_405(self):
+    def test_legacy_delete_returns_410_after_sunset(self):
         r = self.client.delete(f'/api/organizations/{self.org_a.pk}/')
-        self.assertEqual(r.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        self._assert_deprecation_headers(r)
+        self._assert_sunset_response(r)
 
     def test_legacy_emits_deprecation_log_event(self):
         with self.assertLogs('core.deprecation', level='WARNING') as logs:

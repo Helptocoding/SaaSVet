@@ -34,8 +34,7 @@ def _make_admin(username, org):
 
 
 class OrganizationLegacyImmutableIdTests(APITestCase):
-    """PATCH con `id`/`public_id` en body NO debe modificarlos.
-    OrganizationSerializer los declara read_only_fields."""
+    """El endpoint legacy ya venció: ningún body puede mutar la org."""
 
     @classmethod
     def setUpTestData(cls):
@@ -47,30 +46,33 @@ class OrganizationLegacyImmutableIdTests(APITestCase):
     def setUp(self):
         self.client.force_authenticate(self.admin)
 
-    def test_patch_with_id_in_body_ignores_id_field(self):
-        """Body con `id` foráneo en legacy endpoint → 200, `id` sin cambio."""
+    def test_patch_with_id_in_body_is_rejected_after_sunset(self):
+        """El legacy retirado no admite mutaciones aunque incluya un id."""
         r = self.client.patch(
             f'/api/organizations/{self.org.pk}/',
             {'id': 999999, 'name': 'After Patch'},
             format='json',
         )
-        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+        self.assertEqual(r.status_code, status.HTTP_410_GONE, r.content)
+        self.assertEqual(r.data['code'], 'endpoint_sunset')
         self.org.refresh_from_db()
         self.assertEqual(self.org.pk, self.original_pk)
-        self.assertEqual(self.org.name, 'After Patch')
+        self.assertEqual(self.org.name, 'Org IdMut')
 
-    def test_patch_with_public_id_in_body_ignores_public_id(self):
-        """Body con `public_id` foráneo → 200, public_id sin cambio."""
+    def test_patch_with_public_id_in_body_is_rejected_after_sunset(self):
+        """El endpoint retirado no puede cambiar ni nombre ni identificador."""
         foreign_uuid = uuid4()
         r = self.client.patch(
             f'/api/organizations/{self.org.pk}/',
             {'public_id': str(foreign_uuid), 'name': 'PubId Patch'},
             format='json',
         )
-        self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
+        self.assertEqual(r.status_code, status.HTTP_410_GONE, r.content)
+        self.assertEqual(r.data['code'], 'endpoint_sunset')
         self.org.refresh_from_db()
         self.assertEqual(self.org.public_id, self.original_public_id)
         self.assertNotEqual(self.org.public_id, foreign_uuid)
+        self.assertEqual(self.org.name, 'Org IdMut')
 
     def test_me_endpoint_patch_with_id_in_body_ignores_id(self):
         """Mismo test sobre /me/ singleton."""
