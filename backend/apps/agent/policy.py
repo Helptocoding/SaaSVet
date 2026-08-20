@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from . import goals, identity, identity_evidence, matchers, tier0
+from . import confirmations, goals, identity, identity_evidence, matchers, tier0
 from .models import Conversation, HumanHandoff
 
 logger = logging.getLogger('agent.events')
@@ -203,8 +203,9 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     # 7. Confirmación de un pending_action (ACTIVO en F2: las tools de
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
     #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
-    if flow.get('pending_action'):
-        verdict = _burst_confirmation(burst)
+    pending = confirmations.get_pending(conversation)
+    if pending:
+        verdict = confirmations.classify_pending_reply(pending, burst)
         if verdict == 'defer':
             # El cliente pidió tiempo y le contestamos «aquí queda pendiente —
             # me dices». Eso es una PROMESA de esperar, así que se registra
@@ -218,9 +219,16 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
             return PolicyDecision(kind=REPLY, text=tier0.T0_DEFER,
                                   meta={'reason': 'confirm_defer'})
         if verdict == 'negative':
-            flow.pop('pending_action', None)
-            conversation.save(update_fields=['flow'])
+            confirmations.clear_pending(conversation)
+            flow = conversation.flow
             # sigue el pipeline con el pending descartado
+        elif verdict == 'supersede':
+            # La conversación cambió de tema o agregó parámetros. El estado
+            # staged deja de ser ejecutable antes de pasar al planner; éste
+            # tendrá que proponer una operación nueva y completa.
+            confirmations.supersede_pending(
+                conversation, reason='topic_changed_or_ambiguous_confirmation')
+            flow = conversation.flow
         elif verdict == 'affirmative':
             return PolicyDecision(kind=RUN_PLANNER,
                                   meta={'confirm': 'affirmative'})

@@ -140,6 +140,7 @@ class ElErrorEsUnHechoNoUnGuionTests(SimpleTestCase):
     def test_los_hechos_no_dan_ordenes(self):
         from apps.agent.planner import _error_fact
         for code in ('need_data', 'need_date', 'bad_date', 'past_date',
+                     'past_appointment',
                      'slot_taken', 'no_vet', 'unknown_handle', 'not_cancelable',
                      'not_reschedulable', 'already_a_client',
                      'ambiguous_identity', 'invalid_data', 'invalid_slot',

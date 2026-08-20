@@ -17,6 +17,40 @@ from django.utils import timezone
 
 PENDING_TTL = timedelta(minutes=30)  # spec §2.4
 
+# A pending action is intentionally narrow: a later "sí" must only be able to
+# execute the exact proposal that created it. These families also let us detect
+# a new request that arrives while an older proposal is awaiting confirmation.
+OPERATION_FAMILIES = {
+    'create_appointment': 'schedule',
+    'cancel_appointment': 'cancel',
+    'reschedule_appointment': 'reschedule',
+    'register_new_client_and_pet': 'register',
+    'register_pet_and_schedule': 'register',
+    'register_pet_only': 'register',
+}
+_FAMILY_STEMS = {
+    'schedule': ('agend', 'program'),
+    'cancel': ('cancel', 'anul'),
+    'reschedule': ('reagend', 'muev', 'mov', 'cambi'),
+    'register': ('registr', 'agreg', 'alta'),
+}
+_CONFIRMATION_FILLERS = {
+    'si', 'sii', 'siii', 'sip', 'simon', 'claro', 'confirmo', 'confirmar',
+    'confirmado', 'correcto', 'exacto', 'sale', 'va', 'vale', 'ok', 'okey',
+    'oki', 'okis', 'dale', 'listo', 'perfecto', 'andale', 'orale',
+    'adelante', 'hazlo', 'hagamoslo', 'procede', 'proceder', 'por', 'porfa',
+    'favor', 'gracias', 'muchas', 'mil', 'y', 'ya', 'eso', 'esta', 'bien',
+    'asi', 'es', 'de', 'una', 'me', 'sirve',
+}
+_BENIGN_ACKNOWLEDGEMENTS = {
+    'gracias', 'muchas gracias', 'mil gracias', 'ok gracias',
+    'perfecto gracias',
+}
+_SCOPE_CHANGE_MARKERS = {
+    'pero', 'otra', 'otro', 'diferente', 'distinta', 'distinto', 'cambiame',
+    'cambiala', 'cambialo', 'muevela', 'muevelo',
+}
+
 # Parafraseos LITERALES (una plantilla por acción). Fechas absolutas (G5).
 CONFIRM_CREATE = (
     "Te confirmo: cita para *{pet}* el *{fecha}*, motivo: {reason}. "
@@ -52,13 +86,18 @@ def stage_pending(conversation, *, tool, args, paraphrase):
 
     `args` ya trae public_ids resueltos + idempotency_key — NUNCA handles ni
     nada que el LLM re-genere en el turno de la confirmación."""
-    conversation.flow['pending_action'] = {
+    flow = dict(conversation.flow or {})
+    flow['pending_action'] = {
+        'proposal_id': uuid.uuid4().hex,
         'tool': tool,
+        'operation_family': operation_family(tool),
         'args': args,
         'paraphrase': paraphrase,
         'idempotency_key': args.get('idempotency_key') or uuid.uuid4().hex,
+        'proposed_at': timezone.now().isoformat(),
         'expires_at': (timezone.now() + PENDING_TTL).isoformat(),
     }
+    conversation.flow = flow
     conversation.save(update_fields=['flow'])
     return paraphrase
 
@@ -82,8 +121,136 @@ def is_expired(pending, now=None):
 
 def clear_pending(conversation):
     if 'pending_action' in conversation.flow:
-        conversation.flow.pop('pending_action', None)
+        flow = dict(conversation.flow)
+        flow.pop('pending_action', None)
+        conversation.flow = flow
         conversation.save(update_fields=['flow'])
+
+
+def bind_pending_message(conversation, message_id):
+    """Records the outbound message that contains the exact proposal."""
+    pending = get_pending(conversation)
+    if not pending:
+        return
+
+    flow = dict(conversation.flow)
+    staged = dict(pending)
+    staged['proposal_message_id'] = str(message_id)
+    flow['pending_action'] = staged
+    conversation.flow = flow
+    conversation.save(update_fields=['flow'])
+
+
+def supersede_pending(conversation, *, reason):
+    """Invalidates a stale proposal before the planner processes a new topic.
+
+    Only minimal audit metadata is retained. The old executable arguments are
+    removed, so a later bare affirmative cannot revive the stale action.
+    """
+    pending = get_pending(conversation)
+    if not pending:
+        return None
+
+    flow = dict(conversation.flow)
+    flow.pop('pending_action', None)
+    flow['last_superseded_pending'] = {
+        'proposal_id': pending.get('proposal_id'),
+        'tool': pending.get('tool'),
+        'reason': reason,
+        'superseded_at': timezone.now().isoformat(),
+    }
+    conversation.flow = flow
+    conversation.save(update_fields=['flow'])
+    return pending
+
+
+def operation_family(tool):
+    """Returns the coarse operation family for a staged tool."""
+    return OPERATION_FAMILIES.get(tool, 'other')
+
+
+def classify_pending_reply(pending, burst):
+    """Classifies a reply without allowing semantic expansion of a proposal.
+
+    A short, isolated affirmative confirms. Any new operation or substantive
+    affirmative (for example, "sí, pero para otra mascota") invalidates the
+    proposal and returns to normal planning. This is deliberately conservative:
+    losing a stale proposal is recoverable; executing it is not.
+    """
+    from . import matchers
+
+    messages = [part.strip() for part in burst if part and part.strip()]
+    if not messages:
+        return 'unclear'
+
+    family = pending.get('operation_family') or operation_family(
+        pending.get('tool')
+    )
+    if any(_mentions_different_operation(part, family) for part in messages):
+        return 'supersede'
+    if any(_mentions_scope_change(part) for part in messages):
+        return 'supersede'
+
+    verdicts = [matchers.classify_confirmation(part) for part in messages]
+    if 'negative' in verdicts:
+        return 'negative'
+    if 'defer' in verdicts:
+        return 'defer'
+
+    safe_parts = [
+        _is_unambiguous_confirmation(part, family, matchers)
+        or _is_benign_acknowledgement(part, matchers)
+        for part in messages
+    ]
+    if 'affirmative' in verdicts and all(safe_parts):
+        return 'affirmative'
+
+    # An affirmative with extra content must not accept old parameters. The
+    # planner will ask or propose again from the current message.
+    if 'affirmative' in verdicts:
+        return 'supersede'
+    return 'unclear'
+
+
+def _mentions_different_operation(text, pending_family):
+    from . import matchers
+
+    tokens = matchers.normalize(text).split()
+    for family, stems in _FAMILY_STEMS.items():
+        if family == pending_family:
+            continue
+        if any(token.startswith(stem) for token in tokens for stem in stems):
+            return True
+    return False
+
+
+def _mentions_scope_change(text):
+    from . import matchers
+
+    return bool(set(matchers.normalize(text).split()) & _SCOPE_CHANGE_MARKERS)
+
+
+def _is_unambiguous_confirmation(text, family, matchers):
+    if text.strip() == '👍':
+        return True
+    if matchers.classify_confirmation(text) != 'affirmative':
+        return False
+
+    normalized = matchers.normalize(text)
+    if normalized in getattr(matchers, '_AFFIRMATIVE', set()):
+        return True
+
+    allowed_stems = _FAMILY_STEMS.get(family, ())
+    tokens = normalized.split()
+    return bool(tokens) and all(
+        token in _CONFIRMATION_FILLERS
+        or any(token.startswith(stem) for stem in allowed_stems)
+        for token in tokens
+    )
+
+
+def _is_benign_acknowledgement(text, matchers):
+    return matchers.normalize(text) in _BENIGN_ACKNOWLEDGEMENTS
 
 
 def suspend_pending(conversation, *, reason_code, detail='', priority='normal'):

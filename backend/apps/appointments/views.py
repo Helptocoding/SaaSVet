@@ -77,6 +77,15 @@ ALLOWED_TRANSITIONS = {
 }
 
 
+def _appointment_has_started(appointment):
+    """Returns whether the appointment is already in the past."""
+    if appointment.start_datetime is not None:
+        return appointment.start_datetime <= timezone.now()
+    return local_date_time_to_utc(
+        appointment.organization, appointment.date, appointment.start_time,
+    ) <= timezone.now()
+
+
 class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
     serializer_class = AppointmentSerializer
     permission_classes = [HybridPermission]
@@ -238,6 +247,14 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
                         {'error': 'Solo se pueden cancelar citas programadas o confirmadas'},
                         status=status.HTTP_400_BAD_REQUEST,
                     ), request)
+                if _appointment_has_started(locked):
+                    return self._deprecated(Response(
+                        {
+                            'code': 'past_appointment',
+                            'error': 'No se puede cancelar una cita que ya ocurrió.',
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    ), request)
 
                 # Authoritative event lineage: la cancelación vía DELETE debe
                 # quedar registrada en AppointmentStatusChange igual que la
@@ -343,6 +360,15 @@ def update_status(request, pk):
                 if new_status not in allowed:
                     return Response(
                         {'error': f'No se puede pasar de "{from_status}" a "{new_status}"'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if new_status == 'canceled' and _appointment_has_started(locked):
+                    return Response(
+                        {
+                            'code': 'past_appointment',
+                            'error': 'No se puede cancelar una cita que ya ocurrió.',
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 

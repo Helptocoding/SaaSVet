@@ -222,6 +222,26 @@ class WriteToolsTests(TestCase):
         self.assertEqual(appt.status, "canceled")
         self.assertIn("asistente virtual", appt.cancellation_reason)
 
+    def test_cancel_past_appointment_is_not_proposed(self):
+        past = timezone.now() - timedelta(hours=2)
+        appt = Appointment.objects.create(
+            organization=self.org, pet=self.pet, veterinarian=self.vet,
+            date=past.date(),
+            start_time=past.time().replace(second=0, microsecond=0),
+            end_time=(past + timedelta(minutes=30)).time().replace(
+                second=0, microsecond=0),
+            reason="control", status="scheduled",
+            start_datetime=past, end_datetime=past + timedelta(minutes=30),
+        )
+        handle = tools._add_ref(self.conv, "cita", appt.public_id)
+        tools._save_refs(self.conv)
+
+        out = self._run("cancel_appointment", {"appointment_handle": handle})
+
+        self.assertFalse(out.ok)
+        self.assertEqual(out.client_error, "past_appointment")
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
     def test_negative_discards_pending(self):
         appt, handle = self._make_appt(status="confirmed")
         self._run("cancel_appointment", {"appointment_handle": handle})

@@ -786,6 +786,8 @@ def map_domain_400(data):
     un veterinario mal configurado. Mentía al cliente y escondía errores de
     configuración justo durante el piloto.
     """
+    if isinstance(data, dict) and data.get('code') == 'past_appointment':
+        return 'past_appointment', ''
     messages = _domain_messages(data)
     blob = _norm(' | '.join(messages))
     if any(lemma in blob for lemma in _SLOT_TAKEN_LEMMAS):
@@ -844,7 +846,7 @@ def _expected_state_body(args):
 # códigos serían una anomalía y deben seguir alertando.
 BUSINESS_OUTCOMES = (
     'appointment_changed', 'owner_exists', 'owner_ambiguous',
-    'slot_taken', 'past_date', 'validation_error',
+    'slot_taken', 'past_date', 'past_appointment', 'validation_error',
 )
 
 
@@ -1164,6 +1166,13 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
         return ToolOutcome(ok=False, client_error='tool_failure')
     if appt.get('status') not in ('scheduled', 'confirmed'):
         return ToolOutcome(ok=False, client_error='not_cancelable')
+    appointment_time_error = _future_or_error(
+        org, appt.get('date', ''), appt.get('start_time', ''),
+    )
+    if appointment_time_error == 'past_date':
+        return ToolOutcome(ok=False, client_error='past_appointment')
+    if appointment_time_error:
+        return ToolOutcome(ok=False, client_error='tool_failure')
 
     paraphrase = confirmations.CONFIRM_CANCEL.format(
         pet=appt.get('pet_name', ''), fecha=_appt_when_label(appt, org),

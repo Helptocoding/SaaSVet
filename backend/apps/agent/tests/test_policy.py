@@ -192,6 +192,28 @@ class ConfirmationFlowTests(PolicyTestCase):
         self.assertNotIn("pending_action", self.conv.flow)
         self.assertEqual(d.kind, policy.RUN_PLANNER)
 
+    def test_new_operation_supersedes_stale_pending_before_planning(self):
+        """Regression: a later cancellation request cannot confirm an old booking."""
+        d = self._eval("quiero cancelar la cita de Luna")
+
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertNotIn("confirm", d.meta)
+        self.conv.refresh_from_db()
+        self.assertNotIn("pending_action", self.conv.flow)
+        self.assertEqual(
+            self.conv.flow["last_superseded_pending"]["tool"],
+            "create_appointment",
+        )
+
+    def test_ambiguous_confirmation_supersedes_old_parameters(self):
+        """"Sí, pero para otra mascota" needs a new proposal, never a commit."""
+        d = self._eval("sí, pero para otra mascota")
+
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertNotIn("confirm", d.meta)
+        self.conv.refresh_from_db()
+        self.assertNotIn("pending_action", self.conv.flow)
+
 
 class NoPassiveVerificationTests(PolicyTestCase):
     """ADR p59 · `policy` ya NO verifica identidad por su cuenta.

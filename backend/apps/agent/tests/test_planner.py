@@ -288,6 +288,23 @@ class PlannerFailureTests(PlannerTestCase):
             LLMCall.objects.filter(conversation=self.conv).exclude(error="").exists()
         )
 
+    def test_retryable_llm_error_recovers_before_escalating(self):
+        """Regression for transient ChunkedEncodingError-style failures."""
+        self._inbound("¿tienen cita para mañana?")
+        stub = StubLLMClient(scripted=[
+            LLMError("red: ChunkedEncodingError", retryable=True),
+            LLMResult(kind="text", text="Sí, reviso opciones para mañana 🙂"),
+        ])
+
+        result = self._handle(stub)
+
+        self.assertEqual(result["decision"], "planner_reply")
+        self.assertEqual(len(stub.calls), 2)
+        self.assertEqual(
+            LLMCall.objects.filter(conversation=self.conv).exclude(error="").count(),
+            1,
+        )
+
     def test_two_consecutive_tool_failures_escalate(self):
         self._inbound("¿tienen algo?")
         # Tool que siempre falla: check_product con la API caída se simula con

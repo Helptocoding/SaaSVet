@@ -272,6 +272,7 @@ _DIRECT_BECAUSE = {
     'commit_unknown': TurnDecision.Because.SYSTEM_ERROR,
     'commit_slot_taken': TurnDecision.Because.SYSTEM_ERROR,
     'commit_past_date': TurnDecision.Because.SYSTEM_ERROR,
+    'commit_past_appointment': TurnDecision.Because.SYSTEM_ERROR,
     'commit_invalid': TurnDecision.Because.SYSTEM_ERROR,
     # La mascota quedó registrada; solo faltó el horario. `SYSTEM_ERROR` como
     # los de arriba: el turno no cumplió lo prometido, aunque parte sí.
@@ -416,12 +417,11 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 'content': f"Tu borrador anterior no se envió. {correction}",
             }]
         try:
-            result = llm_client.complete(
-                system=prompts.SYSTEM_PROMPT, messages=messages,
-                tools=tool_specs,
+            result = _complete_with_retry(
+                conversation, llm_client, system=prompts.SYSTEM_PROMPT,
+                messages=messages, tool_specs=tool_specs,
             )
         except LLMError as exc:
-            _persist_llm_error(conversation, llm_client, exc)
             # Fallo del modelo: degradar a humano (no dejar al cliente mudo).
             policy.escalate_to_human(
                 conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
@@ -608,7 +608,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             # del agente — la confirmación tier-2 no se toca (§11 del plan).
             paraphrase = (confirmations.get_pending(conversation) or {}).get(
                 'paraphrase', '')
-            enqueue_outbound(conversation, prefix + paraphrase, author='agent')
+            proposal_message = enqueue_outbound(
+                conversation, prefix + paraphrase, author='agent')
+            confirmations.bind_pending_message(conversation, proposal_message.pk)
             return {'decision': 'awaiting_confirmation',
                     'llm_calls': llm_calls, 'tools': tool_calls}
 
@@ -791,13 +793,19 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             )
             return {'decision': 'commit_slot_taken', 'llm_calls': 0,
                     'tools': 1}
-        if outcome.client_error == 'past_date':
+        if outcome.client_error in ('past_date', 'past_appointment'):
             enqueue_outbound(
                 conversation,
-                "Esa fecha ya pasó 😅 ¿Para qué día lo dejamos?",
+                ("Esa cita ya ocurrió y no puedo cancelarla desde aquí 😅 "
+                 "¿Necesitas ayuda con otra cita?"
+                 if outcome.client_error == 'past_appointment'
+                 else "Esa fecha ya pasó 😅 ¿Para qué día lo dejamos?"),
                 author='system',
             )
-            return {'decision': 'commit_past_date', 'llm_calls': 0, 'tools': 1}
+            return {'decision': ('commit_past_appointment'
+                                 if outcome.client_error == 'past_appointment'
+                                 else 'commit_past_date'),
+                    'llm_calls': 0, 'tools': 1}
         if outcome.client_error == 'pet_saved_appointment_failed':
             # Alta de mascota + cita: la mascota SÍ se guardó y la cita no.
             # **No escala**, porque no hay nada roto que arreglar: «mascota
@@ -1127,6 +1135,7 @@ def _error_fact(client_error):
         'need_date': 'Falta el día.',
         'bad_date': 'La fecha que dijo no se entiende.',
         'past_date': 'Esa fecha ya pasó.',
+        'past_appointment': 'Esa cita ya ocurrió y no se puede cancelar.',
         'slot_taken': 'Ese horario se acaba de ocupar.',
         # Se separó de `slot_taken` porque decirle «se ocupó» a quien ocupa el
         # hueco es sencillamente falso, y lo empuja a agendar dos veces.
@@ -1338,6 +1347,54 @@ def _persist_llm_call(conversation, llm_client, result):
         latency_ms=result.latency_ms,
         finish_reason=result.finish_reason,
     )
+
+
+def _complete_with_retry(conversation, llm_client, *, system, messages,
+                         tool_specs):
+    """Completes once plus bounded retries for transient provider failures.
+
+    A transport interruption or 429/5xx must not turn an otherwise normal
+    customer request into a hand-off immediately. Non-retryable provider
+    errors still fail fast. Each failed attempt is persisted independently for
+    incident analysis, but telemetry failures never hide the customer-facing
+    fallback.
+    """
+    try:
+        max_retries = max(
+            0, min(3, int(getattr(settings, 'AGENT_LLM_MAX_RETRIES', 2))),
+        )
+    except (TypeError, ValueError):
+        max_retries = 2
+    try:
+        delay_seconds = max(
+            0.0, float(getattr(settings, 'AGENT_LLM_RETRY_DELAY_SECONDS', 0)),
+        )
+    except (TypeError, ValueError):
+        delay_seconds = 0.0
+
+    for attempt in range(max_retries + 1):
+        try:
+            return llm_client.complete(
+                system=system, messages=messages, tools=tool_specs,
+            )
+        except LLMError as exc:
+            try:
+                _persist_llm_error(conversation, llm_client, exc)
+            except Exception:
+                logger.exception("AGENT_LLMCALL_ERROR_PERSIST_FAILED")
+
+            if not exc.retryable or attempt == max_retries:
+                raise
+            logger.warning("AGENT_LLM_RETRY", extra={
+                'event': 'AGENT_LLM_RETRY',
+                'organization_id': conversation.organization_id,
+                'conversation_id': conversation.pk,
+                'attempt': attempt + 1,
+                'max_retries': max_retries,
+                'error': str(exc)[:120],
+            })
+            if delay_seconds:
+                time.sleep(delay_seconds * (2 ** attempt))
 
 
 def _persist_llm_error(conversation, llm_client, exc):

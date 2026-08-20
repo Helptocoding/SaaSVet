@@ -190,3 +190,35 @@ class PastDateGuardTests(IdempotencyTestBase):
             format="json",
         )
         self.assertEqual(patch.status_code, status.HTTP_200_OK, patch.content)
+
+    def test_cancel_past_appointment_is_rejected_without_audit_write(self):
+        """A scheduled legacy row in the past cannot be cancelled anymore."""
+        r = self.client.post("/api/appointments/", self._future())
+        created = r.json()
+        appt = Appointment.objects.get(public_id=created["public_id"])
+        past = timezone.now() - timedelta(hours=2)
+        appt.date = past.date()
+        appt.start_time = past.time().replace(second=0, microsecond=0)
+        appt.end_time = (past + timedelta(minutes=30)).time().replace(
+            second=0, microsecond=0)
+        appt.start_datetime = past
+        appt.end_datetime = past + timedelta(minutes=30)
+        appt.save(update_fields=[
+            "date", "start_time", "end_time", "start_datetime", "end_datetime",
+        ])
+
+        response = self.client.patch(
+            f"/api/appointments/{appt.public_id}/status/",
+            {"status": "canceled", "expected_state": {
+                "status": "scheduled",
+                "date": appt.date.isoformat(),
+                "start_time": appt.start_time.strftime("%H:%M"),
+            }},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json().get("code"), "past_appointment")
+        appt.refresh_from_db()
+        self.assertEqual(appt.status, "scheduled")
+        self.assertEqual(appt.status_changes.count(), 0)
