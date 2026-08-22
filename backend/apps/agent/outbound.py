@@ -7,6 +7,7 @@ al proveedor desde el planner.
 """
 import logging
 
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.channels.models import Message
@@ -14,7 +15,8 @@ from apps.channels.models import Message
 logger = logging.getLogger('agent.events')
 
 
-def enqueue_outbound(conversation, body, *, author='system'):
+def enqueue_outbound(conversation, body, *, author='system', semantic_type='',
+                     operation_key=''):
     """Crea un Message saliente pendiente. `author`: 'agent' | 'system'.
 
     **El default es `'system'` a propósito** (É-F4 Fase 2 §2.1, R11): hay que
@@ -30,6 +32,12 @@ def enqueue_outbound(conversation, body, *, author='system'):
     (auditoría de rigidez 2026-07-29, conv 13 / CR-6). `assemble_messages` es
     quien consume esta distinción.
     """
+    if semantic_type == Message.SEMANTIC_OPERATION_RECEIPT:
+        if not operation_key:
+            raise ValueError('operation receipt requires operation_key')
+        return _enqueue_operation_receipt(
+            conversation, body, author=author, operation_key=operation_key)
+
     _warn_if_repeated(conversation, body)
     author_type = (
         Message.AUTHOR_AGENT if author == 'agent' else Message.AUTHOR_SYSTEM
@@ -41,6 +49,8 @@ def enqueue_outbound(conversation, body, *, author='system'):
         contact_id=conversation.contact_id,   # F2 · el mensaje es de la PERSONA
         direction=Message.DIRECTION_OUT,
         author_type=author_type,
+        semantic_type=semantic_type,
+        operation_key=operation_key,
         body=body,
         status=Message.STATUS_PENDING,
     )
@@ -49,6 +59,53 @@ def enqueue_outbound(conversation, body, *, author='system'):
     conversation.save(update_fields=['last_activity_at'])
     return message
 
+
+def _enqueue_operation_receipt(conversation, body, *, author, operation_key):
+    """Outbox idempotente para el recibo de un commit.
+
+    El commit puede reintentarse por una caída entre el dominio y el sender;
+    repetirle al cliente "cita creada" no es inocuo. La unicidad vive en la
+    base y no en una comparación del texto, que puede cambiar de copy.
+    """
+    existing = Message.objects.filter(
+        conversation=conversation,
+        direction=Message.DIRECTION_OUT,
+        semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+        operation_key=operation_key,
+    ).first()
+    if existing is not None:
+        return existing
+
+    author_type = (
+        Message.AUTHOR_AGENT if author == 'agent' else Message.AUTHOR_SYSTEM
+    )
+    try:
+        with transaction.atomic():
+            message = Message.objects.create(
+                organization=conversation.organization,
+                channel_account=conversation.channel_account,
+                conversation=conversation,
+                contact_id=conversation.contact_id,
+                direction=Message.DIRECTION_OUT,
+                author_type=author_type,
+                semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+                operation_key=operation_key,
+                body=body,
+                status=Message.STATUS_PENDING,
+            )
+    except IntegrityError:
+        # Otra ejecución ganó la carrera: devuelve el recibo existente sin
+        # crear ni enviar una segunda notificación.
+        return Message.objects.get(
+            conversation=conversation,
+            direction=Message.DIRECTION_OUT,
+            semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+            operation_key=operation_key,
+        )
+
+    conversation.last_activity_at = timezone.now()
+    conversation.save(update_fields=['last_activity_at'])
+    return message
 
 def _warn_if_repeated(conversation, body):
     """C7 · el sistema repitiéndose, mire quien mire (É-F5 Fase 3).

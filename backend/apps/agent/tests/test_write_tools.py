@@ -131,9 +131,30 @@ class WriteToolsTests(TestCase):
         pending = confirmations.get_pending(conversation or self.conv)
         return (pending or {}).get('paraphrase', '')
 
-    def _affirm(self, text="sí"):
-        decision = policy.evaluate(self.conv, text, agent_settings=self.settings)
-        return decision
+    def _ensure_confirmation_proposal(self, conversation=None):
+        conversation = conversation or self.conv
+        pending = confirmations.get_pending(conversation)
+        if not pending or confirmations.is_confirmable(conversation, pending):
+            return
+
+        proposal = Message.objects.create(
+            organization=conversation.organization,
+            channel_account=conversation.channel_account,
+            conversation=conversation,
+            contact=conversation.contact,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_SYSTEM,
+            semantic_type=Message.SEMANTIC_CONFIRMATION,
+            operation_key=pending['proposal_id'],
+            body=pending['paraphrase'],
+            status=Message.STATUS_SENT,
+        )
+        confirmations.bind_pending_message(conversation, proposal.pk)
+
+    def _affirm(self, text="sí", *, conversation=None):
+        conversation = conversation or self.conv
+        self._ensure_confirmation_proposal(conversation)
+        return policy.evaluate(conversation, text, agent_settings=self.settings)
 
     def _last_out(self):
         m = (Message.objects.filter(conversation=self.conv,
@@ -223,7 +244,9 @@ class WriteToolsTests(TestCase):
         self.assertIn("asistente virtual", appt.cancellation_reason)
 
     def test_cancel_past_appointment_is_not_proposed(self):
-        past = timezone.now() - timedelta(hours=2)
+        # Use a fixed daytime instant so this fixture remains valid at midnight.
+        past = (timezone.now() - timedelta(days=1)).replace(
+            hour=10, minute=0, second=0, microsecond=0)
         appt = Appointment.objects.create(
             organization=self.org, pet=self.pet, veterinarian=self.vet,
             date=past.date(),
@@ -305,7 +328,7 @@ class WriteToolsTests(TestCase):
             "owner_name": "Carlos", "pet_name": "Rocky",
             "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
             conversation=conv, executor=ex)
-        policy.evaluate(conv, "sí", agent_settings=self.settings)
+        self._affirm("sí", conversation=conv)
         res = planner._commit_pending(conv, ex)
         self.assertEqual(res["decision"], "committed")
         owner = Owner.objects.get(phone="5512345678")
@@ -341,7 +364,7 @@ class WriteToolsTests(TestCase):
             "owner_name": "Carlos", "pet_name": "Rocky",
             "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
             conversation=conv, executor=ex)
-        policy.evaluate(conv, "sí", agent_settings=self.settings)
+        self._affirm("sí", conversation=conv)
         res = planner._commit_pending(conv, ex)
         self.assertEqual(res["decision"], "escalate")
         self.assertEqual(res["reason"], "owner_exists")
@@ -395,16 +418,19 @@ class WriteToolsTests(TestCase):
 
     # -- expiración del pending --------------------------------------------
     def test_expired_pending_reparaphrases_not_executes(self):
-        self.conv.flow["pending_action"] = {
-            "tool": "create_appointment",
-            "args": {"pet": self.pet.pk, "veterinarian": self.vet.pk,
-                     "date": self.day.isoformat(), "start_time": "10:00",
-                     "end_time": "10:30", "reason": "x", "notes": "",
-                     "idempotency_key": "k"},
-            "paraphrase": "¿Es correcto?",
-            "idempotency_key": "k",
-            "expires_at": (timezone.now() - timedelta(minutes=1)).isoformat(),
-        }
+        confirmations.stage_pending(
+            self.conv,
+            tool="create_appointment",
+            args={"pet": self.pet.pk, "veterinarian": self.vet.pk,
+                  "date": self.day.isoformat(), "start_time": "10:00",
+                  "end_time": "10:30", "reason": "x", "notes": "",
+                  "idempotency_key": "k"},
+            paraphrase="¿Es correcto?",
+        )
+        pending = confirmations.get_pending(self.conv)
+        pending["expires_at"] = (
+            timezone.now() - timedelta(minutes=1)).isoformat()
+        self.conv.flow["pending_action"] = pending
         self.conv.save(update_fields=["flow"])
 
         decision = self._affirm("sí")

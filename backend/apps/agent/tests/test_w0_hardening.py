@@ -23,7 +23,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.agent import executor as executor_module
-from apps.agent import policy, tools
+from apps.agent import confirmations, policy, tools
 from apps.agent.executor import ToolExecutor
 from apps.agent.llm import LLMResult
 from apps.agent.models import (
@@ -186,8 +186,24 @@ class BurstSafetyTests(AgentFixture):
         self.assertEqual(decision.handoff_reason, HumanHandoff.REASON_EXPLICIT)
 
     def test_affirmative_followed_by_thanks_still_confirms(self):
-        self.conv.flow["pending_action"] = {"tool": "create_appointment"}
-        self.conv.save(update_fields=["flow"])
+        confirmations.stage_pending(
+            self.conv, tool="create_appointment", args={},
+            paraphrase="Te confirmo: cita para Luna. ¿Es correcto?",
+        )
+        pending = confirmations.get_pending(self.conv)
+        proposal = Message.objects.create(
+            organization=self.org,
+            channel_account=self.channel,
+            conversation=self.conv,
+            contact=self.contact,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_SYSTEM,
+            semantic_type=Message.SEMANTIC_CONFIRMATION,
+            operation_key=pending["proposal_id"],
+            body=pending["paraphrase"],
+            status=Message.STATUS_SENT,
+        )
+        confirmations.bind_pending_message(self.conv, proposal.pk)
         decision = policy.evaluate(
             self.conv, "gracias", burst=["sí", "gracias"],
             agent_settings=self.settings)

@@ -123,6 +123,19 @@ class Message(OrganizationalModel):
         (AUTHOR_SYSTEM, 'Sistema'),
     )
 
+    # Procedencia semántica del saliente. `author_type` dice QUIÉN redactó el
+    # texto; este campo dice QUÉ papel cumple dentro de un flujo. Separar ambas
+    # cosas permite verificar confirmaciones y recibos sin inferirlos de la
+    # redacción en español.
+    SEMANTIC_GENERIC = ''
+    SEMANTIC_CONFIRMATION = 'confirmation'
+    SEMANTIC_OPERATION_RECEIPT = 'operation_receipt'
+    SEMANTIC_CHOICES = (
+        (SEMANTIC_GENERIC, 'Mensaje general'),
+        (SEMANTIC_CONFIRMATION, 'Confirmación de operación'),
+        (SEMANTIC_OPERATION_RECEIPT, 'Recibo de operación'),
+    )
+
     PAYLOAD_TEXT = 'text'
     PAYLOAD_CHOICES = (
         (PAYLOAD_TEXT, 'Texto'),
@@ -188,6 +201,13 @@ class Message(OrganizationalModel):
     payload_type = models.CharField(
         max_length=15, choices=PAYLOAD_CHOICES, default=PAYLOAD_TEXT,
     )
+    semantic_type = models.CharField(
+        max_length=24, choices=SEMANTIC_CHOICES, blank=True, default='',
+    )
+    # Llave de propuesta/operación del flujo. No es un id del proveedor: la
+    # outbox la usa para emitir el recibo una sola vez y para enlazar la
+    # afirmativa con la propuesta exacta que recibió el cliente.
+    operation_key = models.CharField(max_length=64, blank=True, default='')
     body = models.TextField(blank=True, default='')
     # wamid (inbound: llega en el webhook; outbound: lo asigna el proveedor
     # al enviar). Nullable — el unique parcial exige not-null + direction in.
@@ -223,6 +243,15 @@ class Message(OrganizationalModel):
                 & models.Q(external_message_id__isnull=False),
                 name='message_unique_inbound_wamid',
             ),
+            # Un commit puede reintentarse, pero su recibo no puede volver a
+            # salir como una segunda notificación de la misma operación.
+            models.UniqueConstraint(
+                fields=['conversation', 'operation_key'],
+                condition=models.Q(direction='out')
+                & models.Q(semantic_type='operation_receipt')
+                & ~models.Q(operation_key=''),
+                name='message_unique_operation_receipt',
+            ),
         ]
         indexes = [
             # Transcript de una conversación (bandeja).
@@ -233,6 +262,7 @@ class Message(OrganizationalModel):
             # F2): el modelo lee el hilo de la persona, no el del episodio.
             models.Index(fields=['organization', 'contact', 'channel_account',
                                  'created_at']),
+            models.Index(fields=['conversation', 'semantic_type', 'created_at']),
         ]
 
     def __str__(self):

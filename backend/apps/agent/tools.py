@@ -74,6 +74,10 @@ class ToolOutcome:
     # ejecuta los argumentos STAGED, jamás regenerados (TC-SEC-03).
 
 
+REPLY_TOOL_NAME = 'respond_to_client'
+REPLY_PURPOSES = ('answer', 'ask_for_data')
+
+
 def _norm(text):
     text = unicodedata.normalize('NFD', (text or '').lower())
     return ''.join(ch for ch in text if unicodedata.category(ch) != 'Mn')
@@ -729,6 +733,70 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     return ToolOutcome(ok=True, data=projection, summary={'slots': len(projection)})
 
 
+def _exact_slot_status(org, executor, date_str, time_str, vets, *,
+                       tool_name, triggered_by=None):
+    """Estado exacto de una hora: no confunde ausencia en sugerencias con ocupación."""
+    from datetime import datetime
+
+    from . import clinic_context
+    try:
+        day = datetime.strptime(date_str[:10], '%Y-%m-%d').date()
+        hhmm = datetime.strptime(time_str[:5], '%H:%M').strftime('%H:%M')
+    except (TypeError, ValueError):
+        return 'bad_date', None
+    if day < org_today_local(org):
+        return 'past_date', None
+    if day == org_today_local(org) and hhmm <= org_now_local(org).strftime('%H:%M'):
+        return 'past_date', None
+
+    ranges = clinic_context.weekday_ranges(org, day.weekday())
+    end_time = _appt_end_time(hhmm)
+    if not ranges:
+        return 'closed', None
+    if not any(len(item) == 2 and item[0] <= hhmm and end_time <= item[1]
+               for item in ranges):
+        return 'outside_hours', None
+
+    occupancy = _day_occupancy(
+        org, executor, day, tool_name=tool_name, triggered_by=triggered_by,
+        preferred=hhmm,
+    )
+    if occupancy is None:
+        return 'tool_failure', None
+    for vet in vets:
+        if hhmm not in occupancy.get(vet.pk, ()):
+            return 'available', vet
+    return 'slot_taken', None
+
+
+def check_appointment_slot(conversation, executor, args, triggered_by=None):
+    """Comprueba UNA hora concreta; las alternativas son responsabilidad de T9."""
+    from .models import AgentSettings
+
+    date_str = (args.get('date') or '').strip()
+    time_str = (args.get('time') or '').strip()
+    if not date_str or not time_str:
+        return ToolOutcome(ok=False, client_error='need_date')
+    org = conversation.organization
+    settings = AgentSettings.objects.filter(organization=org).first()
+    vets = _scheduling_vets(org, settings)
+    if not vets:
+        return ToolOutcome(ok=False, client_error='no_vet')
+    state, _vet = _exact_slot_status(
+        org, executor, date_str, time_str, vets,
+        tool_name='check_appointment_slot', triggered_by=triggered_by,
+    )
+    if state in ('bad_date', 'past_date', 'tool_failure'):
+        return ToolOutcome(ok=False, client_error=state)
+    available = state == 'available'
+    return ToolOutcome(
+        ok=True,
+        data={'date': date_str, 'time': time_str[:5], 'available': available,
+              'reason': '' if available else state},
+        summary={'available': available, 'reason': '' if available else state},
+    )
+
+
 def _capture_slot_from_read(conversation, slot, value):
     """Alimenta un slot FALTANTE del objetivo en curso desde una tool de
     lectura. Solo rellena huecos: nunca pisa un valor ya capturado (el modelo
@@ -1038,13 +1106,17 @@ def create_appointment(conversation, executor, args, triggered_by=None):
     vets = _scheduling_vets(org, agent_settings)
     if not vets:
         return ToolOutcome(ok=False, client_error='no_vet')
-    # Quien esté libre a esa hora: da igual quién atienda (decisión del PO).
-    vet = pick_free_vet(org, executor, date_str, time_str, vets,
-                        triggered_by=triggered_by)
-    if vet is None:
+    # Propuesta y sugerencias consumen el mismo veredicto exacto.
+    slot_state, vet = _exact_slot_status(
+        org, executor, date_str, time_str, vets,
+        tool_name='create_appointment', triggered_by=triggered_by,
+    )
+    if slot_state == 'slot_taken':
         return _slot_taken_or_already_scheduled(
             org, executor, date_str, time_str, pet_pid,
             tool_name='create_appointment', triggered_by=triggered_by)
+    if slot_state != 'available':
+        return ToolOutcome(ok=False, client_error=slot_state)
 
     import uuid
     fecha = format_local_wallclock(date_str, time_str)
@@ -1249,6 +1321,19 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
     if appt.get('status') not in ('scheduled', 'confirmed'):
         return ToolOutcome(ok=False, client_error='not_reschedulable')
 
+    from .models import AgentSettings
+    agent_settings = AgentSettings.objects.filter(organization=org).first()
+    vets = _scheduling_vets(org, agent_settings)
+    if not vets:
+        return ToolOutcome(ok=False, client_error='no_vet')
+    slot_state, vet = _exact_slot_status(
+        org, executor, new_date, new_time, vets,
+        tool_name='reschedule_appointment', triggered_by=triggered_by,
+    )
+    if slot_state != 'available':
+        return ToolOutcome(ok=False, client_error=slot_state)
+
+
     paraphrase = confirmations.CONFIRM_RESCHEDULE.format(
         pet=appt.get('pet_name', ''),
         vieja=_appt_when_label(appt, org),
@@ -1257,6 +1342,16 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
     staged = {
         'appointment_public_id': appt_pid, 'date': new_date,
         'start_time': new_time, 'end_time': _appt_end_time(new_time),
+        # La clínica puede atender con cualquier veterinario libre; se fija el
+        # elegido al proponer para que la confirmación no cambie de recurso.
+        'veterinarian': vet.pk,
+        # Si alguien cancela esta cita antes del commit, estos datos permiten
+        # convertir la intención en un ALTA nueva, nunca resucitar la vieja.
+        'replacement_pet': appt.get('pet'),
+        'replacement_pet_public_id': str(appt.get('pet_public_id') or ''),
+        'replacement_reason': appt.get('reason') or 'consulta',
+        'replacement_from_appointment': appt_pid,
+        'replacement_pet_name': appt.get('pet_name', ''),
         # INV-A (§0-C): `from_*` deja de ser dato de triage y pasa a ser
         # PRECONDICIÓN — el origen que el cliente vio en el parafraseo.
         **_expected_state_of(appt),
@@ -1270,10 +1365,13 @@ def reschedule_appointment(conversation, executor, args, triggered_by=None):
 
 def commit_reschedule_appointment(conversation, executor, args, triggered_by=None):
     appt_pid = args['appointment_public_id']
+    body = {'date': args['date'], 'start_time': args['start_time'],
+            'end_time': args['end_time'], **_expected_state_body(args)}
+    if args.get('veterinarian') is not None:
+        body['veterinarian'] = args['veterinarian']
     status_code, data = executor.call(
         'PATCH', f'/api/appointments/{appt_pid}/', tool_name='reschedule_appointment',
-        json={'date': args['date'], 'start_time': args['start_time'],
-              'end_time': args['end_time'], **_expected_state_body(args)},
+        json=body,
         policy_tier='2', policy_decision='confirmed',
         triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
         business_outcomes=BUSINESS_OUTCOMES,
@@ -1291,6 +1389,71 @@ def commit_reschedule_appointment(conversation, executor, args, triggered_by=Non
     return ToolOutcome(ok=True, summary={'rescheduled': True}, data={
         'cuando': format_local_wallclock(args['date'], args['start_time']),
     })
+
+
+def stage_replacement_from_canceled_reschedule(conversation, executor, pending,
+                                               current, *, triggered_by=None):
+    """Convierte un reagendado invalidado por cancelación en alta nueva.
+
+    La cita original jamás se toca de nuevo. Solo se prepara una creación con
+    los datos que el cliente ya aprobó, y la siguiente afirmativa confirma esa
+    nueva operación real.
+    """
+    from . import confirmations
+    from .models import AgentSettings
+
+    if (current or {}).get('status') != 'canceled':
+        return ToolOutcome(ok=False, client_error='not_reschedulable')
+    source = (pending or {}).get('args') or {}
+    pet_pk = source.get('replacement_pet')
+    pet_public_id = source.get('replacement_pet_public_id')
+    if not pet_pk or not pet_public_id:
+        return ToolOutcome(ok=False, client_error='invalid_data')
+    date_str = source.get('date', '')
+    time_str = source.get('start_time', '')
+    err = _future_or_error(conversation.organization, date_str, time_str)
+    if err:
+        return ToolOutcome(ok=False, client_error=err)
+
+    settings = AgentSettings.objects.filter(
+        organization=conversation.organization).first()
+    vets = _scheduling_vets(conversation.organization, settings)
+    if not vets:
+        return ToolOutcome(ok=False, client_error='no_vet')
+    state, vet = _exact_slot_status(
+        conversation.organization, executor, date_str, time_str, vets,
+        tool_name='prepare_replacement_appointment',
+        triggered_by=triggered_by,
+    )
+    if state != 'available':
+        return ToolOutcome(ok=False, client_error=state)
+
+    import uuid
+    reason = source.get('replacement_reason') or 'consulta'
+    staged = {
+        'pet': pet_pk,
+        'pet_public_id': pet_public_id,
+        'veterinarian': vet.pk,
+        'date': date_str,
+        'start_time': time_str,
+        'end_time': _appt_end_time(time_str),
+        'reason': reason,
+        'notes': (
+            'Reemplazo de cita cancelada por asistente virtual · conv '
+            f'{conversation.public_id} · origen {source.get("replacement_from_appointment", "")}'
+        )[:250],
+        'idempotency_key': uuid.uuid4().hex,
+    }
+    paraphrase = confirmations.CONFIRM_REPLACEMENT_CREATE.format(
+        pet=source.get('replacement_pet_name') or 'tu mascota',
+        fecha=format_local_wallclock(date_str, time_str),
+        reason=reason,
+    )
+    confirmations.stage_pending(
+        conversation, tool='create_appointment', args=staged,
+        paraphrase=paraphrase,
+    )
+    return ToolOutcome(ok=True, summary={'proposed': 'replacement_create'})
 
 
 _SPECIES_MAP = {
@@ -2052,7 +2215,11 @@ def get_recent_product_queries(conversation, executor, args, triggered_by=None):
 
 
 def request_human(conversation, executor, args, triggered_by=None):
-    """LOCAL: crea el handoff y silencia al agente (E-02; disponible SIEMPRE)."""
+    """Ruta interna para tests y fallos controlados; el LLM no puede invocarla.
+
+    Las transferencias se deciden en policy.evaluate / escalate_to_human,
+    donde llevan razón, aviso visible y suspensión atómica del flujo.
+    """
     handoff = HumanHandoff(
         organization=conversation.organization,
         conversation=conversation,
@@ -2169,9 +2336,11 @@ TOOL_SPECS = {
         'tier': '1',
         'min_verification': 'unknown',
         'description': (
-            'Horarios libres de la clínica para UN día concreto (formato '
-            'YYYY-MM-DD). Úsalo para proponer horarios antes de agendar. '
-            'preferred_time opcional: "mañana"/"tarde"/"noche" o una hora.'
+            'Hasta TRES alternativas libres para UN día concreto (formato '
+            'YYYY-MM-DD). Úsalo si el cliente pidió una franja (mañana/tarde) '
+            'o DESPUÉS de saber que su hora exacta no está disponible. '
+            'Nunca concluyas que una hora concreta está ocupada porque no '
+            'apareció aquí: para eso usa check_appointment_slot.'
         ),
         'parameters': {
             'type': 'object',
@@ -2181,6 +2350,23 @@ TOOL_SPECS = {
                 'preferred_time': {'type': 'string'},
             },
             'required': ['date'],
+        },
+    },
+    'check_appointment_slot': {
+        'handler': check_appointment_slot,
+        'tier': '1',
+        'min_verification': 'unknown',
+        'description': (
+            'Disponibilidad de una hora CONCRETA. Úsala siempre que el '
+            'cliente diga una hora exacta antes de afirmar que está ocupada.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'date': {'type': 'string', 'description': 'YYYY-MM-DD'},
+                'time': {'type': 'string', 'description': 'HH:MM (24h)'},
+            },
+            'required': ['date', 'time'],
         },
     },
     'create_appointment': {
@@ -2370,6 +2556,7 @@ TOOL_SPECS = {
         },
     },
     'request_human': {
+        'llm_exposed': False,
         'handler': request_human,
         'tier': '0',
         'min_verification': 'unknown',
@@ -2413,8 +2600,11 @@ def _with_confidence(parameters):
 def as_openai_tools():
     """Specs en el formato de tool calling OpenAI-compatible (llm.py)."""
     from . import goals
+
     tools_payload = []
     for name, spec in TOOL_SPECS.items():
+        if not spec.get('llm_exposed', True):
+            continue
         description = spec['description']
         parameters = spec['parameters']
         if name in goals.TOOL_GOALS:
@@ -2428,6 +2618,32 @@ def as_openai_tools():
                 'parameters': parameters,
             },
         })
+
+    # La salida libre no es un canal de negocio: obliga al modelo a declarar
+    # que solo conversa o pide un dato. No existe un propósito “confirmar”:
+    # las confirmaciones salen exclusivamente de `stage_pending` + planner.
+    tools_payload.append({
+        'type': 'function',
+        'function': {
+            'name': REPLY_TOOL_NAME,
+            'description': (
+                'Envía una respuesta conversacional al cliente. Úsala para '
+                'contestar o pedir un dato. Nunca la uses para pedir una '
+                'confirmación de agenda: las propuestas las emite el sistema.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'purpose': {
+                        'type': 'string',
+                        'enum': list(REPLY_PURPOSES),
+                    },
+                    'text': {'type': 'string'},
+                },
+                'required': ['purpose', 'text'],
+            },
+        },
+    })
     return tools_payload
 
 

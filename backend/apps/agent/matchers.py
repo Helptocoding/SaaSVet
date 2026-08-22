@@ -150,6 +150,21 @@ def classify_confirmation(text):
     return 'unclear'
 
 
+def is_bare_affirmative(text):
+    """Verdadero solo si el mensaje no contiene una instrucción adicional.
+
+    Fuera de una propuesta persistida, un "sí" aislado no tiene una operación
+    que confirmar y el router debe resolverlo sin delegarlo al modelo. Una
+    frase como "sí, voy a asistir" sí comunica una intención nueva: puede
+    recorrer el planner y, si corresponde, la herramienta inocua de confirmar
+    asistencia. Esta separación evita la segunda confirmación sin convertir
+    toda frase que contenga "sí" en una respuesta inválida.
+    """
+    if '👍' in (text or ''):
+        return not normalize((text or '').replace('👍', ''))
+    return normalize(text) in _AFFIRMATIVE
+
+
 def _starts_with_phrase(n, phrases):
     return any(n == p or n.startswith(p + ' ') for p in phrases)
 

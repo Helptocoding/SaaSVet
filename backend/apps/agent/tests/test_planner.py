@@ -240,20 +240,30 @@ class PlannerPendingContextTests(PlannerTestCase):
             'reschedule_appointment',
         )
 
-    def test_write_promise_is_retried_before_it_reaches_the_client(self):
+    def test_typed_response_protocol_has_no_confirmation_purpose(self):
         self._inbound('mueve la cita de Luna')
         stub = StubLLMClient(scripted=[
-            LLMResult(kind='text', text='Va, muevo la cita de Luna 🙂'),
-            LLMResult(kind='text',
-                      text='Dime qué horario prefieres para moverla 🙂'),
+            LLMResult(
+                kind='tool_call', tool_name='respond_to_client',
+                tool_args={'purpose': 'confirmation', 'text': '¿Confirmas?'},
+            ),
+            LLMResult(
+                kind='tool_call', tool_name='respond_to_client',
+                tool_args={
+                    'purpose': 'ask_for_data',
+                    'text': '¿Qué horario prefieres para moverla?',
+                },
+            ),
         ])
+        stub.requires_response_tool = True
 
         result = self._handle(stub)
 
         self.assertEqual(result['decision'], 'planner_reply')
         self.assertEqual(len(stub.calls), 2)
+        self.assertNotIn('confirm', self._last_outbound().body.lower())
         self.assertTrue(self._last_outbound().body.endswith(
-            'Dime qué horario prefieres para moverla 🙂'))
+            '¿Qué horario prefieres para moverla?'))
 
 
 class PlannerPolicyShortCircuitTests(PlannerTestCase):

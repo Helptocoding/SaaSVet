@@ -42,11 +42,13 @@ class PromptsTestCase(TestCase):
             status=Message.STATUS_PROCESSED, available_at=available_at,
         )
 
-    def _outbound(self, body, author_type=Message.AUTHOR_AGENT):
+    def _outbound(self, body, author_type=Message.AUTHOR_AGENT,
+                  semantic_type='', operation_key=''):
         return Message.objects.create(
             organization=self.org, channel_account=self.channel,
             conversation=self.conv, direction=Message.DIRECTION_OUT,
-            author_type=author_type, body=body,
+            author_type=author_type, semantic_type=semantic_type,
+            operation_key=operation_key, body=body,
             status=Message.STATUS_SENT,
         )
 
@@ -116,6 +118,46 @@ class AuthorshipTests(PromptsTestCase):
                          {"role": "assistant", "content": "ok"})
 
 
+
+
+class OperationReceiptTests(PromptsTestCase):
+    def test_receipt_enters_context_as_fact_not_as_copy_to_repeat(self):
+        body = 'Tu cita para Luna quedó creada el viernes a las 12:30.'
+        self._outbound(
+            body, author_type=Message.AUTHOR_SYSTEM,
+            semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+            operation_key='create-luna-1',
+        )
+
+        messages = prompts.assemble_messages(self.conv)
+
+        self.assertTrue(self._context_block()['ultimo_recibo_operacion']
+                        ['notificado_al_cliente'])
+        rendered = messages[1:]
+        self.assertEqual(len(rendered), 1)
+        self.assertIn('ya notificó', rendered[0]['content'])
+        self.assertNotIn(body, rendered[0]['content'])
+
+    def test_same_operation_receipt_is_enqueued_once(self):
+        from apps.agent.outbound import enqueue_outbound
+
+        first = enqueue_outbound(
+            self.conv, 'Cita creada', author='system',
+            semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+            operation_key='create-luna-2',
+        )
+        second = enqueue_outbound(
+            self.conv, 'Cita creada de nuevo', author='system',
+            semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+            operation_key='create-luna-2',
+        )
+
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(Message.objects.filter(
+            conversation=self.conv,
+            semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+            operation_key='create-luna-2',
+        ).count(), 1)
 class TurnWindowTests(PromptsTestCase):
     """Fase 2 §2.2 (R2) — CR-3: la ventana contaba MENSAJES y una ráfaga de
     WhatsApp se comía medio contexto."""
@@ -346,4 +388,4 @@ class VerifiedBehaviourPromptTests(PromptsTestCase):
     def test_prompt_version_was_bumped(self):
         """`PROMPT_VERSION` viaja en cada `LLMCall`: sin bumpearlo no se puede
         correlacionar calidad con versión, que es para lo que existe."""
-        self.assertEqual(prompts.PROMPT_VERSION, 'reception-f5-v11')
+        self.assertEqual(prompts.PROMPT_VERSION, 'reception-f5-v12')

@@ -670,61 +670,102 @@ class RepeatedConcurrentCreationTests(TransactionTestCase):
 
     def test_five_hundred_races_never_produce_a_500(self):
         seen = Counter()
+        races = []
 
         for i in range(self.ITERATIONS):
             day = (timezone.now() + timedelta(days=5 + i // 12)).date().isoformat()
             hour = 8 + (i % 12)
             start, end = f"{hour:02d}:00", f"{hour:02d}:30"
+            races.append({
+                "date": day,
+                "start_time": start,
+                "end_time": end,
+                "reason": "consulta",
+            })
 
-            barrier = threading.Barrier(2)
-            outcomes = {}
+        # Cada worker conserva su propia conexión durante las 500 carreras.
+        # Crear dos hilos y dos APIClient nuevos por vuelta abre y cierra 1,000
+        # conexiones en una sola prueba; eso añade churn al test y puede dejar
+        # un worker bloqueado por el runtime, sin aportar más cobertura de la
+        # carrera de base de datos. Las dos conexiones persistentes siguen
+        # entrando a cada POST en el mismo instante gracias a esta barrera de
+        # tres participantes (main + los dos workers).
+        barrier = threading.Barrier(3)
+        outcomes = [dict() for _ in races]
+        worker_errors = {}
+        stop = threading.Event()
 
-            def runner(name, pet):
-                try:
-                    client = APIClient()
-                    client.force_authenticate(self.admin)
+        def runner(name, pet):
+            try:
+                client = APIClient()
+                client.force_authenticate(self.admin)
+                for i, payload in enumerate(races):
                     barrier.wait(timeout=self.BARRIER_TIMEOUT)
+                    if stop.is_set():
+                        return
                     r = client.post("/api/appointments/", {
-                        "pet": pet.id, "veterinarian": self.vet.id,
-                        "date": day, "start_time": start, "end_time": end,
-                        "reason": "consulta",
+                        **payload,
+                        "pet": pet.id,
+                        "veterinarian": self.vet.id,
                     })
-                    outcomes[name] = ('ok', r.status_code, r.json())
-                except BaseException:  # noqa: BLE001
-                    barrier.abort()
-                    outcomes[name] = ('error', None, traceback.format_exc())
-                finally:
-                    connections.close_all()
+                    outcomes[i][name] = ('ok', r.status_code, r.json())
+                    barrier.wait(timeout=self.BARRIER_TIMEOUT)
+            except BaseException:  # noqa: BLE001
+                worker_errors[name] = traceback.format_exc()
+                stop.set()
+                barrier.abort()
+            finally:
+                connections.close_all()
 
-            threads = [
-                threading.Thread(target=runner, args=("a", self.pet_a)),
-                threading.Thread(target=runner, args=("b", self.pet_b)),
-            ]
-            for t in threads:
-                t.start()
+        threads = [
+            threading.Thread(target=runner, args=("a", self.pet_a)),
+            threading.Thread(target=runner, args=("b", self.pet_b)),
+        ]
+        for t in threads:
+            t.start()
+        try:
+            for i in range(self.ITERATIONS):
+                try:
+                    barrier.wait(timeout=self.JOIN_TIMEOUT)
+                    barrier.wait(timeout=self.JOIN_TIMEOUT)
+                except threading.BrokenBarrierError:
+                    detail = "\n\n".join(
+                        f"--- hilo {name} ---\n{tb}"
+                        for name, tb in worker_errors.items()
+                    )
+                    self.fail(
+                        f"iteración {i}: una carrera no terminó en "
+                        f"{self.JOIN_TIMEOUT}s. {detail or 'Sin traza del worker.'}"
+                    )
+
+                if worker_errors:
+                    detail = "\n\n".join(
+                        f"--- hilo {name} ---\n{tb}"
+                        for name, tb in worker_errors.items()
+                    )
+                    self.fail(f"iteración {i}: un hilo murió:\n\n{detail}")
+
+                codes = sorted(code for _, code, _ in outcomes[i].values())
+                if status.HTTP_500_INTERNAL_SERVER_ERROR in codes:
+                    self.fail(
+                        f"iteración {i}: alguien recibió un 500 en una carrera por "
+                        f"el cupo. Respuestas: { {n: (c, b) for n, (_, c, b) in outcomes[i].items()} }"
+                    )
+                self.assertEqual(
+                    codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST],
+                    f"iteración {i}: { {n: (c, b) for n, (_, c, b) in outcomes[i].items()} }",
+                )
+                loser = next(b for _, c, b in outcomes[i].values() if c == 400)
+                self.assertEqual(loser.get("code"), "slot_taken", loser)
+                seen[tuple(codes)] += 1
+        finally:
+            stop.set()
+            barrier.abort()
             for t in threads:
                 t.join(timeout=self.JOIN_TIMEOUT)
-                if t.is_alive():
-                    self.fail(f"iteración {i}: un hilo no terminó en "
-                              f"{self.JOIN_TIMEOUT}s. Reportado: {sorted(outcomes)}")
 
-            crashed = {n: tb for n, (kind, _, tb) in outcomes.items() if kind == 'error'}
-            if crashed:
-                detail = "\n\n".join(f"--- hilo {n} ---\n{tb}" for n, tb in crashed.items())
-                self.fail(f"iteración {i}: un hilo murió:\n\n{detail}")
-
-            codes = sorted(code for _, code, _ in outcomes.values())
-            if status.HTTP_500_INTERNAL_SERVER_ERROR in codes:
-                self.fail(
-                    f"iteración {i}: alguien recibió un 500 en una carrera por "
-                    f"el cupo. Respuestas: { {n: (c, b) for n, (_, c, b) in outcomes.items()} }"
-                )
-            self.assertEqual(
-                codes, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST],
-                f"iteración {i}: { {n: (c, b) for n, (_, c, b) in outcomes.items()} }",
-            )
-            loser = next(b for _, c, b in outcomes.values() if c == 400)
-            self.assertEqual(loser.get("code"), "slot_taken", loser)
-            seen[tuple(codes)] += 1
-
+        self.assertFalse(
+            any(t.is_alive() for t in threads),
+            "un worker siguió activo después de la prueba de concurrencia",
+        )
         self.assertEqual(sum(seen.values()), self.ITERATIONS)

@@ -204,6 +204,19 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
     #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
     pending = confirmations.get_pending(conversation)
+    if not pending and matchers.is_bare_affirmative(burst_text):
+        # Un “sí” no es una instrucción de agenda. Sin una propuesta tipada
+        # previamente emitida, cederlo al planner podía fabricar una propuesta
+        # nueva y pedir un segundo sí. Solo se intercepta la afirmativa
+        # aislada: una frase que aporta intención nueva sigue al planner.
+        logger.info("AGENT_ORPHAN_AFFIRMATIVE", extra={
+            'event': 'AGENT_ORPHAN_AFFIRMATIVE',
+            'organization_id': conversation.organization_id,
+            'conversation_id': conversation.pk,
+        })
+        return PolicyDecision(kind=REPLY,
+                              text=tier0.T0_CONFIRMATION_UNAVAILABLE,
+                              meta={'reason': 'orphan_affirmative'})
     planner_meta = {}
     if pending:
         verdict = confirmations.classify_pending_reply(pending, burst)
@@ -231,6 +244,17 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
                 conversation, reason='topic_changed_or_ambiguous_confirmation')
             flow = conversation.flow
         elif verdict == 'affirmative':
+            if not confirmations.is_confirmable(conversation, pending):
+                logger.error("AGENT_UNBOUND_CONFIRMATION", extra={
+                    'event': 'AGENT_UNBOUND_CONFIRMATION',
+                    'organization_id': conversation.organization_id,
+                    'conversation_id': conversation.pk,
+                })
+                confirmations.clear_pending(conversation)
+                return PolicyDecision(kind=REPLY,
+                                      text=tier0.T0_CONFIRMATION_UNAVAILABLE,
+                                      meta={'reason': 'unbound_confirmation'})
+
             return PolicyDecision(kind=RUN_PLANNER,
                                   meta={'confirm': 'affirmative'})
         elif verdict == 'context':

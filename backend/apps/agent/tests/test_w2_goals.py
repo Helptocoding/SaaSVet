@@ -14,13 +14,14 @@ Lo que estos tests anclan:
 - **É-F4 Fase 3 (ADR p55)**: todo factor lleva un `why` decible en voz alta
   (R9), y suplantar ≠ abortar (R4).
 """
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from apps.agent import confirmations, goals, policy, tools
 from apps.agent.models import ConversationGoal, HumanHandoff
+from apps.agent.tests.harness import set_schedule_day
 from apps.agent.tests.test_w0_hardening import AgentFixture
 from apps.core.datetime_utils import org_today_local
 
@@ -33,6 +34,8 @@ class GoalFixture(AgentFixture):
         self.conv.flow["refs"] = {"mascota_1": str(self.pet.public_id)}
         self.conv.save(update_fields=["flow"])
         self.day = (org_today_local(self.org) + timedelta(days=3)).isoformat()
+        set_schedule_day(self.org, date.fromisoformat(self.day).weekday(),
+                         "09:00", "13:00")
 
     def _create(self, **args):
         return tools.create_appointment(self.conv, self.executor(), args)

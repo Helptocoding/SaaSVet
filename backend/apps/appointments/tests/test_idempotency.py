@@ -196,7 +196,9 @@ class PastDateGuardTests(IdempotencyTestBase):
         r = self.client.post("/api/appointments/", self._future())
         created = r.json()
         appt = Appointment.objects.get(public_id=created["public_id"])
-        past = timezone.now() - timedelta(hours=2)
+        # A fixed daytime past appointment avoids crossing midnight in CI.
+        past = (timezone.now() - timedelta(days=1)).replace(
+            hour=10, minute=0, second=0, microsecond=0)
         appt.date = past.date()
         appt.start_time = past.time().replace(second=0, microsecond=0)
         appt.end_time = (past + timedelta(minutes=30)).time().replace(

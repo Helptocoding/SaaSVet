@@ -148,6 +148,22 @@ class CommitPreconditionBase(TestCase):
 
     def _commit(self, conversation=None, executor=None):
         convo = conversation or self.conv
+        pending = confirmations.get_pending(convo)
+        # Las herramientas se prueban aquí sin pasar por el planner. En
+        # producción el planner siempre emite y enlaza este Message antes del
+        # “sí”; el helper reproduce esa frontera, no un estado imposible.
+        if pending and not confirmations.is_confirmable(convo, pending):
+            proposal = Message.objects.create(
+                organization=convo.organization,
+                channel_account=convo.channel_account,
+                conversation=convo, contact=convo.contact,
+                direction=Message.DIRECTION_OUT,
+                author_type=Message.AUTHOR_SYSTEM,
+                semantic_type=Message.SEMANTIC_CONFIRMATION,
+                operation_key=pending['proposal_id'],
+                body=pending['paraphrase'], status=Message.STATUS_SENT,
+            )
+            confirmations.bind_pending_message(convo, proposal.pk)
         policy.evaluate(convo, "sí", agent_settings=self.settings)
         return planner._commit_pending(convo, executor or self.executor)
 
@@ -225,10 +241,19 @@ class AppointmentChangedTests(CommitPreconditionBase):
         appt.save(update_fields=["status"])
 
         res = self._commit()
-        self.assertEqual(res["decision"], "commit_appointment_changed")
+        self.assertEqual(res["decision"], "replacement_confirmation")
         appt.refresh_from_db()
         self.assertEqual(appt.status, "canceled")
-        self.assertIn("cancel", self._last_out().lower())
+        replacement = confirmations.get_pending(self.conv)
+        self.assertEqual(replacement["tool"], "create_appointment")
+        self.assertTrue(confirmations.is_confirmable(self.conv, replacement))
+
+        committed = self._commit()
+        self.assertEqual(committed["decision"], "committed")
+        replacement_appt = Appointment.objects.exclude(pk=appt.pk).get()
+        self.assertEqual(replacement_appt.date, self.day)
+        self.assertEqual(replacement_appt.start_time.strftime("%H:%M"), "12:00")
+        self.assertEqual(replacement_appt.status, "scheduled")
 
     def test_no_automatic_retry_without_the_precondition(self):
         """R5/§5.3: reintentar sin `expected_state` ES la sobrescritura."""

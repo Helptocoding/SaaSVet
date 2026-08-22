@@ -86,6 +86,10 @@ class SlotsTests(TestCase):
         return run_tool("find_available_slots", args,
                         conversation=self.conv, executor=self.executor)
 
+    def _check(self, args):
+        return run_tool("check_appointment_slot", args,
+                        conversation=self.conv, executor=self.executor)
+
     def _book(self, hhmm):
         from datetime import datetime
         from datetime import timezone as dt_tz
@@ -107,6 +111,24 @@ class SlotsTests(TestCase):
         self.assertEqual(out.data[0]["iso_time"], "09:00")
         self.assertIn("hora", out.data[0])
         self.assertIn("de", out.data[0]["fecha"])  # "... de julio"
+
+    def test_exact_time_is_not_inferred_from_the_three_alternatives(self):
+        alternatives = self._run({"date": self.day.isoformat()})
+        self.assertNotIn("12:30", [slot["iso_time"] for slot in alternatives.data])
+
+        exact = self._check({"date": self.day.isoformat(), "time": "12:30"})
+
+        self.assertTrue(exact.ok, exact.client_error)
+        self.assertTrue(exact.data["available"])
+
+    def test_exact_time_reports_a_real_occupancy(self):
+        self._book("12:30")
+
+        exact = self._check({"date": self.day.isoformat(), "time": "12:30"})
+
+        self.assertTrue(exact.ok, exact.client_error)
+        self.assertFalse(exact.data["available"])
+        self.assertEqual(exact.data["reason"], "slot_taken")
 
     def test_excludes_occupied_slot(self):
         self._book("09:00")

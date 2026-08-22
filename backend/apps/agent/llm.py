@@ -82,9 +82,12 @@ def estimate_cost(input_tokens, output_tokens):
     )
     return min(quantized, Decimal('9999.999999'))
 
-
 class OpenAICompatibleClient:
     """Cliente mínimo de `/chat/completions` con tool calling."""
+
+    # En producción toda respuesta llega como `respond_to_client`; así el
+    # planner puede separar respuesta conversacional de propuesta tier-2.
+    requires_response_tool = True
 
     def __init__(self, base_url=None, api_key=None, model=None):
         self.base_url = (
@@ -95,7 +98,7 @@ class OpenAICompatibleClient:
 
     def complete(self, *, system, messages, tools=None,
                  max_tokens=DEFAULT_MAX_TOKENS,
-                 temperature=DEFAULT_TEMPERATURE):
+                 temperature=DEFAULT_TEMPERATURE, tool_choice='auto'):
         """messages = [{'role': 'user'|'assistant'|'tool', 'content': ...}].
 
         Devuelve LLMResult; levanta LLMError. El caller (planner) decide
@@ -115,7 +118,7 @@ class OpenAICompatibleClient:
         }
         if tools:
             payload['tools'] = tools
-            payload['tool_choice'] = 'auto'
+            payload['tool_choice'] = tool_choice
 
         started = time.monotonic()
         try:
@@ -179,6 +182,8 @@ class StubLLMClient:
     `scripted` = lista de LLMResult (o LLMError para simular fallos) que se
     consumen en orden; registra cada invocación en `calls`.
     """
+
+    requires_response_tool = False
 
     def __init__(self, scripted=None, model='stub-model'):
         self.scripted = list(scripted or [])

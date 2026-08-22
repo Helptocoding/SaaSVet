@@ -42,6 +42,12 @@ class ConfirmationTests(SimpleTestCase):
                   "está bien", "👍"]:
             self.assertEqual(matchers.classify_confirmation(t), 'affirmative', t)
 
+    def test_bare_affirmatives_do_not_capture_an_explicit_intent(self):
+        for t in ["sí", "va", "ok", "👍"]:
+            self.assertTrue(matchers.is_bare_affirmative(t), t)
+        for t in ["sí, voy a asistir", "sí, confirma la cita", "va, cancélala"]:
+            self.assertFalse(matchers.is_bare_affirmative(t), t)
+
     def test_negatives(self):
         for t in ["no", "mejor no", "cancela", "no gracias"]:
             self.assertEqual(matchers.classify_confirmation(t), 'negative', t)

@@ -23,6 +23,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from apps.channels.models import Message
+
 from . import (
     arbiter,
     confirmations,
@@ -460,6 +462,37 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             logger.exception("AGENT_LLMCALL_PERSIST_FAILED")
         _bump_budget(conversation)
 
+        reply_via_protocol = False
+        if (result.kind == 'tool_call'
+                and result.tool_name == tools.REPLY_TOOL_NAME):
+            purpose = (result.tool_args or {}).get('purpose')
+            reply_text = str((result.tool_args or {}).get('text') or '').strip()
+            if purpose not in tools.REPLY_PURPOSES or not reply_text:
+                correction = (
+                    'Usa respond_to_client con purpose answer o ask_for_data '
+                    'y un texto para el cliente. No pidas confirmaciones: '
+                    'las propuestas las emite el sistema.'
+                )
+                continue
+            # La herramienta de respuesta no cambia el dominio. La reducimos
+            # a texto para que pase por los mismos guards y persistencia.
+            result.kind = 'text'
+            result.text = reply_text
+            reply_via_protocol = True
+
+        if (result.kind == 'text'
+                and getattr(llm_client, 'requires_response_tool', False)
+                and not reply_via_protocol):
+            if correction is None:
+                correction = (
+                    'Para responder al cliente usa respond_to_client. Sus '
+                    'únicos purpose son answer y ask_for_data.'
+                )
+                continue
+            enqueue_outbound(conversation, _fallback_text(), author='system')
+            return {'decision': 'response_protocol_failed',
+                    'llm_calls': llm_calls, 'tools': tool_calls}
+
         if result.kind == 'text':
             text = result.text or _fallback_text()
             violations = guards.check_output(
@@ -646,10 +679,13 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             # es plantilla, pero lo PROPUSO el modelo con su llamada a
             # herramienta y el cliente le contesta a él. Se conserva como voz
             # del agente — la confirmación tier-2 no se toca (§11 del plan).
-            paraphrase = (confirmations.get_pending(conversation) or {}).get(
-                'paraphrase', '')
+            pending = confirmations.get_pending(conversation) or {}
+            paraphrase = pending.get('paraphrase', '')
             proposal_message = enqueue_outbound(
-                conversation, prefix + paraphrase, author='agent')
+                conversation, prefix + paraphrase, author='system',
+                semantic_type=Message.SEMANTIC_CONFIRMATION,
+                operation_key=pending.get('proposal_id', ''),
+            )
             confirmations.bind_pending_message(conversation, proposal_message.pk)
             return {'decision': 'awaiting_confirmation',
                     'llm_calls': llm_calls, 'tools': tool_calls}
@@ -789,12 +825,16 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             conversation, tool=pending['tool'], args=pending['args'],
             paraphrase=pending['paraphrase'],
         )
-        enqueue_outbound(
+        proposal_message = enqueue_outbound(
             conversation,
             confirmations.EXPIRED_REPARAPHRASE.format(
                 paraphrase=pending['paraphrase']),
             author='system',
+            semantic_type=Message.SEMANTIC_CONFIRMATION,
+            operation_key=(confirmations.get_pending(conversation) or {}).get(
+                'proposal_id', ''),
         )
+        confirmations.bind_pending_message(conversation, proposal_message.pk)
         return {'decision': 'confirm_expired', 'llm_calls': 0, 'tools': 0}
 
     handler = tools.COMMIT_HANDLERS.get(pending['tool'])
@@ -820,7 +860,8 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
         if outcome.client_error == 'already_done':
             return _already_done(conversation, pending, outcome)
         if outcome.client_error == 'appointment_changed':
-            return _appointment_changed(conversation, pending, outcome)
+            return _appointment_changed(
+                conversation, pending, outcome, executor, triggered_by=triggered_by)
 
     confirmations.clear_pending(conversation)
 
@@ -900,9 +941,13 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
     goals.close_open_goal(
         conversation, ConversationGoal.STATUS_COMPLETED, pending['tool'])
 
-    enqueue_outbound(conversation,
-                     _success_message(pending['tool'], outcome, conversation, executor),
-                     author='system')
+    enqueue_outbound(
+        conversation,
+        _success_message(pending['tool'], outcome, conversation, executor),
+        author='system',
+        semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+        operation_key=pending['proposal_id'],
+    )
     return {'decision': 'committed', 'llm_calls': 0, 'tools': 1,
             'tool': pending['tool']}
 
@@ -998,20 +1043,43 @@ def _already_done(conversation, pending, outcome):
     return {'decision': 'commit_already_done', 'llm_calls': 0, 'tools': 1}
 
 
-def _appointment_changed(conversation, pending, outcome):
-    """`appointment_changed`: alguien movió la cita mientras hablábamos.
-
-    Se le cuenta al cliente con el estado REAL y se le deja decidir (R3). NO se
-    reintenta sin precondición —esa es la sobrescritura que INV-A prohíbe— y NO
-    se escala: es información para el cliente, que está escribiendo justo ahora
-    (R2). La propuesta se descarta; el objetivo sigue abierto para volver a
-    proponer sobre el estado nuevo (R4).
-    """
-    confirmations.clear_pending(conversation)
+def _appointment_changed(conversation, pending, outcome, executor, *,
+                         triggered_by=None):
+    """Cuenta el estado real y convierte cancelación+reagendado en alta nueva."""
     current = (outcome.data or {}).get('current') or {}
+
+    # La cancelación concurrente no autoriza a resucitar la cita vieja. Si el
+    # cliente ya pidió fecha/hora nuevas, se prepara una creación distinta y
+    # esta MISMA respuesta es la única confirmación efectiva que falta.
+    if (pending.get('tool') == 'reschedule_appointment'
+            and current.get('status') == 'canceled'):
+        replacement = tools.stage_replacement_from_canceled_reschedule(
+            conversation, executor, pending, current,
+            triggered_by=triggered_by,
+        )
+        if replacement.ok:
+            fresh_pending = confirmations.get_pending(conversation) or {}
+            proposal = enqueue_outbound(
+                conversation, fresh_pending.get('paraphrase', ''),
+                author='system',
+                semantic_type=Message.SEMANTIC_CONFIRMATION,
+                operation_key=fresh_pending.get('proposal_id', ''),
+            )
+            confirmations.bind_pending_message(conversation, proposal.pk)
+            logger.info("AGENT_REPLACEMENT_PROPOSED", extra={
+                'event': 'AGENT_REPLACEMENT_PROPOSED',
+                'organization_id': conversation.organization_id,
+                'conversation_id': conversation.pk,
+                'source_tool': pending['tool'],
+            })
+            return {'decision': 'replacement_confirmation', 'llm_calls': 0,
+                    'tools': 2}
+
+    confirmations.clear_pending(conversation)
     enqueue_outbound(
         conversation, _appointment_changed_text(conversation, current),
-        author='system')
+        author='system',
+    )
     logger.info("AGENT_COMMIT_PRECONDITION_FAILED", extra={
         "event": "AGENT_COMMIT_PRECONDITION_FAILED",
         "organization_id": conversation.organization_id,
@@ -1416,6 +1484,7 @@ def _complete_with_retry(conversation, llm_client, *, system, messages,
         try:
             return llm_client.complete(
                 system=system, messages=messages, tools=tool_specs,
+                tool_choice='required',
             )
         except LLMError as exc:
             try:

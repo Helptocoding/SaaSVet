@@ -67,6 +67,12 @@ SALVAGUARDAS = {
     #   nombrar.
     'T0_IDENTITY_QUESTION',
     'T0_IDENTITY_ECHO',
+    # Un «sí» sin propuesta persistida no tiene una operación que ejecutar.
+    # Llamar al modelo aquí sería peligroso: podría inventar o prometer una
+    # confirmación no vinculada, recreando la doble confirmación. La respuesta
+    # fija obliga a iniciar una solicitud real, que el sistema podrá sellar
+    # como Message.SEMANTIC_CONFIRMATION antes de aceptar otro «sí».
+    'T0_CONFIRMATION_UNAVAILABLE',
 }
 
 # Las que retiró esta fase. Que no vuelvan por la puerta de atrás.

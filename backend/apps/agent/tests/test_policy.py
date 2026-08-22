@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from apps.agent import goals, matchers, policy, situation, tier0
+from apps.agent import confirmations, goals, matchers, policy, situation, tier0
 from apps.agent.models import (
     AgentSettings,
     ContactIdentity,
@@ -14,7 +14,7 @@ from apps.agent.models import (
     HumanHandoff,
 )
 from apps.agent.tests.harness import identity_commitment
-from apps.channels.models import ChannelAccount
+from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 
@@ -171,8 +171,20 @@ class PriorityOrderTests(PolicyTestCase):
 class ConfirmationFlowTests(PolicyTestCase):
     def setUp(self):
         super().setUp()
-        self.conv.flow["pending_action"] = {"tool": "create_appointment"}
-        self.conv.save()
+        confirmations.stage_pending(
+            self.conv, tool='create_appointment', args={},
+            paraphrase='Te confirmo: cita para Luna. ¿Es correcto?',
+        )
+        pending = confirmations.get_pending(self.conv)
+        proposal = Message.objects.create(
+            organization=self.org, channel_account=self.channel,
+            conversation=self.conv, contact=self.contact,
+            direction=Message.DIRECTION_OUT, author_type=Message.AUTHOR_SYSTEM,
+            semantic_type=Message.SEMANTIC_CONFIRMATION,
+            operation_key=pending['proposal_id'], body=pending['paraphrase'],
+            status=Message.STATUS_SENT,
+        )
+        confirmations.bind_pending_message(self.conv, proposal.pk)
 
     def test_defer_keeps_pending(self):
         d = self._eval("ahorita")
@@ -185,6 +197,36 @@ class ConfirmationFlowTests(PolicyTestCase):
         d = self._eval("sí, dale")
         self.assertEqual(d.kind, policy.RUN_PLANNER)
         self.assertEqual(d.meta.get("confirm"), "affirmative")
+
+    def test_affirmative_without_a_proposal_never_reaches_the_planner(self):
+        confirmations.clear_pending(self.conv)
+
+        d = self._eval('sí')
+
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta.get('reason'), 'orphan_affirmative')
+        self.assertEqual(d.text, tier0.T0_CONFIRMATION_UNAVAILABLE)
+
+    def test_affirmative_with_explicit_intent_reaches_the_planner(self):
+        confirmations.clear_pending(self.conv)
+
+        d = self._eval('sí, voy a asistir')
+
+        self.assertEqual(d.kind, policy.RUN_PLANNER)
+
+    def test_unbound_pending_is_invalidated_before_an_affirmative(self):
+        pending = confirmations.get_pending(self.conv)
+        pending.pop('proposal_message_id')
+        self.conv.flow['pending_action'] = pending
+        self.conv.save(update_fields=['flow'])
+
+        d = self._eval('sí')
+
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta.get('reason'), 'unbound_confirmation')
+        self.conv.refresh_from_db()
+        self.assertNotIn('pending_action', self.conv.flow)
+
 
     def test_reaffirmation_with_words_commits_once(self):
         """Un reclamo que reafirma el sí no puede abrir otra propuesta."""

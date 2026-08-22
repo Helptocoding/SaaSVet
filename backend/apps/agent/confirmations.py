@@ -59,6 +59,11 @@ CONFIRM_CREATE = (
 CONFIRM_CANCEL = (
     "Voy a cancelar la cita de *{pet}* del *{fecha}*. ¿Confirmas?"
 )
+CONFIRM_REPLACEMENT_CREATE = (
+    "Tu cita anterior se canceló mientras hablábamos. Te confirmo: agendo "
+    "una nueva para *{pet}* el *{fecha}*, motivo: {reason}. ¿Es correcto?"
+)
+
 CONFIRM_RESCHEDULE = (
     "Muevo la cita de *{pet}* del *{vieja}* al *{nueva}*. ¿Confirmas?"
 )
@@ -140,6 +145,24 @@ def bind_pending_message(conversation, message_id):
     conversation.flow = flow
     conversation.save(update_fields=['flow'])
 
+
+def is_confirmable(conversation, pending):
+    """True solo si el cliente recibió una propuesta tipada y vigente."""
+    from apps.channels.models import Message
+
+    proposal_id = str((pending or {}).get('proposal_id') or '')
+    message_id = (pending or {}).get('proposal_message_id')
+    if not proposal_id or not message_id:
+        return False
+    return Message.objects.filter(
+        pk=message_id,
+        conversation=conversation,
+        direction=Message.DIRECTION_OUT,
+        semantic_type=Message.SEMANTIC_CONFIRMATION,
+        operation_key=proposal_id,
+    ).exclude(
+        status__in=(Message.STATUS_DISCARDED, Message.STATUS_FAILED),
+    ).exists()
 
 def supersede_pending(conversation, *, reason):
     """Invalidates a stale proposal before the planner processes a new topic.

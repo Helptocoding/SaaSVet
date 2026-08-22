@@ -181,8 +181,16 @@ T0_GOAL_STALLED = (
 # UX-16 · falsa afirmativa a un pending_action (no ejecuta, no cierra).
 T0_DEFER = "Va, aquí queda pendiente — me dices 🙌"
 
-# Reto de identidad (G4: nunca enumera).
+
+# Una afirmativa solo puede ejecutar una propuesta que el cliente sí recibió.
+# Evita convertir un “sí” a una promesa libre del modelo en una segunda ronda.
+T0_CONFIRMATION_UNAVAILABLE = (
+    "No tengo un resumen de cita listo para confirmar. Dime qué necesitas "
+    "hacer y te muestro la propuesta real primero."
+)
+
 # ---------------------------------------------------------------------------
+# Reto de identidad (G4: nunca enumera).
 # Plantillas de identidad — RETIRADAS (É-F5 Fase 2, ADR p56)
 # ---------------------------------------------------------------------------
 # Aquí vivían las 13 plantillas que conducían los retos: T0_CHALLENGE_*,
