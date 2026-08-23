@@ -1,6 +1,7 @@
 # Proceso ARCO manual (LFPDPPP)
 
 **Fecha**: 2026-06-24
+**Última actualización**: 2026-08-22 (WhatsApp Inbox/media, ADR p60)
 **Estado**: vigente / interim (proceso manual; endpoints automatizados son P1)
 
 Este documento describe cómo atender **manualmente** las solicitudes de derechos
@@ -49,6 +50,8 @@ clínica solicite), pero **no responde directamente al titular** en estos casos.
 | Citas | `Appointment` · appointments | Encargado | `organization` |
 | Caja | `CashSession` / `CashMovement` · cash | Encargado | `organization` |
 | Migración (PII cruda staged) | `ImportJob.rows` (JSON) · imports | Encargado | `organization` |
+| WhatsApp: identidad de contacto, conversaciones y texto/captions | `ContactIdentity` / `Conversation` · agent; `Message` · channels | Encargado | `organization` |
+| WhatsApp media (futuro, ADR p60; aún no activo) | `MessageMedia` · channels + objeto privado B2 | Encargado | `organization` + key/prefix B2 |
 
 Notas sobre el mapa:
 - En cobros **nunca** se almacenan datos de tarjeta. Solo se registra el método de
@@ -56,6 +59,11 @@ Notas sobre el mapa:
 - `ImportJob.rows` contiene PII cruda staged de la migración (JSON con filas del
   sistema anterior). Considerarlo en solicitudes de Cancelación/Acceso de clientes
   migrados.
+- Cuando media WhatsApp se active, el binario canónico vivirá en un bucket B2
+  privado dedicado, separado de backups y sin Object Lock. V1 lo servirá
+  únicamente mediante proxy Django autenticado y org-scoped; no habrá URLs
+  públicas ni `presigned GET`. La activación permanece bloqueada hasta archivar
+  el DPA y actualizar aviso, ARCO y divulgación de transferencia internacional.
 
 ---
 
@@ -81,6 +89,11 @@ Procedimiento:
    `Owner.public_id` (cliente final).
 3. Ejecutar consulta/dump filtrada por `organization` y por el `public_id` del
    titular, recorriendo los modelos del mapa de datos (§2) que correspondan.
+   Cuando media WhatsApp esté activa, incluir chats, captions y adjuntos aún
+   vigentes; los expirados se informan como tombstone sin prometer recuperar el
+   binario eliminado. El proxy responde `410 media_expired` para el titular de
+   la organización y la UI muestra «Archivo expirado»; una organización ajena
+   sigue recibiendo 404.
 4. Entregar la información dentro del SLA (§ inicio).
 
 ---
@@ -110,6 +123,16 @@ Procedimiento:
 fiscales** sobre expedientes y comprobantes. La Cancelación no puede vulnerar
 estas obligaciones de retención; por eso, ante dependencias clínicas/fiscales, la
 respuesta es anonimizar/conservar lo legalmente exigible, no borrar.
+
+**WhatsApp/media futura (ADR p60)**: cuando proceda una cancelación antes de los
+180 días, eliminar el objeto B2 operativo y dejar la fila `MessageMedia` como
+tombstone/`expired` sin referencia descargable; anonimizar o conservar el texto
+solo conforme al alcance y obligaciones aplicables. Los backups Postgres p40
+contienen texto/captions y metadatos/referencias, pero **nunca el binario B2**.
+Su ciclo permanece intacto (local 14 días, `daily/` 30 días, `monthly/` 12
+meses) y no se reescribe retroactivamente; una restauración debe reaplicar las
+purgas/anonimizaciones procedentes y ejecutar el reconciliador de expiraciones
+antes de abrir el servicio al tráfico.
 
 ---
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -24,7 +24,10 @@ import { useConfirm } from "../../components/useConfirm";
 import EmptyState from "../../components/EmptyState";
 import { Icon } from "../../components/icons";
 import { apiError } from "../../utils/apiError";
+import { clockTimeOrg, fmtTimeOrg, groupMessagesByDay, orgTz } from "../../utils/datetime";
+import { newIdempotencyKey } from "../../utils/idempotency";
 import { toList } from "../../utils/toList";
+import DeliveryTicks from "./DeliveryTicks";
 import styles from "./inbox.module.css";
 
 // Bandeja WhatsApp (É-F0 PR-7). Polling (patrón useDashboardSummary): la
@@ -33,6 +36,58 @@ import styles from "./inbox.module.css";
 
 const LIST_POLL_MS = 20000;
 const THREAD_POLL_MS = 10000;
+const INBOX_CLOCK_TICK_MS = 60000;
+const MAX_PENDING_SEND_ATTEMPTS = 20;
+
+const removePendingAttempt = (registry, sessionId, clientMessageId) => {
+    const sessionAttempts = registry.get(sessionId);
+    if (!sessionAttempts) return;
+    sessionAttempts.delete(clientMessageId);
+    if (sessionAttempts.size === 0) registry.delete(sessionId);
+};
+
+const registerPendingAttempt = (registry, attempt) => {
+    let sessionAttempts = registry.get(attempt.sessionId);
+    if (!sessionAttempts) {
+        sessionAttempts = new Map();
+        registry.set(attempt.sessionId, sessionAttempts);
+    }
+    sessionAttempts.set(attempt.clientMessageId, attempt);
+
+    let total = [...registry.values()].reduce((sum, attempts) => sum + attempts.size, 0);
+    while (total > MAX_PENDING_SEND_ATTEMPTS) {
+        let oldestAttempt = null;
+        for (const attempts of registry.values()) {
+            for (const candidate of attempts.values()) {
+                if (!oldestAttempt || candidate.sequence < oldestAttempt.sequence) {
+                    oldestAttempt = candidate;
+                }
+            }
+        }
+        if (!oldestAttempt) break;
+        removePendingAttempt(
+            registry,
+            oldestAttempt.sessionId,
+            oldestAttempt.clientMessageId
+        );
+        total -= 1;
+    }
+};
+
+const compareMessages = (left, right) => {
+    const byTime = new Date(left.created_at).getTime() - new Date(right.created_at).getTime();
+    if (byTime !== 0) return byTime;
+    return String(left.id).localeCompare(String(right.id));
+};
+
+const mergeServerMessage = (messages, serverMessage) => {
+    const serverId = serverMessage?.id;
+    const clientMessageId = serverMessage?.client_message_id;
+    return [...messages.filter((message) => (
+        message.id !== serverId
+        && (!clientMessageId || message.client_message_id !== clientMessageId)
+    )), serverMessage].sort(compareMessages);
+};
 
 const STATE_LABEL = {
     active: "Abierta",
@@ -53,15 +108,6 @@ const FILTERS = [
     { value: "", label: "Activas" },
     { value: "archived", label: "Archivadas" },
 ];
-
-const fmtTime = (iso) => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const sameDay = d.toDateString() === new Date().toDateString();
-    return sameDay
-        ? d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
-        : d.toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
-};
 
 const contactLabel = (conv) =>
     conv.owner_name || conv.contact_display_name || conv.contact_phone || "Sin nombre";
@@ -222,8 +268,14 @@ const HandoffReasonBanner = ({ handoff }) => {
     );
 };
 
+const DateDivider = ({ label }) => (
+    <div className={styles.dateDivider} role="separator" aria-label={label}>
+        <span>{label}</span>
+    </div>
+);
+
 const Inbox = () => {
-    const { can } = useAuth();
+    const { can, user } = useAuth();
     const confirm = useConfirm();
     const navigate = useNavigate();
 
@@ -236,45 +288,117 @@ const Inbox = () => {
     const [selectedThread, setSelectedThread] = useState(null);
     const [thread, setThread] = useState(null); // { conversation, messages, ... }
     const [body, setBody] = useState("");
-    const [sending, setSending] = useState(false);
     const [acting, setActing] = useState(false);
     const [agentSettings, setAgentSettings] = useState(null);
     const [metrics, setMetrics] = useState(null);
     const [tokenStatus, setTokenStatus] = useState(null);
     const [tokenInput, setTokenInput] = useState("");
     const [savingToken, setSavingToken] = useState(false);
+    const [timeReference, setTimeReference] = useState(() => new Date());
+    const [optimisticMessages, setOptimisticMessages] = useState([]);
     const threadEndRef = useRef(null);
+    const threadLoadRequestRef = useRef(0);
+    const selectedThreadRef = useRef(null);
+    const activeSessionIdRef = useRef(null);
+    const selectionRevisionRef = useRef(0);
+    const draftRevisionRef = useRef(0);
+    const pendingSendAttemptsRef = useRef(new Map());
+    const optimisticMessagesRef = useRef([]);
+    const sendSequenceRef = useRef(0);
+    const mountedRef = useRef(true);
+    const sendAbortControllersRef = useRef(new Map());
 
     const canSend = can?.("agentinbox.send");
     const canClaim = can?.("agentinbox.claim");
     const canConfig = can?.("agentinbox.config");
+    const timezone = orgTz(user);
     // Permiso PROPIO (ADR p57 §5.5.2): verificar identidad es una función de
     // mostrador, no de administración del canal — quien la tenga no recibe con
     // ella el kill switch del agente.
     const canVerifyIdentity = can?.("agentinbox.identity_verify");
 
     const loadList = useCallback(async ({ silent = true } = {}) => {
+        if (!mountedRef.current) return;
         if (!silent) setLoadingList(true);
         try {
             // `archived` en vez de `state`: el hilo no tiene estado propio — lo
             // tiene su sesión vigente, y si no hay ninguna está archivado.
             const data = await getThreads(filter === "archived" ? { archived: 1 } : {});
+            if (!mountedRef.current) return;
             setConversations(toList(data));
         } catch (err) {
-            console.error(apiError(err));
+            if (mountedRef.current) console.error(apiError(err));
         } finally {
-            setLoadingList(false);
+            if (mountedRef.current) setLoadingList(false);
         }
     }, [filter]);
 
+    const updateOptimisticMessages = useCallback((updater) => {
+        if (!mountedRef.current) return;
+        const next = updater(optimisticMessagesRef.current);
+        optimisticMessagesRef.current = next;
+        setOptimisticMessages(next);
+    }, []);
+
     const loadThread = useCallback(async (target) => {
         if (!target) return;
+        const requestId = ++threadLoadRequestRef.current;
         try {
             const data = await getThreadMessages(target.contact, target.account);
+            if (!mountedRef.current) return;
+            if (requestId !== threadLoadRequestRef.current) return;
+            const current = selectedThreadRef.current;
+            if (!current
+                || current.contact !== target.contact
+                || current.account !== target.account) return;
+            const loadedSessionId = data?.conversation?.public_id || null;
+            activeSessionIdRef.current = loadedSessionId;
+            const serverClientIds = new Set(
+                (data?.messages || [])
+                    .map((message) => message.client_message_id)
+                    .filter(Boolean)
+            );
+            if (serverClientIds.size > 0) {
+                for (const clientMessageId of serverClientIds) {
+                    removePendingAttempt(
+                        pendingSendAttemptsRef.current,
+                        loadedSessionId,
+                        clientMessageId
+                    );
+                }
+                if (optimisticMessagesRef.current.some((message) => (
+                    message.sessionId === loadedSessionId
+                    && serverClientIds.has(message.client_message_id)
+                ))) {
+                    updateOptimisticMessages((messages) => messages.filter((message) => (
+                        message.sessionId !== loadedSessionId
+                        || !serverClientIds.has(message.client_message_id)
+                    )));
+                }
+            }
             setThread(data);
         } catch (err) {
+            if (!mountedRef.current) return;
+            if (requestId !== threadLoadRequestRef.current) return;
+            const current = selectedThreadRef.current;
+            if (!current
+                || current.contact !== target.contact
+                || current.account !== target.account) return;
             toast.error(apiError(err, "No se pudo cargar la conversación"));
         }
+    }, [updateOptimisticMessages]);
+
+    useEffect(() => {
+        mountedRef.current = true;
+        const controllers = sendAbortControllersRef.current;
+        return () => {
+            mountedRef.current = false;
+            threadLoadRequestRef.current += 1;
+            for (const controller of controllers.values()) {
+                controller.abort();
+            }
+            controllers.clear();
+        };
     }, []);
 
     // Lista: carga inicial + polling.
@@ -283,6 +407,14 @@ const Inbox = () => {
         const t = setInterval(loadList, LIST_POLL_MS);
         return () => clearInterval(t);
     }, [loadList]);
+
+    // Una única referencia temporal alimenta todo el render. Se renueva cada
+    // minuto para que Hoy/Ayer cambie al cruzar medianoche sin dejar el Inbox
+    // congelado si no llegan mensajes nuevos.
+    useEffect(() => {
+        const timer = setInterval(() => setTimeReference(new Date()), INBOX_CLOCK_TICK_MS);
+        return () => clearInterval(timer);
+    }, []);
 
     // Transcript del seleccionado: carga + polling.
     useEffect(() => {
@@ -333,12 +465,28 @@ const Inbox = () => {
 
     useEffect(() => {
         threadEndRef.current?.scrollIntoView({ block: "end" });
-    }, [thread?.messages?.length]);
+    }, [thread?.messages?.length, optimisticMessages.length]);
 
     // La sesión contra la que se ACTÚA. `null` = hilo archivado: se lee, se
     // recorre, y no ofrece acciones — escribir sobre una sesión cerrada devuelve
     // 400, así que no se pinta el botón.
     const sessionId = thread?.conversation?.public_id || null;
+    const transcriptMessages = useMemo(() => {
+        const serverMessages = thread?.messages || [];
+        if (!sessionId) return serverMessages;
+        const serverClientIds = new Set(
+            serverMessages.map((message) => message.client_message_id).filter(Boolean)
+        );
+        const localMessages = optimisticMessages.filter((message) => (
+            message.sessionId === sessionId
+            && !serverClientIds.has(message.client_message_id)
+        ));
+        return [...serverMessages, ...localMessages].sort(compareMessages);
+    }, [thread?.messages, optimisticMessages, sessionId]);
+    const messageGroups = useMemo(
+        () => groupMessagesByDay(transcriptMessages, timezone, timeReference),
+        [transcriptMessages, timezone, timeReference]
+    );
     const isSelected = (row) => (
         selectedThread
         && row.contact_public_id === selectedThread.contact
@@ -349,19 +497,138 @@ const Inbox = () => {
         await Promise.all([loadList(), selectedThread ? loadThread(selectedThread) : null]);
     };
 
-    const handleSend = async () => {
+    const executeSendAttempt = async (attempt) => {
+        const controller = new AbortController();
+        sendAbortControllersRef.current.set(attempt.clientMessageId, controller);
+        try {
+            const serverMessage = await sendInboxMessage(
+                attempt.sessionId,
+                attempt.body,
+                attempt.clientMessageId,
+                { signal: controller.signal }
+            );
+            if (!mountedRef.current || controller.signal.aborted) return;
+            if (serverMessage?.client_message_id !== attempt.clientMessageId) {
+                throw new Error("La respuesta no confirmó client_message_id");
+            }
+
+            removePendingAttempt(
+                pendingSendAttemptsRef.current,
+                attempt.sessionId,
+                attempt.clientMessageId
+            );
+
+            const current = selectedThreadRef.current;
+            const activeTarget = current && attempt.targetThread
+                && current.contact === attempt.targetThread.contact
+                && current.account === attempt.targetThread.account
+                && activeSessionIdRef.current === attempt.sessionId;
+            if (activeTarget) {
+                updateOptimisticMessages((messages) => messages.filter(
+                    (message) => message.client_message_id !== attempt.clientMessageId
+                ));
+                setThread((currentThread) => (
+                    currentThread?.conversation?.public_id === attempt.sessionId
+                        ? {
+                            ...currentThread,
+                            messages: mergeServerMessage(
+                                currentThread.messages || [],
+                                serverMessage
+                            ),
+                        }
+                        : currentThread
+                ));
+            } else {
+                // Confirmado, pero el hilo original no está activo. Mantener la
+                // proyección real evita que desaparezca durante navegación o
+                // lag de réplica; el próximo GET la absorberá por client id.
+                updateOptimisticMessages((messages) => [
+                    ...messages.filter(
+                        (message) => message.client_message_id !== attempt.clientMessageId
+                    ),
+                    { ...serverMessage, sessionId: attempt.sessionId },
+                ].slice(-MAX_PENDING_SEND_ATTEMPTS));
+            }
+            await loadList();
+        } catch (err) {
+            if (!mountedRef.current || controller.signal.aborted) return;
+            const status = err?.response?.status;
+            const nonRetryable = status >= 400 && status < 500;
+            const message = apiError(err, "No se pudo enviar el mensaje");
+            if (nonRetryable) {
+                removePendingAttempt(
+                    pendingSendAttemptsRef.current,
+                    attempt.sessionId,
+                    attempt.clientMessageId
+                );
+                updateOptimisticMessages((messages) => messages.filter(
+                    (item) => item.client_message_id !== attempt.clientMessageId
+                ));
+            } else {
+                updateOptimisticMessages((messages) => messages.map((item) => (
+                    item.client_message_id === attempt.clientMessageId
+                        ? { ...item, status: "failed-local", failure_reason: message }
+                        : item
+                )));
+            }
+            toast.error(message);
+        } finally {
+            if (sendAbortControllersRef.current.get(attempt.clientMessageId) === controller) {
+                sendAbortControllersRef.current.delete(attempt.clientMessageId);
+            }
+        }
+    };
+
+    const handleSend = () => {
         const text = body.trim();
         if (!text) { toast.error("Escribe un mensaje"); return; }
-        setSending(true);
-        try {
-            await sendInboxMessage(sessionId, text);
-            setBody("");
-            await refreshAll();
-        } catch (err) {
-            toast.error(apiError(err, "No se pudo enviar"));
-        } finally {
-            setSending(false);
-        }
+        const currentSessionId = sessionId;
+        const targetThread = selectedThreadRef.current;
+        const clientMessageId = newIdempotencyKey();
+        const createdAt = new Date().toISOString();
+        const attempt = {
+            sessionId: currentSessionId,
+            clientMessageId,
+            body: text,
+            targetThread,
+            selectionRevision: selectionRevisionRef.current,
+            sequence: ++sendSequenceRef.current,
+        };
+        registerPendingAttempt(pendingSendAttemptsRef.current, attempt);
+        updateOptimisticMessages((messages) => [...messages, {
+            id: `tmp:${clientMessageId}`,
+            client_message_id: clientMessageId,
+            sessionId: currentSessionId,
+            body: text,
+            direction: "out",
+            author_type: "human_staff",
+            human_author_name: "Tú",
+            payload_type: "text",
+            status: "pending",
+            failure_reason: "",
+            created_at: createdAt,
+        }].slice(-MAX_PENDING_SEND_ATTEMPTS));
+        draftRevisionRef.current += 1;
+        setBody("");
+        executeSendAttempt(attempt);
+    };
+
+    const handleRetrySend = (clientMessageId) => {
+        const sessionAttempts = pendingSendAttemptsRef.current.get(sessionId);
+        const previous = sessionAttempts?.get(clientMessageId);
+        if (!previous) return;
+        const attempt = {
+            ...previous,
+            targetThread: selectedThreadRef.current,
+            selectionRevision: selectionRevisionRef.current,
+        };
+        sessionAttempts.set(clientMessageId, attempt);
+        updateOptimisticMessages((messages) => messages.map((message) => (
+            message.client_message_id === clientMessageId
+                ? { ...message, status: "pending", failure_reason: "" }
+                : message
+        )));
+        executeSendAttempt(attempt);
     };
 
     const runAction = async (fn, successMsg) => {
@@ -568,14 +835,29 @@ const Inbox = () => {
                                         c.handoff_priority === "urgent" ? styles.convItemUrgent : "",
                                     ].filter(Boolean).join(" ")}
                                     onClick={() => {
-                                        // Limpiar aquí y no en un efecto: es la
-                                        // consecuencia de un clic, y hacerlo en
-                                        // el efecto encadena renders.
-                                        setThread(null);
-                                        setSelectedThread({
+                                        const target = {
                                             contact: c.contact_public_id,
                                             account: c.channel_account_public_id,
-                                        });
+                                        };
+                                        const current = selectedThreadRef.current;
+                                        if (current
+                                            && current.contact === target.contact
+                                            && current.account === target.account) return;
+
+                                        // El hilo, su transcript y su borrador
+                                        // cambian juntos. Limpiar aquí evita que
+                                        // el texto de una persona pueda enviarse
+                                        // a otra; un efecto encadenaría renders.
+                                        selectedThreadRef.current = target;
+                                        activeSessionIdRef.current = null;
+                                        selectionRevisionRef.current += 1;
+                                        draftRevisionRef.current += 1;
+                                        setBody("");
+                                        // Invalida cualquier GET del hilo anterior
+                                        // que siga en vuelo y termine más tarde.
+                                        threadLoadRequestRef.current += 1;
+                                        setThread(null);
+                                        setSelectedThread(target);
                                     }}
                                 >
                                     <div className={styles.convTop}>
@@ -590,7 +872,7 @@ const Inbox = () => {
                                                     {c.session_count}
                                                 </span>
                                             )}
-                                            {fmtTime(c.last_activity_at)}
+                                            {fmtTimeOrg(c.last_activity_at, timezone, timeReference)}
                                         </span>
                                     </div>
                                     <div className={styles.convTop}>
@@ -718,33 +1000,46 @@ const Inbox = () => {
                             )}
 
                             <div className={styles.thread}>
-                                {(thread?.messages || []).map((m) => (
-                                    <div
-                                        key={m.id}
-                                        className={
-                                            m.direction === "in"
-                                                ? `${styles.bubble} ${styles.bubbleIn}`
-                                                : `${styles.bubble} ${styles.bubbleOut}`
-                                        }
-                                    >
-                                        {m.body || <em>[{m.payload_type}]</em>}
-                                        <div className={styles.bubbleMeta}>
-                                            {m.direction === "out" && (
-                                                <span>
-                                                    {m.author_type === "human_staff"
-                                                        ? (m.human_author_name || "Staff")
-                                                        : (AUTHOR_LABEL[m.author_type] || "")}
-                                                </span>
-                                            )}
-                                            <span>{fmtTime(m.created_at)}</span>
-                                            {m.direction === "out" && m.status === "failed" && (
-                                                <span className={styles.bubbleFailed} title={m.failure_reason}>
-                                                    no entregado
-                                                </span>
-                                            )}
-                                            {m.direction === "out" && m.status === "pending" && <span>enviando…</span>}
-                                        </div>
-                                    </div>
+                                {messageGroups.map((group) => (
+                                    <Fragment key={group.key}>
+                                        <DateDivider label={group.label} />
+                                        {group.messages.map((m) => (
+                                            <div
+                                                key={m.id}
+                                                className={
+                                                    m.direction === "in"
+                                                        ? `${styles.bubble} ${styles.bubbleIn}`
+                                                        : `${styles.bubble} ${styles.bubbleOut}`
+                                                }
+                                            >
+                                                {m.body || <em>[{m.payload_type}]</em>}
+                                                <div className={styles.bubbleMeta}>
+                                                    {m.direction === "out" && (
+                                                        <span>
+                                                            {m.author_type === "human_staff"
+                                                                ? (m.human_author_name || "Staff")
+                                                                : (AUTHOR_LABEL[m.author_type] || "")}
+                                                        </span>
+                                                    )}
+                                                    <span>{clockTimeOrg(m.created_at, timezone)}</span>
+                                                    <DeliveryTicks
+                                                        status={m.status}
+                                                        direction={m.direction}
+                                                        failure_reason={m.failure_reason}
+                                                    />
+                                                    {m.status === "failed-local" && (
+                                                        <button
+                                                            type="button"
+                                                            className={styles.retrySend}
+                                                            onClick={() => handleRetrySend(m.client_message_id)}
+                                                        >
+                                                            Reintentar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </Fragment>
                                 ))}
                                 <div ref={threadEndRef} />
                             </div>
@@ -756,17 +1051,20 @@ const Inbox = () => {
                                         placeholder="Escribe una respuesta…"
                                         value={body}
                                         maxLength={4000}
-                                        onChange={(e) => setBody(e.target.value)}
+                                        onChange={(e) => {
+                                            draftRevisionRef.current += 1;
+                                            setBody(e.target.value);
+                                        }}
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter" && !e.shiftKey) {
                                                 e.preventDefault();
-                                                if (!sending) handleSend();
+                                                handleSend();
                                             }
                                         }}
                                     />
-                                    <button className="btn btn-primary" disabled={sending} onClick={handleSend}>
+                                    <button className="btn btn-primary" disabled={!body.trim()} onClick={handleSend}>
                                         <Icon.Send s={15} c="currentColor" />
-                                        {sending ? "Enviando…" : "Enviar"}
+                                        Enviar
                                     </button>
                                 </div>
                             )}

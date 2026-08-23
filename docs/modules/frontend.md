@@ -193,6 +193,45 @@ el cuerpo HTTP completo. Para depurar usar siempre `console.error(apiError(err))
 
 Frontend debe distinguir por `code` field, no por status code. El handler `apiError` ya extrae `message` correctamente. Para mostrar acción específica (e.g. "este registro tiene 5 mascotas asociadas"), parsear `protected_count` y `protected_sample`.
 
+### WhatsApp Inbox: tiempo, entrega y envío optimista (ADR p60)
+
+El Inbox usa la zona horaria de la organización publicada por `/me/` como
+`user.organization_timezone`; `orgTz` valida el identificador IANA y cae de
+forma segura en `America/Mexico_City`. La lista usa `fmtTimeOrg`, las burbujas
+`clockTimeOrg` y el transcript se agrupa con `groupMessagesByDay`/
+`dayLabelOrg`. Todos reciben una sola referencia temporal, renovada cada 60 s,
+para que `Hoy`/`Ayer` y la hora no discrepen al cruzar medianoche.
+
+`DeliveryTicks` se renderiza solo en salientes y expone estado accesible por
+`aria-label` y `title`: `pending` (reloj), `sent` (una marca),
+`delivered`/`read` (dos marcas; lectura en verde), y
+`failed`/`discarded`/`failed-local` (advertencia). Los entrantes no muestran
+marcas. El código y sus pruebas viven en
+`src/pages/inbox/DeliveryTicks.jsx` y
+`src/pages/inbox/DeliveryTicks.test.jsx`.
+
+El envío humano cumple este contrato:
+
+- el cliente genera `X-Idempotency-Key` antes del `await`;
+- backend devuelve `client_message_id` de solo lectura en POST/replay/GET,
+  únicamente para salientes `human_staff`;
+- el overlay optimista está separado del transcript servidor y se indexa por
+  `(sessionId, client_message_id)`, con un máximo global de 20 intentos;
+- GET y `201` reconcilian **solo** por `client_message_id`: está prohibido
+  deduplicar por cuerpo, autor o cercanía temporal porque dos Enter pueden ser
+  dos mensajes legítimos;
+- un 4xx retira el optimista y muestra el error; red o 5xx lo conserva como
+  `failed-local`, y «Reintentar» reutiliza exactamente la misma clave;
+- cambio de hilo, secuencia A→B→A y desmontaje están protegidos por revisión
+  de selección y `AbortController`; un resultado viejo no puede borrar el
+  borrador ni reinstalar la sesión de otro hilo.
+
+Pruebas dirigidas: `src/pages/inbox/index.test.jsx`,
+`src/api/inbox.test.js`, `src/utils/datetime.test.js` y los tests de
+`DeliveryTicks`. La representación de estados está implementada; el gate E2E
+de ticks reales contra el sandbox de Meta continúa pendiente y no debe
+declararse cerrado solo con pruebas unitarias.
+
 ### Manejo centralizado de errores de formularios
 
 - Utilities:

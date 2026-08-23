@@ -2,6 +2,7 @@
 
 **Fecha**: 2026-08-17
 **Estado**: **ACEPTADO** (PO, 2026-08-15/16) — **implementado y en producción** (`a00afb6`; F5 en `91c8618`)
+**Addendum de visibilidad del Inbox**: 2026-08-23
 **Contexto de producto**: subsistema del agente WhatsApp, tras dos defectos observados en el piloto
 **Plan de implementación**: [`docs/agent-continuity-plan.md`](../agent-continuity-plan.md) — catorce revisiones, con el veredicto y el motivo de cada punto
 **Relación con p56/p57**: los **complementa**. Aplica al reto conversacional el mismo criterio que p57 §5.5.3 ya había fijado para la verificación humana, y no toca ninguno de sus invariantes.
@@ -181,5 +182,12 @@ sustituto.
    por el predicado `is_resumable_identity_goal`: `identity_triage` es
    maquinaria retirada y volvía al frente arrastrando un `GoalSpec` sin
    conductor.
-6. **Un saliente que el cliente no recibió no existe** para el modelo, para el
-   anti-eco ni para la bandeja: `visible_messages` es el selector único.
+6. **Un saliente que el cliente no recibió no cuenta como emitido.** El
+   anti-eco usa `channels.selectors.emitted_outbound`, limitado a
+   `sent`/`delivered`/`read`. Desde el addendum del 2026-08-23,
+   `visible_messages` tiene una excepción operacional deliberada: incluye el
+   `pending` escrito por `human_staff` para que el Inbox lo muestre de
+   inmediato y para mantener continuidad en los consumidores históricos de
+   contexto. Los `pending` de agente/sistema y todos los `failed`/`discarded`
+   siguen fuera. Responder deja el episodio en `human_active`, pero ningún
+   consumidor debe usar `visible_messages` para inferir entrega o anti-eco.

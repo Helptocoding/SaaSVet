@@ -12,6 +12,7 @@ Toda query org-scoped con for_organization; conversaciones por public_id
 """
 import logging
 
+from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Prefetch
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
@@ -46,6 +47,46 @@ def _get_conversation(request, pk):
         Conversation.objects.for_organization(request.user.organization)
         .select_related('contact', 'contact__owner', 'claimed_by'),
         pk,
+    )
+
+
+def _get_send_idempotency_key(request):
+    """Lee X-Idempotency-Key (opcional) y lo normaliza al contrato DB."""
+    key = (request.headers.get('X-Idempotency-Key') or '').strip()
+    return key[:64] or None
+
+
+def _replay_outbound_message(organization, idempotency_key):
+    """Mensaje saliente original de la org para esta llave, o ``None``."""
+    if not idempotency_key:
+        return None
+    return (
+        Message.objects.for_organization(organization)
+        .filter(
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_HUMAN,
+            idempotency_key=idempotency_key,
+        )
+        .select_related('human_author')
+        .first()
+    )
+
+
+def _closed_send_response(request, conversation):
+    """Respuesta estable al intentar escribir sobre una sesión cerrada."""
+    current = (
+        Conversation.objects.for_organization(request.user.organization)
+        .filter(contact_id=conversation.contact_id,
+                channel_account_id=conversation.channel_account_id)
+        .exclude(state=Conversation.STATE_CLOSED)
+        .order_by('-last_activity_at')
+        .first()
+    )
+    return Response(
+        {'error': 'Esta conversación está cerrada.',
+         'code': 'session_closed',
+         'current_conversation': (str(current.public_id) if current else None)},
+        status=400,
     )
 
 
@@ -440,26 +481,22 @@ def reset_contact_identity(request, pk):
 @permission_classes([make_permission('agentinbox.send')])
 def send_message(request, pk):
     conversation = _get_conversation(request, pk)
+
+    # La resolución del recurso va primero (RBAC/tenant/404); después, el
+    # replay debe ser estable aunque la sesión haya cambiado o se haya cerrado
+    # desde el primer POST.
+    org = request.user.organization
+    idempotency_key = _get_send_idempotency_key(request)
+    replay = _replay_outbound_message(org, idempotency_key)
+    if replay is not None:
+        return Response(MessageSerializer(replay).data, status=201)
+
     if conversation.state == Conversation.STATE_CLOSED:
         # Escribir sigue apuntando a la SESIÓN, no al hilo (§4): una sesión
         # cerrada no se reabre. Pero con la bandeja agrupada es fácil llegar
         # aquí desde un episodio viejo, así que la respuesta dice **cuál** es la
         # vigente en vez de dejar a recepción adivinando.
-        current = (
-            Conversation.objects.for_organization(request.user.organization)
-            .filter(contact_id=conversation.contact_id,
-                    channel_account_id=conversation.channel_account_id)
-            .exclude(state=Conversation.STATE_CLOSED)
-            .order_by('-last_activity_at')
-            .first()
-        )
-        return Response(
-            {'error': 'Esta conversación está cerrada.',
-             'code': 'session_closed',
-             'current_conversation': (str(current.public_id)
-                                      if current else None)},
-            status=400,
-        )
+        return _closed_send_response(request, conversation)
 
     serializer = SendMessageSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -467,34 +504,58 @@ def send_message(request, pk):
     if not body:
         return Response({'error': 'Mensaje vacío.'}, status=400)
 
-    org = request.user.organization
     now = timezone.now()
-    message = Message(
-        organization=org,
-        channel_account=conversation.channel_account,
-        conversation=conversation,
-        contact_id=conversation.contact_id,   # F2
-        direction=Message.DIRECTION_OUT,
-        author_type=Message.AUTHOR_HUMAN,
-        human_author=request.user,
-        body=body,
-        status=Message.STATUS_PENDING,
-    )
-    message.save()
+    try:
+        with transaction.atomic():
+            # Serializa send contra close/release/claim y hace indivisible el
+            # outbox + takeover: nunca queda un mensaje humano sin dueño por
+            # un fallo entre ambas escrituras.
+            conversation = (
+                Conversation.objects.for_organization(org)
+                .select_for_update()
+                .get(pk=conversation.pk)
+            )
+            if conversation.state == Conversation.STATE_CLOSED:
+                return _closed_send_response(request, conversation)
 
-    # Responder ES tomar la conversación: el humano queda a cargo (el
-    # worker F0 solo auto-saluda la primera vez; en F1 el planner respeta
-    # HUMAN_ACTIVE y calla — spec §7.2).
-    update_fields = ['last_activity_at']
-    conversation.last_activity_at = now
-    if conversation.state != Conversation.STATE_HUMAN_ACTIVE:
-        conversation.state = Conversation.STATE_HUMAN_ACTIVE
-        update_fields.append('state')
-    if conversation.claimed_by_id is None:
-        conversation.claimed_by = request.user
-        conversation.claimed_at = now
-        update_fields += ['claimed_by', 'claimed_at']
-    conversation.save(update_fields=update_fields)
+            message = Message(
+                organization=org,
+                channel_account=conversation.channel_account,
+                conversation=conversation,
+                contact_id=conversation.contact_id,   # F2
+                direction=Message.DIRECTION_OUT,
+                author_type=Message.AUTHOR_HUMAN,
+                human_author=request.user,
+                body=body,
+                status=Message.STATUS_PENDING,
+                idempotency_key=idempotency_key,
+            )
+            # full_clean() convierte un duplicado en ValidationError antes del
+            # INSERT. Con llave se delega la carrera a la restricción DB para
+            # que el perdedor reciba IntegrityError y recupere al ganador.
+            message.save(validate=not bool(idempotency_key))
+
+            # Responder ES tomar la conversación: el humano queda a cargo (el
+            # worker F0 solo auto-saluda la primera vez; en F1 el planner
+            # respeta HUMAN_ACTIVE y calla — spec §7.2).
+            update_fields = ['last_activity_at']
+            conversation.last_activity_at = now
+            if conversation.state != Conversation.STATE_HUMAN_ACTIVE:
+                conversation.state = Conversation.STATE_HUMAN_ACTIVE
+                update_fields.append('state')
+            if conversation.claimed_by_id is None:
+                conversation.claimed_by = request.user
+                conversation.claimed_at = now
+                update_fields += ['claimed_by', 'claimed_at']
+            conversation.save(update_fields=update_fields)
+    except IntegrityError:
+        # Debe ejecutarse FUERA del atomic roto. Solo una fila ganadora con la
+        # misma llave convierte el error en replay; cualquier otro fallo de
+        # integridad conserva su traceback y no se disfraza.
+        replay = _replay_outbound_message(org, idempotency_key)
+        if replay is not None:
+            return Response(MessageSerializer(replay).data, status=201)
+        raise
 
     return Response(MessageSerializer(message).data, status=201)
 

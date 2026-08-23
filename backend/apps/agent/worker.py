@@ -211,7 +211,11 @@ def _discard_if_superseded(conversation, pending, before_ids, result):
         Message.objects.for_organization(org)
         .filter(conversation=conversation,
                 direction=Message.DIRECTION_OUT,
-                status=Message.STATUS_PENDING)
+                status=Message.STATUS_PENDING,
+                author_type__in=[
+                    Message.AUTHOR_AGENT,
+                    Message.AUTHOR_SYSTEM,
+                ])
         .exclude(pk__in=before_ids)
         .update(status=Message.STATUS_DISCARDED,
                 failure_reason='descartado: el cliente siguió escribiendo')

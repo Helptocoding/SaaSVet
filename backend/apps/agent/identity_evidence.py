@@ -34,7 +34,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.channels.models import Message
-from apps.channels.selectors import visible_messages
+from apps.channels.selectors import emitted_outbound, visible_messages
 
 from . import identity
 from .models import ContactIdentity, Conversation, ConversationGoal
@@ -245,10 +245,17 @@ def _first_disclosure(conversation, candidate, inbound, *, now):
     «Lunna» tiene que contar como revelación.
     """
     window = now - IDENTITY_EVIDENCE_TTL
-    history = visible_messages(
-        Message.objects.filter(conversation=conversation,
-                               created_at__gte=window,
-                               created_at__lte=inbound.created_at)
+    base = Message.objects.filter(
+        conversation=conversation,
+        created_at__gte=window,
+        created_at__lte=inbound.created_at,
+    )
+    # La bandeja muestra el outbox humano `pending`, pero el anti-eco solo puede
+    # contar una revelación que el cliente pudo ver. Conservamos la primera
+    # mención entre entrantes recibidos y salientes efectivamente emitidos.
+    history = (
+        visible_messages(base.filter(direction=Message.DIRECTION_IN))
+        | emitted_outbound(base)
     ).order_by('created_at', 'id')
     for message in history:
         if not identity.matches_pet_name_tolerant(message.body or '', candidate):

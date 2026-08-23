@@ -34,18 +34,29 @@ def _normalize_fact_key(key):
 
 class MessageSerializer(serializers.ModelSerializer):
     human_author_name = serializers.SerializerMethodField()
+    client_message_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
         fields = [
             'id', 'direction', 'author_type', 'payload_type', 'body',
             'status', 'failure_reason', 'created_at', 'human_author_name',
+            'client_message_id',
         ]
 
     def get_human_author_name(self, obj):
         if obj.human_author_id is None:
             return None
         return obj.human_author.get_full_name() or obj.human_author.username
+
+    def get_client_message_id(self, obj):
+        """Correlación pública del composer; nunca expone claves del bot."""
+        if (
+            obj.direction != Message.DIRECTION_OUT
+            or obj.author_type != Message.AUTHOR_HUMAN
+        ):
+            return None
+        return obj.idempotency_key or None
 
 
 class ConversationListSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
 # Referencia Operacional
 
-**Fecha**: 2026-05-29
-**Estado**: vigente (refleja Sprint A completo + Sprint B + ADR p30)
+**Fecha**: 2026-08-23
+**Estado**: vigente (incluye invariantes hasta ADR p60 y el primer corte del WhatsApp Inbox v1)
 **Audiencia**: nuevo desarrollador, QA, tester, soporte.
 
 Este documento contiene la **referencia operacional** del sistema: errores
@@ -39,6 +39,8 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 | `409 verification_required` al autorizar un vínculo de identidad | FLUJO-C (ADR p57 §5.5): falta una verificación **aprobada del mismo caso y candidato**. También sale si el último registro fue un **rechazo**, o si la aprobación era de un hand-off ya cerrado. | Registrar la verificación primero. La frescura está acotada por el CASO, no por reloj: si el caso se cerró y se abrió otro, hay que verificar de nuevo. |
 | `409 already_linked` / `owner_changed` al autorizar | El contacto ya quedó vinculado por otra vía, o el candidato dejó de existir en esa organización. | `already_linked`: cerrar el caso, el resultado ya es el correcto. `owner_changed`: releer el caso y verificar de nuevo. |
 | El botón «Autorizar vínculo» sale deshabilitado en la bandeja | No hay verificación aprobada de ESE caso, o el caso es `owner_ambiguous` (sin candidato único). | Es el contrato, no un fallo: con varios expedientes hay que ordenarlos antes — el sistema no elige (INV-C). |
+| Un envío del Inbox queda `failed-local` | La solicitud no tuvo respuesta fiable (red) o recibió 5xx; no equivale a rechazo de Meta | Corregir conectividad/servicio y usar «Reintentar», que conserva la misma clave idempotente. Un 4xx se retira y requiere corregir el dato |
+| Un mensaje optimista desaparece o se duplica tras el polling | Se rompió la reconciliación determinista del Inbox | Tratar como bug: POST/replay/GET deben compartir `client_message_id`. Nunca deduplicar por cuerpo, autor o cercanía temporal |
 | `409 release_conflict` al liberar una conversación de la bandeja | F3 (ADR p57 §5.6): el mundo cambió **dos veces** entre que el release capturó su testigo y fue a aplicarlo — otra persona reclamó, el worker tomó el turno, o apareció una suspensión nueva. | **Cero mutaciones**: ni `flow`, ni estado, ni claim, ni hand-off. El `reason` dice qué campo cambió. Recargar el caso y volver a decidir. **Nunca** reintentar en bucle: el servicio ya reintentó una vez. |
 | `409 turn_in_progress` al liberar | El asistente está respondiendo justo ahora (`processing_until > now`). | Reintentar en segundos. No se pisa al worker a mitad de una respuesta al cliente. |
 | Una propuesta suspendida desaparece sin evento tras ~24 h | `close_inactive_conversations(idle_hours=24)` cierra el hilo y una conversación cerrada **no se reabre**: el `flow` muere con ella. **Preexistente**, no lo introduce Item 2. | Hueco conocido y aceptado: F3 **no** añade TTL ni avisos (§9.4). Darle una razón auditable (`conversation_inactive`) es una mejora separada, aún sin implementar. |
@@ -150,11 +152,12 @@ invariantes del sistema y el resumen ejecutivo del negocio.
     `ContactIdentityVerification.EVIDENCE_CHOICES` (p57 §5.5.3), que ya excluía
     toda evidencia basada en el teléfono por circular.
 
-26. **INV-G — un saliente que el cliente no recibió no existe** (ADR p58): los
-    mensajes `failed` (ventana de 24 h cerrada) y `discarded` (el cliente siguió
-    escribiendo) no entran al contexto del modelo, ni al anti-eco, ni a la
-    bandeja. El selector es único (`channels.selectors.visible_messages`): dos
-    lecturas del mismo transcript que no coinciden es peor que una.
+26. **INV-G — visible no significa emitido** (ADR p58, addendum 2026-08-23):
+    `visible_messages` excluye `failed`, `discarded` y los `pending` de
+    agente/sistema, pero incluye el `pending` de `human_staff` para que el
+    Inbox lo muestre inmediatamente. Esa excepción operacional no prueba que
+    Meta lo haya recibido. Anti-eco y decisiones de entrega usan
+    `emitted_outbound`, limitado a `sent`/`delivered`/`read`.
 
 ---
 
@@ -205,9 +208,13 @@ invariantes del sistema y el resumen ejecutivo del negocio.
   residual): es un factor de conocimiento de baja entropía, aceptado para lo que
   el agente hace hoy. Si sube la sensibilidad de lo que puede hacer, se revisa.
 - **Jamás mostrar al modelo —ni a la bandeja— un saliente `failed` o
-  `discarded`**: el cliente no lo recibió. El selector es
-  `channels.selectors.visible_messages`, y filtrar a mano en un consumidor nuevo
-  vuelve a crear dos verdades sobre el mismo transcript.
+  `discarded`**, ni un `pending` de agente/sistema. El pendiente humano sí es
+  visible de inmediato, pero no prueba entrega: para anti-eco usar
+  `channels.selectors.emitted_outbound`.
+- **Jamás reconciliar un envío optimista por cuerpo o tiempo.** Solo
+  `client_message_id` correlaciona POST/replay/GET; dos mensajes iguales pueden
+  ser dos acciones legítimas. La correlación se publica únicamente para
+  salientes `human_staff`, nunca para mensajes internos del agente/sistema.
 
 ---
 

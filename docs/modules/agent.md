@@ -7,7 +7,12 @@
 > guards de conducta). É-F5 con Fases 0-5 implementadas.
 > **Continuidad e identidad (ADR p58) completa y en producción** desde el
 > 2026-08-17: el bypass de verificación cerrado, el contexto leído por contacto
-> y la bandeja agrupada por persona. ~766 tests solo en `agent` + `channels`.
+> y la bandeja agrupada por persona. **WhatsApp Inbox v1, corte 2026-08-23**:
+> Fase 0 y los primeros cortes de Fase 1 implementados (idempotencia de envío,
+> pendientes humanos visibles, tiempo por TZ de la clínica, separadores,
+> estados de entrega y envío optimista). La suite integral de `apps.agent` del
+> corte cerró con 769 tests (`skipped=1`); la evidencia posterior y los gates
+> aún abiertos viven en el plan p60.
 > Ver [`whatsapp-agent-f4-gobernanza-plan.md`](../whatsapp-agent-f4-gobernanza-plan.md).
 >
 > Contratos: [`whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) (registro de
@@ -32,7 +37,10 @@
 > interpretación vuelve al modelo (ACEPTADO 2026-08-17): **enmienda p58 §2** —
 > el servidor conserva la autorización (procedencia, anti-eco, TTL) y suelta la
 > comprensión del lenguaje, que era lo único que en producción rechazó a un
-> cliente legítimo.
+> cliente legítimo ·
+> **[p60](../decisions/2026-08-22-p60-whatsapp-inbox-decisions.md)** decisiones
+> operativas del Inbox v1 (ACEPTADO 2026-08-22; ejecución incremental en el
+> [plan del Inbox](../plan-implementacion-whatsapp-inbox-2026-08-22.md)).
 >
 > Rediseño en curso: [auditoría de arquitectura](../whatsapp-agent-auditoria-arquitectura-2026-07-31.md)
 > → [plan É-F5](../whatsapp-agent-f5-conversacion-plan.md). **Fase 0 hecha**
@@ -59,7 +67,7 @@ ref; `channels.views` importa `agent.services` perezoso.
 | Modelo | App | Claves |
 |---|---|---|
 | `ChannelAccount` | channels | `external_account_id` (phone_number_id) **unique GLOBAL** — el enrutamiento número→org es el control anti cross-tenant (R1); `provider_credentials_ref` = NOMBRE de env var (secreto jamás en DB) |
-| `Message` | channels | Tabla ÚNICA in/out. El inbox ES la cola y el outbox un filtro (`status`); dedup de reintentos: unique parcial `(channel_account, external_message_id)` solo inbound (patrón Payment/ADR p27); `available_at` = ventana silenciosa del debounce (cada entrante empuja la de TODO el hilo: 8 s, tope 25 s desde el más viejo); `process_attempts` = intentos de TURNO del entrante (≠ `attempts`, que cuenta envíos) → al agotar `MAX_PROCESS_ATTEMPTS` el mensaje se descarta y la conversación escala a humano |
+| `Message` | channels | Tabla ÚNICA in/out. El inbox ES la cola y el outbox un filtro (`status`). Inbound: unique parcial `(channel_account, external_message_id)` para dedup del wamid. Envíos del staff: `idempotency_key` con unique parcial `(organization, idempotency_key)` **solo** para `direction='out' + author_type='human_staff' + key no nula`; agent/system nunca comparten ese namespace público. `available_at` = ventana silenciosa del debounce (cada entrante empuja la de TODO el hilo: 8 s, tope 25 s desde el más viejo); `process_attempts` = intentos de TURNO del entrante (≠ `attempts`, que cuenta envíos) → al agotar `MAX_PROCESS_ATTEMPTS` el mensaje se descarta y la conversación escala a humano |
 | `ContactIdentity` | agent | Identidad POR ORG (`unique org+channel+external_id` — el mismo cliente puede escribir a 2 clínicas); `verification_level` (unknown→phone_match→confirmed_in_chat→staff_verified); `phone_normalized` (Q5: últimos 10 dígitos, México-only); NO es un User — jamás recibe tokens |
 | `Conversation` | agent | `PublicIdMixin`; FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo) — pero **el contexto ya no muere con el hilo**: se lee por `(contacto, cuenta)` (F2, §Continuidad); `close_reason` registra por qué se cerró; org fijada al crear e inmutable; `flow` = scratchpad (ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo. **`summary` se retiró en F5**: declarado en É-F1 y nunca escrito ni leído — la continuidad se resolvió sin él |
 | `ConversationGoal` | agent | **El COMPROMISO** (É-F3 W2; extendido por ADR p55 §3 — un solo modelo para tarea e identidad, R7). Estados `active/deviated/suspended/blocked/completed/abandoned/handoff` (+`cancelled` deprecado); `slots` `{slot:{value,confidence}}` YA normalizado; `missing`, `low_confidence`, `asked`, `stall_turns`; coordenadas `return_to`/`supplanted_by`/`blocked_reason`; `attempts_failed` (fallos reales ≠ turnos sin avance) y `working_state` (estado local del mecanismo). Dos constraints parciales: **uno al frente** (`active|deviated`) y **uno suspendido** por conversación |
@@ -191,9 +199,11 @@ es decisión de un script.
 ningún cierre lo decía, así que en los datos «lo cerró el barredor» y «lo cerró
 recepción» eran indistinguibles.
 
-> **Pendiente, y es trabajo propio**: la bandeja sigue mostrando una fila por
-> sesión. Agruparla por contacto necesita `public_id` en `ContactIdentity` y
-> `ChannelAccount`, ruta compuesta y frontend — ver §4 del plan de continuidad.
+> **Implementado desde p58**: la bandeja muestra una fila por
+> `(ContactIdentity, ChannelAccount)` y usa la ruta compuesta de ambos
+> `public_id`. Las sesiones siguen siendo episodios separados; el transcript y
+> la actividad del hilo se agrupan sin convertir `Conversation` en una sesión
+> eterna.
 
 ## Verificación en el chat: el factor único y su régimen probatorio (F0)
 
@@ -295,7 +305,7 @@ bypass.
 | `GET /api/inbox/threads/<contacto>/<cuenta>/messages/` | `agentinbox.view` | Transcript del hilo **cruzando sesiones**, con cursor `?before=`. Devuelve además la sesión vigente, su caso de identidad y su hand-off |
 | ~~`GET /api/inbox/conversations/` (+`?state=`)~~ | `agentinbox.view` | **DEPRECADO** (RFC 8594, Sunset **2026-11-30**) → `GET /api/inbox/threads/`. Devolvía una fila por EPISODIO: un cliente con 19 conversaciones aparecía 19 veces. Sigue funcionando y emite `DEPRECATED_ENDPOINT_HIT`, que es el gate para cortarlo a `410` |
 | `GET /api/inbox/conversations/<uuid>/messages/` | `agentinbox.view` | Transcript cronológico, cap 200 |
-| `POST …/send/` | `agentinbox.send` | Sanitizado, máx 4000; deja la conversación en `human_active` + claim |
+| `POST …/send/` | `agentinbox.send` | Sanitizado, máx. 4000; deja la conversación en `human_active` + claim. Acepta `X-Idempotency-Key` (máx. 64): repetir la misma clave dentro de la organización devuelve `201` con el mismo mensaje humano y no vuelve a tomar ni a encolar. La respuesta y los transcripts exponen `client_message_id` de solo lectura únicamente para salientes `human_staff`; entrantes y mensajes internos de agente/sistema devuelven `null` |
 | `POST …/claim/` · `…/close/` · `…/release/` | `agentinbox.claim` | Claim exclusivo → 409 `already_claimed` |
 | `POST …/unlink-family/` | `agentinbox.claim` | Revoca SOLO un vínculo `family_challenge` (PR-17b) — nunca toca `phone_match`/`self_register` legítimos |
 | `POST …/reset-identity/` | `agentinbox.config` | Resetea el `ContactIdentity` a `unknown` (owner/verificación/`linked_via`, cualquier procedencia) + cierra el hilo activo. `resolve_contact_identity` solo matchea teléfono→Owner al CREAR la fila (nunca la re-deriva después, ni si `Owner.phone` cambia) — este endpoint es la única forma soportada de reabrir esa resolución con el mismo número real. Solo ADMIN: desligar una identidad ya verificada es sensible (mismo permiso que el kill switch) |
@@ -303,6 +313,22 @@ bypass.
 
 Permisos (Q13): ADMIN `*.*` · ASSISTANT view+claim+send · VET view · AGENT
 (el bot) ninguno de bandeja.
+
+### Selectores de transcript y anti-eco (addendum p58, 2026-08-23)
+
+No hay un único predicado para todas las lecturas de mensajes: visibilidad
+operativa y evidencia de entrega son contratos distintos.
+
+| Selector | Incluye | Excluye | Uso correcto |
+|---|---|---|---|
+| `channels.selectors.visible_messages` | Entrantes `received`; salientes `sent`/`delivered`/`read`; y salientes `pending` **solo** de `human_staff` | `pending` de agente/sistema; todos los `failed` y `discarded` | Transcript del Inbox y consumidores históricos de contexto. El pendiente humano aparece de inmediato, sin esperar al sender |
+| `channels.selectors.emitted_outbound` | Salientes `sent`/`delivered`/`read` | Todo `pending`, `failed`, `discarded` e inbound | Anti-eco y cualquier decisión que necesite probar que un saliente fue emitido |
+
+El `pending` humano visible no prueba entrega. Responder desde el Inbox cambia
+la sesión a `human_active`, por lo que el agente normalmente no vuelve a
+planificar en ese episodio; aun así, un consumidor nuevo **no debe inferir
+anti-eco o entrega desde `visible_messages`**. Para reconciliar UI/servidor se
+usa `client_message_id`, nunca coincidencias por cuerpo o tiempo.
 
 ## Comandos
 

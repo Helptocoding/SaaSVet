@@ -223,6 +223,13 @@ class AntiEchoTests(EvidenceTestCase):
         self.assertIsInstance(self._resolve("cita para Luna"),
                               identity_evidence.SealedPetEvidence)
 
+    def test_a_pending_staff_outbound_is_not_a_disclosure(self):
+        """El outbox ya es visible al staff, pero aún no reveló nada al cliente."""
+        self._out("¿Cómo sigue Luna?", status=Message.STATUS_PENDING,
+                  author=Message.AUTHOR_HUMAN)
+        self.assertIsInstance(self._resolve("cita para Luna"),
+                              identity_evidence.SealedPetEvidence)
+
     def test_echo_rejected_cannot_be_verified(self):
         """D33 · no es algo que haya que acordarse de no hacer."""
         self._out("¿Cómo sigue Luna?", author=Message.AUTHOR_HUMAN)

@@ -275,7 +275,8 @@ class QuietWindowTests(AgentFixture):
 class SupersededReplyTests(AgentFixture):
     account_id = "900000103"
 
-    def _run_with_late_message(self, decision, tools_used=0):
+    def _run_with_late_message(self, decision, tools_used=0,
+                               extra_authors=()):
         ingest_inbound_message(
             self.channel, wamid="wamid.S1", wa_id="5215511110000", body="hola")
 
@@ -283,6 +284,22 @@ class SupersededReplyTests(AgentFixture):
             from apps.agent.outbound import enqueue_outbound
             enqueue_outbound(conversation, "respuesta ya desfasada",
                              author='agent')
+            for author_type in extra_authors:
+                Message.objects.create(
+                    organization=self.org,
+                    channel_account=self.channel,
+                    conversation=conversation,
+                    contact_id=conversation.contact_id,
+                    direction=Message.DIRECTION_OUT,
+                    author_type=author_type,
+                    human_author=(
+                        self.vet
+                        if author_type == Message.AUTHOR_HUMAN
+                        else None
+                    ),
+                    body=f"saliente {author_type}",
+                    status=Message.STATUS_PENDING,
+                )
             # El cliente siguió escribiendo mientras el modelo pensaba.
             Message.objects.create(
                 organization=self.org, channel_account=self.channel,
@@ -293,13 +310,40 @@ class SupersededReplyTests(AgentFixture):
 
         with mock.patch("apps.agent.planner.handle_inbound", fake_turn):
             process_pending_conversations(now=_later())
-        return Message.objects.filter(
-            conversation=self.conv, direction=Message.DIRECTION_OUT,
-        ).order_by('-id').first()
+        return Message.objects.get(
+            conversation=self.conv,
+            direction=Message.DIRECTION_OUT,
+            body="respuesta ya desfasada",
+        )
 
     def test_pure_text_reply_is_discarded_and_never_sent(self):
         outbound = self._run_with_late_message('planner_reply')
         self.assertEqual(outbound.status, Message.STATUS_DISCARDED)
+
+    def test_only_agent_and_system_replies_are_discarded(self):
+        """Un saliente humano concurrente no pertenece al turno del modelo."""
+        outbound = self._run_with_late_message(
+            'planner_reply',
+            extra_authors=(Message.AUTHOR_SYSTEM, Message.AUTHOR_HUMAN),
+        )
+
+        self.assertEqual(outbound.status, Message.STATUS_DISCARDED)
+        statuses = dict(
+            Message.objects.filter(
+                conversation=self.conv,
+                direction=Message.DIRECTION_OUT,
+            ).values_list('author_type', 'status')
+        )
+        self.assertEqual(statuses[Message.AUTHOR_SYSTEM],
+                         Message.STATUS_DISCARDED)
+        human = Message.objects.get(
+            conversation=self.conv,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_HUMAN,
+        )
+        self.assertEqual(human.status, Message.STATUS_PENDING)
+        self.assertEqual(human.body, "saliente human_staff")
+        self.assertEqual(human.human_author, self.vet)
 
     def test_reply_with_side_effects_is_kept(self):
         """Descartar la confirmación de algo ya ejecutado sería mucho peor."""

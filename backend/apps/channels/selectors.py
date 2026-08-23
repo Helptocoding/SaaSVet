@@ -11,11 +11,12 @@ La distinción importa para algo más que el prompt: el anti-eco de identidad
 decide si un dato lo reveló el sistema ANTES que el cliente, y un mensaje que
 no salió no reveló nada. Un selector laxo ahí rechaza evidencia legítima.
 
-Reglas:
+Reglas de visibilidad en la bandeja:
   entrantes  → `pending` (la ráfaga de este turno) y `processed`
-  salientes  → `sent`, `delivered`, `read`
+  salientes  → `sent`, `delivered`, `read`; también `pending` cuando lo
+               escribió staff humano, para que su outbox aparezca de inmediato
   fuera      → `discarded` (nunca se envió), `failed` (el proveedor lo rechazó)
-               y los salientes `pending` (todavía no salieron)
+               y `pending` de agente/sistema (todavía no salieron)
 """
 from django.db.models import Q
 
@@ -36,10 +37,15 @@ RECEIVED_IN_STATUSES = (
 
 
 def visible_messages(queryset):
-    """Filtra un queryset de `Message` a lo que realmente ocurrió en el chat."""
+    """Filtra un queryset de `Message` a lo visible en el chat de recepción."""
     return queryset.filter(
         Q(direction=Message.DIRECTION_IN, status__in=RECEIVED_IN_STATUSES)
         | Q(direction=Message.DIRECTION_OUT, status__in=EMITTED_OUT_STATUSES)
+        | Q(
+            direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_PENDING,
+            author_type=Message.AUTHOR_HUMAN,
+        )
     )
 
 

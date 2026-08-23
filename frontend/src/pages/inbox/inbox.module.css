@@ -195,6 +195,33 @@
     background: #f8fafc;
 }
 
+.dateDivider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin: 6px 0 2px;
+    color: var(--c-text-muted, #64748b);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.dateDivider::before,
+.dateDivider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--c-border, #e2e8f0);
+}
+
+.dateDivider span {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--c-surface, #fff);
+    border: 1px solid var(--c-border, #e2e8f0);
+}
+
 .bubble {
     max-width: 72%;
     padding: 8px 12px;
@@ -228,7 +255,45 @@
     justify-content: flex-end;
 }
 
-.bubbleFailed { color: #dc2626; }
+.deliveryTick {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+    letter-spacing: -0.12em;
+    line-height: 1;
+}
+
+.deliveryTickPending {
+    color: var(--c-text-muted, #64748b);
+    letter-spacing: normal;
+}
+
+.deliveryTickRead { color: var(--c-success-text, #1a5c3a); }
+
+.deliveryTickFailed {
+    color: #dc2626;
+    letter-spacing: normal;
+}
+
+.retrySend {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #b91c1c;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.retrySend:hover { color: #7f1d1d; }
+
+.retrySend:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
 
 .composer {
     display: flex;

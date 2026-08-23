@@ -1,0 +1,176 @@
+# ADR p60 — Decisiones de arquitectura y operación del WhatsApp Inbox v1
+
+**Fecha**: 2026-08-22
+**Estado**: **ACEPTADO** (PO, 2026-08-22); D-1..D-10 cerradas. La ejecución de las tareas se sigue por separado en el plan.
+**Plan**: [`plan-implementacion-whatsapp-inbox-2026-08-22.md`](../plan-implementacion-whatsapp-inbox-2026-08-22.md)
+**Alcance**: cierra D-1..D-10; no declara implementadas las tareas posteriores.
+
+---
+
+## 1 · Contexto
+
+El backend del Inbox ya tiene aislamiento por organización, permisos granulares,
+deduplicación de webhooks, outbox con reintentos y ventana de 24 horas. Antes
+de este ADR, los puntos por cerrar estaban concentrados en retención/storage de media,
+semántica multiusuario, operación humana y realtime.
+
+Este ADR fija el contrato v1 para que la implementación no vuelva a decidir
+estas reglas dentro de cada PR. Cuando una decisión incluya un gate de
+cumplimiento o de infraestructura, «aceptada» significa que la arquitectura está
+elegida; no autoriza a omitir el gate antes de producción.
+
+---
+
+## 2 · Decisiones aceptadas
+
+### D-1 · Retención de media: 180 días, borrado físico
+
+- El plazo aplica al **binario** de imagen, audio, video o documento recibido,
+  no al texto del chat ni a la fila `Message`.
+- Al vencer, el Inbox conserva el mensaje/caption y muestra un estado explícito
+  «archivo expirado»; no deja un enlace roto ni oculta que hubo un adjunto.
+- `MessageMedia` tendrá un vencimiento derivado de su persistencia operativa.
+  La aplicación deja de servirlo al vencer y B2 elimina físicamente el objeto,
+  incluyendo versiones anteriores/incompletas mediante lifecycle rules.
+- El evento de expiración se registra sin PII. Una solicitud ARCO procedente
+  puede exigir borrado anticipado del objeto operativo.
+- Los backups cifrados de Postgres conservan el texto/caption del mensaje y los
+  metadatos/referencias de media, pero **no** los binarios B2. Siguen p40: local
+  14 días, `daily/` 30 días y `monthly/` 12 meses; no se reescriben
+  retroactivamente al expirar un objeto. Antes de abrir al tráfico una
+  restauración histórica se reaplican purgas/anonimizaciones procedentes y se
+  reconcilian las expiraciones.
+- Gate de producción: aviso de privacidad y proceso ARCO deben cubrir WhatsApp,
+  media, finalidad, plazo y transferencia internacional. No se crea un checkbox
+  aislado específico de media salvo que la revisión legal lo exija.
+- El aviso público vive en el repositorio externo de la landing y el cambio es
+  material. Antes de activar media se debe editar/publicar
+  `/aviso-de-privacidad` y promover la nueva versión `privacy` en la app para
+  re-consentimiento, siguiendo
+  [`legal-version-sync.md`](../runbooks/legal-version-sync.md). Esta acción queda
+  registrada como gate externo; no se considera completada por este ADR.
+
+### D-2 · Storage v1: Backblaze B2 operativo
+
+- Producción escribe el binario directamente en un bucket B2 privado dedicado.
+  El VPS solo puede usar spool temporal durante descarga/subida y debe limpiarlo
+  al completar o fallar; no es almacenamiento canónico.
+- Postgres guarda únicamente metadatos, estado, hash y referencia del objeto.
+- Dev/CI usan backend local intercambiable, sin credenciales B2.
+- Bucket, prefijo y Application Key son exclusivos de media y distintos de
+  backups. Nunca se reutiliza la clave de `rclone`; mínimo privilegio.
+- El bucket operativo de media **no usa Object Lock**, porque bloquearía la
+  retención de 180 días y borrados ARCO procedentes. Sus lifecycle rules deben
+  eliminar versiones anteriores, hide markers y cargas multiparte incompletas.
+- El servido v1 pasa por un endpoint Django autenticado y acotado a la
+  organización. Este proxy es el **contrato v1 cerrado**: no hay bucket público
+  ni URL persistente compartible. Los `presigned GET` quedan fuera de v1; solo
+  podrán evaluarse mediante un ADR futuro con revisión específica de seguridad,
+  expiración, revocación, caché y riesgo de fuga cross-tenant.
+- Se acepta explícitamente que el cifrado at-rest gestionado por B2 no es la
+  postura zero-knowledge de los backups `age` de p40.
+- Gates de producción: DPA de Backblaze archivado; aviso de privacidad, proceso
+  ARCO y transferencia internacional actualizados; bucket/key/lifecycle
+  verificados. Ninguno se considera satisfecho por el uso previo de B2 para
+  backups, porque media operativa es un tratamiento separado.
+
+### D-3 · Unread por usuario y episodio vigente
+
+Cada usuario mantiene su propio `InboxReadState`. El contador comprende los
+entrantes visibles del episodio vigente posteriores a su último mensaje leído;
+no revive sesiones históricas y la lectura de una persona no limpia la de otra.
+
+### D-4 · Mark-read automático con visibilidad real
+
+Abrir el hilo marca leído automáticamente solo cuando la ventana/pestaña está
+visible y enfocada, después de un debounce breve. Un fetch en background o una
+pestaña oculta no marca. El backend conserva idempotencia y monotonicidad.
+
+### D-5 · NO-GO a SSE en v1
+
+El rollout v1 conserva polling REST y lo optimiza con N+1 corregido, paginación,
+merge/dedupe, `?since` y pausa/reducción al ocultar la pestaña. El Gunicorn
+síncrono actual tiene capacidad limitada y cada stream SSE consumiría un
+worker/thread; Redis pub/sub por sí solo no resuelve esa restricción.
+
+SSE queda diferido. Solo se reevalúa si producción demuestra que la latencia del
+polling causa un problema operativo, con medición de conexiones esperadas y una
+propuesta de capacidad (ASGI o servicio dedicado, entre alternativas). Un GO
+futuro requiere ADR p61; RT-01..03 no son parte del rollout v1.
+
+### D-6 · Asignación operable por `agentinbox.claim`
+
+Quien tenga `agentinbox.claim` puede asignar una conversación a cualquier
+usuario activo de la misma organización que tenga `agentinbox.send`. V1 no
+envía push. Toda asignación registra actor, origen, destino y fecha, respeta el
+lock de la conversación y rechaza usuarios inactivos/cross-tenant.
+
+### D-7 · Retry compartido por la clínica
+
+Quien tenga `agentinbox.send` puede reintentar un saliente fallido aunque lo haya
+creado otra persona. El retry conserva el mismo contenido, no edita el mensaje,
+respeta idempotencia y la ventana de 24 horas, evita duplicados y registra actor
+y resultado.
+
+### D-8 · Contexto mínimo v1; expansión operativa futura
+
+V1 muestra owner, mascotas, última cita no clínica y enlace al expediente. No
+incrusta historial clínico en el Inbox. En una evolución futura el agente/Inbox
+podrá exponer productos, servicios y precios vigentes mediante contratos y
+permisos explícitos, consultando las fuentes de verdad del catálogo; no copia
+esos datos a un modelo paralelo del Inbox.
+
+### D-9 · Título v1; sonidos y Notification API futuros
+
+V1 usa el título/contador de pestaña. Una fase futura añadirá sonido opcional y
+silenciable y después podrá incorporar Notification API. Ambas requieren
+preferencias por usuario, permiso del navegador, deduplicación/rate limiting y
+una forma clara de evitar fatiga de notificaciones.
+
+### D-10 · Orden de llegada en v1
+
+El transcript continúa ordenado por persistencia local (`created_at`, `id`). El
+timestamp del proveedor puede normalizarse y medirse en el futuro, pero no
+reordena históricos ni altera cursores/unread en v1. Adoptarlo como autoridad de
+orden requerirá evidencia de frecuencia/impacto y una nueva decisión.
+
+---
+
+## 3 · Consecuencias de implementación
+
+1. D-1/D-2 desbloquean el diseño de MED-01, pero su activación en producción
+   permanece bloqueada por privacidad/ARCO/DPA y configuración segura de B2.
+2. D-3/D-4 fijan el contrato de UNR-01/02 y sus pruebas multiusuario.
+3. D-5 retira RT-01..03 del rollout v1; PERF-03 es la estrategia de
+   actualización incremental efectiva de esta versión.
+4. D-6/D-7 exigen auditoría de actor y matrices RBAC/cross-tenant.
+5. D-8/D-9 delimitan v1 sin cerrar la evolución del producto.
+6. D-10 impide que ORD-01 cambie el orden global en este plan.
+
+---
+
+## 4 · Gates verificables
+
+- Media: objeto de 181 días no se sirve y el proxy responde `410
+  media_expired`; la fila/mensaje sigue visible y la UI renderiza «Archivo
+  expirado» sin retry infinito; las versiones B2 quedan cubiertas por lifecycle.
+- Storage: proxy Django autenticado como única vía v1; ninguna URL pública o
+  presigned; petición cross-org responde 404; no quedan spools locales tras
+  éxito/fallo/crash gracias al scavenger.
+- Unread: dos usuarios tienen contadores independientes; pestaña oculta no
+  marca leído.
+- Asignación/retry: permiso, organización, usuario activo, lock, idempotencia y
+  auditoría cubiertos por tests.
+- Realtime: ninguna tarea RT-01..03 entra al rollout v1 sin un ADR p61 aceptado.
+- Orden: `meta_timestamp` no participa en ordering v1.
+
+---
+
+## 5 · Lo que este ADR no decide
+
+- Retención del texto de los chats. D-1 cubre exclusivamente binarios de media.
+- Política legal definitiva: los gates se validan con asesoría/proceso de
+  cumplimiento antes de producción.
+- Arquitectura SSE futura; solo fija el NO-GO v1 y el criterio de reapertura.
+- Alcance exacto de catálogo/precios o notificaciones futuras; deberán tener
+  backlog y acceptance criteria propios.

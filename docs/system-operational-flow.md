@@ -1,7 +1,7 @@
 # Mapa Operacional del Sistema
 
-**Fecha**: 2026-05-29
-**Estado**: vigente (refleja Sprint A completo + Sprint B + ADR p30)
+**Fecha**: 2026-08-23
+**Estado**: vigente (incluye invariantes de dominio hasta ADR p60 y el primer corte del WhatsApp Inbox v1)
 **Audiencia**: nuevo desarrollador, QA, tester, soporte.
 
 Este documento es el **índice general** de la arquitectura operacional del SaaS:
@@ -34,8 +34,8 @@ contexto de trabajo ligero y preciso:
 | `analytics` | Snapshots diarios + dashboards (operacional + financiero). Read-only sobre eventos. |
 | `imports` | Migración CSV/Excel: alta por lote de Clientes + Mascotas desde el sistema anterior. Escribe `patients` vía `.save()` directo. ADR p43. Ver [`modules/imports.md`](modules/imports.md). |
 | `logs` | Eventos estructurados JSON a stdout (RBAC, tenant, anchors, deprecation, integridad). |
-| `channels` | **Frontera de mensajería**: `ChannelAccount` (un número = una organización, por constraint global) y `Message` (entrantes y salientes en una tabla). Ningún módulo de dominio lo importa. Ver [`modules/agent.md`](modules/agent.md). |
-| `agent` | Asistente de WhatsApp: identidad del contacto, conversación, compromisos, herramientas y bandeja. **Escribe dominio solo por la API, con su propio rol `AGENT`** — nunca por ORM directo. ADRs p51-p58. |
+| `channels` | **Frontera de mensajería**: `ChannelAccount` (un número = una organización, por constraint global) y `Message` (entrantes y salientes en una tabla). Los envíos humanos se deduplican por organización/clave y publican `client_message_id`; los mensajes internos nunca filtran esa correlación. Ningún módulo de dominio lo importa. Ver [`modules/agent.md`](modules/agent.md). |
+| `agent` | Asistente de WhatsApp: identidad del contacto, conversación, compromisos, herramientas e Inbox agrupado por contacto/cuenta. **Escribe dominio solo por la API, con su propio rol `AGENT`** — nunca por ORM directo. ADRs p51-p60. |
 | `backup` | **Infra/ops (host-level, no es app Django)**: backup nightly cifrado offsite + restore + drill DR. ADR p40. Ver [`modules/backup.md`](modules/backup.md). |
 
 ### Dependencias funcionales

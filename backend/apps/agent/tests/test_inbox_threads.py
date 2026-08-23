@@ -48,7 +48,8 @@ class ThreadsTestCase(APITestCase):
         )
 
     def _msg(self, conversation, body, *, direction=Message.DIRECTION_IN,
-             status=None):
+             status=None, author_type=None, human_author=None,
+             idempotency_key=None):
         outbound = direction == Message.DIRECTION_OUT
         return Message.objects.create(
             organization=self.org,
@@ -56,8 +57,11 @@ class ThreadsTestCase(APITestCase):
             conversation=conversation,
             contact=conversation.contact,
             direction=direction,
-            author_type=(Message.AUTHOR_AGENT if outbound
-                         else Message.AUTHOR_CLIENT),
+            author_type=(author_type or (
+                Message.AUTHOR_AGENT if outbound else Message.AUTHOR_CLIENT
+            )),
+            human_author=human_author,
+            idempotency_key=idempotency_key,
             body=body,
             status=status or (Message.STATUS_SENT if outbound
                               else Message.STATUS_PROCESSED),
@@ -178,6 +182,122 @@ class ThreadDetailTests(ThreadsTestCase):
                   status=Message.STATUS_FAILED)
         response = self.client.get(self._url('inbox-thread-messages'))
         self.assertEqual(response.data['messages'], [])
+
+    def test_pending_outbound_from_own_and_other_staff_is_shown(self):
+        current = self._session()
+        other_staff = User.objects.create_user(
+            username="otra_recepcion", password="pass",
+            organization=self.org, role="ADMIN",
+        )
+        own = self._msg(
+            current, "mensaje propio", direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_PENDING, author_type=Message.AUTHOR_HUMAN,
+            human_author=self.user,
+        )
+        other = self._msg(
+            current, "mensaje de otra persona", direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_PENDING, author_type=Message.AUTHOR_HUMAN,
+            human_author=other_staff,
+        )
+
+        response = self.client.get(self._url('inbox-thread-messages'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [(message['id'], message['status'])
+             for message in response.data['messages']],
+            [(own.pk, Message.STATUS_PENDING),
+             (other.pk, Message.STATUS_PENDING)],
+        )
+
+    def test_pending_agent_and_system_outbound_are_not_shown(self):
+        current = self._session()
+        for author_type in (Message.AUTHOR_AGENT, Message.AUTHOR_SYSTEM):
+            self._msg(
+                current, f"pendiente de {author_type}",
+                direction=Message.DIRECTION_OUT,
+                status=Message.STATUS_PENDING,
+                author_type=author_type,
+            )
+
+        response = self.client.get(self._url('inbox-thread-messages'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['messages'], [])
+
+    def test_discarded_outbound_is_not_shown(self):
+        current = self._session()
+        self._msg(
+            current, "esto se descartó", direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_DISCARDED,
+            author_type=Message.AUTHOR_HUMAN,
+            human_author=self.user,
+        )
+
+        response = self.client.get(self._url('inbox-thread-messages'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['messages'], [])
+
+    def test_transcript_shows_pending_message_immediately_after_send(self):
+        current = self._session()
+        client_message_id = 'transcript-send-correlation'
+
+        sent = self.client.post(
+            reverse('inbox-send', args=[str(current.public_id)]),
+            {'body': 'respuesta inmediata'}, format='json',
+            HTTP_X_IDEMPOTENCY_KEY=client_message_id,
+        )
+        transcript = self.client.get(self._url('inbox-thread-messages'))
+
+        self.assertEqual(sent.status_code, 201)
+        self.assertEqual(sent.data['status'], Message.STATUS_PENDING)
+        self.assertEqual(sent.data['client_message_id'], client_message_id)
+        self.assertEqual(transcript.status_code, 200)
+        self.assertEqual(len(transcript.data['messages']), 1)
+        self.assertEqual(transcript.data['messages'][0]['id'], sent.data['id'])
+        self.assertEqual(transcript.data['messages'][0]['body'],
+                         'respuesta inmediata')
+        self.assertEqual(transcript.data['messages'][0]['status'],
+                         Message.STATUS_PENDING)
+        self.assertEqual(transcript.data['messages'][0]['client_message_id'],
+                         client_message_id)
+
+    def test_client_message_id_is_null_for_non_human_or_unkeyed_messages(self):
+        current = self._session()
+        self._msg(
+            current, 'entrante con clave interna',
+            idempotency_key='inbound-internal-key',
+        )
+        self._msg(
+            current, 'agente emitido', direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_SENT, author_type=Message.AUTHOR_AGENT,
+            idempotency_key='agent-internal-key',
+        )
+        self._msg(
+            current, 'sistema emitido', direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_SENT, author_type=Message.AUTHOR_SYSTEM,
+            idempotency_key='system-internal-key',
+        )
+        self._msg(
+            current, 'humano sin clave', direction=Message.DIRECTION_OUT,
+            status=Message.STATUS_SENT, author_type=Message.AUTHOR_HUMAN,
+            human_author=self.user,
+        )
+
+        response = self.client.get(self._url('inbox-thread-messages'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {message['body']: message['client_message_id']
+             for message in response.data['messages']},
+            {
+                'entrante con clave interna': None,
+                'agente emitido': None,
+                'sistema emitido': None,
+                'humano sin clave': None,
+            },
+        )
 
     def test_the_cursor_walks_backwards(self):
         from apps.agent import views

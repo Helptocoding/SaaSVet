@@ -33,8 +33,19 @@ export const getThreadSessions = (contactId, accountId, params = {}) =>
     .get(`inbox/threads/${contactId}/${accountId}/sessions/`, { params })
     .then((r) => r.data);
 
-export const sendInboxMessage = (publicId, body) =>
-  api.post(`inbox/conversations/${publicId}/send/`, { body }).then((r) => r.data);
+export const sendInboxMessage = (publicId, body, idempotencyKey, { signal } = {}) => {
+  const url = `inbox/conversations/${publicId}/send/`;
+  const config = {
+    ...(idempotencyKey
+      ? { headers: { "X-Idempotency-Key": idempotencyKey } }
+      : {}),
+    ...(signal ? { signal } : {}),
+  };
+  const request = Object.keys(config).length > 0
+    ? api.post(url, { body }, config)
+    : api.post(url, { body });
+  return request.then((r) => r.data);
+};
 
 export const claimConversation = (publicId) =>
   api.post(`inbox/conversations/${publicId}/claim/`).then((r) => r.data);

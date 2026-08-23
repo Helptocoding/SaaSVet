@@ -4,9 +4,16 @@ test_inbox_api.py — É-F0 PR-6: API de la bandeja (/api/inbox/).
 RBAC por catálogo real (roles sembrados desde PERMISSIONS), aislamiento
 tenant, semántica de claim/send/close/release y kill switch.
 """
+from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
+import threading
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, close_old_connections, connection
+from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase, APITransactionTestCase
 
 from apps.agent.models import (
     AgentSettings,
@@ -102,6 +109,7 @@ class InboxRbacTests(InboxApiTestCase):
         r = self.client.post(
             f"/api/inbox/conversations/{self.conversation.public_id}/send/",
             {"body": "hola"},
+            HTTP_X_IDEMPOTENCY_KEY="rbac-does-not-bypass",
         )
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -116,6 +124,29 @@ class InboxRbacTests(InboxApiTestCase):
             f"/api/inbox/conversations/{self.other_conversation.public_id}/messages/"
         )
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_idempotency_replay_cannot_bypass_cross_tenant_send_404(self):
+        Message.objects.create(
+            organization=self.org,
+            channel_account=self.channel,
+            conversation=self.conversation,
+            contact=self.contact,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_HUMAN,
+            human_author=self.assistant,
+            body='mensaje local',
+            status=Message.STATUS_PENDING,
+            idempotency_key='tenant-bound-replay',
+        )
+        self.client.force_authenticate(self.assistant)
+
+        response = self.client.post(
+            f"/api/inbox/conversations/{self.other_conversation.public_id}/send/",
+            {'body': 'no debe devolver el local'},
+            HTTP_X_IDEMPOTENCY_KEY='tenant-bound-replay',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_list_excludes_other_orgs(self):
         self.client.force_authenticate(self.assistant)
@@ -133,6 +164,15 @@ class InboxRbacTests(InboxApiTestCase):
 
 
 class InboxFlowTests(InboxApiTestCase):
+    def _send(self, body, key=None):
+        self.client.force_authenticate(self.assistant)
+        headers = ({'HTTP_X_IDEMPOTENCY_KEY': key} if key is not None else {})
+        return self.client.post(
+            f"/api/inbox/conversations/{self.conversation.public_id}/send/",
+            {'body': body},
+            **headers,
+        )
+
     def test_list_shows_preview_and_unanswered(self):
         self.client.force_authenticate(self.assistant)
         item = self.client.get("/api/inbox/conversations/").json()[0]
@@ -171,6 +211,242 @@ class InboxFlowTests(InboxApiTestCase):
         )
         self.assertEqual(self.conversation.claimed_by, self.assistant)
 
+    def test_send_same_idempotency_key_replays_same_message_once(self):
+        first = self._send('primera entrega', 'same-send-key')
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.content)
+        self.assertEqual(first.json()['client_message_id'], 'same-send-key')
+
+        # Un replay no vuelve a ejecutar takeover ni actualiza actividad.
+        frozen_activity = timezone.now() - timedelta(days=1)
+        Conversation.objects.filter(pk=self.conversation.pk).update(
+            claimed_by=self.admin,
+            last_activity_at=frozen_activity,
+        )
+        second = self._send('primera entrega', 'same-send-key')
+
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.content)
+        self.assertEqual(second.json()['id'], first.json()['id'])
+        self.assertEqual(second.json()['client_message_id'],
+                         first.json()['client_message_id'])
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org,
+                direction=Message.DIRECTION_OUT,
+                idempotency_key='same-send-key',
+            ).count(),
+            1,
+        )
+        self.conversation.refresh_from_db()
+        self.assertEqual(self.conversation.claimed_by, self.admin)
+        self.assertEqual(self.conversation.last_activity_at, frozen_activity)
+
+    def test_send_replay_survives_conversation_closed_after_first_send(self):
+        first = self._send('antes del cierre', 'replay-after-close')
+        Conversation.objects.filter(pk=self.conversation.pk).update(
+            state=Conversation.STATE_CLOSED,
+            closed_at=timezone.now(),
+        )
+
+        replay = self._send('body ignorado', 'replay-after-close')
+
+        self.assertEqual(replay.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(replay.json()['id'], first.json()['id'])
+        self.assertEqual(replay.json()['body'], 'antes del cierre')
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org,
+                direction=Message.DIRECTION_OUT,
+                idempotency_key='replay-after-close',
+            ).count(),
+            1,
+        )
+
+    def test_send_different_idempotency_keys_create_separate_messages(self):
+        first = self._send('uno', 'send-key-one')
+        second = self._send('dos', 'send-key-two')
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED)
+        self.assertNotEqual(first.json()['id'], second.json()['id'])
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org, direction=Message.DIRECTION_OUT,
+            ).count(),
+            2,
+        )
+
+    def test_send_without_idempotency_header_keeps_current_behavior(self):
+        first = self._send('sin llave')
+        second = self._send('sin llave')
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(first.json()['client_message_id'])
+        self.assertIsNone(second.json()['client_message_id'])
+        self.assertNotEqual(first.json()['id'], second.json()['id'])
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org,
+                direction=Message.DIRECTION_OUT,
+                idempotency_key__isnull=True,
+            ).count(),
+            2,
+        )
+
+    def test_client_message_id_is_output_only(self):
+        self.client.force_authenticate(self.assistant)
+
+        response = self.client.post(
+            f"/api/inbox/conversations/{self.conversation.public_id}/send/",
+            {'body': 'sin correlación', 'client_message_id': 'forged-client-id'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.json()['client_message_id'])
+        message = Message.objects.get(pk=response.json()['id'])
+        self.assertIsNone(message.idempotency_key)
+
+    def test_send_same_key_with_different_body_returns_original(self):
+        first = self._send('texto original', 'same-key-new-body')
+        second = self._send('texto que no debe sustituirlo', 'same-key-new-body')
+
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.json()['id'], first.json()['id'])
+        self.assertEqual(second.json()['body'], 'texto original')
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org,
+                direction=Message.DIRECTION_OUT,
+                idempotency_key='same-key-new-body',
+            ).count(),
+            1,
+        )
+
+    def test_send_idempotency_key_is_trimmed_and_truncated_to_64(self):
+        prefix = 'k' * 64
+        first = self._send('truncado', f'  {prefix}first  ')
+        second = self._send('otro', f'{prefix}second')
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.json()['id'], first.json()['id'])
+        message = Message.objects.get(pk=first.json()['id'])
+        self.assertEqual(message.idempotency_key, prefix)
+
+    def test_send_idempotency_key_is_scoped_by_organization(self):
+        other_message = Message.objects.create(
+            organization=self.other_org,
+            channel_account=self.other_conversation.channel_account,
+            conversation=self.other_conversation,
+            contact=self.other_conversation.contact,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_HUMAN,
+            body='mensaje ajeno',
+            status=Message.STATUS_PENDING,
+            idempotency_key='shared-between-orgs',
+        )
+
+        response = self._send('mensaje propio', 'shared-between-orgs')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertNotEqual(response.json()['id'], other_message.pk)
+        self.assertEqual(response.json()['body'], 'mensaje propio')
+        self.assertEqual(
+            Message.objects.filter(
+                direction=Message.DIRECTION_OUT,
+                idempotency_key='shared-between-orgs',
+            ).count(),
+            2,
+        )
+
+    def test_internal_outbound_key_is_never_replayed_to_staff(self):
+        key = 'shared-with-internal-outbound'
+        internal = [
+            Message.objects.create(
+                organization=self.org,
+                channel_account=self.channel,
+                conversation=self.conversation,
+                contact=self.contact,
+                direction=Message.DIRECTION_OUT,
+                author_type=author_type,
+                body=f'cuerpo interno {author_type}',
+                status=Message.STATUS_SENT,
+                idempotency_key=key,
+            )
+            for author_type in (Message.AUTHOR_AGENT, Message.AUTHOR_SYSTEM)
+        ]
+
+        first = self._send('respuesta pública del staff', key)
+        replay = self._send('este cuerpo pierde', key)
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(first.json()['body'], 'respuesta pública del staff')
+        self.assertEqual(first.json()['author_type'], Message.AUTHOR_HUMAN)
+        self.assertEqual(first.json()['client_message_id'], key)
+        self.assertNotIn(first.json()['id'], {message.pk for message in internal})
+        self.assertEqual(replay.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(replay.json()['id'], first.json()['id'])
+        self.assertEqual(replay.json()['body'], 'respuesta pública del staff')
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org,
+                direction=Message.DIRECTION_OUT,
+                author_type=Message.AUTHOR_HUMAN,
+                idempotency_key=key,
+            ).count(),
+            1,
+        )
+
+    def test_send_recovers_winner_after_idempotency_integrity_race(self):
+        winner = Message.objects.create(
+            organization=self.org,
+            channel_account=self.channel,
+            conversation=self.conversation,
+            contact=self.contact,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_HUMAN,
+            human_author=self.admin,
+            body='ganador concurrente',
+            status=Message.STATUS_PENDING,
+            idempotency_key='race-key',
+        )
+
+        with patch(
+            'apps.agent.views._replay_outbound_message',
+            side_effect=[None, winner],
+        ) as replay, patch(
+            'apps.agent.views.Message.save',
+            side_effect=IntegrityError('duplicate key'),
+        ):
+            response = self._send('perdedor', 'race-key')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()['id'], winner.pk)
+        self.assertEqual(replay.call_count, 2)
+        self.assertEqual(
+            Message.objects.filter(
+                organization=self.org,
+                direction=Message.DIRECTION_OUT,
+                idempotency_key='race-key',
+            ).count(),
+            1,
+        )
+        self.conversation.refresh_from_db()
+        self.assertEqual(self.conversation.state, Conversation.STATE_ACTIVE)
+        self.assertIsNone(self.conversation.claimed_by)
+
+    def test_send_does_not_mask_integrity_error_without_winner(self):
+        with patch(
+            'apps.agent.views._replay_outbound_message', return_value=None,
+        ), patch(
+            'apps.agent.views.Message.save',
+            side_effect=IntegrityError('unrelated constraint'),
+        ):
+            response = self._send('mensaje', 'no-winner-key')
+
+        # El exception handler global convierte la excepción relanzada en 500;
+        # no se presenta falsamente como replay 201.
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def test_send_empty_body_rejected(self):
         self.client.force_authenticate(self.assistant)
         r = self.client.post(
@@ -186,6 +462,7 @@ class InboxFlowTests(InboxApiTestCase):
         r = self.client.post(
             f"/api/inbox/conversations/{self.conversation.public_id}/send/",
             {"body": "hola"},
+            HTTP_X_IDEMPOTENCY_KEY="closed-does-not-reopen",
         )
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -223,6 +500,118 @@ class InboxFlowTests(InboxApiTestCase):
         self.conversation.refresh_from_db()
         self.assertEqual(self.conversation.state, Conversation.STATE_CLOSED)
         self.assertIsNotNone(self.conversation.closed_at)
+
+
+class InboxSendIdempotencyRaceTests(APITransactionTestCase):
+    """La restricción DB decide una carrera real entre dos POST concurrentes."""
+
+    reset_sequences = True
+
+    def setUp(self):
+        self.org = Organization.objects.create(
+            name='Inbox Race Org', timezone='UTC',
+        )
+        self.sender_one = _make_user('race_sender_one', self.org, 'ASSISTANT')
+        self.sender_two = _make_user('race_sender_two', self.org, 'ASSISTANT')
+        self.channel = ChannelAccount.objects.create(
+            organization=self.org, external_account_id='600300600',
+        )
+        self.contact = ContactIdentity.objects.create(
+            organization=self.org,
+            external_id='5215512349999',
+            display_name='Carrera',
+            phone_normalized='5512349999',
+        )
+        self.conversation = Conversation.objects.create(
+            organization=self.org,
+            channel_account=self.channel,
+            contact=self.contact,
+        )
+
+    def _concurrent_send(self, user, backend_pids):
+        # Django mantiene una conexión por thread. Cerrar cualquier conexión
+        # heredada obliga a que cada worker abra su propia sesión PostgreSQL.
+        close_old_connections()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT pg_backend_pid()')
+                backend_pids.append(cursor.fetchone()[0])
+
+            client = APIClient()
+            client.force_authenticate(user)
+            response = client.post(
+                f'/api/inbox/conversations/{self.conversation.public_id}/send/',
+                {'body': f'respuesta de {user.username}'},
+                HTTP_X_IDEMPOTENCY_KEY='real-concurrent-send',
+            )
+            return response.status_code, response.json()
+        finally:
+            close_old_connections()
+
+    def test_two_real_concurrent_sends_replay_single_winner(self):
+        if connection.vendor != 'postgresql':
+            self.skipTest('La carrera requiere PostgreSQL y su índice parcial.')
+
+        from apps.agent import views as inbox_views
+
+        real_replay = inbox_views._replay_outbound_message
+        precheck_entry_barrier = threading.Barrier(2, timeout=10)
+        empty_precheck_barrier = threading.Barrier(2, timeout=10)
+        first_call_by_thread = threading.local()
+        backend_pids = []
+
+        def synchronized_replay(organization, idempotency_key):
+            if not getattr(first_call_by_thread, 'completed', False):
+                first_call_by_thread.completed = True
+                # Los dos clientes entran juntos al pre-check y, además, ambos
+                # deben haber observado «no existe» antes de permitir que
+                # cualquiera llegue al INSERT. Las llamadas posteriores son
+                # la recuperación normal del perdedor y no esperan aquí.
+                precheck_entry_barrier.wait()
+                result = real_replay(organization, idempotency_key)
+                self.assertIsNone(result)
+                empty_precheck_barrier.wait()
+                return result
+            return real_replay(organization, idempotency_key)
+
+        with patch(
+            'apps.agent.views._replay_outbound_message',
+            side_effect=synchronized_replay,
+        ):
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [
+                    pool.submit(
+                        self._concurrent_send,
+                        sender,
+                        backend_pids,
+                    )
+                    for sender in (self.sender_one, self.sender_two)
+                ]
+                responses = [future.result(timeout=20) for future in futures]
+
+        self.assertEqual(len(set(backend_pids)), 2)
+        self.assertEqual(
+            [http_status for http_status, _ in responses],
+            [status.HTTP_201_CREATED, status.HTTP_201_CREATED],
+        )
+        response_ids = {payload['id'] for _, payload in responses}
+        self.assertEqual(len(response_ids), 1)
+
+        messages = Message.objects.filter(
+            organization=self.org,
+            direction=Message.DIRECTION_OUT,
+            idempotency_key='real-concurrent-send',
+        )
+        self.assertEqual(messages.count(), 1)
+        winner = messages.select_related('human_author').get()
+        self.assertEqual(response_ids, {winner.pk})
+
+        # El takeover pertenece al mismo request que ganó el único INSERT.
+        self.conversation.refresh_from_db()
+        self.assertEqual(
+            self.conversation.state, Conversation.STATE_HUMAN_ACTIVE,
+        )
+        self.assertEqual(self.conversation.claimed_by, winner.human_author)
 
 
 class InboxReleaseClosesTheCircleTests(InboxApiTestCase):

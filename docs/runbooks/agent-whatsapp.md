@@ -1,11 +1,17 @@
-# Runbook: Agente WhatsApp (buzón É-F0)
+# Runbook: Agente WhatsApp + Inbox
 
-**Alcance F0**: buzón operable — el webhook recibe, el worker auto-saluda una
-vez por conversación (o avisa que recepción responderá, según el kill switch)
-y el staff atiende desde `/inbox`. **Sin LLM** (llega en É-F1).
+**Alcance vigente (2026-08-23)**: operación del webhook, worker con agente,
+sender y bandeja agrupada por `(contacto, cuenta)` en `/inbox`. El staff puede
+responder con idempotencia, estado optimista y acuses de entrega; el agente
+mantiene continuidad entre episodios según ADR p58.
 
 Contratos: [`docs/modules/agent.md`](../modules/agent.md) ·
-[`docs/whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) · ADR p51.
+[`docs/whatsapp-agent-epics.md`](../whatsapp-agent-epics.md) · ADRs p51-p60 ·
+[`plan de implementación del Inbox`](../plan-implementacion-whatsapp-inbox-2026-08-22.md).
+
+> **Media/B2 no está activa por este runbook.** Su despliegue sigue bloqueado
+> por DPA, aviso/ARCO/transferencia y los gates de ADR p60. No reutilizar el
+> bucket ni las credenciales del backup p40.
 
 ---
 
@@ -72,7 +78,7 @@ editan en Configuración (`telefono`, `direccion`, `horario`, `correo`…).
 
 ---
 
-## 2. Smoke E2E (gate de cierre de É-F0)
+## 2. Smoke E2E del canal y el Inbox
 
 Desde un número registrado en el sandbox:
 
@@ -80,10 +86,18 @@ Desde un número registrado en el sandbox:
    automática (T0-GREET o T0-DISABLED) y la conversación aparece en `/inbox`.
 2. Reenviar el mismo texto varias veces rápido → sin duplicados raros
    (dedup por wamid absorbe reintentos).
-3. Responder desde la bandeja → llega al WhatsApp del tester; la conversación
-   pasa a "Atendida" y queda reclamada por quien respondió.
-4. Cerrar la conversación → un mensaje nuevo del tester abre un hilo NUEVO.
-5. `docker compose … logs worker | tail` → `AGENT_FIRST_REPLY_QUEUED`, sin
+3. Responder desde la bandeja → la burbuja aparece inmediatamente como
+   pendiente, el compositor se limpia y la conversación queda reclamada por
+   quien respondió. Repetir la misma petición con igual
+   `X-Idempotency-Key` debe devolver el mismo `Message`, no crear otro.
+4. Confirmar en el sandbox que llega al WhatsApp del tester y que las marcas
+   avanzan `pending → sent → delivered → read` sin retroceder. Este paso es el
+   gate E2E real de WA-TCK-01; los tests unitarios no lo sustituyen.
+5. Verificar separadores `Hoy`/`Ayer` y horas contra la zona horaria configurada
+   de la clínica, no contra la del navegador.
+6. Cerrar la sesión → un mensaje nuevo del tester abre un episodio NUEVO, pero
+   aparece en el mismo hilo agrupado de contacto/cuenta.
+7. `docker compose … logs worker | tail` → `AGENT_FIRST_REPLY_QUEUED`, sin
    errores repetidos.
 
 ---
@@ -91,8 +105,16 @@ Desde un número registrado en el sandbox:
 ## 3. Operación diaria
 
 - **Bandeja `/inbox`**: ASSISTANT/ADMIN operan (ver, tomar, responder,
-  cerrar); VET solo lectura. Responder = tomar la conversación (claim
-  automático). "Liberar" la regresa a la cola.
+  cerrar); VET solo lectura. Una fila representa el hilo agrupado de
+  `(ContactIdentity, ChannelAccount)`, no cada episodio. Responder = tomar la
+  sesión vigente (claim automático). "Liberar" la regresa a la cola.
+- **Envío humano**: el pendiente local se reconcilia solo por
+  `client_message_id`. Un 4xx lo retira; red o 5xx lo dejan `failed-local` y
+  «Reintentar» reutiliza la misma clave. No crear una clave nueva para un
+  intento cuyo resultado es incierto.
+- **Cambio de sesión**: un `failed-local` pertenece al `sessionId` original y
+  no se ofrece en un episodio nuevo. Es deliberado: evita reenviar un mensaje
+  viejo a otra sesión.
 - **Estados**: Abierta → Esperando → Atendida → Cerrada. Cerrada es terminal
   (mensaje posterior = hilo nuevo con la misma identidad de contacto).
 - **Identidad**: el número se matchea contra `Owner.phone` (0 = desconocido,
@@ -139,6 +161,9 @@ Umbrales de atención: latencia p95 > 30 s · handoff > 40 % · repregunta > 20 
 | `WEBHOOK_SIGNATURE_REJECTED` en logs | `APP_SECRET` incorrecto (o alguien probando el endpoint) | Verificar App Secret; si la fuente no es Meta, es ruido esperado — nada se persistió |
 | `WEBHOOK_UNKNOWN_CHANNEL` | Mensaje a un `phone_number_id` sin `ChannelAccount` | Correr `provision_channel` para esa org |
 | Mensajes salientes en "enviando…" eternos | Worker caído (deadman alertó) o token vencido | `logs worker`; token sandbox caduca en 24 h → regenerar; `AGENT_SEND_FAILED` con 401 = token |
+| Mensaje humano queda `failed-local` | La petición no tuvo respuesta fiable (red) o devolvió 5xx | Corregir conectividad/servicio y usar «Reintentar»: conserva la misma clave idempotente. Un 4xx requiere corregir el dato, no reintentar a ciegas |
+| El mensaje optimista desaparece o se duplica tras el polling | Falló la correlación por `client_message_id` | Tratar como bug. Confirmar que POST/replay/GET devuelven la misma correlación humana. Nunca deduplicar por cuerpo, autor o tiempo |
+| Las marcas quedan en `pending` aunque Meta recibió el mensaje | Sender/webhook de estados detenido, token vencido o acuses no suscritos | Revisar worker, eventos `AGENT_SEND_FAILED`, suscripción `messages` y payloads de estados; repetir el smoke E2E sandbox |
 | "no entregado — ventana de sesión de 24h cerrada" | Se intentó responder >24 h tras el último mensaje del cliente | Esperado (límite del canal): el cliente debe escribir de nuevo; plantillas HSM llegan en F3 |
 | Respuesta automática duplicada tras reinicio | No debe pasar (estado en DB, `TC-GB-07`) | Si pasara: bug — revisar `has_outbound` en `agent/worker.py::_first_reply_fallback` |
 | `AGENT_TURN_FAILED` repetido en la misma conversación | Un turno revienta (payload raro, bug). El worker ya NO se cae: reintenta hasta 3 veces con 30 s de respiro | Al agotar reintentos el mensaje pasa a `discarded` y la conversación escala a humano. Revisar el traceback del log y la conversación en `/inbox` |

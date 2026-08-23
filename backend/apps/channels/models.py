@@ -208,6 +208,12 @@ class Message(OrganizationalModel):
     # outbox la usa para emitir el recibo una sola vez y para enlazar la
     # afirmativa con la propuesta exacta que recibió el cliente.
     operation_key = models.CharField(max_length=64, blank=True, default='')
+    # Token opcional enviado por el cliente de la API del Inbox. Permite que
+    # un retry HTTP recupere el mismo outbox sin duplicar el mensaje ni volver
+    # a ejecutar el takeover de la conversación.
+    idempotency_key = models.CharField(
+        max_length=64, null=True, blank=True,
+    )
     body = models.TextField(blank=True, default='')
     # wamid (inbound: llega en el webhook; outbound: lo asigna el proveedor
     # al enviar). Nullable — el unique parcial exige not-null + direction in.
@@ -251,6 +257,17 @@ class Message(OrganizationalModel):
                 & models.Q(semantic_type='operation_receipt')
                 & ~models.Q(operation_key=''),
                 name='message_unique_operation_receipt',
+            ),
+            # Idempotencia de POST /inbox/.../send: la llave pertenece a la
+            # organización, no a una conversación concreta. Así un retry que
+            # llegue por una URL equivocada tampoco puede emitir un segundo
+            # mensaje con la misma intención.
+            models.UniqueConstraint(
+                fields=['organization', 'idempotency_key'],
+                condition=models.Q(direction='out')
+                & models.Q(author_type='human_staff')
+                & models.Q(idempotency_key__isnull=False),
+                name='message_unique_idempotency_per_org',
             ),
         ]
         indexes = [
