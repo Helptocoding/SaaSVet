@@ -2,6 +2,7 @@ import { useAuth } from "../auth/authContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { Icon } from "./icons";
+import styles from "./AppShell.module.css";
 
 const PAGE_TITLES = {
     "/":               "Dashboard",
@@ -25,10 +26,10 @@ const Layout = ({ children }) => {
 
     if (initializing) {
         return (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "var(--c-bg)" }}>
-                <div style={{ textAlign: "center", color: "var(--c-text-3)" }}>
-                    <div style={{ marginBottom: "8px" }}><Icon.Stethoscope s={32} c="var(--c-text-3)" /></div>
-                    <p style={{ fontSize: "13px" }}>Cargando...</p>
+            <div className={styles.loading}>
+                <div className={styles.loadingInner}>
+                    <Icon.Stethoscope s={30} c="currentColor" />
+                    <p>Cargando…</p>
                 </div>
             </div>
         );
@@ -48,71 +49,41 @@ const Layout = ({ children }) => {
     const fromOnboarding = !!location.state?.fromOnboarding;
 
     return (
-        <div style={{ minHeight: "100vh", backgroundColor: "var(--c-bg)" }}>
+        <div className={styles.shell}>
             <Sidebar onLogout={handleLogout} />
 
-            <main style={{ marginLeft: "var(--sidebar-width)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            <main className={styles.main}>
                 {!isDashboard && (
-                    <header style={{
-                        height: "52px",
-                        backgroundColor: "var(--c-surface)",
-                        borderBottom: "1px solid var(--c-border)",
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "0 28px",
-                        gap: "8px",
-                        position: "sticky", top: 0, zIndex: 50,
-                        boxShadow: "var(--shadow-xs)",
-                    }}>
+                    <header className={styles.topbar}>
                         {fromOnboarding ? (
                             <button
                                 onClick={() => navigate("/")}
-                                style={{
-                                    display: "flex", alignItems: "center", gap: "6px",
-                                    background: "none", border: "none", padding: "0",
-                                    fontFamily: "inherit", fontSize: "14px", fontWeight: "600",
-                                    color: "var(--c-primary)", cursor: "pointer",
-                                }}
+                                className={styles.backAction}
                             >
-                                <Icon.ChevronLeft s={16} c="var(--c-primary)" /> Volver al Dashboard
+                                <Icon.ChevronLeft s={16} c="currentColor" /> Volver al Dashboard
                             </button>
                         ) : (
-                            <span style={{ fontSize: "14px", fontWeight: "600", color: "var(--c-text)" }}>
+                            <span className={styles.topbarTitle}>
                                 {pageTitle}
                             </span>
                         )}
-                        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div className={styles.topbarActions}>
                             {location.pathname === "/config" && !user?.is_demo && (
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent("open-change-password"))}
-                                    style={{
-                                        background: "none", border: "none", padding: "4px 8px",
-                                        fontFamily: "inherit", fontSize: "12px", fontWeight: 500,
-                                        color: "var(--c-text-3)", cursor: "pointer",
-                                        borderRadius: "var(--r-md)",
-                                        transition: "color 0.15s, background 0.15s",
-                                    }}
-                                    onMouseEnter={e => { e.target.style.color = "var(--c-text)"; e.target.style.background = "var(--c-subtle)"; }}
-                                    onMouseLeave={e => { e.target.style.color = "var(--c-text-3)"; e.target.style.background = "transparent"; }}
+                                    className={styles.passwordAction}
                                 >
                                     Cambiar contraseña
                                 </button>
                             )}
-                            <div style={{
-                                width: "30px", height: "30px",
-                                borderRadius: "50%",
-                                background: "linear-gradient(135deg, var(--c-primary-light), var(--sage-400))",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: "12px", fontWeight: "700", color: "var(--c-primary-dark)",
-                                border: "1.5px solid var(--sage-400)",
-                            }}>
+                            <div className={styles.avatar} aria-label="Perfil de usuario">
                                 {(user?.first_name?.[0] || user?.username?.[0] || "U").toUpperCase()}
                             </div>
                         </div>
                     </header>
                 )}
 
-                <div style={{ padding: isDashboard ? "0" : "28px", flex: 1 }}>
+                <div className={isDashboard ? styles.contentDashboard : styles.content}>
                     {children}
                 </div>
             </main>

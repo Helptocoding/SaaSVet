@@ -756,17 +756,15 @@ const Billing = () => {
         <div className={s.billingContainer}>
             <div className="page-header">
                 <h1 className="page-title">Cobros</h1>
-                {/* Chip de caja (Fase 3): estado + abrir/cerrar sin fila completa.
+                {/* Estado de caja (Fase 3): estado + abrir/cerrar sin fila completa.
                     onSession alimenta cashBlocked — único GET de sesión de la página. */}
                 <CajaBar variant="compact" onSession={setCashSession} />
             </div>
 
             {cashBlocked && (
-                <div className="form-alert form-alert-warning" style={{ alignItems: "center" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Icon.AlertTriangle s={16} />
-                        <span><strong>No hay una caja abierta.</strong> Debes abrir una caja para registrar pagos — usa "Abrir caja" aquí arriba.</span>
-                    </span>
+                <div className={s.cashNotice} role="status">
+                    <Icon.AlertTriangle s={15} />
+                    <span><strong>No hay una caja abierta.</strong> Ábrela para registrar pagos.</span>
                 </div>
             )}
 

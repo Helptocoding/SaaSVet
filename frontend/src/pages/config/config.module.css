@@ -16,8 +16,8 @@
   --p-accent-2: #0e8a63;
   --p-accent-ring: rgba(11, 107, 79, 0.16);
   --p-danger: #c0362c;
-  --p-shadow-card: 0 1px 2px rgba(16, 24, 32, 0.04), 0 12px 28px -16px rgba(16, 24, 32, 0.16);
-  --p-shadow-btn: 0 1px 2px rgba(11, 107, 79, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --p-shadow-card: none;
+  --p-shadow-btn: none;
 
   color: var(--p-text);
   /* Superficie limpia propia: sangra sobre el padding (28px) del área de
@@ -66,7 +66,7 @@
 .sidebarLabel {
   font-size: 10.5px;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.1em;
   color: var(--p-text-3);
   padding: 0 10px 10px;
@@ -85,12 +85,15 @@
   align-items: center;
   gap: 11px;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: 0;
+  border-left: 2px solid transparent;
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 500;
   color: var(--p-text-2);
-  border: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
   background: none;
   width: 100%;
   text-align: left;
@@ -103,9 +106,10 @@
 .sidebarItemActive,
 .sidebarItemActive:hover {
   color: var(--p-text);
-  background: #fff;
+  border-left-color: var(--p-accent);
+  background: rgba(11, 107, 79, 0.06);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(16, 24, 32, 0.05), 0 0 0 1px var(--p-border) inset;
+  box-shadow: none;
 }
 
 .sidebarItem:not(.sidebarItemActive) .sidebarIcon { color: var(--p-text-3); }
@@ -208,7 +212,7 @@
 .groupTitle {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.09em;
   color: var(--p-text-3);
   margin: 0 0 18px;
@@ -230,7 +234,7 @@
   width: 54px;
   height: 54px;
   border-radius: 15px;
-  background: linear-gradient(150deg, var(--p-accent-2), var(--p-accent));
+  background: var(--p-accent);
   color: #fff;
   font-size: 22px;
   font-weight: 700;
@@ -369,13 +373,13 @@
 .page :global(.btn:active) { transform: translateY(0.5px); }
 
 .page :global(.btn-primary) {
-  background: linear-gradient(180deg, var(--p-accent-2), var(--p-accent));
+  background: var(--p-accent);
   border: 1px solid var(--p-accent);
   color: #fff;
   box-shadow: var(--p-shadow-btn);
 }
 .page :global(.btn-primary:hover) {
-  background: linear-gradient(180deg, #10996f, #0c7857);
+  background: var(--p-accent-2);
   box-shadow: 0 4px 14px -4px rgba(11, 107, 79, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
@@ -464,7 +468,7 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--p-text-3);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.07em;
   border-bottom: 1px solid var(--p-border);
 }

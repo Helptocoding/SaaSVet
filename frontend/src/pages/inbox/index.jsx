@@ -755,8 +755,8 @@ const Inbox = () => {
     const conv = thread?.conversation;
 
     return (
-        <div>
-            <div className="page-header">
+        <div className={styles.page}>
+            <div className={`page-header ${styles.pageHeader}`}>
                 <div>
                     <h1>WhatsApp</h1>
                     <p className="page-subtitle">
@@ -765,7 +765,7 @@ const Inbox = () => {
                 </div>
                 {canConfig && agentSettings !== null && (
                     <button
-                        className={agentSettings.enabled ? "btn btn-secondary" : "btn btn-primary"}
+                        className={`${agentSettings.enabled ? "btn btn-secondary" : "btn btn-primary"} ${styles.agentToggle}`}
                         onClick={handleToggleAgent}
                     >
                         {agentSettings.enabled ? "Desactivar respuestas automáticas" : "Activar respuestas automáticas"}
@@ -808,8 +808,9 @@ const Inbox = () => {
                         {FILTERS.map((f) => (
                             <button
                                 key={f.value}
-                                className={filter === f.value ? "btn btn-primary btn-xs" : "btn btn-secondary btn-xs"}
+                                className={`${styles.filterTab} ${filter === f.value ? styles.filterTabActive : ""}`}
                                 onClick={() => setFilter(f.value)}
+                                aria-pressed={filter === f.value}
                             >
                                 {f.label}
                             </button>
@@ -869,7 +870,7 @@ const Inbox = () => {
                                             {c.session_count > 1 && (
                                                 <span className={styles.sessionCount}
                                                     title={`${c.session_count} conversaciones con esta persona`}>
-                                                    {c.session_count}
+                                                    ×{c.session_count}
                                                 </span>
                                             )}
                                             {fmtTimeOrg(c.last_activity_at, timezone, timeReference)}
@@ -917,35 +918,31 @@ const Inbox = () => {
                     ) : (
                         <>
                             <div className={styles.chatHeader}>
-                                <div>
-                                    <strong>{contactLabel(thread)}</strong>
-                                    {conv?.contact_phone && (
-                                        <span style={{ color: "var(--c-text-muted, #64748b)", marginLeft: 8, fontSize: 12.5 }}>
-                                            {conv.contact_phone}
-                                        </span>
-                                    )}
-                                    {conv ? (
-                                        <span className={`badge ${STATE_BADGE[conv.state]}`} style={{ marginLeft: 8 }}>
-                                            {STATE_LABEL[conv.state]}
-                                        </span>
-                                    ) : (
-                                        // Sin sesión vigente: se lee el historial,
-                                        // no se responde. El hilo revive solo
-                                        // cuando el cliente vuelve a escribir.
-                                        <span className="badge badge-default" style={{ marginLeft: 8 }}
-                                            title="Sin conversación abierta — se puede leer, no responder">
-                                            Archivada
-                                        </span>
-                                    )}
-                                    {conv?.linked_via === "family_challenge" && (
-                                        <span className="badge badge-purple" style={{ marginLeft: 8 }}>
-                                            Vínculo familiar
-                                        </span>
-                                    )}
-                                    {conv?.claimed_by_name && (
-                                        <span style={{ color: "var(--c-text-muted, #64748b)", marginLeft: 8, fontSize: 12 }}>
-                                            Atiende: {conv.claimed_by_name}
-                                        </span>
+                                <div className={styles.chatIdentity}>
+                                    <div className={styles.chatIdentityLine}>
+                                        <strong className={styles.chatName}>{contactLabel(thread)}</strong>
+                                        {conv ? (
+                                            <span className={`badge ${STATE_BADGE[conv.state]}`}>
+                                                {STATE_LABEL[conv.state]}
+                                            </span>
+                                        ) : (
+                                            // Sin sesión vigente: se lee el historial,
+                                            // no se responde. El hilo revive solo
+                                            // cuando el cliente vuelve a escribir.
+                                            <span className="badge badge-default"
+                                                title="Sin conversación abierta — se puede leer, no responder">
+                                                Archivada
+                                            </span>
+                                        )}
+                                        {conv?.linked_via === "family_challenge" && (
+                                            <span className="badge badge-purple">Vínculo familiar</span>
+                                        )}
+                                    </div>
+                                    {(conv?.contact_phone || conv?.claimed_by_name) && (
+                                        <div className={styles.chatMeta}>
+                                            {[conv?.contact_phone, conv?.claimed_by_name ? `Atiende: ${conv.claimed_by_name}` : null]
+                                                .filter(Boolean).join(" · ")}
+                                        </div>
                                     )}
                                 </div>
                                 {canClaim && sessionId && (
@@ -1062,7 +1059,7 @@ const Inbox = () => {
                                             }
                                         }}
                                     />
-                                    <button className="btn btn-primary" disabled={!body.trim()} onClick={handleSend}>
+                                    <button className={`btn btn-primary ${styles.sendButton}`} disabled={!body.trim()} onClick={handleSend}>
                                         <Icon.Send s={15} c="currentColor" />
                                         Enviar
                                     </button>

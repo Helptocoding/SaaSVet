@@ -4,22 +4,23 @@
 ────────────────────────────────────────────────────────────── */
 :root {
   /* ── Paleta de marca ─────────────────────────────────────── */
-  --forest-900: #0f2a1f;
-  --forest-800: #16382a;
-  --forest-700: #1a4434;
-  --sage-500:   #7faa78;
-  --sage-400:   #a8c4a2;
-  --sage-300:   #c6d9c0;
-  --cream-50:   #fbf8f1;
-  --cream-100:  #f5f1e8;
-  --cream-200:  #ede7d7;
+  --forest-900: #0b3d30;
+  --forest-800: #0d4d3b;
+  --forest-700: #0f624b;
+  --sage-500:   #688f80;
+  --sage-400:   #a9beb6;
+  --sage-300:   #dce8e3;
+  /* Alias heredados: ahora son neutros, no crema. */
+  --cream-50:   #ffffff;
+  --cream-100:  #f5f5f3;
+  --cream-200:  #ecece8;
   --coral:      #d67b5c;
   --coral-soft: #e89a7e;
   --amber:      #e8b87a;
-  --ink:        #1a1a1a;
-  --ink-soft:   #3a3a3a;
-  --muted:      #8a8a7f;
-  --line:       #d9d2be;
+  --ink:        #171817;
+  --ink-soft:   #40413f;
+  --muted:      #737570;
+  --line:       #deded9;
 
   --font-display: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body:    'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -27,11 +28,11 @@
   --font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
 
   /* ── Primary (verde bosque) ──────────────────────────────── */
-  --c-primary:       #1a4434;
-  --c-primary-hover: #16382a;
-  --c-primary-dark:  #0f2a1f;
-  --c-primary-light: #c6d9c0;
-  --c-primary-ring:  rgba(26, 68, 52, 0.14);
+  --c-primary:       #0f624b;
+  --c-primary-hover: #0d4d3b;
+  --c-primary-dark:  #0b3d30;
+  --c-primary-light: #e4efeb;
+  --c-primary-ring:  rgba(15, 98, 75, 0.18);
 
   /* ── Accent (coral) ──────────────────────────────────────── */
   --c-accent:       #d67b5c;
@@ -39,20 +40,23 @@
   --c-accent-light: #fdf0eb;
 
   /* ── Texto ───────────────────────────────────────────────── */
-  --c-text:   #1a1a1a;
-  --c-text-2: #3a3a3a;
-  --c-text-3: #8a8a7f;
-  --c-text-4: #b0aba0;
+  --c-text:   #171817;
+  --c-text-2: #454744;
+  --c-text-3: #737570;
+  --c-text-4: #9a9c97;
+  --c-text-muted: var(--c-text-3);
 
   /* ── Fondos ──────────────────────────────────────────────── */
-  --c-bg:      #f5f1e8;
-  --c-surface: #fbf8f1;
-  --c-subtle:  #ede7d7;
-  --c-hover:   #e8e2d4;
+  --c-bg:        #f5f5f3;
+  --c-surface:   #ffffff;
+  --c-surface-2: #f8f8f6;
+  --c-subtle:    #ecece8;
+  --c-hover:     #e7e7e3;
 
   /* ── Bordes ──────────────────────────────────────────────── */
-  --c-border:   #d9d2be;
-  --c-border-2: #c8bfa8;
+  --c-border:   #deded9;
+  --c-border-2: #c5c6c0;
+  --hairline:   rgba(23, 24, 23, 0.12);
 
   /* ── Semánticos — éxito ──────────────────────────────────── */
   --c-success-text:   #1a5c3a;
@@ -80,23 +84,23 @@
   --c-purple-border: #ddd6fe;
 
   /* ── Sidebar ─────────────────────────────────────────────── */
-  --sidebar-bg:     #0f2a1f;
-  --sidebar-text:   rgba(245, 241, 232, 0.65);
-  --sidebar-active: #16382a;
-  --sidebar-accent: #a8c4a2;
+  --sidebar-bg:     #151615;
+  --sidebar-text:   rgba(255, 255, 255, 0.62);
+  --sidebar-active: rgba(255, 255, 255, 0.08);
+  --sidebar-accent: #ffffff;
   --sidebar-width:  220px;
 
   /* ── Sombras ─────────────────────────────────────────────── */
-  --shadow-xs:    0 1px 2px rgba(15, 42, 31, 0.06);
-  --shadow-sm:    0 1px 3px rgba(15, 42, 31, 0.09), 0 1px 2px rgba(15, 42, 31, 0.05);
-  --shadow-md:    0 4px 12px rgba(15, 42, 31, 0.11), 0 2px 4px rgba(15, 42, 31, 0.06);
-  --shadow-modal: 0 24px 64px rgba(15, 42, 31, 0.22), 0 8px 24px rgba(15, 42, 31, 0.1);
+  --shadow-xs:    none;
+  --shadow-sm:    none;
+  --shadow-md:    0 8px 24px rgba(23, 24, 23, 0.08);
+  --shadow-modal: 0 24px 72px rgba(0, 0, 0, 0.22);
 
   /* ── Radios ──────────────────────────────────────────────── */
   --r-sm:   4px;
   --r-md:   6px;
   --r-lg:   8px;
-  --r-xl:   12px;
+  --r-xl:   10px;
   --r-full: 9999px;
 
   /* ── Transiciones ────────────────────────────────────────── */
@@ -125,7 +129,7 @@
   --font-dm-serif: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
   --bg-dark: #1a2e2b;
-  --text-on-dark: #fbf8f1;
+  --text-on-dark: #ffffff;
 
   --radius-sm: 3px;
   --radius-md: 6px;

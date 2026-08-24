@@ -90,14 +90,14 @@ function DashboardChart({ allPoints, hasCorrupt }) {
     primary: "#1a4434",
     accent:  "#d67b5c",
     text3:   "#8a8a7f",
-    border:  "#d9d2be",
+    border:  "#deded9",
   });
   useLayoutEffect(() => {
     setColors({
       primary: readCssVar("--c-primary", "#1a4434"),
       accent:  readCssVar("--c-accent",  "#d67b5c"),
       text3:   readCssVar("--c-text-3",  "#8a8a7f"),
-      border:  readCssVar("--c-border",  "#d9d2be"),
+      border:  readCssVar("--c-border",  "#deded9"),
     });
   }, []);
 

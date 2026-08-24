@@ -32,7 +32,7 @@ button, input, select, textarea { font-family: inherit; }
   justify-content: center;
   gap: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 550;
   cursor: pointer;
   border-radius: var(--r-md);
   transition: background var(--t), border-color var(--t), color var(--t), box-shadow var(--t);
@@ -54,7 +54,7 @@ button, input, select, textarea { font-family: inherit; }
 .btn-primary:focus-visible { box-shadow: 0 0 0 3px var(--c-primary-ring); }
 
 .btn-secondary { background: var(--c-surface); color: var(--c-text); border-color: var(--c-border-2); box-shadow: var(--shadow-xs); }
-.btn-secondary:hover:not(:disabled) { background: var(--c-subtle); }
+.btn-secondary:hover:not(:disabled) { background: var(--c-surface-2); border-color: var(--c-text-3); }
 
 .btn-ghost  { background: transparent; color: var(--c-text-2); border-color: transparent; }
 .btn-ghost:hover:not(:disabled) { background: var(--c-subtle); color: var(--c-text); }
@@ -67,6 +67,14 @@ button, input, select, textarea { font-family: inherit; }
 
 .btn-info   { background: var(--c-info-bg);   color: var(--c-info-text);   border-color: var(--c-info-border); }
 .btn-purple { background: var(--c-purple-bg); color: var(--c-purple-text); border-color: var(--c-purple-border); }
+
+.btn:focus-visible,
+.tab-btn:focus-visible,
+.modal-close:focus-visible,
+.back-btn:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
 
 /* ── Form controls ───────────────────────────────────────── */
 .form-group  { margin-bottom: 16px; }
@@ -108,8 +116,7 @@ button, input, select, textarea { font-family: inherit; }
   width: 100%; height: 40px; padding: 0 12px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--r-md);
   transition: border-color var(--t), box-shadow var(--t);
 }
 .searchBar:focus-within {
@@ -125,10 +132,10 @@ button, input, select, textarea { font-family: inherit; }
 /* ── Badges ──────────────────────────────────────────────── */
 .badge {
   display: inline-flex; align-items: center;
-  height: 20px; padding: 0 8px;
-  font-size: 11px; font-weight: 600;
-  border-radius: var(--r-full);
-  border: 1px solid transparent;
+  min-height: 18px; padding: 1px 5px;
+  font-size: 10.5px; font-weight: 600;
+  border-radius: 3px;
+  border: 0;
   white-space: nowrap; line-height: 1;
   letter-spacing: 0.01em;
 }
@@ -143,8 +150,8 @@ button, input, select, textarea { font-family: inherit; }
 /* ── Form Alerts ─────────────────────────────────────────── */
 .form-alert {
   display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 10px; padding: 10px 14px;
-  border-radius: var(--r-md); border: 1px solid transparent; /* slightly more compact than var(--r-lg) */
+  gap: 10px; padding: 9px 12px;
+  border-radius: 0; border: 0; border-left: 2px solid currentColor;
   font-size: 13px; margin-bottom: 16px;
 }
 .form-alert-success { background: var(--c-success-bg); color: var(--c-success-text); border-color: var(--c-success-border); }
@@ -163,10 +170,9 @@ button, input, select, textarea { font-family: inherit; }
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   padding: 20px 22px;
-  box-shadow: var(--shadow-sm);
 }
-.card-hover { transition: box-shadow var(--t2), border-color var(--t2); }
-.card-hover:hover { box-shadow: var(--shadow-md); border-color: var(--c-border-2); }
+.card-hover { transition: background var(--t2), border-color var(--t2); }
+.card-hover:hover { background: var(--c-surface-2); border-color: var(--c-border-2); }
 
 /* ── Table ───────────────────────────────────────────────── */
 .table-wrap {
@@ -174,18 +180,18 @@ button, input, select, textarea { font-family: inherit; }
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 .table { 
   width: 100%; 
   border-collapse: separate; 
   border-spacing: 0; 
 }
-.table thead tr { background: var(--ink); }
+.table thead tr { background: var(--c-surface-2); }
 .table th {
-  padding: 14px 16px; text-align: left;
-  font-size: 11.5px; font-weight: 700; color: #fff;
-  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  padding: 11px 16px; text-align: left;
+  font-size: 11.5px; font-weight: 600; color: var(--c-text-2);
+  letter-spacing: 0.01em; white-space: nowrap;
+  border-bottom: 1px solid var(--c-border);
 }
 /* Redondear esquinas superiores del header */
 .table th:first-child { border-top-left-radius: var(--r-lg); }
@@ -200,9 +206,9 @@ button, input, select, textarea { font-family: inherit; }
 
 .table td {
   padding: 12px 16px; font-size: 13.5px;
-  color: var(--c-text); border-bottom: none;
+  color: var(--c-text); border-bottom: 1px solid var(--c-border);
 }
-.table tbody tr:nth-child(even) { background: var(--c-subtle); }
+.table tbody tr:nth-child(even),
 .table tbody tr:nth-child(odd) { background: var(--c-surface); }
 .table tbody tr { transition: background var(--t); }
 .table tbody tr:hover { background: var(--c-hover); }
@@ -318,9 +324,9 @@ button, input, select, textarea { font-family: inherit; }
 .stat-card {
   background: var(--c-surface); border: 1px solid var(--c-border);
   border-radius: var(--r-lg); padding: 20px 22px;
-  flex: 1; min-width: 150px; box-shadow: var(--shadow-sm);
+  flex: 1; min-width: 150px;
 }
-.stat-label { font-size: 11px; font-weight: 600; color: var(--c-text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+.stat-label { font-size: 11px; font-weight: 600; color: var(--c-text-3); text-transform: none; letter-spacing: 0.07em; margin-bottom: 8px; }
 .stat-value { font-size: 2.1rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
 .stat-sub   { font-size: 12px; color: var(--c-text-3); }
 
@@ -345,7 +351,7 @@ button, input, select, textarea { font-family: inherit; }
 .fc .fc-button {
   background: var(--c-surface) !important; border: 1px solid var(--c-border) !important;
   color: var(--c-text-2) !important; font-size: 12.5px !important; font-weight: 600 !important;
-  padding: 5px 12px !important; box-shadow: var(--shadow-xs) !important;
+  padding: 5px 12px !important; box-shadow: none !important;
   transition: background var(--t) !important;
 }
 .fc .fc-button:hover  { background: var(--c-subtle) !important; color: var(--c-text) !important; }
@@ -354,7 +360,16 @@ button, input, select, textarea { font-family: inherit; }
 }
 .fc .fc-col-header-cell {
   font-size: 11.5px !important; font-weight: 600 !important;
-  color: var(--c-text-2) !important; text-transform: uppercase !important; letter-spacing: 0.04em !important;
+  color: var(--c-text-2) !important; text-transform: none !important; letter-spacing: 0.04em !important;
 }
 .fc .fc-timegrid-slot { height: 36px !important; }
 .fc .fc-event { border-radius: var(--r-sm) !important; font-size: 12px !important; font-weight: 500 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

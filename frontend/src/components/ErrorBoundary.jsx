@@ -32,12 +32,12 @@ class ErrorBoundary extends Component {
                 alignItems: "center",
                 justifyContent: "center",
                 minHeight: "100vh",
-                backgroundColor: "var(--c-bg, #f5f1e8)",
+                backgroundColor: "var(--c-bg, #f5f5f3)",
                 padding: "40px",
                 textAlign: "center",
             }}>
                 <div style={{
-                    backgroundColor: "var(--c-surface, #fbf8f1)",
+                    backgroundColor: "var(--c-surface, #ffffff)",
                     border: "1px solid var(--c-border, #e5e0d8)",
                     borderRadius: "12px",
                     padding: "40px",

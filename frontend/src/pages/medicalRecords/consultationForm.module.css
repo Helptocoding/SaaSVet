@@ -136,7 +136,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: var(--r-md);
   padding: 9px 16px;
   transition: background var(--t), border-color var(--t), filter var(--t);
   white-space: nowrap;
@@ -236,7 +236,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #999;
   margin-bottom: 4px;
 }
@@ -283,7 +283,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #999;
   margin-bottom: 2px;
 }
@@ -378,7 +378,7 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--sage-400), var(--c-primary));
+  background: var(--c-primary);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -394,7 +394,7 @@
   align-self: flex-start;
   margin-top: 12px;
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   background: var(--c-warning-bg);
   color: var(--c-warning-text);
   border: 1px solid var(--c-warning-border);
@@ -433,7 +433,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #a8a29a;
   margin-bottom: 2px;
 }
@@ -511,7 +511,7 @@
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #8a8a86;
 }
 
@@ -713,7 +713,7 @@
 .totalsSubLabel {
   font-size: 10.5px;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
+  text-transform: none;
   color: rgba(255, 255, 255, 0.55);
 }
 
@@ -738,7 +738,7 @@
 .totalsGrandLabel {
   font-size: 10.5px;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: none;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -1087,7 +1087,7 @@ textarea.control {
 .costToggle {
   display: inline-flex;
   border: 1px solid #e5e5e5;
-  border-radius: 999px;
+  border-radius: var(--r-md);
   overflow: hidden;
   flex-shrink: 0;
   background: #fff;
@@ -1111,12 +1111,12 @@ textarea.control {
 
 /* ── Table modes ── */
 
-/* Modo de línea en la tabla de Cobros (spec: pill verde "Cobrar" / gris "Insumo"). */
+/* Modo de línea en la tabla de Cobros. */
 .tableModeMuted {
   display: inline-flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   background: #f1f0ed;
   color: #8a8a86;
   font-size: 11px;
@@ -1127,7 +1127,7 @@ textarea.control {
   display: inline-flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   background: #e6f5ee;
   color: #1a7d55;
   font-size: 11px;
@@ -1140,7 +1140,7 @@ textarea.control {
   display: inline-flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   border: 1px solid #e5e5e5;
   background: transparent;
   color: #888;
@@ -1196,7 +1196,7 @@ textarea.control {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #8a8a86;
 }
 
@@ -1486,7 +1486,7 @@ textarea.control {
   display: inline-flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   color: var(--accent);
   font-size: 12px;

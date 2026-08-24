@@ -1,0 +1,28 @@
+.bar { display: flex; align-items: center; gap: 10px; }
+.full { padding: 10px 0; margin-bottom: 14px; border-block: 1px solid var(--c-border); }
+.compact { display: inline-flex; }
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-text-2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--c-text-4);
+}
+.statusOpen { color: var(--c-success-text); }
+.statusOpen::before { background: var(--c-success-text); }
+.summary { flex: 1; color: var(--c-text-3); font-size: 12.5px; }
+.summary strong { color: var(--c-text); font-weight: 600; }
+
+@media (max-width: 680px) {
+  .bar { flex-wrap: wrap; }
+  .summary { flex-basis: 100%; }
+}

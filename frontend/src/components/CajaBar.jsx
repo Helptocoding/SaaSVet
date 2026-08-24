@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Icon } from "./icons";
 import { apiError } from "../utils/apiError";
+import styles from "./CajaBar.module.css";
 import { useAuth } from "../auth/authContext";
 import { getCurrentSession, openSession, closeSession, registerCashMovement } from "../api/cash";
 
@@ -118,32 +119,25 @@ export default function CajaBar({ onChange, onSession, showManageLink = true, va
     const compact = variant === "compact";
 
     return (
-        <div style={compact
-            ? { display: "inline-flex", alignItems: "center", gap: "8px" }
-            : {
-                display: "flex", alignItems: "center", gap: "12px",
-                padding: "8px 14px", borderRadius: "8px", marginBottom: "12px",
-                border: "1px solid var(--c-border)",
-                background: open ? "var(--c-success-bg, rgba(16,185,129,0.06))" : "var(--c-subtle, rgba(0,0,0,0.03))",
-            }}>
+        <div className={`${styles.bar} ${compact ? styles.compact : styles.full}`}>
             {compact ? (
                 <span
-                    className={`badge ${open ? "badge-success" : "badge-default"}`}
+                    className={`${styles.status} ${open ? styles.statusOpen : ""}`}
                     title={open ? `Fondo ${money(session.opening_float)}${session.opened_by_name ? ` · ${session.opened_by_name}` : ""}` : "No hay turno de caja abierto"}
                 >
-                    ● Caja {open ? "abierta" : "cerrada"}
+                    Caja {open ? "abierta" : "cerrada"}
                 </span>
             ) : (
                 <>
                     <Icon.Wallet s={16} c={open ? "var(--c-success-text)" : "var(--c-text-3)"} />
-                    <div style={{ flex: 1, fontSize: "13px" }}>
+                    <div className={styles.summary}>
                         {open ? (
-                            <span style={{ color: "var(--c-text)" }}>
+                            <span>
                                 <strong>Caja abierta</strong>
-                                <span style={{ color: "var(--c-text-3)" }}> · fondo {money(session.opening_float)}{session.opened_by_name ? ` · ${session.opened_by_name}` : ""}</span>
+                                <span> · fondo {money(session.opening_float)}{session.opened_by_name ? ` · ${session.opened_by_name}` : ""}</span>
                             </span>
                         ) : (
-                            <span style={{ color: "var(--c-text-3)" }}>Caja cerrada</span>
+                            <span>Caja cerrada</span>
                         )}
                     </div>
                 </>

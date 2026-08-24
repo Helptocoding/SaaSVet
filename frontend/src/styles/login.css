@@ -1,6 +1,6 @@
 /* ────────────────────────────────────────────────────────────
    LOGIN — VetCare
-   Identidad: verde bosque + crema (paleta del sistema, tokens.css).
+   Identidad: verde de marca + base neutra (tokens.css).
    Display serif (Fraunces) exclusiva del login; el resto de la app
    sigue en Plus Jakarta Sans.
    Sólo afecta a /login (todas las reglas viven bajo .login-page).
@@ -10,34 +10,34 @@
 .login-page {
   /* Tokens locales — espejo de tokens.css para mantener el login
      encapsulado. Si cambia la marca, actualizar aquí y en tokens.css. */
-  --lp-bg-dark: #0f2a1f;          /* --c-primary-dark */
-  --lp-bg-dark-2: #16382a;        /* --c-primary-hover */
-  --lp-green: #1a4434;            /* --c-primary */
-  --lp-green-light: #c6d9c0;      /* --c-primary-light */
+  --lp-bg-dark: #151615;
+  --lp-bg-dark-2: #202220;
+  --lp-green: #0f624b;
+  --lp-green-light: #dce8e3;
   --lp-coral: #d67b5c;            /* --c-accent */
-  --lp-on-dark: #fbf8f1;          /* --c-surface (texto sobre verde) */
-  --lp-on-dark-soft: #d8e2d3;
-  --lp-on-dark-mute: #9fb3a4;
-  --lp-on-dark-faint: #6f8577;
+  --lp-on-dark: #ffffff;
+  --lp-on-dark-soft: #dedfdb;
+  --lp-on-dark-mute: #a4a7a1;
+  --lp-on-dark-faint: #747772;
 
-  --lp-bg-light: #fbf8f1;         /* --c-surface */
-  --lp-bg-light-2: #f5f1e8;       /* --c-bg */
-  --lp-ink: #1a1a1a;              /* --c-text */
-  --lp-ink-2: #3a3a3a;            /* --c-text-2 */
-  --lp-text-soft: #6b6b60;
-  --lp-text-muted: #8a8a7f;       /* --c-text-3 */
+  --lp-bg-light: #ffffff;
+  --lp-bg-light-2: #f5f5f3;
+  --lp-ink: #171817;
+  --lp-ink-2: #454744;
+  --lp-text-soft: #61635f;
+  --lp-text-muted: #737570;
 
-  --lp-border: #d9d2be;           /* --c-border */
-  --lp-border-strong: #c8bfa8;    /* --c-border-2 */
+  --lp-border: #deded9;
+  --lp-border-strong: #c5c6c0;
   --lp-input-bg: #ffffff;
   --lp-input-placeholder: #b0aba0;
   --lp-danger: #c0392b;
   --lp-danger-soft: #fdecea;
   --lp-success: #10b981;
 
-  --lp-radius-sm: 8px;
-  --lp-radius-md: 12px;
-  --lp-radius-lg: 16px;
+  --lp-radius-sm: 4px;
+  --lp-radius-md: 6px;
+  --lp-radius-lg: 10px;
 
   --lp-font: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --lp-font-display: 'Space Grotesk', 'Plus Jakarta Sans', 'Helvetica Neue', sans-serif;
@@ -89,32 +89,10 @@
   overflow: hidden;
 }
 
-/* Blobs de luz animados (verde claro + coral, deriva lenta) */
+/* Sin decoración ambiental: el panel oscuro ya aporta el contraste. */
 .login-page .login-left::before,
 .login-page .login-left::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(2px);
-}
-
-.login-page .login-left::before {
-  width: 900px;
-  height: 520px;
-  right: -20%;
-  bottom: -30%;
-  background: radial-gradient(closest-side, rgba(198, 217, 192, 0.16) 0%, transparent 70%);
-  animation: lp-drift-a 18s ease-in-out infinite alternate;
-}
-
-.login-page .login-left::after {
-  width: 640px;
-  height: 420px;
-  left: -15%;
-  top: -18%;
-  background: radial-gradient(closest-side, rgba(214, 123, 92, 0.14) 0%, transparent 70%);
-  animation: lp-drift-b 24s ease-in-out infinite alternate;
+  content: none;
 }
 
 .login-page .login-left-inner {
@@ -139,12 +117,12 @@
 .login-page .brand-mark {
   width: 44px;
   height: 44px;
-  border-radius: 11px;
+  border-radius: 7px;
   background: var(--lp-on-dark);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: none;
 }
 
 .login-page .brand-name {
@@ -205,11 +183,10 @@
 }
 
 .login-page .hero-stats {
-  background: linear-gradient(180deg, rgba(251, 248, 241, 0.06) 0%, rgba(251, 248, 241, 0.02) 100%);
-  border: 1px solid rgba(251, 248, 241, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--lp-radius-lg);
   padding: clamp(14px, 2.4vh, 22px) 26px clamp(16px, 2.8vh, 26px);
-  backdrop-filter: blur(8px);
 }
 
 .login-page .hero-stats-label {
@@ -217,7 +194,7 @@
   font-weight: 600;
   color: var(--lp-on-dark-faint);
   letter-spacing: 0.16em;
-  text-transform: uppercase;
+  text-transform: none;
   margin-bottom: clamp(10px, 2vh, 18px);
 }
 
@@ -253,8 +230,8 @@
   background: var(--lp-input-bg);
   color: var(--lp-ink);
   padding: 10px 14px 10px 12px;
-  border-radius: 999px;
-  box-shadow: 0 12px 32px rgba(15, 42, 31, 0.32);
+  border-radius: var(--lp-radius-md);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
   animation:
     lp-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s both,
     lp-float 3.2s ease-in-out 1.5s infinite alternate;
@@ -589,8 +566,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fbf8f1;
-  color: #8a8a7f;
+  background: #f5f5f3;
+  color: #737570;
   font-family: 'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 

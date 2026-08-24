@@ -51,11 +51,11 @@ function StatusPieChart({ pieData, grandTotal, onSelect, selectedKey }) {
   const [localActive, setLocalActive] = useState(null);
 
   // Resolve CSS vars once after mount — SVG attrs don't support var()
-  const [colors, setColors] = useState({ text: "#1a1a1a", surface: "#fbf8f1", text2: "#3a3a3a" });
+  const [colors, setColors] = useState({ text: "#171817", surface: "#ffffff", text2: "#454744" });
   useLayoutEffect(() => {
     setColors({
       text:    readCssVar("--c-text",    "#1a1a1a"),
-      surface: readCssVar("--c-surface", "#fbf8f1"),
+      surface: readCssVar("--c-surface", "#ffffff"),
       text2:   readCssVar("--c-text-2",  "#3a3a3a"),
     });
   }, []);

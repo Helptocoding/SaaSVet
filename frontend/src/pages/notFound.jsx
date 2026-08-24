@@ -10,7 +10,7 @@ const NotFound = () => {
             alignItems: "center",
             justifyContent: "center",
             minHeight: "100vh",
-            backgroundColor: "var(--c-bg, #f5f1e8)",
+            backgroundColor: "var(--c-bg, #f5f5f3)",
             textAlign: "center",
             padding: "40px",
         }}>

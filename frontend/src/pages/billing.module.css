@@ -12,15 +12,28 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
 }
+
+.cashNotice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -10px 0 18px;
+    padding: 9px 0 9px 12px;
+    border-left: 2px solid var(--c-warning-text);
+    color: var(--c-warning-text);
+    font-size: 12.5px;
+}
+
+.cashNotice strong { font-weight: 650; }
 
 /* ── Labels uppercase de secciones y campos (modales) ── */
 .eyebrow {
     font-size: 11px;
     font-weight: 500;
     color: var(--c-text-3);
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.05em;
     margin-bottom: 10px;
 }
@@ -30,7 +43,7 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--c-text-3);
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.04em;
     margin-bottom: 4px;
 }
@@ -82,7 +95,7 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--c-text-3);
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.04em;
     margin-bottom: 4px;
 }
