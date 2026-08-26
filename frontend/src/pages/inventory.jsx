@@ -815,7 +815,7 @@ const Inventory = () => {
                 {canManage && (
                     <div className={s.pacts}>
                         <button
-                            className={s.btnTutorial}
+                            className="btn btn-secondary btn-md"
                             onClick={() => tour.start({
                                 openWizardCreate,
                                 setWizardProduct,
@@ -835,16 +835,17 @@ const Inventory = () => {
                             Ver ejemplo
                         </button>
                         <button
-                            className={s.btnTutorial}
+                            className="btn btn-secondary btn-md"
                             onClick={() => setStockEntryOpen(true)}
                             title="Sumar mercancía recibida escaneando código de barras o código interno"
                         >
                             <Icon.Package s={13} />
                             Entrada de stock
                         </button>
-                        <button className={s.btnPrime} onClick={() => openWizardCreate()}>
+                        <button className="btn btn-primary btn-md btn-arrow" onClick={() => openWizardCreate()}>
                             <Icon.Plus s={13} />
-                            Nuevo Producto
+                            Nuevo producto
+                            <span className="btn-trailing-icon" aria-hidden="true"><Icon.ChevronRight s={15} /></span>
                         </button>
                     </div>
                 )}
@@ -885,9 +886,9 @@ const Inventory = () => {
             {/* ── Toolbar ── */}
             <div className={s.toolbar}>
                 <div className="searchBar" style={{ flex: 1, maxWidth: 300 }}>
-                    <Icon.Search s={13} />
+                    <span className="search-icon" aria-hidden="true"><Icon.Search s={13} /></span>
                     <input
-                        type="text"
+                        type="search"
                         placeholder="Buscar producto..."
                         value={searchText}
                         onChange={e => setSearchText(e.target.value)}

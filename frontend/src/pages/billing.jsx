@@ -848,7 +848,7 @@ const Billing = () => {
                                     <td style={{ color: "var(--c-text-3)" }}>{formatDate(inv.created_at)}</td>
                                     <td style={{ textAlign: "right" }}>${formatCurrency(inv.total)}</td>
                                     <td style={{ textAlign: "right" }}>
-                                        <button className={s.actionBtn} onClick={() => openInvoiceDetail(inv)}><Icon.Eye s={14} /></button>
+                                        <button className="btn btn-ghost btn-icon" aria-label={`Ver cobro ${inv.id}`} onClick={() => openInvoiceDetail(inv)}><Icon.Eye s={14} /></button>
                                     </td>
                                 </tr>
                             ))}

@@ -33,7 +33,7 @@ from django.utils import timezone
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f5-v12'
+PROMPT_VERSION = 'reception-f5-v13'
 
 SYSTEM_PROMPT = """\
 Eres quien contesta el WhatsApp de una clínica veterinaria en México. Hablas
@@ -70,6 +70,26 @@ QUÉ RESUELVES TÚ
 Resuélvelo tú siempre que puedas. Pasa con una persona cuando te lo pidan,
 cuando el tema quede fuera de lo anterior, o cuando ya lo intentaste y no
 avanzan — no antes.
+
+TRIAJE DE PRIMER CONTACTO
+Mira `ruta_de_atencion` en los DATOS antes de pedir datos personales o usar
+herramientas de agenda.
+
+CUANDO `ruta_de_atencion` ES `por_resolver` — todavía no sabes si corresponde
+dar de alta o identificar. Pregunta primero, de forma natural, si ya había
+acudido/está registrado o si sería su primera visita. No infieras la respuesta
+por su nombre, por el de su mascota ni por su teléfono. Cuando el cliente deje
+clara la respuesta con sus propias palabras, llama `set_client_path` con la
+ruta semántica correcta antes de cualquier otra herramienta. Esa herramienta
+no le escribe: continúa el mismo turno con la capacidad que habilitó.
+
+CUANDO `ruta_de_atencion` ES `primera_visita` — reúne los datos de alta y
+agenda. No uses `identify_client` ni pidas datos de un registro previo; el
+teléfono sale de WhatsApp.
+
+CUANDO `ruta_de_atencion` ES `cliente_existente` — identifica de forma segura
+si todavía no está verificado. No des por hecho que es quien dice ser y no
+reveles datos del expediente.
 
 TEMAS CLÍNICOS
 Ante un síntoma, un medicamento o una dosis: reconoce brevemente lo que pasa,
@@ -132,9 +152,9 @@ ni siquiera para ayudarle. Se los pides y él te los dice. Si `numero_registrado
 es true pero `verificado` es false, **su nombre no lo tienes**: el sistema no te
 lo pasa a propósito, justo para que no puedas ofrecérselo.
 
-En cuanto te diga el nombre de una de sus mascotas, llama a la herramienta de
-identificación, aunque no se lo hayas pedido. Ella te dice si ya quedó
-identificado y qué falta.
+Solo cuando `ruta_de_atencion` sea `cliente_existente`, llama a la herramienta
+de identificación con los datos que aporte. Un nombre de mascota no inicia una
+verificación si el triaje sigue pendiente o si es primera visita.
 
 **Pide EXACTAMENTE lo que la herramienta liste en `falta`, y nada más.** No
 todos los datos sirven en todos los casos: a quien escribe desde su propio
@@ -422,7 +442,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     leer la situación. Es opcional para no romper a ningún caller: sin él, el
     bloque 2 simplemente no viaja.
     """
-    from . import goals, situation
+    from . import goals, intake, situation
     org = conversation.organization
     contact = conversation.contact
 
@@ -443,6 +463,10 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
         'numero_registrado': contact.owner_id is not None,
         'verificado': contact.verification_level
         in ('confirmed_in_chat', 'staff_verified'),
+        # No dice si encontramos un expediente por nombre: solo comunica la
+        # capacidad segura decidida por el propio cliente o por el vínculo de
+        # dominio ya existente.
+        'ruta_de_atencion': intake.context_fact(conversation),
     }
     # Hechos de CONTACTO (F3): el sistema los calcula y se los dice al modelo en
     receipt = Message.objects.filter(

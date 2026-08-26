@@ -61,6 +61,12 @@ class Product(PublicIdMixin, OrganizationalModel):
         max_digits=14, decimal_places=4, default=0,
     )
 
+    # Dato histórico del sistema anterior (mismo patrón que Owner/Pet.extra_data,
+    # ADR p43 §4): columnas del catálogo viejo sin campo equivalente, conservadas
+    # como [{label, value, source_column, imported_at}]. Read-only display; sin
+    # reglas de negocio lo leen (billing/analytics/caja jamás). No es EAV.
+    extra_data = models.JSONField(default=list, blank=True)
+
     def __str__(self):
         return self.name
 

@@ -45,7 +45,8 @@ pasa por los serializers manuales (`OwnerSerializer`/`PetSerializer`). Es la raz
 3a. VALIDATE POST /api/imports/<public_id>/validate/  (dry-run, NO escribe)
              → predice created/reused/skipped/errores. status=validated
 3b. COMMIT   POST /api/imports/<public_id>/commit/  (atómico)
-             → crea Owner/Pet. status=committed. Re-commit → 409
+             → despacha por entity_type: crea Owner/Pet ó Product/Presentation
+               (+ StockMovement inicial). status=committed. Re-commit → 409
 ```
 
 `validate` y `commit` comparten la misma proyección y validación de fila, así el
@@ -73,7 +74,12 @@ Interface `parse_file()` → `CSVParser` | `ExcelParser`.
   columnas al mismo destino. El usuario siempre confirma.
 - `FIELD_CATALOG[entity_type]` — campos destino para la UI: `key`, `label` (humano),
   `group`, `importance ∈ {required, recommended, optional}`, `is_extra` para los
-  targets `owner.extra`/`pet.extra`.
+  targets `owner.extra`/`pet.extra`/`product.extra`.
+- Normalizadores de inventario: `normalize_category`, `normalize_base_unit`
+  (alias → catálogo cerrado de `Product`; no resuelto ⇒ warning + default),
+  `parse_decimal` (estricto: `$`/espacios ok; separador decimal `.` o `,`;
+  mezclados ⇒ ERROR) y `parse_bool` (sí/no/true/false/1/0/x; ambiguo ⇒ None y el
+  caller decide error — nunca False silencioso).
 
 ## Reglas de negocio (`owner_pet`)
 
@@ -112,6 +118,78 @@ Interface `parse_file()` → `CSVParser` | `ExcelParser`.
 - **Commit bloqueado con errores bloqueantes**: si `result.blocking` tiene entradas,
   el endpoint `commit` retorna 400 (`import_has_blocking_errors`). Warnings y conflicts
   NO bloquean — solo `blocking[]`.
+
+## Importador de inventario (`entity_type=inventory`)
+
+Implementado según `docs/decisions/2026-08-25-p61-importador-inventario.md`
+(plan: `docs/PLAN-importador-inventario.md`). Lógica en
+`services_inventory.py`; `validate_job`/`commit_job` despachan por
+`entity_type`. El commit recibe `created_by=request.user` para auditar el
+movimiento de stock.
+
+### Grano del archivo
+
+**1 fila = 1 Product + su Presentation única** (la principal; igual que el alta
+manual). Multi-presentación por producto NO está soportada en esta fase.
+
+### Campos (`FIELD_CATALOG['inventory']`)
+
+- **Required**: `product.name`, `presentation.sale_price` (CHECK DB exige >0;
+  sin precio válido la fila es **bloqueante** — nunca se inventan precios).
+- **Recommended**: `product.internal_code` (identidad de dedup), `category`,
+  `base_unit`, `product.stock` (existencia inicial, unidades de presentación).
+- **Optional**: `min_stock`, `presentation.name` (default = nombre del producto),
+  `conversion_factor` (default 1), `barcode`, `purchase_price`, `description`,
+  `manufacturer`, `requires_prescription` (bool estricto; ambiguo ⇒ ERROR), y
+  `product.extra` (many→1 → `Product.extra_data`, patrón Fase D).
+- Defaults con warning: categoría no reconocida ⇒ `'other'`; unidad ausente o
+  desconocida ⇒ `'unit'`.
+
+### Deduplicación (solo `skip`)
+
+- **Identidad de Product = `internal_code`** (único por org). Conflicto fuerte
+  `duplicate_internal_code` (high si el nombre también coincide) contra el
+  archivo y contra la org → fila omitida + reportada con `existing.public_id`.
+- **Barcode** duplicado (en archivo u org) ⇒ conflicto `duplicate_barcode` high.
+- **Nombre sin código ⇒ conflicto UNCERTAIN `duplicate_name`**: los nombres no
+  son identidad en inventario; jamás dedup automática silenciosa ni creación
+  automática. La fila se omite y se reporta (no bloquea commit); el usuario
+  puede agregar códigos al archivo y volver a mapear.
+- Sin código interno ⇒ auto-generado `PROD-{org.id}-{pk:04d}` (INSERT temporal
+  `__tmp_{uuid}` → UPDATE final dentro del mismo savepoint).
+
+### Stock inicial
+
+Con `stock > 0`, tras crear Product+Presentation dentro del savepoint de fila:
+
+```python
+apply_stock_movement(pres, stock × conversion_factor, 'in', org,
+                     reason='Stock inicial (importación)', created_by=user)
+```
+
+Único escritor del stock (lock de Product, dual-write a `Presentation.stock` en
+unidades de presentación, `StockMovement(quantity_unit='base')` auditable).
+Estos productos aparecen como `no_baseline` en `audit_stock_integrity`
+(informativo, igual que el alta manual). Paridad con el alta manual verificada
+por test gate: `Product.stock_quantity == stock×cf` y `Presentation.stock ==
+stock` para cualquier `cf > 0`. En importación `Presentation.quantity ==
+conversion_factor` SIEMPRE (contrato canónico; el alta manual puede dejar
+`quantity=1` — deuda preexistente, ADR p61 §Deuda).
+
+### Result: contadores adicionales (aditivos)
+
+`created_products`, `created_presentations`, `initial_stock_movements` (en
+owner_pet quedan en 0). El resto del shape canónico es idéntico. Tipos de
+conflicto nuevos: `duplicate_internal_code`, `duplicate_barcode`,
+`duplicate_name`.
+
+### Frontend
+
+El MISMO wizard (`pages/imports/`) con selector de tipo en el paso 1
+("Clientes y mascotas" / "Productos / Inventario"). Textos, columnas de tabla,
+tarjetas de resumen y CTA final vienen de `entityConfig.js` (default =
+owner_pet ⇒ comportamiento histórico intacto). Los destinos "extra" del picker
+se derivan del catálogo (`is_extra`), sin hardcodear entidades.
 
 ## Shape del `result` (contrato)
 
@@ -406,4 +484,7 @@ obliga a revisar `max_locks_per_transaction` de PostgreSQL.
   `patients.services.resolve_owner_for_phone`, y la normalización converge a
   `core.validators.phone_digits` (conservando su excepción de teléfono vacío).
   Ver `modules/patients.md` § Identidad de expediente por teléfono.
+- **inventory**: crea `Product` + `Presentation` + `StockMovement` inicial vía el
+  servicio autoritativo `apply_stock_movement` (ADR p31). Ver § Importador de
+  inventario y ADR p61.
 - Resto de dominios: sin acoplamiento (migración aislada).

@@ -10,6 +10,7 @@ Los archivos reales de clínicas vienen inconsistentes: "Perro"/"PERRO"/"canino"
   4. FIELD_CATALOG — campos destino por entity_type (lo consume la UI de mapeo).
 """
 import unicodedata
+from decimal import Decimal, InvalidOperation
 
 from apps.patients.models import SPECIES_CHOICES
 
@@ -81,6 +82,138 @@ def normalize_sex(raw):
 
 
 # ---------------------------------------------------------------------------
+# Inventario — categoría, unidad base, decimal y booleanos.
+# Deterministas: valor ambiguo NUNCA se convierte silenciosamente en válido
+# ("abc" → decimal es error; bool ambiguo es error). El caller decide el default.
+# ---------------------------------------------------------------------------
+def _canonical_set(choices):
+    return {c[0] for c in choices}
+
+
+def normalize_category(raw):
+    """Mapea categoría libre a CATEGORY_CHOICES de Product, o None si no resuelve.
+
+    None ⇒ el caller importa como 'other' con WARNING visible en el preview
+    (nunca bloquea: la categoría histórica sucia no debe frenar la migración).
+    """
+    from apps.inventory.models import Product
+    key = normalize_text(raw)
+    if not key:
+        return None
+    if key in _canonical_set(Product.CATEGORY_CHOICES):
+        return key
+    aliases = {
+        'medicamento': 'medication', 'medicamentos': 'medication',
+        'medicina': 'medication', 'medicinas': 'medication',
+        'remedio': 'medication', 'farmaco': 'medication',
+        'alimento': 'food', 'alimentos': 'food', 'comida': 'food',
+        'pienso': 'food', 'croquetas': 'food',
+        'accesorio': 'accessory', 'accesorios': 'accessory',
+        'otro': 'other', 'otros': 'other', 'varios': 'other',
+        'general': 'other', 'na': 'other', 'n/a': 'other',
+    }
+    return aliases.get(key)
+
+
+_BASE_UNIT_ALIASES = {
+    'pieza': 'piece', 'piezas': 'piece', 'pza': 'piece', 'pzas': 'piece',
+    'pz': 'piece', 'pc': 'piece',
+    'tableta': 'tablet', 'tabletas': 'tablet', 'tabs': 'tablet', 'tab': 'tablet',
+    'capsula': 'capsule', 'capsulas': 'capsule', 'cap': 'capsule', 'caps': 'capsule',
+    'ampolleta': 'ampoule', 'ampolletas': 'ampoule', 'ampolla': 'ampoule',
+    'ampollas': 'ampoule', 'amp': 'ampoule',
+    'viales': 'vial',
+    'frascos': 'bottle',
+    'bolsas': 'bag',
+    'tubos': 'tube',
+    'kilogramo': 'kg', 'kilogramos': 'kg', 'kilo': 'kg', 'kilos': 'kg',
+    'gramo': 'g', 'gramos': 'g', 'gr': 'g',
+    'mililitro': 'ml', 'mililitros': 'ml',
+    'unidad': 'unit', 'unidades': 'unit', 'u': 'unit',
+}
+
+
+def normalize_base_unit(raw):
+    """Mapea unidad libre a BASE_UNIT_CHOICES de Product, o None si no resuelve.
+
+    None ⇒ el caller importa con 'unit' + WARNING (Presentation.base_unit es
+    NOT NULL y no existe estado "pendiente"; decisión D4 del plan).
+    """
+    from apps.inventory.models import Product
+    key = normalize_text(raw)
+    if not key:
+        return None
+    if key in _canonical_set(Product.BASE_UNIT_CHOICES):
+        return key
+    return _BASE_UNIT_ALIASES.get(key)
+
+
+_CURRENCY_CHARS = '$ \t\xa0\u202f'
+
+
+def parse_decimal(raw):
+    """Parseo ESTRICTO de decimales de Excel/CSV → (Decimal|None, ok).
+
+    - Vacío (None/''/espacios) → (None, True): ausencia legítima; el caller
+      aplica su default (stock→0, cf→1…).
+    - Válido → (Decimal, True). Acepta '$' y espacios alrededor; separador
+      decimal '.' o ',' (uno solo, consistente). Signo negativo parsea; el
+      caller aplica su regla de dominio (≥0 / >0).
+    - No vacío inválido ("abc", "1.234.56", "1,234.56", "", exponentes) →
+      (None, False): el caller lo reporta como ERROR de fila (blocking).
+    """
+    if raw is None:
+        return None, True
+    text = str(raw)
+    for ch in _CURRENCY_CHARS:
+        text = text.replace(ch, '')
+    text = text.strip()
+    if not text:
+        return None, True
+    if text.count(',') and text.count('.'):
+        # Separadores mezclados: ambiguo sin locale (miles vs decimal). Error.
+        return None, False
+    normalized = text.replace(',', '.')
+    body = normalized[1:] if normalized.startswith('-') else normalized
+    if (
+        not body
+        or not body.replace('.', '', 1).isdigit()
+        or normalized.count('.') > 1
+        or '+' in normalized or 'e' in normalized.lower()
+    ):
+        return None, False
+    try:
+        return Decimal(normalized), True
+    except InvalidOperation:
+        return None, False
+
+
+_TRUE_WORDS = {
+    'si', 'yes', 'true', 'verdadero', 'v', '1', 'x', 'y',
+}
+_FALSE_WORDS = {
+    'no', 'false', 'falso', 'f', '0', 'n',
+}
+
+
+def parse_bool(raw):
+    """Booleano estricto → True | False | None.
+
+    None = vacío o ambiguo. Para campos con implicancia operativa
+    (requires_prescription afecta billing/receta) el caller trata None-no-vacío
+    como ERROR: nunca False silencioso.
+    """
+    key = normalize_text(raw)
+    if not key:
+        return None
+    if key in _TRUE_WORDS:
+        return True
+    if key in _FALSE_WORDS:
+        return False
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Catálogo de campos destino por entity_type (consumido por la UI de mapeo).
 # ---------------------------------------------------------------------------
 # Labels en lenguaje humano (sin prefijos técnicos tipo "Cliente · Nombre").
@@ -104,6 +237,28 @@ FIELD_CATALOG = {
         {'key': 'pet.legacy_id', 'label': 'Nº de expediente anterior', 'group': 'Mascota', 'importance': 'optional'},
         # Dato histórico de la mascota sin campo propio (Fase D). many→1 permitido.
         {'key': 'pet.extra', 'label': 'Dato de la mascota', 'group': 'Mascota', 'importance': 'optional', 'is_extra': True},
+    ],
+    # Importador de inventario (plan PLAN-importador-inventario.md §4).
+    # sale_price required: CHECK DB presentation_sale_price_positive (>0) y billing
+    # lo exige — sin precio válido la fila es bloqueante (nunca se inventa dinero).
+    'inventory': [
+        {'key': 'product.name', 'label': 'Nombre del producto', 'group': 'Producto', 'importance': 'required'},
+        {'key': 'presentation.sale_price', 'label': 'Precio de venta', 'group': 'Presentación', 'importance': 'required'},
+        {'key': 'product.internal_code', 'label': 'Código interno', 'group': 'Producto', 'importance': 'recommended'},
+        {'key': 'product.category', 'label': 'Categoría', 'group': 'Producto', 'importance': 'recommended'},
+        {'key': 'product.base_unit', 'label': 'Unidad base', 'group': 'Producto', 'importance': 'recommended'},
+        {'key': 'product.stock', 'label': 'Existencia inicial', 'group': 'Producto', 'importance': 'recommended'},
+        {'key': 'product.min_stock', 'label': 'Stock mínimo', 'group': 'Producto', 'importance': 'optional'},
+        {'key': 'presentation.name', 'label': 'Nombre de la presentación', 'group': 'Presentación', 'importance': 'optional'},
+        {'key': 'presentation.conversion_factor', 'label': 'Factor de conversión', 'group': 'Presentación', 'importance': 'optional'},
+        {'key': 'presentation.barcode', 'label': 'Código de barras', 'group': 'Presentación', 'importance': 'optional'},
+        {'key': 'presentation.purchase_price', 'label': 'Precio de compra', 'group': 'Presentación', 'importance': 'optional'},
+        {'key': 'product.description', 'label': 'Descripción', 'group': 'Producto', 'importance': 'optional'},
+        {'key': 'product.manufacturer', 'label': 'Fabricante', 'group': 'Producto', 'importance': 'optional'},
+        {'key': 'product.requires_prescription', 'label': 'Requiere receta', 'group': 'Producto', 'importance': 'optional'},
+        # Dato histórico del producto sin campo propio (Product.extra_data, patrón
+        # Fase D / ADR p43). many→1 permitido.
+        {'key': 'product.extra', 'label': 'Dato del producto', 'group': 'Producto', 'importance': 'optional', 'is_extra': True},
     ],
 }
 
@@ -167,6 +322,54 @@ _COLUMN_ALIASES = {
             'expediente', 'no expediente', 'no. expediente', 'numero expediente',
             'folio', 'codigo', 'código', 'clave', 'id', 'historia clinica',
             'historia clínica', 'hc',
+        ],
+    },
+    # Importador de inventario (plan §4). Claves normalizadas (sin acentos).
+    'inventory': {
+        'product.name': [
+            'producto', 'productos', 'articulo', 'nombre producto',
+            'nombre del producto', 'nombre articulo', 'descripcion producto',
+        ],
+        'product.internal_code': [
+            'codigo', 'codigo interno', 'código interno', 'codigo producto',
+            'codigo de producto', 'sku', 'clave', 'clave interna', 'id producto',
+        ],
+        'product.category': [
+            'categoria', 'categoria producto', 'tipo', 'rubro', 'linea',
+            'familia',
+        ],
+        'product.base_unit': ['unidad', 'unidad base', 'umedida', 'u de medida'],
+        'product.stock': [
+            'existencia', 'existencias', 'stock', 'stock actual',
+            'existencia inicial', 'inventario', 'cantidad', 'cantidad actual',
+        ],
+        'product.min_stock': [
+            'minimo', 'stock minimo', 'minimo stock', 'punto de reorden',
+            'stock min', 'min',
+        ],
+        'presentation.name': [
+            'presentacion', 'presentacion comercial', 'formato', 'formato venta',
+        ],
+        'presentation.conversion_factor': [
+            'factor', 'factor conversion', 'factor de conversion', 'contenido',
+            'piezas por caja', 'unidades por caja', 'equivale a',
+        ],
+        'presentation.barcode': [
+            'codigo de barras', 'codigo barras', 'codigobarras', 'barcode',
+            'upc', 'ean', 'cbarra',
+        ],
+        'presentation.sale_price': [
+            'precio', 'precio venta', 'precio de venta', 'pvp', 'precio publico',
+            'precio unitario',
+        ],
+        'presentation.purchase_price': [
+            'precio compra', 'precio de compra', 'costo', 'costo compra',
+            'costo de compra', 'ultimo costo',
+        ],
+        'product.description': ['descripcion', 'detalle', 'notas'],
+        'product.manufacturer': ['fabricante', 'laboratorio', 'marca', 'proveedor marca'],
+        'product.requires_prescription': [
+            'receta', 'requiere receta', 'requiere receta medica', 'controlado',
         ],
     },
 }

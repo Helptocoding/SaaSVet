@@ -21,10 +21,12 @@ class ImportJob(PublicIdMixin, OrganizationalModel):
     ENTITY_OWNER_PET = 'owner_pet'
     ENTITY_OWNER = 'owner'
     ENTITY_PRODUCT = 'product'
+    ENTITY_INVENTORY = 'inventory'
     ENTITY_CHOICES = [
         (ENTITY_OWNER_PET, 'Clientes + Mascotas'),
         (ENTITY_OWNER, 'Clientes'),
         (ENTITY_PRODUCT, 'Productos'),
+        (ENTITY_INVENTORY, 'Inventario'),
     ]
 
     STATUS_PENDING = 'pending'

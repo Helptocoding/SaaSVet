@@ -42,6 +42,9 @@ Presentation.stock              ← copia display (backward compat); no autorita
 - `default_cost_behavior` — `charge`|`included` (default `charge`). Modo de cobro por defecto al
   auto-agregar el producto en consulta (p.ej. vacuna aplicada, A2). Editable luego en Cargos.
 - `is_active` — soft delete
+- `extra_data` — dato histórico del sistema anterior (importador; ADR p43/p61):
+  `[{label, value, source_column, imported_at}]`. Read-only display; ninguna
+  regla de negocio lo lee. No es EAV.
 
 ### Presentation
 
@@ -252,6 +255,16 @@ El frontend ordena: primero agotados (`stock_quantity = 0`), luego bajo mínimo.
 
 Tenant-scoped. Retorna `PresentationSerializer` completo con `product.*`. 404 si no existe.
 Diseñado para POS scanner — cuando el cajero escanea, se selecciona la presentación directamente.
+
+## Importador de inventario (ADR p61)
+
+`entity_type=inventory` del módulo imports: migra el catálogo desde Excel/CSV
+creando Product + su Presentation única; el stock inicial entra **siempre** por
+`apply_stock_movement(..., 'in', reason='Stock inicial (importación)')`
+(ledger auditable, `quantity_unit='base'`). Dedup por `internal_code`; nombre
+sin código ⇒ conflicto uncertain reportado (nunca dedup silenciosa). Sin código
+⇒ auto `PROD-{org.id}-{pk:04d}`. Detalle: `modules/imports.md` § Importador de
+inventario.
 
 ## Frontend: Wizard de alta de producto (ADR p33)
 

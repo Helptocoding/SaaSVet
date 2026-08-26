@@ -7,7 +7,10 @@ import { Icon } from "../../components/icons";
    solo una está abierta a la vez (abrir otra cierra la anterior). Sin buscador
    (con pocas categorías confundía). Modal pequeño (clases globales .modal-*),
    sin librerías nuevas. NO toca backend: devuelve el mismo value que consume
-   `choose()` en MappingStep (key del sistema | "owner.extra" | "pet.extra" | "").
+   `choose()` en MappingStep (key del sistema | "*.extra" | "").
+
+   Los destinos "extra" se derivan del fieldCatalog (is_extra) — sin hardcodear
+   entidades; los textos legados de owner_pet se preservan vía EXTRA_OPTION_LABELS.
 
    Props:
    - column         nombre original de la columna del Excel (solo display).
@@ -18,9 +21,11 @@ import { Icon } from "../../components/icons";
    - onPick(value)  callback al elegir.
    - onClose()      cerrar sin cambiar.
 */
-const EXTRA_OWNER = "owner.extra";
-const EXTRA_PET = "pet.extra";
 const NO_IMPORT = "";
+const EXTRA_OPTION_LABELS = {
+    "owner.extra": "Conservar como información anterior del cliente",
+    "pet.extra": "Conservar como información anterior de la mascota",
+};
 
 const DestinationPicker = ({
     column,
@@ -48,18 +53,27 @@ const DestinationPicker = ({
         });
         if (byGroup.Cliente) out.push(sysSection("Cliente", "User", byGroup.Cliente));
         if (byGroup.Mascota) out.push(sysSection("Mascota", "Paw", byGroup.Mascota));
+        if (byGroup.Producto) out.push(sysSection("Producto", "Box", byGroup.Producto));
+        if (byGroup["Presentación"]) out.push(sysSection("Presentación", "FileText", byGroup["Presentación"]));
         for (const g of Object.keys(byGroup)) {
-            if (g !== "Cliente" && g !== "Mascota") out.push(sysSection(g, "FileText", byGroup[g]));
+            if (!["Cliente", "Mascota", "Producto", "Presentación"].includes(g)) {
+                out.push(sysSection(g, "FileText", byGroup[g]));
+            }
         }
-        out.push({
-            id: "extra",
-            name: "Datos del sistema anterior",
-            icon: "Box",
-            options: [
-                { value: EXTRA_OWNER, label: "Conservar como información anterior del cliente" },
-                { value: EXTRA_PET, label: "Conservar como información anterior de la mascota" },
-            ],
-        });
+        const extraOptions = fieldCatalog
+            .filter((f) => f.is_extra)
+            .map((f) => ({
+                value: f.key,
+                label: EXTRA_OPTION_LABELS[f.key] ?? `Conservar como ${f.label.toLowerCase()}`,
+            }));
+        if (extraOptions.length > 0) {
+            out.push({
+                id: "extra",
+                name: "Datos del sistema anterior",
+                icon: "Box",
+                options: extraOptions,
+            });
+        }
         out.push({
             id: "no",
             name: "No usar",

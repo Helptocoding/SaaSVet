@@ -96,21 +96,25 @@ def _extra_entry(spec, header, value, imported_at):
 # ---------------------------------------------------------------------------
 # Proyección fila → dict por campo destino
 # ---------------------------------------------------------------------------
-def _project_row(columns, mapping, row, imported_at=None):
+def _project_row(columns, mapping, row, imported_at=None,
+                 extra_targets=('owner.extra', 'pet.extra')):
     """Aplica el mapping a una fila.
 
-    Devuelve (data, owner_extra, pet_extra):
+    Devuelve (data, extras):
       - data: { campo_destino_del_sistema: valor }  (1:1)
-      - owner_extra / pet_extra: [ {label, value, source_column[, imported_at]}, … ]
-        para owner.extra/pet.extra (Fase D, datos del sistema anterior). Se itera en
+      - extras: { target_extra: [ {label, value, source_column[, imported_at]}, … ] }
+        para los targets `*.extra` (Fase D, datos del sistema anterior). Se itera en
         ORDEN DE COLUMNA para preservar el orden original; labels repetidos conviven
         (lista, no dict). Caps: máx 50 entradas/registro, value truncado a 500 chars.
         `imported_at` solo se incluye al persistir (commit), no en el dry-run.
     mapping = { header: campo_destino }. Columnas no mapeadas se ignoran.
+
+    `extra_targets` parametriza qué targets son "extra" (owner_pet usa
+    owner.extra/pet.extra; inventory usa product.extra). El comportamiento por
+    defecto es idéntico al histórico.
     """
     data = {}
-    owner_extra = []
-    pet_extra = []
+    extras = {target: [] for target in extra_targets}
     # Iterar por ÍNDICE real (no por nombre): si hay headers duplicados
     # ("Comentario" ×2), cada columna lee SU celda → dos entradas distintas en la
     # lista extra. El mapping se comparte por nombre (ambas → el mismo target).
@@ -122,13 +126,14 @@ def _project_row(columns, mapping, row, imported_at=None):
         if idx >= len(row):
             continue
         value = (row[idx] or '').strip()
-        if target == 'owner.extra':
-            owner_extra.append(_extra_entry(spec, header, value, imported_at))
-        elif target == 'pet.extra':
-            pet_extra.append(_extra_entry(spec, header, value, imported_at))
+        if target in extras:
+            extras[target].append(_extra_entry(spec, header, value, imported_at))
         else:
             data[target] = value
-    return data, owner_extra[:_EXTRA_MAX_ENTRIES], pet_extra[:_EXTRA_MAX_ENTRIES]
+    return data, {
+        target: entries[:_EXTRA_MAX_ENTRIES]
+        for target, entries in extras.items()
+    }
 
 
 def _parse_birth_date(raw, org):
@@ -279,6 +284,10 @@ def _base_result():
         'created_owners': 0,
         'reused_owners': 0,
         'created_pets': 0,
+        # Contadores de inventario (aditivos; owner_pet los deja en 0).
+        'created_products': 0,
+        'created_presentations': 0,
+        'initial_stock_movements': 0,
         'skipped_duplicates': 0,
         'skipped_conflicts': 0,
         # Split agregado de skipped_conflicts (fuente única de verdad para el
@@ -371,7 +380,7 @@ def _build_existing_index(org, rows, columns, mapping):
     pet_legacy_ids = set()
     owner_legacy_ids = set()
     for row in rows:
-        data, _, _ = _project_row(columns, mapping, row)
+        data, _extras = _project_row(columns, mapping, row)
         ol = (data.get('owner.legacy_id') or '').strip()[:_LEGACY_MAX]
         pl = (data.get('pet.legacy_id') or '').strip()[:_LEGACY_MAX]
         if ol:
@@ -424,7 +433,28 @@ def _compute_match_confidence(incoming, existing, scope='pet'):
 # ---------------------------------------------------------------------------
 # VALIDATE (dry-run) — no escribe nada
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Dispatch por entity_type (owner_pet = histórico; inventory = services_inventory)
+# ---------------------------------------------------------------------------
 def validate_job(job):
+    """Punto de entrada de validate: despacha por el entity_type del job."""
+    if job.entity_type == ImportJob.ENTITY_INVENTORY:
+        from .services_inventory import validate_inventory_job
+        return validate_inventory_job(job)
+    return _validate_owner_pet_job(job)
+
+
+def commit_job(job, created_by=None):
+    """Punto de entrada de commit: despacha por el entity_type del job.
+    `created_by` se propaga al inventario para auditar StockMovement.created_by;
+    owner_pet lo ignora (paridad con su comportamiento histórico)."""
+    if job.entity_type == ImportJob.ENTITY_INVENTORY:
+        from .services_inventory import commit_inventory_job
+        return commit_inventory_job(job, created_by=created_by)
+    return _commit_owner_pet_job(job)
+
+
+def _validate_owner_pet_job(job):
     """Recorre las filas y predice el resultado SIN escribir. Idempotente.
 
     La fila del archivo es la unidad lógica:
@@ -457,7 +487,7 @@ def validate_job(job):
     seen_pet_legacy = set()
 
     for i, row in enumerate(job.rows, start=1):
-        data, _owner_extra, _pet_extra = _project_row(columns, job.mapping, row)
+        data, _extras = _project_row(columns, job.mapping, row)
         clean, errors, warnings = clean_owner_pet_row(data, org)
         for w in warnings:
             result['warnings'].append({'row': i, **w})
@@ -625,7 +655,7 @@ def validate_job(job):
 # ---------------------------------------------------------------------------
 # COMMIT — escribe en transaction.atomic, savepoint por fila
 # ---------------------------------------------------------------------------
-def commit_job(job):
+def _commit_owner_pet_job(job):
     """Escribe los registros. Atómico a nivel job; savepoint por fila (una fila
     mala no tumba el resto). Devuelve result. NO marca el status (lo hace la view).
 
@@ -664,7 +694,9 @@ def commit_job(job):
 
     with transaction.atomic():
         for i, row in enumerate(job.rows, start=1):
-            data, owner_extra, pet_extra = _project_row(columns, job.mapping, row, imported_at)
+            data, extras = _project_row(columns, job.mapping, row, imported_at)
+            owner_extra = extras.get('owner.extra', [])
+            pet_extra = extras.get('pet.extra', [])
             clean, errors, warnings = clean_owner_pet_row(data, org)
             for w in warnings:
                 result['warnings'].append({'row': i, **w})

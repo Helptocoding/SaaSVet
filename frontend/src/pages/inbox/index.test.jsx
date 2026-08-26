@@ -110,7 +110,8 @@ afterEach(() => {
 
 const selectConversation = async (user, name) => {
     await user.click(await screen.findByRole("button", { name: new RegExp(name) }));
-    return screen.findByPlaceholderText("Escribe una respuesta…");
+    await screen.findByText(name, { selector: "strong" });
+    return screen.getByPlaceholderText("Escribe una respuesta…");
 };
 
 describe("Inbox — aislamiento del borrador", () => {

@@ -871,9 +871,9 @@ const Pets = () => {
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
                 {/* Search */}
                 <div className="searchBar" style={{ flex: "1 1 220px", maxWidth: "300px" }}>
-                    <Icon.Search s={14} c="var(--c-text-3)" />
+                    <span className="search-icon" aria-hidden="true"><Icon.Search s={14} /></span>
                     <input
-                        type="text"
+                        type="search"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Nombre, raza, especie, cliente..."

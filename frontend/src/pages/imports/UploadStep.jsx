@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "../../components/icons";
+import { OWNER_PET_CONFIG } from "./entityConfig";
 import s from "./imports.module.css";
 
 // Extensiones aceptadas en v1 (CSV + XLSX, Ajuste #2 del sprint).
@@ -20,10 +21,9 @@ const formatSize = (bytes) => {
 };
 
 /* Paso 1 — Subir archivo.
-   `entity_type` está fijo a 'owner_pet' en v1 (no hay selector). El padre
-   (index.jsx) es dueño de la llamada de red (uploadImport) para centralizar
-   el manejo de errores; aquí solo se elige el archivo y se valida la extensión. */
-const UploadStep = ({ onUpload, uploading }) => {
+   Los textos vienen del padre vía `config` (entityConfig) — este componente
+   sigue sin tocar red; el padre (index.jsx) centraliza la llamada. */
+const UploadStep = ({ onUpload, uploading, config = OWNER_PET_CONFIG }) => {
     const inputRef = useRef(null);
     const [file, setFile] = useState(null);
     const [dragOver, setDragOver] = useState(false);
@@ -63,11 +63,9 @@ const UploadStep = ({ onUpload, uploading }) => {
     return (
         <div className="card">
             <div style={{ marginBottom: 18 }}>
-                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>Sube tu archivo de clientes y mascotas</p>
+                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{config.uploadTitle}</p>
                 <p style={{ fontSize: 12.5, color: "var(--c-text-2)" }}>
-                    Acepta Excel (.xlsx) o CSV (.csv). La primera fila debe contener los
-                    encabezados de cada columna. En el siguiente paso eliges qué columna
-                    corresponde a cada dato.
+                    {config.uploadHint}
                 </p>
             </div>
 
@@ -118,7 +116,7 @@ const UploadStep = ({ onUpload, uploading }) => {
 
             <div className={s.actions}>
                 <span style={{ fontSize: 12, color: "var(--c-text-3)" }}>
-                    Importarás <strong>clientes y sus mascotas</strong>.
+                    Importarás <strong>{config.uploadFooterLead}</strong>.
                 </span>
                 <div className={s.actionsRight}>
                     <button

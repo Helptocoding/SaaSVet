@@ -53,7 +53,7 @@ const TimelineCard = ({
 
   return (
     <article
-      className={`${styles.txCard} ${isExpanded ? styles.txCardOpen : ""}`}
+        className={`card ${styles.txCard} ${isExpanded ? styles.txCardOpen : ""}`}
       style={{ "--tx-color": typeMeta.color, "--tx-soft": typeMeta.soft || "#f0f9f4" }}
     >
       {/* ── Header: tipo · fecha · vet | badges · chevron ── */}
@@ -147,7 +147,7 @@ const TimelineCard = ({
         <div className={styles.txFooter}>
           {hasPrx && (
             <button
-              className={styles.txBtn}
+              className="btn btn-secondary btn-sm btn-row-action"
               disabled={downloadingPrescriptionId === record.prescription_summary.public_id}
               onClick={(e) => { e.stopPropagation(); onDownloadPrescription?.(record.prescription_summary.public_id); }}
             >
@@ -158,7 +158,7 @@ const TimelineCard = ({
           )}
           {canDownloadRecord && (
             <button
-              className={styles.txBtn}
+              className="btn btn-secondary btn-sm btn-row-action"
               disabled={downloadingRecordPdfId === record.public_id}
               onClick={(e) => { e.stopPropagation(); onDownloadRecordPdf?.(record.public_id); }}
             >
@@ -169,7 +169,7 @@ const TimelineCard = ({
           )}
           {!hasPrx && !isClosed && canCreate && (
             <button
-              className={styles.txBtn}
+              className="btn btn-secondary btn-sm btn-row-action"
               onClick={(e) => { e.stopPropagation(); onCreatePrescription?.(); }}
             >
               <Icon.Pill s={13} /> Nueva receta
@@ -177,7 +177,7 @@ const TimelineCard = ({
           )}
           {canEdit && (
             <button
-              className={styles.txBtn}
+              className="btn btn-secondary btn-sm btn-row-action"
               onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
             >
               <Icon.Edit s={13} /> Editar
@@ -185,7 +185,7 @@ const TimelineCard = ({
           )}
           {canClose && (
             <button
-              className={styles.txBtn}
+              className="btn btn-secondary btn-sm btn-row-action"
               onClick={(e) => { e.stopPropagation(); onClose?.(); }}
             >
               <Icon.CheckCircle s={13} /> Finalizar
@@ -193,7 +193,7 @@ const TimelineCard = ({
           )}
           {canDel && (
             <button
-              className={`${styles.txBtn} ${styles.txBtnDanger}`}
+              className="btn btn-danger btn-sm btn-row-action"
               onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
             >
               <Icon.Trash s={13} /> Eliminar

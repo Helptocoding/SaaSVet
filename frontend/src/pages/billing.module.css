@@ -63,26 +63,6 @@
     border-radius: 50%;
 }
 
-/* ── Discret Actions ── */
-.actionBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: var(--r-sm);
-    color: var(--c-text-4);
-    transition: all var(--t);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-}
-
-.actionBtn:hover {
-    color: var(--c-primary);
-    background: var(--c-subtle);
-}
-
 /* ── Modal & Sections Refinement ── */
 .infoGrid {
     display: grid;

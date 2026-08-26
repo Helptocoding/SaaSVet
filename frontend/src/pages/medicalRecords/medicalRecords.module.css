@@ -400,32 +400,6 @@
   flex-wrap: wrap;
 }
 
-.filterPill {
-  height: 32px;
-  padding: 0 14px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1.5px solid #eee;
-  border-radius: var(--r-md);
-  background: #fff;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.filterPill:hover {
-  border-color: #1a4434;
-  color: #1a4434;
-  background: #f0f9f4;
-}
-
-.filterPillActive {
-  background: #1a4434;
-  border-color: #1a4434;
-  color: #fff;
-}
-
 .historySearchWrap {
   position: relative;
   margin-left: auto;
@@ -1147,45 +1121,4 @@
   background: var(--c-subtle);
   padding: 2px 7px;
   border-radius: var(--r-sm);
-}
-
-.txBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 11px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  border: 1.5px solid var(--c-border-2);
-  border-radius: var(--r-md);
-  background: var(--c-surface);
-  color: var(--c-text-2);
-  cursor: pointer;
-  transition: all var(--t);
-  box-shadow: var(--shadow-xs);
-}
-
-.txBtn:hover {
-  border-color: var(--c-primary);
-  color: var(--c-primary);
-  background: #edf7f0;
-}
-
-.txBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.txBtnDanger {
-  color: var(--c-danger-text);
-  border-color: var(--c-danger-border);
-  background: var(--c-danger-bg);
-}
-
-.txBtnDanger:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #b91c1c;
 }

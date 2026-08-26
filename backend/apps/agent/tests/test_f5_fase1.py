@@ -209,6 +209,19 @@ class Fase1Base(TestCase):
 
 class IdentifyClientTests(Fase1Base):
 
+    def _conversation(self, **kwargs):
+        """El sujeto de estas pruebas ya declaró que es cliente existente.
+
+        Esta clase prueba la herramienta de identificación, no el triaje que
+        decide si dicha herramienta puede usarse. Declarar esa precondición en
+        el fixture evita que un test de privacidad salte la frontera real.
+        """
+        conversation = super()._conversation(**kwargs)
+        if conversation.contact.owner_id is None:
+            conversation.intake_path = Conversation.INTAKE_EXISTING_CLIENT
+            conversation.save(update_fields=['intake_path'])
+        return conversation
+
     def test_acepta_un_solo_dato_y_guarda_lo_que_llego(self):
         """C2 · push: se guarda lo que el cliente aportó, sin habérselo pedido."""
         conversation = self._conversation(external_id="5215500001111")

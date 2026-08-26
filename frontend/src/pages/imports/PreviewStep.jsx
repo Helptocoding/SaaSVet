@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Pagination from "../../components/Pagination";
 import { groupImportIssues } from "./groupImportIssues";
+import { getEntityConfig } from "./entityConfig";
 import s from "./imports.module.css";
 
 const PAGE_SIZE = 25;
@@ -11,28 +12,20 @@ const num = (v) => {
     return Number.isFinite(n) ? n : 0;
 };
 
-const CSV_ACTIONS = {
-    "pet.name": "Agrega el nombre de la mascota en la columna correspondiente de tu archivo.",
-    "owner.name": "Agrega el nombre del cliente en la columna correspondiente de tu archivo.",
-    "owner.phone": "Corrige el teléfono: deben ser exactamente 10 dígitos, o deja la celda vacía.",
-    "pet.species": "La especie no se reconoció. Puedes completarla después desde la ficha.",
-    "pet.birth_date": "La fecha no tiene un formato válido. Puedes corregirla o completarla después.",
-};
-
-function buildCsv(items, labelByKey) {
+function buildCsv(items, labelByKey, csvActions) {
     const BOM = "\uFEFF";
     const header = "Fila,Campo,Error,Qué hacer\n";
     const rows = items.map((it) => {
         const label = labelByKey[it.field] || it.field || "";
-        const action = CSV_ACTIONS[it.field] || "";
+        const action = csvActions[it.field] || "";
         const msg = (it.message || "").replace(/"/g, '""');
         return `${it.row},"${label}","${msg}","${action}"`;
     });
     return BOM + header + rows.join("\n");
 }
 
-function downloadCsv(items, labelByKey, filename) {
-    const csv = buildCsv(items, labelByKey);
+function downloadCsv(items, labelByKey, filename, csvActions) {
+    const csv = buildCsv(items, labelByKey, csvActions);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -43,44 +36,45 @@ function downloadCsv(items, labelByKey, filename) {
 }
 
 /* ── Card de conflicto individual ── */
-const ConflictCard = ({ conflict }) => (
-    <div className={s.conflictCard}>
-        <div className={s.conflictRow}>
-            <span className={s.conflictNum}>Fila #{conflict.row}</span>
-        </div>
-        <div className={s.conflictCompare}>
-            <div className={s.conflictSide}>
-                <div className={s.conflictSideLabel}>En tu archivo</div>
-                <div className={s.conflictSideValue}>
-                    {conflict.incoming?.pet_name || "—"}
+const ConflictCard = ({ conflict, cfg }) => {
+    const c = cfg.conflict;
+    const link = c.link ? c.link(conflict) : null;
+    return (
+        <div className={s.conflictCard}>
+            <div className={s.conflictRow}>
+                <span className={s.conflictNum}>Fila #{conflict.row}</span>
+            </div>
+            <div className={s.conflictCompare}>
+                <div className={s.conflictSide}>
+                    <div className={s.conflictSideLabel}>En tu archivo</div>
+                    <div className={s.conflictSideValue}>
+                        {conflict.incoming?.[c.incomingPrimaryKey] || "—"}
+                    </div>
+                    <div className={s.conflictSideMeta}>
+                        {conflict.incoming?.[c.incomingSecondaryKey] || "—"}
+                    </div>
                 </div>
-                <div className={s.conflictSideMeta}>
-                    {conflict.incoming?.owner_name || "—"}
+                <div className={s.conflictSide}>
+                    <div className={s.conflictSideLabel}>Ya registrado</div>
+                    <div className={s.conflictSideValue}>
+                        {conflict.existing ? c.existingPrimary(conflict.existing) : "—"}
+                    </div>
+                    <div className={s.conflictSideMeta}>
+                        {conflict.existing ? (c.existingSecondary(conflict.existing) || "") : ""}
+                    </div>
                 </div>
             </div>
-            <div className={s.conflictSide}>
-                <div className={s.conflictSideLabel}>Ya registrado</div>
-                <div className={s.conflictSideValue}>
-                    {conflict.existing?.pet_name || "—"}
-                </div>
-                <div className={s.conflictSideMeta}>
-                    {conflict.existing?.owner_name || "—"}
-                </div>
-            </div>
+            <p className={s.conflictHint}>
+                {conflict.match_confidence === "high" ? c.highText : c.cardUncertainText}
+            </p>
+            {link && (
+                <a href={link} target="_blank" rel="noopener noreferrer" className={s.conflictLink}>
+                    {c.linkText}
+                </a>
+            )}
         </div>
-        <p className={s.conflictHint}>
-            {conflict.match_confidence === "high"
-                ? "Parece el mismo paciente."
-                : "El número de expediente ya pertenece a otro paciente."}
-        </p>
-        {conflict.existing?.public_id && (
-            <a href={`/pets/${conflict.existing.public_id}`}
-               target="_blank" rel="noopener noreferrer" className={s.conflictLink}>
-                Ver paciente
-            </a>
-        )}
-    </div>
-);
+    );
+};
 
 /* ── Grupo colapsable genérico (conflictos) ── */
 const CollapseGroup = ({ icon, title, count, intro, items, open, onToggle, variant }) => {
@@ -216,7 +210,16 @@ const ReviewPanel = ({ blockingGroups, warningsGroups, labelByKey }) => {
 };
 
 /* Paso 3 — Vista previa (dry-run) */
-const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing, canCommit }) => {
+const PreviewStep = ({
+    result,
+    fieldCatalog = [],
+    onBack,
+    onConfirm,
+    committing,
+    canCommit,
+    entityType = "owner_pet",
+}) => {
+    const cfg = getEntityConfig(entityType);
     const labelByKey = useMemo(() => {
         const m = { mapping: "Mapeo de columnas", owner: "Cliente", pet: "Mascota", row: "Fila" };
         for (const f of fieldCatalog) m[f.key] = f.label;
@@ -229,9 +232,8 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
     });
 
     const r = result || {};
-    const createdPets = num(r.created_pets);
-    const createdOwners = num(r.created_owners);
-    const reusedOwners = num(r.reused_owners);
+    const createdTotal = num(r[cfg.createdTotalKey]);
+    const createdPets = createdTotal; // alias interno legado (pills/CTA genéricos)
     const skippedDups = num(r.skipped_duplicates);
     const skippedConflicts = num(r.skipped_conflicts);
     const blockingRows = num(r.blocking_rows);
@@ -266,13 +268,11 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
 
     const toggle = (s) => setOpenSections((prev) => ({ ...prev, [s]: !prev[s] }));
 
-    const totalOwners = createdOwners + reusedOwners;
+    const totalPersons = cfg.createdSecondaryKeys.reduce((acc, k) => acc + num(r[k]), 0);
 
-    const blockingActions = {
-        "pet.name": `Agrega el nombre en la columna asignada como ${labelByKey["pet.name"] || "Nombre de la mascota"}.`,
-        "owner.name": `Agrega el nombre en la columna asignada como ${labelByKey["owner.name"] || "Nombre del cliente"}.`,
-        "owner.phone": "Corrige el teléfono: deben ser 10 dígitos, o deja la celda vacía.",
-    };
+    const blockingActions = Object.fromEntries(
+        Object.entries(cfg.blockingActions).map(([field, fn]) => [field, fn(labelByKey)]),
+    );
 
     const blockingGroups = useMemo(
         () => groupImportIssues(blocking, labelByKey, blockingActions),
@@ -292,13 +292,13 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                     Esta es una simulación — todavía no se ha guardado nada.
                 </div>
                 <div className={s.statusPills}>
-                    {createdPets > 0 && (
+                    {createdTotal > 0 && (
                         <div className={`${s.statusPill} ${s.pillSuccess}`}>
                             <span className={s.pillIcon}>✓</span>
-                            Se crearán {createdPets} mascota{createdPets !== 1 ? "s" : ""}
-                            {totalOwners > 0 && (
+                            Se crearán {createdTotal} {createdTotal !== 1 ? cfg.nouns.primaryPlural : cfg.nouns.primary}
+                            {cfg.showPersonsPill && totalPersons > 0 && (
                                 <span className={s.pillExtra}>
-                                    {" · "}asociadas a {totalOwners} cliente{totalOwners !== 1 ? "s" : ""}
+                                    {" · "}asociadas a {totalPersons} {totalPersons !== 1 ? cfg.nouns.personPlural : cfg.nouns.person}
                                 </span>
                             )}
                         </div>
@@ -327,7 +327,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                             {warnings.length} con datos incompletos
                         </div>
                     )}
-                    {!hasAnyIssue && createdPets === 0 && (
+                    {!hasAnyIssue && createdTotal === 0 && (
                         <div className={`${s.statusPill} ${s.pillMuted}`}>
                             No se encontraron registros para importar.
                         </div>
@@ -342,7 +342,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                         <span className={s.previewSectionIcon}>✓</span>
                         <span>SE CREARÁN</span>
                         <span className={s.previewTotal}>
-                            ({previewTotal} mascota{previewTotal === 1 ? "" : "s"})
+                            ({previewTotal} {previewTotal === 1 ? cfg.nouns.primary : cfg.nouns.primaryPlural})
                         </span>
                     </div>
                     <div className={s.previewTableWrap}>
@@ -350,20 +350,20 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Mascota</th>
-                                    <th>Cliente</th>
-                                    <th>Especie</th>
-                                    <th>Teléfono</th>
+                                    {cfg.previewColumns.map((col) => (
+                                        <th key={col.key}>{col.label}</th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {preview.map((p) => (
                                     <tr key={p.row}>
                                         <td className={s.rowNum}>{p.row}</td>
-                                        <td>{p.pet_name || "—"}</td>
-                                        <td>{p.owner_name || "—"}</td>
-                                        <td className={s.cellSpecies}>{p.pet_species || "—"}</td>
-                                        <td className={s.cellMono}>{p.owner_phone || "—"}</td>
+                                        {cfg.previewColumns.map((col) => (
+                                            <td key={col.key} className={col.cellClass ? s[col.cellClass] : undefined}>
+                                                {p[col.key] || "—"}
+                                            </td>
+                                        ))}
                                     </tr>
                                 ))}
                             </tbody>
@@ -438,14 +438,12 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                                                 <span className={s.conflictNum}>Fila #{item.row}</span>
                                             </div>
                                             <div className={s.skippedCardInfo}>
-                                                <span>
-                                                    <span className={s.skippedInfoLabel}>Mascota: </span>
-                                                    {item.pet_name || "—"}
-                                                </span>
-                                                <span>
-                                                    <span className={s.skippedInfoLabel}>Cliente: </span>
-                                                    {item.owner_name || "—"}
-                                                </span>
+                                                {cfg.skippedCardFields.map((f) => (
+                                                    <span key={f.key}>
+                                                        <span className={s.skippedInfoLabel}>{f.label}: </span>
+                                                        {item[f.key] || "—"}
+                                                    </span>
+                                                ))}
                                             </div>
                                             <p style={{ fontSize: 12, color: "var(--c-text-3)", margin: "6px 0 0" }}>
                                                 {item.message}
@@ -458,7 +456,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                                         </div>
                                     )}
                                     {highConfidence.map((c) => (
-                                        <ConflictCard key={`reg-conf-${c.row}`} conflict={c} />
+                                        <ConflictCard key={`reg-conf-${c.row}`} conflict={c} cfg={cfg} />
                                     ))}
                                     {conflictsHighTotal > highConfidence.length && (
                                         <div className={s.previewShowing}>
@@ -471,15 +469,13 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                             {conflictsUncertainTotal > 0 && (
                                 <div className={s.omittedReasonBlock}>
                                     <div className={s.omittedReasonTitle}>
-                                        Mismo expediente con datos diferentes ({conflictsUncertainTotal})
+                                        {cfg.conflict.uncertainTitle(conflictsUncertainTotal)}
                                     </div>
                                     <p className={s.omittedReasonDesc}>
-                                        El número de expediente ya pertenece a otro paciente con datos distintos.
-                                        Puede pasar si importas información de otra clínica o el sistema anterior
-                                        reinició numeraciones.
+                                        {cfg.conflict.uncertainDesc}
                                     </p>
                                     {uncertainConfidence.map((c) => (
-                                        <ConflictCard key={`exp-conf-${c.row}`} conflict={c} />
+                                        <ConflictCard key={`exp-conf-${c.row}`} conflict={c} cfg={cfg} />
                                     ))}
                                     {conflictsUncertainTotal > uncertainConfidence.length && (
                                         <div className={s.previewShowing}>
@@ -500,7 +496,7 @@ const PreviewStep = ({ result, fieldCatalog = [], onBack, onConfirm, committing,
                         className="btn btn-ghost btn-sm"
                         onClick={() => {
                             const all = [...blocking, ...warnings].sort((a, b) => a.row - b.row);
-                            downloadCsv(all, labelByKey, "filas-con-problemas.csv");
+                            downloadCsv(all, labelByKey, "filas-con-problemas.csv", cfg.csvActions);
                         }}
                     >
                         ⬇ Descargar filas con problemas (CSV)

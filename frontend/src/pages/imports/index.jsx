@@ -7,6 +7,7 @@ import { apiError } from "../../utils/apiError";
 import {
     uploadImport, setMapping, validateImport, commitImport,
 } from "../../api/imports";
+import { getEntityConfig } from "./entityConfig";
 import { Icon } from "../../components/icons";
 import UploadStep from "./UploadStep";
 import MappingStep from "./MappingStep";
@@ -51,6 +52,8 @@ const Imports = () => {
     const { can, initializing } = useAuth();
     const confirm = useConfirm();
 
+    const [entityType, setEntityType] = useState("owner_pet");
+    const config = getEntityConfig(entityType);
     const [step, setStep] = useState("upload");
     const [job, setJob] = useState(null);            // ImportJob completo (incluye public_id)
     const [uploading, setUploading] = useState(false);
@@ -77,7 +80,7 @@ const Imports = () => {
         if (uploading) return;
         setUploading(true);
         try {
-            const created = await uploadImport(file, "owner_pet");
+            const created = await uploadImport(file, entityType);
             setJob(created);
             setStep("mapping");
         } catch (err) {
@@ -117,10 +120,11 @@ const Imports = () => {
     const handleConfirm = async () => {
         if (committing || !job) return;
         const r = job.result || {};
-        const createdPets = Number(r.created_pets || 0);
+        const createdTotal = Number(r[config.createdTotalKey] || 0);
         const skippedConflicts = Number(r.skipped_conflicts || 0);
-        const message = createdPets > 0
-            ? `Se importarán ${createdPets} registro${createdPets === 1 ? "" : "s"} a tu sistema.`
+        const noun = createdTotal === 1 ? config.nouns.primary : config.nouns.primaryPlural;
+        const message = createdTotal > 0
+            ? `Se importarán ${createdTotal} ${noun} a tu sistema.`
                 + (skippedConflicts > 0 ? ` ${skippedConflicts} posible${skippedConflicts === 1 ? "" : "s"} duplicado${skippedConflicts === 1 ? "" : "s"} se omitirán.` : "")
                 + " ¿Confirmar la importación?"
             : "No hay registros nuevos para importar. ¿Deseas continuar?";
@@ -157,9 +161,9 @@ const Imports = () => {
         <div>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Importar clientes y mascotas</h1>
+                    <h1 className="page-title">{config.pageTitle}</h1>
                     <p className="page-subtitle">
-                        Migra tus clientes y sus mascotas desde un archivo de Excel o CSV.
+                        {config.pageSubtitle}
                     </p>
                 </div>
             </div>
@@ -167,7 +171,27 @@ const Imports = () => {
             <Stepper current={step} />
 
             {step === "upload" && (
-                <UploadStep onUpload={handleUpload} uploading={uploading} />
+                <>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                        <button
+                            type="button"
+                            className={`btn btn-sm ${entityType === "owner_pet" ? "btn-primary" : "btn-secondary"}`}
+                            onClick={() => setEntityType("owner_pet")}
+                            disabled={uploading}
+                        >
+                            Clientes y mascotas
+                        </button>
+                        <button
+                            type="button"
+                            className={`btn btn-sm ${entityType === "inventory" ? "btn-primary" : "btn-secondary"}`}
+                            onClick={() => setEntityType("inventory")}
+                            disabled={uploading}
+                        >
+                            Productos / Inventario
+                        </button>
+                    </div>
+                    <UploadStep onUpload={handleUpload} uploading={uploading} config={config} />
+                </>
             )}
 
             {step === "mapping" && job && (
@@ -190,6 +214,7 @@ const Imports = () => {
                 <PreviewStep
                     result={job.result}
                     fieldCatalog={job.field_catalog}
+                    entityType={entityType}
                     onBack={() => setStep("mapping")}
                     onConfirm={handleConfirm}
                     committing={committing}
@@ -202,6 +227,7 @@ const Imports = () => {
                     result={job.result}
                     job={job}
                     fieldCatalog={job.field_catalog}
+                    entityType={entityType}
                     onReset={reset}
                 />
             )}

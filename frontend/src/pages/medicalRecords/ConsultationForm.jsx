@@ -939,14 +939,14 @@ export default function ConsultationForm({
         </div>
         {!closed && (
           <div className={styles.topActions}>
-            <button className={styles.btnGhost} onClick={requestClose} disabled={saving} type="button">
+            <button className="btn btn-ghost btn-md" onClick={requestClose} disabled={saving} type="button">
               Cancelar
             </button>
-            <button className={styles.btnSecondary} onClick={handleSaveDraft} disabled={saving} type="button">
+            <button className="btn btn-secondary btn-md" onClick={handleSaveDraft} disabled={saving} type="button">
               <Icon.Check s={15} /> Guardar borrador
             </button>
-            <button className={styles.btnPrimary} onClick={handleFinalize} disabled={saving} type="button">
-              Finalizar y enviar a Cobros <Icon.ChevronRight s={15} />
+            <button className="btn btn-primary btn-md btn-arrow" onClick={handleFinalize} disabled={saving} type="button">
+              Enviar a cobros <span className="btn-trailing-icon" aria-hidden="true"><Icon.ChevronRight s={15} /></span>
             </button>
           </div>
         )}

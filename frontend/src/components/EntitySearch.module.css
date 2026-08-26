@@ -3,19 +3,6 @@
     width: 100%;
 }
 
-.clearBtn {
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--c-text-3);
-    font-size: 16px;
-    line-height: 1;
-    padding: 0 2px;
-    display: flex;
-    align-items: center;
-}
-
 .listbox {
     position: absolute;
     top: calc(100% + 4px);
@@ -52,28 +39,6 @@
 .optionActive,
 .option:hover {
     background: var(--c-subtle);
-}
-
-.moreBtn {
-    width: 100%;
-    padding: 9px 12px;
-    background: var(--c-subtle);
-    border: none;
-    border-top: 1px solid var(--c-border);
-    cursor: pointer;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--c-primary-dark);
-    font-family: inherit;
-}
-
-.moreBtn:hover:not(:disabled) {
-    background: var(--c-primary-light);
-}
-
-.moreBtn:disabled {
-    cursor: default;
-    color: var(--c-text-3);
 }
 
 /* ── Renderers de opción compartidos (PetOption / OwnerOption) ── */

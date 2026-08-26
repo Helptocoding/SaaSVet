@@ -363,15 +363,15 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                         </div>
                     )}
                 </div>
-                <div className="modal-footer" style={{flexDirection:"column",gap:"8px"}}>
+                <div className="modal-footer modal-footer-stacked">
 
                     {/* scheduled / confirmed → Atender ahora */}
                     {(appt.status === "scheduled" || appt.status === "confirmed") && canEdit && (
                         <>
                             <button
-                                className="btn btn-primary btn-lg"
+                                className="btn btn-attention btn-lg"
                                 data-tour="agenda-attend"
-                                style={{ width: "100%", background: "#f59e0b", borderColor: "#f59e0b", color: "#fff", fontWeight: 700, fontSize: "14px" }}
+                                style={{ width: "100%" }}
                                 disabled={attending}
                                 onClick={async () => {
                                     setAttending(true);
@@ -406,8 +406,8 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                     {appt.status === "in_progress" && canEdit && (
                         <>
                             <button
-                                className="btn btn-primary btn-lg"
-                                style={{ width: "100%", background: "#f59e0b", borderColor: "#f59e0b", color: "#fff", fontWeight: 700, fontSize: "14px" }}
+                                className="btn btn-attention btn-lg"
+                                style={{ width: "100%" }}
                                 disabled={attending}
                                 onClick={async () => {
                                     setAttending(true);
@@ -416,7 +416,7 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                 Continuar consulta
                             </button>
                             <div style={{display:"flex",gap:"6px",width:"100%"}}>
-                                <button className="btn btn-md" style={{flex:2,background:"#22c55e",borderColor:"#22c55e",color:"#fff"}}
+                                <button className="btn btn-success btn-md" style={{flex:2}}
                                     onClick={async ()=>{
                                         const ok = await confirm({
                                             title: "Finalizar atención",
@@ -449,8 +449,8 @@ function DetailModal({ appt, petName, vetName, petId, onClose, onStatusChange, o
                                 </button>
                             )}
                             {appt.invoice_id && (
-                                <button className="btn btn-md"
-                                    style={{width:"100%",background:"#059669",borderColor:"#059669",color:"#fff"}}
+                                <button className="btn btn-success btn-md"
+                                    style={{width:"100%"}}
                                     onClick={()=>{onClose(); navigate("/billing"); }}>
                                     Ver Factura
                                 </button>

@@ -3,7 +3,7 @@
  * paginado del backend ({count, results}), navega páginas server-side y manda la
  * búsqueda a la API (debounced). Protege el rediseño de escalabilidad.
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -86,11 +86,12 @@ describe("Mascotas — lista paginada server-side", () => {
     });
 
     it("cambia de página llamando a la API con page=2", async () => {
-        const user = userEvent.setup();
         render(<Pets />);
         await screen.findByText("Mascota 1-0");
 
-        await user.click(screen.getByRole("button", { name: /siguiente/i }));
+        const nextPage = screen.getByRole("button", { name: /siguiente/i });
+        await waitFor(() => expect(nextPage).toBeEnabled());
+        fireEvent.click(nextPage);
 
         await waitFor(() =>
             expect(getPets).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))

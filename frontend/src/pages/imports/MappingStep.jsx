@@ -5,8 +5,13 @@ import DestinationPicker from "./DestinationPicker";
 
 const PENDING = "__pending__";   // sin decidir → bloquea continuar
 const NO_IMPORT = "";
-const EXTRA_OWNER = "owner.extra";
-const EXTRA_PET = "pet.extra";
+
+// Textos legados para los extras de owner_pet (cero regresión de copy); para
+// cualquier otra entidad el texto deriva del label del catálogo.
+const LEGACY_EXTRA_LINES = {
+    "owner.extra": "Se conservará como Información anterior del cliente",
+    "pet.extra": "Se conservará como Información anterior de la mascota",
+};
 
 const targetOf = (spec) =>
     spec === undefined ? PENDING : (typeof spec === "object" ? spec.target : spec);
@@ -36,6 +41,10 @@ const MappingStep = ({
         () => new Set(fieldCatalog.filter((f) => !f.is_extra).map((f) => f.key)),
         [fieldCatalog]
     );
+    const extraKeys = useMemo(
+        () => new Set(fieldCatalog.filter((f) => f.is_extra).map((f) => f.key)),
+        [fieldCatalog]
+    );
     const labelByKey = useMemo(() => {
         const m = {};
         for (const f of fieldCatalog) m[f.key] = f.label;
@@ -46,7 +55,7 @@ const MappingStep = ({
         [fieldCatalog]
     );
     const isSystem = (v) => systemKeys.has(v);
-    const isExtra = (v) => v === EXTRA_OWNER || v === EXTRA_PET;
+    const isExtra = (v) => extraKeys.has(v);
 
     // Origen: columnas que el backend ya reconoció como campo del sistema. Estable
     // (no cambia aunque el usuario reasigne) → define qué va al bloque compacto.
@@ -109,8 +118,7 @@ const MappingStep = ({
 
     const destLine = (v) => {
         if (isSystem(v)) return `Se importará como ${labelByKey[v]}`;
-        if (v === EXTRA_OWNER) return "Se conservará como Información anterior del cliente";
-        if (v === EXTRA_PET) return "Se conservará como Información anterior de la mascota";
+        if (isExtra(v)) return LEGACY_EXTRA_LINES[v] ?? `Se conservará como ${labelByKey[v] || "dato del sistema anterior"}`;
         return "No se importará";
     };
 

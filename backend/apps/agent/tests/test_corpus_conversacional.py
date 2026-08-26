@@ -204,9 +204,13 @@ class BriefConversationTests(CorpusBase):
                    burst=["hola", "quiero una cita para mi mascota"],
                    scripted=[LLMResult(
                        kind="text",
-                       text="¡Claro! ¿Cómo se llama tu peludo? 🐾")])
+                       text="¡Claro! ¿Sería su primera visita o ya han "
+                            "acudido a la clínica? 🐾")])
         self._turn(conversation, burst=["ya he ido", "mi nombre es Ana"],
                    scripted=[LLMResult(
+                       kind="tool_call", tool_name="set_client_path",
+                       tool_args={"path": "existing_client"}),
+                       LLMResult(
                        kind="tool_call", tool_name="identify_client",
                        tool_args={"owner_name": "Ana"}),
                        LLMResult(kind="text",
@@ -385,12 +389,14 @@ class FamilyChallengeInterruptionTests(CorpusBase):
         conversation = self._new_conversation(external_id="5215500002222")
         self._turn(conversation, burst=["quiero una cita para Oliver"],
                    scripted=[LLMResult(
-                       kind="tool_call", tool_name="identify_client",
-                       tool_args={"pet_name": "Oliver"}),
-                       LLMResult(kind="text",
-                                 text="¡Claro! ¿A nombre de quién está? 🙂")])
+                       kind="text",
+                       text="¡Claro! ¿Sería su primera visita o ya han "
+                            "acudido a la clínica? 🙂")])
         self._turn(conversation, burst=["ya he ido varias veces", "Ana Cruz"],
                    scripted=[LLMResult(
+                       kind="tool_call", tool_name="set_client_path",
+                       tool_args={"path": "existing_client"}),
+                       LLMResult(
                        kind="tool_call", tool_name="identify_client",
                        tool_args={"owner_name": "Ana Cruz",
                                   "pet_name": "Oliver"}),

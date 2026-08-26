@@ -334,68 +334,6 @@
   line-height: 1.4;
 }
 
-/* Inputs premium (override local de los globales) */
-.page :global(.input),
-.page :global(.select-input),
-.page :global(.textarea-input) {
-  height: 40px;
-  font-size: 13.5px;
-  color: var(--p-text);
-  background: var(--p-card);
-  border: 1px solid var(--p-border-strong);
-  border-radius: 9px;
-  box-shadow: 0 1px 1px rgba(16, 24, 32, 0.03);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.page :global(.textarea-input) { height: auto; }
-.page :global(.input)::placeholder,
-.page :global(.textarea-input)::placeholder { color: var(--p-text-3); }
-.page :global(.input):hover,
-.page :global(.textarea-input):hover { border-color: #c7c9c1; }
-.page :global(.input):focus,
-.page :global(.select-input):focus,
-.page :global(.textarea-input):focus {
-  border-color: var(--p-accent);
-  box-shadow: 0 0 0 3.5px var(--p-accent-ring);
-  outline: none;
-}
-
-/* ─── Botones premium (override local) ─────────────────────────── */
-.page :global(.btn) {
-  height: 38px;
-  padding: 0 16px;
-  font-size: 13.5px;
-  font-weight: 600;
-  border-radius: 9px;
-  letter-spacing: -0.01em;
-  transition: transform 0.12s ease, box-shadow 0.15s, background 0.15s, border-color 0.15s;
-}
-.page :global(.btn:active) { transform: translateY(0.5px); }
-
-.page :global(.btn-primary) {
-  background: var(--p-accent);
-  border: 1px solid var(--p-accent);
-  color: #fff;
-  box-shadow: var(--p-shadow-btn);
-}
-.page :global(.btn-primary:hover) {
-  background: var(--p-accent-2);
-  box-shadow: 0 4px 14px -4px rgba(11, 107, 79, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-}
-
-.page :global(.btn-secondary) {
-  background: var(--p-card);
-  border: 1px solid var(--p-border-strong);
-  color: var(--p-text);
-  box-shadow: 0 1px 1.5px rgba(16, 24, 32, 0.04);
-}
-.page :global(.btn-secondary:hover) {
-  background: #fafafa;
-  border-color: #c7c9c1;
-}
-
-.page :global(.btn-sm) { height: 34px; padding: 0 13px; font-size: 13px; }
-
 /* ─── Filas de reglas (toggles) ───────────────────────────────── */
 .ruleRow {
   display: flex;
@@ -583,22 +521,6 @@
 }
 
 .serviceEmpty { padding: 40px 0; }
-
-.iconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: none;
-  background: none;
-  color: var(--p-text-3);
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
-}
-.iconBtn:hover { color: var(--p-text); background: rgba(16, 24, 32, 0.06); }
-.iconBtnDanger:hover { color: var(--p-danger); background: rgba(192, 54, 44, 0.08); }
 
 /* ─── Cuenta ───────────────────────────────────────────────────── */
 .accountRow {

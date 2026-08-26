@@ -7,26 +7,15 @@
  *
  * No se renderiza si `count <= pageSize` (una sola página → sin ruido visual).
  */
-const Pagination = ({ page, count, pageSize = 25, onPage, fetching = false }) => {
-    const totalPages = Math.max(1, Math.ceil((count || 0) / pageSize));
+const Pagination = ({ page, count, pageSize = 25, totalPages: totalPagesProp, onPage, fetching = false }) => {
+    const totalPages = totalPagesProp || Math.max(1, Math.ceil((count || 0) / pageSize));
     if (totalPages <= 1) return null;
 
     const canPrev = page > 1 && !fetching;
     const canNext = page < totalPages && !fetching;
 
     return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 12,
-                padding: "10px 14px",
-                borderTop: "1px solid var(--c-border, #e5e7eb)",
-                fontSize: 13,
-                color: "var(--c-text-2, #4b5563)",
-            }}
-        >
+        <nav className="pagination" aria-label="Paginación">
             <button
                 type="button"
                 className="btn btn-ghost btn-sm"
@@ -48,7 +37,7 @@ const Pagination = ({ page, count, pageSize = 25, onPage, fetching = false }) =>
             >
                 Siguiente ›
             </button>
-        </div>
+        </nav>
     );
 };
 

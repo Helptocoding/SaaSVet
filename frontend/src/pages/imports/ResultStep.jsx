@@ -1,25 +1,18 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../../components/icons";
+import { getEntityConfig } from "./entityConfig";
 import s from "./imports.module.css";
 
 const num = (v) => Number(v || 0);
 
-// Datos OPCIONALES que faltaron en el archivo (warnings del backend). NO son
-// errores: el registro se importó igual. Se resumen una vez aquí (estrategia C)
-// para no convertirlos en una alerta global permanente.
-const INCOMPLETE_LABELS = {
-    "pet.species": "mascotas sin especie",
-    "pet.birth_date": "mascotas sin fecha de nacimiento",
-    "owner.phone": "clientes sin teléfono",
-};
-const INCOMPLETE_ORDER = ["pet.species", "pet.birth_date", "owner.phone"];
-
 /* Paso 4 — Resultado de la importación (commit).
    Muestra los conteos reales de lo que se escribió + los errores que quedaron,
-   con CTA para ir a ver los registros importados y reiniciar el wizard. */
-const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
+   con CTA para ir a ver los registros importados y reiniciar el wizard.
+   Los textos/tarjetas vienen de entityConfig (default = owner_pet). */
+const ResultStep = ({ result, job, fieldCatalog = [], onReset, entityType = "owner_pet" }) => {
     const navigate = useNavigate();
+    const cfg = getEntityConfig(entityType);
 
     const labelByKey = useMemo(() => {
         const m = { mapping: "Mapeo de columnas", owner: "Cliente", pet: "Mascota", row: "Fila" };
@@ -28,11 +21,6 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
     }, [fieldCatalog]);
 
     const r = result || {};
-    const createdOwners = num(r.created_owners);
-    const reusedOwners = num(r.reused_owners);
-    const createdPets = num(r.created_pets);
-    const skipped = num(r.skipped_duplicates);
-    const errorRows = num(r.error_rows);
     const errors = r.errors || [];
 
     // Resumen de datos opcionales incompletos (estrategia C: una sola vez, aquí).
@@ -41,11 +29,11 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
         for (const w of (r.warnings || [])) {
             if (w.field) counts[w.field] = (counts[w.field] || 0) + 1;
         }
-        const keys = [...new Set([...INCOMPLETE_ORDER.filter(k => counts[k]), ...Object.keys(counts)])];
+        const keys = [...new Set([...cfg.incompleteOrder.filter(k => counts[k]), ...Object.keys(counts)])];
         return keys.map(field => ({
             field,
             count: counts[field],
-            label: INCOMPLETE_LABELS[field] || `registros con "${field}" pendiente`,
+            label: cfg.incompleteLabels[field] || `registros con "${field}" pendiente`,
         }));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [result]);
@@ -66,26 +54,20 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
                 </div>
 
                 <div className={s.summaryGrid}>
-                    <div className={s.sumCard}>
-                        <div className={`${s.sumValue} ${s.sumValueSuccess}`}>{createdOwners}</div>
-                        <div className={s.sumLabel}>Clientes creados</div>
-                    </div>
-                    <div className={s.sumCard}>
-                        <div className={`${s.sumValue} ${s.sumValueSuccess}`}>{createdPets}</div>
-                        <div className={s.sumLabel}>Mascotas creadas</div>
-                    </div>
-                    <div className={s.sumCard}>
-                        <div className={s.sumValue}>{reusedOwners}</div>
-                        <div className={s.sumLabel}>Clientes reutilizados</div>
-                    </div>
-                    <div className={s.sumCard}>
-                        <div className={`${s.sumValue} ${s.sumValueWarning}`}>{skipped}</div>
-                        <div className={s.sumLabel}>Duplicados omitidos</div>
-                    </div>
-                    <div className={s.sumCard}>
-                        <div className={`${s.sumValue} ${errorRows > 0 ? s.sumValueDanger : ""}`}>{errorRows}</div>
-                        <div className={s.sumLabel}>Filas con error</div>
-                    </div>
+                    {cfg.summaryCards.map((card) => {
+                        const value = num(r[card.valueKey]);
+                        const toneClass =
+                            card.tone === "success" ? s.sumValueSuccess
+                            : card.tone === "warning" ? s.sumValueWarning
+                            : card.tone === "danger" && value > 0 ? s.sumValueDanger
+                            : "";
+                        return (
+                            <div className={s.sumCard} key={card.valueKey}>
+                                <div className={`${s.sumValue} ${toneClass}`}>{value}</div>
+                                <div className={s.sumLabel}>{card.label}</div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -137,8 +119,8 @@ const ResultStep = ({ result, job, fieldCatalog = [], onReset }) => {
                     Importar otro archivo
                 </button>
                 <div className={s.actionsRight}>
-                    <button className="btn btn-primary btn-md" onClick={() => navigate("/pets")}>
-                        Ver clientes y mascotas
+                    <button className="btn btn-primary btn-md" onClick={() => navigate(cfg.doneCta.path)}>
+                        {cfg.doneCta.label}
                     </button>
                 </div>
             </div>

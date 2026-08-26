@@ -31,6 +31,7 @@ from . import (
     goals,
     guards,
     identity,
+    intake,
     matchers,
     policy,
     prompts,
@@ -385,7 +386,7 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
 def _run_planner(conversation, agent_settings, llm_client, executor,
                  triggered_by, *, burst_text='', media_kinds=None,
                  pending_context=False):
-    tool_specs = tools.as_openai_tools()
+    tool_specs = tools.as_openai_tools(conversation)
     base_messages = prompts.assemble_messages(conversation,
                                               burst_text=burst_text,
                                               media_kinds=media_kinds)
@@ -649,6 +650,13 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             conversation=conversation, executor=executor,
             triggered_by=triggered_by,
         )
+
+        # La clasificación puede abrir o cerrar capacidades dentro del mismo
+        # turno. Recalcular el catálogo permite continuar por alta o
+        # identificación sin pedir un turno extra, y sin exponer la capacidad
+        # contraria antes del triaje.
+        if result.tool_name == intake.PATH_SELECTION_TOOL and outcome.ok:
+            tool_specs = tools.as_openai_tools(conversation)
 
         # ¿AVANZÓ el objetivo, o solo se tocó? Llamar la herramienta con los
         # mismos datos de siempre no es progreso: es el bucle.
@@ -1212,6 +1220,21 @@ def _error_fact(client_error):
                                  'concreta la añade el sistema al final de tu '
                                  'mensaje. Cuando te conteste, llama a la '
                                  'herramienta de identificación.',
+        'intake_required': 'Aún no se resolvió si esta persona viene por '
+                           'primera vez o ya es cliente. Pregúntalo antes de '
+                           'pedir datos o consultar una ficha, y cuando lo '
+                           'aclare llama a set_client_path.',
+        'intake_path_conflict': 'La herramienta no corresponde a la ruta de '
+                                'atención actual. Atiende lo que el cliente '
+                                'acaba de aclarar y, si cambió si es nuevo o '
+                                'cliente, actualiza primero esa ruta con '
+                                'set_client_path.',
+        'invalid_intake_path': 'No quedó claro si corresponde primera visita '
+                               'o cliente existente; vuelve a preguntarlo de '
+                               'forma natural.',
+        'intake_already_resolved': 'Este contacto ya tiene una ruta de '
+                                   'atención determinada por su expediente; '
+                                   'no intentes reclasificarlo.',
         # Anti-eco (D33): el turno ya escaló, así que esto es lo que el modelo
         # ve si vuelve a mirar. No le pide reintentar — repetir el dato seguiría
         # siendo eco hasta que caduque la ventana.

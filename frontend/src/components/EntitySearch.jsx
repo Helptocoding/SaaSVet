@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import s from "./EntitySearch.module.css";
 
 /**
@@ -197,8 +197,9 @@ export default function EntitySearch({
     return (
         <div ref={wrapperRef} className={s.wrap}>
             <div className="searchBar">
-                <Search size={15} strokeWidth={2.5} style={{ flexShrink: 0, color: "var(--c-text-3)" }} />
+                <Search className="search-icon" size={15} strokeWidth={2.5} aria-hidden="true" />
                 <input
+                    type="search"
                     id={inputId}
                     name={name || inputId}
                     value={inputVal}
@@ -213,14 +214,14 @@ export default function EntitySearch({
                     aria-controls={listboxId}
                 />
                 {showClear && (
-                    <button type="button" className={s.clearBtn} onClick={handleClear} tabIndex={-1} aria-label="Limpiar">
-                        ×
+                    <button type="button" className="search-clear" onClick={handleClear} aria-label="Limpiar">
+                        <X size={15} strokeWidth={2} aria-hidden="true" />
                     </button>
                 )}
             </div>
 
             {open && (
-                <div id={listboxId} role="listbox" className={s.listbox}>
+                <div id={listboxId} role="listbox" className={`${s.listbox} result-popover`}>
                     {loading && <div className={s.hint}>Buscando...</div>}
                     {!loading && items.length === 0 && <div className={s.hint}>{emptyText}</div>}
                     {!loading && items.map((item, index) => (
@@ -228,7 +229,7 @@ export default function EntitySearch({
                             key={item.public_id ?? item.id ?? index}
                             role="option"
                             aria-selected={highlight === index}
-                            className={`${s.option} ${highlight === index ? s.optionActive : ""}`}
+                            className={`${s.option} result-popover-item ${highlight === index ? s.optionActive : ""}`}
                             onMouseDown={() => handleSelect(item)}
                             onMouseEnter={() => setHighlight(index)}
                         >
@@ -236,16 +237,19 @@ export default function EntitySearch({
                         </div>
                     ))}
                     {!loading && hasMore && (
-                        <button
-                            type="button"
-                            className={s.moreBtn}
-                            // onMouseDown (no onClick) → corre antes del blur del input,
-                            // así el dropdown no se cierra al pedir más.
-                            onMouseDown={(e) => { e.preventDefault(); loadMore(); }}
-                            disabled={loadingMore}
-                        >
-                            {loadingMore ? "Cargando..." : "Ver más resultados"}
-                        </button>
+                        <div className="search-results-footer">
+                            <span className="search-result-count">Más resultados disponibles</span>
+                            <button
+                                type="button"
+                                className="search-load-more"
+                                // Conserva el foco del input al hacer clic, sin perder activación por teclado.
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={loadMore}
+                                disabled={loadingMore}
+                            >
+                                {loadingMore ? "Cargando..." : "Ver más"}
+                            </button>
+                        </div>
                     )}
                 </div>
             )}

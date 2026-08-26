@@ -26,7 +26,10 @@ from .parsers import ImportParseError, parse_file
 from .serializers import ImportJobListSerializer, ImportJobSerializer
 from .services import commit_job, validate_job
 
-_ALLOWED_ENTITY_TYPES = {ImportJob.ENTITY_OWNER_PET}  # v1: solo owner_pet
+_ALLOWED_ENTITY_TYPES = {
+    ImportJob.ENTITY_OWNER_PET,
+    ImportJob.ENTITY_INVENTORY,
+}
 # v1 solo implementa 'skip'. 'update'/'create_anyway' existen en el modelo para
 # Fase B; aceptarlos ahora daría comportamiento skip silencioso → rechazarlos.
 _VALID_DEDUP = {ImportJob.DEDUP_SKIP}
@@ -180,7 +183,9 @@ class ImportJobViewSet(
                  'blocking_count': len(prev['blocking'])},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        result = commit_job(job)
+        # created_by: auditoría del StockMovement inicial (solo inventory lo
+        # consume; owner_pet mantiene su comportamiento histórico).
+        result = commit_job(job, created_by=request.user)
         job.result = result
         job.status = ImportJob.STATUS_COMMITTED
         job.save()

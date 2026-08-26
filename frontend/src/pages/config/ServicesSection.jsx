@@ -77,7 +77,7 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
       description="El catálogo que usas al cobrar y que el asistente consulta para dar precios."
       padded={false}
       action={canManage && (
-        <button className="btn btn-secondary btn-sm" onClick={openNew}>+ Nuevo servicio</button>
+        <button className="btn btn-secondary btn-sm" onClick={openNew}><Icon.Plus s={14} /> Nuevo servicio</button>
       )}
     >
       {services.length === 0 ? (
@@ -100,10 +100,10 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
             </div>
             <div className={styles.serviceActions}>
               <span className={styles.servicePrice}>${fmt(svc.base_price)}</span>
-              <button className={styles.iconBtn} onClick={() => openEdit(svc)} title="Editar">
+              <button className="btn btn-ghost btn-icon" onClick={() => openEdit(svc)} aria-label={`Editar ${svc.name}`} title="Editar">
                 <Icon.Edit s={13} />
               </button>
-              <button className={`${styles.iconBtn} ${styles.iconBtnDanger}`} onClick={() => handleDelete(svc.public_id)} title="Eliminar">
+              <button className="btn btn-danger btn-icon" onClick={() => handleDelete(svc.public_id)} aria-label={`Eliminar ${svc.name}`} title="Eliminar">
                 <Icon.Trash s={13} />
               </button>
             </div>
@@ -145,7 +145,7 @@ const ServicesSection = ({ services, onServicesChange, onOnboardingDone }) => {
             <div className="modal-footer">
               <button className="btn btn-primary btn-md" style={{ flex: 1 }}
                 onClick={handleSubmit} disabled={saving}>
-                {saving ? "Guardando..." : editing ? "Guardar" : "Crear"}
+                <Icon.Check s={15} /> {saving ? "Guardando..." : editing ? "Guardar" : "Crear"}
               </button>
               <button className="btn btn-secondary btn-md" style={{ flex: 1 }}
                 onClick={close} disabled={saving}>Cancelar</button>

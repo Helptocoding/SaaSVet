@@ -123,91 +123,6 @@
   flex-shrink: 0;
 }
 
-/* ── Botones (primitivos de la variante) ── */
-
-.btnPrimary,
-.btnSecondary,
-.btnGhost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: var(--r-md);
-  padding: 9px 16px;
-  transition: background var(--t), border-color var(--t), filter var(--t);
-  white-space: nowrap;
-}
-
-.btnPrimary {
-  background: var(--accent);
-  color: #fff;
-  border: 1px solid var(--accent);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
-}
-
-.btnPrimary:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.btnSecondary {
-  background: #fff;
-  color: #2a2a28;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.btnSecondary:hover:not(:disabled) {
-  background: #f7f7f5;
-}
-
-.btnGhost {
-  background: transparent;
-  color: #6b6b66;
-  border: 1px solid transparent;
-  padding: 9px 12px;
-}
-
-.btnGhost:hover:not(:disabled) {
-  color: #15140f;
-}
-
-.btnPrimary:disabled,
-.btnSecondary:disabled,
-.btnGhost:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Botón oscuro de acción (Agregar) — NO pill (radius 10) — usado en secciones (paso 2). */
-.btnDark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: var(--ink);
-  color: #fff;
-  border: 1px solid var(--ink);
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--font-sans);
-  cursor: pointer;
-  transition: filter var(--t);
-}
-
-.btnDark:hover:not(:disabled) {
-  filter: brightness(1.25);
-}
-
-.btnDark:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* ── Banner ── */
 
 .banner {
@@ -937,41 +852,6 @@ textarea.control {
 .miniInput {
   height: 36px;
   padding: 0 10px;
-}
-
-/* SearchSelect / inputs globales dentro de la consulta → look de la variante
-   (radius 10 + foco azul), sin tocar el componente global compartido. */
-.content :global(.input) {
-  border-radius: 10px;
-  border-color: var(--field-border);
-}
-
-.content :global(.input:focus) {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-/* SearchSelect dentro de la consulta: campo + menú desplegable a la paleta neutra
-   (blanco + acento azul), sin tocar el componente global (que sigue beige fuera). */
-.content :global(.searchBar) {
-  background: #fff;
-  border: 1px solid var(--field-border);
-  border-radius: 10px;
-  box-shadow: none;
-}
-
-.content :global(.searchBar:focus-within) {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.content :global([role="listbox"]) {
-  background: #fff;
-  border-color: var(--line);
-}
-
-.content :global([role="listbox"] > div:hover) {
-  background: #f4f4f2;
 }
 
 /* ── Type selector (segmented control) ── */

@@ -20,7 +20,7 @@ from django.utils import timezone
 from apps.channels.models import Message
 from apps.core.datetime_utils import org_now_local, org_today_local
 
-from . import identity_evidence
+from . import identity_evidence, intake
 from .executor import format_local_datetime, format_local_wallclock
 from .models import ContactIdentity, Conversation, HumanHandoff
 
@@ -1992,11 +1992,19 @@ def identify_client(conversation, executor, args, triggered_by=None):
     herramienta **no crea ni destruye compromisos** — solo marca factores
     satisfechos en el que ya exista, así que no puede interferir con el reto
     que `policy.evaluate` esté conduciendo. Lo aportado sin compromiso vivo
-    aterriza en `flow['aportado']`, que es scratchpad (filosofía ADR p50) y que
-    **ninguna función de decisión lee**.
+    aterriza en `flow['aportado']`, el scratchpad de la ruta de identidad. La
+    frontera de intake garantiza que solo se llena después de clasificar al
+    contacto como cliente existente.
     """
     from . import goals, identity
     from .models import ConversationGoal
+
+    # La herramienta no decide si una persona es nueva o existente. Esa
+    # clasificación es semántica y se persiste antes de exponerla; sin ella,
+    # acumular un nombre de mascota aquí convierte una primera visita en un
+    # falso reto de identidad.
+    if intake.current_path(conversation) != intake.PATH_EXISTING:
+        return ToolOutcome(ok=False, client_error='intake_path_conflict')
 
     contact = conversation.contact
     org = conversation.organization
@@ -2238,6 +2246,55 @@ def request_human(conversation, executor, args, triggered_by=None):
     )
     return ToolOutcome(ok=True, data={'handoff': True},
                        summary={'handoff_id': handoff.pk})
+
+
+def set_client_path(conversation, executor, args, triggered_by=None):
+    """Persiste la clasificación semántica de primera visita vs. cliente.
+
+    La herramienta recibe un enum del modelo, no una frase del cliente. Su
+    salida habilita o bloquea herramientas; no consulta expedientes ni revela
+    si un nombre o teléfono existe en la clínica.
+    """
+    from . import confirmations, goals
+    from .models import ConversationGoal
+
+    requested = str((args or {}).get('path') or '')
+    if requested not in (intake.PATH_NEW, intake.PATH_EXISTING):
+        return ToolOutcome(ok=False, client_error='invalid_intake_path')
+    if conversation.contact.owner_id is not None:
+        return ToolOutcome(ok=False, client_error='intake_already_resolved')
+
+    previous = conversation.intake_path
+    changed = bool(previous and previous != requested)
+    if changed:
+        # Una propuesta de alta o agenda fue construida bajo la otra capacidad;
+        # no puede sobrevivir a una corrección semántica del cliente.
+        confirmations.supersede_pending(
+            conversation, reason='client_path_corrected')
+        active_goal = goals.get_open_goal(conversation)
+        if active_goal is not None:
+            goals.close(active_goal, ConversationGoal.STATUS_ABANDONED,
+                        'cambió la ruta de atención')
+
+    flow = dict(conversation.flow or {})
+    # Los factores de identidad nunca deben contaminar una alta, ni volver a
+    # aparecer si el cliente corrigió la interpretación anterior.
+    if requested == intake.PATH_NEW or changed:
+        flow.pop('aportado', None)
+    conversation.intake_path = requested
+    conversation.flow = flow
+    conversation.save(update_fields=['intake_path', 'flow'])
+    executor.record_local(
+        tool_name=intake.PATH_SELECTION_TOOL,
+        args_redacted={'path': requested},
+        summary={'path': requested, 'changed': changed},
+        triggered_by_message=triggered_by,
+    )
+    return ToolOutcome(
+        ok=True,
+        data={'ruta_cliente': intake.context_fact(conversation)},
+        summary={'path': requested, 'changed': changed},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -2519,21 +2576,44 @@ TOOL_SPECS = {
             'required': ['pet_name'],
         },
     },
+    'set_client_path': {
+        'handler': set_client_path,
+        'tier': '0',
+        'min_verification': 'unknown',
+        'description': (
+            'Registra la clasificación semántica que el cliente acaba de dar '
+            'sobre su relación con la clínica. Úsala solamente cuando el '
+            'cliente haya dejado claro si es su primera visita o si ya es '
+            'cliente; no la adivines por su nombre, mascota o teléfono. No le '
+            'responde al cliente: después continúa con la herramienta que la '
+            'ruta habilitó.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'path': {
+                    'type': 'string',
+                    'enum': ['new_client', 'existing_client'],
+                },
+            },
+            'required': ['path'],
+        },
+    },
     'identify_client': {
         'handler': identify_client,
         'tier': '1',
-        # `unknown` a propósito: es la herramienta que EXISTE para los
-        # contactos sin verificar. Exigir verificación para poder verificarse
-        # sería circular.
+        # `unknown` a propósito: puede identificar a un cliente existente que
+        # aún no fue verificado. La frontera de triaje sí exige que esa ruta
+        # semántica haya sido elegida antes de llegar aquí.
         'min_verification': 'unknown',
         'description': (
-            'Registra y verifica lo que el cliente te haya dicho sobre quién '
-            'es. Llámala EN CUANTO te diga cualquiera de estos datos, aunque '
-            'sea uno solo y aunque no se lo hayas pedido: su nombre, el '
-            'nombre de su mascota, o los últimos 4 dígitos del teléfono con '
-            'el que está registrado. Te responde si ya quedó identificado y '
-            'qué falta. NO te devuelve datos del expediente: tú nunca le dices '
-            'un nombre al cliente para que lo confirme, es él quien los aporta.'
+            'Identifica a una persona que ya indicó que es cliente existente. '
+            'Úsala con los datos que esa persona aporte sobre su propio '
+            'registro; no la uses para una primera visita ni solo porque '
+            'mencionó un nombre o mascota. Te responde si ya quedó identificado '
+            'y qué falta. NO te devuelve datos del expediente: tú nunca le '
+            'dices un nombre al cliente para que lo confirme, es él quien los '
+            'aporta.'
         ),
         'parameters': {
             'type': 'object',
@@ -2597,13 +2677,21 @@ def _with_confidence(parameters):
     return {**parameters, 'properties': props, 'required': []}
 
 
-def as_openai_tools():
-    """Specs en el formato de tool calling OpenAI-compatible (llm.py)."""
+def as_openai_tools(conversation=None):
+    """Specs en el formato de tool calling OpenAI-compatible (llm.py).
+
+    Cuando hay conversación, el catálogo es una capacidad real, no una lista
+    aspiracional: las tools incompatibles con la ruta de atención ni siquiera
+    llegan al modelo. ``None`` conserva el catálogo completo para inspección y
+    pruebas de schema.
+    """
     from . import goals
 
     tools_payload = []
     for name, spec in TOOL_SPECS.items():
         if not spec.get('llm_exposed', True):
+            continue
+        if conversation is not None and not intake.allows_tool(conversation, name):
             continue
         description = spec['description']
         parameters = spec['parameters']
@@ -2653,6 +2741,12 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
     spec = TOOL_SPECS.get(name)
     if spec is None:
         return ToolOutcome(ok=False, client_error='unknown_tool')
+    if not intake.allows_tool(conversation, name):
+        return ToolOutcome(
+            ok=False,
+            client_error=('intake_required' if intake.needs_selection(conversation)
+                          else 'intake_path_conflict'),
+        )
     if not _verification_ok(conversation, spec['min_verification']):
         return ToolOutcome(ok=False, client_error='verification_required')
     return spec['handler'](conversation, executor, args or {},

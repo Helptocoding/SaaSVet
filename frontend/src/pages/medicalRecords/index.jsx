@@ -21,6 +21,8 @@ import PetSidebar from "./PetSidebar";
 import PatientHeader from "./PatientHeader";
 import Timeline from "./Timeline";
 import ConsultationForm from "./ConsultationForm";
+import Pagination from "../../components/Pagination";
+import SegmentedControl from "../../components/SegmentedControl";
 import styles from "./medicalRecords.module.css";
 import Layout from "../../components/Layout";
 
@@ -366,20 +368,18 @@ const MedicalRecords = () => {
                   </div>
 
                   <div className={styles.filtersBar}>
-                    <div className={styles.pillGroup}>
-                      {TYPE_FILTERS.map(f => (
-                        <button key={f.id}
-                          className={`${styles.filterPill}${typeFilter === f.id ? ` ${styles.filterPillActive}` : ""}`}
-                          onClick={() => setTypeFilter(f.id)}>
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
+                    <SegmentedControl
+                      options={TYPE_FILTERS}
+                      value={typeFilter}
+                      onChange={setTypeFilter}
+                      ariaLabel="Filtrar historial por tipo de consulta"
+                    />
                     <div className={styles.historySearchWrap}>
                       <span className={styles.historySearchIcon}><Icon.Search /></span>
                       <input
+                        type="search"
                         className={styles.historySearchInput}
-                        placeholder="Buscar en historial..."
+                        placeholder="Buscar en esta página…"
                         value={historySearch}
                         onChange={e => setHistorySearch(e.target.value)}
                       />
@@ -420,15 +420,12 @@ const MedicalRecords = () => {
                       />
                     )}
 
-                    {totalPages > 1 && (
-                      <div className={styles.pagination}>
-                        <button className="btn btn-secondary btn-sm" disabled={page === 1}
-                          onClick={() => setPage(p => Math.max(1, p - 1))}>Anterior</button>
-                        <span className={styles.paginationLabel}>Página {page} de {totalPages}</span>
-                        <button className="btn btn-secondary btn-sm" disabled={page === totalPages}
-                          onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Siguiente</button>
-                      </div>
-                    )}
+                    <Pagination
+                      page={page}
+                      count={totalCount}
+                      totalPages={totalPages}
+                      onPage={setPage}
+                    />
                   </div>
                 </>
               )}

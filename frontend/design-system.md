@@ -117,9 +117,10 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 
 ### Botón — `.btn` + variante + tamaño
 - **Tamaños:** `.btn-xs` 26px · `.btn-sm` 30px · `.btn-md` 36px · `.btn-lg` 40px. weight 600, radio `--r-md`, gap 6px.
-- **Variantes:** `.btn-primary` (verde, texto #fff) · `.btn-secondary` (surface + `--c-border-2` + shadow-xs) · `.btn-ghost` · `.btn-danger` · `.btn-warning` · `.btn-info` · `.btn-purple`.
+- **Variantes:** `.btn-primary` (verde, texto #fff) · `.btn-secondary` (surface + `--c-border-2` + shadow-xs) · `.btn-ghost` · `.btn-danger` · `.btn-warning` · `.btn-info` · `.btn-purple` · `.btn-success` (confirmar/factura) · `.btn-attention` (iniciar o continuar atención).
 - **CTA primario de página = siempre `.btn.btn-primary`.** No crear botones primarios propios (`.btnPrime` = deuda legacy, no replicar).
-- **Icon-button canónico:** 30×30px, radio `--r-md`, `.btn.btn-ghost` o `.btn-secondary`. (Variantes ad-hoc `.ab*`/`.actionBtn`/`.detailBtn` = legacy, no añadir más.)
+- **Icon-button canónico:** 30×30px, radio `--r-md`, `.btn.btn-icon.btn-ghost` o `.btn.btn-icon.btn-secondary`. Los iconos sin texto deben llevar `aria-label`.
+- **CTA de avance:** añade `.btn-arrow` y envuelve el icono final en `.btn-trailing-icon`; al hover se desplaza 3px. Reserva la flecha para navegar, continuar o enviar a otro paso; no para guardar, eliminar o cancelar.
 - Acción "éxito" (Cobrar/Pagar): hoy se logra con override inline a `--c-success-text`. Deuda conocida; centralizar en `.btn-success` cuando se aborde.
 
 ### Input — `.input` / `.select-input` / `.textarea-input`
@@ -127,6 +128,13 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 - **Foco (obligatorio):** `border-color var(--c-primary)` + `box-shadow 0 0 0 3px var(--c-primary-ring)`. Siempre anillo, no solo border.
 - Label: `.form-label`. Grupo: `.form-group` (margin-bottom 16px).
 - `SearchSelect`, `Field` y buscadores deben consumir `.input`, no estilos inline.
+- Para formularios largos: `.form-card` → `.form-section` → `.form-grid` / `.form-field`; la geometría de cada flujo puede variar, pero no el aspecto de los controles.
+
+### Búsqueda — `.searchBar`
+- Campo compartido con icono `Search` a la izquierda, altura mínima **40px**, radio `--r-md` y foco con el anillo `--c-primary-ring`.
+- Usa `input type="search"`; si el campo permite vaciar su valor, añade el botón `.search-clear` con etiqueta accesible.
+- Las listas de resultados pueden conservar su propio comportamiento, pero no redefinir el contenedor, icono, foco ni botón de limpiar.
+- Si se limita la cantidad inicial de sugerencias, muestra `Mostrando X de Y` y un botón `Ver más`; nunca ocultes coincidencias sin señalarlas.
 
 ### Card — `.card`
 - bg `--c-surface`, border `1px var(--c-border)`, radio `--r-lg`, padding `20px 22px`, `--shadow-sm`.
@@ -151,6 +159,11 @@ Card reposo = `--shadow-sm`; hover = `--shadow-md`; modal = `--shadow-modal`.
 ### Modal — `.modal-overlay` + `.modal`
 - Tamaños: `.modal-sm 400` · `.modal-md 520` · `.modal-lg 640`.
 - radio `--r-xl`, `--shadow-modal`. Header `h3` 16px/700. `.modal-body` padding `20px 24px`. `.modal-footer` gap 8px.
+- El marco es compartido; el tamaño (`sm/md/lg`) y la distribución interior son contextuales. Para acciones verticales usa `.modal-footer-stacked`.
+
+### Filtros y resultados
+- Para filtros mutuamente excluyentes de la misma vista usa `SegmentedControl` / `.segmented-control`; los `.tabs` quedan reservados para navegación entre secciones.
+- Los autocompletados usan `.result-popover` y `.result-popover-item`, siempre con estados de foco/selección visibles.
 
 ### Header de página — `.page-header`
 - `.page-title` (20/700) + `.page-subtitle` (13). Acciones a la derecha con `.btn`.

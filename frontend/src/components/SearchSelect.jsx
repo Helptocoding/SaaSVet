@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import styles from "./SearchSelect.module.css";
+
+const byLabel = (a, b) => String(a?.label ?? "").localeCompare(String(b?.label ?? ""), "es", { sensitivity: "base" });
 
 export default function SearchSelect({
     id,
@@ -20,6 +22,7 @@ export default function SearchSelect({
     const listboxId = `${inputId}-listbox`;
     const [inputVal, setInputVal]   = useState(value?.label ?? "");
     const [results,  setResults]    = useState([]);
+    const [visibleCount, setVisibleCount] = useState(maxSuggestions);
     const [open,     setOpen]       = useState(false);
     const [loading,  setLoading]    = useState(false);
 
@@ -49,6 +52,7 @@ export default function SearchSelect({
 
     function runSearch(q) {
         if (lastQueryRef.current === q && results.length > 0) {
+            setVisibleCount(maxSuggestions);
             setOpen(true);
             return;
         }
@@ -56,13 +60,14 @@ export default function SearchSelect({
 
         setLoading(true);
         setOpen(true);
+        setVisibleCount(maxSuggestions);
 
         debounceRef.current = setTimeout(() => {
             const id = ++reqId.current;
             onSearch(q)
                 .then(data => {
                     if (reqId.current !== id) return;
-                    setResults(Array.isArray(data) ? data.slice(0, maxSuggestions) : []);
+                    setResults(Array.isArray(data) ? [...data].sort(byLabel) : []);
                     lastQueryRef.current = q;
                     setLoading(false);
                 })
@@ -97,6 +102,7 @@ export default function SearchSelect({
     function handleSelect(item) {
         setInputVal(item.label);
         setResults([]);
+        setVisibleCount(maxSuggestions);
         lastQueryRef.current = null;
         setOpen(false);
         onChange(item);
@@ -127,12 +133,15 @@ export default function SearchSelect({
     }
 
     const showClear = !disabled && value !== null && value !== undefined;
+    const visibleResults = results.slice(0, visibleCount);
+    const hasMoreResults = results.length > visibleCount;
 
     return (
         <div ref={wrapperRef} className={styles.wrapper}>
             <div className="searchBar">
-                <Search size={15} strokeWidth={2.5} style={{ flexShrink: 0, color: "var(--c-text-3)" }} />
+                <Search className="search-icon" size={15} strokeWidth={2.5} aria-hidden="true" />
                 <input
+                    type="search"
                     id={inputId}
                     name={name || inputId}
                     value={inputVal}
@@ -150,11 +159,10 @@ export default function SearchSelect({
                     <button
                         type="button"
                         onClick={handleClear}
-                        className={styles.clearBtn}
-                        tabIndex={-1}
+                        className="search-clear"
                         aria-label="Limpiar selección"
                     >
-                        ×
+                        <X size={15} strokeWidth={2} aria-hidden="true" />
                     </button>
                 )}
             </div>
@@ -163,7 +171,7 @@ export default function SearchSelect({
                 <div
                     id={listboxId}
                     role="listbox"
-                    className={styles.popover}
+                    className={`${styles.popover} result-popover`}
                 >
                     {loading && (
                         <div className={styles.statusText}>
@@ -175,15 +183,28 @@ export default function SearchSelect({
                             Sin resultados
                         </div>
                     )}
-                    {!loading && results.map((item, index) => (
+                    {!loading && visibleResults.map((item, index) => (
                         <div
                             key={`${item.id ?? "no-id"}-${item.label ?? "no-label"}-${index}`}
                             onMouseDown={() => handleSelect(item)}
-                            className={styles.item}
+                            className={`${styles.item} result-popover-item`}
                         >
                             {item.label}
                         </div>
                     ))}
+                    {!loading && hasMoreResults && (
+                        <div className="search-results-footer">
+                            <span className="search-result-count">Mostrando {visibleResults.length} de {results.length}</span>
+                            <button
+                                type="button"
+                                className="search-load-more"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => setVisibleCount(count => Math.min(count + maxSuggestions, results.length))}
+                            >
+                                Ver más
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

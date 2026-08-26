@@ -1,13 +1,16 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
 import { getPresentations, getPresentationByBarcode } from "../../api/inventory";
 import { getServices } from "../../api/billing";
 import s from "./pos.module.css";
 
-const MAX_PRODUCTS = 6;
-const MAX_SERVICES = 4;
+const INITIAL_PRODUCTS = 6;
+const INITIAL_SERVICES = 4;
 
 const toList = (d) => (Array.isArray(d) ? d : d?.results || []);
+const byProductName = (a, b) => `${a.product_name} ${a.name}`.localeCompare(`${b.product_name} ${b.name}`, "es", { sensitivity: "base" });
+const byServiceName = (a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" });
 
 /* ── ProductSearch — input único del POS: escáner + búsqueda ──
    Un lector USB funciona como teclado: escribe el código y envía Enter. Por
@@ -22,6 +25,8 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [highlight, setHighlight] = useState(-1);
+    const [productLimit, setProductLimit] = useState(INITIAL_PRODUCTS);
+    const [serviceLimit, setServiceLimit] = useState(INITIAL_SERVICES);
 
     const inputRef = useRef(null);
     const wrapperRef = useRef(null);
@@ -49,17 +54,23 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
         return () => document.removeEventListener("mousedown", handleMouseDown);
     }, []);
 
+    const visibleProducts = useMemo(() => products.slice(0, productLimit), [products, productLimit]);
+    const visibleServices = useMemo(() => services.slice(0, serviceLimit), [services, serviceLimit]);
     const flat = useMemo(() => [
-        ...products.map(p => ({ kind: "product", item: p })),
-        ...services.map(sv => ({ kind: "service", item: sv })),
-    ], [products, services]);
+        ...visibleProducts.map(p => ({ kind: "product", item: p })),
+        ...visibleServices.map(sv => ({ kind: "service", item: sv })),
+    ], [visibleProducts, visibleServices]);
+    const totalResults = products.length + services.length;
+    const hasMoreResults = visibleProducts.length < products.length || visibleServices.length < services.length;
 
     const runSearch = (q) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         const lower = q.trim().toLowerCase();
         if (!lower) {
-            setProducts(cacheRef.current.products.slice(0, MAX_PRODUCTS));
-            setServices(cacheRef.current.services.slice(0, MAX_SERVICES));
+            setProducts([...cacheRef.current.products].sort(byProductName));
+            setServices([...cacheRef.current.services].sort(byServiceName));
+            setProductLimit(INITIAL_PRODUCTS);
+            setServiceLimit(INITIAL_SERVICES);
             setLoading(false);
             setOpen(true);
             setHighlight(-1);
@@ -67,6 +78,8 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
         }
         setLoading(true);
         setOpen(true);
+        setProductLimit(INITIAL_PRODUCTS);
+        setServiceLimit(INITIAL_SERVICES);
         debounceRef.current = setTimeout(() => {
             const id = ++reqIdRef.current;
             const code = q.trim();
@@ -82,8 +95,8 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
                 const merged = byCode
                     ? [byCode, ...pres.filter(p => p.id !== byCode.id)]
                     : pres;
-                setProducts(merged.slice(0, MAX_PRODUCTS));
-                setServices(svcs.filter(sv => sv.name?.toLowerCase().includes(lower)).slice(0, MAX_SERVICES));
+                setProducts([...merged].sort(byProductName));
+                setServices(svcs.filter(sv => sv.name?.toLowerCase().includes(lower)).sort(byServiceName));
                 setLoading(false);
                 setHighlight(-1);
             });
@@ -99,6 +112,8 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
         setOpen(false);
         setLoading(false);
         setHighlight(-1);
+        setProductLimit(INITIAL_PRODUCTS);
+        setServiceLimit(INITIAL_SERVICES);
         inputRef.current?.focus();
     };
 
@@ -141,9 +156,11 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
 
     return (
         <div ref={wrapperRef} className={s.searchWrap}>
-            <div className="searchBar" style={{ height: 44, fontSize: 14 }}>
+            <div className="searchBar" style={{ minHeight: 44, fontSize: 14 }}>
+                <Search className="search-icon" size={17} strokeWidth={2.25} aria-hidden="true" />
                 <input
                     ref={inputRef}
+                    type="search"
                     value={query}
                     placeholder="Escanea un código o busca producto / servicio…"
                     disabled={disabled}
@@ -162,8 +179,8 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
                     {!loading && flat.length === 0 && (
                         <div className={s.dropdownEmpty}>Sin resultados</div>
                     )}
-                    {!loading && products.length > 0 && <div className={s.groupLabel}>Productos</div>}
-                    {!loading && products.map((p, i) => (
+                    {!loading && visibleProducts.length > 0 && <div className={s.groupLabel}>Productos</div>}
+                    {!loading && visibleProducts.map((p, i) => (
                         <div
                             key={`p-${p.id}`}
                             role="option"
@@ -180,9 +197,9 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
                             <span className={s.resultPrice}>${Number(p.sale_price).toFixed(2)}</span>
                         </div>
                     ))}
-                    {!loading && services.length > 0 && <div className={s.groupLabel}>Servicios</div>}
-                    {!loading && services.map((sv, i) => {
-                        const idx = products.length + i;
+                    {!loading && visibleServices.length > 0 && <div className={s.groupLabel}>Servicios</div>}
+                    {!loading && visibleServices.map((sv, i) => {
+                        const idx = visibleProducts.length + i;
                         return (
                             <div
                                 key={`s-${sv.id}`}
@@ -197,6 +214,22 @@ const ProductSearch = forwardRef(function ProductSearch({ onAddProduct, onAddSer
                             </div>
                         );
                     })}
+                    {!loading && hasMoreResults && (
+                        <div className="search-results-footer">
+                            <span className="search-result-count">Mostrando {flat.length} de {totalResults}</span>
+                            <button
+                                type="button"
+                                className="search-load-more"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                    setProductLimit(limit => Math.min(limit + INITIAL_PRODUCTS, products.length));
+                                    setServiceLimit(limit => Math.min(limit + INITIAL_SERVICES, services.length));
+                                }}
+                            >
+                                Ver más
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

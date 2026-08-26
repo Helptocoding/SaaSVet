@@ -53,11 +53,16 @@ credentials.json
 # never versioned.
 .deploy-state
 
+# Configs de MCP con API keys en texto plano (no versionar)
+.mcp.json
+opencode.json
+
 # Artefactos locales / experimentos (no proyecto)
 CON
 _pdf_preview/
 references/
 svgcomponentes/
+docs/datasets/
 frontend/standalone/
 .kiro/
 .agents/

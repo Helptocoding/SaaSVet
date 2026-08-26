@@ -167,12 +167,12 @@ const ChargesSection = forwardRef(function ChargesSection({
                     />
                   </div>
                   <button
-                    className={styles.btnDark}
+                    className="btn btn-primary btn-md"
                     style={{ height: "38px" }}
                     onClick={onAddProduct}
                     disabled={!recordReady || !productLine.product || !productLine.presentation}
                   >
-                    Agregar
+                    <Icon.Plus s={15} /> Agregar
                   </button>
                 </div>
               </div>
@@ -284,12 +284,12 @@ const ChargesSection = forwardRef(function ChargesSection({
                         />
                       </div>
                       <button
-                        className={styles.btnDark}
+                        className="btn btn-primary btn-md"
                         style={{ height: "38px", marginLeft: "auto" }}
                         onClick={onAddService}
                         disabled={!recordReady || !serviceLine.service}
                       >
-                        Agregar servicio
+                        <Icon.Plus s={15} /> Agregar servicio
                       </button>
                     </div>
                   </div>

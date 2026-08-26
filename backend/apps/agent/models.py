@@ -178,6 +178,23 @@ class Conversation(PublicIdMixin, OrganizationalModel):
     # Estado del flujo activo (F1): slots, tabla de refs, pending_action.
     # Whitelist de keys + tope de tamaño se enforcen en É-F1 (patrón ADR p50).
     flow = models.JSONField(default=dict, blank=True)
+    # Qué tipo de relación declaró el contacto SIN expediente vinculado. No se
+    # infiere por frases ni por matchers: el modelo lo decide semánticamente
+    # mediante una tool tipada y el servidor lo usa solo como frontera de
+    # capacidades (alta vs. identificación). ``''`` significa que todavía
+    # falta preguntarlo; un contacto con ``owner`` ya tiene ruta existente por
+    # un hecho de dominio y no necesita escribir este campo.
+    INTAKE_UNRESOLVED = ''
+    INTAKE_NEW_CLIENT = 'new_client'
+    INTAKE_EXISTING_CLIENT = 'existing_client'
+    INTAKE_CHOICES = (
+        (INTAKE_UNRESOLVED, 'Pendiente de clasificar'),
+        (INTAKE_NEW_CLIENT, 'Primera visita'),
+        (INTAKE_EXISTING_CLIENT, 'Cliente existente'),
+    )
+    intake_path = models.CharField(
+        max_length=20, choices=INTAKE_CHOICES, blank=True, default='',
+    )
     # `summary` (resumen rodante) se RETIRÓ en F5 del plan de continuidad. Se
     # declaró en É-F1 y nunca se escribió ni se leyó: 20 filas en producción, 0
     # con contenido. La continuidad se resolvió por otro camino —el transcript se
