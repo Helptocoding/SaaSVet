@@ -33,6 +33,7 @@ from . import (
     identity,
     intake,
     matchers,
+    operation_authorization,
     policy,
     prompts,
     tier0,
@@ -51,7 +52,8 @@ MAX_CONSECUTIVE_TOOL_FAILURES = 2
 
 def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
                    executor=None, triggered_by=None, burst=None,
-                   payload_types=None, burst_messages=None):
+                   payload_types=None, burst_messages=None,
+                   operation_authorizer=None, operation_verifier=None):
     """Envoltorio de `_handle_inbound_inner` que deja el rastro append-only
     de la decisión del turno (R12, É-F4 Fase 1 §1.3).
 
@@ -66,6 +68,8 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
         conversation, agent_settings=agent_settings, llm_client=llm_client,
         executor=executor, triggered_by=triggered_by, burst=burst,
         payload_types=payload_types, burst_messages=burst_messages,
+        operation_authorizer=operation_authorizer,
+        operation_verifier=operation_verifier,
     )
     # El árbitro corre AQUÍ, con el saliente ya encolado (É-F5 Fase 4, p56
     # §5-bis): clasifica qué le pasó al compromiso y el ejecutor aplica los
@@ -296,7 +300,8 @@ def _infer_because(result):
 
 def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
                           executor=None, triggered_by=None, burst=None,
-                          payload_types=None, burst_messages=None):
+                          payload_types=None, burst_messages=None,
+                          operation_authorizer=None, operation_verifier=None):
     """Procesa el turno de la conversación. Devuelve un dict de telemetría
     {decision, llm_calls, tools} para el worker/tests.
 
@@ -372,15 +377,36 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
             and confirmations.get_pending(conversation)):
         return _commit_pending(conversation, executor, triggered_by=triggered_by)
 
+    # Un recibo cerró cualquier capacidad de agenda anterior. La siguiente
+    # operación solo puede nacer de la ráfaga ACTUAL y de un contrato semántico
+    # independiente; el planner no recibe una tool con la que pueda declararla
+    # por sí mismo. Política/confirmaciones se resolvieron antes para no
+    # reclasificar un "sí" que ya tiene una propuesta real a la cual responder.
+    assessment = None
+    if operation_authorization.requires_assessment(conversation):
+        source_messages = burst_messages or ([triggered_by] if triggered_by else [])
+        if source_messages:
+            assessed = operation_authorization.assess_turn(
+                conversation,
+                source_messages,
+                authorizer_client=operation_authorizer,
+                verifier_client=operation_verifier,
+            )
+            assessment = assessed.assessment
+
     if llm_client is None:
         llm_client = get_llm_client('planner')
-    return _run_planner(conversation, agent_settings, llm_client, executor,
-                        triggered_by,
-                        burst_text='\n'.join(texts) if texts else (text or ''),
-                        # Sin texto legible, el tipo de adjunto ES el mensaje
-                        # (É-F5 Fase 5): viaja como hecho de situación.
-                        media_kinds=payload_types if not texts else None,
-                        pending_context=decision.meta.get('pending_context', False))
+    result = _run_planner(
+        conversation, agent_settings, llm_client, executor, triggered_by,
+        burst_text='\n'.join(texts) if texts else (text or ''),
+        # Sin texto legible, el tipo de adjunto ES el mensaje (É-F5 Fase 5):
+        # viaja como hecho de situación.
+        media_kinds=payload_types if not texts else None,
+        pending_context=decision.meta.get('pending_context', False),
+    )
+    if assessment is not None:
+        result['operation_assessment'] = assessment.verdict
+    return result
 
 
 def _run_planner(conversation, agent_settings, llm_client, executor,

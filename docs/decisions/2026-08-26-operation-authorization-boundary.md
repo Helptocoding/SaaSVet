@@ -1,7 +1,13 @@
 # Frontera de autorización de operaciones conversacionales
 
 **Fecha:** 2026-08-26
-**Estado:** aceptada e implementada
+**Estado:** sustituida en el mecanismo de autorización el 2026-08-27
+
+> La frontera de capacidades y el recibo idempotente de esta decisión siguen
+> vigentes. `begin_operation` ya no es el mecanismo de autorización: fue
+> sustituido por la evaluación semántica de la ráfaga mediante autorizador y
+> verificador independientes. Véase
+> [`2026-08-27-semantic-turn-operation-authorization.md`](2026-08-27-semantic-turn-operation-authorization.md).
 
 ## Problema observado
 
@@ -24,12 +30,12 @@ operación por sí sola.
 
 La secuencia es:
 
-`mensaje del cliente → begin_operation → objetivo autorizado → tools acotadas → propuesta → confirmación → commit → recibo`
+`mensaje del cliente → evaluación semántica doble → objetivo autorizado → tools acotadas → propuesta → confirmación → commit → recibo`
 
-`begin_operation` no crea, mueve, cancela, consulta disponibilidad ni redacta
-copy. Solo abre un objetivo tipado y guarda el `Message` entrante que lo
-autorizó. El modelo interpreta semánticamente si existe una nueva petición; el
-servidor controla qué capacidades aparecen y cuáles pueden ejecutarse.
+El planificador no crea, mueve, cancela, consulta disponibilidad ni redacta
+una confirmación para iniciar otra operación. Dos roles estructurados analizan
+la ráfaga actual antes de que el servidor abra un objetivo tipado; el
+planificador no puede autoautorizarse.
 
 No se inspeccionan palabras como "gracias", "sí" o "nos vemos" para decidir.
 Esos textos son ejemplos de un turno sin autorización, no reglas del sistema.
@@ -45,8 +51,8 @@ Esos textos son ejemplos de un turno sin autorización, no reglas del sistema.
 4. Cada objetivo abierto después de un recibo conserva
    `ConversationGoal.authorization_message`, el mensaje entrante causal.
 5. Un objetivo solo habilita la herramienta que le corresponde y las lecturas
-   de agenda necesarias para completarlo. Cambiar de operación exige otro
-   `begin_operation`; no ocurre por una tool lateral.
+   de agenda necesarias para completarlo. Cambiar de operación exige una nueva
+   evaluación doble de la ráfaga; no ocurre por una tool lateral.
 6. El commit sigue emitiendo un único recibo idempotente por `operation_key`.
 
 ## Alcance y compatibilidad
@@ -57,14 +63,14 @@ nueva frontera aplica desde el primer resultado irreversible comunicado al
 cliente, que es el punto donde un objetivo anterior debe considerarse cerrado.
 
 Los objetivos históricos quedan con `authorization_message = NULL`; no se
-inventan causas para conversaciones pasadas. Las nuevas filas creadas mediante
-`begin_operation` sí llevan la relación persistida.
+inventan causas para conversaciones pasadas. Las nuevas evaluaciones persisten
+su evidencia ordenada y los objetivos autorizados las referencian.
 
 ## Observabilidad
 
-- `ToolExecution` registra `begin_operation` y cualquier intento denegado con
-  `policy_decision=denied` y razón
-  `operation_authorization_required`.
+- `TurnOperationAssessment` registra la evaluación y su evidencia; `LLMCall`
+  registra ambos contratos. Cualquier intento legado de `begin_operation` se
+  deniega con `policy_decision=denied`.
 - `ConversationGoal.authorization_message` permite reconstruir qué mensaje del
   cliente abrió cada nueva operación posterior a un recibo.
 - La respuesta al cliente sigue en manos del planner, pero una denegación no
@@ -74,11 +80,12 @@ inventan causas para conversaciones pasadas. Las nuevas filas creadas mediante
 
 - Recibo previo + intento de agenda directo: catálogo sin tools de agenda,
   denegación en profundidad y ningún `pending_action`.
-- Recibo previo + petición nueva: `begin_operation` abre el objetivo correcto,
-  guarda el mensaje causal y revela únicamente las tools de ese objetivo.
+- Recibo previo + petición nueva: autorización y verificación semánticas abren
+  el objetivo correcto, guardan la ráfaga causal y revelan únicamente sus
+  tools.
 - Un modelo de prueba que intenta `create_appointment` después de un recibo no
   puede emitir una confirmación.
 
-Estas pruebas validan una frontera de capacidades, no una lista de frases. Una
-evaluación conversacional adicional debe cubrir variantes libres de agradecimiento,
-consulta de estado, despedida y una petición auténtica de segunda cita.
+Estas pruebas validan una frontera de capacidades, no una lista de frases. La
+evaluación semántica doble cubre variantes libres de cortesía, consulta de
+estado, despedida y petición auténtica de segunda cita.

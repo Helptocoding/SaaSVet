@@ -23,6 +23,8 @@ LLM_SETTINGS = dict(
     AGENT_LLM_API_KEY="key-123",
     AGENT_LLM_MODEL_PLANNER="modelo-capaz",
     AGENT_LLM_MODEL_ROUTER="modelo-barato",
+    AGENT_LLM_MODEL_OPERATION_AUTHORIZER="modelo-autorizador",
+    AGENT_LLM_MODEL_OPERATION_VERIFIER="modelo-verificador",
 )
 
 
@@ -129,11 +131,31 @@ class OpenAICompatibleClientTests(SimpleTestCase):
             post.assert_not_called()
         self.assertFalse(ctx.exception.retryable)
 
-    def test_router_falls_back_to_planner_model(self):
+    def test_specialized_roles_use_configured_model_or_router_fallback(self):
         with override_settings(AGENT_LLM_MODEL_ROUTER=""):
             self.assertEqual(get_llm_client("router").model, "modelo-capaz")
         self.assertEqual(get_llm_client("router").model, "modelo-barato")
         self.assertEqual(get_llm_client("planner").model, "modelo-capaz")
+        self.assertEqual(
+            get_llm_client("operation_authorizer").model,
+            "modelo-autorizador",
+        )
+        self.assertEqual(
+            get_llm_client("operation_verifier").model,
+            "modelo-verificador",
+        )
+        with override_settings(
+            AGENT_LLM_MODEL_OPERATION_AUTHORIZER="",
+            AGENT_LLM_MODEL_OPERATION_VERIFIER="",
+        ):
+            self.assertEqual(
+                get_llm_client("operation_authorizer").model,
+                "modelo-barato",
+            )
+            self.assertEqual(
+                get_llm_client("operation_verifier").model,
+                "modelo-barato",
+            )
 
 
 class EstimateCostTests(SimpleTestCase):

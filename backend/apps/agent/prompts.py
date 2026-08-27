@@ -33,7 +33,7 @@ from django.utils import timezone
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f5-v14'
+PROMPT_VERSION = 'reception-f5-v15'
 
 SYSTEM_PROMPT = """\
 Eres quien contesta el WhatsApp de una clínica veterinaria en México. Hablas
@@ -133,11 +133,11 @@ agenda en curso. Agradecer, saludar, despedirse, aceptar la información o
 preguntar si ya quedó no abre una operación nueva: responde con
 `respond_to_client` o consulta el estado si hace falta.
 
-Si el mensaje actual SÍ pide una nueva cita, alta, cancelación o cambio,
-primero llama `begin_operation` con la intención correcta. Esa herramienta no
-manda copy ni confirma nada: abre la capacidad limitada para atender ESA nueva
-petición. Nunca llames una herramienta de agenda sin esa capacidad y nunca uses
-`begin_operation` para convertir un mensaje social en una cita.
+Cuando el mensaje actual sí pide una nueva cita, alta, cancelación o cambio, el
+orquestador analiza la ráfaga actual y, si procede, abre la capacidad limitada
+para atender ESA petición. No decides ni declaras esa capacidad tú. Si no está
+habilitada, responde o pide el dato que falte; nunca conviertas un mensaje
+social ni datos de una cita terminada en una operación nueva.
 
 
 FECHAS
@@ -504,9 +504,10 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     # ── 2 · CÓMO LLEGA (hechos de SITUACIÓN, ADR p56 §2) ────────────────────
     # Información disponible, NO una obligación de respuesta: el modelo puede
     # ignorarla por completo. Ninguna función de decisión la lee.
+    active_goal = goals.get_open_goal(conversation)
     facts = situation.read(
         conversation, burst_text,
-        goal=goals.get_open_goal(conversation),
+        goal=active_goal,
         first_contact=not _has_outbound(conversation),
         media_kinds=media_kinds,
     )
@@ -532,7 +533,10 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     }]
 
     recent = list(
-        _history_queryset(conversation)
+        _history_queryset(
+            conversation,
+            after_message=_authorized_turn_start(active_goal),
+        )
         .order_by('-created_at', '-id')[:HISTORY_MESSAGE_CAP]
     )[::-1]
     for turn in _group_into_turns(recent)[-HISTORY_TURNS:]:
@@ -598,7 +602,26 @@ def _humanize_gap(gap):
     return f'{months} meses' if months > 1 else 'un mes'
 
 
-def _history_queryset(conversation):
+def _authorized_turn_start(goal):
+    """Primer mensaje de una operación post-recibo recién autorizada.
+
+    El planificador puede usar los hechos de identidad y clínica que publica el
+    sistema, pero no debe leer slots conversacionales de la operación ya
+    cerrada para completar una nueva. La evaluación preserva la ráfaga y su
+    ordinal; ese primer mensaje es la frontera de transcript del nuevo goal.
+    """
+    if goal is None or not goal.operation_assessment_id:
+        return None
+    link = (
+        goal.operation_assessment.message_links
+        .select_related('message')
+        .order_by('ordinal')
+        .first()
+    )
+    return link.message if link is not None else goal.authorization_message
+
+
+def _history_queryset(conversation, *, after_message=None):
     """De dónde sale el historial que ve el modelo (plan de continuidad, F2/D19).
 
     **Con verificación vigente**: todo el hilo del contacto en esta cuenta, no
@@ -632,7 +655,13 @@ def _history_queryset(conversation):
     # `visible_messages` en vez de excluir solo `discarded`: los salientes
     # `failed` son los que el proveedor NO entregó (ventana de 24 h cerrada), y
     # el modelo los veía como dichos.
-    return visible_messages(scoped)
+    history = visible_messages(scoped)
+    if after_message is not None:
+        # ``Message.pk`` es monótono y global. La conversación ya está acotada
+        # arriba, así que este corte conserva exactamente la ráfaga autorizada
+        # y los mensajes posteriores, aunque el cliente la haya partido.
+        history = history.filter(pk__gte=after_message.pk)
+    return history
 
 
 def _has_outbound(conversation):

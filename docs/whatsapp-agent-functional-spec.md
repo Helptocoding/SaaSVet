@@ -211,6 +211,27 @@ Los textos de plantillas tier-0 son **literales** (test por igualdad). Los texto
 - **Cambio de tema** con `pending_action` vivo: se descarta **con aviso** (*"Dejo pendiente lo de la cita. Sobre tu pregunta…"*).
 - Solo puede existir **un** `pending_action` a la vez.
 
+### 2.4.1 Operación nueva después de un recibo
+
+Un `operation_receipt` entregado concluye la operación que lo produjo. Si no
+existe una confirmación ni un objetivo activos, el siguiente turno no recupera
+capacidad de agenda desde el transcript, la mascota o la hora anteriores.
+
+El orquestador toma la ráfaga completa de mensajes entrantes y la evalúa con
+dos contratos semánticos estructurados: el autorizador decide
+`conversational|operation|ambiguous`; cuando propone una operación permitida
+por la ruta de atención, un verificador independiente debe aceptarla. Solo esa
+doble aceptación abre un objetivo nuevo y expone las tools estrictamente
+necesarias.
+
+La evaluación no compara frases, palabras ni patrones de cortesía. Por tanto,
+un agradecimiento o despedida enviados en varios mensajes sigue siendo un
+turno conversacional, y una solicitud libre de nueva cita se puede autorizar
+sin depender de una redacción predeterminada. Un fallo de proveedor, contrato
+inválido, ambigüedad o rechazo deja las tools de agenda ocultas y nunca crea
+una confirmación pendiente. Cada resultado y sus mensajes fuente ordenados se
+auditan en `TurnOperationAssessment`.
+
 ### 2.5 Manejo de errores de herramientas
 
 | Resultado | Comportamiento del agente |

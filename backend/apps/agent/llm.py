@@ -204,12 +204,24 @@ class StubLLMClient:
 
 
 def get_llm_client(role='planner'):
-    """Factory por rol: 'planner' (modelo capaz) | 'router' (barato).
+    """Factory por rol de conversación o autorización semántica.
 
-    Ambos modelos por env; si el router no está configurado cae al planner
-    (una sola config mínima levanta el sistema completo).
+    El autorizador y el verificador pueden usar modelos distintos. Mientras el
+    operador los configura, ambos caen al router y éste al planner; sus
+    contratos y llamadas siguen siendo separados.
     """
     model = getattr(settings, 'AGENT_LLM_MODEL_PLANNER', '')
+    router_model = getattr(settings, 'AGENT_LLM_MODEL_ROUTER', '') or model
     if role == 'router':
-        model = getattr(settings, 'AGENT_LLM_MODEL_ROUTER', '') or model
+        model = router_model
+    elif role == 'operation_authorizer':
+        model = (
+            getattr(settings, 'AGENT_LLM_MODEL_OPERATION_AUTHORIZER', '')
+            or router_model
+        )
+    elif role == 'operation_verifier':
+        model = (
+            getattr(settings, 'AGENT_LLM_MODEL_OPERATION_VERIFIER', '')
+            or router_model
+        )
     return OpenAICompatibleClient(model=model)

@@ -92,6 +92,15 @@ AGENT_LLM_API_KEY = config('AGENT_LLM_API_KEY', default='')
 AGENT_LLM_MODEL_PLANNER = config('AGENT_LLM_MODEL_PLANNER', default='')
 # Router/clasificación barata; vacío = usa el planner para todo.
 AGENT_LLM_MODEL_ROUTER = config('AGENT_LLM_MODEL_ROUTER', default='')
+# Autorización de una operación posterior a un recibo. Se mantienen como roles
+# separados para que el operador pueda elegir modelos distintos; vacíos =
+# router, y router vacío = planner. No cambian la frontera de capacidades.
+AGENT_LLM_MODEL_OPERATION_AUTHORIZER = config(
+    'AGENT_LLM_MODEL_OPERATION_AUTHORIZER', default='',
+)
+AGENT_LLM_MODEL_OPERATION_VERIFIER = config(
+    'AGENT_LLM_MODEL_OPERATION_VERIFIER', default='',
+)
 # Pricing del proveedor elegido (USD por millón de tokens) para LLMCall.
 # 0 = sin contabilidad de costo (los tokens igual se registran).
 AGENT_LLM_COST_PER_MTOK_INPUT = config(

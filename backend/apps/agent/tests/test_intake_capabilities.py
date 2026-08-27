@@ -5,8 +5,10 @@ No se prueban frases del cliente: el modelo entrega el enum tipado mediante
 capacidades llegan al modelo y qué rechaza el servidor si intenta saltarlas.
 """
 from apps.agent import confirmations, goals, planner, tools
-from apps.agent.llm import LLMResult, StubLLMClient
-from apps.agent.models import ContactIdentity, ConversationGoal
+from apps.agent.llm import LLMError, LLMResult, StubLLMClient
+from apps.agent.models import (
+    ContactIdentity, ConversationGoal, TurnOperationAssessment,
+)
 from apps.agent.tests.test_w0_hardening import AgentFixture
 from apps.channels.models import Message
 
@@ -199,7 +201,7 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
 
         names = self._tool_names()
 
-        self.assertIn(tools.BEGIN_OPERATION_TOOL, names)
+        self.assertNotIn(tools.BEGIN_OPERATION_TOOL, names)
         self.assertNotIn('create_appointment', names)
         self.assertNotIn('find_available_slots', names)
         self.assertNotIn('check_appointment_slot', names)
@@ -221,29 +223,198 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
         self.assertIsNone(goals.get_open_goal(self.conv))
         self.assertIsNone(confirmations.get_pending(self.conv))
 
-    def test_new_operation_is_explicit_and_keeps_its_causal_message(self):
+    def test_new_operation_is_authorized_from_the_current_turn(self):
         self._receipt()
+        old_operation_data = self._inbound(
+            'La cita anterior de Luna era a las nueve.',
+        )
         request = self._inbound('Quiero otra cita para Luna el viernes.')
+        authorizer = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='classify_turn_operation',
+                tool_args={
+                    'verdict': 'operation',
+                    'operation': 'new_appointment',
+                },
+                tool_call_id='authorize_1',
+            ),
+        ])
+        verifier = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='verify_turn_operation',
+                tool_args={'verdict': 'accept'}, tool_call_id='verify_1',
+            ),
+        ])
+        agent = StubLLMClient(scripted=[
+            LLMResult(kind='text', text='Claro, ¿qué horario prefieres?'),
+        ])
 
-        outcome = tools.run_tool(
-            tools.BEGIN_OPERATION_TOOL,
-            {'operation': 'new_appointment'},
-            conversation=self.conv, executor=self.executor(),
-            triggered_by=request,
+        planner.handle_inbound(
+            self.conv, agent_settings=self.settings, llm_client=agent,
+            operation_authorizer=authorizer, operation_verifier=verifier,
+            executor=self.executor(), triggered_by=request,
+            burst_messages=[request],
         )
 
-        self.assertTrue(outcome.ok, outcome.client_error)
         goal = goals.get_open_goal(self.conv)
         self.assertEqual(goal.name, goals.SCHEDULE)
         self.assertEqual(goal.authorization_message_id, request.pk)
+        self.assertEqual(
+            goal.operation_assessment.verdict,
+            TurnOperationAssessment.VERDICT_AUTHORIZED,
+        )
+        self.assertEqual(
+            list(goal.operation_assessment.source_messages.values_list('pk', flat=True)),
+            [request.pk],
+        )
+        planner_context = '\n'.join(
+            message['content'] for message in agent.calls[0]['messages']
+        )
+        self.assertIn(request.body, planner_context)
+        self.assertNotIn(old_operation_data.body, planner_context)
         names = self._tool_names()
         self.assertIn('create_appointment', names)
         self.assertIn('find_available_slots', names)
         self.assertNotIn('cancel_appointment', names)
 
+    def test_fragmented_thanks_remains_conversational(self):
+        self._receipt()
+        fragments = [
+            self._inbound('muchas'),
+            self._inbound('gracias'),
+            self._inbound('por su atención'),
+        ]
+        authorizer = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='classify_turn_operation',
+                tool_args={'verdict': 'conversational'},
+                tool_call_id='authorize_1',
+            ),
+        ])
+        agent = StubLLMClient(scripted=[
+            LLMResult(kind='text', text='¡Con gusto! Que estén muy bien.'),
+        ])
+
+        planner.handle_inbound(
+            self.conv, agent_settings=self.settings, llm_client=agent,
+            operation_authorizer=authorizer, executor=self.executor(),
+            triggered_by=fragments[-1], burst_messages=fragments,
+        )
+
+        assessment = TurnOperationAssessment.objects.get(
+            conversation=self.conv, anchor_message=fragments[-1],
+        )
+        self.assertEqual(
+            assessment.verdict,
+            TurnOperationAssessment.VERDICT_CONVERSATIONAL,
+        )
+        self.assertEqual(
+            list(assessment.source_messages.values_list('pk', flat=True)),
+            [message.pk for message in fragments],
+        )
+        self.assertIsNone(goals.get_open_goal(self.conv))
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
+    def test_verifier_rejects_a_hallucinated_new_appointment(self):
+        self._receipt()
+        social_message = self._inbound('Excepcional.')
+        authorizer = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='classify_turn_operation',
+                tool_args={
+                    'verdict': 'operation',
+                    'operation': 'new_appointment',
+                },
+                tool_call_id='authorize_1',
+            ),
+        ])
+        verifier = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='verify_turn_operation',
+                tool_args={'verdict': 'reject'}, tool_call_id='verify_1',
+            ),
+        ])
+        agent = StubLLMClient(scripted=[
+            LLMResult(
+                kind='text', text='Qué bueno saberlo. ¿Te ayudo en algo más?'),
+        ])
+
+        planner.handle_inbound(
+            self.conv, agent_settings=self.settings, llm_client=agent,
+            operation_authorizer=authorizer, operation_verifier=verifier,
+            executor=self.executor(), triggered_by=social_message,
+            burst_messages=[social_message],
+        )
+
+        assessment = TurnOperationAssessment.objects.get(
+            conversation=self.conv, anchor_message=social_message,
+        )
+        self.assertEqual(
+            assessment.verdict,
+            TurnOperationAssessment.VERDICT_REJECTED,
+        )
+        self.assertEqual(assessment.operation, 'new_appointment')
+        self.assertIsNone(goals.get_open_goal(self.conv))
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
+    def test_authorizer_failure_fails_closed(self):
+        self._receipt()
+        request = self._inbound('Quiero agendar otra cita para Luna.')
+        authorizer = StubLLMClient(scripted=[
+            LLMError('proveedor no disponible', retryable=True),
+        ])
+        agent = StubLLMClient(scripted=[
+            LLMResult(kind='text', text='¿Me indicas qué necesitas?'),
+        ])
+
+        planner.handle_inbound(
+            self.conv, agent_settings=self.settings, llm_client=agent,
+            operation_authorizer=authorizer, executor=self.executor(),
+            triggered_by=request, burst_messages=[request],
+        )
+
+        assessment = TurnOperationAssessment.objects.get(
+            conversation=self.conv, anchor_message=request,
+        )
+        self.assertEqual(
+            assessment.verdict,
+            TurnOperationAssessment.VERDICT_UNAVAILABLE,
+        )
+        self.assertEqual(assessment.failure_code, 'llm_retryable_failure')
+        self.assertNotIn(
+            'create_appointment',
+            {item['function']['name'] for item in agent.calls[0]['tools']},
+        )
+        self.assertIsNone(goals.get_open_goal(self.conv))
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
+    def test_begin_operation_is_never_a_model_authority(self):
+        self._receipt()
+        request = self._inbound('Quiero otra cita para Luna.')
+
+        outcome = tools.run_tool(
+            tools.BEGIN_OPERATION_TOOL,
+            {'operation': 'new_appointment'}, conversation=self.conv,
+            executor=self.executor(), triggered_by=request,
+        )
+
+        self.assertFalse(outcome.ok)
+        self.assertEqual(
+            outcome.client_error,
+            'operation_authorization_managed_by_orchestrator',
+        )
+        self.assertIsNone(goals.get_open_goal(self.conv))
+
     def test_errant_planner_call_after_receipt_cannot_emit_confirmation(self):
         self._receipt()
         thanks = self._inbound('Gracias, nos vemos mañana.')
+        authorizer = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='classify_turn_operation',
+                tool_args={'verdict': 'conversational'},
+                tool_call_id='authorize_1',
+            ),
+        ])
         stub = StubLLMClient(scripted=[
             LLMResult(
                 kind='tool_call', tool_name='create_appointment',
@@ -256,7 +427,8 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
 
         result = planner.handle_inbound(
             self.conv, agent_settings=self.settings, llm_client=stub,
-            executor=self.executor(), triggered_by=thanks,
+            operation_authorizer=authorizer, executor=self.executor(),
+            triggered_by=thanks, burst_messages=[thanks],
         )
 
         self.assertEqual(result['decision'], 'planner_reply')

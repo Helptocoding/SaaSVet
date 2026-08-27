@@ -222,6 +222,112 @@ class Conversation(PublicIdMixin, OrganizationalModel):
         return f"Conversation<{self.public_id} {self.state}>"
 
 
+class TurnOperationAssessment(OrganizationalModel):
+    """Decisión semántica y auditable sobre un turno posterior a un recibo.
+
+    No contiene una copia del texto ni decide mediante matchers. Conserva los
+    mensajes que formaron la ráfaga, el veredicto de dos roles de lenguaje y la
+    operación tipada que el orquestador (no el planner) puede convertir en un
+    objetivo. Un veredicto no operativo también se persiste: que una capacidad
+    no se abrió es parte de la auditoría, no una ausencia silenciosa de datos.
+    """
+
+    VERDICT_CONVERSATIONAL = 'conversational'
+    VERDICT_AUTHORIZED = 'authorized'
+    VERDICT_AMBIGUOUS = 'ambiguous'
+    VERDICT_REJECTED = 'rejected'
+    VERDICT_UNAVAILABLE = 'unavailable'
+    VERDICT_CHOICES = (
+        (VERDICT_CONVERSATIONAL, 'Turno conversacional'),
+        (VERDICT_AUTHORIZED, 'Operación autorizada'),
+        (VERDICT_AMBIGUOUS, 'Operación ambigua'),
+        (VERDICT_REJECTED, 'Operación rechazada'),
+        (VERDICT_UNAVAILABLE, 'Verificador no disponible'),
+    )
+
+    OPERATION_NEW_APPOINTMENT = 'new_appointment'
+    OPERATION_FIRST_VISIT = 'first_visit'
+    OPERATION_NEW_PET_WITH_APPOINTMENT = 'new_pet_with_appointment'
+    OPERATION_NEW_PET_ONLY = 'new_pet_only'
+    OPERATION_CANCEL_APPOINTMENT = 'cancel_appointment'
+    OPERATION_RESCHEDULE_APPOINTMENT = 'reschedule_appointment'
+    OPERATION_CHOICES = (
+        (OPERATION_NEW_APPOINTMENT, 'Nueva cita'),
+        (OPERATION_FIRST_VISIT, 'Primera visita'),
+        (OPERATION_NEW_PET_WITH_APPOINTMENT, 'Mascota nueva con cita'),
+        (OPERATION_NEW_PET_ONLY, 'Mascota nueva sin cita'),
+        (OPERATION_CANCEL_APPOINTMENT, 'Cancelar cita'),
+        (OPERATION_RESCHEDULE_APPOINTMENT, 'Reagendar cita'),
+    )
+
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.PROTECT,
+        related_name='turn_operation_assessments',
+    )
+    # Último mensaje de la ráfaga. Hace idempotente la decisión si el worker
+    # retoma el mismo turno; la relación M2M de abajo conserva la evidencia
+    # completa y ordenada.
+    anchor_message = models.ForeignKey(
+        'channels.Message', on_delete=models.PROTECT,
+        related_name='+',
+    )
+    verdict = models.CharField(max_length=20, choices=VERDICT_CHOICES)
+    operation = models.CharField(
+        max_length=32, choices=OPERATION_CHOICES, blank=True, default='',
+    )
+    authorizer_model = models.CharField(max_length=64, blank=True, default='')
+    verifier_model = models.CharField(max_length=64, blank=True, default='')
+    authorizer_prompt_version = models.CharField(
+        max_length=32, blank=True, default='')
+    verifier_prompt_version = models.CharField(
+        max_length=32, blank=True, default='')
+    # Código estable, sin cuerpo del mensaje ni razonamiento libre del modelo.
+    failure_code = models.CharField(max_length=48, blank=True, default='')
+    source_messages = models.ManyToManyField(
+        'channels.Message', through='TurnOperationAssessmentMessage',
+        related_name='turn_operation_assessments',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['conversation', 'anchor_message'],
+                name='turnoperationassessment_one_per_anchor',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'conversation', 'created_at']),
+            models.Index(fields=['organization', 'verdict', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"TurnOperationAssessment<{self.verdict} {self.operation}>"
+
+
+class TurnOperationAssessmentMessage(OrganizationalModel):
+    """Mensaje fuente de una evaluación, preservando su orden en la ráfaga."""
+
+    assessment = models.ForeignKey(
+        TurnOperationAssessment, on_delete=models.CASCADE,
+        related_name='message_links',
+    )
+    message = models.ForeignKey('channels.Message', on_delete=models.PROTECT)
+    ordinal = models.PositiveSmallIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['assessment', 'message'],
+                name='turnoperationassessmentmessage_unique_message',
+            ),
+            models.UniqueConstraint(
+                fields=['assessment', 'ordinal'],
+                name='turnoperationassessmentmessage_unique_ordinal',
+            ),
+        ]
+        ordering = ['ordinal']
+
+
 class ConversationGoal(OrganizationalModel):
     """Objetivo que persigue la conversación (É-F3 W2).
 
@@ -277,6 +383,13 @@ class ConversationGoal(OrganizationalModel):
     # sobre frases: es la relación causal entre un turno y una capacidad.
     authorization_message = models.ForeignKey(
         'channels.Message', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='authorized_goals',
+    )
+    # Reemplaza gradualmente la procedencia de un solo mensaje por la decisión
+    # auditable del turno completo. `authorization_message` se conserva para
+    # compatibilidad histórica y como ancla rápida de consultas existentes.
+    operation_assessment = models.ForeignKey(
+        TurnOperationAssessment, on_delete=models.PROTECT,
         null=True, blank=True, related_name='authorized_goals',
     )
     name = models.CharField(max_length=40)

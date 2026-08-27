@@ -2854,11 +2854,12 @@ def as_openai_tools(conversation=None):
     for name, spec in TOOL_SPECS.items():
         if not spec.get('llm_exposed', True):
             continue
-        if conversation is not None and not intake.allows_tool(conversation, name):
+        # La autorización posrecibo pertenece al orquestador de turnos. Nunca
+        # se ofrece al planner: de otro modo un modelo puede autoafirmar una
+        # intención inexistente y volver a exponer agenda.
+        if conversation is not None and name == BEGIN_OPERATION_TOOL:
             continue
-        if (conversation is not None
-                and name == BEGIN_OPERATION_TOOL
-                and not can_begin_operation(conversation)):
+        if conversation is not None and not intake.allows_tool(conversation, name):
             continue
         if (conversation is not None
                 and name != BEGIN_OPERATION_TOOL
@@ -2912,6 +2913,18 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
     spec = TOOL_SPECS.get(name)
     if spec is None:
         return ToolOutcome(ok=False, client_error='unknown_tool')
+    if name == BEGIN_OPERATION_TOOL:
+        executor.record_local(
+            tool_name=name,
+            args_redacted={},
+            policy_decision='denied',
+            summary={'reason': 'operation_authorization_managed_by_orchestrator'},
+            triggered_by_message=triggered_by,
+        )
+        return ToolOutcome(
+            ok=False,
+            client_error='operation_authorization_managed_by_orchestrator',
+        )
     if not intake.allows_tool(conversation, name):
         return ToolOutcome(
             ok=False,

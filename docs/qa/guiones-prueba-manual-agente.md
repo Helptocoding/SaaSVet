@@ -309,6 +309,57 @@ el `gracias` final no dispare **ninguna** acción nueva.
 
 ---
 
+## C7 — Cortesía fragmentada después del recibo
+
+**Modalidad**: cliente conocido · **Dificultad**: compleja
+
+**Preparar**: completar una cita real y esperar el mensaje automático de
+recibo con fecha, hora y ubicación.
+
+**Objetivo**: confirmar que una despedida transmitida como ráfaga conserva su
+significado conversacional y no reutiliza datos de la cita cerrada.
+
+**Mensajes** (enviarlos con menos de 8 segundos entre cada uno):
+
+1. `muchas`
+2. `gracias`
+3. `por su atención`
+
+**Verificar**: puede responder cordialmente, pero no consulta disponibilidad,
+no propone hora, no muestra resumen de cita y no crea `pending_action` ni otra
+cita.
+
+**Evidencia técnica**: una sola `TurnOperationAssessment` anclada al mensaje
+3, con los tres mensajes fuente ordenados y veredicto `conversational`.
+
+---
+
+## C8 — Nueva cita real en una ráfaga fragmentada
+
+**Modalidad**: cliente conocido · **Dificultad**: compleja
+
+**Preparar**: completar una cita real y esperar su recibo. Tener una segunda
+fecha/hora libre.
+
+**Objetivo**: demostrar que la protección no es un filtro de frases: una nueva
+solicitud libre, incluso fragmentada, sí abre una operación nueva.
+
+**Mensajes** (enviarlos con menos de 8 segundos entre cada uno):
+
+1. `también`
+2. `quiero agendar otra cita`
+3. `para [MASCOTA_ANDRES] el [FECHA_FUTURA] a las [HORA_DISPONIBLE]`
+4. (al resumen) `sí`
+
+**Verificar**: existe una segunda cita distinta solo tras el `sí`. Antes del
+paso 4 hay exactamente una confirmación nueva; no toma fecha, hora o mascota
+de la cita cerrada si faltan en esta solicitud.
+
+**Evidencia técnica**: `TurnOperationAssessment` contiene la ráfaga completa,
+queda `authorized`, y el `ConversationGoal` nuevo la referencia.
+
+---
+
 ## G5 — Cambias la cita desde el panel mientras conversas
 
 **Modalidad**: cliente conocido · **Dificultad**: compleja
@@ -334,6 +385,10 @@ pestaña.
 
 **Señal a observar**: que diga **qué cambió** (que la cita ya estaba cancelada)
 en vez de un error genérico o un «listo» falso.
+
+Si se pide la nueva cita del paso 5, comprobar además que se inicia como una
+operación nueva autorizada por ese turno, no que reusa el objetivo, mascota u
+horario de la reprogramación que el panel invalidó.
 
 ---
 

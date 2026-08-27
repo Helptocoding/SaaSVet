@@ -71,6 +71,7 @@ ref; `channels.views` importa `agent.services` perezoso.
 | `ContactIdentity` | agent | Identidad POR ORG (`unique org+channel+external_id` — el mismo cliente puede escribir a 2 clínicas); `verification_level` (unknown→phone_match→confirmed_in_chat→staff_verified); `phone_normalized` (Q5: últimos 10 dígitos, México-only); NO es un User — jamás recibe tokens |
 | `Conversation` | agent | `PublicIdMixin`; FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo) — pero **el contexto ya no muere con el hilo**: se lee por `(contacto, cuenta)` (F2, §Continuidad); `close_reason` registra por qué se cerró; org fijada al crear e inmutable; `flow` = scratchpad (ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo. **`summary` se retiró en F5**: declarado en É-F1 y nunca escrito ni leído — la continuidad se resolvió sin él |
 | `ConversationGoal` | agent | **El COMPROMISO** (É-F3 W2; extendido por ADR p55 §3 — un solo modelo para tarea e identidad, R7). Estados `active/deviated/suspended/blocked/completed/abandoned/handoff` (+`cancelled` deprecado); `slots` `{slot:{value,confidence}}` YA normalizado; `missing`, `low_confidence`, `asked`, `stall_turns`; coordenadas `return_to`/`supplanted_by`/`blocked_reason`; `attempts_failed` (fallos reales ≠ turnos sin avance) y `working_state` (estado local del mecanismo). Dos constraints parciales: **uno al frente** (`active|deviated`) y **uno suspendido** por conversación |
+| `TurnOperationAssessment` | agent | Decisión append-only de un turno posterior a recibo: `conversation + anchor_message` es única/idempotente; guarda veredicto, operación, fallos, modelos/prompts y la ráfaga fuente como relación ordenada. Un `ConversationGoal` autorizado la referencia; el runtime solo habilita agenda tras autorización+verificación semánticas. |
 | `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `faq_facts` (solo hechos sin campo propio), `default_veterinarian`, `scheduling_mode`, `nudge_enabled` |
 | `TurnDecision` | agent | Rastro **append-only** de cada turno (R12, É-F4 Fase 1). **El runtime NUNCA la lee** — es solo para diagnóstico/regresión. `verdict` (string libre todavía — cerrarlo a los 5 veredictos exige que el árbitro sea dueño de las 22 salidas del planner, que excede R3/R4/R7/R9), `because` (enum cerrado ORTOGONAL, ≤12 valores, `TurnDecision.Because`), `active_commitment`/`return_to`/`supplanted_by` (aún sin poblar, mismo motivo), `facts_consumed`/`facts_produced` (JSON, cero PII). `planner_used`/`tools_called`/`duration_ms` son DIAGNÓSTICO — ningún test afirma sobre ellos |
 
@@ -349,8 +350,10 @@ Pipeline por entrante (`agent/planner.py`): `policy.evaluate` resuelve
 tier-0 sin LLM (urgencia/humano/opt-out/bot/confirmación/presupuesto);
 `RUN_PLANNER` corre el bucle acotado LLM↔tools (executor loopback+RBAC
 reales, resultado como DATOS G6, `LLMCall` por llamada). El LLM **nunca
-autoriza**: policy decide antes, run_tool/executor revalidan
-tier/verificación/ownership. Proveedor LLM = elección del operador
+autoautoriza**: policy decide antes, run_tool/executor revalidan
+tier/verificación/ownership y, después de un recibo de operación, el
+orquestador exige autorización semántica doble de la ráfaga antes de abrir un
+objetivo nuevo. Proveedor LLM = elección del operador
 (`AGENT_LLM_*` por env, cliente OpenAI-compatible en `agent/llm.py`).
 Tools de **lectura** (tier 1): list_my_pets, get_vaccine_status,
 **get_appointments**, get_clinic_info, get_service_catalog,
@@ -366,6 +369,24 @@ Identidad (`agent/identity.py`): implícita (nombrar mascota) + reto UX-03.
 Suite de regresión: 63 casos congelados en CI contra `StubLLMClient`
 (bloqueante) + fixture trampa cross-tenant + aserciones prohibidas globales
 (`agent/tests/harness.py`).
+
+### Operación posterior a un recibo: la ráfaga es la autoridad (2026-08-27)
+
+Un `operation_receipt` cerrado no se interpreta como una conversación que
+puede retomar la operación anterior. Si no hay confirmación ni objetivo vivo,
+el planner pierde todo capability de agenda y `operation_authorization.py`
+evalúa la **ráfaga completa** (no solamente su último texto): un autorizador
+tipado propone `conversational|operation|ambiguous`; si propone operación, un
+verificador independiente acepta, rechaza o marca ambigüedad. Solo dos
+veredictos compatibles abren un `ConversationGoal` nuevo y revelan sus tools.
+
+Las fuentes ordenadas, ambos modelos/prompts y el resultado quedan en
+`TurnOperationAssessment`; el objetivo autorizado la referencia y conserva el
+último `Message` causal por compatibilidad. Un timeout, contrato inválido o
+ambigüedad deja el turno sin agenda, pero permite una respuesta conversacional.
+No hay parser de agradecimientos ni lista de frases; `begin_operation` no se
+expone al modelo y se deniega incluso si aparece en un output atrasado. Ver ADR
+`2026-08-27-semantic-turn-operation-authorization.md`.
 
 ### Una tool no decide qué es relevante (`get_appointments`, 2026-08-17)
 

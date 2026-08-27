@@ -36,6 +36,13 @@ Contratos: [`docs/modules/agent.md`](../modules/agent.md) ·
 **Fail-closed**: sin `APP_SECRET`, el webhook rechaza todo POST — el sistema
 queda sordo pero jamás inseguro.
 
+Para el agente LLM, `AGENT_LLM_MODEL_OPERATION_AUTHORIZER` y
+`AGENT_LLM_MODEL_OPERATION_VERIFIER` son opcionales: si no se fijan, ambos
+usan `AGENT_LLM_MODEL_ROUTER` (y este el modelo planner como último fallback).
+Separarlos permite observar o cambiar el rol de control sin cambiar el modelo
+que redacta respuestas; no cambian la política ni habilitan operaciones por sí
+solos.
+
 ### 1.3 Deploy + provisioning de la clínica
 
 ```bash
@@ -166,6 +173,7 @@ Umbrales de atención: latencia p95 > 30 s · handoff > 40 % · repregunta > 20 
 | Las marcas quedan en `pending` aunque Meta recibió el mensaje | Sender/webhook de estados detenido, token vencido o acuses no suscritos | Revisar worker, eventos `AGENT_SEND_FAILED`, suscripción `messages` y payloads de estados; repetir el smoke E2E sandbox |
 | "no entregado — ventana de sesión de 24h cerrada" | Se intentó responder >24 h tras el último mensaje del cliente | Esperado (límite del canal): el cliente debe escribir de nuevo; plantillas HSM llegan en F3 |
 | Respuesta automática duplicada tras reinicio | No debe pasar (estado en DB, `TC-GB-07`) | Si pasara: bug — revisar `has_outbound` en `agent/worker.py::_first_reply_fallback` |
+| Después de un recibo aparece una confirmación de cita que el cliente no pidió | Regresión en la frontera semántica post-recibo | Revisar `TurnOperationAssessment` de la conversación, sus `source_messages`, `verdict`, `operation`, `failure_code` y los dos `LLMCall` con prompts `operation-authorizer-v1`/`operation-verifier-v1`. Si no hay una evaluación `authorized` vinculada al `ConversationGoal`, es incidente de integridad: no cerrar ni confirmar la propuesta manualmente. |
 | `AGENT_TURN_FAILED` repetido en la misma conversación | Un turno revienta (payload raro, bug). El worker ya NO se cae: reintenta hasta 3 veces con 30 s de respiro | Al agotar reintentos el mensaje pasa a `discarded` y la conversación escala a humano. Revisar el traceback del log y la conversación en `/inbox` |
 | Conversación atascada sin procesarse | `processing_until` quedó en el futuro (worker muerto a mitad de turno) | El lease expira solo a los 5 min. Si urge: poner `processing_until=NULL` por shell |
 | `AGENT_URGENT_HANDOFF` con `alert_delivered: false` | `DISCORD_WEBHOOK_URL` sin configurar o webhook caído | Configurar la variable; el evento igual queda en el log estructurado |

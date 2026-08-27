@@ -458,7 +458,8 @@ def get_suspended_goal(conversation):
     ).first()
 
 
-def open_goal(conversation, name, *, authorization_message=None):
+def open_goal(conversation, name, *, authorization_message=None,
+              operation_assessment=None):
     """Abre, retoma o SUPLANTA.
 
     Cambio de ADR p55 §3 (R4): abrir otro compromiso ya no **cancela** el
@@ -500,6 +501,7 @@ def open_goal(conversation, name, *, authorization_message=None):
         conversation=conversation,
         name=name,
         authorization_message=authorization_message,
+        operation_assessment=operation_assessment,
     )
     _log(goal, 'AGENT_GOAL_OPENED')
     return goal
