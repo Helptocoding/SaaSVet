@@ -211,7 +211,7 @@ class WriteToolsTests(TestCase):
             "pet_handle": "mascota_1", "date": self.day.isoformat(),
             "time": "10:00", "reason": "x"})
         self.assertFalse(out.ok)
-        self.assertEqual(out.client_error, "verification_required")
+        self.assertEqual(out.client_error, "intake_required")
 
     def test_create_unknown_pet_handle(self):
         out = self._run("create_appointment", {
@@ -304,7 +304,13 @@ class WriteToolsTests(TestCase):
             organization=self.org, external_id=wa,
             verification_level="unknown")
         conv = Conversation.objects.create(
-            organization=self.org, channel_account=self.channel, contact=contact)
+            organization=self.org,
+            channel_account=self.channel,
+            contact=contact,
+            # La ruta de alta ya fue seleccionada semánticamente antes de
+            # invocar la herramienta; persistimos ese hecho tipado.
+            intake_path=Conversation.INTAKE_NEW_CLIENT,
+        )
         ex = ToolExecutor(conv, self.agent_user,
                           transport=HeaderForwardingTransport())
         return conv, ex
@@ -389,7 +395,7 @@ class WriteToolsTests(TestCase):
             "owner_name": "X", "pet_name": "Y", "date": self.day.isoformat(),
             "time": "10:00", "reason": "z"})
         self.assertFalse(out.ok)
-        self.assertEqual(out.client_error, "already_client")
+        self.assertEqual(out.client_error, "intake_path_conflict")
         self.assertIsNone(confirmations.get_pending(self.conv))
 
     # -- proactividad UX (PR-18) -------------------------------------------
@@ -521,7 +527,7 @@ class AddPetForExistingClientTests(WriteToolsTests):
             "pet_name": "Koler", "date": self.day.isoformat(),
             "time": "10:00", "reason": "baño"})
         self.assertFalse(out.ok)
-        self.assertEqual(out.client_error, "verification_required")
+        self.assertEqual(out.client_error, "intake_required")
         self.assertEqual(Pet.objects.filter(name="Koler").count(), 0)
 
     def test_a_family_link_cannot_open_records_on_the_titular(self):

@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from apps.core.request_context import get_request_id
 
@@ -39,4 +40,17 @@ class RBACStructuredFormatter(logging.Formatter):
         for key, val in vars(record).items():
             if key not in _BASE_RECORD_KEYS and not key.startswith("_"):
                 data[key] = val
+        # Conserva señales depurables de logger.exception sin exponer el
+        # texto ni la traza completa, que pueden contener datos personales.
+        exc_type, _, trace = record.exc_info or (None, None, None)
+        if exc_type is not None:
+            data.setdefault("error_class", exc_type.__name__)
+        if trace is not None:
+            while trace.tb_next is not None:
+                trace = trace.tb_next
+            code = trace.tb_frame.f_code
+            data.setdefault(
+                "error_origin",
+                f"{os.path.basename(code.co_filename)}:{trace.tb_lineno}:{code.co_name}",
+            )
         return json.dumps(data, default=str)

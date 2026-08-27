@@ -34,8 +34,13 @@ from apps.agent.models import (
 )
 from apps.agent.services import ingest_inbound_message
 from apps.agent.tests.harness import run_turn, set_schedule_day
-from apps.agent.worker import MAX_PROCESS_ATTEMPTS, process_pending_conversations
+from apps.agent.worker import (
+    MAX_PROCESS_ATTEMPTS,
+    _escalate_after_failure,
+    process_pending_conversations,
+)
 from apps.channels.models import ChannelAccount, Message
+from apps.channels.selectors import visible_messages
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSIONS
 from apps.organizations.models import Organization
@@ -252,15 +257,34 @@ class WorkerFaultIsolationTests(AgentFixture):
             process_pending_conversations(now=self._later())
 
         message.refresh_from_db()
-        self.assertEqual(message.status, Message.STATUS_DISCARDED)
+        self.assertEqual(message.status, Message.STATUS_FAILED)
+        self.assertEqual(message.failure_reason, 'turn_failed:RuntimeError')
+        self.assertTrue(
+            visible_messages(Message.objects.filter(pk=message.pk)).exists(),
+            'un mensaje del cliente con fallo técnico debe seguir en bandeja',
+        )
         conv = message.conversation
         conv.refresh_from_db()
         self.assertEqual(conv.state, Conversation.STATE_HANDOFF_PENDING)
         self.assertTrue(HumanHandoff.objects.filter(conversation=conv).exists())
-        # El cliente no queda mudo: recibe una disculpa honesta.
-        self.assertTrue(
-            Message.objects.filter(conversation=conv,
-                                   direction=Message.DIRECTION_OUT).exists())
+        self.assertEqual(
+            Message.objects.filter(
+                conversation=conv,
+                direction=Message.DIRECTION_OUT,
+                semantic_type=Message.SEMANTIC_PROCESSING_FAILURE,
+            ).count(),
+            1,
+        )
+        # Una recuperación/carrera no puede enviar otra misma disculpa.
+        _escalate_after_failure(conv)
+        self.assertEqual(
+            Message.objects.filter(
+                conversation=conv,
+                direction=Message.DIRECTION_OUT,
+                semantic_type=Message.SEMANTIC_PROCESSING_FAILURE,
+            ).count(),
+            1,
+        )
 
     def test_lease_prevents_a_second_worker_taking_the_same_turn(self):
         self._inbound("wamid.F3")

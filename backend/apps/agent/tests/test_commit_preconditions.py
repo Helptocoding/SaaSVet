@@ -346,7 +346,13 @@ class RegisterIdentityTests(CommitPreconditionBase):
             organization=self.org, external_id=wa,
             verification_level="unknown")
         conv = Conversation.objects.create(
-            organization=self.org, channel_account=self.channel, contact=contact)
+            organization=self.org,
+            channel_account=self.channel,
+            contact=contact,
+            # Estas pruebas parten después de que el modelo clasificó que el
+            # contacto es nuevo; reflejan el hecho persistido, no una frase.
+            intake_path=Conversation.INTAKE_NEW_CLIENT,
+        )
         ex = ToolExecutor(conv, self.agent_user,
                           transport=HeaderForwardingTransport())
         return conv, ex

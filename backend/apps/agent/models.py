@@ -270,6 +270,15 @@ class ConversationGoal(OrganizationalModel):
     conversation = models.ForeignKey(
         Conversation, on_delete=models.PROTECT, related_name='goals',
     )
+    # El mensaje entrante que autorizó abrir este objetivo operativo. Los
+    # objetivos anteriores a la frontera no tienen procedencia (NULL); los
+    # que nacen después de un recibo de operación sí deben poder reconstruir
+    # qué nueva petición del cliente los abrió. No es copy ni una inferencia
+    # sobre frases: es la relación causal entre un turno y una capacidad.
+    authorization_message = models.ForeignKey(
+        'channels.Message', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='authorized_goals',
+    )
     name = models.CharField(max_length=40)
     status = models.CharField(
         max_length=12, choices=STATUS_CHOICES, default=STATUS_ACTIVE,

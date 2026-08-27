@@ -275,6 +275,20 @@ class IdentifyClientTests(Fase1Base):
         self.assertEqual(conversation.contact.verification_level,
                          ContactIdentity.VERIFICATION_CONFIRMED)
 
+    def test_digits_alone_on_known_number_do_not_break_identity_turn(self):
+        """Los dígitos no son el factor del titular en su propio número."""
+        conversation = self._conversation(external_id="5215511994586",
+                                          owner=self.owner)
+        outcome = self._identify(
+            conversation, said="1868", phone_digits="1868")
+
+        self.assertTrue(outcome.ok)
+        self.assertFalse(outcome.data["verificado"])
+        self.assertEqual(
+            outcome.data["falta"],
+            ["el nombre de una de sus mascotas"],
+        )
+
     def test_no_verifica_un_nombre_que_el_cliente_nunca_escribio(self):
         """La conv 18 de producción, como test.
 

@@ -12,6 +12,7 @@ líneas de log — indistinguible a simple vista de un worker colgado.
 """
 import json
 import logging
+import sys
 
 from django.test import SimpleTestCase
 
@@ -49,3 +50,21 @@ class AgentLoggerConfigTests(SimpleTestCase):
         self.assertEqual(payload['level'], 'INFO')
         self.assertEqual(payload['organization_id'], 7)
         self.assertEqual(payload['goal'], 'schedule_appointment')
+
+    def test_exception_events_keep_safe_diagnostics_without_exception_text(self):
+        """Un fallo del worker debe ser depurable sin filtrar PII en logs."""
+        from apps.core.logging import RBACStructuredFormatter
+
+        try:
+            raise RuntimeError('teléfono del cliente: 5512345678')
+        except RuntimeError:
+            record = logging.LogRecord(
+                name='agent.events', level=logging.ERROR, pathname=__file__,
+                lineno=1, msg='AGENT_TURN_FAILED', args=(),
+                exc_info=sys.exc_info(),
+            )
+
+        payload = json.loads(RBACStructuredFormatter().format(record))
+        self.assertEqual(payload['error_class'], 'RuntimeError')
+        self.assertIn('error_origin', payload)
+        self.assertNotIn('5512345678', json.dumps(payload))

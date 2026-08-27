@@ -77,6 +77,27 @@ class ToolOutcome:
 REPLY_TOOL_NAME = 'respond_to_client'
 REPLY_PURPOSES = ('answer', 'ask_for_data')
 
+# Una operación cerrada revoca la capacidad que la produjo. Abrir otra no es
+# una consecuencia del recibo ni de que el modelo aún recuerde los slots: es
+# una decisión tipada, atribuible al nuevo mensaje entrante que la solicita.
+#
+# Esto no clasifica frases. El modelo sigue resolviendo semánticamente qué
+# pidió la persona; el servidor únicamente le exige declarar esa decisión antes
+# de volver a exponer herramientas de agenda.
+BEGIN_OPERATION_TOOL = 'begin_operation'
+OPERATION_KINDS = {
+    'new_appointment': 'schedule_appointment',
+    'first_visit': 'register_and_schedule',
+    'new_pet_with_appointment': 'add_pet_and_schedule',
+    'new_pet_only': 'add_pet_only',
+    'cancel_appointment': 'cancel_appointment',
+    'reschedule_appointment': 'reschedule_appointment',
+}
+SCHEDULING_PREPARATION_TOOLS = frozenset({
+    'find_available_slots',
+    'check_appointment_slot',
+})
+
 
 def _norm(text):
     text = unicodedata.normalize('NFD', (text or '').lower())
@@ -130,6 +151,125 @@ def _verification_ok(conversation, minimum):
     if contact.owner_id is None:
         return False
     return order.index(contact.verification_level) >= order.index(minimum)
+
+
+def _last_operation_receipt(conversation):
+    """Último recibo que el cliente realmente pudo recibir, si existe.
+
+    El recibo es un hecho de dominio conversacional: al existir, la operación
+    que lo originó ya terminó y ninguna herramienta puede asumir que la
+    siguiente interacción continúa esa intención.
+    """
+    return (Message.objects.filter(
+        conversation=conversation,
+        direction=Message.DIRECTION_OUT,
+        semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+    ).exclude(
+        status__in=(Message.STATUS_DISCARDED, Message.STATUS_FAILED),
+    ).order_by('-created_at', '-id').first())
+
+
+def _has_completed_operation(conversation):
+    return _last_operation_receipt(conversation) is not None
+
+
+def _goal_for_tool(tool_name):
+    from . import goals
+    return goals.TOOL_GOALS.get(tool_name)
+
+
+def _active_goal_authorizes(conversation, tool_name):
+    """Si la capacidad del objetivo vigente cubre esta herramienta."""
+    from . import goals
+
+    goal = goals.get_open_goal(conversation)
+    if goal is None:
+        return False
+    if tool_name in SCHEDULING_PREPARATION_TOOLS:
+        return goal.name in {
+            goals.SCHEDULE, goals.REGISTER, goals.ADD_PET,
+            goals.CANCEL, goals.RESCHEDULE,
+        }
+    expected = _goal_for_tool(tool_name)
+    return bool(expected and goal.name == expected)
+
+
+def _is_operation_scoped_tool(tool_name):
+    return bool(_goal_for_tool(tool_name)) or tool_name in SCHEDULING_PREPARATION_TOOLS
+
+
+def operation_tool_allowed(conversation, tool_name):
+    """Capacidad de agenda después de una operación completada.
+
+    Antes del primer recibo se conserva el flujo de alta inicial existente. A
+    partir de un commit, en cambio, el catálogo deja de inferir continuidad:
+    una tool de agenda requiere el objetivo explícitamente autorizado que está
+    en el frente. Esta misma función se invoca al construir el catálogo y al
+    ejecutar, para que un output viejo o una llamada directa no salte la regla.
+    """
+    if not _is_operation_scoped_tool(tool_name):
+        return True
+    if not _has_completed_operation(conversation):
+        return True
+    return _active_goal_authorizes(conversation, tool_name)
+
+
+def can_begin_operation(conversation):
+    """La puerta semántica solo aparece después de un recibo real."""
+    return _has_completed_operation(conversation)
+
+
+def _operation_kind_allowed_for_intake(conversation, goal_name):
+    path = intake.current_path(conversation)
+    if path == intake.PATH_NEW:
+        return goal_name == OPERATION_KINDS['first_visit']
+    if path == intake.PATH_EXISTING:
+        return goal_name != OPERATION_KINDS['first_visit']
+    return False
+
+
+def begin_operation(conversation, executor, args, triggered_by=None):
+    """Autoriza un nuevo objetivo DESPUÉS de un recibo previo.
+
+    No agenda, no consulta disponibilidad y no redacta una confirmación. Su
+    único efecto es abrir el compromiso tipado y conservar el mensaje entrante
+    que lo causó. Las herramientas operativas aparecen recién después de esta
+    autorización.
+    """
+    from . import goals
+
+    goal_name = OPERATION_KINDS.get((args or {}).get('operation'))
+    receipt = _last_operation_receipt(conversation)
+    valid_origin = (
+        triggered_by is not None
+        and triggered_by.pk is not None
+        and triggered_by.conversation_id == conversation.pk
+        and triggered_by.direction == Message.DIRECTION_IN
+        and receipt is not None
+        and triggered_by.created_at > receipt.created_at
+    )
+    if (goal_name is None or not valid_origin
+            or not _operation_kind_allowed_for_intake(conversation, goal_name)):
+        executor.record_local(
+            tool_name=BEGIN_OPERATION_TOOL,
+            args_redacted={'operation': (args or {}).get('operation', '')},
+            policy_decision='denied',
+            summary={'reason': 'operation_authorization_required'},
+            triggered_by_message=triggered_by,
+        )
+        return ToolOutcome(ok=False,
+                           client_error='operation_authorization_required')
+
+    goal = goals.open_goal(
+        conversation, goal_name, authorization_message=triggered_by)
+    executor.record_local(
+        tool_name=BEGIN_OPERATION_TOOL,
+        args_redacted={'operation': (args or {}).get('operation', '')},
+        summary={'goal': goal.name, 'authorization_message_id': triggered_by.pk},
+        triggered_by_message=triggered_by,
+    )
+    return ToolOutcome(ok=True, data={'operation_started': True},
+                       summary={'goal': goal.name})
 
 
 # ---------------------------------------------------------------------------
@@ -2426,6 +2566,29 @@ TOOL_SPECS = {
             'required': ['date', 'time'],
         },
     },
+    BEGIN_OPERATION_TOOL: {
+        'handler': begin_operation,
+        'tier': '0',
+        'min_verification': 'unknown',
+        'description': (
+            'Abre una NUEVA intención operativa después de que una operación '
+            'anterior ya fue notificada. Úsala solamente si el mensaje '
+            'entrante actual pide de verdad una nueva cita, alta, cancelación '
+            'o cambio. No la uses para agradecer, saludar, despedirse ni '
+            'consultar si algo ya quedó hecho. No agenda ni confirma nada: '
+            'solo habilita las herramientas correctas para la nueva petición.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'operation': {
+                    'type': 'string',
+                    'enum': list(OPERATION_KINDS),
+                },
+            },
+            'required': ['operation'],
+        },
+    },
     'create_appointment': {
         'handler': create_appointment,
         'tier': '2',
@@ -2693,6 +2856,14 @@ def as_openai_tools(conversation=None):
             continue
         if conversation is not None and not intake.allows_tool(conversation, name):
             continue
+        if (conversation is not None
+                and name == BEGIN_OPERATION_TOOL
+                and not can_begin_operation(conversation)):
+            continue
+        if (conversation is not None
+                and name != BEGIN_OPERATION_TOOL
+                and not operation_tool_allowed(conversation, name)):
+            continue
         description = spec['description']
         parameters = spec['parameters']
         if name in goals.TOOL_GOALS:
@@ -2747,6 +2918,17 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
             client_error=('intake_required' if intake.needs_selection(conversation)
                           else 'intake_path_conflict'),
         )
+    if (name != BEGIN_OPERATION_TOOL
+            and not operation_tool_allowed(conversation, name)):
+        executor.record_local(
+            tool_name=name,
+            args_redacted={},
+            policy_decision='denied',
+            summary={'reason': 'operation_authorization_required'},
+            triggered_by_message=triggered_by,
+        )
+        return ToolOutcome(ok=False,
+                           client_error='operation_authorization_required')
     if not _verification_ok(conversation, spec['min_verification']):
         return ToolOutcome(ok=False, client_error='verification_required')
     return spec['handler'](conversation, executor, args or {},

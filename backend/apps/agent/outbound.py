@@ -107,6 +107,45 @@ def _enqueue_operation_receipt(conversation, body, *, author, operation_key):
     conversation.save(update_fields=['last_activity_at'])
     return message
 
+def enqueue_processing_failure_notice(conversation, body):
+    """Encola una sola notificación de fallo terminal por conversación.
+
+    La unicidad vive en una constraint parcial de la outbox. Recuperar un
+    worker o ejecutar dos handlers en paralelo no puede convertir un fallo
+    técnico en una cascada de disculpas iguales para el cliente.
+    """
+    existing = Message.objects.filter(
+        conversation=conversation,
+        direction=Message.DIRECTION_OUT,
+        semantic_type=Message.SEMANTIC_PROCESSING_FAILURE,
+    ).first()
+    if existing is not None:
+        return existing
+
+    try:
+        with transaction.atomic():
+            message = Message.objects.create(
+                organization=conversation.organization,
+                channel_account=conversation.channel_account,
+                conversation=conversation,
+                contact_id=conversation.contact_id,
+                direction=Message.DIRECTION_OUT,
+                author_type=Message.AUTHOR_SYSTEM,
+                semantic_type=Message.SEMANTIC_PROCESSING_FAILURE,
+                body=body,
+                status=Message.STATUS_PENDING,
+            )
+    except IntegrityError:
+        return Message.objects.get(
+            conversation=conversation,
+            direction=Message.DIRECTION_OUT,
+            semantic_type=Message.SEMANTIC_PROCESSING_FAILURE,
+        )
+
+    conversation.last_activity_at = timezone.now()
+    conversation.save(update_fields=['last_activity_at'])
+    return message
+
 def _warn_if_repeated(conversation, body):
     """C7 · el sistema repitiéndose, mire quien mire (É-F5 Fase 3).
 

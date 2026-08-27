@@ -85,7 +85,11 @@ class FamilyLinkBase(TestCase):
             verification_level="unknown")
         self.conv = Conversation.objects.create(
             organization=self.org, channel_account=self.channel,
-            contact=self.contact)
+            contact=self.contact,
+            # La persona que escribe intenta identificarse contra un expediente
+            # ya existente; no es una primera visita. La selección tipada es
+            # precondición del contrato de `identify_client`.
+            intake_path=Conversation.INTAKE_EXISTING_CLIENT)
 
     def _turn(self, text, scripted):
         return run_turn(self, self.conv, self.agent_user, text,

@@ -135,7 +135,13 @@ class RegF2Base(TestCase):
             organization=self.org, external_id=wa,
             verification_level="unknown")
         return Conversation.objects.create(
-            organization=self.org, channel_account=self.channel, contact=contact)
+            organization=self.org,
+            channel_account=self.channel,
+            contact=contact,
+            # Los casos INT-21 parten de una primera visita ya clasificada;
+            # representamos el hecho tipado de `set_client_path`.
+            intake_path=Conversation.INTAKE_NEW_CLIENT,
+        )
 
 
 # ===========================================================================

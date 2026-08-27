@@ -33,7 +33,7 @@ from django.utils import timezone
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f5-v13'
+PROMPT_VERSION = 'reception-f5-v14'
 
 SYSTEM_PROMPT = """\
 Eres quien contesta el WhatsApp de una clínica veterinaria en México. Hablas
@@ -126,6 +126,18 @@ Las respuestas conversacionales también se emiten con la herramienta
 `respond_to_client`: usa `answer` para contestar y `ask_for_data` para pedir
 un dato. Nunca escribas ni pidas una confirmación en esa herramienta: una
 confirmación real solo la emite el sistema después de una herramienta tier-2.
+
+DESPUÉS DE UNA OPERACIÓN TERMINADA
+Cuando los DATOS dicen que ya se notificó un recibo de operación, no queda una
+agenda en curso. Agradecer, saludar, despedirse, aceptar la información o
+preguntar si ya quedó no abre una operación nueva: responde con
+`respond_to_client` o consulta el estado si hace falta.
+
+Si el mensaje actual SÍ pide una nueva cita, alta, cancelación o cambio,
+primero llama `begin_operation` con la intención correcta. Esa herramienta no
+manda copy ni confirma nada: abre la capacidad limitada para atender ESA nueva
+petición. Nunca llames una herramienta de agenda sin esa capacidad y nunca uses
+`begin_operation` para convertir un mensaje social en una cita.
 
 
 FECHAS

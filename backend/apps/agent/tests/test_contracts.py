@@ -92,7 +92,7 @@ class CommitmentContractTests(SimpleTestCase):
     def test_fields_match_snapshot(self):
         fields = sorted(f.name for f in ConversationGoal._meta.fields)
         self.assertEqual(fields, [
-            'asked', 'attempts_failed', 'blocked_reason', 'closed_at',
+            'asked', 'attempts_failed', 'authorization_message', 'blocked_reason', 'closed_at',
             'closed_reason', 'conversation', 'created_at', 'created_by', 'id',
             'is_active', 'last_progress_at', 'low_confidence', 'missing',
             'name', 'organization', 'return_to', 'slots', 'stall_turns',

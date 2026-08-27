@@ -411,9 +411,9 @@ class PlannerGoalStallTests(PlannerTestCase):
         self.contact.owner = None
         self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
         self.contact.save()
-        # El tamiz ya se resolvió: aquí se prueba lo que pasa DESPUÉS.
-        self.conv.flow = {"identity_triage_done": "new"}
-        self.conv.save(update_fields=["flow"])
+        # La intención ya fue clasificada y persistida como hecho tipado.
+        self.conv.intake_path = Conversation.INTAKE_NEW_CLIENT
+        self.conv.save(update_fields=["intake_path"])
 
     def _goal(self):
         from apps.agent import goals
@@ -507,8 +507,8 @@ class PlannerConcreteTimeCaptureTests(PlannerTestCase):
         self.contact.owner = None
         self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
         self.contact.save()
-        self.conv.flow = {"identity_triage_done": "new"}
-        self.conv.save(update_fields=["flow"])
+        self.conv.intake_path = Conversation.INTAKE_NEW_CLIENT
+        self.conv.save(update_fields=["intake_path"])
 
     def test_hhmm_preferred_time_fills_the_missing_time_slot(self):
         from apps.agent import goals
@@ -555,8 +555,8 @@ class PlannerSlotCaptureTests(PlannerTestCase):
         self.contact.owner = None
         self.contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
         self.contact.save()
-        self.conv.flow = {"identity_triage_done": "new"}
-        self.conv.save(update_fields=["flow"])
+        self.conv.intake_path = Conversation.INTAKE_NEW_CLIENT
+        self.conv.save(update_fields=["intake_path"])
 
     def test_availability_lookup_fills_the_missing_date(self):
         from apps.agent import goals

@@ -655,7 +655,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         # turno. Recalcular el catálogo permite continuar por alta o
         # identificación sin pedir un turno extra, y sin exponer la capacidad
         # contraria antes del triaje.
-        if result.tool_name == intake.PATH_SELECTION_TOOL and outcome.ok:
+        if (result.tool_name in (intake.PATH_SELECTION_TOOL,
+                                 tools.BEGIN_OPERATION_TOOL)
+                and outcome.ok):
             tool_specs = tools.as_openai_tools(conversation)
 
         # ¿AVANZÓ el objetivo, o solo se tocó? Llamar la herramienta con los
@@ -1233,8 +1235,14 @@ def _error_fact(client_error):
                                'o cliente existente; vuelve a preguntarlo de '
                                'forma natural.',
         'intake_already_resolved': 'Este contacto ya tiene una ruta de '
-                                   'atención determinada por su expediente; '
-                                   'no intentes reclasificarlo.',
+                                  'atención determinada por su expediente; '
+                                  'no intentes reclasificarlo.',
+        'operation_authorization_required': (
+            'La operación anterior ya terminó y no hay una nueva petición '
+            'operativa autorizada en este turno. No propongas ni confirmes '
+            'otra cita; responde al mensaje actual. Solo una petición nueva '
+            'del cliente puede abrirse con begin_operation.'
+        ),
         # Anti-eco (D33): el turno ya escaló, así que esto es lo que el modelo
         # ve si vuelve a mirar. No le pide reintentar — repetir el dato seguiría
         # siendo eco hasta que caduque la ventana.

@@ -17,6 +17,7 @@ todas las clínicas); cada conversación ya trae su organización fijada desde
 el webhook (R1) y todo lo que se escribe hereda ese contexto.
 """
 import logging
+import os
 from datetime import timedelta
 
 from django.db import transaction
@@ -89,8 +90,8 @@ def process_pending_conversations(batch=10, now=None):
         conversation, pending = claimed
         try:
             _run_turn(conversation, pending, now)
-        except Exception:
-            _handle_turn_failure(conversation, pending)
+        except Exception as exc:
+            _handle_turn_failure(conversation, pending, exc)
         else:
             _release_turn(conversation)
         processed += 1
@@ -262,7 +263,18 @@ def _release_turn(conversation):
     conversation.save(update_fields=['processing_until'])
 
 
-def _handle_turn_failure(conversation, pending):
+def _exception_origin(exc):
+    """Identificador seguro del último frame de una excepción."""
+    trace = exc.__traceback__
+    if trace is None:
+        return ''
+    while trace.tb_next is not None:
+        trace = trace.tb_next
+    code = trace.tb_frame.f_code
+    return f'{os.path.basename(code.co_filename)}:{trace.tb_lineno}:{code.co_name}'
+
+
+def _handle_turn_failure(conversation, pending, exc):
     """Turno fallido: reintentar con respiro, o dead-letter + humano.
 
     Trade-off consciente: si el turno murió DESPUÉS de encolar una respuesta,
@@ -273,6 +285,8 @@ def _handle_turn_failure(conversation, pending):
         "event": "AGENT_TURN_FAILED",
         "organization_id": conversation.organization_id,
         "conversation_id": conversation.pk,
+        "error_class": type(exc).__name__,
+        "error_origin": _exception_origin(exc),
     })
     try:
         with transaction.atomic():
@@ -287,8 +301,9 @@ def _handle_turn_failure(conversation, pending):
                 Message.objects.for_organization(org).filter(
                     pk__in=[m.pk for m in rows],
                 ).update(
-                    status=Message.STATUS_DISCARDED,
-                    failure_reason='turno fallido: agotó reintentos',
+                    status=Message.STATUS_FAILED,
+                    failure_reason=f'turn_failed:{type(exc).__name__}'[:200],
+                    available_at=None,
                 )
                 _escalate_after_failure(conversation)
             else:
@@ -312,12 +327,12 @@ def _handle_turn_failure(conversation, pending):
 def _escalate_after_failure(conversation):
     from . import policy
     from .models import HumanHandoff
-    from .outbound import enqueue_outbound
+    from .outbound import enqueue_processing_failure_notice
     policy.escalate_to_human(
         conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
         detail='turn_failed',
     )
-    enqueue_outbound(conversation, TURN_FAILURE_TEXT, author='system')
+    enqueue_processing_failure_notice(conversation, TURN_FAILURE_TEXT)
 
 
 def send_pending_outbound(batch=20, provider_factory=get_provider, now=None):

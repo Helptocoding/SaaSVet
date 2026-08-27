@@ -130,10 +130,12 @@ class Message(OrganizationalModel):
     SEMANTIC_GENERIC = ''
     SEMANTIC_CONFIRMATION = 'confirmation'
     SEMANTIC_OPERATION_RECEIPT = 'operation_receipt'
+    SEMANTIC_PROCESSING_FAILURE = 'processing_failure'
     SEMANTIC_CHOICES = (
         (SEMANTIC_GENERIC, 'Mensaje general'),
         (SEMANTIC_CONFIRMATION, 'Confirmación de operación'),
         (SEMANTIC_OPERATION_RECEIPT, 'Recibo de operación'),
+        (SEMANTIC_PROCESSING_FAILURE, 'Fallo de procesamiento'),
     )
 
     PAYLOAD_TEXT = 'text'
@@ -257,6 +259,12 @@ class Message(OrganizationalModel):
                 & models.Q(semantic_type='operation_receipt')
                 & ~models.Q(operation_key=''),
                 name='message_unique_operation_receipt',
+            ),
+            models.UniqueConstraint(
+                fields=['conversation', 'semantic_type'],
+                condition=models.Q(direction='out')
+                & models.Q(semantic_type='processing_failure'),
+                name='message_unique_processing_failure_notice',
             ),
             # Idempotencia de POST /inbox/.../send: la llave pertenece a la
             # organización, no a una conversación concreta. Así un retry que

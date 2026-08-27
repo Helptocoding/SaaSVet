@@ -151,3 +151,117 @@ class IntakePlannerCapabilitiesTests(AgentFixture):
         self.assertNotIn('identify_client', second_names)
         self.conv.refresh_from_db()
         self.assertEqual(self.conv.intake_path, 'new_client')
+
+
+class PostReceiptOperationAuthorityTests(AgentFixture):
+    """Un recibo cierra la capacidad anterior, no inicia otra agenda.
+
+    Estas pruebas no dependen de cómo el cliente redacte un agradecimiento. El
+    caso de producción se representa con una llamada de agenda que el modelo
+    intentaría hacer sin una autorización nueva: el catálogo la oculta y
+    ``run_tool`` la rechaza aunque llegue desde un output viejo o defectuoso.
+    """
+
+    account_id = '900000313'
+
+    def _receipt(self):
+        return Message.objects.create(
+            organization=self.org,
+            channel_account=self.channel,
+            conversation=self.conv,
+            direction=Message.DIRECTION_OUT,
+            author_type=Message.AUTHOR_SYSTEM,
+            semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+            operation_key='operation-already-completed',
+            body='Tu cita quedó agendada.',
+            status=Message.STATUS_DELIVERED,
+        )
+
+    def _inbound(self, body):
+        return Message.objects.create(
+            organization=self.org,
+            channel_account=self.channel,
+            conversation=self.conv,
+            direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT,
+            body=body,
+            status=Message.STATUS_PROCESSED,
+        )
+
+    def _tool_names(self):
+        return {
+            item['function']['name']
+            for item in tools.as_openai_tools(self.conv)
+        }
+
+    def test_completed_operation_hides_unscoped_scheduling_tools(self):
+        self._receipt()
+
+        names = self._tool_names()
+
+        self.assertIn(tools.BEGIN_OPERATION_TOOL, names)
+        self.assertNotIn('create_appointment', names)
+        self.assertNotIn('find_available_slots', names)
+        self.assertNotIn('check_appointment_slot', names)
+
+    def test_direct_scheduling_after_receipt_is_denied_without_pending(self):
+        self._receipt()
+        thanks = self._inbound('muchas gracias')
+
+        outcome = tools.run_tool(
+            'create_appointment',
+            {'pet_handle': 'mascota_1', 'date': '2026-09-01',
+             'time': '10:00', 'reason': 'Revisión'},
+            conversation=self.conv, executor=self.executor(),
+            triggered_by=thanks,
+        )
+
+        self.assertFalse(outcome.ok)
+        self.assertEqual(outcome.client_error, 'operation_authorization_required')
+        self.assertIsNone(goals.get_open_goal(self.conv))
+        self.assertIsNone(confirmations.get_pending(self.conv))
+
+    def test_new_operation_is_explicit_and_keeps_its_causal_message(self):
+        self._receipt()
+        request = self._inbound('Quiero otra cita para Luna el viernes.')
+
+        outcome = tools.run_tool(
+            tools.BEGIN_OPERATION_TOOL,
+            {'operation': 'new_appointment'},
+            conversation=self.conv, executor=self.executor(),
+            triggered_by=request,
+        )
+
+        self.assertTrue(outcome.ok, outcome.client_error)
+        goal = goals.get_open_goal(self.conv)
+        self.assertEqual(goal.name, goals.SCHEDULE)
+        self.assertEqual(goal.authorization_message_id, request.pk)
+        names = self._tool_names()
+        self.assertIn('create_appointment', names)
+        self.assertIn('find_available_slots', names)
+        self.assertNotIn('cancel_appointment', names)
+
+    def test_errant_planner_call_after_receipt_cannot_emit_confirmation(self):
+        self._receipt()
+        thanks = self._inbound('Gracias, nos vemos mañana.')
+        stub = StubLLMClient(scripted=[
+            LLMResult(
+                kind='tool_call', tool_name='create_appointment',
+                tool_args={'pet_handle': 'mascota_1', 'date': '2026-09-01',
+                           'time': '10:00', 'reason': 'Revisión'},
+                tool_call_id='bad_schedule',
+            ),
+            LLMResult(kind='text', text='¡De nada! 😊 Aquí estoy si necesitas algo más.'),
+        ])
+
+        result = planner.handle_inbound(
+            self.conv, agent_settings=self.settings, llm_client=stub,
+            executor=self.executor(), triggered_by=thanks,
+        )
+
+        self.assertEqual(result['decision'], 'planner_reply')
+        self.assertIsNone(confirmations.get_pending(self.conv))
+        self.assertFalse(Message.objects.filter(
+            conversation=self.conv,
+            semantic_type=Message.SEMANTIC_CONFIRMATION,
+        ).exists())
