@@ -1267,7 +1267,13 @@ def _error_fact(client_error):
             'La operación anterior ya terminó y no hay una nueva petición '
             'operativa autorizada en este turno. No propongas ni confirmes '
             'otra cita; responde al mensaje actual. Solo una petición nueva '
-            'del cliente puede abrirse con begin_operation.'
+            'del cliente, aceptada por el orquestador, puede abrir otra '
+            'operación.'
+        ),
+        'operation_authorization_managed_by_orchestrator': (
+            'Esta herramienta no puede autorizar una operación. El '
+            'orquestador evalúa la ráfaga actual antes de abrir un objetivo; '
+            'no propongas ni confirmes otra cita por esta llamada.'
         ),
         # Anti-eco (D33): el turno ya escaló, así que esto es lo que el modelo
         # ve si vuelve a mirar. No le pide reintentar — repetir el dato seguiría

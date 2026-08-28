@@ -95,7 +95,8 @@ class CommitmentContractTests(SimpleTestCase):
             'asked', 'attempts_failed', 'authorization_message', 'blocked_reason', 'closed_at',
             'closed_reason', 'conversation', 'created_at', 'created_by', 'id',
             'is_active', 'last_progress_at', 'low_confidence', 'missing',
-            'name', 'organization', 'return_to', 'slots', 'stall_turns',
+            'name', 'operation_assessment', 'organization', 'return_to',
+            'slots', 'stall_turns',
             'status', 'supplanted_by', 'updated_at', 'updated_by',
             'working_state',
         ])
