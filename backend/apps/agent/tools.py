@@ -9,7 +9,7 @@ Reglas vinculantes:
   server-side — un handle desconocido es denegación dura (R3/R7).
 - `min_verification` es metadata para el Policy Engine (PR-11): la tool
   además re-verifica su propio piso (defensa en profundidad).
-- Cifras de stock, costos y PII financiera: PROHIBIDOS en proyecciones (G7).
+- Precio y stock solo pueden proyectarse para productos con existencia positiva (G7).
 """
 import re
 import unicodedata
@@ -102,6 +102,89 @@ SCHEDULING_PREPARATION_TOOLS = frozenset({
 def _norm(text):
     text = unicodedata.normalize('NFD', (text or '').lower())
     return ''.join(ch for ch in text if unicodedata.category(ch) != 'Mn')
+
+
+_PRODUCT_CATEGORY_ALIASES = {
+    'food': frozenset({
+        'alimento', 'alimentos', 'comida', 'comidas', 'croqueta', 'croquetas',
+        'pienso', 'piensos',
+    }),
+    'medication': frozenset({
+        'medicamento', 'medicamentos', 'medicina', 'medicinas', 'farmaco',
+        'farmacos',
+    }),
+    'accessory': frozenset({
+        'accesorio', 'accesorios', 'collar', 'collares', 'correa', 'correas',
+        'juguete', 'juguetes',
+    }),
+}
+_PRODUCT_QUERY_STOP_WORDS = frozenset({
+    'a', 'al', 'con', 'de', 'el', 'en', 'la', 'las', 'los', 'para', 'por', 'un',
+    'una', 'unos', 'unas', 'y',
+})
+
+
+def _normalized_tokens(value):
+    return tuple(token for token in re.findall(r'\w+', _norm(value))
+                 if token not in _PRODUCT_QUERY_STOP_WORDS)
+
+
+def _product_category_from_query(query):
+    normalized = _norm(query).strip()
+    for category, aliases in _PRODUCT_CATEGORY_ALIASES.items():
+        if normalized in aliases:
+            return category
+    return None
+
+
+def _token_matches_catalog(token, text):
+    """Match tolerante a plural para una palabra significativa del catálogo."""
+    if token in text:
+        return True
+    if token.endswith('es') and token[:-2] in text:
+        return True
+    return token.endswith('s') and token[:-1] in text
+
+
+def _product_text_score(product, query):
+    """Puntúa nombre > descripción > fabricante; `None` significa sin match."""
+    query = _norm(query).strip()
+    name = _norm(product.get('name', ''))
+    description = _norm(product.get('description', ''))
+    manufacturer = _norm(product.get('manufacturer', ''))
+    tokens = _normalized_tokens(query)
+    if not query or not tokens:
+        return None
+    haystack = ' '.join((name, description, manufacturer))
+    if not all(_token_matches_catalog(token, haystack) for token in tokens):
+        return None
+    if name == query:
+        return 400
+    if query in name:
+        return 300
+    if query in manufacturer:
+        return 200
+    if all(_token_matches_catalog(token, name) for token in tokens):
+        return 150
+    return 100
+
+
+def _available_product_details(product):
+    """Datos comerciales permitidos exclusivamente cuando hay existencia."""
+    details = {'stock': product.get('stock_quantity', 0)}
+    presentations = product.get('presentations') or []
+    exhausted = []
+    for presentation in presentations:
+        exhausted.append({
+            'presentacion': presentation.get('name') or product.get('name', ''),
+            'precio': presentation.get('sale_price'),
+            'stock': presentation.get('stock', 0),
+        })
+    if len(exhausted) == 1:
+        details.update(exhausted[0])
+    elif exhausted:
+        details['presentaciones'] = exhausted
+    return details
 
 
 def _format_date(iso_date):
@@ -398,11 +481,74 @@ def get_service_catalog(conversation, executor, args, triggered_by=None):
                        summary={'matches': len(projection)})
 
 
+_SPECIALTY_IGNORED_TOKENS = frozenset({
+    'consulta', 'consultas', 'general', 'servicio', 'servicios', 'veterinaria',
+    'veterinario', 'veterinarios',
+})
+_SPECIALTY_TOKEN_ALIASES = {
+    'cirujano': 'cirugia', 'cirujana': 'cirugia',
+    'dermatologo': 'dermatologia', 'dermatologa': 'dermatologia',
+    'oftalmologo': 'oftalmologia', 'oftalmologa': 'oftalmologia',
+    'cardiologo': 'cardiologia', 'cardiologa': 'cardiologia',
+}
+
+
+def _specialty_tokens(value):
+    return frozenset(
+        _SPECIALTY_TOKEN_ALIASES.get(token, token)
+        for token in _normalized_tokens(value)
+        if token not in _SPECIALTY_IGNORED_TOKENS
+    )
+
+
+def get_offered_specialties(conversation, executor, args, triggered_by=None):
+    """Especialidades que tienen servicio activo Y personal activo asignable.
+
+    Se consulta el dominio directamente para no publicar nombres de personal,
+    correos ni otros datos internos que no necesita el cliente.
+    """
+    from apps.billing.models import Service
+    from apps.users.models import User
+
+    organization = conversation.organization
+    services = list(Service.objects.filter(
+        organization=organization, is_active=True,
+    ).values_list('name', flat=True))
+    staff_specialties = list(User.objects.filter(
+        organization=organization, is_active=True,
+    ).exclude(specialty='').values_list('specialty', flat=True))
+    service_keys = {_specialty_tokens(name) for name in services}
+    query_tokens = _specialty_tokens(args.get('query', ''))
+    offered = []
+    for specialty in staff_specialties:
+        key = _specialty_tokens(specialty)
+        if not key or key not in service_keys:
+            continue
+        if query_tokens and not query_tokens.issubset(key):
+            continue
+        offered.append(specialty.strip())
+
+    projection = [{'especialidad': specialty}
+                  for specialty in sorted(set(offered), key=_norm)[:MAX_ITEMS]]
+    executor.record_local(
+        tool_name='get_offered_specialties', args_redacted={},
+        summary={'matches': len(projection)}, triggered_by_message=triggered_by,
+    )
+    return ToolOutcome(ok=True, data=projection,
+                       summary={'matches': len(projection)})
+
+
 def check_product_availability(conversation, executor, args, triggered_by=None):
+    query = args.get('query', '')
+    category = _product_category_from_query(query)
+    params = {'active': 'true'}
+    if category:
+        params['category'] = category
     status, data = executor.call(
         'GET', '/api/inventory/products/',
         tool_name='check_product_availability',
-        args_redacted={'query': args.get('query', '')},
+        params=params,
+        args_redacted={'query': query},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'products': len(d) if isinstance(d, list) else 0},
     )
@@ -410,17 +556,30 @@ def check_product_availability(conversation, executor, args, triggered_by=None):
         return ToolOutcome(ok=False, client_error='tool_failure')
 
     products = data if isinstance(data, list) else data.get('results', [])
-    query = _norm(args.get('query', ''))
-    matches = [p for p in products if query and query in _norm(p.get('name', ''))]
+    products = [p for p in products if p.get('is_active', True)]
+    if category:
+        matches = [p for p in products if p.get('category') == category]
+    else:
+        scored = [(_product_text_score(product, query), product)
+                  for product in products]
+        matches = [product for score, product in sorted(
+            (item for item in scored if item[0] is not None),
+            key=lambda item: (-item[0], _norm(item[1].get('name', '')), str(item[1].get('public_id', ''))),
+        )]
 
     projection = []
     for product in matches[:MAX_ITEMS]:
-        projection.append({
+        available = _product_available(product)
+        entry = {
             'producto': product.get('name', ''),
-            # SOLO sí/no (G7): jamás cantidades ni costos.
-            'disponible': _product_available(product),
+            'disponible': available,
             'requiere_receta': bool(product.get('requires_prescription')),
-        })
+        }
+        if available:
+            entry.update(_available_product_details(product))
+        else:
+            entry['agotado'] = True
+        projection.append(entry)
 
     # Memoria de producto (plan de continuidad, F4): fila PROPIA con el producto
     # RESUELTO, no el texto del cliente.
@@ -446,7 +605,8 @@ def check_product_availability(conversation, executor, args, triggered_by=None):
             triggered_by_message=triggered_by,
         )
     return ToolOutcome(ok=True, data=projection,
-                       summary={'matches': len(projection)})
+                       summary={'matches': len(projection),
+                                'search_mode': 'category' if category else 'text'})
 
 
 def _product_available(product):
@@ -1672,6 +1832,7 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
     owner_name = slots['owner_name']
     pet_name = slots['pet_name']
     species = slots.get('pet_species') or ''
+    birth_date = slots.get('pet_birth_date') or ''
     date_str = slots['date']
     time_str = slots['time']
     reason = slots['reason']
@@ -1706,6 +1867,8 @@ def register_new_client_and_pet(conversation, executor, args, triggered_by=None)
         'notes': f"Alta por asistente virtual · conv {conversation.public_id}",
         'idempotency_key': uuid.uuid4().hex,
     }
+    if birth_date:
+        staged['pet_birth_date'] = birth_date
     confirmations.stage_pending(conversation, tool='register_new_client_and_pet',
                                args=staged, paraphrase=paraphrase)
     # Propone y devuelve HECHOS: el pending ya quedó staged; que el turno
@@ -1759,6 +1922,8 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
     body = {k: args[k] for k in (
         'owner_name', 'owner_phone', 'pet_name', 'pet_species',
         'veterinarian', 'date', 'start_time', 'end_time', 'reason', 'notes')}
+    if args.get('pet_birth_date'):
+        body['pet_birth_date'] = args['pet_birth_date']
     # C5 — INV-B en el dominio: el alta del agente SIEMPRE pide expediente
     # nuevo, porque en este flujo la premisa es literalmente «cliente nuevo».
     # Si el teléfono ya tiene expediente, la premisa era falsa y la decisión es
@@ -1917,6 +2082,7 @@ def _stage_add_pet(conversation, executor, args, *, with_appointment,
     slots = goals.values(goal)
     pet_name = slots['pet_name']
     species = slots.get('pet_species') or ''
+    birth_date = slots.get('pet_birth_date') or ''
 
     duplicate = _existing_pet_named(conversation, executor, owner, pet_name,
                                     tool_name, triggered_by=triggered_by)
@@ -1932,6 +2098,8 @@ def _stage_add_pet(conversation, executor, args, *, with_appointment,
         'owner_public_id': str(owner.public_id),
         'pet_name': pet_name, 'pet_species': species,
     }
+    if birth_date:
+        staged['pet_birth_date'] = birth_date
     if with_appointment:
         date_str, time_str, reason = slots['date'], slots['time'], slots['reason']
         err = _future_or_error(org, date_str, time_str)
@@ -2005,6 +2173,8 @@ def _commit_add_pet(conversation, executor, args, *, with_appointment,
     }
     if args.get('pet_species'):
         pet_body['species'] = args['pet_species']
+    if args.get('pet_birth_date'):
+        pet_body['birth_date'] = args['pet_birth_date']
 
     status_code, pet = executor.call(
         'POST', '/api/pets/', tool_name=tool_name, json=pet_body,
@@ -2482,11 +2652,31 @@ TOOL_SPECS = {
             'required': [],
         },
     },
+    'get_offered_specialties': {
+        'handler': get_offered_specialties,
+        'tier': '1',
+        'min_verification': 'unknown',
+        'description': (
+            'Especialidades que la clínica puede ofrecer hoy. Solo devuelve una '
+            'especialidad cuando hay servicio activo Y personal activo con esa '
+            'especialidad; no ofrezcas las que no salgan aquí.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {'query': {'type': 'string'}},
+            'required': [],
+        },
+    },
     'check_product_availability': {
         'handler': check_product_availability,
         'tier': '1',
         'min_verification': 'unknown',
-        'description': 'Si un producto se maneja y hay disponible (sí/no).',
+        'description': (
+            'Busca productos activos. Una categoría aislada (alimentos, '
+            'medicamentos, accesorios) busca por categoría; otras consultas '
+            'buscan nombre, descripción y fabricante. Para agotados solo '
+            'comunica que no hay; precio y stock solo aparecen si hay existencia.'
+        ),
         'parameters': {
             'type': 'object',
             'properties': {'query': {'type': 'string'}},
@@ -2681,6 +2871,14 @@ TOOL_SPECS = {
                 'pet_name': {'type': 'string'},
                 'pet_species': {'type': 'string',
                                 'description': 'perro/gato/… (opcional)'},
+                'pet_birth_date': {
+                    'type': 'string',
+                    'description': (
+                        'YYYY-MM-DD opcional. Pregunta si conoce una fecha '
+                        'exacta o aproximada; si no conoce una fecha concreta, '
+                        'omítela. No captures peso ni alergias por WhatsApp.'
+                    ),
+                },
                 'date': {'type': 'string', 'description': 'YYYY-MM-DD'},
                 'time': {'type': 'string', 'description': 'HH:MM (24h)'},
                 'reason': {'type': 'string'},
@@ -2711,6 +2909,13 @@ TOOL_SPECS = {
                 'pet_name': {'type': 'string'},
                 'pet_species': {'type': 'string',
                                 'description': 'perro/gato/… (opcional)'},
+                'pet_birth_date': {
+                    'type': 'string',
+                    'description': (
+                        'YYYY-MM-DD opcional; si no conoce una fecha concreta, '
+                        'omítela. No captures peso ni alergias por WhatsApp.'
+                    ),
+                },
                 'date': {'type': 'string', 'description': 'YYYY-MM-DD'},
                 'time': {'type': 'string', 'description': 'HH:MM (24h)'},
                 'reason': {'type': 'string'},
@@ -2735,6 +2940,13 @@ TOOL_SPECS = {
                 'pet_name': {'type': 'string'},
                 'pet_species': {'type': 'string',
                                 'description': 'perro/gato/… (opcional)'},
+                'pet_birth_date': {
+                    'type': 'string',
+                    'description': (
+                        'YYYY-MM-DD opcional; si no conoce una fecha concreta, '
+                        'omítela. No captures peso ni alergias por WhatsApp.'
+                    ),
+                },
             },
             'required': ['pet_name'],
         },

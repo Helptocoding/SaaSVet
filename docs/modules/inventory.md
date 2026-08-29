@@ -46,6 +46,18 @@ Presentation.stock              ← copia display (backward compat); no autorita
   `[{label, value, source_column, imported_at}]`. Read-only display; ninguna
   regla de negocio lo lee. No es EAV.
 
+### Consulta de catálogo por el agente de WhatsApp
+
+`check_product_availability` expone únicamente productos activos. Una consulta
+que es una categoría aislada (por ejemplo, `alimentos`) se resuelve contra la
+categoría cerrada; las demás se comparan, sin distinguir acentos ni plural,
+contra nombre, fabricante y descripción. El resultado se limita a cinco y se
+ordena por relevancia y después por nombre de forma estable.
+
+Para productos con existencia positiva la proyección incluye disponibilidad,
+precio, stock y si requiere receta. Cuando está agotado, solo indica ese estado;
+costos de compra nunca se publican.
+
 ### Presentation
 
 Cada producto puede tener una o más presentaciones (formatos comerciales de venta/compra).

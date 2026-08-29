@@ -242,6 +242,14 @@ completa después (misma filosofía que el importador: dato faltante ≠ error).
   `get_or_create(name, phone)`. La excepción de teléfono opcional vive **solo** en
   el importador. Datos históricos sucios ≠ datos nuevos.
 
+### Captura por WhatsApp
+
+El asistente solo añade `pet_birth_date` como dato opcional al alta. Pregunta si
+la persona conoce una fecha de nacimiento exacta o aproximada; persiste únicamente
+una fecha concreta `YYYY-MM-DD` que no sea futura. Si no se conoce una fecha
+concreta, el campo queda vacío: no se convierte una edad textual en una fecha
+inventada. Peso y alergias quedan fuera del flujo de WhatsApp.
+
 ## Filtros disponibles (GET /api/pets/)
 
 Todos **server-side** (la página Mascotas escala a miles de registros sin

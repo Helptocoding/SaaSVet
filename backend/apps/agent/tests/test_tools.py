@@ -26,7 +26,7 @@ from apps.billing.models import Service
 from apps.channels.models import ChannelAccount
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSIONS
-from apps.inventory.models import Product
+from apps.inventory.models import Presentation, Product
 from apps.medical_records.models import VaccineRecord
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
@@ -115,9 +115,13 @@ class ToolsThroughRealApiTests(TestCase):
             organization=cls.org, name="Consulta general",
             base_price="350.00",
         )
-        Product.objects.create(
+        cls.food_product = Product.objects.create(
             organization=cls.org, name="Alimento Premium Perro",
             internal_code="ALI-001", category="food", stock_quantity=5,
+        )
+        Presentation.objects.create(
+            organization=cls.org, product=cls.food_product, name="Bolsa 1 kg",
+            base_unit="kg", sale_price="250.00", stock=5,
         )
         AgentSettings.objects.create(
             organization=cls.org,
@@ -251,15 +255,76 @@ class ToolsThroughRealApiTests(TestCase):
         self.assertEqual(outcome.data[0]["servicio"], "Consulta general")
         self.assertEqual(outcome.data[0]["precio"], "$350.00")
 
-    def test_check_product_availability_yes_no_only(self):
+    def test_check_product_availability_category_query_includes_available_price_and_stock(self):
         outcome = self._run("check_product_availability",
-                            {"query": "alimento premium"})
+                            {"query": "alimentos"})
         self.assertTrue(outcome.ok)
         product = outcome.data[0]
         self.assertTrue(product["disponible"])
-        # G7: jamás cifras de stock en la proyección.
-        self.assertNotIn("stock", str(outcome.data))
-        self.assertNotIn("5", str(product.get("disponible")))
+        self.assertIn("stock", product)
+        self.assertEqual(float(product["stock"]), 5.0)
+        self.assertEqual(product["precio"], "250.00")
+
+    def test_product_text_search_uses_description_and_excludes_inactive(self):
+        Product.objects.create(
+            organization=self.org, name="Nutrición canina",
+            description="Croquetas para cachorro de raza mediana",
+            internal_code="ALI-002", category="food", stock_quantity=2,
+        )
+        Product.objects.create(
+            organization=self.org, name="Croquetas retiradas",
+            description="Croquetas para cachorro",
+            internal_code="ALI-003", category="food", stock_quantity=2,
+            is_active=False,
+        )
+
+        outcome = self._run("check_product_availability",
+                            {"query": "croquetas para cachorro"})
+
+        self.assertTrue(outcome.ok)
+        names = [item["producto"] for item in outcome.data]
+        self.assertIn("Nutrición canina", names)
+        self.assertNotIn("Croquetas retiradas", names)
+
+    def test_out_of_stock_product_only_projects_its_exhausted_status(self):
+        product = Product.objects.create(
+            organization=self.org, name="Royal Canin Mini",
+            internal_code="ALI-004", category="food", stock_quantity=0,
+        )
+        Presentation.objects.create(
+            organization=self.org, product=product, name="Bolsa 2 kg",
+            base_unit="kg", sale_price="620.00", stock=0,
+        )
+
+        outcome = self._run("check_product_availability",
+                            {"query": "royal canin"})
+
+        self.assertTrue(outcome.ok)
+        product_data = next(item for item in outcome.data
+                            if item["producto"] == "Royal Canin Mini")
+        self.assertFalse(product_data["disponible"])
+        self.assertTrue(product_data["agotado"])
+        self.assertNotIn("precio", product_data)
+        self.assertNotIn("stock", product_data)
+
+    def test_specialty_is_offered_only_with_active_service_and_staff(self):
+        self.vet.specialty = "Dermatología"
+        self.vet.save(update_fields=["specialty"])
+        Service.objects.create(
+            organization=self.org, name="Consulta de dermatología",
+            base_price="500.00",
+        )
+
+        outcome = self._run("get_offered_specialties", {"query": "dermatologia"})
+
+        self.assertEqual(outcome.data, [{"especialidad": "Dermatología"}])
+        Service.objects.filter(
+            organization=self.org, name="Consulta de dermatología",
+        ).update(is_active=False)
+        self.assertEqual(
+            self._run("get_offered_specialties", {"query": "dermatologia"}).data,
+            [],
+        )
 
     def test_get_clinic_info_topic_and_honesty(self):
         outcome = self._run("get_clinic_info", {"topic": "dirección"})

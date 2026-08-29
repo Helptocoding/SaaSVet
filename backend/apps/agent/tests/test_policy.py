@@ -99,6 +99,7 @@ class PriorityOrderTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.ESCALATE)
         self.assertEqual(d.handoff_reason, HumanHandoff.REASON_EMERGENCY)
         self.assertEqual(d.handoff_priority, HumanHandoff.PRIORITY_URGENT)
+        self.assertEqual(d.meta.get('handoff_detail'), 'posibles convulsiones')
         self.assertIn("55-1234-5678", d.text)
 
     def test_emergency_escalates_leaving_pending_action_for_escalate_to_human(self):
@@ -139,6 +140,18 @@ class PriorityOrderTests(PolicyTestCase):
         self.assertTrue(suspended["suspension_id"])
         self.assertTrue(suspended["suspended_at"])
         self.assertEqual(suspended["handoff_reason"], d.handoff_reason)
+
+    def test_emergency_handoff_keeps_a_safe_symptom_summary(self):
+        d = self._eval("mi perro convulsiona desde hace 30 minutos")
+        policy.escalate_to_human(
+            self.conv, reason_code=d.handoff_reason,
+            priority=d.handoff_priority,
+            detail=d.meta['handoff_detail'],
+        )
+
+        handoff = HumanHandoff.objects.get(conversation=self.conv)
+        self.assertEqual(handoff.reason_detail, 'posibles convulsiones')
+        self.assertNotIn('30 minutos', handoff.reason_detail)
 
     def test_wants_human_escalates(self):
         d = self._eval("me pasas con una persona por favor")
@@ -206,6 +219,14 @@ class ConfirmationFlowTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.REPLY)
         self.assertEqual(d.meta.get('reason'), 'orphan_affirmative')
         self.assertEqual(d.text, tier0.T0_CONFIRMATION_UNAVAILABLE)
+
+    def test_acknowledgement_without_a_proposal_is_silent(self):
+        confirmations.clear_pending(self.conv)
+
+        d = self._eval('ok')
+
+        self.assertEqual(d.kind, policy.SILENT)
+        self.assertEqual(d.meta.get('reason'), 'acknowledgement')
 
     def test_affirmative_with_explicit_intent_reaches_the_planner(self):
         confirmations.clear_pending(self.conv)

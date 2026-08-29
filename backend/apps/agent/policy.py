@@ -128,6 +128,7 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
             text=tier0.render_emergency(agent_settings, org),
             handoff_reason=HumanHandoff.REASON_EMERGENCY,
             handoff_priority=HumanHandoff.PRIORITY_URGENT,
+            meta={'handoff_detail': matchers.emergency_summary(burst_text)},
         )
 
     # 4. Pide humano.
@@ -204,6 +205,9 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
     #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
     pending = confirmations.get_pending(conversation)
+    if not pending and matchers.is_bare_acknowledgement(burst_text):
+        # Un "ok" aislado no acredita una cita inexistente ni abre un flujo.
+        return PolicyDecision(kind=SILENT, meta={'reason': 'acknowledgement'})
     if not pending and matchers.is_bare_affirmative(burst_text):
         # Un “sí” no es una instrucción de agenda. Sin una propuesta tipada
         # previamente emitida, cederlo al planner podía fabricar una propuesta
@@ -435,8 +439,16 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
         # urgencia: sube de prioridad y avisa (antes se quedaba en 'normal').
         existing.priority = HumanHandoff.PRIORITY_URGENT
         existing.reason_code = reason_code
-        existing.save(update_fields=['priority', 'reason_code'])
+        if detail:
+            existing.reason_detail = detail
+        update_fields = ['priority', 'reason_code']
+        if detail:
+            update_fields.append('reason_detail')
+        existing.save(update_fields=update_fields)
         escalated_now = True
+    elif not created and detail and existing.reason_detail != detail:
+        existing.reason_detail = detail
+        existing.save(update_fields=['reason_detail'])
 
     # La TAREA en curso pasa a manos del humano: queda cerrada como `handoff`,
     # no como abandonada (W2 — importa para el embudo). Incluye la que un reto

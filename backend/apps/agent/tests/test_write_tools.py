@@ -332,6 +332,7 @@ class WriteToolsTests(TestCase):
         conv, ex = self._unknown_conv()
         tools.run_tool("register_new_client_and_pet", {
             "owner_name": "Carlos", "pet_name": "Rocky",
+            "pet_birth_date": "2021-05-15",
             "date": self.day.isoformat(), "time": "10:00", "reason": "Consulta"},
             conversation=conv, executor=ex)
         self._affirm("sí", conversation=conv)
@@ -339,6 +340,8 @@ class WriteToolsTests(TestCase):
         self.assertEqual(res["decision"], "committed")
         owner = Owner.objects.get(phone="5512345678")
         self.assertEqual(owner.name, "Carlos")
+        self.assertEqual(Pet.objects.get(name="Rocky").birth_date.isoformat(),
+                         "2021-05-15")
         self.assertEqual(Appointment.objects.filter(pet__owner=owner).count(), 1)
         conv.contact.refresh_from_db()
         self.assertEqual(conv.contact.owner_id, owner.id)           # auto-vínculo
@@ -475,6 +478,7 @@ class AddPetForExistingClientTests(WriteToolsTests):
     def test_commit_creates_pet_and_appointment(self):
         self._run("register_pet_and_schedule", {
             "pet_name": "Koler", "pet_species": "perro",
+            "pet_birth_date": "2020-02-20",
             "date": self.day.isoformat(), "time": "10:00", "reason": "baño"})
         self._affirm("sí")
         res = planner._commit_pending(self.conv, self.executor)
@@ -484,6 +488,7 @@ class AddPetForExistingClientTests(WriteToolsTests):
         # INV-B: cuelga del expediente VINCULADO, no de uno resuelto ahora por
         # teléfono.
         self.assertEqual(pet.owner, self.owner)
+        self.assertEqual(pet.birth_date.isoformat(), "2020-02-20")
         self.assertEqual(Appointment.objects.filter(pet=pet).count(), 1)
 
     def test_pet_only_registers_without_appointment(self):

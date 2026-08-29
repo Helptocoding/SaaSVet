@@ -43,6 +43,26 @@ def is_emergency(text):
     return _has_any(normalize(text), _EMERGENCY_LEMMAS)
 
 
+def emergency_summary(text):
+    """Resumen clínicamente neutro, sin persistir el cuerpo del mensaje."""
+    normalized = normalize(text)
+    categories = (
+        (('convuls',), 'posibles convulsiones'),
+        (('no respira', 'no puede respirar', 'se ahoga'),
+         'posible dificultad respiratoria'),
+        (('sangra', 'sangrado', 'hemorragia', 'vomita sangre'),
+         'posible sangrado'),
+        (('envenen', 'intoxic', 'veneno'), 'posible intoxicación'),
+        (('atropell', 'fractura', 'hueso de fuera', 'golpe fuerte', 'cayo de'),
+         'posible traumatismo'),
+        (('parto', 'esta pariendo'), 'posible complicación de parto'),
+    )
+    for needles, summary in categories:
+        if _has_any(normalized, needles):
+            return summary
+    return 'síntomas de posible urgencia'
+
+
 # --- INT-02 Hablar con humano ----------------------------------------------
 _HUMAN_LEMMAS = (
     'hablar con una persona', 'con una persona', 'con un humano', 'una persona real',
@@ -163,6 +183,16 @@ def is_bare_affirmative(text):
     if '👍' in (text or ''):
         return not normalize((text or '').replace('👍', ''))
     return normalize(text) in _AFFIRMATIVE
+
+
+_ACKNOWLEDGEMENTS = {
+    'ok', 'okey', 'oki', 'okis', 'vale', 'entendido', 'de acuerdo',
+}
+
+
+def is_bare_acknowledgement(text):
+    """Acuses cortos que no deben simular una confirmación de cita."""
+    return normalize(text) in _ACKNOWLEDGEMENTS
 
 
 def _starts_with_phrase(n, phrases):

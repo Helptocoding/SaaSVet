@@ -84,6 +84,23 @@ def _v_time(value, conversation):
     return True, parsed.strftime('%H:%M'), ''
 
 
+def _v_birth_date(value, conversation):
+    """Fecha de nacimiento conocida, incluso si el cliente la expresa como aproximada.
+
+    El modelo Pet solo conserva una fecha, no un grado de precisión. Por eso
+    este factor acepta exclusivamente una fecha concreta y nunca inventa un día
+    para convertir una edad textual o un mes/año incompleto.
+    """
+    try:
+        day = datetime.strptime(str(value)[:10], '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return False, None, 'formato'
+    from apps.core.datetime_utils import org_today_local
+    if day > org_today_local(conversation.organization):
+        return False, None, 'futuro'
+    return True, day.isoformat(), ''
+
+
 def _v_text(min_len=1):
     def validate(value, conversation):
         text = str(value or '').strip()
@@ -239,6 +256,10 @@ GOAL_SPECS = {
                    'que el veterinario prepare lo adecuado para tu mascota',
                    _v_species,
                    label='qué tipo de mascota es'),
+            Factor('pet_birth_date',
+                   'que el expediente tenga su fecha de nacimiento si la conoces',
+                   _v_birth_date,
+                   label='su fecha de nacimiento'),
         ),
     ),
     # Mascota NUEVA de un cliente que YA está registrado. Distinto de REGISTER:
@@ -261,6 +282,9 @@ GOAL_SPECS = {
             Factor('pet_species',
                    'que el veterinario prepare lo adecuado para tu mascota',
                    _v_species, label='qué tipo de mascota es'),
+            Factor('pet_birth_date',
+                   'que el expediente tenga su fecha de nacimiento si la conoces',
+                   _v_birth_date, label='su fecha de nacimiento'),
         ),
     ),
     # Alta SIN cita. Existe porque el PO decidió permitirla, pero **nunca se
@@ -278,6 +302,9 @@ GOAL_SPECS = {
             Factor('pet_species',
                    'que su expediente quede completo desde el principio',
                    _v_species, label='qué tipo de mascota es'),
+            Factor('pet_birth_date',
+                   'que el expediente tenga su fecha de nacimiento si la conoces',
+                   _v_birth_date, label='su fecha de nacimiento'),
         ),
     ),
     CANCEL: GoalSpec(

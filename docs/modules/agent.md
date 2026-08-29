@@ -1244,6 +1244,16 @@ Se exponen en `GET /api/inbox/metrics/` (bloque `calidad`) y en el comando
 `agent_quality`, que además imprime la muestra de transcripts a leer: sin
 lectura humana no hay ciclo de mejora, solo intuición.
 
+## Catálogo, especialidades y escalación
+
+- `get_offered_specialties` solo devuelve una especialidad si hay un servicio
+  activo y al menos un miembro activo del personal con la misma especialidad.
+  La proyección no expone nombres ni datos del personal.
+- Una urgencia genera en el handoff un resumen categórico seguro (por ejemplo,
+  "posibles convulsiones"), no el cuerpo del mensaje del cliente.
+- Sin una confirmación pendiente, los acuses aislados como "ok" o "gracias"
+  se distinguen de una confirmación de cita y nunca crean una cita ficticia.
+
 ## Invariantes propios (además de los globales)
 
 1. La organización de una conversación nace del `ChannelAccount` receptor y
