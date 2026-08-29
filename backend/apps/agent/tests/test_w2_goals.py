@@ -353,7 +353,7 @@ class FactorWhyTests(SimpleTestCase):
         self.assertEqual(
             spec.required_slots,
             ('owner_name', 'pet_name', 'date', 'time', 'reason'))
-        self.assertEqual(spec.optional_slots, ('pet_species',))
+        self.assertEqual(spec.optional_slots, ('pet_species', 'pet_birth_date'))
         for slot in spec.required_slots:
             self.assertIn(slot, spec.validators)
 
