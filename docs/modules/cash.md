@@ -93,7 +93,7 @@ CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → M
 Toggle `OrganizationSettings.require_open_cash_session` (**default `False`** →
 comportamiento actual intacto, caja opcional).
 
-Si `True`: `pay_invoice` / `pay_direct_sale` exigen una caja abierta del usuario;
+Si `True`: `post_checkout(..., pay=True)` / `pay_invoice` exigen una caja abierta del usuario;
 el `Payment` se ata a esa sesion (`cash_session`). Sin caja abierta (o cerrada) →
 `ValidationError` → 400 ("No hay una caja abierta…").
 

@@ -21,6 +21,16 @@ class TsTzRange(Func):
 
 
 class Appointment(PublicIdMixin, OrganizationalModel):
+    CATEGORY_CHOICES = (
+        ('general_consultation', 'Consulta general'),
+        ('preventive_vaccination', 'Vacunación / preventiva'),
+        ('surgery_procedure', 'Cirugía o procedimiento'),
+        ('grooming', 'Estética'),
+        ('follow_up', 'Seguimiento'),
+        ('emergency', 'Urgencia'),
+        ('other', 'Otro'),
+    )
+
     STATUS_CHOICES = (
         ('scheduled', 'Programada'),
         ('confirmed', 'Confirmada'),
@@ -46,6 +56,11 @@ class Appointment(PublicIdMixin, OrganizationalModel):
     timezone_at_creation = models.CharField(max_length=64, default='UTC')
 
     reason = models.CharField(max_length=255)
+    category = models.CharField(
+        max_length=32,
+        choices=CATEGORY_CHOICES,
+        default='general_consultation',
+    )
     notes = models.TextField(blank=True)
     cancellation_reason = models.TextField(blank=True)
 
@@ -77,10 +92,12 @@ class Appointment(PublicIdMixin, OrganizationalModel):
 
     @property
     def invoice_id(self):
-        try:
-            return self.invoice.id
-        except Exception:
-            return None
+        invoice = self.invoices.order_by('-posted_at', '-id').first()
+        return invoice.id if invoice else None
+
+    @property
+    def invoice(self):
+        return self.invoices.order_by('-posted_at', '-id').first()
 
     class Meta:
         ordering = ["date", "start_time"]

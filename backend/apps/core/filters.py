@@ -10,8 +10,8 @@ class StableOrderingFilter(OrderingFilter):
     Sin esto, ordenar por un campo con valores repetidos deja las filas
     empatadas en orden no determinista entre consultas → al paginar, una fila
     puede aparecer en dos páginas o saltarse (P1-2). El dominio garantiza
-    empates: p.ej. `?ordering=total` sobre facturas, donde cada consulta
-    cerrada genera un draft en $0 (ADR p30). El orden por defecto de la vista
+    empates: p.ej. `?ordering=total` sobre facturas emitidas con el mismo total.
+    El orden por defecto de la vista
     (`ordering = ['-created_at', '-id']`) ya es estable; este filtro cubre el
     path opt-in del `?ordering`.
     """

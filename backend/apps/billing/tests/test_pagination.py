@@ -6,10 +6,11 @@ ordering server-side y aislamiento multi-tenant del `count`.
 """
 from decimal import Decimal
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice
+from apps.billing.models import Checkout, Invoice
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.organizations.models import Organization
@@ -37,6 +38,19 @@ def _make_user(username, org, role_name):
     return u
 
 
+def _issued_invoice(*, organization, owner, pet=None, total=Decimal('0.00')):
+    checkout = Checkout.objects.create(
+        organization=organization, origin='direct_sale', kind='direct_sale',
+        lifecycle='completed', completion_kind='posted_unpaid',
+        customer=owner, pet=pet, owner=None, completed_at=timezone.now(),
+    )
+    return Invoice.objects.create(
+        checkout=checkout, owner=owner, pet=pet, organization=organization,
+        status='posted', invoice_type='direct_sale', posted_at=timezone.now(),
+        total=total,
+    )
+
+
 class InvoicePaginationTests(APITestCase):
     URL = '/api/billing/invoices/'
 
@@ -52,17 +66,16 @@ class InvoicePaginationTests(APITestCase):
 
         # 30 facturas en org A → 2 páginas (25 + 5).
         cls.invoices_a = [
-            Invoice.objects.create(
+            _issued_invoice(
                 owner=cls.owner_a, pet=cls.pet_a, organization=cls.org_a,
-                status='draft', invoice_type='direct_sale', total=Decimal(str(i)),
+                total=Decimal(str(i)),
             )
             for i in range(30)
         ]
         # 4 facturas en org B → no deben contarse para org A.
         for i in range(4):
-            Invoice.objects.create(
-                owner=cls.owner_b, organization=cls.org_b,
-                status='draft', invoice_type='direct_sale', total=Decimal('1'),
+            _issued_invoice(
+                owner=cls.owner_b, organization=cls.org_b, total=Decimal('1'),
             )
 
     def setUp(self):
@@ -139,9 +152,9 @@ class InvoiceOrderingStabilityTests(APITestCase):
         cls.pet = Pet.objects.create(name="Pet ORD", species="dog", owner=cls.owner, organization=cls.org)
         # 30 facturas con el MISMO total → empate total para forzar el desempate.
         for _ in range(30):
-            Invoice.objects.create(
+            _issued_invoice(
                 owner=cls.owner, pet=cls.pet, organization=cls.org,
-                status='draft', invoice_type='direct_sale', total=Decimal('0.00'),
+                total=Decimal('0.00'),
             )
 
     def setUp(self):

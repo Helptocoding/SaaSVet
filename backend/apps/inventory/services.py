@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from .models import Presentation, Product, StockLot, StockMovement
+from .units import presentation_conversion_factor
 
 # Precisión máxima para base_units en StockMovement (decimal_places=4)
 _QTY_PRECISION = Decimal('0.0001')
@@ -24,6 +25,7 @@ def apply_stock_movement(
     medical_record=None,
     invoice=None,
     lot=None,
+    allow_non_consumable=False,
 ):
     """
     Único punto de entrada de bajo nivel para todos los cambios de stock (ADR p31).
@@ -54,6 +56,8 @@ def apply_stock_movement(
     org_id = getattr(organization, 'pk', organization)
     user_id = getattr(created_by, 'pk', None)
 
+    factor = presentation_conversion_factor(presentation)
+
     # Normalizar quantity a ≤4 decimal places (límite de StockMovement.quantity).
     quantity = Decimal(quantity).quantize(_QTY_PRECISION, rounding=ROUND_HALF_UP)
 
@@ -62,13 +66,32 @@ def apply_stock_movement(
     locked_product = Product.all_objects.select_for_update().get(
         pk=presentation.product_id
     )
+    if (
+        locked_product.organization_id != org_id
+        or presentation.organization_id != org_id
+    ):
+        raise ValidationError('La presentación y el producto pertenecen a otra organización.')
 
     # Lock del lote DESPUÉS del producto (pertenece al producto ya lockeado).
     locked_lot = None
     if lot is not None:
         locked_lot = StockLot.all_objects.select_for_update().get(pk=lot.pk)
+        if (
+            locked_lot.organization_id != org_id
+            or locked_lot.product_id != locked_product.pk
+        ):
+            raise ValidationError('El lote no pertenece al producto y organización indicados.')
 
     if movement_type == 'out':
+        if (
+            locked_lot is not None
+            and not allow_non_consumable
+            and not locked_lot.is_consumable
+        ):
+            raise ValidationError(
+                f"El lote '{locked_lot.lot_number}' no está disponible para consumo "
+                f"(estado: {locked_lot.effective_status})."
+            )
         if locked_product.stock_quantity < quantity:
             logger.warning(
                 "Stock insuficiente | organization_id=%s user_id=%s product=%s "
@@ -100,10 +123,9 @@ def apply_stock_movement(
                 quantity_on_hand=F('quantity_on_hand') - quantity
             )
         # Dual-write: Presentation.stock en unidades de presentación (compatibilidad).
-        if presentation.conversion_factor:
-            Presentation.all_objects.filter(pk=presentation.pk).update(
-                stock=F('stock') - (quantity / presentation.conversion_factor)
-            )
+        Presentation.all_objects.filter(pk=presentation.pk).update(
+            stock=F('stock') - (quantity / factor)
+        )
 
     elif movement_type == 'in':
         Product.all_objects.filter(pk=locked_product.pk).update(
@@ -113,10 +135,9 @@ def apply_stock_movement(
             StockLot.all_objects.filter(pk=locked_lot.pk).update(
                 quantity_on_hand=F('quantity_on_hand') + quantity
             )
-        if presentation.conversion_factor:
-            Presentation.all_objects.filter(pk=presentation.pk).update(
-                stock=F('stock') + (quantity / presentation.conversion_factor)
-            )
+        Presentation.all_objects.filter(pk=presentation.pk).update(
+            stock=F('stock') + (quantity / factor)
+        )
 
     elif movement_type == 'adjustment':
         if locked_lot is not None:
@@ -129,19 +150,17 @@ def apply_stock_movement(
             Product.all_objects.filter(pk=locked_product.pk).update(
                 stock_quantity=F('stock_quantity') + delta
             )
-            if presentation.conversion_factor:
-                Presentation.all_objects.filter(pk=presentation.pk).update(
-                    stock=F('stock') + (delta / presentation.conversion_factor)
-                )
+            Presentation.all_objects.filter(pk=presentation.pk).update(
+                stock=F('stock') + (delta / factor)
+            )
         else:
             # Ajuste a nivel Product (comportamiento histórico, absoluto).
             Product.all_objects.filter(pk=locked_product.pk).update(
                 stock_quantity=quantity
             )
-            if presentation.conversion_factor:
-                Presentation.all_objects.filter(pk=presentation.pk).update(
-                    stock=quantity / presentation.conversion_factor
-                )
+            Presentation.all_objects.filter(pk=presentation.pk).update(
+                stock=quantity / factor
+            )
 
     else:
         logger.error(
@@ -150,7 +169,7 @@ def apply_stock_movement(
         )
         raise ValidationError(f"Tipo de movimiento inválido: {movement_type}")
 
-    StockMovement.objects.create(
+    movement = StockMovement.objects.create(
         presentation=presentation,
         product=locked_product,
         lot=locked_lot,
@@ -165,15 +184,27 @@ def apply_stock_movement(
         invoice=invoice,
     )
 
+    try:
+        from apps.notifications.services import handle_stock_transition
+        prev_qty = locked_product.stock_quantity
+        locked_product.refresh_from_db(fields=['stock_quantity', 'min_stock', 'name'])
+        handle_stock_transition(
+            organization, locked_product, prev_qty,
+            locked_product.stock_quantity, movement.pk, actor=created_by,
+        )
+    except Exception:
+        logger.exception("notifications: hook stock best-effort falló")
+
     logger.info(
         "StockMovement | type=%s qty_base=%s product=%s presentation=%s lot=%s "
         "organization_id=%s user_id=%s reason=%r",
         movement_type, quantity, locked_product.pk, presentation.pk,
         (locked_lot.pk if locked_lot else None), org_id, user_id, reason,
     )
+    return movement
 
 
-def resolve_consumption_lots(product, quantity_base):
+def resolve_consumption_lots(product, quantity_base, *, lock=False):
     """
     Política FEFO (First Expired First Out) — spec §Políticas operativas (P1).
     Devuelve una asignación `[(StockLot, cantidad_base), ...]` para consumir
@@ -191,7 +222,7 @@ def resolve_consumption_lots(product, quantity_base):
     qty = Decimal(quantity_base).quantize(_QTY_PRECISION, rounding=ROUND_HALF_UP)
     today = timezone.localdate()
 
-    lots = list(
+    lots_query = (
         StockLot.objects.for_organization(product.organization)
         .filter(
             product=product,
@@ -201,6 +232,9 @@ def resolve_consumption_lots(product, quantity_base):
         .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gte=today))
         .order_by(F('expiry_date').asc(nulls_last=True), 'id')
     )
+    if lock:
+        lots_query = lots_query.select_for_update()
+    lots = list(lots_query)
 
     remaining = qty
     allocations = []
@@ -326,32 +360,47 @@ def consume_product(
 
     product = presentation.product
     if not product.tracks_lots:
-        apply_stock_movement(
+        movement = apply_stock_movement(
             presentation, quantity_base, 'out', organization,
             reason=reason, created_by=created_by,
             medical_record=medical_record, invoice=invoice,
         )
-        return
+        return [(movement, None, movement.quantity)]
 
     qty = Decimal(quantity_base).quantize(_QTY_PRECISION, rounding=ROUND_HALF_UP)
 
-    if lot is not None:
-        if not force and not lot.is_consumable:
-            raise ValidationError(
-                f"El lote '{lot.lot_number}' no está disponible para consumo "
-                f"(estado: {lot.effective_status})."
-            )
-        allocations = [(lot, qty)]
-    else:
-        allocations = resolve_consumption_lots(product, qty)
+    org_id = getattr(organization, 'pk', organization)
+    locked_product = Product.all_objects.select_for_update().get(pk=product.pk)
+    if locked_product.organization_id != org_id:
+        raise ValidationError('El producto pertenece a otra organización.')
 
+    if lot is not None:
+        locked_lot = StockLot.all_objects.select_for_update().get(pk=lot.pk)
+        if (
+            locked_lot.organization_id != org_id
+            or locked_lot.product_id != locked_product.pk
+        ):
+            raise ValidationError('El lote no pertenece al producto y organización indicados.')
+        if not force and not locked_lot.is_consumable:
+            raise ValidationError(
+                f"El lote '{locked_lot.lot_number}' no está disponible para consumo "
+                f"(estado: {locked_lot.effective_status})."
+            )
+        allocations = [(locked_lot, qty)]
+    else:
+        allocations = resolve_consumption_lots(locked_product, qty, lock=True)
+
+    committed = []
     for stock_lot, take in allocations:
-        apply_stock_movement(
+        movement = apply_stock_movement(
             presentation, take, 'out', organization,
             reason=reason, created_by=created_by,
             medical_record=medical_record, invoice=invoice,
             lot=stock_lot,
+            allow_non_consumable=force,
         )
+        committed.append((movement, stock_lot, take))
+    return committed
 
 
 def restock_product(
@@ -408,7 +457,7 @@ def receive_stock(
             "La recepción por lotes requiere un producto con control de lotes."
         )
 
-    cf = presentation.conversion_factor or Decimal('1')
+    cf = presentation_conversion_factor(presentation)
     default_received = received_at or timezone.localdate()
     affected = []
 

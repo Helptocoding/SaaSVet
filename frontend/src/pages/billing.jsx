@@ -3,12 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirm } from "../components/useConfirm";
 import { apiError } from "../utils/apiError";
 import {
-    getInvoices, getInvoice, confirmInvoice, payInvoice, directPayInvoice,
+    getInvoices, getInvoice, getCheckouts, getCheckout, payCheckout,
+    postCheckout, completeCheckoutNoCharge, payInvoice,
     downloadInvoicePDF, refundInvoice, reverseCreditNote,
-    dispensePrescription,
+    dispensePrescription, decidePrescriptionItem,
+    issueCheckoutEstimate, downloadCheckoutEstimatePDF,
+    voidAndPrepareReplacement, voidInvoiceTerminal, waiveReplacement,
+    openCheckoutDispute, resolveCheckoutDispute, adjustReplacementExposure,
+    assignReplacementOwner,
 } from "../api/billing";
 import { extractFilename, triggerDownload } from "../utils/downloadBlob";
-import { getProductLots } from "../api/inventory";
 import { getOrgSettings } from "../api/organizations";
 import { useAuth } from "../auth/authContext";
 import { Icon } from "../components/icons";
@@ -16,6 +20,7 @@ import { toast } from "sonner";
 import PaymentLinesEditor from "../components/PaymentLinesEditor";
 import { buildPaymentLines, paymentLinesValid } from "../utils/payments";
 import { newIdempotencyKey } from "../utils/idempotency";
+import { authoritativePresentationMax } from "../utils/prescriptionAvailability";
 import { toList } from "../utils/toList";
 import DateRangePicker from "../components/DateRangePicker";
 import CajaBar from "../components/CajaBar";
@@ -24,14 +29,13 @@ import Pagination from "../components/Pagination";
 import s from "./billing.module.css";
 
 const FILTER_KEYS = ["status", "invoice_type", "created_from", "created_to", "paid_from", "paid_to"];
-const STATUS_LABELS = { draft: "Borrador", confirmed: "Confirmada", paid: "Pagada", cancelled: "Cancelada" };
+const STATUS_LABELS = { posted: "Pendiente", paid: "Pagada", voided: "Anulada" };
 const TYPE_LABELS = { consultation: "Consulta", direct_sale: "Venta directa" };
 
 const DOT_COLOR = {
-    draft: "var(--c-text-4)",
-    confirmed: "var(--c-info-text)",
+    posted: "var(--c-info-text)",
     paid: "var(--c-success-text)",
-    cancelled: "var(--c-danger-text)",
+    voided: "var(--c-danger-text)",
 };
 
 // ADR p29: causas de devolución (deben coincidir con CREDIT_NOTE_REASON_CODES del backend).
@@ -182,6 +186,7 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
                                             >
                                                 <option value="restock">Reingresa a stock</option>
                                                 <option value="discard">Descartar</option>
+                                                <option value="retained">Cliente lo conserva</option>
                                             </select>
                                         ) : (
                                             <span style={{ fontSize: "11px", color: "var(--c-text-4)" }}>—</span>
@@ -241,27 +246,12 @@ const RefundModal = ({ invoice, onClose, onDone }) => {
     );
 };
 
-/* Selector de lote (FEFO) para una línea de dispensación con tracks_lots (B2c). */
+/* Override opcional de lote; vacío conserva FEFO multi-lote del backend. */
 const DispenseLotSelect = ({ row, setRow, disabled }) => {
-    const [lots, setLots] = useState([]);
-    useEffect(() => {
-        if (!row.productPublicId) return undefined;
-        let active = true;
-        (async () => {
-            try {
-                const data = await getProductLots(row.productPublicId, { with_stock: "true" });
-                const list = (Array.isArray(data) ? data : data?.results || [])
-                    .filter(l => l.effective_status === "active");
-                if (!active) return;
-                setLots(list);
-                if (!row.lot) setRow(row.key, { lot: list[0] || null });
-            } catch {
-                /* noop */
-            }
-        })();
-        return () => { active = false; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [row.productPublicId]);
+    const presentation = row.presentations.find(
+        item => String(item.id) === String(row.presentationId),
+    );
+    const lots = presentation?.lots || [];
 
     return (
         <select
@@ -269,10 +259,10 @@ const DispenseLotSelect = ({ row, setRow, disabled }) => {
             value={row.lot?.id ?? ""} disabled={disabled}
             onChange={e => setRow(row.key, { lot: lots.find(l => String(l.id) === e.target.value) || null })}
         >
-            {lots.length === 0 && <option value="">Sin lotes</option>}
+            <option value="">FEFO automático</option>
             {lots.map(l => (
                 <option key={l.id} value={l.id}>
-                    {l.lot_number}{l.expiry_date ? ` · ${l.expiry_date}` : ""} · {Math.round(Number(l.quantity_on_hand))}
+                    {l.lot_number}{l.expiry_date ? ` · ${l.expiry_date}` : ""} · {l.available_quantity_base}
                 </option>
             ))}
         </select>
@@ -280,46 +270,54 @@ const DispenseLotSelect = ({ row, setRow, disabled }) => {
 };
 
 /* ── PrescriptionDispensePanel — dispensar receta interna (ADR p30) ── */
+const PRESCRIPTION_BLOCK_REASON = {
+    checkout_not_open: "Cobro cerrado",
+    prescription_fulfilled: "Receta surtida",
+    below_presentation_size: "El remanente no completa esta presentación",
+    no_consumable_lot: "Sin lote consumible",
+    out_of_stock: "Sin stock",
+    stock_below_presentation_size: "El stock no completa esta presentación",
+};
+
 const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
     const suggestions = invoice.prescription_suggestions || [];
     const [rows, setRows] = useState(() =>
         suggestions.map(s => {
             const presentations = s.presentations || [];
-            // Cantidades de receta en unidades base del producto (ADR p31).
-            const remainingBase = Number(s.remaining_quantity ?? s.suggested_quantity) || 0;
-            const firstCf = Number(presentations[0]?.conversion_factor) || 1;
-            const firstMax = Math.floor(remainingBase / firstCf);
+            const initialPresentation = presentations.find(
+                p => authoritativePresentationMax(p) > 0,
+            ) || presentations[0];
+            const firstMax = authoritativePresentationMax(initialPresentation);
             return {
                 key: s.prescription_item_id,
                 productName: s.product_name,
                 dose: s.dose,
-                baseUnit: s.base_unit || "",
-                prescribed: Number(s.prescribed_quantity ?? s.suggested_quantity) || 0,
-                dispensed: Number(s.dispensed_quantity) || 0,
-                remainingBase,
+                baseUnit: s.base_unit_display || s.base_unit || "",
+                prescribed: Number(s.prescribed_quantity_base),
+                fulfilled: Number(s.fulfilled_quantity_base),
+                selectedBase: Number(s.selected_quantity_base),
+                remainingBase: Number(s.legal_remaining_quantity_base),
                 presentations,
-                // Por defecto seleccionado solo si hay presentación vendible y cupo.
-                selected: presentations.length > 0 && firstMax > 0,
-                presentationId: presentations[0]?.id ? String(presentations[0].id) : "",
+                // La receta es una sugerencia clínica: nunca se preselecciona.
+                selected: false,
+                decision: s.decision || "pending",
+                presentationId: initialPresentation?.id ? String(initialPresentation.id) : "",
                 quantity: firstMax > 0 ? "1" : "0",
                 // Trazabilidad por lote (B2c): picker FEFO si el producto lo usa.
                 tracksLots: !!s.tracks_lots,
-                productPublicId: s.product_public_id,
                 lot: null,
             };
         })
     );
     const [submitting, setSubmitting] = useState(false);
+    const [dispenseIdempotencyKey] = useState(() => newIdempotencyKey());
     const setRow = (key, patch) => setRows(prev => prev.map(r => r.key === key ? { ...r, ...patch } : r));
 
-    // Tope clínico (espejo del backend): máximo en unidades de la presentación
-    // elegida = restante recetado (unidades base) / conversion_factor.
+    // El backend es la única autoridad clínica/de inventario. El frontend solo
+    // presenta el máximo adicional resuelto en unidades de presentación.
     const maxQtyFor = (r, presentationId = r.presentationId) => {
         const p = r.presentations.find(x => String(x.id) === String(presentationId));
-        if (!p) return 0;
-        const cfRaw = Number(p.conversion_factor);
-        const cf = cfRaw > 0 ? cfRaw : 1;   // fail-safe ante cf corrupto (NaN/0/negativo)
-        return Math.floor(r.remainingBase / cf);
+        return authoritativePresentationMax(p);
     };
 
     const selected = rows.filter(r =>
@@ -332,11 +330,6 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
     const canSubmit = selected.length > 0 && !overCap && !submitting;
 
     const submit = async () => {
-        const missingLot = selected.find(r => r.tracksLots && !r.lot?.id);
-        if (missingLot) {
-            toast.error(`${missingLot.productName}: selecciona un lote disponible.`);
-            return;
-        }
         const lines = selected.map(r => ({
             presentation: Number(r.presentationId),
             quantity: Number(r.quantity),
@@ -346,7 +339,11 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
         setSubmitting(true);
         // sonner v2: toast.promise NO resuelve a la data — await la promesa real
         // para obtener la factura de consulta actualizada.
-        const req = dispensePrescription(invoice.prescription_public_id, { lines });
+        const req = dispensePrescription(invoice.prescription_public_id, {
+            lines,
+            expectedVersion: invoice.version,
+            idempotencyKey: dispenseIdempotencyKey,
+        });
         toast.promise(req, {
             loading: "Agregando al cobro...",
             success: "Productos agregados al cobro",
@@ -362,9 +359,30 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
         }
     };
 
-    // Solo se dispensa mientras el cobro está en borrador (los ítems se agregan
+    const decline = async (row) => {
+        setSubmitting(true);
+        try {
+            const updated = await toast.promise(
+                decidePrescriptionItem(invoice.public_id, row.key, {
+                    decision: "declined",
+                    reasonCode: "not_now",
+                    expectedVersion: invoice.version,
+                }),
+                {
+                    loading: "Registrando decisión...",
+                    success: "Medicamento rechazado para esta compra",
+                    error: (err) => apiError(err, "No se pudo registrar la decisión"),
+                },
+            );
+            onDispensed(updated);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Solo se dispensa mientras la preparación comercial sigue abierta.
     // a esta factura antes de confirmar). Confirmada/pagada → sin panel.
-    if (!invoice.prescription_public_id || suggestions.length === 0 || invoice.status !== "draft") return null;
+    if (!invoice.prescription_public_id || suggestions.length === 0 || invoice.lifecycle !== "open") return null;
 
     return (
         <div style={{ marginTop: "20px" }}>
@@ -389,6 +407,15 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                         const noPres = r.presentations.length === 0;
                         const exhausted = r.remainingBase <= 0;
                         const max = maxQtyFor(r);
+                        const currentPresentation = r.presentations.find(
+                            presentation => String(presentation.id) === String(r.presentationId),
+                        );
+                        const blockingReason = currentPresentation?.blocking_reasons
+                            ?.map(code => PRESCRIPTION_BLOCK_REASON[code] || code)
+                            .join(" · ");
+                        const noSelectable = !r.presentations.some(
+                            presentation => maxQtyFor(r, presentation.id) > 0,
+                        );
                         const over = r.selected && Number(r.quantity) > max;
                         const unitLabel = r.baseUnit ? ` ${r.baseUnit.toLowerCase()}` : "";
                         return (
@@ -396,7 +423,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                 <td>
                                     <input
                                         type="checkbox" checked={r.selected}
-                                        disabled={submitting || noPres || exhausted}
+                                        disabled={submitting || noPres || exhausted || noSelectable}
                                         onChange={e => setRow(r.key, { selected: e.target.checked })}
                                     />
                                 </td>
@@ -406,8 +433,16 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                     <div style={{ fontSize: "11px", color: exhausted ? "var(--c-success-text)" : "var(--c-text-3)" }}>
                                         {exhausted
                                             ? "Dispensado por completo"
-                                            : `Recetado ${r.prescribed}${unitLabel}${r.dispensed > 0 ? ` · en cobro ${r.dispensed}` : ""} · restante ${r.remainingBase}`}
+                                            : `Recetado ${r.prescribed}${unitLabel}${r.fulfilled > 0 ? ` · surtido ${r.fulfilled}` : ""}${r.selectedBase > 0 ? ` · seleccionado ${r.selectedBase}` : ""} · restante legal ${r.remainingBase}`}
                                     </div>
+                                    {r.decision === "pending" && !r.selected && !exhausted && (
+                                        <button className="btn btn-ghost btn-xs" onClick={() => decline(r)} disabled={submitting}>
+                                            No lo llevará
+                                        </button>
+                                    )}
+                                    {r.decision === "declined" && (
+                                        <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>Rechazado en esta compra</div>
+                                    )}
                                 </td>
                                 <td>
                                     {noPres ? (
@@ -422,14 +457,15 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                                 const nextMax = maxQtyFor(r, e.target.value);
                                                 setRow(r.key, {
                                                     presentationId: e.target.value,
+                                                    lot: null,
                                                     // Clamp al nuevo máximo del formato elegido.
                                                     quantity: String(Math.min(Math.max(Number(r.quantity) || 1, 1), Math.max(nextMax, 0))),
                                                 });
                                             }}
                                         >
                                             {r.presentations.map(p => (
-                                                <option key={p.id} value={p.id}>
-                                                    {p.name} — ${Number(p.sale_price).toFixed(2)} (stock {p.stock})
+                                                <option key={p.id} value={p.id} disabled={authoritativePresentationMax(p) <= 0}>
+                                                    {p.name} — ${Number(p.sale_price).toFixed(2)} (disponible {p.available_stock_quantity_presentations})
                                                 </option>
                                             ))}
                                         </select>
@@ -453,6 +489,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
                                     {!noPres && !exhausted && (
                                         <div style={{ fontSize: "10px", textAlign: "right", marginTop: "2px", color: over ? "var(--c-danger-text)" : "var(--c-text-4)" }}>
                                             máx {max}
+                                            {max === 0 && blockingReason ? <><br />{blockingReason}</> : null}
                                         </div>
                                     )}
                                 </td>
@@ -471,7 +508,7 @@ const PrescriptionDispensePanel = ({ invoice, onDispensed }) => {
 };
 
 const Billing = () => {
-    const { token, initializing, can } = useAuth();
+    const { token, user, initializing, can } = useAuth();
     const confirm = useConfirm();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -479,6 +516,7 @@ const Billing = () => {
     const requestIdRef = useRef(0);
 
     const [invoices, setInvoices] = useState([]);
+    const [checkouts, setCheckouts] = useState([]);
 
     // P1-2: paginación server-side (PageNumber 25) + ordering server-side.
     const PAGE_SIZE = 25;
@@ -514,10 +552,20 @@ const Billing = () => {
 
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [reversingCnId, setReversingCnId] = useState(null);
+    const [showReplacementModal, setShowReplacementModal] = useState(false);
+    const [replacementReason, setReplacementReason] = useState("correction");
+    const [replacementMode, setReplacementMode] = useState("replacement");
+    const [terminalReasonCode, setTerminalReasonCode] = useState("full_return");
+    const [terminalReasonNotes, setTerminalReasonNotes] = useState("");
+    const [replacementDispositions, setReplacementDispositions] = useState([]);
+    const [replacing, setReplacing] = useState(false);
+    const [disputeBusy, setDisputeBusy] = useState(false);
 
     // Caja (ADR p28): turno actual + si la org exige caja abierta para cobrar.
     const [cashSession, setCashSession] = useState(undefined); // undefined=cargando | null=cerrada | obj=abierta
     const [requireCash, setRequireCash] = useState(false);
+    const [allowPostUnpaid, setAllowPostUnpaid] = useState(false);
+    const [creditDefaultDays, setCreditDefaultDays] = useState(30);
 
     // Feedback de filtros: atenúa la tabla mientras hay un fetch en vuelo.
     const [fetching, setFetching] = useState(false);
@@ -544,18 +592,24 @@ const Billing = () => {
         }
     };
 
+    const loadCheckouts = async () => {
+        const data = await getCheckouts({ lifecycle: "open" });
+        setCheckouts(toList(data));
+    };
+
     // Caja: la sesión llega vía CajaBar (onSession) — sin GET duplicado.
     // Aquí solo se carga el flag de la org. Silencioso: si falla, no bloquea.
     const loadCashSettings = async () => {
         const settings = await getOrgSettings().catch(() => null);
         setRequireCash(!!settings?.require_open_cash_session);
+        setAllowPostUnpaid(!!settings?.allow_post_unpaid);
+        setCreditDefaultDays(Number(settings?.credit_default_days) || 30);
     };
 
     const loadAll = async () => {
         setLoading(requestIdRef.current === 0);
         try {
-            await loadInvoices(filters);
-            loadCashSettings();
+            await Promise.all([loadInvoices(filters), loadCheckouts(), loadCashSettings()]);
         } catch {
             // Silencioso — loadInvoices maneja su error
         } finally { setLoading(false); }
@@ -582,7 +636,13 @@ const Billing = () => {
 
     useEffect(() => {
         const invoiceParam = searchParams.get("invoice");
-        if (invoiceParam && token && !loading) {
+        const checkoutParam = searchParams.get("checkout");
+        if (checkoutParam && token && !loading) {
+            getCheckout(checkoutParam).then((detail) => {
+                setSelectedInvoice({ ...detail, _isCheckout: true });
+                setShowDetailModal(true);
+            }).catch(() => {});
+        } else if (invoiceParam && token && !loading) {
             getInvoice(invoiceParam).then((detail) => {
                 setSelectedInvoice(detail);
                 setShowDetailModal(true);
@@ -620,11 +680,20 @@ const Billing = () => {
         } catch { toast.error("Error al cargar el cobro"); }
     };
 
+    const openCheckoutDetail = async (checkout) => {
+        try {
+            const detail = await getCheckout(checkout.public_id);
+            setSelectedInvoice({ ...detail, _isCheckout: true });
+            setShowDetailModal(true);
+        } catch { toast.error("Error al cargar la preparación de cobro"); }
+    };
+
     const closeDetailModal = () => {
         setShowDetailModal(false);
         setSelectedInvoice(null);
         setShowPayModal(false);
         setShowRefundModal(false);
+        setShowReplacementModal(false);
     };
 
     const handleDownloadInvoicePDF = async (publicId) => {
@@ -637,25 +706,10 @@ const Billing = () => {
         finally { setDownloadingInvoiceId(null); }
     };
 
-    const handleConfirm = async () => {
-        // sonner v2: toast.promise NO resuelve a la data — hay que await la
-        // promesa real para obtener la factura actualizada.
-        const req = confirmInvoice(selectedInvoice.public_id);
-        toast.promise(req, {
-            loading: 'Confirmando...', success: 'Confirmada', error: (err) => apiError(err, "Error")
-        });
-        try {
-            const updated = await req;
-            setSelectedInvoice(updated);
-            loadInvoices(filters);
-        } catch {
-            // toast.promise ya muestra el error
-        }
-    };
-
     const openPayModal = () => {
-        const direct = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
-        const target = direct ? Number(selectedInvoice.total) : Number(selectedInvoice.remaining_balance);
+        const target = selectedInvoice?._isCheckout
+            ? Number(selectedInvoice.total)
+            : Number(selectedInvoice.remaining_balance);
         setPayLines([{ method: "cash", amount: target > 0 ? target.toFixed(2) : "" }]);
         setPayIdemKey(newIdempotencyKey());
         setShowPayModal(true);
@@ -665,25 +719,27 @@ const Billing = () => {
     // efectivo > total, se registra SOLO el total (el excedente es cambio para
     // el cliente, no se persiste). Aplica a venta directa Y a consulta.
     const submitPayment = async () => {
-        const direct = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
         const paymentLines = buildPaymentLines(
-            payLines, direct ? selectedInvoice.total : selectedInvoice.remaining_balance
+            payLines, selectedInvoice._isCheckout ? selectedInvoice.total : selectedInvoice.remaining_balance
         );
-        const call = direct
-            ? directPayInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey })
+        const call = selectedInvoice._isCheckout
+            ? payCheckout(selectedInvoice.public_id, {
+                paymentLines, expectedVersion: selectedInvoice.version,
+                idempotencyKey: payIdemKey,
+            })
             : payInvoice(selectedInvoice.public_id, { paymentLines, idempotencyKey: payIdemKey });
         setPaying(true);
         // sonner v2: toast.promise NO resuelve a la data — await la promesa real.
         toast.promise(call, {
-            loading: direct ? 'Cobrando...' : 'Registrando...',
-            success: direct ? 'Cobrada' : 'Pago registrado',
+            loading: 'Cobrando...',
+            success: 'Pago registrado',
             error: (err) => apiError(err, "Error"),
         });
         try {
             const updated = await call;
             setSelectedInvoice(updated);
             setShowPayModal(false);
-            loadInvoices(filters);
+            await Promise.all([loadInvoices(filters), loadCheckouts()]);
         } catch {
             // toast.promise ya muestra el error; el modal queda abierto para reintentar
         } finally {
@@ -710,8 +766,13 @@ const Billing = () => {
     // consulta. Refresca el detalle abierto (muestra las nuevas líneas) y la
     // lista (totales). No se abre otra factura.
     const handleDispensed = async () => {
-        await refreshSelectedInvoice();
-        await loadInvoices(filters);
+        if (selectedInvoice?._isCheckout) {
+            const detail = await getCheckout(selectedInvoice.public_id);
+            setSelectedInvoice({ ...detail, _isCheckout: true });
+            await loadCheckouts();
+        } else {
+            await refreshSelectedInvoice();
+        }
     };
 
     const handleReverseCreditNote = async (cn) => {
@@ -733,22 +794,232 @@ const Billing = () => {
         finally { setReversingCnId(null); }
     };
 
+    const handleCheckoutEstimate = async () => {
+        const marker = `estimate:${selectedInvoice.public_id}`;
+        setDownloadingInvoiceId(marker);
+        try {
+            const estimate = await issueCheckoutEstimate(selectedInvoice.public_id, {
+                expectedVersion: selectedInvoice.version,
+                idempotencyKey: newIdempotencyKey(),
+            });
+            const { blob, contentDisposition } = await downloadCheckoutEstimatePDF(estimate.public_id);
+            triggerDownload(blob, extractFilename(contentDisposition, 'estimado-no-factura.pdf'));
+        } catch (err) {
+            toast.error(apiError(err, 'No se pudo generar el estimado'));
+        } finally {
+            setDownloadingInvoiceId(null);
+        }
+    };
+
+    const handlePostCheckout = async () => {
+        const accepted = await confirm({
+            title: "Dejar cobro pendiente",
+            message: `Confirma que el cliente aceptó el importe y que se entregaron los productos incluidos. Se creará una obligación con vencimiento a ${creditDefaultDays} días.`,
+            confirmText: "Emitir pendiente",
+        });
+        if (!accepted) return;
+        const dueAt = new Date();
+        dueAt.setDate(dueAt.getDate() + creditDefaultDays);
+        const req = postCheckout(selectedInvoice.public_id, {
+            expectedVersion: selectedInvoice.version,
+            dueAt: dueAt.toISOString(),
+            creditReason: "customer_will_pay_later",
+            obligationEvidence: {
+                basis: "customer_acknowledgement",
+                accepting_party: selectedInvoice.customer_name || "Cliente presente",
+                channel: "in_person",
+            },
+            idempotencyKey: newIdempotencyKey(),
+        });
+        try {
+            await toast.promise(req, {
+                loading: "Emitiendo...", success: "Cobro emitido",
+                error: (err) => apiError(err, "No se pudo emitir el cobro"),
+            });
+            closeDetailModal();
+            await Promise.all([loadInvoices(filters), loadCheckouts()]);
+        } catch { /* toast.promise mostró el error */ }
+    };
+
+    const handleNoCharge = async () => {
+        const req = completeCheckoutNoCharge(selectedInvoice.public_id, {
+            reason: "no_billable_items",
+            expectedVersion: selectedInvoice.version,
+            idempotencyKey: newIdempotencyKey(),
+        });
+        try {
+            await toast.promise(req, {
+                loading: "Completando...", success: "Consulta cerrada sin cargo",
+                error: (err) => apiError(err, "No se pudo completar"),
+            });
+            closeDetailModal();
+            await loadCheckouts();
+        } catch { /* toast.promise mostró el error */ }
+    };
+
+    const openReplacementModal = (mode = "replacement") => {
+        setReplacementMode(mode);
+        setReplacementReason("correction");
+        setTerminalReasonCode("full_return");
+        setTerminalReasonNotes("");
+        setReplacementDispositions(
+            selectedInvoice.items
+                .filter(item => item.has_stock_allocation)
+                .map(item => ({
+                    invoice_item: item.id,
+                    outcome: mode === "terminal" ? "returned_restocked" : "goods_retained",
+                })),
+        );
+        setShowReplacementModal(true);
+    };
+
+    const submitReplacement = async () => {
+        setReplacing(true);
+        try {
+            if (replacementMode === "terminal") {
+                await voidInvoiceTerminal(selectedInvoice.public_id, {
+                    reasonCode: terminalReasonCode,
+                    reasonNotes: terminalReasonNotes,
+                    dispositions: replacementDispositions,
+                    idempotencyKey: newIdempotencyKey(),
+                });
+                toast.success("Factura anulada terminalmente");
+                closeDetailModal();
+            } else {
+                const replacement = await voidAndPrepareReplacement(selectedInvoice.public_id, {
+                    reason: replacementReason,
+                    dispositions: replacementDispositions,
+                    idempotencyKey: newIdempotencyKey(),
+                });
+                toast.success("Factura anulada y corrección preparada");
+                setSelectedInvoice({ ...replacement, _isCheckout: true });
+            }
+            setShowReplacementModal(false);
+            await Promise.all([loadInvoices(filters), loadCheckouts()]);
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo preparar la corrección"));
+        } finally {
+            setReplacing(false);
+        }
+    };
+
+    const handleWaiveReplacement = async () => {
+        const accepted = await confirm({
+            title: "Condonar obligación corregida",
+            message: "La corrección se cerrará sin reemitir el valor ya entregado. La condonación quedará auditada.",
+            confirmText: "Condonar",
+            dangerMode: true,
+        });
+        if (!accepted) return;
+        try {
+            await waiveReplacement(selectedInvoice.public_id, {
+                reasonCode: "authorized_waiver",
+                evidence: { channel: "in_app", note: "Condonación autorizada desde Cobros" },
+                expectedVersion: selectedInvoice.version,
+                idempotencyKey: newIdempotencyKey(),
+            });
+            toast.success("Obligación condonada");
+            closeDetailModal();
+            await loadCheckouts();
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo registrar la condonación"));
+        }
+    };
+
     const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "numeric" }) : "—";
+    const handleOpenDispute = async () => {
+        const statement = window.prompt("Describe qué importe u obligación disputa el cliente:");
+        if (!statement?.trim()) return;
+        setDisputeBusy(true);
+        try {
+            await openCheckoutDispute(selectedInvoice.public_id, {
+                itemIds: selectedInvoice.items.map(item => item.id),
+                statement: statement.trim(), owner: user.id,
+                reviewDueAt: new Date(Date.now() + 2 * 86400000).toISOString(),
+                evidence: { channel: "in_person" },
+                expectedVersion: selectedInvoice.version,
+                idempotencyKey: newIdempotencyKey(),
+            });
+            const detail = await getCheckout(selectedInvoice.public_id);
+            setSelectedInvoice({ ...detail, _isCheckout: true });
+            await loadCheckouts();
+            toast.success("Disputa registrada y cobro bloqueado");
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo registrar la disputa"));
+        } finally { setDisputeBusy(false); }
+    };
+
+    const handleAcceptDispute = async () => {
+        const dispute = selectedInvoice.open_dispute;
+        if (!dispute) return;
+        const reason = window.prompt("Justificación de la aceptación:");
+        if (!reason?.trim()) return;
+        setDisputeBusy(true);
+        try {
+            await resolveCheckoutDispute(dispute.public_id, {
+                resolution: "accepted", reason: reason.trim(),
+                resolutionEvidence: { channel: "in_person" },
+                expectedVersion: selectedInvoice.version,
+                idempotencyKey: newIdempotencyKey(),
+            });
+            const detail = await getCheckout(selectedInvoice.public_id);
+            setSelectedInvoice({ ...detail, _isCheckout: true });
+            await loadCheckouts();
+            toast.success("Disputa resuelta; el cobro vuelve a estar disponible");
+        } catch (err) {
+            toast.error(apiError(err, "No se pudo resolver la disputa"));
+        } finally { setDisputeBusy(false); }
+    };
+
+    const handleAdjustReplacement = async () => {
+        const baseline = selectedInvoice.items.find(item => item.required_replacement_baseline);
+        if (!baseline) return;
+        const amount = window.prompt("Monto de reducción parcial (debe quedar saldo positivo):");
+        const note = amount && window.prompt("Justificación del ajuste:");
+        if (!amount || !note?.trim()) return;
+        try {
+            const updated = await adjustReplacementExposure(selectedInvoice.public_id, {
+                itemId: baseline.id, amount, reasonCode: "pricing_correction",
+                note: note.trim(), evidence: { channel: "in_app" },
+                expectedVersion: selectedInvoice.version, idempotencyKey: newIdempotencyKey(),
+            });
+            setSelectedInvoice({ ...updated, _isCheckout: true });
+            await loadCheckouts();
+            toast.success("Exposición de reemplazo ajustada");
+        } catch (err) { toast.error(apiError(err, "No se pudo ajustar la exposición")); }
+    };
+
+    const handleTakeReplacement = async () => {
+        try {
+            const updated = await assignReplacementOwner(selectedInvoice.public_id, {
+                owner: user.id,
+                correctionDueAt: new Date(Date.now() + 2 * 86400000).toISOString(),
+                reasonCode: "owner_takeover", expectedVersion: selectedInvoice.version,
+                idempotencyKey: newIdempotencyKey(),
+            });
+            setSelectedInvoice({ ...updated, _isCheckout: true });
+            await loadCheckouts();
+            toast.success("Corrección asignada");
+        } catch (err) { toast.error(apiError(err, "No se pudo asignar la corrección")); }
+    };
+
     const formatCurrency = (amount) => Number(amount || 0).toFixed(2);
 
     if (initializing || loading) return <div style={{ display: "flex", justifyContent: "center", padding: "100px", color: "var(--c-text-3)", fontSize: "13px" }}>Cargando...</div>;
 
-    const isDirectSaleDraft = selectedInvoice?.invoice_type === "direct_sale" && selectedInvoice?.status === "draft";
-    // ADR p30 (rev): toda factura exige total exacto — sin parcial. Venta
-    // directa cobra `total`; consulta confirmada cobra `remaining_balance`
-    // (igual al total mientras no haya pagos previos). `allowChange` aplica
-    // siempre: efectivo recibido > total muestra cambio (no se persiste).
+    const isCheckout = !!selectedInvoice?._isCheckout;
     const payTarget = selectedInvoice
-        ? Number(isDirectSaleDraft ? selectedInvoice.total : selectedInvoice.remaining_balance)
+        ? Number(isCheckout ? selectedInvoice.total : selectedInvoice.remaining_balance)
         : 0;
     const payAllowPartial = false;
     // Solo bloquea si la org exige caja Y sabemos que está cerrada (no en carga).
     const cashBlocked = requireCash && cashSession === null;
+    const checkoutAction = (name) => selectedInvoice?.actions?.[name] || null;
+    const checkoutActionBlocked = (name) => checkoutAction(name)?.allowed === false;
+    const checkoutActionTitle = (name) => {
+        const blockers = checkoutAction(name)?.blockers || [];
+        return blockers.map(blocker => blocker.message).join(" ") || undefined;
+    };
 
     const hasActiveFilters = FILTER_KEYS.some(k => filters[k]);
 
@@ -811,6 +1082,33 @@ const Billing = () => {
                     </button>
                 )}
             </div>
+
+            {checkouts.length > 0 && (
+                <div className="table-wrap" style={{ marginBottom: "20px" }}>
+                    <table className="table">
+                        <thead><tr>
+                            <th>Preparación</th><th>Mascota / Cliente</th><th>Origen</th>
+                            <th>Estado</th><th style={{ textAlign: "right" }}>Total</th><th></th>
+                        </tr></thead>
+                        <tbody>{checkouts.map(checkout => (
+                            <tr key={checkout.public_id}>
+                                <td style={{ color: "var(--c-text-3)" }}>#{checkout.id}</td>
+                                <td>
+                                    <div>{checkout.pet_name || "Venta de mostrador"}</div>
+                                    <div style={{ fontSize: "11px", color: "var(--c-text-3)" }}>{checkout.customer_name}</div>
+                                </td>
+                                <td>{checkout.origin === "consultation" ? "Consulta" : "Venta directa"}</td>
+                                <td>{checkout.operational_hold === "dispute" ? "En disputa" : checkout.correction_status === "correction_overdue" ? "Corrección vencida" : "Por preparar"}</td>
+                                <td style={{ textAlign: "right" }}>${formatCurrency(checkout.total)}</td>
+                                <td style={{ textAlign: "right" }}>
+                                    <button className="btn btn-ghost btn-icon" aria-label={`Abrir preparación ${checkout.id}`} onClick={() => openCheckoutDetail(checkout)}><Icon.Eye s={14} /></button>
+                                </td>
+                            </tr>
+                        ))}</tbody>
+                    </table>
+                    <div className="table-footer">{checkouts.length} preparación{checkouts.length !== 1 ? "es" : ""} pendiente{checkouts.length !== 1 ? "s" : ""}</div>
+                </div>
+            )}
 
             {invoices.length === 0 ? (
                 <div className="empty-state">
@@ -875,21 +1173,36 @@ const Billing = () => {
                             <div>
                                 <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--c-text)" }}>#{selectedInvoice.id}</h3>
                                 <div className={s.statusContainer} style={{ marginTop: "4px" }}>
-                                    <span className={s.statusDot} style={{ background: DOT_COLOR[selectedInvoice.status] }} />
-                                    {STATUS_LABELS[selectedInvoice.status]}
+                                    <span className={s.statusDot} style={{ background: isCheckout ? "var(--c-warning-text)" : DOT_COLOR[selectedInvoice.status] }} />
+                                    {isCheckout ? (selectedInvoice.operational_hold === "dispute" ? "Preparación en disputa" : "Preparación abierta") : STATUS_LABELS[selectedInvoice.status]}
                                 </div>
                             </div>
                             <div style={{ display: "flex", gap: "8px" }}>
-                                <button className="btn btn-secondary btn-sm" onClick={() => handleDownloadInvoicePDF(selectedInvoice.public_id)} disabled={downloadingInvoiceId === selectedInvoice.public_id}>
+                                {isCheckout && can('checkout.estimate.issue') && (
+                                    <button className="btn btn-secondary btn-sm" onClick={handleCheckoutEstimate} disabled={downloadingInvoiceId === `estimate:${selectedInvoice.public_id}`}>
+                                        {downloadingInvoiceId === `estimate:${selectedInvoice.public_id}` ? <Icon.Loader s={12} /> : <Icon.Download s={12} />} Estimado
+                                    </button>
+                                )}
+                                {!isCheckout && <button className="btn btn-secondary btn-sm" onClick={() => handleDownloadInvoicePDF(selectedInvoice.public_id)} disabled={downloadingInvoiceId === selectedInvoice.public_id}>
                                     {downloadingInvoiceId === selectedInvoice.public_id ? <Icon.Loader s={12} /> : <Icon.Download s={12} />} PDF
-                                </button>
+                                </button>}
                                 <button className="modal-close" onClick={closeDetailModal}><Icon.X s={14} /></button>
                             </div>
                         </div>
                         <div className="modal-body">
+                            {isCheckout && selectedInvoice.preparation_readiness?.blockers?.length > 0 && (
+                                <div className={s.cashNotice} role="status" style={{ marginBottom: "14px" }}>
+                                    <Icon.AlertTriangle s={15} />
+                                    <span>
+                                        {selectedInvoice.preparation_readiness.blockers
+                                            .map(blocker => blocker.message)
+                                            .join(" ")}
+                                    </span>
+                                </div>
+                            )}
                             <div className={s.infoGrid}>
                                 <div><p className={s.infoLabel}>Mascota</p><p className={s.infoValue}>{selectedInvoice.pet_name}</p></div>
-                                <div><p className={s.infoLabel}>Cliente</p><p className={s.infoValue}>{selectedInvoice.owner_name}</p></div>
+                                <div><p className={s.infoLabel}>Cliente</p><p className={s.infoValue}>{selectedInvoice.customer_name || selectedInvoice.owner_name}</p></div>
                                 <div><p className={s.infoLabel}>Fecha</p><p className={s.infoValue}>{formatDate(selectedInvoice.created_at)}</p></div>
                             </div>
 
@@ -956,26 +1269,50 @@ const Billing = () => {
                             )}
 
                             <PrescriptionDispensePanel
-                                key={selectedInvoice.public_id}
+                                key={`${selectedInvoice.public_id}:${selectedInvoice.version || 0}`}
                                 invoice={selectedInvoice}
                                 onDispensed={handleDispensed}
                             />
                         </div>
                         <div className="modal-footer">
                             <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-                                {isDirectSaleDraft && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>
+                                {isCheckout && Number(selectedInvoice.total) > 0 && !selectedInvoice.operational_hold && (
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked || checkoutActionBlocked("pay")} title={cashBlocked ? "Abre una caja para cobrar" : checkoutActionTitle("pay")}>
                                         Cobrar
                                     </button>
                                 )}
-                                {selectedInvoice.status === "draft" && !isDirectSaleDraft && (
-                                    <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleConfirm}>Confirmar</button>
+                                {isCheckout && Number(selectedInvoice.total) > 0 && !selectedInvoice.operational_hold && selectedInvoice.origin === "consultation" && allowPostUnpaid && can("invoice.post_unpaid") && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={handlePostCheckout} disabled={checkoutActionBlocked("post_unpaid")} title={checkoutActionTitle("post_unpaid")}>Emitir pendiente</button>
                                 )}
-                                {selectedInvoice.status === "confirmed" && (
+                                {isCheckout && Number(selectedInvoice.total) === 0 && !selectedInvoice.operational_hold && (
+                                    <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleNoCharge} disabled={checkoutActionBlocked("complete_no_charge")} title={checkoutActionTitle("complete_no_charge")}>Completar sin cargo</button>
+                                )}
+                                {!isCheckout && selectedInvoice.status === "posted" && (
                                     <button className="btn btn-primary btn-md" style={{ flex: 1, background: "var(--c-success-text)", borderColor: "var(--c-success-text)", color: "#fff" }} onClick={openPayModal} disabled={cashBlocked} title={cashBlocked ? "Abre una caja para cobrar" : undefined}>Registrar Pago</button>
                                 )}
                                 {selectedInvoice.status === "paid" && can("billing.refund") && (
                                     <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setShowRefundModal(true)}>Devolver</button>
+                                )}
+                                {!isCheckout && selectedInvoice.status === "posted" && can("invoice.replace") && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => openReplacementModal("replacement")}>Corregir emisión</button>
+                                )}
+                                {!isCheckout && selectedInvoice.status === "posted" && can("invoice.void_terminal") && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => openReplacementModal("terminal")}>Anular</button>
+                                )}
+                                {isCheckout && selectedInvoice.kind === "replacement" && can("invoice.replace_waive") && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={handleWaiveReplacement} disabled={checkoutActionBlocked("waive_replacement")} title={checkoutActionTitle("waive_replacement")}>Condonar</button>
+                                )}
+                                {isCheckout && !selectedInvoice.operational_hold && can("checkout.dispute.open") && Number(selectedInvoice.total) > 0 && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={handleOpenDispute} disabled={disputeBusy || checkoutActionBlocked("open_dispute")} title={checkoutActionTitle("open_dispute")}>Registrar disputa</button>
+                                )}
+                                {isCheckout && selectedInvoice.operational_hold === "dispute" && can("checkout.dispute.resolve") && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={handleAcceptDispute} disabled={disputeBusy}>Resolver: aceptado</button>
+                                )}
+                                {isCheckout && selectedInvoice.kind === "replacement" && can("invoice.replace_adjust") && !selectedInvoice.operational_hold && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={handleAdjustReplacement} disabled={checkoutActionBlocked("adjust_replacement")} title={checkoutActionTitle("adjust_replacement")}>Ajustar exposición</button>
+                                )}
+                                {isCheckout && selectedInvoice.kind === "replacement" && can("invoice.replace_manage") && !selectedInvoice.operational_hold && (
+                                    <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={handleTakeReplacement}>Asignarme</button>
                                 )}
                                 <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={closeDetailModal}>Cerrar</button>
                             </div>
@@ -988,7 +1325,7 @@ const Billing = () => {
                             <div className="modal" style={{ maxWidth: "360px" }}>
                                 <div className="modal-header">
                                     <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--c-text)" }}>
-                                        {isDirectSaleDraft ? "Cobrar venta directa" : "Registrar pago"}
+                                        {isCheckout ? "Cobrar preparación" : "Registrar pago"}
                                     </h3>
                                     <button className="modal-close" onClick={() => setShowPayModal(false)} disabled={paying}><Icon.X s={14} /></button>
                                 </div>
@@ -1013,7 +1350,71 @@ const Billing = () => {
                                         onClick={submitPayment}
                                         disabled={paying || !paymentLinesValid(payLines, payTarget, payAllowPartial, true)}
                                     >
-                                        {paying ? <Icon.Loader s={14} /> : (isDirectSaleDraft ? "Cobrar" : "Registrar Pago")}
+                                        {paying ? <Icon.Loader s={14} /> : "Registrar Pago"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showReplacementModal && (
+                        <div className="modal-overlay" style={{ zIndex: 1001 }}>
+                            <div className="modal" style={{ maxWidth: "520px" }}>
+                                <div className="modal-header">
+                                    <h3 style={{ fontSize: "15px", fontWeight: 600 }}>
+                                        {replacementMode === "terminal" ? "Anular factura" : "Corregir factura emitida"}
+                                    </h3>
+                                    <button className="modal-close" onClick={() => setShowReplacementModal(false)} disabled={replacing}><Icon.X s={14} /></button>
+                                </div>
+                                <div className="modal-body">
+                                    <p style={{ margin: "0 0 14px", color: "var(--c-text-3)", fontSize: "13px" }}>
+                                        {replacementMode === "terminal"
+                                            ? "La obligación terminará sin reemplazo. Todos los productos entregados deben haber regresado o haberse descartado."
+                                            : "La factura original quedará anulada y se abrirá una preparación vinculada. Indica qué ocurrió físicamente con cada producto."}
+                                    </p>
+                                    {replacementMode === "terminal" ? (
+                                        <>
+                                            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, marginBottom: "6px" }}>Resultado terminal</label>
+                                            <select className="select-input" value={terminalReasonCode} onChange={event => setTerminalReasonCode(event.target.value)}>
+                                                <option value="full_return">Devolución total</option>
+                                                <option value="duplicate">Documento duplicado</option>
+                                                <option value="invalid_obligation">Obligación inválida</option>
+                                                <option value="authorized_waiver">Condonación autorizada</option>
+                                                <option value="legal_cancellation">Cancelación legal</option>
+                                            </select>
+                                            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, margin: "12px 0 6px" }}>Justificación</label>
+                                            <textarea className="input" value={terminalReasonNotes} onChange={event => setTerminalReasonNotes(event.target.value)} maxLength={500} rows={3} />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, marginBottom: "6px" }}>Motivo de corrección</label>
+                                            <input className="input" value={replacementReason} onChange={event => setReplacementReason(event.target.value)} maxLength={100} />
+                                        </>
+                                    )}
+                                    {selectedInvoice.items.filter(item => item.has_stock_allocation).map(item => {
+                                        const row = replacementDispositions.find(value => value.invoice_item === item.id);
+                                        return (
+                                            <div key={item.id} style={{ marginTop: "14px" }}>
+                                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, marginBottom: "6px" }}>{item.description}</label>
+                                                <select
+                                                    className="select-input"
+                                                    value={row?.outcome || "goods_retained"}
+                                                    onChange={event => setReplacementDispositions(current => current.map(value => (
+                                                        value.invoice_item === item.id ? { ...value, outcome: event.target.value } : value
+                                                    )))}
+                                                >
+                                                    {replacementMode !== "terminal" && <option value="goods_retained">El cliente conserva el producto</option>}
+                                                    <option value="returned_restocked">Devuelto y reintegrado a stock</option>
+                                                    <option value="returned_discarded">Devuelto y descartado</option>
+                                                </select>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="btn btn-secondary btn-sm" onClick={() => setShowReplacementModal(false)} disabled={replacing}>Cancelar</button>
+                                    <button className="btn btn-primary btn-sm" onClick={submitReplacement} disabled={replacing || (replacementMode === "terminal" ? !terminalReasonNotes.trim() : !replacementReason.trim())}>
+                                        {replacing ? <Icon.Loader s={12} /> : (replacementMode === "terminal" ? "Anular definitivamente" : "Anular y preparar corrección")}
                                     </button>
                                 </div>
                             </div>

@@ -44,6 +44,7 @@ export function useAgendaTour(actions) {
     a.setViewAppt(null);
     a.setTourDemoAppt(null);
     a.setSelectedSlot(null);
+    a.closeCreateModal?.();
     try { localStorage.setItem(AGENDA_TOUR_KEY, "true"); } catch { /* ignore */ }
   }, []);
 

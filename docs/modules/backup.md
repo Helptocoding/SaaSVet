@@ -106,8 +106,10 @@ pg_dump -Fc → pg_restore --list (validar) → sha256 + manifest
 
 El drill corre, contra la DB **restaurada**, los mismos audits que el cron live:
 
-- `audit_anchor_integrity --json` → anchors (`paid_at`/`confirmed_at`/
-  `cancelled_at`/`closed_at`) íntegros (exit 0).
+- `audit_billing_schema --json` → state de Django y schema físico de Billing
+  convergen, sin residuos legacy (exit 0).
+- `audit_anchor_integrity --json` → anchors
+  (`posted_at`/`paid_at`/`voided_at`/`closed_at`) íntegros (exit 0).
 - `audit_payment_ledger_integrity --json` → `Invoice.status` cuadra con el ledger
   (`paid ⟺ remaining_balance==0`) (exit 0).
 - Multi-tenant: `organization_id IS NULL` count = 0 en `billing_invoice`,

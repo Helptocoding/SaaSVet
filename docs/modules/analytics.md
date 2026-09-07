@@ -1,4 +1,7 @@
-# Modulo: Analytics
+# Módulo: Analytics
+
+**Estado**: vigente
+**Última actualización**: 2026-09-07
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
 
@@ -19,7 +22,7 @@ Una fila por (organization, date). UniqueConstraint `(organization, date)`.
 
 KPIs minimal v1 (7):
 - `revenue_paid` (Decimal, cash basis, anchor `Invoice.paid_at`)
-- `revenue_accrual` (Decimal, anchor `Invoice.confirmed_at`)
+- `revenue_accrual` (Decimal, anchor `Invoice.posted_at`)
 - `invoices_paid_count` (PositiveInt)
 - `appointments_total` / `appointments_done` / `appointments_no_show`
   (PositiveInt, anchor `Appointment.start_datetime`)
@@ -113,8 +116,8 @@ sin coordinator externo.
 
 Vive en `apps/core/management/commands/`. Valida que:
 - `Invoice.status='paid' ⇒ paid_at IS NOT NULL`
-- `Invoice.status IN ('confirmed','paid') ⇒ confirmed_at IS NOT NULL`
-- `Invoice.status='cancelled' ⇒ cancelled_at IS NOT NULL`
+- toda Invoice tiene `posted_at IS NOT NULL`
+- `Invoice.status='voided' ⇒ voided_at IS NOT NULL`
 - `MedicalRecord.status='closed' ⇒ closed_at IS NOT NULL`
 
 Reporta provenance distribution + unresolved + walk-in suspects.
@@ -333,9 +336,9 @@ frozen. Writers cubiertos en Día 5:
 
 | Writer | Anchor | Ubicación |
 |--------|--------|-----------|
-| `confirm_invoice` / `pay_direct_sale` | `confirmed_at` | `billing/services.py` |
-| `pay_invoice` / `pay_direct_sale` | `paid_at` | `billing/services.py` |
-| `cancel_invoice` | `cancelled_at` | `billing/services.py` |
+| `post_checkout` | `posted_at` | `billing/checkout_services.py` |
+| `post_checkout(..., pay=True)` / `pay_invoice` | `paid_at` | `billing/checkout_services.py` / `billing/services.py` |
+| `void_invoice_terminal` / `void_and_prepare_replacement` | `voided_at` | `billing/checkout_services.py` |
 | `close_medical_record` | `closed_at` | `medical_records/views.py` ⚠️ (ADR p9 violation temporal) |
 
 Contrato del log (campos `extra` requeridos):

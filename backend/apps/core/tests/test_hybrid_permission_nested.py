@@ -164,15 +164,13 @@ class MedicalRecordServiceListPermissionTests(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN, r.content)
 
 
-class InvoiceItemDetailPermissionTests(APITestCase):
-    """Día 6 audit F14: InvoiceItemDetailView declara required_permission
-    explícito por método (PATCH → invoice.create, DELETE → invoice.destroy).
-    Sin esto, _method_to_action derivaría 'invoice.update' (inexistente en
-    PERMISSION_CODES) y silenciosamente 403."""
+class CheckoutItemDetailPermissionTests(APITestCase):
+    """Los cambios del carrito financiero exigen invoice.create."""
 
     @classmethod
     def setUpTestData(cls):
-        from apps.billing.models import Invoice, InvoiceItem, Service
+        from apps.billing.checkout_services import add_checkout_item, create_direct_sale_checkout
+        from apps.billing.models import Service
         cls.org = Organization.objects.create(name="II Org", timezone="UTC")
         cls.owner = Owner.objects.create(
             organization=cls.org, name="Dueño", phone="5500002222"
@@ -181,17 +179,15 @@ class InvoiceItemDetailPermissionTests(APITestCase):
             organization=cls.org, owner=cls.owner, name="PetII",
             species="perro", birth_date="2020-01-01",
         )
-        cls.invoice = Invoice.objects.create(
-            organization=cls.org, pet=cls.pet, owner=cls.owner,
-            invoice_type='consultation', status='draft',
-        )
         cls.service = Service.objects.create(
             organization=cls.org, name="Consulta", base_price=Decimal("100.00"),
         )
-        cls.item = InvoiceItem.objects.create(
-            invoice=cls.invoice, service=cls.service,
-            description="Consulta", quantity=Decimal("1"),
-            unit_price=Decimal("100.00"), organization=cls.org,
+        cls.checkout = create_direct_sale_checkout(
+            organization=cls.org, customer=cls.owner, pet=cls.pet,
+            user=None,
+        )
+        cls.item = add_checkout_item(
+            cls.checkout, None, service=cls.service, quantity=Decimal('1'),
         )
 
     def test_patch_item_with_invoice_create_permission(self):
@@ -200,7 +196,7 @@ class InvoiceItemDetailPermissionTests(APITestCase):
         )
         self.client.force_authenticate(u)
         r = self.client.patch(
-            f"/api/billing/invoices/{self.invoice.public_id}/items/{self.item.id}/",
+            f"/api/billing/checkouts/{self.checkout.public_id}/items/{self.item.id}/",
             {"quantity": "2"}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
@@ -211,17 +207,17 @@ class InvoiceItemDetailPermissionTests(APITestCase):
         )
         self.client.force_authenticate(u)
         r = self.client.patch(
-            f"/api/billing/invoices/{self.invoice.public_id}/items/{self.item.id}/",
+            f"/api/billing/checkouts/{self.checkout.public_id}/items/{self.item.id}/",
             {"quantity": "2"}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN, r.content)
 
-    def test_delete_item_with_invoice_destroy_permission(self):
+    def test_delete_item_with_invoice_create_permission(self):
         u = _make_user_with_perms(
-            "item_destroy", self.org, ["invoice.destroy", "invoice.retrieve"]
+            "item_destroy", self.org, ["invoice.create", "invoice.retrieve"]
         )
         self.client.force_authenticate(u)
         r = self.client.delete(
-            f"/api/billing/invoices/{self.invoice.public_id}/items/{self.item.id}/"
+            f"/api/billing/checkouts/{self.checkout.public_id}/items/{self.item.id}/"
         )
         self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT, r.content)

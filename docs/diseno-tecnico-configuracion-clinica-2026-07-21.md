@@ -4,6 +4,13 @@
 **Estado:** diseño técnico previo a implementación
 **Base arquitectónica:** `docs/decisions/2026-07-21-p53-clinic-configuration-aggregates.md`
 
+> [!NOTE]
+> Documento histórico previo a implementación. El toggle
+> `auto_create_invoice_on_done` que aparece en ejemplos fue retirado por ADR
+> p62; Appointment `done` no crea documentos financieros. Consulte
+> [Organizaciones](modules/organizations.md) y
+> [Billing](modules/billing.md) para el contrato vigente.
+
 ## Objetivo
 
 Bajar ADR p53 a un diseño implementable de backend, API y frontend para reemplazar la

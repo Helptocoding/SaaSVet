@@ -140,6 +140,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     invoice_id = serializers.ReadOnlyField()
     invoice_public_id = serializers.SerializerMethodField()
     invoice_status = serializers.SerializerMethodField()
+    checkout_public_id = serializers.SerializerMethodField()
     status = serializers.CharField(read_only=True)
     closed_at = serializers.DateTimeField(read_only=True)
     closed_by = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -166,11 +167,18 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         return str(invoice.public_id) if invoice else None
 
     def get_invoice_status(self, obj):
-        # Estado de la factura vinculada (draft/confirmed/paid/cancelled) para
+        # Estado del documento financiero vinculado (posted/paid/voided) para
         # que el Timeline muestre el badge "Cobro". None si la consulta aún no
         # tiene factura (clínica sin cargos antes de cerrar).
         invoice = getattr(obj, 'invoice', None)
-        return invoice.status if invoice else None
+        if invoice:
+            return invoice.status
+        checkout = obj.checkouts.filter(kind='primary_consultation').order_by('-created_at').first()
+        return f'checkout_{checkout.lifecycle}' if checkout else None
+
+    def get_checkout_public_id(self, obj):
+        checkout = obj.checkouts.filter(kind='primary_consultation').order_by('-created_at').first()
+        return str(checkout.public_id) if checkout else None
 
     force_weight = serializers.BooleanField(write_only=True, required=False, default=False)
 
@@ -202,7 +210,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'consultation_draft',
             'products_used',
             'prescription_id', 'prescription_public_id', 'prescription_summary',
-            'invoice_id', 'invoice_public_id', 'invoice_status',
+            'invoice_id', 'invoice_public_id', 'invoice_status', 'checkout_public_id',
             'latest_vitals',
             'consultation_assessment', 'surgery_record', 'emergency_record',
             'originated_from', 'originated_from_public_id',
@@ -211,7 +219,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id', 'public_id', 'pet_public_id', 'appointment_public_id',
-            'prescription_public_id', 'invoice_public_id', 'invoice_status',
+            'prescription_public_id', 'invoice_public_id', 'invoice_status', 'checkout_public_id',
             'created_at', 'updated_at', 'prescription_id', 'invoice_id',
             'status', 'closed_at', 'closed_by',
             'organization',

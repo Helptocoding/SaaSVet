@@ -1,7 +1,7 @@
 # Referencia Operacional
 
-**Fecha**: 2026-08-23
-**Estado**: vigente (incluye invariantes hasta ADR p60 y el primer corte del WhatsApp Inbox v1)
+**Fecha**: 2026-09-07
+**Estado**: vigente (incluye ADR p62 y el contrato estructural de Checkout/Billing)
 **Audiencia**: nuevo desarrollador, QA, tester, soporte.
 
 Este documento contiene la **referencia operacional** del sistema: errores
@@ -18,18 +18,18 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 
 | Síntoma | Causa probable | Diagnóstico |
 |---------|----------------|-------------|
-| "Stock insuficiente" al confirmar factura | Otra venta concurrente consumió el stock. | La validación bajo `select_for_update` es correcta. En UX: recargar la disponibilidad. |
+| "Stock insuficiente" al postear Checkout | Otra operación concurrente consumió stock base o lotes FEFO. | La revalidación bajo lock es correcta. Recargar el Checkout y su disponibilidad autoritativa. |
 | Botón cobrar deshabilitado | `Σ payment_lines ≠ remaining_balance`. | Verificar el split de pago y el cambio en efectivo (el cambio se capea en UI, no afecta `amount`). |
-| Factura no aparece en Cobros tras cerrar consulta | Comportamiento pre-ADR p30 (creación lazy). | A partir de p30 el cierre de consulta garantiza la factura. Verificar versión del backend. |
+| La consulta cerrada no aparece en Cobros | Falló la materialización/adopción del Checkout primario. | El cierre garantiza un Checkout, no una Invoice. Revisar el cierre y `get_or_create_primary_checkout_for_medical_record`. |
 | "No hay caja abierta" al cobrar | Toggle `require_open_cash_session=True` y el actor no tiene sesión de caja. | Abrir caja con `POST /api/cash/sessions/open/`. |
 | 403 al dispensar receta | Falta el permiso `billing.rx_dispense`. | Asignarlo al rol correspondiente (ADMIN/VET) desde la sección de Roles. |
-| Factura draft de $0 acumulada | Consulta cerrada sin cargos (comportamiento esperado post-p30). | Trade-off aceptado: toda consulta cerrada aparece en Cobros. |
+| Checkout abierto de $0 | Consulta cerrada sin cargos. | Debe completarse con `complete_no_charge`; no se crea Invoice. |
 | Drift de stock detectado por `audit_stock_integrity` | Escritura directa a `stock` sin pasar por `apply_stock_movement`. | Investigar el caller. Se corrige con migración de baseline o `adjustment` manual. |
 | `RBAC_FALLBACK_ALLOWED` en logs | Usuario sin `UserRole` en la base de datos. | Ejecutar `seed_permissions` en la organización. |
 | 401 en frontend tras login válido | Toggle "Recordarme" e inconsistencia en el almacenamiento del token. | Revisar `auth/tokenStorage.js` (session tiene prioridad sobre local). |
 | Cita walk-in con pet genérico no se puede vincular | La cita ya está en estado `done`. | Vincular al paciente real antes de cerrar la cita. |
 | Over-refund | La suma de líneas supera el monto ya devuelto disponible. | Revisar el detalle de las notas de crédito emitidas previamente. |
-| No se puede dispensar un producto que ya figura como insumo | `unique_together(invoice, presentation)`. | Ajustar manualmente la cantidad del insumo en la consulta. |
+| No se puede dispensar una presentación ya usada como insumo | La línea clínica y la línea retail representan operaciones distintas y el Checkout evita colapsarlas. | Corregir el insumo en la consulta si sigue abierta o elegir la decisión comercial válida; no mutar evidencia clínica cerrada. |
 | 400 al dispensar: "la receta ampara N…" | Tope clínico (ADR p37): dispensado acumulado + solicitado > recetado (en unidades base). | El mensaje trae amparado/dispensado/restante. Reducir cantidad o corregir la receta (consulta `open`). |
 | 400 al agregar producto en cobro de consulta | Ítem manual de presentación en factura `consultation` (no liquidaría stock, ADR p37). | Los productos entran por insumos de la consulta o dispensando la receta; aquí solo servicios. |
 | `closed_at` genera log `ANCHOR_LATE_ARRIVAL` | El cierre de consulta cayó en un bucket frozen (>T+2). | Es solo una advertencia (warn-only); revisar la latencia operativa. |
@@ -64,15 +64,24 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 ## 2. Dependencias críticas (no romper)
 
 - `for_organization()` debe ir **siempre primero** en la cadena del queryset.
-- Toda mutación de stock debe pasar por `apply_stock_movement()`, con el lock externo ya adquirido por el caller.
-- Toda mutación de `InvoiceItem.quantity` debe usar `apply_invoice_item_quantity_delta()` (basado en F()).
-- Los anchors (`paid_at`, `confirmed_at`, `cancelled_at`, `closed_at`) solo se escriben dentro de `services.py`.
-- Los eventos financieros (`Payment`, `RefundPayment`, `RefundReversal`) solo se crean en `billing/services.py`.
-- El orden global de locks es: `CashSession → MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct`.
+- Toda mutación de stock pasa por los servicios de inventario. La autoridad es
+  `Product.stock_quantity` en unidades base y, para productos con lotes,
+  `StockLot.quantity_on_hand`.
+- `CheckoutItem` es mutable sólo mientras el Checkout está `open`;
+  `InvoiceItem` nace al post y no se edita después.
+- Los anchors de Billing son `posted_at`, `paid_at` y `voided_at`; sus
+  writers viven en los servicios autoritativos de post, pago y void.
+- Los eventos financieros (`Payment`, `RefundPayment`,
+  `RefundReversal`) sólo se crean mediante sus comandos de dominio.
+- El orden de locks de Billing se define en los servicios autoritativos. No se
+  deben componer locks manuales desde views o serializers.
 - **`User` (veterinario) precede a `Appointment`** (ADR p57). Toda escritura que pueda entrar o salir del predicado de INV-D —crear, `create-with-patient`, atención sin cita, `PATCH` de detalle, `/status/` incluida la reactivación, y `DELETE`— toma antes un `select_for_update()` sobre la fila del veterinario vía `services.lock_veterinarians`. Con dos veterinarios (reasignación) se bloquean **ambos en orden de PK**, o dos reasignaciones cruzadas harían ABBA. Sin esta serialización la restricción de exclusión sigue siendo correcta, pero dos escrituras simultáneas al mismo hueco hacen deadlock (`40P01`) y el perdedor recibe un 500 en vez de `slot_taken`.
 - **`Appointment` precede a `MedicalRecord`** (ADR p57). Desde F0, cuatro endpoints lockean la fila de la cita explícitamente (`PATCH` detalle, `/status/`, `DELETE`, `assign-patient`) y dos de ellos tocan después el `MedicalRecord` vinculado. El único camino que va en sentido contrario —`complete_appointment_on_record_close`, invocado con el lock del `MedicalRecord` ya tomado— usa un **UPDATE condicional** justamente para no invertir el orden con un `select_for_update`. Ese UPDATE toma igualmente el row lock implícito de la cita, así que la ventana `assign-patient` ↔ `close_medical_record` sobre el mismo par sigue siendo la única con orden cruzado: es preexistente, estrecha (exige vincular paciente y cerrar consulta en el mismo instante) y PostgreSQL la resuelve abortando una de las dos, no corrompiendo nada. **No añadir un `select_for_update` a `complete_appointment_on_record_close`**: lo convertiría en un ABBA garantizado en vez de una carrera improbable.
-- **El lock de deduplicación de teléfono se toma antes de cualquier lock de fila del alta** (ADR p57, INV-C) y se libera con el commit de la transacción del llamador. No introduce ciclo con el orden global (`CashSession → MedicalRecord → Invoice → …`) porque precede a todos. En el **cambio de teléfono** se bloquean las **dos** claves (anterior y nueva) en **orden total** por el valor normalizado: sin ese orden, dos cambios cruzados (A→B y B→A) se abortan por deadlock.
-- `recalculate_totals()` solo se invoca bajo lock de la Invoice.
+- **El lock de deduplicación de teléfono se toma antes de cualquier lock de fila
+  del alta** (ADR p57, INV-C) y se libera con el commit. En el cambio de
+  teléfono se bloquean las dos claves en orden total por el valor normalizado.
+- Los totales de Checkout e Invoice se calculan en backend; el cliente no envía
+  totales autoritativos.
 - `seed_permissions` se ejecuta en cada deploy (Procfile).
 - El frontend usa `public_id` en URLs y deep links; los PKs solo se usan en campos FK del body y en despliegues de pantalla.
 - El header `X-Idempotency-Key` debe figurar en `CORS_ALLOW_HEADERS` para que el navegador no bloquee la petición preflight.
@@ -84,7 +93,8 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 ## 3. Invariantes del sistema (binding)
 
 1. **Multitenancy**: todo acceso cross-tenant retorna 404. Cada fila tiene `organization_id`. El sistema está preparado para RLS (ADR p23).
-2. **Anchors inmutables**: `paid_at`, `confirmed_at`, `cancelled_at`, `closed_at` y `closed_snapshot` no se reescriben nunca.
+2. **Anchors inmutables**: `posted_at`, `paid_at`, `voided_at`,
+   `closed_at` y `closed_snapshot` no se reescriben nunca.
 3. **Append-only**: los siguientes modelos son de solo inserción: `Payment`, `RefundPayment`, `RefundReversal`, `CreditNote`, `VitalSigns`, `VaccineRecord`, `ExternalPrescriptionAttestation`, `InvoiceAuditLog`, `AppointmentStatusChange`, `MetricAdjustment`, `DashboardSnapshotAudit`, `OrganizationTimezoneAudit`, `CashMovement` (ADR p39) y `ContactIdentityVerification` (FLUJO-C, ADR p57 — una decisión equivocada se corrige registrando otra; la autorización lee el último registro).
 4. **`amount > 0`** en todos los eventos financieros. El signo lo determina el tipo de evento, nunca un decimal negativo.
 5. **`Invoice.status='paid' ⟺ remaining_balance == 0`**. El estado es una proyección del ledger, no un flag arbitrario.
@@ -102,8 +112,14 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 17. **El día actual (today) nunca se snapshotea** en analytics (siempre se calcula como live).
 18. **Caja-efectivo ≠ revenue_paid**: los pagos con tarjeta o transferencia no entran en el conteo del cierre Z.
 19. **El administrador de una clínica no puede provisionar otras organizaciones** (no es `ADMIN_SAAS`; el payload no permite escalar privilegios).
-20. **`InvoiceItem.dispensed_from_prescription_item`** es el discriminador único para determinar qué ítems descuentan stock en una factura de consulta (no existe una segunda función de stock).
-21. **Dispensado ≤ recetado** (ADR p37): por ítem de receta, `Σ(quantity × conversion_factor)` de las líneas dispensadas activas de la factura no excede `PrescriptionItem.quantity` (unidades base). Cubre dispensación, edición de línea (PATCH) y bloquea ítems de presentación manuales en facturas `consultation`. El cliente puede llevar menos; nunca más.
+20. **Toda salida retail tiene evidencia física**: al postear, cada
+    `InvoiceItem` de presentación queda respaldado por sus
+    `StockAllocation` y `StockDispositionEvent`; los retornos usan esas
+    allocations exactas.
+21. **Dispensado ≤ recetado**: por `PrescriptionItem`, los fulfillment
+    históricos más las selecciones cap-consuming del Checkout no exceden
+    `PrescriptionItem.quantity`, todo en unidades base. La conversión de una
+    línea es `quantity_presentation × conversion_factor_snapshot`.
 22. **INV-A — precondición atómica de estado de cita** (ADR p57): si el llamador envía `expected_state = {status, date, start_time}`, el dominio lo compara contra la fila bajo `select_for_update()` **en la misma transacción que escribe**. Al fallar: `409 appointment_changed` con `current` y **cero escrituras** (ni cita ni `AppointmentStatusChange`). Vale para **cualquier actor**, no solo el agente. **Es obligatoria desde la Fase 3**: omitirla es `400 precondition_required`. Nunca hubo opt-in de la *comparación* — solo del *envío*, y ese periodo terminó porque hacía indistinguible al llamador que no la mandaba del que sí cumplía.
 22b. **INV-B — el teléfono localiza, no autoriza** (ADR p57): que un número
     coincida con un `Owner` **no** habilita escribir sobre ese expediente.
@@ -163,11 +179,12 @@ invariantes del sistema y el resumen ejecutivo del negocio.
 
 ## 4. Reglas que nunca deben romperse
 
-- Jamás escribir `Invoice.status` fuera de `billing/services.py`.
-- Jamás escribir `Presentation.stock` fuera de `apply_stock_movement()`.
-- Jamás mutar `InvoiceItem.quantity` con `+=` seguido de `save()` (debe usarse el helper basado en F()).
-- Jamás invertir el orden global de locks.
-- Jamás crear un `Payment` fuera de `pay_invoice` o `pay_direct_sale`.
+- Jamás crear o mutar una Invoice como borrador; toda edición ocurre en Checkout.
+- Jamás usar `Presentation.stock` como autoridad de disponibilidad.
+- Jamás mutar un `InvoiceItem` después del post.
+- Jamás invertir el orden de locks definido por los servicios de dominio.
+- Jamás crear un `Payment` fuera de `post_checkout(..., pay=True)` o
+  `pay_invoice`.
 - Jamás admitir pagos parciales en una factura.
 - Jamás reabrir una factura que ya está en estado `paid`.
 - Jamás editar ni borrar eventos financieros (la corrección se hace mediante contra-asiento).
@@ -232,20 +249,18 @@ El negocio se opera en cinco flujos centrales:
    atómico). La cita avanza `scheduled → confirmed → in_progress → done` con audit
    trail completo (`AppointmentStatusChange`).
 
-2. **Consulta médica**: el VET abre `MedicalRecord` sobre la mascota, registra
-   vitales (append-only), agrega servicios y productos (estos descuentan stock al
-   consumirse y sincronizan items en una factura draft creada lazy), opcionalmente
-   emite receta (sin stock, sin cobro), y finalmente la cierra. **El cierre
-   GARANTIZA la factura en Cobros** (mínimo draft $0, ADR p30) — toda consulta
-   finalizada es visible para recepción.
+2. **Consulta médica**: el VET abre `MedicalRecord`, registra vitales, servicios
+   y productos; los consumos físicos descuentan stock al ocurrir, mientras los
+   cargos quedan como evidencia clínica. La receta no mueve stock ni cobra. Al
+   cerrar, el sistema congela snapshots y garantiza un
+   `Checkout primary_consultation`, incluso para $0; todavía no existe Invoice.
 
-3. **Cobros**: la factura `consultation` tiene flujo `draft → confirmed → paid`
-   (cobro total exacto, sin parciales). La factura `direct_sale` (venta de mostrador
-   sin consulta) usa `direct-pay` atómico (un solo lock). En consulta, recepción
-   puede **dispensar la receta** agregando líneas a la **misma factura** de la
-   consulta (FK `dispensed_from_prescription_item` discrimina qué descontar al
-   confirmar). En venta directa, productos `requires_prescription` requieren
-   **attestation de receta externa** (modelo append-only legal).
+3. **Cobros**: Checkout es la preparación mutable de consulta o venta directa.
+   El backend resuelve readiness, disponibilidad Rx, unidades base,
+   conversiones y stock. Postear crea una Invoice inmutable en `posted`; pagar
+   en la misma operación o después la lleva a `paid`. Las correcciones usan
+   `voided` y reemplazo protegido. En venta directa, productos
+   `requires_prescription` requieren attestation externa vigente.
 
 4. **Devoluciones** (Sprint B): una factura `paid` NO se cancela; se devuelve vía
    `CreditNote` + `RefundPayment` (append-only, signo `−`). Si fue error, se
@@ -259,25 +274,24 @@ El negocio se opera en cinco flujos centrales:
    `closed_snapshot`. Cuando el toggle `require_open_cash_session=True`, todo
    cobro exige caja abierta.
 
-**Eventos** (Payment, RefundPayment, RefundReversal) son append-only con `amount > 0`
-siempre; el signo lo da el tipo. Los **anchors** (`paid_at`, `confirmed_at`,
-`cancelled_at`, `closed_at`) son `editable=False` con CHECK constraints DB y
-único writer en `services.py` — la regla autoritativa de analytics y auditoría.
+**Eventos** (Payment, RefundPayment, RefundReversal) son append-only con
+`amount > 0`; el signo lo da el tipo. Los anchors `posted_at`, `paid_at`,
+`voided_at` y `closed_at` son inmutables, tienen CHECK constraints y writers
+autoritativos.
 
 **Analytics** corre nightly (`build_daily_metrics`) por organización con advisory
 lock y genera snapshots `DailyOrgMetrics` idempotentes; today es siempre live
 calculado con la misma función. El dashboard expone `source` y `lifecycle_state`
 por datapoint; nada se sirve silenciosamente.
 
-**Reglas duras**: multitenancy estricto (cross-org = 404, NUNCA `[]`); orden global
-de locks `CashSession → MR → Invoice → Presentation → InvoiceItem → MRP`;
-toda mutación de stock vía `apply_stock_movement()` + lock externo; toda mutación
-contable de `InvoiceItem.quantity` vía F(); IDs públicos UUID (`public_id`) en
-URLs, PKs solo en body FK fields. Toda acción crítica deja audit trail (DB o log
-JSON estructurado en stdout).
+**Reglas duras**: multitenancy estricto (cross-org = 404, nunca `[]`);
+`expected_version` e idempotencia en comandos de Checkout; Invoice e
+InvoiceItem inmutables después del post; stock base/lotes como autoridad; IDs
+públicos UUID en URLs. Toda acción crítica deja audit trail en DB o log
+estructurado.
 
 Operativamente, un día típico en una clínica abre con la apertura de caja, recibe
-citas + walk-ins, ejecuta consultas que generan facturas, cobra en efectivo o
+citas + walk-ins, ejecuta consultas que generan Checkouts, cobra en efectivo o
 tarjeta (con dispensación de receta cuando aplica), eventualmente emite
 devoluciones por producto vencido / error, y cierra el día con el Z de caja. La
 información se refleja inmediatamente en el dashboard live; al siguiente nightly

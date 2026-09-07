@@ -177,6 +177,11 @@ def close_cash_session(session, user, counted_cash, notes='', force=False):
             'difference': str(difference),
         },
     )
+    try:
+        from apps.notifications.services import handle_cash_difference
+        handle_cash_difference(session.organization, session, actor=user)
+    except Exception:
+        logger.exception("notifications: hook caja best-effort falló")
     return session
 
 

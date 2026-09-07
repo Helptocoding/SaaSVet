@@ -6,7 +6,7 @@ misma query. Cross-parent (PK del child con UUID parent equivocado) retorna
 404, no leak ni 200.
 
 Cubre:
-  - InvoiceItem bajo billing/invoices/<uuid>/items/<int:pk>/
+  - CheckoutItem bajo billing/checkouts/<uuid>/items/<int:pk>/
   - MedicalRecordService bajo medical-records/<uuid>/services/<int:pk>/
 """
 from decimal import Decimal
@@ -15,7 +15,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Service
+from apps.billing.checkout_services import add_checkout_item, create_direct_sale_checkout
+from apps.billing.models import CheckoutItem, Service
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.medical_records.models import MedicalRecord, MedicalRecordService
@@ -43,8 +44,8 @@ def _make_admin(username, org):
     return u
 
 
-class InvoiceItemSubresourceTests(APITestCase):
-    """Cross-parent y cross-tenant invariants para InvoiceItem."""
+class CheckoutItemSubresourceTests(APITestCase):
+    """Cross-parent y cross-tenant invariants para CheckoutItem."""
 
     @classmethod
     def setUpTestData(cls):
@@ -61,14 +62,14 @@ class InvoiceItemSubresourceTests(APITestCase):
             species="perro", birth_date="2020-01-01",
         )
 
-        # Dos invoices en org_a + un invoice en org_b
-        cls.inv_a1 = Invoice.objects.create(
-            organization=cls.org_a, pet=cls.pet_a, owner=cls.owner_a,
-            invoice_type='consultation', status='draft',
+        # Dos checkouts en org_a + un checkout en org_b.
+        cls.checkout_a1 = create_direct_sale_checkout(
+            organization=cls.org_a, customer=cls.owner_a, pet=cls.pet_a,
+            user=cls.admin_a,
         )
-        cls.inv_a2 = Invoice.objects.create(
-            organization=cls.org_a, pet=cls.pet_a, owner=cls.owner_a,
-            invoice_type='consultation', status='draft',
+        cls.checkout_a2 = create_direct_sale_checkout(
+            organization=cls.org_a, customer=cls.owner_a, pet=cls.pet_a,
+            user=cls.admin_a,
         )
         owner_b = Owner.objects.create(
             organization=cls.org_b, name="OwB", phone="5599998888"
@@ -77,9 +78,9 @@ class InvoiceItemSubresourceTests(APITestCase):
             organization=cls.org_b, owner=owner_b, name="PetB",
             species="gato", birth_date="2021-01-01",
         )
-        cls.inv_b = Invoice.objects.create(
-            organization=cls.org_b, pet=pet_b, owner=owner_b,
-            invoice_type='consultation', status='draft',
+        cls.checkout_b = create_direct_sale_checkout(
+            organization=cls.org_b, customer=owner_b, pet=pet_b,
+            user=None,
         )
 
         svc_a = Service.objects.create(
@@ -89,21 +90,14 @@ class InvoiceItemSubresourceTests(APITestCase):
             organization=cls.org_b, name="Servicio B", base_price=Decimal("200.00"),
         )
 
-        # Items: uno por invoice
-        cls.item_a1 = InvoiceItem.objects.create(
-            invoice=cls.inv_a1, service=svc_a, description="A1",
-            quantity=Decimal("1"), unit_price=Decimal("100.00"),
-            organization=cls.org_a,
+        cls.item_a1 = add_checkout_item(
+            cls.checkout_a1, cls.admin_a, service=svc_a, quantity=Decimal('1'),
         )
-        cls.item_a2 = InvoiceItem.objects.create(
-            invoice=cls.inv_a2, service=svc_a, description="A2",
-            quantity=Decimal("1"), unit_price=Decimal("100.00"),
-            organization=cls.org_a,
+        cls.item_a2 = add_checkout_item(
+            cls.checkout_a2, cls.admin_a, service=svc_a, quantity=Decimal('1'),
         )
-        cls.item_b = InvoiceItem.objects.create(
-            invoice=cls.inv_b, service=svc_b, description="B",
-            quantity=Decimal("1"), unit_price=Decimal("200.00"),
-            organization=cls.org_b,
+        cls.item_b = add_checkout_item(
+            cls.checkout_b, None, service=svc_b, quantity=Decimal('1'),
         )
 
     def setUp(self):
@@ -111,38 +105,38 @@ class InvoiceItemSubresourceTests(APITestCase):
 
     def test_get_item_under_correct_parent_returns_200(self):
         r = self.client.get(
-            f"/api/billing/invoices/{self.inv_a1.public_id}/items/{self.item_a1.id}/"
+            f"/api/billing/checkouts/{self.checkout_a1.public_id}/items/{self.item_a1.id}/"
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
 
     def test_get_item_under_wrong_parent_returns_404(self):
-        """item_a1 pertenece a inv_a1, NO a inv_a2. Cross-parent → 404."""
+        """item_a1 pertenece a checkout_a1, no a checkout_a2."""
         r = self.client.get(
-            f"/api/billing/invoices/{self.inv_a2.public_id}/items/{self.item_a1.id}/"
+            f"/api/billing/checkouts/{self.checkout_a2.public_id}/items/{self.item_a1.id}/"
         )
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND, r.content)
 
     def test_get_cross_tenant_item_returns_404(self):
         """item_b pertenece a org_b. Admin de org_a no debe verlo."""
         r = self.client.get(
-            f"/api/billing/invoices/{self.inv_a1.public_id}/items/{self.item_b.id}/"
+            f"/api/billing/checkouts/{self.checkout_a1.public_id}/items/{self.item_b.id}/"
         )
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND, r.content)
 
     def test_patch_item_under_wrong_parent_returns_404(self):
         r = self.client.patch(
-            f"/api/billing/invoices/{self.inv_a2.public_id}/items/{self.item_a1.id}/",
+            f"/api/billing/checkouts/{self.checkout_a2.public_id}/items/{self.item_a1.id}/",
             {"quantity": "5"}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND, r.content)
 
     def test_delete_item_under_wrong_parent_returns_404(self):
         r = self.client.delete(
-            f"/api/billing/invoices/{self.inv_a2.public_id}/items/{self.item_a1.id}/"
+            f"/api/billing/checkouts/{self.checkout_a2.public_id}/items/{self.item_a1.id}/"
         )
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND, r.content)
         # item_a1 sigue existiendo
-        self.assertTrue(InvoiceItem.objects.filter(pk=self.item_a1.id).exists())
+        self.assertTrue(CheckoutItem.objects.filter(pk=self.item_a1.id, is_active=True).exists())
 
 
 class MedicalRecordServiceSubresourceTests(APITestCase):

@@ -147,14 +147,14 @@ ANCHOR_REGISTRY = (
                status_filter={'status': 'paid'},
                metric_class='financial_cash'),
     AnchorSpec(model='billing.Invoice',
-               anchor_field='confirmed_at',
-               source_field='confirmed_at_source',
-               status_filter={'status__in': ['confirmed', 'paid']},
+               anchor_field='posted_at',
+               source_field='posted_at_source',
+               status_filter={'status__in': ['posted', 'paid']},
                metric_class='financial_cash'),
     AnchorSpec(model='billing.Invoice',
-               anchor_field='cancelled_at',
-               source_field='cancelled_at_source',
-               status_filter={'status': 'cancelled'},
+               anchor_field='voided_at',
+               source_field='voided_at_source',
+               status_filter={'status': 'voided'},
                metric_class='financial_cash'),
     AnchorSpec(model='medical_records.MedicalRecord',
                anchor_field='closed_at',
@@ -231,19 +231,19 @@ def compute_daily_metrics(organization, bucket_date, *, now=None):
         paid_at__isnull=True,
     ).count()
 
-    # ---- Financial accrual: anchored on confirmed_at ----
+    # ---- Financial accrual: anchored on posted_at ----
     accrual_agg = _analytics_queryset(Invoice).filter(
         organization=organization,
-        status__in=['confirmed', 'paid'],
-        confirmed_at__gte=start_utc,
-        confirmed_at__lt=end_utc,
+        status__in=['posted', 'paid'],
+        posted_at__gte=start_utc,
+        posted_at__lt=end_utc,
     ).aggregate(rev=Sum('total'))
     revenue_accrual = accrual_agg['rev'] or Decimal('0.00')
 
-    excluded_confirmed_anchor_missing = _analytics_queryset(Invoice).filter(
+    excluded_posted_anchor_missing = _analytics_queryset(Invoice).filter(
         organization=organization,
-        status__in=['confirmed', 'paid'],
-        confirmed_at__isnull=True,
+        status__in=['posted', 'paid'],
+        posted_at__isnull=True,
     ).count()
 
     # ---- Operational: anchored on Appointment.start_datetime ----
@@ -273,7 +273,7 @@ def compute_daily_metrics(organization, bucket_date, *, now=None):
 
     excluded_total = (
         excluded_paid_anchor_missing
-        + excluded_confirmed_anchor_missing
+        + excluded_posted_anchor_missing
         + excluded_closed_anchor_missing
     )
 
@@ -287,14 +287,14 @@ def compute_daily_metrics(organization, bucket_date, *, now=None):
         ),
         'paid_at_source',
     )
-    confirmed_prov = _provenance_breakdown(
+    posted_prov = _provenance_breakdown(
         _analytics_queryset(Invoice).filter(
             organization=organization,
-            status__in=['confirmed', 'paid'],
-            confirmed_at__gte=start_utc,
-            confirmed_at__lt=end_utc,
+            status__in=['posted', 'paid'],
+            posted_at__gte=start_utc,
+            posted_at__lt=end_utc,
         ),
-        'confirmed_at_source',
+        'posted_at_source',
     )
     closed_prov = _provenance_breakdown(
         _analytics_queryset(MedicalRecord).filter(
@@ -317,7 +317,7 @@ def compute_daily_metrics(organization, bucket_date, *, now=None):
         'excluded_anchor_missing': excluded_total,
         'provenance_mix': {
             'paid_at': paid_prov,
-            'confirmed_at': confirmed_prov,
+            'posted_at': posted_prov,
             'closed_at': closed_prov,
         },
     }

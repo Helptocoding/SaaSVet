@@ -459,9 +459,9 @@ def make_permission(code: str) -> type:
 
     Uso en function-based views que no pueden establecer resource_name:
 
-        @api_view(['PATCH'])
-        @permission_classes([make_permission("invoice.confirm")])
-        def confirm_invoice(request, pk):
+        @api_view(['POST'])
+        @permission_classes([make_permission("invoice.post_unpaid")])
+        def post_checkout_unpaid(request, pk):
             ...
 
     Regla 3: acciones custom SIEMPRE definen required_permission.

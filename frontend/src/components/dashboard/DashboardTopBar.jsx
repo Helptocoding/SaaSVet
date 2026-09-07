@@ -3,6 +3,7 @@ import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { useAuth } from "../../auth/authContext";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../icons";
+import NotificationBell from "../notifications/NotificationBell";
 import "./DashboardTopBar.css";
 
 const readCssVar = (name, fallback) => {
@@ -51,7 +52,7 @@ const MastSpark = memo(function MastSpark({ data, color }) {
 });
 
 export default function DashboardTopBar({ summary, revenueToday, revenueSpark, revenueDelta }) {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const navigate = useNavigate();
   const isAdmin  = user?.role === "ADMIN" || user?.role === "ADMIN_SAAS";
 
@@ -85,6 +86,7 @@ export default function DashboardTopBar({ summary, revenueToday, revenueSpark, r
         </div>
 
         <div className="pacts dtop-pacts">
+          {can?.("notification.list") && <NotificationBell />}
           {criticos > 0 && (
             <span className="badge badge-danger dtop-alert-badge">
               <Icon.AlertOctagon s={12} /> {criticos} crítico{criticos > 1 ? "s" : ""}

@@ -6,7 +6,10 @@ import { useConfirm } from "../../components/useConfirm";
 import { apiError } from "../../utils/apiError";
 import { newIdempotencyKey } from "../../utils/idempotency";
 import { buildPaymentLines } from "../../utils/payments";
-import { createInvoice, addInvoiceItem, getInvoice, directPayInvoice, cancelInvoice } from "../../api/billing";
+import {
+    abandonCheckout, addCheckoutItem, createDirectSaleCheckout,
+    getCheckout, payCheckout,
+} from "../../api/billing";
 import { getOwners } from "../../api/pets";
 import { getOrgSettings } from "../../api/organizations";
 import { Icon } from "../../components/icons";
@@ -22,11 +25,11 @@ const toList = (d) => (Array.isArray(d) ? d : d?.results || []);
 
 /* ── POS — venta directa de mostrador ──
    Checkout en dos pasos, server-driven (sin matemática financiera en React):
-   1. "Cobrar" crea la factura draft real (owner + items vía API existente) y
+   1. "Cobrar" persiste un Checkout (owner + items) y
       lee del backend subtotal/IVA/total exactos.
    2. El panel pasa a modo pago: PaymentLinesEditor (mismo flujo que Registrar
-      Pago de Cobros) + direct-pay atómico con X-Idempotency-Key.
-   "Volver al carrito" cancela el draft (auditable vía InvoiceAuditLog). */
+      Pago de Cobros) + post/pay atómico con X-Idempotency-Key.
+   "Volver al carrito" abandona el Checkout sin emitir una Invoice. */
 const POS = () => {
     const { initializing, can } = useAuth();
     const confirm = useConfirm();
@@ -37,7 +40,7 @@ const POS = () => {
     const [customer, setCustomer] = useState({ owner: null, pet: null });
     const [genericOwner, setGenericOwner] = useState(null);
 
-    // mode "cart" → editando venta | "paying" → draft creado, capturando pago.
+    // mode "cart" → editando venta | "paying" → Checkout creado, capturando pago.
     const [mode, setMode] = useState("cart");
     const [invoice, setInvoice] = useState(null);
     const [payLines, setPayLines] = useState([{ method: "cash", amount: "" }]);
@@ -57,18 +60,8 @@ const POS = () => {
             .catch(() => {});
     }, []);
 
-    // Si el usuario navega con un draft en modo pago, se cancela al desmontar
-    // para no dejar borradores huérfanos en Cobros. Si la venta ya se pagó,
-    // el cancel falla en backend y se ignora (la factura paid es terminal).
-    const abandonRef = useRef(null);
-    useEffect(() => {
-        abandonRef.current = mode === "paying" && invoice ? invoice.public_id : null;
-    }, [mode, invoice]);
-    useEffect(() => () => {
-        if (abandonRef.current) {
-            cancelInvoice(abandonRef.current, { notes: "POS: venta abandonada antes de cobrar" }).catch(() => {});
-        }
-    }, []);
+    // El Checkout POS es servidor-persistente: navegar o refrescar no lo
+    // abandona. Puede reanudarse desde la bandeja de Cobros.
 
     const cashBlocked = requireCash && cashSession === null;
     const paying = mode === "paying";
@@ -99,19 +92,16 @@ const POS = () => {
         return true;
     };
 
-    // Paso 1: crea la factura draft real y pasa a modo pago con totales del backend.
+    // Paso 1: crea el Checkout y pasa a modo pago con totales del backend.
     const handleRingUp = async () => {
         if (!validateCart()) return;
         setProcessing(true);
         let created = null;
         try {
-            // ADR p25: owner real elegido, o genérico por default. invoice_type
-            // explícito 'direct_sale' para que un owner real no caiga en el
-            // default 'consultation' (que exigiría pet).
-            const ownerId = customer.owner ? customer.owner.id : genericOwner.id;
-            const payload = { owner: ownerId, invoice_type: "direct_sale" };
-            if (customer.pet) payload.pet = customer.pet.id;
-            created = await createInvoice(payload);
+            const ownerId = customer.owner ? customer.owner.public_id : genericOwner.public_id;
+            const payload = { owner: ownerId };
+            if (customer.pet) payload.pet = customer.pet.public_id;
+            created = await createDirectSaleCheckout(payload);
             for (const item of cart.items) {
                 let body;
                 if (item.type === "product") {
@@ -128,18 +118,21 @@ const POS = () => {
                 } else {
                     body = { service: item.id, quantity: String(parseInt(item.quantity, 10)) };
                 }
-                await addInvoiceItem(created.public_id, body);
+                await addCheckoutItem(created.public_id, body);
             }
-            const detail = await getInvoice(created.public_id);
+            const detail = await getCheckout(created.public_id);
             setInvoice(detail);
             setPayLines([{ method: "cash", amount: Number(detail.total) > 0 ? Number(detail.total).toFixed(2) : "" }]);
             setIdemKey(newIdempotencyKey());
             setMode("paying");
         } catch (err) {
             toast.error(apiError(err, "No se pudo preparar el cobro."));
-            // No dejar un draft a medias en Cobros: se cancela (auditable).
+            // No dejar una preparación POS a medias.
             if (created) {
-                cancelInvoice(created.public_id, { notes: "POS: error al preparar el cobro" }).catch(() => {});
+                abandonCheckout(created.public_id, {
+                    reason: "pos_prepare_error",
+                    idempotencyKey: newIdempotencyKey(),
+                }).catch(() => {});
             }
         } finally {
             setProcessing(false);
@@ -156,13 +149,17 @@ const POS = () => {
         searchRef.current?.focus();
     };
 
-    // Paso 2: direct-pay atómico (ADR p30 rev: total exacto; el sobrepago en
+    // Paso 2: post/pay atómico (total exacto; el sobrepago en
     // efectivo es cambio para el cliente y NO se registra — se capea al total).
     const handleConfirmCharge = async () => {
         const paymentLines = buildPaymentLines(payLines, invoice.total);
         setProcessing(true);
         // sonner v2: toast.promise NO resuelve a la data — await la promesa real.
-        const call = directPayInvoice(invoice.public_id, { paymentLines, idempotencyKey: idemKey });
+        const call = payCheckout(invoice.public_id, {
+            paymentLines,
+            expectedVersion: invoice.version,
+            idempotencyKey: idemKey,
+        });
         toast.promise(call, {
             loading: "Cobrando...",
             success: "Venta cobrada",
@@ -172,19 +169,22 @@ const POS = () => {
             await call;
             resetSale();
         } catch {
-            // toast.promise ya mostró el error; el draft y la idemKey se
+            // toast.promise ya mostró el error; el Checkout y la idemKey se
             // conservan para reintentar sin doble cobro.
         } finally {
             setProcessing(false);
         }
     };
 
-    // Volver a editar: cancela el draft (no se puede mutar ítems desde el POS
-    // sin re-sincronizar; un draft cancelado queda auditado, no huérfano).
+    // Volver a editar descarta el Checkout persistido y conserva el carrito local.
     const handleBackToCart = async () => {
         setProcessing(true);
         try {
-            await cancelInvoice(invoice.public_id, { notes: "POS: venta editada antes de cobrar" });
+            await abandonCheckout(invoice.public_id, {
+                reason: "pos_back_to_cart",
+                expectedVersion: invoice.version,
+                idempotencyKey: newIdempotencyKey(),
+            });
             setInvoice(null);
             setMode("cart");
             searchRef.current?.focus();

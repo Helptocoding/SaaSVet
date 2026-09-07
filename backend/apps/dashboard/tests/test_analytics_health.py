@@ -7,8 +7,8 @@ from decimal import Decimal
 
 from rest_framework.test import APIClient, APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import confirm_invoice, pay_invoice
+from apps.billing.models import Service
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
@@ -35,18 +35,11 @@ class AnalyticsHealthTests(APITestCase):
         )
 
     def _make_paid_invoice(self):
-        invoice = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.org_admin, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=invoice, service=self.service,
-            description=self.service.name, quantity=1,
-            unit_price=self.service.base_price, organization=self.org,
-        )
-        confirm_invoice(invoice, user=self.org_admin)
-        pay_invoice(invoice, user=self.org_admin, payment_method='cash')
-        return invoice
+        return pay_checkout_for_test(checkout, user=self.org_admin, payment_method='cash')
 
     def test_org_admin_is_forbidden(self):
         client = APIClient()

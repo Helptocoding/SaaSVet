@@ -38,8 +38,13 @@ El comando **reusa los servicios autoritativos** — no escribe estado a mano:
 
 - `provision_organization` → crea la org + admin + settings + roles RBAC + genéricos.
 - `apply_stock_movement` → toda existencia/consumo de stock (bajo lock, en base units).
-- `billing.services` (`confirm_invoice`, `pay_invoice`, `pay_direct_sale`,
-  `get_or_create_invoice_for_medical_record`) → facturas y pagos.
+- `billing.checkout_services`
+  (`record_clinical_charge_delta`,
+  `get_or_create_primary_checkout_for_medical_record`,
+  `create_direct_sale_checkout`, `add_checkout_item`, `post_checkout`) →
+  cargos clínicos, Checkouts, facturas, pagos y stock;
+- `billing.services.pay_invoice` → pago total posterior de una Invoice
+  `posted`.
 - Consumo en consulta vía `MedicalRecordProduct` (descuenta stock en su `save`).
 
 **Única escritura directa permitida:** el *backdating* de fechas

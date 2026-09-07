@@ -1,10 +1,14 @@
 # Financial Event Model Contract
 
-Version: 1.0 (frozen)
+Version: 1.2 (frozen)
 Owner: Backend
-Status: **Frozen — 2026-05-27.** §2 (naming canónico), §3 (invariantes), §4 (naming rules),
+Status: **Frozen — 2026-09-07.** §2 (naming canónico), §3 (invariantes), §4 (naming rules),
 §6 (contra-asiento) y §8 (semántica financiera) son **binding**. Editar requiere ADR.
-Last updated: 2026-05-27
+Last updated: 2026-09-07
+
+La versión 1.2 alinea los ejemplos e invariantes de Invoice con
+[ADR p62](decisions/2026-08-30-p62-billing-checkout-lifecycle.md):
+`posted/paid/voided`, sin `confirmed` y sin pagos parciales.
 
 ---
 
@@ -88,8 +92,8 @@ Aplican a **todo** evento financiero, sin excepción. Son la red de seguridad co
 5. **Single authoritative writer en `services.py`.** Extiende ADR p9 (anchors) a todos los
    eventos monetarios. Un write de evento financiero fuera de un service es bug.
 6. **Las correcciones son contra-asientos, nunca mutaciones** (§6, `DD-007`).
-7. **Idempotencia:** `idempotency_key` único por org; un request reintentado dedupea y
-   devuelve el mismo resultado, jamás doble-registra (§9).
+7. **Idempotencia:** el request se identifica por `CommandReceipt`; cada evento hijo usa
+   `(command_receipt, command_line_index)` y una key derivada, nunca el header raw (§9).
 8. **Provenance:** `service` para nuevos; `legacy` solo en backfill (no inventar actores ni
    timestamps — misma política que la provenance de anchors).
 9. **`cash_session` inmutable** una vez seteada; se ata a la sesión abierta vigente en
@@ -186,14 +190,11 @@ remaining_balance(invoice) = invoice.total − Σ(Payment.amount aplicado a la f
 - **Es el invariante financiero real.** `Invoice.status` es una **proyección operacional**
   de él, no un flag arbitrario.
 - `Invoice.status = 'paid'  ⟺  remaining_balance == 0`
-- `Invoice.status = 'confirmed' (cobrable, no liquidada)  ⟹  remaining_balance > 0`
-- **Pagos parciales** (consultation) bajan `remaining_balance`; la factura permanece
-  `confirmed` hasta llegar a 0, momento en que el service la transiciona a `paid`.
-  **Revisión 2026-05-29 (ADR p30 §7):** v1+ ya **NO admite** parciales — toda factura
-  exige total exacto (`require_full=True` en `pay_invoice` y `pay_direct_sale`). Esta
-  línea se conserva como descripción del invariante computable; la regla `Σ ≤ remaining`
-  sigue válida en `remaining_balance`, pero el writer (`_pay_locked_invoice`) rechaza
-  `Σ < remaining`. Si en el futuro se reabre el parcial, el invariante no cambia.
+- `Invoice.status = 'posted' (cobrable, no liquidada)  ⟹  remaining_balance > 0`
+- El writer vigente no admite pagos parciales ni sobrepagos: `pay_checkout` y
+  `pay_invoice` exigen el saldo total exacto (`require_full=True`). La fórmula sigue
+  siendo computable y no cambia si una versión futura introduce allocations/parciales,
+  pero hoy `ΣPayment < remaining` y `ΣPayment > remaining` se rechazan.
 - v1: `remaining_balance` es **propiedad computada**, no columna almacenada. Almacenarla
   reintroduce el lost-update que se cerró en la auditoría (C2) y exigiría F()/recompute bajo
   lock como `recalculate_totals`. Columna almacenada = `DD-001` (solo si el perf lo pide).
@@ -218,7 +219,7 @@ aparte (§8.4), no reabriendo la cobranza.
 
 | Paso | Evento | Σ Payment | Σ RefundPayment | Σ RefundReversal | `remaining_balance` | `net_settled` | `Invoice.status` |
 |:----:|--------|:---------:|:---------------:|:----------------:|:-------------------:|:-------------:|:----------------:|
-| 0 | factura confirmada | 0 | 0 | 0 | **100** | 0 | `confirmed` |
+| 0 | factura posteada | 0 | 0 | 0 | **100** | 0 | `posted` |
 | 1 | `Payment 100` | 100 | 0 | 0 | **0** | 100 | `paid` (`paid_at` seteado) |
 | 2 | `RefundPayment 20` | 100 | 20 | 0 | **0** | 80 | `paid` (sin cambio) |
 | 3 | `RefundReversal 20` | 100 | 20 | 20 | **0** | 100 | `paid` (sin cambio) |
@@ -257,7 +258,7 @@ net_settled(invoice) = Σ(Payment.amount) − Σ(RefundPayment.amount) + Σ(Refu
 Comando `audit_payment_ledger_integrity` (hermano de `audit_anchor_integrity` /
 `audit_stock_integrity`, exit-codes 0/1/2, wireable a cron):
 - `status='paid'  ⇒  remaining_balance == 0`
-- `status='confirmed'  ⇒  remaining_balance > 0`
+- `status='posted'  ⇒  remaining_balance > 0`
 - `paid_at` consistente con el `Payment` que liquidó.
 
 Es el ratchet que atrapa la regresión "alguien seteó `paid` sin ledger consistente".
@@ -269,8 +270,14 @@ Es el ratchet que atrapa la regresión "alguien seteó `paid` sin ledger consist
 - El frontend genera `X-Idempotency-Key` por intento de cobro/refund.
 - **Agregar el header a `CORS_ALLOW_HEADERS`** (regla CLAUDE frontend; sin esto el browser
   bloquea el preflight).
-- El service hace `get_or_create` sobre `(organization, idempotency_key)`. Un reintento
-  devuelve el mismo evento, nunca doble-registra.
+- El service reclama primero `CommandReceipt` por
+  `(organization, command_kind, idempotency_key)` y valida el hash del payload canónico.
+- Cada evento financiero hijo persiste `command_receipt` y `command_line_index`; el índice
+  es único dentro del receipt. Su `idempotency_key` de compatibilidad se deriva del UUID
+  del receipt y del índice, por lo que dos command kinds pueden reutilizar la misma raw key
+  sin colisionar en el ledger.
+- Replay con mismo actor/hash devuelve el envelope durable del receipt. Misma key con otro
+  actor o payload se rechaza antes de mover dinero.
 - Log estructurado `IDEMPOTENT_PAYMENT_DEDUPED` (logger `billing.events`) con
   `request_id`, `idempotency_key`, `organization_id`.
 - Cierra el gap de ADR p11: la atomicidad del modal protege contra duplicados de UI, no
@@ -296,18 +303,23 @@ Futuras fuentes (`psp_webhook`, `import`) se agregan por ADR, no ad-hoc.
 - El `Payment`/`RefundPayment` se ata a la sesión **abierta en `occurred_at`**.
 - El cierre Z lockea la sesión; los eventos en vuelo re-leen estado y, si está cerrada,
   devuelven 409 `code='cash_session_closed'` (ningún evento se cuela tras el conteo).
-- Orden de locks (extiende ADR p12): `CashSession → MedicalRecord → Invoice → Presentation
-  → InvoiceItem → MedicalRecordProduct`. El cierre lockea **solo** `CashSession` (nunca
-  Invoice) → sin ABBA.
+- Orden de locks: cada comando prelee las claves necesarias y adquiere por
+  `(model_rank, primary_key)`: `CommandReceipt → CashSession → Appointment →
+  MedicalRecord → Prescription → PrescriptionItem → Checkout → Invoice →
+  CreditNote → Product → Presentation → StockLot → CheckoutItem →
+  StockAllocation → StockMovement`. Una fila ya bloqueada puede actualizarse
+  después; no se adquiere por primera vez fuera de este orden.
 
 ---
 
 ## 12. Relación con contratos / ADRs existentes
 
-- **ADR p9** — anchors: `Invoice.paid_at/confirmed_at/cancelled_at` se conservan; este
-  contrato no los reemplaza, los relaciona (§8.3). Writers únicos en `services.py`.
-- **ADR p11** — direct-pay: una sola máquina de estados, UX colapsada. `pay_direct_sale`
-  ahora emite ≥1 `Payment` en su `atomic()`. Sin bifurcar el dominio.
+- **ADR p62** — `Invoice` nace `posted`; sus anchors nativos son `posted_at`,
+  `paid_at` y `voided_at`. No existen `draft/confirmed/cancelled` en el contrato
+  greenfield. Writers únicos en services de billing/checkout.
+- **ADR p11** — direct-pay: una sola máquina de estados y UX colapsada.
+  `pay_checkout` emite la Invoice y ≥1 `Payment` en una sola transacción, sin
+  bifurcar el dominio para `direct_sale`.
 - **ADR p12 / p13** — lock order + F(): respetados; `CashSession` entra a la cabeza.
 - **dashboard-metrics-contract §2.8** — dual-window de reversos: refunds y reversals
   generan `MetricAdjustment`, nunca mutan snapshot frozen. §3.1.1: `revenue_paid` se
@@ -339,10 +351,12 @@ no re-explican el hook (evita drift documental):
 - Minor: campo/evento nuevo sin tocar los existentes.
 - Major: cambio de semántica de un campo/invariante existente → ADR + sign-off.
 
-**Freeze 1.0 — 2026-05-27:**
+**Freeze 1.1 — 2026-09-04:**
 - [x] Nombres canónicos (§2) y reglas de naming (§4) — congelados.
 - [x] Separación `remaining_balance` vs `net_settled` (§8) — confirmada; `remaining_balance
   = total − Σ(Payment)`, refunds fuera; ejemplo formal en §8.2.
 - [x] Modelo de contra-asiento y sus invariantes (§6) — congelado.
+- [x] Identidad financiera hija por CommandReceipt + line index — congelada.
+- [x] Checkout/posting de ADR p62 y lifecycle `posted/paid/voided` — congelados.
 - [ ] **Pendiente (no bloquea freeze):** sign-off de PO para el cambio `revenue_paid` → net
   cuando aterrice Sprint B (es un gate de implementación, no un cambio de contrato).

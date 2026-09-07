@@ -76,7 +76,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'pet', 'pet_name', 'pet_public_id', 'pet_is_generic',
             'owner_id', 'owner_public_id', 'owner_name',
             'veterinarian', 'veterinarian_name', 'veterinarian_public_id',
-            'date', 'start_time', 'end_time', 'reason', 'notes',
+            'date', 'start_time', 'end_time', 'reason', 'category', 'notes',
             # Instantes UTC (anchors): el agente los usa para etiquetar en la
             # hora local de la org sin double-shift (ver executor.format_local_*).
             'start_datetime', 'end_datetime',

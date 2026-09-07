@@ -81,11 +81,12 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
         model = OrganizationSettings
         fields = [
             'auto_create_medical_record',
-            'auto_create_invoice_on_done',
             'require_confirmation_before_start',
             'allow_anonymous_walkin',
             'show_status_change_history',
             'require_open_cash_session',
+            'allow_post_unpaid',
+            'credit_default_days',
             'locale',
             'currency_code',
             'default_appointment_duration_minutes',
@@ -110,6 +111,11 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
     def validate_week_starts_on(self, value):
         if value < 1 or value > 7:
             raise serializers.ValidationError('El dia de inicio de semana debe estar entre 1 (lunes) y 7 (domingo).')
+        return value
+
+    def validate_credit_default_days(self, value):
+        if value < 1 or value > 365:
+            raise serializers.ValidationError('El plazo de crédito debe estar entre 1 y 365 días.')
         return value
 
 

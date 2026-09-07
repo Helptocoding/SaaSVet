@@ -3,8 +3,8 @@ Tests for Dia 5 late-arrival observability (ADR p17 — warn-only phase).
 
 Covers:
   T5  — pay_invoice backdated paid_at emits ANCHOR_LATE_ARRIVAL
-  T6  — confirm_invoice backdated confirmed_at emits ANCHOR_LATE_ARRIVAL
-  T7  — cancel_invoice backdated cancelled_at emits ANCHOR_LATE_ARRIVAL
+  T6  — post_checkout backdated posted_at emits ANCHOR_LATE_ARRIVAL
+  T7  — void command backdated voided_at emits ANCHOR_LATE_ARRIVAL
   T8  — close_medical_record backdated closed_at emits ANCHOR_LATE_ARRIVAL
   T9  — extra dict carries all required structured fields
   T10 — anchor in current window emits NO warning
@@ -17,12 +17,14 @@ from django.test import TestCase
 from django.utils import timezone
 
 from apps.analytics.services import is_bucket_frozen
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import confirm_invoice, _warn_if_late_arrival
+from apps.billing.checkout_services import post_checkout
+from apps.billing.models import Invoice, Service
+from apps.billing.services import _warn_if_late_arrival
+from apps.billing.tests.factories import build_direct_sale_checkout
 from apps.core.datetime_utils import org_today_local
 from apps.medical_records.models import MedicalRecord
 from apps.medical_records.views import _warn_if_late_closed_at
-from apps.organizations.models import Organization
+from apps.organizations.models import Organization, OrganizationSettings
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 
@@ -127,18 +129,25 @@ class LateArrivalObservabilityTests(TestCase):
 
     # ---- helpers -----------------------------------------------------------
 
-    def _create_confirmed_invoice(self):
-        invoice = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+    def _create_posted_invoice(self):
+        settings, _ = OrganizationSettings.objects.get_or_create(organization=self.org)
+        settings.allow_post_unpaid = True
+        settings.save(update_fields=['allow_post_unpaid'])
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.user, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=invoice, service=self.service,
-            description=self.service.name, quantity=1,
-            unit_price=self.service.base_price, organization=self.org,
+        return post_checkout(
+            checkout, self.user, expected_version=checkout.version,
+            idempotency_key=f'late-post-{checkout.public_id}',
+            due_at=timezone.now() + timedelta(days=30),
+            credit_reason='authorized_credit',
+            obligation_evidence={
+                'basis': 'customer_acknowledgement',
+                'accepting_party': self.owner.name,
+                'channel': 'in_person',
+            },
         )
-        confirm_invoice(invoice, user=self.user)
-        return Invoice.objects.get(pk=invoice.pk)
 
     def _backdate_anchor(self, invoice, anchor_field, anchor_value,
                           extra_updates=None):
@@ -156,7 +165,7 @@ class LateArrivalObservabilityTests(TestCase):
         T5 — _warn_if_late_arrival with paid_at 6 days ago emits a
         structured ANCHOR_LATE_ARRIVAL warning on analytics.events logger.
         """
-        invoice = self._create_confirmed_invoice()
+        invoice = self._create_posted_invoice()
         backdated = timezone.now() - timedelta(days=6)
         invoice = self._backdate_anchor(
             invoice, 'paid_at', backdated,
@@ -179,58 +188,58 @@ class LateArrivalObservabilityTests(TestCase):
 
     # ---- T6 ----------------------------------------------------------------
 
-    def test_confirm_invoice_backdated_confirmed_at_emits_warning(self):
+    def test_post_checkout_backdated_posted_at_emits_warning(self):
         """
-        T6 — _warn_if_late_arrival with backdated confirmed_at emits warning.
+        T6 — _warn_if_late_arrival with backdated posted_at emits warning.
         """
-        invoice = self._create_confirmed_invoice()
+        invoice = self._create_posted_invoice()
         backdated = timezone.now() - timedelta(days=6)
         invoice = self._backdate_anchor(
-            invoice, 'confirmed_at', backdated,
+            invoice, 'posted_at', backdated,
         )
 
         with self.assertLogs('analytics.events', level='WARNING') as captured:
             _warn_if_late_arrival(
-                invoice, 'confirmed_at', invoice.confirmed_at,
-                'financial_cash', 'confirm_invoice',
+                invoice, 'posted_at', invoice.posted_at,
+                'financial_cash', 'post_checkout',
             )
 
         assert_late_arrival_logged(
             self, captured,
-            anchor_field='confirmed_at',
+            anchor_field='posted_at',
             organization_id=self.org.pk,
             age_days_min=5,
-            writer_substring='confirm_invoice',
+            writer_substring='post_checkout',
         )
 
     # ---- T7 ----------------------------------------------------------------
 
-    def test_cancel_invoice_backdated_cancelled_at_emits_warning(self):
+    def test_void_invoice_backdated_voided_at_emits_warning(self):
         """
-        T7 — _warn_if_late_arrival with backdated cancelled_at emits warning.
+        T7 — _warn_if_late_arrival with backdated voided_at emits warning.
         """
-        invoice = self._create_confirmed_invoice()
+        invoice = self._create_posted_invoice()
         backdated = timezone.now() - timedelta(days=6)
         invoice = self._backdate_anchor(
-            invoice, 'cancelled_at', backdated,
+            invoice, 'voided_at', backdated,
             extra_updates={
-                'status': 'cancelled',
-                'cancelled_at_source': 'service',
+                'status': 'voided',
+                'voided_at_source': 'service',
             },
         )
 
         with self.assertLogs('analytics.events', level='WARNING') as captured:
             _warn_if_late_arrival(
-                invoice, 'cancelled_at', invoice.cancelled_at,
-                'financial_cash', 'cancel_invoice',
+                invoice, 'voided_at', invoice.voided_at,
+                'financial_cash', 'void_invoice',
             )
 
         assert_late_arrival_logged(
             self, captured,
-            anchor_field='cancelled_at',
+            anchor_field='voided_at',
             organization_id=self.org.pk,
             age_days_min=5,
-            writer_substring='cancel_invoice',
+            writer_substring='void_invoice',
         )
 
     # ---- T8 ----------------------------------------------------------------
@@ -345,7 +354,7 @@ class LateArrivalObservabilityTests(TestCase):
         assert_late_arrival_logged helper already verifies every
         required field is present and non-null where applicable.
         """
-        invoice = self._create_confirmed_invoice()
+        invoice = self._create_posted_invoice()
         backdated = timezone.now() - timedelta(days=6)
         invoice = self._backdate_anchor(
             invoice, 'paid_at', backdated,
@@ -387,7 +396,7 @@ class LateArrivalObservabilityTests(TestCase):
         T10 — pay_invoice with paid_at = today must NOT emit any
         ANCHOR_LATE_ARRIVAL log because today's bucket is never frozen.
         """
-        invoice = self._create_confirmed_invoice()
+        invoice = self._create_posted_invoice()
         now = timezone.now()
         invoice = self._backdate_anchor(
             invoice, 'paid_at', now,

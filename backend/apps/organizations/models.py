@@ -75,11 +75,12 @@ class OrganizationSettings(models.Model):
         Organization, on_delete=models.CASCADE, related_name='settings'
     )
     auto_create_medical_record = models.BooleanField(default=False)
-    auto_create_invoice_on_done = models.BooleanField(default=False)
     require_confirmation_before_start = models.BooleanField(default=False)
     allow_anonymous_walkin = models.BooleanField(default=False)
     show_status_change_history = models.BooleanField(default=True)
     require_open_cash_session = models.BooleanField(default=False)
+    allow_post_unpaid = models.BooleanField(default=False)
+    credit_default_days = models.PositiveSmallIntegerField(default=30)
 
     locale = models.CharField(max_length=16, default='es-MX')
     currency_code = models.CharField(max_length=3, default='MXN')

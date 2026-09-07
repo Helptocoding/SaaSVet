@@ -1,4 +1,6 @@
-# Modulo: Historial clinico
+# Módulo: Historial clínico
+
+**Última actualización**: 2026-09-07
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
 
@@ -26,9 +28,11 @@ Una consulta medica puede incluir:
 
 La consulta se crea en estado `open` con `consultation_type = general` por defecto.
 
-**Facturación lazy**: La factura NO se crea al crear la consulta. Se crea de forma lazy al agregar el primer cargo (servicio o producto) vía `_sync_invoice_item` → `get_or_create_invoice_for_medical_record()`, **o** al cerrar la consulta (ADR p30 — `close_medical_record` la garantiza, ver §Cierre).
-
-Si la consulta tiene cita asociada y la clínica activa explícitamente el toggle `auto_create_invoice_on_done`, la factura se puede crear al marcar la cita como `done` (ver `docs/modules/appointments.md`). El default actual es `False`.
+**Frontera clínica/comercial**: crear o editar la consulta no crea Invoice.
+Servicios y productos facturables producen evidencia de cargos clínicos. Al
+cerrar, el sistema congela esa evidencia y materializa o adopta un
+`Checkout primary_consultation`. La Invoice nace únicamente al postear el
+Checkout.
 
 Reglas:
 - pertenece a una sola organizacion
@@ -56,10 +60,10 @@ Al cerrar via `close_medical_record` view (POST `/api/medical-records/<uuid>/clo
 - `closed_at` se setea con `timezone.now()` en el mismo `transaction.atomic()`
 - `closed_at_source = 'service'` (provenance — ver ADR `2026-05-09-p9`)
 - `closed_by` registra al user
-- **garantiza la factura (ADR p30)**: llama `get_or_create_invoice_for_medical_record()`
-  dentro del mismo `atomic()` (MR ya lockeado → Invoice, orden canónico). Finalizar
-  **siempre** deja la consulta en Cobros, aunque sea una factura `draft` $0. Supera
-  la creación lazy de ADR p7 en este camino.
+- **garantiza el Checkout (ADR p62)**: llama
+  `get_or_create_primary_checkout_for_medical_record()` dentro del mismo
+  `atomic()`. Finalizar siempre deja la consulta visible en Cobros, incluso si
+  suma $0; no crea Invoice.
 - **completa la cita vinculada (ADR p34)**: llama
   `apps.appointments.services.complete_appointment_on_record_close(medical_record.appointment, request.user)`
   dentro del mismo `atomic()`. Transiciona la cita `in_progress → done` (cierre clínico
@@ -122,18 +126,16 @@ Reglas de negocio:
 - la receta por si sola NO descuenta stock ni crea items financieros
 - una consulta `closed` no admite receta nueva ni modificacion de receta existente
 
-Flujo en cobros (dispensación, ADR p30 — ver `docs/modules/billing.md`):
-- la factura de consulta (draft) muestra los servicios e insumos usados como items
-  automaticos (esos SÍ se cobran y ya descontaron stock al consumirse)
-- los recetados NO se agregan automáticamente — se exponen como
-  `prescription_suggestions` en el detalle del cobro, con la presentación de venta a
-  elegir por recepción
-- recepción dispensa lo que el cliente decide llevar vía
-  `POST /api/billing/prescriptions/<uuid>/dispense/`, que **agrega esos productos como
-  items a la MISMA factura de consulta** (marcados con
-  `InvoiceItem.dispensed_from_prescription_item`); no se crea una factura aparte. El
-  stock se descuenta al **confirmar** la factura, por la ruta única de descuento (en
-  una consulta solo liquida los ítems dispensados). "Quitar" = no incluir (no-op)
+Flujo en cobros (ver [Billing](billing.md)):
+
+- el Checkout de consulta muestra snapshots de servicios/cargos clínicos;
+- los recetados no se agregan automáticamente: se exponen como
+  `prescription_suggestions` con remanente clínico, stock y máximo
+  seleccionable resueltos por backend;
+- recepción acepta o rechaza la selección; aceptar agrega un `CheckoutItem`
+  retail ligado al `PrescriptionItem`;
+- al postear se crean juntos `InvoiceItem`, allocations, salida de stock y
+  `PrescriptionFulfillmentEvent`. Rechazar no altera la receta.
 
 Regla de frontend:
 - la creacion de receta se inicia desde `Historial clinico`
@@ -195,10 +197,13 @@ Los productos agregados desde consulta son parte del contexto clinico y tambien 
 Reglas actuales:
 - se guardan como `MedicalRecordProduct`
 - ajustan stock con `select_for_update` para evitar race conditions
-- sincronizan un `InvoiceItem` asociado a la factura draft vinculada a la consulta
-- si se elimina el producto, se revierte stock y se ajusta o elimina el `InvoiceItem` correspondiente
+- registran el delta comercial en
+  `ClinicalChargeEntry`/`ClinicalChargeQuantityEvent`;
+- si se elimina el producto antes del cierre, se revierte stock y se registra el
+  delta compensatorio; no existe `InvoiceItem` todavía;
 - productos con `requires_prescription = true` requieren que exista una receta activa para la consulta antes de poderse agregar
-- toda la operacion esta envuelta en `transaction.atomic()`: si falla el sync de factura, se revierte el producto
+- toda la operación está en `transaction.atomic()`: si falla el registro del
+  delta clínico/comercial, también se revierte el movimiento de producto;
 
 Permiso usado:
 - lectura: `medicalrecord.retrieve`
@@ -211,22 +216,22 @@ No se usa `inventory.create` para este flujo porque el acto que se protege es cl
 Para operaciones concurrentes de productos en consulta, se respeta el orden global:
 
 ```
-MedicalRecord → Invoice → Presentation → InvoiceItem → MedicalRecordProduct
+MedicalRecord → Presentation → MedicalRecordProduct → ClinicalChargeEntry
 ```
 
 **En `MedicalRecordProductListCreateView.perform_create()`:**
 1. Lock de `MedicalRecord`
-2. Lock de `Invoice` via `get_or_create_invoice_for_medical_record()`
-3. Lock de `Presentation`
-4. Sync de `InvoiceItem` bajo lock de `Invoice` — usa `apply_invoice_item_quantity_delta(item, +qty)` para incrementos (ADR p13, patrón F())
-5. Create/update de `MedicalRecordProduct` con `locked_presentation` y `previous_quantity`
+2. Lock de `Presentation`
+3. Create/update de `MedicalRecordProduct` con `locked_presentation` y
+   `previous_quantity`
+4. Registro de `record_clinical_charge_delta`; no crea Invoice
 
 **En `MedicalRecordProductDeleteView.perform_destroy()`:**
 1. Lock de `MedicalRecord`
-2. Lock de `Invoice` (si existe)
-3. Lock de `Presentation`
-4. Sync de `InvoiceItem` bajo lock — proyectar `item.quantity - fresh.quantity`; si `<= 0` llamar `item.delete()`, sino `apply_invoice_item_quantity_delta(item, -fresh.quantity)`
-5. Re-fetch de instancia con lock antes de `delete()`
+2. Lock de `Presentation` y del consumo vigente
+3. Reversión del stock físico
+4. Delta clínico/comercial compensatorio
+5. Eliminación del vínculo
 
 Ver ADRs `2026-05-16-p12-concurrency-lock-order-hardening.md` (orden global) y `2026-05-16-p13-day12-concurrency-remediation.md` (helper F() + asserts).
 
@@ -236,8 +241,10 @@ Los servicios agregados desde consulta forman parte del contexto clinico y finan
 
 Reglas actuales:
 - se guardan como `MedicalRecordService`
-- sincronizan un `InvoiceItem` (con FK a `service`, no a `presentation`) en la factura draft
-- si se elimina el servicio, se ajusta o elimina el `InvoiceItem` correspondiente
+- registran el delta en
+  `ClinicalChargeEntry`/`ClinicalChargeQuantityEvent`;
+- si se elimina antes del cierre, se registra el delta compensatorio; no se
+  mutan documentos financieros;
 - toda la operacion esta envuelta en `transaction.atomic()`
 
 Permiso usado:
@@ -249,23 +256,23 @@ Permiso usado:
 Para operaciones concurrentes de servicios en consulta, se respeta el orden global:
 
 ```
-MedicalRecord → Invoice → InvoiceItem
+MedicalRecord → MedicalRecordService → ClinicalChargeEntry
 ```
 
 **En `MedicalRecordServiceListCreateView.perform_create()` (ADR p13 — orden corregido):**
 1. Lock de `MedicalRecord` con `select_for_update()`
 2. Validar tenant del `service` (`serializer.validated_data`)
-3. Lock de `Invoice` via `get_or_create_invoice_for_medical_record()`
-4. Sync de `InvoiceItem` bajo lock — `apply_invoice_item_quantity_delta(item, +qty)` para incrementos
-5. **Por último:** `serializer.save(medical_record=mr)` crea el MRS
+3. Create/update de `MedicalRecordService`
+4. Registro de `record_clinical_charge_delta`
 
-El orden importa: el MRS se crea **después** del sync de InvoiceItem para respetar el orden canónico `MR → Invoice → InvoiceItem → MRS`. Antes de ADR p13, MRS se guardaba antes que el lock de Invoice (deviation del orden).
+No se crea ni se bloquea una Invoice: el cargo comercial se materializa en el
+Checkout al cerrar la consulta.
 
 **En `MedicalRecordServiceDeleteView.perform_destroy()`:**
 1. Lock de `MedicalRecord`
-2. Lock de `Invoice` (si existe)
-3. Sync de `InvoiceItem` bajo lock — proyectar `item.quantity - fresh.quantity`; si `<= 0` llamar `item.delete()`, sino `apply_invoice_item_quantity_delta(item, -fresh.quantity)`
-4. Re-fetch de instancia con lock antes de `delete()`
+2. Lock de `MedicalRecordService`
+3. Registro del delta compensatorio
+4. Eliminación del vínculo
 
 Ver ADRs `2026-05-16-p12-concurrency-lock-order-hardening.md` (orden global) y `2026-05-16-p13-day12-concurrency-remediation.md` (MRS create reorder + helper F()).
 
@@ -318,10 +325,11 @@ acoplamiento permitido es el scratchpad `consultation_draft`.
 
 ### Materialización atómica en el cierre
 
-`services.apply_consultation_draft_on_close(medical_record, request)` se invoca **dentro
-del `transaction.atomic()` de `close_medical_record`**, junto al invoice-guard y a la
-completación de la cita. Finalizar es **una sola operación**: o se cierra la consulta Y se
-crea el registro legal, o nada (rollback). El frontend **NO** hace un POST aparte de vacuna.
+`services.apply_consultation_draft_on_close(medical_record, request)` se invoca
+**dentro del `transaction.atomic()` de `close_medical_record`**, junto a la
+materialización del Checkout y la completación de la cita. Finalizar es una sola
+operación: o se cierra la consulta, se crea el registro legal y se prepara el
+Checkout, o nada (rollback). El frontend no hace un POST aparte de vacuna.
 
 - **Registry de materializadores** (`services._MATERIALIZERS = {type: fn}`, extraído en la 2ª
   repetición — Cirugía, A3): `apply_consultation_draft_on_close` despacha por
@@ -441,7 +449,8 @@ Respuesta:
 
 Notas:
 - `last_vitals.weight`: usa `get_current_weight(record)` — prioriza `VitalSigns.weight`, sino cae a `MedicalRecord.weight`
-- `totals`: `null` si no existe factura vinculada
+- `totals`: usa Invoice si ya fue posteada; de lo contrario usa el Checkout
+  primario si existe; es `null` antes de ambos
 - `next_vaccine_date`: proxima vacuna futura de la mascota (de cualquier consulta, no solo esta)
 - el endpoint hace una sola query por entidad con `select_related`/`prefetch_related`
 
@@ -457,8 +466,8 @@ Endpoint:
 Comportamiento:
 - si está abierta, se valida y se cierra
 - si ya estaba cerrada, responde `200` sin cambios (idempotente — no re-valida campos)
-- al cerrar, **garantiza la factura** (ADR p30) y **completa la cita vinculada** si está
-  en `in_progress` (ADR p34 — `in_progress → done`, idempotente, no toca Invoice/pagos)
+- al cerrar, **garantiza el Checkout** (ADR p62) y completa la cita vinculada si
+  está en `in_progress` (ADR p34 — `in_progress → done`, idempotente)
 
 Validaciones en cierre (solo para consultas que no están ya cerradas):
 - `diagnosis` no puede estar vacío (todos los tipos)
@@ -517,7 +526,7 @@ No se permite para ningun rol, incluido `ADMIN`:
 - quitar servicios
 - registrar nuevos signos vitales
 
-### Consulta con factura no puede eliminarse
+### Consulta con evidencia financiera no puede eliminarse
 
 Si existe una factura vinculada a la consulta, la eliminacion retorna `403`:
 
@@ -528,7 +537,9 @@ Invoice.objects.filter(medical_record=instance).exists()
 Esto previene que el historial financiero quede huerfano.
 La consulta puede cerrarse pero no eliminarse.
 
-Si se necesita eliminar, primero se debe cancelar o eliminar la factura manualmente.
+Una Invoice emitida no se elimina para habilitar el borrado clínico. Los errores
+financieros se corrigen con void/replacement o contra-asientos; el
+`MedicalRecord` cerrado permanece como evidencia.
 
 ## Validacion de peso
 
@@ -596,24 +607,19 @@ El modulo incluye el modelo `VaccineRecord` para registrar el historial de vacun
 
 Ver seccion completa abajo.
 
-## Relacion con facturacion
+## Relación con facturación
 
-La consulta y la factura son dominios distintos.
+El dominio clínico se completa antes del financiero:
 
-La factura puede:
-- generarse despues
-- cobrarse despues
-- cancelarse segun sus reglas propias
+```text
+MedicalRecord closed → Checkout primary_consultation → Invoice posted → Payment
+```
 
-Nada de eso define por si mismo el estado clinico de la consulta.
-
-El cierre de consulta no depende del pago de factura.
-
-El cierre **sí** completa la cita vinculada (`in_progress → done`, ADR p34), pero eso es
-estado **operativo de agenda**, no financiero: `done` ≠ pagado. El cobro sigue su propio
-flujo en facturación independientemente del cierre clínico.
-
-La relacion modelo es `Invoice.medical_record = OneToOneField` — una sola factura por consulta, constraint en DB.
+El cierre no depende del pago y completa la cita vinculada cuando corresponde.
+El Checkout puede resolverse como `no_charge` sin Invoice, postearse y pagarse
+de inmediato, o generar una Invoice `posted` para pago posterior autorizado.
+La relación financiera conserva trazabilidad al `MedicalRecord`, pero no lo
+vuelve editable.
 
 ## Seguridad y control de acceso
 

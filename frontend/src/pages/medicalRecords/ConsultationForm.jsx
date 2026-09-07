@@ -676,7 +676,7 @@ export default function ConsultationForm({
       onComplete?.(recordRef.id);
       try {
         const updated = await getMedicalRecord(token, targetId);
-        if (updated.invoice_public_id) setCompletionInvoicePublicId(updated.invoice_public_id);
+        if (updated.checkout_public_id) setCompletionInvoicePublicId(updated.checkout_public_id);
       } catch {
         /* la factura se puede ubicar luego en Cobros */
       }
@@ -1016,7 +1016,7 @@ export default function ConsultationForm({
                       className="btn btn-primary btn-md"
                       onClick={() => {
                         onClose?.();
-                        navigate(`/billing?invoice=${completionInvoicePublicId}`);
+                        navigate(`/billing?checkout=${completionInvoicePublicId}`);
                       }}
                     >
                       <Icon.Download s={14} /> Ir a Cobros

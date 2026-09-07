@@ -1,5 +1,12 @@
 # SaaSlyVet — Análisis de producto para investigación competitiva
 
+> [!NOTE]
+> **Corte histórico de producto (2026-07-06).** Las descripciones técnicas de
+> Billing reflejan la arquitectura disponible en esa fecha. El lifecycle
+> normativo vigente es `MedicalRecord → Checkout → Invoice posted → Payment`
+> y está documentado en [Billing](modules/billing.md) y en el
+> [ADR p62](decisions/2026-08-30-p62-billing-checkout-lifecycle.md).
+
 **Fecha**: 2026-07-06
 **Autor**: Análisis de producto (perspectiva Product Manager Senior, SaaS B2B vertical)
 **Fuentes**: código completo del repositorio, `docs/` (14 docs de módulo, 59 ADRs, runbooks, auditorías de cumplimiento, registro de decisiones diferidas DD-001..DD-014, backlog del piloto "Don Carlos").

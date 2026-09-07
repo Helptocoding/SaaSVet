@@ -13,8 +13,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import confirm_invoice, pay_invoice
+from apps.billing.models import Service
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.organizations.models import Organization
@@ -86,19 +86,11 @@ class DashboardConsistencyTests(APITestCase):
         """Validates shape consistency between /summary/ and /series/ endpoints.
         The summary does not expose revenue_paid — this test is structural, not a
         financial parity gate."""
-        invoice = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.admin, service=self.service, quantity=Decimal('2'),
         )
-        InvoiceItem.objects.create(
-            invoice=invoice, service=self.service,
-            description=self.service.name, quantity=2,
-            unit_price=self.service.base_price, organization=self.org,
-        )
-        confirm_invoice(invoice, user=self.admin)
-        invoice.refresh_from_db()
-        pay_invoice(invoice, user=self.admin, payment_method='cash')
-        invoice.refresh_from_db()
+        invoice = pay_checkout_for_test(checkout, user=self.admin, payment_method='cash')
         expected_revenue = invoice.total
 
         self.client.force_authenticate(self.admin)

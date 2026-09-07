@@ -13,8 +13,8 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import pay_direct_sale
+from apps.billing.models import Service
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.cash.models import CashMovement
 from apps.cash.services import (
     close_cash_session,
@@ -38,17 +38,11 @@ class CashMovementServiceTests(TestCase):
         cls.service = Service.objects.create(name="Mov Svc", base_price=Decimal("3000.00"), organization=cls.org)
 
     def _paid_cash_sale(self):
-        inv = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.user, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=inv, service=self.service, description=self.service.name,
-            quantity=1, unit_price=self.service.base_price, organization=self.org,
-        )
-        inv.refresh_from_db()
-        pay_direct_sale(inv, user=self.user, payment_method='cash')
-        return inv
+        return pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
 
     # --- registro ---------------------------------------------------------
 

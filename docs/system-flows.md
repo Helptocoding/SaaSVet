@@ -1,187 +1,194 @@
-# Flujos Completos del Sistema
+# Flujos completos del sistema
 
-**Fecha**: 2026-05-29
-**Estado**: vigente (refleja Sprint A completo + Sprint B + ADR p30)
-**Audiencia**: nuevo desarrollador, QA, tester, soporte.
+**Fecha**: 2026-09-07
 
-Este documento describe los **recorridos extremo a extremo** que cubren los
-escenarios operativos más frecuentes en una clínica, el resumen de todos los
-flujos válidos y la lista de flujos inválidos rechazados explícitamente por el
-sistema.
+**Estado**: vigente; incluye ADR p62
+**Audiencia**: desarrollo, QA, soporte y operaciones.
 
-> **Índice general**: [`docs/system-operational-flow.md`](system-operational-flow.md) — mapa de módulos y dependencias.
-> **Operaciones por módulo**: [`docs/system-module-operations.md`](system-module-operations.md) — acciones con precondiciones, efectos y bloqueos.
-> **Referencia**: [`docs/system-reference.md`](system-reference.md) — errores, dependencias críticas e invariantes.
+Este documento resume los recorridos operativos de extremo a extremo. Los
+contratos detallados viven en [operaciones por módulo](system-module-operations.md),
+[referencia operacional](system-reference.md) y [Billing](modules/billing.md).
 
----
+## 1. Consulta agendada, atendida y cobrada
 
-## 1. Flujos completos
-
-A continuación se presentan los recorridos extremo a extremo que cubren los escenarios
-operativos más frecuentes en una clínica. Cada diagrama traza el camino desde la acción
-inicial hasta el registro en analytics.
-
-### Flujo A — Consulta agendada, atendida y cobrada
-
-```
-Recepción
-   ↓
-Crear cita (scheduled)
-   ↓ (opcional)
-Confirmar (confirmed)
-   ↓
-Iniciar (in_progress)
-   ↓
-[El veterinario abre la consulta médica]
-   ↓
-Registrar signos vitales (VitalSigns append-only)
-   ↓
-Agregar servicios (sincroniza InvoiceItem en factura draft lazy)
-   ↓
-Agregar productos (descuenta stock, sincroniza InvoiceItem)
-   ↓ (opcional)
-Emitir receta (medicamentos, sin descuento de stock ni cobro)
-   ↓
-Cerrar consulta (closed_at + garantiza factura draft)
-   ↓
-[Recepción abre la sección de Cobros]
-   ↓ (opcional)
-Dispensar receta (agrega líneas a la MISMA factura con FK dispensed_from_prescription_item)
-   ↓
-Confirmar factura (confirmed + descuenta stock de ítems dispensados)
-   ↓
-Cobrar (pay_invoice, total exacto, 1+ Payment, paid_at)
-   ↓
-Cita pasa a done (manual; CTAs en detalle de cita: Ver Consulta, Ver Factura)
-   ↓
-Analytics nocturno snapshotea:
-   - revenue_paid, revenue_accrual, invoices_paid_count
-   - medical_records_closed
-   - appointments_done
+```text
+Appointment scheduled
+  → confirmed (opcional)
+  → in_progress
+  → MedicalRecord open
+  → vitales / servicios / consumos / receta
+  → MedicalRecord closed
+  → Checkout primary_consultation open
+  → decisión de receta: accepted | declined
+  → post_checkout
+  → Invoice posted
+  → Payment(s)
+  → Invoice paid
 ```
 
-### Flujo B — Venta directa (mostrador / POS, ADR p38)
+Reglas:
 
-```
-Recepción abre /pos (sidebar, o "+ Cobro" / F11 desde Cobros)
-   ↓
-Selecciona owner (genérico por defecto o real) + pet (opcional)
-   ↓
-Escanea códigos de barras (lookup exacto, qty incremental) o busca por nombre
-   → agrega productos y/o servicios al carrito (estado local)
-   ↓ (si el producto tiene requires_prescription)
-Atestar receta externa en el carrito (prescriber_name, rx_attested=true)
-   ↓
-Botón "Cobrar" → crea la factura real:
-   - createInvoice (direct_sale, draft)
-   - addItem × N (crea ExternalPrescriptionAttestation si aplica)
-   - getInvoice → el panel muestra subtotal/IVA/total del backend
-   ↓
-Captura del pago (PaymentLinesEditor: split, total exacto, recibido → cambio)
-   ↓ ("Volver al carrito" / abandonar → cancelInvoice del draft, auditable)
-Botón "Confirmar cobro" → direct-pay (un solo lock, X-Idempotency-Key):
-   * _confirm_locked_invoice → descuenta stock de TODOS los ítems con presentación + confirmed_at
-   * _pay_locked_invoice → registra Payment(s) + paid_at
-   * Si el toggle de caja está activo: asigna Payment.cash_session
-   ↓
-El frontend muestra el cambio en efectivo (solo UI) si el monto recibido > total
-   ↓
-Analytics nocturno snapshotea:
-   - revenue_paid (confirmed_at ≈ paid_at, diferencia de milisegundos)
-```
+- Los servicios y cargos clínicos se registran como evidencia clínica; no crean
+  una Invoice mutable.
+- Los productos consumidos durante la consulta descuentan stock cuando se
+  consumen.
+- Cerrar la consulta materializa o adopta exactamente un Checkout y congela los
+  snapshots de cargos.
+- La receta por sí sola no cobra ni descuenta stock.
+- Aceptar una presentación crea una selección/línea comercial; el stock y el
+  fulfillment se comprometen juntos al post.
+- Una consulta sin cargos termina mediante `complete_no_charge`, sin Invoice.
+- El post puede cobrar en la misma transacción o dejar una Invoice `posted`
+  sólo cuando el crédito está autorizado.
 
-### Flujo C — Walk-in anónimo, atendido
+## 2. Venta directa / POS
 
-```
-Un cliente llega sin cita previa
-   ↓
-Recepción usa la opción walk-in (allow_anonymous_walkin=True)
-   ↓
-Se crea la cita en in_progress, walk_in=True, pet=genérica
-   ↓
-El banner amarillo en la UI indica: "vincular paciente"
-   ↓ (en cualquier momento antes de done)
-PATCH assign-patient con el pet real
-   ↓
-Se continúa con el Flujo A normal (consulta → cobro)
+```text
+Recepción abre POS
+  → crea Checkout direct_sale
+  → agrega CheckoutItems
+  → attestation externa si un producto Rx la requiere
+  → backend calcula subtotal / impuesto / total / readiness
+  → captura payment lines por total exacto
+  → POST /checkouts/{id}/pay/
+  → revalidación bajo locks
+  → Invoice + InvoiceItems + StockAllocations + StockMovements + Payments
+  → Checkout completed / Invoice paid
 ```
 
-### Flujo D — Devolución (post-pago, Sprint B)
+El cliente envía `expected_version` e `idempotency_key`. Repetir la misma
+operación devuelve el resultado ya confirmado; una versión obsoleta produce un
+conflicto y cero escrituras parciales. Volver al carrito conserva el Checkout
+mutable; abandonarlo usa el comando explícito y no crea una Invoice a cancelar.
 
-```
-La factura está en paid
-   ↓
-ADMIN abre el detalle de la factura → botón "Devolver" (can('billing.refund'))
-   ↓
-Selecciona los conceptos a devolver (cantidad/monto por línea) + disposition (restock/discard)
-   ↓
-Editor de reembolso: payment_lines exactos = Σ credit_lines
-   ↓
-Rellena reason_code (tipificado) + notas
-   ↓
-X-Idempotency-Key + POST refund/
-   ↓ (atómico)
-Se crean CreditNote + CreditNoteItem[] + RefundPayment[]
-   ↓
-Si restock: apply_stock_movement('in')
-   ↓
-Se genera un MetricAdjustment negativo en revenue_paid del DÍA DEL REFUND
-   ↓
-Si es en efectivo: se resta del expected_cash de la caja abierta actual
-   ↓
-La Invoice permanece en paid (paid_at inmutable)
-   ↓
-Si fue un error → botón "Revertir" → RefundReversal + ajuste positivo + suma en caja
+## 3. Dispensación de receta
+
+```text
+PrescriptionItem.quantity (base)
+  − PrescriptionFulfillmentEvent.quantity (base)
+  − selecciones cap-consuming del Checkout (base)
+  = remaining_quantity_base
+
+Product.stock_quantity / StockLot.quantity_on_hand (base)
+  ÷ Presentation.conversion_factor (base por presentación)
+  = stock_max_presentation_units
+
+max_selectable_quantity
+  = min(clinical_max_presentation_units, stock_max_presentation_units)
 ```
 
----
+El backend devuelve las tres magnitudes y sus unidades en
+`prescription_suggestions`. El frontend sólo las presenta.
 
-## 2. Flujos válidos (resumen)
+Casos relevantes:
 
-1. Cita programada: `scheduled → (confirmed) → in_progress → done` (done es terminal).
-2. Cancelación de cita: `scheduled|confirmed → canceled` (se puede reprogramar solo si la fecha original no ha pasado **y** el hueco sigue libre — INV-D, ADR p57).
-3. Consulta médica: `open → closed` (terminal, irreversible y garantiza la existencia de factura).
-4. Factura de consulta: `draft → confirmed → paid` (cobro por el total exacto).
-5. Venta directa: `draft → paid` de forma atómica mediante `direct-pay`.
-6. Cancelación de factura: `draft|confirmed → cancelled` (solo si no tiene Payments registrados).
-7. Devolución: `paid → (CreditNote + RefundPayment[])` — la factura permanece en `paid`.
-8. Reversión de devolución: `RefundPayment → RefundReversal` (relación 1:1, el reversal no es reversible).
-9. Caja: `open → closed` (el cierre Z legal queda congelado).
-10. Walk-in anónimo: `pet genérico → assign-patient → pet real` (antes de que la cita llegue a `done`).
-11. Dispensación de receta: se agregan ítems a la **misma factura de consulta** (en `draft`); el descuento de stock ocurre al confirmar.
-12. Receta externa en venta directa: aplica cuando `requires_prescription=True`, con `rx_attested=true`, `prescriber_name` y permiso `billing.rx_dispense`.
+- `conversion_factor > remaining_quantity_base` puede producir
+  `max_selectable_quantity = 0` de forma válida;
+- stock de producto positivo con cero lotes consumibles produce máximo cero;
+- `Presentation.stock` desincronizado no cambia el resultado;
+- `declined` no consume cap, no crea fulfillment y no mueve stock;
+- un reintento no duplica `PrescriptionFulfillmentEvent`.
 
----
+## 4. Pago posterior de crédito
 
-## 3. Flujos inválidos (rechazados explícitamente)
+```text
+Checkout autorizado sin pago
+  → post_checkout
+  → Invoice posted + due_date + evidencia de aceptación
+  → pay_invoice con total exacto
+  → Payment(s)
+  → Invoice paid
+```
 
-- Pagar una factura en `draft` sin haberla confirmado antes (`pay_invoice` exige `confirmed`).
-- Pagar un monto inferior al total (ADR p30: no se admiten pagos parciales bajo ningún motivo).
-- Cancelar una factura en estado `paid` (para eso existe la nota de crédito).
-- Cancelar una factura en `confirmed` que ya tenga Payments registrados.
-- Emitir un refund sobre una factura en `draft`, `confirmed` o `cancelled` (solo se permite sobre `paid`).
-- Hacer over-refund (cantidad o monto superior al saldo disponible para devolver).
-- Editar o borrar una consulta en estado `closed` (ningún rol puede hacerlo).
-- Borrar una consulta que tenga una factura asociada → 403.
-- Borrar un Owner o Pet que tenga dependencias → 409 `resource_has_dependencies`.
-- Borrar el Owner o Pet genérico → 409 `generic_resource_protected`.
-- Borrar un `VaccineRecord` → 405 (modelo append-only por cumplimiento NOM-007/046).
-- Borrar un `MedicalRecord` con recetas, facturas o signos vitales asociados → 403 (guard) o 409 (PROTECT).
-- Crear un walk-in sin `pet` cuando `allow_anonymous_walkin=False` → 400.
-- Realizar transiciones de cita inválidas (`scheduled → done`, `done → *`, etc.).
-- Crear, reprogramar o reactivar una cita que deje a un veterinario con dos citas activas solapadas → `400 slot_taken` (INV-D, ADR p57). Aplica también a la **atención sin cita** (§9.14) y a la **reactivación** `canceled|no_show → scheduled` (§9.15), que antes no validaban cupo. No existe bandera de forzado.
-- Mutar una cita con `expected_state` desfasado → `409 appointment_changed` con `current` (INV-A, ADR p57). Cero escrituras, ni siquiera `AppointmentStatusChange`.
-- Enviar `expected_state` al **crear** una cita → `400`: no hay estado previo que comparar.
-- Confirmar una factura sin ítems activos → 400.
-- Agregar dos veces la misma presentación o servicio a la misma factura → unique constraint.
-- Dispensar una receta sobre una factura en `confirmed` o `paid` → solo se permite en `draft`.
-- Dispensar más de lo recetado (acumulado en unidades base por ítem de receta) → 400; el cliente puede llevar menos de lo recetado, nunca más.
-- Vender un producto con `requires_prescription` en venta directa sin `rx_attested` → 400 `prescription_required`.
-- Vender un producto con `requires_prescription` sin el permiso `billing.rx_dispense` → 403.
-- Abrir una segunda caja para el mismo usuario → UniqueConstraint.
-- Pagar cuando `require_open_cash_session=True` y el actor no tiene caja abierta → 400 `cash_session_required`.
-- Provisionar una organización con un payload que intente inyectar `role=ADMIN_SAAS` → el sistema aplica fuerza-override silencioso (se asigna `ADMIN`).
-- Acceder a recursos de otra organización (cross-tenant) → 404 (nunca se devuelve `[]`).
-- Crear un `Payment` con `amount <= 0` → se viola el invariante.
-- Mutar `Invoice.status` fuera de `services.py` → bloqueado por CHECK constraints de base de datos y auditoría.
-- Cerrar una consulta sin `diagnosis` (siempre obligatorio) o sin `treatment` (obligatorio excepto en `consultation_type=vaccine`).
+No se admiten pagos parciales ni sobrepagos. Si la configuración exige caja
+abierta, los métodos que afectan efectivo deben vincularse a la sesión del actor.
+
+## 5. Corrección de una Invoice posteada
+
+```text
+Invoice posted
+  → void_and_prepare_replacement
+  → Invoice voided
+  → Checkout replacement open con baseline protegido
+  → corrección explícita
+  → nuevo post
+```
+
+Una Invoice emitida no vuelve a ser editable. El replacement conserva la
+trazabilidad del documento sustituido y no puede reducir silenciosamente a cero
+el baseline entregado sin waiver autorizado y auditado. Una anulación terminal
+usa `void_invoice_terminal` con motivo y evidencia.
+
+## 6. Devolución post-pago
+
+```text
+Invoice paid
+  → CreditNote + CreditNoteItems
+  → RefundPayment(s)
+  → disposition restock | discard por línea
+  → MetricAdjustment
+```
+
+La Invoice permanece `paid`. Una devolución no reescribe `paid_at`. El
+restock se apoya en las `StockAllocation` comprometidas al post para devolver
+cantidades exactas por lote. Un refund emitido por error se corrige con
+`RefundReversal`, nunca editando o borrando el evento original.
+
+## 7. Walk-in anónimo
+
+```text
+Walk-in in_progress con Pet genérica
+  → assign-patient antes de done
+  → MedicalRecord
+  → mismo flujo clínico y comercial
+```
+
+La vinculación a paciente real ocurre antes de cerrar la atención. El
+multitenancy y las precondiciones de Appointment continúan aplicando.
+
+## 8. Analytics
+
+```text
+Invoice.posted_at → revenue_accrual
+Invoice.paid_at → revenue_paid / invoices_paid_count
+MedicalRecord.closed_at → medical_records_closed
+Appointment.start_datetime → métricas operativas
+```
+
+`build_daily_metrics` genera snapshots idempotentes por organización y fecha
+local. El día actual es live. Los anchors ausentes no reciben fallbacks
+silenciosos y los snapshots congelados sólo cambian mediante el flujo de
+adjustment/rebuild.
+
+## 9. Flujos válidos
+
+1. Appointment: `scheduled → confirmed? → in_progress → done`.
+2. MedicalRecord: `open → closed`; el cierre crea Checkout, no Invoice.
+3. Checkout: `open → completed|abandoned`.
+4. Invoice: nace `posted` y pasa a `paid` o `voided`.
+5. Venta directa: Checkout abierto → post/pago atómico.
+6. Crédito: Checkout abierto → Invoice posted → pago total posterior.
+7. Sin cargos: Checkout abierto → completed/no_charge, sin Invoice.
+8. Refund: Invoice paid → CreditNote/RefundPayment; Invoice sigue paid.
+9. Reversal: RefundPayment → RefundReversal append-only.
+10. Dispensación: selección en Checkout → fulfillment y stock al post.
+
+## 10. Flujos inválidos
+
+- Crear una Invoice `draft` para editarla.
+- Confirmar o cancelar una Invoice con el lifecycle retirado.
+- Editar Invoice o InvoiceItem después del post.
+- Pagar menos o más que el saldo total.
+- Pagar dos veces o duplicar fulfillment/stock al reintentar.
+- Postear con `expected_version` obsoleta.
+- Dispensar más unidades base que el remanente clínico.
+- Usar `Presentation.stock` como autoridad.
+- Postear un producto con lotes sin allocations consumibles suficientes.
+- Vender un producto Rx sin receta interna o attestation externa válida.
+- Mutar eventos financieros en vez de emitir un contra-asiento.
+- Acceder a recursos de otra organización.
+- Omitir los gates de schema en un despliegue de Billing.
+
+Antes de release ejecutar `audit_billing_schema --json` y
+`audit_anchor_integrity --json`; para schema drift seguir el
+[runbook de reconciliación](runbooks/billing-schema-reconciliation.md).

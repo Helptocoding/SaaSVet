@@ -27,8 +27,7 @@ from rest_framework.test import APIClient, APITestCase
 from apps.analytics.models import DailyOrgMetrics, LIFECYCLE_CORRUPT, LIFECYCLE_FROZEN
 from apps.analytics.services import apply_snapshot
 from apps.appointments.models import Appointment
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import confirm_invoice, pay_invoice
+from apps.billing.models import Service
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.organizations.models import Organization

@@ -1,4 +1,6 @@
-# Modulo: Organizaciones y usuarios
+# Módulo: Organizaciones y usuarios
+
+**Última actualización**: 2026-09-07
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
 
@@ -356,11 +358,10 @@ Toggles disponibles:
 | Campo                              | Default | Descripcion                                                   |
 |------------------------------------|---------|---------------------------------------------------------------|
 | `auto_create_medical_record`       | `false` | Crea consulta automaticamente al completar una cita           |
-| `auto_create_invoice_on_done`      | `false` | Crea factura draft al marcar cita como completada             |
 | `require_confirmation_before_start`| `false` | La cita debe confirmarse antes de iniciar                     |
 | `allow_anonymous_walkin`           | `false` | Permite walk-in sin mascota registrada                        |
 | `show_status_change_history`       | `true`  | Muestra historial de cambios de estado en citas               |
-| `require_open_cash_session`        | `false` | Si `True`, `pay_invoice` / `pay_direct_sale` exigen una caja abierta del actor (ADR p28). |
+| `require_open_cash_session`        | `false` | Si `True`, `post_checkout(..., pay=True)` / `pay_invoice` exigen una caja abierta del actor. |
 | `locale`                           | `es-MX` | Locale del sistema                                            |
 | `currency_code`                    | `MXN`   | Codigo de moneda ISO-4217                                     |
 | `default_appointment_duration_minutes` | `30` | Duracion sugerida al crear citas nuevas. No modifica citas existentes. |

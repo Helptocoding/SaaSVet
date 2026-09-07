@@ -22,7 +22,8 @@ import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 _SENTRY_DSN = config('SENTRY_DSN', default='')
-if _SENTRY_DSN:
+_SENTRY_DISABLED = config('DISABLE_SENTRY', default=False, cast=bool)
+if _SENTRY_DSN and not _SENTRY_DISABLED:
     # P1-5 A2: scrubbing de privacidad — nunca enviar historial clínico, notas,
     # teléfonos, emails, datos financieros ni tokens a Sentry. Importado dentro
     # del guard para no cargar el módulo cuando Sentry está apagado (dev).
@@ -211,6 +212,7 @@ INSTALLED_APPS = [
     # Dominios FRONTERA: ningún módulo de dominio los importa.
     'apps.channels.apps.ChannelsConfig',
     'apps.agent.apps.AgentConfig',
+    'apps.notifications.apps.NotificationsConfig',
     # ADR p20: requerida para JWT refresh-token rotation + blacklist al
     # cambiar password. Infraestructura crítica del auth lifecycle.
     'rest_framework_simplejwt.token_blacklist',

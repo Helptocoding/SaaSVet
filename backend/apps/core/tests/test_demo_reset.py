@@ -21,7 +21,7 @@ from django.utils import timezone
 from rest_framework.test import APIRequestFactory
 
 from apps.analytics.models import MetricAdjustment
-from apps.billing.models import Invoice
+from apps.billing.models import Checkout, Invoice
 from apps.core.demo_reset import DEMO_RESET_FLAG_KEY
 from apps.core.management.commands.seed_demo_clinic import Command
 from apps.core.permissions import (
@@ -48,9 +48,14 @@ class PurgeP0Tests(TestCase):
         owner = Owner.objects.create(
             organization=self.org, name="Cliente Real", phone="5512345678",
         )
+        checkout = Checkout.objects.create(
+            organization=self.org, origin='direct_sale', kind='direct_sale',
+            lifecycle='completed', completion_kind='posted_unpaid', customer=owner,
+            completed_at=timezone.now(),
+        )
         invoice = Invoice.objects.create(
-            organization=self.org, invoice_type="direct_sale", owner=owner,
-            status="draft", tax_rate=Decimal("0"),
+            checkout=checkout, organization=self.org, invoice_type="direct_sale", owner=owner,
+            status="posted", posted_at=timezone.now(), tax_rate=Decimal("0"),
         )
         # Lo que crea process_refund: ajuste con source_invoice PROTECT.
         MetricAdjustment.objects.create(
@@ -62,6 +67,7 @@ class PurgeP0Tests(TestCase):
         # No debe lanzar ProtectedError (ese era el P0).
         Command()._purge(self.org, full=False)
 
+        self.assertEqual(Checkout.all_objects.filter(organization=self.org).count(), 0)
         self.assertEqual(Invoice.all_objects.filter(organization=self.org).count(), 0)
         self.assertEqual(MetricAdjustment.all_objects.filter(organization=self.org).count(), 0)
         # El cliente real se borra…

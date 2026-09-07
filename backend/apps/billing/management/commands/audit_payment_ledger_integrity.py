@@ -7,10 +7,9 @@ arbitrario. `remaining_balance = total − Σ(Payment.amount)`.
 
 Reglas verificadas (por factura):
   - status='paid'      ⇒ remaining_balance == 0   (Σ pagos == total)
-  - status='confirmed' ⇒ remaining_balance >  0   (Σ pagos < total; si == total
+  - status='posted'    ⇒ remaining_balance >  0   (Σ pagos < total; si == total
                          debería estar 'paid' → violación)
-  - status='draft'     ⇒ Σ pagos == 0             (un borrador no tiene pagos)
-  - status='cancelled' ⇒ Σ pagos == 0             (cancel con pagos está bloqueado;
+  - status='voided'    ⇒ Σ pagos == 0             (void con pagos está bloqueado;
                          la devolución va por nota de crédito, ADR p29)
 
 Es el ratchet que atrapa la regresión "alguien dejó status='paid' sin que el
@@ -89,12 +88,10 @@ class Command(BaseCommand):
 
             if status == 'paid' and remaining != ZERO:
                 kind = 'paid_remaining_nonzero'
-            elif status == 'confirmed' and total > ZERO and paid >= total:
-                kind = 'confirmed_fully_paid_not_marked'
-            elif status == 'draft' and paid > ZERO:
-                kind = 'draft_with_payments'
-            elif status == 'cancelled' and paid > ZERO:
-                kind = 'cancelled_with_payments'
+            elif status == 'posted' and total > ZERO and paid >= total:
+                kind = 'posted_fully_paid_not_marked'
+            elif status == 'voided' and paid > ZERO:
+                kind = 'voided_with_payments'
 
             if kind:
                 violations += 1

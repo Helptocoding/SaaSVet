@@ -19,7 +19,7 @@ import {
     Frown,
     Link, Heart, Activity,
     Building2, Wallet, Lock,
-    MessageCircle, Send,
+    MessageCircle, Send, Bell,
 } from "lucide-react";
 
 export const Icon = {
@@ -91,4 +91,5 @@ export const Icon = {
     Building: ({ s = 20, c = "currentColor" }) => <Building2 size={s} color={c} strokeWidth={2} />,
     Wallet: ({ s = 20, c = "currentColor" }) => <Wallet size={s} color={c} strokeWidth={2} />,
     Lock: ({ s = 20, c = "currentColor" }) => <Lock size={s} color={c} strokeWidth={2} />,
+    Bell: ({ s = 20, c = "currentColor" }) => <Bell size={s} color={c} strokeWidth={2} />,
 };

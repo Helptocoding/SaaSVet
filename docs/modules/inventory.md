@@ -16,7 +16,7 @@ Product.base_unit       ← "piece", "ml", "kg", etc.
 Product.min_stock       ← umbral de alerta (en base_unit)
 
 Presentation.conversion_factor  ← cuántas base_unit contiene 1 unidad de esta presentación
-Presentation.stock              ← copia display (backward compat); no autoritative
+Presentation.stock              ← copia display (backward compat); no autoritativa
 ```
 
 **Ejemplo:** Jeringa 3ml
@@ -107,8 +107,9 @@ Productos consumidos en consulta. Ver también `docs/modules/medical_records.md`
 - `presentation` — FK a Presentation
 - `quantity` — cantidad consumida (en unidades de presentación)
 - `cost_behavior` — `'charge'` | `'included'`
-  - `'charge'`: descuenta stock Y genera InvoiceItem
-  - `'included'`: descuenta stock pero NO genera InvoiceItem (insumo clínico)
+  - `'charge'`: descuenta stock y registra un cargo clínico que se
+    materializa como CheckoutItem al cierre
+  - `'included'`: descuenta stock pero no genera cargo comercial
   - **inmutable** una vez guardado
   - Default en el wizard de consulta: `'charge'` (el usuario puede cambiarlo a `'included'` si es insumo clínico)
 - `lot` — FK nullable a `StockLot` (B2a). **Obligatorio** si el producto tiene `tracks_lots`
@@ -210,8 +211,8 @@ apply_stock_movement(quantity=self.quantity * cf, ...)
 quantity_base = quantity * (locked_pres.conversion_factor or 1)
 apply_stock_movement(quantity=quantity_base, ...)
 
-# billing._confirm_locked_invoice / cancel_invoice
-qty_base = item.quantity * (item.presentation.conversion_factor or 1)
+# billing.post_checkout
+qty_base = item.quantity * item.conversion_factor_snapshot
 ```
 
 ## Validaciones de backend
@@ -232,11 +233,10 @@ Regex: `^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\.\-\(\)\/\%\+]+$`
 
 ## Concurrencia (ADR p12/p13)
 
-### Orden global de locks (actualizado ADR p31)
+### Orden de locks
 
-```
-CashSession → MedicalRecord → Invoice → Product → InvoiceItem
-```
+Los servicios autoritativos de inventario y Billing deciden y adquieren sus
+locks. Views y serializers no deben componer un orden parcial propio.
 
 `apply_stock_movement` adquiere lock sobre `Product` internamente. El caller **no** necesita lockear `Presentation` antes (cambio vs. pre-ADR p31, donde el caller debía lockear Presentation).
 

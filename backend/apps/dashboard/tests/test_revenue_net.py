@@ -8,8 +8,9 @@ from decimal import Decimal
 
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import pay_direct_sale, process_refund
+from apps.billing.models import InvoiceItem, Service
+from apps.billing.services import process_refund
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.organizations.models import Organization
@@ -43,16 +44,11 @@ class RevenueNetTests(APITestCase):
 
     def test_revenue_net_equals_gross_plus_adjustments(self):
         # Venta pagada hoy → today.revenue_paid (gross) = 100.
-        inv = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.admin, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=inv, service=self.service, description=self.service.name,
-            quantity=Decimal("1"), unit_price=Decimal("100.00"), organization=self.org,
-        )
-        pay_direct_sale(inv, user=self.admin, payment_method='cash')
-        inv.refresh_from_db()
+        inv = pay_checkout_for_test(checkout, user=self.admin, payment_method='cash')
 
         # Reembolso parcial de 30 hoy → MetricAdjustment(-30) en revenue_paid de hoy.
         item = InvoiceItem.all_objects.filter(invoice=inv).first()
@@ -61,6 +57,7 @@ class RevenueNetTests(APITestCase):
             credit_lines=[{'invoice_item': item.pk, 'quantity': '1', 'amount': '30.00', 'disposition': 'discard'}],
             refund_lines=[{'method': 'cash', 'amount': '30.00'}],
             reason_code='pricing_error',
+            idempotency_key='revenue-net-refund',
         )
 
         self.client.force_authenticate(self.admin)
@@ -77,15 +74,11 @@ class RevenueNetTests(APITestCase):
         self.assertEqual(net, Decimal("70.00"))
 
     def test_revenue_net_present_without_refunds_equals_gross(self):
-        inv = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.admin, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=inv, service=self.service, description=self.service.name,
-            quantity=Decimal("1"), unit_price=Decimal("100.00"), organization=self.org,
-        )
-        pay_direct_sale(inv, user=self.admin, payment_method='cash')
+        pay_checkout_for_test(checkout, user=self.admin, payment_method='cash')
 
         self.client.force_authenticate(self.admin)
         r = self.client.get('/api/v1/dashboard/financial/series/?include_today=true')

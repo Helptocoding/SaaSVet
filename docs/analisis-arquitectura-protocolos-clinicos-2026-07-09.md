@@ -1,5 +1,13 @@
 # Estudio de arquitectura — Protocolos clínicos por tipo de consulta
 
+> [!NOTE]
+> **Corte histórico de arquitectura (2026-07-09).** Se conserva como evidencia
+> de las decisiones disponibles en esa fecha. Cualquier referencia a la
+> creación lazy de Invoice o al lifecycle anterior de Billing fue sustituida
+> por `MedicalRecord → Checkout → Invoice posted → Payment`; consulte
+> [Billing](modules/billing.md) y el
+> [ADR p62](decisions/2026-08-30-p62-billing-checkout-lifecycle.md).
+
 **Fecha**: 2026-07-09
 **Tipo**: Investigación (read-only). **NO** propone implementación, migración ni cambios de modelo.
 **Audiencia**: quien vaya a diseñar la evolución hacia protocolos clínicos independientes.

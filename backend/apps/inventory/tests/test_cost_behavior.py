@@ -1,16 +1,15 @@
 """
 Tests para MedicalRecordProduct.cost_behavior (ADR p32).
 
-cost_behavior='charge'   → descuenta stock + crea InvoiceItem
-cost_behavior='included' → descuenta stock + NO crea InvoiceItem
+cost_behavior='charge'   → descuenta stock + registra ClinicalChargeEntry
+cost_behavior='included' → descuenta stock + NO registra cargo clínico
 """
 from decimal import Decimal
 
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.billing.models import Invoice, InvoiceItem
-from apps.billing.services import confirm_invoice, cancel_invoice
+from apps.billing.models import ClinicalChargeEntry
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.inventory.models import MedicalRecordProduct, Presentation, Product
@@ -106,7 +105,7 @@ class CostBehaviorSetupMixin:
 class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
     """cost_behavior='charge' (default) — comportamiento existente sin regresión."""
 
-    def test_charge_creates_invoice_item(self):
+    def test_charge_creates_clinical_charge_entry(self):
         resp = self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '2',
@@ -114,13 +113,13 @@ class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
         })
         self.assertEqual(resp.status_code, 201, resp.data)
 
-        invoice = Invoice.objects.get(medical_record=self.medical_record)
-        item = InvoiceItem.objects.filter(
-            invoice=invoice, presentation=self.presentation, is_active=True,
-        ).first()
-        self.assertIsNotNone(item)
-        self.assertEqual(item.quantity, Decimal('2'))
-        self.assertEqual(item.unit_price, Decimal('5.00'))
+        charge = ClinicalChargeEntry.objects.get(
+            medical_record=self.medical_record,
+            medical_record_product__presentation=self.presentation,
+            lifecycle='active',
+        )
+        self.assertEqual(charge.current_quantity, Decimal('2'))
+        self.assertEqual(charge.unit_price, Decimal('5.00'))
 
     def test_charge_deducts_stock(self):
         resp = self.client.post(self._mrp_url(), {
@@ -152,7 +151,7 @@ class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
         })
         self.assertEqual(resp.data['cost_behavior'], 'charge')
 
-    def test_charge_delete_removes_invoice_item(self):
+    def test_charge_delete_closes_clinical_charge_entry(self):
         resp = self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '2',
@@ -164,11 +163,13 @@ class CostBehaviorChargeTests(CostBehaviorSetupMixin, TestCase):
 
         self.client.delete(self._mrp_delete_url(mrp_id))
 
-        invoice = Invoice.objects.get(medical_record=self.medical_record)
-        item = InvoiceItem.objects.filter(
-            invoice=invoice, presentation=self.presentation, is_active=True,
-        ).first()
-        self.assertIsNone(item)
+        charge = ClinicalChargeEntry.all_objects.get(
+            medical_record=self.medical_record,
+            source_kind='product',
+            source_pk=mrp_id,
+        )
+        self.assertEqual(charge.lifecycle, 'closed')
+        self.assertEqual(charge.current_quantity, Decimal('0'))
 
     def test_charge_delete_reverts_stock(self):
         initial = self.product.stock_quantity
@@ -198,12 +199,10 @@ class CostBehaviorIncludedTests(CostBehaviorSetupMixin, TestCase):
         })
         self.assertEqual(resp.status_code, 201, resp.data)
 
-        invoice = Invoice.objects.filter(medical_record=self.medical_record).first()
-        if invoice:
-            item = InvoiceItem.objects.filter(
-                invoice=invoice, presentation=self.presentation, is_active=True,
-            ).first()
-            self.assertIsNone(item)
+        self.assertFalse(ClinicalChargeEntry.objects.filter(
+            medical_record=self.medical_record,
+            medical_record_product__presentation=self.presentation,
+        ).exists())
 
     def test_included_deducts_stock(self):
         resp = self.client.post(self._mrp_url(), {
@@ -240,19 +239,17 @@ class CostBehaviorIncludedTests(CostBehaviorSetupMixin, TestCase):
         self.product.refresh_from_db()
         self.assertEqual(self.product.stock_quantity, initial)
 
-        invoice = Invoice.objects.filter(medical_record=self.medical_record).first()
-        if invoice:
-            item = InvoiceItem.objects.filter(
-                invoice=invoice, presentation=self.presentation, is_active=True,
-            ).first()
-            self.assertIsNone(item)
+        self.assertFalse(ClinicalChargeEntry.objects.filter(
+            medical_record=self.medical_record,
+            medical_record_product__presentation=self.presentation,
+        ).exists())
 
 
 class CostBehaviorImmutabilityTests(CostBehaviorSetupMixin, TestCase):
     """cost_behavior es inmutable tras la creación; incrementos de cantidad lo preservan."""
 
     def test_quantity_increment_preserves_included(self):
-        # Primer POST: included → sin InvoiceItem
+        # Primer POST: included → sin cargo clínico
         self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '2',
@@ -270,16 +267,13 @@ class CostBehaviorImmutabilityTests(CostBehaviorSetupMixin, TestCase):
         self.assertEqual(mrp.cost_behavior, 'included')
         self.assertEqual(mrp.quantity, Decimal('5'))
 
-        # Ningún InvoiceItem creado para esta presentación
-        invoice = Invoice.objects.filter(medical_record=self.medical_record).first()
-        if invoice:
-            item = InvoiceItem.objects.filter(
-                invoice=invoice, presentation=self.presentation, is_active=True,
-            ).first()
-            self.assertIsNone(item)
+        self.assertFalse(ClinicalChargeEntry.objects.filter(
+            medical_record=self.medical_record,
+            medical_record_product__presentation=self.presentation,
+        ).exists())
 
     def test_quantity_increment_preserves_charge(self):
-        # Primer POST: charge → con InvoiceItem
+        # Primer POST: charge → con cargo clínico
         self.client.post(self._mrp_url(), {
             'presentation': self.presentation.pk,
             'quantity': '2',
@@ -297,12 +291,13 @@ class CostBehaviorImmutabilityTests(CostBehaviorSetupMixin, TestCase):
         self.assertEqual(mrp.cost_behavior, 'charge')
         self.assertEqual(mrp.quantity, Decimal('5'))
 
-        # InvoiceItem acumula ambas cantidades
-        invoice = Invoice.objects.get(medical_record=self.medical_record)
-        item = InvoiceItem.objects.get(
-            invoice=invoice, presentation=self.presentation, is_active=True,
+        # El cargo clínico acumula ambas cantidades conservando el primer precio.
+        charge = ClinicalChargeEntry.objects.get(
+            medical_record=self.medical_record,
+            medical_record_product__presentation=self.presentation,
+            lifecycle='active',
         )
-        self.assertEqual(item.quantity, Decimal('5'))
+        self.assertEqual(charge.current_quantity, Decimal('5'))
 
     def test_stock_deducts_on_both_increments_regardless_of_behavior(self):
         # Stock descuenta siempre, independiente del cost_behavior

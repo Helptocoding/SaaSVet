@@ -13,8 +13,8 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 from rest_framework.test import APITestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Payment, Service
-from apps.billing.services import pay_direct_sale
+from apps.billing.models import Payment, Service
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.cash.models import CashSession
 from apps.cash.services import close_cash_session, get_open_session, open_cash_session
 from apps.organizations.models import Organization
@@ -38,17 +38,11 @@ class CashSessionTests(TestCase):
         s.require_open_cash_session = True
         s.save()
 
-    def _draft_direct_sale(self):
-        inv = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+    def _open_direct_sale(self):
+        return build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.user, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=inv, service=self.service, description=self.service.name,
-            quantity=1, unit_price=self.service.base_price, organization=self.org,
-        )
-        inv.refresh_from_db()
-        return inv
 
     # --- apertura -------------------------------------------------------------
 
@@ -68,8 +62,8 @@ class CashSessionTests(TestCase):
     def test_close_computes_expected_and_difference(self):
         s = open_cash_session(self.user, opening_float=Decimal("500.00"))
         self._enable_required_cash()
-        inv = self._draft_direct_sale()  # total 100
-        pay_direct_sale(inv, user=self.user, payment_method='cash')
+        checkout = self._open_direct_sale()  # total 100
+        pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
         closed = close_cash_session(s, user=self.user, counted_cash=Decimal("590.00"))
         self.assertEqual(closed.status, 'closed')
         self.assertEqual(closed.expected_cash, Decimal("600.00"))   # 500 + 100 cash
@@ -82,8 +76,8 @@ class CashSessionTests(TestCase):
     def test_card_payment_not_counted_in_cash(self):
         s = open_cash_session(self.user, opening_float=Decimal("0.00"))
         self._enable_required_cash()
-        inv = self._draft_direct_sale()
-        pay_direct_sale(inv, user=self.user, payment_lines=[{'method': 'card', 'amount': '100.00'}])
+        checkout = self._open_direct_sale()
+        pay_checkout_for_test(checkout, user=self.user, payment_lines=[{'method': 'card', 'amount': '100.00'}])
         closed = close_cash_session(s, user=self.user, counted_cash=Decimal("0.00"))
         self.assertEqual(closed.expected_cash, Decimal("0.00"))  # tarjeta no es efectivo
         self.assertEqual(closed.difference, Decimal("0.00"))
@@ -105,35 +99,34 @@ class CashSessionTests(TestCase):
 
     def test_pay_requires_open_session_when_enabled(self):
         self._enable_required_cash()
-        inv = self._draft_direct_sale()
+        checkout = self._open_direct_sale()
         with self.assertRaises(ValidationError):
-            pay_direct_sale(inv, user=self.user, payment_method='cash')
-        inv.refresh_from_db()
-        self.assertEqual(inv.status, 'draft')  # nada cobrado
+            pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
+        checkout.refresh_from_db()
+        self.assertEqual(checkout.lifecycle, 'open')  # nada cobrado
 
     def test_pay_after_close_rejected_when_enabled(self):
         s = open_cash_session(self.user, opening_float=Decimal("0.00"))
         self._enable_required_cash()
         close_cash_session(s, user=self.user, counted_cash=Decimal("0.00"))
-        inv = self._draft_direct_sale()
+        checkout = self._open_direct_sale()
         with self.assertRaises(ValidationError):
-            pay_direct_sale(inv, user=self.user, payment_method='cash')
+            pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
 
     def test_pay_attaches_cash_session_when_enabled(self):
         s = open_cash_session(self.user, opening_float=Decimal("0.00"))
         self._enable_required_cash()
-        inv = self._draft_direct_sale()
-        pay_direct_sale(inv, user=self.user, payment_method='cash')
-        p = Payment.all_objects.filter(invoice=inv).first()
+        checkout = self._open_direct_sale()
+        invoice = pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
+        p = Payment.all_objects.filter(invoice=invoice).first()
         self.assertEqual(p.cash_session_id, s.pk)
 
     def test_toggle_off_pay_without_session(self):
         # default toggle off → cobro sin caja permitido; Payment.cash_session NULL.
-        inv = self._draft_direct_sale()
-        pay_direct_sale(inv, user=self.user, payment_method='cash')
-        inv.refresh_from_db()
-        self.assertEqual(inv.status, 'paid')
-        p = Payment.all_objects.filter(invoice=inv).first()
+        checkout = self._open_direct_sale()
+        invoice = pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
+        self.assertEqual(invoice.status, 'paid')
+        p = Payment.all_objects.filter(invoice=invoice).first()
         self.assertIsNone(p.cash_session_id)
 
     def test_pay_attaches_session_even_when_toggle_off(self):
@@ -141,9 +134,9 @@ class CashSessionTests(TestCase):
         # asocia SIEMPRE, aunque el toggle esté apagado (antes quedaba NULL y
         # el Z reportaba $0 ventas → diferencias falsas).
         s = open_cash_session(self.user, opening_float=Decimal("0.00"))
-        inv = self._draft_direct_sale()
-        pay_direct_sale(inv, user=self.user, payment_method='cash')
-        p = Payment.all_objects.filter(invoice=inv).first()
+        checkout = self._open_direct_sale()
+        invoice = pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
+        p = Payment.all_objects.filter(invoice=invoice).first()
         self.assertEqual(p.cash_session_id, s.pk)
         closed = close_cash_session(s, user=self.user, counted_cash=Decimal("100.00"))
         self.assertEqual(closed.expected_cash, Decimal("100.00"))

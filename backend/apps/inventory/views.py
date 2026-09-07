@@ -21,6 +21,7 @@ from apps.medical_records.policies import (
 )
 
 from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
+from .units import presentation_conversion_factor
 from .serializers import (
     ProductSerializer,
     PresentationSerializer,
@@ -132,7 +133,7 @@ def adjust_stock(request, pk):
         with transaction.atomic():
             locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
             # ADR p31: convertir de unidades de presentación a base_units
-            quantity_base = quantity * (locked_pres.conversion_factor or 1)
+            quantity_base = quantity * presentation_conversion_factor(locked_pres)
             apply_stock_movement(
                 presentation=locked_pres,
                 quantity=quantity_base,
@@ -173,7 +174,7 @@ def adjust_presentation_stock(request, pk):
         with transaction.atomic():
             locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
             # ADR p31: convertir de unidades de presentación a base_units
-            quantity_base = quantity * (locked_pres.conversion_factor or 1)
+            quantity_base = quantity * presentation_conversion_factor(locked_pres)
             apply_stock_movement(
                 presentation=locked_pres,
                 quantity=quantity_base,
@@ -557,9 +558,8 @@ class MedicalRecordProductDeleteView(generics.DestroyAPIView):
         )
 
     def perform_destroy(self, instance):
-        from apps.billing.models import Invoice
-        from apps.billing.models import InvoiceItem
-        from apps.billing.services import apply_invoice_item_quantity_delta
+        import uuid
+        from apps.billing.checkout_services import record_clinical_charge_delta
 
         with transaction.atomic():
             mr = resolve_public_id(
@@ -567,48 +567,16 @@ class MedicalRecordProductDeleteView(generics.DestroyAPIView):
                 self.kwargs['medical_record_pk'],
             )
             assert_can_modify_charges(self.request.user, mr, self.request)
-            invoice_id = instance.medical_record.invoice_id
-            locked_invoice = None
-            if invoice_id:
-                locked_invoice = Invoice.objects.for_organization(
-                    self.request.user.organization
-                ).select_for_update().filter(pk=invoice_id).first()
-
             locked_pres = Presentation.objects.select_for_update().get(pk=instance.presentation_id)
-
-            item = None
-            if locked_invoice is not None:
-                item = InvoiceItem.objects.select_for_update().filter(
-                    invoice=locked_invoice,
-                    presentation=locked_pres,
-                    is_active=True,
-                ).first()
-
             fresh_instance = MedicalRecordProduct.objects.select_for_update().get(
                 pk=instance.pk,
                 medical_record=mr,
             )
-
-            should_sync_invoice = True
-            if item is not None and item.invoice.status != 'draft':
-                events_logger.warning(
-                    "MEDICAL_RECORD_INVOICE_SYNC_SKIPPED",
-                    extra={
-                        "user_id": self.request.user.id,
-                        "organization_id": self.request.user.organization_id,
-                        "medical_record_id": instance.medical_record_id,
-                        "invoice_id": item.invoice_id,
-                        "endpoint": self.request.path,
-                        "method": self.request.method,
-                    },
+            if fresh_instance.cost_behavior == 'charge':
+                record_clinical_charge_delta(
+                    fresh_instance, delta=-fresh_instance.quantity,
+                    user=self.request.user,
+                    mutation_key=f'mrp-delete:{fresh_instance.pk}:{uuid.uuid4()}',
+                    reason='product_removed',
                 )
-                should_sync_invoice = False
-
-            if item is not None and should_sync_invoice:
-                projected = item.quantity - fresh_instance.quantity
-                if projected <= 0:
-                    item.delete()
-                else:
-                    apply_invoice_item_quantity_delta(item, -fresh_instance.quantity)
-
             fresh_instance.delete(locked_presentation=locked_pres)

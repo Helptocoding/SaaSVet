@@ -39,8 +39,8 @@ from apps.analytics.services import (
     apply_snapshot, compute_daily_metrics, is_bucket_frozen,
 )
 from apps.appointments.models import Appointment
-from apps.billing.models import Invoice, InvoiceItem, Service
-from apps.billing.services import confirm_invoice, pay_invoice
+from apps.billing.models import Invoice, Service
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.medical_records.models import MedicalRecord
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
@@ -70,20 +70,14 @@ class _SnapshotFixtureMixin:
         )
 
     def _paid_invoice_on(self, day):
-        invoice = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale',
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.user, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=invoice, service=self.service,
-            description=self.service.name, quantity=1,
-            unit_price=self.service.base_price, organization=self.org,
-        )
-        confirm_invoice(invoice, user=self.user)
-        pay_invoice(invoice, user=self.user, payment_method='cash')
+        invoice = pay_checkout_for_test(checkout, user=self.user, payment_method='cash')
         # Force anchors onto the target day for the test.
         Invoice.objects.filter(pk=invoice.pk).update(
-            confirmed_at=_utc_dt(day.year, day.month, day.day, 9),
+            posted_at=_utc_dt(day.year, day.month, day.day, 9),
             paid_at=_utc_dt(day.year, day.month, day.day, 14),
         )
         return invoice
@@ -268,19 +262,13 @@ class MultiTenantIsolationTests(_SnapshotFixtureMixin, TestCase):
         admin_b = User.objects.create_user(
             username="admin_b", password="x", organization=self.other_org, role="ADMIN",
         )
-        inv_b = Invoice.objects.create(
-            owner=owner_b, pet=pet_b, organization=self.other_org,
-            status='draft', invoice_type='direct_sale',
+        checkout_b = build_direct_sale_checkout(
+            organization=self.other_org, owner=owner_b, pet=pet_b,
+            user=admin_b, service=svc_b,
         )
-        InvoiceItem.objects.create(
-            invoice=inv_b, service=svc_b,
-            description=svc_b.name, quantity=1, unit_price=svc_b.base_price,
-            organization=self.other_org,
-        )
-        confirm_invoice(inv_b, user=admin_b)
-        pay_invoice(inv_b, user=admin_b, payment_method='cash')
+        inv_b = pay_checkout_for_test(checkout_b, user=admin_b, payment_method='cash')
         Invoice.objects.filter(pk=inv_b.pk).update(
-            confirmed_at=_utc_dt(day.year, day.month, day.day, 9),
+            posted_at=_utc_dt(day.year, day.month, day.day, 9),
             paid_at=_utc_dt(day.year, day.month, day.day, 14),
         )
 
@@ -316,7 +304,7 @@ class CorruptionVisibilityTests(_SnapshotFixtureMixin, TestCase):
             'appointments_no_show': 0,
             'medical_records_closed': 0,
             'excluded_anchor_missing': 3,
-            'provenance_mix': {'paid_at': {'service': 1}, 'confirmed_at': {'service': 1},
+            'provenance_mix': {'paid_at': {'service': 1}, 'posted_at': {'service': 1},
                                'closed_at': {}},
         }
         with patch('apps.analytics.services.compute_daily_metrics',
@@ -349,7 +337,7 @@ class CorruptionVisibilityTests(_SnapshotFixtureMixin, TestCase):
             'invoices_paid_count': 0,
             'appointments_total': 0, 'appointments_done': 0, 'appointments_no_show': 0,
             'medical_records_closed': 0, 'excluded_anchor_missing': 1,
-            'provenance_mix': {'paid_at': {}, 'confirmed_at': {}, 'closed_at': {}},
+            'provenance_mix': {'paid_at': {}, 'posted_at': {}, 'closed_at': {}},
         }
         good = dict(bad, excluded_anchor_missing=0)
         with patch('apps.analytics.services.compute_daily_metrics', return_value=bad):
@@ -367,7 +355,7 @@ class ProvenanceMixTests(_SnapshotFixtureMixin, TestCase):
         self._paid_invoice_on(day)
         snap = apply_snapshot(self.org, day, now=now)
         self.assertIn('paid_at', snap.provenance_mix)
-        self.assertIn('confirmed_at', snap.provenance_mix)
+        self.assertIn('posted_at', snap.provenance_mix)
         # Service-written invoice → at least one 'service' entry.
         paid_mix = snap.provenance_mix['paid_at']
         self.assertGreaterEqual(paid_mix.get('service', 0), 1)

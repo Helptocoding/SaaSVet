@@ -221,11 +221,8 @@ class MedicalRecordServiceListCreateView(TenantQueryMixin, generics.ListCreateAP
         ).select_related('service')
 
     def perform_create(self, serializer):
-        from apps.billing.models import InvoiceItem
-        from apps.billing.services import (
-            apply_invoice_item_quantity_delta,
-            get_or_create_invoice_for_medical_record,
-        )
+        import uuid
+        from apps.billing.checkout_services import record_clinical_charge_delta
 
         with transaction.atomic():
             mr = resolve_public_id(
@@ -239,27 +236,25 @@ class MedicalRecordServiceListCreateView(TenantQueryMixin, generics.ListCreateAP
                 from rest_framework.exceptions import ValidationError
                 raise ValidationError({'service': 'Servicio fuera de tu organización'})
 
-            invoice = get_or_create_invoice_for_medical_record(mr)
-            if invoice.status == 'draft':
-                item = (
-                    InvoiceItem.objects
-                    .select_for_update()
-                    .filter(invoice=invoice, service=service, is_active=True)
-                    .first()
-                )
-                if item is None:
-                    InvoiceItem.objects.create(
-                        invoice=invoice,
-                        service=service,
-                        description=service.name,
-                        quantity=quantity,
-                        unit_price=service.base_price,
-                        organization=invoice.organization,
-                    )
-                else:
-                    apply_invoice_item_quantity_delta(item, quantity)
-
-            serializer.save(medical_record=mr)
+            existing = MedicalRecordService.all_objects.select_for_update().filter(
+                medical_record=mr, service=service,
+            ).first()
+            if existing is None:
+                source = serializer.save(medical_record=mr)
+            else:
+                existing.quantity += quantity
+                existing.updated_by = self.request.user
+                existing.save(update_fields=['quantity', 'updated_by', 'updated_at'])
+                serializer.instance = existing
+                source = existing
+            mutation_key = (
+                self.request.headers.get('X-Idempotency-Key')
+                or f'mrs:{source.pk}:{uuid.uuid4()}'
+            )
+            record_clinical_charge_delta(
+                source, delta=quantity, user=self.request.user,
+                mutation_key=mutation_key, reason='service_recorded',
+            )
 
 
 class MedicalRecordServiceDeleteView(generics.DestroyAPIView):
@@ -279,9 +274,8 @@ class MedicalRecordServiceDeleteView(generics.DestroyAPIView):
         )
 
     def perform_destroy(self, instance):
-        from apps.billing.models import Invoice
-        from apps.billing.models import InvoiceItem
-        from apps.billing.services import apply_invoice_item_quantity_delta
+        import uuid
+        from apps.billing.checkout_services import record_clinical_charge_delta
 
         with transaction.atomic():
             mr = resolve_public_id(
@@ -289,30 +283,16 @@ class MedicalRecordServiceDeleteView(generics.DestroyAPIView):
                 self.kwargs['medical_record_pk'],
             )
             assert_can_modify_charges(self.request.user, mr, self.request)
-            invoice_id = instance.medical_record.invoice_id
-            item = None
-            if invoice_id:
-                locked_invoice = Invoice.objects.for_organization(
-                    self.request.user.organization
-                ).select_for_update().filter(pk=invoice_id).first()
-                if locked_invoice is not None:
-                    item = InvoiceItem.objects.select_for_update().filter(
-                        invoice=locked_invoice,
-                        service=instance.service,
-                        is_active=True,
-                    ).first()
-
             fresh_instance = MedicalRecordService.objects.select_for_update().get(
                 pk=instance.pk,
                 medical_record=mr,
             )
-
-            if item is not None and item.invoice.status == 'draft':
-                projected = item.quantity - fresh_instance.quantity
-                if projected <= 0:
-                    item.delete()
-                else:
-                    apply_invoice_item_quantity_delta(item, -fresh_instance.quantity)
+            record_clinical_charge_delta(
+                fresh_instance, delta=-fresh_instance.quantity,
+                user=self.request.user,
+                mutation_key=f'mrs-delete:{fresh_instance.pk}:{uuid.uuid4()}',
+                reason='service_removed',
+            )
             fresh_instance.delete()
 
 
@@ -393,6 +373,12 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
                 .only('status', 'subtotal', 'tax_amount', 'total')
                 .first()
             )
+        checkout = None
+        if invoice is None:
+            from apps.billing.models import Checkout
+            checkout = Checkout.objects.for_organization(request.user.organization).filter(
+                medical_record=mr, kind='primary_consultation',
+            ).only('lifecycle', 'subtotal', 'tax_amount', 'total').first()
 
         next_vaccine = (
             VaccineRecord.objects
@@ -423,11 +409,11 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
             "consultation_type": mr.consultation_type,
             "status": mr.status,
             "totals": {
-                "subtotal": invoice.subtotal,
-                "tax_amount": invoice.tax_amount,
-                "total": invoice.total,
-                "status": invoice.status,
-            } if invoice else None,
+                "subtotal": (invoice or checkout).subtotal,
+                "tax_amount": (invoice or checkout).tax_amount,
+                "total": (invoice or checkout).total,
+                "status": invoice.status if invoice else f"checkout_{checkout.lifecycle}",
+            } if (invoice or checkout) else None,
             "next_vaccine_date": next_vaccine.next_due_date if next_vaccine else None,
         }
         return Response(data)
@@ -437,12 +423,35 @@ class MedicalRecordSummaryView(generics.GenericAPIView):
 @permission_classes([make_permission("medicalrecord.close")])
 def close_medical_record(request, pk):
     with transaction.atomic():
+        # El cierre es un comando durable. La clave estable por actor mantiene
+        # compatibilidad con clientes anteriores al header y, a la vez, evita
+        # repetir materialización clínica/comercial ante retries de red.
+        from apps.billing.checkout_services import _claim_receipt, _complete_receipt
+        idempotency_key = (
+            request.headers.get('X-Idempotency-Key')
+            or request.data.get('idempotency_key')
+            or f'close:{pk}:actor:{request.user.pk}'
+        )
+        receipt, replay = _claim_receipt(
+            organization=request.user.organization,
+            user=request.user,
+            command_kind='close_medical_record',
+            idempotency_key=idempotency_key,
+            payload={'medical_record': str(pk)},
+            aggregate_type='medical_record',
+            aggregate_public_id=str(pk),
+        )
         medical_record = resolve_public_id(
             MedicalRecord.objects.select_for_update().filter(
                 organization=request.user.organization,
             ),
             pk,
         )
+
+        if replay:
+            return Response(MedicalRecordDetailSerializer(
+                medical_record, context={"request": request},
+            ).data)
 
         # Idempotencia PRIMERO: una consulta ya cerrada retorna 200 sin re-validar
         # ni re-checar ownership. can_close_medical_record() devuelve False para
@@ -461,6 +470,12 @@ def close_medical_record(request, pk):
                     "endpoint": request.path,
                     "method": request.method,
                 },
+            )
+            _complete_receipt(
+                receipt,
+                medical_record_id=medical_record.pk,
+                medical_record_public_id=str(medical_record.public_id),
+                result='already_closed',
             )
             return Response(MedicalRecordDetailSerializer(medical_record, context={"request": request}).data)
 
@@ -516,15 +531,6 @@ def close_medical_record(request, pk):
             'status', 'closed_at', 'closed_at_source', 'closed_by',
         ])
 
-        # ADR p30: finalizar SIEMPRE deja la consulta en Cobros, aunque no tenga
-        # cargos (supera la creación lazy de ADR p7 en el camino de cierre). La
-        # factura draft es la cabecera donde recepción cobra insumos/servicios y
-        # decide dispensar la receta. El MR ya está lockeado (select_for_update
-        # arriba); el helper lockea la Invoice respetando el orden canónico
-        # MedicalRecord -> Invoice.
-        from apps.billing.services import get_or_create_invoice_for_medical_record
-        get_or_create_invoice_for_medical_record(medical_record)
-
         # Sincroniza la agenda: cerrar la consulta finaliza la cita vinculada
         # (in_progress→done). Cross-domain vía service (no mutar Appointment
         # directamente desde medical_records). No-op si no hay cita o si la
@@ -541,6 +547,12 @@ def close_medical_record(request, pk):
         from .services import apply_consultation_draft_on_close
         apply_consultation_draft_on_close(medical_record, request)
 
+        # El cierre crea la preparación comercial, nunca una Invoice draft.
+        # Se ejecuta después de materializar protocolos para que cualquier
+        # insumo clínico generado por ellos quede incluido en el snapshot.
+        from apps.billing.checkout_services import get_or_create_primary_checkout_for_medical_record
+        get_or_create_primary_checkout_for_medical_record(medical_record, owner=request.user)
+
         # Late-arrival observability (ADR p17 Día 5, warn-only).
         # Call lives inside the active transaction so the log only emits
         # if commit succeeds (a rollback unwinds before the helper runs).
@@ -555,6 +567,12 @@ def close_medical_record(request, pk):
                 "endpoint": request.path,
                 "method": request.method,
             },
+        )
+        _complete_receipt(
+            receipt,
+            medical_record_id=medical_record.pk,
+            medical_record_public_id=str(medical_record.public_id),
+            result='closed',
         )
         return Response(MedicalRecordDetailSerializer(medical_record, context={"request": request}).data)
 

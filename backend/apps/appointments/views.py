@@ -662,6 +662,7 @@ def create_with_patient(request):
         'start_time':   request.data.get('start_time'),
         'end_time':     request.data.get('end_time'),
         'reason':       request.data.get('reason', '').strip(),
+        'category':     request.data.get('category', 'general_consultation'),
         'notes':        request.data.get('notes', ''),
         'status':       'scheduled',
     }
@@ -736,11 +737,14 @@ def walk_in(request):
     vet_id = request.data.get('veterinarian')
     reason = sanitize_text(request.data.get('reason') or '', max_length=255)
     notes = sanitize_text(request.data.get('notes') or '', max_length=5000)
+    category = request.data.get('category', 'general_consultation')
 
     if not reason.strip():
         raise ValidationError({'reason': 'El motivo de la consulta es requerido.'})
     if not vet_id:
         raise ValidationError({'veterinarian': 'El veterinario es requerido.'})
+    if category not in dict(Appointment.CATEGORY_CHOICES):
+        raise ValidationError({'category': 'Categoría de cita inválida.'})
 
     # Toggle: allow_anonymous_walkin
     if not pet_id:
@@ -822,6 +826,7 @@ def walk_in(request):
                 end_datetime=end_utc,
                 timezone_at_creation=str(get_context_timezone(org)),
                 reason=reason,
+                category=category,
                 notes=notes,
                 status='in_progress',
                 walk_in=True,

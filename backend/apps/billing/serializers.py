@@ -2,7 +2,12 @@ import logging
 import re
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Service, Invoice, InvoiceItem, CreditNote
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
+from .models import (
+    Service, Invoice, InvoiceItem, CreditNote, Checkout, CheckoutEstimate,
+    CheckoutItem, ReplacementWaiver, CheckoutDispute,
+)
 from .money import discount_amount, money
 from apps.core.sanitize import sanitize_text
 
@@ -13,6 +18,57 @@ SERVICE_NAME_REGEX = re.compile(r'^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\s\-\(\)\/\
 # TENANT_MISMATCH_DETECTED (HybridPermission, ERROR) para no saturar la señal
 # operacional con typos de UI / IDs stale del frontend.
 tenant_logger = logging.getLogger('apps.tenant_validation')
+
+
+class PaymentCommandLineSerializer(serializers.Serializer):
+    method = serializers.ChoiceField(choices=('cash', 'card', 'transfer', 'other'))
+    amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal('0.01'))
+    reference = serializers.CharField(required=False, allow_blank=True, max_length=100)
+
+
+class CheckoutPostCommandSerializer(serializers.Serializer):
+    expected_version = serializers.IntegerField(required=True, min_value=1)
+    idempotency_key = serializers.CharField(required=True, max_length=100)
+    payment_lines = PaymentCommandLineSerializer(
+        many=True, required=False, allow_empty=False, allow_null=True,
+    )
+    payment_method = serializers.ChoiceField(
+        choices=('cash', 'card', 'transfer', 'other'), required=False, allow_null=True,
+    )
+    due_at = serializers.DateTimeField(required=False, allow_null=True)
+    credit_reason = serializers.CharField(required=False, allow_blank=True, max_length=80)
+    obligation_evidence = serializers.DictField(required=False)
+
+
+class PrescriptionDispenseLineSerializer(serializers.Serializer):
+    presentation = serializers.IntegerField(min_value=1)
+    prescription_item = serializers.IntegerField(min_value=1)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('1'))
+    lot = serializers.IntegerField(min_value=1, required=False, allow_null=True)
+
+    def validate_quantity(self, value):
+        from .prescription_availability import validated_presentation_quantity
+        try:
+            return validated_presentation_quantity(value)
+        except DjangoValidationError as exc:
+            if hasattr(exc, 'message_dict'):
+                message = exc.message_dict.get('quantity', exc.messages)
+            else:
+                message = getattr(exc, 'messages', [str(exc)])
+            raise serializers.ValidationError(message)
+
+
+class PrescriptionDispenseCommandSerializer(serializers.Serializer):
+    expected_version = serializers.IntegerField(required=True, min_value=1)
+    idempotency_key = serializers.CharField(required=True, max_length=100)
+    lines = PrescriptionDispenseLineSerializer(many=True, allow_empty=False, max_length=100)
+
+
+class CheckoutItemMutationSerializer(serializers.Serializer):
+    expected_version = serializers.IntegerField(required=True, min_value=1)
+    quantity = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=Decimal('0.01'), required=False,
+    )
 
 
 def _validate_same_org(value, request, field_name, serializer_name):
@@ -85,16 +141,18 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
     tracks_lots = serializers.BooleanField(source='presentation.product.tracks_lots', read_only=True)
     lot_number = serializers.CharField(source='lot.lot_number', read_only=True)
     lot_effective_status = serializers.CharField(source='lot.effective_status', read_only=True)
+    has_stock_allocation = serializers.SerializerMethodField()
 
     class Meta:
         model = InvoiceItem
         fields = [
             'id', 'invoice', 'service', 'service_name',
             'presentation', 'presentation_name', 'description',
-            'quantity', 'unit_price',
+            'quantity', 'conversion_factor_snapshot', 'unit_price',
             'discount_type', 'discount_value', 'discount_amount',
             'subtotal', 'dispensed',
             'lot', 'tracks_lots', 'lot_number', 'lot_effective_status',
+            'has_stock_allocation',
         ]
         read_only_fields = ['id', 'subtotal', 'invoice', 'dispensed']
 
@@ -105,6 +163,9 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
     def get_dispensed(self, obj):
         return obj.dispensed_from_prescription_item_id is not None
+
+    def get_has_stock_allocation(self, obj):
+        return obj.stock_allocations.exists()
 
     def get_discount_amount(self, obj):
         gross = money(obj.quantity * obj.unit_price)
@@ -162,10 +223,9 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
         if presentation:
             _validate_same_org(presentation, request, 'presentation', 'InvoiceItemSerializer')
-            if presentation.stock <= 0:
-                raise serializers.ValidationError(
-                    f"'{presentation.product.name}' no tiene stock disponible."
-                )
+            # Availability is never inferred from Presentation.stock (legacy).
+            # Checkout posting settles Product/StockLot under locks; InvoiceItem
+            # serialization must not introduce a competing stock authority.
             # Lote (B2b): obligatorio y consumible si el producto lo trackea (P1/P2).
             # Solo en CREATE (el lote es inmutable; PATCH parcial no lo re-valida).
             lot = data.get('lot')
@@ -231,11 +291,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
     # `with_credit_notes`) para no incurrir N+1 en la lista. La UI las usa para
     # mostrar las devoluciones y ofrecer "revertir".
     credit_notes = serializers.SerializerMethodField()
+    checkout_public_id = serializers.UUIDField(source='checkout.public_id', read_only=True, allow_null=True)
+    supersedes_invoice_public_id = serializers.UUIDField(source='supersedes_invoice.public_id', read_only=True, allow_null=True)
 
     class Meta:
         model = Invoice
         fields = [
-            'id', 'public_id', 'invoice_type',
+            'id', 'public_id', 'invoice_type', 'checkout_public_id',
+            'supersedes_invoice_public_id',
             'appointment', 'appointment_public_id',
             'medical_record', 'medical_record_public_id',
             'prescription_public_id',
@@ -243,9 +306,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'pet', 'pet_public_id', 'pet_name',
             'status', 'payment_method', 'tax_rate',
             'subtotal', 'tax_amount', 'total',
+            'due_at', 'credit_reason',
             'amount_paid', 'remaining_balance',
             'notes', 'created_by', 'created_by_name',
-            'paid_at', 'created_at', 'updated_at',
+            'posted_at', 'paid_at', 'voided_at', 'created_at', 'updated_at',
             'items', 'prescription_suggestions', 'credit_notes',
         ]
         read_only_fields = [
@@ -254,8 +318,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'prescription_public_id',
             'subtotal', 'tax_amount', 'total',
             'amount_paid', 'remaining_balance', 'credit_notes',
-            'created_by', 'paid_at', 'created_at', 'updated_at',
-            'tax_rate',
+            'created_by', 'posted_at', 'paid_at', 'voided_at',
+            'created_at', 'updated_at',
+            'tax_rate', 'due_at', 'credit_reason',
         ]
 
     def _paid_amount(self, obj):
@@ -372,10 +437,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
         """Receta de la consulta vinculada (OneToOne MedicalRecord.prescription)."""
         if not obj.medical_record_id:
             return None
-        try:
-            return obj.medical_record.prescription
-        except Exception:
-            return None
+        from apps.prescriptions.models import Prescription
+        return Prescription.objects.for_organization(obj.organization).filter(
+            medical_record_id=obj.medical_record_id,
+        ).first()
 
     def get_prescription_public_id(self, obj):
         # Gateado a detalle: solo se usa para dispensar (panel de Cobros). En la
@@ -395,55 +460,13 @@ class InvoiceSerializer(serializers.ModelSerializer):
         """
         if not self.context.get('with_prescription_suggestions'):
             return []
-        rx = self._linked_prescription(obj)
-        if rx is None:
+        if not obj.checkout_id:
             return []
-        # Acumulado ya dispensado por ítem de receta (unidades base): líneas
-        # activas de ESTA factura con FK de dispensación. Permite al frontend
-        # mostrar restante y al usuario no exceder lo recetado (el backend lo
-        # vuelve a validar de forma autoritativa al dispensar).
-        dispensed_base = {}
-        dispensed_items = (
-            obj.items
-            .filter(is_active=True, dispensed_from_prescription_item__isnull=False)
-            .select_related('presentation')
+        from .prescription_availability import build_checkout_prescription_suggestions
+        return build_checkout_prescription_suggestions(
+            obj.checkout,
+            include_closed=True,
         )
-        for inv_item in dispensed_items:
-            cf = inv_item.presentation.conversion_factor or Decimal('1')
-            key = inv_item.dispensed_from_prescription_item_id
-            dispensed_base[key] = dispensed_base.get(key, Decimal('0')) + inv_item.quantity * cf
-
-        suggestions = []
-        for item in rx.items.select_related('product').prefetch_related('product__presentations').all():
-            presentations = [
-                {
-                    'id': p.id,
-                    'name': str(p),
-                    'sale_price': str(p.sale_price),
-                    'stock': str(p.stock),
-                    'conversion_factor': str(p.conversion_factor or Decimal('1')),
-                }
-                for p in item.product.presentations.all()
-            ]
-            dispensed = dispensed_base.get(item.id, Decimal('0'))
-            remaining = max(item.quantity - dispensed, Decimal('0'))
-            suggestions.append({
-                'prescription_item_id': item.id,
-                'product_name': item.product.name,
-                'dose': item.dose,
-                # Cantidades en unidades base del producto (ADR p31).
-                'suggested_quantity': str(item.quantity),  # legacy, = prescribed
-                'prescribed_quantity': str(item.quantity),
-                'dispensed_quantity': str(dispensed),
-                'remaining_quantity': str(remaining),
-                'base_unit': item.product.get_base_unit_display() or '',
-                'presentations': presentations,
-                # Trazabilidad por lote (B2c): si el producto la usa, el frontend
-                # muestra un picker de lote (FEFO default + override).
-                'tracks_lots': item.product.tracks_lots,
-                'product_public_id': str(item.product.public_id),
-            })
-        return suggestions
 
 
 class CreditNoteSerializer(serializers.ModelSerializer):
@@ -466,3 +489,136 @@ class CreditNoteSerializer(serializers.ModelSerializer):
         if obj.created_by:
             return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.username
         return ''
+
+
+class CheckoutItemSerializer(serializers.ModelSerializer):
+    service_name = serializers.CharField(source='service.name', read_only=True)
+    presentation_name = serializers.SerializerMethodField()
+    product_requires_prescription = serializers.BooleanField(
+        source='presentation.product.requires_prescription', read_only=True,
+    )
+    lot_number = serializers.CharField(source='lot.lot_number', read_only=True)
+
+    class Meta:
+        model = CheckoutItem
+        fields = [
+            'id', 'description', 'quantity', 'unit_price', 'subtotal',
+            'discount_type', 'discount_value', 'source_kind', 'service',
+            'service_name', 'presentation', 'presentation_name', 'lot',
+            'conversion_factor_snapshot',
+            'lot_number', 'prescription_item', 'product_requires_prescription',
+            'source_invoice_item', 'baseline_kind',
+            'required_replacement_baseline', 'fulfillment_source',
+            'regulatory_revision',
+        ]
+        read_only_fields = fields
+
+    def get_presentation_name(self, obj):
+        return str(obj.presentation) if obj.presentation_id else None
+
+
+class CheckoutSerializer(serializers.ModelSerializer):
+    items = CheckoutItemSerializer(many=True, read_only=True)
+    preparation_readiness = serializers.SerializerMethodField()
+    actions = serializers.SerializerMethodField()
+    correction_status = serializers.SerializerMethodField()
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
+    customer_public_id = serializers.UUIDField(source='customer.public_id', read_only=True)
+    pet_name = serializers.CharField(source='pet.name', read_only=True, allow_null=True)
+    pet_public_id = serializers.UUIDField(source='pet.public_id', read_only=True, allow_null=True)
+    medical_record_public_id = serializers.UUIDField(source='medical_record.public_id', read_only=True, allow_null=True)
+    invoice_public_id = serializers.SerializerMethodField()
+    prescription_public_id = serializers.SerializerMethodField()
+    prescription_suggestions = serializers.SerializerMethodField()
+    open_dispute = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Checkout
+        fields = [
+            'id', 'public_id', 'origin', 'kind', 'medical_record',
+            'medical_record_public_id', 'lifecycle', 'completion_kind', 'version',
+            'owner', 'customer', 'customer_public_id', 'customer_name', 'pet',
+            'pet_public_id', 'pet_name', 'subtotal', 'tax_rate', 'tax_amount',
+            'total', 'notes', 'correction_due_at', 'expires_at',
+            'operational_hold', 'correction_status', 'invoice_public_id',
+            'prescription_public_id', 'created_at', 'updated_at', 'items',
+            'prescription_suggestions', 'preparation_readiness', 'actions',
+            'open_dispute',
+        ]
+        read_only_fields = fields
+
+    def _read_projection(self, obj):
+        cached = getattr(obj, '_billing_read_projection', None)
+        if cached is None:
+            from .checkout_services import checkout_readiness_snapshot
+            cached = checkout_readiness_snapshot(obj)
+            obj._billing_read_projection = cached
+        return cached
+
+    def get_preparation_readiness(self, obj):
+        return self._read_projection(obj)['preparation_readiness']
+
+    def get_actions(self, obj):
+        return self._read_projection(obj)['actions']
+
+    def get_open_dispute(self, obj):
+        dispute = next(
+            (row for row in obj.disputes.all() if row.status == 'open'), None,
+        )
+        return CheckoutDisputeSerializer(dispute).data if dispute else None
+
+    def get_correction_status(self, obj):
+        if obj.kind != 'replacement' or obj.lifecycle != 'open':
+            return None
+        if obj.correction_due_at and obj.correction_due_at < timezone.now():
+            return 'correction_overdue'
+        return 'correction_pending'
+
+    def get_invoice_public_id(self, obj):
+        try:
+            return str(obj.invoice.public_id)
+        except Exception:
+            return None
+
+    def get_prescription_public_id(self, obj):
+        if not obj.medical_record_id:
+            return None
+        from apps.prescriptions.models import Prescription
+        prescription = Prescription.objects.for_organization(obj.organization).filter(
+            medical_record_id=obj.medical_record_id,
+        ).first()
+        return str(prescription.public_id) if prescription else None
+
+    def get_prescription_suggestions(self, obj):
+        from .prescription_availability import build_checkout_prescription_suggestions
+        return build_checkout_prescription_suggestions(obj)
+
+
+class CheckoutDisputeSerializer(serializers.ModelSerializer):
+    owner_name = serializers.CharField(source='owner.get_full_name', read_only=True)
+    invoice_public_id = serializers.UUIDField(
+        source='invoice.public_id', read_only=True, allow_null=True,
+    )
+
+    class Meta:
+        model = CheckoutDispute
+        fields = [
+            'id', 'public_id', 'checkout', 'invoice_public_id', 'status',
+            'disputed_item_ids', 'disputed_amount', 'statement', 'evidence',
+            'owner', 'owner_name', 'opened_by', 'opened_at', 'review_due_at',
+            'resolution', 'resolution_reason', 'resolution_evidence',
+            'resolved_by', 'resolved_at', 'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
+
+
+class CheckoutEstimateSerializer(serializers.ModelSerializer):
+    checkout_public_id = serializers.UUIDField(source='checkout.public_id', read_only=True)
+
+    class Meta:
+        model = CheckoutEstimate
+        fields = [
+            'public_id', 'checkout_public_id', 'checkout_version', 'snapshot',
+            'content_hash', 'generated_at',
+        ]
+        read_only_fields = fields

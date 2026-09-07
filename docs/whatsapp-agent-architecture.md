@@ -204,7 +204,9 @@ Además, un retry de la tool (timeout del loopback) sin idempotencia crea cita d
 **Mitigación**: las tools mutadoras solo aceptan referencias a objetos **ya resueltos en la conversación y pertenecientes al owner verificado** (resolver server-side, §6.6); cancelación requiere confirmación; DELETE jamás se expone como tool (la cancelación vía `/status/` ya deja lineage de auditoría — el DELETE también, pero es semánticamente de staff).
 
 ### R8 🔴 Dinero
-`pay_invoice`/`pay_direct_sale`/`process_refund` mueven dinero real con reglas duras (total exacto ADR p30; caja ADR p28/p39; orden de locks `CashSession → MR → Invoice → …`). Cualquier acceso del agente a estas rutas es riesgo inaceptable en v1–v3.
+`post_checkout(..., pay=True)`/`pay_invoice`/`process_refund` mueven
+dinero real con reglas duras (total exacto, caja e idempotencia). Cualquier
+acceso del agente a estas rutas es riesgo inaceptable en v1–v3.
 **Mitigación**: el rol `AGENT` **no tiene** `invoice.*` de escritura ni `billing.*`; ni siquiera existe la tool. Doble barrera: RBAC + inexistencia de la herramienta.
 
 ### R9 🟡 Throttling mal dimensionado

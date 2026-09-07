@@ -3,9 +3,8 @@ audit_anchor_integrity — validates that every analytics anchor invariant holds
 
 Invariants checked:
   Invoice.status='paid'      ⇒ paid_at IS NOT NULL
-  Invoice.status='confirmed' ⇒ confirmed_at IS NOT NULL
-  Invoice.status='paid'      ⇒ confirmed_at IS NOT NULL
-  Invoice.status='cancelled' ⇒ cancelled_at IS NOT NULL
+  Toda Invoice               ⇒ posted_at IS NOT NULL (anchor de emisión)
+  Invoice.status='voided'    ⇒ voided_at IS NOT NULL
   MedicalRecord.status='closed' ⇒ closed_at IS NOT NULL
   Appointment.status='in_progress' AND created via walk_in flow ⇒ walk_in=True
 
@@ -69,12 +68,12 @@ class Command(BaseCommand):
                 Q(status='paid', paid_at__isnull=True),
             ),
             (
-                Invoice, 'invoice.confirmed_status_requires_confirmed_at',
-                Q(status__in=['confirmed', 'paid'], confirmed_at__isnull=True),
+                Invoice, 'invoice.posted_at_required',
+                Q(posted_at__isnull=True),
             ),
             (
-                Invoice, 'invoice.cancelled_status_requires_cancelled_at',
-                Q(status='cancelled', cancelled_at__isnull=True),
+                Invoice, 'invoice.voided_status_requires_voided_at',
+                Q(status='voided', voided_at__isnull=True),
             ),
             (
                 MedicalRecord, 'medicalrecord.closed_status_requires_closed_at',
@@ -93,7 +92,7 @@ class Command(BaseCommand):
             })
 
         # ---------- Provenance distribution ----------
-        for source_field in ('paid_at_source', 'confirmed_at_source', 'cancelled_at_source'):
+        for source_field in ('paid_at_source', 'posted_at_source', 'voided_at_source'):
             agg = (
                 Invoice.objects.filter(org_filter)
                 .values(source_field)
@@ -111,12 +110,12 @@ class Command(BaseCommand):
         provenance['medicalrecord.closed_at_source'] = {row['closed_at_source']: row['c'] for row in agg}
 
         # ---------- Unresolved provenance ----------
-        unresolved_q = Q(confirmed_at_source='unresolved') | Q(cancelled_at_source='unresolved')
+        unresolved_q = Q(posted_at_source='unresolved') | Q(voided_at_source='unresolved')
         unresolved = Invoice.objects.filter(unresolved_q & org_filter)
         unresolved_count = unresolved.count()
         unresolved_sample = list(
             unresolved.values('id', 'organization_id', 'status',
-                              'confirmed_at_source', 'cancelled_at_source')[:SAMPLE_SIZE]
+                              'posted_at_source', 'voided_at_source')[:SAMPLE_SIZE]
         ) if unresolved_count else []
 
         # ---------- Walk-in suspicious row check ----------

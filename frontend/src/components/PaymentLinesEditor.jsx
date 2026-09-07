@@ -50,11 +50,6 @@ const PaymentLinesEditor = ({ total, allowPartial, allowChange = false, lines, s
                             : (allowPartial ? "Pago completo" : "Exacto")}
                 </span>
             </div>
-            {allowChange && change > 0 && (
-                <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
-                    Se cobra el total ${Number(total).toFixed(2)}; el cambio ${change.toFixed(2)} no se registra.
-                </p>
-            )}
             {allowPartial && remaining > 0 && sum > 0 && (
                 <p style={{ fontSize: "11px", color: "var(--c-text-3)", marginTop: "4px" }}>
                     Pago parcial: la factura quedará confirmada con saldo pendiente.

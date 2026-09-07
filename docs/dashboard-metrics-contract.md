@@ -1,9 +1,21 @@
-# Dashboard Metrics Contract
+# Dashboard Metrics Contract — propuesta histórica
 
-Version: 0.4 (draft)
+Version: 0.5 (archivado)
 Owner: Backend
-Status: Draft — event authority table updated for p11 (pay_direct_sale)
-Last updated: 2026-05-15
+Status: Sustituido para métricas financieras y anchors de Billing
+Last reviewed: 2026-09-06
+
+> [!IMPORTANT]
+> Este archivo conserva la propuesta v0.4 y su razonamiento histórico. Ya no es
+> la fuente normativa para Invoice: las referencias internas a
+> `draft/confirmed/cancelled`, `confirmed_at` y `cancelled_at` describen el
+> dominio retirado. El runtime vigente usa `posted/paid/voided` con anchors
+> `posted_at`, `paid_at` y `voided_at`. Consulte el
+> [checklist vigente](analytics-readiness-checklist.md), el
+> [modelo de eventos financieros](financial-event-model-contract.md) y
+> [Billing](modules/billing.md). Las definiciones no financieras de esta
+> propuesta sólo siguen siendo útiles cuando no contradicen esos contratos ni
+> el código actual.
 
 Changelog:
 - 0.4: Updated event authority table (§2.7) — all billing anchors now exist and have authoritative writers in `services.py`. Added `pay_direct_sale` as second writer for `confirmed_at` + `paid_at` (atomic single-step for direct_sale). Added note in §3.1.2 about `direct_sale` accrual=cash behavior.
@@ -11,10 +23,8 @@ Changelog:
 - 0.2: incorporated v0.1 review feedback. Added §2.7 (Event Authority), §2.8 (Reversal/Cancellation Policy), §2.9 (Late-arriving Data Policy), §4.6 (Snapshot Lifecycle State), §4.7 (Metrics Schema Versioning), §5.4 (Analytics Throttling). Conversion mutation window extended T+7 → T+14. Appendix A documents resolutions per review item.
 - 0.1: initial draft.
 
-This document is the single source of truth for every metric exposed by the dashboard
-endpoints. Any disagreement between this document and the implementation MUST be
-resolved by changing the implementation, never by changing this document silently.
-Edits to this document require an ADR.
+This document is retained as design history. It is not a release gate or a source of
+truth for the current Billing lifecycle.
 
 ---
 

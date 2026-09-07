@@ -8,13 +8,16 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.appointments.models import Appointment
-from apps.billing.models import Invoice
+from apps.billing.checkout_services import post_checkout
+from apps.billing.models import Invoice, Service
+from apps.billing.services import pay_invoice
+from apps.billing.tests.factories import build_direct_sale_checkout
 from apps.analytics.models import METRICS_SCHEMA_VERSION
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.inventory.models import Presentation, Product
 from apps.medical_records.models import MedicalRecord
-from apps.organizations.models import Organization
+from apps.organizations.models import Organization, OrganizationSettings
 from apps.patients.models import Owner, Pet
 from apps.users.models import User
 
@@ -133,6 +136,29 @@ class DashboardSummaryTests(APITestCase):
     def setUp(self):
         cache.clear()
 
+    def _posted_invoice(self, amount):
+        settings, _ = OrganizationSettings.objects.get_or_create(organization=self.org)
+        settings.allow_post_unpaid = True
+        settings.save(update_fields=['allow_post_unpaid'])
+        service = Service.objects.create(
+            name=f'Cargo AR {amount}', base_price=amount, organization=self.org,
+        )
+        checkout = build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.admin, service=service,
+        )
+        return post_checkout(
+            checkout, self.admin, expected_version=checkout.version,
+            idempotency_key=f'summary-post-{checkout.public_id}',
+            due_at=timezone.now() + timedelta(days=30),
+            credit_reason='authorized_credit',
+            obligation_evidence={
+                'basis': 'customer_acknowledgement',
+                'accepting_party': self.owner.name,
+                'channel': 'in_person',
+            },
+        )
+
     # ------------------------------------------------------------------
     # Permission tests
     # ------------------------------------------------------------------
@@ -206,18 +232,13 @@ class DashboardSummaryTests(APITestCase):
         r = self.client.get(SUMMARY_URL)
         self.assertEqual(r.data['kpis']['patients_today'], 2)
 
-    def test_ar_shows_zero_when_no_confirmed(self):
+    def test_ar_shows_zero_when_no_posted(self):
         self.client.force_authenticate(self.admin)
         r = self.client.get(SUMMARY_URL)
         self.assertEqual(r.data['kpis']['ar_outstanding'], '0.00')
 
-    def test_admin_ar_shows_confirmed_total(self):
-        Invoice.objects.create(
-            owner=self.owner, pet=self.pet, status='confirmed',
-            total=Decimal('500.00'), tax_rate=self.org.tax_rate,
-            tax_amount=Decimal('0.00'), subtotal=Decimal('500.00'),
-            confirmed_at=timezone.now(), organization=self.org,
-        )
+    def test_admin_ar_shows_posted_total(self):
+        self._posted_invoice(Decimal('500.00'))
         self.client.force_authenticate(self.admin)
         r = self.client.get(SUMMARY_URL)
         self.assertEqual(r.data['kpis']['ar_outstanding'], '500.00')
@@ -351,21 +372,14 @@ class DashboardSummaryTests(APITestCase):
     # T12 — Cache invalidation on Invoice change
     # ------------------------------------------------------------------
     def test_ar_outstanding_invalidated_after_pay_invoice(self):
-        from apps.billing.services import pay_invoice
-
-        invoice = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, status='confirmed',
-            total=Decimal('800.00'), tax_rate=self.org.tax_rate,
-            tax_amount=Decimal('0.00'), subtotal=Decimal('800.00'),
-            confirmed_at=timezone.now(), organization=self.org,
-        )
+        invoice = self._posted_invoice(Decimal('800.00'))
 
         self.client.force_authenticate(self.admin)
         r = self.client.get(SUMMARY_URL)
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.data['kpis']['ar_outstanding'], '800.00')
 
-        pay_invoice(invoice, self.admin, 'cash')
+        pay_invoice(invoice, self.admin, 'cash', idempotency_key='summary-ar-pay')
         cache.clear()
 
         r = self.client.get(SUMMARY_URL)

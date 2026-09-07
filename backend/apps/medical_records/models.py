@@ -99,18 +99,13 @@ class MedicalRecord(PublicIdMixin, OrganizationalModel):
 
     @property
     def invoice_id(self):
-        # Factura directa vinculada al registro (walk-in o venta con consulta)
-        try:
-            return self.invoice.id
-        except Exception:
-            pass
-        # Factura via cita
-        if self.appointment_id:
-            try:
-                return self.appointment.invoice.id
-            except Exception:
-                return None
-        return None
+        invoice = self.invoices.order_by('-posted_at', '-id').first()
+        return invoice.id if invoice else None
+
+    @property
+    def invoice(self):
+        """Documento financiero más reciente; puede no existir mientras hay Checkout."""
+        return self.invoices.order_by('-posted_at', '-id').first()
 
     class Meta:
         ordering = ["-created_at"]

@@ -319,7 +319,10 @@ ADR p9, p17 (`2026-05-09-p9-analytics-anchor-authority.md`, `2026-05-17-p17-anal
 
 ### `ANCHOR_LATE_ARRIVAL` · WARNING
 
-Un anchor (`paid_at`, `confirmed_at`, `cancelled_at`, `closed_at`) cayo en un bucket ya frozen (threshold T+2 dias para clase `clinical`/`financial`). Warn-only en Dia 5; hard reject planificado para Dia 7+.
+Un anchor (`posted_at`, `paid_at`, `voided_at`, `closed_at`) cayó en un
+bucket ya frozen (threshold T+2 días para clase
+`clinical`/`financial`). El evento es observabilidad; el tratamiento del
+late arrival se rige por el lifecycle del snapshot y su audit.
 
 Campos: `event='ANCHOR_LATE_ARRIVAL'`, `anchor_field`, `anchor_value_iso`, `bucket_date_local_iso`, `frozen_threshold_days`, `age_days`, `organization_id`, `writer`, `metric_class`.
 
@@ -444,7 +447,7 @@ Filtrar el stdout por nombre de evento:
 | `PLATFORM_ACCESS_DENIED` | Nunca para ADMIN_SAAS legitimo | Posible escalation attempt si bursts |
 | `INVOICEITEM_MUTATION_OUTSIDE_ATOMIC` | Nunca | Caller bypaseo lock de Invoice — localizar y envolver en atomic() |
 | `CASH_SESSION_FORCE_CLOSED` | Bajo | Cierre administrativo — investigar motivo |
-| `ANCHOR_LATE_ARRIVAL` | Bajo | Anchor en bucket frozen; warn-only Dia 5 |
+| `ANCHOR_LATE_ARRIVAL` | Bajo | Anchor en bucket frozen; revisar adjustment/rebuild y audit |
 | `DASH_SNAPSHOT_CORRUPT` | Nunca | excluded_anchor_missing > 0 — correr audit_anchor_integrity |
 | `IDEMPOTENT_PAYMENT_DEDUPED` | Bajo | Retry de cobro funcionando como debe |
 | `DEMO_RESET_VALIDATION_FAILED` | Nunca | Reset demo dejó conteos bajo el mínimo (rollback) — ADR p49 §12 |

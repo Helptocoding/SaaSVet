@@ -1,6 +1,7 @@
 import re
 from decimal import Decimal, InvalidOperation
 from uuid import uuid4
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 from .models import Product, Presentation, StockLot, StockMovement, MedicalRecordProduct
@@ -63,6 +64,13 @@ class PresentationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El precio de venta debe ser mayor a 0.")
         return value
 
+    def validate_conversion_factor(self, value):
+        from .units import validated_conversion_factor
+        try:
+            return validated_conversion_factor(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
+
     def validate_stock(self, value):
         if value < 0:
             raise serializers.ValidationError("El stock no puede ser negativo.")
@@ -96,6 +104,13 @@ class PresentationCreateSerializer(serializers.ModelSerializer):
     def validate_sale_price(self, value):
         _validate_price(value)
         return value
+
+    def validate_conversion_factor(self, value):
+        from .units import validated_conversion_factor
+        try:
+            return validated_conversion_factor(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
 
     def validate_stock(self, value):
         _validate_non_negative(value, 'stock', 'El stock')
@@ -217,7 +232,7 @@ class ProductSerializer(serializers.ModelSerializer):
             # ADR p31: poblar Product.stock_quantity desde el stock inicial.
             # bulk_create omite signals, por eso se hace aquí explícitamente.
             from decimal import Decimal as _D
-            cf = _D(str(data.get('conversion_factor') or 1))
+            cf = _D(str(pres.conversion_factor))
             initial_stock = _D(str(data.get('stock') or 0)) * cf
             min_stock_base = _D(str(data.get('min_stock') or 0)) * cf
             Product.all_objects.filter(pk=product.pk).update(
@@ -265,7 +280,7 @@ class ProductSerializer(serializers.ModelSerializer):
             # ADR p31: sincronizar base_unit y min_stock en Product cuando cambia la presentación.
             # stock_quantity NO se toca aquí — lo gestiona apply_stock_movement.
             from decimal import Decimal as _D
-            cf = _D(str(first_pres.conversion_factor or 1))
+            cf = _D(str(first_pres.conversion_factor))
             min_base = _D(str(first_pres.min_stock or 0)) * cf
             Product.all_objects.filter(pk=instance.pk).update(
                 base_unit=first_pres.base_unit or '',

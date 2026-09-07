@@ -12,10 +12,11 @@ const CONSULTATION_TYPE_LABELS = {
 };
 
 const INVOICE_STATUS_LABELS = {
-  draft: "Borrador",
-  confirmed: "Confirmada",
+  checkout_open: "En preparación",
+  checkout_completed: "Preparación completada",
+  posted: "Pendiente",
   paid: "Pagada",
-  cancelled: "Cancelada",
+  voided: "Anulada",
 };
 
 const getAge = (birthDate) => {
@@ -52,11 +53,11 @@ const getInvoiceStatusBadgeStyle = (status) => {
   switch (status) {
     case "paid":
       return { color: "var(--c-success-text)", background: "var(--c-success-bg)" };
-    case "confirmed":
+    case "posted":
       return { color: "var(--c-info-text)", background: "var(--c-info-bg)" };
-    case "cancelled":
+    case "voided":
       return { color: "var(--c-danger-text)", background: "var(--c-danger-bg)" };
-    case "draft":
+    case "checkout_open":
     default:
       return { color: "var(--c-warning-text)", background: "var(--c-warning-bg)" };
   }

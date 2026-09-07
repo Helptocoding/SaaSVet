@@ -1,5 +1,12 @@
 # Plan de implementación — Inventario por lotes (Proyecto B) + secuenciación global
 
+> [!NOTE]
+> Plan histórico. Las referencias a `_confirm_locked_invoice` y
+> `cancel_invoice` describen el Billing anterior. La integración vigente
+> consume/asigna lotes al `post_checkout` y devuelve desde
+> `StockAllocation`; consulte [Inventario](modules/inventory.md) y
+> [Billing](modules/billing.md).
+
 **Fecha**: 2026-07-10
 **Estado**: plan de trabajo. Diseño de referencia (congelado):
 [`docs/analisis-inventario-trazabilidad-lotes-2026-07-10.md`](analisis-inventario-trazabilidad-lotes-2026-07-10.md).

@@ -1,11 +1,15 @@
-# Modulo: Citas
+# Módulo: Citas
+
+**Última actualización**: 2026-09-07
 
 > **Ver también:** [`docs/system-operational-flow.md`](../system-operational-flow.md) — mapa operacional cross-módulo (acciones, precondiciones, efectos, invariantes).
 
 ## Objetivo
 
 El modulo de citas es el punto de entrada al ciclo clinico completo.
-Una cita agendada y atendida es el punto de entrada al flujo clinico, pero ya no crea automaticamente ni el historial clinico ni la factura por defecto.
+Una cita agendada y atendida es el punto de entrada al flujo clínico.
+Appointment no crea Invoice; el cierre del MedicalRecord prepara un Checkout y
+la Invoice sólo nace al postearlo.
 
 ## Estados y transiciones
 
@@ -420,7 +424,6 @@ Ver ADR `2026-04-28-organization-settings-toggles.md`.
 
 | Toggle | Default | Comportamiento |
 |--------|---------|----------------|
-| `auto_create_invoice_on_done` | `False` | Al pasar a `done`, puede crear factura draft automaticamente via signal si la clinica lo habilita |
 | `auto_create_medical_record` | `False` | Al pasar a `done`, puede crear `MedicalRecord` vacio en estado `open` si la clinica lo habilita |
 | `require_confirmation_before_start` | `False` | Bloquea cualquier transición a `in_progress` si el estado previo no es `confirmed` |
 | `allow_anonymous_walkin` | `False` | Permite walk-in sin mascota; usa paciente genérico (`Pet.is_generic=True`) |
@@ -456,9 +459,9 @@ El walk-in tambien usa `default_appointment_duration_minutes` por defecto (compo
   cross-domain unidireccional (medical_records → appointments.services); no se muta
   `Appointment` directamente desde medical_records.
 
-- **Facturacion**: una cita puede tener una `Invoice` asociada.
-  El campo `invoice_id` en la respuesta expone el ID si existe.
-  La factura no se genera por defecto; si la organizacion activa `auto_create_invoice_on_done`, se crea en `draft` al pasar a `done`.
+- **Facturación**: cambiar Appointment a `done` no crea documentos
+  financieros. El cierre del `MedicalRecord` materializa el Checkout de
+  consulta y una Invoice sólo existe después de postear ese Checkout.
 
 ## UX al completar la cita
 

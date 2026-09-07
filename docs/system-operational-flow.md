@@ -1,7 +1,7 @@
 # Mapa Operacional del Sistema
 
-**Fecha**: 2026-08-23
-**Estado**: vigente (incluye invariantes de dominio hasta ADR p60 y el primer corte del WhatsApp Inbox v1)
+**Fecha**: 2026-09-07
+**Estado**: vigente (incluye ADR p62 y el contrato Checkout/Billing)
 **Audiencia**: nuevo desarrollador, QA, tester, soporte.
 
 Este documento es el **índice general** de la arquitectura operacional del SaaS:
@@ -29,7 +29,7 @@ contexto de trabajo ligero y preciso:
 | `appointments` | Agenda. Estados, walk-in, asignación de paciente, registro rápido. Dueño de dos garantías de dominio (ADR p57): **INV-A** (precondición atómica de estado, `expected_state` → `409 appointment_changed`) e **INV-D** (no-solapamiento por veterinario, restricción de exclusión en PostgreSQL → `400 slot_taken`). |
 | `medical_records` | Acto clínico: consulta, vitales, productos consumidos, servicios prestados, receta. |
 | `inventory` | Catálogo (Product) + presentaciones (Presentation) + stock + movimientos. |
-| `billing` | Facturación: invoice, items, ledger de pagos, notas de crédito, refunds, attestation rx externa, dispensación. |
+| `billing` | Preparación en Checkout, Invoice `posted/paid/voided`, ledger de pagos, notas de crédito, refunds, attestation Rx y dispensación. |
 | `cash` | Turno de caja (CashSession) y cierre Z. Reconciliación física del efectivo. |
 | `analytics` | Snapshots diarios + dashboards (operacional + financiero). Read-only sobre eventos. |
 | `imports` | Migración CSV/Excel: alta por lote de Clientes + Mascotas desde el sistema anterior. Escribe `patients` vía `.save()` directo. ADR p43. Ver [`modules/imports.md`](modules/imports.md). |

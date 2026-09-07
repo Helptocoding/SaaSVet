@@ -1,6 +1,7 @@
 import { useAuth } from "../auth/authContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import NotificationBell from "./notifications/NotificationBell";
 import { Icon } from "./icons";
 import styles from "./AppShell.module.css";
 
@@ -20,7 +21,7 @@ const PAGE_TITLES = {
 };
 
 const Layout = ({ children }) => {
-    const { logout, user, initializing } = useAuth();
+    const { logout, user, initializing, can } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -68,6 +69,7 @@ const Layout = ({ children }) => {
                             </span>
                         )}
                         <div className={styles.topbarActions}>
+                            {can?.("notification.list") && <NotificationBell />}
                             {location.pathname === "/config" && !user?.is_demo && (
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent("open-change-password"))}

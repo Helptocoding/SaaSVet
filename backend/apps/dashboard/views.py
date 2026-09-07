@@ -128,13 +128,13 @@ def analytics_health(request):
             _analytics_queryset(Invoice).filter(
                 org_filter, status='paid', paid_at__isnull=True,
             ).count(),
-        'invoice.confirmed_status_requires_confirmed_at':
+        'invoice.posted_at_required':
             _analytics_queryset(Invoice).filter(
-                org_filter, status__in=['confirmed', 'paid'], confirmed_at__isnull=True,
+                org_filter, posted_at__isnull=True,
             ).count(),
-        'invoice.cancelled_status_requires_cancelled_at':
+        'invoice.voided_status_requires_voided_at':
             _analytics_queryset(Invoice).filter(
-                org_filter, status='cancelled', cancelled_at__isnull=True,
+                org_filter, status='voided', voided_at__isnull=True,
             ).count(),
         'medicalrecord.closed_status_requires_closed_at':
             _analytics_queryset(MedicalRecord).filter(
@@ -143,7 +143,7 @@ def analytics_health(request):
     }
 
     unresolved = _analytics_queryset(Invoice).filter(
-        org_filter & (Q(confirmed_at_source='unresolved') | Q(cancelled_at_source='unresolved'))
+        org_filter & (Q(posted_at_source='unresolved') | Q(voided_at_source='unresolved'))
     ).count()
 
     walk_in_suspect = (
@@ -670,7 +670,7 @@ def dashboard_summary(request):
         ar_outstanding = str(
             Invoice.objects
             .for_organization(org)
-            .filter(status='confirmed')
+            .filter(status='posted')
             .aggregate(total=Coalesce(Sum('total'), Decimal('0.00')))['total']
             .quantize(Decimal('0.01'))
         )

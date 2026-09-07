@@ -1,7 +1,7 @@
 # Operaciones por Módulo
 
-**Fecha**: 2026-06-23
-**Estado**: vigente (refleja Sprint A completo + Sprint B + ADR p30 + ADR p45)
+**Fecha**: 2026-09-07
+**Estado**: vigente (incluye ADR p62 y reconciliación estructural de Billing)
 **Audiencia**: nuevo desarrollador, QA, tester, soporte.
 
 Este documento describe las **acciones operacionales de cada módulo**: qué
@@ -111,17 +111,17 @@ negocio dentro del SaaS** para cada dominio.
 
 **Requiere**
 - Un `ADMIN` autenticado.
-- Un toggle válido entre los disponibles: `auto_create_medical_record`, `auto_create_invoice_on_done`, `require_confirmation_before_start`, `allow_anonymous_walkin`, `show_status_change_history`, `require_open_cash_session`.
+- Un toggle válido entre los disponibles: `auto_create_medical_record`, `require_confirmation_before_start`, `allow_anonymous_walkin`, `show_status_change_history`, `require_open_cash_session` o `allow_post_unpaid`.
 
 **Resultado**
 - Se actualiza `OrganizationSettings` para la organización.
 
 **Efectos cruzados**
-- `auto_create_invoice_on_done=True` → al pasar una cita a `done`, el signal `create_draft_invoice_on_done` genera una factura en `draft`.
+- `allow_post_unpaid=True` → permite emitir una obligación pendiente con vencimiento y evidencia de aceptación; no habilita pagos parciales.
 - `auto_create_medical_record=True` → al pasar una cita a `done`, el signal crea un `MedicalRecord` vacío en estado `open`.
 - `require_confirmation_before_start=True` → bloquea cualquier transición directa a `in_progress` si el estado previo no es `confirmed`.
 - `allow_anonymous_walkin=True` → el walk-in puede omitir la mascota (usa la mascota genérica).
-- `require_open_cash_session=True` → las operaciones `pay_invoice` y `pay_direct_sale` exigen que el actor tenga una caja abierta.
+- `require_open_cash_session=True` → `pay_checkout`, `pay_invoice`, refunds y reversals de efectivo exigen que el actor tenga una caja abierta.
 
 **Defaults actuales** — todos en `False`, excepto `show_status_change_history=True`. Esto privilegia un flujo de trabajo manual y explícito.
 
@@ -369,7 +369,7 @@ existe bandera de forzado**, y nada se desplaza automáticamente.
 **Resultado**
 - El estado se actualiza.
 - Se registra un `AppointmentStatusChange` (append-only) con `from_status → to_status`, `changed_by` y `reason`.
-- Si el nuevo estado es `done` y `auto_create_invoice_on_done=True` → se crea una factura `draft` vía signal.
+- Llegar a `done` no crea documentos financieros. La preparación comercial nace al cerrar el `MedicalRecord` real.
 - Si el nuevo estado es `done` y `auto_create_medical_record=True` → se crea un `MedicalRecord` vacío en `open`.
 
 **Desbloquea** (al llegar a `in_progress`)
@@ -377,7 +377,8 @@ existe bandera de forzado**, y nada se desplaza automáticamente.
 
 **Desbloquea** (al llegar a `done`)
 - Crear una consulta médica desde el detalle de la cita (CTA `+ Crear Consulta Médica`).
-- Cobrar, si el toggle generó la factura automáticamente.
+- Cerrar la consulta y preparar su Checkout; la transición de Appointment por sí
+  sola no crea Checkout ni Invoice.
 
 **Bloquea**
 - Transiciones inválidas → 400 con `error` descriptivo.
@@ -453,8 +454,10 @@ open → closed (terminal, irrevocable)
 - Si se vincula a un `appointment`, este también debe ser de la misma organización.
 
 **Resultado**
-- Se crea un `MedicalRecord` en estado `open` con `consultation_type='general'` (valor por defecto).
-- **No** se crea una factura automáticamente (creación lazy, ADR p7).
+- Se crea un `MedicalRecord` en estado `open` con
+  `consultation_type='general'` (valor por defecto).
+- No se crea Checkout ni Invoice. La preparación comercial se materializa al
+  cerrar la consulta.
 
 **Desbloquea**
 - Registrar signos vitales, agregar productos y servicios, y emitir receta.
@@ -472,23 +475,25 @@ open → closed (terminal, irrevocable)
 **Requiere**
 - Consulta en estado `open`.
 - El VET asignado (o un ADMIN).
-- Una `presentation` con stock suficiente.
+- Una presentación cuyo producto tenga stock base suficiente y, si administra
+  lotes, asignaciones FEFO consumibles suficientes.
 - Si el `Product` tiene `requires_prescription=True`, debe existir una receta activa que contenga ese producto dentro de la misma consulta.
 - La operación completa debe ejecutarse dentro de `transaction.atomic()`.
 
 **Resultado** (siguiendo el orden de locks canónico)
-1. Bloquea el `MedicalRecord`.
-2. Bloquea la `Invoice` (`get_or_create_invoice_for_medical_record` → crea una factura draft de forma lazy si no existía).
-3. Bloquea la `Presentation`.
-4. Ejecuta `apply_stock_movement('out')` → descuenta el stock.
-5. Sincroniza el `InvoiceItem` en la factura draft (usa `apply_invoice_item_quantity_delta` con F()).
-6. Crea o actualiza el `MedicalRecordProduct`.
+1. Bloquea el `MedicalRecord` y los recursos de inventario según el orden global.
+2. Ejecuta `apply_stock_movement('out')` → registra el consumo clínico en
+   unidades base y actualiza `Product.stock_quantity`/lotes.
+3. Crea o actualiza el `MedicalRecordProduct`.
+4. Registra un `ClinicalChargeQuantityEvent` append-only sobre un ciclo de precio inmutable.
+5. No crea `Invoice`; al cierre, el ciclo activo se copia a `ClinicalChargeSnapshot` y `CheckoutItem`.
 
 **Desbloquea**
-- El cobro de la factura (al confirmarla).
+- La preparación comercial que se materializa al cerrar la consulta.
 
 **Bloquea**
-- La eliminación de la consulta mientras tenga una factura asociada → 403.
+- La eliminación de la consulta mientras exista evidencia clínica o comercial
+  dependiente → 403.
 - Stock negativo (la validación ocurre bajo lock).
 
 **Módulos involucrados**
@@ -503,17 +508,20 @@ open → closed (terminal, irrevocable)
 - Un `service` activo de la organización.
 - La operación dentro de `transaction.atomic()`.
 
-**Resultado** (orden de locks)
+**Resultado** (atómico)
 1. Bloquea el `MedicalRecord`.
-2. Bloquea la `Invoice` (creación lazy).
-3. Sincroniza el `InvoiceItem` con FK al `service`.
-4. Crea el `MedicalRecordService`.
+2. Crea o incrementa el `MedicalRecordService`.
+3. Registra el delta mediante `record_clinical_charge_delta` sobre
+   `ClinicalChargeEntry` y `ClinicalChargeQuantityEvent`.
+4. No crea Checkout ni Invoice; al cierre se congela el snapshot clínico y se
+   materializa el `CheckoutItem`.
 
 **Desbloquea**
-- El cobro de la factura.
+- Incluir el servicio en el Checkout creado al cerrar la consulta.
 
 **Bloquea**
-- Duplicar el mismo servicio en la misma factura (unique constraint).
+- Editar cargos después del cierre. Incrementos repetidos antes del cierre se
+  acumulan como eventos explícitos, no como InvoiceItems prematuros.
 
 ---
 
@@ -568,13 +576,13 @@ open → closed (terminal, irrevocable)
 
 **Resultado** (atómico, ADR p30)
 - `status='closed'`. `closed_at = now()`. `closed_at_source='service'`. `closed_by` registrado.
-- **Garantiza la existencia de una factura**: invoca `get_or_create_invoice_for_medical_record` dentro del mismo `atomic()` → si no existía factura, crea una en `draft` por $0. Toda consulta cerrada aparece en la sección de Cobros.
+- Materializa o adopta exactamente un `Checkout kind=primary_consultation`, copia snapshots clínicos y crea decisiones de receta pendientes. No existe `Invoice` hasta postear/cobrar.
 - La operación es idempotente: cerrar dos veces no re-valida ni genera artefactos adicionales.
 - Si `closed_at` cae dentro de un bucket frozen de analytics → se registra el log `ANCHOR_LATE_ARRIVAL` (WARNING, solo advertencia).
 
 **Desbloquea**
-- La visualización de la factura en Cobros (como mínimo en `draft` por $0).
-- La dispensación de la receta (si existe) sobre la misma factura de la consulta.
+- La visualización del Checkout en “Por preparar” de Cobros, incluso si suma $0.
+- La selección/dispensación comercial de la receta sobre ese Checkout.
 
 **Bloquea** (post-cierre, irrevocable)
 - Editar la consulta (ningún rol puede hacerlo).
@@ -593,19 +601,18 @@ open → closed (terminal, irrevocable)
 
 **Requiere**
 - Una `Prescription` existente vinculada a una consulta.
-- Que la factura de la consulta esté en estado `draft`.
+- Que exista un Checkout clínico `open` para la consulta cerrada.
 - Permiso `billing.rx_dispense` (ADMIN y VET lo tienen por defecto).
 - Body con `lines=[{presentation, quantity, prescription_item}]`.
 
-**Resultado** (atómico, orden de locks `MR → Invoice → Presentation → InvoiceItem`)
-- Agrega uno o más `InvoiceItem` a la **misma factura de la consulta**, con la FK `dispensed_from_prescription_item` establecida.
-- Acumula cantidades si la presentación ya existía como línea dispensada (usa el helper F()).
-- **No mueve stock en este momento**: el descuento ocurre al confirmar la factura, por la ruta única `_confirm_locked_invoice` + `_items_settling_stock`. El predicado es: solo ítems con FK `dispensed_from_prescription_item` en facturas `consultation`; todos los ítems en `direct_sale`.
-- Devuelve la factura actualizada (200).
+**Resultado** (atómico)
+- Agrega `CheckoutItem` retail ligados a `PrescriptionItem` y marca la selección `accepted`; `declined` no altera la receta clínica.
+- **No mueve stock en este momento**: el post autoritativo revalida el cap Rx, crea `InvoiceItem`, `StockAllocation`, `StockDispositionEvent`, `PrescriptionFulfillmentEvent` y el movimiento de salida juntos.
+- Devuelve el Checkout actualizado (200).
 - No crea `ExternalPrescriptionAttestation` (la receta interna ya es el respaldo legal).
 
 **Desbloquea**
-- Confirmar y pagar la factura en un solo cobro contable que incluye tanto la consulta como la dispensación.
+- Postear y, opcionalmente, pagar el Checkout que incluye consulta y dispensación.
 
 **Bloquea**
 - Dispensar más de lo recetado: por ítem de receta, lo dispensado acumulado en la factura + lo solicitado no puede exceder `PrescriptionItem.quantity`, comparado en unidades base (`quantity × conversion_factor`, ADR p31) → 400 con amparado/dispensado/restante. El cliente puede llevar menos; nunca más.
@@ -629,7 +636,9 @@ open → closed (terminal, irrevocable)
 - Al crear el producto se crea también su presentación inicial.
 
 **Resultado**
-- Se crean el `Product` y su `Presentation` con el stock inicial.
+- Se crean el `Product` y su presentación inicial. El stock comercial se
+  normaliza a unidades base en `Product.stock_quantity`; para productos con
+  lotes, `StockLot.quantity_on_hand` conserva el desglose consumible.
 
 **Desbloquea**
 - Venderlo en una factura, usarlo como insumo en consulta o recetarlo (si `requires_prescription=True`).
@@ -640,15 +649,22 @@ open → closed (terminal, irrevocable)
 
 **Requiere**
 - Permiso `inventory.update`.
-- La operación debe ejecutarse dentro de `transaction.atomic()` y con `select_for_update` sobre la `Presentation`.
+- La operación debe ejecutarse dentro de `transaction.atomic()` y tomar los
+  locks de Product/lotes requeridos por el servicio de inventario.
 
 **Resultado**
 - Se registra un `StockMovement` de tipo `in`, `out` o `adjustment`.
-- `Presentation.stock` se actualiza a través de `apply_stock_movement()`.
+- `Product.stock_quantity` se actualiza en unidades base mediante
+  `apply_stock_movement()`.
+- En productos con lotes, la suma consumible de
+  `StockLot.quantity_on_hand` debe converger con el stock del producto.
 
 **Reglas duras**
-- **Nunca** se debe escribir `presentation.stock` directamente fuera de `apply_stock_movement()`.
-- El caller **debe** poseer el `select_for_update()` antes de invocar el helper.
+- `Product.stock_quantity` y `StockLot.quantity_on_hand` son las autoridades
+  de inventario.
+- `Presentation.stock` es un campo legacy/display y Billing no lo consulta
+  para disponibilidad, límites ni post.
+- El caller debe respetar el orden de locks definido por el servicio.
 - `adjustment` representa un reset absoluto (reconciliación).
 
 ---
@@ -679,16 +695,76 @@ open → closed (terminal, irrevocable)
 
 | Origen | Resultado en stock |
 |--------|--------------------|
-| Producto consumido en consulta (`MedicalRecordProduct.save`) | `−quantity` al consumirse |
-| Item agregado a factura `direct_sale` (cualquier presentación) | `−quantity` al **confirmar** la factura |
-| Item dispensado de receta en factura `consultation` | `−quantity` al **confirmar** la factura |
-| Cancelación de factura `confirmed` con stock movements | `+quantity` reversa por cada item |
+| Producto consumido en consulta | `−quantity_base` al consumirse |
+| Item retail en Checkout `direct_sale` | `−quantity × factor_snapshot` al postear |
+| Item dispensado de receta | `−quantity × factor_snapshot` al postear |
+| Void/reemplazo con devolución autorizada | retorno exacto según `StockAllocation`, por lote |
 | Nota de crédito con `disposition=restock` | `+quantity` al emitir refund |
 | Nota de crédito con `disposition=discard` | sin movimiento de stock |
 
 ---
 
 ## 7. Cobros (Billing)
+
+> Contrato vigente: [ADR p62](decisions/2026-08-30-p62-billing-checkout-lifecycle.md)
+> y [modelo de eventos financieros](financial-event-model-contract.md).
+
+### Flujo vigente
+
+- `Checkout` es la preparación comercial mutable. Estados: `open → completed|abandoned`;
+  readiness y acciones permitidas se derivan, no se persiste un estado `ready`.
+- `Invoice` es un documento financiero inmutable que nace al postear. Estados:
+  `posted → paid` o `posted → voided`; anchors nativos `posted_at`, `paid_at`,
+  `voided_at`.
+- Una consulta cerrada crea un `Checkout primary_consultation`; una consulta en
+  $0 termina `no_charge` sin crear Invoice.
+- POS crea un `Checkout direct_sale`; post/pago crea Invoice, líneas, movimientos
+  de stock y Payments dentro de una sola transacción.
+- No existe `confirm`: emitir y cobrar son comandos separados solo cuando hay
+  crédito explícito. Los pagos parciales y sobrepagos están prohibidos.
+- La receta es sugerencia clínica. Aceptar crea líneas retail; rechazar conserva
+  la receta y no mueve stock. El stock sale al postear, con allocation,
+  disposición y fulfillment Rx append-only.
+- El backend devuelve `remaining_quantity_base`,
+  `available_stock_quantity_base` y `max_selectable_quantity`; el frontend
+  los presenta y no recalcula el dominio.
+- `CheckoutItem.quantity` e `InvoiceItem.quantity` están en unidades de
+  presentación. El `conversion_factor_snapshot` expresa unidades base por
+  presentación y congela la conversión usada al postear.
+- Un medicamento de venta directa exige `ExternalPrescriptionAttestation`
+  vigente para la revisión/fingerprint exactos de la línea.
+- Corregir una Invoice emitida usa `void_and_prepare_replacement`: void y Checkout
+  replacement nacen atómicamente. El baseline entregado no puede abandonarse,
+  expirar ni reducirse a cero sin waiver autorizado y auditado.
+- Refunds usan `CreditNote` + `RefundPayment`; una reversa monetaria usa
+  `RefundReversal`. Dinero, stock/custodia y fulfillment Rx se proyectan como
+  hechos independientes.
+- Todo comando terminal usa `CommandReceipt`; los eventos financieros hijos se
+  identifican por `(command_receipt, command_line_index)`.
+
+### Comandos principales
+
+| Caso | Comando | Resultado |
+| --- | --- | --- |
+| Consulta cerrada | `get_or_create_primary_checkout_for_medical_record` | Checkout open, snapshots y selecciones |
+| Venta directa | `create_direct_sale_checkout` + items | Checkout open |
+| Cobro inmediato | `post_checkout` con payment lines | Invoice paid + Payments + stock |
+| Crédito autorizado | `post_checkout` sin pago | Invoice posted/unpaid + evidencia |
+| Sin cargos | `complete_no_charge` | Checkout completed/no_charge, sin Invoice |
+| Pago posterior | `pay_invoice` | Invoice paid; exige saldo total exacto |
+| Corrección | `void_and_prepare_replacement` | Invoice voided + replacement open |
+| Anulación terminal | `void_invoice_terminal` | Invoice voided con motivo/evidencia |
+
+Todos los comandos mutantes exigen `expected_version` e
+`idempotency_key`. Para validar el schema físico antes o después de un
+despliegue, ejecutar `audit_billing_schema --json` siguiendo el
+[runbook de reconciliación](runbooks/billing-schema-reconciliation.md).
+
+<details>
+<summary>Archivo histórico del contrato retirado — no ejecutar</summary>
+
+El contenido siguiente describe la máquina anterior
+`draft → confirmed → paid/cancelled`. No es ejecutable ni normativo desde ADR p62.
 
 ### Modelos clave
 
@@ -891,6 +967,8 @@ Cada anchor tiene su `*_source` (`service`, `legacy`, etc.). Los CHECK constrain
 
 ---
 
+</details>
+
 ## 8. Caja (CashSession)
 
 ### Estados
@@ -994,8 +1072,9 @@ hubiera caja abierta → el Z reportaba $0 ventas (diferencia falsa).
 
 | Anchor | Writer | KPI |
 |--------|--------|-----|
-| `Invoice.paid_at` | `pay_invoice` / `pay_direct_sale` | `revenue_paid`, `invoices_paid_count` |
-| `Invoice.confirmed_at` | `confirm_invoice` / `pay_direct_sale` | `revenue_accrual` |
+| `Invoice.paid_at` | `post_checkout` con pago / `pay_invoice` | `revenue_paid`, `invoices_paid_count` |
+| `Invoice.posted_at` | `post_checkout` | `revenue_accrual` |
+| `Invoice.voided_at` | `void_invoice_terminal` / `void_and_prepare_replacement` | anulaciones y provenance |
 | `Appointment.start_datetime` | creación de cita | `appointments_total/done/no_show` |
 | `MedicalRecord.closed_at` | `close_medical_record` | `medical_records_closed` |
 | `MetricAdjustment.delta` (Sprint B) | `process_refund` / `reverse_credit_note` | `revenue_paid_net` |
@@ -1041,9 +1120,9 @@ hubiera caja abierta → el Z reportaba $0 ventas (diferencia falsa).
 
 | Evento | Reflejo en `live` (today) | Reflejo en snapshot (siguiente nightly) |
 |--------|---------------------------|------------------------------------------|
-| `pay_invoice` exitoso | inmediato | sí, fecha local de la org |
-| `confirm_invoice` exitoso | inmediato | sí |
-| `cancel_invoice` exitoso | inmediato | (no es KPI v1 directo) |
+| `post_checkout` con pago o `pay_invoice` exitoso | inmediato | sí, fecha local de la org |
+| `post_checkout` unpaid exitoso | inmediato | sí en `revenue_accrual` |
+| Invoice pasa a `voided` | inmediato | anulación/provenance; no es revenue pagado |
 | `process_refund` | inmediato (live recomputa) | adjustment se aplica vía `revenue_paid_net` |
 | `close_medical_record` | inmediato | sí en `medical_records_closed` |
 | Cita pasa a `done` o `no_show` | inmediato | sí |

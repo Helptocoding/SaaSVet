@@ -377,16 +377,6 @@ class CloseMedicalRecordTests(APITestCase):
         r = self.client.delete(self._detail_url(mr.pk))
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_delete_open_record_with_invoice_returns_403(self):
-        from apps.billing.models import Invoice
-        mr, owner, _pet = self._make_empty_record()
-        Invoice.objects.create(
-            medical_record=mr, owner=owner, organization=self.org_a,
-        )
-        self.client.force_authenticate(self.admin_a)
-        r = self.client.delete(self._detail_url(mr.pk))
-        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_delete_empty_open_record_succeeds(self):
         mr, _owner, _pet = self._make_empty_record()
         self.client.force_authenticate(self.admin_a)

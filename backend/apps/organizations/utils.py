@@ -1,15 +1,15 @@
 from datetime import time as time_type
 
 SETTING_AUTO_MEDICAL_RECORD = 'auto_create_medical_record'
-SETTING_AUTO_INVOICE_ON_DONE = 'auto_create_invoice_on_done'
 
 DEFAULT_ORG_SETTINGS = {
     SETTING_AUTO_MEDICAL_RECORD: False,
-    SETTING_AUTO_INVOICE_ON_DONE: False,
     'require_confirmation_before_start': False,
     'allow_anonymous_walkin': False,
     'show_status_change_history': True,
     'require_open_cash_session': False,
+    'allow_post_unpaid': False,
+    'credit_default_days': 30,
     'locale': 'es-MX',
     'currency_code': 'MXN',
     'default_appointment_duration_minutes': 30,

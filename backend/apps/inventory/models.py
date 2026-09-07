@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -134,6 +136,13 @@ class Presentation(PublicIdMixin, OrganizationalModel):
         # tenant-scoped) y de bajo valor (is_low_stock compara columna-vs-columna,
         # no usa el índice). Si stock__gt se vuelve hot, usar (organization, stock).
         constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(conversion_factor__gt=0)
+                    & models.Q(conversion_factor__lte=Decimal('999999.9999'))
+                ),
+                name="presentation_conversion_factor_positive",
+            ),
             models.CheckConstraint(
                 condition=models.Q(stock__gte=0),
                 name="presentation_stock_non_negative",
@@ -349,6 +358,8 @@ class MedicalRecordProduct(OrganizationalModel):
         related_name='medical_record_usages',
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    # Base units per presentation captured at clinical consumption time.
+    conversion_factor_snapshot = models.DecimalField(max_digits=10, decimal_places=4)
     cost_behavior = models.CharField(
         max_length=20,
         choices=COST_BEHAVIOR_CHOICES,
@@ -372,6 +383,13 @@ class MedicalRecordProduct(OrganizationalModel):
             models.CheckConstraint(
                 condition=models.Q(cost_behavior__in=['charge', 'included']),
                 name='medicalrecordproduct_cost_behavior_valid',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(conversion_factor_snapshot__gt=0)
+                    & models.Q(conversion_factor_snapshot__lte=Decimal('999999.9999'))
+                ),
+                name='medicalrecordproduct_factor_snapshot_valid',
             ),
         ]
 
@@ -412,9 +430,13 @@ class MedicalRecordProduct(OrganizationalModel):
                 fresh = locked_presentation or Presentation.objects.select_for_update().get(pk=self.presentation_id)
                 self.presentation = fresh
 
+            from .units import presentation_conversion_factor
+            if self.conversion_factor_snapshot is None:
+                self.conversion_factor_snapshot = presentation_conversion_factor(self.presentation)
+
             super().save(*args, **kwargs)
 
-            cf = self.presentation.conversion_factor or 1
+            cf = self.conversion_factor_snapshot
             # Consumo/reverso vía la única entrada (consume_product/restock_product),
             # siempre sobre self.lot (None en productos sin tracks_lots → path histórico).
             if self.pk and previous_quantity is not None:
@@ -457,7 +479,7 @@ class MedicalRecordProduct(OrganizationalModel):
         )
         with transaction.atomic():
             fresh = locked_presentation or Presentation.objects.select_for_update().get(pk=self.presentation_id)
-            cf = fresh.conversion_factor or 1
+            cf = self.conversion_factor_snapshot
             # Reverso al MISMO lote del que se consumió (política P4).
             restock_product(
                 presentation=fresh,

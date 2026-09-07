@@ -15,8 +15,8 @@ from django.db import close_old_connections
 from django.db.models import Sum
 from django.test import TransactionTestCase
 
-from apps.billing.models import Invoice, InvoiceItem, Payment, Service
-from apps.billing.services import pay_direct_sale
+from apps.billing.models import Invoice, Payment, Service
+from apps.billing.tests.factories import build_direct_sale_checkout, pay_checkout_for_test
 from apps.cash.services import close_cash_session, open_cash_session
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
@@ -79,29 +79,25 @@ class CashSessionConcurrencyTests(TransactionTestCase):
             t.join(timeout=10)
         return results
 
-    def _draft_direct_sale(self):
-        inv = Invoice.objects.create(
-            owner=self.owner, pet=self.pet, organization=self.org,
-            status='draft', invoice_type='direct_sale', tax_rate=self.org.tax_rate,
+    def _open_direct_sale(self):
+        return build_direct_sale_checkout(
+            organization=self.org, owner=self.owner, pet=self.pet,
+            user=self.admin, service=self.service,
         )
-        InvoiceItem.objects.create(
-            invoice=inv, service=self.service, description=self.service.name,
-            quantity=Decimal('1.00'), unit_price=self.service.base_price, organization=self.org,
-        )
-        inv.refresh_from_db()
-        return inv
 
     def test_close_vs_pay_no_phantom_payment(self):
         session = open_cash_session(self.admin, opening_float=Decimal('0.00'))
-        invoice = self._draft_direct_sale()  # total 100 (tax 0)
+        checkout = self._open_direct_sale()  # total 100 (tax 0)
 
         self._run_parallel([
             ('close', lambda: close_cash_session(session, self.admin, counted_cash=Decimal('0.00'))),
-            ('pay', lambda: pay_direct_sale(invoice, self.admin, payment_method='cash')),
+            ('pay', lambda: pay_checkout_for_test(
+                checkout, user=self.admin, payment_method='cash', idempotency_key='cash-race',
+            )),
         ])
 
         session.refresh_from_db()
-        invoice.refresh_from_db()
+        checkout.refresh_from_db()
         self.assertIn(session.status, ('closed', 'force_closed'))
 
         cash_attached = (
@@ -112,10 +108,12 @@ class CashSessionConcurrencyTests(TransactionTestCase):
         # Si un pago se colara tras el conteo, esta igualdad se rompería.
         self.assertEqual(session.expected_cash - session.opening_float, cash_attached)
 
-        # XOR: o la factura quedó pagada (su pago fue contado) o sigue draft
-        # (el cobro fue rechazado por caja cerrada). Sin estado intermedio.
-        if invoice.status == 'paid':
+        # XOR: o se emitió la factura pagada (su pago fue contado) o el Checkout
+        # sigue abierto porque el cobro fue rechazado por caja cerrada.
+        invoice = Invoice.all_objects.filter(checkout=checkout).first()
+        if invoice is not None:
+            self.assertEqual(invoice.status, 'paid')
             self.assertEqual(cash_attached, invoice.total)
         else:
-            self.assertEqual(invoice.status, 'draft')
+            self.assertEqual(checkout.lifecycle, 'open')
             self.assertEqual(cash_attached, Decimal('0.00'))

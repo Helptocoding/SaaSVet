@@ -1,5 +1,15 @@
 # Analytics Schema Audit
 
+> [!IMPORTANT]
+> **Documento histórico (corte 2026-05-09).** Conserva el diagnóstico del
+> schema que existía en ese momento, incluido el lifecycle
+> `draft/confirmed/cancelled`; no describe el runtime vigente. El contrato
+> actual usa `Invoice.posted_at`, `paid_at` y `voided_at`. Para operar o
+> validar el sistema consulte el
+> [checklist vigente](analytics-readiness-checklist.md), el
+> [módulo Billing](modules/billing.md) y la
+> [auditoría de regresión](audits/2026-09-05-checkout-billing-regression-audit.md).
+
 Version: 0.1
 Owner: Backend
 Status: PASO 2 of analytics roadmap. Read-only audit against current `develop` branch.

@@ -48,43 +48,22 @@ def apply_consultation_draft_on_close(medical_record, request):
 def add_medical_record_product(medical_record, presentation, quantity, cost_behavior, lot, user):
     """
     **Fuente única** para agregar (o incrementar) un producto consumido en la
-    consulta: crea/incrementa el `MedicalRecordProduct` (descuenta stock del lote,
-    B2a) y sincroniza el `InvoiceItem` en la factura draft si `cost_behavior='charge'`.
+    consulta: crea/incrementa el `MedicalRecordProduct` y descuenta stock del lote.
+    El cargo comercial se materializa en Checkout únicamente al cerrar la consulta.
     La usan la view de Cargos (`MedicalRecordProductListCreateView`) y la
     materialización del protocolo Vacuna (A2) — se extrajo al aparecer el 2º caller.
 
     Debe correr dentro de `transaction.atomic()` con el MedicalRecord ya lockeado.
     Devuelve el `MedicalRecordProduct`.
     """
+    import uuid
+    from apps.billing.checkout_services import record_clinical_charge_delta
     from apps.inventory.models import Presentation, MedicalRecordProduct
-    from apps.billing.models import InvoiceItem
-    from apps.billing.services import (
-        apply_invoice_item_quantity_delta,
-        get_or_create_invoice_for_medical_record,
-    )
-
-    invoice = get_or_create_invoice_for_medical_record(medical_record)
     locked_pres = Presentation.objects.select_for_update().get(pk=presentation.pk)
 
     mrp = MedicalRecordProduct.objects.select_for_update().filter(
         medical_record=medical_record, presentation=locked_pres,
     ).first()
-    # cost_behavior inmutable: al incrementar se usa el del MRP existente.
-    effective_cost_behavior = mrp.cost_behavior if mrp is not None else cost_behavior
-
-    if invoice.status == 'draft' and effective_cost_behavior == 'charge':
-        item = InvoiceItem.objects.select_for_update().filter(
-            invoice=invoice, presentation=locked_pres, is_active=True,
-        ).first()
-        if item is None:
-            InvoiceItem.objects.create(
-                invoice=invoice, presentation=locked_pres, description=str(locked_pres),
-                quantity=quantity, unit_price=locked_pres.sale_price,
-                organization=invoice.organization,
-            )
-        else:
-            apply_invoice_item_quantity_delta(item, quantity)
-
     if mrp is not None:
         previous_quantity = mrp.quantity
         mrp.quantity = previous_quantity + quantity
@@ -95,6 +74,11 @@ def add_medical_record_product(medical_record, presentation, quantity, cost_beha
             quantity=quantity, cost_behavior=cost_behavior, lot=lot,
         )
         mrp.save(locked_presentation=locked_pres)
+    record_clinical_charge_delta(
+        mrp, delta=quantity, user=user,
+        mutation_key=f'mrp:{mrp.pk}:{uuid.uuid4()}',
+        reason='product_consumed',
+    )
     return mrp
 
 

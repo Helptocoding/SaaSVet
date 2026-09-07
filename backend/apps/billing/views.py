@@ -17,9 +17,17 @@ from apps.core.pagination import StandardResultsPagination
 from apps.core.permissions import HybridPermission, make_permission
 from apps.core.views import TenantQueryMixin, PublicIdLookupMixin, resolve_public_id
 
-from .models import Service, Invoice, InvoiceItem
-from .serializers import ServiceSerializer, InvoiceSerializer, InvoiceItemSerializer, CreditNoteSerializer
-from .permissions import CanConfirmInvoice, CanPayInvoice, CanCancelInvoice
+from .models import (
+    Service, Invoice, Checkout, CheckoutDispute, CheckoutItem, CheckoutEstimate,
+    ClinicalChargeEntry, CollectionCase,
+)
+from .serializers import (
+    ServiceSerializer, InvoiceSerializer, CreditNoteSerializer,
+    CheckoutSerializer, CheckoutDisputeSerializer, CheckoutItemSerializer,
+    CheckoutEstimateSerializer, CheckoutPostCommandSerializer,
+    PrescriptionDispenseCommandSerializer, CheckoutItemMutationSerializer,
+)
+from .permissions import CanPayInvoice
 
 VALID_INVOICE_TYPES = {choice[0] for choice in Invoice.INVOICE_TYPE_CHOICES}
 VALID_INVOICE_STATUSES = {choice[0] for choice in Invoice.STATUS_CHOICES}
@@ -35,6 +43,600 @@ class PrescriptionRequired(APIException):
 
 class BillingOrganizationMixin(TenantQueryMixin):
     """Garantiza que ninguna vista de facturación retorne datos de otra organización."""
+
+
+class CheckoutListView(BillingOrganizationMixin, generics.ListAPIView):
+    serializer_class = CheckoutSerializer
+    permission_classes = [HybridPermission]
+    resource_name = 'invoice'
+
+    def get_queryset(self):
+        qs = Checkout.objects.for_organization(self.request.user.organization).select_related(
+            'organization__settings', 'owner', 'customer', 'pet', 'medical_record',
+        ).prefetch_related(
+            'items__service', 'items__presentation__product', 'items__lot',
+            'items__rx_attestations', 'items__clinical_charge_snapshot',
+            'items__source_invoice_item', 'prescription_selections', 'disputes',
+        )
+        kind = self.request.query_params.get('kind')
+        if kind:
+            qs = qs.filter(kind=kind)
+        lifecycle = self.request.query_params.get('lifecycle', 'open')
+        if lifecycle:
+            qs = qs.filter(lifecycle=lifecycle)
+        return qs.order_by('-created_at')
+
+
+class CheckoutDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.RetrieveAPIView):
+    serializer_class = CheckoutSerializer
+    permission_classes = [HybridPermission]
+    resource_name = 'invoice'
+    lookup_url_kwarg = 'pk'
+
+    def get_queryset(self):
+        return Checkout.objects.for_organization(self.request.user.organization).select_related(
+            'organization__settings', 'customer', 'pet', 'medical_record',
+        ).prefetch_related(
+            'items__service', 'items__presentation__product', 'items__lot',
+            'items__rx_attestations', 'items__clinical_charge_snapshot',
+            'items__source_invoice_item',
+            'medical_record__prescription', 'prescription_selections', 'disputes',
+        )
+
+
+class CheckoutDisputeListView(BillingOrganizationMixin, generics.ListAPIView):
+    serializer_class = CheckoutDisputeSerializer
+    permission_classes = [make_permission('invoice.list')]
+
+    def get_queryset(self):
+        qs = CheckoutDispute.objects.for_organization(
+            self.request.user.organization,
+        ).select_related('checkout', 'owner', 'opened_by', 'resolved_by', 'invoice')
+        dispute_status = self.request.query_params.get('status', 'open')
+        if dispute_status:
+            qs = qs.filter(status=dispute_status)
+        return qs.order_by('review_due_at', 'pk')
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.create')])
+def create_direct_sale_checkout(request):
+    from apps.patients.models import Owner, Pet
+    from .checkout_services import create_direct_sale_checkout as command
+    customer = resolve_public_id(
+        Owner.objects.for_organization(request.user.organization),
+        request.data.get('owner'),
+    )
+    pet = None
+    if request.data.get('pet'):
+        pet = resolve_public_id(
+            Pet.objects.for_organization(request.user.organization), request.data['pet'],
+        )
+    checkout = command(
+        organization=request.user.organization, customer=customer, pet=pet,
+        user=request.user, notes=request.data.get('notes', ''),
+    )
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.create')])
+def create_checkout_item(request, pk):
+    from apps.inventory.models import Presentation, StockLot
+    from apps.core.permissions import user_has_permission
+    from .checkout_services import add_checkout_item
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    service = presentation = lot = None
+    if request.data.get('service'):
+        service = get_object_or_404(Service, pk=request.data['service'], organization=request.user.organization)
+    if request.data.get('presentation'):
+        presentation = get_object_or_404(
+            Presentation.objects.select_related('product'),
+            pk=request.data['presentation'], organization=request.user.organization,
+        )
+    if request.data.get('lot'):
+        lot = get_object_or_404(StockLot, pk=request.data['lot'], organization=request.user.organization)
+    if presentation and presentation.product.requires_prescription and not user_has_permission(request.user, 'billing.rx_dispense'):
+        from rest_framework.exceptions import PermissionDenied
+        raise PermissionDenied('No tienes permiso para dispensar productos con receta.')
+    try:
+        item = add_checkout_item(
+            checkout, request.user, service=service, presentation=presentation,
+            quantity=request.data.get('quantity', 1), lot=lot,
+            discount_type=request.data.get('discount_type'),
+            discount_value=request.data.get('discount_value', 0),
+            rx_attested=request.data.get('rx_attested', False),
+            prescriber_name=request.data.get('prescriber_name', ''),
+            prescription_folio=request.data.get('prescription_folio', ''),
+            expected_version=request.data.get('expected_version'),
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutItemSerializer(item, context={'request': request}).data, status=201)
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([make_permission('invoice.create')])
+def checkout_item_detail(request, pk, item_pk):
+    from .checkout_services import delete_checkout_item, update_checkout_item
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    item = get_object_or_404(CheckoutItem, pk=item_pk, checkout=checkout)
+    if request.method == 'GET':
+        return Response(CheckoutItemSerializer(item, context={'request': request}).data)
+    command = CheckoutItemMutationSerializer(data=request.data)
+    command.is_valid(raise_exception=True)
+    try:
+        if request.method == 'DELETE':
+            delete_checkout_item(
+                item, request.user,
+                expected_version=command.validated_data['expected_version'],
+            )
+            return Response(status=204)
+        item = update_checkout_item(
+            item, request.user, quantity=command.validated_data.get('quantity'),
+            expected_version=command.validated_data['expected_version'],
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutItemSerializer(item, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('billing.rx_dispense')])
+def attest_checkout_item_external_prescription(request, pk, item_pk):
+    from .checkout_services import attest_external_prescription
+
+    checkout = resolve_public_id(
+        Checkout.objects.for_organization(request.user.organization), pk,
+    )
+    item = get_object_or_404(
+        CheckoutItem.all_objects, pk=item_pk, checkout=checkout, is_active=True,
+    )
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        attestation = attest_external_prescription(
+            item, request.user,
+            prescriber_name=request.data.get('prescriber_name', ''),
+            prescription_folio=request.data.get('prescription_folio', ''),
+            notes=request.data.get('notes', ''),
+            correction_reason=request.data.get('correction_reason', ''),
+            expected_version=request.data.get('expected_version'),
+            idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(
+            exc.message_dict if hasattr(exc, 'message_dict') else exc.messages,
+        )
+    return Response({
+        'id': str(attestation.public_id),
+        'checkout_item': attestation.checkout_item_id,
+        'regulatory_revision': attestation.regulatory_revision,
+        'attested_at': attestation.attested_at,
+        'supersedes': (
+            str(attestation.supersedes_attestation.public_id)
+            if attestation.supersedes_attestation_id else None
+        ),
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('billing.rx_dispense')])
+def create_prescription_supplement_view(request, pk):
+    from apps.medical_records.models import MedicalRecord
+    from .checkout_services import create_prescription_supplement
+
+    medical_record = resolve_public_id(
+        MedicalRecord.objects.for_organization(request.user.organization), pk,
+    )
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        checkout = create_prescription_supplement(
+            medical_record, request.user, idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(
+            exc.message_dict if hasattr(exc, 'message_dict') else exc.messages,
+        )
+    return Response(
+        CheckoutSerializer(checkout, context={'request': request}).data,
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('checkout.dispute.open')])
+def open_checkout_dispute_view(request, pk):
+    from apps.users.models import User
+    from .checkout_services import open_checkout_dispute
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    owner = get_object_or_404(
+        User, pk=request.data.get('owner'), organization=request.user.organization,
+    )
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        dispute = open_checkout_dispute(
+            checkout, request.user, item_ids=request.data.get('item_ids') or [],
+            statement=request.data.get('statement', ''), owner=owner,
+            review_due_at=request.data.get('review_due_at'),
+            evidence=request.data.get('evidence') or {},
+            expected_version=request.data.get('expected_version'),
+            idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutDisputeSerializer(dispute).data, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('checkout.dispute.resolve')])
+def resolve_checkout_dispute_view(request, pk):
+    from .checkout_services import resolve_checkout_dispute
+    dispute = resolve_public_id(
+        CheckoutDispute.objects.for_organization(request.user.organization), pk,
+    )
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        dispute = resolve_checkout_dispute(
+            dispute, request.user, resolution=request.data.get('resolution'),
+            reason=request.data.get('reason', ''),
+            resolution_evidence=request.data.get('resolution_evidence') or {},
+            adjustments=request.data.get('adjustments') or [],
+            due_at=request.data.get('due_at'),
+            obligation_evidence=request.data.get('obligation_evidence') or {},
+            expected_version=request.data.get('expected_version'),
+            idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutDisputeSerializer(dispute).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('collection.resolve')])
+def resolve_collection_case_view(request, pk):
+    from .checkout_services import resolve_collection_case
+
+    case = resolve_public_id(
+        CollectionCase.objects.for_organization(request.user.organization), pk,
+    )
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        case = resolve_collection_case(
+            case, request.user, resolution=request.data.get('resolution'),
+            reason=request.data.get('reason', ''),
+            evidence=request.data.get('evidence') or {}, idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(
+            exc.message_dict if hasattr(exc, 'message_dict') else exc.messages,
+        )
+    return Response({
+        'id': str(case.public_id), 'invoice': str(case.invoice.public_id),
+        'status': case.status, 'resolution': case.resolution,
+        'resolved_at': case.resolved_at,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.replace_adjust')])
+def adjust_replacement_exposure_view(request, pk):
+    from .checkout_services import adjust_replacement_exposure
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        checkout = adjust_replacement_exposure(
+            checkout, request.user, item_id=request.data.get('item_id'),
+            amount=request.data.get('amount'), reason_code=request.data.get('reason_code', ''),
+            note=request.data.get('note', ''), evidence=request.data.get('evidence') or {},
+            expected_version=request.data.get('expected_version'), idempotency_key=key,
+        )
+    except (DjValidationError, TypeError, ValueError) as exc:
+        if isinstance(exc, DjValidationError):
+            raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+        raise ValidationError(str(exc))
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.replace_manage')])
+def assign_replacement_owner_view(request, pk):
+    from apps.users.models import User
+    from .checkout_services import assign_replacement_owner
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    owner = get_object_or_404(
+        User, pk=request.data.get('owner'), organization=request.user.organization,
+    )
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        checkout = assign_replacement_owner(
+            checkout, request.user, owner=owner,
+            correction_due_at=request.data.get('correction_due_at'),
+            reason_code=request.data.get('reason_code', ''),
+            expected_version=request.data.get('expected_version'), idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data)
+
+
+def _post_checkout_response(request, pk, *, paying):
+    from .checkout_services import CheckoutVersionConflict, post_checkout
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    command = CheckoutPostCommandSerializer(data={
+        'expected_version': request.data.get('expected_version'),
+        'idempotency_key': key,
+        'payment_lines': request.data.get('payment_lines'),
+        'payment_method': request.data.get('payment_method'),
+        'due_at': request.data.get('due_at'),
+        'credit_reason': request.data.get('credit_reason', ''),
+        'obligation_evidence': request.data.get('obligation_evidence') or {},
+    })
+    command.is_valid(raise_exception=True)
+    data = command.validated_data
+    try:
+        invoice = post_checkout(
+            checkout, request.user,
+            payment_lines=data.get('payment_lines'),
+            payment_method=data.get('payment_method'),
+            expected_version=data['expected_version'],
+            idempotency_key=data['idempotency_key'],
+            due_at=data.get('due_at'),
+            credit_reason=data.get('credit_reason', ''),
+            obligation_evidence=data.get('obligation_evidence') or {},
+        )
+    except CheckoutVersionConflict as exc:
+        return Response(
+            exc.message_dict if hasattr(exc, 'message_dict') else {'detail': exc.messages},
+            status=status.HTTP_409_CONFLICT,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(InvoiceSerializer(invoice, context={'request': request}).data, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([CanPayInvoice])
+def pay_checkout_view(request, pk):
+    if not (request.data.get('payment_lines') or request.data.get('payment_method')):
+        raise ValidationError('Se requiere payment_lines o payment_method.')
+    return _post_checkout_response(request, pk, paying=True)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.post_unpaid')])
+def post_checkout_unpaid(request, pk):
+    if request.data.get('payment_lines') or request.data.get('payment_method'):
+        raise ValidationError('Usa /pay/ para cobrar ahora.')
+    return _post_checkout_response(request, pk, paying=False)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('checkout.prescription_decide')])
+def decide_checkout_prescription(request, pk, prescription_item_pk):
+    from apps.prescriptions.models import PrescriptionItem
+    from .checkout_services import decide_prescription_item
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    prescription_item = get_object_or_404(
+        PrescriptionItem, pk=prescription_item_pk, organization=request.user.organization,
+    )
+    try:
+        decide_prescription_item(
+            checkout, prescription_item, request.user,
+            decision=request.data.get('decision', 'declined'),
+            decline_reason=request.data.get('reason_code', ''),
+            expected_version=request.data.get('expected_version'),
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    checkout.refresh_from_db()
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('checkout.estimate.issue')])
+def issue_checkout_estimate_view(request, pk):
+    from .checkout_services import issue_checkout_estimate
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        estimate = issue_checkout_estimate(
+            checkout, request.user, expected_version=request.data.get('expected_version'),
+            idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutEstimateSerializer(estimate).data, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([make_permission('checkout.estimate.issue')])
+def checkout_estimate_pdf(request, pk):
+    """Renderiza el snapshot inmutable; nunca consulta precios actuales del Checkout."""
+    from io import BytesIO
+    from django.http import HttpResponse
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Paragraph
+    from apps.core.pdf import (
+        CONTENT_WIDTH, build_styles, data_table, get_theme_for_organization,
+        pdf_filename, render_branded_pdf, safe_pdf_text, section, title_block,
+        totals_table,
+    )
+
+    estimate = resolve_public_id(
+        CheckoutEstimate.objects.for_organization(request.user.organization)
+        .select_related('organization', 'checkout__pet'), pk,
+    )
+    snapshot = estimate.snapshot
+    org = estimate.organization
+    theme = get_theme_for_organization(org)
+    st = build_styles(theme)
+    flow = title_block(
+        st, title='Estimado comercial',
+        meta_lines=[
+            f"Checkout: {safe_pdf_text(snapshot.get('checkout_public_id', ''))}",
+            f"Versión: {snapshot.get('checkout_version', '')}",
+        ],
+    )
+    flow += section(st, theme, 'Ítems')
+    rows = [
+        [
+            Paragraph(safe_pdf_text(row.get('description', ''))[:120], st['cell']),
+            row.get('quantity', ''), _fmt_money(Decimal(row.get('unit_price', '0'))),
+            _fmt_money(Decimal(row.get('subtotal', '0'))),
+        ]
+        for row in snapshot.get('items', [])
+    ] or [[Paragraph('<i>Sin ítems</i>', st['cell']), '', '', '']]
+    flow += data_table(
+        st, theme, ['Descripción', 'Cant.', 'P. unit.', 'Subtotal'], rows,
+        col_widths=[CONTENT_WIDTH - 7.1 * cm, 2.0 * cm, 2.55 * cm, 2.55 * cm],
+        align_right=(1, 2, 3),
+    )
+    flow += totals_table(st, theme, [
+        ['Subtotal', _fmt_money(Decimal(snapshot.get('subtotal', '0')))],
+        ['IVA', _fmt_money(Decimal(snapshot.get('tax_amount', '0')))],
+        ['Total estimado', _fmt_money(Decimal(snapshot.get('total', '0')))],
+    ])
+    buffer = BytesIO()
+    render_branded_pdf(
+        buffer, flow, organization=org, doc_kicker='Estimado',
+        pdf_title='Estimado comercial', watermark='NO ES FACTURA',
+    )
+    buffer.seek(0)
+    filename = pdf_filename(
+        'estimado', estimate.pk,
+        estimate.checkout.pet.name if estimate.checkout.pet_id else 'sin-mascota',
+        estimate.generated_at.date(),
+    )
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('billing.clinical_charge.reprice')])
+def reprice_clinical_charge_view(request, pk):
+    from .checkout_services import reprice_clinical_charge
+    entry = get_object_or_404(
+        ClinicalChargeEntry.all_objects.select_related(
+            'medical_record_service__service', 'medical_record_product__presentation',
+        ),
+        pk=pk, organization=request.user.organization, lifecycle='active',
+    )
+    source = entry.medical_record_service or entry.medical_record_product
+    if source is None:
+        raise ValidationError('La fuente clínica ya no está disponible.')
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        successor = reprice_clinical_charge(
+            source, request.user,
+            new_unit_price=request.data.get('new_unit_price'),
+            reason=request.data.get('reason_code', 'authorized_correction'),
+            expected_quantity=request.data.get('expected_quantity'),
+            idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response({
+        'entry_id': successor.pk, 'cycle_number': successor.cycle_number,
+        'unit_price': str(successor.unit_price),
+        'quantity': str(successor.current_quantity),
+    })
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.create')])
+def complete_checkout_no_charge(request, pk):
+    from .checkout_services import complete_no_charge
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        checkout = complete_no_charge(
+            checkout, request.user, reason=request.data.get('reason', 'no_billable_items'),
+            expected_version=request.data.get('expected_version'), idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.destroy')])
+def abandon_checkout_view(request, pk):
+    from .checkout_services import abandon_checkout
+    checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    try:
+        checkout = abandon_checkout(
+            checkout, request.user, reason=request.data.get('reason', 'cancelled_by_user'),
+            expected_version=request.data.get('expected_version'), idempotency_key=key,
+        )
+    except DjValidationError as exc:
+        raise ValidationError(exc.message_dict if hasattr(exc, 'message_dict') else exc.messages)
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.replace_waive')])
+def waive_replacement(request, pk):
+    checkout = resolve_public_id(
+        Checkout.objects.for_organization(request.user.organization), pk,
+    )
+    from .checkout_services import waive_replacement_exposure
+    try:
+        waiver = waive_replacement_exposure(
+            checkout, request.user,
+            reason_code=request.data.get('reason_code', ''),
+            evidence=request.data.get('evidence') or {},
+            expected_version=request.data.get('expected_version'),
+            idempotency_key=(request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')),
+        )
+    except DjValidationError as exc:
+        return Response({'detail': exc.messages}, status=status.HTTP_409_CONFLICT)
+    return Response(CheckoutSerializer(waiver.checkout, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.replace')])
+def void_and_prepare_replacement(request, pk):
+    invoice = resolve_public_id(
+        Invoice.objects.for_organization(request.user.organization), pk,
+    )
+    from .checkout_services import void_and_prepare_replacement as command
+    try:
+        checkout = command(
+            invoice, request.user,
+            reason=request.data.get('reason', 'correction'),
+            correction_due_at=request.data.get('correction_due_at'),
+            dispositions=request.data.get('dispositions') or [],
+            idempotency_key=(request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')),
+        )
+    except DjValidationError as exc:
+        return Response({'detail': exc.messages}, status=status.HTTP_409_CONFLICT)
+    return Response(CheckoutSerializer(checkout, context={'request': request}).data)
+
+
+@api_view(['POST'])
+@permission_classes([make_permission('invoice.void_terminal')])
+def void_invoice_terminal(request, pk):
+    invoice = resolve_public_id(
+        Invoice.objects.for_organization(request.user.organization), pk,
+    )
+    from .checkout_services import void_invoice_terminal as command
+    try:
+        invoice = command(
+            invoice, request.user,
+            reason_code=request.data.get('reason_code', ''),
+            reason_notes=request.data.get('reason_notes', ''),
+            dispositions=request.data.get('dispositions') or [],
+            idempotency_key=(
+                request.headers.get('X-Idempotency-Key')
+                or request.data.get('idempotency_key')
+            ),
+        )
+    except DjValidationError as exc:
+        return Response({'detail': exc.messages}, status=status.HTTP_409_CONFLICT)
+    return Response(InvoiceSerializer(invoice, context={'request': request}).data)
 
 
 class ServiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView):
@@ -66,7 +668,7 @@ class ServiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.
         return Service.objects.for_organization(self.request.user.organization)
 
 
-class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView):
+class InvoiceListCreateView(BillingOrganizationMixin, generics.ListAPIView):
     serializer_class = InvoiceSerializer
     permission_classes = [HybridPermission]
     resource_name = "invoice"
@@ -75,7 +677,7 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
     # con paginación eso ordenaría solo la página actual → se expone `?ordering`.
     pagination_class = StandardResultsPagination
     # StableOrderingFilter agrega `-id` a cualquier `?ordering` que no lo lleve:
-    # `total` empata entre muchas facturas (drafts en $0, ADR p30) → sin
+    # `total` empata entre muchas facturas → sin
     # desempate, PageNumber saltaría/duplicaría filas entre páginas.
     filter_backends = [StableOrderingFilter]
     ordering_fields = ['created_at', 'total']
@@ -140,16 +742,7 @@ class InvoiceListCreateView(BillingOrganizationMixin, generics.ListCreateAPIView
         # `?ordering`; sin parámetro, este orden = el default de `ordering`.
         return queryset.order_by('-created_at', '-id')
 
-    def perform_create(self, serializer):
-        org = self.request.user.organization
-        serializer.save(
-            organization=org,
-            created_by=self.request.user,
-            tax_rate=org.tax_rate,
-        )
-
-
-class InvoiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.RetrieveUpdateAPIView):
+class InvoiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.RetrieveAPIView):
     serializer_class = InvoiceSerializer
     permission_classes = [HybridPermission]
     resource_name = "invoice"
@@ -171,41 +764,6 @@ class InvoiceDetailView(PublicIdLookupMixin, BillingOrganizationMixin, generics.
         context['with_credit_notes'] = True
         context['with_prescription_suggestions'] = True
         return context
-
-    def update(self, request, *args, **kwargs):
-        with transaction.atomic():
-            invoice = resolve_public_id(
-                Invoice.objects.for_organization(request.user.organization).select_for_update(),
-                kwargs['pk'],
-            )
-            if invoice.status != 'draft':
-                return Response(
-                    {'error': 'Solo se pueden editar facturas en borrador.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            partial = kwargs.pop('partial', False)
-            serializer = self.get_serializer(invoice, data=request.data, partial=partial)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data)
-
-
-@api_view(['PATCH'])
-@permission_classes([CanConfirmInvoice])
-def confirm_invoice(request, pk):
-    from apps.billing.services import confirm_invoice as confirm_invoice_service
-
-    invoice = resolve_public_id(
-        Invoice.objects.for_organization(request.user.organization), pk
-    )
-    try:
-        confirm_invoice_service(invoice, user=request.user)
-    except DjValidationError as e:
-        return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
-
-    invoice.refresh_from_db()
-    return Response(InvoiceSerializer(invoice).data)
-
 
 @api_view(['PATCH'])
 @permission_classes([CanPayInvoice])
@@ -237,288 +795,63 @@ def pay_invoice(request, pk):
 
 
 @api_view(['POST'])
-@permission_classes([make_permission('invoice.create')])
+@permission_classes([make_permission('billing.rx_dispense')])
 def dispense_prescription(request, pk):
     """
-    ADR p30: agrega a la MISMA factura de consulta los productos de la receta
-    interna que el cliente decide llevar (no crea una factura aparte). Recepción
-    elige presentación + cantidad por ítem; "quitar" = no incluir la línea
-    (no-op, sin persistencia). El stock se descuenta al CONFIRMAR la factura de
-    consulta (ruta única `_confirm_locked_invoice`), no al dispensar.
+    Agrega al Checkout abierto los productos de la receta interna que el cliente
+    decide llevar. Recepción elige presentación + cantidad por ítem; el stock se
+    descuenta únicamente en el post autoritativo, no durante la selección.
 
-    Body: { "lines": [ { "presentation": <pk>, "quantity": <num>,
-                         "prescription_item": <pk|null> }, ... ] }
+    Body: { "expected_version": <int>, "idempotency_key": <str>,
+            "lines": [ { "presentation": <pk>, "quantity": <entero>,
+                         "prescription_item": <pk>, "lot": <pk|null> }, ... ] }
     """
     from apps.prescriptions.models import Prescription
-    from apps.inventory.models import Presentation
-    from apps.core.permissions import user_has_permission
-    from apps.billing.services import dispense_prescription_into_invoice
+    from apps.billing.checkout_services import (
+        CheckoutVersionConflict,
+        dispense_prescription_into_checkout,
+    )
 
     prescription = resolve_public_id(
         Prescription.objects.for_organization(request.user.organization), pk
     )
 
-    raw_lines = request.data.get('lines')
-    if not isinstance(raw_lines, list) or not raw_lines:
-        raise ValidationError({'lines': 'Envía al menos una línea a dispensar.'})
-
-    org_id = request.user.organization_id
-    normalized = []
-    requires_rx = False
-    for raw in raw_lines:
-        pres_pk = raw.get('presentation')
-        if pres_pk is None:
-            raise ValidationError({'lines': 'Cada línea requiere "presentation".'})
-        # Cross-tenant → 404 (no [], CLAUDE.md). select_related para el gate rx.
-        pres = get_object_or_404(
-            Presentation.objects.select_related('product'),
-            pk=pres_pk, organization_id=org_id,
-        )
-        try:
-            qty = Decimal(str(raw.get('quantity')))
-        except Exception:
-            raise ValidationError({'lines': 'Cantidad inválida.'})
-        if qty <= 0:
-            raise ValidationError({'lines': 'La cantidad debe ser mayor a 0.'})
-        if pres.product.requires_prescription:
-            requires_rx = True
-        normalized.append({
-            'presentation_id': pres.pk,
-            'quantity': qty,
-            'prescription_item_id': raw.get('prescription_item'),
-            'lot_id': raw.get('lot'),
-        })
-
-    # Dispensar un producto requires_prescription contra la receta interna exige
-    # el mismo permiso que la dispensación con receta externa (ADR p26/p30). La
-    # Prescription interna es el respaldo legal — no se crea atestación externa.
-    if requires_rx and not user_has_permission(request.user, 'billing.rx_dispense'):
-        from rest_framework.exceptions import PermissionDenied
-        raise PermissionDenied('No tienes permiso para dispensar productos con receta.')
+    key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
+    command = PrescriptionDispenseCommandSerializer(data={
+        'lines': request.data.get('lines'),
+        'expected_version': request.data.get('expected_version'),
+        'idempotency_key': key,
+    })
+    command.is_valid(raise_exception=True)
+    data = command.validated_data
+    normalized = [
+        {
+            'presentation_id': line['presentation'],
+            'quantity': line['quantity'],
+            'prescription_item_id': line['prescription_item'],
+            'lot_id': line.get('lot'),
+        }
+        for line in data['lines']
+    ]
 
     try:
-        invoice = dispense_prescription_into_invoice(prescription, normalized, request.user)
+        checkout = dispense_prescription_into_checkout(
+            prescription, normalized, request.user,
+            expected_version=data['expected_version'],
+            idempotency_key=data['idempotency_key'],
+        )
+    except CheckoutVersionConflict as exc:
+        return Response(
+            exc.message_dict if hasattr(exc, 'message_dict') else {'detail': exc.messages},
+            status=status.HTTP_409_CONFLICT,
+        )
     except DjValidationError as e:
         return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(
-        InvoiceSerializer(
-            invoice,
-            context={'request': request, 'with_prescription_suggestions': True},
-        ).data,
+        CheckoutSerializer(checkout, context={'request': request}).data,
         status=status.HTTP_200_OK,
     )
-
-
-class InvoiceItemCreateView(BillingOrganizationMixin, generics.CreateAPIView):
-    serializer_class = InvoiceItemSerializer
-    permission_classes = [HybridPermission]
-    resource_name = "invoice"
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        invoice = resolve_public_id(
-            Invoice.objects.for_organization(self.request.user.organization),
-            self.kwargs['invoice_pk']
-        )
-        context['invoice'] = invoice
-        return context
-
-    def perform_create(self, serializer):
-        from apps.inventory.models import Presentation as InventoryPresentation
-
-        data = serializer.validated_data
-        service = data.get('service')
-        presentation = data.get('presentation')
-
-        with transaction.atomic():
-            invoice = resolve_public_id(
-                Invoice.objects.for_organization(self.request.user.organization).select_for_update(),
-                self.kwargs['invoice_pk']
-            )
-            if invoice.status != 'draft':
-                raise ValidationError('Solo se pueden agregar ítems a cobros en borrador')
-
-            if service:
-                unit_price = service.base_price
-                description = service.name
-                serializer.save(invoice=invoice, unit_price=unit_price, description=description)
-            else:
-                # ADR p30: en una factura de consulta los productos entran solo
-                # por sus rutas únicas — insumos sincronizados desde la consulta
-                # (MedicalRecordProduct, ya descontaron stock) o dispensación de
-                # la receta (FK dispensed_from_prescription_item, descuenta al
-                # confirmar). Un ítem de presentación creado aquí no liquidaría
-                # stock al confirmar (_items_settling_stock lo ignora): se
-                # cobraría sin descontar inventario.
-                if invoice.invoice_type == 'consultation':
-                    raise ValidationError(
-                        'En un cobro de consulta los productos se agregan desde '
-                        'la consulta (insumos) o dispensando la receta; aquí solo '
-                        'se pueden agregar servicios.'
-                    )
-                locked_pres = InventoryPresentation.objects.select_for_update().filter(
-                    pk=presentation.pk,
-                    organization=self.request.user.organization,
-                ).first()
-                if locked_pres is None:
-                    raise ValidationError("Presentación no encontrada en la organización.")
-                if locked_pres.stock < data.get('quantity', 1):
-                    raise ValidationError(
-                        f"Stock insuficiente para '{locked_pres.product.name}': "
-                        f"disponible {locked_pres.stock}, solicitado {data.get('quantity', 1)}."
-                    )
-                # ADR p26: venta de producto con receta en venta directa exige
-                # atestación de receta externa (registro legal append-only) +
-                # permiso billing.rx_dispense. Creada en el mismo atomic, bajo
-                # el lock de la Invoice.
-                if locked_pres.product.requires_prescription and invoice.invoice_type == 'direct_sale':
-                    self._attest_external_prescription(invoice, locked_pres, data.get('quantity', 1))
-                unit_price = locked_pres.sale_price
-                description = str(locked_pres)
-                serializer.save(invoice=invoice, unit_price=unit_price, description=description)
-
-    def _attest_external_prescription(self, invoice, locked_pres, quantity):
-        """ADR p26: gate + registro de atestación de receta externa."""
-        from apps.core.permissions import user_has_permission
-        from apps.core.sanitize import sanitize_text
-        from rest_framework.exceptions import PermissionDenied
-        from .models import ExternalPrescriptionAttestation
-
-        if not user_has_permission(self.request.user, 'billing.rx_dispense'):
-            raise PermissionDenied('No tienes permiso para dispensar productos con receta.')
-
-        attested = self.request.data.get('rx_attested')
-        prescriber = sanitize_text(self.request.data.get('prescriber_name') or '', max_length=255)
-        if not attested or not prescriber:
-            raise PrescriptionRequired(detail=(
-                f"'{locked_pres.product.name}' requiere receta. Confirma que el cliente "
-                f"presentó una receta médica válida e indica el médico que la emitió."
-            ))
-        ExternalPrescriptionAttestation.objects.create(
-            organization=invoice.organization,
-            invoice=invoice,
-            presentation=locked_pres,
-            quantity=quantity,
-            attested_by=self.request.user,
-            prescriber_name=prescriber,
-            prescription_folio=sanitize_text(self.request.data.get('prescription_folio') or '', max_length=100),
-            notes=sanitize_text(self.request.data.get('rx_notes') or '', max_length=5000),
-        )
-
-
-class InvoiceItemDetailView(BillingOrganizationMixin, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = InvoiceItemSerializer
-    permission_classes = [HybridPermission]
-    resource_name = "invoice"
-
-    def initial(self, request, *args, **kwargs):
-        # Día 6 audit F14: `invoice.update` no existe en PERMISSION_CODES
-        # (decisión semántica: invoice no tiene estado "update" abstracto —
-        # cambios son via state machine confirm/pay/cancel + edición de items
-        # en draft). Sin esta declaración explícita, _method_to_action infiere
-        # 'update' por PATCH y exige 'invoice.update' inexistente → 403 silente
-        # para VET/ASSISTANT.
-        #
-        # Mapping declarado:
-        #   GET    → invoice.retrieve   (lectura del ítem)
-        #   PATCH  → invoice.create     (edición de ítems es parte del armado
-        #                                del cobro en draft — VET ya tiene)
-        #   DELETE → invoice.destroy    (eliminar ítems del draft)
-        if request.method == 'GET':
-            self.required_permission = 'invoice.retrieve'
-        elif request.method in ('PUT', 'PATCH'):
-            self.required_permission = 'invoice.create'
-        elif request.method == 'DELETE':
-            self.required_permission = 'invoice.destroy'
-        return super().initial(request, *args, **kwargs)
-
-    def _get_invoice(self):
-        return resolve_public_id(
-            Invoice.objects.for_organization(self.request.user.organization),
-            self.kwargs['invoice_pk']
-        )
-
-    def get_object(self):
-        return get_object_or_404(InvoiceItem, pk=self.kwargs['pk'], invoice=self._get_invoice())
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['invoice'] = self._get_invoice()
-        return context
-
-    def update(self, request, *args, **kwargs):
-        with transaction.atomic():
-            invoice = resolve_public_id(
-                Invoice.objects.for_organization(request.user.organization).select_for_update(),
-                self.kwargs['invoice_pk']
-            )
-            item = get_object_or_404(InvoiceItem.objects.select_for_update(), pk=self.kwargs['pk'], invoice=invoice)
-            if invoice.status != 'draft':
-                return Response(
-                    {'error': 'Solo se pueden editar ítems de facturas en borrador'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            partial = kwargs.pop('partial', False)
-            serializer = self.get_serializer(item, data=request.data, partial=partial)
-            serializer.is_valid(raise_exception=True)
-            # Tope clínico: editar la cantidad de una línea dispensada no puede
-            # exceder lo recetado (mismo cap que el endpoint de dispensación —
-            # sin esto, un PATCH bypasearía la regla).
-            new_qty = serializer.validated_data.get('quantity')
-            if new_qty is not None and item.dispensed_from_prescription_item_id:
-                from apps.billing.services import enforce_dispensed_item_quantity_cap
-                try:
-                    enforce_dispensed_item_quantity_cap(invoice, item, new_qty)
-                except DjValidationError as e:
-                    return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
-            self.perform_update(serializer)
-            return Response(serializer.data)
-
-    def destroy(self, request, *args, **kwargs):
-        with transaction.atomic():
-            invoice = resolve_public_id(
-                Invoice.objects.for_organization(request.user.organization).select_for_update(),
-                self.kwargs['invoice_pk']
-            )
-            item = get_object_or_404(InvoiceItem.objects.select_for_update(), pk=self.kwargs['pk'], invoice=invoice)
-            if invoice.status != 'draft':
-                return Response(
-                    {'error': 'Solo se pueden eliminar ítems de facturas en borrador'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            item.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['POST'])
-@permission_classes([CanPayInvoice])
-def direct_pay_invoice(request, pk):
-    """Paga una venta directa: confirma + cobra atómicamente (draft → paid en un paso)."""
-    from apps.billing.services import pay_direct_sale
-
-    payment_lines = request.data.get('payment_lines')
-    payment_method = request.data.get('payment_method')
-    if not payment_lines and not payment_method:
-        return Response(
-            {'error': 'Se requiere payment_lines o payment_method'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    idempotency_key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
-
-    invoice = resolve_public_id(
-        Invoice.objects.for_organization(request.user.organization), pk
-    )
-    try:
-        invoice = pay_direct_sale(
-            invoice, user=request.user,
-            payment_method=payment_method,
-            payment_lines=payment_lines,
-            idempotency_key=idempotency_key,
-        )
-    except DjValidationError as e:
-        return Response({'detail': e.messages}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(InvoiceSerializer(invoice).data)
 
 
 @api_view(['POST'])
@@ -568,23 +901,6 @@ def reverse_credit_note(request, pk):
     return Response(CreditNoteSerializer(credit_note).data)
 
 
-@api_view(['PATCH'])
-@permission_classes([CanCancelInvoice])
-def cancel_invoice(request, pk):
-    invoice = resolve_public_id(
-        Invoice.objects.for_organization(request.user.organization), pk
-    )
-    from apps.core.sanitize import sanitize_text
-    notes = sanitize_text(request.data.get('notes') or '', max_length=255)
-    try:
-        from .services import cancel_invoice as cancel_invoice_service
-        cancel_invoice_service(invoice, user=request.user, notes=notes)
-    except DjValidationError as e:
-        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    invoice.refresh_from_db()
-    return Response(InvoiceSerializer(invoice).data)
-
-
 _STATUS_LABEL = dict(Invoice.STATUS_CHOICES)
 _TYPE_LABEL = dict(Invoice.INVOICE_TYPE_CHOICES)
 _PAYMENT_LABEL = dict(Invoice.PAYMENT_METHOD_CHOICES)
@@ -600,7 +916,7 @@ def _fmt_money(value):
 @api_view(['GET'])
 @permission_classes([make_permission("invoice.retrieve")])
 def invoice_pdf(request, pk):
-    """Genera el cobro como archivo PDF (todos los estados, incluido draft)."""
+    """Genera el documento financiero emitido (posted, paid o voided)."""
     from io import BytesIO
 
     from reportlab.lib.units import cm
@@ -636,12 +952,12 @@ def invoice_pdf(request, pk):
         f"Tipo: {_TYPE_LABEL.get(invoice.invoice_type, invoice.invoice_type)}",
         f"Creado: {fmt_dt(invoice.created_at)}",
     ]
-    if invoice.confirmed_at:
-        meta_lines.append(f"Confirmado: {fmt_dt(invoice.confirmed_at)}")
+    if invoice.posted_at:
+        meta_lines.append(f"Emitido: {fmt_dt(invoice.posted_at)}")
     if invoice.paid_at:
         meta_lines.append(f"Pagado: {fmt_dt(invoice.paid_at)}")
-    if invoice.cancelled_at:
-        meta_lines.append(f"Cancelado: {fmt_dt(invoice.cancelled_at)}")
+    if invoice.voided_at:
+        meta_lines.append(f"Anulada: {fmt_dt(invoice.voided_at)}")
 
     flow = []
     flow += title_block(st, title=f"Cobro #{invoice.id}", meta_lines=meta_lines)
@@ -698,9 +1014,8 @@ def invoice_pdf(request, pk):
         flow += section(st, theme, "Notas")
         flow.append(Paragraph(safe_pdf_text(invoice.notes).replace('\n', '<br/>'), st['body']))
 
-    # Marca de agua según estado: un draft impreso no debe poder pasar por
-    # comprobante final, y un cancelado debe distinguirse a simple vista.
-    watermark = {'draft': 'BORRADOR', 'cancelled': 'CANCELADO'}.get(invoice.status)
+    # Una factura anulada debe distinguirse a simple vista.
+    watermark = {'voided': 'ANULADO'}.get(invoice.status)
 
     buffer = BytesIO()
     render_branded_pdf(

@@ -38,7 +38,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 from django.utils import timezone
 
-from apps.organizations.models import Organization
+from apps.organizations.models import Organization, OrganizationSettings
 from apps.patients.models import Owner, Pet
 from apps.appointments.models import Appointment, AppointmentStatusChange
 from apps.medical_records.models import (
@@ -49,11 +49,12 @@ from apps.inventory.models import (
 )
 from apps.inventory.services import apply_stock_movement
 from apps.billing.models import (
-    Service, Invoice, InvoiceItem, Payment,
+    Service, Checkout, Invoice, InvoiceItem, Payment,
 )
-from apps.billing.services import (
-    confirm_invoice, pay_invoice, pay_direct_sale,
-    get_or_create_invoice_for_medical_record,
+from apps.billing.checkout_services import (
+    add_checkout_item, create_direct_sale_checkout,
+    get_or_create_primary_checkout_for_medical_record, post_checkout,
+    record_clinical_charge_delta,
 )
 from apps.cash.models import CashSession, CashMovement
 from apps.core.models import Permission, Role
@@ -399,6 +400,9 @@ class Command(BaseCommand):
             organization=org, opened_by=vet, opened_at=self.now,
             opening_float=Decimal("500.00"), status="open",
         )
+        org_settings, _ = OrganizationSettings.objects.get_or_create(organization=org)
+        org_settings.allow_post_unpaid = True
+        org_settings.save(update_fields=['allow_post_unpaid'])
 
         # --- 45 consultas cerradas (con cita 'done') -----------------------
         sample = self.rnd.sample(pets, min(45, len(pets)))
@@ -410,19 +414,34 @@ class Command(BaseCommand):
             actor = recepcion if is_today else vet
 
             appt = self._make_appointment(org, pet, vet, when, "done", tmpl["reason"])
-            invoice, mr = self._build_consultation(org, pet, vet, appt, tmpl, when, close=True)
+            checkout, mr = self._build_consultation(org, pet, vet, appt, tmpl, when, close=True)
 
-            # Outcome: mayoría pagadas, algunas confirmadas, algunas draft.
+            # Outcome futuro: mayoría pagadas y algunas deudas emitidas.
             outcome = self.rnd.choices(
-                ["paid", "confirmed", "draft"], weights=[78, 12, 10], k=1
+                ["paid", "posted"], weights=[85, 15], k=1
             )[0]
-            if outcome in ("paid", "confirmed"):
-                confirm_invoice(invoice, actor)
+            invoice = None
             if outcome == "paid":
                 method = self.rnd.choices(
                     ["cash", "card", "transfer"], weights=[60, 30, 10], k=1
                 )[0]
-                pay_invoice(invoice, actor, payment_method=method)
+                invoice = post_checkout(
+                    checkout, actor, payment_method=method,
+                    expected_version=checkout.version,
+                    idempotency_key=f'demo-consultation-pay-{mr.pk}',
+                )
+            elif outcome == "posted":
+                invoice = post_checkout(
+                    checkout, actor, expected_version=checkout.version,
+                    idempotency_key=f'demo-consultation-post-{mr.pk}',
+                    due_at=self.now + timedelta(days=30),
+                    credit_reason='demo_authorized_credit',
+                    obligation_evidence={
+                        'basis': 'customer_acknowledgement',
+                        'accepting_party': pet.owner.name,
+                        'channel': 'in_person',
+                    },
+                )
 
             self._backdate_invoice(invoice, when)
             self._backdate_mr(mr, when)
@@ -467,26 +486,27 @@ class Command(BaseCommand):
             when = self.now - timedelta(days=days_ago, hours=self.rnd.randint(0, 6))
             actor = recepcion if is_today else vet
             owner = self.rnd.choice(owners)
-            invoice = Invoice.objects.create(
-                organization=org, invoice_type="direct_sale", owner=owner, pet=None,
-                status="draft", tax_rate=org.tax_rate,
+            checkout = create_direct_sale_checkout(
+                organization=org, customer=owner, pet=None, user=actor,
             )
             n_items = self.rnd.randint(1, 2)
             chosen = self.rnd.sample(SALE_PRODUCT_NAMES, n_items)
-            with transaction.atomic():
-                for pname in chosen:
-                    prod = products[pname]
-                    pres = prod.presentations.first()
-                    qty = Decimal(self.rnd.randint(1, 2))
-                    InvoiceItem(
-                        invoice=invoice, presentation=pres,
-                        description=f"{prod.name} — {pres.name}",
-                        quantity=qty, unit_price=pres.sale_price,
-                    ).save()
+            for pname in chosen:
+                prod = products[pname]
+                pres = prod.presentations.first()
+                qty = Decimal(self.rnd.randint(1, 2))
+                add_checkout_item(
+                    checkout, actor, presentation=pres, quantity=qty,
+                )
+            checkout.refresh_from_db()
             method = self.rnd.choices(
                 ["cash", "card", "transfer"], weights=[55, 35, 10], k=1
             )[0]
-            pay_direct_sale(invoice, actor, payment_method=method)
+            invoice = post_checkout(
+                checkout, actor, payment_method=method,
+                expected_version=checkout.version,
+                idempotency_key=f'demo-direct-sale-{i}',
+            )
             self._backdate_invoice(invoice, when)
 
         # --- Citas futuras + perdidas (sin consulta) -----------------------
@@ -570,15 +590,16 @@ class Command(BaseCommand):
                 organization=org, pet=pet, veterinarian=vet, appointment=appt,
                 consultation_type=tmpl["type"], status="open",
             )
-            invoice = get_or_create_invoice_for_medical_record(mr)
 
             # Servicio (no toca stock)
             svc = Service.objects.get(organization=org, name=tmpl["service"])
-            MedicalRecordService.objects.create(medical_record=mr, service=svc, quantity=1)
-            InvoiceItem(
-                invoice=invoice, service=svc, description=svc.name,
-                quantity=Decimal("1"), unit_price=svc.base_price,
-            ).save()
+            mrs = MedicalRecordService.objects.create(
+                organization=org, medical_record=mr, service=svc, quantity=1,
+            )
+            record_clinical_charge_delta(
+                mrs, delta=Decimal('1'), user=vet,
+                mutation_key=f'demo-service-{mr.pk}-{mrs.pk}',
+            )
 
             # Producto consumido (descuenta stock vía MedicalRecordProduct.save)
             if tmpl["product"]:
@@ -590,11 +611,10 @@ class Command(BaseCommand):
                     quantity=Decimal("1"), cost_behavior="charge",
                 )
                 mrp.save(locked_presentation=locked)
-                InvoiceItem(
-                    invoice=invoice, presentation=pres,
-                    description=f"{prod.name} — {pres.name}",
-                    quantity=Decimal("1"), unit_price=pres.sale_price,
-                ).save()
+                record_clinical_charge_delta(
+                    mrp, delta=Decimal('1'), user=vet,
+                    mutation_key=f'demo-product-{mr.pk}-{mrp.pk}',
+                )
 
             # Vitales
             VitalSigns.objects.create(
@@ -624,7 +644,11 @@ class Command(BaseCommand):
                     next_due_date=(when + timedelta(days=365)).date(),
                     applied_by=vet, medical_record=mr,
                 )
-        return invoice, mr
+            checkout = (
+                get_or_create_primary_checkout_for_medical_record(mr, owner=vet)
+                if close else None
+            )
+        return checkout, mr
 
     # ------------------------------------------------------------------ #
     # Backdating (única escritura directa permitida — fechas, seed-only)
@@ -632,10 +656,12 @@ class Command(BaseCommand):
     def _backdate_invoice(self, invoice, when):
         invoice.refresh_from_db()
         fields = {"created_at": when}
-        if invoice.confirmed_at:
-            fields["confirmed_at"] = when
+        if invoice.posted_at:
+            fields["posted_at"] = when
         if invoice.paid_at:
             fields["paid_at"] = when
+        if invoice.due_at:
+            fields["due_at"] = when + timedelta(days=30)
         Invoice.all_objects.filter(pk=invoice.pk).update(**fields)
         Payment.all_objects.filter(invoice=invoice).update(occurred_at=when)
 
@@ -735,19 +761,32 @@ class Command(BaseCommand):
             raise CommandError("Guard: la org objetivo NO tiene is_demo=True. Abortando.")
 
         f = {"organization": org}
-        # Eventos financieros / refunds primero (PROTECT sobre invoice/cash).
-        for Model in (Payment,):
-            Model.all_objects.filter(**f).delete()
-        # Defensivo: refunds/credit notes si existieran.
+        # El agregado Checkout/Invoice contiene PROTECT intencionales para que la
+        # operación normal nunca destruya evidencia. El reset demo es la única
+        # operación de borrado total autorizada; primero elimina hojas y rompe
+        # solamente enlaces anulables internos del mismo subgrafo demo.
         from apps.billing.models import (
-            RefundReversal, RefundPayment, CreditNoteItem, CreditNote,
-            ExternalPrescriptionAttestation,
+            CheckoutDispute, CheckoutEstimate, CheckoutEvent, CheckoutItem,
+            CheckoutPrescriptionSelection, ClinicalChargeEntry,
+            ClinicalChargeQuantityEvent, ClinicalChargeSnapshot, CollectionCase,
+            CommandReceipt, CreditNote, CreditNoteItem,
+            ExternalPrescriptionAttestation, InvoiceAuditLog,
+            MedicalRecordBillingContext, ObligationEvidence,
+            PrescriptionFulfillmentEvent, RefundPayment, RefundReversal,
+            ReplacementWaiver, StockAllocation, StockDispositionEvent,
         )
+
+        # Eventos financieros primero: protegen Invoice, CreditNote,
+        # CommandReceipt y CashSession.
         RefundReversal.all_objects.filter(**f).delete()
         RefundPayment.all_objects.filter(**f).delete()
-        CreditNoteItem.all_objects.filter(**f).delete()
-        CreditNote.all_objects.filter(**f).delete()
-        ExternalPrescriptionAttestation.all_objects.filter(**f).delete()
+        Payment.all_objects.filter(**f).delete()
+
+        # Proyecciones de inventario/Rx dependen de líneas de factura, notas de
+        # crédito y allocations. Se eliminan de hoja a raíz.
+        PrescriptionFulfillmentEvent.all_objects.filter(**f).delete()
+        StockDispositionEvent.all_objects.filter(**f).delete()
+        StockAllocation.all_objects.filter(**f).delete()
 
         # ADR p49 (P0): MetricAdjustment.source_invoice es PROTECT → DEBE borrarse
         # ANTES que Invoice, o el DELETE de Invoice lanza ProtectedError. Lo crea
@@ -757,10 +796,46 @@ class Command(BaseCommand):
         )
         MetricAdjustment.all_objects.filter(**f).delete()
 
-        StockMovement.all_objects.filter(**f).delete()
-        MedicalRecordProduct.all_objects.filter(**f).delete()  # QuerySet.delete → sin reversa de stock
+        CreditNoteItem.all_objects.filter(**f).delete()
+        CreditNote.all_objects.filter(**f).delete()
+
+        ObligationEvidence.all_objects.filter(**f).delete()
+        CollectionCase.all_objects.filter(**f).delete()
+        CheckoutDispute.all_objects.filter(**f).delete()
+        ReplacementWaiver.all_objects.filter(**f).delete()
+        CheckoutEstimate.all_objects.filter(**f).delete()
+        CheckoutEvent.all_objects.filter(**f).delete()
+        CheckoutPrescriptionSelection.all_objects.filter(**f).delete()
+
+        # Las correcciones de atestación, las facturas reemplazadas y los
+        # ciclos de precio forman cadenas self-PROTECT. Al borrar todo el tenant
+        # demo no existe un documento superviviente que deba conservarlas.
+        ExternalPrescriptionAttestation.all_objects.filter(**f).update(
+            supersedes_attestation=None,
+        )
+        InvoiceItem.all_objects.filter(**f).update(external_rx_attestation=None)
+        CheckoutItem.all_objects.filter(**f).update(source_invoice_item=None)
+        Invoice.all_objects.filter(**f).update(
+            checkout=None, supersedes_invoice=None,
+        )
+        Checkout.all_objects.filter(**f).update(replaces_invoice=None)
+        ClinicalChargeEntry.all_objects.filter(**f).update(supersedes_entry=None)
+
+        ExternalPrescriptionAttestation.all_objects.filter(**f).delete()
+        InvoiceAuditLog.objects.filter(invoice__organization=org).delete()
+        CheckoutItem.all_objects.filter(**f).delete()
+        Checkout.all_objects.filter(**f).delete()
         InvoiceItem.all_objects.filter(**f).delete()
         Invoice.all_objects.filter(**f).delete()
+
+        ClinicalChargeSnapshot.all_objects.filter(**f).delete()
+        ClinicalChargeQuantityEvent.all_objects.filter(**f).delete()
+        ClinicalChargeEntry.all_objects.filter(**f).delete()
+        MedicalRecordBillingContext.all_objects.filter(**f).delete()
+        CommandReceipt.all_objects.filter(**f).delete()
+
+        StockMovement.all_objects.filter(**f).delete()
+        MedicalRecordProduct.all_objects.filter(**f).delete()  # QuerySet.delete → sin reversa de stock
 
         MedicalRecordService.all_objects.filter(**f).delete()
         VitalSigns.all_objects.filter(**f).delete()
@@ -817,6 +892,7 @@ class Command(BaseCommand):
             "products": Product.objects.filter(organization=org).count(),
             "appointments": Appointment.all_objects.filter(organization=org).count(),
             "medical_records": MedicalRecord.all_objects.filter(organization=org).count(),
+            "checkouts": Checkout.all_objects.filter(organization=org).count(),
             "invoices": Invoice.all_objects.filter(organization=org).count(),
             "payments": Payment.all_objects.filter(organization=org).count(),
             "cash_sessions": CashSession.all_objects.filter(organization=org).count(),
