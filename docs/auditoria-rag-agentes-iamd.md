@@ -1,0 +1,707 @@
+# Auditoría de RAG y agentes IA — SaaSlyVet
+
+## 1. Veredicto ejecutivo
+
+- Hoy no hay un problema real del producto que exija RAG/vector search en el core transaccional del SaaS.
+- El sistema actual vive en PostgreSQL con modelos relacionales y permisos multitenant muy claros: [backend/apps/core/models.py](../backend/apps/core/models.py), [backend/apps/appointments/models.py](../backend/apps/appointments/models.py), [backend/apps/medical_records/models.py](../backend/apps/medical_records/models.py), [backend/apps/inventory/models.py](../backend/apps/inventory/models.py), [backend/apps/billing/models.py](../backend/apps/billing/models.py).
+- El caso más racional para IA es un asistente de lectura/escritura sobre APIs y un repositorio documental de protocolos/FAQ, no un vector search sobre pacientes o facturas.
+- El primer caso que sí justificaría RAG es una base de conocimiento por clínica (protocolos, preparación preoperatoria, FAQs, políticas internas) con recuperación por tema y tenant, no sobre historial clínico transaccional.
+- Si se quiere IA sobre historial clínico, la arquitectura correcta es SQL + LLM context builder, no RAG vectorial sobre el DB operacional.
+
+## 2. Estado actual relevante del sistema
+
+> **Corrección de alcance (2026-09-03):** la primera versión de esta auditoría
+> se inspeccionó accidentalmente sobre la rama `agents/audit-architecture-rag-agents-saaslyvet`.
+> La fuente correcta para esta revisión es `develop`. Por tanto, las afirmaciones
+> anteriores de que no existía agente, WhatsApp o automatización conversacional
+> eran falsas y quedan reemplazadas por esta sección.
+
+### 2.1. Dominio real y estructura de datos
+
+La base del producto es un SaaS veterinario multitenant con un diseño fuerte de dominio y un modelo de datos muy estructurado:
+
+- [backend/apps/core/models.py](../backend/apps/core/models.py): tenant manager, `Organization`, `PublicIdMixin`, soft delete, `for_organization()`.
+- [backend/apps/patients/models.py](../backend/apps/patients/models.py): `Owner`, `Pet`, generic patient logic, uniqueness by organization.
+- [backend/apps/appointments/models.py](../backend/apps/appointments/models.py): `Appointment`, estados, `AppointmentStatusChange`.
+- [backend/apps/medical_records/models.py](../backend/apps/medical_records/models.py): `MedicalRecord`, `VitalSigns`, `VaccineRecord`, `MedicalRecordService`.
+- [backend/apps/inventory/models.py](../backend/apps/inventory/models.py): `Product`, `Presentation`, `StockMovement`, `MedicalRecordProduct`.
+- [backend/apps/billing/models.py](../backend/apps/billing/models.py): `Service`, `Invoice`, `InvoiceItem`, reglas de totales y estados.
+- [backend/apps/prescriptions/models.py](../backend/apps/prescriptions/models.py): receta como documento clínico y relación OneToOne con `MedicalRecord`.
+- [backend/apps/dashboard/views.py](../backend/apps/dashboard/views.py): analytics muy estructurada sobre citas, pacientes, stock bajo y registros recientes.
+
+Esto no es un sistema documental. Es un sistema de operaciones clínicas y financieras con datos muy relacionales, y casi todo necesita consistencia y permisos fuertes.
+
+### 2.2. Sí existe actualmente un agente conversacional y un subsistema WhatsApp
+
+En `develop` sí existe una implementación funcional y extensa:
+
+- [backend/apps/agent/](../backend/apps/agent/): identidad de contacto,
+  conversaciones persistentes, objetivos, planner, policy/arbiter, executor,
+  tools, confirmations, operación autorizada, LLM, métricas y worker.
+- [backend/apps/channels/](../backend/apps/channels/): `ChannelAccount`,
+  `Message`, recepción y envío, deduplicación de mensajes, estados de entrega,
+  idempotencia y cola/inbox.
+- [backend/apps/agent/models.py](../backend/apps/agent/models.py):
+  `ContactIdentity`, `Conversation`, `ConversationGoal`, `AgentSettings`,
+  `TurnDecision` y `TurnOperationAssessment`.
+- [backend/apps/agent/tools.py](../backend/apps/agent/tools.py): tools de lectura
+  con proyecciones mínimas, handles efímeros y revalidación server-side.
+- [backend/apps/agent/operation_authorization.py](../backend/apps/agent/operation_authorization.py)
+  y [backend/apps/agent/policy.py](../backend/apps/agent/policy.py): autorización
+  determinista, niveles de verificación, confirmaciones y bloqueos.
+- [backend/apps/agent/worker.py](../backend/apps/agent/worker.py) y
+  [backend/apps/agent/management/commands/run_agent_worker.py](../backend/apps/agent/management/commands/run_agent_worker.py):
+  procesamiento diferido de turnos.
+- [backend/apps/channels/views.py](../backend/apps/channels/views.py): endpoint
+  de webhook/inbox del canal.
+
+La documentación de `develop` registra F0-F5 implementadas, continuidad e
+identidad en producción y WhatsApp Inbox v1 con 769 tests en el corte
+2026-08-23. Esto no debe confundirse con RAG: el agente actual usa memoria
+conversacional persistida, tools y APIs; no se encontró una implementación de
+embeddings, `pgvector` ni retrieval vectorial.
+
+### 2.3. Qué hace hoy el agente y qué no hace
+
+El flujo actual es, conceptualmente:
+
+```text
+WhatsApp webhook
+  -> ChannelAccount -> organización
+  -> deduplicación Message
+  -> ContactIdentity -> Conversation
+  -> worker / debounce
+  -> planner + policy + tools
+  -> API HTTP autenticada con usuario AGENT
+  -> mensaje saliente o handoff humano
+```
+
+El agente ya puede conversar sobre agenda, pacientes, catálogo y operaciones
+permitidas, con identidad, continuidad, confirmaciones y escalamiento. Las
+escrituras no deben tocar ORM directamente: pasan por los contratos HTTP,
+serializers, permisos y servicios autoritativos del SaaS.
+
+Lo que **no existe** en `develop` es una capa RAG/vectorial:
+
+- no hay modelos de `KnowledgeDocument`/`KnowledgeChunk`;
+- no hay columna/vector index `pgvector`;
+- no hay proveedor o pipeline de embeddings;
+- no hay retrieval semántico documental o clínico.
+
+La búsqueda actual sigue siendo relacional, por filtros y matching textual
+determinista, por ejemplo:
+
+- [backend/apps/patients/views.py](../backend/apps/patients/views.py):
+  `name__icontains`;
+- [backend/apps/inventory/views.py](../backend/apps/inventory/views.py):
+  catálogo, categoría y stock;
+- [backend/apps/agent/tools.py](../backend/apps/agent/tools.py):
+  matching normalizado por tokens/alias para productos.
+
+### 2.4. Qué está exactamente en el sistema
+
+El comportamiento real del producto se resume así:
+
+- Citas: agenda, walk-in, historial clínico, estado de atención, reprogramación, cancelación, no-show. [docs/modules/appointments.md](modules/appointments.md)
+- Pacientes y propietarios: alta de clientes y mascotas, generic patient, tenant restrictions. [docs/modules/patients.md](modules/patients.md)
+- Historial clínico: `MedicalRecord`, `VitalSigns`, diagnóstico, tratamiento, notas, productos/servicios utilizados. [docs/modules/medical_records.md](modules/medical_records.md)
+- Inventario: productos, presentaciones, stock, movimientos y validaciones concurrentes. [backend/apps/inventory/models.py](../backend/apps/inventory/models.py)
+- Facturación: Checkout mutable; Invoice inmutable en lifecycle
+  `posted/paid/voided`; totales, disponibilidad de receta y stock resueltos
+  por backend. [docs/modules/billing.md](modules/billing.md)
+- Prescripciones: documento clínico asociado a una consulta, no es una venta ni un punto de creación principal. [docs/modules/medical_records.md](modules/medical_records.md)
+- Dashboard: reportes de citas, stock bajo y registros recientes.
+
+Sí existe un agente WhatsApp y un inbox conversacional; lo que no existe es
+todavía un corpus documental indexado semánticamente ni RAG. La documentación
+detallada de ese subsistema está en
+[docs/modules/agent.md](modules/agent.md),
+[docs/whatsapp-agent-architecture.md](whatsapp-agent-architecture.md) y
+[docs/runbooks/agent-whatsapp.md](runbooks/agent-whatsapp.md).
+
+## 3. RAG vs SQL vs Full-text vs Tool Calling aplicado a SaaSlyVet
+
+### 3.1. Datos estructurados: NO usar RAG
+
+La gran parte del dominio se resuelve con consultas exactas y transacciones:
+
+- próxima cita de Luna
+- facturas pendientes
+- stock de un producto
+- vacunas vencidas
+- ventas del mes
+- propietarios con riesgo o condición específica
+- consultas abiertas
+- caja actual
+- progreso de una cita
+
+Estas son operaciones sobre relaciones y filtros, no sobre "significado libre". Deben resolverse con:
+
+- ORM / Django QuerySet
+- SQL parametrizado
+- tool calling sobre APIs internas
+- filtros de tenant + permisos
+- validaciones de dominio y transacciones atómicas
+
+Eso es exactamente cómo funciona el backend hoy.
+
+### 3.2. Búsqueda textual clásica: ES suficiente en mucho de lo que ya existe
+
+El repositorio ya usa busquedas por name, category, status, stock y `icontains` de forma server-side. Ejemplos:
+
+- [backend/apps/patients/views.py](../backend/apps/patients/views.py)
+- [backend/apps/inventory/views.py](../backend/apps/inventory/views.py)
+- [backend/apps/dashboard/views.py](../backend/apps/dashboard/views.py)
+
+Esto es suficiente para:
+
+- buscar mascota o propietario por nombre
+- buscar producto por nombre o código interno
+- buscar historial por paciente
+- buscar solicitudes por texto en campos acotados
+
+La falta de un `SearchVector` / `pg_trgm` / `GinIndex` no es un agujero funcional; es una de las decisiones de arquitectura del proyecto. Para los patrones actuales, SQL y filtros son la elección correcta.
+
+### 3.3. Búsqueda semántica: sí, pero solo para casos where el usuario no conoce las palabras exactas
+
+La búsqueda semántica empieza a tener sentido cuando hay:
+
+- texto libre largo o heterogéneo
+- conceptos no marcados por un schema
+- contenido documental/protocolo
+- similitud entre casos no capturada por un campo etiquetado
+
+En este repositorio, hay dos contextos relevantes:
+
+1. historia clínica personal del paciente: sí se podría resumir con SQL y LLM, no con vector search
+2. corpus documental interno de protocolos: sí es un buen caso para RAG
+
+No aplica tan bien a facturas, citas, stock, pagos, etc.
+
+### 3.4. Agent vs RAG: distinción crítica
+
+- Un agent puede consultar la API y ejecutar acciones con tools.
+- RAG es solo una estrategia de recuperación de contexto para el LLM.
+- El backend actual ya expone interfaces y servicios bien definidos; cualquier agente debe usar esos contracts, no tocar modelos directamente.
+
+El sistema tiene servicios autoritativos y reglas de dominio serias. Eso es exactamente lo que un agente debe consumir con `tool calling`.
+
+## 4. Matriz completa de casos de uso
+
+| Caso | Problema | Datos | Solución correcta | RAG Score | Riesgo | Prioridad |
+| ---- | ------- | ----- | ---------------- | --------- | ----- | --------- |
+| Próxima cita de Luna | Consultar agenda y estado | Estructurado | SQL/ORM + tool calling | 0 | Bajo | P0 no usar |
+| Stock actual de presentación X | Validar inventario real | Estructurado | ORM + transacción | 0 | Alto si se usa mal | P0 no usar |
+| Saldo de factura y pagos | Reglas financieras | Estructurado | Service + API | 0 | Crítico | P0 no usar |
+| Buscar paciente por nombre | Nombre + propietario + especie | Estructurado | `icontains` + filtros | 0 | Bajo | P0 no usar |
+| Resumen del historial de una mascota | Entender episodios relevantes y contexto | Semiestructurado + texto libre | SQL + LLM context builder | 2 | Medio | P2 |
+| “Casos parecidos” entre pacientes | Buscar similitud semántica | Texto libre clínico | Hybrid search + validación clínica | 4 | Alto clínico | P3 |
+| Copiloto durante consulta | Recomendar contexto relevante al vet | SQL + notas + protocolos | SQL + context builder + optional RAG doc retrieval | 3 | Medio | P2 |
+| Base de conocimientos de la clínica | Protocolos, procedimientos, FAQs | Documental | RAG documental por tenant | 5 | Medio/alto si mala fuente | P1 |
+| WhatsApp con triage/booking | Resolver dudas sobre disponibilidad y agenda | Estructurado + documentales | Agent + tools + RAG documental | 4 | Medio | P2 |
+| Soporte SaaS interno | FAQs del sistema | Documental | RAG documental | 3 | Bajo | P2 |
+| Datos históricos importados con `extra_data` | Recuperar información antigua no modelada | Mixto | SQL si hay estructura; RAG solo si hay corpus real | 2 | Medio | P3 |
+| Guías veterinarias externas | Literatura externa | Documental externo | RAG externo, separado del PTO | 2 | Alto clínico | P4 |
+
+## 5. Casos donde NO usar RAG
+
+Esta sección es obligatoria y refleja exactamente el proyecto real.
+
+| Problema | Arquitectura correcta | Por qué NO RAG |
+| -------- | -------------------- | --------------- |
+| Próxima cita de Luna | ORM + filtros por `Pet` y `Appointment` | Es un dato exacto con relaciones y estados bien definidos. RAG no aporta precisión ni fiabilidad. |
+| Facturas pendientes | `Invoice.objects.for_organization(user.organization)` + service layer | El sistema necesita consistencia financiera y validación. RAG sería una fuente no autorizada, no fiable. |
+| Stock actual | `Presentation.stock` + `select_for_update()` | Requiere reconciliación de inventario real, no similitud semántica. |
+| Saldo de caja / metas del día | Dashboard SQL + agregados | Es un problema de agregación y auditoría estricta. |
+| Vacunas vencidas | Query por fechas y `next_due_date` | Es un cálculo temporal estructurado. |
+| Búsqueda de mascota por nombre | `name__icontains` y filtros de organización | La consulta es exacta y rápida. |
+| Listado por propietario o especie | SQL con relaciones | No requiere semántica: el schema ya define el campo. |
+| Filtros de facturas por estado | `status` y `organization` | El estado es un enum y un flujo de negocio; no hay ambigüedad. |
+| Revisión de estado de una consulta | `MedicalRecord.status`, `consultation_type`, `veterinarian` | El dominio ya modela esta información. |
+| Resumen de “últimos 6 meses” | SQL + LLM sobre registros estructurados | Se puede obtener usando fechas, pet id, y un contexto compacto para el LLM; no requiere vector DB. |
+| Reprogramación / cancelación de citas | Services y transacciones | Es un flujo de escritura con reglas de negocio. Un agente debe llamar a APIs, no inferir. |
+| Vender un producto a cliente | `InvoiceItem` + stock movement | Robusto y transaccional; no tiene nada que recuperar por significado. |
+| Dashboard de ventas | Agregaciones SQL | El problema es analítico, no semántico. |
+| Búsqueda de proveedor/producto por código interno | búsqueda exacta por `internal_code` | El objetivo es precisión exacta; un embedding agrega ruido. |
+| Detección de Stock bajo | agrupación SQL con `presentations__stock__lte` | Es un cálculo de negocio, no un problema de similitud. |
+
+## 6. Top 3 implementaciones donde sí tendría sentido
+
+### 6.1. Base de conocimiento clínica por organización (RAG documental) — Caso más claro
+
+- Problema: la clínica necesita consultar protocolos internos, políticas de preparación para procedimientos, FAQs de atención, listas de materiales, guías de rehidratación, protocolo de vacunación, protocolos de urgencias, consentimientos, y capacitación del equipo.
+- Usuario: veterinario, asistente, recepción, administrador.
+- Flujo: el usuario pregunta “¿Cuál es el protocolo para hospitalización?” o “¿Qué preparación sigue para una cirugía?” y el sistema responde con extractos de documentos por organización.
+- Fuentes de datos: PDFs, DOCX, páginas internas, FAQs, procedimientos y políticas exportadas a un corpus documental por tenant.
+- Por qué SQL no basta: no hay una estructura fija para todos los protocolos; el usuario busca por concepto, no por ID o nombre exacto.
+- Por qué full-text no basta: los documentos varían mucho, tienen secciones, conceptos semánticos, sinónimos; un `icontains` es frágil, y el usuario no conoce exacta terminología.
+- Rol del LLM: interpretar la pregunta, resumir, y razonar sobre los documentos recuperados.
+- Rol del RAG: recuperar secciones relevantes por significado y contexto.
+- Rol del tool calling: si la pregunta requiere consultar disponibilidad, paciente o plan de tratamiento, el agente debe accesar APIs estructuradas y samblar contexto propio del sistema.
+- RAG Necessity Score: 5
+- Riesgos: documento stale, protocolo incorrecto, acceso cruzado entre organizaciones, no usar como autoridad médica.
+
+### 6.2. WhatsApp automation con agenda + FAQ + protocolos — agente con tools + RAG documental
+
+- Problema: un cliente quiere saber “¿Cuándo fue la última vacuna de Luna?”, “¿Hay espacio mañana?”, “¿Qué preparación necesito para la cirugía?” o “Quiero reagendar”.
+- Usuario: cliente / receptor / clínica.
+- Flujo: el bot usa herramientas para consultar agenda, paciente, servicios, vacunas y luego puede usar RAG para recuperar la preparación preoperatoria, FAQ y políticas.
+- Fuentes de datos: 
+  - estructuradas: citas, pacientes, vacunas, inventario, servicios
+  - documentales: preparación quirúrgica, restricciones, políticas de cancelación, horarios, FAQ
+- Por qué SQL no basta: la agenda y el estado se responden con SQL, pero las preguntas de preparación o de política no son fácilmente representables como campos relacionales.
+- Por qué full-text no basta: “preparación para cirugía” o “qué necesito antes de venir” no coincide con documentos exactos; se necesita comprensión semántica.
+- Rol del LLM: normalizar lenguaje natural, decidir qué tool llamar y resumir.
+- Rol del RAG: recuperar protocolos y preguntas frecuentes.
+- Rol del tool calling: consultar disponibilidad, vacunación, factura, cita, etc.
+- RAG Necessity Score: 4
+- Riesgos: seguridad del bot, consentimiento, respuesta incorrecta sobre protocolos médicos, autorización por tenant y usuario.
+
+### 6.3. Asistente clínico de resumen y contexto (SQL + LLM, no vector puro) — útil, pero no RAG en sentido estricto
+
+- Problema: el veterinario quiere responder preguntas del tipo “¿Qué antecedentes relevantes tiene Luna?”, “Resume los últimos seis meses”, “¿Ha tenido episodios similares?”, “¿Qué tratamientos se utilizaron antes?”
+- Usuario: veterinario.
+- Flujo: backend extrae el paciente, citas, `MedicalRecord`, `VaccineRecord`, `VitalSigns`, servicios, medicamentos, y el LLM resume la historia.
+- Fuentes de datos: SQL estructurado y datos clínicos ya modelados.
+- Por qué SQL no basta: SQL puede devolver todos los registros, pero la dificultad no está en hallar filas sino en transformar una larga línea temporal en una síntesis útil.
+- Por qué full-text no basta: no se busca un documento exacto; se necesita comprensión del contexto y síntesis.
+- Rol del LLM: resumir y responder.
+- Rol del RAG: opcional solo si se agregan notas largas o documentos externos; no es necesario para el core.
+- Rol del tool calling: consultas estructuradas del backend, nunca acceso directo por LLM.
+- RAG Necessity Score: 3 (si se trata de una gran historia clínica) / 2 (si el historial es corto y estructurado)
+- Riesgos: alucinación clínica, resumen incorrecto, exposición de historial sensible, necesidad de versión y auditabilidad.
+
+## 7. Caso especial: historial clínico
+
+Este es el caso más delicado porque parece “RAG natural” y sin embargo la arquitectura correcta no es necesariamente vectorial.
+
+### Qué sí se sabe ya
+
+- [backend/apps/medical_records/models.py](../backend/apps/medical_records/models.py) modela `diagnosis`, `treatment`, `notes`, `consultation_type`, `status`, `VitalSigns`, `VaccineRecord`, y `MedicalRecordService`.
+- El historial es fácilmente consultable por `pet`, `veterinarian`, `organization`, `consultation_type`, `status`, fechas.
+- El sistema ya tiene un flujo fuerte de cierre y validación, además de la relación con factura y receta.
+
+### Qué no es un caso limpio de RAG
+
+La pregunta “¿Qué antecedentes relevantes tiene Luna?” no requiere recuperar un corpus vectorial de millones de documentos; requiere:
+
+- obtener todas las consultas por paciente
+- ordenar por fecha
+- filtrar a tipos relevantes
+- resumir condicionantes, diagnósticos, tratamientos, vacuans, peso, signos vitales, y eventos.
+
+Esto se hace mejor con:
+
+- SQL estructurado
+- una capa de contexto builder
+- un LLM que lee un texto compacto
+
+### Cuándo sí tendría sentido usar embeddings
+
+Solo si hay muchas notas clínicas no estructuradas, un corpus enorme, sinónimos, o un patrón de “casos parecidos” entre pacientes. Ejemplo:
+
+- “Muéstrame casos similares a este episodio de vómitos recurrentes y alergia posterior a vacuna.”
+
+Pero esto tiene riesgos clínicos y requiere:
+
+- filtro por paciente y organización
+- revisión humana
+- no presentar como recomendación médica autorizada
+- evaluación de similitud por habilidad no por verdad clínica
+
+### Recomendación práctica
+
+- Para resúmenes de histórico: `LLM + SQL`.
+- Para casos parecidos: `hybrid search` solo en un segundo momento y con defensas muy claras.
+- No usar vector search sobre el historial transaccional como primera implementación.
+
+## 8. Caso especial: agente WhatsApp
+
+Este ya es un subsistema existente en `develop`, no una hipótesis:
+[backend/apps/agent/](../backend/apps/agent/) contiene el núcleo
+conversacional y [backend/apps/channels/](../backend/apps/channels/) contiene
+el transporte/inbox. El webhook enruta por `ChannelAccount`, deduplica el
+`wamid`, resuelve `ContactIdentity`, mantiene `Conversation`, procesa turnos
+con worker/debounce y puede escalar a humano. `AgentSettings` ofrece kill
+switch y configuración por organización.
+
+La conclusión correcta es más precisa: **WhatsApp ya justifica un agente con
+tool calling; todavía no justifica RAG por sí mismo**. El agente existente
+puede consultar y operar sobre el estado estructurado mediante tools y API
+HTTP autenticada. RAG solo sería una extensión para conocimiento documental
+que hoy no está modelado ni indexado.
+
+### Qué tendría sentido del lado de datos operativos
+
+- disponibilidad de la agenda
+- pacientes y propietarios
+- vacunación
+- servicios y precios
+- preparación preoperatoria
+- recordatorios de citas
+- cotización y agenda
+
+Todo eso debe ir por `tool calling` sobre APIs del backend y servicios dominantes del sistema.
+
+### Qué sí puede vivir en RAG
+
+- FAQ de la clínica
+- preparación quirúrgica
+- cuándo y cómo reagendar
+- política de cancelación
+- manual de dudas frecuentes del cliente
+- instrucciones precirugía o de rutina
+
+### Arquitectura actual y evolución recomendada para WhatsApp
+
+- `WhatsApp gateway` + webhook de `channels` (ya existente)
+- `Agent orchestrator`/planner/policy/worker de `agent` (ya existente) que decide:
+  - si necesita consultar un dato estructurado
+  - si necesita recuperar documentos
+- `Tool gateway` sobre API del SaaS
+- `Retrieval service` sobre base documental por organización
+- `Context builder` que junta datos exactos + documentos relevantes
+- `LLM` para responder con brevity, not as source of truth
+
+La evolución no debe reemplazar este diseño por un “agente mágico”. Debe
+conservar la separación entre:
+
+- herramientas del SaaS
+- documentos institucionales
+- seguridad y permisos
+
+## 9. Caso especial: base de conocimiento documental / SOPs internos
+
+Este sí es el caso auténtico de RAG en esta empresa.
+
+### Qué podría ser documentado
+
+- protocolos de hospitalización
+- preparación para cirugías
+- protocolos de vacunación
+- políticas de atención, cancelación y reprogramación
+- procedimientos de admisión
+- FAQ para clientes
+- listas de materiales y medicamentos por procedimiento
+- documentos internos de la clínica
+
+### Qué no debería vectorizarse
+
+- facturas
+- stock real
+- citas operativas
+- contratos legales o auditoría del sistema
+- transacciones financieras
+- historial del paciente como fuente de verdad
+
+### Requisitos para que RAG sea válido
+
+- por organización
+- por rol y permisos
+- versión y expiración documentada
+- sources + metadata + last_updated
+- auditable
+- no mezclarse con datos de otra clínica
+
+## 10. Arquitectura técnica recomendada
+
+### 10.1. Recomendación global
+
+No recomiendo RAG sobre el DB transaccional del sistema. La arquitectura
+actual ya es una base válida y debe ampliarse de forma incremental:
+
+- `agent` existente + `LLM + tool calling` para el estado operativo del SaaS
+- `Conversation`, `ConversationGoal`, `TurnDecision` y `Message` para memoria,
+  continuidad, auditoría y cola conversacional; no son una base vectorial
+- `RAG documental` para conocimiento institucional/documental
+- `SQL + context builder` para historial clínico resumido
+- `vector search` solo para documentos/FAQ/protocolos y no como fuente de verdad
+
+### 10.2. Diagrama propuesto
+
+```text
+Usuario / WhatsApp / UI
+        |
+        v
+channels webhook / inbox
+        |
+        v
+Agent worker + planner + policy
+  |-- Tool call -----------> Tool Gateway ----> SaaS APIs / PostgreSQL
+  |
+  |-- Doc retrieval futuro -> Retrieval Service -> pgvector / KnowledgeDocument
+  |
+  +--> Context Builder --> LLM --> Respuesta
+```
+
+### 10.3. Qué encaja en el proyecto real
+
+- `SQL/tool calling` mediante las tools actuales: citas, pacientes, pagos,
+  stock, facturas, vacunas, dashboard.
+- `RAG documental`: protocolos, SOPs, FAQ, preparación quirúrgica.
+- `HL + SQL`: resumen del historial del paciente sin vectorizar registros financieros o clínicos core.
+
+## 11. Diseño multitenant y RBAC para IA
+
+El sistema ya tiene un diseño fuerte de tenant y permisos:
+
+- [backend/apps/core/models.py](../backend/apps/core/models.py): aislamiento por `organization`
+- [backend/apps/core/permissions.py](../backend/apps/core/permissions.py): `HybridPermission`, DB roles, fallback, observability
+- [backend/apps/users/models.py](../backend/apps/users/models.py): `User.organization`, `role`
+
+Esto es una limitante importante: un agente o retriever no puede “decidir” qué puede ver el usuario.
+
+### Invariantes obligatorias
+
+- `organization_id` debe aplicarse antes del retrieval.
+- el usuario no puede consultar documentos de otra clínica aunque el vector index lo contenga.
+- el LLM nunca debe decidir permisos.
+- el backend debe filtrar chunks antes de enviar al LLM.
+- el access control debe resolverse antes del `prompt` y no dentro del modelo.
+
+### Reglas concretas de enforcement
+
+- Documentos globales del SaaS: únicamente visibles a administradores SaaS.
+- Documentos por organización: `WHERE organization_id = user.organization_id`
+- Documentos por paciente: `WHERE patient_id IN paciente accesible` + organización
+- Documentos por rol: los de “recepción” no tienen acceso a contenido de veterinario / cirugía interna.
+
+Esto debe hacerse en backend, no como un prompt a un LLM.
+
+## 12. Modelo de datos propuesto (solo si se necesita)
+
+Si se introduce un corpus documental, la estructura debe respetar la multitenencia explícita y no desordenar la base de negocio.
+
+```text
+KnowledgeDocument
+- id
+- organization_id FK
+- scope_type ENUM('global','organization','patient','user')
+- scope_id nullable
+- source_type ENUM('pdf','docx','faq','manual','protocol')
+- source_name
+- status ENUM('draft','active','archived')
+- version
+- created_at, updated_at
+- created_by
+
+KnowledgeChunk
+- id
+- document_id FK
+- chunk_index
+- heading
+- content
+- content_tokens
+- metadata JSONB
+- embedding vector(1536 or 3072)
+- embedding_model
+- created_at
+- updated_at
+
+KnowledgeAccessLog
+- id
+- user_id
+- organization_id
+- document_id
+- chunk_ids
+- query_text
+- retrieved_count
+- created_at
+```
+
+Importante: este es “índice derivado”, no fuente de verdad. La fuente de verdad sigue siendo el documento original o la base documental controlada por la organización.
+
+## 13. Pipeline de embeddings
+
+### Recomendado
+
+```text
+Documento / PDF / FAQ / SOP
+        |
+        v
+parser + sectioning + chunking
+        |
+        v
+normalization + metadata enrichment
+        |
+        v
+embedder (tenant-controlled / controlled provider)
+        |
+        v
+upsert pgvector index
+        |
+        v
+background job / outbox / queue
+```
+
+### Chunking recomendado
+
+- chunks semánticos en vez de un solo embedding por documento largo
+- chunking por headings / sections / paragraphs
+- tamaño razonable, por ejemplo 600–1200 tokens por chunk
+- evitar crear un único vector por “documento completo” cuando el documento es extenso
+
+### Qué no debe vectorizarse a la primera
+
+- Transacciones financieras
+- citas operativas y ticketing
+- inventario exacto
+- historial clínico transaccional completo como una sola unidad
+
+## 14. Estrategia de invalidación y rebuild
+
+RAG no es una base de verdad. Debe poder reconstruirse.
+
+### Reglas
+
+- `KnowledgeDocument` y `KnowledgeChunk` se actualizan por reindexing
+- cambios en un protocolo disparan re-embedding
+- versionado de documento obligatorio
+- no depender de un single embedding model sin versionado
+- si un documento se borra o se archiva, se invalida el índice por `status`
+
+### Estrategia mínima aceptable
+
+- `outbox` o queue para reindexación asíncrona
+- job nocturno o por documento al cambiarlo
+- reindex parcial por `document_id`
+- no crear side effects dentro del flujo transaccional financiero o clínico principal
+
+## 15. Seguridad y privacidad
+
+### 15.1. Datos clínicos y embeddings
+
+La mayor preocupación no es solo “qué modelo usamos”, sino qué se manda a terceros.
+
+Riesgos específicos:
+
+- text embeddings contienen contenido clínico sensible
+- prompts con historial paciente pueden quedar en logs
+- proveedores externos pueden retener textos en caché o entrenamiento
+- metadatos de paciente o organización pueden quedar o filtrarse
+- backups del vector DB pueden no tener el mismo nivel de control
+
+### 15.2. Recomendación técnica
+
+- Primero evaluar: embeddings API externa vs embeddings self-hosted
+- si el contenido clínico es sensible, preferir infraestructura controlada
+- evitar mandar texto completo del historial del paciente a un proveedor externo si no hay necesidad real
+- separar fondo documental clínico de datos del paciente bajo una política estricta
+- no usar RAG para “verdad clínica” ni para decisiones directas sin revisión humana
+
+### 15.3. Protección de logs y trazas
+
+- no loggear chunks completos a producción
+- loggear solo IDs, query_hash, org_id, user_id, time, source document IDs
+- eliminar/retener cuidadosamente datos de prompt y retrieval
+
+## 16. Coste y escalabilidad
+
+### Costes relevantes
+
+- embeddings por chunk y por documento nuevo
+- almacenamiento vectorial
+- índice pgvector / estructura de chunks
+- coste de LLM por prompt y respuesta
+- infraestructura de workers y reindexación
+- observabilidad de retrieval
+
+### Escala del proyecto
+
+Aunque el proyecto puede crecer, hoy el principal problema no es “falta de buscar semánticamente”; es que el backend aún desarrolla operaciones clínicas y financieras con relaciones muy claras. Eso hace que un vector DB sea una adición de costo, no una necesidad inmediata.
+
+Un enfoque razonable sería empezar por:
+
+- un corpus pequeño de protocolos y FAQs
+- un tenant-scoped índice documental
+- un workflow de prueba con un conjunto muy limitado de usuarios
+
+## 17. Roadmap: ¿cuándo conviene?
+
+### Ahora
+
+- No implementar RAG en el core transaccional ni en el historial clínico médico.
+- El agente WhatsApp y su Inbox ya existen en `develop`; mantener y medir su
+  operación actual antes de añadir retrieval.
+- Consolidar `LLM + tool calling` sobre las APIs existentes y sus guards, sin
+  duplicar lógica en el agente.
+- Mantener toda la lógica de negocio en services y endpoints autorizados.
+
+### Beta
+
+- Prototipar un pequeño corpus documental por clínica (FAQ, protocolos, preparación quirúrgica, políticas de atención).
+- Validar Si el beneficio es real para veterinarios o recepcionistas.
+- Probar una solución híbrida: SQL + retrieval documental + LLM.
+
+### Post-beta
+
+- Agregar índice vectorial `pgvector` por tenant y alcance documental.
+- Extender el agente WhatsApp existente con RAG documental solo si las FAQs,
+  protocolos y consultas reales muestran una necesidad medible.
+- Añadir observabilidad y métricas de retrieval, clics, rescates y accuracy.
+
+### Escala
+
+- Si el producto se vuelve una plataforma con múltiples clínicas y bases de conocimiento muy amplias, el RAG documental sí puede ser una ventaja.
+- En ese punto sí tiene sentido una infraestructura vectorial por tenant y chunking robusto.
+
+## 18. Decisión recomendada
+
+### Candidatos principales
+
+1. Resumen clínico del paciente
+   - Decisión: PROTOTIPAR
+   - Arquitectura: SQL + context builder + LLM
+   - RAG: no necesario salvo notas largas/documentos externos
+
+2. Base de conocimiento de protocolos y SOPs
+   - Decisión: IMPLEMENTAR EN BETA
+   - Arquitectura: RAG documental + tenant scoping + RBAC
+   - RAG: sí, porque es un corpus real y semántico
+
+3. WhatsApp assistant con agenda + FAQ + preparación
+   - Decisión: MANTENER EL AGENTE ACTUAL; AÑADIR RAG DESPUÉS
+   - Arquitectura actual: `agent` + `channels` + tools + API HTTP + worker
+   - Extensión futura: Agent + tools + RAG documental
+   - RAG: aún no implementado; útil solo para documentación y FAQ
+
+4. Vector search sobre historial clínico transaccional
+   - Decisión: NO IMPLEMENTAR AHORA
+   - Arquitectura: no es la primera necesidad del producto
+
+5. RAG para facturas, stock, pagos y operaciones del core
+   - Decisión: NO IMPLEMENTAR
+   - Arquitectura: SQL + modelos + services
+
+## 19. Veredicto final
+
+VEREDICTO - ¿Necesitamos RAG hoy?
+- Sí / No / Parcialmente: PARCIALMENTE. El agente WhatsApp sí existe y es útil;
+  RAG todavía no existe ni es necesario para el estado estructurado del SaaS.
+- Primer caso que lo justificaría: base de conocimiento documental por clínica (protocolos, FAQ, preparación preoperatoria, políticas).
+- Arquitectura mínima: PostgreSQL + pgvector por tenant, con retrieval documental y ACL por organización/rol.
+- Qué NO vectorizar: historial transaccional, citas, facturas, stock, pagos, pacientes y inventario exacto.
+- Qué SÍ vectorizar: documentos SOP/protocolos/FAQ, manuales internos y material documental relevante por organización.
+- Qué debe seguir consultándose por SQL/tools: agenda, pacientes, vacunas, facturas, stock, reportes, estados y toda la lógica autorizada del sistema.
+- Momento recomendado para RAG: beta/post-beta, después de medir preguntas
+  documentales que el agente actual no pueda resolver con tools/FAQ; no como
+  sustituto del dominio operativo.
+
+## 20. Conclusión arquitectónica final
+
+La arquitectura actual de SaaSlyVet combina un dominio transaccional fuerte con
+un subsistema conversacional real (`agent` + `channels`). Esa existencia sí
+justifica evaluar mejoras del agente, pero no convierte automáticamente RAG en
+un requisito. El agente ya resuelve el estado operativo mediante tools; RAG
+debe reservarse para un corpus documental que no pueda resolverse con esas
+tools, SQL o matching textual.
+
+La oportunidad real es distinta:
+
+- no vectorizar el negocio de la clínica,
+- sí vectorizar la base documental de la clínica,
+- y usar el agente existente sobre APIs con tool calling para automatizar
+  WhatsApp, siempre bajo una separación clara entre sistema operativo y
+  conocimiento documental.
+
+En palabras simples: el dominio del SaaS debe seguir siendo consultado por SQL y servicios; la documentación institucional puede ser la única capa donde RAG tiene sentido real.

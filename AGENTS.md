@@ -26,3 +26,23 @@ Para descubrir código, prioriza las herramientas del grafo: `search_graph`,
 Usa búsquedas de texto solo para literales, errores, configuraciones y archivos
 no relacionados con código.
 <!-- codebase-memory-mcp:end -->
+
+## RTK - obligatorio en Codex (shell wrapper)
+
+MUST: prefix every shell command with `rtk` when a filter exists. Never call raw `git status`, `git diff`, `git log`, `ls`, `cat`, `grep`, `pytest`, `npm test` directly.
+
+```bash
+rtk git status
+rtk git diff
+rtk git log -n 10
+rtk ls .
+rtk read <file>
+rtk grep "<pattern>" .
+rtk pytest -q
+rtk proxy <cmd>  # solo si rtk no tiene filtro / falla
+```
+
+Rules:
+- If `rtk rewrite "<cmd>"` returns `rtk ...`, run the rewritten form.
+- `RTK_DISABLED=1 <cmd>` = bypass intencional, úsalo solo para debug.
+- Verify once per session: `rtk --version && rtk gain`.
