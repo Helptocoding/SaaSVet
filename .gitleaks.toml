@@ -49,4 +49,9 @@ regexes = [
   # bf897d4, que es inmutable.
   '''Recepcion12345''',
   '''Ajeno12345678''',
+  # Test-only idempotency labels from the already-published billing audit
+  # commit. They are opaque fixture identifiers, not credentials; the exact
+  # values are allowlisted so generic-api-key remains active everywhere else.
+  '''dispute-resolve-[12]''',
+  '''replacement-owner-1''',
 ]

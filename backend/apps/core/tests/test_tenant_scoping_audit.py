@@ -85,7 +85,6 @@ BASELINE = {
     # el valor contra la fila ya bloqueada.
     ('appointments', 'services.py', 'Appointment', 'filter'),
     ('billing', 'serializers.py', 'InvoiceItem', 'filter'),
-    ('billing', 'services.py', 'Invoice', 'get_or_create'),
     ('inventory', 'serializers.py', 'Product', 'filter'),
     ('inventory', 'serializers.py', 'PrescriptionItem', 'filter'),
     ('inventory', 'views.py', 'StockMovement', 'filter'),

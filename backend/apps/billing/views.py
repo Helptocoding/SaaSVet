@@ -33,6 +33,21 @@ VALID_INVOICE_TYPES = {choice[0] for choice in Invoice.INVOICE_TYPE_CHOICES}
 VALID_INVOICE_STATUSES = {choice[0] for choice in Invoice.STATUS_CHOICES}
 
 
+def _internal_pk(value, field_name='id'):
+    """Parsea IDs internos usados solo como hijos de un recurso público.
+
+    Las rutas permanecen como ``<str:...>`` para no declarar PK enteros en la
+    superficie pública; el modelo interno sigue usando su PK relacional.
+    """
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        raise ValidationError({field_name: 'Identificador inválido.'})
+    if parsed < 1:
+        raise ValidationError({field_name: 'Identificador inválido.'})
+    return parsed
+
+
 class PrescriptionRequired(APIException):
     """ADR p26: falta atestación de receta para un producto requires_prescription.
     `default_code` propaga a `{code: 'prescription_required'}` vía el handler global."""
@@ -160,7 +175,7 @@ def create_checkout_item(request, pk):
 def checkout_item_detail(request, pk, item_pk):
     from .checkout_services import delete_checkout_item, update_checkout_item
     checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
-    item = get_object_or_404(CheckoutItem, pk=item_pk, checkout=checkout)
+    item = get_object_or_404(CheckoutItem, pk=_internal_pk(item_pk, 'item_pk'), checkout=checkout)
     if request.method == 'GET':
         return Response(CheckoutItemSerializer(item, context={'request': request}).data)
     command = CheckoutItemMutationSerializer(data=request.data)
@@ -190,7 +205,7 @@ def attest_checkout_item_external_prescription(request, pk, item_pk):
         Checkout.objects.for_organization(request.user.organization), pk,
     )
     item = get_object_or_404(
-        CheckoutItem.all_objects, pk=item_pk, checkout=checkout, is_active=True,
+        CheckoutItem.all_objects, pk=_internal_pk(item_pk, 'item_pk'), checkout=checkout, is_active=True,
     )
     key = request.headers.get('X-Idempotency-Key') or request.data.get('idempotency_key')
     try:
@@ -418,7 +433,8 @@ def decide_checkout_prescription(request, pk, prescription_item_pk):
     from .checkout_services import decide_prescription_item
     checkout = resolve_public_id(Checkout.objects.for_organization(request.user.organization), pk)
     prescription_item = get_object_or_404(
-        PrescriptionItem, pk=prescription_item_pk, organization=request.user.organization,
+        PrescriptionItem, pk=_internal_pk(prescription_item_pk, 'prescription_item_pk'),
+        organization=request.user.organization,
     )
     try:
         decide_prescription_item(
@@ -521,7 +537,7 @@ def reprice_clinical_charge_view(request, pk):
         ClinicalChargeEntry.all_objects.select_related(
             'medical_record_service__service', 'medical_record_product__presentation',
         ),
-        pk=pk, organization=request.user.organization, lifecycle='active',
+        pk=_internal_pk(pk), organization=request.user.organization, lifecycle='active',
     )
     source = entry.medical_record_service or entry.medical_record_product
     if source is None:

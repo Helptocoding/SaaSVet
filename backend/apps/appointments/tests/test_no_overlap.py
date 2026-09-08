@@ -150,10 +150,14 @@ class WalkInRespectsNoOverlapTests(NoOverlapBase):
     def _occupy_now(self, pet):
         """Cita activa del vet que cubre el instante actual."""
         now = timezone.now()
+        end_local = now + timedelta(hours=1)
+        end_time = end_local.time().replace(second=0, microsecond=0)
+        if end_local.date() != now.date():
+            end_time = now.time().replace(hour=23, minute=59, second=59, microsecond=0)
         return Appointment.objects.create(
             organization=self.org, pet=pet, veterinarian=self.vet,
             date=now.date(), start_time=now.time().replace(second=0, microsecond=0),
-            end_time=(now + timedelta(hours=1)).time().replace(second=0, microsecond=0),
+            end_time=end_time,
             start_datetime=now - timedelta(minutes=5),
             end_datetime=now + timedelta(hours=1),
             reason="consulta en curso", status="in_progress",

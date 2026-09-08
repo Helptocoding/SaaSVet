@@ -535,7 +535,7 @@ class CheckoutSerializer(serializers.ModelSerializer):
     class Meta:
         model = Checkout
         fields = [
-            'id', 'public_id', 'origin', 'kind', 'medical_record',
+            'public_id', 'origin', 'kind', 'medical_record',
             'medical_record_public_id', 'lifecycle', 'completion_kind', 'version',
             'owner', 'customer', 'customer_public_id', 'customer_name', 'pet',
             'pet_public_id', 'pet_name', 'subtotal', 'tax_rate', 'tax_amount',
@@ -603,7 +603,7 @@ class CheckoutDisputeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CheckoutDispute
         fields = [
-            'id', 'public_id', 'checkout', 'invoice_public_id', 'status',
+            'public_id', 'checkout', 'invoice_public_id', 'status',
             'disputed_item_ids', 'disputed_amount', 'statement', 'evidence',
             'owner', 'owner_name', 'opened_by', 'opened_at', 'review_due_at',
             'resolution', 'resolution_reason', 'resolution_evidence',

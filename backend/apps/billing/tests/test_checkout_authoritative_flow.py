@@ -117,7 +117,7 @@ class AuthoritativeCheckoutFlowTests(TestCase):
         resolved = resolve_checkout_dispute(
             dispute, self.user, resolution='accepted', reason='Cliente acepta tras revisión.',
             resolution_evidence={'channel': 'in_person'},
-            expected_version=checkout.version, idempotency_key='dispute-resolve-1',
+            expected_version=checkout.version, idempotency_key='resolve-a',
         )
         self.assertEqual(resolved.status, 'resolved')
         checkout.refresh_from_db()
@@ -143,7 +143,7 @@ class AuthoritativeCheckoutFlowTests(TestCase):
             dispute, self.user, resolution='adjusted_or_waived',
             reason='Condonación comercial autorizada.',
             adjustments=[{'item_id': item.pk, 'amount': '100.00'}],
-            expected_version=checkout.version, idempotency_key='dispute-resolve-2',
+            expected_version=checkout.version, idempotency_key='resolve-b',
         )
         checkout.refresh_from_db()
         self.assertEqual(checkout.lifecycle, 'completed')
@@ -256,7 +256,7 @@ class AuthoritativeCheckoutFlowTests(TestCase):
             replacement, self.user, owner=self.user,
             correction_due_at=timezone.now() + timedelta(days=3),
             reason_code='follow_up', expected_version=replacement.version,
-            idempotency_key='replacement-owner-1',
+            idempotency_key='owner-a',
         )
         self.assertEqual(replacement.owner_id, self.user.pk)
         self.assertTrue(replacement.events.filter(kind='replacement_exposure_adjusted').exists())

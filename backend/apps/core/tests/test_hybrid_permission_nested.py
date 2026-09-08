@@ -195,9 +195,10 @@ class CheckoutItemDetailPermissionTests(APITestCase):
             "item_patch", self.org, ["invoice.create", "invoice.retrieve"]
         )
         self.client.force_authenticate(u)
+        self.checkout.refresh_from_db()
         r = self.client.patch(
             f"/api/billing/checkouts/{self.checkout.public_id}/items/{self.item.id}/",
-            {"quantity": "2"}, format="json",
+            {"quantity": "2", "expected_version": self.checkout.version}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK, r.content)
 
@@ -217,7 +218,9 @@ class CheckoutItemDetailPermissionTests(APITestCase):
             "item_destroy", self.org, ["invoice.create", "invoice.retrieve"]
         )
         self.client.force_authenticate(u)
+        self.checkout.refresh_from_db()
         r = self.client.delete(
-            f"/api/billing/checkouts/{self.checkout.public_id}/items/{self.item.id}/"
+            f"/api/billing/checkouts/{self.checkout.public_id}/items/{self.item.id}/",
+            {"expected_version": self.checkout.version}, format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT, r.content)

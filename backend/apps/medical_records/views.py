@@ -523,6 +523,19 @@ def close_medical_record(request, pk):
                 )
                 raise ValidationError({"treatment": "El tratamiento es obligatorio."})
 
+        # Protocolos clínicos (ADR p50): materializa los registros de dominio
+        # capturados en el scratchpad consultation_draft (hoy solo Vacuna →
+        # VaccineRecord), dentro del MISMO atomic. Finalizar es una sola operación:
+        # o se cierra la consulta Y se crea el registro legal, o nada. El frontend
+        # NO hace un POST aparte. Un protocolo NUNCA muta MedicalRecord (principio
+        # binding). Draft inválido → ValidationError → rollback del cierre.
+        from .services import apply_consultation_draft_on_close
+        apply_consultation_draft_on_close(medical_record, request)
+
+        # El materializador puede agregar insumos clínicos al checkout. Ese
+        # delta es una mutación válida mientras el expediente sigue abierto;
+        # cerrar primero haría que record_clinical_charge_delta lo rechazara.
+        # El estado legal se sella solo después de materializar el protocolo.
         medical_record.status = MedicalRecord.Status.CLOSED
         medical_record.closed_at = timezone.now()
         medical_record.closed_at_source = 'service'
@@ -537,15 +550,6 @@ def close_medical_record(request, pk):
         # cita no está en in_progress. NO toca Invoice/pagos.
         from apps.appointments.services import complete_appointment_on_record_close
         complete_appointment_on_record_close(medical_record.appointment, request.user)
-
-        # Protocolos clínicos (ADR p50): materializa los registros de dominio
-        # capturados en el scratchpad consultation_draft (hoy solo Vacuna →
-        # VaccineRecord), dentro del MISMO atomic. Finalizar es una sola operación:
-        # o se cierra la consulta Y se crea el registro legal, o nada. El frontend
-        # NO hace un POST aparte. Un protocolo NUNCA muta MedicalRecord (principio
-        # binding). Draft inválido → ValidationError → rollback del cierre.
-        from .services import apply_consultation_draft_on_close
-        apply_consultation_draft_on_close(medical_record, request)
 
         # El cierre crea la preparación comercial, nunca una Invoice draft.
         # Se ejecuta después de materializar protocolos para que cualquier

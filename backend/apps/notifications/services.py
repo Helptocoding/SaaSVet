@@ -31,7 +31,7 @@ def _recipients_with_capability(org, capability):
 
 def _get_or_create_notification(org, type, dedup_key, entity_type='',
                                entity_public_id=None, payload=None, occurred_at=None):
-    notif, created = Notification.objects.get_or_create(
+    notif, created = Notification.objects.for_organization(org).get_or_create(
         organization=org, dedup_key=dedup_key,
         defaults={
             'type': type,
@@ -47,7 +47,7 @@ def _get_or_create_notification(org, type, dedup_key, entity_type='',
 def _ensure_receipts(org, notification, users):
     receipts = []
     for user in users:
-        receipt, _ = NotificationReceipt.objects.get_or_create(
+        receipt, _ = NotificationReceipt.objects.for_organization(org).get_or_create(
             organization=org, notification_key=notification.dedup_key, user=user,
             defaults={'notification': notification, 'seen_at': None},
         )

@@ -650,3 +650,34 @@ traía once archivos de tests Billing eliminados y numerosos cambios ajenos. Se
 preservó ese estado y se usaron suites focalizadas sobre cada invariante nueva más
 los gates físicos PostgreSQL. Los tests eliminados se registran como deuda P2 y no
 como evidencia aprobatoria.
+
+### 14.5 Correcciones posteriores detectadas por CI (2026-09-07)
+
+El primer CI posterior al merge descubrió contratos secundarios que no estaban
+cubiertos por la auditoría inicial:
+
+- El fixture SQL de `audit_appointment_overlaps` no incluía el campo requerido
+  `Appointment.category`; se alineó con el schema actual. El helper de walk-in
+  también conserva el invariante de fin de cita al cruzar medianoche.
+- `discard_lot` distingue una merma de un consumo y ahora transmite esa
+  semántica al ledger, permitiendo retirar lotes vencidos o bloqueados sin
+  relajar los callers de consumo.
+- El cierre de una consulta de vacuna materializaba el producto después de
+  marcar el expediente `closed`; ahora materializa cargos mientras está abierto
+  y lo sella después, dentro de la misma transacción. El resultado es un
+  `Checkout` abierto; la `Invoice` nace al postear/cobrar.
+- Los serializers públicos de Checkout/Dispute dejaron de exponer el PK entero
+  junto al `public_id`. Las rutas de hijos internos usan segmento textual y
+  validan el PK sólo después de resolver el recurso padre tenant-scoped.
+- Las notificaciones usan `for_organization()` también en `get_or_create`; se
+  retiró del baseline una excepción que ya no existe.
+- El editor de pagos documenta visualmente el cambio no registrado cuando se
+  permite sobrepago. Los identificadores de fixtures que Gitleaks marcó como
+  secretos se sustituyeron y se dejó una allowlist exacta para los valores del
+  commit histórico ya publicado, sin desactivar la regla global.
+
+Validación local posterior: 13 tests focalizados de materialización/RBAC,
+3 tests de auditoría de URLs/tenant, 19 tests del editor de pagos y la suite
+frontend completa (346 tests) quedaron verdes; compilación Python y `git diff
+--check` también pasaron. El siguiente CI debe confirmar Gitleaks contra el
+historial remoto y la suite backend completa.

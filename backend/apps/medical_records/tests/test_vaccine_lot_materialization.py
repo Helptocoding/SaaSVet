@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.billing.models import Invoice, InvoiceItem
+from apps.billing.models import Checkout, CheckoutItem
 from apps.core.models import Permission, Role, UserRole
 from apps.core.permissions_codes import PERMISSION_CODES, PERMISSIONS
 from apps.inventory.models import MedicalRecordProduct, Presentation, Product, StockLot
@@ -109,10 +109,10 @@ class VaccineLotMaterializationTests(TestCase):
         self.assertEqual(mrp.lot_id, self.lot.id)
         self.assertEqual(mrp.cost_behavior, 'charge')                   # de default_cost_behavior
 
-        # charge → línea de cobro creada
-        invoice = Invoice.objects.get(medical_record=mr)
-        self.assertTrue(InvoiceItem.objects.filter(
-            invoice=invoice, presentation=self.presentation, is_active=True).exists())
+        # charge → línea del checkout clínico creada (la Invoice nace al postear)
+        checkout = Checkout.objects.get(medical_record=mr)
+        self.assertTrue(CheckoutItem.objects.filter(
+            checkout=checkout, presentation=self.presentation, is_active=True).exists())
 
     def test_included_default_does_not_bill(self):
         Product.objects.filter(pk=self.product.pk).update(default_cost_behavior='included')
@@ -124,10 +124,9 @@ class VaccineLotMaterializationTests(TestCase):
         self.assertEqual(mrp.cost_behavior, 'included')
         self.lot.refresh_from_db()
         self.assertEqual(self.lot.quantity_on_hand, Decimal('9'))       # consume igual
-        invoice = Invoice.objects.filter(medical_record=mr).first()
-        if invoice:
-            self.assertFalse(InvoiceItem.objects.filter(
-                invoice=invoice, presentation=self.presentation, is_active=True).exists())
+        checkout = Checkout.objects.get(medical_record=mr)
+        self.assertFalse(CheckoutItem.objects.filter(
+            checkout=checkout, presentation=self.presentation, is_active=True).exists())
 
     def test_missing_lot_blocks_close(self):
         mr = self._make_vaccine_mr({'lot_id': None})

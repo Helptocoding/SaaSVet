@@ -284,6 +284,10 @@ def discard_lot(lot, organization, quantity=None, reason='Descarte de lote', cre
     apply_stock_movement(
         presentation=presentation, quantity=qty, movement_type='out',
         organization=organization, reason=reason, created_by=created_by, lot=locked_lot,
+        # Una merma es una salida administrativa, no consumo clínico/venta;
+        # por eso puede retirar lotes vencidos o bloqueados sin relajar los
+        # callers de consumo.
+        allow_non_consumable=True,
     )
     return locked_lot
 

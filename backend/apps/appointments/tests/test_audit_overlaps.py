@@ -42,11 +42,11 @@ def _insert_raw_appointment(org, pet, vet, start, end, status='scheduled'):
             """
             INSERT INTO appointments_appointment
                 (public_id, organization_id, pet_id, veterinarian_id,
-                 date, start_time, end_time, start_datetime, end_datetime,
-                 timezone_at_creation, reason, notes, cancellation_reason,
+                date, start_time, end_time, start_datetime, end_datetime,
+                 timezone_at_creation, reason, category, notes, cancellation_reason,
                  status, walk_in, created_at, updated_at, is_active)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    'UTC', 'historico', '', '', %s, false, now(), now(), true)
+                    'UTC', 'historico', 'general_consultation', '', '', %s, false, now(), now(), true)
             RETURNING id
             """,
             [
