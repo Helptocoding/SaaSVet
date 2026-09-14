@@ -31,6 +31,7 @@ Mapa de casos:
 from django.test import TestCase
 from django.utils import timezone
 
+from .harness import legacy_write_component
 from apps.agent import executor as executor_module
 from apps.agent.llm import LLMResult
 from apps.agent.models import (
@@ -63,6 +64,7 @@ def _seed_role(org, role_name):
             [Permission.objects.get_or_create(code=c)[0] for c in codes]
         )
     return role
+
 
 
 class CorpusBase(TestCase):
@@ -297,6 +299,7 @@ class BriefConversationTests(CorpusBase):
 # Caso B — conv 12 (`0d56b976`, 2026-07-28): el mismo dato, cuatro veces
 # ---------------------------------------------------------------------------
 
+@legacy_write_component
 class RepeatedAskTests(CorpusBase):
     """Cliente verificado agendando. El modelo llama la herramienta con datos
     parciales una y otra vez; el sistema vuelve a pedir lo mismo.

@@ -139,6 +139,7 @@ class ToolsThroughRealApiTests(TestCase):
             organization=self.org, external_id="5215511224488",
             phone_normalized="5511224488", owner=self.owner,
             verification_level=ContactIdentity.VERIFICATION_CONFIRMED,
+            verified_at=timezone.now(),
         )
         self.conversation = Conversation.objects.create(
             organization=self.org, channel_account=channel,

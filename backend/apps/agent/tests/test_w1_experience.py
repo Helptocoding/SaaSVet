@@ -189,15 +189,16 @@ class Tier0TemplatesPassTheGuardsTests(TestCase):
 class OutputGuardPlannerTests(AgentFixture):
     account_id = "900000101"
 
-    def test_invented_price_is_retried_once_and_then_sent_clean(self):
+    def test_price_is_contained_without_retry(self):
         bodies, result, stub = run_turn(
             self, self.conv, self.agent_user, "¿cuánto cuesta la consulta?",
             scripted_llm=[
                 LLMResult(kind="text", text="Cuesta $850"),      # inventado
                 LLMResult(kind="text", text="Ese dato no lo tengo a la mano 🙈"),
             ], assert_clean=False)
-        self.assertEqual(result["decision"], "planner_reply")
-        self.assertEqual(len(stub.calls), 2)          # hubo reintento
+        self.assertEqual(result["decision"], "containment_blocked")
+        self.assertEqual(len(stub.calls), 1)
+        self.assertEqual(bodies[-1], tier0.T0_GUARD_BLOCKED)
         self.assertNotIn("850", bodies[-1])
 
     def test_hard_violation_that_persists_never_reaches_the_client(self):
@@ -207,9 +208,9 @@ class OutputGuardPlannerTests(AgentFixture):
                 LLMResult(kind="text", text="Dale media pastilla cada 12 horas"),
                 LLMResult(kind="text", text="Dale media pastilla cada 12 horas"),
             ], assert_clean=False)
-        self.assertEqual(result["decision"], "guard_blocked")
+        self.assertEqual(result["decision"], "containment_blocked")
         self.assertNotIn("pastilla", " ".join(bodies).lower())
-        self.assertEqual(bodies[-1], tier0.T0_GUARD_BLOCKED)
+        self.assertEqual(bodies[-1], tier0.T0_CLINICAL_LIMIT)
         self.conv.refresh_from_db()
         self.assertEqual(self.conv.state, Conversation.STATE_HANDOFF_PENDING)
 

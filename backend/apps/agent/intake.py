@@ -15,6 +15,18 @@ PATH_EXISTING = Conversation.INTAKE_EXISTING_CLIENT
 # ``respond_to_client`` porque no se ejecuta por ``run_tool``.
 PATH_SELECTION_TOOL = 'set_client_path'
 
+# B0: contención de release, sin flag que permita reabrir escrituras legacy.
+# B7/B8/B9 deberán sustituirla por capacidades con sus gates aprobados.
+CONTAINED_WRITES = frozenset({
+    'create_appointment', 'confirm_appointment', 'cancel_appointment',
+    'reschedule_appointment', 'register_new_client_and_pet',
+    'register_pet_and_schedule', 'register_pet_only',
+})
+
+
+def write_is_contained(tool_name):
+    return tool_name in CONTAINED_WRITES
+
 
 def current_path(conversation):
     """Ruta efectiva basada en hechos de dominio y, si hace falta, triaje."""
@@ -34,6 +46,8 @@ def allows_tool(conversation, tool_name):
     validación en ``run_tool``: una tool puede llegar por un prompt viejo, un
     retry o un caller futuro que no haya usado el catálogo dinámico.
     """
+    if write_is_contained(tool_name):
+        return False
     path = current_path(conversation)
     if not path:
         return tool_name == PATH_SELECTION_TOOL

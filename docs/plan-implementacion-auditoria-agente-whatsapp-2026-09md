@@ -1,0 +1,1223 @@
+# Plan de implementación — Auditoría agente WhatsApp
+
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Estado: **plan técnico; correcciones aún no implementadas**.
+
+Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
+
+## 1. Objetivo y alcance
+
+Implementar las correcciones mediante contratos comunes y cambios incrementales, conservando el monolito, las APIs de negocio y sus garantías. Este documento permite encargar una subfase por separado. Cada subfase debe entregar código, migraciones cuando correspondan, pruebas, documentación y evidencia de rollout; **esta revisión solo modifica este plan; no implementa las correcciones**.
+
+No se volvió a auditar el agente ni a reproducir los hallazgos. Las consultas puntuales verificaron modelos, fronteras de ejecución/entrega, contratos de herramientas, entrada del worker, migraciones, evaluaciones y ADRs necesarios para diseñar cambios. No se ejecutaron tests, migraciones, consultas a producción ni llamadas a proveedores. Los escenarios de prueba que siguen son trabajo futuro, no resultados obtenidos.
+
+**Orden ejecutivo:** contención y contratos mínimos; evidencia del turno y resultados; procesamiento/ownership y sender independientes; safety/atención humana mínima; invalidación de un asunto; propuesta/consentimiento; guard y una escritura por entrega; gate de beta por capacidad. Política de privacidad empieza con B0. Múltiples asuntos, avisos adicionales, altas compuestas y coordinación avanzada de escala quedan condicionados al alcance, sin bloquear una beta que no los ofrece.
+
+Una beta ampliada requiere completar los gates P0 y los P1 aplicables de §15. Una beta exclusivamente de consultas públicas puede habilitarse antes bajo el gate específico de §12. El sistema nunca se ofrece como atención clínica autónoma.
+
+## 2. Principios de implementación
+
+1. El LLM interpreta y propone; el servidor concede capacidades y valida la autorización de una operación exacta. Una interpretación incorrecta puede causar una aclaración, pero no ampliar permisos.
+2. Reutilizar `Conversation`, `ConversationGoal`, `Message`, `HumanHandoff`, `ToolOutcome`, `ToolExecutor`, `ToolExecution`, `TurnOperationAssessment`, `TurnDecision`, `LLMCall` e identidad. No crear un segundo Inbox, framework de agentes o motor general de workflows.
+3. Distinguir estado conversacional, estado de trabajo, estado de negocio y entrega. Sus transiciones no son intercambiables.
+4. Preservar HMAC/dedup inbound, org fijada por canal, RBAC AGENT, evidencia anti-eco, ventana de WhatsApp, public IDs, precondiciones, locks veterinario→cita, exclusión de solapamientos e idempotencia existentes.
+5. `TurnDecision` y `ToolExecution` siguen siendo diagnóstico append-only; no convertirlos en tablas operativas de recuperación. Ningún dato de diagnóstico concede autoridad.
+6. Cada cambio persistente se despliega de forma aditiva y con lector compatible. Rollback significa suspender nuevas acciones y reconciliar las ya iniciadas, no reinterpretar estados nuevos con código antiguo.
+7. Tests críticos desde la primera subfase, no al final de H16. PostgreSQL y procesos/conexiones independientes para probar concurrencia y crashes.
+8. No introducir Celery, Kafka, SSE, nuevas bases de datos, memoria vectorial ni microservicios. Polling y procesos separados con concurrencia acotada bastan para la siguiente beta si pasan medición.
+
+## 3. Causas raíz
+
+| ID | Problema compartido | Solución mínima | Hallazgos relacionados |
+| --- | --- | --- | --- |
+| CR1 | La interpretación, apertura de goal, propuesta y permiso de escritura comparten señales que no prueban consentimiento exacto. La política por tier/intake no expresa el efecto real. | Manifiesto de capacidades con efecto y política; operación persistente inmutable; autorización causal verificable; guard común de ejecución. | H01, H02, H09, H13, H18, H20 |
+| CR2 | Un resultado técnico o un número cualquiera se usa como evidencia de una afirmación de negocio. | Ampliar `ToolOutcome`; validación de respuesta por endpoint; hechos tipados y renderizado controlado de afirmaciones sensibles. | H05, H14, H20, parte de H04 |
+| CR3 | Trabajo, efectos externos y finalización local no tienen la misma frontera durable ni propietario verificable. | Trabajo por turno con lease/token; fencing en el punto de commit; ledger de operación; outbox con incertidumbre explícita. | H06, H07, H08, H19 |
+| CR4 | El turno se reconstruye varias veces y los datos carecen de alcance, cursor y dependencias suficientes. | Sobre de turno inmutable y vistas acotadas; identidad y entidades con procedencia; goals por instancia e invalidación explícita. | H10, H11, H12, H13, H15; refuerza H01/H03 |
+| CR5 | Safety y atención humana se confunden con ramas del flujo comercial y con estados nominales de conversación. | Circuito de safety independiente; orientación limitada; handoff operable con estado de aviso/acuse separado de ownership y resolución. | H03, H04, H08 |
+| CR6 | Métricas, evaluaciones, retención y presupuestos representan intención de diseño más que eventos operativos comprobados. | Evals por worker/sender real, métricas de etapas, contabilidad común, jobs verificables y criterios de capacidad. | H16, H17, H19; riesgo residual H18 |
+
+### 3.1 Interpretación y autoridad
+
+`TurnOperationAssessment` ya conserva ráfaga, operación interpretada y dos veredictos, y puede abrir un goal después de un recibo. **No prueba** que el usuario haya autorizado parámetros concretos, una propuesta emitida o una nueva versión. `ConversationGoal.authorization_message` prueba la petición de iniciar un asunto, no el consentimiento a ejecutarlo. Se conserva esa procedencia, corrigiendo nombres/documentación de su semántica.
+
+La separación objetivo es: **interpretación → asunto solicitado → operación propuesta → autorización exacta → ejecución → resultado**. No es necesario crear una tabla por cada palabra. Se introduce una sola tabla operativa `ConversationOperation` (nombre propuesto, en `backend/apps/agent/models.py`) con bloques de propuesta, autorización y ejecución claramente separados; los intentos siguen en `ToolExecution`. Ver §5.3.
+
+H01/H02 comparten la misma propuesta inmutable (nueva fila por versión), emisión y vinculación causal. H20 usa el mismo guard de efecto y evidencia, con un modo de declaración de asistencia acotado; no necesita obligatoriamente una segunda confirmación. H18 aporta el permiso del actor, que es independiente del consentimiento.
+
+### 3.2 Contexto compartido, con límites
+
+Ya hay `burst_messages`, hechos de prompts, `CommitmentView` y `TurnFacts` en `arbiter.py`, slots y referencias. Falta un sobre común antes de derivarlos; no faltan todas las piezas de contexto.
+
+Se introduce `TurnContext` como **valor inmutable en memoria**, no modelo, snapshot de ORM completo ni servicio global. Contiene identidad técnica del turno y eventos; las vistas privadas de identidad, goals y entidades se cargan solo para consumidores autorizados. El arbiter recibe sus `TurnFacts`/`CommitmentView`, no transcript privado ni un ORM al que pueda consultar. El dominio recibe una operación normalizada, no `TurnContext`. El sender recibe un saliente y su autoridad de publicación, no el contexto del LLM.
+
+Esto elimina derivaciones divergentes H10, exclusiones por estado H11 y pérdida de metadatos H15. Por sí solo **no** resuelve H12 ni H13: hacen falta instancias, procedencia e invalidación.
+
+### 3.3 Resultados y grounding
+
+`ToolOutcome(ok, data, client_error, detail, summary)` es la abstracción que se amplía. No crear un `ToolResult` paralelo. `RequestsTransport` deja de traducir JSON inválido a `{}`; HTTP y validez de esquema se evalúan por separado.
+
+El éxito de transporte, la completitud de una consulta y el efecto confirmado son dimensiones distintas. Una mascota registrada con cita fallida es un resultado parcial válido del flujo existente `_commit_add_pet`, no una transacción ficticiamente atómica ni un fracaso sin efectos. Un 409 no es `already_done` salvo que un estado canónico compatible lo demuestre.
+
+### 3.4 Durabilidad: fronteras que cambian
+
+| Frontera | Garantía objetivo | Recuperación |
+| --- | --- | --- |
+| Webhook→DB | Dedup por canal/wamid; ACK solo tras persistir. | Si DB cae, no confirmar recepción durable; reintento de webhook conserva identidad. |
+| Inbound→claim | Crear/reclamar el mismo `TurnWork`, fijar miembros, token y vencimiento en transacción corta. | Lease vencido devuelve el trabajo a procesamiento; no crear otra ráfaga con los mismos mensajes. |
+| Claim→planner | Sin transacción de DB abierta durante LLM; checkpoints escritos con token vigente. | Reintentar interpretación es admisible; no repetir efectos confirmados. |
+| Operación→dominio | Autorización, fencing, precondición, efecto y resultado del paso se comprueban/registran en la transacción del servidor que modifica el negocio. | Repetir la misma clave recupera el resultado; una clave con otros parámetros se rechaza. |
+| Resultado→outbound | Recibo deduplicado, finalización del turno y salientes publicables se consolidan con propiedad vigente. | Crash antes de consolidar recupera resultado y genera el recibo que falta, sin repetir negocio. |
+| Outbound→HTTP Meta | Claim individual durable; llamada externa fuera de transacción larga; no lote HTTP bajo un único `atomic`. | `SENDING` abandonado o aceptación dudosa pasa a `UNCERTAIN`, no a `PENDING` automáticamente. |
+| HTTP→estado local | `SENT` exige aceptación parseada con ID; `DELIVERED`/`READ` requieren webhook verificable y correlacionado. | Webhooks/reconciliación completan evidencia disponible; sin correlación suficiente interviene operación humana. |
+
+Procesamiento **at-least-once**; efectos idempotentes por operación/paso; dedup local de recibos; entrega externa con incertidumbre explícita. No se promete exactly-once ni que un saliente ya aceptado pueda retirarse tras takeover.
+
+### 3.5 Handoff y safety
+
+`HumanHandoff` ya tiene razón, prioridad, timestamps heredados, `claimed_by`, `claimed_at`, `resolved_at` y resolución. `Conversation` también tiene owner humano. Se amplía el modelo, no se reemplaza por una nueva cola.
+
+La secuencia distinguible será: decisión de escalar → caso creado → aviso pendiente/aceptado/fallido → persona toma ownership y acusa en la misma acción explícita de beta → respuesta humana encolada/enviada → resolución explícita → eventual devolución al bot. El acuse no garantiza valoración clínica. Inactividad, lectura de una campana y respuesta escrita no resuelven automáticamente el caso.
+
+Safety se evalúa sobre texto/caption/ráfaga y contexto temporal mínimo, antes de onboarding y de silencio por owner humano. Reglas de señales críticas, interpretación adicional de contexto y revisión de salida se complementan. Ni regex ni LLM constituyen por sí solos un protocolo clínico. El corpus, textos y destinos requieren responsable veterinario; esa validación sigue pendiente según la auditoría.
+
+## 4. Invariantes del sistema
+
+Los IDs de tests son especificaciones de pruebas futuras, detalladas en §7 y §9. Cero writes se refiere a negocio; registrar un rechazo, handoff o auditoría no viola ese criterio.
+
+| ID | Regla garantizada | Dónde y mecanismo | Test que la demuestra |
+| --- | --- | --- | --- |
+| I01 | Ninguna escritura sensible sin autorización válida para esa operación. | `run_tool` + `ConversationOperation` + guard en API para actor AGENT; política deny por defecto. | AUTH-01/05, EXEC-01: forzar elección de write por LLM y llamada directa al endpoint sin autorización. |
+| I02 | La autorización no se transfiere a otra mascota, cita, fecha, hora, acción ni versión. | Args canónicos inmutables, digest, vínculo a operation_key inmutable, precondiciones y validación de todo el burst. | AUTH-02/04; cambiar cada campo individualmente y repetir la autorización. |
+| I03 | Una propuesta no emitida correctamente no es autorizable. | Etapa derivada `EMITTED` condicionada a `Message.SENT/DELIVERED/READ`, aceptación con ID y causalidad anterior a respuesta. | AUTH-03: PENDING/SENDING/UNCERTAIN/FAILED, sin ID, respuesta previa o referida a otra propuesta. |
+| I04 | Una pregunta no muta por una tool mal elegida. | READ separado; asistencia requiere evidencia de declaración estructurada admitida por servidor. | ATT-01: `¿mi cita está confirmada?`, sin signos y pregunta indirecta, aun con stub que llama PATCH. |
+| I05 | Texto del usuario, historial o catálogo no amplía permisos. | Registro cerrado, origen del tenant desde canal, RBAC y revalidación en ejecutor/API. | SEC-01: injection directa/indirecta, tool inventada, IDs manipulados. |
+| I06 | Ningún efecto se afirma sin evidencia compatible. | Hechos tipados de `ToolOutcome`, recibo determinista desde resultado persistido; guard duro antes de publicación. | RESULT-01/03: lectura seguida de falso éxito, precio apoyado en duración, notificación solo encolada. |
+| I07 | Error/parcial/recorte nunca significa ausencia real. | Esquema por endpoint, estado y cobertura separados, filtros y paginación explícitos. | RESULT-02: vacío válido vs parcial/truncado/malformado/403/409/timeout. |
+| I08 | Safety no queda bloqueado por onboarding, identity, client path, goal ni owner humano. | Circuito de safety por cada evento; acción de sistema limitada, independiente del turno ordinario. | SAFE-01/02/03: matriz de estados, captions y ráfagas, humano ausente. |
+| I09 | Tras takeover confirmado, ningún turno viejo adquiere nueva autoridad para efectos, publicación local o despacho. | Epoch conversacional + lease token + guard en transacción de negocio y outbox; cancelación de no despachados. | OWN-01/02/03 con barreras durante LLM, antes de commit, enqueue y dispatch. |
+| I10 | Crash no convierte trabajo incompleto en completado. | `TurnWork` durable; completion y publicación consolidada; leases recuperables. | DUR-01/02: kill tras claim, durante LLM, antes/después de finalización. |
+| I11 | Envío externo incierto no equivale a no enviado. | `Message.UNCERTAIN`, clasificación de aceptación, prohibición de retry ciego. | SEND-01/02/03: timeout, 500, 2xx malformado, crash post-HTTP/pre-commit. |
+| I12 | Datos de una mascota no se heredan silenciosamente a otra. | Binding por goal/operación y reglas de invalidación con procedencia. | CTX-03/04: Luna→Max y tres asuntos. |
+| I13 | Ningún dato de otra organización entra a contexto/operación. | Queries por org, validación de relaciones completas y guard de API; no confiar en FK aislada. | SEC-02: dos organizaciones, handles/public IDs/tokens de otra org, relaciones de otro owner. |
+| I14 | Una corrección invalida todos los derivados afectados. | Revisión de binding, mapa fijo de dependencias, invalidación atómica de propuestas/precondiciones/refs. | CTX-03, AUTH-04: mascota, fecha, hora, actor e identidad revocada. |
+
+**Límites explícitos de las garantías:** I08 garantiza prioridad y conducta ante señales detectadas, no sensibilidad clínica perfecta ni disponibilidad de Internet. I09 es una garantía de autoridad y publicación **local**: un HTTP admitido antes del takeover puede terminar o entregarse después; no hay cancelación remota demostrada. La UI debe mostrar ese envío en vuelo/incierto. No ocultar este límite tras la expresión “cero mensajes después del takeover”. I03 no equipara aceptación del proveedor con lectura; por eso además exige vinculación causal y consentimiento de alcance exacto.
+
+## 5. Arquitectura objetivo mínima
+
+### 5.1 Se conserva / se modifica / se introduce / se depreca
+
+| Decisión | Componentes |
+| --- | --- |
+| Se conserva | Monolito Django/React, loopback HTTP, canal→org, rol AGENT, constraints/precondiciones de agenda, validadores de slots, evidencias de identidad, `ConversationGoal`, árbitro puro post-hoc, auditoría append-only, Inbox, selector de emitidos y ventana de sesión. |
+| Se modifica | Registro/dispatch de tools, `ToolOutcome`/transport, `confirmations.py`, entrada del planner/worker, construcción de hechos, goals, política de safety, sender, takeover/release, APIs AGENT, métricas/evals y handoff. |
+| Se introduce | Dos tablas operativas: `TurnWork` y `ConversationOperation`; valores acotados `TurnContext`, `AuthorizationEvidence`, `GroundedFact`, `OwnershipWitness`; campos de entrega en `Message` y evidencia mínima de aviso en `HumanHandoff`. Estos nombres nuevos son propuesta de implementación. |
+| Se elimina/depreca | `pending_action` JSON como autoridad, `permission=True`/veredicto LLM como consentimiento, `already_or_invalid`, `tool_ran` como grounding, coincidencia numérica sin campo, claim=PROCESSED, release sin token, transacción HTTP de lote, cierre humano por inactividad; el único suspendido se retira solo en E2. |
+
+No introducir tabla `OutboundMessage`: los salientes ya son `channels.Message`. No introducir `UserIntent`, `Authorization`, `HandoffStatus` o `ToolResult` como tablas duplicadas. No reutilizar `billing.CommandReceipt`: pertenece a otro dominio; adoptar su patrón de resultado idempotente sin acoplar agenda a billing.
+
+### 5.2 READ, WRITE y efectos de control
+
+Ampliar el manifiesto existente de `backend/apps/agent/tools.py` con `effect` (`READ_PUBLIC`, `READ_PERSONAL`, `WRITE_BUSINESS`, `CONTROL`), `operation_kind`, política de identidad, modo de autorización, esquema de entrada/salida y regla de idempotencia. Los tiers siguen siendo UX, no permiso implícito.
+
+| Clase | Política |
+| --- | --- |
+| Pública | Clínica, servicios, especialidades/productos públicos y disponibilidad no personal: sin onboarding ni confirmación. Sin goal nuevo automático. |
+| Personal | Mascotas, citas, vacunas administrativas y memoria permitida: identidad vigente y scope de owner; nunca requiere confirmar una lectura. |
+| Escritura de agenda/registro | Solicitud permite recopilar datos/proponer. Ejecutar exige operación exacta autorizada, precondiciones, permiso vigente y resultado idempotente. |
+| Confirmar asistencia | Puede conservar Tier 1, pero exige declaración vinculada a una cita; no basta seleccionar tool. Ver §5.4. |
+| Control | `request_human`, opt-out, ruta declarada e identidad tienen reglas propias. No exigen propuesta de agenda. No pueden elevar identidad, resolver un handoff ni asignar ownership por autoafirmación del LLM. |
+
+La regla posterior a recibo conserva la prohibición de abrir una nueva **escritura** por una cortesía. Se elimina su bloqueo indiscriminado de READs: consultar disponibilidad o estado no reabre agenda. Cambiar esto requiere enmienda a los ADRs del 26/27 de agosto, no borrar su frontera.
+
+### 5.3 Contratos, persistencia y lifecycle
+
+#### C1. TurnContext acotado
+
+- **Propósito/productor:** sobre inmutable construido en la entrada del planner desde Messages reclamados; B1 elimina reconstrucciones divergentes sin precargar el dominio.
+- **Campos mínimos:** IDs de org/conversación/canal/contacto, inbound IDs y eventos ordenados, cursor anterior al primero, hora/zona de clínica. Cada evento distingue texto original/normalizado, caption, tipo, reply/action ID y referencia de media; no descarga binarios. B3 añade ID de TurnWork y witness al adaptar el claim, sin otra copia persistida del contexto.
+- **Consumidores:** policy, planner, prompts y referencias reciben su proyección. Reutilizar DTO del arbiter. Tools reciben argumentos y autoridad mínimos; dominio y sender no dependen del transcript ni de C1 completo.
+- **Límites:** no exigir clases SafetyInput/IdentityView/GoalView/HistoryView por consumidor. Selectores existentes con tenant/contacto/cursor producen vistas bajo demanda. Añadir un DTO solo si fija un contrato reutilizado; no versionar cada vista interna.
+- **Lifecycle/persistencia:** pertenencia e historial anterior fijos por intento/TurnWork. C4 define cómo procesar nuevos inbounds. Message conserva texto/metadata; TurnWork conserva pertenencia/cursor. Caption proyectado como body se usa una vez, preservando origen. Solo las proyecciones persistidas necesitan versión de esquema.
+
+#### C2. ConversationOperation: propuesta inmutable, autorización y resultado
+
+**Propósito/productores/consumidores.** Una tabla nueva propuesta en backend/apps/agent/models.py. Confirmations prepara; el servicio de consentimiento autoriza; la API valida y registra el efecto/resultado. Planner reconstruye recibos desde ella. ToolExecution sigue siendo diagnóstico por intento, sin conceder permisos ni dirigir recuperación.
+
+**Identidad y propuesta.** UUID operation_key, org y FKs a conversación/contacto/source_turn; goal nullable; mensaje causal y proposal_message nullable; tipo cerrado de operación; authorization_mode; parameters discriminados por tipo, un parameters_digest canónico con versión de esquema, precondiciones y expires_at. FKs nullable a owner/pet/appointment cuando existen. Una corrección crea otra fila enlazada mediante replaces: el contenido propuesto es inmutable. **No añadir proposal_group_id, contador revision ni authorization_revision/digest que dupliquen la misma fila.** “Otra versión” significa otra operation_key, nunca editar su JSON.
+
+Guardar únicamente revisiones de ámbitos distintos: binding_revision del goal, identity_revision del contacto y ownership_epoch de conversación. Invalidan condiciones externas a la propuesta; no sustituyen su identidad. expected_state contiene precondiciones de negocio.
+
+**Consentimiento.** Campo consent_state persistido PENDING → AUTHORIZED, o terminal REJECTED / EXPIRED / INVALIDATED. La etapa visible **EMITTED es derivada**, no estado sincronizado: propuesta pendiente + Message emitido con ID de proveedor y causalidad válida. No duplicar emitted_at/emission_evidence; Message es fuente de emisión. TTL inicial de 30 minutos mediante expires_at; no reserva horario. proposal_stage es la vista derivada usada en UX/tests: PENDING sin emisión, EMITTED con emisión compatible, o el terminal de consentimiento. AUTH-03 usa esa etapa; consent_state=PENDING por sí solo no acredita emisión.
+
+AuthorizationEvidence embebida: authorized_at, FK authorization_message y referencias adicionales del burst cuando sean necesarias, canal de aceptación y versión de política. Actor derivado del contacto del inbound. source_turn identifica preparación, no el turno/token que ejecuta: el witness siempre corresponde al trabajo actual autorizado. proposal_message se liga en la misma transacción que inserta outbox final/completa el turno. Autorizar una vez bajo lock; la evidencia apunta a la fila exacta sin copiar parámetros/revisión/digest. Guard recalcula digest de parámetros persistidos y request. La declaración de asistencia usa su adaptador acotado sin fingir propuesta inexistente; conserva el mensaje/contexto emitido que fija la cita.
+
+**Resultado.** Estado NOT_STARTED → SUCCEEDED / FAILED / UNCERTAIN, con códigos que distinguen rechazo definitivo y fallo reintentable. Éxito canónico nunca se degrada a UNCERTAIN por pérdida de respuesta HTTP. No RUNNING durable para una mutación local cuyo guard, efecto y resultado comparten transacción: lock e intento correlacionado bastan. Guardar resultado mínimo tipado, timestamps y códigos de replay. B8A usa clave estable de operación individual; E5 añade PARTIAL y los dos pasos cerrados pet/appointment al habilitar esa capacidad. No construir ahora un motor genérico de pasos.
+
+**Constraints/índices.** Unique (org,operation_key); unique (source_turn,stage_key) para preparación repetida del mismo turno/punto lógico. Stage_key procede de un punto fijo de preparación, nunca del número de retry. Payload diferente para esa clave exige invalidación y nueva petición causal; no sortear dedup con UUID aleatorio. Check de evidencia requerida al autorizar y timestamps coherentes; índices de conversación/estado y ejecución/updated_at según recuperación. Política beta: máximo una operación autorizada por mensaje, validado bajo lock de conversación; **sin unique global del mensaje** que convierta UX temporal en cardinalidad perpetua. Esto no permite consentimiento ambiguo ni en lote.
+
+**Relaciones/legacy.** FKs causales protegidas; validar org/owner al preparar y ejecutar, no solo Model.clean(). Entidades de negocio nullable/SET_NULL con identificador histórico mínimo sujeto a P; no ejecutar si la entidad actual ya no existe. Ninguna FK desde negocio al agente. Correlaciones diagnósticas nullable se añaden con sus consumidores. No sintetizar autorización ni emisión legacy. B7A crea source_turn desde el inicio después de B3, eliminando la migración intermedia de propuestas sin turno.
+
+#### C3. ToolOutcome y evidencia para respuestas
+
+**Productor:** adaptadores que validan transporte, esquema y dominio. **Consumidores:** planner, renderizadores, guards y diagnóstico. Ampliar ToolOutcome existente; ok es propiedad derivada temporal, nunca autoridad.
+
+| Variante | Campos y significado |
+| --- | --- |
+| Lectura válida | data, alcance/filtros, observación, completitud complete/truncated/unknown; has_more/cursor solo si la consulta los soporta. Empty se deriva solo de colección vacía válida y completa para esos filtros. |
+| Efecto confirmado | operation_key, entidad/acción/estado canónicos y resultado success/already_done. Already_done exige estado objetivo probado; no atribuye creación al turno. |
+| Error/incertidumbre | Código forbidden/not_found/validation_error/conflict/transport_error/malformed_response/provider_error/uncertain, origen y retry acotado. Un WRITE de aceptación desconocida no es ausencia de entidad. |
+| Parcial compuesto, E5 | Efectos confirmados y pendientes explícitos. Distinto de truncamiento de consulta; no fingir atomicidad pet+cita. |
+
+No exigir cursor, operation_key, facts y efectos simultáneamente a cada tool. Recorte propio indica truncated aunque HTTP sea 200; has_more=false no prueba completitud sin contrato del proveedor. JSON inválido nunca se convierte en {} ni en empty.
+
+**Grounding mínimo.** Proyecciones tipadas de precio con moneda/servicio, slot con intervalo, operación con entidad/resultado, estado de mensaje y aviso/handoff. GroundedFact es nombre conceptual para esas proyecciones, no tabla ni ontología. Renderizadores existentes ampliados construyen los segmentos sensibles desde campos validados; el LLM no los reescribe. Para esos recibos, el modelo puede elegir cortesías/transiciones de un conjunto aprobado, sin adjuntar prosa libre que repita o contradiga hechos. Fallback seguro y sin afirmaciones clínicas libres. Guard de texto es defensa adicional, no verificador universal de entailment ni detector infalible de afirmaciones arbitrarias.
+
+**Lifecycle.** Resultado válido para alcance/momento observado; revalidar disponibilidad al escribir. Ledger respalda efectos; falta de proyección válida fuerza plantilla segura. B2 entrega errores honestos y límites visibles; nuevas búsquedas/paginación quedan en E1 si se necesitan.
+
+#### C4. TurnWork y OwnershipWitness
+
+**Propósito/productor:** claim durable del worker. Nueva tabla propuesta TurnWork: org, conversación, anchor Message único, estado PENDING/PROCESSING/COMPLETED/FAILED, cursor, lease_token UUID, lease_expires_at, attempts, next_attempt_at, claimed_at/completed_at, outcome_code y ownership_epoch capturado. Message.turn_work fija miembros. Máximo un trabajo no terminal por conversación; PROCESSING requiere lease y COMPLETED un desenlace persistido. FAILED mantiene trabajo visible recuperable por procedimiento.
+
+**Una autoridad por ámbito.** TurnWork guarda el único token del claim, sustituido al recuperar lease. No lease_generation ni Conversation.processing_token. Conversation añade ownership_epoch; processing_until legacy es proyección temporal sin lector autoritativo. Witness = org/conversación/turno/token/epoch; CAS y reloj fresco de DB para renew/release/finalize. ContactIdentity.authorization_revision revoca entre episodios; binding_revision protege derivados del goal. No unificar estos ámbitos.
+
+**Procesamiento inbound derivado.** No añadir Message.PROCESSING: pendiente asociado a TurnWork PROCESSING significa reclamado; Message.PROCESSED se proyecta solo al finalizar. Selectores consultan pertenencia/lease, no solo status. No guardar input_revision: bajo lock de Conversation compartido con recepción, comparar último cursor inbound persistido con cursor evaluado; duplicados y status de entrega no avanzan esa frontera.
+
+**Nuevo inbound sin starvation.** Miembros fijos. Un inbound posterior sin evaluar impide iniciar efectos sensibles nuevos. No replanificar indefinidamente el mismo trabajo: completar con outcome deferred_to_new_input, conservando goal/operación pendientes y fuentes; siguiente claim procesa nuevos inbounds y recupera esa continuación explícita. Outcome significa derivación, no ejecución ni respuesta enviada. Cortesía no invalida parámetros por sí sola; siguiente turno evalúa la corrección. Efectos ya confirmados consolidan resultado/recibo bajo ownership vigente; un inbound nuevo no los borra ni repite. Si takeover ganó, resultado queda disponible en Inbox y no se publica respuesta vieja del bot.
+
+**Continuación durable.** Outcome y referencias operativas existentes bastan; no tabla de workflows. El siguiente turno carga fuentes del último trabajo diferido como contexto pendiente, sin contarlas como inbound nuevo ni crear otra autorización. Se conserva la cadena causal al diferir varias veces; selector recorre solo continuaciones pendientes de esta conversación y resume por IDs de operación/goal, sin copiar chats. Límite de intentos/tiempo y derivación visible al superar presupuesto; no exigir silencio indefinido. Tests verifican corrección, cortesía, entradas continuas, pérdida de lease y ausencia de pérdida/duplicación.
+
+**Lease mínimo beta.** Deadline de llamadas/turno inferior a duración de lease con margen definido; renew con CAS entre pasos. No hilo heartbeat durante LLM si basta timeout acotado. Heartbeat controlado durante llamadas largas solo se introduce si las mediciones lo exigen. Un worker expirado no recupera autoridad al terminar después.
+
+#### C5. Message: publicación y envío
+
+Reutilizar channels.Message. B3 añade turn_work, output_ordinal y origin_epoch. Persistir salientes finales en la misma transacción corta que completa el turno: fila PENDING visible implica lista para despacho. **No guardar borradores del planner en outbox ni añadir publishable_at/lifecycle de candidatos.** Antes de completion se reconstruye salida desde fuentes/resultados persistidos. Unique parcial (turn_work,output_ordinal) conserva dedup; ordinal estable por segmento final, nunca por conteo de filas. No editar cuerpo ya encolado.
+
+B3 entrega también selector compatible con epoch/legacy y ventana de WhatsApp; no exige pausar sender hasta B4. B4 cambia transporte/claim y añade send_token, send_started_at, send_lease_until, provider_accepted_at, delivered_at, read_at, uncertain_at, código de fallo y supersedes_message nullable para reemisión manual. No otra fecha sent equivalente a provider_accepted_at.
+
+Lifecycle: PENDING → SENDING → SENT → DELIVERED → READ; rechazo conocido → FAILED o retry acotado; ambiguo → UNCERTAIN; takeover/corrección antes de dispatch → DISCARDED. Claim individual persistido, HTTP fuera de transacción, resultado bajo CAS. SENT = aceptación parseada con ID, no entrega. Estados/timestamps monotónicos; índices de colas por dirección/estado/next_attempt_at y lease; SENDING exige token/fecha.
+
+No tabla adicional de intentos en beta mientras no se reintenten inciertos automáticamente; preservar intento vigente/evidencia terminal. Legacy sin prueba sigue desconocido; created_at no prueba entrega. La conciliación puede terminar en incertidumbre visible y atendible, sin obligar a demostrar lo que Meta no permite correlacionar.
+
+Safety crea Message de sistema con semantic_type safety_guidance y clave causal en operation_key bajo namespace de evento, no permiso comercial; unique conversación/tipo/clave. Se encola bajo epoch vigente, independientemente del trabajo ordinario, limitado a guidance/handoff. No eximir todos los mensajes system del fence.
+
+#### C6. Handoff mínimo y extensiones
+
+Reutilizar HumanHandoff y claim/resolución existentes. OPEN/CLAIMED/RESOLVED derivados; Conversation.claimed_by es owner vigente y Handoff conserva historia. Claim/release coordinados bajo lock; resolver/devolver explícitos. Claim beta puede incluir acuse si la UI lo declara, sin acknowledged_at/by adicionales. Primera respuesta se deriva de Message emitido y correlacionado al caso/intervalo de atención; no nueva FK salvo necesidad medida.
+
+**B5 mínimo.** Cola Inbox, prioridad/razón existentes, source_message/event_key deduplicable, owner/resolución y cobertura real. Aviso externo opcional; si se usa, notification_status nullable para legacy desconocido y enum PENDING/SENDING/ACCEPTED/FAILED/UNCERTAIN/NOT_CONFIGURED, intento/token/lease/next_attempt_at y resultado mínimo. Son campos de ese efecto externo, no reutilizan token Meta. Caso y aviso pendiente nacen juntos; aceptación de transporte no prueba lectura, acuse ni atención. Sin destino: NOT_CONFIGURED, sin promesa de aviso.
+
+**Unicidad/legacy.** Unique parcial (org,event_key) para eventos nuevos; bajo lock de Conversation seleccionar explícitamente caso nuevo activo y reutilizarlo para escalaciones compatibles. No imponer unique global de un abierto ni consolidar históricos para satisfacerlo. Todos los abiertos legacy siguen visibles; revisión humana selecciona atención sin fabricar claim/resolución de los demás. Limpieza futura separada y ensayada.
+
+**E3 opcional.** Integración ampliada con Notification/Receipt, reparación de descubrimiento, destinos secundarios y alertas de atraso. Acuse separado solo si existe atención sin ownership; due_at/umbrales son política operativa aprobada, no estado clínico ni plazo prometido. No bloquean B5 si el circuito Inbox está demostrado. Crear, avisar, reclamar, responder, resolver y devolver siguen siendo hechos distintos aunque algunos se deriven o compartan una acción.
+
+### 5.4 Consentimiento ejecutable y UX de asistencia
+
+El dominio exige evidencia de aceptación para una operación exacta; no exige un texto concreto ni un número fijo de pantallas. La política inicial permite una operación por respuesta bajo lock, sin constraint global que impida futuras UX inequívocas. Texto estricto y action ID son adaptadores; cambiar canal no cambia la autorización ni habilita consentimiento ambiguo.
+
+Para beta, el camino determinista de autorización de una propuesta usa una **respuesta exacta con token de propuesta** (por ejemplo, instrucción visible `CONFIRMAR <código corto de esta propuesta>`), o action ID ligado al servidor cuando exista soporte de botones. El código debe ser impredecible, con colisión controlada y vinculado a org/contacto/operation_key/caducidad; no es un public ID de negocio ni autentica por sí solo. El parser admite únicamente la respuesta completa documentada y normalización limitada; nunca busca “sí” dentro de una frase. Texto adicional, negación, cambio o varios asuntos impiden ejecutar. Un botón recibido solo es válido si corresponde a una acción realmente emitida por el servidor, no por su título.
+
+El lenguaje natural sigue interpretándose para **rechazar, corregir, aclarar y preparar**. `sí para Max` invalida la propuesta de Luna; `no 👍` rechaza; un `sí` sin referencia segura obtiene una aclaración ligada a la propuesta, cero writes. No convertir una coincidencia léxica más amplia en autorización. Este límite temporal de UX es preferible a declarar infalible un clasificador probabilístico; el plan no exige implementar botones para poder corregir H01/H02.
+
+Asistencia puede seguir Tier 1: una tarjeta/pregunta de estado de **una cita identificada y emitida** puede ofrecer una acción “Confirmo asistencia”. El reply estructurado o una declaración completa del conjunto cerrado mostrado al usuario —incluida `sí confirmo que asistiré` cuando ese alcance está inequívocamente abierto— constituye la autorización, sin segundo ritual. El servidor verifica acción, cita, actor, evidencia de emisión, ausencia de correcciones en la ráfaga y estado actual. Una declaración libre sin alcance resoluble prepara la aclaración; una pregunta nunca adquiere permiso aunque dos modelos la clasifiquen mal. No habilitar automáticamente un conjunto ilimitado de paráfrasis por score del LLM.
+
+El estado de una cita y una nueva solicitud pueden resolverse semánticamente desde contexto. **Resolver la referencia no reutiliza consentimiento antiguo**. Toda ampliación futura del canal de aceptación libre requiere corpus adversarial y decisión explícita sobre riesgo residual.
+
+### 5.5 Identidad proporcional a capacidades
+
+Niveles de política, **no una nueva jerarquía de autenticación inventada**: PÚBLICO; CONTACTO (control del canal, sin expediente); VÍNCULO_VIGENTE (`confirmed_in_chat`/`staff_verified` vigente, no ambiguo, sin revocación); REVISIÓN_HUMANA (verificación existente de staff para conflicto o derecho sobre la entidad). `phone_match` nunca se asciende solo por conversación ni por confianza del modelo.
+
+| Operación/capability actual | Identidad requerida y alcance |
+| --- | --- |
+| `get_clinic_info`, `get_service_catalog`, consultas públicas de especialidades/productos/disponibilidad | PÚBLICO. No publicar detalles de citas ajenas al informar ocupación. |
+| `identify_client`, selección de ruta, reto familiar | CONTACTO; evidencia del servidor y protección anti-eco existentes. No enumerar candidatos. |
+| `list_my_pets`, `get_appointments`, vacunas administrativas, visitas/productos previos permitidos | VÍNCULO_VIGENTE, owner/relación acotada. Sin diagnóstico ni expediente médico. |
+| `create_appointment` | VÍNCULO_VIGENTE + propuesta exacta + relación admitida actualmente. |
+| `cancel_appointment`, `reschedule_appointment` | VÍNCULO_VIGENTE titular; conservar restricción familiar. Conflicto, número compartido conocido o identidad discutida → REVISIÓN_HUMANA antes de nueva propuesta. |
+| `confirm_appointment` | VÍNCULO_VIGENTE con relación permitida + declaración exacta de la cita. Familiar sin permiso explícito no hereda el del titular. |
+| `register_new_client_and_pet` | CONTACTO sin expediente, datos aportados y propuesta del alta compuesta. `require_new_owner=True`; coincidencia/conflicto → humano. No registrar cita implícita si se pidió solo alta. |
+| `register_pet_only`, `register_pet_and_schedule` | VÍNCULO_VIGENTE y owner autorizado; propuesta especifica si incluye cita y el posible resultado parcial. |
+| `request_human`, orientación de safety, opt-out reactivo | PÚBLICO/CONTACTO según persistencia; no exigir expediente. Opt-out no reactiva proactivos por un saludo. |
+| Cambio de owner, disputa/revocación, acceso clínico, cobros | REVISIÓN_HUMANA; los dos últimos fuera del catálogo del agente. No introducir MFA/billing/expediente como parte del plan. |
+
+Conservar TTL actual de identidad de 182 días como dato de compatibilidad, **no como prueba fuerte**. Para datos legacy sin procedencia fiable, nueva autorización requiere revalidación permitida o staff. Revocación incrementa revisión, invalida propuestas y permisos de todos los episodios del contacto; no se revierte por rematch telefónico. Antes de abrir beta, producto debe aceptar por escrito el riesgo de teléfono reciclado/compartido desconocido. Un reto repetido con nombre de mascota no es step-up fuerte; usar el flujo existente de revisión humana en los casos seleccionados. No imponer MFA a preguntas públicas.
+
+### 5.6 Correcciones y múltiples asuntos
+
+Mapa **fijo**, sin motor de dependencias genérico:
+
+| Dato corregido | Invalidar/revalidar |
+| --- | --- |
+| Owner, contacto o relación | Entidades personales, permisos, referencias, verificación dependiente, candidatos de cita, propuestas y autorizaciones aún sin efecto. |
+| Mascota/binding de goal | Cita candidata, motivo/especie/datos de vacuna derivados de esa mascota, precondición, horario elegido condicionado, argumentos staged y propuesta. |
+| Fecha | Fecha absoluta calculada, slots, veterinario elegido por disponibilidad, precondición temporal y propuesta. |
+| Hora/veterinario/servicio-duración | Intervalo, disponibilidad, precio si depende del servicio y propuesta. |
+| Acción | Propuesta y permiso actuales; otra operación, aunque afecte la misma cita. |
+| Dato sin dependencia, p. ej. cortesía | No invalidar ni duplicar propuesta. |
+
+Cada slot conserva valor validado, source_message_id y source_kind (user_explicit/domain/derived/legacy). El turno se resuelve por Message; binding_revision vive en goal y la operación captura su revisión. El mapa de dependencias es código fijo, no otro depends_on serializado por slot. Confianza ausente/inválida no se convierte en 1.0; el score solo ayuda a pedir aclaración. Copiar fecha/motivo de Luna a Max exige una petición explícita como “mismo horario”, y aun así se consulta disponibilidad para Max.
+
+Corrección bajo lock: incrementar binding revision → limpiar derivados → invalidar operación no ejecutada y descartar propuesta no despachada → guardar nuevo dato validado → recalcular faltantes. Si el efecto ya ocurrió, se conserva su historia y se prepara otra operación; nunca editar retrospectivamente lo autorizado. Si está incierto, reconciliar antes de ofrecer un cambio que pueda duplicarlo.
+
+`ConversationGoal` ya tiene PK e instancia: usarlas. `open_goal` deja de reutilizar por nombre y acepta instancia/binding explícito. Se conserva **un frente**. B6 solo protege un asunto y deriva múltiples peticiones sin destruirlas; E2 habilita varios suspendidos, con límite de producto inicial de tres asuntos abiertos en total, no constraint de cardinalidad de dominio. Al cuarto se pide priorizar, sin perder los tres. Retirar solo `commitment_one_suspended_per_conversation`, mantener constraint del frente. B6 añade bound_pet/bound_appointment nullable y binding_revision, sin retirar constraints de suspendidos. E2 añade source_turn si requiere idempotencia de apertura; no supplanted_by_goal sin caso demostrado. Idempotencia de apertura por `(source_turn,request_ordinal)` nullable para legacy; una reevaluación no abre otro goal de la misma petición. No parent/child ni stack de workflows; orden por creación/última interacción y elección explícita del usuario.
+
+“Cita Luna mañana” + “vacunas Max” son asuntos distintos. “Mejor Luna el viernes” selecciona goal Luna, invalida únicamente sus derivados y conserva el asunto de Max si aún está pendiente. Las READs simples no necesitan goal. Para la consulta de vacunas que requiere aclaración, E2 añade al registro existente un GoalSpec nuevo propuesto `vaccine_status_query`, limitado a resolver mascota y ejecutar `get_vaccine_status`; no programa vacunas ni interpreta tratamiento. Si la consulta ya se respondió completamente, no se mantiene un goal abierto artificial.
+
+### 5.7 Flujo objetivo
+
+`Webhook validado/deduplicado → Message persistido → safety mínimo por evento + claim durable → TurnContext → safety contextual → interpretación/resolución acotada → política de capability → READ o preparación WRITE → propuesta persistida → outbound publicable → sender acredita emisión → respuesta causal autoriza esa revisión → API valida permiso/fence/precondición → paso idempotente y resultado durable → ToolOutcome/facts → recibo grounded → completion/outbox → sender → aceptación/entrega local diferenciadas`.
+
+El arbiter conserva su clasificación post-hoc de compromisos. Recibe evidencia correcta del turno y aplica transiciones antes de consolidar completion; nunca autoriza un commit ni reescribe un mensaje emitido. Un safety event puede producir guidance de sistema durante ownership humano sin devolver la conversación al bot.
+
+## 6. Dependencias entre cambios
+
+La numeración B identifica el núcleo; E son extensiones según alcance; P-A/P-B son el trabajo de privacidad. B7 significa B7A+B7B; B8 significa únicamente los adaptadores expresamente seleccionados, no habilitar todo el catálogo. Una dependencia técnica exige contrato implementado y probado. Un gate de activación exige además evidencia operativa; escribir un contrato en B0 no equivale a desplegarlo.
+
+| Cambio / entrega | Dependencia técnica | Qué habilita; condición adicional |
+| --- | --- | --- |
+| B0 contención, contratos mínimos y harness base | Base documental existente | Preparar todas las ramas sin abrir WRITE |
+| B1 eventos/cursor/C1 | B0 | Contexto causal para processing, safety y binding |
+| B2 resultados/plantillas | B0 | READ honestas; WRITE se integra con su adaptador |
+| B3 TurnWork/epoch/publicación y selector compatible | B1 | Worker recuperable con sender actual compatible, sin esperar B4 |
+| B4 sender durable | B3 | Evidencia de emisión y takeover en dispatch, sin depender del ledger de negocio |
+| B5 safety y handoff mínimo | B1/B2/B3/B4 | Consultas bajo circuito seguro; protocolo/cobertura son gates externos |
+| B6 binding/invalidation de un asunto | B1 | Preparación exacta sin exigir multi-goal |
+| B7A C2 y permiso/revocación | B2/B3/B6 | Servicio de propuesta/resultados; no aceptación UX ni mutaciones |
+| B7B consentimiento/canal | B7A/B4 | Autorización exacta consumible por guard B8 |
+| B8A guard + crear cita | B7B | Primer adaptador completo; activación posterior en B9 |
+| B8B confirmar; B8C cancelar; B8D reprogramar; B8E registrar mascota | B8A; independientes entre sí | Una capacidad por entrega/PR y gate; no todas necesarias para beta |
+| B9 evaluación y límites básicos; gate separado | B2/B3/B4/B5; B6/B7B/B8 seleccionados para WRITE | Eval/carga/cobertura, P-A y P-B de categorías comprometidas; ninguna capacidad implícita |
+| E1 referencias/READ ampliadas | B1/B2/B6 | Mejoras conversacionales sin dependencia del sender; WRITE conserva sus gates |
+| E2 múltiples goals | B6/E1/B7B | Retirar solo límite técnico de suspendidos; gate antes de ofrecer varios asuntos |
+| E3 avisos/descubrimiento adicionales | B5 | Mejora de operación, no requisito de claim/resolución básicos |
+| E4 coordinación por medición | B9 técnico + perfil/reporte, sin aprobación de activación | Solo mecanismo justificado; puede corregir un ensayo B9 fallido sin depender de su aprobación |
+| E5 altas compuestas | B7B/B8A/B8E | PARTIAL y pasos cerrados; gate por capacidad, fuera de beta inicial |
+| P-A política/restricciones | B0 + revisión profesional | Decisiones mínimas de evidencia antes de cerrar schema |
+| P-B purga/restore por categoría | P-A + schema/lector de esa categoría | No esperar todos los modelos futuros; sí mecanismo antes del plazo prometido |
+
+DAG del núcleo:
+
+`B0 → B1 → B3 → B4 → B5`
+`B0 → B2 → B5`
+`B1 → B6; {B2,B3,B6} → B7A; {B7A,B4} → B7B → B8A → {B8B,B8C,B8D,B8E opcionales}`
+`{B2,B3,B4,B5,adaptadores seleccionados,P aplicable} → B9`
+
+Safety/corpus pueden prepararse desde B1 y guidance limitada existe desde B0. No esperar multi-goal, campana, altas compuestas o scheduler avanzado para atender la cola humana. E4 no es dependencia fija de B9: primero demostrar si el perfil cabe con límites básicos.
+
+## 7. Fases ejecutables
+
+### Convenciones para todas las entregas
+
+- Rutas heredadas proceden de la validación inicial; nombres **nuevos propuestos** no existen todavía. Esta revisión no reinspeccionó código ni migraciones. Al implementar, comprobar solo símbolos/hojas necesarios.
+- Cada fase entrega sus tests/consumidores y deja un estado válido; no necesita que una fase futura interprete sus datos para operar en su alcance. Contratos escritos son entradas de diseño, no dependencias desplegadas.
+- Tests afirman estado/efecto/HTTP, no solo prompt. Ampliar harness al añadir cada frontera real. PostgreSQL y procesos independientes donde prueban atomicidad/recuperación; no matriz cartesiana de toda tool y todo fallo.
+- Cada PR cita contratos/invariantes y actualiza test_contracts.py/ADR cuando cambie semántica. Gate crítico fallido no se relaja. Separar cierre técnico de aprobación clínica/operativa para activación.
+- Schema aditivo y corte controlado cuando basta; no cuatro deploys por rutina. Declarar versión mínima lectora y rollback funcional con datos nuevos. Contención nunca retrocede a autoridad lexical/LLM.
+- Autonomía efectiva se activa en B9 **por capacidad**. Antes, staff realiza/valida acciones por Inbox/dominio; supervisión no significa revisar después un write ya ejecutado por el bot.
+- B8B/B8C/B8D/B8E son encargos independientes bajo receta común; E4 requiere reporte/objetivo acotado antes de encargar un mecanismo. Extensiones sin necesidad demostrada quedan fuera del trabajo actual.
+
+### Fase B0 — Contratos, contención y gates mínimos
+
+**Seguimiento 2026-09-13:** B0 implementada; BASE-01/02/03 validados localmente (17 tests críticos; compatibilidad: 373 tests, 1 skip heredado fuera de B0). Evidencias y límites en [acta B0](implementacion-b0-agente-whatsapp-2026-09-13.md). Solo B0 está autorizada en este encargo: no adelantar B1–B9; registrar descubrimientos como dependencias/riesgos. El cierre técnico no autoriza despliegue ni ampliación. Registro operativo: **PENDING_ACTIVATION_REQUIREMENTS**; clínicas, responsables Inbox/seguridad clínica/privacidad y fallback por clínica pendientes confirmados por el usuario. Bloquean tráfico real, no implementación ni tests de B0.
+
+**Objetivo.** Hacer revisable el contrato de seguridad y dejar el rollout en modo seguro mientras se construyen las piezas dependientes.
+
+**Hallazgos:** H01–H08, H16, H18, H20 como contención, sin declarar cierre. **Invariantes:** I01–I11/I13 como criterios; la fase todavía no los garantiza todos. **Dependencias:** ninguna implementación nueva.
+
+**Actual relevante → objetivo.** Hay catálogo por tiers y guards, pero no gates adversariales suficientes. Se define explícitamente qué capacidades siguen habilitadas y qué evidencia exige su reapertura.
+
+**Cambios técnicos ordenados de esta fase.**
+
+1. En `backend/apps/agent/tools.py`, `intake.py`, `policy.py` y `guards.py`, establecer una política de contención: las mutaciones sensibles autónomas están cerradas; consultas personales solo con identidad vigente; solicitudes clínicas reciben plantilla limitada/humano. No retirar validaciones existentes.
+2. En `tier0.py`/`alerts.py`, retirar inmediatamente afirmaciones de notificación no probada y garantías clínicas. Es contención sobre resultado observable, no intentar arreglar H03 con más palabras.
+3. Acordar contratos mínimos C1–C6 e invariantes, sin congelar campos opcionales de E2–E5. Identificar responsables clínicos, de privacidad e Inbox. Registrar el perfil de ensayo de B9 y una matriz inicial de locks de las rutas que se modificarán; no inspeccionar todo el módulo para hacerlo.
+4. Ampliar `tests/harness.py` con eventos persistidos, proveedor controlado, barreras de fallo y aserción de cero efectos. B3 incorpora claim real, B4 sender y B8 API/ledger; cada consumidor entrega su integración junto con sus pruebas, sin esperar B9 ni sustituir todos los callers. Crear corpus determinista crítico y hacer fallar CI si no se ejecuta; `.github/workflows/ci.yml` ya corre la suite Django/PostgreSQL, aprovecharla.
+5. Registrar alcance beta por clínica: capacidades admitidas, responsable de cola y canal fallback configurado. Ningún destino/horario se rellena con ejemplos.
+
+**Datos/migraciones.** Ninguna necesaria en esta subfase. La política inicial puede ser constante restrictiva usando el kill switch `AgentSettings.enabled` y despliegue controlado. El modo gradual por org se incorpora en B7A; una lista explícita por release determina capacidades realmente habilitadas, sin flags individuales que desactiven guards. No marcar estados históricos como seguros.
+
+**Tests/aceptación.** BASE-01: un stub selecciona cada WRITE actual y la contención impide negocio; READ pública/solicitud humana siguen disponibles donde se habiliten. BASE-02: salida clínica/no respaldada se reemplaza por fallback limitado. BASE-03: caso crítico fallido hace fallar el job requerido; ausencia de fixture no cuenta como pass. Registrar línea base como fallos pendientes, sin xfail silenciosos que autoricen beta.
+
+**Deploy/flags/rollback.** Cambiar copy/contención primero; no requiere migración. El rollback conserva la contención mediante configuración o patch compatible; nunca reabre el catálogo peligroso. No se requiere aprobación adicional para planificar estos cambios; su activación futura seguirá el proceso de despliegue autorizado.
+
+**Documentación.** Enmiendas de ADR 2026-08-27 y p54/p55/p56; `docs/whatsapp-agent-functional-spec.md`, `docs/runbooks/agent-whatsapp.md`; registrar protocolo pendiente, sin declararlo validado.
+
+**Riesgos eliminados:** writes autónomos por rutas bloqueadas, falsas promesas eliminadas de las plantillas modificadas. **Reducidos:** exposición clínica por respuesta libre. **Abiertos:** detector, recuperación, sender, ownership, contexto e identidad de baja entropía. **Salida válida:** piloto supervisado; no ampliación autónoma.
+
+### Fase B1 — Evidencia única del turno y evento de canal
+
+**Objetivo.** Establecer el dato causal compartido que requieren consentimiento y safety, corrigiendo H10/H11/H15 sin reestructurar goals.
+
+**Hallazgos:** H10, H11, H15; habilita H01/H02/H03/H13. **Invariantes:** I03/I08/I13/I14 en sus entradas. **Dependencias:** B0.
+
+**Actual → objetivo.** `handle_inbound` deriva la ráfaga dentro del flujo, pero el wrapper usa el argumento original para el arbiter. El historial excluye por status. `_extract_body` pierde captions y títulos interactivos pierden ID. Habrá un único sobre de eventos y un cursor de historia independiente del estado técnico.
+
+**Cambios técnicos.**
+
+1. `backend/apps/channels/views.py::_extract_body`: extraer texto/caption sin reemplazarlo con OCR; normalizar por separado `context.id`, `interactive.button_reply.id`, `list_reply.id`, título y tipo real. Mantener `raw_metadata` como diagnóstico; el runtime consume una proyección validada, no todo el JSON externo.
+2. Introducir **módulo nuevo propuesto** `backend/apps/agent/turn_context.py` para C1 y constructor. La primera versión usa los IDs de mensajes/anchor; B3 añade TurnWork/witness al constructor. No añadir tablas ni familia obligatoria de vistas/versiones para esta entrega.
+3. `worker.py::_run_turn`, `planner.py::handle_inbound/_settle_commitment`, `policy.py`, `prompts.py::_contact_history_facts`: construir C1 antes de distribuir; eliminar listas paralelas como fuente alternativa. Adaptadores legacy solo para tests/callers conocidos, con misma salida y sin inferir identidad de mensajes fabricados.
+4. `backend/apps/channels/selectors.py` y `prompts.py`: cursor `(created_at,id)` exclusivo; org+contacto+cuenta; historial anterior de otros episodios solo con identidad vigente según p58. `visible_messages` no prueba emisión; usar selector de emitidos para causalidad.
+5. La respuesta a media sin texto informa limitación y ofrece texto/humano. Audio no se transcribe; imagen/documento no se interpreta; caption sí participa en safety. No descargar archivos ni añadir storage.
+
+**Datos/migraciones.** Puede completarse sin migración: conservar la proyección versionada en `Message.raw_metadata` o derivarla del payload ya persistido; no usar metadata arbitraria sin validador. Elegir una clave reservada documentada, sin duplicar cuerpo. Legacy sin reply/action = `unknown`, nunca sintetizar un ID. No reordenar transcript por timestamp Meta (p60 D-10).
+
+**Tests.** CTX-01 en `test_worker.py`, `test_turn_decision.py`, `test_prompts.py`: ruta con solo `burst_messages` entrega texto idéntico al arbiter; primer contacto no genera `ya_hablamos_antes`; recurrente conserva fecha real; evento posterior al cursor no entra en historia. CHANNEL-01 en `backend/apps/channels/tests/test_webhook.py`: texto, audio, imagen/documento con caption, botón/lista con ID, reply y referenced message; org ajena no resuelve referencia.
+
+**Aceptación.** Todas las entradas reales y tests convergen en C1; ningún primer inbound se cuenta como pasado; caption crítico llega intacto a safety; media sin procesamiento no produce facts sobre su contenido. No se crean writes ni capabilities nuevas.
+
+**Deploy/rollback.** Activación directa después de fixtures; no flag semántico necesario. Lector tolera metadata legacy. Si se revierte el consumidor, mantener parser de captions y contención; no volver a considerar metadata ausente como consentimiento.
+
+**Documentación.** Enmendar p56/p58 y p60 D-10 solo para aclarar proyección/cursor, sin cambiar orden. `docs/modules/agent.md`, arquitectura y contrato de eventos.
+
+**Riesgos eliminados:** divergencia de burst y falsa historia del turno actual en rutas migradas. **Reducidos:** pérdida de evidencia textual/causal. **Abiertos:** comprensión de media, goals contaminados, consentimiento y entrega. La metadata preservada no equivale a multimedia implementada.
+
+### Fase B2 — Resultados tipados y respuestas respaldadas
+
+**Objetivo.** Unificar semántica de consulta y efecto, eliminando éxitos/ausencias falsos y números usados como pruebas accidentales.
+
+**Hallazgos:** H05, H14, H20; parte H04. **Invariantes:** I06/I07/I13. **Dependencias:** B0. READs/error/plantillas se completan sin C2. B8 integra resultados de nuevas escrituras al incorporar cada capacidad.
+
+**Actual → objetivo.** `ToolOutcome.ok`, tuples HTTP y summaries mezclan estados. Se implementa C3 y se hace imposible construir recibos sensibles desde datos no tipados.
+
+**Cambios técnicos.**
+
+1. `executor.py::RequestsTransport/ToolExecutor.call`: resultado de transporte explícito (status, cuerpo validable, parse_error, aceptación de request incierta cuando aplique); eliminar `{}` para malformed. Adaptar `RealApiTransport` e `InProcessTransport` de tests/evals para no ocultar ese error.
+2. En tools.py/intake.py aplicar manifiesto READ_PUBLIC/READ_PERSONAL/WRITE_BUSINESS/CONTROL tanto a catálogo como dispatch. READ pública y request_human no esperan onboarding ni abren goal; consultas personales exigen vínculo vigente. WRITE sigue denegado por contención. En tools.py::ToolOutcome, `list_my_pets`, `get_appointments`, `get_vaccine_status`, `confirm_appointment` y `commit_*`: esquemas por endpoint, código de negocio y completitud. Mantener temporalmente `ok` derivado solo para callers migrados y deprecado en guards. No un adaptador que marque cualquier 2xx como success.
+3. `planner.py::_commit_success_text`, `guards.py::check_output/_facts_numbers/check_behaviour`, `prompts.py`: renderizar efectos/precios/disponibilidad desde facts tipados. Eliminar la equivalencia `tool_ran=True`; una infracción de efecto sin evidencia pasa a hard block. El borrador libre no puede volver a afirmar fuera de sus facts.
+4. En READs, declarar filtros/cobertura y has_more solo si existe evidencia. Conservar límites de proyección y hacer visible truncamiento/desconocimiento. No ampliar endpoints ni navegar todo el expediente: las búsquedas/páginas nuevas se entregan aparte en E1 si el caso lo requiere.
+5. Mantener altas compuestas supervisadas. Sus respuestas existentes deben diferenciar mascota/cita para no afirmar éxito falso, pero B2 no implementa su ledger ni motor de pasos. E5 integra el contrato parcial al habilitarlas.
+
+**Datos/migraciones.** Proyección de resultado versionada en datos diagnósticos existentes; sin tabla de facts ni migración obligatoria. C2 recibirá resultados al existir en B7A/B8; no se necesita crearlo para validar READ. No migrar summaries antiguos a “éxitos canónicos”: solo sirven como diagnóstico; una afirmación actual requiere dominio o resultado nuevo verificado. No hay motivo para crear tabla de facts ni copiar catálogo/precios.
+
+**Tests.** RESULT-01: `duracion_minutos=30` no respalda `$30`; número de teléfono/cantidad/fecha no respalda precio; moneda/servicio distintos tampoco. RESULT-02: 0 resultados válidos, >10 mascotas, >5 citas y cita antigua; truncated sin cursor disponible informa límite; 200 JSON roto, lista con esquema inválido, 403, 404, 409, timeout, 500 no se vuelven `empty`. RESULT-03: READ seguido de borrador “ya agendé” se bloquea; conflicto de asistencia no comunica confirmación; `already_done` requiere GET compatible; alta parcial solo afirma mascota. RESULT-04: tokens/IDs/PII no entran en logs/errores.
+
+Ubicación: `test_executor.py`, `test_tools.py`, `test_write_tools.py`, `test_w3_quality.py`, `test_commit_preconditions.py`, `test_planner.py`; pruebas de endpoints de pacientes/citas para filtros y tenant.
+
+**Aceptación.** Todas las READ expuestas y respuestas de capacidad denegada tienen esquema/semántica definida; segmentos sensibles salen de renderizadores con fuente compatible. Cero falsos éxitos/ausencias en corpus crítico. WRITE sigue cerrado hasta su adaptador B8; no exigir una ontología ni verificación universal de prosa libre. Un `HTTP 200` malformado siempre termina en código semántico de error.
+
+**Deploy/rollback.** Migrar adaptador→tools→planner/guards dentro de una versión compatible; no convivir con `ok` entendido distinto entre workers. Rollback reduce salida a plantillas/lectura supervisada, conserva resultados versionados y no los parsea con código anterior. No flag para volver a grounding numérico.
+
+**Documentación.** p54 grounding, p57 precondiciones/resultados, p52 replay, arquitectura y catálogo de tools. `docs/modules/agent.md` describe `ToolOutcome` nuevo, no un segundo contrato homónimo.
+
+**Riesgos eliminados:** equivalencias técnicas de H05/H14/H20 en rutas migradas. **Reducidos:** afirmaciones falsas de LLM con salida controlada. **Abiertos:** lenguaje adversarial no cubierto, protocolo clínico, recuperación y resultados históricos insuficientes.
+
+### Fase B3 — Trabajo durable, ownership y publicación atómica
+
+**Objetivo.** Recuperar un turno tras crash y retirar autoridad al worker viejo; entrega válida con READ/supervisión, sin necesitar propuestas o sender nuevo. **Hallazgos:** H06/H08, base H07/H19. **Invariantes:** I09/I10/I13/I14 en estado local. **Dependencias:** B1.
+
+**Actual → objetivo.** Claim marca inbound procesado antes del resultado y release no compara token. C4 sustituye esa autoridad y C5 evita outbounds borrador.
+
+**Cambios técnicos.**
+1. backend/apps/agent/models.py: TurnWork, ownership_epoch; channels/models.py: FK Message.turn_work, output_ordinal y origin_epoch. Solo correlaciones usadas ahora (TurnDecision si su productor las consume); no añadir a la vez FKs a cinco tablas futuras.
+2. worker.py::_claim_turn: claim/recuperación bajo lock corto con reloj DB fresco, un trabajo no terminal, token nuevo al recuperar y miembros/cursor fijos. Inbound pendiente asociado al trabajo, sin Message.PROCESSING duplicado.
+3. worker.py::_run_turn/_release_turn, planner.py y outbound.py::enqueue_outbound: witness antes de mutar estado; salida final en memoria, luego transacción corta con goals/decisión, inserción de salientes PENDING y completion. No draft durable/publishable_at. Un error revierte esa consolidación completa; no filas listas a medias.
+4. agent/services.py recepción y views.py/services.py takeover/cierre/reset: lock de Conversation compartido para persistencia del inbound y cambios de ownership; incrementar epoch en los cambios pertinentes. Cursor fresh bloquea efecto sensible aún no iniciado si llegó entrada pendiente. Aplicar continuidad deferred_to_new_input de C4; no replanificar eternamente el mismo trabajo ni borrar resultado ya confirmado.
+5. Selector del sender actual en worker.py: compatibilidad con epoch/legacy y descartados **en esta entrega**, preservando forma PENDING lista para enviar y ventana. No necesita campos SENDING/UNCERTAIN aún. B4 cierra la incertidumbre HTTP; hasta entonces solo piloto supervisado, sin promesa de takeover remoto. No dejar sender pausado entre fases.
+6. Timeout total acotado, lease con margen y renew CAS entre pasos. No heartbeat thread por defecto. Recuperador rechaza token antiguo aun si acaba LLM. Routed_to_human/deferred/failed visibles en Inbox; en conversación humana el bot no genera respuestas ordinarias.
+7. tests/harness.py incorpora claim y completion reales en esta fase, con DB/proveedor controlados, sin esperar B9.
+
+**Datos/migración.** Primero crear TurnWork con anchor→Message existente, después FK Message→TurnWork en migración dependiente; sin ciclo. Epoch=0, token null, campos causales nullable legacy. Unicidad de trabajo no terminal e índices status/lease/next_attempt_at/org. processing_until solo proyección transitoria. Pendientes actuales siguen pendientes; PROCESSED sin resultado se etiqueta legacy_unverified en reporte, **no enum ni replay automático**. Sin input_revision, generación ni token duplicado.
+
+**Tests/aceptación.** DUR-01: kill tras claim/durante planner/antes de finalización recupera mismo trabajo. DUR-02: DB caída durante inserción de outbox/finalización revierte ambas; crash posterior no repite. OWN-01: token vencido no renueva/libera/finaliza trabajo recuperado. CTX-02: corrección posterior impide nuevo efecto; cortesía no borra parámetros; entradas continuas dejan continuidad visible, presupuesto acotado y ningún mensaje perdido. Inbound duplicado no crea otro trabajo. test_worker.py, test_w0_hardening.py, test_turn_decision.py, test_inbox_api.py y nuevo tests/test_turn_recovery.py con procesos PostgreSQL. Un completion lógico y desenlace explícito por trabajo; no simular PROCESSED como evidencia.
+
+**Deploy/rollback.** Schema + versión compatible de worker/selector actual, corte controlado drenando claimers viejos; ingress puede continuar. No coexistir escritores antiguos que ignoren contrato. Rollback a versión identificada que entiende TurnWork o pausar autonomía y usar Inbox; preservar miembros/token/outcomes. No conversión masiva de estados ni necesidad de completar B4 para leer/enviar PENDING válidos.
+**Documentación.** ADR conjunto de durabilidad, p55/p56/p60, contrato C4/C5 y runbook de trabajos diferidos.
+**Riesgos eliminados:** pérdida por claim prematuro y release ajeno. **Reducidos:** writes de estado local obsoletos. **Abiertos:** incertidumbre de sender hasta B4 y commit de negocio hasta B8; WRITE permanece cerrado.
+
+### Fase B4 — Sender durable, reconciliación y takeover completo
+
+**Objetivo.** Separar planificación de envío, evitar rollback de lote y tratar honestamente toda aceptación externa dudosa.
+
+**Hallazgos:** H07, H08, H02 (emisión durable), parte H06/H16/H19. **Invariantes:** I03/I06/I09–I11/I13. **Dependencias:** B3. No requiere C2 ni adaptadores de negocio; B7B consumirá después su evidencia de emisión.
+
+**Actual → objetivo.** `send_pending_outbound` agrupa HTTP bajo un atomic; `send_text` devuelve string o vacío y trata timeouts como retryable. Se implementa C5 y aceptación explícita del proveedor, sin suponer dedup remoto.
+
+**Cambios técnicos.**
+
+1. `worker.py::send_pending_outbound/_send_one`: claim de **un mensaje** por transacción, grabando intento/token/lease antes del HTTP; liberar locks; ejecutar proveedor; finalizar solo ese intento con CAS. No hacer rollback de estados de mensajes anteriores al fallar otro.
+2. `backend/apps/channels/providers.py::ProviderError/MetaWhatsAppProvider.send_text`: devolver resultado estructurado `accepted`, `known_rejected` o `uncertain`, ID/código seguro. Un 2xx sin wamid parseable es `uncertain`. Timeout/red y 500 después de enviar request son inciertos salvo evidencia contractual de rechazo; no conservar retry automático solo porque el error dice `retryable=True`.
+3. `agent/services.py::record_status_update` y webhook channels: correlación por cuenta/wamid, transiciones monotónicas y timestamps de recepción/etapa. Con wamid conocido un webhook puede cerrar incertidumbre. Sin wamid, el contrato actual no demuestra una búsqueda por clave local ni correlación segura: conservar `UNCERTAIN` para revisión, sin heurística por texto/hora/teléfono. Cualquier futura correlación Meta se verifica contra contrato oficial antes de implementarla; no es prerrequisito inventado de este plan.
+4. Reconciliador dentro del comando sender: `SENDING` con lease vencido pasa a incertidumbre; reintenta solo rechazo conocido temporal o fallo demostrado anterior a dispatch. Propuestas/recibos inciertos no se reenvían automáticamente. Acción manual de Inbox debe advertir el estado real y registrar actor/motivo; si se decide reemitir, nuevo Message enlazado, nunca borrar intento anterior.
+5. `views.py::claim_conversation`, envío humano y `services.py::release_conversation/_apply_release`: incrementar epoch, invalidar trabajos viejos, descartar bot outbounds no despachados en la misma transacción. Claim no exige esperar al planner. Release preserva el patrón R1/R2/R3 actual, sustituyendo witness incompleto por epoch; revalidar dominio fuera de lock y comparar de nuevo al aplicar.
+6. El sender admite dispatch bajo lock corto de Conversation/Message y epoch vigente. Esa admisión es el punto de inicio lógico del envío. Un takeover posterior no puede retirar un HTTP ya admitido; UI muestra “envío previo en curso”/incierto. No ofrecer a staff una garantía de ausencia de entregas tardías. En tests de takeover **durante planning/antes de admisión**, cero dispatch posterior del turno viejo. En tests durante HTTP, conservar evidencia, no repetir, no atribuir el envío al humano.
+7. Reservar contrato acotado para safety que integra B5: mensaje de sistema con origen explícito y epoch actual; no eximir indiscriminadamente todos los mensajes `system` del fence. Se permite solo guidance/handoff aprobados, sin operación comercial.
+8. `backend/apps/agent/management/commands/run_agent_worker.py`: añadir modo explícito `planner`/`sender` (nuevo argumento propuesto), manteniendo `--once` para pruebas. `docker-compose.prod.yml`: procesos separados con límites. El sender y avisos no esperan el resto del lote LLM; no hace falta broker nuevo.
+9. `agent/serializers.py`, `views.py` y `frontend/src/pages/inbox/index.jsx`: distinguir queued/sending/accepted/delivered/read/failed/uncertain; conservar idempotency key humana/`executeSendAttempt`. Mostrar incertidumbre y claim actual; polling REST, sin SSE.
+
+**Datos/migraciones.** Campos C5, longitud de status y checks direccionales. Legacy `SENT` con wamid conserva aceptación conocida pero timestamp puede quedar `NULL/legacy_unknown`; no usar `created_at` como fecha de entrega. `SENT` sin wamid se concilia como desconocido, no autorización. Todos los `PENDING` al corte se inventarían como “no enviados” si no se analiza el lote antiguo: pausar sender durante el corte, drenar y clasificar intentos en vuelo. Los dudosos pasan a UNCERTAIN con responsable/cola antes de reanudar; no exigir correlación remota imposible ni una resolución definitiva de todos para terminar el deploy.
+
+**Tests.** SEND-01: caída tras claim antes de HTTP, tras primer/segundo HTTP de lote y antes de commit local; cada mensaje conserva estado independiente; duda nunca se reenvía ciegamente. SEND-02: timeout Meta, 500, 429/rechazo probado, 4xx, 2xx malformado, éxito con ID; resultado y retry correctos. SEND-03: webhooks duplicados/fuera de orden/otra cuenta; READ no baja a SENT; wamid ausente no se correlaciona por parecido. OWN-03: takeover durante LLM, antes de enqueue, antes de dispatch y durante HTTP; asserts diferentes según punto de admisión. SEND-04: ventana 24h sigue bloqueando lo no permitido, retry manual no la evade. B7B repetirá AUTH-03 por la ruta completa, con sender detenido. B4 prueba emisión causal mediante Messages reales, sin necesitar una propuesta futura.
+
+Ubicación: `test_worker.py`, `test_inbox_api.py`, `test_release_service.py`, `channels/tests/test_webhook.py`; **nuevos propuestos** `test_sender_recovery.py` y tests de UI en el directorio de Inbox según convención local existente.
+
+**Aceptación.** Ningún HTTP del sender dentro de una transacción de lote; todos los intentos reclamados quedan persistidos; cero repeat automático tras resultado incierto; takeover elimina publicación/despacho no admitido del turno viejo; aceptación/entrega conserva causalidad verificable para consumidores futuros. El proceso sender responde aun con LLM bloqueado. No contar un dispatch/row como delivery.
+
+**Deploy/flags.** Corte único por canal/cohorte, nunca dos senders con semánticas distintas sobre los mismos mensajes. Schema→compatibilidad UI/API→pausa/drain→clasificar legacy→nuevo sender. Sin flag que seleccione sender viejo al fallar; usar pausa de envíos y reconciliación.
+
+**Rollback.** Parar dispatch, conservar leases/uncertain/IDs, dejar webhooks activos para conciliar. Reanudar solo sender que entiende estados nuevos; nunca volver a `pending` como rollback masivo. Claim/release compatibles se mantienen. Los efectos de negocio no se revierten porque falle el recibo.
+
+**Documentación.** ADR nuevo procesamiento/ownership/delivery, p58 emisión y p60 retry/claim; runbook de envío incierto y recuperación. **Riesgos eliminados:** rollback HTTP de lote, publicación local sin ownership y retraso del sender por lote de planning. **Reducidos:** duplicado remoto mediante no-retry conservador. **Abiertos:** aceptación remota sin correlación, mensajes ya en vuelo y disponibilidad de Meta. **Gate:** sender queda independiente del planner. No abre WRITE: faltan B6/B7/B8 y activación B9. Las consultas requieren también safety/handoff B5.
+
+### Fase B5 — Safety y handoff operativo mínimo
+
+**Objetivo.** Toda señal urgente detectable recibe atención prioritaria y respuesta limitada/honesta, con trabajo de aviso recuperable aunque el bot esté pausado.
+
+**Hallazgos:** H03, H04, parte H05/H08/H15. **Invariantes:** I06/I08/I13; respeta I09 mediante circuito de sistema independiente. **Dependencias:** B1/B2/B3/B4: epoch, outbox y sender existen antes del circuito de sistema. El detector/corpus puede prepararse desde B1; la activación usa estas dependencias.
+
+**Actual → objetivo.** Matcher léxico, `human_active` antes de emergencia, plantilla que dice “avisado” y webhook best-effort. Se establece safety antes de gate comercial/humano y un handoff real con estado de aviso.
+
+**Cambios técnicos.**
+
+1. `matchers.py` conserva señales deterministas de alta precisión, pero no toda la decisión. Incorporar en **módulo nuevo propuesto** `agent/safety.py` una clasificación con razones estructuradas, negación/temporalidad/experienciador y contexto textual acotado. Reglas críticas aprobadas tienen prioridad; una capa semántica puede elevar a `possible_urgent`, nunca rebajar una señal crítica validada por el protocolo.
+2. C1 proporciona ráfaga completa/caption y mensajes recientes pertinentes para síntomas partidos. Usar tolerancia a errores solo como señal auxiliar; no fuzzy matching que declare permiso o diagnóstico. La ausencia de señal no autoriza decir “no es urgente”.
+3. `policy.py`, `planner.py` y `tier0.py`: `high_confidence_urgent` → guidance inmediata aprobada + handoff urgente; `possible_urgent/uncertain` → misma cautela, aclaración breve opcional que no retrase contacto profesional; normal → continuar. LLM timeout no elimina reglas críticas y no libera salida clínica libre.
+4. Safety mínimo por inbound en el servicio de recepción de `agent/services.py`, llamado desde webhook de channels, y reevaluación contextual al agrupar turno. La ruta rápida solo hace DB/plantilla/cola, no HTTP externo ni LLM dentro del webhook. Dedup por mensaje/caso evita guía repetida para el mismo evento. Si síntomas solo se entienden al unir mensajes, la reevaluación los detecta en el turno.
+5. HumanHandoff recibe fuente/event_key y evidencia mínima C6. Inbox con responsables es la vía obligatoria de atención. Si se mantiene aviso externo configurado, alerts.py::notify_urgent_handoff se ejecuta desde trabajo persistente con lease/backoff; si no se usa, registrar NOT_CONFIGURED y no introducir otro canal. Eliminar texto libre en `detail`; usar código/links internos sin contenido sensible. Al crear caso, dejar aviso durable **en la misma transacción**, no depender solo de `on_commit`.
+6. `policy.py::close_inactive_conversations` excluye casos humanos sin resolución. `human_active` no silencia safety; genera un nuevo evento de sistema bajo epoch actual, no reanima el turno anterior ni abre agenda.
+7. Configuración institucional: conservar horario/telefono en `Organization`/`OrganizationSchedule` y `clinic_context.py`. Si se necesita destino de urgencia externo, añadir campo validado en la configuración de clínica existente (`backend/apps/organizations/models.py`, `serializers.py`); no duplicar horario en AgentSettings. Destino/servicio no configurado = desconocido, no ejemplo ficticio.
+
+**Conducta operativa por situación.**
+
+| Situación | Respuesta/acción permitida |
+| --- | --- |
+| Señal crítica, registro incompleto | Omitir onboarding/goals comerciales; guidance aprobada que recomienda atención profesional inmediata, sin diagnóstico ni tratamiento; crear caso urgente. |
+| Negación clara actual, mensaje normal | No activar por una palabra aislada; continuar o aclarar contradicción real. “No tiene convulsiones” no elimina otra señal crítica distinta. |
+| Síntoma antiguo/resuelto o temporalidad dudosa | Considerar contexto; si no se puede resolver, cautela sin garantizar baja gravedad. Corpus decide copy, no un score aislado. |
+| Clínica cerrada/no horario/no servicio urgente configurado | No dirigir automáticamente a “la clínica abierta”. Orientar a servicio veterinario disponible sin inventar destino; usar contacto/ruta solo si configurados y vigentes. No esperar respuesta del chat. |
+| Sin webhook o fallo de aviso | Caso permanece visible y prioritario; retry limitado; decir que la solicitud quedó registrada solo si DB lo confirma, nunca “ya avisé”. Guidance no depende del aviso. |
+| Humano owner ausente | Evento safety de sistema + alerta al circuito humano; conservar ownership y bloquear trabajo ordinario viejo. No simular aceptación humana. |
+
+**Datos/migraciones.** Ampliación aditiva de `HumanHandoff` y eventual configuración de destino. Legacy notification_status=NULL significa desconocido; NOT_CONFIGURED solo para ausencia de destino conocida, nunca inventar ACCEPTED. No estado UNKNOWN fuera del enum; campos nuevos nullable. Timestamp creado ya existe; no duplicarlo. Unique parcial por event_key para eventos nuevos, sin constraint global de un abierto ni consolidación de históricos. Bajo lock seleccionar caso activo explícito; casos legacy abiertos permanecen visibles para revisión humana. El estado de aviso no se infiere de logs best-effort antiguos.
+
+**Handoff operativo incluido.** En agent/services.py, views.py::claim_conversation/release_conversation, serializers.py e Inbox, claim exclusivo y resolución/devolución explícita. Claim puede ser también acuse si la UI lo declara; no nuevos acknowledged_at/by ni first_human_response FK. Respuesta se deriva de Message humano emitido en el intervalo del caso. No resolver por inactividad; staff ve prioridad/edad, owner y aviso fallido/incierto. Doble claim devuelve conflicto, permisos por org. Este circuito básico se entrega ahora; integración ampliada de campana/due_at/destino secundario queda E3.
+
+**Tests.** SAFE-01 corpus revisado: dificultad respiratoria, incapacidad de orinar, convulsión activa y demás señales que el protocolo apruebe; formas coloquiales, errores y mensajes partidos. SAFE-02: `no tiene convulsiones`, `no está sangrando`, `se comió su comida`, negación temporal/contradictoria, experiencias de terceros. SAFE-03: estados unknown/onboarding/goal/human_active, caption, fuera de horario, config ausente y LLM timeout. HAND-01: DB+case creados sin aviso, aviso 500/timeout, crash tras claim, aviso aceptado sin acuse; ninguna respuesta promete atención.
+
+Ubicación: `test_policy.py`, `test_matchers.py`, `test_tier0.py`, `test_w0_hardening.py`, `test_worker.py`, **nuevo propuesto** `test_safety_protocol.py`. No duplicar en tests la misma lista de keywords como oráculo; corpus independiente aprobado.
+
+**Aceptación técnica.** Corpus crítico con escenarios/estados especificados pasa sin diagnóstico/prescripción/minimización; fallo de aviso visible, retry solo cuando sea seguro y guidance no espera identidad. HAND-02/03 en test_inbox_api.py, test_inbox_threads.py y test_release_service.py: caso ≠ aviso ≠ claim ≠ respuesta emitida ≠ resolución; claim/acuse pueden compartir acción explícita; doble claim y staff de otra org rechazados. **Gate institucional de activación:** protocolo revisado por veterinario y simulacro por clínica de descubrimiento→claim→respuesta→resolución, incluyendo ausencia/fallo de aviso. No atribuir ese gate al simple CI ni exigir notificaciones avanzadas para demostrar la cola.
+
+**Deploy/flags/rollback.** Texto honesto y prioridad safety se activan sin flag de retorno inseguro. Detector semántico adicional puede correr en shadow sin afectar decisiones; tras validación, solo eleva cautela. Rollback vuelve a guidance limitada y supervisión, mantiene el handoff durable y nunca restaura silencio por ownership. No reactivar proactivos para emitir guidance reactiva.
+
+**Documentación.** p54/p56 límites clínicos, p60 atención, spec, runbook. Protocolo clínico nuevo como documento operativo referenciado por ADR, ubicación a definir con el responsable; no crear un ADR por cada síntoma.
+
+**Riesgos eliminados:** falsa equivalencia fila=avisado, bloqueo deliberado por onboarding/owner en rutas de safety. **Reducidos:** falsos negativos/positivos del corpus y atención fuera de horario. **Abiertos:** casos clínicos desconocidos, proveedor/DB caídos, cobertura humana efectiva, detección imperfecta e indisponibilidad externa; sender ya corresponde a B4. Safety nunca se ofrece como evaluación veterinaria.
+
+### Fase B6 — Binding e invalidación de un asunto
+
+**Objetivo.** Corregir mascota/fecha/acción sin heredar derivados, antes de habilitar cualquier WRITE. No habilitar múltiples goals suspendidos.
+
+**Hallazgos:** H12 mitigación básica, H01/H13. **Invariantes:** I02/I12/I13/I14. **Dependencias:** B1. **Actual → objetivo:** slots y foco pueden mezclar datos; un goal existente conserva entidad y procedencia explícitas, con invalidación cerrada y sin nuevo workflow.
+
+**Cambios técnicos.** En backend/apps/agent/models.py::ConversationGoal añadir bound_pet/bound_appointment nullable y binding_revision. En goals.py::capture, slots y validadores distinguir ausente/borrado/corrección y aplicar mapa §5.6 antes de mezclar. Guardar fuente mínima por slot; confianza desconocida no equivale a validación. En planner.py, tools.py y resolución de handles exigir goal/entidad explícitos; no fallback a mascota actual. Confirmations invalida pending legacy y, cuando B7 se integre, recibe evento de binding cambiado para invalidar C2. No necesita importar un modelo futuro: B6 entrega el contrato de invalidación y B7 conecta su consumidor. Mantener un frente y el límite existente de suspendidos; petición multi-asunto no soportada queda visible y se deriva, sin reemplazar datos silenciosamente.
+
+**Datos/migración.** Campos nullable, binding_revision=0 y proyección de procedencia en slots existentes; no supplanted_by_goal, source_turn ni request_ordinal adicionales todavía. FK pet/appointment con SET_NULL y validación completa de org/owner. Backfill solo entidades de procedencia demostrable; legacy unbound exige recaptura antes de preparar WRITE. Conservar constraints de goals. B3 añadirá witness al caller cuando se integren ambos; las actualizaciones propias de B6 son atómicas bajo lock de conversación.
+
+**Tests/aceptación.** CTX-03: Luna→Max, viernes→sábado, acción cambiada y dato sin dependencia; borrar cita candidata, slot, precio/precondición dependientes y pending. CTX-07: omisión vs borrado, confidence ausente/NaN, homónimos, dos citas no intercambiables. En test_w2_goals.py, test_slots.py, test_identity_readers.py y test_commit_preconditions.py. Cero derived de Luna reutilizado para Max; cortesía conserva parámetros; petición de tercer asunto no destruye los anteriores aunque requiera humano. Integración de propuestas exactas se prueba luego en B7B; B6 no la presume implementada.
+
+**Deploy/rollback.** Schema aditivo + lector que recaptura legacy; activar solo con contención. Rollback conserva binding y bloquea WRITE si el lector no entiende procedencia; no repoblar desde flow antiguo. Sin flag para volver a herencia silenciosa.
+**Documentación.** p54/p55/p56, contrato de slots e invalidación; no cambiar aún ADR sobre varios suspendidos.
+**Riesgos eliminados:** arrastre determinista en rutas migradas. **Reducidos:** contaminación del único asunto. **Abiertos:** interpretación ambigua, varios asuntos y ejecución; ninguna autonomía WRITE se habilita.
+
+### Fase B7A — Persistencia de operación y permiso del actor
+
+**Objetivo.** Entregar C2 como servicio operativo y fijar permiso/revocación, sin mezclarlo con parser de confirmación ni todos los endpoints de negocio.
+
+**Hallazgos:** H01/H02/H18/H20 como base. **Invariantes:** I01/I02/I03/I05/I13/I14 como contratos comprobables. **Dependencias:** B2/B3/B6. **Actual → objetivo:** pending_action contiene parámetros; ConversationOperation pasa a ser autoridad única de propuesta, fuente causal y resultado.
+
+**Cambios técnicos.** Crear C2 en backend/apps/agent/models.py con source_turn desde el inicio; confirmations.py::stage_pending/get_pending/supersede_pending/clear_pending se vuelve fachada del servicio inmutable. Flow guarda referencia. Añadir ContactIdentity.authorization_revision y actualizar identity.py, identity_evidence.py, services.py y views.py para que revocación invalide permiso entre episodios. Reusar registro READ/WRITE/CONTROL de B2 y completar permiso/revocación §5.5 en tools.py/intake.py; servidor deniega capacidades WRITE que todavía no tienen adaptador B8. No añadir UI de tokens ni aceptación de texto aquí. Modelo no asigna actor/tenant.
+
+**Datos/migración.** C2 simplificado, revisión de identidad default 0, FK nullable ToolExecution→operación. Sin tablas de Authorization/facts ni contador de revisión de propuesta. Expirar pending JSON legacy; no backfill de consentimiento. Revisiones 0 no acreditan identidad fuerte. Resultado histórico sigue diagnóstico. Modo supervised/restricted puede añadirse a AgentSettings si hace falta rollout por org; default supervised. Lista de capacidades admitidas por release es explícita y deny por defecto, independiente del modo.
+
+**Tests/aceptación.** AUTH-DATA: stage repetido retorna misma operation_key; payload cambiado para misma causalidad se rechaza; replaces crea identidad nueva sin reutilizar autorización; relaciones de otra org/owner fallan. ID-01: titular/familiar/revocado/TTL/número ambiguo y no rematch tras revocación. Fuente de emisión se consulta desde Message; no columnas duplicadas. En test_commit_preconditions.py, test_identity_verification.py, test_family_link.py, test_stale_phone_identity.py y nuevo propuesto tests/test_operation_consent.py. Ningún endpoint de negocio se abre por existir la tabla; B7B puede consumir servicio probado sin necesitar nuevos campos.
+
+**Deploy/rollback.** Schema + servicios compatibles, corte de escritores pending legacy, contención activa. Mantener filas/evidencia; invalidar propuestas abiertas si se desactiva el consumidor, no convertirlas a JSON autorizable. Sin rollback a permiso LLM.
+**Documentación.** ADR 2026-08-26/27, p58 y spec: C2, permiso del actor, inmutabilidad y lista de capacidades.
+**Riesgos eliminados:** duplicación de autoridad persistida en rutas nuevas. **Reducidos:** revocación inconsistente. **Abiertos:** canal de consentimiento, guard transaccional y riesgo de teléfono compartido/reciclado.
+
+### Fase B7B — Adaptadores de consentimiento y propuesta emitida
+
+**Objetivo.** Conectar lenguaje/canal con autorización exacta C2, sin modificar todavía endpoints de negocio. **Hallazgos:** H01/H02/H20/H18; H09 en dispatch. **Invariantes:** I01–I05/I12–I14; commit se garantiza en B8. **Dependencias:** B7A/B4.
+
+**Actual → objetivo.** Respuestas vagas/pending JSON dejan de otorgar permiso. Servidor distingue intención, propuesta, evidencia de aceptación y resultado.
+
+**Cambios técnicos.** confirmations.py::bind_pending_message/is_confirmable usa Message como fuente de emisión; no sincroniza estado EMITTED en otra fila. planner.py::_commit_pending y tools.py::run_tool solo seleccionan autorización desde inbound/scope reales; modelo no inventa autorización. operation_authorization.py::assess_turn/_authorized_goal conserva interpretación de apertura, sin convertirla en permiso. Adaptadores de §5.4: texto exacto con token o action ID emitido, más declaración de asistencia acotada; ambos producen misma evidencia independiente de UX. B6 notifica binding cambiado y C2 invalida la fila anterior; corrección exige nueva operation_key. La política una operación por respuesta se comprueba bajo lock, sin unique global por mensaje.
+
+frontend/src/pages/inbox/index.jsx y serializers muestran propuesta/permiso/revisión requerida, derivando emisión de Message. Sin nueva jerarquía de identidad, botones obligatorios ni acceso a tokens de otros contactos. Propuestas legacy sin fuente/fecha fiable se regeneran, nunca se vuelven autorizables retroactivamente.
+
+**Datos/migración.** Ninguna obligatoria: B7A entrega contrato completo. Solo persistir evidencia tipada y referencia de propuesta en flow; eliminar uso autoritativo de argumentos duplicados. Token de UX ligado a operation_key/contacto/caducidad; no es autenticación. No versionar parámetros editables.
+
+**Tests y aceptación.**
+
+- AUTH-01: `no `, `no 👍`, `no estoy de acuerdo `, `no estoy de acuerdo 👍` y emoji aislado → cero writes.
+- AUTH-02: `sí para Max`, `si para mi gato`, `sí pero otra mascota`, corrección en segundo mensaje de misma ráfaga → cero writes de Luna, propuesta invalidada o aclaración segura.
+- AUTH-03: propuesta `PENDING`, `REJECTED`, `EXPIRED` o `INVALIDATED`, outbound pending/sending/uncertain/failed, respuesta anterior, reply a propuesta vieja → cero writes. `SENT` sin ID parseable tampoco autoriza.
+- AUTH-04: autorización de operation_key A con parámetros de su reemplazo B, cambio de mascota/cita/fecha/hora/acción/owner/identidad → rechazo y ninguna ejecución.
+- AUTH-05: aceptación correcta de operación emitida → una autorización persistida, mismos parámetros; replay del inbound devuelve el mismo registro. ID manipulado de otra org/contacto → cero lectura/escritura ajena.
+- ATT-01/02: pregunta sobre confirmación, aun sin `¿?`, nunca PATCH con tool forzada; declaración admitida en scope inequívoco puede efectuar transición; 400/409 nunca se acepta como éxito genérico (mapeo completo en B2).
+- ID-01: matriz titular/familiar/revocado/TTL expirado/número ambiguo; no rematch tras revocación; permisos humanos cross-org rechazados.
+
+Ubicación: ampliar `test_commit_preconditions.py`, `test_write_tools.py`, `test_identity_verification.py`, `test_family_link.py`, `test_stale_phone_identity.py`, `test_intake_capabilities.py`; **archivo nuevo propuesto** `tests/test_operation_consent.py` para lifecycle/causalidad.
+
+
+**Aceptación adicional.** Todas las pruebas de autorización se ejecutan con servicio real y stub de executor que registra intentos; cero dispatch de negocio para entradas negativas. Una autorización válida puede producir solicitud de ejecución controlada en tests, pero rutas reales permanecen cerradas hasta B8/B9.
+
+**Deploy/rollback.** Integración bajo contención con API/Message de B4; feature de interpretación libre no abre permisos. Invalidar pendientes incompatibles y conservar autorizadas/ejecutadas para lectura. No recrear pending_action ni volver al matcher anterior. Ninguna capacidad pasa a autonomía por completar B7B.
+**Documentación.** ADR 2026-08-26/27, p58, spec y contrato de aceptación como adaptador de canal.
+**Riesgos eliminados:** consentimiento por negación/pregunta/propuesta no emitida en las rutas nuevas. **Reducidos:** transferencia de autoridad entre entidades. **Abiertos:** guard atómico de negocio, identidad débil y expresiones ambiguas; estas se aclaran/derivan.
+
+### Fase B8A — Guard transaccional y creación individual de cita
+
+**Objetivo.** Entregar la frontera común de commit junto con una capacidad completa, sin migrar todas las escrituras. **Hallazgos:** H01/H02/H05/H06/H08/H18. **Invariantes:** I01–I07/I09/I12–I14. **Dependencias:** B7B y C2/C3/C4 desplegados.
+
+**Actual → objetivo.** Agenda conserva locks/precondiciones e idempotencia de creación; AGENT añade autorización y fencing dentro de la misma transacción de negocio.
+
+**Cambios técnicos.**
+1. Nuevo módulo propuesto backend/apps/agent/operation_execution.py: guard estrecho para actor AGENT, org, operation_key, request canónico y witness. Verifica identidad/relación, autorización/TTL, binding, ownership, cursor fresco, entidad y precondiciones. No interpreta lenguaje.
+2. executor.py::ToolExecutor.call transmite referencias estructuradas/headers internos, que no autentican por sí mismos. API verifica JWT AGENT y recurso/acción/método/parámetros contra C2. Cambiar cuerpo conservando digest se rechaza. Worker no retiene locks al llamar loopback HTTP.
+3. Integrar create_appointment en appointments/views.py::AppointmentListCreateView.create y serializers/servicio existentes. Una transacción del servidor abarca guard + efecto + resultado C2. Reusar Appointment.idempotency_key: misma operación/digest devuelve resultado, otro payload conflict. No callbacks del worker para registrar éxito después del commit.
+4. Rutas WRITE AGENT aún no adaptadas en AppointmentDetailView/update_status/create_with_patient y patients/views.py::PetViewSet quedan denegadas mediante guard común de capacidad; no implementar sus mutaciones en esta fase. Staff conserva permisos/rutas/locks.
+5. Antes de editar locks, documentar en este PR una matriz **acotada** de las rutas anteriores y servicios de identidad/revocación/takeover que comparten filas. Guard AGENT toma ContactIdentity→Conversation→ConversationOperation y luego locks de negocio en su orden existente (veterinarios ordenados→cita). Takeover solo necesita Conversation; una ruta que vaya a tocar ambos ámbitos toma identidad primero. No imponer refactor global a goals/reset/billing ni introducir orden inverso. Si un caller seleccionado necesita ajuste, incluirlo como parte explícita de esta entrega y su prueba de carrera.
+6. Servicio de lectura interna del ledger en operation_execution.py permite al worker recuperar resultado con scope org/contacto. No nuevo endpoint HTTP para leer la propia tabla del agente. Esto no permite saltarse API de negocio para mutar. Ante respuesta interna perdida, consultar resultado y repetir solo misma clave; incertidumbre no genera nueva operación.
+7. Ledger ya confirmado puede leerse bajo permiso vigente tras TTL; nunca inicia nuevo efecto vencido/revocado. Resultado exitoso no se degrada por timeout del caller.
+
+**Datos/migración.** C2 de B7A basta, sin RUNNING ni mapa genérico de pasos. Clave estable por operación individual; no tocar claves históricas Appointment. Guard obliga contrato a AGENT, no idempotency header a staff histórico. FKs de diagnóstico solo si las consume esta integración.
+
+**Tests/aceptación.** EXEC-01: JWT AGENT sin autorización, digest/recurso/owner/binding/token/epoch/cursor incorrectos → cero efecto; endpoints no adaptados siguen denegados. EXEC-02: HTTP perdido después de commit + replay = una cita y resultado reconstruible; kill dentro de transacción revierte efecto/ledger juntos. OWN-02: takeover gana lock → rechazo; commit gana → efecto anterior a takeover, sin atribución posterior. SEC-02 dos orgs/familiares/public IDs. Mantener tests de solapamiento y zonas horarias. Archivos test_write_tools.py, test_commit_preconditions.py, test_release_service.py, tests appointments y nuevo tests/test_operation_execution.py con HTTP/PostgreSQL. Criterio de cierre: crear cita satisface contrato; otras capacidades no habilitadas, sin exigir implementarlas.
+
+**Deploy/rollback.** API guard primero con autonomía cerrada; drenar workers incompatibles; habilitación solo en B9. API jamás acepta header opcional para AGENT tras el corte. Retirar capacidad para rollback, preservar ledger y lectura/replay seguro. Si se retrocede a API sin guard, toda ejecución AGENT se deshabilita antes. No compensar ni cambiar claves.
+**Documentación.** p52/p57, ADR autoridad y durabilidad, matriz de locks y request/resultado de create_appointment.
+**Riesgos eliminados:** TOCTOU y repetición local de creación de cita. **Reducidos:** pérdida de respuesta interna. **Abiertos:** demás adaptadores y casos compuestos, identidad débil y delivery incierto; B9 decide activación.
+
+### Fases B8B–B8E — Un adaptador WRITE por entrega
+
+Cada ID es una unidad **independiente**, no una tarea conjunta. Dependen de B8A (guard y ledger comunes), no unas de otras. Solo la capacidad entregada puede solicitar activación en B9; las demás permanecen supervisadas.
+
+| ID / capacidad | Cambio concreto y alcance | Pruebas y cierre específico |
+| --- | --- | --- |
+| B8B confirmar asistencia | tools.py::confirm_appointment, appointments/views.py::update_status y renderer: declaración inequívoca/cita exacta; misma clave no repite transición. | ATT-01/02 + EXEC-01/02: pregunta forzando PATCH se deniega; declaración válida actualiza una cita; 409 no comunica éxito; ya confirmado exige estado canónico. |
+| B8C cancelar cita | tools.py, AppointmentDetailView/update_status según ruta existente y serialización de resultado: permiso titular/precondiciones; sin cancelación por READ. | AUTH/EXEC/SEC y tests de agenda: replay no duplica transición; otra cita/owner/familiar prohibido no muta; staff concurrente conserva locks. |
+| B8D reprogramar cita | tools.py, AppointmentDetailView y validadores existentes: fecha/hora/veterinario exactos, exclusión de solapamientos y clave estable. | AUTH-04/CTX-03/EXEC-02: corrección invalida slot anterior; conflicto de disponibilidad no atribuye éxito; retry no vuelve a mover cita; zonas horarias y dos autores compitiendo. |
+| B8E registrar solo mascota | tools.py y patients/views.py::PetViewSet: propietario autorizado, datos propuestos, alta individual sin cita implícita. | ID/SEC/EXEC: replay devuelve misma Pet; owner distinto rechazado; pérdida de respuesta no duplica; petición de alta no crea cita. |
+
+**Objetivo/actual → objetivo.** Aplicar la frontera común a la operación seleccionada; actualmente las garantías no están uniformadas. **Hallazgos:** H01/H02/H05/H06/H08/H18; B8B cierra además H20. **Invariantes:** I01–I07/I09/I12–I14.
+
+**Cambios comunes.** Integrar operación/request canónicos con operation_execution.py propuesto, mantener serializers/locks de negocio y respuesta tipada B2. Denegar rutas AGENT alternativas que eludan ese adaptador. No alterar flujos staff, no ampliar identidad y no crear nueva capability. Tests en test_write_tools.py, test_commit_preconditions.py, tests de appointments/patients y test_operation_execution.py propuesto, usando HTTP real/PostgreSQL en fronteras de commit.
+
+**Datos/migraciones.** C2 ya basta: resultado atómico por operación. Reusar constraints/idempotencia existentes; no recalcular claves legacy. Un campo adicional solo si el adaptador demuestra una precondición no representable en contrato vigente; documentar antes, no convertirlo en refactor genérico. Ningún paso compuesto ni tabla nueva.
+
+**Aceptación común.** Mismo contrato de B8A: guard y efecto/resultado atómicos, cero bypass con JWT AGENT, replay estable, precondiciones y ownership vigentes, resultado recuperable. Pruebas específicas de tabla son obligatorias para ese ID; no exigir implementar las otras filas.
+
+**Deploy/rollback.** API/adaptador primero bajo contención, mismo ID incluido en lista del release solo tras B9 aplicable. Retirar capacidad de lista para rollback y conservar ledger/lectores; no compensar ni generar claves nuevas. Invalidar propuestas pendientes de esa capacidad si no puede ejecutarse con versión compatible.
+**Documentación.** p52/p57, ADR autoridad, catálogo de capacidades y runbook de replay; registrar matriz endpoint/request de ese adaptador.
+**Riesgos eliminados:** permiso defectuoso/duplicación local de capacidad migrada. **Reducidos:** recuperación de fallos internos. **Abiertos:** otras capacidades, incertidumbre Meta, identidad débil y operaciones compuestas.
+
+### Fase B9 — Evaluación y límites mínimos para activar beta
+
+**Objetivo.** Autorizar un alcance concreto con evidencia operativa; no construir al final el harness que necesitaban las fases anteriores. **Hallazgos:** H16/H19 y cierre de gates transversales. **Invariantes:** I01–I14 aplicables al alcance, sin prometer perfección clínica/semántica. **Dependencias:** B2/B3/B4/B5; para WRITE B6/B7B y cada B8 seleccionado; P-A y mecanismo P-B de las categorías/plazos comprometidos.
+
+**Actual → objetivo.** Los helpers/evals actuales no representan todas las etapas; B0/B3/B4/B8 ya incorporaron sus integraciones al harness. Esta fase compone guiones, comprueba contabilidad/límites y produce acta reproducible de activación por capacidad.
+
+**Cambios técnicos.**
+1. tests/harness.py y management/commands/agent_eval.py/agent_eval_conversations.py: guiones multi-turn por worker/HTTP/sender reales con Meta controlado; cliente responde solo a Message emitido. Separar response_generated, outbound_queued, provider_accepted y delivered con señal. “Sent” se define como alias de aceptación cuando esa sea la señal disponible, no nueva evidencia.
+2. metrics.py, llm.py y operation_authorization.py::_classify/_verify/_persist_llm_call: registrar todas las llamadas/roles/retries y límites de timeout/calls/tokens máximos por turno. Coste/usage desconocido no es cero. Reusar LLMCall; correlación a TurnWork nullable se introduce con este consumidor. Un intento recuperado cuenta llamadas anteriores del mismo trabajo al aplicar presupuesto; no otorgar cupo infinito por restart.
+3. worker.py/run_agent_worker.py y docker-compose.prod.yml: planners con concurrencia fija acotada por procesos, un trabajo activo por conversación y como máximo uno por org para ensayo beta; sender separado. Claim por org protegido en transacción corta usando fila organizativa/AgentSettings existente e índice de TurnWork, sin nueva tabla de scheduler. No autoscaling que multiplique el límite sin cambiar el contrato. Timeouts de herramientas/proveedor; backoff conocido y safety rápido sin esperar LLM.
+4. Presupuesto por turno con reserva de llamadas/cupo máximo antes de llamar, actualizada bajo witness; rollback de intento no repone llamadas ya admitidas. No reservas distribuidas de gasto diario ni cuotas globales de urgencias ahora. Si los límites fijos no pasan el perfil, reducir alcance o ejecutar el mecanismo concreto E4 justificado por medición.
+5. CI mantiene suites deterministas críticas requeridas; eval real al cambiar modelo/prompt/semántica o promover autonomía. Nightly ayuda a detectar deriva, no sustituye el artefacto candidato. Agregar solo reportes con responsable/acción de §10.
+
+**Perfil reproducible inicial PROFILE-BETA-1.** DB PostgreSQL aislada y fixtures committeados; dos planners y un sender con polling máximo 1 s; tres orgs, 300 s de medición tras 30 s de calentamiento. Dos orgs sanas: un inbound cada 10 s; org ruidosa: uno por segundo distribuido en conversaciones. Proveedor simulado: una llamada LLM de 0,5 s, READ de 0,1 s y aceptación Meta de 0,2 s por turno básico; respuestas/uso deterministas. Ensayos separados: bloquear una llamada LLM de org ruidosa hasta timeout de 10 s; Meta a 2 s por envío; duplicate webhook; saturación con guidance safety ya detectable en recepción. No extrapolar este perfil a todo diálogo real.
+
+**Cierre técnico y gate operativo separados.** B9 entrega harness, contabilidad/límites y reporte reproducible bajo contención. Si el perfil falla, la activación queda rechazada; ese reporte puede habilitar el trabajo E4 sin fingir aprobación ni reimplementar B9. Repetir el ensayo tras E4 es verificación del gate, no dependencia circular de código.
+
+**Medición/gate de activación.** En perfil base y bloqueo de una llamada LLM: p95 desde persistencia inbound sano a claim ≤10 s; p95 desde persistencia de guidance detectable a admisión de dispatch ≤5 s; p95 desde outbox committed a dispatch ≤5 s con proveedor base. En Meta lento se exige estado durable, concurrencia acotada y ausencia de retry ciego; no el mismo SLO de latencia. Incluir cola en la medición, cantidad de muestras, máximos y errores. Cero violación crítica en corpus/inyección; gates fallidos/skipped nunca verde. Perfil es ensayo técnico, no promesa pública; la clínica fija alcance/tasa permitidos y se repite con distribución real de llamadas antes de superar la carga ensayada. No criterio abstracto de “dos rondas”.
+
+**Tests.** EVAL-01/02: fila queued no delivered, stub no responde a pending, release incompleto no aprobado. COST-01: planner+authorizer+verifier+retry+timeout contados; restart no reinicia presupuesto. SCALE-01: org ruidosa no ocupa todos los planners y sender progresa con LLM bloqueado; SCALE-02: timeout/Meta lento no pierden guidance ni abren permiso. Archivos test_metrics.py, test_llm.py, test_worker.py, test_regression_suite.py y test_corpus_conversacional.py; escenario de carga nuevo propuesto en tests del agente. Contratos se prueban por capa y un conjunto acotado E2E, no producto cartesiano de todos los fallos/tools.
+
+**Datos/migración.** FK LLMCall→TurnWork si falta; contadores de llamadas/cupo reservado por trabajo solo para presupuesto operativo (default 0 para nuevos; legacy desconocido no inventado). Reusar configuración existente o constantes de release para límites fijos; no nuevos estados, tabla de billing ni presupuesto global distribuido. Uso desconocido se expone y admite fallback conservador.
+
+**Deploy/rollback.** Aprobar lista explícita: READs públicas, READs personales y cada WRITE adaptado. Por org, autonomía efectiva = lista del release ∩ política/identidad ∩ capacidades del contrato desplegado. Terminar B8A no abre las demás. Ampliar cohortes solo tras gates técnicos y cobertura humana; retirar capacidad/reducir carga para rollback, conservando sender, fencing, contabilidad y datos. Fallo en E2/E3/E4 no cierra por sí solo una capacidad básica ya validada.
+
+**Documentación.** Runbook de agente, arquitectura, CI/evals y acta de perfil/capacidades/versión mínima compatible. P-A aporta política revisada; P-B demuestra el mecanismo de retención aplicable.
+**Riesgos eliminados:** falso verde por row/skip y contador parcial en rutas migradas. **Reducidos:** saturación/coste dentro del perfil. **Abiertos:** otra carga, deriva LLM, proveedor, identidad débil y cobertura humana; ampliar alcance requiere repetir gates pertinentes.
+
+### Fase E1 — Referencias, lectura pública y continuidad verdadera
+
+**Objetivo.** Entender referencias legítimas sin reutilizar autoridad antigua y responder consultas sin crear workflows de escritura.
+
+**Hallazgos:** H09, H10/H11 cierre de consumidores, H13, parte H14/H15. **Invariantes:** I02–I07/I12–I14. **Dependencias:** B1/B2/B6. No depende del sender: referencias se prueban con Message emitidos de fixture. La integración de ejecución se revalida al habilitar el adaptador B8 correspondiente.
+
+**Actual → objetivo.** El autorizador posterior a recibo solo recibe la ráfaga actual por decisión explícita; referencias como “cambiarla”/“al viernes” carecen de contexto. Se permite una vista mínima con procedencia, no todo el transcript ni slots del último éxito.
+
+**Cambios técnicos.**
+
+1. `operation_authorization.py::_turn_data/_classify/_verify/assess_turn`, `prompts.py`, `planner.py`: `ReferenceResolution` como valor nuevo propuesto dentro de C1, con operación candidata, entidad, fuentes, ambigüedad y aclaración pendiente. Ambos roles reciben la misma vista autorizada; sus veredictos no ejecutan ni confirman.
+2. Contexto admisible: inbound actual, pregunta de aclaración **emitida**, último recibo tipado relevante y lectura canónica limitada de la entidad. Excluir datos personales sin verificación y cualquier propuesta no emitida. El recibo aporta una referencia, no consentimiento ni parámetros de nueva cita.
+3. Reusar `ConversationGoal.mechanism_state` para aclaración tipada breve (`operation_kind`, entidad candidata, dato pedido, mensaje emitido, revisión/expiry); no inventar tabla de diálogos. “Al viernes” responde a esa aclaración y genera candidato sin autoridad. B7 convierte ese candidato en propuesta/confirmación cuando exista; E1 no lo requiere para su cierre de resolución. Una pregunta sobre estado va por READ aunque haya proposal pendiente.
+4. `tools.py::as_openai_tools/run_tool` y `intake.py`: usar matriz de efecto ya establecida; `get_appointments`/disponibilidad no reabren operación. No abolir restricciones de datos personales. Fracaso semántico no bloquea `request_human`.
+5. `arbiter.py` conserva DTO/cinco veredictos, productores y consumidores deterministas; `planner._settle_commitment` usa el mismo turno real. `TurnDecision` recibe correlación y códigos, no PII nueva. No mover al arbiter la autorización ni diagnóstico.
+
+Añadir filtros/páginas únicamente para escenarios documentados que los necesiten en backend/apps/appointments/views.py::AppointmentListCreateView y patients/views.py, reutilizando paginación. Resultado truncado honesto de B2 no espera esta mejora. Cada endpoint ampliado incluye tests de alcance/tenant y lista completa vs recortada.
+
+**Datos/migraciones.** No modelo nuevo; `mechanism_state`/contexto versionado y FK/IDs de fuente. `TurnOperationAssessment` puede añadir proyección estructurada de referencias o FK al goal cuando sea necesario, sin cuerpos. Legacy sin fuentes no sirve para resolver una operación sensible; aclarar. TTL de aclaración ligado al goal y revisión, nunca autorización eterna.
+
+**Tests.** CTX-05 en E1: fixture de cita/recibo emitido→“quiero cambiarla”→aclaración emitida→“al viernes” produce candidato correcto y cero writes. Si B7 aún no está, consumir ReferenceResolution solo para aclaración/READ bajo contención; no importar un servicio futuro ni persistir autoridad. Al integrar B7/B8 repetir secuencia completa con propuesta y confirmación causal antes del efecto. CTX-06: agradecer recibo, preguntar precio/horario/estado, pedir humano con lenguaje libre y cambiar de tema; no abrir operaciones por cortesía ni bloquear READ. CTX-01 se repite vía worker para first/recurrent contact; referencia vieja/ajena/no emitida se rechaza. EVAL-REF añade variaciones con modelo real, sin igualdad literal de copy.
+
+**Aceptación.** Para cada escenario del corpus declarar salida aceptable: entidad correcta, aclaración pertinente o derivación segura. No exigir resolver todo en una aclaración ni igualdad literal de copy. No usar contexto antiguo como consentimiento; READs públicas funcionan en unknown con cero acceso personal; múltiples resultados incompletos se muestran honestamente. Si modelos discrepan, cero writes y pendiente conservado.
+
+**Deploy/flag/rollback.** Puede compararse nueva interpretación en shadow y activarse por cohortes con `autonomy_mode`; permisos deterministas no cambian con el flag. El rollback deja aclaraciones nuevas como no resolubles para el lector anterior y pide una aclaración nueva; no las convierte en consentimiento.
+
+**Documentación.** Enmendar explícitamente prohibición de transcript del ADR 2026-08-27, p56/p58 y spec de consultas. **Riesgos eliminados:** falta contractual de contexto para H13 en corpus. **Reducidos:** bucles y falsa continuidad. **Abiertos:** referencias fuera de ventana y asuntos múltiples hasta E2; estas ambigüedades siguen derivándose.
+
+### Fase E2 — Varios asuntos sobre bindings ya seguros
+
+**Objetivo.** Sostener varios asuntos concretos sin contaminación ni desaparición silenciosa, conservando un solo foco conversacional.
+
+**Hallazgos:** H12, parte H01/H13. **Invariantes:** I02/I12/I14/I13. **Dependencias:** B6/E1/B7B; capacidad WRITE solo si su B8 pasó gates. Es ampliación por necesidad de producto, no requisito de beta de un asunto.
+
+**Actual → objetivo.** `open_goal` reusa por nombre; un solo suspendido; slots no borrados y confianza default 1.0. Bindings/provenance e invalidación de B6 ya existen; aquí se amplían instancias y selección, sin rehacerlos.
+
+**Cambios técnicos.**
+
+1. `models.py::ConversationGoal`, `goals.py::open_goal/capture`: selección por instancia + entidad + operación. Misma mascota puede tener dos objetivos de agenda si el usuario pidió dos citas; no unique por `(name,pet)` que vuelva a fusionarlos. Detectar repetición por mensaje/instancia, no por nombre.
+2. Reusar bound_pet/bound_appointment y binding_revision de B6; añadir source_turn/request_ordinal para dedup de apertura si el mecanismo actual no conserva petición única. No añadir supplanted_by_goal sin caso concreto: PK existente, estado y procedencia bastan. Soportar inicialmente hasta tres abiertos con un foreground como política de producto, sin CHECK de límite tres en DB; la validación de límite se hace bajo lock de conversación, no con count racy. Añadir el GoalSpec acotado `vaccine_status_query` de §5.6 para consultas pendientes, reutilizando READ existente y lifecycle de goals.
+3. Reusar capture e invalidación B6 por instancia. Una corrección de Luna no modifica goal de Max; no duplicar mapa de dependencias ni volver a migrar confianza.
+4. `planner.py`, `confirmations.py`, `tools.py` y resolución de handles: toda preparación/ejecución consume `goal_id` y binding revision explícitos. Las tools ya no usan “la mascota actual” como fallback silencioso. Un handle cacheado se valida contra owner y binding fresco.
+5. `arbiter.py`/aplicación de veredictos conserva lifecycle existente y un foco, selecciona goal concreto. Múltiples suspendidos se retoman por elección/contexto claro; no pop automático del último como autorización. Ajustar selectores de identidad que hoy usan `.first()` para no tomar un goal personal distinto.
+
+**Datos/migraciones.** Bindings ya existen; añadir solo causalidad de apertura necesaria. Lector de múltiples instancias y después retirar `commitment_one_suspended_per_conversation` **solo tras detener todos los escritores viejos**. Mantener `conversationgoal_one_open_per_conversation` del frente. Índices `(org,conversation,status)` y `(conversation,bound_pet,name)`; FK a pet/appointment no prueba owner/tenant, validar relación completa. Backfill solo IDs cuyo origen sea demostrable; resto `legacy/unbound`, recapturar antes de proponer. No “rellenar” mascota desde el último flow. Nuevos slots inválidos no destruyen historia de efectos ejecutados.
+
+**Tests.** CTX-03: “sí para Luna”→“perdón era para Max”; cambio antes/después de autorización y antes/después de commit, invalidación exacta según etapa. CTX-04: Luna cita mañana + vacunas Max + registrar Nala; “Mejor Luna el viernes” cambia solo Luna; tercer asunto no elimina otro; cuarto requiere priorización. CTX-07: omisión vs borrado, confidence ausente/NaN/fuera de rango, mascota homónima, cambio de fecha invalida hora seleccionada/veterinario/propuesta. Dos citas para misma mascota permanecen distintas.
+
+Ubicación: `test_w2_goals.py`, `test_slots.py`, `test_arbiter.py`, `test_contracts.py`, `test_identity_readers.py`, `test_corpus_conversacional.py` y tests de consentimiento. Cada test afirma slots/propuestas/HTTP de cada mascota, no solo número de goals.
+
+**Aceptación.** Corpus de tres asuntos conserva cada objetivo y procedencia; cero dato derivado de Luna en operación Max sin transferencia explícita válida; toda corrección invalida versiones afectadas; un frente y ningún asunto abierto perdido. No se introduce workflow clínico/vacunas terapéuticas.
+
+**Deploy/flag/rollback.** Activación gradual de multiple-goals solo cuando todos los lectores entiendan instancias. El modo seguro sigue operando un frente, pero **conserva** los otros suspendidos. Rollback no reinstala el unique de un suspendido con filas nuevas; mantener lector compatible o pasar a supervisión. No cerrar goals extra para satisfacer schema viejo.
+
+**Documentación.** Enmendar p54/p55/p56, contrato slots/refs y límite de tres; retirar afirmación histórica de “no existe caso para dos suspendidos”. **Riesgos eliminados:** fusión por nombre, arrastre silencioso y pérdida del tercer asunto. **Reducidos:** interpretación de correcciones. **Abiertos:** ambigüedad natural, límites de contexto y más de tres asuntos, que requieren aclaración/humano.
+
+### Fase E3 — Descubrimiento y avisos de handoff adicionales
+
+**Objetivo.** Mejorar descubrimiento/seguimiento cuando la operación real de Inbox lo requiera; B5 ya entrega atención mínima. **Hallazgos:** H04/H16/H19, hardening operativo. **Invariantes:** I06/I08/I09/I13. **Dependencias:** B5. **Actual → objetivo:** reutilizar centro de notificaciones existente sin equiparar seen a atención.
+
+**Cambios técnicos.** backend/apps/notifications/services.py/policies.py/models.py: evento deduplicado y payload mínimo con enlace a Inbox; job idempotente repara descubrimiento desde HumanHandoff. En agent/services.py, serializers.py e Inbox mostrar aviso/claim/respuesta/resolución existentes. Destino secundario, alerta de atraso y acuse sin claim son opciones separadas: implementar solo la opción requerida por cobertura, no todas por defecto. Si no hay persona/destino disponible, mantener guidance/cola y no anunciar aviso/atención.
+
+**Datos/migración.** Reusar Notification/NotificationReceipt y campos de aviso C6. Añadir acknowledged_at/by solo si se permite acuse sin owner, y due_at solo si existe umbral operativo aprobado. Sin defaults inventados de 2/15 minutos ni nueva FSM. Legacy null; no backfill desde seen/claim. Índices únicamente para consulta de vencidos/cola usada. No consolidar casos históricos.
+
+**Tests/aceptación.** HAND-04 en notifications/tests/test_notifications.py y test_inbox_api.py: commit de caso sin notificación se repara; retry no duplica; seen no claim; destino fallido/incierto no muestra aviso aceptado. HAND-02/03 se mantienen; ensayo de cobertura de B5 para la ruta modificada. Si se añade vencimiento, reloj controlado y fuera de horario/configuración ausente explícitos. Cada opción tiene su test, sin exigir las otras para cerrar el PR.
+
+**Deploy/rollback.** Schema y API compatibles antes de UI/job; detener la opción defectuosa conserva cola, owner/historia y avisos inciertos. Sin recrear caso ni resolver pendientes por rollback.
+**Documentación.** p60, ADR 2026-09-06 de notificaciones y runbook de recepción.
+**Riesgos eliminados:** pérdida de descubrimiento en la opción implementada. **Reducidos:** casos olvidados. **Abiertos:** personas ausentes y errores clínicos; supervisión sigue siendo necesaria.
+
+### Fase E4 — Coordinación operativa justificada por medición
+
+**Objetivo.** Corregir un límite demostrado al aumentar carga/réplicas, sin exigir un scheduler/plataforma nuevos para beta inicial. **Hallazgos:** H19/H16. **Invariantes:** I08/I09/I10/I11/I13. **Dependencias técnicas:** B3/B4 y entrega técnica de instrumentación/límites/reporte B9. No requiere aprobar su gate de activación. Seleccionar mecanismo y campos en el reporte antes de encargar E4; repetir el ensayo de B9 después no es reimplementar B9.
+
+**Entrada obligatoria de esta entrega.** Un reporte versionado identifica cuello de botella, topología/carga objetivo y umbral; seleccionar una sola mejora por PR. No usar “implementar escalabilidad” como encargo abierto. Si el perfil cabe con límites de B9, esta fase no se ejecuta.
+
+| Evidencia | Cambio acotado | Datos/contrato adicional |
+| --- | --- | --- |
+| Selección de claims deja orgs sin progreso al ampliar carga | worker.py/run_agent_worker.py: selección justa por org y lotes pequeños, conservando un trabajo por conversación y token único. | Cursor last_scheduled_at en AgentSettings existente si hace falta round-robin durable; nullable legacy, índice solo para selección usada. No tabla de colas nueva. |
+| Nuevas réplicas eluden el cupo configurado | Claim/reserva bajo coordinación PostgreSQL común, usando límites por org y topología global explícita. | Documentar cupo global y partición de procesos; no contador en memoria por réplica presentado como global. Si requiere nueva entidad coordinadora, ADR acotado previo; no asumir tabla/broker en este plan. |
+| Fallos del proveedor consumen reiteradamente presupuesto | llm.py/executor.py: breaker por proveedor y backoff, separado de permiso y de retry de efectos inciertos. | Configuración de umbral/ventana/reapertura ligada al reporte; estado compartido solo si hay más de un proceso que deba compartirlo. Reusar almacenamiento operativo validado antes de proponer otro. |
+| Coste supera presupuesto pese a tope por turno | Envolver todas las llamadas con reserva por org/período antes de admitirlas. | Extender configuración/counters existentes solo después de fijar unidad, período y reconciliación de usage desconocido; no sistema de billing. |
+
+**Tests/aceptación.** SCALE-01/02 y COST-01 del perfil de entrada, con réplicas/conexiones reales y fallos pertinentes. Antes/después reproducible demuestra la mejora específica y cero regresión OWN/DUR/SEND/SAFE/SEC. No reclamar capacidad para millones ni SLO fuera de la carga ensayada. Reporte y ADR de mecanismo son prerequisitos explícitos si falta un contrato persistente; B9 puede reducir alcance sin esperar esta evolución.
+
+**Migración/deploy/rollback.** Solo campos de mecanismo seleccionado, nullable/default seguro y readers compatibles; no backfill de métricas exactas desconocidas. Activar por carga/cohorte, conservar límites anteriores como rollback funcional. Estado coordinado no se convierte a contadores locales que multipliquen cuota; reducir procesos si se retira coordinación.
+**Documentación.** Arquitectura/runbook y ADR existente de durabilidad/operación, sin ADR por métrica.
+**Riesgos eliminados:** bypass/cuello de botella demostrado. **Reducidos:** coste/espera a carga objetivo. **Abiertos:** otras topologías y límites externos; no bloquea una beta que ya pasa perfil con B9.
+
+### Fase E5 — Altas compuestas, fuera de la beta inicial
+
+**Objetivo.** Habilitar exclusivamente las altas compuestas actuales con resultado e idempotencia por efecto; no crear saga ni compensaciones. **Hallazgos:** H01/H05/H06/H08/H18. **Invariantes:** I01–I07/I09/I12–I14. **Dependencias:** B7B/B8A/B8E; gate de capacidad propio B9. Si la beta requiere estas altas, E5 pasa a ser bloqueante para ellas, no para consultas/citas simples.
+
+**Actual → objetivo.** _commit_add_pet acepta mascota creada sin cita; create-with-patient conserva alta atómica existente. tools.py::_commit_add_pet y executor.py llevan operación/clave estable; patients/views.py::PetViewSet registra resultado pet en la misma transacción; appointments/views.py::create_with_patient y creación de cita registran su efecto. Un receptor de agenda no adquiere permiso para registrar cliente implícitamente.
+
+**Datos/migración.** Extender C2 con PARTIAL y proyección de exactamente dos pasos pet/appointment para el tipo que los necesita. Claves derivadas de operation_key/paso, digest y resultado por paso. No framework genérico de pasos ni tabla por transición. Cliente+pet+cita que ya es atómico conserva una ejecución main. Read-only del ledger desde servicio de agente, sin endpoint nuevo solo para consultar su propia tabla.
+
+**Precondiciones/recuperación.** Revalidar permiso/ownership/TTL antes de cada paso nuevo; timeout consulta ledger antes de retry. Pet confirmada + cita fallida/takeover = PARTIAL; no borrar Pet ni repetir alta. Identidad vinculada después de efecto requiere revisión vigente; si falta, exponer estado pendiente a Inbox sin elevar permisos.
+
+**Tests/aceptación.** EXEC-03 + AUTH/SEC/OWN en test_write_tools.py, tests appointments/patients y test_operation_execution.py: crash entre pasos, conflicto, timeout, revocación y takeover dejan Pet exacta sin cita ficticia; replay no duplica ningún efecto. El endpoint atómico revierte owner/pet/cita juntos si cae dentro de su transacción. Propuesta describe efectos y parcial posible. Corpus de petición “solo registro” no crea cita.
+
+**Deploy/rollback.** Schema/lector PARTIAL antes de activar tipo compuesto; ensayar datos C2 individuales. Retirar solo capacidades compuestas, preservar parciales/resultados y cola manual. No downgrade de PARTIAL a FAILED ni compensación automática.
+**Documentación.** p52/p57, resultado parcial de la operación existente, D05 y lista de capacidades.
+**Riesgos eliminados:** duplicación de pasos soportados y falsa cita en parcial. **Reducidos:** fallo entre APIs. **Abiertos:** atención manual de parciales y desvinculación/identidad incierta; resto de producto sin cambios.
+
+### Fase P-A — Política y evidencia mínima de privacidad
+
+**Objetivo.** Fijar categorías, finalidad, evidencia y procedimientos antes de cerrar schemas de operación; no esperar el final del agente. **Hallazgos:** H17/H18. **Invariantes:** I01–I03/I06/I13 en conservación y minimización. **Dependencias:** B0 y responsable de datos/revisión profesional.
+
+**Actual → objetivo.** La retención documentada de media/notificaciones no acredita purga de chat. Clasificar texto/caption, metadata, flow/slots, autorización/resultados, diagnósticos, vínculos, binarios y backups según P-B; aprobar plazos por categoría y destino, requisitos de prueba, excepciones y restauración. Las cifras de P-B son hipótesis para revisión, nunca defaults autorizados.
+
+**Cambios/documentación futura.** Arquitectura §retención, p60/p40 y runbook de eliminación/restauración; definir registros mínimos que conservarán Message/C2/Handoff y lectores de contenido redactado. Procedimiento manual verificable de solicitudes y restricciones mientras llega cada job. No modificar modelos ni exigir proveedor nuevo en esta fase; desacuerdos legales se elevan a profesional, sin asumir cumplimiento.
+
+**Datos/migraciones.** Ninguna. Contrato de política versionado y responsables; no borrar ni backfill. Registro durable de restricciones individuales con org, selector/IDs opacos, alcance, fecha/política y excepciones; ubicación operativa privada/restaurable definida antes de usarlo. Sin contenido ni razonamiento clínico. No afirmar que conteos/checksum permiten recuperar qué fila se restringió.
+
+**Aceptación/pruebas.** PRIV-POL: ejemplos sintéticos de mensaje autorizante, expediente referenciado, metadata, excepción y backup se clasifican sin contradicción; responsables aprueban plazos/procedimiento y campos mínimos. El gate profesional es separado de CI. Evidencia de aprobación habilita implementación P-B por categoría; documento solo no cierra H17.
+
+**Deploy/rollback.** Publicación de política por proceso autorizado; cambios de versión no borran restricciones previas ni justifican recuperar datos eliminados. Si falta revisión, mantener tratamiento limitado y no ampliar datos prometiendo plazo sin mecanismo.
+**Riesgos eliminados:** decisión técnica de plazo/evidencia sin política. **Reducidos:** rework de schemas y promesas incompatibles. **Abiertos:** ejecución de purga/restore y retención efectiva externa.
+
+### Fase P-B — Purga y restauración verificables por categoría
+
+**Objetivo.** Reemplazar la promesa documental de retención por una política por categoría, aplicada con job comprobable sin destruir evidencia operativa necesaria.
+
+**Hallazgos:** H17; datos de H16/H18/H19. **Invariantes:** I06/I10/I13 y preservación de trazabilidad I01–I03. **Dependencias:** P-A y schema/lector de la categoría concreta. Texto/metadata existentes no esperan C2, varios goals ni notificaciones avanzadas; ampliar selección cuando se despliegue cada modelo. No aplicar sobre evidencia que aún no tenga política definida.
+
+**Estado actual relevante.** `Message.body/raw_metadata` contienen conversación; flow/goals guardan datos normalizados; `ContactIdentity`/verificaciones, `TurnOperationAssessmentMessage` y auditoría tienen referencias protegidas; ToolExecution/LLMCall/TurnDecision guardan proyecciones. No consta job de purga de transcripts. `prune_notifications` es de notificaciones, no de chats. Los 180 días de p60 aplican al binario futuro, no al texto. Backups p40 tienen política documentada; no se verificó su aplicación en producción en esta tarea.
+
+**Hipótesis de plazos para revisión en P-A, no defaults del job ni conclusión legal.** Ninguna cifra de la tabla habilita apply sin política aprobada. El job rechaza categoría sin plazo/política vigentes.
+
+| Categoría | Propuesta técnica inicial | Tratamiento/excepción |
+| --- | --- | --- |
+| Texto/caption de conversación cerrada | 90 días desde última actividad | Redactar cuerpo una vez vencido; no purgar caso abierto o evidencia bajo excepción aprobada. Revisar casos abiertos >90 días para evitar excepción indefinida. |
+| `raw_metadata` de proveedor | 30 días | Eliminar payload crudo; conservar proyección mínima de causalidad/entrega que tenga su propio plazo. Nunca tokens, URLs firmadas o media binaria en logs. |
+| Slots/flow/clarificaciones y propuestas no ejecutadas | Limpiar payload al cerrar/vencer y a más tardar 30 días tras cierre | Conservar códigos/IDs mínimos si hay disputa/fallo; no mantener scratchpad como memoria permanente. |
+| Evidencia mínima de operación/autorización, resultados e incidentes | 365 días como propuesta a validar | Separar del transcript completo; entidad/acción/revisión/mensajes causales, evidencia estructurada y resultado. Plazo final debe satisfacer requisitos de negocio/legales revisados; no purgar antes de fijarlo. |
+| Diagnóstico LLM/turnos/herramientas redactado | 90 días; agregados sin contenido hasta 365 | Sin chain-of-thought, cuerpo, identificadores innecesarios ni falsas “anonimizaciones” por hash de datos adivinables. |
+| Binarios multimedia | 180 días según p60 si se implementan | Fuera del pipeline actual; no declarar purga de objetos que el agente aún no almacena. Respetar gates/storage de p60 en ese proyecto. |
+| Identidad/vínculos | Mientras exista finalidad y relación autorizada revisada | Expiración de permiso/revocación no equivale a borrado de expediente. Eliminar/minimizar por procedimiento autorizado, sin inventar vigencia indefinida. |
+| Backups | Mantener política p40 documentada: local 14 días, daily 30, monthly 12 meses, sujeta a revisión | No reescribir históricos automáticamente; registro de purgas/restricciones se reaplica antes de abrir una restauración al tráfico. Verificar eliminación por vencimiento y excepciones. |
+
+**Cambios técnicos.**
+
+1. Aprobar política por categoría/finalidad y destinos de proveedores (LLM, Meta, alertas, almacenamiento/backups); registrar qué campos pueden salir y qué términos/retención se verificaron. No afirmar cumplimiento normativo desde docs técnicos.
+2. **Comando nuevo propuesto** `backend/apps/agent/management/commands/prune_agent_data.py`: `--dry-run` por defecto, selección por org/categoría/cutoff/policy_version, lotes limitados, lock de ejecución y resumible; modo apply explícito para job autorizado. Nunca ejecutar ahora.
+3. Job redacta contenido y conserva skeletons de Message referenciados por PROTECT. Añadir `redacted_at`/`retention_policy_version` y motivo estructurado a entidades de contenido necesarias; serializadores/Inbox muestran contenido eliminado, no mensaje vacío misterioso. No cambiar FKs a CASCADE para facilitar borrado.
+4. Antes de borrar un mensaje autorizante, verificar si debe preservarse evidencia mínima: autorización estructurada de token/acción y operación exacta puede mantenerse con la fila referenciada, sin todo el chat. Si la evidencia existente depende de texto libre, aplicar retención de evidencia o revisión antes de redacción. Un hash solo no sustituye prueba ni vuelve anónimo el dato.
+5. Excluir trabajo en vuelo, `UNCERTAIN`, handoffs abiertos, operaciones no reconciliadas y retenciones excepcionales explícitas con responsable/vencimiento. No borrar datos mientras un retry necesita parámetros; cerrar/revisar excepciones periódicamente.
+6. Separar evidencia de ejecución y registro de restricciones. Manifest de purga temporal: run ID, org/categoría, versión, cutoff, conteos, errores, cursor y checksum, sin contenido; permite reejecutar selección temporal y comprobar resultado. Restricción individual: IDs opacos/selector estable, org, alcance/categorías, fecha/política y excepciones, sin contenido; permite reaplicar redacción selectiva. Conteos/hash solos no identifican filas. Almacenar ambos en destino operativo privado durable definido en P-A, respaldado fuera del conjunto que se restaura; no depender de logs efímeros ni crear otra tabla si ese registro basta.
+7. Programación por cron externo siguiendo operación existente; dry-run y reporte revisados antes de apply. Al restaurar, ejecutar política temporal aprobada y reaplicar restricciones individuales desde registro independiente antes de habilitar tráfico; verificar ambas por queries/lectores. Ensayar al activar/cambiar purga o restore, no en cada release ajeno. No usar DB real ni borrar archivos en esta tarea.
+
+**Migraciones/backfill.** Timestamps/versión de redacción aditivos y null por defecto; no borrar contenido dentro de migración de schema. No marcar legacy como purgado. Índices por fecha/categoría donde medición justifique; usar existentes de created_at/conversación. Restricciones de evidencia deben documentar FK y plazo; si la revisión legal cambia política, ajustar job/configuración, no inventar migración destructiva.
+
+**Tests.** PRIV-01: fixture vencido desaparece del cuerpo/metadata, skeleton/FKs permanecen; contenido reciente y evidencia protegida no se purgan. PRIV-02: dry-run no modifica, apply repetido idempotente, crash entre lotes reanuda, una org no afecta otra. PRIV-03: restore a DB aislada reaplica tanto purga por cutoff como eliminación individual de una fila reciente que no cumpliría ese cutoff; demostrar que ninguna vuelve a estar accesible antes de tráfico. PRIV-04: exports/logs/alertas no contienen datos prohibidos; caso incierto/abierto preserva mínimos y produce excepción visible. Probar índices/coste de lote en copia sintética representativa.
+
+**Aceptación.** Política revisada y destino de manifest verificado; ejecución programada observada con manifest; verificación independiente de filas elegibles restantes y contenido inaccesible por API/Inbox; restore drill aprobado. Una política escrita o `--dry-run` sin job operativo no cierra H17.
+
+**Deploy/rollback.** Schema→lectores de contenido redactado→dry-run→aprobación de política→cron apply gradual por org. Rollback desactiva job; la redacción ya realizada es intencional y no se restaura desde backup automáticamente. Si hubo selección errónea, procedimiento de incidente/restauración aislada con revisión de restricciones, no `git revert`.
+
+**Documentación.** Enmendar arquitectura §retención, p60 y p40 según política aprobada; runbook nuevo o sección de `docs/runbooks/agent-whatsapp.md`; coordinaciones externas de aviso/proveedores según p60, sin presumir que están publicadas. **Riesgos eliminados:** acumulación por ausencia de mecanismo en categorías cubiertas. **Reducidos:** exposición y deuda de eliminación. **Abiertos:** decisiones legales, retención en proveedores, backups vigentes y solicitudes excepcionales; siguen bajo supervisión profesional/operativa.
+
+## 8. Migraciones y estrategia de despliegue
+
+### 8.1 Base real y secuencia de schema
+
+Hojas observadas: `agent/0021_turn_operation_assessment.py`, `channels/0010_message_processing_failure_notice.py`, `appointments/0015_appointment_category.py`. Se revisaron específicamente lifecycle de goals en `agent/0012_commitment_lifecycle.py`, evaluación en `0021` y mensajes semánticos en `channels/0008_message_semantic_operation.py`. Al implementar, comprobar nuevamente hojas, sin renumerar migraciones ajenas.
+
+| Entrega | Migración necesaria | Legacy/defaults | Orden y condición de seguridad |
+| --- | --- | --- | --- |
+| B0/B1/B2 | Ninguna obligatoria; proyecciones existentes versionadas donde se persisten | Metadata/resultados sin evidencia = desconocidos | Parser/DTO/renderizadores bajo contención, sin tabla de facts |
+| B3 | TurnWork; epoch; Message.turn_work/output_ordinal/origin_epoch | Epoch 0, FK nullable; pendientes se conservan; reporte legacy_unverified | Crear Work→Message y después Message→Work; versión incluye selector sender compatible, sin drafts/publicabilidad diferida |
+| B4 | Campos sender/timestamps y SENDING/UNCERTAIN/checks/índices C5 | No inventar fecha de aceptación; en vuelo dudoso→UNCERTAIN documentado | API/UI compatibles, corte y nuevo sender; no necesidad de resolver toda incertidumbre externa |
+| B5 | Fuente/event_key Handoff; aviso durable solo para canal utilizado | NULL desconocido legacy; NOT_CONFIGURED con evidencia | Unique parcial por evento nuevo; no consolidar abiertos legacy ni constraint global |
+| B6 | Bound_pet/bound_appointment/binding_revision y procedencia mínima | Nullable/0; legacy unbound, recapturar | Preservar constraints de goals; lector compatible antes de preparar datos sensibles |
+| B7A | ConversationOperation con source_turn desde creación; revisión identidad; correlación ToolExecution | Pending viejo invalidado; sin backfill de autorización ni emisión | C2 después de B3/B6; no tabla intermedia ni duplicación de revision/digest/EMITTED |
+| B7B | Ninguna obligatoria | No volver autorizable propuesta legacy | Consumidor de C2/Message ya desplegados |
+| B8A/B8B/B8C/B8D/B8E | C2 e idempotencia existente; ninguna obligatoria por defecto | Claves y resultados legacy intactos | Un adaptador por release; AGENT no adaptado denegado; staff sin cambios |
+| B9 | Correlación LLMCall/TurnWork y cupo por trabajo si falta | Nuevos contadores 0; usage histórico desconocido | No reservas distribuidas de gasto ni tabla scheduler para límite fijo |
+| E1 | Proyección de referencia en estructura existente si precisa | Null/unknown sin fuente | READ/historia independiente de delivery; filtros adicionales solo para caso probado |
+| E2 | Causalidad de apertura si necesaria; retirar unique de un suspendido | No rellenar binding desde flow; conservar un frente | Lector compatible y drain de writers antiguos antes de permitir múltiples suspendidos; sin unique de límite tres |
+| E3 | Solo opción de aviso/acuse/vencimiento realmente requerida | Null; seen no acuse | API/lectores antes de job/UI; preservar B5 como rollback |
+| E4 | Solo mecanismo respaldado por reporte B9/contrato previo | Sin backfill de cifras exactas desconocidas | No migración genérica de escalabilidad ni nueva entidad sin diseño acotado |
+| E5 | PARTIAL y dos pasos cerrados para alta compuesta | Operaciones individuales siguen legibles | Lector compatible antes de activar; sin RUNNING genérico ni saga |
+| P-A | Ninguna | Política/registro de restricciones explícitos | Revisar evidencia antes de cerrar schema C2; no purgar |
+| P-B | Redacted_at/retention_policy_version por categoría necesaria | Null, sin purga en migración | Lector→dry-run→apply por categoría con política; no esperar todos los esquemas |
+
+
+### 8.2 Patrón de deploy, aplicado solo donde hace falta
+
+**A — Schema aditivo.** Campos nullable/default seguro; índices medidos; constraints verificadas contra legacy antes de validarlas. Probar migración desde snapshot sintético de hoja actual. Para tablas grandes, construir índices con estrategia PostgreSQL que evite bloqueo prolongado, solo tras medir; no prescribir indiscriminadamente concurrent indexes en tablas pequeñas.
+
+**B — Compatibilidad/backfill.** Código lee legacy sin atribuirle consentimiento, delivery o acuse. Backfills por lotes repetibles y con conteos; no usar el LLM para reconstruir evidencia faltante. Ingreso sigue persistiendo mientras procesos de ejecución se pausan. No introducir dual-write de dos autoridades: flow contiene referencia/proyección, C2 es canónica.
+
+**C — Activación.** Verificar workers y API con versión compatible; drenar procesos antiguos, leases y requests en vuelo; asignar nuevos claims a versión nueva. En cambios de sender no basta esperar TTL: hay que clasificar intentos cuyo HTTP pudo salir, admitiendo UNCERTAIN visible con responsable cuando no exista correlación. Activar por clínica/cohorte después de gates y conservar kill switch. Un flag por org no protege de un worker viejo que no lo lee.
+
+**D — Cleanup posterior.** Eliminar adaptadores/pending JSON/processing_until legacy solo cuando métricas indiquen cero lectores/escritores viejos, terminó ventana de rollback y no hay trabajos legacy activos. No borrar datos de operación/evidencia. Por defecto en beta: schema aditivo + un corte controlado con código compatible. Separar A/B/C solo si compatibilidad/volumen lo exige; D es limpieza posterior opcional. No dual-write de autoridad ni cuatro deploys por rutina.
+
+### 8.3 Qué combinaciones deben probarse
+
+- Código viejo + schema nuevo: puede funcionar en modo supervisado si ignora campos; **no** se acepta que ejecute sobre nuevos estados/operaciones. Guard de API exige contrato AGENT al activarse.
+- Código nuevo + datos legacy: lectura honesta, expiración/revalidación, no consentimiento/acuse/entrega sintetizados.
+- Workers viejos todavía ejecutando: detenerlos/revocar ejecución AGENT durante corte; epoch protege solo a código que lo valida. Tener un campo de versión en DB no hace seguro al worker antiguo.
+- API nueva + worker nuevo en rollback parcial: ambos entienden ledger/delivery; se bloquean capabilities incompatibles con versión de contrato.
+- Deploy fallido: ingress y status webhooks pueden seguir persistiendo si DB está sana; planner/sender pausados, Inbox indica cola y estado real.
+
+## 9. Testing, failure injection y evals
+
+### 9.1 Reutilización de tests y ejecución futura
+
+Preservar suites existentes `test_commit_preconditions`, `test_identity_evidence`, `test_identity_readers`, `test_family_link`, `test_stale_phone_identity`, `test_release_service`, `test_contracts` y pruebas de agenda/multi-tenant. Se adaptan helpers que hoy crean `PROCESSED` y llaman planner directamente; no eliminarlos si siguen útiles como unitarios. Para probar H06/H10/H11/H16, usar explícitamente ruta real de worker.
+
+Fixtures sintéticos: dos orgs, propietarios distintos, Luna/Max y mascotas homónimas, >10 mascotas, >5 citas, tres asuntos, horarios/zona de clínica, identidad legacy/vigente/revocada/familiar, propuestas en cada estado y relojes controlados. El proveedor falso **registra fuera de la transacción del proceso que se mata**; de otro modo no demuestra HTTP exitoso + rollback local.
+
+Comandos orientativos para el implementador, desde `backend`, con DB de tests aislada y RTK:
+
+```powershell
+rtk proxy python manage.py test apps.agent.tests.test_commit_preconditions apps.agent.tests.test_worker apps.agent.tests.test_inbox_api
+rtk proxy python manage.py test apps.agent.tests.test_contracts apps.agent.tests.test_identity_evidence apps.agent.tests.test_release_service
+rtk proxy python manage.py test apps.agent apps.channels apps.appointments apps.patients
+rtk proxy python manage.py makemigrations --check --dry-run
+```
+
+Añadir módulos nuevos propuestos a la selección de la fase. Los tests con locks/crash usan `TransactionTestCase`/procesos separados y PostgreSQL; un `TestCase` con rollback externo o SQLite no prueba fencing. CI actual ya aporta PostgreSQL 16. Los comandos anteriores **no se ejecutaron durante esta planificación**.
+
+### 9.2 Matriz de failure injection obligatoria
+
+| Inyección y punto | Estado/efecto esperado | Prueba/fase |
+| --- | --- | --- |
+| DB caída antes de persistir webhook | No ACK durable; retry del mismo wamid crea un inbound como máximo | DUR-03/B3 |
+| Kill después del commit de claim | Trabajo PROCESSING expira y se recupera con token nuevo; inbound no desaparece | DUR-01/B3 |
+| LLM timeout/kill durante planner | Reintento acotado/FAILED visible; sin autoridad extra ni outbound falso | DUR-03/B3, SAFE-03/B5 |
+| Crash tras tool READ y antes de outbound | Puede repetirse READ; sin mutación implícita ni completion prematuro | DUR-02/B3 |
+| Crash dentro de transacción de dominio | Resultado y efecto revierten juntos; mismo paso recuperable | EXEC-02/B8A |
+| Dominio commit exitoso + respuesta HTTP perdida | Reconciliar ledger/replay mismo paso, una cita/transición | EXEC-02/B8A |
+| Alta mascota exitosa + fallo segundo paso | PARTIAL con Pet exacta; no duplicar ni decir cita creada | EXEC-03/E5 |
+| Ownership cambia durante planning | Token anterior no actualiza goal/flow, no escribe dominio, no publica | OWN-01/02/B3/B8 |
+| Ownership cambia entre enqueue y dispatch | Outbound no despachado se descarta; humano tiene autoridad | OWN-03/B4 |
+| Takeover con HTTP Meta ya admitido | No nuevo dispatch; intento conserva SENT/UNCERTAIN y UI informa estado previo | OWN-03/B4 |
+| Meta timeout o 500 después de request | UNCERTAIN salvo rechazo demostrado; cero retry ciego | SEND-02/B4 |
+| Meta acepta + crash antes del commit local | Intento no vuelve automáticamente a pending; correlacionar por evidencia o revisión | SEND-01/B4 |
+| Meta 2xx sin ID/JSON válido | UNCERTAIN; propuesta no confirmable | SEND-02/AUTH-03/B4 |
+| HTTP 200 de API con JSON/esquema inválido | malformed_response; nunca empty, no efecto afirmado | RESULT-02/B2 |
+| Duplicate webhook/status | Un inbound/turno lógico; estado de entrega monotónico; sin nueva autorización | SEC-02/DUR-01/SEND-03 |
+| Restart de varios workers/lease expirado | Un propietario autoritativo; viejo release falla; trabajo visible | OWN-01/B3 |
+| Notificación externa 500/timeout/crash | Caso/guidance conservados, aviso fallido/incierto/reintentable según contrato; no humano avisado ficticio | HAND-01/B5; HAND-04/E3 si aplica |
+| DB caída al consolidar turno/outbox | No completion; efectos previos conciliables; outbounds no publicados a medias | DUR-02/EXEC-02 |
+| Purga interrumpida / restore antiguo | Job reanuda por lote; no reaparecen datos restringidos al abrir servicio | PRIV-02/03/P-B |
+
+### 9.3 Corpus y gates
+
+**Determinista, bloquea merge desde la fase correspondiente:** AUTH/ATT, SEC multi-tenant/owner/injection, RESULT, OWN, DUR, SEND y contratos de estado. Fallar un caso crítico es rojo, no porcentaje negociable. Tests de cada fase se incorporan al job requerido de CI existente, no a uno opcional que puede omitirse.
+
+**Safety:** corpus independiente aprobado por veterinario, con positivos/negaciones/temporalidad/contexto/caption/typos/multiturno. Cero diagnóstico, prescripción, terapia individualizada o “no es urgente” en salientes del corpus. El gate es comportamiento, no coincidencia con las mismas regex de producción. Modelos no revisan la seguridad clínica de sus propias respuestas como único juez.
+
+**Evals reales, bloquean promoción de modelo/prompt/autonomía:** conversaciones completas con correcciones, cortesías tras recibo, referencias elípticas, tres asuntos, ownership y fallos. Por versión candidata ejecutar al menos tres repeticiones del corpus crítico como mínimo inicial, todas sin violación crítica; registrar modelo/proveedor/config/prompt/contratos/commit. Tres pasadas no estiman fiabilidad poblacional: conservar muestreo humano y ampliar corpus con incidentes. Fallo de proveedor o eval `skipped` = validación incompleta, nunca verde automático.
+
+**Gate deploy:** mismos artefactos probados; crash en fronteras modificadas y restore al activar/cambiar purga/restauración, migraciones ensayadas, cero trabajos huérfanos sin estado, cola de incertidumbre atendible y capacidad humana configurada. El CI actual no despliega; el proceso de release debe comprobar el artefacto del eval explícitamente, sin atribuir CD a `.github/workflows/ci.yml`.
+
+**Métricas del harness:** `response_generated` (borrador aprobado), `outbound_queued` (persistido publicable), `dispatch_started`, `provider_accepted`, `delivered`, `read`. `outbound_sent` solo alias documentado de aceptación con ID, nunca sinónimo de delivery. El guion cliente avanza según evento que simula, no según existencia de fila. `resolved` requiere resultado de negocio/servicio definido y no se infiere de silencio ni cierre de conversación.
+
+**Alcance y coste de verificación.** Cada fila de failure injection se prueba al introducir/modificar su frontera. No ejecutarla contra toda tool ni exigir producto cartesiano de estados/canales/proveedores. Mantener unitarias/contratos por adaptador y casos E2E representativos con procesos reales. Tres asuntos se incluyen antes de E2; en beta de un asunto se exige derivación sin contaminación/pérdida, no comprensión multi-goal anticipada. Nuevos modelos/prompts o aumento de autonomía requieren eval real del alcance candidato; cambios documentales o ajenos al modelo no obligan a repetir tres pasadas LLM. Una validación externa pendiente se registra como pendiente, no fallo de un test inexistente ni verde automático.
+
+## 10. Observabilidad mínima útil
+
+Correlación común (campos introducidos con cada consumidor, no todos en B3): org, conversación, turn ID/lease token, operation key/paso, message ID/send token, handoff ID y request ID. Logs redactados con códigos; no copiar transcript/JSON externo ni razonamientos del LLM. IDs de alta cardinalidad van en trazas, no como etiquetas de cada serie de métricas.
+
+| Métrica | Pregunta operativa | Fuente/acción |
+| --- | --- | --- |
+| `inbound_pending_age`, count por estado | ¿Hay clientes cuyo trabajo aún no fue tomado? | Message/TurnWork; alertar edad, no solo volumen |
+| `processing_latency`, expiraciones/reclaims | ¿El worker termina o pierde leases? | Claim→completion; investigar huérfanos/timeout |
+| `planner_latency` y espera de cuota | ¿La demora está en LLM o scheduler? | TurnWork y LLMCall por rol; ajustar cupo/timeout |
+| `tool_latency`, conflict/error por código | ¿Falló integración o hay conflicto de negocio normal? | ToolExecution; no mezclar 409 esperado con 500 |
+| `outbound_pending_age` y dispatch latency | ¿Se generó respuesta que nadie envía? | outbox final committed→send_started_at (created_at como aproximación documentada de encolado, nunca de entrega); sender independiente |
+| `provider_acceptance_latency`, delivered latency | ¿Meta aceptó y hay señal de entrega? | Timestamps distintos; valor desconocido no es 0 |
+| `sender_failures`, `uncertain_sends` y edad | ¿Necesitamos reconciliar/revisar un envío antes de repetir? | Message estado/código; responsable y cola visible |
+| `handoff_open_age`, `time_to_claim/response` (acuse separado solo E3) | ¿Existe alguien atendiendo la solicitud? | Handoff + saliente humano emitido; alertar atraso/cobertura |
+| `human_takeover`, `stale_fence_rejections` | ¿Intervienen personas y se detiene el bot viejo? | Eventos claim/epoch y denegación; investigar tasa inesperada |
+| `operation_rejection/conflict/partial/uncertain` | ¿Se bloquea un riesgo, chocó agenda o quedó efecto parcial? | C2/ToolExecution; playbook según código |
+| `safety_escalation`, fallo aviso y tiempo hasta dispatch | ¿Se detecta, orienta y hace visible una posible urgencia? | Razones estructuradas, sin síntomas en tags; revisión humana de FP/FN |
+| `llm_calls/tokens/cost` por turno/rol y unknown usage | ¿Cuál es el coste completo y qué cupos se agotan? | Admisión por turno + LLMCall; incluye verificador/retries |
+| `turns_completed/failed` y outcome diferido | ¿Qué porcentaje de trabajo llega a desenlace explícito? | TurnWork real; no count inbound como count turns |
+| `retention_last_success`, elegibles restantes/excepciones | ¿La retención se ejecuta o solo está documentada? | Manifest + consulta de verificación; alarma de job ausente |
+
+Los umbrales de carga de B9 se ensayan en su perfil explícito; umbrales de atención adicionales solo E3 con responsables; no añadir dashboard sin destinatario y respuesta operativa. Una caída de telemetría no debe ampliar permisos ni perder trabajo; el estado durable sigue disponible para recuperación.
+
+B0/B3/B4/B5/B8 entregan instrumentación de sus propias fronteras. B9 valida agregación/coste completo. No bloquear una fase esperando dashboard final, cuotas distribuidas ni un catálogo genérico de métricas.
+
+## 11. Rollback operativo
+
+| Entrega | Qué detener/revertir | Datos nuevos y versión compatible | Qué nunca hacer |
+| --- | --- | --- | --- |
+| B0/B1 | Consumidor defectuoso, conservar contención/caption | Proyección legacy se lee como desconocida | Volver a historial por PROCESSED o metadata como permiso |
+| B2 | Salida libre/capacidad afectada | Resultado por esquema o fallback honesto | Unknown = success/empty |
+| B3 | Nuevos claims; drain/invalidate token | Conservar Work/miembros/outcome y selector de PENDING finales; reader compatible | Reabrir todos los PROCESSED/PENDING o perder continuidad diferida |
+| B4 | Dispatch; mantener status webhook | SENDING dudoso→UNCERTAIN; conservar IDs/intento | Reset a pending o reactivar sender incompatible |
+| B5 | Detector auxiliar/aviso defectuoso | Guidance limitada y cola/claim/resolución compatibles permanecen | Silenciar safety por owner o anunciar aviso inexistente |
+| B6 | Preparación sensible incompatible | Conservar binding/procedencia, recapturar o supervisar | Reponer derivados desde mascota anterior |
+| B7A/B7B | Nuevas propuestas/autorización incompatible | Invalidar pendientes afectadas, preservar evidencia/operaciones y leer Message para emisión | Convertir C2 a pending JSON autorizable o reinterpretar canal libre |
+| Cada B8 | Retirar capacidad de lista; nuevos commits | Ledger y replay seguro con mismas claves/resultado | Compensar/borrar entidad o abrir guard opcional |
+| B9 | Retirar capacidad/cohorte y bajar carga | Conservar contadores, fences, sender y evidencias de gates | Rebajar test/permiso para recuperar throughput |
+| E1 | Nueva interpretación/consulta ampliada | Aclaración incompatible se invalida; B2 sigue honesto | Heredar consentimiento de referencia |
+| E2 | Desactivar captura de más asuntos | Mantener lector de suspendidos y datos; supervisar | Reinstalar unique antiguo cerrando/borrando goals |
+| E3 | Opción de aviso/seguimiento defectuosa | B5 opera cola; conservar casos/avisos/history | Resolver casos por deploy o borrar incertidumbre |
+| E4 | Mecanismo/carga adicional | Mantener límites de topología anterior, datos coordinados legibles | Multiplicar cuota por réplica con contadores locales |
+| E5 | Retirar altas compuestas | PARTIAL/steps siguen visibles y conciliables con claves originales | Degradar parcial a fracaso sin efecto o borrar Pet |
+| P-A/P-B | Detener apply defectuoso; revisar política | Restricciones/redacciones persisten; restauración aislada las reaplica | Restaurar automáticamente texto eliminado |
+
+Procedimiento: detener nuevas acciones → identificar trabajo/HTTP en vuelo → esperar o clasificar incertidumbre → versión mínima compatible → verificar colas → reabrir solo capacidades aprobadas. “Conciliado” puede significar UNCERTAIN visible con responsable, no una certeza remota imposible. Mantener ingress/status si su contrato/DB son compatibles.
+
+Cada release declara versión mínima lectora, capacidades afectadas y tratamiento de filas nuevas. Si no existe rollback binario seguro, rollback funcional = supervisión/pausa y forward fix. No desplegar binario antiguo sobre estados que desconoce ni ejecutar migración inversa destructiva.
+
+## 12. Riesgos residuales y decisión de beta
+
+### 12.1 Gates progresivos
+
+| Punto | Autonomía candidata | Condición y riesgo todavía abierto |
+| --- | --- | --- |
+| B0–B4 | Preparación y piloto supervisado | No WRITE; B3 ya deja selector/outbox compatibles, B4 no espera ledger. Safety/cobertura completa pendiente B5 |
+| B5 + B9 de READ + P aplicable | Consultas públicas/personales en alcance verificado | Identidad vigente para personales, resultados honestos, sender/recuperación y circuito humano; sin mutaciones |
+| B6/B7B/B8A + B9 de crear cita | Una escritura concreta y un asunto | Invalidación, autorización exacta, guard/idempotencia, resultados, delivery e identidad probados; otros WRITE siguen supervisados |
+| Cada B8B/B8C/B8D/B8E + su gate B9 | Añadir únicamente esa capacidad | La lista del release y org explicita incorporación; no activar otras por terminar fase común |
+| E1/E2 + eval específico | Referencias más amplias/múltiples asuntos | E2 necesario antes de ofrecer varios pendientes; sin él derivar sin contaminación ni pérdida |
+| E5 + gate propio | Altas compuestas | Parcial/recuperación y consentimiento por efectos probados; no requisito de beta inicial |
+| Aumento de organizaciones/carga/datos | Ampliación de beta | Repetir perfil con carga real propuesta, costes/cobertura/P-A/P-B pertinentes; E3/E4 solo si hace falta para cumplirlo |
+
+No hacen falta multimedia interpretada, memoria avanzada, multi-goal o scheduler distribuido para una beta que no los ofrece y pasa su perfil. Sí resultados honestos ante esas limitaciones. H17: política y procedimiento mínimo desde P-A; si se comprometió un plazo, su mecanismo verificable P-B debe estar operativo antes de incumplirlo o ampliar ese tratamiento. No tratar automatización avanzada como excusa para retención indefinida.
+
+Los invariantes de autoridad/durabilidad no se dispensan por supervisión posterior. Cierre técnico, protocolo clínico y cobertura humana son evidencias separadas; ninguna columna de autonomía acredita por sí sola atención veterinaria.
+
+### 12.2 Riesgos que no desaparecen con tests verdes
+
+- **H03/H04/H05:** corpus no cubre todo lenguaje/síntoma; ningún gate prueba riesgo clínico cero. Guidance/protocolo requieren veterinario y revisión de incidentes. Handoff requiere personas disponibles.
+- **H07/H08:** Meta puede aceptar/entregar tarde una solicitud anterior; sin ID/correlación el resultado queda incierto. El humano decide reenvíos excepcionales con evidencia visible.
+- **H12/H13:** referencias ambiguas, más de tres asuntos y fuera de ventana requieren aclaración/humano; no rellenar con supuestos para mejorar tasa de resolución.
+- **H18:** nombre de mascota/teléfono no son autenticación fuerte. Teléfono compartido/reciclado no detectado sigue siendo riesgo residual; operación clínica/financiera o cambio de titularidad no se abre por estas mitigaciones.
+- **H16/H19:** latencia/coste fuera de carga ensayada y cambios de modelo/proveedor requieren reevaluación; un score agregado no permite excepción a los invariantes.
+- **H17:** política final, proveedores, restauraciones y excepciones dependen de responsables profesionales y operativos; no se declaran resueltas por la creación del job.
+
+El cierre técnico de un Hxx no elimina necesariamente supervisión: H03/H04/H05, H17/H18 y envíos inciertos de H07 deben mantener controles humanos específicos.
+
+## 13. Matriz de trazabilidad H01–H20
+
+Ningún hallazgo se declara corregido por este plan. “Fase” indica dónde se implementa y dónde puede verificarse su cierre completo; se preserva el grado de certeza de la auditoría, sin convertir riesgos inferidos en incidentes nuevamente demostrados.
+
+| Hallazgo | Causa raíz | Cambio que lo resuelve | Fase | Componentes afectados | Test | Criterio de cierre |
+| --- | --- | --- | --- | --- | --- | --- |
+| H01 | CR1/CR4 | Propuesta inmutable, consentimiento causal estricto, invalidación y guard de commit | B6/B7B; B8A y cada adaptador habilitado | confirmations, planner, tools, ConversationOperation, API | AUTH-01/02/04/05, EXEC-01 | Cero writes negativos/correcciones; autorización ligada a operation_key inmutable y parámetros exactos; guard en cada capacidad habilitada |
+| H02 | CR1/CR3 | Emisión acreditada, relación respuesta/propuesta y estados de delivery | B4/B7B | Message, confirmations, sender, selectors | AUTH-03, SEND-02/03 | Propuesta pendiente sin emisión compatible no autoriza; respuesta anterior/ajena o envío incierto no ejecuta |
+| H03 | CR5/CR4 | Safety por capas con contexto/caption, protocolo y prioridad | B1/B5 | matchers, safety propuesto, policy, tier0 | SAFE-01/02/03 | Corpus crítico y negaciones/coloquial aprobados pasan en estados especificados; sin atribuir sensibilidad perfecta |
+| H04 | CR5/CR2 | Guidance honesta y hechos de caso/aviso/owner/respuesta/resolución; claim incluye acuse beta | B5; E3 solo hardening requerido | HumanHandoff, alerts, services, Inbox; notifications solo E3 | HAND-01/02/03, SAFE-03; HAND-04 si E3 | Cola/claim/respuesta/resolución demostrados con fallo/ausencia/fuera de horario; aviso solo con evidencia, sin exigir integración avanzada |
+| H05 | CR2/CR5 | Hechos tipados, recibos/precios controlados, salida clínica limitada | B2/B5 | ToolOutcome, guards, planner, tier0 | RESULT-01/03/04, SAFE-01 | Segmentos sensibles construidos desde resultados válidos; cero éxito/precio falso ni clínica prohibida en corpus |
+| H06 | CR3 | Trabajo durable, completion consolidada y recuperación de efectos | B3; B8 de capacidades habilitadas | TurnWork, worker, Message, ledger | DUR-01/02/03, EXEC-02 | Crash matrix deja trabajo recuperable/derivado visible, sin falso PROCESSED; efectos confirmados no se repiten |
+| H07 | CR3 | Claim individual sender, HTTP fuera de lote, incertidumbre y reconciliación | B4 | worker sender, providers, Message, status webhook, Inbox | SEND-01/02/03 | Caída post-HTTP no provoca retry ciego ni rollback de otros envíos; UNCERTAIN atendible sin promesa exactly-once |
+| H08 | CR3/CR5 | Epoch/token, fence de API y publicación, takeover/release coordinados | B3/B4/B5; cada B8 habilitado | Conversation, TurnWork, executor/API, outbound, Inbox | OWN-01/02/03, HAND-03 | Worker viejo no obtiene nueva autoridad local; takeover y HTTP previo tienen resultados diferenciados y trazables |
+| H09 | CR1 | Matriz de sensibilidad/efecto; READ pública y humano fuera de intake | B0/B2; E1 mejora continuidad | intake, tools catálogo/dispatch, policy | BASE-01, CTX-06, SEC-02 | Unknown obtiene READ pública y humano sin onboarding ni acceso personal; catálogo/dispatch deniegan WRITE no adaptado |
+| H10 | CR4 | Sobre de turno único antes de wrapper/arbiter | B1; integración de C1 con B3 | worker, planner, TurnContext propuesto, TurnFacts | CTX-01 | Ráfaga real idéntica para consumidores; arbiter conserva DTO acotado |
+| H11 | CR4 | Cursor/IDs actuales excluidos de historia, no estado técnico | B1; E1 referencias más amplias | prompts, channels selectors, TurnContext | CTX-01 | Primer contacto sin pasado inventado; historia anterior real/permitida independiente de status técnico |
+| H12 | CR4 | Binding/invalidation básicos primero; instancias y varios suspendidos solo E2 | B6 mitigación obligatoria; E2 cierre multi-goal | ConversationGoal, goals, tools, arbiter, confirmations | CTX-03/04/07 | B6 impide herencia con correcciones; E2 separa tres asuntos y conserva pendientes. Hasta E2 multi-asunto supervisado sin pérdida silenciosa |
+| H13 | CR1/CR4 | Vista mínima de referencia y aclaración tipada sin consentimiento heredado | E1; integración con B7/B8 de agenda | operation_authorization, prompts, planner, mechanism_state | CTX-05/06, EVAL-REF | Referencia resuelta/aclarada/derivada según escenario; flujo de escritura completo exige nueva autorización y entidad correcta |
+| H14 | CR2 | Esquema por endpoint, completitud/cursor/filtros y error distinto de vacío | B2; E1 filtros adicionales si se requieren | executor, ToolOutcome, tools, APIs de citas/pets | RESULT-02 | Empty completo distinto de truncated/malformed/forbidden/conflict/transport; recuperación disponible o límite explícito |
+| H15 | CR4/CR5 | Evento preserva caption, tipo, reply/action ID; limitación multimedia visible | B1/B5 | channels views/metadata, TurnContext, policy | CHANNEL-01, SAFE-03 | Caption en safety y reply/action preservados; limitación multimedia transparente |
+| H16 | CR6 | Harness por eventos y semántica de métricas/gates por artefacto | B0/B3/B4/B8 incremental; B9 gate | harness, eval commands, metrics, CI | EVAL-01/02 y corpus crítico | E2E usa fronteras reales; queued no delivery; fallo crítico/skip bloquea promoción aplicable |
+| H17 | CR6 | Política por categoría, job/manifest, evidencias protegidas y restore | P-A/P-B por categoría | Message/goals/operaciones, comando prune propuesto, runbook | PRIV-01/02/03/04 | Política y job/restore selectivo demostrados por categoría comprometida; texto distinto de media/notificaciones |
+| H18 | CR1/CR6 | Matriz de permisos por vínculo, revisión/revocación, step-up humano selectivo | B7A/B7B; B8 correspondiente y gate B9 | ContactIdentity, verification, tools/API, Inbox | ID-01, SEC-02, EXEC-01 | Permisos/revocación/familiar/TTL probados; revisión humana selectiva y aceptación de riesgo residual sin llamarlo autenticación fuerte |
+| H19 | CR3/CR6 | Sender separado, límites de topología y presupuesto por turno; coordinación extra solo por medición | B4/B9; E4 solo por carga demostrada | worker command, compose, llm, authorization, metrics | SCALE-01/02, COST-01 | Perfil explícito pasa con límites acotados; sender progresa con LLM bloqueado; todas las llamadas/retries contados |
+| H20 | CR1/CR2 | Declaración de asistencia exacta y resultado confirmado/already_done/conflict diferenciado | B7B/B2/B8B | confirm_appointment, manifiesto, ledger/API, renderizador | ATT-01/02, RESULT-03, EXEC-01 | Pregunta nunca PATCH; declaración exacta autoriza solo cita vigente; conflicto no comunica éxito genérico |
+
+Cierre se evalúa en el alcance explícitamente habilitado: operaciones no adaptadas permanecen denegadas/supervisadas. H12 no se declara completamente cerrado antes de E2; H13 requiere validar también su integración con la escritura elegida. E3/E4 no son requisitos universales de cierre si el circuito/ perfil básico ya cumplen el criterio.
+
+## 14. Matriz de capacidades y activación por fase
+
+AUTONOMOUS: alcance público sin supervisión ordinaria. AUTONOMOUS_RESTRICTED: permiso/identidad/contrato y excepciones obligatorias. SUPERVISED: staff realiza/valida antes del efecto. DISABLED: capacidad no ofrecida. Actual describe capacidad técnica auditada, no configuración productiva ni aprobación.
+
+La tabla muestra el **máximo permitido** con gates aprobados. B0–B8 implementan/prueban contratos bajo contención; no activan por sí solas. La columna de adaptador presupone que se seleccionó e implementó el adaptador de esa fila; no abre los demás. Las columnas de B9/E5 son escenarios de activación independientes, no permisos acumulados automáticamente; no desactivan capacidades ya aprobadas. E5 no habilita cancelación/reprogramación/asistencia. La política por org puede ser más restrictiva.
+
+| Capacidad | Actual | B0–B8 sin activación | B9 READ | B9 + crear cita | B9 + adaptador B8 de esa fila | E5 + gate compuesto | Objetivo permitido |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Preguntas públicas | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS | AUTONOMOUS | AUTONOMOUS | AUTONOMOUS | AUTONOMOUS |
+| Identificar cliente | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Listar mascotas | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Consultar citas | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Disponibilidad pública | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS | AUTONOMOUS | AUTONOMOUS | AUTONOMOUS | AUTONOMOUS |
+| Crear cita | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Reprogramar | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS_RESTRICTED |
+| Cancelar | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS_RESTRICTED |
+| Confirmar asistencia | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS_RESTRICTED |
+| Registrar cliente mediante alta compuesta existente | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Registrar cliente sin mascota/cita (capability independiente) | DISABLED | DISABLED | DISABLED | DISABLED | DISABLED | DISABLED | DISABLED |
+| Registrar mascota sin cita | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Registrar mascota con cita | AUTONOMOUS_RESTRICTED | SUPERVISED | SUPERVISED | SUPERVISED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Vacunas: estado administrativo disponible | AUTONOMOUS_RESTRICTED | SUPERVISED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Urgencias: orientación limitada + circuito profesional | SUPERVISED | SUPERVISED | SUPERVISED | SUPERVISED | SUPERVISED | SUPERVISED | SUPERVISED |
+| Handoff: creación/derivación, no atención humana automática | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Multimedia: preservar texto/caption/reply y explicar límite | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED | AUTONOMOUS_RESTRICTED |
+| Multimedia: comprender audio/imagen/documento binario | DISABLED | DISABLED | DISABLED | DISABLED | DISABLED | DISABLED | DISABLED |
+
+| Fase terminada | Efecto sobre autonomía y alcance |
+| --- | --- |
+| B0 | Aplica contención de tabla |
+| B1/B2/B3/B4 | Mantiene contención; cambia evidencia, resultados, recuperación y envío |
+| B5 | Guidance/circuito humano demostrables; READ puede solicitar B9, no WRITE |
+| B6/B7A/B7B | Mantiene contención; binding/permiso/consentimiento listos |
+| Cada B8A/B8B/B8C/B8D/B8E | Capacidad candidata, permanece supervisada hasta su gate B9 |
+| B9 | Activa intersección de capacidades aprobadas y política de org/identidad; nunca todo por modo restricted |
+| E1/E2 | Amplía referencias/varios asuntos únicamente tras eval; no transfiere autorización entre goals |
+| E3/E4 | Mejora cobertura/carga demostrada; no concede permisos de negocio |
+| E5 | Solo altas compuestas tras gate específico; no alta de cliente independiente inexistente |
+| P-A/P-B | Restringe tratamiento de datos; no amplía capacidades del bot |
+
+**Writes.** Crear cita exige B6+B7+B8A+B9. Asistencia puede seguir Tier 1 con evidencia inequívoca B8B; cancelar/reprogramar usan sus adaptadores y restricciones familiares. B8E registra solo mascota; E5 es necesario para alta compuesta, nunca cita implícita porque se pidió solo registro. Varias mascotas/asuntos requieren E2, pero correcciones dentro de un asunto ya están protegidas por B6.
+
+Urgencias permanecen SUPERVISED: detección/guidance no son triaje profesional. Crear/derivar handoff puede ser autónomo; atender/resolver requiere persona. Multimedia binaria sigue DISABLED; preservar caption/reply no acredita comprensión.
+
+## 15. Prioridades P0–P3
+
+Complejidad relativa B/M/A, sin estimación de calendario. Prioridad P0 no significa dependencias arbitrarias: contención inmediata mientras se completan contratos pequeños. P-A/P-B son IDs de fases de privacidad, distintos de estas prioridades.
+
+| Prioridad | Cambio/Fase | Riesgo eliminado/reducido | Dependencias | Bloquea beta | Complejidad |
+| --- | --- | --- | --- | --- | --- |
+| P0 | B0 contención y gates/harness inicial | Efectos/promesas inseguros durante transición | Base auditada | Sí | B–M |
+| P0 | B1 eventos; B2 resultados sensibles | Falta de causalidad y afirmaciones falsas | B0 | Sí, alcance correspondiente | M por entrega |
+| P0 | B3 procesamiento/ownership/publicación | Pérdida y worker obsoleto | B1 | Sí, autonomía | A acotada a estado local |
+| P0 | B4 sender | Duplicación por incertidumbre y despacho obsoleto | B3, no B8 | Sí, autonomía | M–A |
+| P0 | B5 safety y atención mínima | Silencio, falso aviso y ausencia de circuito humano | B1/B2/B3/B4 | Sí; protocolo/cobertura además | M–A |
+| P0 | B6 invalidación de un asunto | Operación de mascota/fecha anterior | B1 | Sí, todo WRITE | M |
+| P0 | B7A/B7B propuesta/consentimiento/identidad | Permiso no exacto o actor sin alcance | B2/B3/B6; B4 para aceptación | Sí, WRITE | M por entrega |
+| P0 | B8A y cada B8 seleccionado | Carrera/duplicación de efecto local | B7B; guard común | Sí, capacidad específica | M por adaptador |
+| P0 transversal | Pruebas críticas de cada frontera | Falso verde de contrato | Fase que cambia frontera | Sí | Acotada por fase |
+| P1 | B9 E2E, coste completo y límites fijos | Saturación/falso delivery/gasto invisible | Alcance implementado, P aplicable | Sí, ampliación | M |
+| P1 | E1 referencias/consultas ampliadas | Bucles y limitaciones de consulta | B1/B2/B6 | Solo para ese alcance conversacional | M |
+| P1 | E2 múltiples asuntos | Contaminación/pérdida entre goals | B6/E1/B7B | Si beta ofrece multi-goal | M, sin rehacer B6 |
+| P1 | P-A política/procedimiento | Promesa de privacidad sin fundamento/mecanismo | B0 + revisión profesional | Sí, ampliar datos | M |
+| P1/P2 | P-B purga/restore por categoría | Acumulación y restauración indebida | Política y schema de categoría | Sí si plazo comprometido; no esperar todo agente | M |
+| P2 | E3 avisos avanzados | Descubrimiento/seguimiento insuficiente medido | B5 | Solo si cobertura lo necesita | B–M por opción |
+| P2 | E4 coordinación de escala | Límite demostrado por perfil | B9 técnico y reporte acotado | Solo si límites B9 no bastan | Según mecanismo, diseñar antes de ampliar |
+| P1 por capacidad; diferible | E5 alta compuesta | Duplicación/parcial mal comunicado | B8A/B8E/B7B | Solo si se ofrece esa capacidad | M–A |
+| P3 | Interpretación multimedia, memoria ampliada, broker/SSE/autoscaling | Evolución futura | Necesidad y ADR propios | No | Fuera de alcance |
+
+**Antes de ampliar beta:** contratos de autoridad/durabilidad de capacidades elegidas, invalidación básica, sender separado, safety/cobertura, evals, contabilidad completa, límites acotados y privacidad aplicable. **Después, según medición/producto:** multi-goal, notificaciones adicionales, reservas distribuidas y altas compuestas no incluidas. No habilitar clínica/billing al cerrar este plan.
+
+## 16. Documentación y ADRs
+
+Esta tarea no modifica los documentos siguientes. Se actualizan al implementar cada fase; el implementador debe enmendar la decisión existente y marcar qué párrafo sustituye, sin duplicar decisiones históricas.
+
+| Fase | Documento/ADR real afectado | Cambio/contrato que debe documentarse |
+| --- | --- | --- |
+| B0 | `docs/whatsapp-agent-functional-spec.md`, `docs/runbooks/agent-whatsapp.md`; p54/p55/p56 | Alcance supervisado, invariantes, gates y fuentes de verdad |
+| B1 | `docs/decisions/2026-08-01-p56-perception-situation-and-turn-as-root.md`, `2026-08-17-p58-continuidad-e-identidad-del-agente.md`; `docs/modules/agent.md` | C1/cursor/eventos, DTO del arbiter, emisión vs visibilidad |
+| B7A/B7B | `docs/decisions/2026-08-26-operation-authorization-boundary.md`, `2026-08-27-semantic-turn-operation-authorization.md`; p58 | Solicitud interpretada vs autorización de commit; C2, READ/WRITE, declaración Tier 1 y matriz identidad |
+| B2 | `docs/decisions/2026-07-25-p54-agent-goals-and-binding-rules.md`, `2026-08-08-p57-garantias-de-agenda.md`; arquitectura/spec | C3/READ, proyecciones/moneda/alcance y error vs empty; enmienda ADR 2026-08-26/27 para READ tras recibo; parcial solo E5 |
+| B5 | p54/p56; `docs/decisions/2026-08-22-p60-whatsapp-inbox-decisions.md`; runbook | Protocolo clínico versionado, safety independiente, aviso durable y límites de cobertura |
+| B3/B4/B8/E5 | **Nuevo ADR propuesto** en `docs/decisions/`, nombre/fecha a asignar al implementarlo; p52/p57/p58/p60 | Una decisión conjunta de procesamiento durable, fencing, ledger por paso y delivery incierto. C4/C5 y puntos de linearización. No un ADR por cada campo. |
+| B8A/B8B/B8C/B8D/B8E; E5 | `docs/decisions/2026-07-19-p52-appointment-idempotency.md`, p57 | Replay/digest de operación individual, guard AGENT y matriz acotada de locks; E5 agrega dos pasos sin saga |
+| E1 | ADR 2026-08-27, p56/p58; spec | Contexto mínimo permitido para referencias y aclaraciones; recibo no concede consentimiento |
+| B6/E2 | p54; `docs/decisions/2026-07-30-p55-turn-authority-and-commitments.md`; p56 | B6 binding/invalidation; E2 varios suspendidos, un frente; límite tres como política de UX, no constraint |
+| B5/E3 | p60; `docs/decisions/2026-09-06-notificaciones-hibridas.md`; runbook | B5 cola/claim que acusa/resolución y aviso honesto; E3 solo opciones adicionales de Notification/seguimiento |
+| B0/B3/B4/B8/B9; E4 por medición | `docs/runbooks/agent-whatsapp.md`, `docs/whatsapp-agent-architecture.md` | Harness por frontera y gates por capacidad; perfil exacto y límites fijos; E4 necesita reporte/contrato concreto |
+| P-A/P-B | Arquitectura §retención; p60; `docs/decisions/2026-06-12-p40-backup-offsite-disaster-recovery.md` | Política por categoría, job/manifests, excepciones, restauración y revisión externa |
+
+Para identidad se conservan también `docs/decisions/2026-07-15-p51-virtual-agent-identity.md` y p58: rol AGENT y evidencia anti-eco no se debilitan. p59 (`2026-08-17-p59-interpretacion-al-modelo.md`) debe referenciar la distinción interpretación/autoridad al enmendar semántica, sin revertir a extractores léxicos universales. La arquitectura principal se actualiza como visión vigente, no se usa `ClientMemoryFact` histórico ni resumen eliminado como modelo que hubiera que implementar.
+
+## 17. Orden recomendado de implementación
+
+Secuencia por defecto para beta de consultas y creación individual de cita:
+
+`B0 → B1 → B2 → B3 → B4 → B5 → B6 → B7A → B7B → B8A → B9`.
+
+P-A empieza con B0; P-B se entrega por categoría antes de vencer el plazo comprometido y antes de ampliar ese tratamiento. B2 y B6 son ramas independientes que pueden prepararse después de sus dependencias de §6; el orden escrito es una recomendación de ejecución secuencial, no nuevas aristas del DAG.
+
+1. Contención/harness mínimo y responsables desde B0. No congelar schemas opcionales de extensiones.
+2. B1 aporta eventos; B2 salida honesta sin esperar operación persistida.
+3. B3 termina con worker y selector compatibles; B4 cierra sender sin depender de todas las escrituras.
+4. B5 termina circuito de safety/atención básica, no solo fila de handoff.
+5. B6 elimina derivados obsoletos incluso para una mascota. Nunca aplazarlo después de abrir WRITE.
+6. B7A entrega persistencia/permiso; B7B conecta aceptación causal sin tocar todo el dominio.
+7. B8A guard + crear cita. B8B confirmar, B8C cancelar, B8D reprogramar y B8E alta individual son entregas independientes cuando se necesiten.
+8. B9 verifica/activa únicamente capacidades seleccionadas; READ puede pasar su gate antes de B7/B8. Ningún modo restricted abre tools no adaptadas.
+9. E1 referencias y E2 multi-goal se incorporan según alcance, con evaluación propia. E3 avisos adicionales y E4 coordinación solo por necesidad demostrada. E5 altas compuestas conserva su gate y no frena la beta inicial.
+10. Al ampliar carga/datos/capacidades repetir el gate afectado y revisar cobertura/P. No completar extensiones innecesarias para declarar una beta acotada segura.
+
+### Checklist para encargar «Implementa Fase X»
+
+- Identificar ID exacto y capacidad: B8B/C/D/E son encargos individuales; para E4 adjuntar reporte, mecanismo seleccionado y contrato previo si requiere persistencia nueva.
+- Leer objetivo, C/I, dependencias técnicas y D pertinentes. Comprobar versiones desplegadas, no asumir que un contrato escrito ya existe.
+- Modificar solo módulos/servicios descritos, sus pruebas/documentación y la compatibilidad necesaria para que la entrega funcione sin fases futuras.
+- Ensayar migración desde datos legacy; identificar versión mínima lectora y rollback funcional con nuevas filas/estados.
+- Ejecutar tests de la fase y regresiones de la frontera afectada; anexar evidencia por ID. Mantener separados gate técnico y validación clínica/operativa/privacidad pendiente.
+- Entregar capacidades que permanecen supervisadas, lista que podría activarse en B9, riesgo residual y estado de datos. No cerrar hallazgo completo por pasar un matcher, añadir campo o mitigar solo un alcance.
+
+## 18. Discrepancias encontradas y decisiones
+
+### D01 — Grafo con posiciones antiguas, no evidencia de código corregido
+
+**Auditoría:** ya advertía que algunos snippets del grafo podían estar desactualizados. **Estado actual:** el grafo local encontró símbolos, pero `get_code_snippet(ConversationGoal/HumanHandoff/confirm_appointment)` devolvió rangos correspondientes a otros fragmentos. Se contrastaron únicamente las clases/funciones necesarias desde AST/archivo. HEAD y código tracked coinciden con commit auditado; el diff observado solo incluía eliminaciones preexistentes de dos documentos de deploy.
+
+**Impacto:** usar rutas/símbolos y contratos comprobados, no números de línea del grafo como evidencia. **Decisión:** no reindexar/explorar todo para planificar; ninguna de H01–H20 se declara obsoleta/corregida por esos snippets.
+
+### D02 — No hacen falta modelos nuevos para todo el vocabulario propuesto
+
+**Auditoría:** recomienda separar propuestas/autorizaciones/resultados/handoff/contexto. **Estado actual:** `Message`, `ToolOutcome`, `HumanHandoff`, goals y auditoría ya existen; `TurnDecision` prohíbe lectura runtime. **Impacto:** duplicar cada sustantivo crearía varias fuentes de verdad. **Decisión:** dos tablas nuevas del núcleo (`TurnWork`, `ConversationOperation`); autorización embebida y tipada; resto son extensiones/vistas. La recomendación se concreta sin rewrite.
+
+### D03 — El ADR semántico impide exactamente el contexto necesario para H13
+
+**Auditoría:** H13 pide referencias/contexto mínimo. **Estado actual:** ADR 2026-08-27 prohíbe explícitamente transcript/entidades/slots previos a authorizer/verifier y también limita agenda READ después de recibo. No es un descuido que se arregle pasando más texto sin documentarlo. **Impacto:** E1 debe enmendar ese contrato y sus tests. **Decisión:** referencias mínimas con fuentes y READs permitidas por sensibilidad; recibo/goal antiguo nunca consentimiento. Mantener frontera contra operaciones iniciadas por cortesía.
+
+### D04 — Ya existe centro de notificaciones, pero no prueba atención
+
+**Auditoría:** H04 describe alerta externa opcional y handoff insuficiente. **Estado actual:** `notifications.Notification/NotificationReceipt`, servicio con dedup y ADR 2026-09-06 existen en la base auditada; modelo de notificaciones usa `on_commit` best-effort y `seen`. **Impacto:** no crear otro centro ni inferir que H04 está resuelto. **Decisión:** B5 usa cola Inbox y hechos separados; claim puede incluir acuse explícito. E3 reutiliza evento/receipt y reparación si se necesita ampliar descubrimiento.
+
+### D05 — La operación compuesta de mascota admite parcial por decisión vigente
+
+**Auditoría:** recomienda resultados tipados/durabilidad. **Estado actual:** `_commit_add_pet` documenta como aceptado mascota registrada sin cita y realiza dos llamadas. La segunda llamada no transmite clave de idempotencia en esa ruta; se observó puntualmente para diseñar recuperación, sin reproducir un nuevo incidente. **Impacto:** exigir atomicidad total sería alterar producto y añadir compensaciones innecesarias. **Decisión:** E5 entrega dos pasos cerrados, claves estables y parcial honesto sin borrar mascota; alta compuesta permanece supervisada hasta entonces. Alta de cliente nuevo conserva endpoint compuesto atómico.
+
+### D06 — Fencing local no cancela aceptación/entrega remota previa
+
+**Auditoría:** H08 pide que turno antiguo no actúe después de takeover; H07 advierte no prometer exactly-once. **Estado actual:** provider solo envía texto, devuelve wamid o vacío; no hay revocación/idempotency key remota demostrada ni búsqueda segura por clave local. **Impacto:** la formulación absoluta de “no puede llegar ningún mensaje después” es indemostrable. **Decisión:** fence de nueva autoridad/dispatch local; distinguir HTTP admitido antes; estados UNCERTAIN/UI y reconciliación. Envío 2xx sin ID no acredita propuesta emitida autorizable.
+
+### D07 — Identidad débil es riesgo reconocido, no bypass multi-tenant demostrado
+
+**Auditoría:** H18 distingue identidad conversacional y autenticación fuerte. **Estado actual:** p58 ya reconoce baja entropía y conserva operaciones sobre propietario verificado; revocación y verificación staff existen. **Impacto:** no introducir MFA universal ni afirmar hallazgo ya resuelto por el ADR. **Decisión:** política por efecto/relación, revisión de permiso/identidad en commit y step-up humano selectivo, con aceptación explícita de riesgo residual antes de beta.
+
+### D08 — Retención de media/notificaciones no equivale a purga de chat
+
+**Auditoría:** H17 señala ausencia de operación de retención de transcript. **Estado actual:** p60 limita 180 días a binarios futuros; ADR de notificaciones refiere `prune_notifications`; no se identificó job de chat en los comandos pertinentes. **Impacto:** no trasladar los 180 días ni el job de otra tabla al chat. **Decisión:** P-A aprueba política/evidencia y P-B aplica por categoría con restore verificable; legales/proveedores/producción quedan pendientes de revisión profesional y evidencia operativa.
+
+### D09 — Sent_at, suspendidos y límites son decisiones que ahora sí tienen requisito
+
+**Auditoría:** H02/H11/H12/H16 requieren causalidad, historia y asuntos separados. **Estado actual:** p58 había descartado `Message.sent_at` por falta de caso; p55/migración 0012 restringían a un suspendido. **Impacto:** ahora hay requisitos concretos, pero no justifican rehacer orden del transcript ni eliminar lifecycle. **Decisión:** añadir timestamps de aceptación/entrega sin reordenar históricos; conservar un frente y ampliar instancias suspendidas con límite explícito. No resucitar resumen/ClientMemoryFact.
+
+### D10 — Actualización de guard no puede demostrar comprensión infalible
+
+**Auditoría:** propone consentimiento causal con comprensión semántica; H01 prueba defectos de matchers. **Estado actual:** no hay una fuente determinista que convierta toda frase libre en autorización inequívoca; consenso de dos LLM sigue siendo interpretación. **Impacto:** no prometer resolver H01 añadiendo más reglas “sí/no” o confidence. **Decisión:** canal estricto de respuesta a propuesta para beta; lenguaje natural corrige/prepara/aclara. Tier 1 admite declaración contextual cerrada sin segundo ritual. La expansión de paráfrasis libres queda P3 hasta evaluar riesgo de forma explícita.
+
+### D11 — Simplificación del plan tras revisión documental del 2026-09-13
+
+**Fuente:** revisión exclusivamente de este plan; no nuevos hallazgos de código ni reproducción de H01–H20. **Plan anterior:** fases F1B/F3B amplias, F2B usaba epoch futuro, F3A necesitaba pausar sender hasta F3C, invalidación básica llegaba después del gate WRITE; contratos repetían estados/revisiones y gates mezclaban beta con extensiones.
+
+**Decisión vigente:** numeración B/E/P y DAG §6. B3 entrega selector compatible y outbox final atómico; B4 sender independiente del negocio; B6 invalidación antes de B7/B8; propuesta nueva = fila inmutable, emisión derivada de Message, un token por claim y cursor fresco sin input_revision duplicada. Un adaptador WRITE por entrega; beta por lista de capacidades. Handoff básico incluye claim/acuse y respuesta derivada; no consolidar legacy para imponer unicidad. Evals crecen con cada frontera. P-A temprano; P-B por categoría y restore de restricciones individuales.
+
+**Impacto:** estas decisiones sustituyen las recomendaciones de campos/fases anteriores; no son flags para volver al comportamiento inseguro. Conteos de tablas bajos no justifican objetos enormes; opciones E3/E4/E5 necesitan alcance concreto. Se conservan fuente auditada, invariantes, rutas ya contrastadas y garantías reales de incertidumbre externa. Ningún Hxx se declara corregido por editar el plan.
+
+| Fase anterior, solo referencia histórica | Entregas vigentes |
+| --- | --- |
+| F0/F1A | B0/B1 |
+| F1B | B7A/B7B; matriz READ básica en B2 |
+| F2A | B2; búsquedas ampliadas E1 |
+| F2B/F5 mínimo | B5 |
+| F3A/F3C | B3/B4 sin dependencia de todas las escrituras |
+| F3B | B8A y B8B–B8E; altas compuestas E5 |
+| F4A/F4B | E1; B6 antes de WRITE; E2 multi-goal |
+| F5 ampliado | E3 |
+| F6A | Harness incremental+B9; coordinación condicional E4 |
+| F6B | P-A/P-B |
+
+
+## 19. Qué NO debemos hacer
+
+- Agregar más regex a “sí/no” como solución final de H01; una palabra/emoji, score o consenso LLM no concede permiso. El canal de consentimiento estricto debe identificar propuesta/revisión y validar todo el alcance.
+- Resolver H03 solamente agregando palabras a `_EMERGENCY_LEMMAS`, o delegar seguridad clínica entera a un LLM. Tampoco ignorar negaciones/temporalidad o declarar “no es urgente” por detector negativo.
+- Convertir toda conversación en FSM gigante, introducir un motor genérico de workflows o reemplazar todos los módulos del agente para arreglar contratos concretos.
+- Eliminar determinismo, permitir que el modelo amplíe tools/permisos o usar prompt secrecy como seguridad.
+- Usar `tool_ran=True`, números coincidentes, `HTTP 200`, `ok=True` o `already_or_invalid` como prueba de éxito/completitud.
+- Marcar inbound PROCESSED al reclamar; hacer heartbeat/release sin token; comprobar ownership únicamente antes del LLM o solo en el worker, lejos del commit de dominio.
+- Mantener HTTP Meta dentro de una transacción de lote, resetear a pending los envíos dudosos o prometer exactly-once.
+- Llamar “recibida/leída” a una fila pending o confundir `visible_messages` con emisión. Un humano pending puede ser visible en Inbox sin haber salido.
+- Suponer handoff creado = equipo notificado = owner = respuesta = resolución. `NotificationReceipt.seen_at` no sustituye acuse explícito del caso.
+- Resolver casos humanos por inactividad, reactivar bot con autorización vieja o eximir a todos los mensajes system del fence bajo el pretexto de safety.
+- Cambiar solo `pet_id`/fecha de goal dejando slot, appointment candidate, refs, precondición o propuesta derivados de otra entidad.
+- Reutilizar goal por nombre, confianza ausente como 1.0 o el último recibo como slots/consentimiento para otra cita.
+- Describir caption/reply guardados como comprensión de audio/imagen; añadir descarga/visión/transcripción sin proyecto y controles específicos.
+- Romper las precondiciones, locks, idempotencia y constraints de agenda que ya funcionan para simplificar el agente; copiar `billing.CommandReceipt` como dependencia de agenda.
+- Borrar legacy para imponer nuevos constraints, fabricar autorizaciones/backfill de acuses/entregas, purgar evidencia sin política o restaurar datos eliminados inadvertidamente desde backups.
+- Usar mocks que saltan worker/API/sender como única prueba de resiliencia; aceptar eval skipped o outbound row exists como mensaje delivered.
+- Añadir billing, diagnóstico, prescripción u operaciones clínicas sensibles antes —ni como consecuencia automática— de estabilizar estas correcciones.
+
+- Duplicar token/generación/processing state sin frontera distinta, sincronizar EMITTED en dos tablas o persistir depends_on cuando existe mapa fijo.
+- Hacer que invalidación de una sola mascota espere multi-goal, que sender espere todas las mutaciones o que B3 necesite un lector de otra fase para publicar.
+- Convertir código de confirmación, máximo de una aceptación o límite de tres asuntos en cardinalidades permanentes del dominio.
+- Activar todos los WRITE por cambiar autonomy_mode, exigir scheduler/avisos avanzados sin necesidad o usar un SLO sin perfil reproducible.
+- Tratar manifest de conteos/checksum como lista de restricciones individuales reaplicable tras restore.

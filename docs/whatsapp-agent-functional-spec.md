@@ -1,5 +1,7 @@
 # Especificación funcional del agente WhatsApp (v1.1)
 
+> **Enmienda de alcance B0 — 2026-09-13.** WRITE autónomo cerrado, incluidos asistencia y pendientes heredados. READ dentro de restricciones actuales y atención humana; copy sin aviso/atención garantizados. No cambia el detector clínico ni se amplía beta. Consultar [acta B0](implementacion-b0-agente-whatsapp-2026-09-13.md) para contratos mínimos, responsables pendientes, gate crítico, despliegue sin workers viejos y rollback que conserve contención. Esta enmienda prevalece sobre ejemplos de autonomía/avisos anteriores.
+
 **Fecha**: 2026-07-14 · **Enmienda P0 + congelamiento**: 2026-07-15
 **Estado**: **CONGELADA PARA F1** — §0, §2 (reglas globales), §3, §4 (tier-0) y §5 (lecturas) son contrato cerrado de F1 (cambios solo por enmienda explícita). §6 (escrituras F2) queda en borrador hasta el kickoff de F2, donde se incorporarán las propuestas P1 de la revisión UX (vinculación familiar endurecida, oferta proactiva de slots, nudge, presencia). Sin código.
 **Documentos base**: [`whatsapp-agent-architecture.md`](whatsapp-agent-architecture.md) (investigación + §18 decisiones) · [`whatsapp-agent-implementation-plan.md`](whatsapp-agent-implementation-plan.md) (diseño v1.1, clasificación A/B/C/D — **manda sobre el doc de arquitectura**).

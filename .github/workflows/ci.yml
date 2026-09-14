@@ -67,6 +67,10 @@ jobs:
         run: python manage.py migrate --no-input
       - name: Verify Billing model/state/physical schema contract
         run: python manage.py audit_billing_schema --json
+      - name: B0 critical corpus (required, no skips)
+        run: >-
+          python manage.py test apps.agent.tests.test_b0_containment
+          --testrunner apps.agent.tests.harness.CriticalB0Runner
       - name: Run test suite (parallel)
         run: python manage.py test --parallel
 

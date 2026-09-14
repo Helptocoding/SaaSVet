@@ -10,6 +10,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .harness import legacy_write_component
 from apps.agent import executor as executor_module
 from apps.agent import planner
 from apps.agent.executor import ToolExecutor
@@ -70,6 +71,7 @@ def _next_open_day(min_offset):
     con un offset fijo son intermitentes: si "hoy + N" cae en domingo,
     `find_available_slots` devuelve `closed=True` sin capturar ningún slot."""
     return _next_open_days(1, min_offset)[0]
+
 
 
 class TestClientTransport:
@@ -210,6 +212,7 @@ class PlannerHappyPathTests(PlannerTestCase):
 
 
 class PlannerPendingContextTests(PlannerTestCase):
+    @legacy_write_component
     def test_question_does_not_restage_the_same_pending_action(self):
         """Una duda durante la espera conserva la propuesta y se contesta."""
         self.conv.flow['pending_action'] = {
@@ -261,7 +264,9 @@ class PlannerPendingContextTests(PlannerTestCase):
 
         self.assertEqual(result['decision'], 'planner_reply')
         self.assertEqual(len(stub.calls), 2)
-        self.assertNotIn('confirm', self._last_outbound().body.lower())
+        self.assertNotIn('¿Confirmas?', self._last_outbound().body)
+        self.assertNotEqual(self._last_outbound().semantic_type,
+                            Message.SEMANTIC_CONFIRMATION)
         self.assertTrue(self._last_outbound().body.endswith(
             '¿Qué horario prefieres para moverla?'))
 
@@ -388,6 +393,7 @@ class PlannerFailureTests(PlannerTestCase):
         self.assertEqual(result["reason"], "tool_failure")
 
 
+@legacy_write_component
 class PlannerGoalStallTests(PlannerTestCase):
     """El detector de estancamiento debe medir PROGRESO, no "llamó la tool".
 
@@ -497,6 +503,7 @@ class PlannerGoalStallTests(PlannerTestCase):
         self.assertEqual(goal.slots["date"]["value"], segundo)
 
 
+@legacy_write_component
 class PlannerConcreteTimeCaptureTests(PlannerTestCase):
     """Fase 0 §0.6: `preferred_time` concreto (HH:MM) llena el slot `time`
     desde una lectura, igual que `date` (ADR de la auditoría — parcial: NO
@@ -544,6 +551,7 @@ class PlannerConcreteTimeCaptureTests(PlannerTestCase):
         self.assertIn("time", goal.missing)
 
 
+@legacy_write_component
 class PlannerSlotCaptureTests(PlannerTestCase):
     """Lo que el cliente ya dio no se vuelve a pedir — aunque el dato haya
     entrado por una tool de LECTURA (piloto conv 12: el agente resolvió

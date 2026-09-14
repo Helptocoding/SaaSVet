@@ -102,6 +102,27 @@ def _facts_numbers(tool_facts):
     return {v for v in values if v is not None}
 
 
+def check_containment(text):
+    """Filtro temporal B0, no evidencia semántica ni detector de urgencias.
+
+    Bajo contención no hay recibos de WRITE autónomo. Precios y avisos humanos
+    requieren revisión hasta los contratos B2/B5; un READ cualquiera no los
+    acredita. El corpus acota cobertura: no garantiza detectar toda paráfrasis.
+    """
+    low = (text or '').lower()
+    if any(pattern in low for pattern in MEDICAL_ADVICE_PATTERNS):
+        return 'medical_advice'
+    if _money_values(text):
+        return 'price_requires_review'
+    if any(pattern in low for pattern in SUCCESS_CLAIM_PATTERNS):
+        return 'write_claim_during_containment'
+    if any(pattern in low for pattern in (
+            'ya avisé', 'ya avise', 'ya les avisé', 'ya les avise',
+            'ya le avisé', 'ya le avise', 'ya notifiqué', 'ya notifique')):
+        return 'notification_not_proven'
+    return None
+
+
 def check_output(text, *, tool_facts=None, protected_name=None,
                  grounded_names=()):
     """Devuelve la lista de violaciones del texto generado (vacía si limpio).

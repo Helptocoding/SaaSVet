@@ -1,5 +1,8 @@
 # ADR p55 — Autoridad del turno y compromisos conversacionales
 
+> **Enmienda B0 (2026-09-13), vigente para esta release.** Un compromiso, un veredicto semántico o un pending heredado no concede permiso de escritura durante B0. Las escrituras contenidas se derivan mediante la suspensión/handoff existentes. No cambian FSM, modelos ni número de suspendidos. Crear handoff no prueba aviso, owner humano ni respuesta.
+> Alcance, pruebas, límites y rollback: [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md). El resto del ADR conserva sus decisiones salvo esta contención temporal.
+
 **Fecha**: 2026-07-30
 **Estado**: ACEPTADO — **escrito ANTES de implementar** (É-F4 Fase 3). Este
 documento es la brújula del sprint, no su acta.

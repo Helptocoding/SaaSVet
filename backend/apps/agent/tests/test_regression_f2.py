@@ -18,6 +18,7 @@ from datetime import timezone as dt_tz
 from django.test import TestCase
 from django.utils import timezone
 
+from .harness import legacy_write_component
 from apps.agent import executor as executor_module
 from apps.agent import confirmations, tools
 from apps.agent.llm import LLMResult
@@ -46,6 +47,8 @@ def _seed_role(org, role_name):
     return role
 
 
+
+@legacy_write_component
 class RegF2Base(TestCase):
     @classmethod
     def setUpTestData(cls):

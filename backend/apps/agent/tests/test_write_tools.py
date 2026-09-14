@@ -13,6 +13,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .harness import legacy_write_component
 from apps.agent import executor as executor_module
 from apps.agent import confirmations, planner, policy, tools
 from apps.agent.executor import ToolExecutor
@@ -41,6 +42,7 @@ def _seed_role(org, role_name):
     return role
 
 
+
 class HeaderForwardingTransport:
     """Reenvía TODOS los headers (Authorization + X-Idempotency-Key +
     X-Request-ID) al test client → el loopback se comporta como en producción."""
@@ -64,6 +66,7 @@ class HeaderForwardingTransport:
             return r.status_code, {}
 
 
+@legacy_write_component
 class WriteToolsTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -95,7 +98,8 @@ class WriteToolsTests(TestCase):
             organization=self.org, external_account_id="770100770")
         self.contact = ContactIdentity.objects.create(
             organization=self.org, external_id="5215511110000",
-            owner=self.owner, verification_level="confirmed_in_chat")
+            owner=self.owner, verification_level="confirmed_in_chat",
+            verified_at=timezone.now())
         self.conv = Conversation.objects.create(
             organization=self.org, channel_account=self.channel,
             contact=self.contact)
@@ -591,6 +595,7 @@ class ToolErrorCopyIsReachableTests(TestCase):
         # cerrar) en vez de contárselos al modelo, y los puramente internos
         # que ninguna conversación puede provocar.
         handled_elsewhere = {
+            "autonomous_writes_paused",  # B0: plantilla + handoff, sin LLM
             "identity_changed", "owner_exists", "owner_ambiguous",
             "appointment_changed", "already_done",
             "pet_saved_appointment_failed",   # el planner redacta el suyo

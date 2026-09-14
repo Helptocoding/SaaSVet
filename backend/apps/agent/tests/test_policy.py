@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from .harness import legacy_write_component
 from apps.agent import confirmations, goals, matchers, policy, situation, tier0
 from apps.agent.models import (
     AgentSettings,
@@ -17,6 +18,7 @@ from apps.agent.tests.harness import identity_commitment
 from apps.channels.models import ChannelAccount, Message
 from apps.organizations.models import Organization
 from apps.patients.models import Owner, Pet
+
 
 
 class PolicyTestCase(TestCase):
@@ -181,6 +183,7 @@ class PriorityOrderTests(PolicyTestCase):
         self.assertIn("pending_action", self.conv.flow)  # NO lo descarta
 
 
+@legacy_write_component
 class ConfirmationFlowTests(PolicyTestCase):
     def setUp(self):
         super().setUp()

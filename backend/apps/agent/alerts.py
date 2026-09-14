@@ -23,7 +23,10 @@ _TIMEOUT = 5
 
 
 def notify_urgent_handoff(conversation, *, reason_code, detail=''):
-    """Avisa a ops que hay una escalada urgente esperando. Devuelve si se envió."""
+    """Devuelve aceptación HTTP del webhook, nunca lectura/atención humana.
+
+    `detail` se conserva por compatibilidad de callers, sin enviarlo fuera.
+    """
     url = getattr(settings, 'DISCORD_WEBHOOK_URL', '')
     org = conversation.organization
     if not url:
@@ -34,7 +37,7 @@ def notify_urgent_handoff(conversation, *, reason_code, detail=''):
             "organization_id": org.pk,
             "conversation_id": conversation.pk,
             "reason_code": reason_code,
-            "alert_delivered": False,
+            "alert_provider_accepted": False,
         })
         return False
 
@@ -49,21 +52,17 @@ def notify_urgent_handoff(conversation, *, reason_code, detail=''):
         ],
         "footer": {"text": "Ábrela en /inbox — el agente ya está en pausa"},
     }]}
-    if detail:
-        payload["embeds"][0]["fields"].append(
-            {"name": "Detalle", "value": detail[:200], "inline": False})
-
     try:
         response = requests.post(url, json=payload, timeout=_TIMEOUT)
-        delivered = 200 <= response.status_code < 300
+        accepted = 200 <= response.status_code < 300
     except requests.RequestException:
-        delivered = False
+        accepted = False
 
     logger.error("AGENT_URGENT_HANDOFF", extra={
         "event": "AGENT_URGENT_HANDOFF",
         "organization_id": org.pk,
         "conversation_id": conversation.pk,
         "reason_code": reason_code,
-        "alert_delivered": delivered,
+        "alert_provider_accepted": accepted,
     })
-    return delivered
+    return accepted

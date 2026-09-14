@@ -522,6 +522,19 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
 
         if result.kind == 'text':
             text = result.text or _fallback_text()
+            containment_reason = guards.check_containment(text)
+            if containment_reason:
+                policy.escalate_to_human(
+                    conversation, reason_code=HumanHandoff.REASON_POLICY,
+                    detail=containment_reason,
+                )
+                fallback = (tier0.T0_CLINICAL_LIMIT
+                            if containment_reason == 'medical_advice'
+                            else tier0.T0_GUARD_BLOCKED)
+                enqueue_outbound(conversation, fallback, author='system')
+                return {'decision': 'containment_blocked',
+                        'llm_calls': llm_calls, 'tools': tool_calls,
+                        'reason': containment_reason}
             violations = guards.check_output(
                 text, tool_facts=tool_facts,
                 # Fuga de identidad (D13): con el contacto sin verificar, el
@@ -736,6 +749,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         # pregunta lo que falta es el modelo.
 
         if not outcome.ok:
+            if outcome.client_error == 'autonomous_writes_paused':
+                return _contain_write(conversation, llm_calls=llm_calls,
+                                      tool_calls=tool_calls)
             # Acceso restringido del familiar (PR-17b): no es un fallo de
             # sistema — se explica y se ofrece una persona (sin escalar en bucle).
             if outcome.client_error == 'family_restricted':
@@ -849,11 +865,25 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             'tools': tool_calls}
 
 
+def _contain_write(conversation, *, llm_calls=0, tool_calls=0):
+    """Contención B0: registrar atención pendiente no significa notificar."""
+    policy.escalate_to_human(
+        conversation, reason_code=HumanHandoff.REASON_POLICY,
+        detail='autonomous_writes_paused',
+    )
+    enqueue_outbound(conversation, tier0.T0_WRITE_PAUSED, author='system')
+    return {'decision': 'autonomous_writes_paused',
+            'llm_calls': llm_calls, 'tools': tool_calls}
+
+
 def _commit_pending(conversation, executor, *, triggered_by=None):
     """Ejecuta el pending_action ya confirmado (spec §2.4). Corre el
     `commit_*` con los args STAGED (nunca re-generados por el LLM) → cumple
     TC-SEC-03: la afirmativa jamás amplía el alcance de lo parafraseado."""
     pending = confirmations.get_pending(conversation)
+
+    if pending and tools.intake.write_is_contained(pending.get('tool')):
+        return _contain_write(conversation)
 
     # TTL vencido (spec §2.4): re-parafrasea y re-arma expiración; NO ejecuta.
     if confirmations.is_expired(pending):

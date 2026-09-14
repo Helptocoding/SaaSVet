@@ -20,14 +20,14 @@ T0_GREET = (
 
 # INT-03 · sufijo fuera de horario (modificador, una vez por conversación).
 T0_AFTER_HOURS_SUFFIX = (
-    "\n\nAhorita estamos fuera de horario — deja tu mensaje y el equipo te "
-    "responde al abrir 🙌"
+    "\n\nEstamos fuera de horario. Puedes dejar tu mensaje para revisión; "
+    "no puedo confirmar cuándo estará disponible una persona."
 )
 
 # INT-00 borde · agente/buzón apagado (AgentSettings.enabled=False).
 T0_DISABLED = (
-    "¡Hola! Gracias por escribir a *{clinic}*. El equipo de recepción te "
-    "responderá en cuanto esté disponible 🙌"
+    "¡Hola! Gracias por escribir a *{clinic}*. La atención automática está "
+    "en pausa. Tu mensaje queda registrado para revisión."
 )
 
 # Forma del horario que produce `clinic_context.effective_business_hours`:
@@ -68,31 +68,35 @@ def is_open_now(hours, tz_name, now=None):
 
 # --- Plantillas F1 (LITERALES, spec §1.3; el LLM no participa) -------------
 
-# INT-01 · urgencia (R16): acudir de inmediato + teléfono + aviso al equipo.
+# INT-01 · contención B0: buscar atención; no afirmar aviso ni cobertura.
 # JAMÁS evalúa el cuadro (G2). {phone} = `Organization.phone` (ADR p53).
 T0_EMERGENCY = (
-    "Esto puede ser una emergencia 🚨 Acude de inmediato a la clínica o "
-    "llámanos{phone}. Ya avisé al equipo para que te contacte lo antes "
-    "posible."
+    "Esto puede ser una emergencia 🚨 Busca atención "
+    "veterinaria presencial disponible y no esperes una respuesta por este "
+    "chat. También puedes intentar llamar a la clínica{phone}; no puedo confirmar "
+    "su disponibilidad ni que una persona haya recibido un aviso."
 )
 T0_EMERGENCY_NO_PHONE = (
-    "Esto puede ser una emergencia 🚨 Acude de inmediato a la clínica. Ya "
-    "avisé al equipo para que te contacte lo antes posible."
+    "Esto puede ser una emergencia 🚨 Busca atención "
+    "veterinaria presencial disponible y no esperes una respuesta por este "
+    "chat. No puedo confirmar que una persona haya recibido un aviso."
 )
 
 # INT-02 · handoff explícito.
 T0_HANDOFF = (
-    "Claro, en un momento una persona del equipo continúa contigo por aquí 🙌"
+    "Tu solicitud de atención humana queda registrada para revisión. "
+    "Todavía no puedo confirmar que una persona haya tomado el caso."
 )
 T0_HANDOFF_AFTER_HOURS = (
-    "Con gusto. Ahorita estamos fuera de horario; el equipo te responde por "
-    "aquí en cuanto abramos 🙌"
+    "Tu solicitud queda registrada. Estamos fuera de horario; no puedo "
+    "confirmar cuándo estará disponible una persona."
 )
 
 # INT-06 · "¿eres una persona?".
 T0_BOTQ = (
-    "Soy el asistente virtual de la clínica 🙂 Puedo agendarte y resolver "
-    "dudas al momento — y si prefieres, te comunico con una persona del equipo."
+    "Soy el asistente virtual de la clínica. Puedo ayudarte con consultas "
+    "administrativas y registrar una solicitud de atención humana. Los "
+    "cambios de citas y registros requieren atención del equipo."
 )
 
 # UX-01 · aviso de privacidad just-in-time (antes de la 1ª recolección de datos).
@@ -103,16 +107,16 @@ T0_PRIVACY = (
 
 # E-09 · presupuesto de conversación agotado.
 T0_BUDGET = (
-    "Para darte una mejor atención, dejo que una persona del equipo continúe "
-    "contigo 🙌"
+    "No puedo continuar esta consulta automáticamente. Queda pendiente de "
+    "atención humana."
 )
 
 # W1-5 · el cliente escribe cuando ya hay una escalada en cola. Un acuse, una
 # sola vez: ni seguir conversando como si nada (le prometimos una persona) ni
 # silencio absoluto (parece que nadie lo leyó).
 T0_HANDOFF_WAITING = (
-    "Aquí sigo 🙌 Ya le pasé tu mensaje al equipo; en cuanto alguien se "
-    "desocupe continúa contigo por aquí."
+    "Tu solicitud sigue pendiente de atención humana. No puedo confirmar "
+    "que una persona haya tomado el caso."
 )
 
 # Anti-eco de identidad (plan de continuidad, D33): el nombre con el que el
@@ -125,7 +129,7 @@ T0_HANDOFF_WAITING = (
 # que la salida es una persona, no otro intento.
 T0_IDENTITY_ECHO = (
     "Por seguridad, prefiero que recepción continúe contigo con la "
-    "verificación 🙏 Ya les avisé."
+    "verificación. La solicitud queda pendiente de atención humana."
 )
 
 # La pregunta del reto de identidad la pone el SISTEMA (D38), no el modelo. Sin
@@ -143,22 +147,35 @@ T0_IDENTITY_QUESTION = (
 # motivo técnico: ve a alguien que prefiere que lo atienda una persona.
 T0_GUARD_BLOCKED = (
     "Mejor que esto te lo confirme una persona del equipo — no quiero darte "
-    "un dato equivocado 🙏 Ya les avisé."
+    "un dato equivocado. La solicitud queda pendiente de atención humana."
 )
 
 # Problema técnico real (LLM caído, tool en 5xx). Antes se reusaba T0_BUDGET,
 # que habla de "mejor atención" para un fallo de infraestructura.
 T0_TECH_PROBLEM = (
-    "Uy, se me trabó el sistema tantito 😅 Ya le avisé al equipo para que te "
-    "atiendan por aquí."
+    "No pude completar la consulta por un problema técnico. La solicitud "
+    "queda pendiente de atención humana."
 )
 
 # W2 · el objetivo lleva 3 turnos sin avanzar un solo dato. No es un fallo
 # técnico ni un límite contable: la conversación no está llegando a ningún
 # lado y una persona la resuelve mejor.
 T0_GOAL_STALLED = (
-    "Creo que por aquí nos estamos enredando 🙈 Le paso tu caso a una persona "
-    "del equipo para que lo resuelva contigo rapidito."
+    "No he podido resolver tu solicitud por aquí. Queda pendiente de "
+    "atención humana."
+)
+
+T0_WRITE_PAUSED = (
+    "Los cambios de citas y registros requieren atención del equipo. "
+    "No he realizado ningún cambio; tu solicitud queda pendiente de "
+    "atención humana."
+)
+
+T0_CLINICAL_LIMIT = (
+    "Por este chat no puedo diagnosticar, indicar tratamientos ni valorar "
+    "la gravedad. Solicita una evaluación veterinaria. Tu consulta queda "
+    "pendiente de atención humana; si necesitas atención urgente, busca "
+    "atención presencial disponible sin esperar respuesta por aquí."
 )
 
 # ---------------------------------------------------------------------------

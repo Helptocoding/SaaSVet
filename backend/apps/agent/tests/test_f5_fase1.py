@@ -20,6 +20,7 @@ import re
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from .harness import legacy_write_component
 from apps.agent import executor as executor_module
 from apps.agent import policy, situation
 from apps.agent.executor import ToolExecutor
@@ -45,6 +46,7 @@ _AGENT_DIR = pathlib.Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 # Gates ESTÁTICOS — fronteras, no conducta
 # ---------------------------------------------------------------------------
+
 
 class StaticBoundaryTests(SimpleTestCase):
 
@@ -447,6 +449,7 @@ class ConversationalTurnIsValidTests(Fase1Base):
 
 class NudgeRespectsDeferTests(Fase1Base):
 
+    @legacy_write_component
     def test_quien_pidio_tiempo_no_recibe_el_recordatorio(self):
         """C13 · un mensaje que el sistema INICIA también cumple un propósito.
 

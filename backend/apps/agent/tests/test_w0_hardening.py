@@ -22,6 +22,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .harness import legacy_write_component
 from apps.agent import executor as executor_module
 from apps.agent import confirmations, policy, tools
 from apps.agent.executor import ToolExecutor
@@ -62,6 +63,7 @@ def _seed_role(org, role_name):
         role.permissions.set(
             [Permission.objects.get_or_create(code=c)[0] for c in codes])
     return role
+
 
 
 class TestClientTransport:
@@ -190,6 +192,7 @@ class BurstSafetyTests(AgentFixture):
         self.assertEqual(decision.kind, policy.ESCALATE)
         self.assertEqual(decision.handoff_reason, HumanHandoff.REASON_EXPLICIT)
 
+    @legacy_write_component
     def test_affirmative_followed_by_thanks_still_confirms(self):
         confirmations.stage_pending(
             self.conv, tool="create_appointment", args={},

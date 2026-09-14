@@ -35,6 +35,9 @@ from apps.agent import matchers, policy, situation, tier0
 
 # El inventario vivo. Crece SOLO con justificación explícita.
 SALVAGUARDAS = {
+    # B0: WRITE prohibido y salida clínica fuera de alcance; no reformular con LLM.
+    'T0_WRITE_PAUSED',
+    'T0_CLINICAL_LIMIT',
     'T0_DISABLED',
     'T0_EMERGENCY',
     'T0_EMERGENCY_NO_PHONE',

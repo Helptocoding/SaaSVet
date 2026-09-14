@@ -1,5 +1,8 @@
 # ADR p56 — Percepción, situación y el turno como objeto raíz
 
+> **Enmienda B0 (2026-09-13), vigente para esta release.** El filtro temporal de contención tiene prioridad sobre la publicación de salida libre cubierta por el corpus. No modifica percepción, arbiter, historia ni el orden de safety/ownership. C1 queda acordado como contexto causal acotado para B1, sin implementar DTO global, leases o revisiones en B0.
+> Alcance, pruebas, límites y rollback: [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md). El resto del ADR conserva sus decisiones salvo esta contención temporal.
+
 **Fecha**: 2026-08-01
 **Estado**: **ACEPTADO** (PO, 2026-08-01) — **sin implementar**
 **Contexto de producto**: subsistema del agente WhatsApp, tras la [auditoría de arquitectura conversacional](../whatsapp-agent-auditoria-arquitectura-2026-07-31.md) y el plan [É-F5](../whatsapp-agent-f5-conversacion-plan.md)

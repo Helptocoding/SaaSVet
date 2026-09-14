@@ -20,7 +20,7 @@ from django.utils import timezone
 from apps.channels.models import Message
 from apps.core.datetime_utils import org_now_local, org_today_local
 
-from . import identity_evidence, intake
+from . import identity, identity_evidence, intake
 from .executor import format_local_datetime, format_local_wallclock
 from .models import ContactIdentity, Conversation, HumanHandoff
 
@@ -233,6 +233,9 @@ def _verification_ok(conversation, minimum):
         return True
     if contact.owner_id is None:
         return False
+    if minimum in ('confirmed_in_chat', 'staff_verified'):
+        if not identity.is_verification_current(contact):
+            return False
     return order.index(contact.verification_level) >= order.index(minimum)
 
 
@@ -3125,6 +3128,13 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
     spec = TOOL_SPECS.get(name)
     if spec is None:
         return ToolOutcome(ok=False, client_error='unknown_tool')
+    if intake.write_is_contained(name):
+        executor.record_local(
+            tool_name=name, args_redacted={}, policy_decision='denied',
+            summary={'reason': 'autonomous_writes_paused'},
+            triggered_by_message=triggered_by,
+        )
+        return ToolOutcome(ok=False, client_error='autonomous_writes_paused')
     if name == BEGIN_OPERATION_TOOL:
         executor.record_local(
             tool_name=name,

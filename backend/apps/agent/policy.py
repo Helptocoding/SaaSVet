@@ -20,7 +20,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from . import confirmations, goals, identity, identity_evidence, matchers, tier0
+from . import confirmations, goals, identity, identity_evidence, intake, matchers, tier0
 from .models import Conversation, HumanHandoff
 
 logger = logging.getLogger('agent.events')
@@ -205,6 +205,14 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #    escritura proponen; la afirmativa ejecuta el commit staged en el
     #    planner — invariante TC-SEC-03). En F1 quedaba dormant (read-only).
     pending = confirmations.get_pending(conversation)
+    if pending and intake.write_is_contained(pending.get('tool')):
+        # Ni un pending heredado ni un "sí" reabren la escritura durante B0.
+        return PolicyDecision(
+            kind=ESCALATE, text=tier0.T0_WRITE_PAUSED,
+            handoff_reason=HumanHandoff.REASON_POLICY,
+            meta={'reason': 'autonomous_writes_paused',
+                  'detail': 'autonomous_writes_paused'},
+        )
     if not pending and matchers.is_bare_acknowledgement(burst_text):
         # Un "ok" aislado no acredita una cita inexistente ni abre un flujo.
         return PolicyDecision(kind=SILENT, meta={'reason': 'acknowledgement'})

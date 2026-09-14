@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .harness import legacy_write_component
 from apps.agent import confirmations
 from apps.agent import executor as executor_module
 from apps.agent import tools
@@ -47,6 +48,7 @@ def _seed_role(org, role_name):
         role.permissions.set(
             [Permission.objects.get_or_create(code=c)[0] for c in codes])
     return role
+
 
 
 class FamilyLinkBase(TestCase):
@@ -156,6 +158,7 @@ class FamilyChallengeFlowTests(FamilyLinkBase):
                          "el contacto se revinculó a otro titular")
 
 
+@legacy_write_component
 class FamilyRestrictedAccessTests(FamilyLinkBase):
     def setUp(self):
         super().setUp()

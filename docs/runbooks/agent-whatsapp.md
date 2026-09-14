@@ -1,5 +1,7 @@
 # Runbook: Agente WhatsApp + Inbox
 
+> **Enmienda de alcance B0 — 2026-09-13.** WRITE autónomo cerrado, incluidos asistencia y pendientes heredados. READ dentro de restricciones actuales y atención humana; copy sin aviso/atención garantizados. No cambia el detector clínico ni se amplía beta. Consultar [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md) para contratos mínimos, responsables pendientes, gate crítico, despliegue sin workers viejos y rollback que conserve contención. Esta enmienda prevalece sobre ejemplos de autonomía/avisos anteriores.
+
 **Alcance vigente (2026-08-23)**: operación del webhook, worker con agente,
 sender y bandeja agrupada por `(contacto, cuenta)` en `/inbox`. El staff puede
 responder con idempotencia, estado optimista y acuses de entrega; el agente

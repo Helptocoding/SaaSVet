@@ -1,5 +1,8 @@
 # ADR p54 — Conversación por objetivos y conservación vinculante en el agente
 
+> **Enmienda B0 (2026-09-13), vigente para esta release.** Mientras rige B0, los goals y la confianza de slots no habilitan WRITE. Se conservan sus validadores/lifecycle; la salida insegura cubierta por el corpus deriva a plantilla/humano sin retry de redacción. El filtro temporal no demuestra grounding ni sensibilidad clínica completa. B2/B5 y B6 reemplazarán las fronteras correspondientes; no se introduce un motor de workflows.
+> Alcance, pruebas, límites y rollback: [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md). El resto del ADR conserva sus decisiones salvo esta contención temporal.
+
 **Fecha**: 2026-07-25
 **Estado**: ACEPTADO (implementado en `develop`: `9bce13c`, `0767eb9`, `06e6edc`)
 **Contexto de producto**: subsistema del agente WhatsApp, tras la [auditoría conversacional](../whatsapp-agent-auditoria-conversacional-2026-07-24.md) y el plan [É-F3](../whatsapp-agent-epica-f3-conversacion-por-objetivos.md)

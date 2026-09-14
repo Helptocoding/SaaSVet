@@ -57,7 +57,7 @@ class IntakeCapabilityTests(AgentFixture):
         self.conv.refresh_from_db()
 
         names = self._tool_names()
-        self.assertIn('register_new_client_and_pet', names)
+        self.assertNotIn('register_new_client_and_pet', names)  # B0: WRITE cerrado
         self.assertNotIn('identify_client', names)
 
         denied = tools.run_tool(
@@ -81,7 +81,7 @@ class IntakeCapabilityTests(AgentFixture):
             conversation=self.conv, executor=self.executor(),
         )
         self.assertFalse(denied.ok)
-        self.assertEqual(denied.client_error, 'intake_path_conflict')
+        self.assertEqual(denied.client_error, 'autonomous_writes_paused')
 
     def test_reclassification_invalidates_pending_and_old_goal(self):
         self.assertTrue(self._select('new_client').ok)
@@ -149,7 +149,8 @@ class IntakePlannerCapabilitiesTests(AgentFixture):
         }
         self.assertEqual(first_names,
                          {'set_client_path', tools.REPLY_TOOL_NAME})
-        self.assertIn('register_new_client_and_pet', second_names)
+        self.assertNotIn('register_new_client_and_pet', second_names)
+        self.assertIn('get_clinic_info', second_names)
         self.assertNotIn('identify_client', second_names)
         self.conv.refresh_from_db()
         self.assertEqual(self.conv.intake_path, 'new_client')
@@ -219,7 +220,7 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
         )
 
         self.assertFalse(outcome.ok)
-        self.assertEqual(outcome.client_error, 'operation_authorization_required')
+        self.assertEqual(outcome.client_error, 'autonomous_writes_paused')
         self.assertIsNone(goals.get_open_goal(self.conv))
         self.assertIsNone(confirmations.get_pending(self.conv))
 
@@ -273,7 +274,7 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
         self.assertIn(request.body, planner_context)
         self.assertNotIn(old_operation_data.body, planner_context)
         names = self._tool_names()
-        self.assertIn('create_appointment', names)
+        self.assertNotIn('create_appointment', names)  # Interpretación no reabre B0.
         self.assertIn('find_available_slots', names)
         self.assertNotIn('cancel_appointment', names)
 
@@ -431,7 +432,7 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
             triggered_by=thanks, burst_messages=[thanks],
         )
 
-        self.assertEqual(result['decision'], 'planner_reply')
+        self.assertEqual(result['decision'], 'autonomous_writes_paused')
         self.assertIsNone(confirmations.get_pending(self.conv))
         self.assertFalse(Message.objects.filter(
             conversation=self.conv,

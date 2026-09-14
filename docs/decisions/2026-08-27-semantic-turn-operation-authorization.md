@@ -1,5 +1,8 @@
 # Autorización semántica del turno posterior a un recibo
 
+> **Enmienda B0 (2026-09-13), vigente para esta release.** La evaluación semántica puede interpretar una intención y abrir un objetivo, pero no acredita consentimiento para modificar negocio. B0 contiene todos los WRITE, incluso tras evaluación accept o pendiente heredado. C2/B7 y cada adaptador B8 definirán la autoridad de la operación exacta; no se implementan aquí. Se mantiene por ahora la restricción de READ posterior al recibo, cuya modificación pertenece a B2.
+> Alcance, pruebas, límites y rollback: [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md). El resto del ADR conserva sus decisiones salvo esta contención temporal.
+
 **Fecha:** 2026-08-27
 **Estado:** aceptada e implementada
 **Sustituye:** el mecanismo `begin_operation` de

@@ -21,6 +21,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.agent import executor as executor_module
+from apps.agent import tier0
 from apps.agent.llm import LLMResult
 from apps.agent.models import AgentSettings, ContactIdentity, Conversation
 from apps.agent.tests.harness import RealApiTransport, assert_no_forbidden, run_turn
@@ -149,7 +150,8 @@ class ReadFlowTests(RegressionBase):
                 LLMResult(kind="text", text="La consulta cuesta $350.00 🙂"),
             ],
         )
-        self.assertIn("350", bodies[-1])
+        self.assertEqual(bodies[-1], tier0.T0_GUARD_BLOCKED)
+        self.assertNotIn("350", bodies[-1])  # B0: precio en prosa requiere revisión.
 
     def test_int10_clinic_info(self):
         bodies, _, _ = self._turn(

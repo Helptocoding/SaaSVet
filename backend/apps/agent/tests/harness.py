@@ -11,6 +11,11 @@ LLM = elementos obligatorios/prohibidos, jamás igualdad. Tools y efectos de
 dominio = exactos. La suite CI corre contra el stub (bloqueante); el eval
 con LLM real es nightly (comando agent_eval).
 """
+from functools import wraps
+from unittest.mock import patch
+
+from django.test import tag
+from django.test.runner import DiscoverRunner
 from rest_framework.test import APIClient
 
 from apps.agent import guards, planner
@@ -178,3 +183,186 @@ def run_turn(testcase, conversation, agent_user, text=None, *, scripted_llm,
         for body in bodies:
             assert_no_forbidden(testcase, body, decoy_terms=decoy_terms)
     return bodies, result, stub
+
+
+def legacy_write_component(target):
+    """Ejercita componentes inactivos, NO autonomía ni aceptación de B0.
+
+    Opt-in explícito por clase/método para conservar pruebas de precondiciones,
+    slots y handlers mientras el release deniega WRITE. Solo sustituye la
+    frontera temporal B0; mantiene identidad, permisos y validaciones internas.
+    No es un flag de aplicación ni afecta tests que no llevan este decorador.
+    El corpus crítico debe ejecutarse sin esta sustitución.
+    """
+    if isinstance(target, type):
+        setup = target.setUp
+
+        @wraps(setup)
+        def component_setup(self):
+            boundary = patch('apps.agent.intake.CONTAINED_WRITES', frozenset())
+            boundary.start()
+            self.addCleanup(boundary.stop)
+            setup(self)
+
+        target.setUp = component_setup
+        return tag('legacy_write_component')(target)
+
+    @wraps(target)
+    def component_test(*args, **kwargs):
+        with patch('apps.agent.intake.CONTAINED_WRITES', frozenset()):
+            return target(*args, **kwargs)
+
+    return tag('legacy_write_component')(component_test)
+
+
+# B0: pruebas de planner con eventos persistidos; NO simula completion, claim
+# ni entrega. B3/B4 integrarán sus fronteras reales sin sustituir run_turn.
+class InjectedFailure(RuntimeError):
+    pass
+
+
+class FailureBarrier:
+    def __init__(self, fail_at=None):
+        self.fail_at = fail_at
+        self.events = []
+
+    def reach(self, name):
+        self.events.append(name)
+        if name == self.fail_at:
+            raise InjectedFailure(name)
+
+
+class ControlledTransport:
+    """Proveedor sin red, con respuestas explícitas y fallos antes/después."""
+
+    def __init__(self, responses=(), barrier=None):
+        self.responses = iter(responses)
+        self.calls = []
+        self.barrier = barrier or FailureBarrier()
+
+    def __call__(self, method, path, *, headers, params=None, json=None):
+        self.calls.append((method.upper(), path))
+        self.barrier.reach('before_provider')
+        response = next(self.responses)  # Una llamada inesperada falla el test.
+        if isinstance(response, Exception):
+            raise response
+        self.barrier.reach('after_provider')
+        return response
+
+
+def business_snapshot():
+    from apps.appointments.models import Appointment
+    from apps.patients.models import Owner, Pet
+    # Incluye filas de otros tenants y valores: detecta updates además de altas.
+    return {
+        model._meta.label: list(model.objects.order_by('pk').values())
+        for model in (Owner, Pet, Appointment)
+    }
+
+
+class PersistedTurnHarness:
+    def __init__(self, testcase, conversation, agent_user, *, transport=None,
+                 barrier=None):
+        self.testcase = testcase
+        self.conversation = conversation
+        self.agent_user = agent_user
+        self.transport = transport or ControlledTransport()
+        self.barrier = barrier or FailureBarrier()
+        self.before_business = business_snapshot()
+        self.inbounds = []
+        self.outbounds = []
+
+    def run(self, burst, *, scripted_llm):
+        from apps.agent.llm import StubLLMClient
+        from apps.agent.models import AgentSettings
+
+        conv = self.conversation
+        before_outbound = set(Message.objects.filter(
+            conversation=conv, direction=Message.DIRECTION_OUT,
+        ).values_list('pk', flat=True))
+        self.inbounds = [
+            Message.objects.create(
+                organization=conv.organization,
+                channel_account=conv.channel_account, conversation=conv,
+                direction=Message.DIRECTION_IN, author_type=Message.AUTHOR_CLIENT,
+                body=body, status=Message.STATUS_PENDING,
+            ) for body in burst
+        ]
+        self.barrier.reach('inbound_persisted')
+        self.barrier.reach('before_planner')
+        result = planner.handle_inbound(
+            conv, agent_settings=AgentSettings.objects.get(
+                organization=conv.organization),
+            llm_client=StubLLMClient(scripted=scripted_llm),
+            executor=ToolExecutor(conv, self.agent_user,
+                                  transport=self.transport),
+            burst=list(burst), triggered_by=self.inbounds[-1],
+        )
+        self.outbounds = list(Message.objects.filter(
+            conversation=conv, direction=Message.DIRECTION_OUT,
+        ).exclude(pk__in=before_outbound).order_by('pk'))
+        self.barrier.reach('after_planner')
+        return result
+
+    def assert_zero_business_effects(self):
+        self.testcase.assertEqual(self.before_business, business_snapshot())
+        self.testcase.assertFalse([
+            call for call in self.transport.calls
+            if call[0] not in ('GET', 'HEAD', 'OPTIONS')
+        ], 'La contención debe impedir incluso el intento HTTP de WRITE')
+
+
+class CriticalB0Runner(DiscoverRunner):
+    """Exige los escenarios B0: ni omitir una clase ni skip cuenta como verde."""
+
+    REQUIRED = {
+        'B0ContainmentTests': (
+            'test_registry_covers_every_current_write',
+            'test_forced_dispatch_cannot_invoke_any_write_handler',
+            'test_forced_planner_write_is_handed_off',
+            'test_legacy_pending_cannot_authorize_any_reply',
+            'test_direct_pending_commit_is_contained',
+            'test_unsafe_output_corpus_is_replaced_without_retry',
+            'test_read_result_does_not_prove_write_or_price',
+            'test_public_read_and_explicit_human_remain_available',
+            'test_personal_read_needs_current_identity',
+            'test_pending_events_and_queued_outbound_do_not_mean_delivery',
+            'test_failure_after_persistence_leaves_pending_event',
+            'test_llm_timeout_yields_honest_fallback',
+            'test_emergency_copy_uses_only_configured_phone',
+        ),
+        'B0CorpusGateTests': (
+            'test_fixture_is_required_and_complete',
+            'test_failed_empty_skipped_or_expected_failure_cannot_pass_gate',
+            'test_controlled_provider_failure_boundaries',
+            'test_alert_acceptance_failure_and_no_free_text_export',
+        ),
+    }
+
+    def build_suite(self, test_labels=None, **kwargs):
+        suite = super().build_suite(test_labels, **kwargs)
+
+        def ids(items):
+            for case in items:
+                if hasattr(case, 'id'):
+                    yield case.id()
+                else:
+                    yield from ids(case)
+
+        expected = {
+            f'apps.agent.tests.test_b0_containment.{group}.{method}'
+            for group, methods in self.REQUIRED.items() for method in methods
+        }
+        missing = expected - set(ids(suite))
+        if missing:
+            raise RuntimeError(f'Escenarios críticos B0 ausentes: {sorted(missing)}')
+        self._planned_count = suite.countTestCases()
+        return suite
+
+    def suite_result(self, suite, result, **kwargs):
+        failures = super().suite_result(suite, result, **kwargs)
+        if (result.testsRun == 0 or result.skipped or result.expectedFailures
+                or result.unexpectedSuccesses
+                or result.testsRun != getattr(self, '_planned_count', result.testsRun)):
+            return failures + 1
+        return failures

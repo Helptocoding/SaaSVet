@@ -126,7 +126,8 @@ class ClinicPhoneTests(TestCase):
         from apps.agent.tier0 import render_emergency
         bare = Organization.objects.create(name="Bare Phone", timezone="UTC")
         text = render_emergency(None, bare)
-        self.assertIn("Acude de inmediato", text)
+        self.assertIn("atención veterinaria presencial disponible", text)
+        self.assertIn("no esperes una respuesta por este chat", text)
         self.assertNotIn("llámanos al", text)
 
 
