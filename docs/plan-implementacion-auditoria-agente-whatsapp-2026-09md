@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-14**. Estado: **B0 y B1 implementadas; las fases restantes siguen pendientes y la activación no está autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-15**. Estado: **B0, B1 y B2 implementadas y cerradas técnicamente; las fases restantes siguen pendientes y la activación no está autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -375,6 +375,8 @@ Safety/corpus pueden prepararse desde B1 y guidance limitada existe desde B0. No
 **Riesgos eliminados:** divergencia de burst y falsa historia del turno actual en rutas migradas. **Reducidos:** pérdida de evidencia textual/causal. **Abiertos:** comprensión de media, goals contaminados, consentimiento y entrega. La metadata preservada no equivale a multimedia implementada.
 
 ### Fase B2 — Resultados tipados y respuestas respaldadas
+
+**Seguimiento 2026-09-15: COMPLETED en alcance B2.** C3 y manifiesto estático implementados sobre B1 (`2b6c9ce`), sin nuevas tablas ni migraciones. Aceptación conjunta: 448 tests (39 dedicados B2, 163 de compatibilidad/endpoints y 246 de regresión B1/continuidad), más 17 críticos B0; todos aprobados, sin fallos, errores ni skips. `makemigrations --check --dry-run`: `No changes detected`. Contratos, endpoints, desviaciones, límites y commits en [acta B2](implementacion-b2-agente-whatsapp-2026-09-15.md) y [contrato C3](contrato-resultados-tools-b2.md). H05/H14/H20 quedan mitigados técnicamente en estas rutas, sin declarar garantía end-to-end pendiente de B7/B8/B9 ni cierre de H04/B5. WRITE autónomo permanece cerrado, activación **PENDING_ACTIVATION_REQUIREMENTS**. No se implementan B3–B9/E1–E5/P-A/P-B.
 
 **Objetivo.** Unificar semántica de consulta y efecto, eliminando éxitos/ausencias falsos y números usados como pruebas accidentales.
 
