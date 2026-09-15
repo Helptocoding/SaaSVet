@@ -43,6 +43,7 @@ from .executor import ToolExecutor
 from .llm import LLMError, estimate_cost, get_llm_client
 from .models import Conversation, HumanHandoff, LLMCall, TurnDecision
 from .outbound import enqueue_outbound
+from .turn_context import context_from_inputs, messages_for_turn
 
 logger = logging.getLogger('agent.events')
 
@@ -53,7 +54,8 @@ MAX_CONSECUTIVE_TOOL_FAILURES = 2
 def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
                    executor=None, triggered_by=None, burst=None,
                    payload_types=None, burst_messages=None,
-                   operation_authorizer=None, operation_verifier=None):
+                   operation_authorizer=None, operation_verifier=None,
+                   turn_context=None):
     """Envoltorio de `_handle_inbound_inner` que deja el rastro append-only
     de la decisión del turno (R12, É-F4 Fase 1 §1.3).
 
@@ -64,18 +66,23 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
     se pierde el rastro de ESE turno.
     """
     started = time.monotonic()
+    turn_context = context_from_inputs(
+        conversation, turn_context=turn_context, burst_messages=burst_messages,
+        triggered_by=triggered_by, burst=burst, payload_types=payload_types,
+    )
+    source_messages = messages_for_turn(conversation, turn_context)
+    triggered_by = source_messages[-1] if source_messages else None
     result = _handle_inbound_inner(
         conversation, agent_settings=agent_settings, llm_client=llm_client,
-        executor=executor, triggered_by=triggered_by, burst=burst,
-        payload_types=payload_types, burst_messages=burst_messages,
+        executor=executor, triggered_by=triggered_by, turn_context=turn_context,
+        source_messages=source_messages,
         operation_authorizer=operation_authorizer,
         operation_verifier=operation_verifier,
     )
     # El árbitro corre AQUÍ, con el saliente ya encolado (É-F5 Fase 4, p56
-    # §5-bis): clasifica qué le pasó al compromiso y el ejecutor aplica los
-    # efectos SOBRE EL COMPROMISO. Ese turno ya ocurrió — el cliente ya leyó
-    # el mensaje y nada de esto puede tocarlo.
-    verdict = _settle_commitment(conversation, result, burst)
+    # §5-bis): clasifica qué le pasó al compromiso y aplica sus efectos. Encolar
+    # no acredita emisión ni lectura del saliente.
+    verdict = _settle_commitment(conversation, result, turn_context)
     _record_turn_decision(conversation, result, started, triggered_by,
                           verdict=verdict)
     return result
@@ -127,7 +134,7 @@ def _no_self_service_factor(conversation):
     return not identity._pet_names(contact.owner)
 
 
-def _settle_commitment(conversation, result, burst):
+def _settle_commitment(conversation, result, turn_context):
     """Clasifica el desenlace del compromiso y aplica sus efectos.
 
     Nunca puede tumbar el turno: si algo revienta aquí, el cliente ya tiene su
@@ -135,14 +142,12 @@ def _settle_commitment(conversation, result, burst):
     `_record_turn_decision`).
     """
     try:
-        raw = [b for b in (burst or []) if b]
-        burst_text = "\n".join(raw)
         commitment = (goals.get_open_goal(conversation)
                       or goals.get_identity_commitment(conversation))
         view = (arbiter.CommitmentView(commitment.name, commitment.return_to)
                 if commitment is not None else None)
         facts = _observe_turn_facts(
-            burst_text,
+            turn_context.burst_text,
             goal_advanced=bool(result.get('goal_advanced')),
             other_goal_proposed=result.get('other_goal_proposed', ''),
         )
@@ -299,17 +304,14 @@ def _infer_because(result):
 
 
 def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
-                          executor=None, triggered_by=None, burst=None,
-                          payload_types=None, burst_messages=None,
+                          executor=None, triggered_by=None, turn_context,
+                          source_messages=(),
                           operation_authorizer=None, operation_verifier=None):
     """Procesa el turno de la conversación. Devuelve un dict de telemetría
     {decision, llm_calls, tools} para el worker/tests.
 
-    `burst_messages` = los `Message` entrantes drenados en este turno, en orden
-    (el worker los agrupa); `burst` y `payload_types` se derivan de ellos y se
-    conservan como parámetros para los tests que solo tienen texto. El Policy
-    Engine evalúa la ráfaga completa para urgencia/humano/opt-out/confirmación;
-    el modelo ya veía todos los mensajes en el historial.
+    Policy, prompts y arbiter derivan sus vistas del mismo TurnContext. Los ORM
+    acotados a sus IDs solo adaptan consumidores existentes que necesitan FKs.
     """
     from .models import AgentSettings
     if agent_settings is None:
@@ -317,20 +319,8 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
             organization=conversation.organization,
         ).first()
 
-    burst_messages = list(burst_messages or [])
-    if burst_messages:
-        burst = [m.body for m in burst_messages]
-        payload_types = [m.payload_type for m in burst_messages]
-    raw_burst = list(burst) if burst is not None else []
-    texts = [b for b in raw_burst if b]
-    text = texts[-1] if texts else (
-        '' if raw_burst else _last_inbound_text(conversation))
-    if not raw_burst:
-        raw_burst = [text] if text else []
-    decision = policy.evaluate(conversation, text, burst=raw_burst,
-                               payload_types=payload_types,
-                               agent_settings=agent_settings,
-                               burst_messages=burst_messages)
+    decision = policy.evaluate(conversation, turn_context=turn_context,
+                               agent_settings=agent_settings)
 
     if decision.kind == policy.SILENT:
         return {'decision': 'silent', 'llm_calls': 0, 'tools': 0}
@@ -384,7 +374,6 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
     # reclasificar un "sí" que ya tiene una propuesta real a la cual responder.
     assessment = None
     if operation_authorization.requires_assessment(conversation):
-        source_messages = burst_messages or ([triggered_by] if triggered_by else [])
         if source_messages:
             assessed = operation_authorization.assess_turn(
                 conversation,
@@ -398,10 +387,7 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
         llm_client = get_llm_client('planner')
     result = _run_planner(
         conversation, agent_settings, llm_client, executor, triggered_by,
-        burst_text='\n'.join(texts) if texts else (text or ''),
-        # Sin texto legible, el tipo de adjunto ES el mensaje (É-F5 Fase 5):
-        # viaja como hecho de situación.
-        media_kinds=payload_types if not texts else None,
+        turn_context=turn_context,
         pending_context=decision.meta.get('pending_context', False),
     )
     if assessment is not None:
@@ -410,12 +396,12 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
 
 
 def _run_planner(conversation, agent_settings, llm_client, executor,
-                 triggered_by, *, burst_text='', media_kinds=None,
+                 triggered_by, *, turn_context,
                  pending_context=False):
+    burst_text = turn_context.burst_text
     tool_specs = tools.as_openai_tools(conversation)
     base_messages = prompts.assemble_messages(conversation,
-                                              burst_text=burst_text,
-                                              media_kinds=media_kinds)
+                                              turn_context=turn_context)
     active_pending = (confirmations.get_pending(conversation)
                       if pending_context else None)
     if active_pending:
@@ -560,7 +546,8 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 # F1b · ¿este contacto ya había hablado con la clínica? Negar el
                 # hilo era honesto cuando el contexto moría con la conversación;
                 # desde F2 el modelo lo recibe, así que decirlo se contradice.
-                has_history=prompts.has_previous_history(conversation),
+                has_history=prompts.has_previous_history(
+                    conversation, turn_context=turn_context),
                 # p59 §6 · el simétrico de `unbacked_success`. Conv 21: el agente
                 # dijo cuatro veces «no tengo ninguna cita» mientras las tools
                 # devolvían una. Nada lo vigilaba.

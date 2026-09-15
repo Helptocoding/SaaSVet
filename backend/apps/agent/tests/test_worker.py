@@ -209,3 +209,64 @@ class SendPendingTests(TestCase):
         self.assertEqual(message.status, Message.STATUS_FAILED)
         self.assertIn("24h", message.failure_reason)
         self.assertEqual(message.attempts, 0)  # ni siquiera intentó el HTTP
+
+
+class B1WorkerContextTests(TestCase):
+    """CTX-01 runs through the actual worker claim and planner entry point."""
+
+    def setUp(self):
+        from apps.users.services import ensure_agent_user
+        self.org = Organization.objects.create(name='B1 Worker', timezone='UTC')
+        self.channel = ChannelAccount.objects.create(
+            organization=self.org, external_account_id='b1-worker')
+        agent_user, _ = ensure_agent_user(self.org)
+        AgentSettings.objects.create(organization=self.org, enabled=True, agent_user=agent_user)
+
+    def test_claimed_burst_is_shared_and_first_contact_has_no_invented_history(self):
+        import json
+        from unittest.mock import patch
+        from apps.agent import planner, policy, prompts
+        from apps.agent.llm import LLMResult, StubLLMClient
+
+        first = ingest_inbound_message(self.channel, wamid='b1-worker-1',
+                                       wa_id='5215511110000', body='hola')
+        last = ingest_inbound_message(self.channel, wamid='b1-worker-2',
+                                      wa_id='5215511110000', body='¿qué horarios tienen?')
+        captured = {}
+        assemble = prompts.assemble_messages
+
+        def capture(conversation, **kwargs):
+            captured['context'] = kwargs['turn_context']
+            self.assertEqual(set(Message.objects.filter(
+                pk__in=kwargs['turn_context'].inbound_ids).values_list('status', flat=True)),
+                {Message.STATUS_PROCESSED})
+            # A real later input arrives during this attempt. It belongs to a
+            # subsequent turn even though the prompt has not been assembled yet.
+            later = ingest_inbound_message(self.channel, wamid='b1-worker-later',
+                                           wa_id='5215511110000', body='mensaje posterior')
+            Message.objects.filter(pk=later.pk).update(
+                available_at=timezone.now() + timedelta(minutes=1))
+            captured['prompt'] = assemble(conversation, **kwargs)
+            return captured['prompt']
+
+        stub = StubLLMClient(scripted=[LLMResult(
+            kind='text', text='Puedo ayudarte con los horarios de la clínica.')])
+        with (patch.object(planner, 'handle_inbound', wraps=planner.handle_inbound) as entry,
+              patch.object(planner, 'get_llm_client', return_value=stub),
+              patch.object(policy, 'evaluate', wraps=policy.evaluate) as evaluate,
+              patch.object(prompts, 'assemble_messages', side_effect=capture),
+              patch.object(planner, '_observe_turn_facts', wraps=planner._observe_turn_facts) as observe):
+            self.assertEqual(process_pending_conversations(now=_later()), 1)
+        entry.assert_called_once()
+        turn = entry.call_args.kwargs['turn_context']
+        self.assertEqual(turn.inbound_ids, (first.pk, last.pk))
+        self.assertIs(evaluate.call_args.kwargs['turn_context'], turn)
+        self.assertIs(captured['context'], turn)
+        self.assertEqual(observe.call_args.args[0], turn.burst_text)
+        data = json.loads(captured['prompt'][0]['content'].split('\n', 1)[1])
+        self.assertNotIn('ya_hablamos_antes', data)
+        self.assertEqual([m['content'] for m in captured['prompt'] if m['role'] == 'user'],
+                         ['hola', '¿qué horarios tienen?'])
+        self.assertNotIn('mensaje posterior', str(captured['prompt']))
+        self.assertEqual(Message.objects.get(external_message_id='b1-worker-later').status,
+                         Message.STATUS_PENDING)

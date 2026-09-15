@@ -254,10 +254,8 @@ class QuietWindowTests(AgentFixture):
         seen = {}
 
         def fake_turn(conversation, **kwargs):
-            # Viajan los OBJETOS, no los cuerpos (plan de continuidad, D24):
-            # sin PK no hay procedencia de identidad que sellar, y `burst` +
-            # `payload_types` eran dos listas paralelas que podían desalinearse.
-            seen['messages'] = kwargs.get('burst_messages')
+            # B1: IDs y texto comparten el contexto causal ya congelado.
+            seen['turn'] = kwargs['turn_context']
             from apps.agent.outbound import enqueue_outbound
             enqueue_outbound(conversation, "una sola respuesta", author='agent')
             return {'decision': 'planner_reply', 'llm_calls': 1, 'tools': 0}
@@ -265,9 +263,9 @@ class QuietWindowTests(AgentFixture):
         with mock.patch("apps.agent.planner.handle_inbound", fake_turn):
             process_pending_conversations(now=_later())
 
-        self.assertEqual([m.body for m in seen['messages']],
-                         ["hola", "quiero agendar", "para mañana"])
-        self.assertTrue(all(m.pk for m in seen['messages']))
+        self.assertEqual(seen['turn'].texts,
+                         ("hola", "quiero agendar", "para mañana"))
+        self.assertEqual(len(seen['turn'].inbound_ids), 3)
         self.assertEqual(
             Message.objects.filter(conversation=self.conv,
                                    direction=Message.DIRECTION_OUT).count(), 1)
@@ -475,19 +473,14 @@ class ContactRematchTests(AgentFixture):
 class IncomingMediaTests(AgentFixture):
     account_id = "900000107"
 
-    def test_media_reaches_the_model_instead_of_a_template(self):
-        """É-F5 Fase 5: media sin texto ya NO se despacha con una constante.
-
-        Antes este test exigía lo contrario (`T0_MEDIA_AUDIO`, cero llamadas al
-        modelo). La constante era correcta y era inútil: "no alcanzo a ver lo
-        que me mandaste" no sabe de qué se venía hablando. El turno llega al
-        modelo con el hecho y con el historial, que es lo que permite responder
-        algo que continúe la conversación.
-        """
+    def test_media_without_text_has_an_explicit_limit(self):
+        """B1 exige limitación segura, sin inferir el contenido desde el pasado."""
         d = policy.evaluate(self.conv, "", burst=[""],
                             payload_types=["image"],
                             agent_settings=self.settings)
-        self.assertEqual(d.kind, policy.RUN_PLANNER)
+        self.assertEqual(d.kind, policy.REPLY)
+        self.assertEqual(d.meta['reason'], 'unreadable_media')
+        self.assertIn('texto', d.text)
 
     def test_the_kind_of_attachment_travels_as_a_fact(self):
         """El modelo tiene que poder distinguir una nota de voz de un archivo:

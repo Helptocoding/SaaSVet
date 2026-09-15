@@ -1,5 +1,7 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
+> **Corte B1 (2026-09-14):** evidencia única del turno implementada sobre B0. `channels.events` normaliza texto/caption, tipo real y referencias explícitas en `_channel_event` v1; `agent.turn_context` congela eventos/IDs/cursor/reloj sin ORM ni persistencia adicional. Worker, policy, planner, prompts y wrapper del arbiter comparten C1. El historial usa cursor exclusivo y emisión, con los permisos de identidad existentes. La limitación de media sin comprensión binaria sigue explícita. No se habilitan escrituras ni consentimiento. Activación: **PENDING_ACTIVATION_REQUIREMENTS**. Contrato y pruebas: [acta B1](../implementacion-b1-agente-whatsapp-2026-09-14.md).
+
 > **Estado**: É-F3 y É-F4 completas (gobernanza conversacional: interrupciones,
 > suspender-no-destruir + `TurnDecision`, autoría de salientes, ventana por
 > turnos, árbitro + compromiso unificado

@@ -158,6 +158,8 @@ def _run_turn(conversation, pending, now):
     # único) para no romper instalaciones a medio provisionar.
     if agent_settings and agent_settings.enabled and agent_settings.agent_user_id:
         from . import planner
+        from .turn_context import build_turn_context
+        turn_context = build_turn_context(conversation, pending, now=now)
         before_ids = set(
             Message.objects.for_organization(org)
             .filter(conversation=conversation,
@@ -166,16 +168,7 @@ def _run_turn(conversation, pending, now):
         )
         result = planner.handle_inbound(
             conversation, agent_settings=agent_settings,
-            triggered_by=pending[-1],
-            # La ráfaga COMPLETA va al Policy Engine: la urgencia puede venir
-            # en cualquier mensaje del grupo, no solo en el último (W0-2).
-            #
-            # Viajan los OBJETOS, no los cuerpos (plan de continuidad, D24): sin
-            # PK no hay procedencia de identidad que sellar, y `triggered_by`
-            # solo apunta al último de la ráfaga. Antes iban dos listas
-            # paralelas (`burst` y `payload_types`) que podían desalinearse;
-            # ahora se derivan dentro, de la misma fuente.
-            burst_messages=pending,
+            turn_context=turn_context,
         )
         _discard_if_superseded(conversation, pending, before_ids, result)
         return

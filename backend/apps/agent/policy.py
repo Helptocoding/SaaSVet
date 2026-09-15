@@ -54,34 +54,27 @@ def _agent_settings(conversation):
     ).first()
 
 
-def evaluate(conversation, text, *, burst=None, payload_types=None,
-             agent_settings=None, burst_messages=None):
+def evaluate(conversation, text='', *, burst=None, payload_types=None,
+             agent_settings=None, burst_messages=None, turn_context=None):
     """Pipeline pre-planner. Devuelve PolicyDecision.
 
-    `text` = último entrante. `burst_messages` = los `Message` entrantes drenados
-    en este turno (el worker los agrupa); `burst`/`payload_types` se DERIVAN de
-    ellos. Los matchers de seguridad —urgencia, petición de humano, opt-out y
-    confirmación— corren sobre la ráfaga COMPLETA: con "mi perro convulsiona" +
-    "ayúdenme por favor" el detector solo veía el segundo mensaje y la urgencia
-    se perdía. Los matchers de conveniencia (gracias, pagos) siguen mirando el
-    último mensaje, que es su semántica.
-
-    **Los objetos, no solo los cuerpos** (plan de continuidad, D24): sin PK no
-    hay procedencia que sellar, y mantener listas paralelas de cuerpos y tipos
-    —que es lo que había— invita a que se desalineen.
+    C1 es la fuente del texto/caption real, incluido el último texto legible.
+    Los argumentos legacy se convierten una sola vez si no se recibió C1.
+    Urgencia, humano, opt-out y confirmación leen la ráfaga completa; los
+    matchers que necesitan el último texto lo derivan del mismo contexto.
     """
     if agent_settings is None:
         agent_settings = _agent_settings(conversation)
     contact = conversation.contact
     flow = conversation.flow
-    burst_messages = list(burst_messages or [])
-    if burst_messages:
-        raw_burst = [m.body for m in burst_messages]
-        payload_types = [m.payload_type for m in burst_messages]
-    else:
-        raw_burst = list(burst) if burst is not None else [text]
-    burst = [b for b in raw_burst if b]
-    burst_text = '\n'.join(burst) if burst else (text or '')
+    from .turn_context import context_from_inputs
+    turn_context = context_from_inputs(
+        conversation, turn_context=turn_context, burst_messages=burst_messages,
+        burst=burst if burst is not None else [text], payload_types=payload_types,
+    )
+    text = turn_context.latest_text
+    burst = [b for b in turn_context.texts if b]
+    burst_text = turn_context.burst_text
 
     # 0. Kill switch / demo → buzón pasivo (T0-DISABLED, sin LLM).
     org = conversation.organization
@@ -110,13 +103,6 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
     #     turno: `missing_slots` y el ensamblado del prompt son lectores.
     identity_evidence.reconcile_identity_facts(conversation)
     flow = conversation.flow
-
-    # 2b. RETIRADO (É-F5 Fase 5). Media sin texto seguía contestando con una
-    #     constante ("no alcanzo a ver lo que me mandaste") que ignoraba de qué
-    #     venían hablando. El turno ahora llega al modelo con el hecho
-    #     `mando_algo_que_no_puedo_leer` y el historial, que es justo lo que
-    #     convierte esa frase en una respuesta. Se sigue midiendo el volumen por
-    #     `payload_type` para decidir si toca transcribir (UX-14).
 
     # 3. URGENCIA (prioridad 1, R16) — antes que todo, incluso a mitad de
     #    flujo. Un `pending_action` en curso NO se descarta aquí: la
@@ -184,6 +170,17 @@ def evaluate(conversation, text, *, burst=None, payload_types=None,
         conversation.save(update_fields=['flow'])
         return PolicyDecision(kind=REPLY, text=tier0.T0_HANDOFF_WAITING,
                               meta={'reason': 'handoff_ack'})
+
+    # B1: no texto/caption interpretable = límite explícito. Un adjunto no
+    # obtiene significado de un pending viejo ni permite fingir comprensión.
+    if (not burst_text.strip()
+            and any(event.uninterpretable for event in turn_context.events)):
+        return PolicyDecision(
+            kind=REPLY,
+            text='No puedo interpretar ese adjunto por aquí. Escríbeme en '
+                 'texto qué necesitas o pide que te atienda una persona.',
+            meta={'reason': 'unreadable_media'},
+        )
 
     # 6c. Compromiso de identidad SUSPENDIDO (R5/R8): si no hay ninguno al
     #     frente pero sí uno suspendido, se retoma antes de que los pasos

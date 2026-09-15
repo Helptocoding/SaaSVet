@@ -1,5 +1,7 @@
 # ADR p58 — Continuidad conversacional e identidad del agente
 
+> **Enmienda B1 (2026-09-14).** Hechos de contacto, transcript y señal de contacto previo usan un límite exclusivo `(created_at,id)` anterior al primer inbound de `TurnContext`. `PENDING`/`PROCESSED` no determinan qué es pasado. El alcance exige organización, contacto y cuenta; el transcript privado de otros episodios solo se lee con verificación vigente. Se conserva la excepción D19 para hechos de existencia/fecha de contacto previo, sin entregar su contenido. Para historia causal se admiten entrantes recibidos y salientes emitidos; la visibilidad inmediata de un borrador humano en Inbox no acredita emisión. El turno actual se agrega una sola vez desde C1, nunca como historial anterior. No se cambia la verificación, su TTL ni el anti-eco. [Acta B1](../implementacion-b1-agente-whatsapp-2026-09-14.md).
+
 **Fecha**: 2026-08-17
 **Estado**: **ACEPTADO** (PO, 2026-08-15/16) — **implementado y en producción** (`a00afb6`; F5 en `91c8618`)
 **Addendum de visibilidad del Inbox**: 2026-08-23

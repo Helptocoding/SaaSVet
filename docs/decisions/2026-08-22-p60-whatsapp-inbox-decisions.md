@@ -129,6 +129,8 @@ una forma clara de evitar fatiga de notificaciones.
 
 ### D-10 · Orden de llegada en v1
 
+**Aclaración B1 (2026-09-14):** el cursor causal exclusivo y el orden de eventos de `TurnContext` usan `(Message.created_at, Message.id)` persistidos localmente. `raw_metadata.timestamp` de Meta sigue siendo diagnóstico; no reordena mensajes ni reconstruye causalidad legacy. Caption/tipo/reply/action se conservan en la proyección validada `_channel_event` v1, sin binarios ni cuerpo duplicado. [Contrato y pruebas B1](../implementacion-b1-agente-whatsapp-2026-09-14.md).
+
 El transcript continúa ordenado por persistencia local (`created_at`, `id`). El
 timestamp del proveedor puede normalizarse y medirse en el futuro, pero no
 reordena históricos ni altera cursores/unread en v1. Adoptarlo como autoridad de

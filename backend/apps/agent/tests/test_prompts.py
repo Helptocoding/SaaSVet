@@ -38,6 +38,7 @@ class PromptsTestCase(TestCase):
         return Message.objects.create(
             organization=self.org, channel_account=self.channel,
             conversation=self.conv, direction=Message.DIRECTION_IN,
+            contact=self.contact,
             author_type=Message.AUTHOR_CLIENT, body=body,
             status=Message.STATUS_PROCESSED, available_at=available_at,
         )
@@ -47,6 +48,7 @@ class PromptsTestCase(TestCase):
         return Message.objects.create(
             organization=self.org, channel_account=self.channel,
             conversation=self.conv, direction=Message.DIRECTION_OUT,
+            contact=self.contact,
             author_type=author_type, semantic_type=semantic_type,
             operation_key=operation_key, body=body,
             status=Message.STATUS_SENT,
@@ -388,4 +390,157 @@ class VerifiedBehaviourPromptTests(PromptsTestCase):
     def test_prompt_version_was_bumped(self):
         """`PROMPT_VERSION` viaja en cada `LLMCall`: sin bumpearlo no se puede
         correlacionar calidad con versión, que es para lo que existe."""
-        self.assertEqual(prompts.PROMPT_VERSION, 'reception-f5-v15')
+        self.assertEqual(prompts.PROMPT_VERSION, 'reception-b1-v16')
+
+
+class B1HistoryCursorTests(PromptsTestCase):
+    """CTX-01: causal history, shared immutable events and scoped reads."""
+
+    def _turn(self, *messages):
+        from apps.agent.turn_context import build_turn_context
+        return build_turn_context(self.conv, messages)
+
+    def _data(self, turn):
+        rendered = prompts.assemble_messages(self.conv, turn_context=turn)
+        return json.loads(rendered[0]['content'].split('\n', 1)[1]), rendered
+
+    def test_first_processed_burst_is_not_previous_history(self):
+        first = self._inbound('hola')
+        second = self._inbound('¿qué horarios tienen?')
+        turn = self._turn(second, first)
+        data, rendered = self._data(turn)
+        self.assertNotIn('ya_hablamos_antes', data)
+        self.assertTrue(data['como_llega']['es_su_primer_mensaje_con_nosotros'])
+        self.assertFalse(prompts.has_previous_history(self.conv, turn_context=turn))
+        self.assertFalse(prompts._history_queryset(self.conv, turn_context=turn).exists())
+        self.assertEqual([m['content'] for m in rendered if m['role'] == 'user'],
+                         ['hola', '¿qué horarios tienen?'])
+
+    def test_real_previous_inbound_counts_independently_of_processing_status(self):
+        old = self._inbound('pregunta anterior')
+        stamp = timezone.now() - timedelta(days=7)
+        Message.objects.filter(pk=old.pk).update(created_at=stamp)
+        current = self._inbound('pregunta actual')
+        turn = self._turn(current)
+        for status in (Message.STATUS_PENDING, Message.STATUS_PROCESSED, Message.STATUS_FAILED):
+            with self.subTest(status=status):
+                Message.objects.filter(pk=old.pk).update(status=status)
+                facts = prompts._contact_history_facts(self.conv, turn_context=turn)
+                self.assertTrue(facts['ya_hablamos_antes'])
+                self.assertEqual(facts['ultima_vez'], stamp.date().isoformat())
+                self.assertEqual(list(prompts._history_queryset(
+                    self.conv, turn_context=turn).values_list('pk', flat=True)), [old.pk])
+
+    def test_cursor_ties_use_id_and_future_events_never_enter_existing_turn(self):
+        old = self._inbound('pasado')
+        current = self._inbound('actual')
+        stamp = current.created_at
+        Message.objects.filter(pk=old.pk).update(created_at=stamp)
+        turn = self._turn(current)
+        later = self._inbound('posterior')
+        Message.objects.filter(pk=later.pk).update(created_at=stamp)
+        self._outbound('recibo posterior', semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+                       operation_key='b1-later')
+        data, rendered = self._data(turn)
+        contents = [m['content'] for m in rendered]
+        self.assertIn('pasado', contents)
+        self.assertEqual(contents.count('actual'), 1)
+        self.assertNotIn('posterior', contents)
+        self.assertNotIn('ultimo_recibo_operacion', data)
+        self.assertEqual(turn.anchor.message_id, current.pk)
+        self.assertEqual(turn.history_before.message_id, current.pk)
+
+    def test_other_episode_requires_current_identity_and_keeps_real_date(self):
+        from apps.patients.models import Owner
+        old_conv = Conversation.objects.create(
+            organization=self.org, channel_account=self.channel, contact=self.contact,
+            state=Conversation.STATE_CLOSED)
+        old = Message.objects.create(
+            organization=self.org, channel_account=self.channel, contact=self.contact,
+            conversation=old_conv, direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT, body='historia privada anterior',
+            status=Message.STATUS_PROCESSED)
+        stamp = timezone.now() - timedelta(days=10)
+        Message.objects.filter(pk=old.pk).update(created_at=stamp)
+        turn = self._turn(self._inbound('hola otra vez'))
+        # p58 permits recurrence/date even when private transcript is gated.
+        self.assertTrue(self._data(turn)[0]['ya_hablamos_antes'])
+        self.assertNotIn('historia privada anterior', str(self._data(turn)[1]))
+        self.contact.owner = Owner.objects.create(
+            organization=self.org, name='Cliente B1', phone='5511223344')
+        self.contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
+        self.contact.verified_at = timezone.now()
+        self.contact.save(update_fields=['owner', 'verification_level', 'verified_at'])
+        data, rendered = self._data(turn)
+        self.assertTrue(data['ya_hablamos_antes'])
+        self.assertEqual(data['ultima_vez'], stamp.date().isoformat())
+        self.assertIn('historia privada anterior', str(rendered))
+        from apps.agent.identity import VERIFICATION_TTL
+        self.contact.verified_at = timezone.now() - VERIFICATION_TTL - timedelta(seconds=1)
+        self.contact.save(update_fields=['verified_at'])
+        self.assertNotIn('historia privada anterior', str(self._data(turn)[1]))
+        self.assertTrue(self._data(turn)[0]['ya_hablamos_antes'])
+
+    def test_pending_staff_and_unemitted_receipt_do_not_prove_past_contact(self):
+        draft = self._outbound('borrador humano', author_type=Message.AUTHOR_HUMAN)
+        receipt = self._outbound('recibo sin emitir', semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
+                                 operation_key='b1-pending')
+        Message.objects.filter(pk__in=[draft.pk, receipt.pk]).update(status=Message.STATUS_PENDING)
+        data, rendered = self._data(self._turn(self._inbound('hola')))
+        self.assertNotIn('ya_hablamos_antes', data)
+        self.assertNotIn('ultimo_recibo_operacion', data)
+        self.assertNotIn('borrador humano', str(rendered))
+        self.assertNotIn('recibo sin emitir', str(rendered))
+
+    def test_context_and_events_are_immutable_and_do_not_requery_text(self):
+        from dataclasses import FrozenInstanceError
+        current = self._inbound('texto original')
+        turn = self._turn(current)
+        with self.assertRaises(FrozenInstanceError):
+            turn.contact_id = 999
+        with self.assertRaises(FrozenInstanceError):
+            turn.events[0].text = 'otro'
+        Message.objects.filter(pk=current.pk).update(body='cambio posterior')
+        self.assertEqual(turn.texts, ('texto original',))
+        self.assertIn('texto original', str(self._data(turn)[1]))
+        self.assertNotIn('cambio posterior', str(self._data(turn)[1]))
+
+    def test_foreign_account_and_contact_are_rejected_or_excluded(self):
+        from apps.agent.turn_context import build_turn_context
+        other_channel = ChannelAccount.objects.create(
+            organization=self.org, external_account_id='b1-other-account')
+        other = Conversation.objects.create(
+            organization=self.org, channel_account=other_channel, contact=self.contact)
+        alien = Message.objects.create(
+            organization=self.org, conversation=other, channel_account=other_channel,
+            contact=self.contact, direction=Message.DIRECTION_IN,
+            author_type=Message.AUTHOR_CLIENT, body='otra cuenta')
+        current = self._inbound('actual')
+        with self.assertRaises(ValueError):
+            self._turn(current, alien)
+        turn = self._turn(current)
+        self.assertNotIn('otra cuenta', str(self._data(turn)[1]))
+        with self.assertRaises(ValueError):
+            prompts.assemble_messages(other, turn_context=turn)
+        with self.assertRaises(ValueError):
+            build_turn_context(self.conv, [current, current])
+
+    def test_legacy_text_has_no_fabricated_ids_or_history(self):
+        from apps.agent.turn_context import context_from_inputs
+        self._inbound('no se conoce su relación con el texto legacy')
+        turn = context_from_inputs(self.conv, burst=['texto legacy'])
+        self.assertEqual(turn.inbound_ids, ())
+        self.assertIsNone(turn.anchor)
+        self.assertIsNone(turn.history_before)
+        self.assertIsNone(turn.events[0].reply_to_id)
+        self.assertIsNone(turn.events[0].action_id)
+        self.assertFalse(prompts.has_previous_history(self.conv, turn_context=turn))
+
+    def test_clinic_clock_is_fixed_for_the_turn(self):
+        from unittest.mock import patch
+        current = self._inbound('hoy')
+        turn = self._turn(current)
+        with patch('apps.agent.prompts.timezone.now', return_value=timezone.now() + timedelta(days=2)):
+            data, _ = self._data(turn)
+        self.assertEqual(data['fecha_hoy'], turn.clinic_now.date().isoformat())
+        self.assertEqual(turn.clinic_timezone, self.org.timezone)

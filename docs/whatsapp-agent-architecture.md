@@ -1,5 +1,7 @@
 # Arquitectura: Subsistema de Automatización Inteligente por WhatsApp
 
+> **Implementación B1 (2026-09-14):** la entrada actual es webhook → `Message.body` + proyección `_channel_event` v1 → `TurnContext` inmutable → vistas de policy/planner/prompts y `TurnFacts` del arbiter. C1 no es una tabla, servicio global ni transcript persistido. Historial anterior por cursor local exclusivo y permisos existentes. No modifica goals, consentimiento, operaciones, leases ni sender. El [plan canónico](plan-implementacion-auditoria-agente-whatsapp-2026-09md) y el [acta B1](implementacion-b1-agente-whatsapp-2026-09-14.md) describen este corte; el resto de este documento conserva su carácter histórico de propuesta.
+
 **Fecha**: 2026-07-13
 **Estado**: PROPUESTA DE INVESTIGACIÓN — sin implementar, sin código, sin migraciones
 **Audiencia**: Product Owner + equipo de ingeniería

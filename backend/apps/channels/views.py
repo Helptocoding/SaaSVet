@@ -32,6 +32,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from .models import ChannelAccount
+from .events import EVENT_METADATA_KEY, normalize_whatsapp_event
 
 logger = logging.getLogger('agent.events')
 
@@ -92,23 +93,8 @@ def whatsapp_webhook(request):
 
 
 def _extract_body(msg: dict):
-    """(body, payload_type) según el tipo de mensaje de Meta. Media sin
-    transcripción en F0/F1 (GB-1): body vacío + tipo preservado para medir
-    el % de audio (trigger UX-14)."""
-    mtype = msg.get('type', 'text')
-    if mtype == 'text':
-        return (msg.get('text', {}) or {}).get('body', ''), 'text'
-    if mtype == 'interactive':
-        interactive = msg.get('interactive', {}) or {}
-        reply = (
-            interactive.get('button_reply')
-            or interactive.get('list_reply')
-            or {}
-        )
-        return reply.get('title', ''), 'button_reply'
-    if mtype in ('audio', 'image', 'document', 'location', 'sticker'):
-        return '', mtype
-    return '', 'other'
+    """Text/caption plus explicit channel evidence; never binary comprehension."""
+    return normalize_whatsapp_event(msg)
 
 
 def _process_payload(payload):
@@ -140,17 +126,18 @@ def _process_payload(payload):
                 for c in value.get('contacts') or []
             }
             for msg in value.get('messages') or []:
-                body, payload_type = _extract_body(msg)
+                event = _extract_body(msg)
                 ingest_inbound_message(
                     channel,
                     wamid=msg.get('id', ''),
                     wa_id=msg.get('from', ''),
-                    body=body,
-                    payload_type=payload_type,
+                    body=event.text,
+                    payload_type=event.payload_type,
                     profile_name=profiles.get(msg.get('from'), ''),
                     raw={
                         'type': msg.get('type'),
                         'timestamp': msg.get('timestamp'),
+                        EVENT_METADATA_KEY: event.projection(),
                     },
                 )
             for status_event in value.get('statuses') or []:

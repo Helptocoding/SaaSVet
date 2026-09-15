@@ -1,5 +1,7 @@
 # ADR p56 — Percepción, situación y el turno como objeto raíz
 
+> **Enmienda B1 (2026-09-14).** `TurnContext` es el valor inmutable en memoria compartido por worker, planner, policy y prompts. El wrapper del árbitro deriva `TurnFacts` de esa misma ráfaga; el árbitro conserva sus DTO puros, sin ORM ni transcript. Los eventos se ordenan por `(created_at,id)` local, con historia estrictamente anterior al primero. No añade tablas, goals, autorización ni estado de recuperación. Media sin texto interpretable recibe una limitación explícita; con caption se utiliza solo ese texto, conservando la limitación binaria. Encolar no prueba emisión ni lectura. Contrato, compatibilidad y evidencia: [acta B1](../implementacion-b1-agente-whatsapp-2026-09-14.md).
+
 > **Enmienda B0 (2026-09-13), vigente para esta release.** El filtro temporal de contención tiene prioridad sobre la publicación de salida libre cubierta por el corpus. No modifica percepción, arbiter, historia ni el orden de safety/ownership. C1 queda acordado como contexto causal acotado para B1, sin implementar DTO global, leases o revisiones en B0.
 > Alcance, pruebas, límites y rollback: [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md). El resto del ADR conserva sus decisiones salvo esta contención temporal.
 

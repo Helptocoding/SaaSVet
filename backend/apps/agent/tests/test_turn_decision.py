@@ -180,3 +180,89 @@ class ResilienceTests(TurnDecisionSetupMixin, TestCase):
             )
         self.assertEqual(result['decision'], 'reply')
         self.assertEqual(TurnDecision.objects.filter(conversation=self.conv).count(), 0)
+
+
+class B1TurnEvidenceTests(TurnDecisionSetupMixin, TestCase):
+    """CTX-01: the wrapper observes the real burst even without legacy text args."""
+
+    def test_real_burst_reaches_inner_policy_prompts_and_arbiter_in_the_same_order(self):
+        from django.utils import timezone
+        from apps.agent import policy, prompts
+        from apps.agent.llm import LLMResult, StubLLMClient
+        from apps.agent.turn_context import build_turn_context
+
+        first = self._inbound('hola')
+        last = self._inbound('¿qué horarios tienen?')
+        stamp = timezone.now()
+        Message.objects.filter(pk__in=[first.pk, last.pk]).update(created_at=stamp)
+        first.refresh_from_db()
+        last.refresh_from_db()
+        captured = {}
+        assemble = prompts.assemble_messages
+
+        def capture_prompt(conversation, **kwargs):
+            captured['context'] = kwargs['turn_context']
+            captured['prompt'] = assemble(conversation, **kwargs)
+            return captured['prompt']
+
+        with (patch.object(planner, '_handle_inbound_inner', wraps=planner._handle_inbound_inner) as inner,
+              patch.object(policy, 'evaluate', wraps=policy.evaluate) as evaluate,
+              patch.object(prompts, 'assemble_messages', side_effect=capture_prompt),
+              patch.object(planner, '_settle_commitment', wraps=planner._settle_commitment) as settle,
+              patch.object(planner, '_observe_turn_facts', wraps=planner._observe_turn_facts) as observe):
+            planner.handle_inbound(
+                self.conv, agent_settings=self.settings,
+                burst_messages=[last, first],
+                # Conflicting obsolete arguments must not redefine the turn.
+                burst=['no'], payload_types=['audio'], triggered_by=first,
+                llm_client=StubLLMClient(scripted=[LLMResult(
+                    kind='text', text='Puedo ayudarte con los horarios de la clínica.')]),
+            )
+        turn = inner.call_args.kwargs['turn_context']
+        self.assertEqual(turn.inbound_ids, (first.pk, last.pk))
+        self.assertEqual(turn.texts, ('hola', '¿qué horarios tienen?'))
+        self.assertIs(evaluate.call_args.kwargs['turn_context'], turn)
+        self.assertIs(captured['context'], turn)
+        self.assertIs(settle.call_args.args[2], turn)
+        self.assertEqual(observe.call_args.args[0], 'hola\n¿qué horarios tienen?')
+        self.assertEqual([m['content'] for m in captured['prompt'] if m['role'] == 'user'],
+                         list(turn.texts))
+        row = TurnDecision.objects.get(conversation=self.conv)
+        self.assertEqual(row.triggered_by_message_id, last.pk)
+        self.assertTrue(row.facts_consumed['interrumpe'])
+        self.assertEqual(turn, build_turn_context(self.conv, [first, last], now=turn.clinic_now))
+
+    def test_explicit_context_wins_over_legacy_policy_arguments(self):
+        from apps.agent import policy
+        from apps.agent.turn_context import build_turn_context
+        msg = self._inbound('mi perro convulsiona')
+        turn = build_turn_context(self.conv, [msg])
+        decision = policy.evaluate(
+            self.conv, 'hola', burst=['hola'], payload_types=['text'],
+            turn_context=turn, agent_settings=self.settings)
+        self.assertEqual(decision.kind, policy.ESCALATE)
+        self.assertEqual(decision.handoff_reason, 'emergency')
+
+    def test_post_receipt_assessment_keeps_exact_context_members_without_new_semantics(self):
+        from types import SimpleNamespace
+        from apps.agent.llm import LLMResult, StubLLMClient
+        first, last = self._inbound('quiero consultar'), self._inbound('los horarios')
+        with (patch.object(planner.operation_authorization, 'requires_assessment', return_value=True),
+              patch.object(planner.operation_authorization, 'assess_turn', return_value=SimpleNamespace(
+                  assessment=SimpleNamespace(verdict='conversational'))) as assess):
+            planner.handle_inbound(
+                self.conv, agent_settings=self.settings, burst_messages=[last, first],
+                llm_client=StubLLMClient(scripted=[LLMResult(
+                    kind='text', text='Puedo ayudarte con los horarios de la clínica.')]))
+        self.assertEqual([m.pk for m in assess.call_args.args[1]], [first.pk, last.pk])
+        self.assertEqual([m.body for m in assess.call_args.args[1]], ['quiero consultar', 'los horarios'])
+
+    def test_single_inbound_adapter_does_not_invent_an_action_id(self):
+        from apps.agent.turn_context import context_from_inputs
+        msg = self._inbound('Confirmar')
+        msg.payload_type = 'button_reply'
+        msg.save(update_fields=['payload_type'])
+        turn = context_from_inputs(self.conv, triggered_by=msg, burst=['otra cosa'])
+        self.assertEqual(turn.texts, ('Confirmar',))
+        self.assertIsNone(turn.events[0].action_id)
+        self.assertIsNone(turn.events[0].action_title)

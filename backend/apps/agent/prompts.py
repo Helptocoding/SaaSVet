@@ -33,7 +33,7 @@ from django.utils import timezone
 
 from apps.channels.models import Message
 
-PROMPT_VERSION = 'reception-f5-v15'
+PROMPT_VERSION = 'reception-b1-v16'
 
 SYSTEM_PROMPT = """\
 Eres quien contesta el WhatsApp de una clínica veterinaria en México. Hablas
@@ -296,7 +296,7 @@ _ES_MONTH = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
              'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre')
 
 
-def _now_context(org):
+def _now_context(org, *, turn_context=None):
     """Fecha/hora ACTUAL en la zona de la org, para que el LLM resuelva
     'este viernes', 'mañana', etc. Sin esto el modelo no tiene reloj y
     alucina la fecha (bug real en piloto)."""
@@ -304,10 +304,13 @@ def _now_context(org):
     from zoneinfo import ZoneInfo
 
     from django.utils import timezone
-    try:
-        now = timezone.now().astimezone(ZoneInfo(org.timezone))
-    except Exception:
-        now = timezone.localtime()
+    if turn_context is not None:
+        now = turn_context.clinic_now
+    else:
+        try:
+            now = timezone.now().astimezone(ZoneInfo(org.timezone))
+        except Exception:
+            now = timezone.localtime()
     return {
         'fecha_hoy': now.date().isoformat(),               # 2026-07-24
         'dia_semana': _ES_WEEKDAY[now.weekday()],
@@ -443,7 +446,8 @@ def _render_message(message):
     return [{'role': 'assistant', 'content': message.body}]
 
 
-def assemble_messages(conversation, *, burst_text='', media_kinds=None):
+def assemble_messages(conversation, *, burst_text='', media_kinds=None,
+                      turn_context=None):
     """Historial → mensajes rol/contenido para el LLM.
 
     La ventana cuenta TURNOS (§2.2) y cada mensaje se etiqueta por AUTORÍA
@@ -459,11 +463,17 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
 
         1. quién es · 2. cómo llega · 3. qué le debemos · 4. la clínica
 
-    `burst_text` es el mensaje (o la ráfaga) de ESTE turno; sin él no se puede
-    leer la situación. Es opcional para no romper a ningún caller: sin él, el
-    bloque 2 simplemente no viaja.
+    C1 fija eventos, reloj y cursor. `burst_text`/`media_kinds` son adaptadores
+    legacy sin IDs: no reconstruyen una relación con mensajes persistidos.
     """
     from . import goals, intake, situation
+    from .turn_context import context_from_inputs
+    turn_context = context_from_inputs(
+        conversation, turn_context=turn_context,
+        burst=[burst_text] if burst_text else None, payload_types=media_kinds,
+    )
+    burst_text = turn_context.burst_text
+    media_kinds = turn_context.media_kinds
     org = conversation.organization
     contact = conversation.contact
 
@@ -490,11 +500,11 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
         'ruta_de_atencion': intake.context_fact(conversation),
     }
     # Hechos de CONTACTO (F3): el sistema los calcula y se los dice al modelo en
-    receipt = Message.objects.filter(
+    receipt = _history_queryset(conversation, turn_context=turn_context).filter(
         conversation=conversation,
         direction=Message.DIRECTION_OUT,
         semantic_type=Message.SEMANTIC_OPERATION_RECEIPT,
-    ).exclude(status__in=(Message.STATUS_DISCARDED, Message.STATUS_FAILED)).order_by(
+    ).order_by(
         '-created_at', '-id').first()
     if receipt is not None:
         context['ultimo_recibo_operacion'] = {'notificado_al_cliente': True}
@@ -503,7 +513,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     # «¡Bienvenido!» a un cliente de 19 conversaciones, y `ultimo_mensaje_hace`
     # evita que lea una cola vieja como si fuera de hoy — que es el riesgo real
     # de leer el hilo completo del contacto.
-    context.update(_contact_history_facts(conversation))
+    context.update(_contact_history_facts(conversation, turn_context=turn_context))
     # Hechos de identidad ANCLADOS: viajan siempre, aunque el mensaje que los
     # originó ya no quepa en la ventana (R2, §2.2).
     identity_facts = anchored_identity_facts(conversation)
@@ -517,7 +527,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
     facts = situation.read(
         conversation, burst_text,
         goal=active_goal,
-        first_contact=not _has_outbound(conversation),
+        first_contact=not _has_outbound(conversation, turn_context=turn_context),
         media_kinds=media_kinds,
     )
     if facts:
@@ -533,7 +543,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
 
     # ── 4 · LA CLÍNICA ──────────────────────────────────────────────────────
     context['clinica'] = org.name
-    context.update(_now_context(org))
+    context.update(_now_context(org, turn_context=turn_context))
 
     messages = [{
         'role': 'system',
@@ -545,26 +555,41 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None):
         _history_queryset(
             conversation,
             after_message=_authorized_turn_start(active_goal),
+            turn_context=turn_context,
         )
         .order_by('-created_at', '-id')[:HISTORY_MESSAGE_CAP]
     )[::-1]
-    for turn in _group_into_turns(recent)[-HISTORY_TURNS:]:
+    history_turns = HISTORY_TURNS - bool(turn_context.events)
+    for turn in _group_into_turns(recent)[-history_turns:]:
         for message in turn:
             messages.extend(_render_message(message))
+    # Current evidence comes only from C1, not a second transcript query. IDs
+    # remain structured in C1; this projection neither resolves nor authorizes.
+    for event in turn_context.events:
+        if event.text:
+            messages.append({'role': 'user', 'content': event.text})
+    if turn_context.media_kinds:
+        messages.append({
+            'role': 'system',
+            'content': 'El turno incluye contenido adjunto que no se ha interpretado. '
+                       'Solo puedes usar el texto o caption aportado; no has visto '
+                       'imágenes/documentos ni escuchado audio. No deduzcas hechos '
+                       'del contenido binario. Si hace falta, pide texto o una persona.',
+        })
     return messages
 
 
-def has_previous_history(conversation):
+def has_previous_history(conversation, *, turn_context=None):
     """¿Este contacto ya había hablado con la clínica? (F1b)
 
     Es el mismo hecho que publica `ya_hablamos_antes`, expuesto para el guard de
     conducta: se pasa el HECHO, no el objeto, para que `guards` siga sin tocar la
     base (mismo criterio que el resto de sus entradas).
     """
-    return bool(_contact_history_facts(conversation))
+    return bool(_contact_history_facts(conversation, turn_context=turn_context))
 
 
-def _contact_history_facts(conversation, now=None):
+def _contact_history_facts(conversation, now=None, *, turn_context=None):
     """`ya_hablamos_antes` / `ultima_vez` / `ultimo_mensaje_hace` (F3).
 
     **Se calculan EXCLUYENDO la ráfaga en curso.** El entrante ya está persistido
@@ -573,18 +598,14 @@ def _contact_history_facts(conversation, now=None):
     contrario de lo que quiere decir. La referencia es el mensaje anterior al
     turno actual.
     """
-    from apps.channels.selectors import visible_messages
-
-    now = now or timezone.now()
-    previous = visible_messages(
-        Message.objects.for_organization(conversation.organization).filter(
-            contact=conversation.contact,
-            channel_account=conversation.channel_account,
-        )
-    ).exclude(
-        # El turno en curso: los entrantes que el worker acaba de tomar.
-        direction=Message.DIRECTION_IN, status=Message.STATUS_PENDING,
-    ).order_by('-created_at', '-id').first()
+    from .turn_context import context_from_inputs
+    turn_context = context_from_inputs(conversation, turn_context=turn_context)
+    now = now or turn_context.clinic_now
+    # p58 permits the existence/date of previous contact without exposing its
+    # private transcript. Keep that permission while fixing the causal boundary.
+    previous = _prior_contact_messages(
+        conversation, turn_context,
+    ).only('created_at').order_by('-created_at', '-id').first()
     if previous is None:
         return {}
 
@@ -630,7 +651,19 @@ def _authorized_turn_start(goal):
     return link.message if link is not None else goal.authorization_message
 
 
-def _history_queryset(conversation, *, after_message=None):
+def _prior_contact_messages(conversation, turn_context):
+    """Scoped causal source; callers still gate access to private content."""
+    from apps.channels.selectors import prior_messages
+    turn_context.assert_scope(conversation)
+    return prior_messages(
+        Message.objects.for_organization(turn_context.organization_id).filter(
+            contact_id=turn_context.contact_id,
+            channel_account_id=turn_context.channel_account_id,
+        ), turn_context.history_before,
+    )
+
+
+def _history_queryset(conversation, *, after_message=None, turn_context=None):
     """De dónde sale el historial que ve el modelo (plan de continuidad, F2/D19).
 
     **Con verificación vigente**: todo el hilo del contacto en esta cuenta, no
@@ -653,18 +686,12 @@ def _history_queryset(conversation, *, after_message=None):
     propio permiso.
     """
     from . import identity
-    from apps.channels.selectors import visible_messages
+    from .turn_context import context_from_inputs
 
-    base = Message.objects.for_organization(conversation.organization)
-    if identity.is_verification_current(conversation.contact):
-        scoped = base.filter(contact=conversation.contact,
-                             channel_account=conversation.channel_account)
-    else:
-        scoped = base.filter(conversation=conversation)
-    # `visible_messages` en vez de excluir solo `discarded`: los salientes
-    # `failed` son los que el proveedor NO entregó (ventana de 24 h cerrada), y
-    # el modelo los veía como dichos.
-    history = visible_messages(scoped)
+    turn_context = context_from_inputs(conversation, turn_context=turn_context)
+    history = _prior_contact_messages(conversation, turn_context)
+    if not identity.is_verification_current(conversation.contact):
+        history = history.filter(conversation_id=turn_context.conversation_id)
     if after_message is not None:
         # ``Message.pk`` es monótono y global. La conversación ya está acotada
         # arriba, así que este corte conserva exactamente la ráfaga autorizada
@@ -673,21 +700,18 @@ def _history_queryset(conversation, *, after_message=None):
     return history
 
 
-def _has_outbound(conversation):
+def _has_outbound(conversation, *, turn_context=None):
     """¿Ya le hemos escrito alguna vez? Señal de primer contacto (bloque 2).
 
     Por CONTACTO y cuenta, no por conversación (F2): derivarlo del hilo hacía
     que un cliente con 19 conversaciones recibiera «¡Bienvenido!» en cada una.
-    Y con `visible_messages`, un saliente que nunca salió no cuenta como haberle
-    escrito.
+    Solo una emisión anterior al cursor acredita haberle escrito. Como en p58,
+    este hecho no entrega el contenido privado de otro episodio.
     """
-    from apps.channels.selectors import visible_messages
-    return visible_messages(
-        Message.objects.for_organization(conversation.organization).filter(
-            contact=conversation.contact,
-            channel_account=conversation.channel_account,
-            direction=Message.DIRECTION_OUT,
-        )
+    from .turn_context import context_from_inputs
+    turn_context = context_from_inputs(conversation, turn_context=turn_context)
+    return _prior_contact_messages(conversation, turn_context).filter(
+        direction=Message.DIRECTION_OUT,
     ).exists()
 
 

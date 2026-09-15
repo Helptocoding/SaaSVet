@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Estado: **plan técnico; correcciones aún no implementadas**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-14**. Estado: **B0 y B1 implementadas; las fases restantes siguen pendientes y la activación no está autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -345,6 +345,8 @@ Safety/corpus pueden prepararse desde B1 y guidance limitada existe desde B0. No
 **Riesgos eliminados:** writes autónomos por rutas bloqueadas, falsas promesas eliminadas de las plantillas modificadas. **Reducidos:** exposición clínica por respuesta libre. **Abiertos:** detector, recuperación, sender, ownership, contexto e identidad de baja entropía. **Salida válida:** piloto supervisado; no ampliación autónoma.
 
 ### Fase B1 — Evidencia única del turno y evento de canal
+
+**Seguimiento 2026-09-14:** B1 implementada sobre B0 (`ecd7912`), sin nuevas tablas ni migraciones. CTX-01/CHANNEL-01 + continuidad: 105 tests; compatibilidad seleccionada: 179 tests, ambas sin fallos ni skips. Contrato C1, proyección `_channel_event` v1, cursores, desviaciones y límites en [acta B1](implementacion-b1-agente-whatsapp-2026-09-14.md). No se avanza B2–B9, E1–E5 o P-A/P-B ni se declara resuelto H01/H02/H03/H13. Activación conservada en **PENDING_ACTIVATION_REQUIREMENTS**; no se despliega ni se amplían capacidades.
 
 **Objetivo.** Establecer el dato causal compartido que requieren consentimiento y safety, corrigiendo H10/H11/H15 sin reestructurar goals.
 
