@@ -1,5 +1,13 @@
 # ADR p54 — Conversación por objetivos y conservación vinculante en el agente
 
+> **Enmienda B2 (2026-09-14).** G1 ya no acepta coincidencias numéricas en
+> resultados arbitrarios: precios, disponibilidad y recibos sensibles se
+> renderizan desde `ToolOutcome` validado y compatible con el scope del turno.
+> `tool_ran=True` y `ok=True` legacy no acreditan efectos. El borrador libre no
+> puede reescribir esos hechos. READ pública no exige onboarding/goal; WRITE
+> sigue contenido por B0. No cambia el lifecycle de goals ni implementa B6/B7.
+> Contrato vigente: [resultados y capacidades B2](../contrato-resultados-tools-b2.md).
+
 > **Enmienda B0 (2026-09-13), vigente para esta release.** Mientras rige B0, los goals y la confianza de slots no habilitan WRITE. Se conservan sus validadores/lifecycle; la salida insegura cubierta por el corpus deriva a plantilla/humano sin retry de redacción. El filtro temporal no demuestra grounding ni sensibilidad clínica completa. B2/B5 y B6 reemplazarán las fronteras correspondientes; no se introduce un motor de workflows.
 > Alcance, pruebas, límites y rollback: [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md). El resto del ADR conserva sus decisiones salvo esta contención temporal.
 

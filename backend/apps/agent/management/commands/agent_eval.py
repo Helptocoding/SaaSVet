@@ -66,11 +66,8 @@ class InProcessTransport:
         else:
             response = getattr(client, method.lower())(
                 path, data=params or {}, **extra)
-        try:
-            payload = response.json() if response.content else {}
-        except ValueError:
-            payload = {}
-        return response.status_code, payload
+        from apps.agent.executor import TransportResponse
+        return TransportResponse.from_http(response)
 
 
 # Escenario: (mensaje del cliente, [obligatorios], [prohibidos]).

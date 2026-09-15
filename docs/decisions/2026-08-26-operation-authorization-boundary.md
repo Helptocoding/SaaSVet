@@ -1,5 +1,14 @@
 # Frontera de autorización de operaciones conversacionales
 
+> **Enmienda B2 (2026-09-15).** La restricción posterior al recibo se aplica
+> a nuevas operaciones WRITE, que además siguen bloqueadas por B0. Las READ
+> públicas, incluida disponibilidad, pueden ejecutarse sin un nuevo goal;
+> las READ personales conservan identidad vigente y scope. `request_human`
+> conserva su política de CONTROL. Consultar no reabre ni autoriza una
+> operación. Esta enmienda sustituye únicamente el bloqueo indiscriminado
+> de lecturas en los invariantes y ejemplos históricos de este documento.
+> [Contrato B2](../contrato-resultados-tools-b2.md).
+
 **Fecha:** 2026-08-26
 **Estado:** sustituida en el mecanismo de autorización el 2026-08-27
 

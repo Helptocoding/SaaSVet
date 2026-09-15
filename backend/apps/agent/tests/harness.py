@@ -93,11 +93,8 @@ class RealApiTransport:
         else:
             response = getattr(client, method.lower())(
                 path, data=params or {}, **extra)
-        try:
-            payload = response.json() if response.content else {}
-        except ValueError:
-            payload = {}
-        return response.status_code, payload
+        from apps.agent.executor import TransportResponse
+        return TransportResponse.from_http(response)
 
 
 def assert_no_forbidden(testcase, text, *, decoy_terms=()):

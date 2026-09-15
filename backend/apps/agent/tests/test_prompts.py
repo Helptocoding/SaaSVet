@@ -390,7 +390,7 @@ class VerifiedBehaviourPromptTests(PromptsTestCase):
     def test_prompt_version_was_bumped(self):
         """`PROMPT_VERSION` viaja en cada `LLMCall`: sin bumpearlo no se puede
         correlacionar calidad con versión, que es para lo que existe."""
-        self.assertEqual(prompts.PROMPT_VERSION, 'reception-b1-v16')
+        self.assertEqual(prompts.PROMPT_VERSION, 'reception-b2-v17')
 
 
 class B1HistoryCursorTests(PromptsTestCase):

@@ -1,5 +1,14 @@
 # Arquitectura: Subsistema de Automatización Inteligente por WhatsApp
 
+> **Enmienda de catálogo/ejecución B2 (2026-09-14):** la cadena vigente es
+> C1 → capacidad estática → transporte explícito → validación de endpoint →
+> `ToolOutcome` C3 → renderer determinista. Las tablas históricas de tiers no
+> habilitan WRITE: las siete capacidades mutadoras continúan contenidas,
+> incluso en el executor HTTP. Consulta de asistencia usa `get_appointments`.
+> La clasificación completa, schemas, cobertura y límites están en el
+> [contrato B2](contrato-resultados-tools-b2.md), que enmienda el inventario
+> histórico de este documento. No hay nueva tabla de facts ni operaciones.
+
 > **Implementación B1 (2026-09-14):** la entrada actual es webhook → `Message.body` + proyección `_channel_event` v1 → `TurnContext` inmutable → vistas de policy/planner/prompts y `TurnFacts` del arbiter. C1 no es una tabla, servicio global ni transcript persistido. Historial anterior por cursor local exclusivo y permisos existentes. No modifica goals, consentimiento, operaciones, leases ni sender. El [plan canónico](plan-implementacion-auditoria-agente-whatsapp-2026-09md) y el [acta B1](implementacion-b1-agente-whatsapp-2026-09-14.md) describen este corte; el resto de este documento conserva su carácter histórico de propuesta.
 
 **Fecha**: 2026-07-13

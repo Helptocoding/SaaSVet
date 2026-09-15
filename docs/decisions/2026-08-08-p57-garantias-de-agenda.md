@@ -1,5 +1,15 @@
 # ADR p57 — Garantías de agenda e identidad: precondición atómica (INV-A), no-solapamiento (INV-D) e identidad de expediente (INV-B/INV-C)
 
+> **Enmienda B2 (2026-09-14), consumo del agente.** Un 400/409 de asistencia
+> deja de convertirse en éxito benigno. Consulta de estado = READ mediante
+> `get_appointments`; confirmar asistencia = WRITE contenido. Los handlers
+> supervisados requieren respuesta estructuralmente válida y entidad/estado
+> compatibles para emitir EFFECT. Tras conflicto, solo un GET fresco compatible
+> acredita `already_done`; no se reintenta el PATCH. Esta enmienda no cambia
+> locks, precondiciones ni permisos de los endpoints, ni implementa
+> consentimiento B7 o el guard de ejecución B8.
+> [Contrato B2](../contrato-resultados-tools-b2.md) y [acta](../implementacion-b2-agente-whatsapp-2026-09-15.md).
+
 **Fecha**: 2026-08-08 (rev. 2026-08-11 — F1 añade INV-B e INV-C)
 **Estado**: ACEPTADO. F0–F4 implementadas y **INV-A cerrado**: la precondición
 de estado es **obligatoria** para toda mutación de cita (`400

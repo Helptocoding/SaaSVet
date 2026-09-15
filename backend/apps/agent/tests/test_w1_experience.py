@@ -53,10 +53,12 @@ class OutputGuardUnitTests(TestCase):
         self.assertTrue(guards.has_hard(v))
         self.assertEqual(v[0].kind, 'invented_price')
 
-    def test_price_present_in_tool_results_passes(self):
+    def test_legacy_price_text_does_not_ground_free_prose(self):
         facts = [{'tool': 'get_service_catalog',
                   'resultado': [{'servicio': 'Consulta', 'precio': '$350.00'}]}]
-        self.assertEqual(guards.check_output("Cuesta $350 🙂", tool_facts=facts), [])
+        violations = guards.check_output("Cuesta $350 🙂", tool_facts=facts)
+        self.assertTrue(guards.has_hard(violations))
+        self.assertEqual(violations[0].kind, 'invented_price')
 
     def test_medical_advice_is_blocked(self):
         v = guards.check_output("Dale media pastilla cada 12 horas")
@@ -139,12 +141,12 @@ class BehaviourGuardUnitTests(TestCase):
                                    tool_ran=False)
         self.assertEqual([x.kind for x in v], ['unbacked_success'])
 
-    def test_confirming_after_a_read_tool_is_legitimate(self):
-        """Consultar las citas y confirmar lo que se leyó NO es inventar: la
-        señal es que no se ejecutó herramienta ALGUNA, no que no se escribió."""
-        self.assertEqual(
-            guards.check_behaviour("Sí, ya quedó agendada para el martes",
-                                   tool_ran=True), [])
+    def test_read_execution_cannot_authorize_free_success_claim(self):
+        """B2: el estado READ tiene renderer propio; tool_ran no prueba efectos."""
+        violations = guards.check_behaviour("Sí, ya quedó agendada para el martes",
+                                             tool_ran=True)
+        self.assertTrue(guards.has_hard(violations))
+        self.assertEqual(violations[0].kind, 'unbacked_success')
     def test_clean_turn_passes(self):
         self.assertEqual(
             guards.check_behaviour("¿Te va bien el martes? 🐾",
@@ -650,23 +652,22 @@ class DeniesDomainStateGuardTests(SimpleTestCase):
             rows_read=1)
         self.assertIn('denies_domain_state', [v.kind for v in violations])
 
-    def test_it_stays_quiet_when_the_domain_returned_nothing(self):
-        """Si de verdad no hay nada, decirlo es correcto — y es lo más honesto
-        que puede hacer el agente. El guard no puede castigar la verdad."""
+    def test_zero_rows_without_typed_completeness_do_not_prove_absence(self):
+        """B2: cero filas también puede ser error o cobertura desconocida.
+        La ausencia real se renderiza desde READ completa, fuera del borrador."""
         violations = guards.check_behaviour(
             "Revisé y no tengo ninguna cita agendada para Koler hoy.",
             rows_read=0)
-        self.assertNotIn('denies_domain_state', [v.kind for v in violations])
+        self.assertIn('denies_domain_state', [v.kind for v in violations])
+        self.assertTrue(guards.has_hard(violations))
 
     def test_reporting_what_was_read_is_not_a_violation(self):
         violations = guards.check_behaviour(
             "Tienes una cita el lunes a las 9. ¿La movemos?", rows_read=1)
         self.assertNotIn('denies_domain_state', [v.kind for v in violations])
 
-    def test_the_violation_is_soft(self):
-        """Se corrige y se reintenta. Un guard nuevo en HARD escala
-        conversaciones sanas, y eso le cuesta más al cliente que un log de más.
-        Promoverlo exige mirar antes los `AGENT_OUTPUT_GUARD` que deje."""
+    def test_unsupported_absence_is_hard(self):
+        """B2: la prosa libre no puede negar evidencia de dominio."""
         violations = guards.check_behaviour(
             "no hay citas a tu nombre", rows_read=3)
-        self.assertFalse(guards.has_hard(violations))
+        self.assertTrue(guards.has_hard(violations))

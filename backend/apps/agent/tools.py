@@ -19,8 +19,11 @@ from django.utils import timezone
 
 from apps.channels.models import Message
 from apps.core.datetime_utils import org_now_local, org_today_local
+from apps.organizations.utils import get_org_setting
 
+from . import endpoint_contracts as contracts
 from . import identity, identity_evidence, intake
+from .capabilities import EFFECTS, READ_PUBLIC, READ_PERSONAL, WRITE_BUSINESS, CONTROL
 from .executor import format_local_datetime, format_local_wallclock
 from .models import ContactIdentity, Conversation, HumanHandoff
 
@@ -51,13 +54,79 @@ _VACCINE_STATE_LABEL = {
 }
 
 
-@dataclass
+@dataclass(init=False)
 class ToolOutcome:
-    ok: bool
-    data: object = None            # proyección para el LLM
-    client_error: str = ''         # guía conversacional si falló (spec §2.5)
-    detail: str = ''               # mensaje real del dominio (W1-8), ya legible
-    summary: dict = field(default_factory=dict)  # redactado, para auditoría
+    """C3: READ/EFFECT/ERROR, in memory. `ok` is derived compatibility.
+
+    Legacy `ok=` adapts preparation/control handlers only; it does not
+    establish validated evidence. New consumers require kind and scope.
+    """
+    kind: str
+    data: object = field(repr=False)
+    client_error: str
+    detail: str = field(repr=False)
+    summary: dict
+    scope: dict = field(repr=False)
+    completeness: str
+    observed_at: object
+    has_more: bool | None
+    cursor: str | None
+    error_kind: str | None
+    origin: str | None
+    retryable: bool | None
+    validated: bool
+    effects: tuple = field(repr=False)
+    partial_effects: tuple = field(repr=False)
+    operation_key: str | None = field(repr=False)
+
+    def __init__(self, ok=None, data=None, client_error='', detail='', summary=None,
+                 *, kind=None, scope=None, completeness='unknown', observed_at=None,
+                 has_more=None, cursor=None, error_kind=None, origin=None,
+                 retryable=None, validated=False, effects=(), partial_effects=(), operation_key=None):
+        self.kind = kind or ('READ' if ok else 'ERROR')
+        if self.kind not in ('READ', 'EFFECT', 'ERROR'):
+            raise ValueError('Invalid ToolOutcome kind')
+        if completeness not in ('complete', 'truncated', 'unknown'):
+            raise ValueError('Invalid completeness')
+        if error_kind is None and self.kind == 'ERROR':
+            error_kind = ('forbidden' if client_error in (
+                'verification_required', 'autonomous_writes_paused',
+                'family_restricted', 'operation_authorization_required',
+                'intake_required', 'intake_path_conflict') else 'validation_error')
+        if error_kind not in (None, 'forbidden', 'not_found', 'validation_error',
+                              'conflict', 'transport_error', 'malformed_response',
+                              'provider_error', 'uncertain'):
+            raise ValueError('Invalid error kind')
+        self.data, self.client_error, self.detail = data, client_error, detail
+        self.summary, self.scope = summary or {}, scope or {}
+        self.completeness, self.observed_at = completeness, observed_at
+        self.has_more, self.cursor = has_more, cursor
+        self.error_kind, self.origin, self.retryable = error_kind, origin, retryable
+        self.validated = validated
+        self.effects, self.partial_effects = tuple(effects), tuple(partial_effects)
+        self.operation_key = operation_key
+
+    @property
+    def ok(self):
+        return self.kind == 'READ' or (
+            self.kind == 'EFFECT' and self.validated and bool(self.effects))
+
+    @property
+    def empty(self):
+        return (self.kind == 'READ' and self.validated
+                and self.completeness == 'complete'
+                and isinstance(self.data, (list, tuple)) and not self.data)
+
+    def project(self, data, *, total=None, summary=None):
+        completeness = self.completeness
+        if total is not None and len(data) < total:
+            completeness = 'truncated'
+        return ToolOutcome(
+            kind=self.kind, data=data, scope=self.scope,
+            completeness=completeness, observed_at=self.observed_at,
+            has_more=self.has_more, cursor=self.cursor, validated=self.validated,
+            summary=summary, error_kind=self.error_kind,
+        )
 
     # AUTORIDAD CERO (ADR p55 §4). Aquí vivían `reply_text`,
     # `needs_confirmation` y `confirmation_text`: con ellos una herramienta
@@ -169,7 +238,7 @@ def _product_text_score(product, query):
     return 100
 
 
-def _available_product_details(product):
+def _available_product_details(product, currency=None):
     """Datos comerciales permitidos exclusivamente cuando hay existencia."""
     details = {'stock': product.get('stock_quantity', 0)}
     presentations = product.get('presentations') or []
@@ -178,6 +247,8 @@ def _available_product_details(product):
         exhausted.append({
             'presentacion': presentation.get('name') or product.get('name', ''),
             'precio': presentation.get('sale_price'),
+            'amount': contracts.decimal_field(presentation.get('sale_price'), nullable=True),
+            'currency': currency,
             'stock': presentation.get('stock', 0),
         })
     if len(exhausted) == 1:
@@ -293,6 +364,8 @@ def operation_tool_allowed(conversation, tool_name):
     en el frente. Esta misma función se invoca al construir el catálogo y al
     ejecutar, para que un output viejo o una llamada directa no salte la regla.
     """
+    if EFFECTS.get(tool_name) in (READ_PUBLIC, READ_PERSONAL) or tool_name == 'request_human':
+        return True
     if not _is_operation_scoped_tool(tool_name):
         return True
     if not _has_completed_operation(conversation):
@@ -362,19 +435,159 @@ def begin_operation(conversation, executor, args, triggered_by=None):
 # Tools
 # ---------------------------------------------------------------------------
 
+def _scope(conversation, **filters):
+    return {'organization_id': conversation.organization_id,
+            'conversation_id': conversation.pk,
+            'contact_id': conversation.contact_id, **filters}
+
+
+def _response_error(response, scope):
+    return ToolOutcome(
+        kind='ERROR', error_kind=response.error_kind, scope=scope,
+        client_error='tool_failure', origin=('transport' if response.transport_error else 'endpoint'),
+        # Retrying reads after a transport failure is safe; B2 never retries
+        # ambiguous writes or infers their final state.
+        retryable=(False if response.uncertain else None),
+        summary={'contract_version': 1, 'http_status': response.status_code,
+                 'error_kind': response.error_kind, 'timeout': response.timeout},
+    )
+
+
+def _malformed(scope):
+    return ToolOutcome(kind='ERROR', error_kind='malformed_response',
+                       client_error='tool_failure', origin='endpoint', scope=scope)
+
+
+def _read_endpoint(conversation, executor, path, *, schema, scope=None, **kwargs):
+    scope = scope or _scope(conversation)
+    if (executor.conversation.pk != conversation.pk
+            or executor.agent_user.organization_id != conversation.organization_id):
+        return ToolOutcome(kind='ERROR', error_kind='forbidden',
+                           client_error='verification_required', scope=scope)
+    response = executor.call('GET', path, **kwargs)
+    if response.error_kind:
+        return _response_error(response, scope)
+    try:
+        # These endpoint list implementations have no pagination by default.
+        rows, completeness, has_more, cursor = contracts.collection(
+            response.data, schema, scope, flat_complete=True)
+    except contracts.InvalidResponse:
+        outcome = _malformed(scope)
+    else:
+        outcome = ToolOutcome(kind='READ', data=rows, validated=True, scope=scope,
+                              completeness=completeness, has_more=has_more, cursor=cursor)
+    executor.record_outcome(kwargs['tool_name'], outcome)
+    return outcome
+
+
+def _effect_response(conversation, response, *, action, schema='appointment',
+                     scope=None, expected=None, result='success'):
+    """Only a validated entity with matching requested state proves an effect."""
+    scope = scope or _scope(conversation)
+    if response.error_kind:
+        outcome = _response_error(response, scope)
+        if response.status_code == 409:
+            code = response.data.get('code') if isinstance(response.data, dict) else None
+            outcome.client_error = code if code in BUSINESS_OUTCOMES else 'tool_failure'
+        elif response.status_code == 400:
+            # Known domain codes only. Never relay the server's personal body.
+            code = response.data.get('code') if isinstance(response.data, dict) else None
+            outcome.client_error = code if code in ('slot_taken', 'past_appointment') else 'invalid_data'
+        return outcome
+    try:
+        contracts.validate_row(response.data, schema, scope)
+        for key, value in (expected or {}).items():
+            actual = response.data.get(key)
+            if key in ('start_time', 'end_time'):
+                contracts.require(contracts.iso_time(actual) == contracts.iso_time(value))
+            else:
+                contracts.require(actual == value)
+    except contracts.InvalidResponse:
+        return _malformed(scope)
+    row = response.data
+    effect = {'entity': schema, 'reference': row['public_id'], 'action': action,
+              'state': row.get('status', 'registered'), 'result': result}
+    data = ({'cuando': format_local_wallclock(row['date'], row['start_time'])}
+            if schema == 'appointment' else {'nombre': row['name']})
+    return ToolOutcome(kind='EFFECT', validated=True, scope=scope,
+                       data=data, effects=(effect,), summary={'contract_version': 1, 'effect': result})
+
+
+def _appointment_effect(conversation, executor, response, *, action, args,
+                        triggered_by=None):
+    scope = _scope(conversation)
+    if conversation.contact.owner_id:
+        scope['owner'] = str(conversation.contact.owner.public_id)
+    if args.get('appointment_public_id'):
+        scope['appointment'] = args['appointment_public_id']
+    expected = {}
+    if action in ('cancel_appointment', 'confirm_appointment'):
+        expected['status'] = 'canceled' if action == 'cancel_appointment' else 'confirmed'
+    else:
+        expected.update({k: args[k] for k in ('date', 'start_time', 'end_time', 'pet', 'veterinarian') if k in args})
+        if args.get('pet_name'):
+            expected['pet_name'] = args['pet_name']
+        if action in ('create_appointment', 'register_new_client_and_pet', 'register_pet_and_schedule'):
+            expected['status'] = 'scheduled'
+    # A conflict itself is never success. A fresh scoped GET may demonstrate
+    # that the exact target already holds, without attributing it to this turn.
+    if response.status_code == 409 and scope.get('appointment'):
+        current = executor.call('GET', f"/api/appointments/{scope['appointment']}/",
+                                tool_name=action, triggered_by_message=triggered_by)
+        checked = _effect_response(conversation, current, action=action,
+                                   scope=scope, expected=expected, result='already_done')
+        if checked.kind == 'EFFECT':
+            checked.data['current'] = {k: current.data[k] for k in ('status', 'date', 'start_time')}
+            return checked
+        conflict = _effect_response(conversation, response, action=action, scope=scope)
+        # Existing state-change UX consumes a minimal current state, only if
+        # the fresh response itself passed the appointment schema and scope.
+        try:
+            contracts.validate_row(current.data, 'appointment', scope)
+            if not current.error_kind:
+                conflict.data = {'current': {k: current.data[k] for k in ('status', 'date', 'start_time')}}
+        except (contracts.InvalidResponse, KeyError, TypeError):
+            pass
+        return conflict
+    outcome = _effect_response(conversation, response, action=action, scope=scope, expected=expected)
+    if outcome.kind == 'EFFECT':
+        outcome.operation_key = args.get('idempotency_key')
+    # p52's 200 replay is already_done only with the same server idempotency
+    # key and a fully compatible returned entity, never from status alone.
+    if (outcome.kind == 'EFFECT' and response.status_code == 200
+            and action in ('create_appointment', 'register_new_client_and_pet')
+            and args.get('idempotency_key')):
+        outcome.effects[0]['result'] = 'already_done'
+    return outcome
+
+
+def _personal_pet_reference(conversation, handle):
+    from apps.patients.models import Pet
+    if not _verification_ok(conversation, 'confirmed_in_chat'):
+        return None
+    public_id = resolve_handle(conversation, handle)
+    if contracts.public_id(public_id) and Pet.objects.filter(
+            organization_id=conversation.organization_id,
+            owner_id=conversation.contact.owner_id, public_id=public_id).exists():
+        return public_id
+    return None
+
+
 def list_my_pets(conversation, executor, args, triggered_by=None):
+    if not _verification_ok(conversation, 'confirmed_in_chat'):
+        return ToolOutcome(kind='ERROR', client_error='verification_required')
     owner = conversation.contact.owner
-    status, data = executor.call(
-        'GET', '/api/pets/', tool_name='list_my_pets',
+    source = _read_endpoint(
+        conversation, executor, '/api/pets/', schema='pet',
+        scope=_scope(conversation, owner=str(owner.public_id)), tool_name='list_my_pets',
         params={'owner': str(owner.public_id)},
         args_redacted={},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'pets': len(d) if isinstance(d, list) else 0},
     )
-    if status >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-
-    pets = data if isinstance(data, list) else data.get('results', [])
+    if source.kind == 'ERROR':
+        return source
+    pets = source.data
     projection = []
     for pet in pets[:MAX_PETS]:
         handle = _add_ref(conversation, 'mascota', pet['public_id'])
@@ -384,34 +597,33 @@ def list_my_pets(conversation, executor, args, triggered_by=None):
             'especie': pet.get('species', '') or 'sin especie',
         })
     _save_refs(conversation)
-    return ToolOutcome(ok=True, data=projection,
-                       summary={'pets': len(projection)})
+    return source.project(projection, total=len(pets), summary={'pets': len(projection)})
 
 
 def get_vaccine_status(conversation, executor, args, triggered_by=None):
-    public_id = resolve_handle(conversation, args.get('pet_handle'))
+    public_id = _personal_pet_reference(conversation, args.get('pet_handle'))
     if public_id is None:
         return ToolOutcome(ok=False, client_error='unknown_handle')
 
-    status, data = executor.call(
-        'GET', '/api/vaccines/', tool_name='get_vaccine_status',
+    source = _read_endpoint(
+        conversation, executor, '/api/vaccines/', schema='vaccine',
+        scope=_scope(conversation, pet=public_id), tool_name='get_vaccine_status',
         params={'pet': public_id},
         args_redacted={'pet_handle': args.get('pet_handle')},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'vaccines': len(d) if isinstance(d, list) else 0},
     )
-    if status >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-
-    vaccines = data if isinstance(data, list) else data.get('results', [])
+    if source.kind == 'ERROR':
+        return source
+    vaccines = source.data
     projection = [{
         'vacuna': v.get('vaccine_name', ''),
         'aplicada': _format_date(v.get('application_date')),
         'proximo_refuerzo': _format_date(v.get('next_due_date')),
         'estado': _VACCINE_STATE_LABEL.get(v.get('status'), v.get('status', '')),
     } for v in vaccines[:MAX_ITEMS * 2]]
-    return ToolOutcome(ok=True, data=projection,
-                       summary={'vaccines': len(projection)})
+    return source.project(projection, total=len(vaccines),
+                          summary={'vaccines': len(projection)})
 
 
 def get_clinic_info(conversation, executor, args, triggered_by=None):
@@ -444,24 +656,31 @@ def get_clinic_info(conversation, executor, args, triggered_by=None):
 
     executor.record_local(
         tool_name='get_clinic_info',
-        args_redacted={'topic': args.get('topic', '')},
+        args_redacted={},
         summary={'facts': len([k for k in facts if k != '_sin_dato'])},
         triggered_by_message=triggered_by,
     )
-    return ToolOutcome(ok=True, data=facts, summary={'facts': len(facts)})
+    # FAQ values are staff supplied text, not structured price/effect evidence.
+    if not all(isinstance(k, str) and isinstance(v, (str, bool))
+               for k, v in facts.items()):
+        return _malformed(_scope(conversation))
+    return ToolOutcome(kind='READ', data=facts, validated=True,
+                       scope=_scope(conversation, topic=topic), completeness='unknown',
+                       summary={'facts': len(facts)})
 
 
 def get_service_catalog(conversation, executor, args, triggered_by=None):
-    status, data = executor.call(
-        'GET', '/api/billing/services/', tool_name='get_service_catalog',
-        args_redacted={'query': args.get('query', '')},
+    currency = get_org_setting(conversation.organization, 'currency_code')
+    source = _read_endpoint(
+        conversation, executor, '/api/billing/services/', schema='service',
+        scope=_scope(conversation, currency=currency), tool_name='get_service_catalog',
+        args_redacted={},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'services': len(d) if isinstance(d, list) else 0},
     )
-    if status >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-
-    services = data if isinstance(data, list) else data.get('results', [])
+    if source.kind == 'ERROR':
+        return source
+    services = [s for s in source.data if s['is_active']]
     query = _norm(args.get('query', ''))
     if query:
         services = [s for s in services if query in _norm(s.get('name', ''))]
@@ -469,19 +688,17 @@ def get_service_catalog(conversation, executor, args, triggered_by=None):
     projection = []
     for service in services[:MAX_ITEMS]:
         # ServiceSerializer expone `base_price` (billing/serializers.py:52).
-        price = service.get('base_price')
-        try:
-            price_value = float(price)
-        except (TypeError, ValueError):
-            price_value = 0.0
+        price_value = contracts.decimal_field(service['base_price'], nullable=True)
         projection.append({
             'servicio': service.get('name', ''),
             # Precio nulo/0 → None: el planner responde "lo cotiza el
             # equipo", jamás "$0" (spec INT-11).
-            'precio': f"${price_value:,.2f}" if price_value > 0 else None,
+            'precio': f"${price_value:,.2f}" if price_value and price_value > 0 else None,
+            'amount': price_value if price_value and price_value > 0 else None,
+            'currency': currency, 'service_id': service['public_id'],
         })
-    return ToolOutcome(ok=True, data=projection,
-                       summary={'matches': len(projection)})
+    source.scope['local_filters'] = {'name_contains': query, 'is_active': True}
+    return source.project(projection, total=len(services), summary={'matches': len(projection)})
 
 
 _SPECIALTY_IGNORED_TOKENS = frozenset({
@@ -537,7 +754,9 @@ def get_offered_specialties(conversation, executor, args, triggered_by=None):
         tool_name='get_offered_specialties', args_redacted={},
         summary={'matches': len(projection)}, triggered_by_message=triggered_by,
     )
-    return ToolOutcome(ok=True, data=projection,
+    return ToolOutcome(kind='READ', data=projection, validated=True,
+                       scope=_scope(conversation, local_filters={'query': args.get('query', '')}),
+                       completeness=('truncated' if len(set(offered)) > MAX_ITEMS else 'complete'),
                        summary={'matches': len(projection)})
 
 
@@ -547,18 +766,18 @@ def check_product_availability(conversation, executor, args, triggered_by=None):
     params = {'active': 'true'}
     if category:
         params['category'] = category
-    status, data = executor.call(
-        'GET', '/api/inventory/products/',
+    source = _read_endpoint(
+        conversation, executor, '/api/inventory/products/', schema='product',
+        scope=_scope(conversation, currency=get_org_setting(conversation.organization, 'currency_code'), **params),
         tool_name='check_product_availability',
         params=params,
-        args_redacted={'query': query},
+        args_redacted={},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'products': len(d) if isinstance(d, list) else 0},
     )
-    if status >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-
-    products = data if isinstance(data, list) else data.get('results', [])
+    if source.kind == 'ERROR':
+        return source
+    products = source.data
     products = [p for p in products if p.get('is_active', True)]
     if category:
         matches = [p for p in products if p.get('category') == category]
@@ -579,7 +798,7 @@ def check_product_availability(conversation, executor, args, triggered_by=None):
             'requiere_receta': bool(product.get('requires_prescription')),
         }
         if available:
-            entry.update(_available_product_details(product))
+            entry.update(_available_product_details(product, get_org_setting(conversation.organization, 'currency_code')))
         else:
             entry['agotado'] = True
         projection.append(entry)
@@ -607,9 +826,10 @@ def check_product_availability(conversation, executor, args, triggered_by=None):
                      'disponible': entry['disponible']},
             triggered_by_message=triggered_by,
         )
-    return ToolOutcome(ok=True, data=projection,
-                       summary={'matches': len(projection),
-                                'search_mode': 'category' if category else 'text'})
+    source.scope['local_filters'] = {'query': query, 'search_mode': 'category' if category else 'text'}
+    return source.project(projection, total=len(matches),
+                          summary={'matches': len(projection),
+                                   'search_mode': 'category' if category else 'text'})
 
 
 def _product_available(product):
@@ -657,40 +877,49 @@ def get_appointments(conversation, executor, args, triggered_by=None):
     único recorte es el volumen (`MAX_ITEMS`), y se hace por CERCANÍA a ahora
     para que sobrevivan a la vez la que se perdió esta mañana y la próxima.
     """
+    if not _verification_ok(conversation, 'confirmed_in_chat'):
+        return ToolOutcome(kind='ERROR', client_error='verification_required')
     pet_handle = args.get('pet_handle')
+    coverage = 'complete'
     if pet_handle:
-        public_id = resolve_handle(conversation, pet_handle)
+        public_id = _personal_pet_reference(conversation, pet_handle)
         if public_id is None:
             return ToolOutcome(ok=False, client_error='unknown_handle')
         pet_ids = [public_id]
     else:
         pets_outcome = list_my_pets(conversation, executor, {},
                                     triggered_by=triggered_by)
-        if not pets_outcome.ok:
+        if pets_outcome.kind == 'ERROR':
             return pets_outcome
+        coverage = pets_outcome.completeness
         pet_ids = [resolve_handle(conversation, p['handle'])
                    for p in pets_outcome.data]
 
     now = timezone.now()
     found = []
     for pet_id in pet_ids:
-        status, data = executor.call(
-            'GET', '/api/appointments/', tool_name='get_appointments',
+        source = _read_endpoint(
+            conversation, executor, '/api/appointments/', schema='appointment',
+            scope=_scope(conversation, pet=pet_id,
+                         owner=str(conversation.contact.owner.public_id)),
+            tool_name='get_appointments',
             params={'pet': pet_id},
             args_redacted={'pet_handle': pet_handle or '(todas)'},
             triggered_by_message=triggered_by,
             result_summarizer=lambda d: {
                 'appointments': len(d) if isinstance(d, list) else 0},
         )
-        if status >= 400:
-            return ToolOutcome(ok=False, client_error='tool_failure')
-        rows = data if isinstance(data, list) else data.get('results', [])
+        if source.kind == 'ERROR':
+            return source
+        if source.completeness != 'complete':
+            coverage = ('truncated' if 'truncated' in (coverage, source.completeness) else 'unknown')
+        rows = source.data
         for appointment in rows:
             start_dt = _appointment_start(appointment)
             if start_dt is None:
                 # Fecha ilegible: se descarta porque no se puede situar en el
                 # tiempo, no porque su estado no nos guste.
-                continue
+                return _malformed(source.scope)
             found.append((start_dt, appointment))
 
     # El recorte por volumen elige por CERCANÍA (|start - ahora|) y luego se
@@ -714,7 +943,10 @@ def get_appointments(conversation, executor, args, triggered_by=None):
             'motivo': (appointment.get('reason') or '')[:120],
         })
     _save_refs(conversation)
-    return ToolOutcome(ok=True, data=projection,
+    return ToolOutcome(kind='READ', data=projection, validated=True,
+                       scope=_scope(conversation, pets=tuple(pet_ids),
+                                    owner=str(conversation.contact.owner.public_id)),
+                       completeness=('truncated' if len(found) > MAX_ITEMS else coverage),
                        summary={'citas': len(projection)})
 
 
@@ -785,34 +1017,37 @@ def _scheduling_vets(organization, agent_settings):
 
 def _day_occupancy(org, executor, day, *, tool_name, triggered_by=None,
                    preferred=''):
-    """`{vet_pk: {'HH:MM', …}}` del día, en UNA sola llamada a la API.
+    """READ de intervalos ocupados por veterinario, o ERROR explícito.
 
     Antes se consultaba la agenda de UN veterinario; ahora se traen las citas
     del día y se agrupan. Con la misma llamada se responde la pregunta que de
     verdad importa: *¿queda algún veterinario libre a esta hora?*
-    Devuelve None si la API falla.
+    Sin cobertura completa no se puede demostrar que un horario esté libre.
     """
     date_str = day.isoformat()
-    status_code, data = executor.call(
-        'GET', '/api/appointments/', tool_name=tool_name,
+    source = _read_endpoint(
+        executor.conversation, executor, '/api/appointments/', schema='appointment',
+        scope=_scope(executor.conversation, date=date_str), tool_name=tool_name,
         params={'date': date_str},
         args_redacted={'date': date_str, 'preferred': preferred},
         triggered_by_message=triggered_by,
         result_summarizer=lambda d: {'occupied': len(d) if isinstance(d, list) else 0},
     )
-    if status_code >= 400:
-        return None
-    rows = data if isinstance(data, list) else data.get('results', [])
+    if source.kind == 'ERROR':
+        return source
+    if source.completeness != 'complete':
+        return ToolOutcome(kind='ERROR', error_kind='uncertain',
+                           client_error='tool_failure', scope=source.scope, origin='endpoint')
+    rows = source.data
     occupancy = {}
     for row in rows:
         if row.get('status') not in ('scheduled', 'confirmed', 'in_progress'):
             continue
         vet_pk = row.get('veterinarian')
-        hhmm = (row.get('start_time') or '')[:5]
-        if vet_pk is None or not hhmm:
-            continue
-        occupancy.setdefault(vet_pk, set()).add(hhmm)
-    return occupancy
+        if vet_pk is None:
+            return _malformed(source.scope)
+        occupancy.setdefault(vet_pk, []).append((row['start_time'], row['end_time']))
+    return source.project(occupancy)
 
 
 def _own_appointment_at(org, executor, day, pet_public_id, hhmm, *,
@@ -872,16 +1107,22 @@ def _slot_taken_or_already_scheduled(org, executor, date_str, hhmm,
 
 
 def _any_vet_free(vets, occupancy, hhmm):
-    return any(hhmm not in occupancy.get(vet.pk, ()) for vet in vets)
+    return any(_vet_free(vet.pk, occupancy, hhmm) for vet in vets)
+
+
+def _vet_free(vet_pk, occupancy, hhmm):
+    start = contracts.iso_time(hhmm)
+    end = contracts.iso_time(_appt_end_time(hhmm))
+    return not any(start < contracts.iso_time(b) and end > contracts.iso_time(a)
+                   for a, b in occupancy.get(vet_pk, ()))
 
 
 def pick_free_vet(org, executor, date_str, hhmm, vets, *, triggered_by=None,
                   tool_name='create_appointment'):
     """Primer veterinario libre a esa hora, o None si no queda ninguno.
 
-    Si la consulta de agenda falla se devuelve el primer candidato en vez de
-    bloquear el agendado: el dominio revalida el solape bajo su propia
-    validación y, si está ocupado, responde 400 → el agente re-oferta.
+    Si la consulta falla no se elige un candidato por defecto. Las escrituras
+    siguen contenidas y las pruebas supervisadas conservan la validación API.
     """
     from datetime import datetime
     try:
@@ -890,10 +1131,10 @@ def pick_free_vet(org, executor, date_str, hhmm, vets, *, triggered_by=None,
         return None
     occupancy = _day_occupancy(org, executor, day, tool_name=tool_name,
                                triggered_by=triggered_by)
-    if occupancy is None:
-        return vets[0] if vets else None
+    if occupancy.kind == 'ERROR':
+        return None
     for vet in vets:
-        if hhmm not in occupancy.get(vet.pk, ()):
+        if _vet_free(vet.pk, occupancy.data, hhmm):
             return vet
     return None
 
@@ -903,15 +1144,15 @@ def _free_slots_for_day(org, executor, day, vets, ranges, *, preferred='',
     """[hhmm…] libres ese día = horario de la clínica (`ranges`) ∩ ocupación real.
 
     Un hueco se ofrece si **algún** veterinario candidato lo tiene libre (a la
-    clínica le da igual quién atienda). None si la API falla. El caller resuelve
+    clínica le da igual quién atienda). ERROR si la API falla. El caller resuelve
     `vets` y `ranges` para mapear sus propios errores. Compartido por la tool de
     slots y la retención al cancelar (UX-11)."""
     from datetime import datetime, timedelta
 
     occupancy = _day_occupancy(org, executor, day, tool_name=tool_name,
                                triggered_by=triggered_by, preferred=preferred)
-    if occupancy is None:
-        return None
+    if occupancy.kind == 'ERROR':
+        return occupancy
     # Reloj de la ORGANIZACIÓN, no del proceso (settings.TIME_ZONE='UTC').
     # Con la zona del servidor, a las 10:00 en México se descartaban como
     # "pasados" todos los huecos anteriores a las 16:00 y a la 13:00 no quedaba
@@ -927,15 +1168,15 @@ def _free_slots_for_day(org, executor, day, vets, ranges, *, preferred='',
             if (
                 hhmm > now_hhmm
                 and _time_bucket_ok(hhmm, preferred)
-                and _any_vet_free(vets, occupancy, hhmm)
+                and _any_vet_free(vets, occupancy.data, hhmm)
             ):
                 slots.append(hhmm)
-                if len(slots) >= MAX_ITEMS:
+                if len(slots) > MAX_ITEMS:
                     break
             cursor += timedelta(minutes=SLOT_MINUTES)
-        if len(slots) >= MAX_ITEMS:
+        if len(slots) > MAX_ITEMS:
             break
-    return slots
+    return occupancy.project(slots[:MAX_ITEMS], total=len(slots))
 
 
 def suggest_retention_slots(conversation, executor, *, max_days=7):
@@ -958,10 +1199,10 @@ def suggest_retention_slots(conversation, executor, *, max_days=7):
             slots = _free_slots_for_day(
                 org, executor, day, vets, ranges,
                 tool_name='suggest_retention_slots')
-            if slots:
+            if slots.kind == 'READ' and slots.data:
                 fecha = format_local_wallclock(
-                    day.isoformat(), slots[0]).rsplit(',', 1)[0]
-                return fecha, [_hhmm_label(h) for h in slots[:2]]
+                    day.isoformat(), slots.data[0]).rsplit(',', 1)[0]
+                return fecha, [_hhmm_label(h) for h in slots.data[:2]]
         day += timedelta(days=1)
     return None, []
 
@@ -995,7 +1236,9 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     agent_settings = AgentSettings.objects.filter(organization=org).first()
     ranges = clinic_context.weekday_ranges(org, day.weekday())
     if not ranges:
-        return ToolOutcome(ok=True, data=[], summary={'slots': 0, 'closed': True})
+        return ToolOutcome(kind='READ', data=[], validated=True, completeness='complete',
+                           scope=_scope(conversation, date=date_str),
+                           summary={'slots': 0, 'closed': True})
 
     vets = _scheduling_vets(org, agent_settings)
     if not vets:
@@ -1005,8 +1248,8 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     slots = _free_slots_for_day(
         org, executor, day, vets, ranges,
         preferred=preferred, triggered_by=triggered_by)
-    if slots is None:
-        return ToolOutcome(ok=False, client_error='tool_failure')
+    if slots.kind == 'ERROR':
+        return slots
 
     projection = [{
         'fecha': format_local_wallclock(
@@ -1015,7 +1258,8 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
         'hora': _hhmm_label(hhmm),
         'iso_date': date_str,
         'iso_time': hhmm,
-    } for hhmm in slots[:3]]
+        'iso_end_time': _appt_end_time(hhmm),
+    } for hhmm in slots.data[:3]]
 
     # El día consultado ENTRA al objetivo en curso (piloto 2026-07-28, conv 12).
     # Hasta aquí el único acceso a los slots eran los argumentos de una tool de
@@ -1033,7 +1277,8 @@ def find_available_slots(conversation, executor, args, triggered_by=None):
     if re.match(r'^\d{1,2}:\d{2}$', (preferred or '').strip()):
         _capture_slot_from_read(conversation, 'time', preferred.strip())
 
-    return ToolOutcome(ok=True, data=projection, summary={'slots': len(projection)})
+    slots.scope['local_filters'] = {'preferred_time': preferred, 'duration_minutes': SLOT_MINUTES}
+    return slots.project(projection, total=len(slots.data), summary={'slots': len(projection)})
 
 
 def _exact_slot_status(org, executor, date_str, time_str, vets, *,
@@ -1064,10 +1309,10 @@ def _exact_slot_status(org, executor, date_str, time_str, vets, *,
         org, executor, day, tool_name=tool_name, triggered_by=triggered_by,
         preferred=hhmm,
     )
-    if occupancy is None:
-        return 'tool_failure', None
+    if occupancy.kind == 'ERROR':
+        return 'tool_failure', occupancy
     for vet in vets:
-        if hhmm not in occupancy.get(vet.pk, ()):
+        if _vet_free(vet.pk, occupancy.data, hhmm):
             return 'available', vet
     return 'slot_taken', None
 
@@ -1089,12 +1334,16 @@ def check_appointment_slot(conversation, executor, args, triggered_by=None):
         org, executor, date_str, time_str, vets,
         tool_name='check_appointment_slot', triggered_by=triggered_by,
     )
+    if state == 'tool_failure' and isinstance(_vet, ToolOutcome):
+        return _vet
     if state in ('bad_date', 'past_date', 'tool_failure'):
         return ToolOutcome(ok=False, client_error=state)
     available = state == 'available'
     return ToolOutcome(
-        ok=True,
+        kind='READ', validated=True, completeness='complete',
+        scope=_scope(conversation, date=date_str, time=time_str[:5]),
         data={'date': date_str, 'time': time_str[:5], 'available': available,
+              'end_time': _appt_end_time(time_str[:5]),
               'reason': '' if available else state},
         summary={'available': available, 'reason': '' if available else state},
     )
@@ -1448,70 +1697,43 @@ def create_appointment(conversation, executor, args, triggered_by=None):
 def commit_create_appointment(conversation, executor, args, triggered_by=None):
     body = {k: args[k] for k in
             ('pet', 'veterinarian', 'date', 'start_time', 'end_time', 'reason', 'notes')}
-    status_code, data = executor.call(
+    response = executor.call(
         'POST', '/api/appointments/', tool_name='create_appointment',
         json=body, args_redacted={'date': args['date'], 'time': args['start_time']},
         policy_tier='2', policy_decision='confirmed',
-        triggered_by_message=triggered_by,
-        idempotency_key=args.get('idempotency_key'),
-        extract_domain_id=lambda d: d.get('public_id'),
-        result_summarizer=lambda d: {'status': d.get('status')},
-    )
-    if status_code == 400:
-        client_error, detail = map_domain_400(data)
-        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    _add_ref(conversation, 'cita', data.get('public_id'))
-    _save_refs(conversation)
-    return ToolOutcome(ok=True, summary={'created': True}, data={
-        'cuando': format_local_wallclock(args['date'], args['start_time']),
-    })
+        triggered_by_message=triggered_by, idempotency_key=args.get('idempotency_key'))
+    outcome = _appointment_effect(conversation, executor, response,
+                                  action='create_appointment', args=args, triggered_by=triggered_by)
+    if outcome.kind == 'EFFECT':
+        _add_ref(conversation, 'cita', response.data['public_id'])
+        _save_refs(conversation)
+    return outcome
 
 
 def confirm_appointment(conversation, executor, args, triggered_by=None):
-    """Tier-1 (INT-22): scheduled→confirmed, sin parafraseo (benigno).
-
-    Benigno **no** quiere decir sin precondición (INV-A). Confirmar es una
-    escritura, y sin declarar cómo se vio la cita este camino podía confirmar
-    una que alguien acababa de cancelar — resucitándola por la puerta de atrás
-    mientras `cancel`/`reschedule` sí lo comprobaban.
-
-    La lectura previa es lo que hace honesta a la precondición aquí: se envía
-    el estado que el dominio ACABA de devolver, no uno recordado de antes.
-    """
+    """WRITE only. State queries use get_appointments; containment still wins."""
     appt_pid = resolve_handle(conversation, args.get('appointment_handle'))
     if appt_pid is None:
-        return ToolOutcome(ok=False, client_error='unknown_handle')
-
-    read_code, appt = executor.call(
-        'GET', f'/api/appointments/{appt_pid}/', tool_name='confirm_appointment',
-        args_redacted={'appointment_handle': args.get('appointment_handle')},
-        triggered_by_message=triggered_by,
-    )
-    if read_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-
-    status_code, data = executor.call(
-        'PATCH', f'/api/appointments/{appt_pid}/status/',
-        tool_name='confirm_appointment',
-        json={'status': 'confirmed', **_expected_state_body(_expected_state_of(appt))},
-        policy_tier='1', args_redacted={'appointment_handle': args.get('appointment_handle')},
-        triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
-        result_summarizer=lambda d: {'status': d.get('status')},
-        business_outcomes=BUSINESS_OUTCOMES,
-    )
-    if status_code == 409:
-        # Cambió entre la lectura y la escritura: NO se reintenta. Para el
-        # cliente es lo mismo que un "ya estaba" — la tool es benigna y el
-        # modelo sigue la conversación con el estado real.
-        return ToolOutcome(ok=True, data={'already_or_invalid': True},
-                           summary={'noop': True})
-    if status_code == 400:
-        return ToolOutcome(ok=True, data={'already_or_invalid': True}, summary={'noop': True})
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    return ToolOutcome(ok=True, data={'confirmed': True}, summary={'confirmed': True})
+        return ToolOutcome(kind='ERROR', client_error='unknown_handle')
+    scope = _scope(conversation, appointment=appt_pid,
+                   owner=str(conversation.contact.owner.public_id))
+    read = executor.call('GET', f'/api/appointments/{appt_pid}/',
+                         tool_name='confirm_appointment', triggered_by_message=triggered_by)
+    if read.error_kind:
+        return _response_error(read, scope)
+    try:
+        contracts.validate_row(read.data, 'appointment', scope)
+    except contracts.InvalidResponse:
+        return _malformed(scope)
+    if read.data['status'] == 'confirmed':
+        return _effect_response(conversation, read, action='confirm_appointment', scope=scope,
+                                expected={'status': 'confirmed'}, result='already_done')
+    response = executor.call(
+        'PATCH', f'/api/appointments/{appt_pid}/status/', tool_name='confirm_appointment',
+        json={'status': 'confirmed', **_expected_state_body(_expected_state_of(read.data))},
+        policy_tier='1', triggered_by_message=triggered_by, business_outcomes=BUSINESS_OUTCOMES)
+    return _appointment_effect(conversation, executor, response, action='confirm_appointment',
+                               args={'appointment_public_id': appt_pid}, triggered_by=triggered_by)
 
 
 def cancel_appointment(conversation, executor, args, triggered_by=None):
@@ -1572,24 +1794,13 @@ def cancel_appointment(conversation, executor, args, triggered_by=None):
 
 def commit_cancel_appointment(conversation, executor, args, triggered_by=None):
     appt_pid = args['appointment_public_id']
-    status_code, data = executor.call(
-        'PATCH', f'/api/appointments/{appt_pid}/status/',
-        tool_name='cancel_appointment',
-        json={'status': 'canceled',
-              'cancellation_reason': args.get('cancellation_reason', ''),
-              **_expected_state_body(args)},
-        policy_tier='2', policy_decision='confirmed',
-        triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
-        business_outcomes=BUSINESS_OUTCOMES,
-    )
-    if status_code == 409:
-        return _precondition_outcome(data, already_done_when=_cancel_already_done)
-    if status_code == 400:
-        client_error, detail = map_domain_400(data)
-        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    return ToolOutcome(ok=True, data={'canceled': True}, summary={'canceled': True})
+    response = executor.call(
+        'PATCH', f'/api/appointments/{appt_pid}/status/', tool_name='cancel_appointment',
+        json={'status': 'canceled', 'cancellation_reason': args.get('cancellation_reason', ''),
+              **_expected_state_body(args)}, policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by, business_outcomes=BUSINESS_OUTCOMES)
+    return _appointment_effect(conversation, executor, response, action='cancel_appointment',
+                               args=args, triggered_by=triggered_by)
 
 
 def reschedule_appointment(conversation, executor, args, triggered_by=None):
@@ -1672,26 +1883,12 @@ def commit_reschedule_appointment(conversation, executor, args, triggered_by=Non
             'end_time': args['end_time'], **_expected_state_body(args)}
     if args.get('veterinarian') is not None:
         body['veterinarian'] = args['veterinarian']
-    status_code, data = executor.call(
+    response = executor.call(
         'PATCH', f'/api/appointments/{appt_pid}/', tool_name='reschedule_appointment',
-        json=body,
-        policy_tier='2', policy_decision='confirmed',
-        triggered_by_message=triggered_by, domain_object_public_id=appt_pid,
-        business_outcomes=BUSINESS_OUTCOMES,
-    )
-    if status_code == 409:
-        return _precondition_outcome(
-            data,
-            already_done_when=lambda current: _reschedule_already_done(current, args),
-        )
-    if status_code == 400:
-        client_error, detail = map_domain_400(data)
-        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    return ToolOutcome(ok=True, summary={'rescheduled': True}, data={
-        'cuando': format_local_wallclock(args['date'], args['start_time']),
-    })
+        json=body, policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by, business_outcomes=BUSINESS_OUTCOMES)
+    return _appointment_effect(conversation, executor, response, action='reschedule_appointment',
+                               args=args, triggered_by=triggered_by)
 
 
 def stage_replacement_from_canceled_reschedule(conversation, executor, pending,
@@ -1933,7 +2130,7 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
     # de una persona. No se pre-consulta desde aquí a propósito: sería un
     # `icontains` acotado a 20 filas con una ventana TOCTOU hasta el POST.
     body['require_new_owner'] = True
-    status_code, data = executor.call(
+    response = executor.call(
         'POST', '/api/appointments/create-with-patient/',
         tool_name='register_new_client_and_pet', json=body,
         args_redacted={'date': args['date'], 'time': args['start_time']},
@@ -1943,19 +2140,12 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
         extract_domain_id=lambda d: d.get('public_id'),
         result_summarizer=lambda d: {'status': d.get('status')},
         business_outcomes=BUSINESS_OUTCOMES)
-    if status_code == 409:
-        # El teléfono ya tiene expediente (uno: `owner_exists`; varios:
-        # `owner_ambiguous`). CERO escrituras — ni Owner, ni Pet, ni cita — y
-        # la decisión pasa a una persona con la intención preservada (§5.5).
-        code = (data or {}).get('code')
-        if code in ('owner_exists', 'owner_ambiguous'):
-            return ToolOutcome(ok=False, client_error=code)
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    if status_code == 400:
-        client_error, detail = map_domain_400(data)
-        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
+    outcome = _appointment_effect(conversation, executor, response,
+                                  action='register_new_client_and_pet', args=args,
+                                  triggered_by=triggered_by)
+    if outcome.kind != 'EFFECT':
+        return outcome
+    data = response.data
 
     # Auto-vínculo: el número queda ligado al owner resuelto (probó control
     # del número al escribir + aportó sus datos → confirmed_in_chat).
@@ -1995,8 +2185,8 @@ def commit_register_new_client_and_pet(conversation, executor, args, triggered_b
 
     _add_ref(conversation, 'cita', data.get('public_id'))
     _save_refs(conversation)
-    return ToolOutcome(ok=True, summary={'registered': True}, data={
-        'cuando': format_local_wallclock(args['date'], args['start_time'])})
+    return outcome
+
 
 
 # ---------------------------------------------------------------------------
@@ -2154,90 +2344,50 @@ def register_pet_only(conversation, executor, args, triggered_by=None):
 
 def _commit_add_pet(conversation, executor, args, *, with_appointment,
                     triggered_by=None):
-    """Crea la mascota en modo REFERENCIA y, si toca, su cita.
-
-    Modo referencia (`owner_public_id`) y no alta por teléfono: INV-B exige que
-    el expediente lo haya ELEGIDO alguien, y aquí quien lo eligió fue la
-    verificación de identidad que vinculó el contacto. Resolver el número aquí
-    sería dejar que el teléfono autorice.
-
-    **Dos llamadas, y eso es aceptable en este flujo concreto.** Si la mascota
-    se crea y la cita choca (`slot_taken`), el estado resultante —mascota
-    registrada sin cita— es exactamente uno de los dos desenlaces que el PO
-    aprobó, no un huérfano. El cliente se entera y se recupera agendando. Por
-    eso este camino NO necesita endpoint compuesto, a diferencia del alta de
-    cliente nuevo, donde un Owner sin mascota sí sería basura.
-    """
-    tool_name = ('register_pet_and_schedule' if with_appointment
-                 else 'register_pet_only')
-    pet_body = {
-        'owner_public_id': args['owner_public_id'],
-        'name': args['pet_name'],
-    }
-    if args.get('pet_species'):
-        pet_body['species'] = args['pet_species']
-    if args.get('pet_birth_date'):
-        pet_body['birth_date'] = args['pet_birth_date']
-
-    status_code, pet = executor.call(
+    """Existing supervised compound path: preserve each proven effect."""
+    tool_name = 'register_pet_and_schedule' if with_appointment else 'register_pet_only'
+    pet_body = {'owner_public_id': args['owner_public_id'], 'name': args['pet_name']}
+    for key, dest in (('pet_species', 'species'), ('pet_birth_date', 'birth_date')):
+        if args.get(key):
+            pet_body[dest] = args[key]
+    response = executor.call(
         'POST', '/api/pets/', tool_name=tool_name, json=pet_body,
-        args_redacted={'pet_name': args['pet_name']},
-        policy_tier='2', policy_decision='confirmed',
-        triggered_by_message=triggered_by,
-        idempotency_key=args.get('idempotency_key'),
-        extract_domain_id=lambda d: d.get('public_id'),
+        args_redacted={}, policy_tier='2', policy_decision='confirmed',
+        triggered_by_message=triggered_by, idempotency_key=args.get('idempotency_key'),
         business_outcomes=BUSINESS_OUTCOMES)
-    if status_code == 409:
-        # El expediente dejó de ser inequívoco entre la propuesta y el «sí».
-        code = (pet or {}).get('code')
-        if code in ('owner_exists', 'owner_ambiguous'):
-            return ToolOutcome(ok=False, client_error=code)
-        return ToolOutcome(ok=False, client_error='tool_failure')
-    if status_code == 400:
-        client_error, detail = map_domain_400(pet)
-        return ToolOutcome(ok=False, client_error=client_error, detail=detail)
-    if status_code >= 400:
-        return ToolOutcome(ok=False, client_error='tool_failure')
-
-    pet_handle = _add_ref(conversation, 'mascota', pet.get('public_id'))
+    pet_effect = _effect_response(
+        conversation, response, action=tool_name, schema='pet',
+        scope=_scope(conversation, owner=args['owner_public_id']),
+        expected={'name': args['pet_name']})
+    if pet_effect.kind != 'EFFECT':
+        return pet_effect
+    pet = response.data
+    pet_handle = _add_ref(conversation, 'mascota', pet['public_id'])
     _save_refs(conversation)
+    pet_effect.data['mascota_handle'] = pet_handle
     if not with_appointment:
-        return ToolOutcome(ok=True, summary={'registered': True},
-                           data={'mascota_handle': pet_handle,
-                                 'nombre': args['pet_name']})
-
-    appt_body = {
-        'pet': pet.get('id'), 'veterinarian': args['veterinarian'],
-        'date': args['date'], 'start_time': args['start_time'],
-        'end_time': args['end_time'], 'reason': args['reason'],
-        'notes': args['notes'],
-    }
-    status_code, appt = executor.call(
+        return pet_effect
+    appt_body = {k: args[k] for k in ('veterinarian', 'date', 'start_time', 'end_time', 'reason', 'notes')}
+    appt_body['pet'] = pet['id']
+    response = executor.call(
         'POST', '/api/appointments/', tool_name=tool_name, json=appt_body,
         args_redacted={'date': args['date'], 'time': args['start_time']},
-        policy_tier='2', policy_decision='confirmed',
-        triggered_by_message=triggered_by,
-        extract_domain_id=lambda d: d.get('public_id'),
-        result_summarizer=lambda d: {'status': d.get('status')},
+        policy_tier='2', policy_decision='confirmed', triggered_by_message=triggered_by,
         business_outcomes=BUSINESS_OUTCOMES)
-    if status_code >= 400:
-        client_error = 'tool_failure'
-        if status_code == 400:
-            client_error, _ = map_domain_400(appt)
-        # La mascota SÍ quedó registrada. Decirlo es obligatorio: callarlo
-        # dejaría al cliente creyendo que no pasó nada y al siguiente intento
-        # chocando con `pet_exists`.
-        return ToolOutcome(ok=False, client_error='pet_saved_appointment_failed',
-                           detail=client_error,
-                           data={'mascota_handle': pet_handle,
-                                 'nombre': args['pet_name']})
-
-    _add_ref(conversation, 'cita', appt.get('public_id'))
+    outcome = _appointment_effect(conversation, executor, response,
+                                  action=tool_name, args=appt_body, triggered_by=triggered_by)
+    if outcome.kind != 'EFFECT':
+        outcome.partial_effects = pet_effect.effects
+        outcome.validated = True
+        outcome.client_error = 'pet_saved_appointment_failed'
+        outcome.data = pet_effect.data
+        return outcome
+    _add_ref(conversation, 'cita', response.data['public_id'])
     _save_refs(conversation)
-    return ToolOutcome(ok=True, summary={'registered': True, 'scheduled': True},
-                       data={'mascota_handle': pet_handle,
-                             'cuando': format_local_wallclock(
-                                 args['date'], args['start_time'])})
+    outcome.effects = pet_effect.effects + outcome.effects
+    outcome.data['mascota_handle'] = pet_handle
+    return outcome
+
 
 
 def commit_register_pet_and_schedule(conversation, executor, args,
@@ -2531,8 +2681,9 @@ def get_recent_product_queries(conversation, executor, args, triggered_by=None):
         summary={'consultas': len(projection)},
         triggered_by_message=triggered_by,
     )
-    return ToolOutcome(ok=True, data=projection,
-                       summary={'consultas': len(projection)})
+    return ToolOutcome(kind='READ', data=projection, validated=True,
+                       scope=_scope(conversation, local_filters={'limit': limit}),
+                       completeness='unknown', summary={'consultas': len(projection)})
 
 
 def request_human(conversation, executor, args, triggered_by=None):
@@ -2557,8 +2708,11 @@ def request_human(conversation, executor, args, triggered_by=None):
         policy_decision='escalated',
         triggered_by_message=triggered_by,
     )
-    return ToolOutcome(ok=True, data={'handoff': True},
-                       summary={'handoff_id': handoff.pk})
+    return ToolOutcome(kind='EFFECT', validated=True, scope=_scope(conversation),
+                       data={'handoff': True}, effects=({
+                           'entity': 'human_handoff', 'reference': str(handoff.pk),
+                           'action': 'request_human', 'state': 'persisted', 'result': 'success',
+                       },), summary={'handoff_id': handoff.pk})
 
 
 def set_client_path(conversation, executor, args, triggered_by=None):
@@ -3028,6 +3182,31 @@ TOOL_SPECS = {
 }
 
 
+assert set(TOOL_SPECS) == set(EFFECTS), 'Every tool needs a static capability effect'
+for _name, _spec in TOOL_SPECS.items():
+    _spec.update(
+        effect=EFFECTS[_name],
+        identity_policy=('current_link' if _spec['min_verification'] != 'unknown'
+                         else 'public' if EFFECTS[_name] == READ_PUBLIC else 'contact'),
+        authorization_mode=('contained' if EFFECTS[_name] == WRITE_BUSINESS
+                            else 'existing_identity' if EFFECTS[_name] == READ_PERSONAL
+                            else 'existing_control' if EFFECTS[_name] == CONTROL else 'public'),
+        result_contract='ToolOutcome/C3-v1',
+    )
+    if EFFECTS[_name] == WRITE_BUSINESS:
+        _spec['operation_kind'] = _name
+        _spec['idempotency_semantics'] = (
+            'appointment_replay_by_header' if _name in ('create_appointment', 'register_new_client_and_pet')
+            else 'expected_state' if _name in ('confirm_appointment', 'cancel_appointment', 'reschedule_appointment')
+            else 'no_compound_atomicity')
+
+TOOL_SPECS['get_appointments']['description'] += (
+    ' Consulta también el estado de asistencia; preguntar si está confirmada '
+    'es una lectura y nunca autoriza confirmarla.')
+TOOL_SPECS['confirm_appointment']['description'] = (
+    'WRITE de asistencia, bloqueado por containment. No sirve para consultas de estado.')
+
+
 _GOAL_TOOL_HINT = (
     " Puedes llamarla con datos PARCIALES: el sistema lleva la cuenta de lo "
     "que ya tiene y te dice qué falta. Acompaña cada dato con "
@@ -3075,6 +3254,9 @@ def as_openai_tools(conversation=None):
         if conversation is not None and name == BEGIN_OPERATION_TOOL:
             continue
         if conversation is not None and not intake.allows_tool(conversation, name):
+            continue
+        if (conversation is not None and spec['effect'] == READ_PERSONAL
+                and not _verification_ok(conversation, spec['min_verification'])):
             continue
         if (conversation is not None
                 and name != BEGIN_OPERATION_TOOL
@@ -3128,6 +3310,11 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
     spec = TOOL_SPECS.get(name)
     if spec is None:
         return ToolOutcome(ok=False, client_error='unknown_tool')
+    if (executor.conversation.pk != conversation.pk
+            or executor.agent_user.organization_id != conversation.organization_id
+            or conversation.contact.organization_id != conversation.organization_id
+            or conversation.channel_account.organization_id != conversation.organization_id):
+        return ToolOutcome(kind='ERROR', error_kind='forbidden', client_error='verification_required')
     if intake.write_is_contained(name):
         executor.record_local(
             tool_name=name, args_redacted={}, policy_decision='denied',
@@ -3166,5 +3353,27 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
                            client_error='operation_authorization_required')
     if not _verification_ok(conversation, spec['min_verification']):
         return ToolOutcome(ok=False, client_error='verification_required')
-    return spec['handler'](conversation, executor, args or {},
-                           triggered_by=triggered_by)
+    if not isinstance(args, (dict, type(None))):
+        return ToolOutcome(kind='ERROR', client_error='invalid_data')
+    from . import goals
+    parameters = (_with_confidence(spec['parameters']) if name in goals.TOOL_GOALS
+                  else spec['parameters'])
+    for key, value in (args or {}).items():
+        schema = parameters.get('properties', {}).get(key)
+        if schema is None:
+            return ToolOutcome(kind='ERROR', client_error='invalid_data')
+        expected = {'string': str, 'integer': int, 'object': dict}.get(schema.get('type'))
+        if expected and type(value) is not expected:
+            return ToolOutcome(kind='ERROR', client_error='invalid_data')
+        if 'enum' in schema and value not in schema['enum']:
+            return ToolOutcome(kind='ERROR', client_error='invalid_data')
+        if schema.get('type') == 'number' and (type(value) not in (int, float) or not 0 <= value <= 1):
+            return ToolOutcome(kind='ERROR', client_error='invalid_data')
+        if name == 'get_recent_product_queries' and key == 'limit' and value < 1:
+            return ToolOutcome(kind='ERROR', client_error='invalid_data')
+    before = executor.last_execution_id
+    outcome = spec['handler'](conversation, executor, args or {},
+                              triggered_by=triggered_by)
+    if executor.last_execution_id != before:
+        executor.record_outcome(name, outcome)
+    return outcome

@@ -1,5 +1,14 @@
 # ADR p59 — La interpretación vuelve al modelo; el servidor conserva la autorización
 
+> **Enmienda B2 (2026-09-15), solo §6.** `rows_read=0` no acredita ausencia:
+> también puede reflejar error, recorte o cobertura desconocida. Las afirmaciones
+> de existencia/ausencia en resultados sensibles tienen renderer determinista
+> desde READ validada y su completitud. El guard léxico complementario
+> `denies_domain_state` pasa a HARD para afirmaciones libres no respaldadas;
+> no es un verificador universal. No se modifica la interpretación ni el
+> mecanismo de identidad de este ADR.
+> [Contrato B2](../contrato-resultados-tools-b2.md).
+
 **Fecha**: 2026-08-17
 **Estado**: **ACEPTADO** (PO, 2026-08-17) e **implementado**.
 **Relación con p58**: **la enmienda**. p58 §2 (ADR de hace dos días) puso en el servidor tanto la autorización como la interpretación del lenguaje. Esta propuesta mantiene la primera y retira la segunda.

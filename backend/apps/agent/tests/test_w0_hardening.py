@@ -71,10 +71,8 @@ class TestClientTransport:
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=headers.get("Authorization", ""))
         r = getattr(client, method.lower())(path, data=params or {})
-        try:
-            return r.status_code, (r.json() if r.content else {})
-        except ValueError:
-            return r.status_code, {}
+        from apps.agent.executor import TransportResponse
+        return TransportResponse.from_http(r)
 
 
 class AgentFixture(TestCase):

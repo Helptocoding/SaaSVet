@@ -269,7 +269,10 @@ class AppointmentChangedTests(CommitPreconditionBase):
         self._commit()
         after = ToolExecution.objects.filter(conversation=self.conv).count()
         # Exactamente UNA llamada de escritura: la que recibió el 409.
-        self.assertEqual(after - before, 1)
+        # B2 adds one fresh GET to establish current state, never another PATCH.
+        self.assertEqual(after - before, 2)
+        calls = ToolExecution.objects.filter(conversation=self.conv).order_by('-id')[:2]
+        self.assertEqual(sorted(call.http_status for call in calls), [200, 409])
         # Y la propuesta se descarta: no queda nada que un "sí" posterior
         # pudiera ejecutar sobre un mundo que ya cambió.
         self.assertIsNone(confirmations.get_pending(self.conv))
@@ -302,7 +305,7 @@ class AlreadyDoneTests(CommitPreconditionBase):
 
         res = self._commit()
         self.assertEqual(res["decision"], "commit_already_done")
-        self.assertIn("Ya estaba cancelada", self._last_out())
+        self.assertIn("ya está cancelada", self._last_out())
         # No escala: antes este caso rebotaba a una persona para nada.
         self.assertFalse(HumanHandoff.objects.filter(
             conversation=self.conv, resolved_at__isnull=True).exists())

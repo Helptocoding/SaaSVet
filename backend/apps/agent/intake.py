@@ -5,6 +5,7 @@ este módulo nunca intenta deducirla desde texto. La única responsabilidad del
 servidor es decidir qué herramientas son seguras para esa decisión.
 """
 from .models import Conversation
+from .capabilities import PUBLIC_OR_HUMAN
 
 
 PATH_NEW = Conversation.INTAKE_NEW_CLIENT
@@ -48,6 +49,8 @@ def allows_tool(conversation, tool_name):
     """
     if write_is_contained(tool_name):
         return False
+    if tool_name in PUBLIC_OR_HUMAN:
+        return True
     path = current_path(conversation)
     if not path:
         return tool_name == PATH_SELECTION_TOOL

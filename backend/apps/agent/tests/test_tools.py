@@ -62,11 +62,8 @@ class TestClientTransport:
             response = handler(path, data=params or {})
         else:
             response = handler(path, data=json or {}, format="json")
-        try:
-            payload = response.json() if response.content else {}
-        except ValueError:
-            payload = {}
-        return response.status_code, payload
+        from apps.agent.executor import TransportResponse
+        return TransportResponse.from_http(response)
 
 
 class ToolsThroughRealApiTests(TestCase):

@@ -60,10 +60,8 @@ class HeaderForwardingTransport:
         else:
             r = getattr(client, method.lower())(
                 path, data=json or {}, format="json", **extra)
-        try:
-            return r.status_code, (r.json() if r.content else {})
-        except ValueError:
-            return r.status_code, {}
+        from apps.agent.executor import TransportResponse
+        return TransportResponse.from_http(r)
 
 
 @legacy_write_component
@@ -427,7 +425,7 @@ class WriteToolsTests(TestCase):
         planner._commit_pending(self.conv, self.executor)
         out = self._last_out()
         self.assertIn("cancelé tu cita", out)
-        self.assertIn("te reagendo", out)            # UX-11 retención con horario
+        self.assertIn("Tengo lugar", out)          # B2: alternativa respaldada, sin prometer WRITE
 
     # -- expiración del pending --------------------------------------------
     def test_expired_pending_reparaphrases_not_executes(self):
@@ -665,10 +663,18 @@ class CommitSuccessTextIsSpecificTests(TestCase):
         from apps.agent import planner
         from apps.agent.tools import COMMIT_HANDLERS, ToolOutcome
 
-        outcome = ToolOutcome(ok=True, data={"cuando": "sábado 15, 11:00"})
-        generic = planner._commit_success_text("__inexistente__", outcome)
+        from uuid import uuid4
+        generic = planner._commit_success_text("__inexistente__", ToolOutcome(ok=True))
         for tool in sorted(COMMIT_HANDLERS):
             with self.subTest(tool=tool):
+                state = {'cancel_appointment': 'canceled', 'reschedule_appointment': 'scheduled'}.get(tool, 'scheduled')
+                entities = (['pet'] if tool == 'register_pet_only' else
+                            ['pet', 'appointment'] if tool == 'register_pet_and_schedule' else ['appointment'])
+                outcome = ToolOutcome(kind='EFFECT', validated=True,
+                                      data={"cuando": "sábado 15, 11:00"}, effects=tuple({
+                                          'entity': entity, 'reference': str(uuid4()), 'action': tool,
+                                          'state': 'registered' if entity == 'pet' else state, 'result': 'success',
+                                      } for entity in entities))
                 self.assertNotEqual(
                     planner._commit_success_text(tool, outcome), generic,
                     f"`{tool}` confirma con el acuse genérico: el cliente no "

@@ -365,7 +365,8 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
     # parafraseado, sin volver a pasar por el LLM (invariante TC-SEC-03).
     if (decision.meta.get('confirm') == 'affirmative'
             and confirmations.get_pending(conversation)):
-        return _commit_pending(conversation, executor, triggered_by=triggered_by)
+        return _commit_pending(conversation, executor, triggered_by=triggered_by,
+                               turn_context=turn_context)
 
     # Un recibo cerró cualquier capacidad de agenda anterior. La siguiente
     # operación solo puede nacer de la ráfaga ACTUAL y de un contrato semántico
@@ -398,6 +399,7 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
 def _run_planner(conversation, agent_settings, llm_client, executor,
                  triggered_by, *, turn_context,
                  pending_context=False):
+    from . import result_renderers
     burst_text = turn_context.burst_text
     tool_specs = tools.as_openai_tools(conversation)
     base_messages = prompts.assemble_messages(conversation,
@@ -424,6 +426,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     # modelo no veía que ya había llamado a la herramienta.
     turn_messages = []
     tool_facts = []          # lo que las tools devolvieron ESTE turno (G1)
+    typed_outcomes = {}      # C3 outcomes share this C1 turn; never historic summaries.
     rows_read = 0            # filas que el dominio SÍ devolvió (p59 §6)
     correction = None        # instrucción correctiva del guard (un intento)
     # ¿Este turno descubrió que hay que identificar a alguien? Si sí, el aviso
@@ -508,6 +511,29 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
 
         if result.kind == 'text':
             text = result.text or _fallback_text()
+            # Sensitive facts are rendered from validated C3 fields. The LLM
+            # cannot append prose that changes price/state/coverage/delivery.
+            # Clinical containment remains first even if a public READ ran.
+            if guards.check_containment(text) != 'medical_advice' and typed_outcomes:
+                rendered = []
+                for tool_name, typed in typed_outcomes.items():
+                    if tool_name == 'list_my_pets' and any(
+                            name in typed_outcomes for name in ('get_appointments', 'get_vaccine_status')):
+                        continue
+                    receipt = (result_renderers.render_effect(tool_name, typed, context=turn_context)
+                               if tool_name == 'request_human'
+                               else result_renderers.render_read(tool_name, typed, turn_context))
+                    if receipt:
+                        rendered.append(receipt)
+                if rendered:
+                    enqueue_outbound(
+                        conversation,
+                        (_privacy_prefix(conversation) if needs_privacy_notice else '')
+                        + '\n'.join(dict.fromkeys(rendered))
+                        + (tier0.T0_IDENTITY_QUESTION if identity_commitment else ''), author='system')
+                    return {'decision': 'planner_reply', 'llm_calls': llm_calls,
+                            'tools': tool_calls, 'goal_advanced': goal_progressed,
+                            'other_goal_proposed': other_goal_proposed}
             containment_reason = guards.check_containment(text)
             if containment_reason:
                 policy.escalate_to_human(
@@ -538,7 +564,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
                 text,
                 asked=_asked_counters(conversation),
                 anchored_facts=prompts.anchored_identity_facts(conversation),
-                tool_ran=tool_calls > 0,
+                # Tool execution alone is never effect evidence.
                 # Estado REAL al cerrar el turno. El guard recibe el hecho, no
                 # el objeto: no consulta la base (mismo criterio que los demás).
                 verified=conversation.contact.verification_level in (
@@ -676,6 +702,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             conversation=conversation, executor=executor,
             triggered_by=triggered_by,
         )
+        if (result.tool_name in result_renderers.PROTECTED_READS
+                or result.tool_name == 'request_human'):
+            typed_outcomes[result.tool_name] = outcome
 
         # La clasificación puede abrir o cerrar capacidades dentro del mismo
         # turno. Recalcular el catálogo permite continuar por alta o
@@ -844,7 +873,9 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             if isinstance(outcome.data, (list, tuple)):
                 rows_read += len(outcome.data)
         turn_messages.append(prompts.tool_result_message(
-            result, {'resultado': outcome.data}))
+            result, {'resultado': outcome.data, 'kind': outcome.kind,
+                     'completeness': outcome.completeness,
+                     'validated': outcome.validated}))
 
     # Agotó el presupuesto de tools del turno sin respuesta final.
     enqueue_outbound(conversation, _fallback_text(), author='system')
@@ -863,7 +894,7 @@ def _contain_write(conversation, *, llm_calls=0, tool_calls=0):
             'llm_calls': llm_calls, 'tools': tool_calls}
 
 
-def _commit_pending(conversation, executor, *, triggered_by=None):
+def _commit_pending(conversation, executor, *, triggered_by=None, turn_context=None):
     """Ejecuta el pending_action ya confirmado (spec §2.4). Corre el
     `commit_*` con los args STAGED (nunca re-generados por el LLM) → cumple
     TC-SEC-03: la afirmativa jamás amplía el alcance de lo parafraseado."""
@@ -898,6 +929,25 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
 
     outcome = handler(conversation, executor, pending['args'],
                       triggered_by=triggered_by)
+    from . import result_renderers
+    expected_scope = tools._scope(conversation)
+    if (outcome.validated and any(outcome.scope.get(key) != value
+                                 for key, value in expected_scope.items())):
+        outcome = tools.ToolOutcome(kind='ERROR', error_kind='forbidden',
+                                    client_error='tool_failure')
+    if turn_context is not None:
+        turn_context.assert_scope(conversation)
+        if outcome.validated and not result_renderers.in_scope(outcome, turn_context):
+            outcome = tools.ToolOutcome(kind='ERROR', error_kind='forbidden',
+                                        client_error='tool_failure')
+    executor.record_outcome(pending['tool'], outcome)
+    if (result_renderers.effect_matches(pending['tool'], outcome)
+            and any(e.get('result') == 'already_done' for e in outcome.effects)):
+        return _already_done(conversation, pending, outcome)
+    if outcome.kind == 'READ' or (outcome.kind == 'EFFECT'
+                                 and not result_renderers.effect_matches(pending['tool'], outcome)):
+        outcome = tools.ToolOutcome(kind='ERROR', error_kind='malformed_response',
+                                    client_error='tool_failure')
 
     # La limpieza del pendiente ya NO ocurre a ciegas aquí (§5.5.4, hallazgo
     # Q). Pasa a ser responsabilidad de cada desenlace: los que limpiaban
@@ -910,8 +960,6 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             return _suspend_for_identity(conversation, outcome, pending)
         if outcome.client_error == 'identity_changed':
             return _resolved_identity(conversation, pending)
-        if outcome.client_error == 'already_done':
-            return _already_done(conversation, pending, outcome)
         if outcome.client_error == 'appointment_changed':
             return _appointment_changed(
                 conversation, pending, outcome, executor, triggered_by=triggered_by)
@@ -948,11 +996,9 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
             #
             # Callarlo sería lo peor de los dos mundos: creería que no pasó
             # nada y su siguiente intento chocaría con `pet_exists`.
-            nombre = (outcome.data or {}).get('nombre', 'tu mascota')
             enqueue_outbound(
                 conversation,
-                f"Ya dejé registrada a *{nombre}* 🐾 Lo que no pude fue "
-                "apartarle el horario. ¿Buscamos otro?",
+                result_renderers.render_effect(pending['tool'], outcome),
                 author='system',
             )
             return {'decision': 'commit_pet_without_appointment',
@@ -972,7 +1018,7 @@ def _commit_pending(conversation, executor, *, triggered_by=None):
                 "organization_id": conversation.organization_id,
                 "conversation_id": conversation.pk,
                 "tool": pending['tool'],
-                "detail": outcome.detail[:160],
+                "error_kind": outcome.error_kind,
             })
             return {'decision': 'commit_invalid', 'llm_calls': 0, 'tools': 1}
         policy.escalate_to_human(
@@ -1084,8 +1130,8 @@ def _already_done(conversation, pending, outcome):
     confirmations.clear_pending(conversation)
     goals.close_open_goal(
         conversation, ConversationGoal.STATUS_COMPLETED, pending['tool'])
-    text = (ALREADY_CANCELED_TEXT if pending['tool'] == 'cancel_appointment'
-            else ALREADY_RESCHEDULED_TEXT)
+    from .result_renderers import render_effect
+    text = render_effect(pending['tool'], outcome)
     enqueue_outbound(conversation, text, author='system')
     logger.info("AGENT_COMMIT_ALREADY_DONE", extra={
         "event": "AGENT_COMMIT_ALREADY_DONE",
@@ -1162,18 +1208,17 @@ def _appointment_changed_text(conversation, current):
 
 
 def _success_message(tool, outcome, conversation, executor):
-    """Mensaje de éxito enriquecido (UX-09/UX-11): al agendar se añade
-    dirección/indicaciones; al cancelar se ofrece reagendar con horarios
-    concretos (retención)."""
+    from .result_renderers import effect_matches
+    base = _commit_success_text(tool, outcome)
+    if not effect_matches(tool, outcome):
+        return base
     if tool == 'cancel_appointment':
+        # This selector now derives slots only from complete validated
+        # occupancy; a failed/partial lookup cannot enrich the receipt.
         fecha, horas = tools.suggest_retention_slots(conversation, executor)
         if fecha and horas:
-            return (f"Listo, cancelé tu cita. Si quieres te reagendo — tengo "
-                    f"lugar el {fecha}: {' o '.join(horas)}. ¿Te acomoda "
-                    f"alguno? 🙂")
-        return _commit_success_text(tool, outcome)
-
-    base = _commit_success_text(tool, outcome)
+            return (base + f" Tengo lugar el {fecha}: {' o '.join(horas)}. "
+                    '¿Te acomoda alguno?')
     if tool in ('create_appointment', 'register_new_client_and_pet'):
         base += _post_scheduling_info(conversation)
     return base
@@ -1206,29 +1251,8 @@ def _post_scheduling_info(conversation):
 
 
 def _commit_success_text(tool, outcome):
-    cuando = (outcome.data or {}).get('cuando', '')
-    if tool == 'register_new_client_and_pet':
-        return (f"¡Listo! ✅ Te registré y quedó agendada tu cita para el "
-                f"{cuando}. Te esperamos 🐾")
-    if tool == 'create_appointment':
-        return f"¡Listo! ✅ Quedó agendada para el {cuando}. Te esperamos 🐾"
-    if tool == 'reschedule_appointment':
-        return f"¡Listo! Tu cita quedó reprogramada para el {cuando} ✅"
-    if tool == 'cancel_appointment':
-        return ("Listo, cancelé tu cita. Si quieres agendar otra, con gusto te "
-                "ayudo 🙂")
-    if tool == 'register_pet_and_schedule':
-        return (f"¡Listo! ✅ Registré a tu mascota y quedó agendada para el "
-                f"{cuando}. Te esperamos 🐾")
-    if tool == 'register_pet_only':
-        return ("¡Listo! ✅ Ya quedó registrada en tu expediente. Cuando "
-                "quieras agendarle cita, aquí estoy 🐾")
-    # El genérico es una RED, no un destino. Un `¡Listo! ✅` a secas no dice
-    # qué pasó, y el modelo lee el hilo para saber en qué estado está: en la
-    # conv 18 del piloto, tras ese mensaje mudo, volvió a intentar agendar lo
-    # que acababa de agendar. Toda herramienta de COMMIT_HANDLERS necesita su
-    # frase; hay un test que lo exige.
-    return "¡Listo! ✅"
+    from .result_renderers import render_effect
+    return render_effect(tool, outcome)
 
 
 def _error_fact(client_error):

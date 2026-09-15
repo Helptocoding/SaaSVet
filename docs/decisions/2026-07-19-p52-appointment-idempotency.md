@@ -1,5 +1,14 @@
 # ADR p52 — Idempotencia en creación de citas (A2-1)
 
+> **Enmienda B2 (2026-09-14).** La clave de replay y el status HTTP no bastan
+> para construir un recibo del agente. El adaptador valida entidad, relación,
+> argumentos y estado; el 200 del contrato de replay con clave existente y
+> entidad compatible se representa como `already_done`, sin atribuir creación
+> nueva al turno. JSON inválido o aceptación incierta no prueban éxito ni ausencia.
+> No se modifica la idempotencia del dominio; WRITE autónomo sigue cerrado por
+> B0, sin ledger B8 ni operación persistente B7.
+> [Contrato B2](../contrato-resultados-tools-b2.md).
+
 **Fecha**: 2026-07-19
 **Estado**: ACEPTADO (implementado en É-F2 PR-14)
 **Contexto de producto**: prerrequisito de la escritura de agenda del agente WhatsApp (`docs/whatsapp-agent-epics.md` É-F2), con beneficio propio para el frontend actual.

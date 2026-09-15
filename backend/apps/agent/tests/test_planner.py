@@ -79,11 +79,8 @@ class TestClientTransport:
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=headers.get("Authorization", ""))
         response = getattr(client, method.lower())(path, data=params or {})
-        try:
-            payload = response.json() if response.content else {}
-        except ValueError:
-            payload = {}
-        return response.status_code, payload
+        from apps.agent.executor import TransportResponse
+        return TransportResponse.from_http(response)
 
 
 class PlannerTestCase(TestCase):

@@ -91,15 +91,12 @@ def _money_values(text):
 
 
 def _facts_numbers(tool_facts):
-    """CUALQUIER número presente en los resultados de tools del turno.
+    """Deprecated: arbitrary numeric matches never authorize a price claim.
 
-    Deliberadamente permisivo: el objetivo es atrapar la cifra inventada de
-    raíz, no auditar el formateo. Un falso positivo aquí escala una
-    conversación sana, y eso cuesta más que un falso negativo cosmético.
+    Prices are emitted only by result_renderers from Decimal+concept+currency.
+    This compatibility selector deliberately provides no monetary authority.
     """
-    blob = str(tool_facts or '')
-    values = {_as_amount(raw) for raw in _NUMBER_RE.findall(blob)}
-    return {v for v in values if v is not None}
+    return set()
 
 
 def check_containment(text):
@@ -241,6 +238,8 @@ HISTORY_DENIAL_PATTERNS = (
 # dio por agendada una cita inexistente — dos veces, incluida la respuesta a un
 # "¿la cita se creó bien?" del cliente.
 SUCCESS_CLAIM_PATTERNS = (
+    'ya agendé', 'ya agende', 'ya confirmé', 'ya confirme',
+    'ya registré', 'ya registre',
     'ya quedó agendada', 'ya quedo agendada', 'quedó agendada', 'quedo agendada',
     'ya está agendada', 'ya esta agendada', 'ya te agendé', 'ya te agende',
     'ya la agendé', 'ya la agende', 'ya quedó tu cita', 'ya quedo tu cita',
@@ -361,8 +360,8 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
     - `anchored_facts`: los hechos que SÍ viajaron al modelo en este turno.
       Si el texto niega haber sido informado y aquí hay algo, se contradice a
       sí mismo (R2) — el "no me lo dijiste aún" de la conv 13.
-    - `tool_ran`: si se ejecutó ALGUNA herramienta en el turno. Confirmar una
-      cita tras una LECTURA es legítimo; afirmarla sin tocar nada, no.
+    - `tool_ran`: compatibilidad de firma, sin autoridad. Una READ no prueba
+      una mutación; los recibos EFFECT se renderizan fuera del borrador libre.
     - `has_history`: si este contacto ya había hablado con la clínica (F1b).
       Negar el HILO —«no tengo contexto de lo anterior»— era una descripción
       honesta cuando el contexto moría con la conversación; desde F2 el modelo
@@ -390,16 +389,22 @@ def check_behaviour(text, *, asked=None, anchored_facts=None, tool_ran=True,
         if denial:
             violations.append(Violation('denies_history', SOFT, denial))
 
-    if not tool_ran:
-        claim = _first_match(low, SUCCESS_CLAIM_PATTERNS)
-        if claim:
-            violations.append(Violation('unbacked_success', SOFT, claim))
+    # `tool_ran` is deprecated compatibility, not evidence. This guard handles
+    # free prose; compatible EFFECT receipts bypass free drafting entirely.
+    claim = _first_match(low, SUCCESS_CLAIM_PATTERNS)
+    if claim:
+        violations.append(Violation('unbacked_success', HARD, claim))
 
 
-    if rows_read:
-        denial = _first_match(low, EXISTENCE_DENIAL_PATTERNS)
-        if denial:
-            violations.append(Violation('denies_domain_state', SOFT, denial))
+    denial = _first_match(low, EXISTENCE_DENIAL_PATTERNS)
+    if denial:
+        violations.append(Violation('denies_domain_state', HARD, denial))
+    availability = _first_match(low, (
+        'hay disponibilidad', 'tengo lugar', 'está disponible', 'esta disponible',
+        'no hay horarios', 'no tengo horarios', 'no hay disponibilidad',
+    ))
+    if availability:
+        violations.append(Violation('unbacked_availability', HARD, availability))
 
     if not verified:
         claim = _first_match(low, VERIFICATION_CLAIM_PATTERNS)
