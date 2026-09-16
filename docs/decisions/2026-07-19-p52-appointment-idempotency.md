@@ -1,5 +1,10 @@
 # ADR p52 — Idempotencia en creación de citas (A2-1)
 
+> **Enmienda B3 (2026-09-15).** TurnWork/ordinal hacen idempotente la publicación
+> local del agente; no sustituyen la idempotencia de citas ni prueban efecto de
+> negocio o entrega. WRITE autónomo sigue cerrado; B8 y sender B4 pendientes.
+> [Contrato B3](../contrato-trabajo-durable-b3.md).
+
 > **Enmienda B2 (2026-09-14).** La clave de replay y el status HTTP no bastan
 > para construir un recibo del agente. El adaptador valida entidad, relación,
 > argumentos y estado; el 200 del contrato de replay con clave existente y

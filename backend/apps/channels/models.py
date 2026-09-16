@@ -91,8 +91,8 @@ class ChannelAccount(PublicIdMixin, OrganizationalModel):
 class Message(OrganizationalModel):
     """Mensaje de canal — entrantes y salientes en una sola tabla (v1.1 §7-C1).
 
-    Cola y outbox son filtros sobre `status` (§7-C4):
-      - inbound:  pending → processed | discarded
+    B3 deriva el trabajo inbound de TurnWork; status es proyección final:
+      - inbound: pending durante claim/retry; processed solo al completar
       - outbound: pending → sent → delivered → read, o failed (con reintentos)
 
     Dedup de reintentos del proveedor: unique parcial por
@@ -234,15 +234,24 @@ class Message(OrganizationalModel):
     # Drain-on-pickup (v1.1 §7-C9): el worker no toma mensajes con
     # available_at futuro — delay fijo barato en vez de debounce con timers.
     available_at = models.DateTimeField(null=True, blank=True)
-    # Veces que el worker intentó procesar este ENTRANTE (É-F3 W0-3). Distinto
-    # de `attempts`, que cuenta envíos de un saliente. Al agotar el tope, el
-    # mensaje se descarta y la conversación pasa a un humano: sin esto, un
-    # payload que revienta el turno se reprocesaba para siempre.
+    # Proyección de attempts del TurnWork (≠ attempts de envío). El trabajo
+    # FAILED conserva este inbound pendiente y asignado, sin replay implícito.
     process_attempts = models.PositiveSmallIntegerField(default=0)
+    turn_work = models.ForeignKey('agent.TurnWork', on_delete=models.PROTECT,
+                                  null=True, blank=True, related_name='messages')
+    output_ordinal = models.PositiveIntegerField(null=True, blank=True)
+    origin_epoch = models.PositiveBigIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ['created_at', 'id']
         constraints = [
+            models.UniqueConstraint(fields=['turn_work', 'output_ordinal'],
+                condition=models.Q(direction='out', turn_work__isnull=False,
+                                   output_ordinal__isnull=False),
+                name='message_unique_turn_output'),
+            models.CheckConstraint(condition=(~models.Q(direction='out', turn_work__isnull=False) |
+                (models.Q(output_ordinal__isnull=False) & models.Q(origin_epoch__isnull=False))),
+                name='message_turn_output_evidence'),
             # Dedup de reintentos del webhook (R5): el mismo wamid entrante
             # solo puede existir una vez por canal.
             models.UniqueConstraint(

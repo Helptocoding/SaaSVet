@@ -380,11 +380,9 @@ def anchored_identity_facts(conversation):
     # `flow`.
     commitment = (
         goals.get_identity_commitment(conversation)
-        or ConversationGoal.objects.filter(
-            conversation=conversation,
-            name__in=goals.IDENTITY_GOALS,
-            status=ConversationGoal.STATUS_SUSPENDED,
-        ).first()
+        or next((g for g in goals.local_goals(conversation)
+                 if g.name in goals.IDENTITY_GOALS
+                 and g.status == ConversationGoal.STATUS_SUSPENDED), None)
     )
     if commitment is not None:
         slot = commitment.slots.get('titular') or {}

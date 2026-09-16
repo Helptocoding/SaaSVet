@@ -207,10 +207,11 @@ class Conversation(PublicIdMixin, OrganizationalModel):
     # Presupuesto (spec §2.6): al alcanzar el tope global la conversación
     # degrada a plantilla + handoff (E-09). Solo lo incrementa el planner.
     total_llm_calls = models.PositiveIntegerField(default=0)
-    # Lease del turno en vuelo (É-F3 W0-7): mientras esté en el futuro, ningún
-    # otro worker toma esta conversación. Serializa el turno SIN mantener una
-    # transacción abierta durante la llamada al LLM.
+    # Proyección legacy del lease B3 para lectores/UI compatibles. Ningún
+    # claim ni release nuevo usa este campo como autoridad: usa TurnWork.
     processing_until = models.DateTimeField(null=True, blank=True)
+    # B3 authority generation. processing_until is only a compatibility projection.
+    ownership_epoch = models.PositiveBigIntegerField(default=0)
 
     class Meta:
         indexes = [
@@ -220,6 +221,65 @@ class Conversation(PublicIdMixin, OrganizationalModel):
 
     def __str__(self):
         return f"Conversation<{self.public_id} {self.state}>"
+
+
+class TurnWork(OrganizationalModel):
+    """Durable local work; completion says nothing about business or delivery."""
+
+    PENDING = 'PENDING'
+    PROCESSING = 'PROCESSING'
+    COMPLETED = 'COMPLETED'
+    FAILED = 'FAILED'
+    NON_TERMINAL = (PENDING, PROCESSING)
+    conversation = models.ForeignKey(Conversation, on_delete=models.PROTECT,
+                                     related_name='turn_works')
+    anchor_message = models.ForeignKey('channels.Message', on_delete=models.PROTECT,
+                                       related_name='+')
+    anchor_created_at = models.DateTimeField()
+    cursor_message_id = models.PositiveBigIntegerField()
+    cursor_created_at = models.DateTimeField()
+    # Freeze the B1 interpretation clock too, without duplicating event bodies.
+    context_at = models.DateTimeField()
+    clinic_timezone = models.CharField(max_length=64)
+    status = models.CharField(max_length=10, default=PENDING,
+        choices=[(s, s) for s in ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')])
+    lease_token = models.UUIDField(null=True, blank=True)
+    lease_expires_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    claimed_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    outcome_code = models.CharField(max_length=64, blank=True, default='')
+    ownership_epoch = models.PositiveBigIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['conversation', 'anchor_message'],
+                                    name='turnwork_unique_anchor'),
+            models.UniqueConstraint(fields=['conversation'],
+                condition=models.Q(status__in=['PENDING', 'PROCESSING']),
+                name='turnwork_one_nonterminal'),
+            models.CheckConstraint(condition=(~models.Q(status='PROCESSING') |
+                (models.Q(lease_token__isnull=False) &
+                 models.Q(lease_expires_at__isnull=False) & models.Q(attempts__gt=0))),
+                name='turnwork_processing_lease'),
+            models.CheckConstraint(condition=(~models.Q(status='COMPLETED') |
+                (models.Q(completed_at__isnull=False) & ~models.Q(outcome_code=''))),
+                name='turnwork_completed_outcome'),
+        ]
+        indexes = [
+            models.Index(fields=['status', 'next_attempt_at'], name='turnwork_poll_retry'),
+            models.Index(fields=['status', 'lease_expires_at'], name='turnwork_poll_lease'),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.conversation_id and self.anchor_message_id:
+            conv, anchor = self.conversation, self.anchor_message
+            if (conv.organization_id != self.organization_id or
+                    anchor.organization_id != self.organization_id or
+                    anchor.conversation_id != conv.pk or anchor.direction != 'in'):
+                raise ValidationError('TurnWork scope mismatch')
 
 
 class TurnOperationAssessment(OrganizationalModel):

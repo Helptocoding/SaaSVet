@@ -10,6 +10,8 @@ afirmativa jamás amplía el alcance).
 
 El `pending_action` vive en `Conversation.flow['pending_action']`.
 """
+
+from .turn_changes import save_local, create_local, open_handoff, local_or_locked_conversation
 import re
 import uuid
 from datetime import timedelta
@@ -103,7 +105,7 @@ def stage_pending(conversation, *, tool, args, paraphrase):
         'expires_at': (timezone.now() + PENDING_TTL).isoformat(),
     }
     conversation.flow = flow
-    conversation.save(update_fields=['flow'])
+    save_local(conversation, update_fields=['flow'])
     return paraphrase
 
 
@@ -129,7 +131,7 @@ def clear_pending(conversation):
         flow = dict(conversation.flow)
         flow.pop('pending_action', None)
         conversation.flow = flow
-        conversation.save(update_fields=['flow'])
+        save_local(conversation, update_fields=['flow'])
 
 
 def bind_pending_message(conversation, message_id):
@@ -143,7 +145,7 @@ def bind_pending_message(conversation, message_id):
     staged['proposal_message_id'] = str(message_id)
     flow['pending_action'] = staged
     conversation.flow = flow
-    conversation.save(update_fields=['flow'])
+    save_local(conversation, update_fields=['flow'])
 
 
 def is_confirmable(conversation, pending):
@@ -183,7 +185,7 @@ def supersede_pending(conversation, *, reason):
         'superseded_at': timezone.now().isoformat(),
     }
     conversation.flow = flow
-    conversation.save(update_fields=['flow'])
+    save_local(conversation, update_fields=['flow'])
     return pending
 
 
@@ -321,14 +323,11 @@ def suspend_pending(conversation, *, reason_code, detail='', priority='normal'):
     from .models import Conversation, HumanHandoff
 
     with transaction.atomic():
-        convo = (Conversation.objects.select_for_update()
-                 .get(pk=conversation.pk))
+        convo = local_or_locked_conversation(conversation)
 
-        handoff = HumanHandoff.objects.filter(
-            conversation=convo, resolved_at__isnull=True,
-        ).first()
+        handoff = open_handoff(convo)
         if handoff is None:
-            handoff = HumanHandoff.objects.create(
+            handoff = create_local(HumanHandoff,
                 organization=convo.organization,
                 conversation=convo,
                 reason_code=reason_code,
@@ -353,7 +352,7 @@ def suspend_pending(conversation, *, reason_code, detail='', priority='normal'):
         flow.pop('handoff_ack_sent', None)
 
         convo.state = Conversation.STATE_HANDOFF_PENDING
-        convo.save(update_fields=['state', 'flow'])
+        save_local(convo, update_fields=['state', 'flow'])
 
     # El caller sigue trabajando sobre su instancia: se sincroniza para que no
     # escriba encima con un `flow` anterior al lock.

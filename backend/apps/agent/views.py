@@ -35,6 +35,8 @@ from .serializers import (
     ThreadSerializer,
 )
 
+from .durable import invalidate_ownership
+
 logger = logging.getLogger('agent.events')
 
 # La bandeja carga como máximo este número de mensajes por transcript (los
@@ -395,25 +397,31 @@ def unlink_family(request, pk):
     nunca desvincula un phone_match/self_register legítimo."""
     from .models import ContactIdentity
     conversation = _get_conversation(request, pk)
-    contact = conversation.contact
-    if contact.linked_via != ContactIdentity.LINKED_FAMILY:
-        return Response(
-            {'error': 'Esta conversación no tiene un vínculo familiar.'},
-            status=400,
-        )
-    contact.owner = None
-    contact.linked_via = ''
-    contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
-    contact.verified_at = None
-    contact.save(update_fields=[
-        'owner', 'linked_via', 'verification_level', 'verified_at'])
-    logger.info("AGENT_FAMILY_LINK_REVOKED", extra={
-        "event": "AGENT_FAMILY_LINK_REVOKED",
-        "organization_id": request.user.organization_id,
-        "conversation_id": conversation.pk,
-        "actor_id": request.user.id,
-    })
-    return Response(ConversationListSerializer(conversation).data)
+    with transaction.atomic():
+        locked = list(Conversation.objects.for_organization(request.user.organization)
+                      .select_for_update().filter(contact_id=conversation.contact_id).order_by('pk'))
+        conversation = next(c for c in locked if c.pk == conversation.pk)
+        contact = conversation.contact
+        if contact.linked_via != ContactIdentity.LINKED_FAMILY:
+            return Response(
+                {'error': 'Esta conversación no tiene un vínculo familiar.'},
+                status=400,
+            )
+        for conv in locked:
+            invalidate_ownership(conv, reason='identity_unlink')
+        contact.owner = None
+        contact.linked_via = ''
+        contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        contact.verified_at = None
+        contact.save(update_fields=[
+            'owner', 'linked_via', 'verification_level', 'verified_at'])
+        logger.info("AGENT_FAMILY_LINK_REVOKED", extra={
+            "event": "AGENT_FAMILY_LINK_REVOKED",
+            "organization_id": request.user.organization_id,
+            "conversation_id": conversation.pk,
+            "actor_id": request.user.id,
+        })
+        return Response(ConversationListSerializer(conversation).data)
 
 
 @api_view(['POST'])
@@ -444,37 +452,43 @@ def reset_contact_identity(request, pk):
     deshaga un reset."""
     from .models import ContactIdentity
     conversation = _get_conversation(request, pk)
-    contact = conversation.contact
-    previous_owner_id = contact.owner_id
-    contact.owner = None
-    contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
-    contact.verified_at = None
-    contact.linked_via = ''
-    contact.is_ambiguous = False
-    contact.auto_rematch_blocked = True
-    contact.save(update_fields=[
-        'owner', 'verification_level', 'verified_at', 'linked_via',
-        'is_ambiguous', 'auto_rematch_blocked'])
+    with transaction.atomic():
+        locked = list(Conversation.objects.for_organization(request.user.organization)
+                      .select_for_update().filter(contact_id=conversation.contact_id).order_by('pk'))
+        conversation = next(c for c in locked if c.pk == conversation.pk)
+        for conv in locked:
+            invalidate_ownership(conv, reason='identity_reset')
+        contact = conversation.contact
+        previous_owner_id = contact.owner_id
+        contact.owner = None
+        contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
+        contact.verified_at = None
+        contact.linked_via = ''
+        contact.is_ambiguous = False
+        contact.auto_rematch_blocked = True
+        contact.save(update_fields=[
+            'owner', 'verification_level', 'verified_at', 'linked_via',
+            'is_ambiguous', 'auto_rematch_blocked'])
 
-    now = timezone.now()
-    open_conversations = Conversation.objects.for_organization(
-        request.user.organization
-    ).filter(contact=contact).exclude(state=Conversation.STATE_CLOSED)
-    for conv in open_conversations:
-        conv.state = Conversation.STATE_CLOSED
-        conv.closed_at = now
-        conv.close_reason = Conversation.CLOSE_IDENTITY_RESET
-        conv.save(update_fields=['state', 'closed_at', 'close_reason'])
+        now = timezone.now()
+        open_conversations = Conversation.objects.for_organization(
+            request.user.organization
+        ).filter(contact=contact).exclude(state=Conversation.STATE_CLOSED)
+        for conv in open_conversations:
+            conv.state = Conversation.STATE_CLOSED
+            conv.closed_at = now
+            conv.close_reason = Conversation.CLOSE_IDENTITY_RESET
+            conv.save(update_fields=['state', 'closed_at', 'close_reason'])
 
-    logger.info("AGENT_CONTACT_IDENTITY_RESET", extra={
-        "event": "AGENT_CONTACT_IDENTITY_RESET",
-        "organization_id": request.user.organization_id,
-        "contact_id": contact.pk,
-        "previous_owner_id": previous_owner_id,
-        "actor_id": request.user.id,
-    })
-    conversation.refresh_from_db()
-    return Response(ConversationListSerializer(conversation).data)
+        logger.info("AGENT_CONTACT_IDENTITY_RESET", extra={
+            "event": "AGENT_CONTACT_IDENTITY_RESET",
+            "organization_id": request.user.organization_id,
+            "contact_id": contact.pk,
+            "previous_owner_id": previous_owner_id,
+            "actor_id": request.user.id,
+        })
+        conversation.refresh_from_db()
+        return Response(ConversationListSerializer(conversation).data)
 
 
 @api_view(['POST'])
@@ -518,7 +532,10 @@ def send_message(request, pk):
             if conversation.state == Conversation.STATE_CLOSED:
                 return _closed_send_response(request, conversation)
 
+            if conversation.state != Conversation.STATE_HUMAN_ACTIVE or conversation.claimed_by_id is None:
+                invalidate_ownership(conversation, reason='human_reply')
             message = Message(
+                origin_epoch=conversation.ownership_epoch,
                 organization=org,
                 channel_account=conversation.channel_account,
                 conversation=conversation,
@@ -584,6 +601,8 @@ def claim_conversation(request, pk):
                 'message': 'Otra persona ya está atendiendo esta conversación.',
             }, status=409)
 
+        if convo.claimed_by_id != request.user.pk or convo.state != Conversation.STATE_HUMAN_ACTIVE:
+            invalidate_ownership(convo, reason='takeover')
         convo.claimed_by = request.user
         convo.claimed_at = timezone.now()
         convo.state = Conversation.STATE_HUMAN_ACTIVE
@@ -601,6 +620,7 @@ def close_conversation(request, pk):
     with transaction.atomic():
         convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
         if convo.state != Conversation.STATE_CLOSED:
+            invalidate_ownership(convo, reason='staff_close')
             convo.state = Conversation.STATE_CLOSED
             convo.closed_at = timezone.now()
             convo.close_reason = Conversation.CLOSE_STAFF

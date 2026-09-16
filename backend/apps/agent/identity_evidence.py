@@ -26,6 +26,8 @@ Reglas que este módulo hace cumplir:
 - **Unión cerrada** (D33): verificar un `EchoRejected` es inexpresable, y además
   se rechaza en runtime.
 """
+
+from .turn_changes import save_local, current_changes, local_goals, local_or_locked_conversation
 import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -304,15 +306,15 @@ def verify_pet_evidence(conversation, sealed):
 
     anomalies = []
     with transaction.atomic():
-        contact = ContactIdentity.objects.select_for_update().get(
-            pk=conversation.contact_id)
-        convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
-        open_goals = list(
-            ConversationGoal.objects.select_for_update()
-            .filter(conversation=convo,
-                    status__in=ConversationGoal.OPEN_STATUSES)
-            .order_by('id')
-        )
+        convo = local_or_locked_conversation(conversation)
+        if current_changes() is not None:
+            contact = convo.contact
+            open_goals = [g for g in local_goals(convo)
+                          if g.status in ConversationGoal.OPEN_STATUSES]
+        else:
+            contact = ContactIdentity.objects.select_for_update().get(pk=convo.contact_id)
+            open_goals = list(ConversationGoal.objects.select_for_update().filter(
+                conversation=convo, status__in=ConversationGoal.OPEN_STATUSES).order_by('id'))
 
         identity._promote(contact)
 
@@ -330,7 +332,7 @@ def verify_pet_evidence(conversation, sealed):
         }
         convo.flow = dict(convo.flow or {})
         convo.flow[FLOW_KEY] = evidence
-        convo.save(update_fields=['flow'])
+        save_local(convo, update_fields=['flow'])
 
         foreground_identity = [
             goal for goal in open_goals
@@ -413,7 +415,7 @@ def reconcile_identity_facts(conversation, now=None):
 
     conversation.flow = dict(conversation.flow or {})
     conversation.flow[FLOW_KEY] = valid
-    conversation.save(update_fields=['flow'])
+    save_local(conversation, update_fields=['flow'])
 
     commitment = goals.get_identity_commitment(conversation)
     if commitment is not None:
@@ -427,7 +429,7 @@ def reconcile_identity_facts(conversation, now=None):
                 touched = True
         if touched:
             commitment.missing = goals.missing_slots(commitment)
-            commitment.save(update_fields=['slots', 'missing'])
+            save_local(commitment, update_fields=['slots', 'missing'])
 
     logger.info('AGENT_IDENTITY_EVIDENCE_EXPIRED', extra={
         'event': 'AGENT_IDENTITY_EVIDENCE_EXPIRED',

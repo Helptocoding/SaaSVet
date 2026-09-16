@@ -363,3 +363,33 @@ class CriticalB0Runner(DiscoverRunner):
                 or result.testsRun != getattr(self, '_planned_count', result.testsRun)):
             return failures + 1
         return failures
+
+
+class CriticalB3Runner(CriticalB0Runner):
+    """B3 gate: real PostgreSQL corpus, including isolated process boundaries."""
+
+    def build_suite(self, test_labels=None, **kwargs):
+        suite = DiscoverRunner.build_suite(self, test_labels, **kwargs)
+
+        def ids(items):
+            for case in items:
+                if hasattr(case, 'id'):
+                    yield case.id()
+                else:
+                    yield from ids(case)
+
+        required = {
+            'test_b3_durable.DurableTurnTests.test_dur_01_reclaims_same_work_context_and_fences_old_token',
+            'test_b3_durable.DurableTurnTests.test_dup_01_live_lease_and_partial_unique_constraint',
+            'test_b3_durable.B3LocalIntegrationTests.test_real_postgres_error_after_outbound_insert_rolls_back_final_commit',
+            'test_b3_durable.B3LocalIntegrationTests.test_takeover_api_and_return_advance_epoch_and_fence_old_worker',
+            'test_b3_durable.B3LocalIntegrationTests.test_starve_01_repeated_new_input_finishes_each_fixed_work',
+            'test_b3_processes.B3ProcessTests.test_dup_01_two_processes_compete_for_one_lease',
+            'test_b3_processes.B3ProcessTests.test_dur_01_killed_process_restarted_worker_recovers_same_work',
+            'test_b3_processes.B3ProcessTests.test_llm_timeout_runs_outside_transaction_and_commits_fallback',
+        }
+        missing = {'apps.agent.tests.' + name for name in required} - set(ids(suite))
+        if missing:
+            raise RuntimeError(f'Escenarios críticos B3 ausentes: {sorted(missing)}')
+        self._planned_count = suite.countTestCases()
+        return suite

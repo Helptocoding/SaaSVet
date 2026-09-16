@@ -15,6 +15,8 @@ Flujo:
 Seguridad: el LLM nunca autoriza — el Policy Engine decidió ANTES si se
 invoca; el executor + run_tool revalidan tier/verificación/ownership.
 """
+
+from .turn_changes import save_local, create_local, current_changes
 import copy
 import logging
 import time
@@ -156,6 +158,8 @@ def _settle_commitment(conversation, result, turn_context):
                        supplanted_by=result.get('other_goal_proposed', ''))
         return verdict, facts
     except Exception:
+        if current_changes() is not None:
+            raise
         logger.exception("AGENT_ARBITER_FAILED")
         return None, None
 
@@ -221,7 +225,7 @@ def _record_turn_decision(conversation, result, started, triggered_by,
         # no se pierde: baja a `facts_produced`, que es diagnóstico.
         produced = {'reason': result['reason']} if result.get('reason') else {}
         produced['salida'] = result.get('decision', '')
-        TurnDecision.objects.create(
+        create_local(TurnDecision,
             organization=conversation.organization,
             conversation=conversation,
             verdict=(turn_verdict.verdict if turn_verdict
@@ -242,6 +246,8 @@ def _record_turn_decision(conversation, result, started, triggered_by,
             triggered_by_message=triggered_by,
         )
     except Exception:
+        if current_changes() is not None:
+            raise
         logger.exception("AGENT_TURN_DECISION_RECORD_FAILED")
 
 
@@ -342,7 +348,7 @@ def _handle_inbound_inner(conversation, *, agent_settings=None, llm_client=None,
         conversation.state = Conversation.STATE_CLOSED
         conversation.closed_at = timezone.now()
         conversation.close_reason = Conversation.CLOSE_OPT_OUT
-        conversation.save(update_fields=['state', 'closed_at',
+        save_local(conversation, update_fields=['state', 'closed_at',
                                          'close_reason'])
         return {'decision': 'close', 'llm_calls': 0, 'tools': 0}
 
@@ -1494,7 +1500,7 @@ def _after_hours_prefix(conversation, agent_settings, *, burst_text=''):
     if open_now is not False:          # None = sin horario configurado
         return ''
     conversation.flow['after_hours_notified'] = True
-    conversation.save(update_fields=['flow'])
+    save_local(conversation, update_fields=['flow'])
     return tier0.T0_AFTER_HOURS_SUFFIX.strip() + "\n\n"
 
 
@@ -1526,7 +1532,7 @@ def _privacy_prefix(conversation):
         organization=conversation.organization,
     ).first()
     contact.privacy_notice_sent_at = timezone.now()
-    contact.save(update_fields=['privacy_notice_sent_at'])
+    save_local(contact, update_fields=['privacy_notice_sent_at'])
     return tier0.render_privacy(agent_settings) + "\n\n"
 
 
@@ -1543,11 +1549,11 @@ def _last_inbound_text(conversation):
 
 def _bump_budget(conversation):
     conversation.total_llm_calls += 1
-    conversation.save(update_fields=['total_llm_calls'])
+    save_local(conversation, update_fields=['total_llm_calls'])
 
 
 def _persist_llm_call(conversation, llm_client, result):
-    LLMCall.objects.create(
+    create_local(LLMCall,
         organization=conversation.organization,
         conversation=conversation,
         provider=getattr(settings, 'AGENT_LLM_BASE_URL', '')[:32],
@@ -1585,6 +1591,9 @@ def _complete_with_retry(conversation, llm_client, *, system, messages,
         delay_seconds = 0.0
 
     for attempt in range(max_retries + 1):
+        if current_changes() is not None:
+            from .durable import check_turn_deadline
+            check_turn_deadline(current_changes().witness)
         try:
             return llm_client.complete(
                 system=system, messages=messages, tools=tool_specs,
@@ -1611,7 +1620,7 @@ def _complete_with_retry(conversation, llm_client, *, system, messages,
 
 
 def _persist_llm_error(conversation, llm_client, exc):
-    LLMCall.objects.create(
+    create_local(LLMCall,
         organization=conversation.organization,
         conversation=conversation,
         model_id=getattr(llm_client, 'model', ''),

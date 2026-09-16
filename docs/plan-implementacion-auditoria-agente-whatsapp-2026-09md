@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-15**. Estado: **B0, B1 y B2 implementadas y cerradas técnicamente; las fases restantes siguen pendientes y la activación no está autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-15**. Estado: **B0, B1, B2 y B3 implementadas y cerradas técnicamente; las fases restantes siguen pendientes y la activación no está autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -407,6 +407,8 @@ Ubicación: `test_executor.py`, `test_tools.py`, `test_write_tools.py`, `test_w3
 **Riesgos eliminados:** equivalencias técnicas de H05/H14/H20 en rutas migradas. **Reducidos:** afirmaciones falsas de LLM con salida controlada. **Abiertos:** lenguaje adversarial no cubierto, protocolo clínico, recuperación y resultados históricos insuficientes.
 
 ### Fase B3 — Trabajo durable, ownership y publicación atómica
+
+**Seguimiento 2026-09-15: COMPLETED en alcance B3.** Base `a06b4f7`. TurnWork, membership fijo, cursor B1 recuperable, lease/token único con reloj DB, ownership epoch/witness y consolidación local atómica implementados. Tres migraciones aditivas; constraints y concurrencia probadas en PostgreSQL real, incluidos procesos independientes. Aceptación: 708 tests conjuntos + 17 críticos B0 (**725 únicos**), todos aprobados; incluye 42 B3, y pasada dirigida adicional de 55/55 (B3 + intake), sin skips/xfail. Sin drift de migraciones. Sender actual compatible con epoch/legacy/discard, sin lifecycle B4. Contrato, commits, failure injection, despliegue controlado y rollback en [acta B3](implementacion-b3-agente-whatsapp-2026-09-15.md) y [contrato durable](contrato-trabajo-durable-b3.md). H07 permanece abierto; H08 y H19 no se declaran completamente resueltos. WRITE sigue cerrado. Activación **PENDING_ACTIVATION_REQUIREMENTS**; sin despliegue. B4–B9/E/P no implementados.
 
 **Objetivo.** Recuperar un turno tras crash y retirar autoridad al worker viejo; entrega válida con READ/supervisión, sin necesitar propuestas o sender nuevo. **Hallazgos:** H06/H08, base H07/H19. **Invariantes:** I09/I10/I13/I14 en estado local. **Dependencias:** B1.
 

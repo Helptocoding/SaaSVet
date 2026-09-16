@@ -165,6 +165,14 @@ class ReleaseServiceBase(TestCase):
     def _release(self):
         return services.release_conversation(self.conv, self.staff)
 
+    def _claim_durable_turn(self):
+        from apps.agent.durable import claim_turn
+        from apps.channels.models import Message
+        Message.objects.create(organization=self.org, conversation=self.conv,
+            channel_account=self.channel, contact=self.contact, direction='in',
+            author_type=Message.AUTHOR_CLIENT, body='nuevo input')
+        return claim_turn(self.conv.pk)
+
     def _flow(self):
         self.conv.refresh_from_db()
         return self.conv.flow
@@ -456,8 +464,7 @@ class WitnessTests(ReleaseServiceBase):
         handoff = self._handoff()
 
         def worker_takes_turn():
-            Conversation.objects.filter(pk=self.conv.pk).update(
-                processing_until=timezone.now() + timedelta(minutes=5))
+            self._claim_durable_turn()
 
         with self.assertRaises(services.TurnInProgress):
             self._release_with_interference(worker_takes_turn)
@@ -470,8 +477,7 @@ class WitnessTests(ReleaseServiceBase):
         self.assertIsNone(handoff.resolved_at)
 
     def test_turn_in_progress_is_rejected_up_front(self):
-        self.conv.processing_until = timezone.now() + timedelta(minutes=5)
-        self.conv.save(update_fields=['processing_until'])
+        self._claim_durable_turn()
         with self.assertRaises(services.TurnInProgress):
             self._release()
 
@@ -522,8 +528,7 @@ class ReleaseEndpointTests(ReleaseServiceBase):
         self.assertEqual(resp.data['release']['verdict'], 'restore')
 
     def test_turn_in_progress_is_409(self):
-        self.conv.processing_until = timezone.now() + timedelta(minutes=5)
-        self.conv.save(update_fields=['processing_until'])
+        self._claim_durable_turn()
         resp = self.client.post(self.url, format='json')
         self.assertEqual(resp.status_code, 409, resp.data)
         self.assertEqual(resp.data['code'], 'turn_in_progress')

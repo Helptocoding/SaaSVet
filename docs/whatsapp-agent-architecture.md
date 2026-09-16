@@ -1,5 +1,14 @@
 # Arquitectura: Subsistema de Automatización Inteligente por WhatsApp
 
+> **Enmienda B3 (2026-09-15):** webhook → Message → claim TurnWork → TurnContext
+> B1 → planificación en memoria → commit local bajo OwnershipWitness → Message
+> final PENDING + completion. TurnWork es la única tabla operativa nueva; epoch
+> de Conversation invalida autoridad previa. Sender compatible verifica epoch,
+> scope y legacy antes de dispatch. **B3 garantiza autoridad y publicación local
+> durable. B4 resolverá la frontera de dispatch externo y resultados inciertos.**
+> No hay drafts ni nueva cola/broker. [Contrato B3](contrato-trabajo-durable-b3.md),
+> [ADR](decisions/2026-09-15-b3-durable-turn-ownership-publication.md).
+
 > **Enmienda de catálogo/ejecución B2 (2026-09-14):** la cadena vigente es
 > C1 → capacidad estática → transporte explícito → validación de endpoint →
 > `ToolOutcome` C3 → renderer determinista. Las tablas históricas de tiers no

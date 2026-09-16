@@ -15,6 +15,8 @@ prohibidos). Dos vías:
 `confirmed_in_chat` persiste; se re-reta si `verified_at` > 6 meses o el
 Owner cambió.
 """
+
+from .turn_changes import save_local
 import unicodedata
 from datetime import timedelta
 
@@ -174,7 +176,7 @@ def _promote(contact):
     contact.verification_level = ContactIdentity.VERIFICATION_CONFIRMED
     contact.verified_at = timezone.now()
     contact.auto_rematch_blocked = False
-    contact.save(update_fields=[
+    save_local(contact, update_fields=[
         'verification_level', 'verified_at', 'auto_rematch_blocked'])
 
 
@@ -243,7 +245,7 @@ def link_self_registered(contact, owner):
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_SELF_REGISTER
     contact.auto_rematch_blocked = False
-    contact.save(update_fields=[
+    save_local(contact, update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
         'auto_rematch_blocked'])
 
@@ -272,7 +274,7 @@ def link_staff_verified(contact, owner):
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_STAFF
     contact.auto_rematch_blocked = False
-    contact.save(update_fields=[
+    save_local(contact, update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
         'auto_rematch_blocked'])
 
@@ -284,6 +286,6 @@ def link_family(contact, owner):
     contact.verified_at = timezone.now()
     contact.linked_via = ContactIdentity.LINKED_FAMILY
     contact.auto_rematch_blocked = False
-    contact.save(update_fields=[
+    save_local(contact, update_fields=[
         'owner', 'verification_level', 'verified_at', 'linked_via',
         'auto_rematch_blocked'])

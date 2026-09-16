@@ -6,6 +6,7 @@ el sender (PR-5) la entrega con reintentos y ventana de 24h. Nunca se llama
 al proveedor desde el planner.
 """
 import logging
+from functools import wraps
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -15,6 +16,25 @@ from apps.channels.models import Message
 logger = logging.getLogger('agent.events')
 
 
+def _local_publication(function):
+    @wraps(function)
+    def guarded(conversation, *args, **kwargs):
+        from .turn_changes import current_changes
+        if current_changes() is not None:
+            return function(conversation, *args, **kwargs)
+        from .models import Conversation, TurnWork
+        from .durable import OwnershipLost
+        with transaction.atomic():
+            current = Conversation.objects.select_for_update().get(
+                pk=conversation.pk, organization_id=conversation.organization_id)
+            if TurnWork.objects.filter(conversation=current,
+                                       status__in=TurnWork.NON_TERMINAL).exists():
+                raise OwnershipLost('Active TurnWork publication requires its witness')
+            return function(current, *args, **kwargs)
+    return guarded
+
+
+@_local_publication
 def enqueue_outbound(conversation, body, *, author='system', semantic_type='',
                      operation_key=''):
     """Crea un Message saliente pendiente. `author`: 'agent' | 'system'.
@@ -32,6 +52,20 @@ def enqueue_outbound(conversation, body, *, author='system', semantic_type='',
     (auditoría de rigidez 2026-07-29, conv 13 / CR-6). `assemble_messages` es
     quien consume esta distinción.
     """
+    from .turn_changes import current_changes
+    changes = current_changes()
+    if changes is not None:
+        from .durable import assert_witness
+        changes.scope(conversation)
+        assert_witness(changes.witness)
+        changes.outputs.append({
+            'body': body,
+            'author_type': Message.AUTHOR_AGENT if author == 'agent' else Message.AUTHOR_SYSTEM,
+            'semantic_type': semantic_type, 'operation_key': operation_key,
+        })
+        # Text only in memory; B0 prevents autonomous proposals/WRITE callers
+        # from treating this as an emitted or authorizing message.
+        return None
     if semantic_type == Message.SEMANTIC_OPERATION_RECEIPT:
         if not operation_key:
             raise ValueError('operation receipt requires operation_key')
@@ -43,6 +77,7 @@ def enqueue_outbound(conversation, body, *, author='system', semantic_type='',
         Message.AUTHOR_AGENT if author == 'agent' else Message.AUTHOR_SYSTEM
     )
     message = Message(
+        origin_epoch=conversation.ownership_epoch,
         organization=conversation.organization,
         channel_account=conversation.channel_account,
         conversation=conversation,
@@ -82,6 +117,7 @@ def _enqueue_operation_receipt(conversation, body, *, author, operation_key):
     try:
         with transaction.atomic():
             message = Message.objects.create(
+                origin_epoch=conversation.ownership_epoch,
                 organization=conversation.organization,
                 channel_account=conversation.channel_account,
                 conversation=conversation,
@@ -107,13 +143,17 @@ def _enqueue_operation_receipt(conversation, body, *, author, operation_key):
     conversation.save(update_fields=['last_activity_at'])
     return message
 
-def enqueue_processing_failure_notice(conversation, body):
+@_local_publication
+def enqueue_processing_failure_notice(conversation, body, *, work=None):
     """Encola una sola notificación de fallo terminal por conversación.
 
     La unicidad vive en una constraint parcial de la outbox. Recuperar un
     worker o ejecutar dos handlers en paralelo no puede convertir un fallo
     técnico en una cascada de disculpas iguales para el cliente.
     """
+    from .turn_changes import current_changes
+    if current_changes() is not None:
+        raise RuntimeError('Terminal failure notice requires the failure transaction')
     existing = Message.objects.filter(
         conversation=conversation,
         direction=Message.DIRECTION_OUT,
@@ -125,6 +165,9 @@ def enqueue_processing_failure_notice(conversation, body):
     try:
         with transaction.atomic():
             message = Message.objects.create(
+                origin_epoch=conversation.ownership_epoch,
+                turn_work=work,
+                output_ordinal=0 if work is not None else None,
                 organization=conversation.organization,
                 channel_account=conversation.channel_account,
                 conversation=conversation,

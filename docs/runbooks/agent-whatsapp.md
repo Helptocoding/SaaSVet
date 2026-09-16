@@ -1,5 +1,70 @@
 # Runbook: Agente WhatsApp + Inbox
 
+## B3: despliegue controlado y rollback
+
+Contrato vigente: [trabajo durable B3](../contrato-trabajo-durable-b3.md) y
+[ADR](../decisions/2026-09-15-b3-durable-turn-ownership-publication.md).
+No se ha desplegado este corte. Activación: **PENDING_ACTIVATION_REQUIREMENTS**.
+El kill switch/containment B0 permanece disponible y WRITE continúa cerrado.
+
+### Secuencia de cutover
+
+1. Programar ventana controlada. Pausar el servicio `worker` de **todas** las
+   réplicas (`run_agent_worker` incluye planner y sender), dejar terminar sus
+   operaciones en vuelo y confirmar que no quedan procesos antiguos. Si un
+   proceso debe terminarse forzosamente, registrar sus trabajos/pending y
+   reconciliar aceptación externa antes de reanudar; B3 no resuelve B4.
+2. Conservar ingress/webhooks durables si el mantenimiento lo permite; pausar
+   brevemente las acciones mutadoras de Inbox durante el cambio de API para
+   que ningún escritor antiguo opere junto al nuevo. No usar rolling deploy
+   de workers: el antiguo ignora TurnWork y podría reclamar los mismos inbound.
+3. Respaldar y aplicar migraciones aditivas: `agent.0022`, `channels.0011` y
+   `channels.0012`. Verificar `showmigrations agent channels` y
+   `makemigrations --check --dry-run` con la imagen nueva. No hay backfill de
+   membership histórico ni origin_epoch para mensajes antiguos.
+4. Desplegar API, worker y selector sender compatibles B3 desde el mismo corte.
+   Inspeccionar pendientes legacy antes de arrancar: outbound sin origin_epoch
+   será descartado como `legacy_unverified`, incluidos humanos ambiguos. Es
+   visible en historial; no se reenvía ni se le asigna epoch sintético. El staff
+   puede evaluar una respuesta nueva usando la ruta normal cuando corresponda.
+5. Reiniciar solamente procesos B3 con el alcance previamente autorizado. No
+   habilitar WRITE ni ampliar beta por haber desplegado infraestructura. El
+   sender compatible opera ya con PENDING B3; no necesita esperar B4.
+6. Observar claims, reclaims, expiraciones, completion, FAILED, fencing rejects
+   y deferred. Confirmar un único trabajo no terminal, miembros fijos, attempts,
+   pending age y ausencia de PROCESSED prematuro. Mantener observación de sender
+   y ventana de 24 h existentes; no interpretar COMPLETED como entrega.
+
+Comandos de comprobación (desde `backend/`, entorno elegido explícitamente):
+
+```powershell
+rtk proxy python manage.py migrate --noinput
+rtk proxy python manage.py showmigrations agent channels
+rtk proxy python manage.py makemigrations --check --dry-run
+```
+
+### Diagnóstico y rollback operacional
+
+- Leer `TurnWork.status`, attempts, next_attempt_at, lease_expires_at y
+  outcome_code por organización. Para pendientes legacy inbound ya PROCESSED
+  sin TurnWork, reportar **legacy_unverified**; no inferir completion ni hacer
+  replay por ausencia de outbound (puede haber sido un turno sin respuesta).
+- `PROCESSING` expirado se recupera por polling con nuevo token; nunca cambiar
+  `processing_until` para forzar autoridad. Deadline 12 min, lease 15 min,
+  máximo 3 intentos y backoff 30/60 s. FAILED conserva membership y no convierte
+  sus inbound a PROCESSED; requiere revisión operativa, sin resurrección automática.
+- Ante regresión, pausar autonomía/worker mediante B0 y detener sender si la
+  causa afecta publicación o selección. Conservar DB, TurnWork, epochs,
+  correlaciones, outcomes y estados de Message. Usar Inbox/lector compatible B3.
+- No revertir las migraciones, bajar epochs, borrar trabajos, soltar membership,
+  convertir FAILED en PENDING ni reinstalar un worker B2 que ignore TurnWork.
+  Corregir hacia delante y reconciliar trabajo/pendientes/posibles envíos antes
+  de reanudar. Respuesta humana debe usar la API B3 compatible.
+
+**B3 garantiza autoridad y publicación local durable. B4 resolverá la frontera
+de dispatch externo y resultados inciertos.** El HTTP admitido puede terminar
+tras takeover; no se ofrece cancelación remota ni entrega exactamente una vez.
+
 > **Enmienda de alcance B0 — 2026-09-13.** WRITE autónomo cerrado, incluidos asistencia y pendientes heredados. READ dentro de restricciones actuales y atención humana; copy sin aviso/atención garantizados. No cambia el detector clínico ni se amplía beta. Consultar [acta B0](../implementacion-b0-agente-whatsapp-2026-09-13.md) para contratos mínimos, responsables pendientes, gate crítico, despliegue sin workers viejos y rollback que conserve contención. Esta enmienda prevalece sobre ejemplos de autonomía/avisos anteriores.
 
 **Alcance vigente (2026-08-23)**: operación del webhook, worker con agente,
@@ -174,13 +239,13 @@ Umbrales de atención: latencia p95 > 30 s · handoff > 40 % · repregunta > 20 
 | El mensaje optimista desaparece o se duplica tras el polling | Falló la correlación por `client_message_id` | Tratar como bug. Confirmar que POST/replay/GET devuelven la misma correlación humana. Nunca deduplicar por cuerpo, autor o tiempo |
 | Las marcas quedan en `pending` aunque Meta recibió el mensaje | Sender/webhook de estados detenido, token vencido o acuses no suscritos | Revisar worker, eventos `AGENT_SEND_FAILED`, suscripción `messages` y payloads de estados; repetir el smoke E2E sandbox |
 | "no entregado — ventana de sesión de 24h cerrada" | Se intentó responder >24 h tras el último mensaje del cliente | Esperado (límite del canal): el cliente debe escribir de nuevo; plantillas HSM llegan en F3 |
-| Respuesta automática duplicada tras reinicio | No debe pasar (estado en DB, `TC-GB-07`) | Si pasara: bug — revisar `has_outbound` en `agent/worker.py::_first_reply_fallback` |
+| Respuesta automática duplicada tras reinicio | Frontera HTTP incierta del sender legacy (B4 pendiente) o regresión local | Revisar work/ordinal/epoch y evidencia de envío; pausar y reconciliar, sin replay automático |
 | Después de un recibo aparece una confirmación de cita que el cliente no pidió | Regresión en la frontera semántica post-recibo | Revisar `TurnOperationAssessment` de la conversación, sus `source_messages`, `verdict`, `operation`, `failure_code` y los dos `LLMCall` con prompts `operation-authorizer-v1`/`operation-verifier-v1`. Si no hay una evaluación `authorized` vinculada al `ConversationGoal`, es incidente de integridad: no cerrar ni confirmar la propuesta manualmente. |
-| `AGENT_TURN_FAILED` repetido en la misma conversación | Un turno revienta (payload raro, bug). El worker ya NO se cae: reintenta hasta 3 veces con 30 s de respiro | Al agotar reintentos el mensaje pasa a `discarded` y la conversación escala a humano. Revisar el traceback del log y la conversación en `/inbox` |
-| Conversación atascada sin procesarse | `processing_until` quedó en el futuro (worker muerto a mitad de turno) | El lease expira solo a los 5 min. Si urge: poner `processing_until=NULL` por shell |
+| `AGENT_TURN_FAILED` | Fallo terminal de TurnWork tras 3 intentos | Revisar outcome/attempts y handoff; inbound sigue pending asignado, nunca PROCESSED ni replay automático |
+| Conversación atascada sin procesarse | TurnWork PROCESSING con worker muerto | Lease DB de 15 min; polling recupera el mismo trabajo. No modificar processing_until para reclamar |
 | `AGENT_URGENT_HANDOFF` con `alert_delivered: false` | `DISCORD_WEBHOOK_URL` sin configurar o webhook caído | Configurar la variable; el evento igual queda en el log estructurado |
 | El agente tarda ~10 s en responder | Esperado (W1-4): la ventana silenciosa de 8 s agrupa la ráfaga del cliente en un solo turno. Tope duro 25 s | Solo investigar si supera los 30 s |
-| `AGENT_REPLY_SUPERSEDED` en logs | El cliente siguió escribiendo mientras el modelo pensaba: la respuesta se descartó y se replanificó | Normal. Frecuencia alta sostenida ⇒ subir `QUIET_WINDOW` |
+| `AGENT_TURN_DEFERRED_TO_NEW_INPUT` | Llegó input posterior durante W1 | W1 completa sin outbound; nuevo input queda para W2. No reiniciar W1 ni interpretar cortesías/correcciones antes de B6 |
 | `AGENT_OUTPUT_GUARD` con `action: blocked` | El modelo insistió en un precio inventado, un consejo médico o una promesa: **no se envió** y escaló | Revisar la conversación y el prompt. Un pico ⇒ regresión de calidad del proveedor |
 | `AGENT_COMMIT_REJECTED` | El dominio rechazó la escritura por datos inválidos (ya no se disfraza de "se ocupó el horario") | El `detail` del log trae el mensaje real del serializer |
 | Conversación en org equivocada | NUNCA debe pasar (unique global + guard R1) | Incidente crítico: parar worker, auditar `ChannelAccount`, avisar |

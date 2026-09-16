@@ -1,5 +1,13 @@
 # ADR p60 — Decisiones de arquitectura y operación del WhatsApp Inbox v1
 
+> **Enmienda B3 (2026-09-15).** Claim humano, respuesta que toma ownership,
+> release y reset usan lock de Conversation e invalidación común de epoch.
+> Pendientes bot identificables se descartan; enviados no se borran. Sender
+> actual acepta PENDING B3 válidos y descarta legacy sin epoch como
+> legacy_unverified. Idempotencia humana permanece; B4 externo no implementado.
+> [Contrato B3](../contrato-trabajo-durable-b3.md) y
+> [cutover/rollback](../runbooks/agent-whatsapp.md#b3-despliegue-controlado-y-rollback).
+
 **Fecha**: 2026-08-22
 **Estado**: **ACEPTADO** (PO, 2026-08-22); D-1..D-10 cerradas. La ejecución de las tareas se sigue por separado en el plan.
 **Plan**: [`plan-implementacion-whatsapp-inbox-2026-08-22.md`](../plan-implementacion-whatsapp-inbox-2026-08-22.md)

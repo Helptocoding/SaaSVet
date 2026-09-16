@@ -24,6 +24,9 @@ from apps.patients.services import lookup_owner_by_phone
 
 from .models import ContactIdentity, Conversation
 
+from .durable import invalidate_ownership, db_now
+from .models import TurnWork
+
 logger = logging.getLogger('agent.events')
 
 # Debounce real por ventana silenciosa (É-F3 W1-4).
@@ -239,7 +242,7 @@ def get_or_create_open_conversation(contact, channel_account):
             .exclude(state=Conversation.STATE_CLOSED)
             .order_by('-created_at')
         )
-        conv = _resolve_duplicate_sessions(open_convs) if open_convs else None
+        conv = open_convs[0] if open_convs else None
         if conv is None:
             conv = Conversation(
                 organization=org,
@@ -252,6 +255,17 @@ def get_or_create_open_conversation(contact, channel_account):
                 "organization_id": org.pk,
                 "conversation_id": conv.pk,
             })
+    if len(open_convs) > 1:
+        # The creation mutex is released before any Conversation lock. Final
+        # turn publication locks Conversation before updating ContactIdentity.
+        with transaction.atomic():
+            current = list(Conversation.objects.select_for_update().filter(
+                pk__in=[c.pk for c in open_convs], organization=org
+            ).exclude(state=Conversation.STATE_CLOSED).order_by('pk'))
+            if current:
+                conv = _resolve_duplicate_sessions(current)
+        if not current:
+            return get_or_create_open_conversation(contact, channel_account)
     return conv
 
 
@@ -294,7 +308,9 @@ def _resolve_duplicate_sessions(open_convs):
         return survivor
 
     now = timezone.now()
-    for duplicate in duplicates:
+    for duplicate in sorted(duplicates, key=lambda c: c.pk):
+        duplicate = Conversation.objects.select_for_update().get(pk=duplicate.pk)
+        invalidate_ownership(duplicate, reason='duplicate_session')
         duplicate.state = Conversation.STATE_CLOSED
         duplicate.closed_at = now
         duplicate.close_reason = Conversation.CLOSE_DUPLICATE
@@ -350,16 +366,25 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
         available_at=now + QUIET_WINDOW,
     )
     try:
-        with transaction.atomic():
-            message.save()
+        while True:
+            with transaction.atomic():
+                conversation = Conversation.objects.select_for_update().get(
+                    pk=conversation.pk, organization_id=org.pk)
+                if conversation.state != Conversation.STATE_CLOSED:
+                    message.conversation = conversation
+                    message.save()
+                    conversation.last_inbound_at = now
+                    conversation.last_activity_at = now
+                    conversation.save(update_fields=['last_inbound_at', 'last_activity_at'])
+                    if message.status == Message.STATUS_PENDING:
+                        _extend_quiet_window(conversation, now)
+                    break
+            # A reset/close won the lock. Resolve a new episode without holding
+            # the old Conversation lock while acquiring the creation mutex.
+            conversation = get_or_create_open_conversation(contact, channel_account)
     except (ValidationError, IntegrityError):
         return None  # carrera de reintentos: otro request ya lo insertó
 
-    conversation.last_inbound_at = now
-    conversation.last_activity_at = now
-    conversation.save(update_fields=['last_inbound_at', 'last_activity_at'])
-    if message.status == Message.STATUS_PENDING:
-        _extend_quiet_window(conversation, now)
     return message
 
 
@@ -376,7 +401,7 @@ def _extend_quiet_window(conversation, now):
     ).filter(
         conversation=conversation,
         direction=Message.DIRECTION_IN,
-        status=Message.STATUS_PENDING,
+        status=Message.STATUS_PENDING, turn_work__isnull=True,
     )
     oldest = pending.aggregate(first=Min('created_at'))['first'] or now
     target = min(now + QUIET_WINDOW, oldest + MAX_WAIT)
@@ -534,7 +559,8 @@ def _capture_witness(conversation):
         if convo.state == Conversation.STATE_CLOSED:
             raise ConversationClosed()
         # El worker pudo tomar el turno: no se le pisa a mitad de camino.
-        if convo.processing_until and convo.processing_until > timezone.now():
+        if TurnWork.objects.filter(conversation=convo, status=TurnWork.PROCESSING,
+                                   lease_expires_at__gt=db_now()).exists():
             raise TurnInProgress()
 
         handoff_id = (
@@ -547,7 +573,7 @@ def _capture_witness(conversation):
             'suspension_id': (suspension or {}).get('suspension_id'),
             'state': convo.state,
             'claimed_by_id': convo.claimed_by_id,
-            'processing_until': convo.processing_until,
+            'ownership_epoch': convo.ownership_epoch,
             'handoff_id': handoff_id,
         }
     return witness, suspension
@@ -706,6 +732,9 @@ def _apply_release(conversation, witness, suspension, verdict, reason, actor):
 
     with transaction.atomic():
         convo = Conversation.objects.select_for_update().get(pk=conversation.pk)
+        if TurnWork.objects.filter(conversation=convo, status=TurnWork.PROCESSING,
+                                   lease_expires_at__gt=db_now()).exists():
+            raise ReleaseConflict(CONFLICT_TURN)
 
         current_handoff = (
             HumanHandoff.objects.for_organization(convo.organization).filter(
@@ -716,14 +745,14 @@ def _apply_release(conversation, witness, suspension, verdict, reason, actor):
             'suspension_id': (convo.flow.get('suspended') or {}).get('suspension_id'),
             'state': convo.state,
             'claimed_by_id': convo.claimed_by_id,
-            'processing_until': convo.processing_until,
+            'ownership_epoch': convo.ownership_epoch,
             'handoff_id': current_handoff,
         }
         for field, conflict in (
             ('suspension_id', CONFLICT_SUSPENSION),
             ('state', CONFLICT_STATE),
             ('claimed_by_id', CONFLICT_CLAIM),
-            ('processing_until', CONFLICT_TURN),
+            ('ownership_epoch', CONFLICT_TURN),
             ('handoff_id', CONFLICT_HANDOFF),
         ):
             if current[field] != witness[field]:
@@ -744,6 +773,7 @@ def _apply_release(conversation, witness, suspension, verdict, reason, actor):
                 flow.pop('nudge_sent', None)
         flow.pop('suspended', None)
 
+        invalidate_ownership(convo, reason='release')
         convo.state = Conversation.STATE_ACTIVE
         convo.claimed_by = None
         convo.claimed_at = None

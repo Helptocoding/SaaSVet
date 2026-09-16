@@ -286,6 +286,9 @@ class SupersededReplyTests(AgentFixture):
             enqueue_outbound(conversation, "respuesta ya desfasada",
                              author='agent')
             for author_type in extra_authors:
+                if author_type != Message.AUTHOR_HUMAN:
+                    enqueue_outbound(conversation, f"saliente {author_type}", author='system')
+                    continue
                 Message.objects.create(
                     organization=self.org,
                     channel_account=self.channel,
@@ -300,6 +303,7 @@ class SupersededReplyTests(AgentFixture):
                     ),
                     body=f"saliente {author_type}",
                     status=Message.STATUS_PENDING,
+                    origin_epoch=conversation.ownership_epoch,
                 )
             # El cliente siguió escribiendo mientras el modelo pensaba.
             Message.objects.create(
@@ -311,15 +315,24 @@ class SupersededReplyTests(AgentFixture):
 
         with mock.patch("apps.agent.planner.handle_inbound", fake_turn):
             process_pending_conversations(now=_later())
-        return Message.objects.get(
+        from apps.agent.models import TurnWork
+        work = TurnWork.objects.get(conversation=self.conv)
+        self.assertEqual(work.status, TurnWork.COMPLETED)
+        self.assertEqual(work.outcome_code, 'deferred_to_new_input')
+        self.assertEqual(work.attempts, 1)
+        self.assertEqual(Message.objects.filter(turn_work=work, direction='in',
+                                               status='processed').count(), 1)
+        self.assertEqual(Message.objects.filter(conversation=self.conv, direction='in',
+                                               turn_work__isnull=True).count(), 1)
+        return Message.objects.filter(
             conversation=self.conv,
             direction=Message.DIRECTION_OUT,
             body="respuesta ya desfasada",
-        )
+        ).first()
 
-    def test_pure_text_reply_is_discarded_and_never_sent(self):
+    def test_pure_text_reply_is_never_persisted_or_sent(self):
         outbound = self._run_with_late_message('planner_reply')
-        self.assertEqual(outbound.status, Message.STATUS_DISCARDED)
+        self.assertIsNone(outbound)
 
     def test_only_agent_and_system_replies_are_discarded(self):
         """Un saliente humano concurrente no pertenece al turno del modelo."""
@@ -328,15 +341,15 @@ class SupersededReplyTests(AgentFixture):
             extra_authors=(Message.AUTHOR_SYSTEM, Message.AUTHOR_HUMAN),
         )
 
-        self.assertEqual(outbound.status, Message.STATUS_DISCARDED)
+        self.assertIsNone(outbound)
         statuses = dict(
             Message.objects.filter(
                 conversation=self.conv,
                 direction=Message.DIRECTION_OUT,
             ).values_list('author_type', 'status')
         )
-        self.assertEqual(statuses[Message.AUTHOR_SYSTEM],
-                         Message.STATUS_DISCARDED)
+        self.assertNotIn(Message.AUTHOR_SYSTEM, statuses)
+        self.assertNotIn(Message.AUTHOR_AGENT, statuses)
         human = Message.objects.get(
             conversation=self.conv,
             direction=Message.DIRECTION_OUT,
@@ -346,14 +359,14 @@ class SupersededReplyTests(AgentFixture):
         self.assertEqual(human.body, "saliente human_staff")
         self.assertEqual(human.human_author, self.vet)
 
-    def test_reply_with_side_effects_is_kept(self):
-        """Descartar la confirmación de algo ya ejecutado sería mucho peor."""
+    def test_tool_counter_cannot_bypass_causal_publication(self):
+        """B2/B3: tools count is diagnostic, never evidence of business effect."""
         outbound = self._run_with_late_message('planner_reply', tools_used=1)
-        self.assertEqual(outbound.status, Message.STATUS_PENDING)
+        self.assertIsNone(outbound)
 
-    def test_confirmation_is_never_discarded(self):
+    def test_confirmation_label_cannot_bypass_causal_publication(self):
         outbound = self._run_with_late_message('awaiting_confirmation')
-        self.assertEqual(outbound.status, Message.STATUS_PENDING)
+        self.assertIsNone(outbound)
 
 
 # ---------------------------------------------------------------------------

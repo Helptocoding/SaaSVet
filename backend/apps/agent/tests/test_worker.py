@@ -147,6 +147,7 @@ class SendPendingTests(TestCase):
             direction=Message.DIRECTION_OUT,
             author_type=Message.AUTHOR_SYSTEM,
             body="respuesta",
+            origin_epoch=self.conversation.ownership_epoch,
         )
         defaults.update(kwargs)
         return Message.objects.create(**defaults)
@@ -239,7 +240,7 @@ class B1WorkerContextTests(TestCase):
             captured['context'] = kwargs['turn_context']
             self.assertEqual(set(Message.objects.filter(
                 pk__in=kwargs['turn_context'].inbound_ids).values_list('status', flat=True)),
-                {Message.STATUS_PROCESSED})
+                {Message.STATUS_PENDING})
             # A real later input arrives during this attempt. It belongs to a
             # subsequent turn even though the prompt has not been assembled yet.
             later = ingest_inbound_message(self.channel, wamid='b1-worker-later',

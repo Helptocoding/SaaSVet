@@ -1,5 +1,16 @@
 # Especificación funcional del agente WhatsApp (v1.1)
 
+> **Enmienda B3 (2026-09-15).** Reclamar un turno no marca sus mensajes como
+> procesados. TurnWork conserva los miembros y el cursor B1 para recuperarse
+> tras crash; un takeover/reset invalida la autoridad del worker anterior.
+> Estado local y respuesta pendiente final se guardan junto con completion.
+> Entrada posterior se procesa en otro trabajo y difiere la publicación del
+> primero sin reiniciarlo. COMPLETED no prueba éxito de negocio, entrega ni
+> atención humana. Sender actual opera con epoch/legacy; incertidumbre externa
+> sigue en B4, semántica de cortesías/correcciones en B6. WRITE permanece cerrado.
+> [Contrato B3](contrato-trabajo-durable-b3.md) y
+> [runbook](runbooks/agent-whatsapp.md#b3-despliegue-controlado-y-rollback).
+
 > **Enmienda de alcance B0 — 2026-09-13.** WRITE autónomo cerrado, incluidos asistencia y pendientes heredados. READ dentro de restricciones actuales y atención humana; copy sin aviso/atención garantizados. No cambia el detector clínico ni se amplía beta. Consultar [acta B0](implementacion-b0-agente-whatsapp-2026-09-13.md) para contratos mínimos, responsables pendientes, gate crítico, despliegue sin workers viejos y rollback que conserve contención. Esta enmienda prevalece sobre ejemplos de autonomía/avisos anteriores.
 
 **Fecha**: 2026-07-14 · **Enmienda P0 + congelamiento**: 2026-07-15

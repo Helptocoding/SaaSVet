@@ -1,5 +1,14 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
+> **Corte B3 (2026-09-15):** TurnWork fija miembros/cursor y recupera el mismo
+> trabajo mediante lease UUID con reloj DB. OwnershipWitness y epoch monotónico
+> cercan las mutaciones locales; goals/diagnóstico/outbound final/completion se
+> publican en una transacción corta. Inbound sigue PENDING al claim. Nuevo input
+> termina W1 como deferred, sin reiniciarlo. Sender actual comprueba epoch y
+> descarta legacy ambiguo como legacy_unverified. B4 externo sigue pendiente;
+> WRITE cerrado y activación PENDING_ACTIVATION_REQUIREMENTS. Contrato vigente:
+> [B3](../contrato-trabajo-durable-b3.md); [acta](../implementacion-b3-agente-whatsapp-2026-09-15.md).
+
 > **Corte B2 (2026-09-14):** `TransportResponse` separa HTTP/parseo de negocio;
 > `ToolOutcome` C3 contiene READ/EFFECT/ERROR y completitud explícita. Los
 > resultados sensibles se renderizan de forma determinista, desde campos
@@ -80,9 +89,10 @@ ref; `channels.views` importa `agent.services` perezoso.
 | Modelo | App | Claves |
 |---|---|---|
 | `ChannelAccount` | channels | `external_account_id` (phone_number_id) **unique GLOBAL** — el enrutamiento número→org es el control anti cross-tenant (R1); `provider_credentials_ref` = NOMBRE de env var (secreto jamás en DB) |
-| `Message` | channels | Tabla ÚNICA in/out. El inbox ES la cola y el outbox un filtro (`status`). Inbound: unique parcial `(channel_account, external_message_id)` para dedup del wamid. Envíos del staff: `idempotency_key` con unique parcial `(organization, idempotency_key)` **solo** para `direction='out' + author_type='human_staff' + key no nula`; agent/system nunca comparten ese namespace público. `available_at` = ventana silenciosa del debounce (cada entrante empuja la de TODO el hilo: 8 s, tope 25 s desde el más viejo); `process_attempts` = intentos de TURNO del entrante (≠ `attempts`, que cuenta envíos) → al agotar `MAX_PROCESS_ATTEMPTS` el mensaje se descarta y la conversación escala a humano |
+| `Message` | channels | Tabla ÚNICA in/out. El inbound alimenta TurnWork y el outbox sigue siendo un filtro (`status`); turn_work fija membership, output_ordinal/origin_epoch correlacionan publicación B3. Inbound: unique parcial `(channel_account, external_message_id)` para dedup del wamid. Envíos del staff: `idempotency_key` con unique parcial `(organization, idempotency_key)` **solo** para `direction='out' + author_type='human_staff' + key no nula`; agent/system nunca comparten ese namespace público. `available_at` = ventana silenciosa del debounce (cada entrante empuja la de miembros aún sin trabajo: 8 s, tope 25 s desde el más viejo); `process_attempts` proyecta los intentos de TurnWork (≠ `Message.attempts`, envíos); al agotar retries el trabajo queda FAILED, conserva inbound pending asignado y escala a humano |
 | `ContactIdentity` | agent | Identidad POR ORG (`unique org+channel+external_id` — el mismo cliente puede escribir a 2 clínicas); `verification_level` (unknown→phone_match→confirmed_in_chat→staff_verified); `phone_normalized` (Q5: últimos 10 dígitos, México-only); NO es un User — jamás recibe tokens |
-| `Conversation` | agent | `PublicIdMixin`; FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo) — pero **el contexto ya no muere con el hilo**: se lee por `(contacto, cuenta)` (F2, §Continuidad); `close_reason` registra por qué se cerró; org fijada al crear e inmutable; `flow` = scratchpad (ADR p50, jamás fuente de verdad); `processing_until` = lease del turno en vuelo. **`summary` se retiró en F5**: declarado en É-F1 y nunca escrito ni leído — la continuidad se resolvió sin él |
+| `Conversation` | agent | `PublicIdMixin`; FSM 4 estados: `active → handoff_pending → human_active → closed`; **CLOSED es terminal** (mensaje posterior = hilo nuevo) — pero **el contexto ya no muere con el hilo**: se lee por `(contacto, cuenta)` (F2, §Continuidad); `close_reason` registra por qué se cerró; org fijada al crear e inmutable; `flow` = scratchpad (ADR p50, jamás fuente de verdad); `ownership_epoch` = generación operativa; `processing_until` = proyección legacy sin autoridad. **`summary` se retiró en F5**: declarado en É-F1 y nunca escrito ni leído — la continuidad se resolvió sin él |
+| `TurnWork` | agent | Trabajo causal durable: anchor/cursor B1, miembros por Message FK, estado y único lease_token, DB expiry, attempts/backoff, epoch; unicidad parcial de un no terminal por conversación. Completion y outputs finales atómicos; [contrato B3](../contrato-trabajo-durable-b3.md) |
 | `ConversationGoal` | agent | **El COMPROMISO** (É-F3 W2; extendido por ADR p55 §3 — un solo modelo para tarea e identidad, R7). Estados `active/deviated/suspended/blocked/completed/abandoned/handoff` (+`cancelled` deprecado); `slots` `{slot:{value,confidence}}` YA normalizado; `missing`, `low_confidence`, `asked`, `stall_turns`; coordenadas `return_to`/`supplanted_by`/`blocked_reason`; `attempts_failed` (fallos reales ≠ turnos sin avance) y `working_state` (estado local del mecanismo). Dos constraints parciales: **uno al frente** (`active|deviated`) y **uno suspendido** por conversación |
 | `TurnOperationAssessment` | agent | Decisión append-only de un turno posterior a recibo: `conversation + anchor_message` es única/idempotente; guarda veredicto, operación, fallos, modelos/prompts y la ráfaga fuente como relación ordenada. Un `ConversationGoal` autorizado la referencia; el runtime solo habilita agenda tras autorización+verificación semánticas. |
 | `AgentSettings` | agent | OneToOne a Organization (patrón OrganizationSettings): `enabled` (kill switch, default False), `agent_user`, `faq_facts` (solo hechos sin campo propio), `default_veterinarian`, `scheduling_mode`, `nudge_enabled` |
@@ -96,11 +106,12 @@ Cliente → WhatsApp → POST /hooks/whatsapp/ (firma HMAC, fail-closed)
   → dedup wamid → ContactIdentity (match Owner: 0/1/≥2=ambiguous — ver §Identidad
     por teléfono: la resolución la hace `patients.services`, no una query propia)
   → Conversation abierta (o nueva) → Message(in, pending, available_at=+8s;
-    cada entrante nuevo empuja la ventana de todo el hilo, tope 25 s)
+    cada entrante nuevo empuja la ventana de los pendientes sin TurnWork, tope 25 s)
 Worker (run_agent_worker, SKIP LOCKED por conversación):
-  → marca procesados → si NO hay salientes previos: encola 1ª respuesta
-    (T0-GREET / T0-DISABLED / +sufijo fuera-de-horario, plantillas LITERALES)
-Sender: outbox → Meta Cloud API (backoff 30s·2^n cap 1h, máx 5; ventana 24h
+  → claim TurnWork (miembros fijos; inbound sigue pending) → TurnContext B1
+  → planificación en memoria → witness + commit local atómico
+    (goals/diagnóstico + outbound final pending + completed + inbound processed)
+Sender: outbox → chequeo epoch/scope/legacy → Meta Cloud API (backoff 30s·2^n cap 1h, máx 5; ventana 24h
   se valida ANTES de intentar HTTP) → acuses sent/delivered/read forward-only
 Staff → /inbox (bandeja): responder = tomar (human_active + claim).
 ```
@@ -698,7 +709,7 @@ R2 va fuera del lock porque una llamada de red dentro de una transacción la
 mantiene abierta lo que tarde el otro extremo (invariante 7). El **testigo**
 existe por eso: durante esa ventana el worker puede tomar el turno, otra persona
 puede reclamar, o puede aparecer una suspensión nueva. Sus cinco campos:
-`suspension_id`, `state`, `claimed_by_id`, `processing_until` y el **id del
+`suspension_id`, `state`, `claimed_by_id`, `ownership_epoch` y el **id del
 hand-off abierto observado** — se resuelve **ese** caso, no «el último abierto».
 
 **Veredicto** (§3.1 — *solo el match exacto descarta*):
@@ -1094,7 +1105,7 @@ Correcciones de la [auditoría conversacional](../whatsapp-agent-auditoria-conve
 | W0-4 | Urgencia notificada a ops (webhook Discord) + prioridad en `/inbox` | `HumanHandoff(priority=urgent)` dispara aviso (sin PII) y la bandeja ordena urgentes primero |
 | W0-5 | Se agenda con el veterinario **libre**, no con "el primer VET por pk" | Ver §Asignación de veterinario |
 | W0-6 | Aviso de privacidad just-in-time | Se emite una vez por contacto, antes del primer reto de identidad o alta (`privacy_notice_sent_at`) |
-| W0-7 | Transacción corta por conversación + lease (`processing_until`) | La red (LLM, loopback) queda FUERA de toda transacción |
+| W0-7 / B3 | Transacción corta + lease/token de TurnWork; processing_until solo proyección | La red del planner queda fuera de la transacción; el transporte sender legacy conserva su frontera pendiente B4 |
 
 ### Configuración de clínica: fuente única (ADR p53)
 

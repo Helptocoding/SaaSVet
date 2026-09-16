@@ -19,6 +19,8 @@ Transporte inyectable: ``RequestsTransport`` (producción, hacia
 Django test client — así los tests de tools atraviesan la API REAL
 (RBAC del rol AGENT incluido) sin servidor vivo.
 """
+
+from .turn_changes import save_local, current_changes
 import logging
 import time
 import uuid
@@ -165,6 +167,9 @@ class ToolExecutor:
         sería el fail-open de la observabilidad.
         """
         from . import intake
+        if current_changes() is not None:
+            from .durable import check_turn_deadline
+            check_turn_deadline(current_changes().witness)
         from .capabilities import EFFECTS, WRITE_BUSINESS
         # A READ can never hide a mutation, even through a wrong dispatch.
         # B0's legacy component test override is not a runtime setting.
@@ -253,7 +258,7 @@ class ToolExecutor:
             domain_object_public_id=domain_object_public_id,
             triggered_by_message=triggered_by_message,
         )
-        execution.save()
+        save_local(execution)
         self.last_execution_id = execution.pk
 
         if response.error_kind:
@@ -301,7 +306,7 @@ class ToolExecutor:
             domain_object_public_id=domain_object_public_id,
             triggered_by_message=triggered_by_message,
         )
-        execution.save()
+        save_local(execution)
         self.last_execution_id = execution.pk
         return execution
 
@@ -311,9 +316,11 @@ class ToolExecutor:
         No body, labels, prices, entity references or personal scope is copied.
         Older summaries remain diagnostics and are never upgraded/backfilled.
         """
-        execution = ToolExecution.objects.filter(
-            pk=self.last_execution_id, conversation=self.conversation,
-            organization_id=self.conversation.organization_id, tool_name=tool_name).first()
+        changes = current_changes()
+        execution = (changes.executions.get(self.last_execution_id) if changes else
+            ToolExecution.objects.filter(
+                pk=self.last_execution_id, conversation=self.conversation,
+                organization_id=self.conversation.organization_id, tool_name=tool_name).first())
         if execution is None:
             return
         summary = dict(execution.result_summary_redacted or {})
@@ -333,7 +340,7 @@ class ToolExecutor:
                 'status_code': execution.http_status, 'error_kind': outcome.error_kind,
                 'request_id': execution.request_id,
             })
-        execution.save(update_fields=fields)
+        save_local(execution, update_fields=fields)
 
 
 _ES_DAYS = ('lunes', 'martes', 'miércoles', 'jueves',

@@ -71,6 +71,11 @@ jobs:
         run: >-
           python manage.py test apps.agent.tests.test_b0_containment
           --testrunner apps.agent.tests.harness.CriticalB0Runner
+      - name: B3 durable work and independent PostgreSQL processes (required)
+        run: >-
+          python manage.py test apps.agent.tests.test_b3_durable
+          apps.agent.tests.test_b3_processes
+          --testrunner apps.agent.tests.harness.CriticalB3Runner
       - name: Run test suite (parallel)
         run: python manage.py test --parallel
 

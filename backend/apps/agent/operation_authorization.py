@@ -14,6 +14,8 @@ agenda; el planner puede seguir respondiendo de forma conversacional.
 """
 from __future__ import annotations
 
+from .turn_changes import create_local, current_changes
+
 import json
 import logging
 from dataclasses import dataclass
@@ -315,6 +317,9 @@ def _turn_data(messages: list[Message]) -> str:
 
 
 def _classify(conversation, client, turn_data: str, permitted: list[str]):
+    if current_changes() is not None:
+        from .durable import check_turn_deadline
+        check_turn_deadline(current_changes().witness)
     result = client.complete(
         system=AUTHORIZER_SYSTEM_PROMPT,
         messages=[{
@@ -338,6 +343,9 @@ def _classify(conversation, client, turn_data: str, permitted: list[str]):
 
 
 def _verify(conversation, client, turn_data: str, operation: str):
+    if current_changes() is not None:
+        from .durable import check_turn_deadline
+        check_turn_deadline(current_changes().witness)
     result = client.complete(
         system=VERIFIER_SYSTEM_PROMPT,
         messages=[{
@@ -361,7 +369,7 @@ def _verify(conversation, client, turn_data: str, operation: str):
 
 
 def _persist_llm_call(conversation, client, result, prompt_version: str) -> None:
-    LLMCall.objects.create(
+    create_local(LLMCall,
         organization=conversation.organization,
         conversation=conversation,
         provider=getattr(settings, 'AGENT_LLM_BASE_URL', '')[:32],
@@ -388,6 +396,13 @@ def _persist_assessment(conversation, messages, *, verdict, operation='',
         'authorizer_prompt_version': AUTHORIZER_PROMPT_VERSION,
         'verifier_prompt_version': VERIFIER_PROMPT_VERSION if verifier_model else '',
     }
+    if current_changes() is not None:
+        assessment = create_local(TurnOperationAssessment, conversation=conversation,
+                                  anchor_message=anchor, **defaults)
+        for index, message in enumerate(messages, start=1):
+            create_local(TurnOperationAssessmentMessage, organization=conversation.organization,
+                         assessment=assessment, message=message, ordinal=index)
+        return assessment
     try:
         with transaction.atomic():
             assessment, created = TurnOperationAssessment.objects.get_or_create(

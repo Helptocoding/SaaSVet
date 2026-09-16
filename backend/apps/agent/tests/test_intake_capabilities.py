@@ -12,6 +12,12 @@ from apps.agent.models import (
 from apps.agent.tests.test_w0_hardening import AgentFixture
 from apps.channels.models import Message
 
+# The confirmed B2 contract permits these six public reads before onboarding.
+B2_PUBLIC_TOOLS = {
+    'get_clinic_info', 'get_service_catalog', 'get_offered_specialties',
+    'check_product_availability', 'find_available_slots', 'check_appointment_slot',
+}
+
 
 class IntakeCapabilityTests(AgentFixture):
     account_id = '900000311'
@@ -38,10 +44,10 @@ class IntakeCapabilityTests(AgentFixture):
             executor=self.executor(),
         )
 
-    def test_unknown_contact_can_only_classify_or_reply(self):
+    def test_unknown_contact_keeps_public_reads_without_personal_access(self):
         self.assertEqual(
             self._tool_names(),
-            {'set_client_path', tools.REPLY_TOOL_NAME},
+            B2_PUBLIC_TOOLS | {'set_client_path', tools.REPLY_TOOL_NAME},
         )
         outcome = tools.run_tool(
             'identify_client', {'pet_name': 'Kiko'}, conversation=self.conv,
@@ -148,7 +154,7 @@ class IntakePlannerCapabilitiesTests(AgentFixture):
             item['function']['name'] for item in stub.calls[1]['tools']
         }
         self.assertEqual(first_names,
-                         {'set_client_path', tools.REPLY_TOOL_NAME})
+                         B2_PUBLIC_TOOLS | {'set_client_path', tools.REPLY_TOOL_NAME})
         self.assertNotIn('register_new_client_and_pet', second_names)
         self.assertIn('get_clinic_info', second_names)
         self.assertNotIn('identify_client', second_names)
@@ -197,15 +203,16 @@ class PostReceiptOperationAuthorityTests(AgentFixture):
             for item in tools.as_openai_tools(self.conv)
         }
 
-    def test_completed_operation_hides_unscoped_scheduling_tools(self):
+    def test_completed_operation_keeps_public_reads_and_hides_writes(self):
         self._receipt()
 
         names = self._tool_names()
 
         self.assertNotIn(tools.BEGIN_OPERATION_TOOL, names)
         self.assertNotIn('create_appointment', names)
-        self.assertNotIn('find_available_slots', names)
-        self.assertNotIn('check_appointment_slot', names)
+        self.assertTrue(B2_PUBLIC_TOOLS.issubset(names))
+        self.assertNotIn('cancel_appointment', names)
+        self.assertNotIn('reschedule_appointment', names)
 
     def test_direct_scheduling_after_receipt_is_denied_without_pending(self):
         self._receipt()

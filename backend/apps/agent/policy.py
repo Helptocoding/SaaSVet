@@ -13,6 +13,8 @@ del modelo — el LLM propone, el sistema dispone (plan v1.1, principio 2).
 conversacional determinista (verificación implícita, arranque/avance del
 reto de identidad, opt-out) — todo testeable sin proveedor.
 """
+
+from .turn_changes import save_local, open_handoff, after_local_commit
 import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -132,7 +134,7 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
     #    inalcanzable.
     if any(matchers.wants_optout(part) for part in burst):
         contact.proactive_opt_out = True
-        contact.save(update_fields=['proactive_opt_out'])
+        save_local(contact, update_fields=['proactive_opt_out'])
         return PolicyDecision(
             kind=CLOSE,
             text="Listo, no volveré a escribirte por aquí. Si cambias de "
@@ -167,7 +169,7 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
             return PolicyDecision(kind=SILENT,
                                   meta={'reason': 'handoff_pending'})
         flow['handoff_ack_sent'] = True
-        conversation.save(update_fields=['flow'])
+        save_local(conversation, update_fields=['flow'])
         return PolicyDecision(kind=REPLY, text=tier0.T0_HANDOFF_WAITING,
                               meta={'reason': 'handoff_ack'})
 
@@ -238,7 +240,7 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
             # CONTROL —el veredicto de una confirmación—, no de situación:
             # `nudge_abandoned_flows` puede leerlo sin violar el invariante 1.
             flow['deferred_at'] = timezone.now().isoformat()
-            conversation.save(update_fields=['flow'])
+            save_local(conversation, update_fields=['flow'])
             return PolicyDecision(kind=REPLY, text=tier0.T0_DEFER,
                                   meta={'reason': 'confirm_defer'})
         if verdict == 'negative':
@@ -415,9 +417,7 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
                       detail=''):
     """Crea el HumanHandoff y pasa la conversación a HANDOFF_PENDING.
     Idempotente por conversación: no duplica handoffs abiertos."""
-    existing = HumanHandoff.objects.filter(
-        conversation=conversation, resolved_at__isnull=True,
-    ).first()
+    existing = open_handoff(conversation)
     created = existing is None
 
     # SUSPENDE, no destruye (R4/R5): una urgencia SUPLANTA el pending_action,
@@ -449,11 +449,11 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
         update_fields = ['priority', 'reason_code']
         if detail:
             update_fields.append('reason_detail')
-        existing.save(update_fields=update_fields)
+        save_local(existing, update_fields=update_fields)
         escalated_now = True
     elif not created and detail and existing.reason_detail != detail:
         existing.reason_detail = detail
-        existing.save(update_fields=['reason_detail'])
+        save_local(existing, update_fields=['reason_detail'])
 
     # La TAREA en curso pasa a manos del humano: queda cerrada como `handoff`,
     # no como abandonada (W2 — importa para el embudo). Incluye la que un reto
@@ -472,8 +472,8 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
     if escalated_now and priority == HumanHandoff.PRIORITY_URGENT:
         from . import alerts
         try:
-            alerts.notify_urgent_handoff(
-                conversation, reason_code=reason_code, detail=detail)
+            after_local_commit(lambda: alerts.notify_urgent_handoff(
+                conversation, reason_code=reason_code, detail=detail))
         except Exception:
             logger.exception("AGENT_URGENT_ALERT_FAILED")
 
@@ -499,32 +499,40 @@ def nudge_abandoned_flows(now=None):
         .select_related('contact', 'organization')
     )
     count = 0
-    for conversation in candidates:
-        flow = conversation.flow or {}
-        contact = conversation.contact
-        if contact.is_blocked or contact.proactive_opt_out:
-            continue
-        if flow.get('nudge_sent'):                 # una sola vez por conversación
-            continue
-        if not flow.get('pending_action'):         # solo un flujo a medias
-            continue
-        if flow.get('deferred_at'):
-            # El cliente dijo «déjame pensarlo» y le respondimos que aquí
-            # quedaba pendiente. Insistir a los 60 minutos contradice esa
-            # promesa — y no es un caso extremo, es el flujo normal del
-            # producto: `T0_DEFER` conserva el `pending_action` a propósito,
-            # así que hasta ahora TODO cliente que pedía tiempo recibía el
-            # recordatorio igual.
-            continue
-        agent_settings = _agent_settings(conversation)
-        if (agent_settings is None or not agent_settings.enabled
-                or not agent_settings.nudge_enabled
-                or getattr(conversation.organization, 'is_demo', False)):
-            continue
-        enqueue_outbound(conversation, NUDGE_TEXT, author='system')
-        conversation.flow['nudge_sent'] = True
-        conversation.save(update_fields=['flow'])
-        count += 1
+    from django.db import transaction
+    from .models import TurnWork
+    for candidate in candidates:
+        with transaction.atomic():
+            conversation = (Conversation.objects.select_for_update(of=('self',))
+                .select_related('contact', 'organization').get(pk=candidate.pk))
+            if conversation.state != Conversation.STATE_ACTIVE or TurnWork.objects.filter(
+                    conversation=conversation, status__in=TurnWork.NON_TERMINAL).exists():
+                continue
+            flow = conversation.flow or {}
+            contact = conversation.contact
+            if contact.is_blocked or contact.proactive_opt_out:
+                continue
+            if flow.get('nudge_sent'):                 # una sola vez por conversación
+                continue
+            if not flow.get('pending_action'):         # solo un flujo a medias
+                continue
+            if flow.get('deferred_at'):
+                # El cliente dijo «déjame pensarlo» y le respondimos que aquí
+                # quedaba pendiente. Insistir a los 60 minutos contradice esa
+                # promesa — y no es un caso extremo, es el flujo normal del
+                # producto: `T0_DEFER` conserva el `pending_action` a propósito,
+                # así que hasta ahora TODO cliente que pedía tiempo recibía el
+                # recordatorio igual.
+                continue
+            agent_settings = _agent_settings(conversation)
+            if (agent_settings is None or not agent_settings.enabled
+                    or not agent_settings.nudge_enabled
+                    or getattr(conversation.organization, 'is_demo', False)):
+                continue
+            enqueue_outbound(conversation, NUDGE_TEXT, author='system')
+            conversation.flow['nudge_sent'] = True
+            save_local(conversation, update_fields=['flow'])
+            count += 1
     return count
 
 
@@ -538,11 +546,21 @@ def close_inactive_conversations(idle_hours=24, now=None):
         last_activity_at__lt=cutoff,
     ).exclude(state=Conversation.STATE_CLOSED)
     count = 0
-    for conversation in stale:
-        conversation.state = Conversation.STATE_CLOSED
-        conversation.closed_at = now
-        conversation.close_reason = Conversation.CLOSE_IDLE
-        conversation.save(update_fields=['state', 'closed_at',
-                                         'close_reason'])
-        count += 1
+    from django.db import transaction
+    from .models import TurnWork
+    from .durable import invalidate_ownership
+    for candidate in stale:
+        with transaction.atomic():
+            conversation = Conversation.objects.select_for_update().get(pk=candidate.pk)
+            if (conversation.state == Conversation.STATE_CLOSED
+                    or conversation.last_activity_at >= cutoff
+                    or TurnWork.objects.filter(conversation=conversation,
+                        status__in=TurnWork.NON_TERMINAL).exists()):
+                continue
+            invalidate_ownership(conversation, reason='idle_close')
+            conversation.state = Conversation.STATE_CLOSED
+            conversation.closed_at = now
+            conversation.close_reason = Conversation.CLOSE_IDLE
+            conversation.save(update_fields=['state', 'closed_at', 'close_reason'])
+            count += 1
     return count

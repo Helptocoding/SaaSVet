@@ -140,6 +140,13 @@ class Command(BaseCommand):
             return
 
         with transaction.atomic():
+            from apps.agent.durable import invalidate_ownership
+            from apps.agent.models import Conversation
+            affected = Conversation.objects.select_for_update().filter(
+                Q(contact_id__in=[c.pk for c in suspects]) |
+                Q(pk__in=[g.conversation_id for g in orphans])).order_by('pk')
+            for conversation in affected:
+                invalidate_ownership(conversation, reason='identity_remediation')
             for contact in suspects:
                 contact.verification_level = (
                     ContactIdentity.VERIFICATION_PHONE_MATCH)

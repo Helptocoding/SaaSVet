@@ -250,16 +250,22 @@ class WorkerFaultIsolationTests(AgentFixture):
         self.assertIsNotNone(message.available_at)
 
     def test_poison_message_is_dead_lettered_and_escalated(self):
+        from apps.agent.durable import claim_turn
+        from apps.agent.models import TurnWork
         message = self._inbound("wamid.F2")
-        Message.objects.filter(pk=message.pk).update(
-            process_attempts=MAX_PROCESS_ATTEMPTS - 1)
+        witness = claim_turn(message.conversation_id, eligible_at=self._later())
+        TurnWork.objects.filter(pk=witness.turn_work_id).update(
+            attempts=MAX_PROCESS_ATTEMPTS - 1,
+            lease_expires_at=timezone.now() - timedelta(seconds=1))
         with mock.patch("apps.agent.planner.handle_inbound",
                         side_effect=RuntimeError("boom")):
             process_pending_conversations(now=self._later())
 
         message.refresh_from_db()
-        self.assertEqual(message.status, Message.STATUS_FAILED)
-        self.assertEqual(message.failure_reason, 'turn_failed:RuntimeError')
+        self.assertEqual(message.status, Message.STATUS_PENDING)
+        work = TurnWork.objects.get(pk=witness.turn_work_id)
+        self.assertEqual(work.status, TurnWork.FAILED)
+        self.assertEqual(work.outcome_code, 'turn_RuntimeError')
         self.assertTrue(
             visible_messages(Message.objects.filter(pk=message.pk)).exists(),
             'un mensaje del cliente con fallo técnico debe seguir en bandeja',
@@ -288,10 +294,10 @@ class WorkerFaultIsolationTests(AgentFixture):
         )
 
     def test_lease_prevents_a_second_worker_taking_the_same_turn(self):
+        from apps.agent.durable import claim_turn
         self._inbound("wamid.F3")
         conv = Conversation.objects.get(contact=self.contact)
-        conv.processing_until = timezone.now() + timedelta(minutes=1)
-        conv.save(update_fields=["processing_until"])
+        self.assertIsNotNone(claim_turn(conv.pk, eligible_at=self._later()))
         processed = process_pending_conversations(now=self._later())
         self.assertEqual(processed, 0)
 

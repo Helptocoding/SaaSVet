@@ -28,6 +28,8 @@ Contrato (revisión del PO, 2026-07-24) — deliberadamente pequeño:
 El objetivo se sitúa ANTES de la confirmación tier-2 y DESPUÉS del Policy
 Engine: no toca ninguna barrera de control existente.
 """
+
+from .turn_changes import save_local, create_local, local_goals
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -471,18 +473,15 @@ def get_open_goal(conversation):
     `get_identity_commitment`.
     """
     from .models import ConversationGoal
-    return ConversationGoal.objects.filter(
-        conversation=conversation,
-        status__in=ConversationGoal.FOREGROUND_STATUSES,
-    ).exclude(name__in=IDENTITY_GOALS).first()
+    return next((g for g in local_goals(conversation)
+                 if g.status in ConversationGoal.FOREGROUND_STATUSES
+                 and g.name not in IDENTITY_GOALS), None)
 
 
 def get_suspended_goal(conversation):
     from .models import ConversationGoal
-    return ConversationGoal.objects.filter(
-        conversation=conversation,
-        status=ConversationGoal.STATUS_SUSPENDED,
-    ).first()
+    return next((g for g in local_goals(conversation)
+                 if g.status == ConversationGoal.STATUS_SUSPENDED), None)
 
 
 def open_goal(conversation, name, *, authorization_message=None,
@@ -523,7 +522,7 @@ def open_goal(conversation, name, *, authorization_message=None,
         suspended = get_suspended_goal(conversation)
         if suspended is not None and suspended.name == name:
             return resume(suspended)
-    goal = ConversationGoal.objects.create(
+    goal = create_local(ConversationGoal,
         organization=conversation.organization,
         conversation=conversation,
         name=name,
@@ -540,7 +539,7 @@ def close(goal, status, reason=''):
     goal.status = status
     goal.closed_at = timezone.now()
     goal.closed_reason = reason[:80]
-    goal.save(update_fields=['status', 'closed_at', 'closed_reason'])
+    save_local(goal, update_fields=['status', 'closed_at', 'closed_reason'])
     _log(goal, 'AGENT_GOAL_CLOSED')
     return goal
 
@@ -561,7 +560,7 @@ def deviate(goal, return_to):
         )
     goal.status = ConversationGoal.STATUS_DEVIATED
     goal.return_to = return_to[:32]
-    goal.save(update_fields=['status', 'return_to'])
+    save_local(goal, update_fields=['status', 'return_to'])
     return goal
 
 
@@ -572,7 +571,7 @@ def suspend(goal, *, supplanted_by):
         return goal
     goal.status = ConversationGoal.STATUS_SUSPENDED
     goal.supplanted_by = (supplanted_by or '')[:40]
-    goal.save(update_fields=['status', 'supplanted_by'])
+    save_local(goal, update_fields=['status', 'supplanted_by'])
     return goal
 
 
@@ -585,7 +584,7 @@ def resume(goal):
         return goal
     goal.status = ConversationGoal.STATUS_ACTIVE
     goal.supplanted_by = ''
-    goal.save(update_fields=['status', 'supplanted_by'])
+    save_local(goal, update_fields=['status', 'supplanted_by'])
     return goal
 
 
@@ -602,7 +601,7 @@ def block(goal, reason):
     if goal is None:
         return None
     goal.blocked_reason = (reason or '')[:40]
-    goal.save(update_fields=['blocked_reason'])
+    save_local(goal, update_fields=['blocked_reason'])
     return close(goal, ConversationGoal.STATUS_BLOCKED, reason)
 
 
@@ -640,12 +639,8 @@ def close_task_commitments(conversation, status, reason=''):
     `park_identity` para sobrevivir a una escalada.
     """
     from .models import ConversationGoal
-    live = list(
-        ConversationGoal.objects.filter(
-            conversation=conversation,
-            status__in=ConversationGoal.OPEN_STATUSES,
-        ).exclude(name__in=IDENTITY_GOALS)
-    )
+    live = [g for g in local_goals(conversation)
+            if g.status in ConversationGoal.OPEN_STATUSES and g.name not in IDENTITY_GOALS]
     return [close(goal, status, reason) for goal in live]
 
 
@@ -656,11 +651,9 @@ def close_task_commitments(conversation, status, reason=''):
 def get_identity_commitment(conversation):
     """El reto de identidad en curso, si lo hay."""
     from .models import ConversationGoal
-    return ConversationGoal.objects.filter(
-        conversation=conversation,
-        name__in=IDENTITY_GOALS,
-        status__in=ConversationGoal.FOREGROUND_STATUSES,
-    ).first()
+    return next((g for g in local_goals(conversation)
+                 if g.name in IDENTITY_GOALS
+                 and g.status in ConversationGoal.FOREGROUND_STATUSES), None)
 
 
 def start_identity(conversation, name, *, first_factor, working_state=None):
@@ -691,7 +684,7 @@ def start_identity(conversation, name, *, first_factor, working_state=None):
                   'desplazado por otro compromiso')
         suspend(task, supplanted_by=name)
 
-    commitment = ConversationGoal.objects.create(
+    commitment = create_local(ConversationGoal,
         organization=conversation.organization,
         conversation=conversation,
         name=name,
@@ -787,7 +780,7 @@ def advance_to(commitment, factor):
     if commitment is None:
         return None
     commitment.return_to = (factor or '')[:32]
-    commitment.save(update_fields=['return_to'])
+    save_local(commitment, update_fields=['return_to'])
     return commitment
 
 
@@ -826,7 +819,7 @@ def satisfy(commitment, factor, value=True, *, provenance=None):
         commitment.slots[factor]['match_mode'] = provenance.get('match_mode')
     commitment.missing = missing_slots(commitment)
     commitment.last_progress_at = timezone.now()
-    commitment.save(update_fields=['slots', 'missing', 'last_progress_at'])
+    save_local(commitment, update_fields=['slots', 'missing', 'last_progress_at'])
     return commitment
 
 
@@ -839,7 +832,7 @@ def register_failure(commitment):
     if commitment is None:
         return False
     commitment.attempts_failed += 1
-    commitment.save(update_fields=['attempts_failed'])
+    save_local(commitment, update_fields=['attempts_failed'])
     spec = spec_for(commitment.name)
     return commitment.attempts_failed >= (spec.max_stall_turns if spec else 2)
 
@@ -852,7 +845,7 @@ def set_scratch(commitment, **values):
     if commitment is None:
         return None
     commitment.working_state = {**(commitment.working_state or {}), **values}
-    commitment.save(update_fields=['working_state'])
+    save_local(commitment, update_fields=['working_state'])
     return commitment
 
 
@@ -911,7 +904,7 @@ def capture(goal, raw_args, conversation):
     if advanced:
         goal.last_progress_at = timezone.now()
         goal.stall_turns = 0
-    goal.save(update_fields=['slots', 'low_confidence', 'missing',
+    save_local(goal, update_fields=['slots', 'low_confidence', 'missing',
                              'last_progress_at', 'stall_turns'])
     return {'filled': filled, 'advanced': advanced, 'missing': goal.missing,
             'low_confidence': low, 'rejected': rejected}
@@ -965,11 +958,8 @@ def last_task_goal(conversation):
     contar por qué llegó el caso, que es el 90 % de su valor.
     """
     from .models import ConversationGoal
-    return (ConversationGoal.objects
-            .filter(conversation=conversation)
-            .exclude(name__in=IDENTITY_GOALS)
-            .order_by('-id')
-            .first())
+    return next((g for g in reversed(local_goals(conversation))
+                 if g.name not in IDENTITY_GOALS), None)
 
 
 def describe(goal):
@@ -1005,7 +995,7 @@ def mark_asked(goal, slots):
     """Cuenta cuántas veces se ha pedido cada slot (anti-repetición)."""
     for slot in slots:
         goal.asked[slot] = goal.asked.get(slot, 0) + 1
-    goal.save(update_fields=['asked'])
+    save_local(goal, update_fields=['asked'])
 
 
 def bump_stall(goal):
@@ -1017,7 +1007,7 @@ def bump_stall(goal):
     if goal is None:
         return False
     goal.stall_turns += 1
-    goal.save(update_fields=['stall_turns'])
+    save_local(goal, update_fields=['stall_turns'])
     spec = spec_for(goal.name)
     return goal.stall_turns >= (spec.max_stall_turns if spec else 3)
 

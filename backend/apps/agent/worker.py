@@ -1,12 +1,10 @@
 """
-agent/worker.py — Lógica del worker (É-F0 PR-5): inbox-como-cola + sender.
+agent/worker.py — B3 TurnWork durable + sender compatible.
 
-Diseño v1.1 §7-C4: NO hay tabla de cola. El worker toma CONVERSACIONES con
-mensajes entrantes pendientes vía FOR UPDATE SKIP LOCKED — lockear la
-conversación serializa sus mensajes (FIFO por conversación) y paraleliza
-entre conversaciones/réplicas del worker gratis. Drain-on-pickup (§7-C9):
-al tomar una conversación se procesan TODOS sus pendientes elegibles
-(available_at vencido) en un solo turno.
+Un claim corto fija miembros/cursor y concede un único lease de TurnWork.
+El planner prepara cambios en memoria; la transacción final verifica el
+witness y publica junto con completion. El polling recupera trabajo expirado.
+El sender conserva su transporte actual; incertidumbre HTTP corresponde a B4.
 
 Este módulo es deliberadamente importable y puro-de-side-effects-globales
 (el loop vive en el management command): cada función procesa un lote y
@@ -17,17 +15,18 @@ todas las clínicas); cada conversación ya trae su organización fijada desde
 el webhook (R1) y todo lo que se escribe hereda ese contexto.
 """
 import logging
-import os
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.channels.models import Message
 from apps.channels.providers import ProviderError, get_provider
 
-from . import goals
+from .durable import MAX_ATTEMPTS as MAX_PROCESS_ATTEMPTS
+from .durable import RETRY_DELAY as TURN_RETRY_DELAY
+from .durable import LEASE as PROCESSING_LEASE
 from .models import AgentSettings, Conversation
 from .tier0 import render_first_reply
 
@@ -42,300 +41,121 @@ SEND_BACKOFF_CAP = timedelta(hours=1)
 # caben plantillas HSM (F3) — en F0/F1 el texto libre se marca failed.
 SESSION_WINDOW = timedelta(hours=24)
 
-# Aislamiento de fallos del turno (É-F3 W0-3).
-MAX_PROCESS_ATTEMPTS = 3               # tras esto, dead-letter + humano
-TURN_RETRY_DELAY = timedelta(seconds=30)
-PROCESSING_LEASE = timedelta(minutes=5)  # ventana de exclusividad del turno
-
-TURN_FAILURE_TEXT = (
-    "Perdón, tuve un problema técnico y no pude atenderte bien 🙏 Ya avisé al "
-    "equipo para que te contacte."
-)
-
-
 def process_pending_conversations(batch=10, now=None):
-    """Drena conversaciones con entrantes pendientes. Devuelve cuántas tocó.
-
-    Con el agente encendido corre el pipeline completo (policy → planner →
-    tools); sin provisionar cae al buzón F0 (saludo único por conversación).
-
-    Dos garantías que antes no existían (É-F3 W0-3/W0-7):
-
-    1. **Una transacción CORTA por conversación**, solo para reclamar el turno.
-       Antes, un único `atomic()` envolvía el lote entero *incluyendo* las
-       llamadas al LLM (hasta 30 s cada una) y el loopback HTTP: una clínica
-       lenta bloqueaba las otras nueve y la conexión quedaba idle-in-transaction.
-    2. **Un turno que revienta no tumba el worker.** Antes, cualquier excepción
-       salía hasta el command, mataba el proceso, el rollback devolvía el
-       mensaje a `pending` y al reiniciar se reprocesaba: crash-loop con todas
-       las clínicas mudas y una llamada al LLM quemada por vuelta.
-    """
-    now = now or timezone.now()
-    conv_ids = list(
-        Message.objects.filter(
-            direction=Message.DIRECTION_IN,
-            status=Message.STATUS_PENDING,
-            conversation__isnull=False,
-        )
-        .filter(Q(available_at__isnull=True) | Q(available_at__lte=now))
-        .values_list('conversation_id', flat=True)
-        .distinct()[:batch]
-    )
-
+    """Poll durable retries/recovery and unassigned inbound using existing loop."""
+    from django.db.models.functions import Now
+    from .models import TurnWork
+    from . import durable
+    due = (Q(turn_works__status=TurnWork.PROCESSING,
+             turn_works__lease_expires_at__lte=Now()) |
+           Q(turn_works__status=TurnWork.PENDING,
+             turn_works__next_attempt_at__lte=Now()) |
+           Q(turn_works__status=TurnWork.PENDING,
+             turn_works__next_attempt_at__isnull=True))
+    incoming = Message.objects.filter(direction='in', status='pending',
+        turn_work__isnull=True).filter(Q(available_at__isnull=True) |
+        Q(available_at__lte=now or Now())).values('conversation_id')
+    conv_ids = list(Conversation.objects.filter(due | Q(pk__in=incoming))
+                    .order_by('last_activity_at', 'pk').values_list('pk', flat=True)
+                    .distinct()[:batch])
     processed = 0
     for conv_id in conv_ids:
-        claimed = _claim_turn(conv_id, now)
-        if claimed is None:
+        witness = _claim_turn(conv_id, now)
+        if witness is None:
             continue
-        conversation, pending = claimed
         try:
-            _run_turn(conversation, pending, now)
+            _run_turn(witness)
+        except durable.OwnershipLost:
+            pass  # Durable state belongs to the newer owner; never release it.
         except Exception as exc:
-            _handle_turn_failure(conversation, pending, exc)
-        else:
-            _release_turn(conversation)
+            _handle_turn_failure(witness, exc)
         processed += 1
     return processed
 
 
-def _claim_turn(conv_id, now):
-    """Reclama la conversación y sus entrantes elegibles. Transacción corta.
-
-    Devuelve `(conversation, pending)` o None si otro worker la tiene, si el
-    turno anterior sigue vivo (lease) o si ya no hay nada elegible. El lease
-    sustituye al lock sostenido: serializa el turno entre réplicas sin mantener
-    una transacción abierta mientras se espera al modelo.
-    """
-    with transaction.atomic():
-        conversation = (
-            Conversation.objects
-            # of=('self',): lockear SOLO la conversación. Sin esto el lock se
-            # extiende a organization/contact/channel_account y dos
-            # conversaciones del mismo contacto se bloquean entre sí.
-            .select_for_update(skip_locked=True, of=('self',))
-            .select_related('organization', 'contact', 'channel_account')
-            .filter(pk=conv_id)
-            .first()
-        )
-        if conversation is None:
-            return None                       # otra réplica la tiene tomada
-        if conversation.processing_until and conversation.processing_until > now:
-            return None                       # turno en vuelo en otra réplica
-
-        org = conversation.organization
-        pending = list(
-            Message.objects.for_organization(org)
-            .filter(
-                conversation=conversation,
-                direction=Message.DIRECTION_IN,
-                status=Message.STATUS_PENDING,
-            )
-            .filter(Q(available_at__isnull=True) | Q(available_at__lte=now))
-            .order_by('created_at', 'id')
-        )
-        if not pending:
-            return None
-
-        Message.objects.for_organization(org).filter(
-            pk__in=[m.pk for m in pending],
-        ).update(
-            status=Message.STATUS_PROCESSED,
-            process_attempts=F('process_attempts') + 1,
-        )
-        conversation.processing_until = now + PROCESSING_LEASE
-        conversation.save(update_fields=['processing_until'])
-    return conversation, pending
+def _claim_turn(conv_id, now=None):
+    from .durable import claim_turn
+    return claim_turn(conv_id, eligible_at=now)
 
 
-def _run_turn(conversation, pending, now):
-    """Ejecuta el turno FUERA de toda transacción (red: LLM + loopback)."""
-    org = conversation.organization
-    agent_settings = AgentSettings.objects.filter(organization=org).first()
+def _run_turn(witness):
+    """Plan in memory, then publish under a fresh witness/CAS in one commit."""
+    from . import durable, planner
+    from .turn_changes import TurnChanges
+    conversation = Conversation.objects.select_related(
+        'organization', 'contact', 'channel_account').get(
+            pk=witness.conversation_id, organization_id=witness.organization_id)
+    turn_context = durable.context_for_work(witness)
+    agent_settings = AgentSettings.objects.filter(
+        organization_id=witness.organization_id).first()
+    changes = TurnChanges(witness, conversation)
+    with changes.activate():
+        if agent_settings and agent_settings.enabled and agent_settings.agent_user_id:
+            result = planner.handle_inbound(conversation, agent_settings=agent_settings,
+                                            turn_context=turn_context)
+        else:
+            _first_reply_fallback(conversation, agent_settings, turn_context.clinic_now)
+            result = {'decision': 'fallback'}
+    outcome = durable.finalize_turn(witness, outputs=changes.outputs, changes=changes,
+                                   outcome=result.get('decision', 'completed'))
+    # Existing optional handoff alert stays outside the local transaction.
+    # It is not a durable B5 notification or proof that a human was notified.
+    for callback in changes.callbacks:
+        try:
+            callback()
+        except Exception:
+            logger.exception('AGENT_POST_TURN_CALLBACK_FAILED')
+    return outcome
 
-    # É-F1: con el agente encendido y provisionado, el turno pasa por el
-    # pipeline completo (policy → planner → tools). Si NO está provisionado el
-    # actor (agent_user), caemos al comportamiento F0 de buzón (auto-saludo
-    # único) para no romper instalaciones a medio provisionar.
-    if agent_settings and agent_settings.enabled and agent_settings.agent_user_id:
-        from . import planner
-        from .turn_context import build_turn_context
-        turn_context = build_turn_context(conversation, pending, now=now)
-        before_ids = set(
-            Message.objects.for_organization(org)
-            .filter(conversation=conversation,
-                    direction=Message.DIRECTION_OUT)
-            .values_list('pk', flat=True)
-        )
-        result = planner.handle_inbound(
-            conversation, agent_settings=agent_settings,
-            turn_context=turn_context,
-        )
-        _discard_if_superseded(conversation, pending, before_ids, result)
-        return
 
-    _first_reply_fallback(conversation, agent_settings, now)
-
-
-def _discard_if_superseded(conversation, pending, before_ids, result):
-    """Descarta la respuesta si el cliente siguió escribiendo mientras el
-    modelo pensaba (É-F3 W1-4). Devuelve cuántos salientes descartó.
-
-    Solo aplica a respuestas de TEXTO PURO. Si el turno ejecutó una
-    herramienta, propuso una confirmación o escaló, el mensaje sale igual:
-    descartar la confirmación de una cita ya creada sería mucho peor que una
-    respuesta ligeramente desfasada.
-    """
-    result = result or {}
-    if result.get('decision') not in ('planner_reply', 'reply'):
-        return 0
-    if result.get('tools'):
-        return 0
-
-    org = conversation.organization
-    superseded = Message.objects.for_organization(org).filter(
-        conversation=conversation,
-        direction=Message.DIRECTION_IN,
-        status=Message.STATUS_PENDING,
-        created_at__gt=pending[-1].created_at,
-    ).exists()
-    if not superseded:
-        return 0
-
-    discarded = (
-        Message.objects.for_organization(org)
-        .filter(conversation=conversation,
-                direction=Message.DIRECTION_OUT,
-                status=Message.STATUS_PENDING,
-                author_type__in=[
-                    Message.AUTHOR_AGENT,
-                    Message.AUTHOR_SYSTEM,
-                ])
-        .exclude(pk__in=before_ids)
-        .update(status=Message.STATUS_DISCARDED,
-                failure_reason='descartado: el cliente siguió escribiendo')
-    )
-    if discarded:
-        logger.info("AGENT_REPLY_SUPERSEDED", extra={
-            "event": "AGENT_REPLY_SUPERSEDED",
-            "organization_id": org.pk,
-            "conversation_id": conversation.pk,
-            "discarded": discarded,
-        })
-    return discarded
 
 
 def _first_reply_fallback(conversation, agent_settings, now):
-    """Buzón F0 (sin LLM): saludo/aviso una sola vez por conversación."""
-    org = conversation.organization
-    has_outbound = Message.objects.for_organization(org).filter(
-        conversation=conversation, direction=Message.DIRECTION_OUT,
-    ).exists()
-    if has_outbound:
+    from .outbound import enqueue_outbound
+    if conversation.claimed_by_id or conversation.state in (
+            Conversation.STATE_HUMAN_ACTIVE, Conversation.STATE_CLOSED):
         return
-    Message(
-        organization=org,
-        channel_account=conversation.channel_account,
-        conversation=conversation,
-        contact_id=conversation.contact_id,   # F2
-        direction=Message.DIRECTION_OUT,
-        author_type=Message.AUTHOR_SYSTEM,
-        body=render_first_reply(agent_settings, org),
-        status=Message.STATUS_PENDING,
-    ).save()
-    conversation.last_activity_at = now
-    conversation.save(update_fields=['last_activity_at'])
-    logger.info("AGENT_FIRST_REPLY_QUEUED", extra={
-        "event": "AGENT_FIRST_REPLY_QUEUED",
-        "organization_id": org.pk,
-        "conversation_id": conversation.pk,
-    })
+    if Message.objects.for_organization(conversation.organization_id).filter(
+            conversation=conversation, direction='out').exists():
+        return
+    enqueue_outbound(conversation, render_first_reply(agent_settings, conversation.organization))
 
 
-def _release_turn(conversation):
-    conversation.processing_until = None
-    conversation.save(update_fields=['processing_until'])
 
 
-def _exception_origin(exc):
-    """Identificador seguro del último frame de una excepción."""
-    trace = exc.__traceback__
-    if trace is None:
-        return ''
-    while trace.tb_next is not None:
-        trace = trace.tb_next
-    code = trace.tb_frame.f_code
-    return f'{os.path.basename(code.co_filename)}:{trace.tb_lineno}:{code.co_name}'
-
-
-def _handle_turn_failure(conversation, pending, exc):
-    """Turno fallido: reintentar con respiro, o dead-letter + humano.
-
-    Trade-off consciente: si el turno murió DESPUÉS de encolar una respuesta,
-    el reintento puede duplicarla. Está acotado a `MAX_PROCESS_ATTEMPTS` y es
-    preferible al silencio — un cliente sin respuesta es peor que uno con dos.
-    """
-    logger.exception("AGENT_TURN_FAILED", extra={
-        "event": "AGENT_TURN_FAILED",
-        "organization_id": conversation.organization_id,
-        "conversation_id": conversation.pk,
-        "error_class": type(exc).__name__,
-        "error_origin": _exception_origin(exc),
-    })
+def _handle_turn_failure(witness, exc):
+    from .durable import fail_turn, OwnershipLost
+    logger.error('AGENT_TURN_EXCEPTION', extra={
+        'event': 'AGENT_TURN_EXCEPTION', 'turn_work_id': witness.turn_work_id,
+        'conversation_id': witness.conversation_id, 'error_class': type(exc).__name__})
     try:
-        with transaction.atomic():
-            org = conversation.organization
-            rows = list(
-                Message.objects.for_organization(org)
-                .filter(pk__in=[m.pk for m in pending])
-            )
-            exhausted = [m for m in rows
-                         if m.process_attempts >= MAX_PROCESS_ATTEMPTS]
-            if exhausted:
-                Message.objects.for_organization(org).filter(
-                    pk__in=[m.pk for m in rows],
-                ).update(
-                    status=Message.STATUS_FAILED,
-                    failure_reason=f'turn_failed:{type(exc).__name__}'[:200],
-                    available_at=None,
-                )
-                _escalate_after_failure(conversation)
-            else:
-                Message.objects.for_organization(org).filter(
-                    pk__in=[m.pk for m in rows],
-                ).update(
-                    status=Message.STATUS_PENDING,
-                    available_at=timezone.now() + TURN_RETRY_DELAY,
-                )
-            conversation.processing_until = None
-            conversation.save(update_fields=['processing_until'])
+        fail_turn(witness, reason=('turn_' + type(exc).__name__)[:64])
+    except OwnershipLost:
+        pass
     except Exception:
-        # El manejador de fallos jamás puede propagar: sería el crash-loop
-        # que este bloque existe para evitar.
-        logger.exception("AGENT_TURN_FAILURE_HANDLER_FAILED", extra={
-            "event": "AGENT_TURN_FAILURE_HANDLER_FAILED",
-            "conversation_id": conversation.pk,
-        })
+        logger.exception('AGENT_TURN_FAILURE_HANDLER_FAILED')
+        # Keep PROCESSING durable; a later poll recovers its expired lease.
 
 
-def _escalate_after_failure(conversation):
-    from . import policy
+def _escalate_after_failure(conversation, *, work=None):
+    """Existing terminal fallback, in the same local commit as FAILED."""
+    from . import policy, tier0
     from .models import HumanHandoff
     from .outbound import enqueue_processing_failure_notice
-    policy.escalate_to_human(
-        conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
-        detail='turn_failed',
-    )
-    enqueue_processing_failure_notice(conversation, TURN_FAILURE_TEXT)
+    policy.escalate_to_human(conversation, reason_code=HumanHandoff.REASON_TOOL_FAILURE,
+                            detail='turn_failed')
+    enqueue_processing_failure_notice(conversation, tier0.T0_TECH_PROBLEM, work=work)
+
+
 
 
 def send_pending_outbound(batch=20, provider_factory=get_provider, now=None):
     """Entrega salientes pendientes con reintentos. Devuelve cuántos intentó.
 
-    Multi-réplica-safe: lock por mensaje con SKIP LOCKED. El envío HTTP
-    ocurre DENTRO del lock del mensaje (si el proceso muere a mitad, el
-    mensaje queda pending y otro worker lo retoma — el proveedor dedupea
-    razonablemente poco, por eso attempts se persiste ANTES de enviar:
-    a lo sumo un reintento manual, nunca un bucle).
+    Transporte legacy: SKIP LOCKED por mensaje y HTTP dentro del lote atómico.
+    La comprobación B3 rechaza epochs obsoletos antes de admitir el envío.
+    Un crash puede dejar incertidumbre remota y permitir reenvío: resolver
+    esa frontera requiere B4; B3 no promete entrega exactamente una vez.
     """
     now = now or timezone.now()
     attempted = 0
@@ -361,6 +181,15 @@ def send_pending_outbound(batch=20, provider_factory=get_provider, now=None):
 
 
 def _send_one(message, provider_factory, now):
+    reason = _dispatch_rejection(message)
+    if reason:
+        message.status = Message.STATUS_DISCARDED
+        message.failure_reason = reason
+        message.save(update_fields=['status', 'failure_reason'])
+        logger.info('AGENT_SEND_DISCARDED', extra={
+            'event': 'AGENT_SEND_DISCARDED', 'message_id': message.pk,
+            'outcome_code': reason})
+        return
     conversation = message.conversation
 
     # Ventana de 24 h (la valida el sender, no el LLM — spec §2.8).
@@ -420,3 +249,34 @@ def _send_one(message, provider_factory, now):
     # guarda `STATUS_SENT`. Necesitaba un `try/except` propio precisamente porque
     # un `raise` ahí habría hecho rollback de un WhatsApp ya entregado y el
     # sender lo habría reenviado.
+
+
+def _dispatch_rejection(message):
+    """B3 selection fence, immediately before admitting existing sender HTTP.
+
+    No durable send claim and no cancellation of a remote request already
+    admitted. That race/uncertainty remains B4, including legacy retries.
+    """
+    from .models import TurnWork
+    if message.origin_epoch is None:
+        return 'legacy_unverified'
+    conv = Conversation.objects.filter(pk=message.conversation_id,
+        organization_id=message.organization_id,
+        channel_account_id=message.channel_account_id,
+        channel_account__organization_id=message.organization_id,
+        contact__organization_id=message.organization_id).first()
+    if conv is None:
+        return 'scope_invalid'
+    if message.contact_id not in (None, conv.contact_id):
+        return 'scope_invalid'
+    if message.origin_epoch != conv.ownership_epoch:
+        return 'ownership_invalidated'
+    if message.turn_work_id is not None and not TurnWork.objects.filter(
+            pk=message.turn_work_id, organization_id=message.organization_id,
+            conversation_id=conv.pk, ownership_epoch=message.origin_epoch,
+            ).filter(Q(status=TurnWork.COMPLETED) |
+                     Q(status=TurnWork.FAILED, messages__pk=message.pk,
+                       messages__semantic_type=Message.SEMANTIC_PROCESSING_FAILURE)).exists():
+        return 'turn_work_invalid'
+    message.conversation = conv
+    return ''

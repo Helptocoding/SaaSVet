@@ -11,6 +11,8 @@ Reglas vinculantes:
   además re-verifica su propio piso (defensa en profundidad).
 - Precio y stock solo pueden proyectarse para productos con existencia positiva (G7).
 """
+
+from .turn_changes import save_local, refresh_local
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -294,7 +296,7 @@ def resolve_handle(conversation, handle):
 
 
 def _save_refs(conversation):
-    conversation.save(update_fields=['flow'])
+    save_local(conversation, update_fields=['flow'])
 
 
 def _verification_ok(conversation, minimum):
@@ -2482,7 +2484,7 @@ def identify_client(conversation, executor, args, triggered_by=None):
     if aportado:
         flow_store.update(aportado)
         conversation.flow['aportado'] = flow_store
-        conversation.save(update_fields=['flow'])
+        save_local(conversation, update_fields=['flow'])
     # Lo REUNIDO en toda la conversación, no solo en esta llamada. El cliente
     # aporta a su ritmo y en el orden que quiere; exigir que los factores
     # lleguen juntos sería volver al modo pull con otro nombre.
@@ -2563,7 +2565,7 @@ def identify_client(conversation, executor, args, triggered_by=None):
     # El reto lo cierra `verify_pet_evidence` DENTRO de su commit (D32); en la
     # vía familiar, que no pasa por él, se cierra aquí.
     if verified and commitment is not None and contact.owner_id is not None:
-        commitment.refresh_from_db()
+        refresh_local(commitment)
         if commitment.status in ConversationGoal.FOREGROUND_STATUSES:
             goals.finish_identity(conversation, commitment,
                                   ConversationGoal.STATUS_COMPLETED,
@@ -2698,9 +2700,9 @@ def request_human(conversation, executor, args, triggered_by=None):
         reason_code=HumanHandoff.REASON_EXPLICIT,
         reason_detail=str(args.get('reason', ''))[:200],
     )
-    handoff.save()
+    save_local(handoff, )
     conversation.state = Conversation.STATE_HANDOFF_PENDING
-    conversation.save(update_fields=['state'])
+    save_local(conversation, update_fields=['state'])
     executor.record_local(
         tool_name='request_human',
         args_redacted={},
@@ -2750,7 +2752,7 @@ def set_client_path(conversation, executor, args, triggered_by=None):
         flow.pop('aportado', None)
     conversation.intake_path = requested
     conversation.flow = flow
-    conversation.save(update_fields=['intake_path', 'flow'])
+    save_local(conversation, update_fields=['intake_path', 'flow'])
     executor.record_local(
         tool_name=intake.PATH_SELECTION_TOOL,
         args_redacted={'path': requested},

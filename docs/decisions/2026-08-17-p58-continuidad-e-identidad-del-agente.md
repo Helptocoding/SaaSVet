@@ -1,5 +1,12 @@
 # ADR p58 — Continuidad conversacional e identidad del agente
 
+> **Enmienda B3 (2026-09-15).** Recuperar TurnWork conserva miembros/cursor B1;
+> el historial no se calcula desde pendientes actuales. Reset/unlink cercan
+> trabajo anterior aumentando epochs de los episodios afectados bajo locks de
+> Conversation; conservan historial e identidad según las reglas existentes.
+> Deferred conserva estado local del asunto para continuidad, sin interpretar
+> correcciones semánticas B6. [Contrato B3](../contrato-trabajo-durable-b3.md).
+
 > **Enmienda B1 (2026-09-14).** Hechos de contacto, transcript y señal de contacto previo usan un límite exclusivo `(created_at,id)` anterior al primer inbound de `TurnContext`. `PENDING`/`PROCESSED` no determinan qué es pasado. El alcance exige organización, contacto y cuenta; el transcript privado de otros episodios solo se lee con verificación vigente. Se conserva la excepción D19 para hechos de existencia/fecha de contacto previo, sin entregar su contenido. Para historia causal se admiten entrantes recibidos y salientes emitidos; la visibilidad inmediata de un borrador humano en Inbox no acredita emisión. El turno actual se agrega una sola vez desde C1, nunca como historial anterior. No se cambia la verificación, su TTL ni el anti-eco. [Acta B1](../implementacion-b1-agente-whatsapp-2026-09-14.md).
 
 **Fecha**: 2026-08-17
