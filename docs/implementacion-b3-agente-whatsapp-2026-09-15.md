@@ -11,8 +11,12 @@ baseline B2 indicado por el usuario. Actas previas:
 [B1](implementacion-b1-agente-whatsapp-2026-09-14.md),
 [B2](implementacion-b2-agente-whatsapp-2026-09-15.md).
 
-El hash técnico se registra después de crear el commit; el cierre de acta va
-en un commit documental posterior para evitar autorreferencia.
+Commit final de implementación: **`46328f4b44924c883bb35d5c1f23b0880215bfdf`**
+(`46328f4`), `Implement WhatsApp agent B3 durable turns and atomic local publication`.
+Incluye 45 archivos: 19 runtime, 9 tests/harness, 3 migraciones, 13 documentos
+y el workflow CI. El commit documental que registra este hash únicamente cierra
+el acta; no modifica runtime ni cambia la evidencia de pruebas. Esta separación
+evita exigir que un commit contenga su propio hash.
 Los borrados preexistentes de `DEPLOY_VPS_PLAN.md` y `DEPLOY_VPS_STATUS.md`, y
 el archivo no seguido `docs/auditoria-agente-conversacional-veterinario-2026-09-10.md`
 quedan fuera de B3 y sus commits.
