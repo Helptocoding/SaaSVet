@@ -411,50 +411,10 @@ def _extend_quiet_window(conversation, now):
 
 
 # Orden forward-only de los acuses de entrega del proveedor.
-_DELIVERY_RANK = {
-    Message.STATUS_PENDING: 0,
-    Message.STATUS_SENT: 1,
-    Message.STATUS_DELIVERED: 2,
-    Message.STATUS_READ: 3,
-}
-_PROVIDER_STATUS_MAP = {
-    'sent': Message.STATUS_SENT,
-    'delivered': Message.STATUS_DELIVERED,
-    'read': Message.STATUS_READ,
-}
-
-
-def record_status_update(channel_account, wamid, provider_status,
-                         error_detail=''):
-    """Acuse de entrega de un SALIENTE (value.statuses[] del webhook).
-
-    Forward-only: un acuse tardío 'sent' no degrada un 'read' ya aplicado.
-    """
-    if not wamid:
-        return None
-    org = channel_account.organization
-    message = Message.objects.for_organization(org).filter(
-        channel_account=channel_account,
-        direction=Message.DIRECTION_OUT,
-        external_message_id=wamid,
-    ).first()
-    if message is None:
-        return None
-
-    if provider_status == 'failed':
-        message.status = Message.STATUS_FAILED
-        message.failure_reason = (error_detail or 'proveedor: failed')[:200]
-        message.save(update_fields=['status', 'failure_reason'])
-        return message
-
-    new_status = _PROVIDER_STATUS_MAP.get(provider_status)
-    if new_status is None:
-        return None
-    if _DELIVERY_RANK.get(new_status, 0) <= _DELIVERY_RANK.get(message.status, 0):
-        return message  # acuse viejo o repetido: no degradar
-    message.status = new_status
-    message.save(update_fields=['status'])
-    return message
+def record_status_update(channel_account, wamid, provider_status, error_detail=''):
+    """Account/org scoped evidence; delegate all transitions to B4 delivery."""
+    from apps.channels.status import record_status
+    return record_status(channel_account, wamid, provider_status)
 
 
 # ===========================================================================

@@ -399,42 +399,8 @@ class B3LocalIntegrationTests(TestCase):
         self.assertFalse(ConversationGoal.objects.exists())
         self.assertFalse(Message.objects.filter(direction='out').exists())
 
-    def test_legacy_01_sender_discards_ambiguous_without_fabricating_epoch(self):
-        from apps.agent.worker import send_pending_outbound
-        out = Message.objects.create(organization=self.org, conversation=self.conv,
-            channel_account=self.channel, direction='out', body='legacy', status='pending',
-            author_type=Message.AUTHOR_SYSTEM)
-        provider = __import__('unittest.mock', fromlist=['Mock']).Mock()
-        send_pending_outbound(provider_factory=provider)
-        out.refresh_from_db()
-        self.assertEqual((out.status, out.failure_reason), ('discarded', 'legacy_unverified'))
-        self.assertIsNone(out.turn_work_id)
-        self.assertIsNone(out.origin_epoch)
-        provider.assert_not_called()
 
-    def test_sender_dispatches_valid_b3_output(self):
-        from apps.agent.worker import send_pending_outbound
-        from unittest.mock import Mock
-        witness = self.claim()
-        durable.finalize_turn(witness, outputs=[{'body': 'B3'}])
-        provider = Mock()
-        provider.return_value.send_text.return_value = 'wamid.b3'
-        send_pending_outbound(provider_factory=provider)
-        out = Message.objects.get(direction='out')
-        self.assertEqual(out.status, 'sent')
-        self.assertEqual(out.external_message_id, 'wamid.b3')
-        provider.return_value.send_text.assert_called_once()
 
-    def test_sender_rechecks_epoch_at_dispatch(self):
-        from apps.agent.worker import send_pending_outbound
-        from unittest.mock import Mock
-        witness = self.claim()
-        durable.finalize_turn(witness, outputs=[{'body': 'Stale'}])
-        Conversation.objects.filter(pk=self.conv.pk).update(ownership_epoch=1)
-        provider = Mock()
-        send_pending_outbound(provider_factory=provider)
-        self.assertEqual(Message.objects.get(direction='out').failure_reason, 'ownership_invalidated')
-        provider.assert_not_called()
 
     def test_processed_01_real_worker_planning_sees_pending_members(self):
         from apps.agent import worker, planner
@@ -583,3 +549,50 @@ class B3LocalIntegrationTests(TestCase):
             durable.finalize_turn(replace(a, organization_id=other.pk),
                                   outputs=[{'body': 'No'}])
         self.assertFalse(Message.objects.filter(direction='out').exists())
+
+
+class B3SenderCompatibilityTests(TransactionTestCase):
+    """B3 sender regressions with actual commit boundaries required by B4."""
+    setUp = DurableTurnTests.setUp
+    claim = DurableTurnTests.claim
+    inbound = DurableTurnTests.inbound
+
+    def test_legacy_01_sender_discards_ambiguous_without_fabricating_epoch(self):
+        from apps.agent.worker import send_pending_outbound
+        out = Message.objects.create(organization=self.org, conversation=self.conv,
+            channel_account=self.channel, direction='out', body='legacy', status='pending',
+            author_type=Message.AUTHOR_SYSTEM)
+        provider = __import__('unittest.mock', fromlist=['Mock']).Mock()
+        send_pending_outbound(provider_factory=provider)
+        out.refresh_from_db()
+        self.assertEqual((out.status, out.failure_reason), ('discarded', 'legacy_unverified'))
+        self.assertIsNone(out.turn_work_id)
+        self.assertIsNone(out.origin_epoch)
+        provider.assert_not_called()
+
+
+    def test_sender_dispatches_valid_b3_output(self):
+        from apps.agent.worker import send_pending_outbound
+        from unittest.mock import Mock
+        witness = self.claim()
+        durable.finalize_turn(witness, outputs=[{'body': 'B3'}])
+        provider = Mock()
+        from apps.channels.providers import SendResult
+        provider.return_value.send_text.return_value = SendResult('accepted', 'wamid.b3')
+        send_pending_outbound(provider_factory=provider)
+        out = Message.objects.get(direction='out')
+        self.assertEqual(out.status, 'sent')
+        self.assertEqual(out.external_message_id, 'wamid.b3')
+        provider.return_value.send_text.assert_called_once()
+
+
+    def test_sender_rechecks_epoch_at_dispatch(self):
+        from apps.agent.worker import send_pending_outbound
+        from unittest.mock import Mock
+        witness = self.claim()
+        durable.finalize_turn(witness, outputs=[{'body': 'Stale'}])
+        Conversation.objects.filter(pk=self.conv.pk).update(ownership_epoch=1)
+        provider = Mock()
+        send_pending_outbound(provider_factory=provider)
+        self.assertEqual(Message.objects.get(direction='out').failure_reason, 'ownership_invalidated')
+        provider.assert_not_called()

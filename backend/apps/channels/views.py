@@ -101,12 +101,24 @@ def _process_payload(payload):
     # Import perezoso: evita ciclos de import channels↔agent al cargar apps.
     from apps.agent.services import ingest_inbound_message, record_status_update
 
-    for entry in payload.get('entry') or []:
-        for change in entry.get('changes') or []:
-            value = change.get('value') or {}
-            phone_number_id = (value.get('metadata') or {}).get(
+    def objects(value):
+        return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
+
+    if not isinstance(payload, dict):
+        return
+    for entry in objects(payload.get('entry')):
+        for change in objects(entry.get('changes')):
+            value = change.get('value')
+            if not isinstance(value, dict):
+                continue
+            metadata = value.get('metadata')
+            if not isinstance(metadata, dict):
+                continue
+            phone_number_id = metadata.get(
                 'phone_number_id', '',
             )
+            if not isinstance(phone_number_id, str) or not phone_number_id:
+                continue
             # Resolutor número→org (R1): la ÚNICA lectura sin org previa del
             # subsistema — aquí NACE el tenant context de todo lo que sigue.
             # Baselined con revisión en test_tenant_scoping_audit.
@@ -123,9 +135,10 @@ def _process_payload(payload):
 
             profiles = {
                 c.get('wa_id'): (c.get('profile') or {}).get('name', '')
-                for c in value.get('contacts') or []
+                for c in objects(value.get('contacts'))
+                if isinstance(c.get('profile'), dict) and isinstance(c.get('wa_id'), str)
             }
-            for msg in value.get('messages') or []:
+            for msg in objects(value.get('messages')):
                 event = _extract_body(msg)
                 ingest_inbound_message(
                     channel,
@@ -140,11 +153,9 @@ def _process_payload(payload):
                         EVENT_METADATA_KEY: event.projection(),
                     },
                 )
-            for status_event in value.get('statuses') or []:
-                errors = status_event.get('errors') or []
+            for status_event in objects(value.get('statuses')):
                 record_status_update(
                     channel,
                     status_event.get('id', ''),
                     status_event.get('status', ''),
-                    (errors[0].get('title', '') if errors else ''),
                 )

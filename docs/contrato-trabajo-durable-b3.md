@@ -3,6 +3,10 @@
 Fecha: 2026-09-15. Base: `a06b4f7`. Alcance exclusivo B3/C4/C5 del
 [plan canónico](plan-implementacion-auditoria-agente-whatsapp-2026-09md).
 
+> Actualización 2026-09-16: la frontera externa ya está implementada en el
+> [contrato B4](contrato-sender-durable-b4.md). La enmienda B4 al final prevalece
+> sobre las referencias al sender legacy; lo siguiente conserva el corte B3.
+
 **B3 garantiza autoridad y publicación local durable. B4 resolverá la frontera
 de dispatch externo y resultados inciertos.** `COMPLETED` describe trabajo local;
 no acredita éxito de negocio, entrega de Meta ni atención humana. Containment
@@ -178,3 +182,13 @@ Despliegue requiere ventana controlada, nunca workers viejos y B3 simultáneos.
 Secuencia, observación, legacy y rollback en el
 [runbook](runbooks/agent-whatsapp.md#b3-despliegue-controlado-y-rollback).
 Activación: `PENDING_ACTIVATION_REQUIREMENTS`. Sin despliegue automático.
+
+## Enmienda de frontera B4 — 2026-09-16
+
+La sección «Sender compatible y legacy» anterior describe el corte B3.
+Para el runtime actual la sustituye el [contrato sender B4](contrato-sender-durable-b4.md):
+claim individual, admisión/HTTP/finalización separados y UNCERTAIN durable.
+El sender toma Conversation→Message; no espera Meta bajo locks. La autoridad
+de procesamiento TurnWork y su publicación atómica permanecen como aquí se
+definieron. El helper de invalidación descarta además SENDING sin admisión;
+los admitidos conservan la posibilidad de registrar su resultado externo.

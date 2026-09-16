@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-15**. Estado: **B0, B1, B2 y B3 implementadas y cerradas técnicamente; las fases restantes siguen pendientes y la activación no está autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-16**. Estado: **B0–B4 cerradas técnicamente; B5–B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -432,6 +432,22 @@ Ubicación: `test_executor.py`, `test_tools.py`, `test_write_tools.py`, `test_w3
 **Riesgos eliminados:** pérdida por claim prematuro y release ajeno. **Reducidos:** writes de estado local obsoletos. **Abiertos:** incertidumbre de sender hasta B4 y commit de negocio hasta B8; WRITE permanece cerrado.
 
 ### Fase B4 — Sender durable, reconciliación y takeover completo
+
+**Seguimiento 2026-09-16: COMPLETED en alcance B4.** Base `5ae6077`.
+Aceptación: 807 conjuntos + 17 B0 + 44 frontend = **868 tests únicos**, todos
+aprobados, cero skips/xfail; incluye 68 B4 actuales y cinco pruebas B4 con
+procesos PostgreSQL independientes. Migración sin drift. H07 cerrado para la
+frontera sender; H08 cubre publicación/admisión B3/B4 y conserva pendientes B5/B8. [Contrato B4](contrato-sender-durable-b4.md),
+[ADR](decisions/2026-09-16-b4-durable-sender-uncertainty.md) y
+[acta](implementacion-b4-agente-whatsapp-2026-09-16.md) registran la evidencia.
+Message es el único outbox; migración aditiva channels.0013_b4_durable_sender.
+Claim individual UUID/lease, admisión de un uso, HTTP fuera de transacción,
+finalización CAS y UNCERTAIN sin blind retry. Webhook monotónico por org/cuenta/ID;
+takeover distingue antes/después de admisión. `send_admitted_at` adicional a C5
+acredita el inicio lógico bajo lock, no recepción de socket. Reemisión manual
+crea otro Message, Inbox expone incertidumbre y Compose separa planner/sender.
+No activación WRITE ni implementación de B5+. La descripción siguiente conserva
+los criterios de aceptación de la fase; el acta identifica los ejecutados.
 
 **Objetivo.** Separar planificación de envío, evitar rollback de lote y tratar honestamente toda aceptación externa dudosa.
 

@@ -93,7 +93,8 @@ class Message(OrganizationalModel):
 
     B3 deriva el trabajo inbound de TurnWork; status es proyección final:
       - inbound: pending durante claim/retry; processed solo al completar
-      - outbound: pending → sent → delivered → read, o failed (con reintentos)
+      - outbound B4: pending → sending → sent → delivered → read;
+        failed conocido, uncertain durable o discarded antes de admisión.
 
     Dedup de reintentos del proveedor: unique parcial por
     (channel_account, external_message_id) SOLO inbound — patrón espejo de
@@ -151,6 +152,8 @@ class Message(OrganizationalModel):
     )
 
     STATUS_PENDING = 'pending'
+    STATUS_SENDING = 'sending'
+    STATUS_UNCERTAIN = 'uncertain'
     STATUS_PROCESSED = 'processed'
     STATUS_DISCARDED = 'discarded'
     STATUS_SENT = 'sent'
@@ -163,7 +166,9 @@ class Message(OrganizationalModel):
         (STATUS_PROCESSED, 'Procesado'),
         (STATUS_DISCARDED, 'Descartado'),
         # outbound
-        (STATUS_SENT, 'Enviado'),
+        (STATUS_SENDING, 'Envío en curso'),
+        (STATUS_UNCERTAIN, 'Aceptación incierta'),
+        (STATUS_SENT, 'Aceptado por proveedor'),
         (STATUS_DELIVERED, 'Entregado'),
         (STATUS_READ, 'Leído'),
         (STATUS_FAILED, 'Fallido'),
@@ -231,6 +236,18 @@ class Message(OrganizationalModel):
     attempts = models.PositiveSmallIntegerField(default=0)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     failure_reason = models.CharField(max_length=200, blank=True, default='')
+    # B4: independent of TurnWork. Never recycle a token or retry uncertainty.
+    send_token = models.UUIDField(null=True, blank=True)
+    send_started_at = models.DateTimeField(null=True, blank=True)
+    send_lease_until = models.DateTimeField(null=True, blank=True)
+    # Logical admission COMMIT just before HTTP; not proof of network receipt.
+    send_admitted_at = models.DateTimeField(null=True, blank=True)
+    provider_accepted_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    uncertain_at = models.DateTimeField(null=True, blank=True)
+    supersedes_message = models.ForeignKey(
+        'self', on_delete=models.PROTECT, null=True, blank=True, related_name='reemissions')
     # Drain-on-pickup (v1.1 §7-C9): el worker no toma mensajes con
     # available_at futuro — delay fijo barato en vez de debounce con timers.
     available_at = models.DateTimeField(null=True, blank=True)
@@ -245,6 +262,16 @@ class Message(OrganizationalModel):
     class Meta:
         ordering = ['created_at', 'id']
         constraints = [
+            models.CheckConstraint(condition=(~models.Q(status='sending') |
+                models.Q(direction='out', send_token__isnull=False,
+                         send_started_at__isnull=False, send_lease_until__isnull=False)),
+                name='message_sending_claim'),
+            models.CheckConstraint(condition=(~models.Q(status='uncertain') |
+                models.Q(direction='out', uncertain_at__isnull=False)),
+                name='message_uncertainty_evidence'),
+            models.CheckConstraint(condition=(models.Q(send_admitted_at__isnull=True) |
+                models.Q(direction='out', send_token__isnull=False,
+                         send_started_at__isnull=False)), name='message_admission_claim'),
             models.UniqueConstraint(fields=['turn_work', 'output_ordinal'],
                 condition=models.Q(direction='out', turn_work__isnull=False,
                                    output_ordinal__isnull=False),
@@ -288,6 +315,11 @@ class Message(OrganizationalModel):
             ),
         ]
         indexes = [
+            models.Index(fields=['direction', 'status', 'next_attempt_at'], name='message_send_ready'),
+            models.Index(fields=['send_lease_until'], condition=models.Q(status='sending'),
+                         name='message_send_expiry'),
+            models.Index(fields=['organization', 'channel_account', 'external_message_id'],
+                         condition=models.Q(direction='out'), name='message_status_lookup'),
             # Transcript de una conversación (bandeja).
             models.Index(fields=['organization', 'conversation', 'created_at']),
             # Cola del worker (inbox pendiente) y outbox del sender.

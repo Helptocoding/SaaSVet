@@ -393,3 +393,31 @@ class CriticalB3Runner(CriticalB0Runner):
             raise RuntimeError(f'Escenarios críticos B3 ausentes: {sorted(missing)}')
         self._planned_count = suite.countTestCases()
         return suite
+
+
+class CriticalB4Runner(CriticalB0Runner):
+    """Reject absent B4 process boundaries, skips, xfails and partial runs."""
+
+    def build_suite(self, test_labels=None, **kwargs):
+        suite = DiscoverRunner.build_suite(self, test_labels, **kwargs)
+        def ids(items):
+            for case in items:
+                if hasattr(case, 'id'):
+                    yield case.id()
+                else:
+                    yield from ids(case)
+        required = {
+            'apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_12_two_processes_one_claim_one_http',
+            'apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_03_process_killed_after_meta_acceptance',
+            'apps.agent.tests.test_b4_processes.B4ProcessTests.test_send_fi_08_other_transaction_progresses_while_http_blocked',
+            'apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http',
+            'apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history',
+            'apps.channels.tests.test_b4_transport.B4TransportTests.test_send_fi_05_2xx_without_wamid_is_uncertain',
+            'apps.channels.tests.test_b4_webhook.B4WebhookTests.test_other_org_correct_wamid_cannot_update',
+            'apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence',
+        }
+        missing = required - set(ids(suite))
+        if missing:
+            raise RuntimeError(f'Escenarios críticos B4 ausentes: {sorted(missing)}')
+        self._planned_count = suite.countTestCases()
+        return suite

@@ -1,5 +1,11 @@
 # Especificación funcional del agente WhatsApp (v1.1)
 
+> **Frontera vigente B4 (2026-09-16):** Inbox distingue pendiente, envío en
+> curso, aceptación, entrega, lectura e incertidumbre. Takeover no cancela un
+> intento ya admitido. La sección B4 final y el [contrato sender](contrato-sender-durable-b4.md)
+> sustituyen las referencias históricas siguientes a incertidumbre pendiente.
+> WRITE sigue cerrado; B5 y B6 conservan su alcance futuro.
+
 > **Enmienda B3 (2026-09-15).** Reclamar un turno no marca sus mensajes como
 > procesados. TurnWork conserva los miembros y el cursor B1 para recuperarse
 > tras crash; un takeover/reset invalida la autoridad del worker anterior.
@@ -686,3 +692,17 @@ La suite es **el gate de regresión conversacional**: cambiar prompt, modelo o p
 ---
 
 *Esta especificación es el contrato funcional del agente v1.1. Cualquier comportamiento no especificado aquí se resuelve por las reglas globales (§2); si tampoco aplican, el comportamiento por defecto es: no actuar, decir la verdad sobre el límite y ofrecer un humano.*
+
+## Enmienda funcional B4 — 2026-09-16
+
+La cola muestra por separado pendiente, envío en curso, aceptación de WhatsApp,
+entrega, lectura, fallo conocido, aceptación incierta y descarte. Un timeout no
+permite decir «no se envió»; aceptación no permite decir «entregado». Un histórico
+SENT sin wamid se identifica como evidencia desconocida. La incertidumbre exige
+revisión y nunca dispara retry automático; reemitir crea otro mensaje humano.
+
+Tomar la conversación impide nuevos dispatches del epoch anterior. Un envío ya
+admitido puede terminar después, conservando su autor y resultado externo.
+Ningún estado de canal prueba atención humana ni éxito de una operación de
+negocio. No se añaden protocolos/handoff B5 ni se habilita WRITE autónomo.
+Contrato y límites: [B4](contrato-sender-durable-b4.md).

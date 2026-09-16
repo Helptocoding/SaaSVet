@@ -57,6 +57,16 @@ def emitted_outbound(queryset):
     )
 
 
+def operational_messages(queryset):
+    """Inbox-only: outbound evidence includes pending/failed/uncertain history.
+
+    Never use this selector as emission or conversational/business authority.
+    """
+    return queryset.filter(
+        Q(direction=Message.DIRECTION_IN, status__in=RECEIVED_IN_STATUSES)
+        | Q(direction=Message.DIRECTION_OUT))
+
+
 def before_cursor(queryset, cursor):
     """Exclusive local order, independent of Message processing status."""
     if cursor is None:

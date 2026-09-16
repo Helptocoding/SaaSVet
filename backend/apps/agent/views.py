@@ -277,15 +277,15 @@ def conversation_messages(request, pk):
     salientes `discarded` pero **no los `failed`** —los que el proveedor nunca
     entregó porque la ventana de 24 h estaba cerrada— así que le mostraría a
     recepción mensajes que el cliente jamás recibió. Se deprecó en vez de
-    arreglarlo: el sucesor ya filtra bien con `visible_messages`, y mantener dos
+    arreglarlo: el sucesor ya filtra bien con `operational_messages`, y mantener dos
     lecturas del mismo transcript que no coinciden es peor que tener una.
     """
-    from apps.channels.selectors import visible_messages
+    from apps.channels.selectors import operational_messages
 
     conversation = _get_conversation(request, pk)
     org = request.user.organization
     messages = list(
-        visible_messages(
+        operational_messages(
             Message.objects.for_organization(org)
             .filter(conversation=conversation)
         )
@@ -844,7 +844,7 @@ def list_threads(request):
     `?archived=1` incluye los hilos sin sesión abierta. Por defecto no salen,
     igual que hoy no salen las conversaciones cerradas.
     """
-    from apps.channels.selectors import visible_messages
+    from apps.channels.selectors import operational_messages
 
     org = request.user.organization
     include_archived = request.query_params.get('archived') in ('1', 'true')
@@ -872,7 +872,7 @@ def list_threads(request):
         if current is None and not include_archived:
             continue
         head = current or sessions[0]      # ordenadas por actividad, desc
-        last_message = visible_messages(
+        last_message = operational_messages(
             Message.objects.for_organization(org).filter(
                 contact_id=head.contact_id,
                 channel_account_id=head.channel_account_id)
@@ -950,12 +950,12 @@ def thread_messages(request, contact_pid, account_pid):
 
     Cursor por `before` (id): un hilo de años no se carga entero.
     """
-    from apps.channels.selectors import visible_messages
+    from apps.channels.selectors import operational_messages
 
     contact, account = _resolve_thread(request, contact_pid, account_pid)
     org = request.user.organization
 
-    queryset = visible_messages(
+    queryset = operational_messages(
         Message.objects.for_organization(org).filter(
             contact=contact, channel_account=account)
     ).select_related('human_author', 'conversation')

@@ -1,5 +1,10 @@
 # Arquitectura: Subsistema de Automatización Inteligente por WhatsApp
 
+> **Frontera vigente B4 (2026-09-16):** Message → claim UUID/lease → admisión
+> durable → HTTP fuera de DB → CAS del resultado. Sender separado del planner,
+> UNCERTAIN sin replay y status monotónico. El [contrato B4](contrato-sender-durable-b4.md)
+> y la sección B4 final sustituyen el futuro del sender descrito en el corte B3.
+
 > **Enmienda B3 (2026-09-15):** webhook → Message → claim TurnWork → TurnContext
 > B1 → planificación en memoria → commit local bajo OwnershipWitness → Message
 > final PENDING + completion. TurnWork es la única tabla operativa nueva; epoch
@@ -968,3 +973,19 @@ Cambios pequeños y aditivos requeridos:
 ---
 
 *Fin del documento. Nada de lo aquí propuesto está implementado; los §2–§5 describen el sistema real con referencias verificables; los §6–§14 son diseño pendiente de decisión; el §18 registra las recomendaciones (Q7 y Q11 verificadas en código el 2026-07-13).*
+
+## Frontera vigente B4 — sender durable (2026-09-16)
+
+Esta enmienda sustituye cualquier descripción anterior de sender HTTP dentro
+de un batch atomic o retry de timeout. [Contrato B4](contrato-sender-durable-b4.md).
+Message es el único outbox. Conversation→Message serializa claim y admisión;
+send_token UUID/lease propios, HTTP fuera de transacción y CAS de resultado.
+SENT requiere aceptación con ID; DELIVERED/READ son webhooks monotónicos por
+org/cuenta/wamid; timeout/5xx/2xx sin evidencia/crash post-HTTP→UNCERTAIN sin replay.
+
+`run_agent_worker --mode planner` y `--mode sender` separan procesos en Compose
+con la misma imagen. Logs/snapshot e Inbox exponen estados y edades; sin B9,
+broker, crawler Meta ni matching heurístico. `send_admitted_at` define inicio
+lógico, no recepción de red. Takeover no revoca un intento ya admitido, pero
+cerca nuevos dispatches. Cutover con pausa; rollback conserva el outbox.
+B0 WRITE cerrado; B1/B2/B3 conservados; B5–B9/E/P no implementados.

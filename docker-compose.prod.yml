@@ -160,7 +160,7 @@ services:
 
   # É-F0 PR-8: worker del agente conversacional (runbook:
   # docs/runbooks/agent-whatsapp.md). Misma imagen SHA-tagged que backend;
-  # loop inbox-como-cola + sender del outbox (apps/agent/worker.py).
+  # B4: planner y sender del outbox en procesos independientes.
   # Stateless: N réplicas conviven sin coordinación (FOR UPDATE SKIP LOCKED).
   # Sin healthcheck de contenedor: `restart` cubre crashes y el deadman de
   # Healthchecks.io (HEALTHCHECK_AGENT_WORKER_URL) detecta un loop colgado.
@@ -171,7 +171,24 @@ services:
     image: vet-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file: .env.prod
-    command: ["python", "manage.py", "run_agent_worker"]
+    command: ["python", "manage.py", "run_agent_worker", "--mode", "planner"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      release:
+        condition: service_completed_successfully
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  sender:
+    build: *backend-build
+    image: vet-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env.prod
+    command: ["python", "manage.py", "run_agent_worker", "--mode", "sender"]
     depends_on:
       postgres:
         condition: service_healthy

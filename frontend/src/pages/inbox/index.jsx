@@ -1023,6 +1023,7 @@ const Inbox = () => {
                                                         status={m.status}
                                                         direction={m.direction}
                                                         failure_reason={m.failure_reason}
+                                                        acceptance_known={m.acceptance_known}
                                                     />
                                                     {m.status === "failed-local" && (
                                                         <button

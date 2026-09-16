@@ -6,7 +6,9 @@ import DeliveryTicks from "./DeliveryTicks";
 describe("DeliveryTicks", () => {
     it.each([
         ["pending", "Pendiente de envío", "⏱"],
-        ["sent", "Enviado", "✓"],
+        ["sent", "Aceptado por WhatsApp", "✓"],
+        ["sending", "Envío previo en curso", "⏱"],
+        ["uncertain", "Aceptación incierta; requiere revisión", "⚠"],
         ["delivered", "Entregado", "✓✓"],
         ["read", "Leído", "✓✓"],
         ["failed-local", "No se pudo enviar", "⚠"],
@@ -28,7 +30,7 @@ describe("DeliveryTicks", () => {
             />
         );
 
-        const label = "No entregado: Ventana de atención cerrada";
+        const label = "Envío rechazado: Ventana de atención cerrada";
         const tick = screen.getByLabelText(label);
         expect(tick).toHaveTextContent("⚠");
         expect(tick).toHaveAttribute("title", label);
@@ -58,5 +60,16 @@ describe("DeliveryTicks", () => {
         );
 
         expect(container).toBeEmptyDOMElement();
+    });
+
+    it("no afirma aceptación de un SENT histórico sin evidencia", () => {
+        render(<DeliveryTicks status="sent" direction="out" acceptance_known={false} />);
+        expect(screen.getByLabelText("Envío histórico sin evidencia de aceptación")).toHaveTextContent("?");
+    });
+
+    it("conserva aceptación y muestra fallo posterior de entrega", () => {
+        render(<DeliveryTicks status="sent" direction="out" failure_reason="provider_delivery_failed" />);
+        expect(screen.getByLabelText("Aceptado por WhatsApp; WhatsApp informó un fallo de entrega"))
+            .toHaveTextContent("✓");
     });
 });

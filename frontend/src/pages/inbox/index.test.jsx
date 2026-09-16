@@ -320,7 +320,7 @@ describe("Inbox — aislamiento del borrador", () => {
             resolveSend({ ...sentMessage(text, key, "message-after-navigation"), status: "sent" });
         });
 
-        await waitFor(() => expect(screen.getByLabelText("Enviado")).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText("Aceptado por WhatsApp")).toBeInTheDocument());
         expect(screen.getAllByText("Confirmado durante navegación")).toHaveLength(1);
         expect(returnedComposer).toHaveValue("Draft posterior intacto");
     });
@@ -369,7 +369,7 @@ describe("Inbox — aislamiento del borrador", () => {
             resolveSend({ ...sentMessage(text, key, "message-confirmed"), status: "sent" });
         });
 
-        await waitFor(() => expect(screen.getByLabelText("Enviado")).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByLabelText("Aceptado por WhatsApp")).toBeInTheDocument());
         expect(screen.getAllByText("Visible inmediatamente")).toHaveLength(1);
         expect(screen.queryByText("Tú")).not.toBeInTheDocument();
     });

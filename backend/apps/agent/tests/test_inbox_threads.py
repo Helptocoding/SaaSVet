@@ -175,13 +175,13 @@ class ThreadDetailTests(ThreadsTestCase):
         bodies = [m['body'] for m in response.data['messages']]
         self.assertEqual(bodies, ["esto lo dije la semana pasada", "y esto hoy"])
 
-    def test_a_failed_outbound_is_not_shown(self):
-        """Nunca llegó al cliente: mostrarlo haría creer que sí."""
+    def test_a_failed_outbound_is_shown_with_failed_status(self):
+        """B4 Inbox shows operational evidence without claiming delivery."""
         current = self._session()
         self._msg(current, "esto no salió", direction=Message.DIRECTION_OUT,
                   status=Message.STATUS_FAILED)
         response = self.client.get(self._url('inbox-thread-messages'))
-        self.assertEqual(response.data['messages'], [])
+        self.assertEqual([m['status'] for m in response.data['messages']], ['failed'])
 
     def test_pending_outbound_from_own_and_other_staff_is_shown(self):
         current = self._session()
@@ -210,7 +210,7 @@ class ThreadDetailTests(ThreadsTestCase):
              (other.pk, Message.STATUS_PENDING)],
         )
 
-    def test_pending_agent_and_system_outbound_are_not_shown(self):
+    def test_pending_agent_and_system_outbound_are_shown_as_queued(self):
         current = self._session()
         for author_type in (Message.AUTHOR_AGENT, Message.AUTHOR_SYSTEM):
             self._msg(
@@ -223,9 +223,9 @@ class ThreadDetailTests(ThreadsTestCase):
         response = self.client.get(self._url('inbox-thread-messages'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['messages'], [])
+        self.assertEqual([m['status'] for m in response.data['messages']], ['pending', 'pending'])
 
-    def test_discarded_outbound_is_not_shown(self):
+    def test_discarded_outbound_is_shown_with_history(self):
         current = self._session()
         self._msg(
             current, "esto se descartó", direction=Message.DIRECTION_OUT,
@@ -237,7 +237,29 @@ class ThreadDetailTests(ThreadsTestCase):
         response = self.client.get(self._url('inbox-thread-messages'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['messages'], [])
+        self.assertEqual([m['status'] for m in response.data['messages']], ['discarded'])
+
+    def test_b4_uncertain_is_visible_without_acceptance_claim_or_token(self):
+        current = self._session()
+        message = self._msg(current, 'aceptación por revisar', direction=Message.DIRECTION_OUT)
+        Message.objects.filter(pk=message.pk).update(status='uncertain', uncertain_at=timezone.now(),
+                                                    failure_reason='transport_Timeout')
+        response = self.client.get(self._url('inbox-thread-messages'))
+        self.assertEqual(response.status_code, 200)
+        row = response.data['messages'][0]
+        self.assertEqual(row['status'], 'uncertain')
+        self.assertIsNotNone(row['uncertain_at'])
+        self.assertFalse(row['acceptance_known'])
+        self.assertNotIn('send_token', row)
+
+    def test_b4_sent_without_wamid_is_legacy_unknown(self):
+        current = self._session()
+        self._msg(current, 'histórico', direction=Message.DIRECTION_OUT, status=Message.STATUS_SENT)
+        response = self.client.get(self._url('inbox-thread-messages'))
+        row = response.data['messages'][0]
+        self.assertEqual(row['status'], 'sent')
+        self.assertFalse(row['acceptance_known'])
+        self.assertIsNone(row['provider_accepted_at'])
 
     def test_transcript_shows_pending_message_immediately_after_send(self):
         current = self._session()

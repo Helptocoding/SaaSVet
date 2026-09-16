@@ -1,5 +1,11 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
+> **Frontera vigente B4 (2026-09-16):** Message incorpora claim, admisión y
+> aceptación externa; HTTP fuera de transacción e incertidumbre sin replay.
+> Inbox expone todos los estados outbound. La sección B4 al final y el
+> [contrato sender](../contrato-sender-durable-b4.md) sustituyen las referencias
+> históricas siguientes al sender pendiente. WRITE continúa cerrado.
+
 > **Corte B3 (2026-09-15):** TurnWork fija miembros/cursor y recupera el mismo
 > trabajo mediante lease UUID con reloj DB. OwnershipWitness y epoch monotónico
 > cercan las mutaciones locales; goals/diagnóstico/outbound final/completion se
@@ -1308,3 +1314,23 @@ lectura humana no hay ciclo de mejora, solo intuición.
     cambia el estado en **un commit**. Escribirlo a mano —o combinar
     `clear_pending` + `escalate_to_human` por separado— reabre el hueco por el
     que la intención del cliente se perdía en silencio.
+
+## B4 — frontera Message / Meta (2026-09-16)
+
+`sender.py` reemplaza el sender transaccional legacy de worker (se conserva su
+import público). Claim individual UUID/lease 120 s, admisión lógica de un solo
+uso, HTTP timeout 15 s fuera de DB y resultado CAS. El único outbox es Message;
+migración channels.0013_b4_durable_sender aditiva. `channels/providers.py`
+devuelve SendResult aceptado/rechazado conocido/incierto. `channels/delivery.py`
+centraliza monotonía y `channels/status.py` correlaciona tenant/cuenta/wamid.
+
+SENDING expirado→UNCERTAIN, nunca retry. Solo rechazo Meta 130429 explícito
+4xx admite hasta cinco claims con backoff. Takeover invalida nueva admisión;
+los resultados ya admitidos conservan realidad externa con token válido.
+Modo planner/sender en management command y Compose; inspect_agent_outbound
+expone counts/edades y el Inbox muestra incertidumbre sin otorgar emisión.
+Reemisión explícita conserva original y crea Message humano supersedes.
+
+Contrato: [B4](../contrato-sender-durable-b4.md). ADR y [acta](../implementacion-b4-agente-whatsapp-2026-09-16.md)
+describen legacy, pruebas y riesgos. B0 WRITE sigue cerrado; ninguna fase B5+
+se implementa como consecuencia de este cambio.

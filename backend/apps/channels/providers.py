@@ -11,6 +11,8 @@ vive en el entorno (.env.prod), jamás en DB ni en logs.
 """
 import logging
 import os
+import re
+from dataclasses import dataclass
 
 import requests
 from django.conf import settings
@@ -22,12 +24,25 @@ DEFAULT_API_BASE = 'https://graph.facebook.com/v20.0'
 
 
 class ProviderError(Exception):
-    """Fallo al enviar. `retryable` decide si el sender re-intenta con
-    backoff (5xx/timeout/429) o marca failed directo (4xx de contrato)."""
+    """Legacy exception; retryable alone NEVER proves non-acceptance."""
 
     def __init__(self, message, retryable):
         super().__init__(message)
         self.retryable = retryable
+
+
+def valid_provider_id(value):
+    return (isinstance(value, str) and 6 < len(value) <= 128
+            and re.fullmatch(r'wamid\.[A-Za-z0-9_+/=.\-]+', value) is not None)
+
+
+@dataclass(frozen=True)
+class SendResult:
+    """Evidence from one external attempt; unrelated to business ToolOutcome."""
+    kind: str  # accepted | known_rejected | uncertain
+    provider_id: str = ''
+    code: str = ''
+    retryable: bool = False
 
 
 class MetaWhatsAppProvider:
@@ -56,13 +71,17 @@ class MetaWhatsAppProvider:
         return token
 
     def send_text(self, to_wa_id, body):
-        """Envía texto; devuelve el wamid asignado por el proveedor."""
+        """No network retries. 5xx/network/invalid 2xx remain uncertain."""
         base = getattr(settings, 'WHATSAPP_API_BASE_URL', DEFAULT_API_BASE)
         url = f"{base}/{self.channel_account.external_account_id}/messages"
         try:
+            token = self._access_token()
+        except ProviderError:
+            return SendResult('known_rejected', code='credentials_missing')
+        try:
             response = requests.post(
                 url,
-                headers={'Authorization': f'Bearer {self._access_token()}'},
+                headers={'Authorization': f'Bearer {token}'},
                 json={
                     'messaging_product': 'whatsapp',
                     'recipient_type': 'individual',
@@ -71,32 +90,35 @@ class MetaWhatsAppProvider:
                     'text': {'body': body},
                 },
                 timeout=15,
+                allow_redirects=False,
             )
         except requests.RequestException as exc:
-            raise ProviderError(f"red: {exc.__class__.__name__}", retryable=True)
-
-        if response.status_code >= 500 or response.status_code == 429:
-            raise ProviderError(
-                f"proveedor {response.status_code}", retryable=True,
-            )
-        if response.status_code >= 400:
-            # 4xx de contrato (token inválido, destinatario mal formado,
-            # ventana cerrada…): reintentar no lo arregla.
-            raise ProviderError(
-                f"proveedor {response.status_code}", retryable=False,
-            )
-
+            return SendResult('uncertain', code=f'transport_{exc.__class__.__name__}')
         try:
             data = response.json()
-            return data['messages'][0]['id']
-        except (ValueError, KeyError, IndexError):
-            # Envió (2xx) pero sin wamid parseable: no reintentar (riesgo de
-            # duplicar el mensaje al cliente); el acuse llegará por webhook.
-            logger.warning("PROVIDER_RESPONSE_UNPARSEABLE", extra={
-                "event": "PROVIDER_RESPONSE_UNPARSEABLE",
-                "status_code": response.status_code,
-            })
-            return ''
+        except ValueError:
+            return SendResult('uncertain', code='invalid_json')
+        if not isinstance(data, dict):
+            return SendResult('uncertain', code='invalid_shape')
+        if 200 <= response.status_code < 300:
+            messages = data.get('messages')
+            if (isinstance(messages, list) and len(messages) == 1
+                    and isinstance(messages[0], dict)
+                    and valid_provider_id(messages[0].get('id'))
+                    and 'error' not in data
+                    and data.get('messaging_product', 'whatsapp') == 'whatsapp'):
+                return SendResult('accepted', provider_id=messages[0]['id'])
+            return SendResult('uncertain', code='acceptance_id_missing')
+        error = data.get('error')
+        code = error.get('code') if isinstance(error, dict) else None
+        # Only explicit pre-acceptance contract/auth/rate-limit errors in 4xx.
+        # An error envelope in a 5xx is deliberately NOT sufficient evidence.
+        if (400 <= response.status_code < 500 and response.status_code != 408
+                and type(code) is int and code in (10, 100, 190, 200, 130429, 131047)
+                and not data.get('messages')):
+            return SendResult('known_rejected', code=f'meta_{code}',
+                              retryable=code == 130429)
+        return SendResult('uncertain', code=f'http_{response.status_code}_unclassified')
 
 
 def get_provider(channel_account):

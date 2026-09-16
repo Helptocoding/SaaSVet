@@ -1,5 +1,10 @@
 # ADR p60 — Decisiones de arquitectura y operación del WhatsApp Inbox v1
 
+> **Enmienda vigente B4 (2026-09-16):** la sección B4 final y el
+> [contrato sender](../contrato-sender-durable-b4.md) sustituyen el sender
+> pendiente del corte B3: claim/admisión, evidencia externa e Inbox honesto.
+> No cambian la idempotencia humana ni habilitan WRITE.
+
 > **Enmienda B3 (2026-09-15).** Claim humano, respuesta que toma ownership,
 > release y reset usan lock de Conversation e invalidación común de epoch.
 > Pendientes bot identificables se descartan; enviados no se borran. Sender
@@ -184,3 +189,18 @@ orden requerirá evidencia de frecuencia/impacto y una nueva decisión.
 - Arquitectura SSE futura; solo fija el NO-GO v1 y el criterio de reapertura.
 - Alcance exacto de catálogo/precios o notificaciones futuras; deberán tener
   backlog y acceptance criteria propios.
+
+## Enmienda B4 — evidencia del sender y takeover (2026-09-16)
+
+Inbox ahora muestra los outbounds operacionales con estado explícito, incluidos
+queued, sending, failed, uncertain y discarded; esos estados no acreditan que
+el cliente haya recibido el texto. SENT se rotula «Aceptado por WhatsApp»;
+DELIVERED/READ conservan sus eventos distintos. SENT histórico sin ID muestra
+falta de evidencia. Se expone incertidumbre/fechas sin revelar send_token.
+
+Takeover antes de admisión impide HTTP. Tras admisión se conserva la realidad
+externa aunque el request termine después; nunca se promete cancelación remota.
+Reemisión manual es otro Message con supersedes/actor/motivo, conservando el
+original y la idempotencia humana. No nueva UI de handoff, SLA, acuse humano ni
+notificación secundaria. Aceptación/entrega/lectura no equivale a atención.
+Prevalece el [contrato B4](../contrato-sender-durable-b4.md) para esta frontera.

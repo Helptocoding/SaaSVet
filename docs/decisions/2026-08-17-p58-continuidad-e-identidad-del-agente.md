@@ -200,3 +200,14 @@ sustituto.
    contexto. Los `pending` de agente/sistema y todos los `failed`/`discarded`
    siguen fuera. Responder deja el episodio en `human_active`, pero ningún
    consumidor debe usar `visible_messages` para inferir entrega o anti-eco.
+
+## Enmienda B4 — emisión observable (2026-09-16)
+
+Se sustituye para el sender la ausencia previa de fechas de emisión por
+`Message.provider_accepted_at`, `delivered_at` y `read_at`, sin otra fecha sent.
+Son primeras observaciones locales distintas; `created_at` no acredita entrega.
+Legacy conserva fechas NULL. `SENT` nuevo exige wamid compatible, mientras
+SENDING/UNCERTAIN nunca prueban emisión autorizable. Inbox puede mostrar estos
+estados sin incorporarlos al selector causal/de emisión B1 ni conceder permisos.
+No se modifican identidad, anti-eco, bindings ni autorización B7.
+Contrato vigente: [B4](../contrato-sender-durable-b4.md).

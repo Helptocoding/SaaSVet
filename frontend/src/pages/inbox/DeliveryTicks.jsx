@@ -2,10 +2,12 @@ import styles from "./inbox.module.css";
 
 const DELIVERY_STATE = {
     pending: { glyph: "⏱", label: "Pendiente de envío", tone: "pending" },
-    sent: { glyph: "✓", label: "Enviado" },
+    sending: { glyph: "⏱", label: "Envío previo en curso", tone: "pending" },
+    sent: { glyph: "✓", label: "Aceptado por WhatsApp" },
     delivered: { glyph: "✓✓", label: "Entregado" },
     read: { glyph: "✓✓", label: "Leído", tone: "read" },
-    failed: { glyph: "⚠", label: "No entregado", tone: "failed" },
+    failed: { glyph: "⚠", label: "Envío rechazado", tone: "failed" },
+    uncertain: { glyph: "⚠", label: "Aceptación incierta; requiere revisión", tone: "failed" },
     "failed-local": { glyph: "⚠", label: "No se pudo enviar", tone: "failed" },
     discarded: { glyph: "⚠", label: "Descartado", tone: "failed" },
 };
@@ -17,13 +19,17 @@ const TONE_CLASS = {
 };
 
 /** Estado de entrega del canal. Los entrantes no tienen recibo de salida. */
-const DeliveryTicks = ({ status, direction, failure_reason: failureReason }) => {
+const DeliveryTicks = ({ status, direction, failure_reason: failureReason, acceptance_known: acceptanceKnown }) => {
     if (direction !== "out") return null;
-    const state = DELIVERY_STATE[status];
+    const state = status === "sent" && acceptanceKnown === false
+        ? { glyph: "?", label: "Envío histórico sin evidencia de aceptación", tone: "pending" }
+        : DELIVERY_STATE[status];
     if (!state) return null;
 
     const detail = failureReason?.trim();
-    const accessibleLabel = detail && ["failed", "failed-local", "discarded"].includes(status)
+    const accessibleLabel = detail?.includes("provider_delivery_failed")
+        ? `${state.label}; WhatsApp informó un fallo de entrega`
+        : detail && ["failed", "failed-local", "discarded", "uncertain"].includes(status)
         ? `${state.label}: ${detail}`
         : state.label;
 

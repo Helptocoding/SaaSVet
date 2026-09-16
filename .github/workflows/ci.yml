@@ -76,6 +76,13 @@ jobs:
           python manage.py test apps.agent.tests.test_b3_durable
           apps.agent.tests.test_b3_processes
           --testrunner apps.agent.tests.harness.CriticalB3Runner
+      - name: B4 durable sender and external uncertainty (required)
+        run: >-
+          python manage.py test apps.agent.tests.test_b4_sender
+          apps.agent.tests.test_b4_processes apps.agent.tests.test_b4_command
+          apps.channels.tests.test_b4_transport apps.channels.tests.test_b4_webhook
+          apps.channels.tests.test_b4_migration
+          --testrunner apps.agent.tests.harness.CriticalB4Runner
       - name: Run test suite (parallel)
         run: python manage.py test --parallel
 

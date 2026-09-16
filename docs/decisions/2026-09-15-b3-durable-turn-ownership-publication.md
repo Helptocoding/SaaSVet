@@ -49,3 +49,14 @@ tabla genérica de jobs; snapshot/membership duplicados; transacción larga del
 planner; incorporar sender durable/B4 en este cambio.
 
 Evidencia y comandos: [acta B3](../implementacion-b3-agente-whatsapp-2026-09-15.md).
+
+## Enmienda B4 — 2026-09-16
+
+La frontera que este ADR dejaba pendiente al cerrar B3 está implementada por
+[B4](2026-09-16-b4-durable-sender-uncertainty.md). Prevalece sobre las frases
+anteriores en futuro relativas exclusivamente al sender: Message se reclama
+individualmente, HTTP ocurre fuera de transacción y la duda queda UNCERTAIN.
+Ownership sigue autorizando nuevos efectos/publicación/admisión. Registrar
+evidencia de un request ya admitido después de takeover es una excepción
+deliberada al fencing de nuevas mutaciones, sin autoridad nueva del bot.
+TurnWork, witness y publicación local B3 conservan su contrato. No ledger B8.

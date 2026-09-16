@@ -3,7 +3,7 @@ test_worker.py — É-F0 PR-5: inbox-como-cola y sender del outbox.
 """
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from apps.agent.models import AgentSettings, ContactIdentity, Conversation
@@ -15,7 +15,7 @@ from apps.agent.worker import (
     send_pending_outbound,
 )
 from apps.channels.models import ChannelAccount, Message
-from apps.channels.providers import ProviderError
+from apps.channels.providers import SendResult
 from apps.organizations.models import Organization
 
 
@@ -30,9 +30,9 @@ class FakeProvider:
 
     def send_text(self, to_wa_id, body):
         if self.error is not None:
-            raise self.error
+            return self.error
         self.sent.append((to_wa_id, body))
-        return self.wamid
+        return SendResult('accepted', provider_id=self.wamid)
 
 
 def _factory(error=None, wamid="wamid.FAKE"):
@@ -123,7 +123,7 @@ class ProcessPendingTests(TestCase):
         )
 
 
-class SendPendingTests(TestCase):
+class SendPendingTests(TransactionTestCase):
     def setUp(self):
         self.org = Organization.objects.create(
             name="Sender Org", timezone="UTC",
@@ -164,7 +164,7 @@ class SendPendingTests(TestCase):
     def test_retryable_error_schedules_backoff(self):
         message = self._outbound()
         send_pending_outbound(
-            provider_factory=_factory(error=ProviderError("500", retryable=True)),
+            provider_factory=_factory(error=SendResult('known_rejected', code='meta_130429', retryable=True)),
         )
         message.refresh_from_db()
         self.assertEqual(message.status, Message.STATUS_PENDING)
@@ -184,7 +184,7 @@ class SendPendingTests(TestCase):
     def test_exhausted_retries_mark_failed(self):
         message = self._outbound(attempts=SEND_MAX_ATTEMPTS - 1)
         send_pending_outbound(
-            provider_factory=_factory(error=ProviderError("500", retryable=True)),
+            provider_factory=_factory(error=SendResult('known_rejected', code='meta_130429', retryable=True)),
         )
         message.refresh_from_db()
         self.assertEqual(message.status, Message.STATUS_FAILED)
@@ -192,7 +192,7 @@ class SendPendingTests(TestCase):
     def test_non_retryable_error_fails_immediately(self):
         message = self._outbound()
         send_pending_outbound(
-            provider_factory=_factory(error=ProviderError("401", retryable=False)),
+            provider_factory=_factory(error=SendResult('known_rejected', code='meta_190')),
         )
         message.refresh_from_db()
         self.assertEqual(message.status, Message.STATUS_FAILED)

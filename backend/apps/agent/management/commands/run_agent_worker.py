@@ -1,9 +1,9 @@
 """
 run_agent_worker — Proceso worker del subsistema conversacional (É-F0 PR-5).
 
-Loop: drena entrantes pendientes (inbox-como-cola, SKIP LOCKED) + entrega
-salientes (outbox con reintentos). Stateless: N réplicas conviven sin
-coordinación (el lock de fila reparte el trabajo).
+Loop B4: modo planner para TurnWork; modo sender para Message. Default both
+conserva el comando anterior. Claims DB cortos, HTTP fuera de transacción,
+incertidumbre durable y reintentos solo de rechazos conocidos seguros.
 
 Despliegue: servicio propio en docker-compose (PR-8), `restart: always`,
 misma imagen que el backend. Deadman opcional: exporta
@@ -12,6 +12,7 @@ HEALTHCHECK_AGENT_WORKER_URL y el loop pinguea cada ~60 ciclos sanos.
 Uso:
     python manage.py run_agent_worker              # loop infinito
     python manage.py run_agent_worker --once       # un ciclo (smoke/tests)
+    python manage.py run_agent_worker --mode sender # proceso independiente
 """
 import logging
 import signal
@@ -19,7 +20,7 @@ import time
 
 import requests
 from django.conf import settings as django_settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from apps.agent.worker import process_pending_conversations, send_pending_outbound
 
@@ -37,9 +38,14 @@ class Command(BaseCommand):
         parser.add_argument('--poll', type=float, default=2.0,
                             help='Segundos de espera cuando no hay trabajo')
         parser.add_argument('--batch', type=int, default=10)
+        parser.add_argument('--mode', choices=('planner', 'sender', 'both'), default='both',
+                            help='B4: planner y sender pueden ejecutarse por separado')
 
     def handle(self, *args, **options):
+        if not 1 <= options['batch'] <= 50 or not 0.1 <= options['poll'] <= 60:
+            raise CommandError('batch debe ser 1..50 y poll 0.1..60 segundos')
         self._stop = False
+        self._mode = options['mode']
 
         def _graceful(signum, frame):
             self._stop = True
@@ -59,33 +65,38 @@ class Command(BaseCommand):
 
         cycles = 0
         while not self._stop:
-            processed = process_pending_conversations(batch=options['batch'])
-            sent = send_pending_outbound(batch=options['batch'] * 2)
+            processed = (process_pending_conversations(batch=options['batch'])
+                         if options['mode'] != 'sender' else 0)
+            sent = (send_pending_outbound(batch=options['batch'] * 2)
+                    if options['mode'] != 'planner' else 0)
 
             cycles += 1
             if cycles % _DEADMAN_EVERY_CYCLES == 0:
                 self._ping_deadman()
                 # Pasadas periódicas (baratas, poco frecuentes):
-                from apps.agent.policy import (
-                    close_inactive_conversations, nudge_abandoned_flows,
-                )
-                close_inactive_conversations()   # cierre por inactividad (§2.8)
-                nudge_abandoned_flows()          # UX-08 recordatorio único
+                if options['mode'] != 'sender':
+                    from apps.agent.policy import close_inactive_conversations, nudge_abandoned_flows
+                    close_inactive_conversations()
+                    nudge_abandoned_flows()
+                if options['mode'] != 'planner':
+                    from apps.agent.sender import observe_outbound
+                    observe_outbound()
 
             if options['once']:
                 self.stdout.write(
                     f"ciclo único: {processed} conversaciones, {sent} envíos"
                 )
                 break
-            if processed == 0 and sent == 0:
-                time.sleep(options['poll'])
+            time.sleep(options['poll'])  # bounded even under conflicts/backlog
 
         logger.info("AGENT_WORKER_STOPPED", extra={
             "event": "AGENT_WORKER_STOPPED",
         })
 
     def _ping_deadman(self):
-        url = getattr(django_settings, 'HEALTHCHECK_AGENT_WORKER_URL', '')
+        key = ('HEALTHCHECK_AGENT_SENDER_URL' if self._mode == 'sender'
+               else 'HEALTHCHECK_AGENT_WORKER_URL')
+        url = getattr(django_settings, key, '')
         if not url:
             return
         try:

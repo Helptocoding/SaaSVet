@@ -268,10 +268,17 @@ def invalidate_ownership(conversation, *, reason):
         status__in=TurnWork.NON_TERMINAL)
     for work in work_rows:
         _terminal_failure(work, conversation, reason, db_now())
-    Message.objects.for_organization(conversation.organization_id).filter(
+    discarded_pending = Message.objects.for_organization(conversation.organization_id).filter(
         conversation=conversation, direction='out', status='pending',
         author_type__in=(Message.AUTHOR_AGENT, Message.AUTHOR_SYSTEM)
     ).update(
         status='discarded', failure_reason='ownership_invalidated')
+    # B4: only claims without logical HTTP admission can be discarded.
+    # An admitted request may still complete after takeover; preserve its token.
+    discarded_claims = Message.objects.for_organization(conversation.organization_id).filter(
+        conversation=conversation, direction='out', status='sending',
+        send_admitted_at__isnull=True,
+    ).update(status='discarded', failure_reason='ownership_invalidated')
     _event('ownership_changed', conversation_id=conversation.pk,
-           ownership_epoch=conversation.ownership_epoch, outcome_code=reason)
+           ownership_epoch=conversation.ownership_epoch, outcome_code=reason,
+           discarded_outbounds=discarded_pending + discarded_claims)

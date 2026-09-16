@@ -79,6 +79,7 @@ WHATSAPP_API_BASE_URL = config(
     'WHATSAPP_API_BASE_URL', default='https://graph.facebook.com/v20.0',
 )
 # Deadman del worker (Healthchecks.io, patrón ADR p49). Vacío = sin ping.
+HEALTHCHECK_AGENT_SENDER_URL = config('HEALTHCHECK_AGENT_SENDER_URL', default='')
 HEALTHCHECK_AGENT_WORKER_URL = config(
     'HEALTHCHECK_AGENT_WORKER_URL', default='',
 )

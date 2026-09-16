@@ -33,6 +33,7 @@ def _normalize_fact_key(key):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    acceptance_known = serializers.SerializerMethodField()
     human_author_name = serializers.SerializerMethodField()
     client_message_id = serializers.SerializerMethodField()
 
@@ -41,13 +42,21 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'direction', 'author_type', 'payload_type', 'body',
             'status', 'failure_reason', 'created_at', 'human_author_name',
-            'client_message_id',
+            'client_message_id', 'acceptance_known',
+            'send_started_at', 'send_admitted_at', 'provider_accepted_at',
+            'delivered_at', 'read_at', 'uncertain_at', 'supersedes_message_id',
         ]
 
     def get_human_author_name(self, obj):
         if obj.human_author_id is None:
             return None
         return obj.human_author.get_full_name() or obj.human_author.username
+
+    def get_acceptance_known(self, obj):
+        from apps.channels.providers import valid_provider_id
+        return (obj.direction == Message.DIRECTION_OUT
+                and obj.status in (Message.STATUS_SENT, Message.STATUS_DELIVERED, Message.STATUS_READ)
+                and valid_provider_id(obj.external_message_id))
 
     def get_client_message_id(self, obj):
         """Correlación pública del composer; nunca expone claves del bot."""

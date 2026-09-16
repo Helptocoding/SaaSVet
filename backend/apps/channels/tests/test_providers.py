@@ -7,7 +7,7 @@ import requests
 from django.test import TestCase, override_settings
 
 from apps.channels.models import ChannelAccount
-from apps.channels.providers import MetaWhatsAppProvider, ProviderError
+from apps.channels.providers import MetaWhatsAppProvider
 from apps.organizations.models import Organization
 
 
@@ -47,7 +47,8 @@ class MetaProviderTests(TestCase):
         wamid, post = self._send(
             _response(200, {"messages": [{"id": "wamid.NEW"}]}),
         )
-        self.assertEqual(wamid, "wamid.NEW")
+        self.assertEqual(wamid.kind, 'accepted')
+        self.assertEqual(wamid.provider_id, "wamid.NEW")
         url = post.call_args.args[0]
         self.assertEqual(url, "https://graph.test/v20.0/123123123/messages")
         kwargs = post.call_args.kwargs
@@ -55,25 +56,23 @@ class MetaProviderTests(TestCase):
         self.assertEqual(kwargs["json"]["to"], "5215511112222")
         self.assertEqual(kwargs["json"]["text"]["body"], "hola")
 
-    def test_5xx_is_retryable(self):
-        with self.assertRaises(ProviderError) as ctx:
-            self._send(_response(503))
-        self.assertTrue(ctx.exception.retryable)
+    def test_5xx_is_uncertain(self):
+        result, _ = self._send(_response(503))
+        self.assertEqual(result.kind, 'uncertain')
 
     def test_429_is_retryable(self):
-        with self.assertRaises(ProviderError) as ctx:
-            self._send(_response(429))
-        self.assertTrue(ctx.exception.retryable)
+        result, _ = self._send(_response(429, {'error': {'code': 130429}}))
+        self.assertEqual(result.kind, 'known_rejected')
+        self.assertTrue(result.retryable)
 
     def test_4xx_is_not_retryable(self):
-        with self.assertRaises(ProviderError) as ctx:
-            self._send(_response(400))
-        self.assertFalse(ctx.exception.retryable)
+        result, _ = self._send(_response(400, {'error': {'code': 100}}))
+        self.assertEqual(result.kind, 'known_rejected')
+        self.assertFalse(result.retryable)
 
-    def test_network_error_is_retryable(self):
-        with self.assertRaises(ProviderError) as ctx:
-            self._send(post_error=requests.ConnectTimeout("timeout"))
-        self.assertTrue(ctx.exception.retryable)
+    def test_network_error_is_uncertain(self):
+        result, _ = self._send(post_error=requests.ConnectTimeout("timeout"))
+        self.assertEqual(result.kind, 'uncertain')
 
     def test_missing_token_is_not_retryable(self):
         provider = MetaWhatsAppProvider(self.channel)
@@ -82,12 +81,11 @@ class MetaProviderTests(TestCase):
             with mock.patch(
                 "apps.channels.providers.os.environ.get", return_value="",
             ), override_settings(WHATSAPP_ACCESS_TOKEN=""):
-                with self.assertRaises(ProviderError) as ctx:
-                    provider.send_text("5215511112222", "hola")
-        self.assertFalse(ctx.exception.retryable)
+                result = provider.send_text("5215511112222", "hola")
+        self.assertEqual(result.kind, 'known_rejected')
+        self.assertFalse(result.retryable)
 
-    def test_2xx_without_wamid_returns_empty_no_retry(self):
-        """Envió pero respuesta rara: NO reintentar (duplicaría el mensaje
-        al cliente); el acuse llegará por webhook."""
+    def test_2xx_without_wamid_is_uncertain_no_retry(self):
+        """No acceptance evidence; a later webhook might remain uncorrelatable."""
         wamid, _ = self._send(_response(200, {"unexpected": True}))
-        self.assertEqual(wamid, "")
+        self.assertEqual(wamid.kind, 'uncertain')

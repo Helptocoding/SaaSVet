@@ -258,3 +258,86 @@ Umbrales de atención: latencia p95 > 30 s · handoff > 40 % · repregunta > 20 
   webhook en Meta (deja de llegar todo).
 - **Desmontar un número de una clínica**: operación manual consciente
   (shell), jamás automatizada — ver guard R1 del provisioning.
+
+## B4: cutover controlado y rollback
+
+Contrato normativo: [sender B4](../contrato-sender-durable-b4.md). No ejecutar
+deploy por cerrar el acta. Containment activo y WRITE autónomo cerrado durante
+todos los pasos. No hay rollout mixto seguro con el sender pre-B4: ignora claims
+durables y puede devolver a pending un HTTP que Meta aceptó.
+
+### Cutover (ventana de mantenimiento)
+
+1. Registrar imagen/base, backup y responsables; mantener B0 y activación
+   PENDING_ACTIVATION_REQUIREMENTS. Pausar todas las réplicas sender/worker viejas.
+2. Esperar salida de procesos y examinar outbounds existentes. No inferir
+   «no enviado» de attempts=0: un rollback legacy también borraba ese contador.
+   No reanudar automáticamente un lote antiguo cuyo HTTP pudo salir.
+3. Aplicar migración aditiva `channels.0013_b4_durable_sender` con todos los
+   senders detenidos. No hace backfill ni reescribe estados históricos.
+4. Desplegar API/lector compatible, planner y sender B4; mantener sender parado
+   hasta terminar clasificación. No mezclar código anterior y actual.
+5. Con scope org/cuenta, inspeccionar pendientes del corte: los que carecen de
+   epoch conservan política B3 `legacy_unverified`/DISCARDED, sin replay. Si hay
+   indicios de HTTP previo o no puede demostrarse que el lote no se admitió,
+   poner los mensajes afectados en UNCERTAIN con fecha de clasificación y razón
+   `cutover_legacy_dispatch_unknown`. Ese tiempo no es aceptación/delivery.
+   Un responsable conserva IDs/decisión en el registro operativo. No usar texto,
+   teléfono o proximidad de tiempo para inventar wamid.
+6. Conservar SENT+ID, DELIVERED/READ y timestamps existentes; nuevas fechas NULL
+   siguen desconocidas. SENT sin ID permanece visible como histórico desconocido.
+7. Iniciar `run_agent_worker --mode planner` y `--mode sender` en procesos
+   separados (Compose ya los declara). Una réplica sender es suficiente para
+   beta; no se amplía capacidad ni se habilitan escrituras.
+8. Ejecutar `inspect_agent_outbound`; observar pendientes/edades, SENDING vencidos,
+   UNCERTAIN, conflictos, descartes y status unmatched. Probar un envío controlado
+   bajo aprobación operativa separada; este trabajo no llamó a Meta real.
+
+Comandos de verificación, desde backend y con entorno explícito correcto:
+
+```powershell
+rtk proxy python manage.py migrate --noinput
+rtk proxy python manage.py showmigrations agent channels
+rtk proxy python manage.py makemigrations --check --dry-run
+rtk proxy python manage.py inspect_agent_outbound
+rtk proxy python manage.py run_agent_worker --mode sender --once
+```
+
+El último comando puede enviar pendientes: solo después de terminar el cutover.
+`inspect_agent_outbound` es solo lectura. Para despliegue normal, Compose usa
+worker/planner y sender independientes, misma imagen, 256 MiB cada uno. Batch
+default 10 (20 candidatos sender), poll 2 s. Configurar deadman separado
+HEALTHCHECK_AGENT_SENDER_URL si se utiliza; el del planner no prueba sender vivo.
+
+### Tratar incertidumbre
+
+Un webhook HMAC válido puede reconciliar si ya existe un wamid exacto persistido
+para la misma org/cuenta. Mantener original y uncertain_at. Si se perdió ese ID,
+no existe recuperación automática segura por el contrato actual. Inspección
+manual puede dejar el caso incierto. No crawler/polling de Meta.
+
+La reemisión explícita usa `sender.reemit_uncertain` con Message ID, usuario
+humano activo del tenant, motivo y nueva clave de idempotencia. Requiere permisos
+send/claim; crea otro Message enlazado, toma ownership y respeta la ventana 24 h
+al dispatch. Reusar la misma clave recupera ese nuevo Message. Explicar al operador
+que puede duplicar un envío previamente aceptado; no resetear el original.
+
+### Rollback operacional
+
+Pausar sender y planner si corresponde, conservar API/Inbox/lector compatible,
+preservar claims, epochs, tokens, provider IDs y todas las fechas/estados. Revisar
+UNCERTAIN y permitir reconciliación por webhook válido. Mantener B0. No ejecutar
+la reversión de esquema de 0013 en producción ni volver a un sender que ignore B4.
+No convertir UNCERTAIN/SENDING a PENDING, no degradar SENT/DELIVERED/READ y no
+borrar evidencia para permitir replay. Si no hay lector anterior compatible,
+mantener la imagen B4 con sender detenido mientras se corrige.
+
+### Evidencia técnica B4
+
+Corpus requerido `test_b4_sender`, `test_b4_processes`, `test_b4_command`,
+`channels.test_b4_transport`, `channels.test_b4_webhook` y `test_b4_migration`;
+CriticalB4Runner rechaza ejecución incompleta/skips/xfail. Los procesos reales
+prueban dos senders, kill tras claim/aceptación y takeover antes/durante HTTP;
+la barrera HTTP permite confirmar otra transacción antes de continuar.
+La prueba de migración usa solo DB `test_*` con modelos históricos; no es una
+instrucción de rollback productivo. Resultados exactos en el [acta B4](../implementacion-b4-agente-whatsapp-2026-09-16.md).
