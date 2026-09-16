@@ -8,7 +8,18 @@ Activación: **PENDING_ACTIVATION_REQUIREMENTS**. Sin despliegue.
 Base exacta `5ae6077ab62432864c4563921d3305b76dad5529`, cierre B3 confirmado.
 Solo B4/C5 del [plan canónico](plan-implementacion-auditoria-agente-whatsapp-2026-09md).
 No nueva auditoría H01–H20, exploración global ni rediseño B0–B3.
-Los hashes de implementación/cierre se registran después de concluir validación.
+Commit de implementación: **`98af2838d3910ccb54222c231dc49c1dfede3e0d`**
+(`98af283`), `Implement WhatsApp B4 durable sender and external uncertainty`.
+Su padre directo es la base B3 indicada. Contiene runtime, migración, tests,
+CI y documentación B4, validados con los resultados de esta acta.
+
+Commit final/documental: el commit hijo directo de `98af283` titulado
+**`Record B4 technical closure evidence`**, que registra este hash y no modifica
+runtime, tests ni migraciones. Su hash se obtiene con
+`rtk git log -1 --format=%H --grep="^Record B4 technical closure evidence$"`
+y se entrega en el informe final. Se conserva la convención del acta B3:
+el commit documental no intenta contener su propio hash.
+
 Los borrados previos de DEPLOY_VPS_PLAN.md / DEPLOY_VPS_STATUS.md y la auditoría
 no seguida de 2026-09-10 se excluyen del trabajo y de los commits B4.
 
