@@ -1,0 +1,82 @@
+# B5 — safety contextual y evidencia honesta de handoff
+
+Fecha: 2026-09-16. Base: `ce322d54d7ac78fb929298f8e42bb8edc49d1fe3`.
+Decisión técnica; protocolo/corpus **VETERINARY_REVIEW_REQUIRED**.
+Activación **PENDING_ACTIVATION_REQUIREMENTS**, sin despliegue.
+
+## Decisión
+
+Reutilizar TurnContext, TurnWork, HumanHandoff, Conversation y Message. No
+tablas clínicas ni de notificación. El detector server-side produce un VO
+inmutable discreto con códigos y referencias; no diagnóstico, score ni LLM.
+Catálogo/corpus `b5-safety-v1`, normalización de acentos y errores acotados,
+negación por cláusula, temporalidad, sujeto/referencia y dos continuaciones
+conceptuales. Las señales históricas no se reactivan por estar en historial.
+
+La recepción evalúa el evento y su C1 acotado antes del funnel, usando solo DB.
+Si no hay trabajo activo, reclama/consolida B3 en la misma transacción de
+recepción. Si W1 está activo, conserva membership, marca el inbound safety y
+lo deja para W2 sin debounce adicional. Sender bloquea admisión comercial
+mientras la señal está pendiente; W1 termina deferred_to_new_input. El worker
+reevalúa el contexto causal antes del planner, incluso con bot comercial pausado.
+Fallo local del fast path revierte su savepoint y conserva inbound para recovery.
+
+## Epoch causal y admisión específica
+
+No cambiar la identidad causal inmutable de TurnWork/Message de B3. En el
+commit safety: crear/reutilizar caso, suspender tarea con mecanismo existente,
+completar trabajo, usar invalidate_ownership B3 y publicar la guía. El Message
+conserva origin_epoch del trabajo. HumanHandoff enlaza exactamente ese mensaje
+y guidance_epoch resultante; B4 solo permite esa excepción si coinciden org,
+conversación, trabajo COMPLETED/safety_handoff, fuente, ordinal cero, tipo,
+autor system, clave safety:<work> y cuerpo de uno de los dos renderers finitos.
+No excepción para todos los mensajes system. Takeover posterior revoca el grant.
+
+Se elige esta excepción limitada en vez de modificar los triggers B3 o cambiar
+el epoch de trabajos ya reclamados. La unicidad de salida de B3
+message_unique_turn_output ya evita duplicados de la guía; no otra constraint
+redundante de Message. HumanHandoff añade unique parcial org/event_key para
+casos nuevos; no unique global de abierto y no consolidación legacy.
+
+La finalización safety sin cambios ni outputs ordinarios no se difiere por
+un nuevo mensaje: la señal urgente fija sigue justificando la cola. W1 normal
+conserva íntegra la semántica deferred. Un takeover que interrumpe un trabajo
+con señal detectada conserva el caso en Inbox antes de invalidarlo; nunca
+resucita el trabajo ni publica usando su autoridad vencida.
+
+## Hechos operativos
+
+HumanHandoff creado significa registro visible en Inbox. `NOT_CONFIGURED`
+significa que B5 no opera un aviso secundario. Se retira la invocación automática
+best effort de alerts.py; su función legacy sigue disponible para compatibilidad,
+pero no constituye evidencia de entrega ni se usa en B5. No se implementa E3.
+
+Acuse nuevo nullable (actor/fecha) solo en POST claim con RBAC/tenant vigente y
+botón «Tomar y acusar recibo». Claimed histórico, abrir Inbox, respuesta del
+proveedor o resolución no fabrican acuse. El acuse no acredita rol veterinario,
+revisión clínica ni atención. Se conserva resolución/release existente; casos
+humanos sin resolver no se cierran por inactividad.
+Si ya existe owner humano, «Acusar recibo» reutiliza claim sin nueva transición
+de ownership. El banner urgente no se oculta por un caso de identidad pendiente.
+
+Una guía por caso safety abierto. Repeticiones actualizan códigos/prioridad;
+sin otro takeover ni warning. Humano ya owner: solo cola/prioridad, nunca guía
+automática ni devolución al bot. Guidance usa B4; FAILED/UNCERTAIN no eliminan
+caso, no equivalen a recepción del cliente y no se reintentan a ciegas.
+
+## Límites y activación
+
+Solo texto/caption; ninguna comprensión de imagen/audio. Guidance indica ese
+límite si hay media. No clínica/horario/teléfono inventados; B5 no incluye datos
+operativos opcionales en la guía, sino búsqueda de servicio disponible sin SLA.
+El renderer legacy conserva su teléfono configurado y disclaimers B0.
+
+Flag `AGENT_SAFETY_AUTOMATION_ENABLED=False` por defecto; activación requiere
+revisión veterinaria real de corpus/protocolo, clínicas piloto, owner Inbox,
+owner veterinario/safety, owner privacidad y canal alternativo validado. No
+responsables inventados. El flag no abre WRITE. Rollback apaga automatización
+y conserva toda evidencia, sin resolver casos ni disminuir epochs.
+
+Contrato: [B5](../contrato-safety-handoff-b5md). Corpus:
+[b5-safety-v1](../evals/b5-safety-v1.json). Evidencia de ejecución:
+[acta](../implementacion-b5-agente-whatsapp-2026-09-16md).

@@ -1334,3 +1334,21 @@ Reemisión explícita conserva original y crea Message humano supersedes.
 Contrato: [B4](../contrato-sender-durable-b4.md). ADR y [acta](../implementacion-b4-agente-whatsapp-2026-09-16.md)
 describen legacy, pruebas y riesgos. B0 WRITE sigue cerrado; ninguna fase B5+
 se implementa como consecuencia de este cambio.
+
+
+## Enmienda B5 — 2026-09-16
+
+Prevalece el [contrato safety/handoff B5](../contrato-safety-handoff-b5md) en las fronteras afectadas.
+Safety contextual precede funnel/identidad/goal/owner humano; consume TurnContext
+causal y no interpreta binario ni depende del LLM. HumanHandoff es cola Inbox,
+no notificación ni atención. Acuse nuevo solo por acción explícita de claim con
+actor y timestamp, sin backfill legacy. No se cierran casos humanos sin resolver
+por inactividad. Una guía finita por caso abierto pasa por Message/B4, bajo grant
+específico mensaje/TurnWork/epoch; takeover posterior revoca admisión y no borra
+realidad HTTP ya admitida. Humano activo conserva ownership y recibe prioridad
+en bandeja, sin mensaje bot competidor. Múltiples casos legacy siguen visibles.
+
+Corpus/protocolo **VETERINARY_REVIEW_REQUIRED**, automatización B5 apagada por
+defecto y activación **PENDING_ACTIVATION_REQUIREMENTS**. No se atribuye revisión
+clínica, notificación secundaria, SLA ni disponibilidad. WRITE autónomo cerrado;
+sin B6–B9, E1–E5 ni P-A/P-B. No despliegue automático.

@@ -1,0 +1,56 @@
+# Contrato B5 — safety contextual y handoff mínimo
+
+Estado de protocolo/corpus: **VETERINARY_REVIEW_REQUIRED**. Activación:
+**PENDING_ACTIVATION_REQUIREMENTS**. Base: `ce322d54d7ac78fb929298f8e42bb8edc49d1fe3`.
+
+`SafetyAssessment` es un valor inmutable, no una tabla. Clasificaciones:
+`NO_SIGNAL`, `POSSIBLE_URGENT`, `URGENT`. Contiene versión de catálogo,
+señales/evidencia estructurada (código, referencias causales, negación,
+temporalidad, sujeto, base de decisión), limitación de media y acción
+`CONTINUE` o `GUIDANCE_HANDOFF`. No hay score clínico ni diagnóstico.
+
+Capas: normalización acotada; grupos deterministas respiratorios, urinarios,
+neurológicos, trauma/hemorragia y exposición tóxica; filtros contextuales;
+continuaciones entre mensajes causales recientes. Una señal crítica actual
+no puede ser rebajada por el LLM. No se invoca LLM en este circuito.
+
+Safety precede identidad, onboarding, goals, tools y owner humano. Usa C1 y
+su cursor exclusivo; como máximo dos inbounds previos del mismo episodio,
+contacto/canal/org y 15 minutos, únicamente para completar una continuación
+actual. No reactivar señales históricas del historial. Media no es comprendida.
+
+Guidance: buscar atención veterinaria inmediata/disponible, WhatsApp no
+sustituye atención veterinaria, no esperar el chat. Sin diagnóstico, tratamiento,
+dosis, estabilidad, SLA ni disponibilidad inventada. Corpus y copy requieren
+revisión veterinaria real antes de activar. El flag de automatización B5
+permanece apagado por defecto, independiente del funnel comercial.
+
+HumanHandoff es la cola durable de Inbox: creado/visible NO significa aviso,
+acuse ni atención. Se reutiliza un caso abierto compatible bajo lock de
+Conversation; históricos abiertos no se consolidan ni se reinterpretan.
+Fuente TurnWork/Message, clave de evento única por org para casos nuevos,
+prioridad existente y códigos de señal sin transcript. Canal secundario:
+`NOT_CONFIGURED`; no callback externo best effort como prueba de aviso.
+Acuse solamente por acción explícita «Tomar y acusar recibo», actor y fecha
+nuevos nullable. Abrir Inbox, asignación histórica y resolver no fabrican acuse.
+Con humano ya owner, «Acusar recibo» usa el mismo claim sin otro epoch.
+La prioridad safety sigue visible aunque haya verificación de identidad pendiente.
+
+Consolidación B3: handoff, suspensión, completion y guía final en una sola
+transacción. Takeover reutiliza invalidate_ownership; descarta pendientes y
+claims no admitidos. La guía conserva el epoch causal inmutable de su trabajo.
+La única excepción de admisión B4 exige mensaje exacto referenciado por el
+handoff, TurnWork COMPLETED/safety_handoff, ordinal 0, autor system, tipo
+safety_guidance, clave safety:<work>, y guidance_epoch igual al epoch actual.
+Un takeover posterior revoca esa excepción. Ningún texto comercial la obtiene.
+HTTP admitido conserva su realidad externa; UNCERTAIN no se reintenta a ciegas.
+
+Una guía por caso safety abierto; cada señal posterior se evalúa y actualiza
+prioridad sin otro takeover ni spam. Si ya hay humano, solo cola/prioridad:
+no guía automática, no cambio de owner ni de epoch. Nuevo inbound normal no
+reactiva funnel. W1 normal con nuevo input finaliza deferred_to_new_input;
+W2 atiende safety. Recepción acelera trabajo safety sin red/LLM; si W1 está
+en curso deja el evento para W2 y bloquea admisión comercial pendiente.
+
+Sin nuevas tablas, visión, STT, notificaciones, routing, SLA ni WRITE de negocio.
+Rollback: containment y flag apagado; preservar casos, epochs y Messages.

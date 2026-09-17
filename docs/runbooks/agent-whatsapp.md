@@ -341,3 +341,39 @@ prueban dos senders, kill tras claim/aceptación y takeover antes/durante HTTP;
 la barrera HTTP permite confirmar otra transacción antes de continuar.
 La prueba de migración usa solo DB `test_*` con modelos históricos; no es una
 instrucción de rollback productivo. Resultados exactos en el [acta B4](../implementacion-b4-agente-whatsapp-2026-09-16.md).
+
+# B5: cutover controlado y rollback
+
+Contrato: [safety/handoff B5](../contrato-safety-handoff-b5md).
+ADR: [decisión B5](../decisions/2026-09-16-b5-safety-handoffmd).
+
+1. Mantener containment B0 y WRITE cerrado. No activar automáticamente.
+2. Pausar/drenar receptores, worker y sender viejos; aplicar migraciones
+   `channels.0014_alter_message_semantic_type` y
+   `agent.0023_humanhandoff_acknowledged_at_and_more` con backup operativo.
+3. Desplegar API/worker/sender/Inbox compatibles, sin rolling mixto que omita
+   el grant específico safety o los campos de evidencia.
+4. Ejecutar corpus técnico, dedicada B5 con PostgreSQL y regresiones B0–B4.
+   Verificar Inbox: prioridad, fecha, pendientes, acuse explícito y estado de guía.
+5. Ensayar recepción con bot comercial pausado, takeover antes y después de
+   admisión, y reintento de webhook. Abrir Inbox no es acuse: usar «Tomar y
+   acusar recibo»; requiere permiso `agentinbox.claim` y organización correcta.
+6. Mantener `AGENT_SAFETY_AUTOMATION_ENABLED=False` hasta aprobar revisión
+   veterinaria real de corpus/protocolo, clínicas piloto, owner de Inbox,
+   owner veterinario/safety, owner privacidad y canal alternativo validado.
+   Estado: **PENDING_ACTIVATION_REQUIREMENTS**. No inventar cobertura ni SLA.
+
+`inspect_agent_outbound --safety` muestra conteos/edad de cola y estados de guía.
+Consultar logs `AGENT_SAFETY_ASSESSMENT`, `AGENT_SAFETY_HANDOFF_CREATED`,
+`AGENT_SAFETY_HANDOFF_REUSED`, `AGENT_SAFETY_WHILE_HUMAN_OWNED`,
+`AGENT_SAFETY_ACKNOWLEDGED`, `AGENT_SAFETY_RECEIVE_FALLBACK` y
+`AGENT_SEND_SAFETY_OUTPUT`; clasificaciones/códigos sin transcript como labels.
+NOT_CONFIGURED significa sin canal secundario operado por B5. No existe
+notificación externa durable ni señal automática de atención. Una guía FAILED
+o UNCERTAIN conserva el caso; revisar desde Inbox sin retry ciego.
+
+Rollback: containment, apagar flag safety y pausar automatismos incompatibles.
+Preservar HumanHandoff, Messages, TurnWork, epochs, FKs, fuentes y acuses. No
+resolver casos por rollback, no bajar epochs, no resetear UNCERTAIN ni reenviar
+automáticamente. Conservar lector compatible para atención manual. El flag
+detiene nuevos automatismos; para detener pendientes usar además pausa sender.

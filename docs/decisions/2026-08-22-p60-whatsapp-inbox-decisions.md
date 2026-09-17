@@ -204,3 +204,21 @@ Reemisión manual es otro Message con supersedes/actor/motivo, conservando el
 original y la idempotencia humana. No nueva UI de handoff, SLA, acuse humano ni
 notificación secundaria. Aceptación/entrega/lectura no equivale a atención.
 Prevalece el [contrato B4](../contrato-sender-durable-b4.md) para esta frontera.
+
+
+## Enmienda B5 — 2026-09-16
+
+Prevalece el [contrato safety/handoff B5](../contrato-safety-handoff-b5md) en las fronteras afectadas.
+Safety contextual precede funnel/identidad/goal/owner humano; consume TurnContext
+causal y no interpreta binario ni depende del LLM. HumanHandoff es cola Inbox,
+no notificación ni atención. Acuse nuevo solo por acción explícita de claim con
+actor y timestamp, sin backfill legacy. No se cierran casos humanos sin resolver
+por inactividad. Una guía finita por caso abierto pasa por Message/B4, bajo grant
+específico mensaje/TurnWork/epoch; takeover posterior revoca admisión y no borra
+realidad HTTP ya admitida. Humano activo conserva ownership y recibe prioridad
+en bandeja, sin mensaje bot competidor. Múltiples casos legacy siguen visibles.
+
+Corpus/protocolo **VETERINARY_REVIEW_REQUIRED**, automatización B5 apagada por
+defecto y activación **PENDING_ACTIVATION_REQUIREMENTS**. No se atribuye revisión
+clínica, notificación secundaria, SLA ni disponibilidad. WRITE autónomo cerrado;
+sin B6–B9, E1–E5 ni P-A/P-B. No despliegue automático.

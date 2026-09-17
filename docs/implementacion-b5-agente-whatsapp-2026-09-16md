@@ -1,0 +1,363 @@
+# Acta de implementación — B5 safety contextual y handoff mínimo
+
+Inicio: 2026-09-16. Verificación final: 2026-09-17.
+Estado de aceptación: **COMPLETED — cierre técnico B5**.
+Activación: **PENDING_ACTIVATION_REQUIREMENTS**. Sin despliegue.
+
+## Base, commits y alcance
+
+Base exacta: `ce322d54d7ac78fb929298f8e42bb8edc49d1fe3` (cierre B4).
+Implementación B4 conservada: `98af2838d3910ccb54222c231dc49c1dfede3e0d`.
+Commit de implementación B5: `5db10495449511ae1985d311d2fae62b062baf75`.
+Commit final/documental: commit hijo que contiene esta acta final y su evidencia;
+se identifica con `git log -1 --format=%H -- docs/implementacion-b5-agente-whatsapp-2026-09-16md`.
+Su hash se entrega en la respuesta final, sin autorreferencia circular.
+
+Solo B5 del [plan canónico](plan-implementacion-auditoria-agente-whatsapp-2026-09md).
+No reauditoría H01–H20, descubrimiento global, B6–B9, E1–E5 ni P-A/P-B.
+Descubrimiento dirigido por grafo; sus posiciones/símbolos B3/B4 estaban
+desfasados y se usaron lecturas acotadas de archivos afectados como fallback.
+Cambios preexistentes excluidos de commits B5: borrados DEPLOY_VPS_PLAN.md y
+DEPLOY_VPS_STATUS.md; auditoría no seguida de 2026-09-10.
+
+## Runtime y migraciones
+
+Rutas bajo `backend/apps/agent/` salvo prefijo explícito:
+
+| Archivos | Responsabilidad B5 |
+| --- | --- |
+| safety.py, matchers.py | VO inmutable, catálogo contextual y adaptador legacy |
+| safety_handoff.py | Consolidación, idempotencia, grant exacto, acuse y snapshot |
+| services.py, worker.py | Recepción DB-only, recuperación y precedencia antes de planner |
+| policy.py, confirmations.py | Safety antes de identidad/humano, conservar owner, retirar callback de aviso, no cierre humano por inactividad |
+| durable.py | Completion safety acotada y conservación de caso al invalidar trabajo |
+| sender.py | Grant de guía exacta, bloqueo comercial pendiente y logging correlacionado |
+| tier0.py, guards.py | Guidance finita y bloqueo de falsos claims |
+| models.py, views.py | Evidencia mínima del handoff, scope, cola prioritaria y acuse RBAC |
+| management/commands/inspect_agent_outbound.py | Opción de lectura --safety |
+| backend/apps/channels/models.py | Tipos semánticos safety_signal/safety_guidance |
+| backend/config/settings.py | Flag B5 apagado por defecto |
+| frontend/src/pages/inbox/index.jsx | Prioridad, cola/acuse, fecha y realidad del envío; múltiples legacy visibles |
+
+Migraciones aditivas: `channels.0014_alter_message_semantic_type` y
+`agent.0023_humanhandoff_acknowledged_at_and_more`. Nueve campos nuevos en
+HumanHandoff: source_message, source_turn, event_key, safety_signals,
+notification_status, acknowledged_by/at, guidance_message, guidance_epoch.
+Legacy conserva NULL/lista vacía; no notified/ack/review/backfill ficticio.
+Constraint parcial `handoff_unique_event` por org/event_key no nulo. Se reutiliza
+`message_unique_turn_output` B3 para la guía; no nueva tabla/constraint de
+idempotencia de Message. No unique global de caso abierto, porque existen
+históricos válidos múltiples. La selección prioriza safety y conserva todos.
+
+## SafetyAssessment y detector
+
+[Contrato](contrato-safety-handoff-b5md), [ADR](decisions/2026-09-16-b5-safety-handoffmd).
+Value object frozen/slotted: clasificación NO_SIGNAL/POSSIBLE_URGENT/URGENT,
+evidencias inmutables (código, IDs causales, negación, temporalidad, sujeto,
+base de decisión, clasificación), catálogo, limitación de media y acción
+CONTINUE/GUIDANCE_HANDOFF. No tabla, score clínico, diagnóstico ni ToolOutcome
+interpretado como estabilidad.
+
+Capas: normalización acotada, grupos deterministas versionados, filtros de
+negación/tiempo/sujeto/referencia, continuaciones causales. Grupos respiratorio,
+boca abierta contextual, urinario sin micción, convulsión/colapso/pérdida de
+consciencia, trauma/hemorragia y exposición tóxica; percepción inespecífica de
+deterioro como POSSIBLE_URGENT. No catálogo médico abierto ni fuzzy general.
+
+Negación por cláusula, incluidos no está/no presenta/nunca/ya no/no es que;
+una señal negada no cancela otra cláusula crítica. Temporalidad discreta
+CURRENT/RECENT/HISTORICAL/HYPOTHETICAL. C1 proporciona todos los miembros de la
+ráfaga y hasta dos inbounds previos del mismo episodio/org/contacto/canal,
+cursor exclusivo y 15 minutos. Los previos solo completan una continuación
+urinaria/respiratoria actual: no se reactivan positivos históricos solos.
+
+LLM: **ninguna participación** en detección/guidance. El circuito opera antes
+de identidad, Client/Pet, goals, presupuesto o tools y también con bot comercial
+pausado. Timeout LLM/tool no rebaja señal determinista. Fotos/audio no aportan
+contenido comprendido; solo texto/caption. Guidance declara limitación cuando
+hay adjuntos.
+
+Guidance finita: atención veterinaria inmediata en servicio disponible;
+WhatsApp no sustituye atención; no esperar el chat; conversación marcada para
+revisión, sin afirmar que alguien la vio/tomó. No diagnóstico, medicamento,
+dosis, tratamiento, pronóstico, estabilidad ni disponibilidad/SLA. No se añaden
+datos opcionales de clínica a B5; no dirección, horario o teléfono inventados.
+
+## Handoff, honestidad e Inbox
+
+Caso durable asociado a org/conversación y fuente TurnWork/anchor Message;
+reason safety_urgent, prioridad urgent, códigos mínimos sin transcript.
+Crear un caso **solo** prueba registro visible en Inbox. notification_status
+NOT_CONFIGURED: no canal secundario operado por B5. No intento/aceptación/entrega
+externa fabricados. Se retira invocación del webhook legacy best effort de
+policy; no se implementa E3 ni aviso por email/SMS/push/WhatsApp interno.
+El helper legacy `alerts.notify_urgent_handoff` puede observar aceptación HTTP,
+pero apunta a `DISCORD_WEBHOOK_URL` global de operaciones, sin destinatario
+clínico por tenant ni canal alternativo validado. No demuestra aviso al equipo
+de la clínica. Se conserva como helper legacy para compatibilidad B0, sin
+invocarlo desde safety; no se configura ningún destino nuevo.
+
+ACKNOWLEDGED requiere POST claim auténtico con permiso agentinbox.claim y mismo
+tenant, botón «Tomar y acusar recibo». Se registra actor y timestamp una vez.
+Abrir Inbox/claim histórico/resolver no fabrica acuse. Acuse no equivale a
+atención ni demuestra profesión. Claimed/resolution existentes se conservan.
+Inbox muestra urgente/normal, cuándo se creó, QUEUED/ACKNOWLEDGED, limitación
+de aviso y estado B4 de guía. Casos legacy múltiples siguen separados/visibles.
+Una guía DISCARDED aparece descartada sin envío, no pendiente. La prioridad
+urgente no queda oculta por un caso de identidad. Humano ya owner puede pulsar
+«Acusar recibo» sobre el mismo claim, sin nuevo epoch.
+
+Guards rechazan claims de aviso, recepción, atención inmediata, SLA o estabilidad
+sin evidencia. Texto permitido después de commit: «He marcado esta conversación
+para revisión del equipo en su bandeja». No «Ya avisé al veterinario», «Ya vieron
+tu mensaje», «Te atenderán enseguida» ni «No es una emergencia».
+
+## Ownership, sender y races
+
+Consolidación bajo locks Conversation→TurnWork: caso/suspensión, completion,
+invalidate_ownership B3 y Message final son atómicos. Una guía por caso abierto;
+repeticiones reutilizan/elevan y no incrementan epoch ni repiten warning.
+Humano activo: se preserva owner/epoch y solo se crea/eleva cola; cero guía bot.
+Caso humano sin resolver no se cierra automáticamente por inactividad.
+
+La guía conserva epoch causal inmutable de su TurnWork. Grant de B4 limitado al
+Message exacto enlazado por HumanHandoff, org/conversación, source_turn COMPLETED
+con outcome safety_handoff, fuente, ordinal cero, system, semantic safety_guidance,
+clave safety:<work>, cuerpo finito y guidance_epoch vigente. No bypass global.
+Takeover humano posterior descarta pendientes/revoca grant. HTTP admitido conserva
+SENT/FAILED/UNCERTAIN reales; no cancelación remota ni retry ciego.
+
+W1 normal mantiene membership cuando llega safety. Inbound marcado queda listo
+para W2 y bloquea admisión comercial pendiente; W1 termina deferred_to_new_input.
+W2 consolida safety con prioridad. Nueva entrada normal no difiere una señal
+safety ya evaluada ni revive funnel humano. Takeover concurrente conserva en
+Inbox safety del trabajo que invalida, sin publicar desde un witness vencido.
+Error en fast path usa savepoint y conserva inbound durable para retry B3.
+
+## Corpus técnico
+
+[Corpus v1](evals/b5-safety-v1.json), [resultados](evals/b5-safety-v1-results.json),
+[guía](evals/README-b5-safety.md). **125 casos: TP=53, FN=0, TN=72, FP=0**.
+Recall de positivos críticos definidos: **47/47 (100%)**. FPR en negaciones:
+0/26; históricos: 0/9; hipotéticos: 0/9. Otras familias: administrativos 13 TN,
+referencia/sujeto 8 TN, límites de contexto 7 TN, multi-turn 6 TP, posibles 6 TP.
+Se exige además clasificación exacta, no solo el resultado binario de escalar.
+
+**VETERINARY_REVIEW_REQUIRED**: corpus sintético/técnico, no sensibilidad clínica
+ni validación veterinaria. No existe revisor clínico acreditado en esta entrega.
+Primera versión (93) pasó 40 TP/53 TN; la expansión (121) reveló 6 FN/8 FP;
+se corrigieron reglas, sin ocultarlos tras accuracy. Una pasada en curso que
+había importado código anterior leyó el corpus expandido y mostró 7 FN/8 FP:
+no se cuenta como aceptación. También se corrigieron fixtures de autor de
+Message y available_at nullable; no skips/xfail para ocultar errores.
+La ampliación final (125) añadió precio con señal actual, relato de un tercero
+y «no responde» administrativo: primero 2 FN/2 FP, después 0 FN/0 FP.
+La regresión detectó `_HUMAN_LEMMAS` ausente al sustituir el adaptador; se
+restauró íntegro y B0 crítico pasó 17/17. Se ajustó la expectativa legacy de
+callback externo al nuevo contrato Inbox y una fecha relativa B2 a lunes
+futuro: el sábado cerrado no alcanzaba la condición de cobertura que probaba.
+No se alteró runtime B2 para acomodar ese fixture.
+
+## Failure injection y concurrencia
+
+| ID | Evidencia |
+| --- | --- |
+| SAFE-FI-01 | Kill real después de detectar/claim COMMIT; lease expiry y proceso nuevo completan mismo trabajo, un caso/guía |
+| SAFE-FI-02 | Kill real después de insertar caso antes de guía: rollback; restart coherente. Además división por cero PostgreSQL en consolidación |
+| SAFE-FI-03 | Planner/tool configurados para timeout no son invocados por safety crítica |
+| SAFE-FI-04 | Fallo DB al crear caso no publica claim; en webhook conserva inbound y worker recupera |
+| SAFE-FI-05 | Safety vs takeover en dos procesos; owner humano final, una o dos transiciones reales según orden; sin epoch repetido para el mismo acto |
+| SAFE-FI-06 | Nuevo inbound normal después de safety conserva handoff/ownership y no revive funnel |
+| SAFE-FI-07 | Guidance UNCERTAIN conserva caso y no admite retry ciego |
+| SAFE-FI-08 | Caso anterior normal elevado; señal repetida conserva un caso y una guía |
+
+Cinco tests con intérpretes/conexiones PostgreSQL independientes: kills FI-01/02,
+webhook duplicado concurrente, dos workers safety y carrera contra takeover.
+Además tests PostgreSQL de scope, partial unique, DB rollback, epoch, trabajo
+viejo, admisión previa/posterior, media, negación, tiempo, C1 y acuse RBAC.
+LLM/Meta son doubles controlados; no llamadas externas reales.
+
+## Validación y entorno
+
+Aceptación final: **926 tests únicos**, **877 backend + 49 frontend**. Cero fallos, errores, skips o xfail.
+
+| Ejecución | Resultado | Segundos |
+| --- | --- | --- |
+| combined_acceptance | 860/860 | 590.179 |
+| b0_acceptance | 17/17 | 75.28 |
+| dedicated_acceptance | 37/37 | 471.173 |
+| Frontend Inbox/API/B4/B5 | 49/49 | Vitest JSON |
+
+La dedicada B5 es subconjunto de la conjunta; no se duplica en el total. El corpus aporta 125 subcasos y cuenta como un test. B1 caption dirigido: 15/15 en una ejecución adicional, también subconjunto.
+Las regresiones identificadas dentro de la conjunta incluyen B2 (39), B3 (42)
+y B4 (68), además de B5 (37). Hay **13 pruebas multiproceso reales**: tres B3,
+cinco B4 y cinco B5; sus resultados ya están incluidos en los totales anteriores.
+IDs exactos, distribución por módulo y SHA256 de logs en [evidencia de aceptación](evals/b5-acceptance-results.json).
+Build final correcto (16.48 s), con advertencia de chunks grandes ya existente. `makemigrations --check --dry-run`: No changes detected. Migraciones aplicadas; `showmigrations agent channels` confirma ambos nodos [X].
+
+Comandos exactos (backend con DATABASE_URL de prueba explícita):
+
+```text
+rtk proxy python manage.py test apps.agent.tests.test_b5_safety apps.agent.tests.test_b5_corpus apps.agent.tests.test_b5_processes apps.agent.tests.test_b5_migration --testrunner apps.agent.tests.harness.CriticalB5Runner --keepdb --noinput --verbosity 2
+rtk proxy python manage.py test apps.agent.tests.test_b0_containment --testrunner apps.agent.tests.harness.CriticalB0Runner --keepdb --noinput --verbosity 2
+rtk proxy python manage.py makemigrations --check --dry-run
+rtk proxy python manage.py showmigrations agent channels
+```
+
+Frontend: `rtk proxy npx vitest run src/api/inbox.test.js src/pages/inbox/DeliveryTicks.test.jsx src/pages/inbox/index.test.jsx --reporter=json --outputFile=<log>`;
+`rtk npm run build`. Build muestra advertencia existente de tamaño de chunk;
+no es error. No rediseño ni nuevas dependencias frontend.
+
+Entorno: Python 3.13.2, Django 6.0.5, PostgreSQL 18.3 local aislado
+127.0.0.1:55441, b5/test_b5 y clones. La instancia B4 no respondió; se creó una
+nueva con fixtures sintéticos. Para reducir fsync de fixtures en Windows,
+fsync/synchronous_commit desactivados solo en esta instancia temporal: las
+pruebas acreditan locks, constraints, commits y crashes de **workers**, no
+caída eléctrica ni crash del servidor PostgreSQL. No datos/credenciales de
+producción, deploy ni CI remoto presentados como ejecutados.
+
+La conjunta inicial no arrancó al intentar clonar mientras la dedicada aún
+cerraba una conexión. Se relanzó tras liberarla; ese intento no cuenta como verde.
+La pasada que importó el matcher incompleto fue detenida tras conservar el log;
+no se cuenta como aceptación. El primer relanzamiento corregido no ejecutó
+tests por timeout de conexión PostgreSQL. Se recuperó exclusivamente el cluster
+temporal y se relanzó. Se conservaron todos los datos sintéticos/evidencias.
+La ejecución de ocho procesos produjo errores de preparación/conexión; no se
+acepta. Tras reducir a cuatro y ampliar a 30 segundos el timeout de conexión
+del harness local, la pasada failfast detectó fixtures residuales de clones
+interrumpidos (worker encontró dos trabajos en vez de uno). Se recrearon solo
+los clones `test_b5_1`–`test_b5_8` de la instancia temporal, sin alterar la
+aserción ni runtime. Se preservan logs; esa pasada de 283 tests no es aceptación.
+La siguiente pasada limpia se detuvo en 622 tests por la expectativa legacy
+B1 de invocar `is_emergency`: la escalación por caption ocurría, pero B5 llama
+a `assess_context`. La prueba conserva su propósito y ahora comprueba el mismo
+TurnContext, el Message causal y su caption; no se modificó runtime para ello.
+
+## Desviaciones, riesgos y cierre
+
+Desviaciones acotadas: grant exacto en HumanHandoff conserva triggers B3; sin
+constraint redundante Message; Inbox como único canal mínimo, retirando callback
+legacy; acuse separado de claimed porque el legacy también se llenaba al resolver;
+sin guía automática con humano activo; una guía por caso abierto en vez de timer
+de cooldown; flag de activación B5 apagado. Rutas documentales nuevas conservan
+el sufijo `md` sin punto solicitado por el usuario.
+
+Riesgos residuales: lenguaje fuera del corpus, contradicciones/cambio de sujeto,
+negaciones no cubiertas, pérdida de Internet, operador ausente, desconocimiento
+de binario y aceptación externa incierta. No diagnóstico ni garantía de recall
+clínico. La regla técnica y el corpus requieren revisión veterinaria real.
+
+Deploy/rollback: [runbook](runbooks/agent-whatsapp.md). Containment activo,
+migraciones antes de lectores/worker/sender compatibles; verificar Inbox y
+ownership. Mantener flag apagado y activación pendiente. Rollback conserva
+casos, epochs, fuentes, acuses y Messages; no borrar ni resolver por rollback.
+
+Documentación afectada: contrato B5, ADR B5, p55/p56/p58/p60, módulo agent,
+arquitectura, especificación funcional, runbook, corpus/resultados y plan.
+H03: técnicamente mitigado para corpus implementado; activación clínica pendiente.
+H04: separación técnica de handoff/notification/acknowledgement/attention;
+no prueba ni promesa de atención real.
+
+Pendientes: clínicas piloto, owner Inbox, owner veterinario/safety, owner
+privacidad, canal alternativo validado, revisión veterinaria del corpus/protocolo.
+**PENDING_ACTIVATION_REQUIREMENTS**. **WRITE autónomo cerrado**. Sin B6–B9,
+E1–E5 ni P-A/P-B. Se recomienda cerrar técnicamente B5 para el corpus y fronteras implementados,
+con activación clínica/operativa pendiente; no se despliega ni se inicia B6.
+
+## Inventario exacto de pruebas B5
+Prefijo Python: `apps.agent.tests.`. El corpus es un test con 125 subcasos;
+no se suma 125 veces al total de tests únicos.
+
+- `test_b5_safety.B5SafetyTests.test_safe_01_identity_tool_planner_and_onboarding_independent`
+- `test_b5_safety.B5SafetyTests.test_handoff_01_durable_scope_source_and_inbox`
+- `test_b5_safety.B5SafetyTests.test_safe_mt_01_real_c1_and_exclusive_cursor`
+- `test_b5_safety.B5SafetyTests.test_safe_context_does_not_cross_time_or_subject`
+- `test_b5_safety.B5SafetyTests.test_safe_neg_01_independent_symptoms`
+- `test_b5_safety.B5SafetyTests.test_safe_time_01`
+- `test_b5_safety.B5SafetyTests.test_safe_03_honest_finite_guidance`
+- `test_b5_safety.B5SafetyTests.test_handoff_02_ack_only_explicit_scoped_claim`
+- `test_b5_safety.B5SafetyTests.test_handoff_03_duplicate_webhook_repeat_signal_no_spam`
+- `test_b5_safety.B5SafetyTests.test_safe_human_01_no_ownership_or_output_competition`
+- `test_b5_safety.B5SafetyTests.test_safe_media_01_no_binary_inference`
+- `test_b5_safety.B5SafetyTests.test_safe_tenant_01_foreign_context_and_ack_rejected`
+- `test_b5_safety.B5SafetyTests.test_safe_race_01_new_safety_fixed_membership_defers_normal`
+- `test_b5_safety.B5SafetyTests.test_safe_race_02_pending_commercial_discarded_valid_guidance_admitted`
+- `test_b5_safety.B5SafetyTests.test_safe_race_03_admitted_commercial_reality_survives`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_01_crash_after_detection_recovers_same_work`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_02_db_failure_after_handoff_rolls_back_all`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_04_handoff_insert_failure_no_false_claim`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_04_webhook_preserves_inbound_on_consolidation_failure`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_05_takeover_before_finalize_preserves_case_without_output`
+- `test_b5_safety.B5SafetyTests.test_safe_gate_before_requested_human_and_no_onboarding`
+- `test_b5_safety.B5SafetyTests.test_sender_refuses_commercial_while_safety_waits_for_w2`
+- `test_b5_safety.B5SafetyTests.test_automation_flag_off_does_not_activate_new_safety_circuit`
+- `test_b5_safety.B5SafetyTests.test_observability_snapshot_has_counts_ages_and_no_pii_labels`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_06_normal_input_does_not_resume_funnel`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_07_uncertain_guidance_does_not_erase_handoff_or_retry`
+- `test_b5_safety.B5SafetyTests.test_safe_fi_08_existing_handoff_is_elevated`
+- `test_b5_safety.B5SafetyTests.test_own_04_grant_revoked_by_next_takeover_and_not_generic_system`
+- `test_b5_safety.B5SafetyTests.test_no_idle_close_of_unresolved_human_queue`
+- `test_b5_safety.B5SafetyTests.test_partial_event_uniqueness_preserves_multiple_legacy_open`
+
+- `test_b5_processes.B5ProcessTests.test_safe_fi_01_process_killed_after_detection`
+- `test_b5_processes.B5ProcessTests.test_safe_fi_02_process_killed_after_case_before_output`
+- `test_b5_processes.B5ProcessTests.test_safe_dup_01_two_inbound_processes_one_handoff`
+- `test_b5_processes.B5ProcessTests.test_safe_fi_05_safety_worker_vs_human_takeover`
+- `test_b5_processes.B5ProcessTests.test_own_04_two_safety_workers_one_epoch_and_case`
+
+- `test_b5_migration.B5MigrationTests.test_legacy_handoffs_have_no_synthetic_safety_notification_or_ack`
+
+- `test_b5_corpus.B5CorpusTests.test_safe_02_versioned_adversarial_corpus`
+
+## Comando de regresión conjunta
+
+```text
+rtk proxy python manage.py test
+  apps.agent.tests.test_b2_results
+  apps.agent.tests.test_executor
+  apps.agent.tests.test_tools
+  apps.agent.tests.test_slots
+  apps.agent.tests.test_write_tools
+  apps.agent.tests.test_commit_preconditions
+  apps.agent.tests.test_planner
+  apps.agent.tests.test_w3_quality
+  apps.agent.tests.test_worker
+  apps.agent.tests.test_turn_decision
+  apps.agent.tests.test_prompts
+  apps.agent.tests.test_f2_continuity
+  apps.agent.tests.test_policy
+  apps.agent.tests.test_arbiter
+  apps.agent.tests.test_w0_hardening
+  apps.agent.tests.test_w1_experience
+  apps.agent.tests.test_f5_fase5
+  apps.agent.tests.test_b3_durable
+  apps.agent.tests.test_b3_processes
+  apps.agent.tests.test_inbox_api
+  apps.agent.tests.test_release_service
+  apps.agent.tests.test_identity_evidence
+  apps.agent.tests.test_identity_verification
+  apps.agent.tests.test_services
+  apps.agent.tests.test_w2_goals
+  apps.agent.tests.test_identity
+  apps.agent.tests.test_intake_capabilities
+  apps.agent.tests.test_inbox_threads
+  apps.agent.tests.test_b4_sender
+  apps.agent.tests.test_b4_processes
+  apps.agent.tests.test_b4_command
+  apps.agent.tests.test_b5_safety
+  apps.agent.tests.test_b5_processes
+  apps.agent.tests.test_b5_corpus
+  apps.agent.tests.test_b5_migration
+  apps.agent.tests.test_matchers
+  apps.patients.tests.test_pet_list_pagination
+  apps.channels.tests.test_webhook
+  apps.channels.tests.test_providers
+  apps.channels.tests.test_b4_transport
+  apps.channels.tests.test_b4_webhook
+  apps.channels.tests.test_b4_migration
+  --testrunner apps.agent.tests.harness.CriticalB5Runner
+  --keepdb --noinput --verbosity 2 --parallel 4
+```
+
+Se presenta envuelto para lectura; los argumentos se pasaron juntos al mismo
+comando. El runner exige conjunto completo, sin skips/xfail/ejecución parcial.

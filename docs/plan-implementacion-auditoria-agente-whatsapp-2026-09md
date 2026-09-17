@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-16**. Estado: **B0–B4 cerradas técnicamente; B5–B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-17**. Estado: **B0–B5 cerradas técnicamente; B6–B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -1243,3 +1243,28 @@ P-A empieza con B0; P-B se entrega por categoría antes de vencer el plazo compr
 - Convertir código de confirmación, máximo de una aceptación o límite de tres asuntos en cardinalidades permanentes del dominio.
 - Activar todos los WRITE por cambiar autonomy_mode, exigir scheduler/avisos avanzados sin necesidad o usar un SLO sin perfil reproducible.
 - Tratar manifest de conteos/checksum como lista de restricciones individuales reaplicable tras restore.
+
+
+## Seguimiento de implementación B5 — 2026-09-17
+
+Base exclusiva `ce322d54d7ac78fb929298f8e42bb8edc49d1fe3`. Contrato implementado
+en [safety/handoff B5](contrato-safety-handoff-b5md); decisión y desviaciones en
+[ADR B5](decisions/2026-09-16-b5-safety-handoffmd). La evidencia de ejecución,
+commits y estado de cierre se registra en el
+[acta B5](implementacion-b5-agente-whatsapp-2026-09-16md).
+
+Enmienda acotada C5/C6: el epoch causal de TurnWork permanece inmutable; solo
+la guía exacta enlazada desde HumanHandoff puede admitirse en el epoch resultante
+del takeover safety. Se reutiliza la unicidad de output B3, sin constraint
+redundante. Inbox durable es el canal mínimo; no se opera aviso secundario E3.
+No emitir guía automática si el humano ya es owner. Una guía por caso abierto;
+repeticiones solo elevan/conservan prioridad y evidencia mínima.
+
+H03: mitigación técnica acotada al corpus implementado, revisión veterinaria
+real pendiente. H04: se separan cola, notificación, acuse y atención; copy
+limitado al hecho durable. No declarar sensibilidad clínica ni personal presente.
+Activación **PENDING_ACTIVATION_REQUIREMENTS**; siguen pendientes clínicas piloto,
+owners Inbox/veterinario-safety/privacidad, canal alternativo validado y revisión
+veterinaria de corpus/protocolo. WRITE autónomo sigue cerrado. B6+ no implementado.
+
+**COMPLETED en alcance técnico B5 (2026-09-17).** Implementación `5db10495449511ae1985d311d2fae62b062baf75`. Aceptación: 926 tests únicos (877 backend + 49 frontend), 0 fallos/errores/skips/xfail; corpus 125, TP=53/FN=0/TN=72/FP=0, críticos 47/47. H03 mitigado para corpus implementado y H04 cerrado técnicamente por separación de evidencia. VETERINARY_REVIEW_REQUIRED; PENDING_ACTIVATION_REQUIREMENTS; WRITE cerrado. Sin deploy ni B6–B9/E/P. Ver acta para límites, migraciones, races y rollback.
