@@ -443,16 +443,20 @@ class B1ChannelEventTests(TestCase):
 
     def test_critical_caption_reaches_existing_safety_from_the_same_context(self):
         from unittest.mock import patch
-        from apps.agent import planner, policy
+        from apps.agent import planner, safety
         from apps.agent.models import AgentSettings, HumanHandoff
         settings = AgentSettings.objects.create(organization=self.org, enabled=True)
         message, _ = self._event('image', {'id': 'media-only-reference', 'caption': 'mi perro convulsiona'})
-        with (patch.object(policy.matchers, 'is_emergency', wraps=policy.matchers.is_emergency) as emergency,
+        with (patch.object(safety, 'assess_context', wraps=safety.assess_context) as assessment,
               patch.object(planner, '_run_planner') as llm):
             result = planner.handle_inbound(message.conversation, agent_settings=settings,
                                             burst_messages=[message])
         self.assertEqual(result['decision'], 'escalate')
-        emergency.assert_called_once_with('mi perro convulsiona')
+        assessment.assert_called_once()
+        assessed_conversation, context = assessment.call_args.args
+        self.assertEqual(assessed_conversation.pk, message.conversation_id)
+        self.assertEqual(context.inbound_ids, (message.pk,))
+        self.assertEqual(context.latest_text, 'mi perro convulsiona')
         llm.assert_not_called()
         self.assertEqual(HumanHandoff.objects.get(conversation=message.conversation).reason_code,
                          HumanHandoff.REASON_EMERGENCY)

@@ -295,7 +295,9 @@ class B2ApiResultsTests(TestCase):
         self.assertNotIn(self.pet_luna.name, str(record.result_summary_redacted))
 
     def test_partial_occupancy_cannot_prove_available_slot(self):
-        day = (timezone.now() + timedelta(days=3)).date().isoformat()
+        # Reach occupancy coverage on an open weekday regardless of run date.
+        day = (timezone.now() + timedelta(days=3)).date()
+        day = (day + timedelta(days=(0 - day.weekday()) % 7)).isoformat()
         self._fake(TransportResponse(200, {'results': []}, parse_valid=True))
         outcome = self._run('check_appointment_slot', {'date': day, 'time': '11:00'})
         self.assertEqual(outcome.kind, 'ERROR')

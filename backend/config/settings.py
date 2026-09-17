@@ -90,6 +90,8 @@ HEALTHCHECK_AGENT_WORKER_URL = config(
 # self-hosted funcionan con solo cambiar estas envs. Vacío = el planner no
 # arranca (el buzón F0 y las plantillas tier-0 siguen operando).
 AGENT_LLM_BASE_URL = config('AGENT_LLM_BASE_URL', default='')
+# B5 technical circuit; enable only after veterinary/operational activation review.
+AGENT_SAFETY_AUTOMATION_ENABLED = config('AGENT_SAFETY_AUTOMATION_ENABLED', default=False, cast=bool)
 AGENT_LLM_API_KEY = config('AGENT_LLM_API_KEY', default='')
 AGENT_LLM_MODEL_PLANNER = config('AGENT_LLM_MODEL_PLANNER', default='')
 # Router/clasificación barata; vacío = usa el planner para todo.

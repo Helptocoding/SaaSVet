@@ -117,6 +117,16 @@ def check_containment(text):
             'ya avisé', 'ya avise', 'ya les avisé', 'ya les avise',
             'ya le avisé', 'ya le avise', 'ya notifiqué', 'ya notifique')):
         return 'notification_not_proven'
+    if any(pattern in low for pattern in (
+            'ya fue notificado', 'ya fue notificada', 'ya vieron tu mensaje',
+            'te atenderán enseguida', 'te atenderan enseguida',
+            'te atenderá inmediatamente', 'te atendera inmediatamente',
+            'ya está revisando tu mascota', 'ya esta revisando tu mascota',
+            'ya está atendiendo', 'ya esta atendiendo', 'ya tomó la conversación',
+            'ya tomo la conversacion', 'en menos de 5 minutos', 'en breve', 'enseguida',
+            'está todo bajo control', 'esta todo bajo control',
+            'no es una emergencia', 'puedes esperar')):
+        return 'human_or_safety_claim_not_proven'
     return None
 
 

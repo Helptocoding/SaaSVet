@@ -83,6 +83,12 @@ jobs:
           apps.channels.tests.test_b4_transport apps.channels.tests.test_b4_webhook
           apps.channels.tests.test_b4_migration
           --testrunner apps.agent.tests.harness.CriticalB4Runner
+      - name: B5 contextual safety and durable handoff (required)
+        run: >-
+          python manage.py test apps.agent.tests.test_b5_corpus
+          apps.agent.tests.test_b5_safety apps.agent.tests.test_b5_processes
+          apps.agent.tests.test_b5_migration
+          --testrunner apps.agent.tests.harness.CriticalB5Runner
       - name: Run test suite (parallel)
         run: python manage.py test --parallel
 

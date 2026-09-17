@@ -403,7 +403,7 @@ class HandoffAckTests(AgentFixture):
 
     def test_open_handoff_is_upgraded_to_urgent(self):
         """Ya había una escalada normal en cola y aparece una urgencia: sube
-        de prioridad y avisa, en vez de quedarse enterrada como 'normal'."""
+        de prioridad en Inbox, sin fabricar un aviso externo (B5)."""
         with mock.patch("apps.agent.alerts.notify_urgent_handoff") as alert:
             policy.escalate_to_human(
                 self.conv, reason_code=HumanHandoff.REASON_EMERGENCY,
@@ -411,7 +411,8 @@ class HandoffAckTests(AgentFixture):
         handoff = HumanHandoff.objects.get(conversation=self.conv)
         self.assertEqual(handoff.priority, HumanHandoff.PRIORITY_URGENT)
         self.assertEqual(handoff.reason_code, HumanHandoff.REASON_EMERGENCY)
-        self.assertEqual(alert.call_count, 1)
+        alert.assert_not_called()
+        self.assertIsNone(handoff.acknowledged_at)
         # Sigue habiendo UNA sola escalada abierta.
         self.assertEqual(
             HumanHandoff.objects.filter(conversation=self.conv).count(), 1)

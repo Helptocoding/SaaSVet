@@ -64,8 +64,13 @@ def _rejection(message, conv):
         return 'legacy_unverified'
     if not _scope(message, conv):
         return 'scope_invalid'
-    if message.origin_epoch != conv.ownership_epoch:
+    from .safety_handoff import guidance_authorized, pending_signal
+    safety_grant = guidance_authorized(message, conv)
+    if message.origin_epoch != conv.ownership_epoch and not safety_grant:
         return 'ownership_invalidated'
+    if (message.author_type in (Message.AUTHOR_AGENT, Message.AUTHOR_SYSTEM)
+            and not safety_grant and pending_signal(conv)):
+        return 'safety_pending'
     if conv.channel_account.status != 'active':
         return 'channel_inactive'
     if message.turn_work_id is not None and not TurnWork.objects.filter(
@@ -231,6 +236,9 @@ No retry if takeover or recovery already invalidated eligibility.
                 fields.append('external_message_id')
             message.save(update_fields=fields)
             event('uncertain', message_id=message.pk, outcome_code=message.failure_reason)
+        if message.semantic_type == Message.SEMANTIC_SAFETY_GUIDANCE:
+            event('safety_output', status=message.status, message_id=message.pk,
+                  turn_work_id=message.turn_work_id)
         return True
 
 

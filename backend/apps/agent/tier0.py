@@ -231,6 +231,17 @@ T0_CONFIRMATION_UNAVAILABLE = (
 # exactamente donde el sistema contestaba con una constante.
 
 
+def render_safety_guidance(assessment):
+    """Finite B5 copy; pending veterinary review. No generated clinical text."""
+    media = ('No puedo interpretar la imagen o el audio; me baso solo en el texto. '
+             if assessment.media_uninterpreted else '')
+    return (media + 'Por lo que describes, busca atención veterinaria inmediata en un '
+            'servicio disponible. WhatsApp no sustituye la atención veterinaria; '
+            'no esperes una respuesta de este chat para buscar ayuda. '
+            'He marcado esta conversación para revisión del equipo en su bandeja. '
+            'No puedo confirmar que una persona la haya visto o tomado.')
+
+
 def render_emergency(agent_settings, organization):
     """Plantilla de urgencia con el teléfono de la clínica.
 

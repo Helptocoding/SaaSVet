@@ -28,39 +28,14 @@ def _has_any(text, needles):
 
 
 # --- INT-01 Urgencia (router prioridad 1; R16) -----------------------------
-# Lemas, no palabras exactas: "convuls" cubre convulsión/convulsiona/etc.
-_EMERGENCY_LEMMAS = (
-    'convuls', 'atropell', 'no respira', 'no puede respirar', 'se ahoga',
-    'sangra', 'sangrado', 'hemorragia', 'envenen', 'intoxic', 'se comio',
-    'se trago veneno', 'no se mueve', 'se esta muriendo', 'agoniz',
-    'inconsciente', 'no reacciona', 'parto', 'esta pariendo', 'fractura',
-    'hueso de fuera', 'quemadura grave', 'golpe fuerte', 'cayo de',
-    'vomita sangre', 'convulsion',
-)
-
-
 def is_emergency(text):
-    return _has_any(normalize(text), _EMERGENCY_LEMMAS)
+    from .safety import assess_texts, NO_SIGNAL
+    return assess_texts([text]).classification != NO_SIGNAL
 
 
 def emergency_summary(text):
-    """Resumen clínicamente neutro, sin persistir el cuerpo del mensaje."""
-    normalized = normalize(text)
-    categories = (
-        (('convuls',), 'posibles convulsiones'),
-        (('no respira', 'no puede respirar', 'se ahoga'),
-         'posible dificultad respiratoria'),
-        (('sangra', 'sangrado', 'hemorragia', 'vomita sangre'),
-         'posible sangrado'),
-        (('envenen', 'intoxic', 'veneno'), 'posible intoxicación'),
-        (('atropell', 'fractura', 'hueso de fuera', 'golpe fuerte', 'cayo de'),
-         'posible traumatismo'),
-        (('parto', 'esta pariendo'), 'posible complicación de parto'),
-    )
-    for needles, summary in categories:
-        if _has_any(normalized, needles):
-            return summary
-    return 'síntomas de posible urgencia'
+    from .safety import assess_texts
+    return ','.join(assess_texts([text]).matched_signals)
 
 
 # --- INT-02 Hablar con humano ----------------------------------------------

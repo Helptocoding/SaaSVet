@@ -21,9 +21,10 @@ const inboxApi = vi.hoisted(() => ({
 }));
 
 vi.mock("../../api/inbox", () => inboxApi);
+const authPermissions = vi.hoisted(() => new Set(['agentinbox.send']));
 vi.mock("../../auth/authContext", () => ({
     useAuth: () => ({
-        can: (permission) => permission === "agentinbox.send",
+        can: (permission) => authPermissions.has(permission),
         user: { organization_timezone: "America/Tijuana" },
     }),
 }));
@@ -35,8 +36,50 @@ vi.mock("sonner", () => ({
     toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-import Inbox from "./index";
+import Inbox, { HandoffReasonBanner } from "./index";
 import { toast } from "sonner";
+
+describe('B5 handoff evidence', () => {
+    it('does not call discarded guidance pending delivery', () => {
+        render(<HandoffReasonBanner handoff={{ reason: 'safety_urgent', guidance_status: 'discarded' }} />);
+        expect(screen.getByText(/descartada sin envío/)).toBeInTheDocument();
+        expect(screen.queryByText(/pendiente de entrega/)).not.toBeInTheDocument();
+    });
+    it('allows the current human owner to explicitly acknowledge a new queued case', async () => {
+        authPermissions.add('agentinbox.claim');
+        inboxApi.getThreadMessages.mockImplementation((contactId) => Promise.resolve({
+            ...threadFor(contactId), conversation: { public_id: 'session-ana', state: 'human_active' },
+            handoff: { reason: 'safety_urgent', priority: 'urgent', state: 'QUEUED' },
+            identity_case: { kind: 'owner_ambiguous' },
+        }));
+        const user = userEvent.setup();
+        render(<Inbox />);
+        await selectConversation(user, 'Ana');
+        expect(screen.getByText(/Safety · Revisión urgente/)).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'Acusar recibo' }));
+        await waitFor(() => expect(inboxApi.claimConversation).toHaveBeenCalledWith('session-ana'));
+    });
+    it('shows a durable queue without inventing notification or acknowledgement', () => {
+        render(<HandoffReasonBanner handoff={{ reason: 'safety_urgent', priority: 'urgent',
+            state: 'QUEUED', notification_status: 'NOT_CONFIGURED', opened_at: '2026-09-16T10:00:00Z' }} />);
+        expect(screen.getByText(/Safety · Revisión urgente/)).toBeInTheDocument();
+        expect(screen.getByText(/Pendiente de acuse/)).toBeInTheDocument();
+        expect(screen.getByText(/Sin canal secundario de aviso/)).toBeInTheDocument();
+        expect(screen.queryByText(/Acuse explícito registrado/)).not.toBeInTheDocument();
+    });
+    it('labels explicit acknowledgement without claiming clinical attention', () => {
+        render(<HandoffReasonBanner handoff={{ reason: 'safety_urgent', state: 'ACKNOWLEDGED' }} />);
+        expect(screen.getByText(/Acuse explícito registrado/)).toBeInTheDocument();
+        expect(screen.queryByText(/veterinario.*atendiendo/i)).not.toBeInTheDocument();
+    });
+    it('keeps uncertain guidance visible and preserves multiple open legacy cases', () => {
+        render(<HandoffReasonBanner handoff={{ reason: 'safety_urgent', guidance_status: 'uncertain',
+            open_cases: [{ id: 1, reason: 'explicit_request', priority: 'normal', opened_at: '2026-09-15', state: 'QUEUED' },
+                { id: 2, reason: 'safety_urgent', priority: 'urgent', opened_at: '2026-09-16', state: 'QUEUED' }] }} />);
+        expect(screen.getByText(/Guía al cliente: envío incierto/)).toBeInTheDocument();
+        expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    });
+});
 
 const ACCOUNT_ID = "account-main";
 const rows = [
@@ -86,6 +129,8 @@ const sentMessage = (body, clientMessageId, id = `message-${clientMessageId}`) =
 });
 
 beforeEach(() => {
+    authPermissions.clear();
+    authPermissions.add('agentinbox.send');
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
         configurable: true,
         value: vi.fn(),

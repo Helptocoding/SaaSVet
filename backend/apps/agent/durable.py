@@ -196,7 +196,10 @@ def finalize_turn(witness, *, outputs=(), changes=None, outcome='completed'):
     with transaction.atomic():
         conv, work = lock_witness(witness)
         check_turn_deadline(witness)
-        deferred = has_new_input(work)
+        # B5 consolidates a bounded safety case even if another message arrived.
+        # No normal output/changes may use this completion-only exception.
+        safety_completion = outcome == 'safety_handoff' and not outputs and changes is None
+        deferred = has_new_input(work) and not safety_completion
         if deferred:
             outputs = ()
             outcome = 'deferred_to_new_input'
@@ -267,6 +270,8 @@ def invalidate_ownership(conversation, *, reason):
         conversation=conversation, organization_id=conversation.organization_id,
         status__in=TurnWork.NON_TERMINAL)
     for work in work_rows:
+        from .safety_handoff import retain_interrupted_safety
+        retain_interrupted_safety(conversation, work)
         _terminal_failure(work, conversation, reason, db_now())
     discarded_pending = Message.objects.for_organization(conversation.organization_id).filter(
         conversation=conversation, direction='out', status='pending',

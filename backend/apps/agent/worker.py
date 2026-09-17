@@ -78,6 +78,11 @@ def _run_turn(witness):
         'organization', 'contact', 'channel_account').get(
             pk=witness.conversation_id, organization_id=witness.organization_id)
     turn_context = durable.context_for_work(witness)
+    from . import safety, safety_handoff
+    if safety_handoff.automation_enabled():
+        assessment = safety.assess_context(conversation, turn_context)
+        if assessment.classification != safety.NO_SIGNAL:
+            return safety_handoff.finalize_safety(witness, assessment)
     agent_settings = AgentSettings.objects.filter(
         organization_id=witness.organization_id).first()
     changes = TurnChanges(witness, conversation)
@@ -90,8 +95,7 @@ def _run_turn(witness):
             result = {'decision': 'fallback'}
     outcome = durable.finalize_turn(witness, outputs=changes.outputs, changes=changes,
                                    outcome=result.get('decision', 'completed'))
-    # Existing optional handoff alert stays outside the local transaction.
-    # It is not a durable B5 notification or proof that a human was notified.
+    # Callbacks cannot provide evidence of notification or human attention.
     for callback in changes.callbacks:
         try:
             callback()

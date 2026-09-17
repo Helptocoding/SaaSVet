@@ -378,6 +378,17 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
                     conversation.save(update_fields=['last_inbound_at', 'last_activity_at'])
                     if message.status == Message.STATUS_PENDING:
                         _extend_quiet_window(conversation, now)
+                        from .safety_handoff import receive_safety
+                        # A B5 consolidation failure must not acknowledge a lost
+                        # inbound as a duplicate. Keep reception durable for B3 retry.
+                        from django.db import DatabaseError
+                        try:
+                            with transaction.atomic():
+                                receive_safety(message)
+                        except (DatabaseError, ValidationError) as exc:
+                            logger.error('AGENT_SAFETY_RECEIVE_FALLBACK', extra={
+                                'event': 'AGENT_SAFETY_RECEIVE_FALLBACK',
+                                'error_class': type(exc).__name__})
                     break
             # A reset/close won the lock. Resolve a new episode without holding
             # the old Conversation lock while acquiring the creation mutex.
@@ -402,7 +413,7 @@ def _extend_quiet_window(conversation, now):
         conversation=conversation,
         direction=Message.DIRECTION_IN,
         status=Message.STATUS_PENDING, turn_work__isnull=True,
-    )
+    ).exclude(semantic_type=Message.SEMANTIC_SAFETY_SIGNAL)
     oldest = pending.aggregate(first=Min('created_at'))['first'] or now
     target = min(now + QUIET_WINDOW, oldest + MAX_WAIT)
     if target < now:

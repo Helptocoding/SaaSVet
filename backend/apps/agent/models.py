@@ -624,6 +624,7 @@ class HumanHandoff(OrganizationalModel):
 
     REASON_EXPLICIT = 'explicit_request'
     REASON_EMERGENCY = 'emergency'
+    REASON_SAFETY = 'safety_urgent'
     REASON_POLICY = 'policy_block'
     REASON_LOW_CONFIDENCE = 'low_confidence'
     REASON_TOOL_FAILURE = 'tool_failure'
@@ -639,6 +640,7 @@ class HumanHandoff(OrganizationalModel):
     REASON_CHOICES = (
         (REASON_EXPLICIT, 'Pidió humano'),
         (REASON_EMERGENCY, 'Urgencia'),
+        (REASON_SAFETY, 'Señal safety: revisión prioritaria'),
         (REASON_POLICY, 'Bloqueado por política'),
         (REASON_LOW_CONFIDENCE, 'Baja confianza'),
         (REASON_TOOL_FAILURE, 'Fallo de herramienta'),
@@ -669,6 +671,21 @@ class HumanHandoff(OrganizationalModel):
     )
     reason_code = models.CharField(max_length=20, choices=REASON_CHOICES)
     reason_detail = models.CharField(max_length=200, blank=True, default='')
+    # B5 evidence; NULL/empty legacy is unknown, never synthetic notification.
+    source_message = models.ForeignKey('channels.Message', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='+')
+    source_turn = models.ForeignKey('TurnWork', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='+')
+    event_key = models.CharField(max_length=64, null=True, blank=True)
+    safety_signals = models.JSONField(default=list, blank=True)
+    notification_status = models.CharField(max_length=20, null=True, blank=True,
+        choices=(('NOT_CONFIGURED', 'Sin canal secundario'),))
+    acknowledged_by = models.ForeignKey('users.User', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+')
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    guidance_message = models.ForeignKey('channels.Message', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='+')
+    guidance_epoch = models.PositiveBigIntegerField(null=True, blank=True)
     priority = models.CharField(
         max_length=8, choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL,
     )
@@ -683,6 +700,8 @@ class HumanHandoff(OrganizationalModel):
     )
 
     class Meta:
+        constraints = [models.UniqueConstraint(fields=['organization', 'event_key'],
+            condition=models.Q(event_key__isnull=False), name='handoff_unique_event')]
         indexes = [
             # Cola de pendientes por org (resolved_at IS NULL).
             models.Index(fields=['organization', 'resolved_at', 'priority']),
@@ -690,6 +709,17 @@ class HumanHandoff(OrganizationalModel):
 
     def __str__(self):
         return f"HumanHandoff<{self.reason_code} {self.priority}>"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.conversation_id and self.conversation.organization_id != self.organization_id:
+            raise ValidationError('Handoff conversation outside organization')
+        for name in ('source_message', 'source_turn', 'guidance_message'):
+            row = getattr(self, name) if getattr(self, name + '_id') else None
+            if row and (row.organization_id != self.organization_id or row.conversation_id != self.conversation_id):
+                raise ValidationError('Handoff causal reference outside conversation')
+        if self.acknowledged_by_id and self.acknowledged_by.organization_id != self.organization_id:
+            raise ValidationError('Handoff acknowledgement outside organization')
 
 
 class AgentSettings(models.Model):

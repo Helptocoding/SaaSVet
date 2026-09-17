@@ -322,7 +322,7 @@ def _handoff_payload(conversation):
     """
     handoff = (conversation.handoffs
                .filter(resolved_at__isnull=True)
-               .order_by('-id').first())
+               .order_by('-priority', '-id').first())
     if handoff is None:
         return None
     goal = goals.last_task_goal(conversation)
@@ -331,6 +331,17 @@ def _handoff_payload(conversation):
         'detail': handoff.reason_detail,
         'priority': handoff.priority,
         'opened_at': handoff.created_at,
+        'state': 'ACKNOWLEDGED' if handoff.acknowledged_at else 'QUEUED',
+        'notification_status': handoff.notification_status,
+        'acknowledged_at': handoff.acknowledged_at,
+        'acknowledged_by': str(handoff.acknowledged_by.public_id) if handoff.acknowledged_by_id else None,
+        'safety_signals': handoff.safety_signals,
+        'source_turn': handoff.source_turn_id,
+        'guidance_status': handoff.guidance_message.status if handoff.guidance_message_id else None,
+        'open_cases': [{'id': h.pk, 'reason': h.reason_code, 'priority': h.priority,
+                        'opened_at': h.created_at,
+                        'state': 'ACKNOWLEDGED' if h.acknowledged_at else 'QUEUED'}
+                       for h in conversation.handoffs.filter(resolved_at__isnull=True).order_by('id')],
         'goal': goals.describe(goal) if goal is not None else None,
     }
 
@@ -607,6 +618,8 @@ def claim_conversation(request, pk):
         convo.claimed_at = timezone.now()
         convo.state = Conversation.STATE_HUMAN_ACTIVE
         convo.save(update_fields=['claimed_by', 'claimed_at', 'state'])
+        from .safety_handoff import acknowledge
+        acknowledge(convo, request.user)
     return Response(ConversationListSerializer(convo).data)
 
 
@@ -806,7 +819,7 @@ def _thread_row(conversation, *, session_count, last_message, unanswered):
     """Proyecta la sesión VIGENTE (o la última cerrada) como fila de bandeja."""
     contact = conversation.contact
     handoff = (conversation.handoffs.filter(resolved_at__isnull=True)
-               .order_by('-id').first())
+               .order_by('-priority', '-id').first())
     archived = conversation.state == Conversation.STATE_CLOSED
     return {
         'contact_public_id': contact.public_id,

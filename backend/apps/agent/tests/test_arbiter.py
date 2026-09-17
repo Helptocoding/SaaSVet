@@ -185,7 +185,7 @@ class A5NoInternalPrecedenceTests(SimpleTestCase):
         opt-out ANTES de que ningún reto avance."""
         from apps.agent import policy
         source = inspect.getsource(policy.evaluate)
-        for guard in ('is_emergency', 'is_blocked', 'STATE_HUMAN_ACTIVE',
+        for guard in ('assessment.classification', 'is_blocked', 'STATE_HUMAN_ACTIVE',
                       'wants_optout'):
             self.assertLess(
                 source.index(guard), source.index('get_identity_commitment'),

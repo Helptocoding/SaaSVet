@@ -333,6 +333,7 @@ def suspend_pending(conversation, *, reason_code, detail='', priority='normal'):
                 reason_code=reason_code,
                 reason_detail=detail[:200],
                 priority=priority,
+                notification_status='NOT_CONFIGURED',
             )
 
         flow = convo.flow
@@ -351,7 +352,8 @@ def suspend_pending(conversation, *, reason_code, detail='', priority='normal'):
         # El acuse al cliente que insiste se rearma con cada escalada nueva.
         flow.pop('handoff_ack_sent', None)
 
-        convo.state = Conversation.STATE_HANDOFF_PENDING
+        if not convo.claimed_by_id and convo.state != Conversation.STATE_HUMAN_ACTIVE:
+            convo.state = Conversation.STATE_HANDOFF_PENDING
         save_local(convo, update_fields=['state', 'flow'])
 
     # El caller sigue trabajando sobre su instancia: se sincroniza para que no

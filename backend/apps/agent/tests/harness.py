@@ -421,3 +421,31 @@ class CriticalB4Runner(CriticalB0Runner):
             raise RuntimeError(f'Escenarios críticos B4 ausentes: {sorted(missing)}')
         self._planned_count = suite.countTestCases()
         return suite
+
+
+class CriticalB5Runner(CriticalB0Runner):
+    """B5 corpus + real process/ownership boundaries, no skips or partial pass."""
+
+    def build_suite(self, test_labels=None, **kwargs):
+        suite = DiscoverRunner.build_suite(self, test_labels, **kwargs)
+        def ids(items):
+            for case in items:
+                if hasattr(case, 'id'):
+                    yield case.id()
+                else:
+                    yield from ids(case)
+        required = {
+            'test_b5_corpus.B5CorpusTests.test_safe_02_versioned_adversarial_corpus',
+            'test_b5_processes.B5ProcessTests.test_safe_fi_01_process_killed_after_detection',
+            'test_b5_processes.B5ProcessTests.test_safe_fi_02_process_killed_after_case_before_output',
+            'test_b5_processes.B5ProcessTests.test_safe_fi_05_safety_worker_vs_human_takeover',
+            'test_b5_processes.B5ProcessTests.test_safe_dup_01_two_inbound_processes_one_handoff',
+            'test_b5_processes.B5ProcessTests.test_own_04_two_safety_workers_one_epoch_and_case',
+            'test_b5_safety.B5SafetyTests.test_safe_race_01_new_safety_fixed_membership_defers_normal',
+            'test_b5_safety.B5SafetyTests.test_safe_race_03_admitted_commercial_reality_survives',
+        }
+        missing = {'apps.agent.tests.' + name for name in required} - set(ids(suite))
+        if missing:
+            raise RuntimeError(f'Escenarios críticos B5 ausentes: {sorted(missing)}')
+        self._planned_count = suite.countTestCases()
+        return suite

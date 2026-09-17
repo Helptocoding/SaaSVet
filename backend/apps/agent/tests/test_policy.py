@@ -101,7 +101,7 @@ class PriorityOrderTests(PolicyTestCase):
         self.assertEqual(d.kind, policy.ESCALATE)
         self.assertEqual(d.handoff_reason, HumanHandoff.REASON_EMERGENCY)
         self.assertEqual(d.handoff_priority, HumanHandoff.PRIORITY_URGENT)
-        self.assertEqual(d.meta.get('handoff_detail'), 'posibles convulsiones')
+        self.assertEqual(d.meta.get('handoff_detail'), 'b5-safety-v1')
         self.assertIn("55-1234-5678", d.text)
 
     def test_emergency_escalates_leaving_pending_action_for_escalate_to_human(self):
@@ -111,7 +111,7 @@ class PriorityOrderTests(PolicyTestCase):
         dispatcher del planner tras recibir el veredicto ESCALATE."""
         self.conv.flow["pending_action"] = {"tool": "x"}
         self.conv.save()
-        d = self._eval("se está muriendo")
+        d = self._eval("está convulsionando")
         self.assertEqual(d.kind, policy.ESCALATE)
         self.conv.refresh_from_db()
         self.assertIn("pending_action", self.conv.flow)   # intacto todavía
@@ -129,7 +129,7 @@ class PriorityOrderTests(PolicyTestCase):
         """
         self.conv.flow["pending_action"] = {"tool": "create_appointment"}
         self.conv.save()
-        d = self._eval("se está muriendo")
+        d = self._eval("está convulsionando")
         policy.escalate_to_human(
             self.conv, reason_code=d.handoff_reason,
             priority=d.handoff_priority)
@@ -152,7 +152,7 @@ class PriorityOrderTests(PolicyTestCase):
         )
 
         handoff = HumanHandoff.objects.get(conversation=self.conv)
-        self.assertEqual(handoff.reason_detail, 'posibles convulsiones')
+        self.assertEqual(handoff.reason_detail, 'b5-safety-v1')
         self.assertNotIn('30 minutos', handoff.reason_detail)
 
     def test_wants_human_escalates(self):

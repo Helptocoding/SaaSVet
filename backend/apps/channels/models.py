@@ -132,11 +132,15 @@ class Message(OrganizationalModel):
     SEMANTIC_CONFIRMATION = 'confirmation'
     SEMANTIC_OPERATION_RECEIPT = 'operation_receipt'
     SEMANTIC_PROCESSING_FAILURE = 'processing_failure'
+    SEMANTIC_SAFETY_GUIDANCE = 'safety_guidance'
+    SEMANTIC_SAFETY_SIGNAL = 'safety_signal'
     SEMANTIC_CHOICES = (
         (SEMANTIC_GENERIC, 'Mensaje general'),
         (SEMANTIC_CONFIRMATION, 'Confirmación de operación'),
         (SEMANTIC_OPERATION_RECEIPT, 'Recibo de operación'),
         (SEMANTIC_PROCESSING_FAILURE, 'Fallo de procesamiento'),
+        (SEMANTIC_SAFETY_GUIDANCE, 'Guía safety limitada'),
+        (SEMANTIC_SAFETY_SIGNAL, 'Señal safety entrante'),
     )
 
     PAYLOAD_TEXT = 'text'

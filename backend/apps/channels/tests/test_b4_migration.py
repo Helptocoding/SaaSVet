@@ -10,8 +10,9 @@ class B4MigrationTests(TransactionTestCase):
         self.assertTrue(connection.settings_dict['NAME'].startswith('test_'))
         old = ('channels', '0012_b3_scope_and_membership')
         new = ('channels', '0013_b4_durable_sender')
+        latest = MigrationExecutor(connection).loader.graph.leaf_nodes()
         def restore():
-            MigrationExecutor(connection).migrate([new])
+            MigrationExecutor(connection).migrate(latest)
         self.addCleanup(restore)
         executor = MigrationExecutor(connection)
         executor.migrate([old])

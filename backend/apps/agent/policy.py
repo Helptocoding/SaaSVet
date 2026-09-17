@@ -77,6 +77,8 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
     text = turn_context.latest_text
     burst = [b for b in turn_context.texts if b]
     burst_text = turn_context.burst_text
+    from .safety import assess_context, NO_SIGNAL
+    assessment = assess_context(conversation, turn_context)
 
     # 0. Kill switch / demo → buzón pasivo (T0-DISABLED, sin LLM).
     org = conversation.organization
@@ -90,6 +92,18 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
     # 1. Contacto bloqueado → silencio (GB-10).
     if contact.is_blocked:
         return PolicyDecision(kind=SILENT, meta={'reason': 'blocked'})
+
+    # B5 safety precedes human ownership and every identity/operational gate.
+    # Worker consolidates the enabled B5 circuit before reaching this adapter.
+    if assessment.classification != NO_SIGNAL:
+        human_owned = bool(conversation.claimed_by_id or conversation.state == Conversation.STATE_HUMAN_ACTIVE)
+        return PolicyDecision(
+            kind=ESCALATE,
+            text='' if human_owned else tier0.render_emergency(agent_settings, org),
+            handoff_reason=HumanHandoff.REASON_EMERGENCY,
+            handoff_priority=HumanHandoff.PRIORITY_URGENT,
+            meta={'handoff_detail': assessment.catalog_version, 'safety_assessment': assessment},
+        )
 
     # 2. Humano ya atiende → el agente calla (spec §7.2, invariante duro).
     if conversation.state == Conversation.STATE_HUMAN_ACTIVE:
@@ -110,15 +124,6 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
     #    flujo. Un `pending_action` en curso NO se descarta aquí: la
     #    urgencia SUPLANTA (no aborta, R4/R5) — `escalate_to_human` lo
     #    suspende, nunca lo destruye (Fase 1 §1.1).
-    if matchers.is_emergency(burst_text):
-        return PolicyDecision(
-            kind=ESCALATE,
-            text=tier0.render_emergency(agent_settings, org),
-            handoff_reason=HumanHandoff.REASON_EMERGENCY,
-            handoff_priority=HumanHandoff.PRIORITY_URGENT,
-            meta={'handoff_detail': matchers.emergency_summary(burst_text)},
-        )
-
     # 4. Pide humano.
     if matchers.wants_human(burst_text):
         return PolicyDecision(
@@ -467,15 +472,8 @@ def escalate_to_human(conversation, *, reason_code, priority='normal',
     goals.close_task_commitments(
         conversation, ConversationGoal.STATUS_HANDOFF, reason_code)
 
-    # Una urgencia no puede quedarse esperando a que alguien tenga la bandeja
-    # abierta (W0-4). El aviso nunca puede tumbar el turno: se traga todo.
-    if escalated_now and priority == HumanHandoff.PRIORITY_URGENT:
-        from . import alerts
-        try:
-            after_local_commit(lambda: alerts.notify_urgent_handoff(
-                conversation, reason_code=reason_code, detail=detail))
-        except Exception:
-            logger.exception("AGENT_URGENT_ALERT_FAILED")
+    # B5: Inbox is the durable queue. A best-effort webhook is not notification
+    # evidence; external discovery requires a separate, validated E3 channel.
 
 
 NUDGE_IDLE = timedelta(minutes=60)   # silencio mínimo antes del recordatorio
@@ -553,6 +551,10 @@ def close_inactive_conversations(idle_hours=24, now=None):
         with transaction.atomic():
             conversation = Conversation.objects.select_for_update().get(pk=candidate.pk)
             if (conversation.state == Conversation.STATE_CLOSED
+                    or conversation.state in (Conversation.STATE_HUMAN_ACTIVE, Conversation.STATE_HANDOFF_PENDING)
+                    or conversation.claimed_by_id
+                    or HumanHandoff.objects.for_organization(conversation.organization_id).filter(
+                        conversation=conversation, resolved_at__isnull=True).exists()
                     or conversation.last_activity_at >= cutoff
                     or TurnWork.objects.filter(conversation=conversation,
                         status__in=TurnWork.NON_TERMINAL).exists()):

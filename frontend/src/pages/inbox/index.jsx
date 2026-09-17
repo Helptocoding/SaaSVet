@@ -227,6 +227,7 @@ const IdentityCaseBanner = ({
 const HANDOFF_REASON = {
     explicit_request: "El cliente pidió hablar con una persona.",
     emergency: "Posible urgencia clínica.",
+    safety_urgent: "Safety · Revisión urgente del equipo.",
     policy_block: "El asistente tiene prohibido resolver esto solo.",
     low_confidence: "El asistente no pudo avanzar.",
     tool_failure: "Falló una operación del sistema.",
@@ -242,7 +243,7 @@ const HANDOFF_DETAIL = {
     owner_ambiguous: "El teléfono tiene varios expedientes.",
 };
 
-const HandoffReasonBanner = ({ handoff }) => {
+export const HandoffReasonBanner = ({ handoff }) => {
     const { reason, detail, goal } = handoff;
     const headline = HANDOFF_REASON[reason] || "El asistente pasó el caso al equipo.";
     const nuance = HANDOFF_DETAIL[detail];
@@ -250,6 +251,28 @@ const HandoffReasonBanner = ({ handoff }) => {
     return (
         <div className={styles.handoffReason}>
             <strong>{headline}</strong>
+            {handoff.state && <p className={styles.handoffReasonBody}>
+                {handoff.state === "ACKNOWLEDGED" ? "Acuse explícito registrado" : "En bandeja · Pendiente de acuse"}
+                {handoff.opened_at && <> · Creado: {new Date(handoff.opened_at).toLocaleString()}</>}
+            </p>}
+            {handoff.notification_status === "NOT_CONFIGURED" && <p className={styles.handoffReasonBody}>
+                Sin canal secundario de aviso. Estar en bandeja no confirma atención.
+            </p>}
+            {handoff.open_cases?.length > 1 && <ul>
+                {handoff.open_cases.map((entry) => <li key={entry.id}>
+                    {HANDOFF_REASON[entry.reason] || entry.reason} · {entry.priority === "urgent" ? "Urgente" : "Normal"}
+                    {" · "}{entry.state === "ACKNOWLEDGED" ? "Acuse registrado" : "Pendiente de acuse"}
+                    {" · "}{new Date(entry.opened_at).toLocaleString()}
+                </li>)}
+            </ul>}
+            {handoff.guidance_status && <p className={styles.handoffReasonBody}>
+                Guía al cliente: {handoff.guidance_status === "uncertain" ? "envío incierto" :
+                    handoff.guidance_status === "failed" ? "envío fallido" :
+                    handoff.guidance_status === "discarded" ? "descartada sin envío" :
+                    handoff.guidance_status === "read" ? "leída" :
+                    handoff.guidance_status === "delivered" ? "entregada" :
+                    handoff.guidance_status === "sent" ? "aceptada por proveedor" : "pendiente de entrega"}.
+            </p>}
             {nuance && <p className={styles.handoffReasonBody}>{nuance}</p>}
             {goal?.promise && (
                 <p className={styles.handoffReasonBody}>
@@ -947,10 +970,10 @@ const Inbox = () => {
                                 </div>
                                 {canClaim && sessionId && (
                                     <div className={styles.chatActions}>
-                                        {conv?.state !== "human_active" && (
+                                        {(conv?.state !== "human_active" || thread?.handoff?.state === "QUEUED") && (
                                             <button className="btn btn-secondary btn-xs" disabled={acting}
                                                 onClick={() => runAction(claimConversation)}>
-                                                Tomar
+                                                {conv?.state === "human_active" ? "Acusar recibo" : "Tomar y acusar recibo"}
                                             </button>
                                         )}
                                         {conv?.state === "human_active" && (
@@ -992,7 +1015,7 @@ const Inbox = () => {
                             {/* Los casos de identidad ya se explican arriba, con
                                 sus acciones; este banner cubre el resto — que
                                 hasta aquí llegaba sin ninguna explicación. */}
-                            {thread?.handoff && !thread?.identity_case && (
+                            {thread?.handoff && (!thread?.identity_case || thread.handoff.priority === "urgent") && (
                                 <HandoffReasonBanner handoff={thread.handoff} />
                             )}
 
