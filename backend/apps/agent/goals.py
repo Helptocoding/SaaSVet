@@ -863,6 +863,15 @@ def capture(goal, raw_args, conversation):
     Un valor rechazado nunca se pierde en silencio: viaja al contexto para que
     el agente lo confirme o lo vuelva a pedir.
     """
+    from . import matter_binding
+    if matter_binding.metadata(goal):
+        # The model may repeat validated parameters, never replace C1 evidence
+        # or write provenance. Corrections enter through matter_resolution.
+        valid = matter_binding.values(goal)
+        rejected = {key: 'binding_evidence_required' for key, value in (raw_args or {}).items()
+                    if not key.endswith(CONFIDENCE_SUFFIX) and valid.get(key) != value}
+        return {'filled': [], 'advanced': [], 'missing': missing_slots(goal),
+                'low_confidence': [], 'rejected': rejected}
     spec = spec_for(goal.name)
     raw_args = raw_args or {}
     threshold = confidence_threshold()
@@ -923,6 +932,10 @@ def missing_slots(goal):
     spec = spec_for(goal.name)
     if spec is None:
         return []
+    from . import matter_binding
+    if matter_binding.metadata(goal):
+        valid = matter_binding.values(goal)
+        return [slot for slot in spec.required_slots if not valid.get(slot)]
     return [slot for slot in spec.required_slots
             if not (goal.slots.get(slot) or {}).get('value')]
 
@@ -933,6 +946,9 @@ def is_complete(goal):
 
 def values(goal):
     """Slots normalizados listos para la herramienta ({slot: valor})."""
+    from . import matter_binding
+    if matter_binding.metadata(goal):
+        return matter_binding.values(goal)
     return {slot: data.get('value')
             for slot, data in (goal.slots or {}).items()
             if data.get('value') not in (None, '')}
@@ -1068,6 +1084,12 @@ def context_block(conversation):
                      for slot, value in values(goal).items()},
         'me_falta': [_fact(slot) for slot in missing_slots(goal)],
     }
+    if goal.name not in IDENTITY_GOALS:
+        from . import matter_binding
+        block['ya_tengo'] = {_label(slot): value
+                            for slot, value in matter_binding.projection(conversation)['slots'].items()}
+        block['binding_revision'] = goal.binding_revision
+        block['unresolved'] = matter_binding.metadata(goal).get('unresolved', ['binding'])
     if goal.low_confidence:
         # Valores que el modelo propuso con poca seguridad: se confirman con
         # el cliente, jamás se asumen.

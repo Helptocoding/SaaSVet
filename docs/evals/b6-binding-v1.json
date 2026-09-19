@@ -1,0 +1,349 @@
+{
+  "schema": 1,
+  "version": "b6-binding-v1",
+  "cases": [
+    {
+      "id": "LUNA_MAX",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna el jueves consulta general",
+          "pet": "Luna",
+          "derive": [
+            "vaccine_facts",
+            "availability",
+            "selected_slot"
+          ]
+        },
+        {
+          "text": "Mejor para Max",
+          "pet": "Max",
+          "invalidated": [
+            "vaccine_facts",
+            "availability",
+            "selected_slot"
+          ],
+          "keep": [
+            "date",
+            "service"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DATE",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna el jueves consulta",
+          "pet": "Luna",
+          "derive": [
+            "availability",
+            "selected_slot"
+          ]
+        },
+        {
+          "text": "Perdón viernes",
+          "pet": "Luna",
+          "invalidated": [
+            "availability",
+            "selected_slot"
+          ],
+          "keep": [
+            "service"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SERVICE",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna el jueves consulta",
+          "pet": "Luna",
+          "derive": [
+            "price",
+            "availability",
+            "selected_slot"
+          ]
+        },
+        {
+          "text": "Mejor vacunación",
+          "pet": "Luna",
+          "invalidated": [
+            "price",
+            "availability",
+            "selected_slot"
+          ],
+          "keep": [
+            "date"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "APPOINTMENT_UNRESOLVED",
+      "steps": [
+        {
+          "text": "Quiero cancelar la cita de Luna",
+          "pet": "Luna",
+          "derive": [
+            "appointment_facts"
+          ]
+        },
+        {
+          "text": "Esa no la otra cita",
+          "pet": "Luna",
+          "clarify": true,
+          "invalidated": [
+            "appointment_facts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "NO_ESA",
+      "steps": [
+        {
+          "text": "Quiero reprogramar la cita de Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "No esa no",
+          "pet": "Luna",
+          "clarify": true
+        }
+      ]
+    },
+    {
+      "id": "NEGATION",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna",
+          "derive": [
+            "vaccine_facts"
+          ]
+        },
+        {
+          "text": "No es para Luna",
+          "pet": null,
+          "clarify": true,
+          "invalidated": [
+            "vaccine_facts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FORGET",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "Olvida eso",
+          "pet": null,
+          "abandoned": true
+        }
+      ]
+    },
+    {
+      "id": "SIDE_QUESTION",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "¿Cuánto cuesta la consulta?",
+          "pet": "Luna",
+          "same_revision": true
+        },
+        {
+          "text": "El viernes",
+          "pet": "Luna",
+          "keep": [
+            "date"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "COMPOUND",
+      "steps": [
+        {
+          "text": "Reprograma Luna y cancela Max",
+          "pet": null,
+          "clarify": true,
+          "no_goal": true
+        }
+      ]
+    },
+    {
+      "id": "COMPOUND_WITH_ACTIVE",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "Reprograma Luna y cancela Max",
+          "pet": "Luna",
+          "clarify": true,
+          "same_revision": true
+        }
+      ]
+    },
+    {
+      "id": "PLURAL",
+      "steps": [
+        {
+          "text": "¿Qué vacunas tienen Luna y Max?",
+          "pet": null,
+          "clarify": true
+        },
+        {
+          "text": "Agéndale una cita",
+          "pet": null,
+          "clarify": true
+        }
+      ]
+    },
+    {
+      "id": "HOMONYMS",
+      "extra_pets": [
+        "Luna"
+      ],
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": null,
+          "clarify": true
+        }
+      ]
+    },
+    {
+      "id": "PARTIAL",
+      "extra_pets": [
+        "Luna Bella"
+      ],
+      "steps": [
+        {
+          "text": "Quiero una cita para Lu",
+          "pet": null,
+          "clarify": true
+        }
+      ]
+    },
+    {
+      "id": "SOL_SOLO",
+      "extra_pets": [
+        "Sol"
+      ],
+      "steps": [
+        {
+          "text": "Solo quiero saber el precio",
+          "pet": null,
+          "no_goal": true
+        }
+      ]
+    },
+    {
+      "id": "IMMEDIATE_PRONOUN",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "¿Tiene vacunas pendientes?",
+          "pet": "Luna",
+          "same_revision": true
+        }
+      ]
+    },
+    {
+      "id": "REPLACEMENT",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna el jueves",
+          "pet": "Luna",
+          "derive": [
+            "selected_slot"
+          ]
+        },
+        {
+          "text": "Olvida eso quiero cancelar la cita de Max",
+          "pet": "Max",
+          "kind": "cancel_appointment",
+          "absent": [
+            "date",
+            "selected_slot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "UNKNOWN_PET",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "Mejor para Pepe",
+          "pet": null,
+          "clarify": true
+        }
+      ]
+    },
+    {
+      "id": "NO_ROCKY_TOBY",
+      "extra_pets": [
+        "Rocky",
+        "Toby"
+      ],
+      "steps": [
+        {
+          "text": "Quiero una cita para Rocky",
+          "pet": "Rocky"
+        },
+        {
+          "text": "No es Rocky es Toby",
+          "pet": "Toby"
+        }
+      ]
+    },
+    {
+      "id": "ACCENTS",
+      "extra_pets": [
+        "Ámbar"
+      ],
+      "steps": [
+        {
+          "text": "Quiero una cita para AMBAR",
+          "pet": "Ámbar"
+        }
+      ]
+    },
+    {
+      "id": "NO_GLOBAL_LAST_PET",
+      "steps": [
+        {
+          "text": "Quiero una cita para Luna",
+          "pet": "Luna"
+        },
+        {
+          "text": "Olvida eso",
+          "pet": null,
+          "abandoned": true
+        },
+        {
+          "text": "¿Cuándo fue su última vacuna?",
+          "pet": null,
+          "clarify": true
+        }
+      ]
+    }
+  ]
+}

@@ -479,7 +479,7 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None,
     C1 fija eventos, reloj y cursor. `burst_text`/`media_kinds` son adaptadores
     legacy sin IDs: no reconstruyen una relación con mensajes persistidos.
     """
-    from . import goals, intake, situation
+    from . import goals, intake, situation, matter_binding
     from .turn_context import context_from_inputs
     turn_context = context_from_inputs(
         conversation, turn_context=turn_context,
@@ -553,6 +553,9 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None,
     goal_block = goals.context_block(conversation)
     if goal_block:
         context['en_curso'] = goal_block
+    matter = matter_binding.projection(conversation)
+    if matter:
+        context['asunto_actual'] = matter
 
     # ── 4 · LA CLÍNICA ──────────────────────────────────────────────────────
     context['clinica'] = org.name
@@ -573,6 +576,14 @@ def assemble_messages(conversation, *, burst_text='', media_kinds=None,
         .order_by('-created_at', '-id')[:HISTORY_MESSAGE_CAP]
     )[::-1]
     history_turns = HISTORY_TURNS - bool(turn_context.events)
+    if matter:
+        floor = matter_binding.metadata(active_goal).get('history_floor_cursor')
+        # Unknown legacy bindings cannot turn historical private text into
+        # current facts. A correction preserves independent slots explicitly.
+        floor = floor or next(([e.created_at.isoformat(), e.message_id]
+                              for e in turn_context.events if e.message_id is not None), None)
+        if floor:
+            recent = [m for m in recent if [m.created_at.isoformat(), m.pk] >= floor]
     for turn in _group_into_turns(recent)[-history_turns:]:
         for message in turn:
             messages.extend(_render_message(message))

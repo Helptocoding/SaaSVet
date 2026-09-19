@@ -1358,6 +1358,10 @@ def _capture_slot_from_read(conversation, slot, value):
     La confirmación tier-2 sigue siendo la barrera real antes de escribir."""
     from . import goals
     goal = goals.get_open_goal(conversation)
+    from . import matter_binding
+    if goal is not None and matter_binding.metadata(goal):
+        # C1 supplies explicit values. READ arguments are not user evidence.
+        return
     if goal is None or slot not in (goal.missing or []):
         return
     goals.capture(goal, {slot: value}, conversation)
@@ -3306,7 +3310,7 @@ def as_openai_tools(conversation=None):
     return tools_payload
 
 
-def run_tool(name, args, *, conversation, executor, triggered_by=None):
+def run_tool(name, args, *, conversation, executor, triggered_by=None, turn_context=None):
     """Punto único de ejecución. El Policy Engine (PR-11) valida tier y
     verificación ANTES; aquí queda la defensa en profundidad."""
     spec = TOOL_SPECS.get(name)
@@ -3373,9 +3377,22 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None):
             return ToolOutcome(kind='ERROR', client_error='invalid_data')
         if name == 'get_recent_product_queries' and key == 'limit' and value < 1:
             return ToolOutcome(kind='ERROR', client_error='invalid_data')
+    from . import matter_binding
+    if turn_context is not None and name in matter_binding.PERSONAL_TOOLS:
+        # Identity may have been established by a previous tool in this same
+        # turn. Reuse the same C1, now with permitted candidates; no history query.
+        from . import matter_resolution
+        matter_resolution.process_turn(conversation, turn_context)
+    safe_args, binding_stamp, binding_error = matter_binding.guard_arguments(
+        conversation, name, args or {}, context=turn_context)
+    if binding_error:
+        return ToolOutcome(kind='ERROR', client_error=binding_error, error_kind='conflict')
     before = executor.last_execution_id
-    outcome = spec['handler'](conversation, executor, args or {},
+    outcome = spec['handler'](conversation, executor, safe_args,
                               triggered_by=triggered_by)
+    outcome = matter_binding.consume_outcome(
+        conversation, name, outcome, binding_stamp, context=turn_context,
+        tool_execution_id=executor.last_execution_id if executor.last_execution_id != before else None)
     if executor.last_execution_id != before:
         executor.record_outcome(name, outcome)
     return outcome

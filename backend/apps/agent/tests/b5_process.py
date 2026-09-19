@@ -38,6 +38,8 @@ def main():
     else:
         witness = durable.claim_turn(conv_id)
         result = {'work': witness.turn_work_id if witness else None}
+        if mode == 'assessed_run' and witness is None:
+            raise RuntimeError('Safety race requires admitted work')
         if witness:
             if mode == 'detect_crash':
                 conv = Conversation.objects.get(pk=conv_id)
@@ -51,7 +53,20 @@ def main():
                     worker._run_turn(witness)
             else:
                 try:
-                    worker._run_turn(witness)
+                    if mode == 'assessed_run':
+                        from unittest.mock import patch
+                        from apps.agent import safety_handoff
+                        finalize = safety_handoff.finalize_safety
+                        def after_assessment(*args, **kwargs):
+                            # Race publication with takeover after C1 and safety
+                            # exist, not skip_locked or pre-assessment fencing.
+                            print('B3_READY', flush=True)
+                            sys.stdin.readline()
+                            return finalize(*args, **kwargs)
+                        with patch.object(safety_handoff, 'finalize_safety', side_effect=after_assessment):
+                            worker._run_turn(witness)
+                    else:
+                        worker._run_turn(witness)
                 except durable.OwnershipLost:
                     result['fenced'] = True
     print('B3_RESULT ' + json.dumps(result), flush=True)

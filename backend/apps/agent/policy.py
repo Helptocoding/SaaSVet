@@ -189,6 +189,24 @@ def evaluate(conversation, text='', *, burst=None, payload_types=None,
             meta={'reason': 'unreadable_media'},
         )
 
+    # B6 runs after B5/human ownership and before a legacy pending can be
+    # interpreted as confirmation. Its writes share B3's local publication.
+    from . import matter_resolution
+    pending_before_binding = confirmations.get_pending(conversation)
+    binding_reply = matter_resolution.process_turn(conversation, turn_context)
+    if pending_before_binding and intake.write_is_contained(pending_before_binding.get('tool')):
+        # B6 may invalidate its arguments; that never removes B0's obligation
+        # to report that this business change still requires the human team.
+        return PolicyDecision(
+            kind=ESCALATE, text=tier0.T0_WRITE_PAUSED,
+            handoff_reason=HumanHandoff.REASON_POLICY,
+            meta={'reason': 'autonomous_writes_paused', 'detail': 'autonomous_writes_paused'},
+        )
+    if binding_reply:
+        return PolicyDecision(kind=REPLY, text=binding_reply,
+                              meta={'reason': 'matter_clarification'})
+    flow = conversation.flow
+
     # 6c. Compromiso de identidad SUSPENDIDO (R5/R8): si no hay ninguno al
     #     frente pero sí uno suspendido, se retoma antes de que los pasos
     #     normales (8/8b/8c) lo procesen — con su etapa y sus candidatos

@@ -457,6 +457,20 @@ class ConversationGoal(OrganizationalModel):
         max_length=12, choices=STATUS_CHOICES, default=STATUS_ACTIVE,
     )
     slots = models.JSONField(default=dict, blank=True)
+    # B6 semantic generation belongs to this matter, not to identity/ownership.
+    binding_revision = models.PositiveBigIntegerField(default=0)
+    bound_owner = models.ForeignKey(
+        'patients.Owner', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    bound_pet = models.ForeignKey(
+        'patients.Pet', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    bound_appointment = models.ForeignKey(
+        'appointments.Appointment', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='+',
+    )
     missing = models.JSONField(default=list, blank=True)
     # Valores propuestos por debajo del umbral de confianza: se confirman con
     # el cliente, jamás se dan por buenos.

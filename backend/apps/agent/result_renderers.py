@@ -115,6 +115,8 @@ def render_read(tool, outcome, context):
             'need_date': 'Indícame el día y la hora que quieres consultar.',
             'bad_date': 'Necesito una fecha y hora válidas para consultar la agenda.',
             'past_date': 'Esa fecha ya pasó; indícame una fecha futura para consultar disponibilidad.',
+            'binding_required': 'Necesito identificar la mascota o cita de este asunto antes de consultar sus datos.',
+            'stale_binding': 'Necesito volver a consultar los datos de este asunto.',
         }.get(outcome.client_error, UNKNOWN)
     if outcome.kind != 'READ' or not outcome.validated or not in_scope(outcome, context):
         return UNKNOWN

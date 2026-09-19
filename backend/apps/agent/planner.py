@@ -153,6 +153,14 @@ def _settle_commitment(conversation, result, turn_context):
             goal_advanced=bool(result.get('goal_advanced')),
             other_goal_proposed=result.get('other_goal_proposed', ''),
         )
+        from . import matter_binding
+        binding_state = matter_binding.metadata(commitment) if commitment else {}
+        if (binding_state.get('last_change_is_correction') and
+                binding_state.get('last_event_id') in turn_context.inbound_ids):
+            # B6 already applied corrections/abandonment from fixed C1 events.
+            # A negated entity is not a second instruction to abandon the goal.
+            from dataclasses import replace
+            facts = replace(facts, client_declined=False)
         verdict = arbiter.decide(facts, view)
         _apply_verdict(conversation, verdict,
                        supplanted_by=result.get('other_goal_proposed', ''))
@@ -453,6 +461,12 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
     max_tools = getattr(settings, 'AGENT_MAX_TOOLS_PER_TURN', 5)
 
     for step in range(max_tools + 2):
+        from . import matter_binding
+        if any(not matter_binding.outcome_current(conversation, typed)
+               for typed in typed_outcomes.values()):
+            enqueue_outbound(conversation, 'Necesito volver a consultar los datos de este asunto.',
+                             author='system')
+            return {'decision': 'binding_stale', 'llm_calls': llm_calls, 'tools': tool_calls}
         messages = base_messages + turn_messages
         if correction:
             messages = messages + [{
@@ -523,6 +537,10 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             if guards.check_containment(text) != 'medical_advice' and typed_outcomes:
                 rendered = []
                 for tool_name, typed in typed_outcomes.items():
+                    from . import matter_binding
+                    if not matter_binding.outcome_current(conversation, typed):
+                        rendered.append('Necesito volver a consultar los datos de este asunto.')
+                        continue
                     if tool_name == 'list_my_pets' and any(
                             name in typed_outcomes for name in ('get_appointments', 'get_vaccine_status')):
                         continue
@@ -707,6 +725,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
             result.tool_name, result.tool_args,
             conversation=conversation, executor=executor,
             triggered_by=triggered_by,
+            turn_context=turn_context,
         )
         if (result.tool_name in result_renderers.PROTECTED_READS
                 or result.tool_name == 'request_human'):

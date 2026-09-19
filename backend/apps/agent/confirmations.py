@@ -104,6 +104,10 @@ def stage_pending(conversation, *, tool, args, paraphrase):
         'proposed_at': timezone.now().isoformat(),
         'expires_at': (timezone.now() + PENDING_TTL).isoformat(),
     }
+    from . import matter_binding
+    goal = matter_binding.current_goal(conversation)
+    if goal and matter_binding.metadata(goal):
+        flow['pending_action']['binding'] = matter_binding.snapshot(goal)
     conversation.flow = flow
     save_local(conversation, update_fields=['flow'])
     return paraphrase
@@ -148,9 +152,21 @@ def bind_pending_message(conversation, message_id):
     save_local(conversation, update_fields=['flow'])
 
 
+def binding_is_current(conversation, pending):
+    """B6 semantic precondition, independent of the legacy delivery evidence."""
+    from . import matter_binding
+    goal = matter_binding.current_goal(conversation)
+    return bool(goal and matter_binding.metadata(goal)
+                and (pending or {}).get('binding') == matter_binding.snapshot(goal)
+                and matter_binding.projection(conversation)['bindings']['owner']
+                and not matter_binding.projection(conversation)['unresolved'])
+
+
 def is_confirmable(conversation, pending):
     """True solo si el cliente recibió una propuesta tipada y vigente."""
     from apps.channels.models import Message
+    if not binding_is_current(conversation, pending):
+        return False
 
     proposal_id = str((pending or {}).get('proposal_id') or '')
     message_id = (pending or {}).get('proposal_message_id')

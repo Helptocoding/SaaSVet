@@ -187,10 +187,22 @@ def legacy_write_component(target):
 
     Opt-in explícito por clase/método para conservar pruebas de precondiciones,
     slots y handlers mientras el release deniega WRITE. Solo sustituye la
-    frontera temporal B0; mantiene identidad, permisos y validaciones internas.
+    frontera temporal B0 y la precondición B6 para fixtures SIN versión de
+    binding; mantiene identidad, permisos y validaciones internas. Los casos
+    B6 no usan este decorador y ejercitan ambas fronteras de producción.
     No es un flag de aplicación ni afecta tests que no llevan este decorador.
     El corpus crítico debe ejecutarse sin esta sustitución.
     """
+    from apps.agent import confirmations, matter_binding
+    binding_check = confirmations.binding_is_current
+
+    def component_binding_check(conversation, pending):
+        goal = matter_binding.current_goal(conversation)
+        if ((pending or {}).get('binding') or (goal and
+                (goal.working_state or {}).get('binding'))):
+            return binding_check(conversation, pending)
+        return True
+
     if isinstance(target, type):
         setup = target.setUp
 
@@ -199,6 +211,10 @@ def legacy_write_component(target):
             boundary = patch('apps.agent.intake.CONTAINED_WRITES', frozenset())
             boundary.start()
             self.addCleanup(boundary.stop)
+            semantic_boundary = patch('apps.agent.confirmations.binding_is_current',
+                                      side_effect=component_binding_check)
+            semantic_boundary.start()
+            self.addCleanup(semantic_boundary.stop)
             setup(self)
 
         target.setUp = component_setup
@@ -206,7 +222,9 @@ def legacy_write_component(target):
 
     @wraps(target)
     def component_test(*args, **kwargs):
-        with patch('apps.agent.intake.CONTAINED_WRITES', frozenset()):
+        with patch('apps.agent.intake.CONTAINED_WRITES', frozenset()), patch(
+                'apps.agent.confirmations.binding_is_current',
+                side_effect=component_binding_check):
             return target(*args, **kwargs)
 
     return tag('legacy_write_component')(component_test)
@@ -447,5 +465,34 @@ class CriticalB5Runner(CriticalB0Runner):
         missing = {'apps.agent.tests.' + name for name in required} - set(ids(suite))
         if missing:
             raise RuntimeError(f'Escenarios críticos B5 ausentes: {sorted(missing)}')
+        self._planned_count = suite.countTestCases()
+        return suite
+
+
+class CriticalB6Runner(CriticalB0Runner):
+    """B6 requires corpus, actual process CAS/crashes and no skips/xfail."""
+
+    def build_suite(self, test_labels=None, **kwargs):
+        suite = DiscoverRunner.build_suite(self, test_labels, **kwargs)
+        def ids(items):
+            for case in items:
+                if hasattr(case, 'id'):
+                    yield case.id()
+                else:
+                    yield from ids(case)
+        required = {
+            'test_b6_corpus.B6CorpusTests.test_versioned_multi_turn_corpus',
+            'test_b6_processes.B6ProcessTests.test_race_02_two_processes_one_revision_winner',
+            'test_b6_processes.B6ProcessTests.test_fi_01_process_killed_before_commit_no_partial_invalidation',
+            'test_b6_processes.B6ProcessTests.test_fi_02_process_killed_after_commit_recovery_complete',
+            'test_b6_binding.B6BindingTests.test_bind_01_pet_correction_selective',
+            'test_b6_binding.B6BindingTests.test_bind_03_appointment_correction_and_pending',
+            'test_b6_binding.B6BindingTests.test_bind_05_late_outcome_cannot_revive',
+            'test_b6_binding.B6BindingTests.test_fi_01_and_05_db_failure_rolls_back_revision_and_pending',
+            'test_b6_binding.B6BindingTests.test_race_01_new_inbound_defers_b3_output',
+        }
+        missing = {'apps.agent.tests.' + name for name in required} - set(ids(suite))
+        if missing:
+            raise RuntimeError(f'Escenarios críticos B6 ausentes: {sorted(missing)}')
         self._planned_count = suite.countTestCases()
         return suite

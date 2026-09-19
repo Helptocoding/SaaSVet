@@ -36,6 +36,7 @@ class TurnChanges:
         self.executions = {}
         self.goals = list(ConversationGoal.objects.for_organization(witness.organization_id)
                           .filter(conversation_id=witness.conversation_id).order_by('id'))
+        self.binding_revisions = {g.pk: g.binding_revision for g in self.goals}
         self.handoffs = list(HumanHandoff.objects.for_organization(witness.organization_id)
                             .filter(conversation_id=witness.conversation_id,
                                     resolved_at__isnull=True).order_by('id'))
@@ -97,6 +98,14 @@ class TurnChanges:
         if not connection.in_atomic_block:
             raise RuntimeError('B3 flush requires the final transaction')
         lock_witness(self.witness)
+        # B6 corrections outside this attempt must not be overwritten by a
+        # recovered/stale in-memory goal. Locks follow Conversation/TurnWork.
+        from .models import ConversationGoal
+        from .matter_binding import BindingConflict
+        for goal in ConversationGoal.objects.select_for_update().filter(
+                pk__in=self.binding_revisions).order_by('pk'):
+            if goal.binding_revision != self.binding_revisions[goal.pk]:
+                raise BindingConflict('B6 staged revision changed before publication')
         for model, values, new, fields in self.actions:
             values = dict(values)
             if deferred and model.__name__ == 'ContactIdentity':

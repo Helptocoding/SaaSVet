@@ -77,8 +77,10 @@ class B5ProcessTests(TransactionTestCase):
 
     def test_safe_fi_05_safety_worker_vs_human_takeover(self):
         self.prepare()
-        processes = [self.start('run'), self.start('takeover')]
+        processes = [self.start('assessed_run'), self.start('takeover')]
         for p in processes: self.ready(p)
+        processes[0].stdin.write('claim\n'); processes[0].stdin.flush()
+        self.ready(processes[0])  # C1/safety produced before racing publication and takeover
         for p in processes: p.stdin.write('go\n'); p.stdin.flush()
         for p in processes: self.result(p)
         self.conv.refresh_from_db()
