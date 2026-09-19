@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-17**. Estado: **B0–B5 cerradas técnicamente; B6–B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-18**. Estado: **B0–B6 cerradas técnicamente; B7–B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -528,6 +528,14 @@ Ubicación: `test_policy.py`, `test_matchers.py`, `test_tier0.py`, `test_w0_hard
 
 ### Fase B6 — Binding e invalidación de un asunto
 
+**COMPLETED técnico beta B6 (2026-09-18).** Implementación `dded2f718ec65fff0ae4fb7a8399e59d01e40fa5`. 936 tests backend únicos verdes; corpus 20 conversaciones/37 turnos, bindings 37/37, aclaraciones 35/35, invalidaciones 10/10; stale reuse=0, matter mixing=0. Sin skips/xfail. H12 cerrado para beta; H13 parcial. WRITE cerrado, sin deploy ni B7+. Contrato congelado en
+[matter/binding B6](contrato-matter-binding-b6md), decisión en
+[ADR B6](decisions/2026-09-17-b6-matter-entity-bindingmd).
+La evidencia y estado final se registran en
+[acta B6](implementacion-b6-agente-whatsapp-2026-09-17md).
+No se modifica el alcance de B7A ni se abre WRITE. Baseline exacto
+`ec19bfca6669df92d54a288236faedeadc3ca575`.
+
 **Objetivo.** Corregir mascota/fecha/acción sin heredar derivados, antes de habilitar cualquier WRITE. No habilitar múltiples goals suspendidos.
 
 **Hallazgos:** H12 mitigación básica, H01/H13. **Invariantes:** I02/I12/I13/I14. **Dependencias:** B1. **Actual → objetivo:** slots y foco pueden mezclar datos; un goal existente conserva entidad y procedencia explícitas, con invalidación cerrada y sin nuevo workflow.
@@ -1020,8 +1028,8 @@ Ningún hallazgo se declara corregido por este plan. “Fase” indica dónde se
 | H09 | CR1 | Matriz de sensibilidad/efecto; READ pública y humano fuera de intake | B0/B2; E1 mejora continuidad | intake, tools catálogo/dispatch, policy | BASE-01, CTX-06, SEC-02 | Unknown obtiene READ pública y humano sin onboarding ni acceso personal; catálogo/dispatch deniegan WRITE no adaptado |
 | H10 | CR4 | Sobre de turno único antes de wrapper/arbiter | B1; integración de C1 con B3 | worker, planner, TurnContext propuesto, TurnFacts | CTX-01 | Ráfaga real idéntica para consumidores; arbiter conserva DTO acotado |
 | H11 | CR4 | Cursor/IDs actuales excluidos de historia, no estado técnico | B1; E1 referencias más amplias | prompts, channels selectors, TurnContext | CTX-01 | Primer contacto sin pasado inventado; historia anterior real/permitida independiente de status técnico |
-| H12 | CR4 | Binding/invalidation básicos primero; instancias y varios suspendidos solo E2 | B6 mitigación obligatoria; E2 cierre multi-goal | ConversationGoal, goals, tools, arbiter, confirmations | CTX-03/04/07 | B6 impide herencia con correcciones; E2 separa tres asuntos y conserva pendientes. Hasta E2 multi-asunto supervisado sin pérdida silenciosa |
-| H13 | CR1/CR4 | Vista mínima de referencia y aclaración tipada sin consentimiento heredado | E1; integración con B7/B8 de agenda | operation_authorization, prompts, planner, mechanism_state | CTX-05/06, EVAL-REF | Referencia resuelta/aclarada/derivada según escenario; flujo de escritura completo exige nueva autorización y entidad correcta |
+| H12 | CR4 | Binding/invalidation de una instancia con un frente | Cierre técnico beta B6; multi-goal avanzado sigue en E2 | ConversationGoal, matter_binding, matter_resolution, goals, planner, confirmations | BIND/MATTER/AMB/PROV/B6-RACE/FI | Correcciones invalidan dependencias; ambiguity y compuestos aclaran; cero stale reuse/mezcla en corpus. E2 no implementado |
+| H13 | CR1/CR4 | B6 mitiga contexto/binding, referencia inmediata y stale; no cierra autorización/referencia general | Pendiente B7/E1; integración futura B8 | matter_binding, prompts, planner, confirmations | AMB/PROV/stale B6; CTX-05/06, EVAL-REF pendientes ampliación | H13 no cerrado: B6 no resuelve referencias históricas/ordinales ni consentimiento |
 | H14 | CR2 | Esquema por endpoint, completitud/cursor/filtros y error distinto de vacío | B2; E1 filtros adicionales si se requieren | executor, ToolOutcome, tools, APIs de citas/pets | RESULT-02 | Empty completo distinto de truncated/malformed/forbidden/conflict/transport; recuperación disponible o límite explícito |
 | H15 | CR4/CR5 | Evento preserva caption, tipo, reply/action ID; limitación multimedia visible | B1/B5 | channels views/metadata, TurnContext, policy | CHANNEL-01, SAFE-03 | Caption en safety y reply/action preservados; limitación multimedia transparente |
 | H16 | CR6 | Harness por eventos y semántica de métricas/gates por artefacto | B0/B3/B4/B8 incremental; B9 gate | harness, eval commands, metrics, CI | EVAL-01/02 y corpus crítico | E2E usa fronteras reales; queued no delivery; fallo crítico/skip bloquea promoción aplicable |
@@ -1265,6 +1273,6 @@ real pendiente. H04: se separan cola, notificación, acuse y atención; copy
 limitado al hecho durable. No declarar sensibilidad clínica ni personal presente.
 Activación **PENDING_ACTIVATION_REQUIREMENTS**; siguen pendientes clínicas piloto,
 owners Inbox/veterinario-safety/privacidad, canal alternativo validado y revisión
-veterinaria de corpus/protocolo. WRITE autónomo sigue cerrado. B6+ no implementado.
+veterinaria de corpus/protocolo. WRITE autónomo sigue cerrado. En este corte histórico B5, B6+ aún no estaba implementado; el cierre B6 posterior consta en su sección y acta.
 
 **COMPLETED en alcance técnico B5 (2026-09-17).** Implementación `5db10495449511ae1985d311d2fae62b062baf75`. Aceptación: 926 tests únicos (877 backend + 49 frontend), 0 fallos/errores/skips/xfail; corpus 125, TP=53/FN=0/TN=72/FP=0, críticos 47/47. H03 mitigado para corpus implementado y H04 cerrado técnicamente por separación de evidencia. VETERINARY_REVIEW_REQUIRED; PENDING_ACTIVATION_REQUIREMENTS; WRITE cerrado. Sin deploy ni B6–B9/E/P. Ver acta para límites, migraciones, races y rollback.

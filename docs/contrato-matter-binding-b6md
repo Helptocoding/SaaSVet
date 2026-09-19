@@ -1,0 +1,59 @@
+# Contrato B6 — un asunto, binding y procedencia
+
+Baseline: `ec19bfca6669df92d54a288236faedeadc3ca575`. Contrato v1.
+Estado de implementación y evidencia en el acta B6. WRITE autónomo cerrado.
+
+`ConversationGoal` representa la instancia de asunto. Conserva su ciclo de
+vida y unicidad de frente. Añade `bound_owner`, `bound_pet`,
+`bound_appointment` nullable y `binding_revision` monotónica, independiente
+de ownership e identidad. No se crea ConversationOperation ni otra cola.
+
+La metadata `working_state.binding` tiene schema 1: revisiones por dependencia,
+fuentes de bindings, campos sin resolver, límite causal de contexto e
+invalidaciones acotadas sin valores privados. Cada slot válido conserva
+provenance schema 1, tipo USER_EXPLICIT/USER_CORRECTION/TOOL_RESULT/DERIVED/
+SYSTEM_DEFAULT, Message del TurnContext, anchor del turno, TurnWork si existe,
+revisión de cálculo, revisión validada, scope y snapshot de dependencias.
+TOOL_RESULT conserva además nombre de tool, ID de ToolExecution cuando hubo
+ejecución y observed_at del resultado. Una lectura compuesta conserva su
+resultado agregado y el último ID de ejecución; no se crea otro ledger.
+El LLM no puede escribir esta metadata ni asignar identidad por ID.
+
+Mapa pequeño server-side: owner invalida pet/appointment y READs personales;
+pet invalida appointment, hechos privados, disponibilidad dependiente y
+selección; date/service invalidan disponibilidad/selección y facts dependientes;
+appointment invalida facts y parámetros derivados de esa cita. Fecha/servicio
+explícitos independientes sobreviven. Ningún valor sin procedencia se promueve.
+
+Correcciones atómicas bajo Conversation → Goal y revisión esperada. En B3 se
+preparan en TurnChanges y se validan al consolidar bajo los locks existentes;
+no se mantiene transacción durante LLM/HTTP. La revisión, invalidación y retiro
+de pending legacy se confirman juntos. Dos revisiones concurrentes no ganan.
+
+El matching de mascota usa nombres normalizados completos, tokens y contexto,
+únicamente candidatos del owner verificado y tenant actual. Homónimos, plurales,
+negación sin reemplazo y referencias no inmediatas exigen aclaración. No hay
+fuzzy matching ni resolución histórica E1. Una READ pública incidental conserva
+el asunto. Una sustitución explícita abandona el anterior; «olvida eso» abandona
+el contexto, nunca cancela una cita de negocio. Los inputs compuestos se aclaran
+antes de mezclar slots. No hay scheduler ni pila multigoal E2.
+
+Los resultados B2 conservan ToolOutcome, con snapshot B6 en scope. Se valida
+antes de HTTP y nuevamente antes de consumir/renderizar. Un resultado tardío
+no revive candidatos ni slots. El planner recibe solo proyección vigente; el
+historial privado anterior al cambio no sirve como cache de hechos.
+El corte usa `(created_at, id)` de C1. Se vuelve a comprobar el snapshot antes
+de otra llamada al modelo, además de la validación de publicación B3.
+
+Safety B5 y ownership humano preceden B6. TurnContext B1 es la única evidencia
+causal. B3 conserva membership/deferred_to_new_input; B4 no cambia.
+Legacy es legible pero unknown: recapturar antes de continuación sensible.
+Antes de verificar identidad se mantiene su flujo existente; no se enumeran
+candidatos ni se fabrica binding. Un READ público no necesita mascota. El plural
+personal ambiguo se aclara conservadoramente, sin promoverlo a binding singular.
+Un pending sin snapshot B6 no es confirmable, aunque tenga mensaje legacy.
+
+B7A podrá consumir goal, bindings, parámetros válidos, revisión y provenance.
+B6 no acredita autorización. H13 sigue abierto para B7/E1; multigoal avanzado
+sigue fuera. Deploy/rollback mantiene containment y preserva evidencia; nunca
+reactivar derivados obsoletos ni reinterpretar metadata nueva como slots legacy.

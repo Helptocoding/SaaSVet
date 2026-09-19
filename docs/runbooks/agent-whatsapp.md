@@ -245,7 +245,7 @@ Umbrales de atención: latencia p95 > 30 s · handoff > 40 % · repregunta > 20 
 | Conversación atascada sin procesarse | TurnWork PROCESSING con worker muerto | Lease DB de 15 min; polling recupera el mismo trabajo. No modificar processing_until para reclamar |
 | `AGENT_URGENT_HANDOFF` con `alert_delivered: false` | `DISCORD_WEBHOOK_URL` sin configurar o webhook caído | Configurar la variable; el evento igual queda en el log estructurado |
 | El agente tarda ~10 s en responder | Esperado (W1-4): la ventana silenciosa de 8 s agrupa la ráfaga del cliente en un solo turno. Tope duro 25 s | Solo investigar si supera los 30 s |
-| `AGENT_TURN_DEFERRED_TO_NEW_INPUT` | Llegó input posterior durante W1 | W1 completa sin outbound; nuevo input queda para W2. No reiniciar W1 ni interpretar cortesías/correcciones antes de B6 |
+| `AGENT_TURN_DEFERRED_TO_NEW_INPUT` | Llegó input posterior durante W1 | W1 completa sin outbound; nuevo input queda para W2. No reiniciar W1; B6 interpreta la corrección únicamente dentro del C1 de W2 |
 | `AGENT_OUTPUT_GUARD` con `action: blocked` | El modelo insistió en un precio inventado, un consejo médico o una promesa: **no se envió** y escaló | Revisar la conversación y el prompt. Un pico ⇒ regresión de calidad del proveedor |
 | `AGENT_COMMIT_REJECTED` | El dominio rechazó la escritura por datos inválidos (ya no se disfraza de "se ocupó el horario") | El `detail` del log trae el mensaje real del serializer |
 | Conversación en org equivocada | NUNCA debe pasar (unique global + guard R1) | Incidente crítico: parar worker, auditar `ChannelAccount`, avisar |
@@ -377,3 +377,27 @@ Preservar HumanHandoff, Messages, TurnWork, epochs, FKs, fuentes y acuses. No
 resolver casos por rollback, no bajar epochs, no resetear UNCERTAIN ni reenviar
 automáticamente. Conservar lector compatible para atención manual. El flag
 detiene nuevos automatismos; para detener pendientes usar además pausa sender.
+
+## B6 — cutover y rollback de binding
+
+Sin despliegue automático. Mantener containment B0 y WRITE cerrado; activación
+PENDING_ACTIVATION_REQUIREMENTS y revisión veterinaria B5 pendiente.
+
+1. Detener consumidores durante el cambio de versión según B3/B4 existentes.
+2. Aplicar agent.0024_matter_binding_b6 antes de iniciar lectores B6.
+3. Verificar showmigrations agent; no backfill de entidades/provenance legacy.
+4. Iniciar código compatible. Goals antiguos son legibles pero no confiables
+   para continuación sensible: recapturar binding desde C1 y candidatos permitidos.
+5. Observar eventos AGENT_B6_MATTER_STARTED/REPLACED/ABANDONED,
+   BINDING_CHANGED/UNRESOLVED, STALE_SLOT_REJECTED, INVALIDATION_COUNT,
+   CLARIFICATION_REQUIRED, AMBIGUOUS_ENTITY y LEGACY_BINDING_REJECTED.
+   Los campos de logs B6 no incluyen nombres, IDs de entidades, teléfono o texto.
+6. Confirmar WRITE cerrado, B3 defer ante nuevo inbound, B5 precedencia/humano y
+   exclusión de hechos viejos al corregir. No habilitar B7–B9 como parte del cambio.
+
+Rollback conserva columnas, revisión, provenance, invalidaciones y mensajes;
+no revertir la migración para volver al lector anterior. Mantener containment y
+detener progresión automática: abandonar/reaclarar goals creados por B6 antes de
+retomar con código legacy. Nunca repoblar slots desde flow/handles ni reactivar
+pending retirado. La reversión de schema solo se ejercita sobre fixtures de test,
+no es procedimiento de producción. No nueva infraestructura ni colas.

@@ -1,0 +1,260 @@
+# Acta B6 — single-matter, entity binding, provenance e invalidación
+
+Inicio documental: 2026-09-17. Cierre de ejecución: 2026-09-18.
+Estado: **COMPLETED en alcance técnico B6 beta**.
+Baseline exacto: `ec19bfca6669df92d54a288236faedeadc3ca575`.
+Implementación B5 de referencia: `5db10495449511ae1985d311d2fae62b062baf75`.
+
+Commit de implementación: `dded2f718ec65fff0ae4fb7a8399e59d01e40fa5`. El commit final
+documental es el que incorpora esta acta y la evidencia de aceptación: se obtiene
+con `git log -1 --format=%H -- docs/evals/b6-acceptance-results.json`; su hash
+exacto se comunica también en la entrega. Esta referencia evita intentar incluir
+el hash de un commit dentro de su propio contenido.
+
+## Alcance y representación
+
+Solo B6. No hubo reauditoría H01–H20, cambios de UI, despliegue ni infraestructura.
+WRITE autónomo permanece cerrado, containment B0 activo, activación
+`PENDING_ACTIVATION_REQUIREMENTS` y B5 `VETERINARY_REVIEW_REQUIRED`.
+No ConversationOperation, operation_key nuevo, consent state, execution state,
+ledger de propuestas, autorización B7, referencia histórica E1 ni multi-goal E2.
+Los campos legacy preexistentes no constituyen una implementación de B7.
+
+Se reutiliza `ConversationGoal`: una fila representa la instancia de asunto,
+su kind y ciclo de vida. Se conservan los constraints de un frente y suspendidos
+existentes; no se añade scheduler, cola de goals ni grafo de dependencias.
+Los READ personales pueden tener un goal `read_vaccines`/`read_appointments`;
+las preguntas públicas incidentales no abren otra operación.
+
+`binding_revision` vive en el goal, es monotónica y empieza en 0 para legacy.
+No se confunde con `ownership_epoch` ni con evidencia/revisión de identidad.
+Cada cambio efectivo o paso a unresolved incrementa la revisión. Una relectura
+idéntica de C1 no incrementa artificialmente el contador. Cambio de matter abre
+otra instancia; no copia el JSON de slots de la anterior.
+
+Los bindings soportados son owner/contact, pet y appointment. Organization y
+conversation/contact forman parte de todos los snapshots. Las FKs
+`bound_owner`, `bound_pet`, `bound_appointment` son nullable y SET_NULL.
+Resolver pet exige identidad vigente, pertenencia al owner y tenant; una cita
+exige además pet compatible y evidencia de `get_appointments` bajo el binding
+actual. Un ID o handle por sí solo no acredita binding.
+
+## Persistencia, procedencia e invalidación
+
+Migración aditiva **agent.0024_matter_binding_b6**: cuatro columnas, sin tablas
+nuevas, sin modificar dominio clínico y sin backfill de evidencia. El test de
+migración recorre 0023→0024 y comprueba slots originales, revision=0 y FKs null.
+
+`working_state.binding` usa schema 1: revisiones acotadas por dependencia,
+fuentes de entidades, unresolved, último evento/cursor causal, límite de historial
+e invalidaciones diagnósticas acotadas a 16 entradas. Los slots usan status y
+provenance schema 1. El lector valida estructura y scope; los escritores son
+server-side, nunca JSON libre del modelo.
+
+Fuentes: USER_EXPLICIT, USER_CORRECTION, TOOL_RESULT, DERIVED y SYSTEM_DEFAULT.
+Cada fuente contiene Message/event real de C1, anchor del turno, TurnWork si
+existe, revisión de cálculo y validada, bindings de origen y snapshot de
+dependencias. TOOL_RESULT añade tool, ToolExecution cuando existe y observed_at.
+Las lecturas agregadas conservan el resultado compuesto y el último ID de
+ejecución; no se añade persistencia por resultado ni event sourcing.
+Owner usa DERIVED/current_verified_contact: no se inventa una afirmación del usuario.
+
+| Cambio | Dependencias retiradas de la proyección |
+|---|---|
+| owner | pet, appointment, handles, candidatos, hechos personales, disponibilidad y selección |
+| pet | appointment, handles dependientes, candidatos, hechos privados/vacunas, disponibilidad y selección |
+| appointment | handle/facts de cita, disponibilidad, selección y cualquier slot que declare esa dependencia |
+| date | disponibilidad y selección |
+| time | selección |
+| service/reason | disponibilidad, selección, precio y facts de servicio |
+
+`DEPENDENCY_RULES` y `SLOT_DEPENDENCIES` son mapas pequeños explícitos. Fecha,
+hora y servicio suministrados independientemente sobreviven a cambios ajenos.
+Un derivado puede conservar su revisión de cálculo si se revalida explícitamente
+que ninguna dependencia cambió; no se finge una observación nueva.
+Valores invalidados conservan diagnóstico en DB, pero no alimentan planner/tools.
+
+Luna→Max cambia pet, incrementa revisión, retira candidatos de Luna, hechos
+privados y derivados dependientes, e invalida pending legacy. Conserva fecha y
+servicio explícitos independientes. Corregir jueves→viernes conserva pet/service
+y retira disponibilidad/selección de jueves. Cambiar servicio retira precio y
+disponibilidad del servicio anterior. Appointment A→B conserva identidad global
+y retira hechos/parámetros derivados de A.
+
+## Conversación y límites lingüísticos
+
+Matching exacto normalizado por case/acentos/espacios/puntuación, con límites de
+token/frase y candidatos permitidos. No fuzzy matching agresivo ni `last_pet`
+como autoridad. Homónimos, nickname/parcial y negación sin reemplazo aclaran.
+«Solo» no coincide con mascota «Sol». «No es Rocky es Toby» reemplaza; «no es
+Luna» retira Luna sin adivinar Max. Dentro de C1 manda el evento explícito más
+reciente en orden `(created_at, id)`, no voto ni confianza LLM.
+
+Un compuesto de operaciones distintas, o dos solicitudes operativas de la misma
+clase para mascotas distintas dentro de C1, pide priorizar antes de aplicar
+slots. No crea dos operaciones/autorizaciones. Una corrección explícita posterior
+como «mejor Max» sí sustituye el binding. No se crea cola general multi-goal.
+
+Una pregunta pública compatible conserva matter y binding, sin exigir mascota
+para precio/horario general. Replacement abandona el goal anterior, retira pending
+y abre una instancia sin herencia sintética. «Olvida eso» abandona el asunto
+conversacional y dice explícitamente que no canceló ninguna cita de negocio.
+La negación de entidad no se convierte en ABORT del goal en el árbitro legacy.
+
+Referencias admitidas: binding activo, continuación inmediata no ambigua y
+corrección explícita. Un único candidato actual permite «esa»; varios candidatos,
+«la otra», ordinales o referencias históricas requieren aclaración/reconsulta.
+Las consultas personales plurales ambiguas se aclaran conservadoramente; no se
+promueven a un binding singular para una operación posterior. Eso no implementa E1/E2.
+
+Antes de verificar identidad se conserva su challenge existente y no se enumeran
+mascotas. El LLM puede solicitar READ/redactar dentro de B2; no determina IDs,
+provenance, revisión ni invalidación. `goals.capture` rechaza sustituir slots B6
+con argumentos sin evidencia C1. Los constructores de argumentos revalidan tenant,
+owner/pet y parámetros activos antes de ejecutar la consulta.
+
+## Fronteras B1–B5, resultados y legacy
+
+B1 es la fuente causal única: `messages_for_turn` valida membership y cada source
+apunta a un evento real. No se reconstruye un turno consultando historia paralela.
+El planner recibe kind, bindings, slots válidos, unresolved y revisión. Tras una
+corrección se corta historia previa usando el cursor causal; los datos explícitos
+independientes conservados se proyectan aparte. La DB histórica no se borra.
+
+B2 conserva ToolOutcome. Su scope lleva el snapshot B6 de la consulta. Se valida
+al construir argumentos, al consumir, antes de otro LLM y al renderizar. Resultados
+con revisión vieja o scope incompatible devuelven error/aclaración y no pueden
+revivir slots. El timeout conserva el binding y su procedencia.
+
+Las correcciones directas usan una transacción corta Conversation→Goal, lock y
+revision esperada. B3 conserva TurnWork, membership, lease/recovery, fencing y
+publicación local. TurnChanges prepara en memoria y vuelve a comparar las
+revisiones bajo Conversation→TurnWork→Goal al publicar. Cambio, incremento,
+invalidación y supersede de pending están en el mismo commit. No LLM/HTTP dentro
+de la transacción. Nuevo input durante planning conserva `deferred_to_new_input`:
+W1 completa sin publicar salida sensible; W2 aplica su corrección, sin reiniciar W1.
+
+B4 no cambió: no se redefinió ningún estado ni el sender. B5 safety/humano se
+evalúan antes de B6. Una emergencia no espera resolver pet. Human ownership no
+permite progresión automática; safety conserva sus propias reglas de caso/guía.
+
+Legacy no recibe bindings sintéticos. Raw slots siguen legibles para diagnóstico;
+la continuación sensible requiere recaptura/revalidación. Pending sin snapshot
+B6 no es confirmable. Un cambio/replacement/abandono retira los argumentos del
+pending y conserva metadata mínima de supersede. El fallo DB al superseder revierte
+también la nueva revisión. No se rehizo el protocolo de consentimiento.
+
+Observabilidad: eventos `AGENT_B6_MATTER_STARTED`, `MATTER_REPLACED`,
+`MATTER_ABANDONED`, `BINDING_CHANGED`, `BINDING_UNRESOLVED`, `STALE_SLOT_REJECTED`,
+`INVALIDATION_COUNT`, `CLARIFICATION_REQUIRED`, `AMBIGUOUS_ENTITY` y
+`LEGACY_BINDING_REJECTED`. Campos nuevos: códigos, count y schema; sin nombres,
+teléfonos, texto ni IDs de entidad como labels.
+
+## Evidencia y pruebas
+
+[Inventario exacto, conteos, checks y hashes de logs](evals/b6-acceptance-results.json).
+[Corpus versionado](evals/b6-binding-v1.json),
+[métricas](evals/b6-binding-v1-results.json) y
+[reproducción](evals/README-b6-binding.md).
+
+Corpus: **20 conversaciones, 37 turnos; bindings 37/37, aclaraciones 35/35,
+invalidaciones 10/10; stale reuse violations=0; matter mixing violations=0**.
+Las dos respuestas de abandono se verifican separadamente de aclaraciones.
+No es una medida de comprensión lingüística general. El corpus B5 sigue intacto.
+
+| Grupo | Evidencia |
+|---|---|
+| BIND-01…06 | corrección pet/fecha/cita, negación unresolved, resultado tardío, rechazo tenant/owner |
+| MATTER-01…05 | una instancia, compuesto intraevento y entre eventos, pregunta pública, replacement, abandono sin cancelación |
+| AMB-01…05 | homónimos/parcial, Sol/solo, plural, pronombre único, varias citas |
+| PROV-01…05 | fuente explícita, cálculo/dependencias TOOL_RESULT, DERIVED, legacy unknown, corrección causal más reciente |
+| B6-RACE-01 | input nuevo durante W1, sin outbound y outcome deferred_to_new_input |
+| B6-RACE-02 | CAS directo y dos intérpretes/conexiones PostgreSQL: un solo ganador |
+| B6-RACE-03 | resultado tardío por run_tool no revive slot; revisión B3 al flush |
+| B6-RACE-04/05 | safety anterior al resolver; humano impide progresión |
+| B6-FI-01/02 | proceso terminado antes/después del commit: rollback completo/recuperación completa |
+| B6-FI-03 | requests.Timeout en transporte real del executor, sin alterar provenance |
+| B6-FI-04 | tool retorna tras corrección: stale rechazado |
+| B6-FI-05 | error PostgreSQL real al superseder propuesta: no nuevo binding con propuesta antigua |
+| B6-FI-06 | nueva corrección durante planning y deferred B3 |
+
+59 tests B6 dedicados. PostgreSQL real, sin SQLite: locks/CAS/atomicidad/migración,
+dos procesos de corrección y kill antes/después del commit. El cluster aislado de
+pruebas mantiene fsync/synchronous_commit desactivados heredados del entorno B5:
+las pruebas acreditan caída de worker y transacciones, no corte de energía/host.
+Aceptación final: **936 tests backend únicos**, 0 fallos, 0 errores, 0 skips, 0 xfail.
+Las reejecuciones no se suman como tests distintos.
+
+| Grupo | Tests | Fallos | Errores | Skips | Xfail |
+|---|---:|---:|---:|---:|---:|
+| B0 crítico | 17 | 0 | 0 | 0 | 0 |
+| B1 clases causales explícitas (además de continuidad) | 29 | 0 | 0 | 0 | 0 |
+| B2 results | 39 | 0 | 0 | 0 | 0 |
+| B3 durable + procesos | 42 | 0 | 0 | 0 | 0 |
+| B4 sender + procesos + command + channels | 68 | 0 | 0 | 0 | 0 |
+| B5 safety + corpus + procesos + migración | 37 | 0 | 0 | 0 | 0 |
+| B6 dedicado | 59 | 0 | 0 | 0 | 0 |
+| Conjunta | 919 | 0 | 0 | 0 | 0 |
+| FI-03 transporte ampliado, mismo test ID | 1 | 0 | 0 | 0 | 0 |
+| B5 procesos con barrera final, mismos test IDs | 5 | 0 | 0 | 0 | 0 |
+
+B5 corpus: 125 casos, TP=53, FN=0, TN=72, FP=0; críticos 47/47.
+La ampliación final de FI-03 añadió inyección requests.Timeout al mismo test ID;
+se ejecutó por separado después de iniciar la conjunta, sin cambio adicional de runtime.
+Los cinco procesos B5 se reejecutaron tras precisar la barrera de test después
+de C1/assessment y antes de publicar; no cambia runtime ni aserciones.
+
+Regresión requerida: B0 crítico; B1 causal/captions/replies/actions en prompts,
+worker, turn_decision y webhook; B2 results; B3 durable/procesos; B4
+sender/transporte/webhook/procesos/migración; B5 safety/corpus/procesos/migración.
+Frontend no cambia y no se reejecuta; sus 49 tests históricos no se cuentan como
+nueva ejecución. Checks: makemigrations sin cambios, migración aplicada en base
+aislada, showmigrations 0024 marcada, Django check sin incidencias, diff limpio.
+
+## Archivos, desviaciones y riesgos
+
+Runtime, todos bajo `backend/apps/agent/`: `models.py`,
+`migrations/0024_matter_binding_b6.py`, `matter_binding.py`, `matter_resolution.py`,
+`goals.py`, `policy.py`, `planner.py`, `prompts.py`, `tools.py`,
+`confirmations.py`, `result_renderers.py`, `turn_changes.py`.
+Tests: `test_b6_binding.py`, `test_b6_corpus.py`, `test_b6_processes.py`,
+`b6_process.py`, `test_b6_migration.py`, `harness.py` y barrera de
+`test_b5_processes.py`/`b5_process.py`.
+
+Desviaciones acotadas y justificadas:
+
+- READ plural ambiguo se aclara; no se amplían endpoints ni E2.
+- El arnés WRITE legacy aísla la precondición B6 solo en fixtures sin versión,
+  conservando el test de sus componentes inactivos. B0/B6 usan guard real.
+- La carrera B5 mostró una premisa no garantizada: `skip_locked` podía devolver
+  sin claim y el test exigía un caso. Se añadió barrera después del claim y de
+  producir C1/assessment, antes de competir con takeover al publicar. Evita además
+  fencing antes de la evaluación. Mismas aserciones; runtime y corpus B5 intactos.
+- El corte de historial tras corrección es conservador; puede perder prosa
+  incidental, pero conserva los slots independientes con evidencia.
+
+Riesgos residuales: gramática acotada y mayor aclaración fuera de cobertura;
+homónimos pueden requerir equipo humano; availability no promete vigencia futura;
+B7 aún debe implementar permiso/consentimiento/operación y E1 referencias generales.
+La procedencia no acredita autorización ni cambios de negocio. Revisión
+veterinaria y requisitos de activación siguen pendientes de B5/B9.
+
+## Documentación, deploy, rollback y cierre
+
+Contrato [B6](contrato-matter-binding-b6md) y
+[ADR](decisions/2026-09-17-b6-matter-entity-bindingmd). Enmiendas acotadas a p54,
+p55, p56, p58, arquitectura WhatsApp, módulo agent, especificación funcional,
+plan canónico y [runbook](runbooks/agent-whatsapp.md).
+
+No se desplegó. Cutover: containment, pausa de consumidores según B3/B4,
+migración aditiva, lectores compatibles con legacy unknown, observar aclaraciones
+y stale rejects, WRITE sigue cerrado. Rollback conserva columnas, revisión,
+provenance e invalidaciones; pausar progresión y abandonar/reaclarar goals B6
+antes de usar código anterior. Nunca reactivar slots/propuestas stale.
+
+H12: **cerrado técnicamente para el alcance beta B6**; multi-goal avanzado queda
+fuera. H13: mitigado en contexto/binding/referencia inmediata/stale; **no cerrado**.
+B7A puede consumir goal/kind, owner/pet/appointment, parámetros válidos,
+binding_revision y provenance. B7A no fue implementado ni iniciado.
+No avances B7–B9/E1–E5/P-A/P-B. **Recomendación: cerrar técnicamente B6.** La suite conjunta y todos los gates
+requeridos están verdes. Detenerse aquí: no autoriza activación, despliegue ni WRITE.

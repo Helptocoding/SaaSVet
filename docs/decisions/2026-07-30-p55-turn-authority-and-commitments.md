@@ -471,3 +471,27 @@ Corpus/protocolo **VETERINARY_REVIEW_REQUIRED**, automatización B5 apagada por
 defecto y activación **PENDING_ACTIVATION_REQUIREMENTS**. No se atribuye revisión
 clínica, notificación secundaria, SLA ni disponibilidad. WRITE autónomo cerrado;
 sin B6–B9, E1–E5 ni P-A/P-B. No despliegue automático.
+
+## Enmienda B6 — 2026-09-17
+
+Prevalece el [contrato matter/binding B6](../contrato-matter-binding-b6md)
+para continuidad semántica. ConversationGoal es una instancia de asunto con
+bound_owner/bound_pet/bound_appointment y binding_revision propia; no equivale
+a ownership ni identidad. Slots válidos tienen provenance schema 1 y snapshots
+de dependencia. Correcciones retiran derivados y pending legacy atómicamente,
+conservando aportes explícitos independientes. Legacy sin evidencia queda unknown.
+
+Una READ pública incidental conserva el asunto. Un compuesto se aclara antes
+de mezclar datos; reemplazo explícito abandona la instancia incompatible. «Olvida
+eso» abandona el asunto conversacional, nunca cancela una cita. Homónimos/plural
+ambiguo no crean binding. Solo nombre contextual exacto, continuación inmediata
+singular y corrección explícita; referencias históricas y multi-goal avanzado
+siguen fuera. El LLM no asigna entidades ni provenance y no autoriza operaciones.
+
+Policy aplica B6 después de safety/owner B5 y antes de confirmations. Planner
+recibe proyección vigente; tools validan argumentos y resultados contra scope y
+revisión. TurnContext conserva causalidad y TurnChanges valida CAS al publicar
+con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
+H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
+pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
+Véase [ADR B6](../decisions/2026-09-17-b6-matter-entity-bindingmd).

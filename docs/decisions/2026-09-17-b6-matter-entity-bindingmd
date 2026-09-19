@@ -1,0 +1,70 @@
+# ADR B6 — binding de una instancia de asunto
+
+Fecha: 2026-09-17. Baseline: `ec19bfca6669df92d54a288236faedeadc3ca575`.
+Alcance: B6 exclusivamente. La aceptación se registra en el acta B6.
+
+## Problema y decisión
+
+Los slots globales y handles de `Conversation.flow` podían sobrevivir a una
+corrección con significado distinto. Se extiende `ConversationGoal`, que ya
+tiene unicidad del frente y ciclo de vida. Un goal es una instancia: cambiar
+Luna por Max incrementa su revisión semántica; sustituir crear por cancelar
+abandona la instancia y abre otra. No se copian slots entre instancias.
+
+Cuatro columnas aditivas: bound_owner/bound_pet/bound_appointment, FKs nullable
+SET_NULL, y binding_revision=0. Organization y conversation/contact conservan
+el scope existente. Ninguna migración fabrica bindings, fuentes o consentimiento.
+La revisión pertenece al goal: no a Conversation, ownership_epoch ni identidad.
+
+Metadata schema 1 en working_state.binding y provenance schema 1 por slot.
+El contrato de lector valida estructura, scope, fuente y snapshots de dependencia;
+JSON del modelo no llega a estos escritores. Cinco tipos de fuente acotados.
+Owner se obtiene de identidad vigente como DERIVED/current_verified_contact;
+no se atribuye al usuario haber escrito su ID. Pet exige mención contextual de
+un candidato exacto del contacto/tenant. Appointment exige candidato vigente
+producido por get_appointments, además de relaciones de dominio compatibles.
+
+Un mapa explícito de dependencias sustituye la mezcla ciega. Revisión de cálculo
+y revisión de validación se separan: evidencia independiente puede revalidarse
+sin fingir una nueva observación del tool. Cambiar una dependencia retira el
+valor de la proyección, conservando diagnóstico acotado sin texto ni PII en logs.
+
+## Fronteras
+
+B1 aporta eventos reales ordenados y su cursor. Una corrección sin reemplazo
+deja el binding sin resolver; no usa último pet ni confianza del LLM. La gramática
+es deliberadamente acotada: no resuelve referencias históricas, ordinales ni
+«la otra» entre varios candidatos. Solo permite continuación inmediata singular,
+corrección explícita y binding activo. Plural ambiguo se aclara, sin E2.
+
+Las READ públicas incidentales conservan el asunto y no exigen pet. Un compuesto
+se detecta antes de aplicar cualquiera de sus partes. «Olvida eso» abandona
+el contexto conversacional y no muta una cita. No se crea una cola de asuntos.
+Se conserva el mecanismo anterior de retos de identidad/suspensión.
+
+LLM/HTTP ocurren fuera de transacciones. Los callers directos toman Conversation
+→ Goal y comparan revisión. B3 prepara en TurnChanges y valida las revisiones
+leídas al consolidar bajo Conversation → TurnWork → Goal. La corrección, retiro
+de pending legacy y publicación local comparten commit. El resultado tardío de
+un tool se rechaza antes de persistirlo/renderizarlo. B3 mantiene el defer ante
+nuevo inbound. B4 no cambia. Safety y ownership humano B5 preceden B6.
+
+## Consecuencias y alternativas descartadas
+
+No Matter/EntityBinding/Slot/Dependency tables, DAG, event sourcing ni operación
+B7. Se mantiene slots legible para diagnóstico, pero legacy sin evidencia no
+alimenta continuación personal del planner. Los handlers WRITE legacy siguen
+como componentes inactivos bajo containment B0; no se habilitan por tener datos.
+
+La frontera de historial se adelanta después de una corrección para no suministrar
+prosa privada antigua como cache del nuevo pet. Los slots explícitos independientes
+se proyectan por separado. Esto sacrifica contexto incidental antiguo antes que
+atribuir un hecho privado al paciente incorrecto; no se borra el historial de DB.
+
+La gramática puede pedir aclaraciones adicionales. Homónimos requieren apoyo del
+equipo si el nombre no los distingue. No se reclama comprensión lingüística general.
+H12 se evalúa para beta; H13 permanece parcial y autorización sigue en B7/E1.
+
+Cutover y rollback: [runbook](../runbooks/agent-whatsapp.md). Contrato:
+[B6](../contrato-matter-binding-b6md). WRITE cerrado, activación pendiente,
+sin despliegue automático ni infraestructura nueva.
