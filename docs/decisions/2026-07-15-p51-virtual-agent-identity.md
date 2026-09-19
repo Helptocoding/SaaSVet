@@ -56,3 +56,12 @@ La identidad del agente se modela con **dos ejes ortogonales sobre `users.User`*
 
 - Varios agentes por org (por canal): un user por canal con la convención de username; `AgentSettings` referencia cuál usa cada canal.
 - Si algún día se necesita auth M2M real (integraciones de terceros), este ADR no la bloquea: el flag `is_service_account` es la base natural para esa clase de cuentas.
+
+## Enmienda B7A — 2026-09-18
+
+ConversationOperation conserva el actor conversacional mediante contact/owner y
+identity_revision. El servicio de permiso evalúa el efecto WRITE, identidad vigente,
+tenant y relación con las entidades antes de preparar PENDING. El usuario técnico
+AGENT y su RBAC no cambian: READ permitido no concede permiso de actor para WRITE.
+Sin nuevos permisos clínicos/familiares ni step-up implementado. Véase
+[contrato B7A](../contrato-conversation-operation-b7amd). Containment B0 activo.

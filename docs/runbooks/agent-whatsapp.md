@@ -401,3 +401,31 @@ detener progresión automática: abandonar/reaclarar goals creados por B6 antes 
 retomar con código legacy. Nunca repoblar slots desde flow/handles ni reactivar
 pending retirado. La reversión de schema solo se ejercita sobre fixtures de test,
 no es procedimiento de producción. No nueva infraestructura ni colas.
+
+## B7A — cutover y rollback de definición persistente
+
+No se desplegó automáticamente en la implementación B7A. Para un cutover autorizado:
+
+1. Mantener containment B0 y activación PENDING_ACTIVATION_REQUIREMENTS. Pausar
+   consumidores con el procedimiento B3/B4 existente; no reinterpretar UNCERTAIN.
+2. Aplicar `python manage.py migrate agent` hasta
+   `0025_conversation_operation_b7a` y verificar `showmigrations agent`/`check`.
+   Es aditiva: tabla operations, revisión contacto default 0 y FK ToolExecution;
+   no ejecuta backfill ni transforma pending legacy en autorizaciones.
+3. Publicar servicios compatibles. Nuevos writers pasan por factory/witness/B6;
+   no escribir pending_action. Revisiones conversacionales legacy 0 requieren
+   revalidación de identidad permitida o staff. No alterar phone_match a mano.
+4. Inspeccionar admin de solo lectura: kind/estados/created_at/expiry/replaces y
+   revisiones. Observar AGENT_B7A_OPERATION_* y rechazos de schema/permission/stale;
+   no exportar parámetros, nombres ni IDs como métricas. AUTHORIZED o ejecución
+   distinta de NOT_STARTED sería incompatibilidad con este release.
+5. WRITE debe seguir denegado aun con operación PENDING y permiso admitido.
+   No activar B7B/B8, sender de propuestas ni parser de confirmación.
+
+Rollback: pausar los consumidores de B7A y retirar PENDING mediante el servicio
+`operations.invalidate_pending(organization_id=..., reason='release_disabled',
+conversation_id=...)` usando scope explícito aprobado. Conservar filas, columnas,
+digests, revisiones y estados; no revertir 0025 ni regenerar JSON autorizable.
+Mantener B0 y desplegar únicamente código compatible con el esquema conservado.
+La reversión de código no restituye identidad revocada ni hace válida una operación
+INVALIDATED/EXPIRED. No restaurar permisos LLM. [Contrato](../contrato-conversation-operation-b7amd).

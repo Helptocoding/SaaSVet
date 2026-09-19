@@ -1,0 +1,259 @@
+# Acta B7A — ConversationOperation persistente + actor permission
+
+Trabajo iniciado 2026-09-18; validación final 2026-09-19.
+Baseline exacto: `fc95ab89a4b3a8020641fd2850c345ee42aae64b`.
+Implementación B6 de referencia: `dded2f718ec65fff0ae4fb7a8399e59d01e40fa5`.
+Commit de implementación B7A: `9643c03e226b8ecd4e66c8334dc0828936f12f49`.
+El commit final/documental es el que incorpora esta acta y su evidencia: obtenerlo
+con `git log --diff-filter=A --format=%H -- docs/evals/b7a-acceptance-results.json`.
+Su hash exacto se comunica en la entrega, evitando una autorreferencia imposible
+al hash dentro del contenido del mismo commit.
+**Estado: COMPLETED en alcance técnico B7A beta.**
+
+Solo se implementa B7A. No se reauditaron H01–H20 ni se rediseñó B0–B6.
+Containment B0 permanece activo, WRITE autónomo cerrado y activación
+`PENDING_ACTIVATION_REQUIREMENTS`; `VETERINARY_REVIEW_REQUIRED` no cambia.
+No se desplegó ni se implementó B7B/B8/B9/E1–E5/P-A/P-B.
+
+## Entrega y alcance de datos
+
+Migración aditiva: `agent.0025_conversation_operation_b7a`. Introduce solamente
+ConversationOperation; añade ContactIdentity.authorization_revision default 0 y
+ToolExecution.operation nullable. Sin backfill, borrado o consentimiento sintético.
+Aplicada únicamente al PostgreSQL local aislado de pruebas.
+
+Runtime modificado, relativo a `backend/apps/agent/`:
+
+- `models.py`, `migrations/0025_conversation_operation_b7a.py`, `admin.py`.
+- `capabilities.py`, `operation_schema.py`, `operation_permission.py`,
+  `operation_identity.py`, `operation_model_contract.py`, `operations.py`.
+- `confirmations.py`, `turn_changes.py`, `durable.py`, `intake.py`,
+  `matter_binding.py`, `views.py`.
+
+No cambia frontend ni endpoints de negocio. Se preservan fuera de los commits
+los cambios del usuario en DEPLOY_VPS_PLAN.md, DEPLOY_VPS_STATUS.md y el documento
+de auditoría no versionado que ya estaba en el workspace.
+
+## Schema y definición exacta
+
+Contrato completo: [ConversationOperation B7A](contrato-conversation-operation-b7amd).
+
+| Ámbito | Schema final |
+| --- | --- |
+| Identidad | operation_key UUID único/global e inmutable, organization, conversation, contact |
+| Causalidad | source_turn TurnWork, source_message anchor, stage_key fijo, goal nullable |
+| Propuesta futura | proposal_message nullable, operation_kind, authorization_mode |
+| Parámetros | parameters, parameters_digest SHA-256, parameters_schema_version=1 |
+| Scope/evidencia | owner/pet/appointment nullable, preconditions, permission_snapshot |
+| Revisiones | binding_revision B6, identity_revision del contacto, ownership_epoch B3 |
+| Vigencia/historia | expires_at, replaces nullable self-FK, timestamps de auditoría |
+| Consentimiento | consent_state, invalidation_reason, authorized_at, authorization_message, authorization_channel, authorization_policy_version |
+| Ejecución | execution_state, result, result_code, executed_at |
+
+Las FKs causales son PROTECT; negocio nullable SET_NULL con IDs mínimos históricos.
+Unique UUID, unique(source_turn,stage_key), unique parcial de goal PENDING, no
+self-replace, digest SHA-256 y lifecycle combinations válidas. No OperationVersion
+ni contadores redundantes de propuesta. No nuevo RUNNING, EMITTED o emitted_at.
+
+| Kind | Schema v1 |
+| --- | --- |
+| CREATE_APPOINTMENT | pet_id, date, start_time, end_time, veterinarian_id, reason |
+| RESCHEDULE_APPOINTMENT | appointment_id, date, start_time, end_time, veterinarian_id |
+| CANCEL_APPOINTMENT | appointment_id, cancellation_reason opcional |
+| CONFIRM_ATTENDANCE | appointment_id, target_status=confirmed |
+| REGISTER_PET | owner_id, name, species/birth_date opcionales |
+
+La configuración vive en el manifest B2. Appointment no tiene service FK; el
+motivo/servicio admitido se representa como reason, con límites reales del modelo.
+Registro compuesto permanece sin adapter B7A (E5). Los campos nuevos de mascota
+consumen slots B6 con provenance, sin implementar otro resolver/extractor.
+
+Canonicalization: schema cerrado, IDs a int, fechas ISO, horas HH:MM, texto NFC y
+espacios normalizados, keys ordenadas. Opcionales vacíos se omiten; null/bool y
+claves desconocidas se rechazan. SHA-256 de kind + schema version + canonical
+parameters + bindings relevantes (tenant/actor/entidades/expected_state/zona).
+No se acepta ningún digest, revisión o ID confiable del LLM. Cambiar mascota,
+cita, fecha/hora, motivo/servicio, veterinario o acción modifica el digest.
+
+Después del INSERT no se cambian parámetros, tipo, digest, FKs, revisiones,
+expiry ni replaces. Model.save valida aun con validate=False; managers rechazan
+bulk/update. Recalcular un digest correcto no habilita mutar la fila. Corrección
+Luna 10:00 → Luna 11:00 → Max conserva A/B INVALIDATED y C PENDING, con UUIDs y
+digests diferentes; B.replaces=A y C.replaces=B. Cita X → Y también se prueba.
+Links inmutables hacia filas anteriores del mismo matter impiden ciclos.
+
+## Actor permission, identidad y ownership
+
+ALLOWED_TO_PROPOSE significa elegibilidad histórica para proponer, no autorización.
+REQUIRES_IDENTITY, REQUIRES_STEP_UP o FORBIDDEN no insertan un PENDING legítimo.
+Se exige tenant/owner/entidades exactos, contacto activo no bloqueado, verificación
+vigente y ownership del bot. READ no implica WRITE. Familia conserva create;
+no hereda cancel/reschedule/attendance/register. RBAC técnico queda intacto.
+
+Se reutiliza TTL de identidad 182 días, confirmed_in_chat/staff_verified y revisión
+humana existente. Legacy conversacional con revisión 0 requiere revalidación;
+staff sigue su autoridad vigente. No se implementan OTP, links o códigos de step-up.
+Ambigüedad/revocación devuelve REQUIRES_STEP_UP. Unlink familiar bloquea rematch.
+
+ContactIdentity.save serializa cambios de permiso y aumenta authorization_revision;
+invalida PENDING en todos los episodios. CAS rechaza writers stale. Los escritores
+existentes de identity/identity_evidence/services convergen en ese contrato sin
+duplicar una revisión. TurnChanges también verifica la revisión capturada antes
+de republicar acciones. Binding, identidad y ownership siguen siendo independientes.
+
+Permission snapshot mínimo: policy_version, capability, identity_policy,
+verification_level y linked_via. No hay booleano persistido de permiso eterno.
+B8 debe reevaluar permiso/precondiciones bajo el witness vigente antes del efecto.
+
+## Lifecycle, precondiciones y renderer
+
+Consent enum disponible: PENDING/AUTHORIZED/REJECTED/EXPIRED/INVALIDATED. B7A
+crea PENDING y solo habilita retiros server-side a EXPIRED o INVALIDATED.
+**Ninguna ruta runtime B7A puede producir AUTHORIZED**: servicio y ORM lo rechazan;
+REJECTED conversacional también queda cerrado. No parser sí/no ni adapter B7B.
+
+Execution enum disponible: NOT_STARTED/SUCCEEDED/FAILED/UNCERTAIN. B7A solo
+escribe NOT_STARTED; no permite transiciones ni resultados de ejecución. No hay
+RUNNING durable. TurnDecision/ToolExecution no adquieren autoridad ejecutora.
+
+TTL inicial 30 minutos. Consulta vigente persiste EXPIRED por TTL solo. Corrección,
+binding/identidad/epoch, matter inactivo, handoff o precondición cambiada producen
+INVALIDATED. Si concurren ambas causas, invalidez causal tiene precedencia.
+Nunca se borra la fila ni se modifica Appointment/Pet al expirar/invalidar.
+
+Preconditions guarda datos verificables: timezone/labels mínimos, observación de
+slot por IDs/timestamp y expected_state de cita (estado, fecha, intervalo, vet,
+mascota). Consulta clínica/ocupación local antes de preparar y al revalidar; no
+inventar versiones de dominio ni reservar horario. Disponibilidad no es permiso.
+
+Renderer determinista sin LLM: mascota, fechas/intervalos/zona, veterinario/motivo;
+cita original y destino al reprogramar; cita y razón al cancelar; cita y estado
+en asistencia; nombre/especie/nacimiento al registrar mascota. Usa snapshots
+controlados, no transcript ni teléfono. **Renderizar no acredita envío**.
+proposal_message sigue null y no se sintetiza Message/emisión/consentimiento.
+
+## Preparación, races y legacy
+
+Factory central operations.prepare_operation: valida witness B3, org, matter,
+binding revision, fuentes B6 y entidades, schema, canonicalización, actor permission,
+captura revisiones, calcula digest y persiste. Locks locales:
+Conversation → TurnWork → ContactIdentity → Goal → Operation. No LLM/HTTP en txn.
+Deadline se vuelve a comprobar después de INSERT, con rollback si expiró el lease.
+
+Unique(source_turn,stage_key fijo) reutiliza fila por retry/crash del mismo trabajo.
+Payload cambiado para esa clave se rechaza; no sortea dedup con UUID nuevo. Nuevo
+turno corregido crea replacement atómico. Un side question consulta la definición
+vigente sin repetir preparación. Máximo un PENDING por matter, sin impedir historia.
+
+La integración B3 prepara al flush del B6 suficiente y no deferred. Safety/handoff
+y takeover B5 prevalecen; cambio de epoch retira PENDING y conserva evidencia.
+No se cambia B4 sender ni UNCERTAIN. Queries internas scoped: by_key, for_matter,
+current_pending y revalidate; no API pública nueva.
+
+confirmations corta nuevos escritores legacy; su fachada ignora args/paraphrase
+como autoridad. Flow nuevo guarda conversation_operation_key. JSON histórico queda
+diagnóstico, se retira ante corrección o se elimina al preparar; no backfill,
+fake digest, fake emisión ni fake consentimiento. Fixtures legacy solo en tests.
+
+| Failure injection | Evidencia exigida |
+| --- | --- |
+| B7A-FI-01 | Kill del proceso tras validación antes de persistir; retry una fila |
+| B7A-FI-02 | Kill tras commit antes de output; witness recuperado encuentra la fila |
+| B7A-FI-03 | Error PostgreSQL real durante replacement; rollback coherente de A/B |
+| B7A-FI-04 | Corrección concurrente gana revisión; preparación vieja rechazada y A inválida |
+| B7A-FI-05 | Cambio de identity revision compite con preparación; nada elegible bajo evidencia vieja |
+| B7A-FI-06 | Takeover compite con preparación; no nueva propuesta/autorización |
+
+También se prueban dos procesos preparando/reemplazando simultáneamente, expiración,
+lease perdido después del INSERT, abandono, handoff abierto y parámetros inmutables.
+El cluster PostgreSQL real local conserva fsync/synchronous_commit off del entorno
+B5: verifica caída de worker/atomicidad transaccional, no pérdida eléctrica del host.
+
+## Observabilidad, validación y evidencia
+
+Eventos AGENT_B7A_OPERATION_CREATED/REUSED/REPLACED/INVALIDATED/EXPIRED,
+PERMISSION_DENIED/REQUIRES_IDENTITY/REQUIRES_STEP_UP, STALE_BINDING_REJECTED y
+DIGEST_SCHEMA_VALIDATION_FAILURE. Counters count/schema, sin IDs/PII/digests como
+labels. Persistencia se registra on_commit. Admin readonly tenant-scoped muestra
+kind, estado, edad, replaced, expiry, ejecución y revisiones; sin parámetros.
+
+La suite dedicada final pasó **63 tests**, cero failures/errors/skips/xfail.
+Incluye modelo, schemas, canonicalization, digest, inmutabilidad, replacement,
+expiry/invalidation, PERM-01–06, tenant, renderer, idempotencia, legacy, races,
+migración y siete casos PostgreSQL multiproceso. El runner rechaza aceptación
+vacía, parcial, skips o xfail. La conjunta final pasó **1022 tests backend únicos**, incluidos los **936** IDs del baseline B6, con cero failures/errors/skips/xfail. Las reejecuciones no se suman como pruebas distintas.
+
+Checks ejecutados: makemigrations --check --dry-run sin cambios; showmigrations
+agent con 0025 aplicada; Django check sin incidencias; git diff --check limpio.
+No frontend modificado ni reejecutado. Comandos e inventario:
+[reproducción](evals/b7a-acceptance.md) y [evidencia versionada](evals/b7a-acceptance-results.json).
+
+Fallos reparados durante implementación: fixtures de horario/mascota genérica;
+Manager real de AgentSettings; reinicio de PostgreSQL tras interrupción; descubrimiento
+accidental de tests heredados; import uuid aún necesario para suspensión safety;
+fixture familiar con argumento retirado del schema; contacto inactivo que debía
+devolver FORBIDDEN explícito. Una conjunta previa con errores conocidos se detuvo
+y se reemplazó por una corrida completa del código final, sin contarse como aceptación.
+Otra corrida paralela se interrumpió con 991 pruebas reportadas y sin resultado
+final del runner. Se repitió la conjunta con `--parallel 1`; los casos de dos procesos
+mantienen su concurrencia real. No se cuentan corridas interrumpidas como aceptación.
+
+| Grupo | Tests | Failures | Errors | Skips | Xfail |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| B0 | 17 | 0 | 0 | 0 | 0 |
+| B1 | 29 | 0 | 0 | 0 | 0 |
+| B2 | 39 | 0 | 0 | 0 | 0 |
+| B3 | 47 | 0 | 0 | 0 | 0 |
+| B4 | 70 | 0 | 0 | 0 | 0 |
+| B5 | 37 | 0 | 0 | 0 | 0 |
+| B6 | 59 | 0 | 0 | 0 | 0 |
+| B7A | 63 | 0 | 0 | 0 | 0 |
+| Conjunta completa | 1022 | 0 | 0 | 0 | 0 |
+
+B1 cuenta sus 29 escenarios causales explícitos, además de continuidad. B4 incluye sender, procesos, comando, transporte, webhook y migración. El detalle por módulo y test ID está en la evidencia.
+
+Entorno de aceptación: Python 3.13.2, Django 6.0.3 y PostgreSQL 18.3 en Windows. Dedicada final: 213.36 s; conjunta final: 2295.138 s.
+
+## Desviaciones, riesgos y continuidad
+
+Adaptaciones al repo, sin ampliar alcance:
+
+- UUID global único es más fuerte que org/UUID. Schema usa IDs enteros reales;
+  no service FK ficticia. REGISTER_PET prepara solo campos soportados.
+- Locks conservan orden B3/B6; no adelantan orden del guard B8. Identidad se protege
+  en el contrato común de save, sin duplicar cambios en cada writer.
+- Legacy JSON puede seguir diagnóstico, conforme a la política permitida; no
+  migración masiva ni promoción sintética. Fixtures del writer retirado quedan en
+  el arnés explícito de componentes inactivos, sin debilitar B0/B7A runtime.
+- No supervised flag nuevo: containment global de release sigue siendo autoridad.
+  No cron, API pública o trigger PostgreSQL adicional.
+
+Riesgos residuales: teléfono compartido/reciclado desconocido, step-up y consentimiento
+todavía pendientes; availability es observación sin reserva; SQL administrativo
+fuera del contrato ORM exige control operacional; interpretación/referencias generales
+siguen limitadas por B6/E1. Nada habilita activación ni permisos clínicos.
+
+H01: base inmutable/digest, **abierto hasta B7B**. H02: propuesta null no emitted,
+**abierto hasta B7B**. H13: referencia tipada y revisiones mitigadas, **sin cierre
+total ni E1**. H18: permiso proporcional/tenant/relación/revocación beta cubiertos,
+**sin cierre total de step-up/familia ampliada/teléfono reciclado**.
+
+B7B podrá obtener PENDING vigente, renderizar, persistir Message real y evaluar
+emisión + inbound causal + evidencia exacta. B7A no implementa estos últimos pasos
+ni transiciones AUTHORIZED/REJECTED. B8 deberá volver a evaluar permiso/dominio y
+ejecutar de forma idempotente. **ConversationOperation válida NO abre WRITE**.
+
+## Documentación y operación
+
+[Contrato](contrato-conversation-operation-b7amd),
+[ADR](decisions/2026-09-18-b7a-conversation-operationmd), enmiendas p51/p52/p55/p56/p58,
+ADRs 2026-08-26/27, arquitectura, módulo agent, spec funcional y
+[runbook](runbooks/agent-whatsapp.md). Plan canónico actualizado con cierre técnico B7A y B7B/B8 pendientes.
+
+Deploy no ejecutado. Cutover autorizado: containment, pausa de consumidores con
+procedimiento existente, migrate 0025, checks, revalidación de identidades legacy,
+inspección de PENDING/retiros y confirmación de WRITE cerrado. Rollback conserva
+schema/filas/revisiones y retira pendientes por scope explícito; no volver a JSON
+autorizable ni reactivar identidad revocada. B7B/B8/B9/E1–E5/P-A/P-B fuera de entrega.
+
+**Recomendación: cerrar técnicamente B7A.** Todos los gates requeridos están verdes. Detenerse aquí: no autoriza activación, despliegue ni apertura WRITE. B7B/B8/B9/E1–E5/P-A/P-B no fueron implementados.

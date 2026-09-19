@@ -699,3 +699,12 @@ con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
 H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
 pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
 Véase [ADR B6](../decisions/2026-09-17-b6-matter-entity-bindingmd).
+
+## Enmienda B7A — 2026-09-18
+
+La propuesta semántica del modelo no fija IDs confiables, revisiones, UUID, digest
+ni permission. ConversationOperationService (módulo operations) consume B6 y el
+witness/anchor causal B3, aplica schemas v1 y actor permission, y persiste PENDING.
+Renderer determinista usa entidades/snapshots controlados; renderizar no es
+emisión. TurnContext sigue inmutable y no se reconstruye fuente desde texto.
+Véase [contrato B7A](../contrato-conversation-operation-b7amd); WRITE cerrado.

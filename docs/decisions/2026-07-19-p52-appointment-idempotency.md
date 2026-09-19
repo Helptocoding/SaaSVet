@@ -89,3 +89,12 @@ staff y agente por igual (el guard de Policy del agente era redundante).
 - El TOCTOU del check de solape (dos clientes distintos al mismo slot) NO lo
   resuelve la idempotencia — eso se maneja con revalidación + compensación, y
   NO se toca el orden global de locks (ADR p12) desde este cambio.
+
+## Enmienda B7A — 2026-09-18
+
+La preparación conversacional se deduplica por (source_turn, stage_key fijo), bajo
+lock y constraint PostgreSQL. Payload cambiado exige nueva causalidad; corrección
+crea otro UUID con replaces. Esta idempotencia es local a la definición y no
+modifica la idempotencia de Appointment de p52, no reserva horario y no ejecuta
+HTTP/WRITE. B8 consumirá operation_key al diseñar su guard. Véase
+[contrato B7A](../contrato-conversation-operation-b7amd).

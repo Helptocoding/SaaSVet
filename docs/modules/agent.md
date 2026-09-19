@@ -1376,3 +1376,18 @@ con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
 H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
 pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
 Véase [ADR B6](../decisions/2026-09-17-b6-matter-entity-bindingmd).
+
+## B7A — operación persistente y permiso del actor (2026-09-18)
+
+Nuevos módulos internos: operation_schema (v1/digest), operation_permission
+(elegibilidad), operation_identity (revisión/CAS/revocación),
+operation_model_contract (inmutabilidad/estados cerrados) y operations
+(factory/revalidate/queries/renderer). ConversationOperation es el único modelo
+nuevo; migración agent.0025_conversation_operation_b7a, aditiva y sin backfill.
+Admin ofrece inspección de solo lectura sin parameters. Logs AGENT_B7A_* contienen
+counts/schema, sin IDs/PII como labels. No API pública ni cambios frontend.
+
+prepare_current se integra al flush B3 del estado B6; confirmations es fachada y
+lector legacy diagnóstico. No hay consentimiento ni efecto autónomo. Registro
+compuesto sigue fuera; los cinco kinds y schemas están en
+[contrato B7A](../contrato-conversation-operation-b7amd). WRITE permanece cerrado.

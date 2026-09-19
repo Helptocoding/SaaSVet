@@ -96,3 +96,12 @@ completo, no por texto coincidente.
 - Si el autorizador se equivoca y propone agenda para un mensaje social, el
   verificador la rechaza y el estado sigue sin operación activa.
 - Una repetición del worker no duplica evaluación, objetivo ni recibo.
+
+## Enmienda B7A — 2026-09-18
+
+ConversationOperation es la autoridad persistente de definición; la clasificación
+semántica de apertura sigue siendo intención, no consentimiento. La fachada de
+confirmations corta nuevos escritores pending_action y conserva el legado solo
+para diagnóstico, sin backfill/digest/emisión sintéticos. Una corrección B6 retira
+la definición y requiere UUID nuevo. Parser sí/no, token/action ID y causalidad
+de aceptación quedan para B7B. [Contrato B7A](../contrato-conversation-operation-b7amd).

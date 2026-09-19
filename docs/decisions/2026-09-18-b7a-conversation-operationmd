@@ -1,0 +1,86 @@
+# ADR — B7A: definición persistente de operación y permiso del actor
+
+Fecha: 2026-09-18. Alcance: exclusivamente B7A.
+Estado de aceptación: ver [acta y evidencia](../implementacion-b7a-agente-whatsapp-2026-09-18md).
+Baseline: `fc95ab89a4b3a8020641fd2850c345ee42aae64b`.
+
+## Contexto
+
+B6 ya fija un matter, entidades/provenance y binding_revision. Los pending JSON
+legacy no son una autoridad suficiente para expresar una operación exacta ni
+para distinguir acceso READ de permiso para proponer WRITE. B0 mantiene los
+efectos autónomos cerrados. No corresponde implementar consentimiento ni guard
+de ejecución en esta fase.
+
+## Decisión
+
+Introducir únicamente `ConversationOperation` conforme a C2 del plan. Cada
+definición tiene UUID propio, schema discriminado v1, digest SHA-256 del contenido
+canónico y bindings relevantes, FKs explícitas, source_turn/source_message reales,
+revisiones independientes y TTL 30 minutos. Es inmutable; corrección significa
+otra fila y `replaces`, con la anterior INVALIDATED. Retiro y replacement comparten
+transacción. No hay OperationVersion, Authorization ni tabla de idempotencia.
+
+El manifest B2 declara kind/schema/identity policy/modo futuro de cada WRITE.
+El factory recibe witness/goal/revisiones, deriva parámetros del B6 validado y
+consulta dominio local. No recibe JSON autoritativo del LLM. La unicidad causal
+es `(source_turn,stage_key)` con stage fijo; payload cambiado exige otro turno.
+Una constraint parcial permite un único PENDING por matter sin perder historial.
+
+Actor permission distingue ALLOWED_TO_PROPOSE, REQUIRES_IDENTITY,
+REQUIRES_STEP_UP y FORBIDDEN. Tenant, owner, entidad, identidad actual, vínculo
+familiar y ownership se validan antes de insertar. READ no concede WRITE. Se
+conserva TTL de identidad 182 días y familia limitada a crear cita; no hay nuevos
+privilegios clínicos o familiares. Staff sigue su política existente. La revisión
+del contacto default 0 y su CAS en save invalidan permisos entre episodios;
+legacy conversacional requiere revalidación, y revocación bloquea auto-rematch.
+
+La publicación B3 consume B6 bajo Conversation → TurnWork → ContactIdentity →
+Goal → Operation. Se conserva ese orden para no invertir locks ya establecidos
+en B3/B6/takeover. Los writers de identidad toman ContactIdentity → Operation y
+no adquieren Conversation. El orden transaccional de ejecución B8 se decidirá
+con su implementación; no se adelanta aquí. Sin LLM/HTTP dentro de estos locks.
+
+Los campos de consent/execution futuros están disponibles, pero el contrato de
+modelo/servicio B7A solo escribe PENDING/NOT_STARTED y retiro EXPIRED/INVALIDATED.
+Rechaza AUTHORIZED, REJECTED conversacional, proposal_message y resultados. No hay
+EMITTED/RUNNING duplicados, parser sí/no ni evidencia sintética. Renderer server-side
+es texto de definición, no emisión. ToolExecution/TurnDecision no conceden permiso.
+
+## Compatibilidad y consecuencias
+
+- `confirmations.stage_pending` deja de escribir argumentos ejecutables legacy.
+  Flow guarda una referencia a la operación nueva. El JSON histórico puede
+  consultarse para diagnóstico, se elimina al preparar y se invalida por B6;
+  nunca se transforma en consentimiento ni recibe digest/emisión sintéticos.
+- CREATE/RESCHEDULE/CANCEL/ATTENDANCE/REGISTER_PET tienen schema cerrado.
+  Appointment no tiene service FK: se usa reason del dominio. Registro compuesto
+  carece de adapter B7A (E5). No se reservan slots ni se inventa versión de dominio.
+- Se guarda observación mínima verificable, no transcript/teléfono ni copia de
+  objetos. El snapshot de permiso es histórico, exige reevaluación futura.
+- Cambios de binding/identity/ownership, abandono y handoff inutilizan PENDING;
+  expiración sola queda EXPIRED. La auditoría no se borra y el negocio no cambia.
+- Admin solo lectura y logging contable sin labels sensibles permiten inspección.
+  No hay API pública/UI nueva, cron, queue o feature flag que abra WRITE.
+- Migración aditiva `agent.0025_conversation_operation_b7a`, sin backfill. Rollback
+  conserva esquema/evidencia, retira pendientes y mantiene containment.
+
+## Alternativas descartadas dentro del alcance
+
+Mutar parameters rompe correspondencia de consentimiento futuro; usar solo
+pending_action no proporciona identidad/constraints/auditoría; promover legado
+inventa evidencia; usar READ como permiso ignora el efecto; unir revisiones
+confunde matter, identidad y ownership. Duplicar propuestas o incorporar tablas
+de workflows añade autoridades sin necesidad del contrato beta.
+
+## Verificación y pendientes
+
+Pruebas de schema/digest, inmutabilidad, tenant/permission, reemplazo, expiry,
+renderer, retry/crashes y PostgreSQL multiproceso; migración sin backfill;
+regresión B0–B6 y checks, con inventario versionado en el acta. Los componentes
+legacy inactivos usan una fixture explícita, sin relajar las fronteras runtime.
+
+H01/H02 abiertos para B7B; H13 mitigado sin E1; H18 mitigado sin cierre total de
+step-up/teléfono compartido/reciclado. B7B podrá ligar Message y consentimiento a
+esta definición; B8 deberá reevaluar autorización/dominio e idempotencia al ejecutar.
+**PENDING válido y ALLOWED_TO_PROPOSE no abren WRITE.** No despliegue ni activación.

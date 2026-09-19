@@ -1031,3 +1031,18 @@ con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
 H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
 pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
 Véase [ADR B6](decisions/2026-09-17-b6-matter-entity-bindingmd).
+
+## Incremento B7A — 2026-09-18
+
+La publicación local B3 consume el matter B6 en operations.prepare_current. El
+factory valida witness, tenant, provenance, revisiones, schema y actor permission;
+persiste ConversationOperation PENDING/NOT_STARTED con TTL 30 minutos. UUID,
+parámetros, digest y FKs son inmutables; corrección enlaza replaces. ContactIdentity
+añade authorization_revision; ToolExecution una correlación nullable diagnóstica.
+No hay nueva queue ni llamadas LLM/HTTP bajo locks. B4 sender no cambia.
+
+Consent/execution futuros tienen campos, sin writers B7B/B8. Renderer es definición,
+no Message emitido. B5/ownership invalidan o bloquean continuación; B0 contiene
+todos los WRITE aunque haya PENDING válido. Contrato detallado, locks y queries:
+[B7A](contrato-conversation-operation-b7amd); decisión:
+[ADR](decisions/2026-09-18-b7a-conversation-operationmd).

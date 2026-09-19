@@ -98,3 +98,11 @@ su evidencia ordenada y los objetivos autorizados las referencian.
 Estas pruebas validan una frontera de capacidades, no una lista de frases. La
 evaluación semántica doble cubre variantes libres de cortesía, consulta de
 estado, despedida y petición auténtica de segunda cita.
+
+## Enmienda B7A — 2026-09-18
+
+La intención semántica ya puede prepararse como ConversationOperation inmutable,
+con digest/schema y actor permission proporcional. Esto no concede autorización:
+solo PENDING/NOT_STARTED y retiros server-side están habilitados. El nuevo contrato
+ORM rechaza AUTHORIZED y emisión en B7A. B7B/B8 siguen pendientes y containment B0
+prevalece. Véase [ADR B7A](2026-09-18-b7a-conversation-operationmd).

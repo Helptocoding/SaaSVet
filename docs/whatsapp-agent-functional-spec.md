@@ -748,3 +748,18 @@ con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
 H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
 pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
 Véase [ADR B6](decisions/2026-09-17-b6-matter-entity-bindingmd).
+
+## Enmienda funcional B7A — 2026-09-18
+
+Preparar una operación exacta no confirma una cita ni registra una mascota.
+El servidor puede definir alta/movimiento/cancelación/asistencia de cita y alta
+simple de mascota con permiso del actor, parámetros v1 y TTL 30 minutos. Una
+corrección sustituye la definición, conserva la anterior inválida y nunca arrastra
+aceptación. Familia conserva acceso acotado existente: READ/create no implican
+cancel/reschedule/attendance/register. Identidad en conflicto requiere revisión.
+
+El renderer canónico muestra mascota, fechas/horas y datos que distinguen la
+operación. B7A no lo presenta como mensaje enviado, no solicita ni interpreta
+sí/no, no cambia la bandeja/frontend y no abre WRITE. B7B ligará emisión y
+consentimiento; B8 reevaluará y ejecutará cuando esté autorizado por su fase.
+H01/H02/H13/H18 no se declaran cerrados. [Contrato B7A](contrato-conversation-operation-b7amd).

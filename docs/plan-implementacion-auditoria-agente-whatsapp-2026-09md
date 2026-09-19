@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-18**. Estado: **B0–B6 cerradas técnicamente; B7–B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-19**. Estado: **B0–B6 y B7A cerradas técnicamente; B7B/B8/B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -551,6 +551,8 @@ No se modifica el alcance de B7A ni se abre WRITE. Baseline exacto
 **Riesgos eliminados:** arrastre determinista en rutas migradas. **Reducidos:** contaminación del único asunto. **Abiertos:** interpretación ambigua, varios asuntos y ejecución; ninguna autonomía WRITE se habilita.
 
 ### Fase B7A — Persistencia de operación y permiso del actor
+
+**Estado 2026-09-19: COMPLETED en alcance técnico B7A beta.** Baseline exacto `fc95ab89a4b3a8020641fd2850c345ee42aae64b`; implementación `9643c03e226b8ecd4e66c8334dc0828936f12f49`. 63 tests dedicados y 1022 backend únicos en la conjunta, incluidos los 936 IDs del baseline B6: cero failures/errors/skips/xfail. Migración aditiva agent.0025_conversation_operation_b7a sin backfill; checks verdes. ConversationOperation inmutable, schemas v1, digest, revisiones, actor permission, replaces, TTL 30 minutos y renderer. Runtime solo PENDING/NOT_STARTED y retiros EXPIRED/INVALIDATED; ninguna ruta B7A produce AUTHORIZED. Una operación válida no abre WRITE. B7B/B8 no implementados; H01/H02/H13/H18 no se declaran cerrados. Sin despliegue. [Contrato](contrato-conversation-operation-b7amd), [ADR](decisions/2026-09-18-b7a-conversation-operationmd), [acta](implementacion-b7a-agente-whatsapp-2026-09-18md) y [evidencia](evals/b7a-acceptance-results.json).
 
 **Objetivo.** Entregar C2 como servicio operativo y fijar permiso/revocación, sin mezclarlo con parser de confirmación ni todos los endpoints de negocio.
 

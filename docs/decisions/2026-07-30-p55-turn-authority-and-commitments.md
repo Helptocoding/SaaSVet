@@ -495,3 +495,12 @@ con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
 H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
 pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
 Véase [ADR B6](../decisions/2026-09-17-b6-matter-entity-bindingmd).
+
+## Enmienda B7A — 2026-09-18
+
+El commitment/matter B6 alimenta ConversationOperation: definición exacta e
+inmutable ligada a goal, entidades y binding_revision. Cambio de revisión o
+abandono retira PENDING; reemplazo crea otra fila enlazada, sin editar parámetros.
+TurnDecision explica la decisión pero no autoriza efectos. B3 prepara al publicar
+el estado local del turno; no envía propuesta ni concede consentimiento.
+Contrato y lifecycle: [B7A](../contrato-conversation-operation-b7amd).

@@ -253,3 +253,14 @@ con B3. No cambios B4 ni infraestructura. WRITE autónomo permanece cerrado.
 H12: alcance beta sujeto a evidencia del acta. H13: mitigación parcial, B7/E1
 pendientes. Activación PENDING_ACTIVATION_REQUIREMENTS; no despliegue automático.
 Véase [ADR B6](../decisions/2026-09-17-b6-matter-entity-bindingmd).
+
+## Enmienda B7A — 2026-09-18
+
+ContactIdentity.authorization_revision versiona cambios del vínculo/permiso,
+independiente de binding_revision y ownership_epoch. Save serializa y aplica CAS:
+un writer stale no revierte revocación; cambio relevante invalida operations
+PENDING de todos los episodios. Unlink familiar bloquea auto-rematch. Identidad
+conversacional legacy revisión 0 requiere revalidación; staff y TTL 182 días
+siguen la política existente. Ambigüedad/revocación produce REQUIRES_STEP_UP sin
+implementar autenticación nueva. H18 sigue parcialmente abierto. Detalle:
+[contrato B7A](../contrato-conversation-operation-b7amd).
