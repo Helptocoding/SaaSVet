@@ -1,6 +1,7 @@
 """
 test_policy.py — É-F1 PR-11: Policy Engine (orden del router, spec §3/§11.2).
 """
+from .legacy_pending import seed_pending
 from datetime import timedelta
 
 from django.test import SimpleTestCase, TestCase
@@ -187,7 +188,7 @@ class PriorityOrderTests(PolicyTestCase):
 class ConfirmationFlowTests(PolicyTestCase):
     def setUp(self):
         super().setUp()
-        confirmations.stage_pending(
+        seed_pending(
             self.conv, tool='create_appointment', args={},
             paraphrase='Te confirmo: cita para Luna. ¿Es correcto?',
         )

@@ -424,8 +424,9 @@ def unlink_family(request, pk):
         contact.linked_via = ''
         contact.verification_level = ContactIdentity.VERIFICATION_UNKNOWN
         contact.verified_at = None
+        contact.auto_rematch_blocked = True
         contact.save(update_fields=[
-            'owner', 'linked_via', 'verification_level', 'verified_at'])
+            'owner', 'linked_via', 'verification_level', 'verified_at', 'auto_rematch_blocked'])
         logger.info("AGENT_FAMILY_LINK_REVOKED", extra={
             "event": "AGENT_FAMILY_LINK_REVOKED",
             "organization_id": request.user.organization_id,

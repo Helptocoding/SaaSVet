@@ -30,6 +30,7 @@ class TurnChanges:
         from .models import ConversationGoal, HumanHandoff
         self.witness = witness
         self.conversation = conversation
+        self.identity_revision = conversation.contact.authorization_revision
         self.outputs = []
         self.actions = []
         self.callbacks = []
@@ -100,8 +101,12 @@ class TurnChanges:
         lock_witness(self.witness)
         # B6 corrections outside this attempt must not be overwritten by a
         # recovered/stale in-memory goal. Locks follow Conversation/TurnWork.
-        from .models import ConversationGoal
+        from .models import ConversationGoal, ContactIdentity
         from .matter_binding import BindingConflict
+        contact = ContactIdentity.all_objects.select_for_update().get(
+            pk=self.conversation.contact_id, organization_id=self.witness.organization_id)
+        if contact.authorization_revision != self.identity_revision:
+            raise BindingConflict('Identity changed before B3 publication')
         for goal in ConversationGoal.objects.select_for_update().filter(
                 pk__in=self.binding_revisions).order_by('pk'):
             if goal.binding_revision != self.binding_revisions[goal.pk]:
@@ -128,6 +133,11 @@ class TurnChanges:
             # Scope was validated on staging; normal model validation still
             # runs on INSERT. UPDATE contains only the explicitly staged fields.
             obj.save(force_insert=new, update_fields=None if new else fields)
+        # B7A definitions consume committed B6 state under the existing witness.
+        # No renderer output is published here, no legacy reply is consent.
+        if not deferred:
+            from .operations import prepare_current
+            prepare_current(self.witness)
 
 
 def save_local(obj, **kwargs):

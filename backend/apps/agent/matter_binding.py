@@ -34,6 +34,9 @@ DEPENDENCY_RULES = {
     'reason': {'availability', 'selected_slot', 'price', 'service_facts'},
 }
 SLOT_DEPENDENCIES = {
+    # B7A can consume the existing pet-registration fields with B6 provenance.
+    # These are values for a new pet, never a second entity resolver.
+    'pet_name': ('owner',), 'pet_species': ('owner',), 'pet_birth_date': ('owner',),
     'appointment_candidates': ('owner', 'pet'),
     'appointment_facts': ('owner', 'pet', 'appointment'),
     'vaccine_facts': ('owner', 'pet'), 'personal_facts': ('owner', 'pet'),

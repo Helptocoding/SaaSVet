@@ -5,7 +5,7 @@ este módulo nunca intenta deducirla desde texto. La única responsabilidad del
 servidor es decidir qué herramientas son seguras para esa decisión.
 """
 from .models import Conversation
-from .capabilities import PUBLIC_OR_HUMAN
+from .capabilities import PUBLIC_OR_HUMAN, EFFECTS, WRITE_BUSINESS
 
 
 PATH_NEW = Conversation.INTAKE_NEW_CLIENT
@@ -18,11 +18,7 @@ PATH_SELECTION_TOOL = 'set_client_path'
 
 # B0: contención de release, sin flag que permita reabrir escrituras legacy.
 # B7/B8/B9 deberán sustituirla por capacidades con sus gates aprobados.
-CONTAINED_WRITES = frozenset({
-    'create_appointment', 'confirm_appointment', 'cancel_appointment',
-    'reschedule_appointment', 'register_new_client_and_pet',
-    'register_pet_and_schedule', 'register_pet_only',
-})
+CONTAINED_WRITES = frozenset(name for name, effect in EFFECTS.items() if effect == WRITE_BUSINESS)
 
 
 def write_is_contained(tool_name):

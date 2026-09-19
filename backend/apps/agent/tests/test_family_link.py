@@ -121,7 +121,7 @@ class FamilyChallengeFlowTests(FamilyLinkBase):
 
     def test_wrong_digits_no_link(self):
         """Un conocido casual sabe «Juan y Max»; los 4 dígitos no."""
-        out = self._identify(titular_name=None, owner_name="Juan Perez",
+        out = self._identify(owner_name="Juan Perez",
                              pet_name="Max", phone_digits="0000")
         self.assertFalse(out.data['verificado'])
         self.contact.refresh_from_db()

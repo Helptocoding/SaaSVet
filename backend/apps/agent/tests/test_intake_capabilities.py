@@ -4,6 +4,7 @@ No se prueban frases del cliente: el modelo entrega el enum tipado mediante
 ``set_client_path``. Lo que estas pruebas aseguran es la parte vinculante: qué
 capacidades llegan al modelo y qué rechaza el servidor si intenta saltarlas.
 """
+from .legacy_pending import seed_pending
 from apps.agent import confirmations, goals, planner, tools
 from apps.agent.llm import LLMError, LLMResult, StubLLMClient
 from apps.agent.models import (
@@ -92,7 +93,7 @@ class IntakeCapabilityTests(AgentFixture):
     def test_reclassification_invalidates_pending_and_old_goal(self):
         self.assertTrue(self._select('new_client').ok)
         goal = goals.open_goal(self.conv, goals.REGISTER)
-        confirmations.stage_pending(
+        seed_pending(
             self.conv,
             tool='register_new_client_and_pet',
             args={'idempotency_key': 'test-intake-reclassification'},

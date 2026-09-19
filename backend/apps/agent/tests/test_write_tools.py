@@ -6,6 +6,7 @@ vía el Django test client — sin LLM: las tools se invocan por `run_tool` y la
 afirmativa por `policy.evaluate` + `planner._commit_pending`, de modo que se
 prueba el contrato determinista (propone → confirma → ejecuta lo STAGED).
 """
+from .legacy_pending import seed_pending
 from datetime import datetime, timedelta
 from datetime import timezone as dt_tz
 
@@ -429,7 +430,7 @@ class WriteToolsTests(TestCase):
 
     # -- expiración del pending --------------------------------------------
     def test_expired_pending_reparaphrases_not_executes(self):
-        confirmations.stage_pending(
+        seed_pending(
             self.conv,
             tool="create_appointment",
             args={"pet": self.pet.pk, "veterinarian": self.vet.pk,

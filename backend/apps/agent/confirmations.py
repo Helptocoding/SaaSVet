@@ -1,14 +1,7 @@
-"""
-agent/confirmations.py — Flujo de confirmación tier-2 (É-F2 PR-16).
+"""B7A preparation facade and historical tier-2 diagnostic readers.
 
-Toda mutación de agenda se PROPONE primero: la tool arma un `pending_action`
-(tool + args YA resueltos a public_id + idempotency_key + expiración) y un
-**parafraseo por PLANTILLA** (nunca generado por el LLM — spec §2.4, G5
-fecha absoluta). El cliente confirma ("sí") → el planner ejecuta el
-`pending_action` TAL CUAL fue parafraseado (invariante TC-SEC-03: la
-afirmativa jamás amplía el alcance).
-
-El `pending_action` vive en `Conversation.flow['pending_action']`.
+New definitions live only in ConversationOperation. Legacy matching remains
+behind B0 containment and cannot authorize an operation. B7B is not implemented.
 """
 
 from .turn_changes import save_local, create_local, open_handoff, local_or_locked_conversation
@@ -88,33 +81,43 @@ CONFIRM_ADD_PET_ONLY = (
 EXPIRED_REPARAPHRASE = "Pasó un rato — te confirmo de nuevo:\n{paraphrase}"
 
 
-def stage_pending(conversation, *, tool, args, paraphrase):
-    """Persiste el pending_action y devuelve el texto de confirmación.
-
-    `args` ya trae public_ids resueltos + idempotency_key — NUNCA handles ni
-    nada que el LLM re-genere en el turno de la confirmación."""
-    flow = dict(conversation.flow or {})
-    flow['pending_action'] = {
-        'proposal_id': uuid.uuid4().hex,
-        'tool': tool,
-        'operation_family': operation_family(tool),
-        'args': args,
-        'paraphrase': paraphrase,
-        'idempotency_key': args.get('idempotency_key') or uuid.uuid4().hex,
-        'proposed_at': timezone.now().isoformat(),
-        'expires_at': (timezone.now() + PENDING_TTL).isoformat(),
-    }
-    from . import matter_binding
+def stage_pending(conversation, *, tool, args=None, paraphrase=None, witness=None):
+    """B7A facade. Legacy arguments never become an operation definition."""
+    from .turn_changes import current_changes
+    if current_changes() is not None:
+        # B7A: actual workers never persist duplicated executable JSON. B3's
+        # final publication prepares from B6; args/paraphrase are not authority.
+        # Renderer/emission/consent binding is deliberately left to B7B.
+        return None
+    from . import matter_binding, operations
+    if witness is None:
+        raise operations.PreparationDenied('source_turn_required')
     goal = matter_binding.current_goal(conversation)
-    if goal and matter_binding.metadata(goal):
-        flow['pending_action']['binding'] = matter_binding.snapshot(goal)
-    conversation.flow = flow
-    save_local(conversation, update_fields=['flow'])
-    return paraphrase
+    if not goal:
+        raise operations.PreparationDenied('matter_required')
+    return operations.prepare_operation(witness=witness, goal_id=goal.pk, capability=tool,
+        expected_binding_revision=goal.binding_revision,
+        expected_identity_revision=conversation.contact.authorization_revision)
 
 
 def get_pending(conversation):
+    # Historical JSON is diagnostic compatibility only. Canonical operations
+    # use current_operation; no synthetic proposal_id/digest/consent projection.
     return conversation.flow.get('pending_action')
+
+
+def current_operation(conversation):
+    from . import matter_binding, operations
+    goal = matter_binding.current_goal(conversation)
+    if goal is None:
+        return None
+    return operations.current_pending(organization_id=conversation.organization_id,
+        conversation_id=conversation.pk, goal_id=goal.pk)
+
+
+def stage_operation(**kwargs):
+    from .operations import prepare_operation
+    return prepare_operation(**kwargs)
 
 
 def is_expired(pending, now=None):
@@ -131,6 +134,7 @@ def is_expired(pending, now=None):
 
 
 def clear_pending(conversation):
+    _retire_operation(conversation, 'cleared')
     if 'pending_action' in conversation.flow:
         flow = dict(conversation.flow)
         flow.pop('pending_action', None)
@@ -188,6 +192,7 @@ def supersede_pending(conversation, *, reason):
     Only minimal audit metadata is retained. The old executable arguments are
     removed, so a later bare affirmative cannot revive the stale action.
     """
+    _retire_operation(conversation, reason)
     pending = get_pending(conversation)
     if not pending:
         return None
@@ -203,6 +208,16 @@ def supersede_pending(conversation, *, reason):
     conversation.flow = flow
     save_local(conversation, update_fields=['flow'])
     return pending
+
+
+def _retire_operation(conversation, reason):
+    from .turn_changes import current_changes
+    if current_changes() is not None:
+        # B6 goal save / ownership invalidation retire atomically at B3 flush.
+        return
+    from .operations import invalidate_pending
+    invalidate_pending(organization_id=conversation.organization_id,
+                       conversation_id=conversation.pk, reason='context_invalidated')
 
 
 def operation_family(tool):

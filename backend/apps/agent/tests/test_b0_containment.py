@@ -1,4 +1,5 @@
 """BASE-01/02/03: fronteras actuales, sin worker/sender ni bypass de contención."""
+from .legacy_pending import seed_pending
 import json
 import unittest
 from datetime import timedelta
@@ -115,7 +116,7 @@ class B0ContainmentTests(TestCase):
         for reply in self.corpus['replies']:
             with self.subTest(reply=reply):
                 self.conv = self.new_conversation()
-                confirmations.stage_pending(
+                seed_pending(
                     self.conv, tool='create_appointment',
                     args={'pet_id': str(self.pet.public_id)}, paraphrase='Cita para Luna')
                 harness = self.harness()
@@ -127,7 +128,7 @@ class B0ContainmentTests(TestCase):
         for name in tools.COMMIT_HANDLERS:
             with self.subTest(tool=name):
                 self.conv = self.new_conversation()
-                confirmations.stage_pending(self.conv, tool=name, args={},
+                seed_pending(self.conv, tool=name, args={},
                                             paraphrase='Propuesta heredada')
                 harness = self.harness()
                 handler = Mock(side_effect=AssertionError('commit invoked'))

@@ -194,6 +194,7 @@ def legacy_write_component(target):
     El corpus crítico debe ejecutarse sin esta sustitución.
     """
     from apps.agent import confirmations, matter_binding
+    from .legacy_pending import seed_pending
     binding_check = confirmations.binding_is_current
 
     def component_binding_check(conversation, pending):
@@ -215,6 +216,9 @@ def legacy_write_component(target):
                                       side_effect=component_binding_check)
             semantic_boundary.start()
             self.addCleanup(semantic_boundary.stop)
+            legacy_writer = patch('apps.agent.confirmations.stage_pending', side_effect=seed_pending)
+            legacy_writer.start()
+            self.addCleanup(legacy_writer.stop)
             setup(self)
 
         target.setUp = component_setup
@@ -224,7 +228,8 @@ def legacy_write_component(target):
     def component_test(*args, **kwargs):
         with patch('apps.agent.intake.CONTAINED_WRITES', frozenset()), patch(
                 'apps.agent.confirmations.binding_is_current',
-                side_effect=component_binding_check):
+                side_effect=component_binding_check), patch(
+                'apps.agent.confirmations.stage_pending', side_effect=seed_pending):
             return target(*args, **kwargs)
 
     return tag('legacy_write_component')(component_test)
@@ -494,5 +499,35 @@ class CriticalB6Runner(CriticalB0Runner):
         missing = {'apps.agent.tests.' + name for name in required} - set(ids(suite))
         if missing:
             raise RuntimeError(f'Escenarios críticos B6 ausentes: {sorted(missing)}')
+        self._planned_count = suite.countTestCases()
+        return suite
+
+
+class CriticalB7ARunner(CriticalB0Runner):
+    """B7A required boundaries; never pass absent, skipped or expected failures."""
+    def build_suite(self, test_labels=None, **kwargs):
+        suite = DiscoverRunner.build_suite(self, test_labels, **kwargs)
+        def ids(items):
+            for case in items:
+                if hasattr(case, 'id'):
+                    yield case.id()
+                else:
+                    yield from ids(case)
+        required = {
+            'test_b7a_operations.ConversationOperationTests.test_b7a_cannot_authorize_reject_or_execute',
+            'test_b7a_operations.ConversationOperationTests.test_pending_does_not_open_any_write',
+            'test_b7a_operations.ConversationOperationTests.test_fi03_postgresql_replacement_failure_is_atomic',
+            'test_b7a_operations.ConversationOperationTests.test_permission_04_family_read_does_not_grant_cancel',
+            'test_b7a_processes.B7AProcessTests.test_duplicate_preparation_two_processes_one_operation',
+            'test_b7a_processes.B7AProcessTests.test_concurrent_replacement_two_processes_one_current',
+            'test_b7a_processes.B7AProcessTests.test_fi01_kill_after_validation_before_persistence',
+            'test_b7a_processes.B7AProcessTests.test_fi02_kill_after_persistence_before_output',
+            'test_b7a_processes.B7AProcessTests.test_fi05_identity_change_during_preparation_invalidates',
+            'test_b7a_processes.B7AProcessTests.test_fi06_takeover_during_preparation_no_proposal_or_authorization',
+            'test_b7a_migration.B7AMigrationTests.test_no_backfill_of_legacy_proposals',
+        }
+        missing = {'apps.agent.tests.' + name for name in required} - set(ids(suite))
+        if missing:
+            raise RuntimeError(f'Missing B7A boundaries: {sorted(missing)}')
         self._planned_count = suite.countTestCases()
         return suite

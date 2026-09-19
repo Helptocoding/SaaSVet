@@ -266,6 +266,9 @@ def invalidate_ownership(conversation, *, reason):
     Conversation.objects.filter(pk=conversation.pk,
         organization_id=conversation.organization_id).update(
             ownership_epoch=conversation.ownership_epoch, processing_until=None)
+    from .operations import invalidate_pending
+    invalidate_pending(organization_id=conversation.organization_id,
+                       conversation_id=conversation.pk, reason='ownership_changed')
     work_rows = TurnWork.objects.select_for_update().filter(
         conversation=conversation, organization_id=conversation.organization_id,
         status__in=TurnWork.NON_TERMINAL)

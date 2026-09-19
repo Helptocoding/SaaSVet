@@ -13,6 +13,7 @@ W0-3  un turno que revienta mataba el worker de TODAS las clínicas y volvía a
 W0-5  sin veterinario configurado se agendaba con "el primer VET por pk".
 W0-6  el aviso de privacidad estaba escrito pero nunca se emitía.
 """
+from .legacy_pending import seed_pending
 from datetime import datetime, timedelta
 from datetime import timezone as dt_timezone
 from unittest import mock
@@ -192,7 +193,7 @@ class BurstSafetyTests(AgentFixture):
 
     @legacy_write_component
     def test_affirmative_followed_by_thanks_still_confirms(self):
-        confirmations.stage_pending(
+        seed_pending(
             self.conv, tool="create_appointment", args={},
             paraphrase="Te confirmo: cita para Luna. ¿Es correcto?",
         )

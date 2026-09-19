@@ -15,10 +15,13 @@ Principios (contrato: docs/whatsapp-agent-implementation-plan.md §8):
   separa actor-agente de identidad-de-contacto).
 """
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
+from uuid import uuid4
 from django.utils import timezone
 
 from apps.core.models import OrganizationalModel, PublicIdMixin
+from .operation_model_contract import OperationManager
+from .capabilities import OPERATIONS
 
 
 class ContactIdentity(PublicIdMixin, OrganizationalModel):
@@ -41,6 +44,8 @@ class ContactIdentity(PublicIdMixin, OrganizationalModel):
         (VERIFICATION_STAFF, 'Verificado por staff'),
     )
 
+    # B7A: permission generation, independent of matter and worker ownership.
+    authorization_revision = models.PositiveBigIntegerField(default=0, editable=False)
     channel_type = models.CharField(max_length=20, default='whatsapp')
     # wa_id del remitente (E.164 sin '+', tal como lo entrega el proveedor).
     external_id = models.CharField(max_length=32)
@@ -110,6 +115,10 @@ class ContactIdentity(PublicIdMixin, OrganizationalModel):
 
     def __str__(self):
         return f"ContactIdentity<{self.channel_type} {self.external_id} {self.verification_level}>"
+
+    def save(self, *args, **kwargs):
+        from .operation_identity import save_identity
+        return save_identity(self, super().save, args, kwargs)
 
 
 class Conversation(PublicIdMixin, OrganizationalModel):
@@ -221,6 +230,68 @@ class Conversation(PublicIdMixin, OrganizationalModel):
 
     def __str__(self):
         return f"Conversation<{self.public_id} {self.state}>"
+
+
+class ConversationOperation(OrganizationalModel):
+    """B7A exact immutable definition. PENDING is not consent or WRITE authority."""
+    KINDS = tuple(spec.operation_kind for spec in OPERATIONS.values() if spec.operation_kind)
+    CONSENT_STATES = ('PENDING', 'AUTHORIZED', 'REJECTED', 'EXPIRED', 'INVALIDATED')
+    EXECUTION_STATES = ('NOT_STARTED', 'SUCCEEDED', 'FAILED', 'UNCERTAIN')
+    operation_key = models.UUIDField(default=uuid4, unique=True, editable=False)
+    conversation = models.ForeignKey(Conversation, on_delete=models.PROTECT, related_name='operations')
+    contact = models.ForeignKey(ContactIdentity, on_delete=models.PROTECT, related_name='operations')
+    source_turn = models.ForeignKey('TurnWork', on_delete=models.PROTECT, related_name='operations')
+    source_message = models.ForeignKey('channels.Message', on_delete=models.PROTECT, related_name='+')
+    stage_key = models.CharField(max_length=40, default='business_definition_v1', editable=False)
+    goal = models.ForeignKey('ConversationGoal', null=True, blank=True, on_delete=models.PROTECT, related_name='operations')
+    proposal_message = models.ForeignKey('channels.Message', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
+    operation_kind = models.CharField(max_length=32, choices=[(s, s) for s in KINDS])
+    authorization_mode = models.CharField(max_length=32, choices=[(s, s) for s in
+        ('EXPLICIT_CONFIRMATION', 'CONTEXTUAL_DECLARATION', 'STEP_UP')])
+    parameters = models.JSONField(default=dict)
+    parameters_digest = models.CharField(max_length=64, editable=False)
+    parameters_schema_version = models.PositiveSmallIntegerField(default=1, editable=False)
+    preconditions = models.JSONField(default=dict)
+    permission_snapshot = models.JSONField(default=dict)
+    expires_at = models.DateTimeField()
+    owner = models.ForeignKey('patients.Owner', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    pet = models.ForeignKey('patients.Pet', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    appointment = models.ForeignKey('appointments.Appointment', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    binding_revision = models.PositiveBigIntegerField()
+    identity_revision = models.PositiveBigIntegerField()
+    ownership_epoch = models.PositiveBigIntegerField()
+    replaces = models.ForeignKey('self', null=True, blank=True, on_delete=models.PROTECT, related_name='replacements')
+    consent_state = models.CharField(max_length=12, default='PENDING', choices=[(s, s) for s in CONSENT_STATES])
+    invalidation_reason = models.CharField(max_length=64, blank=True, default='')
+    authorized_at = models.DateTimeField(null=True, blank=True)
+    authorization_message = models.ForeignKey('channels.Message', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
+    authorization_channel = models.CharField(max_length=32, blank=True, default='')
+    authorization_policy_version = models.PositiveSmallIntegerField(null=True, blank=True)
+    execution_state = models.CharField(max_length=12, default='NOT_STARTED', choices=[(s, s) for s in EXECUTION_STATES])
+    result = models.JSONField(default=dict, blank=True)
+    result_code = models.CharField(max_length=64, blank=True, default='')
+    executed_at = models.DateTimeField(null=True, blank=True)
+    objects = OperationManager()
+    all_objects = OperationManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['source_turn', 'stage_key'], name='operation_causal_stage_unique'),
+            models.UniqueConstraint(fields=['goal'], condition=models.Q(consent_state='PENDING'), name='operation_one_pending_matter'),
+            models.CheckConstraint(condition=~models.Q(pk=models.F('replaces_id')), name='operation_no_self_replace'),
+            models.CheckConstraint(condition=models.Q(parameters_digest__regex=r'^[0-9a-f]{64}$'), name='operation_digest_sha256'),
+            models.CheckConstraint(condition=models.Q(consent_state__in=('PENDING', 'AUTHORIZED', 'REJECTED', 'EXPIRED', 'INVALIDATED')), name='operation_consent_valid'),
+            models.CheckConstraint(condition=models.Q(execution_state__in=('NOT_STARTED', 'SUCCEEDED', 'FAILED', 'UNCERTAIN')), name='operation_execution_valid'),
+            models.CheckConstraint(condition=~models.Q(consent_state='AUTHORIZED') | (models.Q(authorized_at__isnull=False) & models.Q(authorization_message__isnull=False)), name='operation_authorized_evidence'),
+            models.CheckConstraint(condition=models.Q(execution_state='NOT_STARTED') | models.Q(consent_state='AUTHORIZED'), name='operation_effect_needs_consent'),
+        ]
+        indexes = [models.Index(fields=['organization', 'conversation', 'consent_state'], name='operation_current_lookup')]
+
+    def save(self, *args, **kwargs):
+        from .operation_model_contract import validate_operation
+        with transaction.atomic():
+            validate_operation(self)  # Cannot bypass with save(validate=False).
+            return super().save(*args, **kwargs)
 
 
 class TurnWork(OrganizationalModel):
@@ -401,6 +472,19 @@ class ConversationGoal(OrganizationalModel):
     normalizado por el validador — nunca el texto crudo del cliente.
     """
 
+    def save(self, *args, **kwargs):
+        # B7A retirement shares the B6 transaction, including staged B3 saves.
+        with transaction.atomic():
+            result = super().save(*args, **kwargs)
+            stale = ConversationOperation.objects.for_organization(self.organization_id).filter(goal_id=self.pk)
+            if self.status in self.FOREGROUND_STATUSES:
+                stale = stale.exclude(binding_revision=self.binding_revision)
+            count = stale.retire_pending('INVALIDATED', 'binding_or_matter_changed')
+            if count:
+                from .operations import observe
+                transaction.on_commit(lambda: observe('operation_invalidated', count=count))
+            return result
+
     # Ciclo de vida del COMPROMISO (ADR p55 §3). Un compromiso nunca
     # desaparece: siempre está en uno de estos estados.
     STATUS_ACTIVE = 'active'
@@ -561,6 +645,9 @@ class ToolExecution(OrganizationalModel):
     conversation = models.ForeignKey(
         Conversation, on_delete=models.PROTECT, related_name='tool_executions',
     )
+    # Diagnostic correlation only; B7A does not use attempts as authorization.
+    operation = models.ForeignKey(ConversationOperation, null=True, blank=True,
+                                  on_delete=models.PROTECT, related_name='tool_executions')
     tool_name = models.CharField(max_length=64)
     args_redacted = models.JSONField(default=dict, blank=True)
     policy_tier = models.CharField(max_length=8, blank=True, default='')

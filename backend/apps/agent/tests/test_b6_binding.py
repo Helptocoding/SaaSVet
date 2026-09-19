@@ -1,4 +1,5 @@
 """B6 semantic boundary acceptance on real PostgreSQL."""
+from .legacy_pending import seed_pending
 from django.test import TestCase
 from apps.agent import matter_binding as binding
 from apps.agent import matter_resolution as resolution, goals, confirmations, tools, durable, policy, prompts
@@ -58,7 +59,7 @@ class B6BindingTests(TestCase):
             tool='fixture_read', dependencies=dependencies)
 
     def pending(self):
-        confirmations.stage_pending(self.conv, tool='create_appointment',
+        seed_pending(self.conv, tool='create_appointment',
                                    args={'pet': str(self.luna.public_id)}, paraphrase='Propuesta')
         return confirmations.get_pending(self.conv)
 
