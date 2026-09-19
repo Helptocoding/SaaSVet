@@ -25,7 +25,7 @@ class B3ProcessTests(TransactionTestCase):
         env = dict(os.environ)
         env['B3_TEST_DATABASE'] = json.dumps(connection.settings_dict, default=str)
         env['PYTHONIOENCODING'] = 'utf-8'
-        proc = subprocess.Popen([sys.executable, '-X', 'utf8', '-m',
+        proc = subprocess.Popen([getattr(sys, '_base_executable', sys.executable), '-X', 'utf8', '-m',
             'apps.agent.tests.b3_process', mode, str(self.conv.pk)],
             cwd=Path(__file__).resolve().parents[3], env=env,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,

@@ -21,11 +21,12 @@ from django.utils import timezone
 
 from apps.agent import confirmations, goals, policy, tools
 from apps.agent.models import ConversationGoal, HumanHandoff
-from apps.agent.tests.harness import set_schedule_day
+from apps.agent.tests.harness import legacy_write_component, set_schedule_day
 from apps.agent.tests.test_w0_hardening import AgentFixture
 from apps.core.datetime_utils import org_today_local
 
 
+@legacy_write_component
 class GoalFixture(AgentFixture):
     account_id = "900000201"
 

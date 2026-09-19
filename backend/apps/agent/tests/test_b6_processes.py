@@ -24,7 +24,7 @@ class B6ProcessTests(TransactionTestCase):
     def start_process(self, mode, pet, message):
         env = dict(os.environ, B3_TEST_DATABASE=json.dumps(connection.settings_dict, default=str),
                    PYTHONIOENCODING='utf-8')
-        proc = subprocess.Popen([sys.executable, '-X', 'utf8', '-m', 'apps.agent.tests.b6_process',
+        proc = subprocess.Popen([getattr(sys, '_base_executable', sys.executable), '-X', 'utf8', '-m', 'apps.agent.tests.b6_process',
             mode, str(self.conv.pk), str(self.goal.pk), str(self.goal.binding_revision),
             str(message.pk), str(pet.pk)], cwd=Path(__file__).resolve().parents[3], env=env,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
