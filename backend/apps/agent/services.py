@@ -336,6 +336,13 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
     Contacto bloqueado (GB-10): el mensaje SE persiste (auditable) pero con
     ``status='discarded'`` — el worker no lo procesa y no hay respuesta.
     """
+    from .operation_proposals import capture_receipt, RECEIPT_KEY
+    receipt = capture_receipt(channel_account, wa_id)
+    # A provider/LLM supplied reserved key never becomes a server receipt.
+    raw = dict(raw or {})
+    raw.pop(RECEIPT_KEY, None)
+    if receipt is not None:
+        raw[RECEIPT_KEY] = receipt
     org = channel_account.organization
     if wamid and Message.objects.for_organization(org).filter(
         channel_account=channel_account,

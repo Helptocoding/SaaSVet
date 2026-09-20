@@ -80,6 +80,11 @@ def _rejection(message, conv):
                      Q(status=TurnWork.FAILED, messages__pk=message.pk,
                        messages__semantic_type=Message.SEMANTIC_PROCESSING_FAILURE)).exists():
         return 'turn_work_invalid'
+    if message.semantic_type == Message.SEMANTIC_CONFIRMATION:
+        from .operation_proposals import dispatch_rejection
+        reason = dispatch_rejection(message, conv)
+        if reason:
+            return reason
     return ''
 
 
@@ -207,6 +212,8 @@ No retry if takeover or recovery already invalidated eligibility.
             fields = apply_evidence(message, 'sent', now, provider_id=result.provider_id)
             if fields:
                 message.save(update_fields=fields)
+                from .operation_proposals import observe_delivery
+                observe_delivery(message)
                 event('accepted', message_id=message.pk,
                     provider_acceptance_latency_seconds=(now - message.send_admitted_at).total_seconds())
             return bool(fields)
@@ -235,6 +242,8 @@ No retry if takeover or recovery already invalidated eligibility.
                 message.external_message_id = result.provider_id
                 fields.append('external_message_id')
             message.save(update_fields=fields)
+            from .operation_proposals import observe_delivery
+            observe_delivery(message)
             event('uncertain', message_id=message.pk, outcome_code=message.failure_reason)
         if message.semantic_type == Message.SEMANTIC_SAFETY_GUIDANCE:
             event('safety_output', status=message.status, message_id=message.pk,
@@ -282,6 +291,8 @@ def recover_expired(batch=20):
             message.failure_reason = ('lease_expired_after_admission' if message.send_admitted_at
                                       else 'lease_expired_before_admission')
             message.save(update_fields=['status', 'uncertain_at', 'failure_reason'])
+            from .operation_proposals import observe_delivery
+            observe_delivery(message)
             event('expired', message_id=message.pk, outcome_code=message.failure_reason,
                   sending_age_seconds=(now - message.send_started_at).total_seconds())
             recovered += 1

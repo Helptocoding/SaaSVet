@@ -1,0 +1,99 @@
+# ADR — B7B: propuesta emitida y consentimiento causal
+
+Fecha: 2026-09-20. Alcance: B7B exclusivamente.
+Baseline: `dcd8e21274638909d53602984237fbc41c545edc` (cierre B7A, HEAD inicial).
+Estado de aceptación técnica: ver [acta](../implementacion-b7b-agente-whatsapp-2026-09-20md).
+
+## Problema
+
+ConversationOperation B7A define una operación inmutable, pero su FK de propuesta
+no prueba emisión. El SENT observado al procesar una respuesta tampoco demuestra
+que ya existiera al entrar el inbound. El caso SENDING → «sí» → SENT permite una
+autorización retroactiva si solo se mira el estado final. JSON legacy, intención
+LLM y proximidad temporal no resuelven esa diferencia.
+
+## Decisión
+
+Reutilizar ConversationOperation, Message, TurnWork y las fronteras B3/B4.
+Renderer server-side + código visible; publicación local y FK en un commit B3.
+Una sola propuesta por operación. Sender B4 vuelve a comprobar vigencia antes de
+admisión, conservando aceptación externa si el HTTP ya fue admitido.
+
+Agregar un witness mínimo a la metadata reservada del inbound. La primera SELECT
+MVCC de recepción captura únicamente referencias a evidencia B4 ya committed,
+con reloj DB; ocurre antes de identidad/locks. Posteriormente no puede añadirse
+evidencia mediante reconciliación, retry o raw metadata. Guard PostgreSQL lo
+hace inmutable desde INSERT, además del fencing/membership B3 existente.
+La evidencia de emisión permanece exclusivamente en los campos de Message B4.
+
+El coste aditivo de datos es consent_decided_at nullable en Operation y metadata
+de recepción en el Message existente. La fecha adicional distingue rechazo de
+authorized_at. No tabla Authorization/Consent/Proposal/Receipt ni estados Message
+duplicados. AuthorizationEvidence es un value object validado que deriva las
+referencias/revisiones desde filas ya persistidas, sin copiar transcript/digest.
+
+Autorización determinista bajo locks B7A: una respuesta real del TurnContext,
+propuesta exacta emitida antes de recepción, PENDING y TTL vigente, actor actual,
+bindings, identidad y ownership compatibles, digest íntegro. Terminales idempotentes
+y evidencia se confirman juntos. B0 contiene WRITE también tras AUTHORIZED.
+
+## Política beta
+
+Sin reply-to: aceptación completa `CONFIRMAR <código>`, única propuesta elegible.
+Código derivado de UUID aleatoria y scope/expiry, 12 hex, colisión detectada bajo
+lock contra historial de la conversación. No autentica y no depende de SECRET_KEY.
+Después de una pregunta incidental, el código sigue siendo referencia explícita;
+un sí sin referencia nunca hereda consentimiento por recencia.
+
+Reply-to WhatsApp verificado permite el conjunto cerrado de afirmaciones del
+contrato. Referencias viejas/ajenas/duplicadas no hacen fallback. Negación rechaza
+solo la propuesta; corrección/condición reconocida invalida y exige resolución.
+B6 controla reemplazos; una corrección sin nueva revisión no repropone los datos
+anteriores. Safety y humano activo tienen precedencia. No parser probabilístico,
+emoji consent, motor de condiciones ni ampliación ilimitada de paráfrasis.
+
+CONTEXTUAL_DECLARATION continúa registrado para CONFIRM_ATTENDANCE, pero no se
+habilita para autorización: faltan pruebas inequívocas de parámetros conocidos
+y contexto emitido. La declaración previa no equivale a permiso automático.
+
+## Diferencias deliberadas respecto del plan
+
+- §5.4 inicialmente limita aceptación a token/action ID. El encargo explícito
+  exige «Sí confirmo» inequívoco y reply-to; se admite solo con referencia B1
+  validada a la propuesta exacta. Sin referencia se conserva el código.
+- Se difiere la autorización contextual de asistencia, conforme a la frontera
+  conservadora solicitada, sin modificar el modo del manifest B7A.
+- Se amplía admin como inspector mínimo tenant-scoped; no se cambia frontend
+  Inbox ni se crea otra superficie de aprobación. Cumple la opción admin/inspector
+  del encargo y evita presentar autorización como efecto de negocio.
+- La carencia causal de B4 se cubre con referencias inmutables de recepción,
+  no con emitted_at ni un estado espejo. No se fabrica evidencia legacy.
+- ATT de efecto real permanece fuera: B8B será responsable de PATCH/resultado.
+  B7B prueba cero WRITE incluso en aceptación válida.
+
+## Consecuencias y límites
+
+Falsos negativos se resuelven con aclaración/referencia exacta. UNCERTAIN sin ID
+reconciliable puede quedar definitivamente sin consentimiento; no se reenvía a
+ciegas. Desactivar el flag e invalidar pendientes es rollback de contención,
+preservando Messages y evidencia histórica. Un release humano no resucita filas.
+
+AUTHORIZED puede quedar históricamente válido pero perder vigencia por una
+corrección posterior. B8 deberá revisar permisos/revisiones/preconditions de nuevo
+en la transacción de negocio. No se implementa ese guard en B7B.
+
+Corpus y procesos PostgreSQL no prueban semántica universal, persona real tras
+teléfono compartido/reciclado, exactly-once externo ni resistencia a pérdida de
+energía. No se cambian requisitos de revisión veterinaria, responsables humanos
+o canales alternativos. No despliegue ni activación clínica/operativa.
+
+## Hallazgos dentro de la frontera probada
+
+H01: transferencia/interpretación se bloquea en el adaptador nuevo mediante
+definición exacta, referencia, conjunto cerrado y corrección antes de aceptación.
+H02: propuesta no emitida/orden incierto no autoriza, incluso tras webhook tardío.
+H13: referencias a operaciones viejas no transfieren consentimiento; E1 general
+permanece fuera. H18: permiso actual/revisiones/tenant se revalidan; teléfono
+compartido/reciclado y step-up siguen riesgos residuales. No cierre más amplio.
+
+Contrato detallado: [consentimiento causal](../contrato-consentimiento-causal-b7bmd).

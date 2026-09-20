@@ -1,7 +1,7 @@
-"""B7A preparation facade and historical tier-2 diagnostic readers.
+"""B7A preparation facade, B7B emission reader and historical diagnostics.
 
 New definitions live only in ConversationOperation. Legacy matching remains
-behind B0 containment and cannot authorize an operation. B7B is not implemented.
+behind B0 containment and cannot authorize an operation.
 """
 
 from .turn_changes import save_local, create_local, open_handoff, local_or_locked_conversation
@@ -143,7 +143,7 @@ def clear_pending(conversation):
 
 
 def bind_pending_message(conversation, message_id):
-    """Records the outbound message that contains the exact proposal."""
+    """Legacy diagnostic only; B7B binding is owned by B3 atomic publication."""
     pending = get_pending(conversation)
     if not pending:
         return
@@ -167,24 +167,17 @@ def binding_is_current(conversation, pending):
 
 
 def is_confirmable(conversation, pending):
-    """True solo si el cliente recibió una propuesta tipada y vigente."""
-    from apps.channels.models import Message
-    if not binding_is_current(conversation, pending):
+    """Eligibility only. A subsequent causal inbound still needs B7B evaluation."""
+    from .models import ConversationOperation
+    from .operations import revalidate
+    from .operation_proposals import is_proposal_emitted
+    if not isinstance(pending, ConversationOperation):
+        return False  # historical JSON never becomes synthetic consent
+    if (pending.organization_id != conversation.organization_id
+            or pending.conversation_id != conversation.pk):
         return False
-
-    proposal_id = str((pending or {}).get('proposal_id') or '')
-    message_id = (pending or {}).get('proposal_message_id')
-    if not proposal_id or not message_id:
-        return False
-    return Message.objects.filter(
-        pk=message_id,
-        conversation=conversation,
-        direction=Message.DIRECTION_OUT,
-        semantic_type=Message.SEMANTIC_CONFIRMATION,
-        operation_key=proposal_id,
-    ).exclude(
-        status__in=(Message.STATUS_DISCARDED, Message.STATUS_FAILED),
-    ).exists()
+    pending = revalidate(pending)
+    return pending.consent_state == 'PENDING' and is_proposal_emitted(pending)
 
 def supersede_pending(conversation, *, reason):
     """Invalidates a stale proposal before the planner processes a new topic.

@@ -194,7 +194,7 @@ def legacy_write_component(target):
     El corpus crítico debe ejecutarse sin esta sustitución.
     """
     from apps.agent import confirmations, matter_binding
-    from .legacy_pending import seed_pending
+    from .legacy_pending import seed_pending, legacy_is_confirmable
     binding_check = confirmations.binding_is_current
 
     def component_binding_check(conversation, pending):
@@ -219,6 +219,9 @@ def legacy_write_component(target):
             legacy_writer = patch('apps.agent.confirmations.stage_pending', side_effect=seed_pending)
             legacy_writer.start()
             self.addCleanup(legacy_writer.stop)
+            legacy_reader = patch('apps.agent.confirmations.is_confirmable', side_effect=legacy_is_confirmable)
+            legacy_reader.start()
+            self.addCleanup(legacy_reader.stop)
             setup(self)
 
         target.setUp = component_setup
@@ -229,7 +232,8 @@ def legacy_write_component(target):
         with patch('apps.agent.intake.CONTAINED_WRITES', frozenset()), patch(
                 'apps.agent.confirmations.binding_is_current',
                 side_effect=component_binding_check), patch(
-                'apps.agent.confirmations.stage_pending', side_effect=seed_pending):
+                'apps.agent.confirmations.stage_pending', side_effect=seed_pending), patch(
+                'apps.agent.confirmations.is_confirmable', side_effect=legacy_is_confirmable):
             return target(*args, **kwargs)
 
     return tag('legacy_write_component')(component_test)

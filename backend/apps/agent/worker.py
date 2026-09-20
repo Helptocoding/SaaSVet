@@ -83,6 +83,19 @@ def _run_turn(witness):
         assessment = safety.assess_context(conversation, turn_context)
         if assessment.classification != safety.NO_SIGNAL:
             return safety_handoff.finalize_safety(witness, assessment)
+    from .operation_proposals import enabled as consent_enabled
+    if consent_enabled():
+        from .operation_consent import classify
+        from .models import ConversationOperation
+        if ConversationOperation.objects.filter(organization_id=witness.organization_id,
+                conversation=conversation, proposal_message__isnull=False).exists():
+            verdicts = [classify(event.text) for event in turn_context.events]
+            # Corrections pass through B6. Safety never waits for consent, even
+            # when B5 autonomous guidance is operationally disabled.
+            if (safety.assess_context(conversation, turn_context).classification == safety.NO_SIGNAL
+                    and verdicts and all(v.reason != 'correction' for v in verdicts)
+                    and any(v.decision != 'IRRELEVANT' for v in verdicts)):
+                return durable.finalize_turn(witness, evaluate_consent=True)
     agent_settings = AgentSettings.objects.filter(
         organization_id=witness.organization_id).first()
     changes = TurnChanges(witness, conversation)

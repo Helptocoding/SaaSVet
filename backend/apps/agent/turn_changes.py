@@ -136,8 +136,15 @@ class TurnChanges:
         # B7A definitions consume committed B6 state under the existing witness.
         # No renderer output is published here, no legacy reply is consent.
         if not deferred:
+            from .operation_consent import retire_unresolved_corrections
+            self.consent_correction_unresolved = retire_unresolved_corrections(self)
+            if self.consent_correction_unresolved:
+                self.proposal_operation = None
+                return
             from .operations import prepare_current
-            prepare_current(self.witness)
+            operation = prepare_current(self.witness)
+            from .operation_proposals import enabled
+            self.proposal_operation = operation if enabled() else None
 
 
 def save_local(obj, **kwargs):

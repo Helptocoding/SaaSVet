@@ -1,0 +1,198 @@
+# Contrato B7B — consentimiento causal v1
+
+Contrato congelado antes del parser, 2026-09-20.
+Baseline verificado: `dcd8e21274638909d53602984237fbc41c545edc`, HEAD inicial,
+commit `docs(agent): close B7A acceptance and contract`; incluye acta COMPLETED,
+contrato y 1022 tests reportados. No se sustituye por un commit posterior.
+
+## Reglas a probar antes de integrar
+
+1. Propuesta: renderer B7A determinista + referencia pública de operación y
+   pregunta explícita. Texto, semantic type, clave, contacto, tenant, canal,
+   conversación y epoch deben coincidir. La referencia distingue incluso
+   operaciones con iguales nombres/horas. Ningún texto LLM es propuesta autorizable.
+2. Publicación: FK proposal_message y Message final B3 en un mismo commit,
+   bajo witness; una sola propuesta por operación. No HTTP en transacción.
+3. Emisión: Message SENT/DELIVERED/READ con wamid válido, admisión B4 y primera
+   observación local de aceptación/entrega/lectura. PENDING/SENDING/UNCERTAIN sin
+   reconciliación/FAILED/DISCARDED no bastan. Tampoco la FK sola.
+4. Causalidad: la primera SELECT MVCC de recepción captura reloj DB y referencias
+   a propuestas cuya evidencia B4 ya estaba committed, antes de resolver identidad
+   o esperar locks. Se guarda solo referencia y nombre del campo B4 observado,
+   no otro estado de emisión. Sin ese witness de recepción no hay autorización.
+   Reconciliar tarde nunca modifica ese witness ni retroautoriza un inbound.
+5. Respuesta: exclusivamente miembros reales del TurnContext/TurnWork vigente,
+   contacto exacto, canal/org/conversación iguales, posterioridad estricta y TTL
+   de 30 minutos original. Ráfagas de varias respuestas requieren aclaración.
+6. Reply-to: solo proyección B1 proveniente del canal, wamid único del scope
+   exacto. No revive operaciones antiguas. Sin reply-to: una única propuesta
+   elegible y aceptación con código exacto. Rechazo sin referencia exige además
+   ausencia de intervenciones intermedias. No se selecciona por recencia.
+7. Interpretación beta cerrada: ACCEPT, REJECT, AMBIGUOUS, IRRELEVANT, STALE.
+   Correcciones/condiciones/múltiples intenciones nunca ACCEPT; emoji tampoco.
+   Una corrección retira la propuesta y B6 decide nuevos bindings. Safety B5
+   y control humano preceden a este adaptador. No LLM dentro del evaluador.
+8. CONTEXTUAL_DECLARATION: solo CONFIRM_ATTENDANCE está registrado; queda
+   deshabilitado para AUTHORIZED beta. Los datos actuales no prueban qué
+   parámetros exactos conocía el declarante. No se cambia el manifest B7A ni
+   se habilita por intención. Es una restricción conservadora de §5.4 del plan.
+9. Antes de transición: locks B3/B7A, permiso actual, digest, binding_revision,
+   identity_revision, ownership_epoch, estado PENDING, vigencia y causalidad.
+   AUTHORIZED/REJECTED son terminales. Retry devuelve evidencia histórica;
+   una respuesta solo decide una operación bajo lock de conversación.
+10. AuthorizationEvidence es value object validado, construido con las
+    referencias inmutables existentes, sin duplicar parámetros/digest/revisiones
+    ni transcript. Rechazo necesita fecha de decisión propia, no authorized_at.
+11. No ejecutar negocio, no convertir legacy, no reintentar UNCERTAIN. Propuestas
+    stale se bloquean antes de admisión; HTTP admitido conserva realidad externa.
+12. Activación controlada por configuración, apagada por defecto; B0 cerrado
+    incluso si B7B produce AUTHORIZED. Sin deploy. Gate operativo continúa
+    PENDING_ACTIVATION_REQUIREMENTS. No B8/B9/E/P.
+
+## Verificación
+
+EMIT/CAUSAL/CONSENT/MODE/REV/INT del encargo, corpus versionado, FI-01..10,
+PostgreSQL real con intérpretes independientes para transiciones y carreras,
+regresión de los 1022 IDs B7A. Una carencia crítica no demostrada impide COMPLETED.
+
+## Contrato final de propuesta y emisión
+
+`operation_proposals.render_proposal` envuelve `operations.render` B7A: acción,
+mascota, cita original, intervalo/zona, destino, veterinario y motivo/datos del
+kind. B7B añade veterinario original al texto de cita existente y un código
+distinto por operación. Ningún segmento autorizable depende del LLM.
+
+El código de 12 caracteres hexadecimales usa HMAC-SHA256 con la UUID aleatoria
+inmutable como clave y org/contacto/operation_key/expiry como entrada. No depende
+de SECRET_KEY; rotar la clave global no altera una propuesta histórica. No es
+autenticación. Bajo lock se rechaza una colisión con cualquier propuesta
+histórica de la conversación, sin otro UUID/retry/ganador arbitrario.
+
+`finalize_turn` → `publish_proposal` crea Message system/confirmation, clave
+exacta, tenant/canal/contacto, TurnWork/epoch/ordinal 0 y FK proposal_message
+en la misma transacción que completa B3. Sustituye el texto libre del planner
+para no publicar dos preguntas simultáneas. Retry reutiliza la FK; error de
+DB/fencing revierte mensaje y vínculo. No hay otro sender ni HTTP bajo locks.
+
+`is_proposal_emitted` exige FK exacta, texto del renderer, semantic type, clave,
+autor system, outbound activo, tenant/conversación/cuenta/contacto y epoch
+compatibles. TurnWork de publicación COMPLETED con mismo scope/epoch. Exige
+SENT/DELIVERED/READ, wamid válido B4 y único entre outbound del org/canal,
+send_token, send_admitted_at y al menos un
+timestamp provider_accepted_at/delivered_at/read_at no anterior a admisión.
+Ningún Message puede supersederlo. Vigencia de operación/permiso se valida aparte.
+
+| Message | Elegibilidad |
+| --- | --- |
+| PENDING | Persistido no significa admitido ni emitido |
+| SENDING | Claim o admisión no prueban aceptación externa |
+| SENT | Solo con el resto de evidencia B4 y scope exacto |
+| DELIVERED / READ | Evidencia de emisión; no de comprensión/consentimiento |
+| UNCERTAIN | No elegible hasta reconciliación suficiente B4 |
+| FAILED / DISCARDED | No elegible; un texto posterior no lo revive |
+
+Claim/admisión B4 revalidan operación y nuevo input. Si una corrección,
+replacement, takeover o inbound precede admisión, se bloquea el mensaje viejo.
+Tras admisión se conserva realidad externa B4 sin volver válida la operación.
+No existe EMITTED persistido, emitted_at, otro ledger ni retry ciego.
+
+## Witness de recepción y selección
+
+La primera consulta de ingest_inbound_message lee propuestas PENDING del
+contacto/cuenta/org con Message/TurnWork y `statement_timestamp()` en una sola
+SELECT. Solo evidencia B4 ya committed y estrictamente anterior entra en el
+witness; esto evita esperar Conversation y luego fabricar causalidad retroactiva.
+B4 también usa reloj DB. No se depende del reloj remoto ni de created_at solo.
+
+Message.raw_metadata reserva `_b7b_receipt` v1: received_at DB y una lista de
+`{message_id, field}`. No copia wamid, estado, transcript ni timestamp de emisión.
+Se sobrescribe cualquier clave aportada por raw; sin evidencia guarda lista
+vacía. Más de 16 candidatas bloquea el conjunto completo, sin elegir un subconjunto.
+Trigger PostgreSQL impide modificar/agregar el witness tras INSERT, incluso
+antes del claim; protege scope, texto, autoría, ID externo, payload y proyección
+B1 de ese inbound. B3 conserva membership/cursor congelados.
+
+Evaluación usa exclusivamente context_for_work y sus miembros reales: texto
+original del cliente, wamid válido, contacto exacto, canal WhatsApp, TurnWork
+vigente. Campo B4 referenciado < recepción < expires_at, y commit antes del TTL.
+SENDING → inbound → SENT no retroautoriza. UNCERTAIN → inbound → webhook tampoco:
+la reconciliación no cambia el witness ni antedata su observación. Un inbound
+nuevo posterior sí puede evaluarse. No se renueva el TTL de 30 minutos.
+
+Reply-to procede solo de `_channel_event` B1. Se exige un único outbound con
+wamid/org/conversación/cuenta/contacto exactos. Referencia inválida, duplicada o
+antigua no cae al matcher sin referencia ni transfiere autorización a replacement.
+Sin reply-to: una propuesta elegible y respuesta completa `CONFIRMAR <código>`.
+Case/acentos/espacios/puntuación terminal se normalizan de forma limitada;
+texto adicional bloquea. El código es referencia inequívoca incluso tras una
+pregunta incidental; «sí» después del precio no lo es. Rechazo sin referencia
+requiere ausencia de mensajes intermedios en el rango B1, sin buscar otro sí.
+
+Con reply-to válido se admite el conjunto cerrado `sí`, `sí confirmo`,
+`confirmo esa cita`; `sí cancélala` solo en CANCEL_APPOINTMENT. Es una extensión
+acotada del token de §5.4 motivada por CAUSAL-04/CONSENT-01 del encargo explícito.
+No se implementan botones ni se acepta un action ID sin acción emitida.
+
+## Interpretación, transacción y evidencia
+
+ACCEPT / REJECT / AMBIGUOUS / IRRELEVANT / STALE son resultados, no estados nuevos.
+Negaciones explícitas del corpus rechazan la propuesta, nunca una cita real.
+Emoji aislado, «ajá», preguntas, tono positivo y contenido adicional no aceptan.
+Ráfagas y múltiples intenciones no conceden dos consentimientos. Corrección
+retira la propuesta; B6 debe resolver bindings antes de B7A replacement. Al flush,
+una corrección sin revisión B6 impide re-proponer parámetros viejos. Condiciones
+reconocidas también invalidan y piden aclaración; no hay motor de condiciones.
+
+CONTEXTUAL_DECLARATION permanece en el manifest para CONFIRM_ATTENDANCE, pero
+no publica propuestas autorizables ni habilita AUTHORIZED beta. No existe aún
+evidencia suficiente de cita/parámetros conocidos por una declaración previa.
+Restricción explícita respecto de §5.4; no hay bypass ni ampliación de permisos.
+
+Locks: Conversation → TurnWork → ContactIdentity → Goal → Operation, como B7A.
+Sender conserva Conversation → Message; su revalidación no introduce writer
+identidad→Message. Sin LLM/HTTP bajo locks. Antes del commit se revalidan witness,
+deadline, PENDING, digest, parámetros/preconditions B7A, TTL, permiso actual,
+binding_revision, identity_revision, ownership_epoch y ausencia de handoff.
+Safety B5 y humano activo preceden consentimiento. B6 se consolida antes de publicar.
+
+PENDING → AUTHORIZED/REJECTED solo por el writer privado validado. Continúan
+retiros B7A → EXPIRED/INVALIDATED. Terminales no se sobrescriben. Bajo lock de
+Conversation, un inbound ya utilizado devuelve su decisión histórica sin otra
+transición. No unique global por mensaje. Nuevo input difiere B3; un worker
+tardío no puede sobrescribir el resultado del turno siguiente.
+
+AuthorizationEvidence es dataclass frozen validada. Deriva key/digest/modo y
+revisiones de Operation; propuesta/provider/evidencia de Message; respuesta,
+TurnWork y actor de authorization_message. Se reutilizan authorized_at,
+authorization_message/channel/policy_version. Único campo aditivo de Operation:
+consent_decided_at, para fechar también rechazo sin fingir authorized_at.
+Constraints exigen fecha/referencias/política/canal en terminales. No JSON de
+parámetros/revisiones duplicado, transcript ni explicación libre del LLM.
+
+AUTHORIZED conserva evidencia histórica ante corrección/identidad/epoch posterior.
+Nunca la transfiere al replacement; B8 deberá revalidar vigencia en commit de
+negocio. Return humano no revive operaciones, requiere evaluación y nueva propuesta.
+
+## Inspección, observabilidad y límites
+
+Admin tenant-scoped de solo lectura muestra PREPARED/PERSISTED/EMISSION_VERIFIED/
+UNCERTAIN, separado de consent_state y NOT_STARTED. AUTHORIZED no significa cita
+agendada. Se amplía este inspector; no se agrega otra UI/frontend de aprobación.
+
+Eventos AGENT_B7B: PROPOSAL_CREATED, PROPOSAL_EMISSION_PENDING/VERIFIED/UNCERTAIN,
+CONSENT_ACCEPTED/REJECTED/AMBIGUOUS/STALE/EXPIRED/IDENTITY_BLOCKED/PERMISSION_BLOCKED/
+TAKEOVER_BLOCKED/DUPLICATE_IGNORED. Solo count/schema, sin PII, key o message ID
+como labels. Las observaciones de emisión pueden repetirse ante evidencia B4
+superior; no son conteos de autorizaciones únicas. Persistencia se observa on_commit.
+
+Migraciones aditivas: agent.0026_b7b_consent_evidence y
+channels.0015_b7b_receipt_guard. Sin tablas nuevas, backfill ni timestamps legacy.
+is_confirmable rechaza JSON histórico; el matcher retirado solo existe en fixtures
+de componentes legacy opt-in. WRITE sigue contenido incluso para AUTHORIZED.
+
+No se acredita comprensión universal, identidad fuerte ante teléfono compartido/
+reciclado, exactly-once externo, atención humana ni resistencia a pérdida eléctrica.
+SQL administrativo fuera del contrato mantiene sus controles operacionales.
+Ver [ADR](decisions/2026-09-20-b7b-consentimiento-causalmd),
+[acta](implementacion-b7b-agente-whatsapp-2026-09-20md) y
+[runbook](runbooks/agent-whatsapp.md#b7b-consentimiento-causal-cutover-y-rollback).

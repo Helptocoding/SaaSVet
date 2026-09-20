@@ -280,7 +280,8 @@ class B6BindingTests(TestCase):
             operation_key=pending['proposal_id'])
         confirmations.bind_pending_message(self.conv, message.pk)
         pending = confirmations.get_pending(self.conv)
-        self.assertTrue(confirmations.is_confirmable(self.conv, pending))
+        self.assertTrue(confirmations.binding_is_current(self.conv, pending))
+        self.assertFalse(confirmations.is_confirmable(self.conv, pending))  # B7B excludes legacy consent
         self.turn('Mejor para Max')
         self.assertFalse(confirmations.is_confirmable(self.conv, pending))
 

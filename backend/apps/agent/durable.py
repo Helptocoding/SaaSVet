@@ -189,7 +189,8 @@ def has_new_input(work):
         Q(created_at=work.anchor_created_at, id__gt=work.anchor_message_id)).exists()
 
 
-def finalize_turn(witness, *, outputs=(), changes=None, outcome='completed'):
+def finalize_turn(witness, *, outputs=(), changes=None, outcome='completed', proposal_operation=None,
+                  evaluate_consent=False):
     """Atomic local changes + final PENDING messages + completion, under CAS."""
     if changes is not None and changes.witness != witness:
         raise ValueError('Local changes belong to another ownership witness')
@@ -205,6 +206,23 @@ def finalize_turn(witness, *, outputs=(), changes=None, outcome='completed'):
             outcome = 'deferred_to_new_input'
         if changes is not None:
             changes.flush(deferred=deferred)
+            proposal_operation = getattr(changes, 'proposal_operation', None)
+            if not deferred and getattr(changes, 'consent_correction_unresolved', False):
+                from .operation_consent import Evaluation, reply_text
+                outputs = [{'body': reply_text(Evaluation('AMBIGUOUS', 'correction'))}]
+        if not deferred and evaluate_consent:
+            from .operation_consent import evaluate_turn, reply_text
+            consent = evaluate_turn(witness)
+            outputs = (() if consent.reason in ('human_ownership', 'safety', 'disabled')
+                       else [{'body': reply_text(consent)}])
+            outcome = 'consent_' + consent.decision.lower()
+        if not deferred and proposal_operation is not None and not proposal_operation.proposal_message_id:
+            # One canonical output; never mix a free-form planner question with
+            # the proposal that the next response could authorize.
+            from .operation_proposals import publish_proposal
+            message = publish_proposal(witness, proposal_operation, ordinal=0)
+            if message is not None:
+                outputs = ()
         for ordinal, output in enumerate(outputs):
             Message.objects.create(
                 organization_id=conv.organization_id, conversation=conv,
@@ -214,6 +232,7 @@ def finalize_turn(witness, *, outputs=(), changes=None, outcome='completed'):
                 body=output['body'], author_type=output.get('author_type', Message.AUTHOR_SYSTEM),
                 semantic_type=output.get('semantic_type', ''),
                 operation_key=output.get('operation_key', ''))
+        check_turn_deadline(witness)
         if witness_query(witness).update(status=TurnWork.COMPLETED,
                 completed_at=Now(), outcome_code=outcome, lease_expires_at=None) != 1:
             _reject(witness)

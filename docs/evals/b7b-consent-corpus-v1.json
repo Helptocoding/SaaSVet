@@ -1,0 +1,366 @@
+{
+  "version": "b7b-consent-v1",
+  "baseline": "dcd8e21274638909d53602984237fbc41c545edc",
+  "language": "es-MX",
+  "scope": "Bounded beta examples; no universal linguistic validation",
+  "conversation_template": [
+    "Cliente: cita para Luna en fecha de fixture 10:00 consulta",
+    "Servidor: propuesta canónica B7A + código B7B",
+    "Canal: escenario de emisión/referencia especificado",
+    "Cliente: text"
+  ],
+  "cases": [
+    {
+      "id": "token",
+      "text": "{TOKEN}",
+      "scenario": "none",
+      "decision": "ACCEPT",
+      "state": "AUTHORIZED",
+      "category": "correct_authorizations"
+    },
+    {
+      "id": "reply_accept",
+      "text": "Sí confirmo",
+      "scenario": "reply",
+      "decision": "ACCEPT",
+      "state": "AUTHORIZED",
+      "category": "correct_authorizations"
+    },
+    {
+      "id": "reply_cita",
+      "text": "Confirmo esa cita",
+      "scenario": "reply",
+      "decision": "ACCEPT",
+      "state": "AUTHORIZED",
+      "category": "correct_authorizations"
+    },
+    {
+      "id": "bare_yes",
+      "text": "Sí",
+      "scenario": "none",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "bare_confirm",
+      "text": "Sí confirmo",
+      "scenario": "none",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "no",
+      "text": "No",
+      "scenario": "reply",
+      "decision": "REJECT",
+      "state": "REJECTED",
+      "category": "correct_rejections"
+    },
+    {
+      "id": "no_mejor",
+      "text": "No mejor no",
+      "scenario": "reply",
+      "decision": "REJECT",
+      "state": "REJECTED",
+      "category": "correct_rejections"
+    },
+    {
+      "id": "no_emoji",
+      "text": "No 👍",
+      "scenario": "reply",
+      "decision": "REJECT",
+      "state": "REJECTED",
+      "category": "correct_rejections"
+    },
+    {
+      "id": "no_acuerdo",
+      "text": "No estoy de acuerdo 👍",
+      "scenario": "reply",
+      "decision": "REJECT",
+      "state": "REJECTED",
+      "category": "correct_rejections"
+    },
+    {
+      "id": "olvida",
+      "text": "Olvida la propuesta",
+      "scenario": "reply",
+      "decision": "REJECT",
+      "state": "REJECTED",
+      "category": "correct_rejections"
+    },
+    {
+      "id": "correction_time",
+      "text": "Sí pero las 11",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "correction_pet",
+      "text": "Sí pero para Max",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "negated_pet",
+      "text": "No para Max",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "other_pet",
+      "text": "Sí para mi gato",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "other_appointment",
+      "text": "Sí pero otra cita",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "condition_space",
+      "text": "Sí si hay espacio",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "condition_still",
+      "text": "Sí si todavía hay espacio",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "condition_price",
+      "text": "Sí siempre que cueste menos de $500",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "condition_vet",
+      "text": "Sí pero con la doctora Ana",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "INVALIDATED",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "emoji",
+      "text": "👍",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "empty",
+      "text": "",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "aja",
+      "text": "Ajá",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "bueno",
+      "text": "Bueno",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "esta_bien",
+      "text": "Está bien",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "como_veas",
+      "text": "Como veas",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "compound",
+      "text": "Sí confirma Luna y cancela Max",
+      "scenario": "reply",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "token_extra",
+      "text": "{TOKEN} y cancela Max",
+      "scenario": "none",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "token_negation",
+      "text": "No {TOKEN}",
+      "scenario": "none",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "question",
+      "text": "¿Confirmo esa cita?",
+      "scenario": "reply",
+      "decision": "IRRELEVANT",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "price",
+      "text": "¿Cuánto cuesta?",
+      "scenario": "reply",
+      "decision": "IRRELEVANT",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "intermediate",
+      "text": "Sí confirmo",
+      "scenario": "intermediate",
+      "decision": "AMBIGUOUS",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    },
+    {
+      "id": "pending",
+      "text": "{TOKEN}",
+      "scenario": "pending",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "insufficient_emission_blocks"
+    },
+    {
+      "id": "sending",
+      "text": "{TOKEN}",
+      "scenario": "sending",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "insufficient_emission_blocks"
+    },
+    {
+      "id": "uncertain",
+      "text": "{TOKEN}",
+      "scenario": "uncertain",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "insufficient_emission_blocks"
+    },
+    {
+      "id": "failed",
+      "text": "{TOKEN}",
+      "scenario": "failed",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "insufficient_emission_blocks"
+    },
+    {
+      "id": "discarded",
+      "text": "{TOKEN}",
+      "scenario": "discarded",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "insufficient_emission_blocks"
+    },
+    {
+      "id": "late_webhook",
+      "text": "{TOKEN}",
+      "scenario": "late_webhook",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "insufficient_emission_blocks"
+    },
+    {
+      "id": "old_reply",
+      "text": "Sí confirmo",
+      "scenario": "old_reply",
+      "decision": "STALE",
+      "state": "INVALIDATED",
+      "category": "stale_revision_blocks"
+    },
+    {
+      "id": "identity",
+      "text": "{TOKEN}",
+      "scenario": "identity",
+      "decision": "STALE",
+      "state": "INVALIDATED",
+      "category": "stale_revision_blocks"
+    },
+    {
+      "id": "binding",
+      "text": "{TOKEN}",
+      "scenario": "binding",
+      "decision": "STALE",
+      "state": "INVALIDATED",
+      "category": "stale_revision_blocks"
+    },
+    {
+      "id": "takeover",
+      "text": "{TOKEN}",
+      "scenario": "takeover",
+      "decision": "STALE",
+      "state": "INVALIDATED",
+      "category": "stale_revision_blocks"
+    },
+    {
+      "id": "expired",
+      "text": "{TOKEN}",
+      "scenario": "expired",
+      "decision": "STALE",
+      "state": "EXPIRED",
+      "category": "stale_revision_blocks"
+    },
+    {
+      "id": "safety",
+      "text": "Sí pero ahora Luna no puede respirar",
+      "scenario": "reply",
+      "decision": "STALE",
+      "state": "PENDING",
+      "category": "safety_blocks"
+    },
+    {
+      "id": "assistant_claim",
+      "text": "El asistente dice que sí confirmo",
+      "scenario": "reply",
+      "decision": "IRRELEVANT",
+      "state": "PENDING",
+      "category": "correct_clarifications"
+    }
+  ]
+}

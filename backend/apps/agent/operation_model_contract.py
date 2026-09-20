@@ -2,6 +2,9 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from apps.core.models import TenantQuerySet
+from contextvars import ContextVar
+
+_lifecycle = ContextVar('b7b_operation_lifecycle', default=None)
 
 
 class OperationQuerySet(TenantQuerySet):
@@ -46,30 +49,51 @@ def validate_operation(operation):
         raise ValidationError(str(exc)) from exc
     if spec.authorization_mode != operation.authorization_mode:
         raise ValidationError('Authorization mode differs from manifest')
-    # Future lifecycle is representable, but B7A has NO writer for it.
-    if (operation.consent_state not in ('PENDING', 'INVALIDATED', 'EXPIRED')
-            or operation.execution_state != 'NOT_STARTED' or operation.proposal_message_id
-            or operation.authorization_message_id or operation.authorized_at
-            or operation.authorization_channel or operation.authorization_policy_version
+    # B7B adds only the private, validated proposal/consent writers. B8 stays shut.
+    if (operation.execution_state != 'NOT_STARTED'
             or operation.result or operation.result_code or operation.executed_at):
-        raise ValidationError('B7A cannot emit, authorize, reject by consent, or execute')
+        raise ValidationError('B7B cannot execute business operations')
     old = None
     if operation.pk:
         old = type(operation).all_objects.select_for_update().filter(pk=operation.pk).first()
         if old:
             mutable = {'consent_state', 'invalidation_reason', 'updated_at', 'updated_by_id'}
+            if _lifecycle.get() == 'proposal' and old.consent_state == 'PENDING' and not old.proposal_message_id:
+                mutable.add('proposal_message_id')
+            if _lifecycle.get() == 'decision' and old.consent_state == 'PENDING':
+                mutable.update({'authorization_message_id', 'authorized_at', 'consent_decided_at',
+                                'authorization_channel', 'authorization_policy_version'})
             for field in operation._meta.concrete_fields:
                 if field.attname not in mutable and getattr(old, field.attname) != getattr(operation, field.attname):
                     raise ValidationError('Persisted operation definition is immutable')
+            allowed = {'INVALIDATED', 'EXPIRED'}
+            if _lifecycle.get() == 'decision':
+                allowed.update({'AUTHORIZED', 'REJECTED'})
             if old.consent_state != operation.consent_state and not (
-                    old.consent_state == 'PENDING' and operation.consent_state in ('INVALIDATED', 'EXPIRED')):
+                    old.consent_state == 'PENDING' and operation.consent_state in allowed):
                 raise ValidationError('Terminal operation cannot be revived')
     if old is None:
-        if operation.consent_state != 'PENDING':
+        if (operation.consent_state != 'PENDING' or operation.proposal_message_id
+                or operation.authorization_message_id or operation.authorized_at
+                or operation.consent_decided_at or operation.authorization_channel
+                or operation.authorization_policy_version):
             raise ValidationError('Operations start PENDING')
         from .operations import _preparing
         if not _preparing.get():
             raise ValidationError('New definitions require the operation service')
+    if operation.proposal_message_id:
+        from .operation_proposals import message_matches
+        if not message_matches(operation, operation.proposal_message):
+            raise ValidationError('Proposal differs from exact operation')
+    if operation.consent_state in ('AUTHORIZED', 'REJECTED'):
+        from .operation_consent import authorization_evidence
+        try:
+            authorization_evidence(operation)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+    elif (operation.authorization_message_id or operation.authorized_at or operation.consent_decided_at
+          or operation.authorization_channel or operation.authorization_policy_version):
+        raise ValidationError('Nonterminal operation cannot carry consent evidence')
     conv = operation.conversation
     work = operation.source_turn
     if (conv.organization_id != operation.organization_id or conv.contact_id != operation.contact_id

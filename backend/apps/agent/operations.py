@@ -114,6 +114,9 @@ def definition_from_matter(conversation, goal, capability):
             raise PreparationDenied('appointment_not_mutable')
         params['appointment_id'] = appointment.pk
         preconditions['expected_state'] = _appointment_state(appointment)
+        preconditions['labels']['original_veterinarian'] = (
+            appointment.veterinarian.get_full_name() or appointment.veterinarian.username
+            if appointment.veterinarian_id else 'sin asignar')
     if spec.operation_kind in ('CREATE_APPOINTMENT', 'RESCHEDULE_APPOINTMENT'):
         # B6 date/time represent the target, including corrections to reschedule.
         day, start = values.get('date'), values.get('time')
@@ -330,6 +333,13 @@ def prepare_current(witness):
         conversation_id=conv.pk, goal_id=goal.pk)
     if pending:
         return pending
+    from .models import ConversationOperation
+    if ConversationOperation.objects.filter(organization_id=conv.organization_id, conversation=conv,
+            goal=goal, consent_state__in=('AUTHORIZED', 'REJECTED'),
+            binding_revision=goal.binding_revision, identity_revision=conv.contact.authorization_revision,
+            ownership_epoch=conv.ownership_epoch).exists():
+        # A completed consent decision is not a request for another proposal.
+        return None
     try:
         return prepare_operation(witness=witness, goal_id=goal.pk, capability=capability,
             expected_binding_revision=goal.binding_revision,
@@ -364,7 +374,7 @@ def render(operation):
     pet = pre['labels'].get('pet', '')
     old = pre.get('expected_state', {})
     original = (f"{pet}, {old.get('date')} {old.get('start_time')}–{old.get('end_time')}"
-                f" ({pre['clinic_timezone']})")
+                f" ({pre['clinic_timezone']}), veterinario {pre['labels'].get('original_veterinarian', 'sin asignar')}")
     kind = operation.operation_kind
     if kind in ('CREATE_APPOINTMENT', 'RESCHEDULE_APPOINTMENT'):
         target = f"{p['date']} {p['start_time']}–{p['end_time']} ({pre['clinic_timezone']}), veterinario {pre['labels']['veterinarian']}"

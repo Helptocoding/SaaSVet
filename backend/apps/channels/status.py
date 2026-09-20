@@ -54,6 +54,8 @@ def record_status(channel, provider_id, status):
         fields = apply_evidence(message, status, now)
         if fields:
             message.save(update_fields=fields)
+            from apps.agent.operation_proposals import observe_delivery
+            observe_delivery(message)
             metrics = {}
             if status == 'sent' and message.send_admitted_at is not None:
                 metrics['provider_acceptance_latency_seconds'] = max(

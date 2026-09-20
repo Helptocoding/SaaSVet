@@ -264,6 +264,7 @@ class ConversationOperation(OrganizationalModel):
     consent_state = models.CharField(max_length=12, default='PENDING', choices=[(s, s) for s in CONSENT_STATES])
     invalidation_reason = models.CharField(max_length=64, blank=True, default='')
     authorized_at = models.DateTimeField(null=True, blank=True)
+    consent_decided_at = models.DateTimeField(null=True, blank=True)
     authorization_message = models.ForeignKey('channels.Message', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
     authorization_channel = models.CharField(max_length=32, blank=True, default='')
     authorization_policy_version = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -277,6 +278,11 @@ class ConversationOperation(OrganizationalModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['source_turn', 'stage_key'], name='operation_causal_stage_unique'),
+            models.CheckConstraint(condition=~models.Q(consent_state__in=('AUTHORIZED', 'REJECTED')) |
+                (models.Q(consent_decided_at__isnull=False) & models.Q(proposal_message__isnull=False)
+                 & models.Q(authorization_message__isnull=False) & models.Q(authorization_policy_version=1)
+                 & models.Q(authorization_policy_version__isnull=False)
+                 & models.Q(authorization_channel='whatsapp')), name='operation_b7b_decision_evidence'),
             models.UniqueConstraint(fields=['goal'], condition=models.Q(consent_state='PENDING'), name='operation_one_pending_matter'),
             models.CheckConstraint(condition=~models.Q(pk=models.F('replaces_id')), name='operation_no_self_replace'),
             models.CheckConstraint(condition=models.Q(parameters_digest__regex=r'^[0-9a-f]{64}$'), name='operation_digest_sha256'),
