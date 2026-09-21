@@ -19,6 +19,11 @@ Renderer server-side + código visible; publicación local y FK en un commit B3.
 Una sola propuesta por operación. Sender B4 vuelve a comprobar vigencia antes de
 admisión, conservando aceptación externa si el HTTP ya fue admitido.
 
+Definiciones B7A ligadas a cita sin snapshot visible del veterinario original
+se invalidan antes de publicar y requieren una definición nueva. No se toma
+el fallback del renderer como evidencia de que la cita no tenía veterinario,
+ni se completa el snapshot histórico con backfill.
+
 Agregar un witness mínimo a la metadata reservada del inbound. La primera SELECT
 MVCC de recepción captura únicamente referencias a evidencia B4 ya committed,
 con reloj DB; ocurre antes de identidad/locks. Posteriormente no puede añadirse

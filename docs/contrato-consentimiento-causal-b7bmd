@@ -62,6 +62,12 @@ mascota, cita original, intervalo/zona, destino, veterinario y motivo/datos del
 kind. B7B añade veterinario original al texto de cita existente y un código
 distinto por operación. Ningún segmento autorizable depende del LLM.
 
+Una definición de cita preparada en B7A sin snapshot `original_veterinarian`
+no es publicable: se retira INVALIDATED/proposal_contract_changed y requiere
+nueva definición. No se convierte el fallback del renderer en un dato probado
+ni se completa el snapshot histórico mediante backfill. El predicado de mensaje
+exacto exige también ese snapshot para las operaciones ligadas a cita.
+
 El código de 12 caracteres hexadecimales usa HMAC-SHA256 con la UUID aleatoria
 inmutable como clave y org/contacto/operation_key/expiry como entrada. No depende
 de SECRET_KEY; rotar la clave global no altera una propuesta histórica. No es

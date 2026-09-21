@@ -42,9 +42,16 @@ def render_proposal(operation):
         + '. Para rechazarla responde NO. La confirmación no ejecuta la operación.')
 
 
+def has_proposal_snapshot(operation):
+    # B7A never emitted proposals. Old appointment definitions have no visible
+    # original-vet snapshot; do not turn the renderer's fallback into a fact.
+    return not operation.appointment_id or bool(
+        operation.preconditions.get('labels', {}).get('original_veterinarian'))
+
+
 def message_matches(operation, message):
     conv = operation.conversation
-    return bool(message and operation.proposal_message_id == message.pk
+    return bool(has_proposal_snapshot(operation) and message and operation.proposal_message_id == message.pk
         and message.organization_id == operation.organization_id
         and message.conversation_id == operation.conversation_id
         and message.channel_account_id == conv.channel_account_id
@@ -136,6 +143,11 @@ def publish_proposal(witness, operation, *, ordinal):
         raise ValueError('Proposal scope/cursor mismatch')
     operation = operations.revalidate(operation)
     if operation.consent_state != 'PENDING' or operation.authorization_mode != 'EXPLICIT_CONFIRMATION':
+        return None
+    if not has_proposal_snapshot(operation):
+        ConversationOperation.objects.filter(pk=operation.pk).retire_pending(
+            'INVALIDATED', 'proposal_contract_changed')
+        observe('consent_stale')
         return None
     if operation.proposal_message_id:
         return operation.proposal_message  # never another output on retry

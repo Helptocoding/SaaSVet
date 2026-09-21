@@ -644,3 +644,24 @@ class OperationConsentTests(ConsentFixtures, TestCase):
         self.assertEqual(self.evaluate().decision, 'AMBIGUOUS')
         self.assertEqual(len(durable.context_for_work(self.witness).events), 2)
         self.assertEqual(self.op.consent_state, 'INVALIDATED')
+
+    def test_b7a_appointment_without_visible_vet_snapshot_requires_new_definition(self):
+        import json
+        from django.db import connection
+        self.bind_appointment(name='cancel_appointment')
+        operation = self.prepare('cancel_appointment')
+        # A real B7A definition predates the original-vet renderer snapshot.
+        # Reproduce that historical shape without inventing proposal/evidence.
+        old_preconditions = dict(operation.preconditions)
+        old_preconditions['labels'] = dict(old_preconditions['labels'])
+        old_preconditions['labels'].pop('original_veterinarian')
+        with connection.cursor() as cursor:
+            cursor.execute('UPDATE agent_conversationoperation SET preconditions=%s::jsonb WHERE id=%s',
+                [json.dumps(old_preconditions), operation.pk])
+        operation.refresh_from_db()
+        durable.finalize_turn(self.witness, proposal_operation=operation)
+        operation.refresh_from_db()
+        self.assertEqual(operation.consent_state, 'INVALIDATED')
+        self.assertEqual(operation.invalidation_reason, 'proposal_contract_changed')
+        self.assertIsNone(operation.proposal_message_id)
+        self.assertFalse(Message.objects.filter(direction='out').exists())
