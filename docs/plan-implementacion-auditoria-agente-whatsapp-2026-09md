@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-19**. Estado: **B0–B6 y B7A cerradas técnicamente; B7B/B8/B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-20**. Estado: **B0–B7B cerradas técnicamente; B8/B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -570,6 +570,8 @@ No se modifica el alcance de B7A ni se abre WRITE. Baseline exacto
 
 ### Fase B7B — Adaptadores de consentimiento y propuesta emitida
 
+**Estado 2026-09-20: COMPLETED técnico beta.** Baseline exacto dcd8e21274638909d53602984237fbc41c545edc. Implementación 6293438ace78f068d091eb64be979d65195ea181 y ajuste final 7a99eda848d5ad56b32b2a5bfea062cc3c069c85. 113 tests B7B únicos y 1022 IDs B0–B7A reejecutados, cero failures/errors/skips/xfail en las ejecuciones finales correspondientes; 13 escenarios multiproceso, FI-01..10 y corpus de 44 casos con false_authorizations=0. Propuesta canónica/Message en commit B3, emisión B4 y witness de recepción inmutable, evaluación conservadora y autorización atómica. CONTEXTUAL_DECLARATION permanece sin autorización beta; reply-to verificado admite frases cerradas, sin reply-to exige código y propuesta única. Inspector admin en vez de frontend Inbox. Migraciones aditivas agent.0026 y channels.0015, sin backfill. Operaciones B7A de cita sin snapshot visible se invalidan antes de publicar. AUTHORIZED conserva evidencia y no ejecuta negocio: B0 WRITE CLOSED. B8/B9/E/P no implementados; activación PENDING_ACTIVATION_REQUIREMENTS, sin despliegue. [Contrato](contrato-consentimiento-causal-b7bmd), [ADR](decisions/2026-09-20-b7b-consentimiento-causalmd), [acta](implementacion-b7b-agente-whatsapp-2026-09-20md) y [evidencia](evals/b7b-acceptance-results.json).
+
 **Objetivo.** Conectar lenguaje/canal con autorización exacta C2, sin modificar todavía endpoints de negocio. **Hallazgos:** H01/H02/H20/H18; H09 en dispatch. **Invariantes:** I01–I05/I12–I14; commit se garantiza en B8. **Dependencias:** B7A/B4.
 
 **Actual → objetivo.** Respuestas vagas/pending JSON dejan de otorgar permiso. Servidor distingue intención, propuesta, evidencia de aceptación y resultado.
@@ -848,7 +850,7 @@ Hojas observadas: `agent/0021_turn_operation_assessment.py`, `channels/0010_mess
 | B5 | Fuente/event_key Handoff; aviso durable solo para canal utilizado | NULL desconocido legacy; NOT_CONFIGURED con evidencia | Unique parcial por evento nuevo; no consolidar abiertos legacy ni constraint global |
 | B6 | Bound_pet/bound_appointment/binding_revision y procedencia mínima | Nullable/0; legacy unbound, recapturar | Preservar constraints de goals; lector compatible antes de preparar datos sensibles |
 | B7A | ConversationOperation con source_turn desde creación; revisión identidad; correlación ToolExecution | Pending viejo invalidado; sin backfill de autorización ni emisión | C2 después de B3/B6; no tabla intermedia ni duplicación de revision/digest/EMITTED |
-| B7B | Ninguna obligatoria | No volver autorizable propuesta legacy | Consumidor de C2/Message ya desplegados |
+| B7B | agent.0026 + channels.0015 aditivas; fecha de decisión y guard de recepción | Sin backfill; no volver autorizable propuesta legacy | Consumidor de C2/Message; esquema conservado en rollback |
 | B8A/B8B/B8C/B8D/B8E | C2 e idempotencia existente; ninguna obligatoria por defecto | Claves y resultados legacy intactos | Un adaptador por release; AGENT no adaptado denegado; staff sin cambios |
 | B9 | Correlación LLMCall/TurnWork y cupo por trabajo si falta | Nuevos contadores 0; usage histórico desconocido | No reservas distribuidas de gasto ni tabla scheduler para límite fijo |
 | E1 | Proyección de referencia en estructura existente si precisa | Null/unknown sin fuente | READ/historia independiente de delivery; filtros adicionales solo para caso probado |

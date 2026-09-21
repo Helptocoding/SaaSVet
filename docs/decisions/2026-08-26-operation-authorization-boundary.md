@@ -106,3 +106,14 @@ con digest/schema y actor permission proporcional. Esto no concede autorización
 solo PENDING/NOT_STARTED y retiros server-side están habilitados. El nuevo contrato
 ORM rechaza AUTHORIZED y emisión en B7A. B7B/B8 siguen pendientes y containment B0
 prevalece. Véase [ADR B7A](2026-09-18-b7a-conversation-operationmd).
+
+## Enmienda B7B — 2026-09-20
+
+ConversationOperation exacta puede recibir AUTHORIZED/REJECTED por propuesta
+canónica emitida y respuesta causal verificada. La intención de apertura,
+el JSON legacy y el texto del asistente siguen sin autoridad de consentimiento.
+Se revalidan permiso actual, binding_revision, identity_revision y ownership_epoch;
+CONTEXTUAL_DECLARATION queda sin autorización beta. AUTHORIZED conserva evidencia
+histórica, no ejecuta negocio y no abre WRITE B0. B8 y activación siguen pendientes.
+Alcance, diferencias y pruebas: [ADR B7B](2026-09-20-b7b-consentimiento-causalmd) y
+[acta](../implementacion-b7b-agente-whatsapp-2026-09-20md).

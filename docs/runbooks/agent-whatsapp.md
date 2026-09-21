@@ -429,3 +429,50 @@ digests, revisiones y estados; no revertir 0025 ni regenerar JSON autorizable.
 Mantener B0 y desplegar únicamente código compatible con el esquema conservado.
 La reversión de código no restituye identidad revocada ni hace válida una operación
 INVALIDATED/EXPIRED. No restaurar permisos LLM. [Contrato](../contrato-conversation-operation-b7amd).
+
+## B7B: consentimiento causal, cutover y rollback
+
+Esta sección actualiza el corte histórico B7A anterior. B7B admite consentimiento
+persistido; **AUTHORIZED no agenda, cancela, reprograma, confirma asistencia ni
+registra mascotas**. B0 sigue cerrando WRITE. No se ejecuta este runbook ni se
+despliega automáticamente por completar código/tests.
+
+Precondiciones de activación: siguen PENDING_ACTIVATION_REQUIREMENTS y
+VETERINARY_REVIEW_REQUIRED. No se inventan responsables, atención humana ni canal
+alternativo validado. `AGENT_B7B_CONSENT_ENABLED` permanece apagado por defecto.
+No cambiar la bandera B5 ni el release de capabilities como parte de B7B.
+
+Cutover futuro controlado:
+
+1. Mantener B0 cerrado y B7B deshabilitado. Detener/drenar planners incompatibles;
+   conservar sender durable B4 y su evidencia. No mezclar escritores antiguos.
+2. Backup habitual y migraciones aditivas `agent.0026_b7b_consent_evidence` y
+   `channels.0015_b7b_receipt_guard`. No backfill de autorización/recepción/emisión.
+   Verificar `check`, `makemigrations --check` y `showmigrations` en el candidato.
+3. Inspeccionar admin: PREPARED, PERSISTED, EMISSION_VERIFIED o UNCERTAIN, separado
+   de PENDING/AUTHORIZED/REJECTED/EXPIRED/INVALIDATED y ejecución NOT_STARTED.
+   AUTHORIZED debe tener propuesta, respuesta, fecha y política. No modificar
+   SQL/JSON para fabricar evidencia faltante. Legacy requiere nueva propuesta.
+   Definiciones B7A de cita sin snapshot del veterinario original se retiran
+   como proposal_contract_changed: requieren definición nueva, sin backfill.
+4. Solo después de gates operativos, habilitar de forma controlada el flujo de
+   propuestas compatible. El flag técnico no concede autonomía WRITE ni habilita
+   CONTEXTUAL_DECLARATION. Observar AGENT_B7B_* y mantener el alcance probado.
+5. Una propuesta UNCERTAIN no se reintenta. Si B4 reconcilia con wamid verificado,
+   pedir respuesta nueva cuya recepción ya observe esa emisión. Una respuesta
+   anterior nunca se vuelve válida retroactivamente. Sin ID reconciliable,
+   atención operativa bajo permisos propios; no matching por texto/tiempo.
+
+Rollback: apagar AGENT_B7B_CONSENT_ENABLED, drenar los planners y retirar PENDING
+con `operations.invalidate_pending(organization_id=..., conversation_id=...,
+reason='release_disabled')` en scope explícito. El sender bloquea propuestas B7B
+cuando el flag está apagado; intentos ya admitidos conservan su realidad B4.
+Preservar filas/columnas/Message/metadata/guards y evidencia AUTHORIZED histórica;
+no revertir migraciones de evidencia ni convertir terminales en PENDING.
+No restaurar pending_action autoritativo o el matcher retirado. El código de
+rollback debe ser compatible con el esquema conservado. Reanudar exige revisión
+actual/nueva propuesta, nunca revivir una operación stale. B0 permanece activo.
+
+Pruebas, comandos e inventario: [acta B7B](../implementacion-b7b-agente-whatsapp-2026-09-20md),
+[contrato](../contrato-consentimiento-causal-b7bmd),
+[ADR](../decisions/2026-09-20-b7b-consentimiento-causalmd).

@@ -1391,3 +1391,18 @@ prepare_current se integra al flush B3 del estado B6; confirmations es fachada y
 lector legacy diagnóstico. No hay consentimiento ni efecto autónomo. Registro
 compuesto sigue fuera; los cinco kinds y schemas están en
 [contrato B7A](../contrato-conversation-operation-b7amd). WRITE permanece cerrado.
+
+### B7B (2026-09-20)
+
+Actualiza el corte histórico B7A: operation_proposals concentra renderer/código,
+emisión y witness de recepción; operation_consent interpreta el conjunto beta y
+persiste decisión exacta/idempotente. B3 publica propuesta y vínculo en un commit;
+B4 conserva lifecycle y consulta vigencia antes de admitir. B5/B6/identity/ownership
+preceden la transición. No se llama al LLM ni a HTTP dentro de ese commit.
+
+Migraciones agent.0026_b7b_consent_evidence y channels.0015_b7b_receipt_guard.
+AuthorizationEvidence no es modelo y no copia transcript/digest/revisiones.
+Admin de solo lectura distingue propuesta/emisión/consentimiento/NOT_STARTED.
+AGENT_B7B_* usa count/schema; flag AGENT_B7B_CONSENT_ENABLED apagado por defecto.
+Legacy no recibe consentimiento sintético. AUTHORIZED no ejecuta negocio;
+WRITE continúa contenido. [Contrato B7B](../contrato-consentimiento-causal-b7bmd).

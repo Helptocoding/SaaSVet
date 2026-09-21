@@ -763,3 +763,19 @@ operación. B7A no lo presenta como mensaje enviado, no solicita ni interpreta
 sí/no, no cambia la bandeja/frontend y no abre WRITE. B7B ligará emisión y
 consentimiento; B8 reevaluará y ejecutará cuando esté autorizado por su fase.
 H01/H02/H13/H18 no se declaran cerrados. [Contrato B7A](contrato-conversation-operation-b7amd).
+
+### Enmienda B7B — consentimiento exacto (2026-09-20)
+
+Con el flujo B7B habilitado bajo sus gates, la propuesta canónica lleva un código
+propio. `CONFIRMAR <código>` acepta únicamente esa propuesta emitida y vigente;
+un reply-to verificado admite el conjunto cerrado del contrato. Un sí sin
+referencia, emoji, varias intenciones o causalidad incierta piden aclaración.
+Corrección/condición reconocida retira la propuesta anterior; nunca acepta una
+parte ignorando cambios. Un rechazo de propuesta no cancela una cita real.
+
+Se informa consentimiento registrado y ejecución pendiente, nunca «cita agendada».
+CONFIRM_ATTENDANCE no se autoriza por intención/contextual declaration en beta.
+Humano activo y safety conservan precedencia; teléfonos ambiguos o permiso
+revocado bloquean. Propuestas UNCERTAIN necesitan reconciliación y respuesta nueva.
+No se migra consentimiento histórico. WRITE autónomo sigue cerrado por B0,
+activación PENDING_ACTIVATION_REQUIREMENTS. [Contrato B7B](contrato-consentimiento-causal-b7bmd).

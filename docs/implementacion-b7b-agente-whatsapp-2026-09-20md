@@ -1,0 +1,200 @@
+# Acta B7B — consentimiento causal de ConversationOperation
+
+Fecha: 2026-09-20. Alcance exclusivo B7B. Estado: **COMPLETED técnico beta**.
+No despliegue. WRITE autónomo **CLOSED por B0**, ejecución **NOT_STARTED**.
+Activación **PENDING_ACTIVATION_REQUIREMENTS**; revisión **VETERINARY_REVIEW_REQUIRED**.
+
+## Baseline y alcance
+
+Baseline resuelto antes de editar runtime:
+`dcd8e21274638909d53602984237fbc41c545edc`, HEAD inicial, commit
+`docs(agent): close B7A acceptance and contract` del 2026-09-19. Se verificaron
+su acta COMPLETED, contrato y aceptación de 1022 tests backend únicos. Incluye
+la implementación B7A `9643c03e226b8ecd4e66c8334dc0828936f12f49` y su ajuste de
+fixtures `0d80d85`. No se tomó otro baseline ni se rediseñó B0–B7A.
+
+Commit principal de implementación: `6293438ace78f068d091eb64be979d65195ea181`.
+Commit final de implementación: `7a99eda848d5ad56b32b2a5bfea062cc3c069c85`,
+que añade el bloqueo de snapshots incompletos de cita preparados en B7A.
+Los hashes de implementación y evidencia se registran también en
+[aceptación JSON](evals/b7b-acceptance-results.json). El commit documental que
+contiene esta acta se identifica mediante `git log -1 -- <ruta de esta acta>`;
+no se introduce una autorreferencia circular a su propio hash.
+
+Se leyó B7B/§5.4 del plan y se inspeccionaron solamente las fronteras de
+Operation, B1/B3/B4/B5/B6, identidad/permission y puntos de integración del
+worker/confirmations. Contrato y corpus precedieron al adaptador; el primer
+test RED falló por ausencia del módulo de consentimiento. No se modificaron
+prompts. No se reauditaron H01–H20.
+
+## Resultado implementado
+
+Una Operation PENDING exacta puede publicar una propuesta canónica y recibir
+AUTHORIZED o REJECTED con evidencia causal. Es autorización de consentimiento,
+sin ningún efecto de agenda, asistencia, registro ni otro negocio.
+
+| Frontera | Contrato final |
+| --- | --- |
+| Propuesta | Renderer B7A server-side, datos exactos, veterinario original cuando aplica y código visible por operación; nunca texto libre LLM |
+| Identidad visible | Acción/mascota/cita/fecha/intervalo/zona/destino y referencia de 12 hex; colisión histórica rechazada bajo lock |
+| Vínculo | proposal_message FK y Message system/confirmation se publican con TurnWork COMPLETED en un commit B3; retry reutiliza vínculo |
+| Emisión | FK/texto/key/semantic type/scope/actor/epoch/TurnWork exactos; activo, sin superseder, estado SENT/DELIVERED/READ, wamid válido y único en cuenta/org, send_token, admisión y observación B4 posterior |
+| PENDING / SENDING | Ni persistencia, claim ni admisión solos prueban emisión |
+| SENT / DELIVERED / READ | Solo elegibles con evidencia completa; no prueban comprensión |
+| UNCERTAIN | Bloqueado hasta reconciliación B4 verificable, sin reenvío ciego ni causalidad retroactiva |
+| FAILED / DISCARDED | No autorizables |
+| Posterioridad | Primera SELECT MVCC de recepción observa evidencia B4 ya committed, reloj DB; timestamp de emisión observado < recepción < expires_at; vigencia comprobada otra vez antes de commit |
+| Reply-to | Proyección real B1, wamid único en conversación/contacto/cuenta/org; referencia inválida o antigua no hace fallback |
+| Sin reply-to | Una única propuesta elegible; aceptación completa CONFIRMAR código; rechazo inequívoco sin intervenciones intermedias; nunca escoger por recencia |
+| Evidencia | Value object AuthorizationEvidence, referencias a Operation/Message/TurnWork, actor, digest, modo, revisiones, decisión/fecha; sin transcript ni explicación LLM |
+| Parser | ACCEPT/REJECT/AMBIGUOUS/IRRELEVANT/STALE; vocabulario beta cerrado; corrección y condición reconocida invalidan; emoji aislado o múltiples intenciones no aceptan |
+| Modo contextual | CONFIRM_ATTENDANCE conserva CONTEXTUAL_DECLARATION en manifest, sin transición AUTHORIZED beta; no bypass por intención |
+| Terminales | PENDING → AUTHORIZED/REJECTED; retiros B7A → INVALIDATED/EXPIRED; no sobrescribir decisión histórica |
+| Actor | Permission actual B7A proporcional al efecto; FORBIDDEN/REQUIRES_STEP_UP bloquean; no step-up nuevo |
+| Revisiones | binding_revision B6, authorization_revision de identidad y ownership_epoch deben coincidir; cambios retiran pendientes |
+| TTL/replacement | 30 minutos originales, sin renovación; nueva UUID/digest/revisiones y sin transferir consentimiento; AUTHORIZED anterior conserva su historia |
+| Safety/humano | B5 precede consentimiento; no propuestas ni autorización autónoma con humano activo; release no revive pendientes |
+| Idempotencia | Locks Conversation/TurnWork/identidad/goal/operation, witness B3 y respuesta real; duplicado devuelve decisión histórica, retry no duplica propuesta |
+
+El witness mínimo `_b7b_receipt` guarda received_at DB y referencias
+`{message_id, field}` a campos B4. La carencia demostrada es SENDING → inbound →
+SENT: mirar el SENT final permite inventar posterioridad. La SELECT inicial
+no espera el lock de Conversation para decidir qué evidencia ya existía.
+No se copia estado/provider ID/timestamp de emisión. Un webhook tardío no
+puede añadir evidencia al inbound antiguo. Trigger lo protege desde INSERT,
+incluso antes del claim; B3 sigue protegiendo membership/cursor.
+
+Una pregunta incidental permite continuar el matter, pero un «sí» sin referencia
+no hereda autorización. El código exacto sí es referencia explícita. Con reply-to
+se admiten «sí»/«sí confirmo»; «confirmo esa cita» solo creación/reprogramación;
+«sí cancélala» solo cancelación. No se proclama cobertura lingüística universal.
+
+## Archivos y persistencia
+
+Runtime nuevo: `backend/apps/agent/operation_proposals.py` y
+`backend/apps/agent/operation_consent.py`.
+
+Runtime integrado: `backend/apps/agent/{admin,confirmations,durable,models,
+operation_model_contract,operations,sender,services,turn_changes,worker}.py`,
+`backend/apps/channels/status.py`, `backend/config/settings.py`.
+
+Migraciones aditivas:
+
+- `agent.0026_b7b_consent_evidence`: único campo nuevo consent_decided_at nullable
+  y constraint de evidencia terminal. Reutiliza proposal_message,
+  authorization_message, authorized_at, authorization_channel/policy_version.
+- `channels.0015_b7b_receipt_guard`: función/trigger PostgreSQL que protege
+  metadata reservada y scope/contenido causal inbound. Ninguna tabla nueva.
+
+No backfill, digest sintético ni timestamps legacy. `is_confirmable` deja de
+aceptar pending JSON; el matcher histórico queda solo en fixtures opt-in de
+componentes legacy. Tres ajustes de compatibilidad en tests: harness,
+legacy_pending y aserción B6 que separa binding vigente de consentimiento.
+El inventario B7A conserva sus IDs. Los tests B0 reales no usan el bypass legacy.
+
+## Validación y límites de las pruebas
+
+Resultados efectivos, IDs únicos, hashes de fuentes/logs y métricas del corpus:
+[b7b-acceptance-results.json](evals/b7b-acceptance-results.json).
+Corpus versionado: [44 conversaciones](evals/b7b-consent-corpus-v1.json).
+Se reportan por separado autorizaciones, rechazos, aclaraciones, bloqueos por
+emisión/revisión y safety; criterio crítico false_authorizations = 0.
+
+Resultado dedicado conjunto: **112 tests** (54 contrato/integración, 44 corpus,
+13 multiproceso, 1 migración), **0 failures/errors/skips/xfail**, 692.703 s.
+Tras el guard conservador de compatibilidad se repitió contrato/integración:
+**55 tests verdes**, 111.620 s, incluido el caso nuevo que primero falló RED.
+Esto acredita **113 IDs B7B únicos**, sin sumar dos veces los repetidos.
+Regresión **1022 IDs B0–B7A**, 3391.266 s, **0 failures/errors/skips/xfail**;
+el inventario coincide exactamente con el cierre B7A. Total **1135 tests únicos**
+en estas ejecuciones, no una sola invocación conjunta de 1135.
+Corpus: 3 autorizaciones correctas, 5 rechazos correctos, 24 aclaraciones
+correctas, 6 bloqueos por emisión insuficiente, 5 por vigencia/revisiones,
+1 por safety; **false_authorizations = 0**. Los dos casos de ráfaga pasaron
+además por separado, con aserción de dos miembros reales; no suman IDs únicos.
+
+Suite B7B: `test_operation_consent`, `test_b7b_corpus`, `test_b7b_processes`,
+`test_b7b_migration`; runner `apps.agent.tests.b7b_runner.CriticalB7BRunner`
+rechaza inventario incompleto/duplicado, fallos, errores, skips y xfail.
+Regresión: mismos 1022 IDs del resultado conjunto B7A, con CriticalB7ARunner.
+Frontend sin cambios; no se atribuye a B7B una ejecución de sus tests.
+
+| Failure injection / carrera | Evidencia comprobable exigida |
+| --- | --- |
+| FI-01 | Kill tras commit de propuesta antes de emitir; una Message pending, cero autorización |
+| FI-02 | Kill después de respuesta Meta simulada tras admisión y antes de SENT; recovery UNCERTAIN, sin ID inventado |
+| FI-03 | Kill tras emisión verificable antes de evaluar; nuevo witness permite una decisión |
+| FI-04 | Kill tras validar/persistir dentro de transacción no committed; rollback de estado/evidencia |
+| FI-05 | Kill tras commit AUTHORIZED antes de completar TurnWork; recovery devuelve duplicado |
+| FI-06 | Corrección gana lock a autorización; operación INVALIDATED |
+| FI-07 | Takeover gana lock; worker anterior pierde autoridad |
+| FI-08 | Dos intérpretes con el mismo inbound; una transición, un duplicado |
+| FI-09 | Reconciliación después de recepción incierta; respuesta vieja sigue no elegible |
+| FI-10 | Error PostgreSQL dentro de persistencia; evidencia y estado revierten juntos |
+| Orden inverso | Autorización anterior a corrección/takeover conserva historia y nunca ejecuta |
+| Respuestas incompatibles | «No» posterior difiere el «sí» en proceso; worker antiguo no sobrescribe REJECTED |
+
+PostgreSQL real local aislado; procesos Python independientes con barreras
+explícitas y kill de worker, más tests de transacción. No se golpeó Meta real.
+Configuración local heredada: fsync/synchronous_commit desactivados. Estas pruebas
+no acreditan pérdida eléctrica, durabilidad de host ni exactly-once externo.
+La prueba de múltiples candidatas inyecta datos históricos inconsistentes y
+sustituye solo revalidación de matter para comprobar la defensa; B6 normalmente
+impide esos dos asuntos foreground. No se vende como soporte multi-goal.
+
+El último ajuste no cambia B0–B7A ni Message B4: únicamente retira definiciones
+viejas ligadas a cita que no tienen snapshot visible del veterinario original,
+antes de publicar una propuesta B7B, y las excluye del predicado de emisión.
+Las definiciones históricas no se rellenan. La nueva prueba y el módulo completo
+de contrato/integración se ejecutaron después de ese ajuste. Checks Django,
+deriva de modelos, aplicación/listado de migraciones y diff --check verdes.
+
+Los intentos intermedios no se ocultan: hubo errores de fixtures nuevos
+(callbacks on_commit fuera de captura, author_type faltante), intentos que
+no arrancaron por PostgreSQL detenido y un fallo TTL legacy en una ejecución
+prolongada. Se conservan aparte de los resultados finales; no se atribuye su
+causa a suspensión del equipo sin evidencia suficiente.
+
+## Observabilidad, inspección y despliegue
+
+Eventos de vocabulario cerrado AGENT_B7B para creación/emisión pending,
+verified/uncertain y consentimiento accepted/rejected/ambiguous/stale/expired,
+identity/permission/takeover blocked y duplicate ignored. Solo count/schema,
+sin teléfono, mascota, texto, key ni message ID como etiquetas. Callbacks de
+persistencia se emiten on_commit; observaciones de emisión no son conteos
+exactos de autorizaciones únicas.
+
+Admin de solo lectura y tenant-scoped distingue PREPARED/PERSISTED/
+EMISSION_VERIFIED/UNCERTAIN, consentimiento y ejecución. No se presenta
+AUTHORIZED como cita agendada. No otra UI/sistema paralelo de confirmaciones.
+
+Flag AGENT_B7B_CONSENT_ENABLED=False por defecto. Cutover/rollback detallado en
+[runbook](runbooks/agent-whatsapp.md#b7b-consentimiento-causal-cutover-y-rollback):
+migrar bajo contención, drenar writers incompatibles, activar solo tras gates;
+para rollback apagar flag, invalidar pendientes con scope explícito, preservar
+esquema/evidencia histórica y realidad B4. Nunca reactivar stale ni matcher
+legacy; UNCERTAIN no se reenvía a ciegas. No deploy ejecutado.
+
+## Desviaciones, hallazgos y preparación para B8
+
+Se documentan en el [ADR](decisions/2026-09-20-b7b-consentimiento-causalmd):
+reply-to verificado extiende el token de §5.4 por el encargo explícito;
+declaración contextual queda cerrada; inspector admin en vez de frontend Inbox;
+persistencia mínima de recepción y fecha de rechazo por carencia causal probada.
+No botones/action IDs sin una acción emitida, otro workflow engine ni cola nueva.
+
+| Hallazgo | Alcance técnico y residual |
+| --- | --- |
+| H01 | Consentimiento exacto/transferencia/negación/corrección cubiertos por adaptador B7B; guard de negocio B8 pendiente, sin cierre global |
+| H02 | Propuesta no emitida, orden incierto y reconciliación tardía bloqueados en ruta probada; no prueba de comprensión humana |
+| H13 | Reply-to anterior no revive ni transfiere autorización; resolución general E1 fuera |
+| H18 | Actor actual, revisiones, tenant y revocación revalidados; teléfono compartido/reciclado, step-up y aceptación operativa del riesgo permanecen abiertos |
+
+B8 recibe una Operation exacta y evidencia histórica auditable; todavía debe
+revalidar vigencia/permission/ownership/preconditions en su commit de negocio.
+No se añadió ejecución, reserva de agenda, guard B8 ni cambio de endpoints.
+B8–B9/E1–E5/P-A/P-B no implementados. No propietarios operativos, revisión
+veterinaria ni canales alternativos inventados. Cierre técnico sujeto al
+alcance probado: se recomienda cerrar B7B técnicamente y detenerse aquí;
+activación operativa no autorizada. AUTHORIZED no ejecuta ninguna operación de
+negocio y WRITE autónomo sigue cerrado por B0.

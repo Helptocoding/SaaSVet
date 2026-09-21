@@ -264,3 +264,14 @@ conversacional legacy revisión 0 requiere revalidación; staff y TTL 182 días
 siguen la política existente. Ambigüedad/revocación produce REQUIRES_STEP_UP sin
 implementar autenticación nueva. H18 sigue parcialmente abierto. Detalle:
 [contrato B7A](../contrato-conversation-operation-b7amd).
+
+## Enmienda B7B — 2026-09-20
+
+ConversationOperation exacta puede recibir AUTHORIZED/REJECTED por propuesta
+canónica emitida y respuesta causal verificada. La intención de apertura,
+el JSON legacy y el texto del asistente siguen sin autoridad de consentimiento.
+Se revalidan permiso actual, binding_revision, identity_revision y ownership_epoch;
+CONTEXTUAL_DECLARATION queda sin autorización beta. AUTHORIZED conserva evidencia
+histórica, no ejecuta negocio y no abre WRITE B0. B8 y activación siguen pendientes.
+Alcance, diferencias y pruebas: [ADR B7B](2026-09-20-b7b-consentimiento-causalmd) y
+[acta](../implementacion-b7b-agente-whatsapp-2026-09-20md).

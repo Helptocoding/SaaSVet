@@ -1046,3 +1046,20 @@ no Message emitido. B5/ownership invalidan o bloquean continuación; B0 contiene
 todos los WRITE aunque haya PENDING válido. Contrato detallado, locks y queries:
 [B7A](contrato-conversation-operation-b7amd); decisión:
 [ADR](decisions/2026-09-18-b7a-conversation-operationmd).
+
+### Enmienda B7B — emisión y consentimiento (2026-09-20)
+
+El corte B7A anterior es histórico. B7B añade operation_proposals y
+operation_consent: renderer canónico → publicación Message/FK/completion B3
+atómica → sender B4 → witness de recepción MVCC → evaluación server-side bajo
+locks → AUTHORIZED/REJECTED o aclaración. No añade tabla/cola ni motor de workflow.
+Message sigue siendo fuente de emisión; el inbound conserva solo referencias
+inmutables a evidencia ya observada. Reconciliación posterior no retroautoriza.
+
+AuthorizationEvidence es value object derivado de Operation/Message/TurnWork.
+Campo aditivo consent_decided_at y guard PostgreSQL de recepción; sin backfill.
+B5 y humano preceden consentimiento; B6 corrige antes de preparar replacement.
+Actor permission y las tres revisiones se revalidan. Terminales no se transfieren.
+CONTEXTUAL_DECLARATION permanece deshabilitado. El inspector admin distingue
+consentimiento y ejecución. El flag B7B nace apagado; B0 mantiene WRITE contenido
+incluso con AUTHORIZED. No guard ni efectos B8. [Contrato](contrato-consentimiento-causal-b7bmd).
