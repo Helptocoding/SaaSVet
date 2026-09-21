@@ -199,6 +199,12 @@ de componentes legacy opt-in. WRITE sigue contenido incluso para AUTHORIZED.
 No se acredita comprensión universal, identidad fuerte ante teléfono compartido/
 reciclado, exactly-once externo, atención humana ni resistencia a pérdida eléctrica.
 SQL administrativo fuera del contrato mantiene sus controles operacionales.
+
+Addendum B8A (2026-09-21): [el guard](contrato-execution-guard-b8amd) consume
+execution_authorization_evidence, que vuelve a verificar las referencias B7B,
+emisión, ACCEPT y reply-to/token exactos sin renovar consentimiento. AUTHORIZED
+permanece histórico después de TTL, corrección o takeover, pero no habilita nuevo
+efecto. Ningún kind real está habilitado. No cambia el contrato de autorización.
 Ver [ADR](decisions/2026-09-20-b7b-consentimiento-causalmd),
 [acta](implementacion-b7b-agente-whatsapp-2026-09-20md) y
 [runbook](runbooks/agent-whatsapp.md#b7b-consentimiento-causal-cutover-y-rollback).

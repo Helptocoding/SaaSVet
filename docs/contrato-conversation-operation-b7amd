@@ -203,3 +203,10 @@ tipada, sin resolver E1 ni cierre total. H18 cubre elegibilidad proporcional, te
 relación actual/revocación; sigue abierto el riesgo residual de teléfono compartido
 o reciclado y la política de step-up. Activación sigue PENDING_ACTIVATION_REQUIREMENTS.
 No hay B7B/B8/B9/E1–E5/P-A/P-B ni despliegue en B7A.
+
+Addendum B8A (2026-09-21): el lifecycle de ejecución se implementa en
+[contrato-execution-guard-b8amd](contrato-execution-guard-b8amd), usando los campos
+existentes result/result_code/executed_at. No modifica definiciones, digest,
+expiry ni decisiones históricas. La ausencia de RUNNING durable se conserva;
+los cinco adapters reales y B0 siguen cerrados. Este addendum no reescribe el
+estado histórico de la entrega B7A descrita arriba.

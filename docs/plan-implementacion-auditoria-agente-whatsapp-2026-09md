@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-20**. Estado: **B0–B7B cerradas técnicamente; B8/B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-21**. Estado: **B0–B8A cerradas técnicamente en su alcance; B8B–B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -284,8 +284,8 @@ La numeración B identifica el núcleo; E son extensiones según alcance; P-A/P-
 | B6 binding/invalidation de un asunto | B1 | Preparación exacta sin exigir multi-goal |
 | B7A C2 y permiso/revocación | B2/B3/B6 | Servicio de propuesta/resultados; no aceptación UX ni mutaciones |
 | B7B consentimiento/canal | B7A/B4 | Autorización exacta consumible por guard B8 |
-| B8A guard + crear cita | B7B | Primer adaptador completo; activación posterior en B9 |
-| B8B confirmar; B8C cancelar; B8D reprogramar; B8E registrar mascota | B8A; independientes entre sí | Una capacidad por entrega/PR y gate; no todas necesarias para beta |
+| B8A guard sin efecto real | B7B | Frontera común con registry cerrado; no habilita ninguna escritura |
+| B8B crear cita; B8C reprogramar/cancelar; B8D asistencia; B8E registrar mascota | B8A; independientes entre sí | Adapters concretos por entrega y gate; no todos necesarios para beta |
 | B9 evaluación y límites básicos; gate separado | B2/B3/B4/B5; B6/B7B/B8 seleccionados para WRITE | Eval/carga/cobertura, P-A y P-B de categorías comprometidas; ninguna capacidad implícita |
 | E1 referencias/READ ampliadas | B1/B2/B6 | Mejoras conversacionales sin dependencia del sender; WRITE conserva sus gates |
 | E2 múltiples goals | B6/E1/B7B | Retirar solo límite técnico de suspendidos; gate antes de ofrecer varios asuntos |
@@ -601,28 +601,61 @@ Ubicación: ampliar `test_commit_preconditions.py`, `test_write_tools.py`, `test
 **Documentación.** ADR 2026-08-26/27, p58, spec y contrato de aceptación como adaptador de canal.
 **Riesgos eliminados:** consentimiento por negación/pregunta/propuesta no emitida en las rutas nuevas. **Reducidos:** transferencia de autoridad entre entidades. **Abiertos:** guard atómico de negocio, identidad débil y expresiones ambiguas; estas se aclaran/derivan.
 
-### Fase B8A — Guard transaccional y creación individual de cita
+### Fase B8A — Guard transaccional de operaciones autorizadas
 
-**Objetivo.** Entregar la frontera común de commit junto con una capacidad completa, sin migrar todas las escrituras. **Hallazgos:** H01/H02/H05/H06/H08/H18. **Invariantes:** I01–I07/I09/I12–I14. **Dependencias:** B7B y C2/C3/C4 desplegados.
+**Enmienda explícita 2026-09-21.** El encargo B8A separa la frontera común de los
+efectos: B8A no crea citas; B8B creación, B8C reprogramación/cancelación, B8D
+asistencia, B8E mascota individual. Sustituye el alcance/numeración anterior de
+esta sección. Baseline obligatorio verificado `fa29d81dcef64daa9ed013c7120e5ac763a51f34`.
 
-**Actual → objetivo.** Agenda conserva locks/precondiciones e idempotencia de creación; AGENT añade autorización y fencing dentro de la misma transacción de negocio.
+**Estado: COMPLETED en alcance técnico B8A (2026-09-21).** Implementación
+`892fe0c0a28b974b8f35aedf726195cba99e92ca`; 89 tests dedicados aprobados (53 guard,
+20 corpus y 16 escenarios multiproceso PostgreSQL). Corpus fake con
+unauthorized_business_effects=0; no acredita efectos de adapters reales. Regresión:
+1135 IDs B0–B7B cubiertos verdes entre la pasada inicial (1134 + un fallo de copia)
+y reparación dirigida de 87 tests; no se afirma una sola invocación verde ni se
+suman duplicados. Sin migraciones. [Acta](implementacion-b8a-agente-whatsapp-2026-09-21md)
+y [evidencia completa](evals/b8a-acceptance-results.json).
+[Contrato](contrato-execution-guard-b8amd),
+[ADR](decisions/2026-09-21-b8a-execution-guardmd).
+Sin deploy, B0 cerrado y activación **PENDING_ACTIVATION_REQUIREMENTS**.
 
-**Cambios técnicos.**
-1. Nuevo módulo propuesto backend/apps/agent/operation_execution.py: guard estrecho para actor AGENT, org, operation_key, request canónico y witness. Verifica identidad/relación, autorización/TTL, binding, ownership, cursor fresco, entidad y precondiciones. No interpreta lenguaje.
-2. executor.py::ToolExecutor.call transmite referencias estructuradas/headers internos, que no autentican por sí mismos. API verifica JWT AGENT y recurso/acción/método/parámetros contra C2. Cambiar cuerpo conservando digest se rechaza. Worker no retiene locks al llamar loopback HTTP.
-3. Integrar create_appointment en appointments/views.py::AppointmentListCreateView.create y serializers/servicio existentes. Una transacción del servidor abarca guard + efecto + resultado C2. Reusar Appointment.idempotency_key: misma operación/digest devuelve resultado, otro payload conflict. No callbacks del worker para registrar éxito después del commit.
-4. Rutas WRITE AGENT aún no adaptadas en AppointmentDetailView/update_status/create_with_patient y patients/views.py::PetViewSet quedan denegadas mediante guard común de capacidad; no implementar sus mutaciones en esta fase. Staff conserva permisos/rutas/locks.
-5. Antes de editar locks, documentar en este PR una matriz **acotada** de las rutas anteriores y servicios de identidad/revocación/takeover que comparten filas. Guard AGENT toma ContactIdentity→Conversation→ConversationOperation y luego locks de negocio en su orden existente (veterinarios ordenados→cita). Takeover solo necesita Conversation; una ruta que vaya a tocar ambos ámbitos toma identidad primero. No imponer refactor global a goals/reset/billing ni introducir orden inverso. Si un caller seleccionado necesita ajuste, incluirlo como parte explícita de esta entrega y su prueba de carrera.
-6. Servicio de lectura interna del ledger en operation_execution.py permite al worker recuperar resultado con scope org/contacto. No nuevo endpoint HTTP para leer la propia tabla del agente. Esto no permite saltarse API de negocio para mutar. Ante respuesta interna perdida, consultar resultado y repetir solo misma clave; incertidumbre no genera nueva operación.
-7. Ledger ya confirmado puede leerse bajo permiso vigente tras TTL; nunca inicia nuevo efecto vencido/revocado. Resultado exitoso no se degrada por timeout del caller.
+**Objetivo.** Una entrada server-side `execute_authorized_operation` obtiene la
+operación persistida por UUID y valida definición/digest/tenant/matter/entidades,
+evidencia causal B7B, actor permission actual, revisiones, safety/ownership,
+membership/witness B3, TTL, gates y preconditions. AUTHORIZED solo no ejecuta.
+ExecutionContext tiene witness actual, contacto y capability confiables; no
+parámetros del LLM, permisos declarados ni idempotency keys por retry.
 
-**Datos/migración.** C2 de B7A basta, sin RUNNING ni mapa genérico de pasos. Clave estable por operación individual; no tocar claves históricas Appointment. Guard obliga contrato a AGENT, no idempotency header a staff histórico. FKs de diagnóstico solo si las consume esta integración.
+**Cambios técnicos.** Registry explícito de cinco kinds DISABLED/sin adapters;
+flags vacías y B0 intacto. Rechazo de legacy WRITE en tool/transport/API AGENT,
+sin alterar rutas humanas. CONTEXTUAL_DECLARATION continúa deshabilitado.
+Reconcile consulta evidencia exacta por operation_key antes de cualquier efecto.
+SUCCEEDED exige evidencia durable; FAILED exige ausencia definitiva comprobada;
+UNCERTAIN no reintenta a ciegas. Nuevo inbound posterior a autorización bloquea
+nuevos efectos; decisiones históricas no se reescriben. TTL original bloquea
+inicio tras expiry, sin impedir lectura/reconciliación de efectos confirmados.
 
-**Tests/aceptación.** EXEC-01: JWT AGENT sin autorización, digest/recurso/owner/binding/token/epoch/cursor incorrectos → cero efecto; endpoints no adaptados siguen denegados. EXEC-02: HTTP perdido después de commit + replay = una cita y resultado reconstruible; kill dentro de transacción revierte efecto/ledger juntos. OWN-02: takeover gana lock → rechazo; commit gana → efecto anterior a takeover, sin atribución posterior. SEC-02 dos orgs/familiares/public IDs. Mantener tests de solapamiento y zonas horarias. Archivos test_write_tools.py, test_commit_preconditions.py, test_release_service.py, tests appointments y nuevo tests/test_operation_execution.py con HTTP/PostgreSQL. Criterio de cierre: crear cita satisface contrato; otras capacidades no habilitadas, sin exigir implementarlas.
+**Transacción y locks.** Solo LOCAL_ATOMIC: guard, validación final bajo locks
+del dominio, efecto, evidencia y resultado comparten transacción sin red/LLM.
+Conversation→TurnWork→ContactIdentity→Goal→Operation conserva el orden real de
+B3/B7A/B7B; sustituye el orden inverso sugerido por el borrador anterior B8.
+Los futuros adapters deben demostrar sus propios locks (agenda: veterinarios
+ordenados→cita), disponibilidad/constraints e idempotencia. READ no reserva slot.
 
-**Deploy/rollback.** API guard primero con autonomía cerrada; drenar workers incompatibles; habilitación solo en B9. API jamás acepta header opcional para AGENT tras el corte. Retirar capacidad para rollback, preservar ledger y lectura/replay seguro. Si se retrocede a API sin guard, toda ejecución AGENT se deshabilita antes. No compensar ni cambiar claves.
-**Documentación.** p52/p57, ADR autoridad y durabilidad, matriz de locks y request/resultado de create_appointment.
-**Riesgos eliminados:** TOCTOU y repetición local de creación de cita. **Reducidos:** pérdida de respuesta interna. **Abiertos:** demás adaptadores y casos compuestos, identidad débil y delivery incierto; B9 decide activación.
+**Datos.** Reutiliza ConversationOperation y ToolExecution. Sin nuevas tablas,
+migraciones, backfill, RUNNING durable, saga ni workflow engine. El writer privado
+actualiza únicamente resultado; ORM ordinario no concede ejecución.
+
+**Aceptación.** AUTH/REV/GATE/RESULT, RACE-01..10 y B8A-FI-01..08, corpus versionado
+con unauthorized_business_effects=0, PostgreSQL real multiproceso y regresión
+B0–B7B. Efectos de tests aislados no acreditan Appointment/Pet reales. FI-03
+inyecta un commit en otra conexión para probar reconciliación; no es soporte de
+proveedor externo ni prueba de fencing remoto. No cierre universal H01/H18.
+
+**Deploy/rollback.** No despliegue en B8A. Mantener registry/B0 cerrados, preservar
+estados/evidencia al retirar código. Nunca convertir UNCERTAIN en NOT_STARTED ni
+revivir consentimiento stale. Adapters/activación requieren su fase y gates B9.
 
 ### Fases B8B–B8E — Un adaptador WRITE por entrega
 
@@ -630,12 +663,12 @@ Cada ID es una unidad **independiente**, no una tarea conjunta. Dependen de B8A 
 
 | ID / capacidad | Cambio concreto y alcance | Pruebas y cierre específico |
 | --- | --- | --- |
-| B8B confirmar asistencia | tools.py::confirm_appointment, appointments/views.py::update_status y renderer: declaración inequívoca/cita exacta; misma clave no repite transición. | ATT-01/02 + EXEC-01/02: pregunta forzando PATCH se deniega; declaración válida actualiza una cita; 409 no comunica éxito; ya confirmado exige estado canónico. |
-| B8C cancelar cita | tools.py, AppointmentDetailView/update_status según ruta existente y serialización de resultado: permiso titular/precondiciones; sin cancelación por READ. | AUTH/EXEC/SEC y tests de agenda: replay no duplica transición; otra cita/owner/familiar prohibido no muta; staff concurrente conserva locks. |
-| B8D reprogramar cita | tools.py, AppointmentDetailView y validadores existentes: fecha/hora/veterinario exactos, exclusión de solapamientos y clave estable. | AUTH-04/CTX-03/EXEC-02: corrección invalida slot anterior; conflicto de disponibilidad no atribuye éxito; retry no vuelve a mover cita; zonas horarias y dos autores compitiendo. |
+| B8B crear cita | Integrar el guard con AppointmentListCreateView/servicio local; reusar Appointment.idempotency_key, serializers, locks y exclusión de solapamientos. | EXEC/SEC: disponibilidad actual bajo locks, mismo UUID/digest produce una cita; crash y respuesta perdida no duplican; rutas AGENT sin guard denegadas. |
+| B8C reprogramar/cancelar | AppointmentDetailView/update_status: cita exacta, estado mutable, permiso titular, horario destino actual y locks existentes; sin mutación por READ. | AUTH/EXEC/SEC: replay no duplica transición, corrección invalida destino anterior, otro owner/familiar prohibido no muta; conflicto y staff concurrente conservan verdad de dominio. |
+| B8D confirmar asistencia | confirm_appointment/update_status y renderer: contrato válido de autorización contextual antes de habilitarlo; cita exacta y transición idempotente. | ATT/EXEC: pregunta forzando PATCH denegada, declaración válida actualiza una cita; 409 no comunica éxito; ya confirmado exige evidencia canónica. |
 | B8E registrar solo mascota | tools.py y patients/views.py::PetViewSet: propietario autorizado, datos propuestos, alta individual sin cita implícita. | ID/SEC/EXEC: replay devuelve misma Pet; owner distinto rechazado; pérdida de respuesta no duplica; petición de alta no crea cita. |
 
-**Objetivo/actual → objetivo.** Aplicar la frontera común a la operación seleccionada; actualmente las garantías no están uniformadas. **Hallazgos:** H01/H02/H05/H06/H08/H18; B8B cierra además H20. **Invariantes:** I01–I07/I09/I12–I14.
+**Objetivo/actual → objetivo.** Aplicar la frontera común a la operación seleccionada; actualmente las garantías no están uniformadas. **Hallazgos:** H01/H02/H05/H06/H08/H18; B8D debe demostrar además H20. **Invariantes:** I01–I07/I09/I12–I14.
 
 **Cambios comunes.** Integrar operación/request canónicos con operation_execution.py propuesto, mantener serializers/locks de negocio y respuesta tipada B2. Denegar rutas AGENT alternativas que eludan ese adaptador. No alterar flujos staff, no ampliar identidad y no crear nueva capability. Tests en test_write_tools.py, test_commit_preconditions.py, tests de appointments/patients y test_operation_execution.py propuesto, usando HTTP real/PostgreSQL en fronteras de commit.
 
@@ -994,7 +1027,7 @@ Cada release declara versión mínima lectora, capacidades afectadas y tratamien
 | --- | --- | --- |
 | B0–B4 | Preparación y piloto supervisado | No WRITE; B3 ya deja selector/outbox compatibles, B4 no espera ledger. Safety/cobertura completa pendiente B5 |
 | B5 + B9 de READ + P aplicable | Consultas públicas/personales en alcance verificado | Identidad vigente para personales, resultados honestos, sender/recuperación y circuito humano; sin mutaciones |
-| B6/B7B/B8A + B9 de crear cita | Una escritura concreta y un asunto | Invalidación, autorización exacta, guard/idempotencia, resultados, delivery e identidad probados; otros WRITE siguen supervisados |
+| B6/B7B/B8A/B8B + B9 de crear cita | Una escritura concreta y un asunto | Invalidación, autorización exacta, guard/idempotencia, resultados, delivery e identidad probados; otros WRITE siguen supervisados |
 | Cada B8B/B8C/B8D/B8E + su gate B9 | Añadir únicamente esa capacidad | La lista del release y org explicita incorporación; no activar otras por terminar fase común |
 | E1/E2 + eval específico | Referencias más amplias/múltiples asuntos | E2 necesario antes de ofrecer varios pendientes; sin él derivar sin contaminación ni pérdida |
 | E5 + gate propio | Altas compuestas | Parcial/recuperación y consentimiento por efectos probados; no requisito de beta inicial |
@@ -1021,8 +1054,8 @@ Ningún hallazgo se declara corregido por este plan. “Fase” indica dónde se
 
 | Hallazgo | Causa raíz | Cambio que lo resuelve | Fase | Componentes afectados | Test | Criterio de cierre |
 | --- | --- | --- | --- | --- | --- | --- |
-| H01 | CR1/CR4 | Propuesta inmutable, consentimiento causal estricto, invalidación y guard de commit | B6/B7B; B8A y cada adaptador habilitado | confirmations, planner, tools, ConversationOperation, API | AUTH-01/02/04/05, EXEC-01 | Cero writes negativos/correcciones; autorización ligada a operation_key inmutable y parámetros exactos; guard en cada capacidad habilitada |
-| H02 | CR1/CR3 | Emisión acreditada, relación respuesta/propuesta y estados de delivery | B4/B7B | Message, confirmations, sender, selectors | AUTH-03, SEND-02/03 | Propuesta pendiente sin emisión compatible no autoriza; respuesta anterior/ajena o envío incierto no ejecuta |
+| H01 | CR1/CR4 | Propuesta inmutable, consentimiento causal e invalidación; guard común B8A cerrado | B6/B7B/B8A técnicos; cada adapter real pendiente | operation_consent, operation_execution, tools, ConversationOperation, API | AUTH/REV/GATE/RESULT y RACE B8A | Autorización exacta y guard probados con dominio fake; no cierre universal de WRITE hasta validar cada adapter |
+| H02 | CR1/CR3 | Emisión acreditada y relación respuesta/propuesta B7B revalidadas por B8A | B4/B7B/B8A en su alcance | Message, operation_consent, operation_execution, sender | AUTH-07/08 B8A, SEND-02/03 | Propuesta sin emisión o respuesta no causal no ejecuta; no se amplía modo contextual ni se acreditan proveedores externos |
 | H03 | CR5/CR4 | Safety por capas con contexto/caption, protocolo y prioridad | B1/B5 | matchers, safety propuesto, policy, tier0 | SAFE-01/02/03 | Corpus crítico y negaciones/coloquial aprobados pasan en estados especificados; sin atribuir sensibilidad perfecta |
 | H04 | CR5/CR2 | Guidance honesta y hechos de caso/aviso/owner/respuesta/resolución; claim incluye acuse beta | B5; E3 solo hardening requerido | HumanHandoff, alerts, services, Inbox; notifications solo E3 | HAND-01/02/03, SAFE-03; HAND-04 si E3 | Cola/claim/respuesta/resolución demostrados con fallo/ausencia/fuera de horario; aviso solo con evidencia, sin exigir integración avanzada |
 | H05 | CR2/CR5 | Hechos tipados, recibos/precios controlados, salida clínica limitada | B2/B5 | ToolOutcome, guards, planner, tier0 | RESULT-01/03/04, SAFE-01 | Segmentos sensibles construidos desde resultados válidos; cero éxito/precio falso ni clínica prohibida en corpus |
@@ -1033,14 +1066,14 @@ Ningún hallazgo se declara corregido por este plan. “Fase” indica dónde se
 | H10 | CR4 | Sobre de turno único antes de wrapper/arbiter | B1; integración de C1 con B3 | worker, planner, TurnContext propuesto, TurnFacts | CTX-01 | Ráfaga real idéntica para consumidores; arbiter conserva DTO acotado |
 | H11 | CR4 | Cursor/IDs actuales excluidos de historia, no estado técnico | B1; E1 referencias más amplias | prompts, channels selectors, TurnContext | CTX-01 | Primer contacto sin pasado inventado; historia anterior real/permitida independiente de status técnico |
 | H12 | CR4 | Binding/invalidation de una instancia con un frente | Cierre técnico beta B6; multi-goal avanzado sigue en E2 | ConversationGoal, matter_binding, matter_resolution, goals, planner, confirmations | BIND/MATTER/AMB/PROV/B6-RACE/FI | Correcciones invalidan dependencias; ambiguity y compuestos aclaran; cero stale reuse/mezcla en corpus. E2 no implementado |
-| H13 | CR1/CR4 | B6 mitiga contexto/binding, referencia inmediata y stale; no cierra autorización/referencia general | Pendiente B7/E1; integración futura B8 | matter_binding, prompts, planner, confirmations | AMB/PROV/stale B6; CTX-05/06, EVAL-REF pendientes ampliación | H13 no cerrado: B6 no resuelve referencias históricas/ordinales ni consentimiento |
+| H13 | CR1/CR4 | B6/B7B y guard B8A ligan operación/referencia exactas y rechazan stale | E1 general y adapters reales pendientes | matter_binding, operation_consent, operation_execution | AMB/PROV/stale B6; AUTH/REV B8A; CTX-05/06, EVAL-REF pendientes | H13 parcial: referencias históricas/ordinales y WRITE real no se acreditan con fake adapters |
 | H14 | CR2 | Esquema por endpoint, completitud/cursor/filtros y error distinto de vacío | B2; E1 filtros adicionales si se requieren | executor, ToolOutcome, tools, APIs de citas/pets | RESULT-02 | Empty completo distinto de truncated/malformed/forbidden/conflict/transport; recuperación disponible o límite explícito |
 | H15 | CR4/CR5 | Evento preserva caption, tipo, reply/action ID; limitación multimedia visible | B1/B5 | channels views/metadata, TurnContext, policy | CHANNEL-01, SAFE-03 | Caption en safety y reply/action preservados; limitación multimedia transparente |
 | H16 | CR6 | Harness por eventos y semántica de métricas/gates por artefacto | B0/B3/B4/B8 incremental; B9 gate | harness, eval commands, metrics, CI | EVAL-01/02 y corpus crítico | E2E usa fronteras reales; queued no delivery; fallo crítico/skip bloquea promoción aplicable |
 | H17 | CR6 | Política por categoría, job/manifest, evidencias protegidas y restore | P-A/P-B por categoría | Message/goals/operaciones, comando prune propuesto, runbook | PRIV-01/02/03/04 | Política y job/restore selectivo demostrados por categoría comprometida; texto distinto de media/notificaciones |
-| H18 | CR1/CR6 | Matriz de permisos por vínculo, revisión/revocación, step-up humano selectivo | B7A/B7B; B8 correspondiente y gate B9 | ContactIdentity, verification, tools/API, Inbox | ID-01, SEC-02, EXEC-01 | Permisos/revocación/familiar/TTL probados; revisión humana selectiva y aceptación de riesgo residual sin llamarlo autenticación fuerte |
+| H18 | CR1/CR6 | Permiso actual ALLOWED_TO_EXECUTE y revisiones/revocación B8A; mismo servicio B7A | B7A/B7B/B8A técnicos; adapter real y B9 pendientes | ContactIdentity, operation_permission, operation_execution, tools/API | ID-01, REV-02/04 y TTL B8A | No autenticación fuerte universal; persisten riesgo telefónico y aceptación/revisión humana selectiva antes de activar |
 | H19 | CR3/CR6 | Sender separado, límites de topología y presupuesto por turno; coordinación extra solo por medición | B4/B9; E4 solo por carga demostrada | worker command, compose, llm, authorization, metrics | SCALE-01/02, COST-01 | Perfil explícito pasa con límites acotados; sender progresa con LLM bloqueado; todas las llamadas/retries contados |
-| H20 | CR1/CR2 | Declaración de asistencia exacta y resultado confirmado/already_done/conflict diferenciado | B7B/B2/B8B | confirm_appointment, manifiesto, ledger/API, renderizador | ATT-01/02, RESULT-03, EXEC-01 | Pregunta nunca PATCH; declaración exacta autoriza solo cita vigente; conflicto no comunica éxito genérico |
+| H20 | CR1/CR2 | Declaración de asistencia exacta y resultado confirmado/already_done/conflict diferenciado | B7B/B2/B8D | confirm_appointment, manifiesto, ledger/API, renderizador | ATT-01/02, RESULT-03, EXEC-01 | Pregunta nunca PATCH; declaración exacta autoriza solo cita vigente; conflicto no comunica éxito genérico |
 
 Cierre se evalúa en el alcance explícitamente habilitado: operaciones no adaptadas permanecen denegadas/supervisadas. H12 no se declara completamente cerrado antes de E2; H13 requiere validar también su integración con la escritura elegida. E3/E4 no son requisitos universales de cierre si el circuito/ perfil básico ya cumplen el criterio.
 
@@ -1077,14 +1110,15 @@ La tabla muestra el **máximo permitido** con gates aprobados. B0–B8 implement
 | B1/B2/B3/B4 | Mantiene contención; cambia evidencia, resultados, recuperación y envío |
 | B5 | Guidance/circuito humano demostrables; READ puede solicitar B9, no WRITE |
 | B6/B7A/B7B | Mantiene contención; binding/permiso/consentimiento listos |
-| Cada B8A/B8B/B8C/B8D/B8E | Capacidad candidata, permanece supervisada hasta su gate B9 |
+| B8A | Ninguna capacidad WRITE habilitada; registry cerrado |
+| Cada B8B/B8C/B8D/B8E | Capacidad candidata, permanece supervisada hasta su gate B9 |
 | B9 | Activa intersección de capacidades aprobadas y política de org/identidad; nunca todo por modo restricted |
 | E1/E2 | Amplía referencias/varios asuntos únicamente tras eval; no transfiere autorización entre goals |
 | E3/E4 | Mejora cobertura/carga demostrada; no concede permisos de negocio |
 | E5 | Solo altas compuestas tras gate específico; no alta de cliente independiente inexistente |
 | P-A/P-B | Restringe tratamiento de datos; no amplía capacidades del bot |
 
-**Writes.** Crear cita exige B6+B7+B8A+B9. Asistencia puede seguir Tier 1 con evidencia inequívoca B8B; cancelar/reprogramar usan sus adaptadores y restricciones familiares. B8E registra solo mascota; E5 es necesario para alta compuesta, nunca cita implícita porque se pidió solo registro. Varias mascotas/asuntos requieren E2, pero correcciones dentro de un asunto ya están protegidas por B6.
+**Writes.** Crear cita exige B6+B7+B8A+B8B+B9. Asistencia puede seguir Tier 1 con contrato de evidencia habilitado en B8D; cancelar/reprogramar usan sus adaptadores y restricciones familiares. B8E registra solo mascota; E5 es necesario para alta compuesta, nunca cita implícita porque se pidió solo registro. Varias mascotas/asuntos requieren E2, pero correcciones dentro de un asunto ya están protegidas por B6.
 
 Urgencias permanecen SUPERVISED: detección/guidance no son triaje profesional. Crear/derivar handoff puede ser autónomo; atender/resolver requiere persona. Multimedia binaria sigue DISABLED; preservar caption/reply no acredita comprensión.
 
@@ -1150,7 +1184,7 @@ P-A empieza con B0; P-B se entrega por categoría antes de vencer el plazo compr
 4. B5 termina circuito de safety/atención básica, no solo fila de handoff.
 5. B6 elimina derivados obsoletos incluso para una mascota. Nunca aplazarlo después de abrir WRITE.
 6. B7A entrega persistencia/permiso; B7B conecta aceptación causal sin tocar todo el dominio.
-7. B8A guard + crear cita. B8B confirmar, B8C cancelar, B8D reprogramar y B8E alta individual son entregas independientes cuando se necesiten.
+7. B8A guard sin WRITE real. B8B crear cita, B8C reprogramar/cancelar, B8D asistencia y B8E alta individual son entregas independientes cuando se necesiten.
 8. B9 verifica/activa únicamente capacidades seleccionadas; READ puede pasar su gate antes de B7/B8. Ningún modo restricted abre tools no adaptadas.
 9. E1 referencias y E2 multi-goal se incorporan según alcance, con evaluación propia. E3 avisos adicionales y E4 coordinación solo por necesidad demostrada. E5 altas compuestas conserva su gate y no frena la beta inicial.
 10. Al ampliar carga/datos/capacidades repetir el gate afectado y revisar cobertura/P. No completar extensiones innecesarias para declarar una beta acotada segura.

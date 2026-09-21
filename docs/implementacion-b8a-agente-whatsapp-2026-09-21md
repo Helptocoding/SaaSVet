@@ -1,0 +1,255 @@
+# Acta B8A — guard transaccional de ejecución autorizada
+
+Fecha: **2026-09-21**. Estado: **COMPLETED en alcance técnico B8A, bajo contención**.
+No habilita efectos de negocio, tráfico autónomo ni despliegue.
+
+## Baseline, commits y alcance
+
+- Base obligatoria verificada como HEAD antes de modificar código:
+  `fa29d81dcef64daa9ed013c7120e5ac763a51f34` (final B7B). No sustituida.
+- Implementación, contrato congelado, pruebas y corpus:
+  `892fe0c0a28b974b8f35aedf726195cba99e92ca`.
+- Commit final/documental: el que incorpora esta acta y la evidencia; resolver
+  con `rtk git log -1 --format=%H -- docs/implementacion-b8a-agente-whatsapp-2026-09-21md`.
+  No se introduce un hash autorreferencial. El hash completo se entrega también
+  en la respuesta final del encargo.
+- Árbol inicial ajeno: `DEPLOY_VPS_PLAN.md` y `DEPLOY_VPS_STATUS.md` eliminados,
+  y `docs/auditoria-agente-conversacional-veterinario-2026-09-10.md` sin seguimiento.
+  Se preservan fuera de ambos commits.
+
+El encargo enmienda expresamente la división anterior del plan: **B8A solo guard**;
+B8B creación de citas, B8C reprogramación/cancelación, B8D asistencia y B8E mascotas.
+No se implementaron B8B–B9, E1–E5 ni P-A/P-B. No hubo reauditoría H01–H20.
+Se inspeccionaron las dependencias B7A/B7B, B0–B6 y los contratos de dominio necesarios
+para definir futuros adapters. El grafo disponible se consultó/reindexó, pero sus
+resultados incompletos exigieron lecturas y búsquedas dirigidas en archivos.
+
+## Runtime y migraciones
+
+| Archivo | Cambio B8A |
+| --- | --- |
+| `backend/apps/agent/operation_execution.py` | Entrada única, contexto, registry cerrado, protocolo de adapter, locks, revalidación, reconciliación, resultados, eventos e inspector |
+| `backend/apps/agent/operation_consent.py` | Revalidación de AuthorizationEvidence B7B para ejecución |
+| `backend/apps/agent/operation_permission.py` | Propósito execute y ALLOWED_TO_EXECUTE en el servicio existente |
+| `backend/apps/agent/operation_model_contract.py` | Resultado escrito exclusivamente por guard; definición/consentimiento/resultado ordinarios protegidos |
+| `backend/apps/agent/tools.py` | WRITE del modelo rechazado; no dispatch a adapter/handler legacy |
+| `backend/apps/agent/executor.py` | Transporte HTTP legacy mutante cerrado aun simulando apertura de B0 |
+| `backend/apps/core/permissions.py` | Métodos mutantes del rol AGENT denegados en permisos comunes; rutas humanas conservadas |
+| `backend/apps/agent/planner.py` | Rechazo operation_guard_required con contención y copia específica |
+| `backend/apps/agent/admin.py` | Estado de ejecución, razón y timestamp readonly |
+| `backend/config/settings.py` | Diccionario de flags de ejecución vacío, sin default permisivo |
+
+**Migraciones: ninguna.** Sin tabla nueva de producción, backfill legacy ni RUNNING
+durable. Se reutilizan `ConversationOperation.execution_state/result/result_code/
+executed_at` y la FK de `ToolExecution`. La tabla SQL `b8a_test_effect` solo existe
+en bases `test_*` del harness; no es un modelo ni migración de la aplicación.
+
+## Entrada, autorización y elegibilidad
+
+`execute_authorized_operation(operation_key: UUID, context: ExecutionContext)` es
+la única puerta server-side para futuros efectos autónomos. El contexto congelado
+contiene `OwnershipWitness` B3 actual, `contact_id` y capability resueltos por servidor.
+No admite parámetros alternativos, digest, permiso, resultado, preconditions ni
+idempotency key del LLM. El tool dispatcher no expone esta entrada al modelo.
+
+La operación se obtiene de la base por UUID y scope de conversación/tenant/contacto.
+Se revalidan tipo, schema y parámetros canónicos, digest SHA-256 con bindings, matter,
+capability B2, organización del canal/contacto/entidades, relaciones owner/pet/cita,
+entidades activas y veterinario vigente cuando corresponde.
+
+AUTHORIZED es necesario, nunca suficiente. `execution_authorization_evidence`
+verifica la evidencia tipada: clave/digest exactos, propuesta canónica y Message
+durable, emisión verificable B4 y provider ID, inbound exacto del mismo actor/canal,
+TurnWork/cursor/epoch históricos, ACCEPT, causalidad temporal, TTL y reply-to único
+validado o código exacto. No reconstruye consentimiento mediante transcript/LLM.
+**CONTEXTUAL_DECLARATION sigue deshabilitado**, también para CONFIRM_ATTENDANCE.
+
+`actor_permission(..., purpose='execute')` devuelve ALLOWED_TO_EXECUTE,
+REQUIRES_IDENTITY, REQUIRES_STEP_UP o FORBIDDEN. Reutiliza la política B7A; no confía
+en ALLOWED_TO_PROPOSE persistido ni introduce otro RBAC. Revalida
+`ContactIdentity.authorization_revision`, `binding_revision`, `ownership_epoch`,
+matter activo/replacement, ownership humano, señales/handoff de seguridad B5 y
+membership fijo B3. Un número telefónico coincidente no sustituye esa autoridad.
+
+**TTL:** no se renueva al autorizar. Expiry antes del consentimiento bloquea B7B;
+autorización válida seguida de espera hasta expiry bloquea el nuevo efecto B8A
+sin borrar AUTHORIZED. Resultado confirmado/reconciliación pueden observarse después
+del TTL bajo permiso actual, sin repetir negocio. Se comprueba deadline y TTL también
+antes de cerrar el commit local; vencimiento revierte efecto/resultado locales.
+
+Todo inbound durable posterior a la autorización impide iniciar el efecto antiguo,
+aunque otro turno lo haya procesado. Es una restricción conservadora explícita:
+una cortesía puede exigir nueva propuesta; el LLM no prueba ausencia de revocación.
+Corrección, rechazo o abandono previos bloquean la definición. Si el efecto ya hizo
+commit, su evidencia y autorización histórica permanecen; otra acción exige otra
+operación de dominio, no mutar retroactivamente consent_state.
+
+## Gates, adapters y preconditions
+
+Los cinco kinds están **DISABLED y sin adapter**: CREATE_APPOINTMENT,
+RESCHEDULE_APPOINTMENT, CANCEL_APPOINTMENT, CONFIRM_ATTENDANCE y REGISTER_PET.
+B0 continúa cerrando las siete capabilities WRITE históricas. Para iniciar un
+efecto deben coincidir B0 abierto, release explícito habilitado, flag estrictamente
+True, capability conocida, consentimiento habilitado y adapter compatible. Flag
+ausente/truthy, adapter ausente o schema válido no habilitan nada.
+
+El protocolo mínimo es `validate_preconditions`, `reconcile`, `execute`; solo
+`LOCAL_ATOMIC` está soportado. No plugins, sagas ni proveedores externos.
+El validador futuro debe adquirir los locks del dominio y comprobar estado actual,
+pertenencia, expected_state y disponibilidad dentro de la transacción del efecto.
+READ previo de slot no reserva nada. Agenda conserva veterinarios ordenados→cita
+y exclusión de solapamientos; no se implementó el algoritmo B8B. Las obligaciones
+por cada kind están detalladas en el [contrato](contrato-execution-guard-b8amd).
+
+Una precondition definitivamente incompatible registra razón tipada y queda
+bloqueada para esa operación; no se borra por reintentos. Un error de infraestructura
+durante la validación se distingue como transitorio y no afirma efecto ni fracaso
+definitivo. Las validaciones reales y sus carreras con staff quedan pendientes
+de cada adapter B8B–B8E; el fake no acredita reservas ni reglas clínicas.
+
+## Frontera del efecto, resultados y recuperación
+
+La UUID de operación es la identidad estable; ningún retry genera otra clave.
+Antes de todo execute se consulta `reconcile` por key/digest/tenant, incluso si
+el ledger indica NOT_STARTED. Estado contradicho por evidencia o intento técnico
+no basta para afirmar ausencia. Denegaciones tempranas no destruyen esa evidencia.
+
+| Resultado | Evidencia y conducta |
+| --- | --- |
+| SUCCEEDED | EffectEvidence tipada con key/digest/objeto/timestamp y confirmación mediante consulta durable del dominio; nunca HTTP 200, texto del LLM o ausencia de excepción. Replay devuelve el resultado sin otro efecto |
+| FAILED | Fallo definitivo permitido y ausencia de efecto comprobada para la misma key/digest; terminal, no éxito ni retry automático |
+| UNCERTAIN | Excepción/timeout/resultado sin prueba/contradicción. No execute en retries; requiere reconciliación. Solo evidencia positiva o ausencia definitiva permiten cerrar |
+| NOT_STARTED bloqueado | Consentimiento, gates, revisiones, safety o preconditions impiden efecto; inspector separa la causa de la autorización histórica |
+
+En el contrato local, guard + preconditions + efecto + evidencia + resultado
+comparten conexión y transacción. Crash antes del commit revierte todo; crash
+después conserva efecto y resultado. No se deja un RUNNING durable que simule éxito.
+Error DB al persistir evidencia revierte el efecto local. ToolExecution solo audita
+el intento técnico, no autoriza ni prueba por sí mismo éxito.
+
+FI-03/FI-05 fuerzan deliberadamente un commit SQL separado de prueba antes del
+ledger, para reproducir efecto visible + crash/timeout. Recovery independiente
+encuentra ese efecto por UUID y no reejecuta; si no puede probarlo, sigue UNCERTAIN.
+Este adapter de inyección **viola intencionalmente LOCAL_ATOMIC**: demuestra el
+comportamiento de reconciliación, no soporte ni fencing de un proveedor externo.
+
+## Concurrencia y fencing
+
+Orden conservado: Conversation → TurnWork → ContactIdentity → Goal → Operation;
+después, locks del futuro dominio en su orden documentado. No se adopta el orden
+identidad→conversación del borrador previo porque invertiría rutas B3/B7A/B7B.
+No se mantiene una transacción mientras se espera LLM/HTTP. Se usa witness/lease/
+epoch y recovery B3, sin segundo sistema de workers.
+
+Takeover, ingreso de revocación y corrección comparten el lock de conversación.
+Si su commit gana, el ejecutor antiguo queda bloqueado; si gana el efecto, no se
+finge deshacerlo. La garantía causal es **recepción local durable bajo ese lock**,
+no timestamp de envío remoto ni solicitud todavía no persistida. La atención humana
+no depende de completar un trabajo remoto del guard.
+
+Dos ejecutores independientes se excluyen; el segundo observa resultado confirmado
+o incertidumbre y no repite efecto. Las pruebas comprobaron espera real en
+`pg_stat_activity.wait_event_type=Lock`, barreras por stdin y terminación del PID
+del intérprete real, no solo excepciones simuladas o hilos.
+
+## Aceptación ejecutada
+
+[Evidencia JSON](evals/b8a-acceptance-results.json): inventarios completos por ID,
+hashes SHA-256 de fuentes/logs, fallos iniciales conservados, corpus y mapeo
+AUTH/REV/GATE/RESULT, RACE-01..10 y B8A-FI-01..08. Sin skips ni xfail.
+
+| Ejecución | Resultado y alcance |
+| --- | --- |
+| Dedicada B8A final | **89/89**, 600.425 s de tests; 53 contrato/guard, 20 corpus, 16 procesos PostgreSQL |
+| Corpus `b8a-execution-corpus-v1.json` | **20/20**, `unauthorized_business_effects = 0`, exclusivamente dominio fake SQL |
+| Baseline B0–B7B original | 1.135 IDs exactos reejecutados; 1.134 aprobados + un subtest de copia de error fallido |
+| Reparación dirigida | **87/87** tools/planner, 64.731 s; incluye el test fallido tras corregir operation_guard_required |
+| Cobertura efectiva única | **1.135 regresión + 89 B8A = 1.224 únicos aprobados** entre ejecuciones, sin contar dos veces los 87 |
+| Checks | Django check; makemigrations --check --dry-run; migrate --check; git diff --check; todos correctos |
+
+No se afirma una única invocación verde de 1.135 tests: la evidencia conserva
+`baseline_initial.exit_code=1` y el subtest
+`ToolErrorCopyIsReachableTests.test_no_client_error_falls_back_to_the_generic_text
+(client_error='operation_guard_required')`. La corrección añade su texto de rechazo
+y ruta de contención; se repitieron los dos módulos afectados completos. Los demás
+IDs del baseline quedaron verdes en esa pasada. El runtime final del guard estuvo
+congelado durante los 89 tests finales; después solo se editaron documentos.
+
+Entorno: Python 3.13.2, Django 6.0.3 y PostgreSQL 18.3 local, bases `test_*` aisladas.
+Los hijos B8A verifican la misma versión Django que el coordinador. El cluster de
+pruebas heredado usa fsync=off/synchronous_commit=off: estas pruebas acreditan
+crash de worker, **no pérdida de energía/host**. No se invocaron proveedores reales.
+La regresión legacy conserva sus fixtures explícitos de componentes cerrados;
+no acredita permiso de WRITE autónomo.
+
+La primera harness multiproceso mataba el launcher venv de Windows, no el intérprete;
+esos resultados no se aceptaron. Se corrigieron PID, barreras con EOF abortivo y
+dependencias de los hijos, y se repitieron los 16 escenarios. Los intentos con
+PostgreSQL detenido durante la continuación tampoco se cuentan. Una pasada
+intermedia de 84 tests se sustituyó por la final de 89. No se ocultaron esos intentos.
+
+Para reproducir la dedicada, configurar entorno de tests PostgreSQL y, desde backend:
+
+```powershell
+rtk proxy ../venv/Scripts/python.exe manage.py test apps.agent.tests.test_operation_execution apps.agent.tests.test_b8a_corpus apps.agent.tests.test_b8a_processes --testrunner=apps.agent.tests.b8a_runner.CriticalB8ARunner --noinput --keepdb -v 2
+```
+
+`B8A_RESULTS_PATH` exporta el resultado. Para regresión, usar exactamente los labels
+devueltos por `apps.agent.tests.b8a_runner.baseline_ids()` en `call_command('test',
+*sorted(baseline_ids()), testrunner='apps.agent.tests.b8a_runner.CriticalB8ARunner',
+interactive=False, keepdb=True)` con `B8A_SUITE=baseline`. El runner rechaza inventario
+vacío/incompleto/duplicado, skips, xfail y resultados inesperados.
+
+## Observabilidad, inspector y hallazgos
+
+Vocabulario cerrado: execution_guard_denied, execution_guard_allowed,
+execution_gate_closed, execution_precondition_failed, execution_stale_revision,
+execution_permission_denied, execution_started, execution_succeeded,
+execution_failed, execution_uncertain, execution_reconciled y
+execution_duplicate_suppressed. Se emiten tras commit con count/schema; sin IDs,
+teléfonos ni nombres como labels y sin excepciones crudas del adapter.
+
+Admin readonly diferencia AUTHORIZED_NOT_EXECUTED, BLOCKED_BY_GATE,
+BLOCKED_BY_PRECONDITIONS, SUCCEEDED, FAILED, UNCERTAIN/RECONCILIATION_PENDING e
+inconsistencia de ledger. AUTHORIZED nunca se presenta como cita creada/cancelada.
+
+| Hallazgo afectado | Estado acotado tras B8A |
+| --- | --- |
+| H01 | Consentimiento exacto B7B revalidado y guard común implementado/probado con fake; cierre de WRITE por cada adapter real pendiente |
+| H02 | Emisión y autorización causal B7B preservadas y revalidadas antes de ejecución; sin ampliar lenguaje/modos ni garantía de proveedor |
+| H13 | Operación, referencias y revisiones exactas protegidas; E1 general y referencias históricas/ordinales siguen fuera; integración WRITE real pendiente |
+| H18 | Permiso actual de ejecución y revisiones/revocación comprobados; sin autenticación fuerte universal, persisten teléfono compartido/reciclado y aceptación operativa del riesgo |
+| H05/H06/H08 | Resultado tipado, incertidumbre, idempotencia y fencing probados en frontera de prueba; requieren evidencia de efectos/notificaciones reales por adapter |
+| H16 | Eventos e inspector añadidos; no se declara sistema completo de métricas/capacidad |
+| H20 | Asistencia contextual continúa cerrada; no se implementa B8D ni se declara resuelta asistencia real |
+
+No se cierran otros hallazgos ni se atribuye al fake prueba de WRITE real.
+
+## Desviaciones, riesgos, deploy y readiness
+
+Desviaciones justificadas: división de B8 enmendada por el encargo; orden real de
+locks conservado; cualquier inbound posterior bloquea por prudencia; inspector
+admin readonly sin UI nueva; cero migraciones; reproducción separada de commit
+inconsistente solo para FI. El rechazo de API rol AGENT cierra bypass legacy aun
+cuando se simula B0 abierto, manteniendo el camino humano.
+
+Riesgos residuales: validadores/preconditions/locks/idempotencia/evidencia y efectos
+secundarios de adapters reales; identidad fuerte y riesgo telefónico; fronteras
+externas sin contrato; posible nueva propuesta tras cortesías; activación y cobertura
+humana pendientes. No hay exactamente-una-vez universal ni pruebas reales de slots.
+
+**Deploy: no realizado.** Activación permanece **PENDING_ACTIVATION_REQUIREMENTS**.
+B0 y registry cerrados. [Runbook](runbooks/agent-whatsapp.md): deshabilitar gates,
+conservar evidencia/reader y reconciliar por dominio; nunca resetear UNCERTAIN a
+NOT_STARTED ni reescribir AUTHORIZED como PENDING. Sin downgrade de schema.
+No hacer un rollback a código que ignore evidencia terminal si alguna capacidad
+se habilita en una fase futura; requiere compatibilidad del reader y plan propio.
+
+**Readiness B8B:** frontera técnica disponible para comenzar ese encargo por separado;
+pendientes adapter real de creación, transacción/slots/expected_state aplicables,
+idempotencia/evidencia de Appointment, carreras con staff y gates específicos. No
+implica readiness de producción ni autorización para abrir flags.
+
+**Recomendación:** cerrar técnicamente B8A en este alcance y detenerse. Ningún kind
+ejecuta WRITE real; no se avanza B8B. [ADR](decisions/2026-09-21-b8a-execution-guardmd),
+[contrato](contrato-execution-guard-b8amd) y [plan](plan-implementacion-auditoria-agente-whatsapp-2026-09md).

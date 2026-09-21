@@ -476,3 +476,54 @@ actual/nueva propuesta, nunca revivir una operación stale. B0 permanece activo.
 Pruebas, comandos e inventario: [acta B7B](../implementacion-b7b-agente-whatsapp-2026-09-20md),
 [contrato](../contrato-consentimiento-causal-b7bmd),
 [ADR](../decisions/2026-09-20-b7b-consentimiento-causalmd).
+
+## B8A — guard cerrado y reconciliación
+
+B8A no despliega ni habilita ningún WRITE. Mantener containment B0, las cinco
+entradas del registry DISABLED/sin adapter y AGENT_OPERATION_EXECUTION_ENABLED
+vacío. No hay migraciones B8A. AUTHORIZED acredita consentimiento histórico,
+nunca cita creada/cancelada, asistencia confirmada o mascota registrada.
+Activación sigue PENDING_ACTIVATION_REQUIREMENTS.
+
+Inspector admin readonly: AUTHORIZED_NOT_EXECUTED, BLOCKED_BY_GATE,
+BLOCKED_BY_PRECONDITIONS, EXECUTION_DENIED, SUCCEEDED, FAILED y
+UNCERTAIN / RECONCILIATION_PENDING. result_code usa causas tipadas; no editar
+JSON/estados para corregir un bloqueo. Los eventos execution_guard_denied/allowed,
+execution_gate_closed, execution_precondition_failed, execution_stale_revision,
+execution_permission_denied, execution_started/succeeded/failed/uncertain,
+execution_reconciled y execution_duplicate_suppressed llevan solo count/schema.
+
+Procedimiento ante un intento:
+
+1. Comprobar scope del operador y evidencia de Operation/Message/B7B. Propuesta
+   persistida o AUTHORIZED no bastan. Conservar el historial de autorización.
+2. Gate cerrado: esperar el adapter/gates de su fase; no abrir configuración para
+   probarlo en producción. JWT AGENT y tool args tampoco evitan el guard.
+3. Precondition definitiva incompatible, corrección, identidad/binding/ownership
+   cambiado o TTL vencido: no repetir esa definición. Nueva evaluación/propuesta,
+   bajo ownership vigente. Un release humano no renueva epoch ni consentimiento.
+4. SUCCEEDED: leer evidencia exacta del dominio y devolver resultado, sin ejecutar
+   otra vez. FAILED: prueba de ausencia definitiva; no comunicar éxito.
+5. UNCERTAIN: no retry automático ni UUID nueva para resolver la duda. El guard
+   solo reconcilia con un adapter local compatible y permiso actual. En B8A no
+   existen adapters reales: un resultado inesperado en producción requiere
+   investigación humana, sin fabricar ausencia ni éxito. No usar ToolExecution,
+   texto del LLM, HTTP 200 o proximidad temporal como prueba de efecto.
+6. Para adapters futuros, commit local guarda efecto+resultado juntos; crash antes
+   revierte ambos. Reconcile por operation_key recupera evidencia faltante. No
+   existe proveedor externo aprobado: su idempotencia/reconciliación necesitan
+   contrato propio antes de habilitarlo, sin locks mantenidos durante red.
+
+Rollback: suspender nuevas acciones, conservar B0, schema y evidencia; no revertir
+SUCCEEDED/FAILED/UNCERTAIN ni pasar AUTHORIZED a PENDING. Desplegar únicamente un
+lector compatible con result schema 1; drenar workers con el procedimiento B3.
+No volver a rutas legacy ni compensar negocio cambiando consent_state. Las
+operaciones humanas siguen sus permisos y servicios de dominio habituales.
+
+[Contrato B8A](../contrato-execution-guard-b8amd) y
+[ADR B8A](../decisions/2026-09-21-b8a-execution-guardmd) distinguen garantías del
+guard de las validaciones todavía pendientes de B8B–B8E.
+
+[Acta y reproducción de pruebas](../implementacion-b8a-agente-whatsapp-2026-09-21md)
+y [evidencia versionada](../evals/b8a-acceptance-results.json). El cierre técnico
+de B8A no cambia el registro PENDING_ACTIVATION_REQUIREMENTS.

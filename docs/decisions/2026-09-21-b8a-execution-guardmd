@@ -1,0 +1,116 @@
+# ADR — B8A: frontera transaccional de operación autorizada
+
+Fecha: 2026-09-21. Estado: aceptado para implementación técnica B8A bajo contención.
+Baseline obligatorio: `fa29d81dcef64daa9ed013c7120e5ac763a51f34`.
+
+## Decisión y alcance
+
+El encargo actual sustituye el alcance anterior de §B8 del plan: B8A entrega el
+guard sin crear citas; B8B creará citas, B8C reprogramará/cancelará, B8D asistencia
+y B8E alta individual de mascota. Es enmienda explícita, no cambio silencioso de
+baseline. No reauditoría H01–H20 ni implementación de esas fases.
+
+`operation_execution.execute_authorized_operation(UUID, ExecutionContext)` es la
+única entrada autónoma de efecto. El contexto contiene OwnershipWitness B3 actual,
+contact_id y capability de servidor. No existen parámetros de ejecución del modelo,
+headers que concedan permisos, idempotency keys nuevas por retry ni adapters
+seleccionables desde tool calls. Todos los registros de producción están disabled,
+sin adapter, y la lista de flags está vacía. B0 no se modifica.
+
+Se extiende `actor_permission(..., purpose='execute')`, sin otra política RBAC:
+ALLOWED_TO_EXECUTE / REQUIRES_IDENTITY / REQUIRES_STEP_UP / FORBIDDEN. La misma
+relación vigente se evalúa para el propósito concreto; consentimiento, safety,
+revisiones, preconditions y gates siguen siendo comprobaciones independientes.
+El snapshot ALLOWED_TO_PROPOSE nunca concede autoridad de ejecución.
+
+La evidencia B7B se revalida desde referencias protegidas: digest, propuesta
+canónica, emisión B4 verificable, recepción posterior, ACCEPT exacto, actor/canal,
+TurnWork de autorización y reply-to/token. No se usa transcript LLM ni el booleano
+AUTHORIZED aislado. El modo contextual continúa cerrado, incluso para asistencia.
+
+## Persistencia y efecto
+
+No hay nuevas tablas ni migraciones. Se reutilizan execution_state, result JSON
+v1, result_code y executed_at de ConversationOperation, y la FK ya existente de
+ToolExecution. Los writers ORM ordinarios siguen sin poder modificar definición,
+consentimiento terminal ni resultado; el writer privado del guard solo actualiza
+los campos de ejecución bajo lock. No permite volver SUCCEEDED/FAILED a otro estado.
+SQL administrativo directo conserva los controles operativos existentes; no se
+afirma que el ORM sea una barrera frente a un administrador de base de datos.
+
+Adapter mínimo tipado por kind: validate_preconditions / reconcile / execute;
+solo LOCAL_ATOMIC soportado. La validación final adquiere locks del dominio y
+comprueba sus reglas actuales dentro de la transacción que ejecuta y persiste
+evidencia/resultado. No se mantiene una transacción mientras se espera red o LLM.
+Los adapters de agenda deben preservar veterinarios ordenados→cita y exclusión
+de solapamientos; la observación B7A del slot nunca equivale a una reserva.
+
+Reconcile se consulta antes de ejecutar aun con NOT_STARTED. SUCCEEDED requiere
+EffectEvidence exacta y consulta del dominio; una respuesta positiva sin fila
+durable se convierte en UNCERTAIN. FAILED requiere rechazo definitivo + prueba
+de ausencia; un timeout nunca la aporta. UNCERTAIN solo consulta evidencia y no
+reintenta; puede reconciliar a SUCCEEDED o a FAILED si el dominio prueba ausencia
+definitiva. No existe RUNNING durable ni exactly-once ficticio sobre proveedores.
+
+En LOCAL_ATOMIC no existe un commit de efecto independiente del ledger: un crash
+antes revierte ambos; después conserva ambos. La inyección FI-03 crea deliberadamente
+un efecto en una conexión SQL separada de prueba y mata el worker antes del ledger
+para demostrar que recovery consulta por UUID sin duplicarlo. Ese adapter viola
+intencionalmente la frontera local y no acredita soporte ni fencing remoto.
+
+Un rechazo de preconditions definitivo permanece bloqueado para esa operación,
+aunque después se intente con otro permiso o estado. Un error de infraestructura
+durante validación no afirma incompatibilidad definitiva ni efecto sucedido.
+
+## Causalidad, TTL y locks
+
+AUTHORIZED es historia inmutable, no vigencia permanente. expires_at no se renueva:
+no nuevo efecto tras los 30 minutos originales; sí reconciliación/lectura de
+resultado confirmado bajo permiso actual. No se degrada éxito por un timeout posterior.
+
+Todo inbound local posterior a la autorización bloquea nuevos efectos de esa
+definición, también si fue procesado. Esta restricción conservadora evita declarar
+que una cortesía/corrección ambigua fue evaluada inocua por el LLM. La reapertura
+requiere evaluación/propuesta nueva; no se modifica retroactivamente consentimiento.
+Una revocación que gana el commit de recepción bajo Conversation bloquea el efecto;
+una recibida después del commit no lo deshace. No se garantiza orden por tiempo
+remoto, solicitud HTTP aún no persistida ni intención del usuario no recibida.
+
+Se conserva Conversation→TurnWork→ContactIdentity→Goal→Operation de B3/B7A/B7B.
+El borrador previo de B8 proponía ContactIdentity→Conversation; aplicarlo aquí
+invertiría locks existentes. Identidad aislada toma ContactIdentity→Operation
+pendiente sin pedir Conversation; takeover/corrección comparten el primer lock.
+Antes del efecto y del cierre se comprueban deadline/lease; expiración revierte
+efecto local. No se introduce un segundo worker o lease.
+
+## Rutas alternativas, inspección y límites
+
+Tool dispatch y ToolExecutor rechazan escrituras legacy incluso si se simula B0
+abierto. Los permisos comunes de API niegan métodos mutantes del rol AGENT; no se
+acepta JWT+body arbitrario para acceder al dominio. Staff conserva su recorrido.
+El futuro adapter de una API concreta deberá entrar explícitamente por el guard;
+añadir un adapter al registry no levanta por sí solo esta denegación.
+
+Los fixtures legacy opt-in continúan probando componentes históricos mediante
+monkeypatch explícito de estas barreras; no son aceptación de autonomía. Los tests
+B8A/B0 no usan ese bypass. Se conserva el inventario de regresión original.
+
+Admin readonly diferencia AUTHORIZED_NOT_EXECUTED, BLOCKED_BY_GATE,
+BLOCKED_BY_PRECONDITIONS, SUCCEEDED, FAILED y UNCERTAIN/RECONCILIATION_PENDING.
+Eventos de vocabulario cerrado, solo count/schema, sin IDs/PII como labels.
+
+Garantías de B8A: autoridad, revalidación, fencing y protocolo de resultado en
+dominio aislado de tests. Pendientes: locks/preconditions/serializers, notificaciones
+secundarias e idempotencia de cada dominio real B8B–B8E; identidad fuerte, aceptación
+del riesgo telefónico, gates B9 y revisión operativa. La tabla SQL de tests no es
+un modelo/migración de producción ni prueba de citas/Pet reales.
+
+No deploy. Rollback mantiene B0 y registry cerrados, conserva evidencia y readers;
+no se transforma UNCERTAIN en NOT_STARTED ni AUTHORIZED en PENDING. Activación
+PENDING_ACTIVATION_REQUIREMENTS. [Contrato](../contrato-execution-guard-b8amd).
+
+Cierre técnico acotado: [acta 2026-09-21](../implementacion-b8a-agente-whatsapp-2026-09-21md)
+y [evidencia por ID de test](../evals/b8a-acceptance-results.json). 89 dedicados
+B8A aprobados, incluidos 16 escenarios multiproceso y 20 casos del corpus fake;
+la regresión de 1135 IDs se acredita entre la pasada inicial y la reparación
+dirigida documentada, sin duplicar conteos. No es aceptación de adapters reales.
