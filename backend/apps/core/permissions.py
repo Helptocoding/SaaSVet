@@ -295,6 +295,9 @@ class RolePermission(BasePermission):
             return False
 
         # Superadmin de plataforma siempre tiene acceso
+        from apps.agent.operation_execution import agent_api_write_denied
+        if agent_api_write_denied(request.user, request.method):
+            return False
         if request.user.is_superuser:
             return True
 
@@ -350,6 +353,11 @@ class HybridPermission(BasePermission):
 
     def has_permission(self, request, view) -> bool:
         if not request.user.is_authenticated:
+            return False
+
+        # B8A denies legacy AGENT mutations even if role grants are widened.
+        from apps.agent.operation_execution import agent_api_write_denied
+        if agent_api_write_denied(request.user, request.method):
             return False
 
         # ADR p49: ventana de mantenimiento del demo. Embebido aquí (igual que el

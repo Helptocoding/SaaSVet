@@ -790,7 +790,7 @@ def _run_planner(conversation, agent_settings, llm_client, executor,
         # pregunta lo que falta es el modelo.
 
         if not outcome.ok:
-            if outcome.client_error == 'autonomous_writes_paused':
+            if outcome.client_error in ('autonomous_writes_paused', 'operation_guard_required'):
                 return _contain_write(conversation, llm_calls=llm_calls,
                                       tool_calls=tool_calls)
             # Acceso restringido del familiar (PR-17b): no es un fallo de
@@ -1291,6 +1291,10 @@ def _error_fact(client_error):
     imperativo es justamente el contenido.
     """
     return {
+        'operation_guard_required': (
+            'Esta llamada no puede realizar cambios. La operación sigue sin ejecutarse '
+            'y necesita atención del equipo.'
+        ),
         # É-F5 Fase 2: la verificación deja de ser una rama que TERMINA el
         # turno con una plantilla y pasa a ser un error suave como los demás.
         # Antes, este código secuestraba el turno: el router sembraba un reto,

@@ -1,0 +1,117 @@
+# Contrato B8A — guard de ejecución v1
+
+Congelado antes de implementar el guard, 2026-09-20. Baseline obligatorio
+`fa29d81dcef64daa9ed013c7120e5ac763a51f34`, verificado como HEAD. Cambios previos
+ajenos: DEPLOY_VPS_PLAN.md y DEPLOY_VPS_STATUS.md eliminados; auditoría del
+2026-09-10 sin seguimiento. Se conservan fuera de los commits B8A.
+
+El encargo enmienda §B8 del plan: B8A entrega solo la frontera común; B8B creación,
+B8C reprogramación/cancelación, B8D asistencia, B8E mascota. Ningún adapter real,
+deploy o activación. B0 y los cinco kinds siguen cerrados. La versión anterior
+del plan incluía creación dentro de B8A y otro orden de adapters; no se aplica.
+
+## Autoridad y TTL
+
+Una entrada server-side `execute_authorized_operation(operation_key, context)`.
+ExecutionContext contiene únicamente witness B3 actual, contacto y capability
+esperada, resueltos por servidor. No acepta parámetros, digest, permiso, estado,
+preconditions ni claves de idempotencia del LLM. La UUID identifica la definición
+persistida. Una tool del modelo no dispone de una entrada a adapters.
+
+Revalidar schema/digest/FKs/tenant/matter/capability, evidencia B7B y emisión B4,
+respuesta inbound y reply-to/token exactos, permiso de ejecución actual,
+authorization_revision, binding_revision y ownership_epoch; safety B5 prevalece.
+CONTEXTUAL_DECLARATION sigue cerrado, incluida asistencia. Consentimiento y
+ejecución son bloques distintos; no reescribir decisiones históricas.
+
+TTL de 30 minutos original: el consentimiento y el inicio del efecto deben ser
+anteriores a expires_at. AUTHORIZED no renueva ni suspende TTL. Expiración previa
+al consentimiento bloquea B7B; autorización válida seguida de espera hasta expiry
+bloquea un nuevo efecto, conservando AUTHORIZED. Un resultado ya confirmado puede
+consultarse/reconciliarse después del TTL sin iniciar otra mutación de negocio.
+
+Nuevo inbound durable después de la autorización impide usar esa autorización
+para iniciar un efecto, incluso si otro turno ya lo procesó. Es una restricción
+conservadora B8A: no atribuir al LLM una prueba de ausencia de revocación. Una
+corrección/rechazo/abandono anteriores al efecto bloquean; después del commit no
+lo deshacen. Requieren nueva operación cuando exista adapter. No se promete ordenar
+por el envío remoto: la frontera garantizada es recepción committed bajo el lock
+de Conversation, compartido con ingest, corrección y takeover.
+
+## Efecto, idempotencia y adapters
+
+Registry cerrado y explícito por kind, sin descubrimiento de plugins. Cada entrada
+requiere habilitación de release, feature flag estrictamente True, capability
+conocida, adapter compatible y B0 abierto. Todos están DISABLED/sin adapter en B8A.
+
+Interfaz mínima local: validate_preconditions, reconcile, execute. Solo se admite
+LOCAL_ATOMIC en B8A; no HTTP/LLM dentro de la transacción. validate_preconditions
+adquiere los locks del dominio y comprueba el estado actual; execute usa esa misma
+conexión/transacción. READ de disponibilidad nunca es reserva. Agenda futura debe
+reusar veterinarios ordenados→cita y exclusión de solapamientos; registro futuro
+debe demostrar unicidad/replay por operation_key. No se implementan esos algoritmos.
+
+Reconcile consulta evidencia durable exacta por UUID/digest/tenant antes de cualquier
+execute, incluso si el ledger dice NOT_STARTED. Ausencia comprobada permite el
+primer intento; evidencia contradictoria exige UNCERTAIN. El adapter no recibe
+argumentos alternativos. SUCCEEDED requiere evidencia tipada de objeto/clave/digest/
+timestamp, comprobada de nuevo mediante reconcile; no un 200 ni ausencia de excepción.
+El timestamp de fila es observado dentro del commit local; el resultado solo se
+expone tras salir de atomic. FAILED requiere fallo definitivo y ausencia de efecto
+verificada. Timeout/error no probado es UNCERTAIN, nunca retry automático.
+
+ABSENT/FAILED incluyen operation_key y parameters_digest exactos además de
+no_effect_confirmed; una prueba de ausencia de otra operación no se transfiere.
+El adapter produce esos datos desde la consulta del dominio, no desde HTTP/LLM.
+NOT_STARTED con evidencia contradictoria no inicia efectos; un rechazo temprano
+no borra ese registro, y el inspector lo expone como reconciliación pendiente.
+
+Guard+preconditions+efecto+evidencia+resultado comparten atomic. Crash antes de commit
+revierte todos; crash después conserva resultado y efecto. No RUNNING durable.
+Para un efecto encontrado sin resultado (inconsistencia/futuro proveedor), recovery
+reconcilia por UUID y no reejecuta; ausencia de prueba mantiene UNCERTAIN. Proveedores
+externos están deshabilitados: requieren idempotencia/fencing/reconciliación propios
+antes de poder agregarse. Un lock de operación no demuestra exactly-once externo.
+
+ConversationOperation.result/result_code/executed_at guardan resultado tipado y
+razón de bloqueo; ToolExecution registra intentos técnicos, nunca autorización ni
+fuente suficiente de éxito. No tabla operativa nueva ni backfill legacy.
+
+## Obligaciones de los validadores futuros (no implementados en B8A)
+
+| Kind | Validación final y evidencia exigidas al adapter |
+| --- | --- |
+| CREATE_APPOINTMENT | Pet vigente y del owner/contacto exactos; fecha/intervalo/zona/veterinario permitidos; disponibilidad bajo locks y constraint actual; idempotencia por UUID/digest, objeto creado probado |
+| RESCHEDULE_APPOINTMENT | Cita exacta y expected_state actuales; estado mutable; relaciones vigentes; destino disponible bajo locks del origen/destino; transición idempotente con evidencia de ese cambio |
+| CANCEL_APPOINTMENT | Cita exacta y expected_state actuales; estado cancelable; sin recancelar ni repetir notificaciones si staff ya actuó; evidencia distingue resultado ajeno de efecto de esta operación |
+| CONFIRM_ATTENDANCE | Cita/estado/actor actuales y contrato de modo habilitado; contextual permanece cerrado; pregunta/READ nunca produce transición |
+| REGISTER_PET | Owner/contacto vigentes y datos del schema B7A válidos al escribir; key estable evita duplicado por retry; ninguna cita implícita |
+
+Los snapshots B7A no sustituyen estos validadores. La prueba fake solo valida el
+protocolo: no implementa reservas, slots, serializers ni reglas clínicas reales.
+
+## Matriz acotada de locks
+
+| Ruta | Orden / frontera |
+| --- | --- |
+| B3 claim/finalize | Conversation → TurnWork |
+| B7A/B7B/guard B8A | Conversation → TurnWork actual → ContactIdentity → Goal → Operation |
+| B6 correction | Conversation → Goal → Operation pendiente |
+| Identity writer | ContactIdentity → Operation pendiente; nunca toma Conversation después |
+| Takeover/B5 | Conversation → TurnWork/invalidation pendiente |
+| Sender B4 | Conversation → Message; no identidad→Message inverso |
+| Adapters futuros locales | después de autoridad, locks del dominio en orden propio documentado |
+| API humana | permanece en su servicio/locks existente |
+
+Se conserva orden real B3/B7A/B7B; no se impone identidad→conversación del borrador
+antiguo de B8 que invertiría las rutas actuales. Revalidar lease/deadline y TTL en
+la frontera y antes de cerrar la transacción; un vencimiento revierte efecto local.
+Transacciones cortas; ejecución pendiente no sostiene locks durante red ni LLM.
+
+## Evidencia exigida para cierre
+
+AUTH/REV/GATE/RESULT, corpus versionado con unauthorized_business_effects=0,
+PostgreSQL real con procesos separados, barriers y kill para RACE/FI; regresión
+de los 1135 IDs B0–B7B. Los efectos del dominio aislado de prueba NO acreditan agenda,
+asistencia ni Pet reales. La validación de cada adapter continúa pendiente B8B–B8E.
+Sin skips/xfail ni sumas duplicadas. Activación PENDING_ACTIVATION_REQUIREMENTS.

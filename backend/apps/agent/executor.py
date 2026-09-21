@@ -171,10 +171,12 @@ class ToolExecutor:
             from .durable import check_turn_deadline
             check_turn_deadline(current_changes().witness)
         from .capabilities import EFFECTS, WRITE_BUSINESS
+        from .operation_execution import legacy_write_denied
         # A READ can never hide a mutation, even through a wrong dispatch.
         # B0's legacy component test override is not a runtime setting.
         if method.upper() not in ('GET', 'HEAD', 'OPTIONS') and (
-                EFFECTS.get(tool_name) != WRITE_BUSINESS or intake.write_is_contained(tool_name)):
+                EFFECTS.get(tool_name) != WRITE_BUSINESS or intake.write_is_contained(tool_name)
+                or legacy_write_denied()):
             self.record_local(tool_name=tool_name, policy_decision='denied',
                               summary={'reason': 'autonomous_writes_paused'},
                               triggered_by_message=triggered_by_message)

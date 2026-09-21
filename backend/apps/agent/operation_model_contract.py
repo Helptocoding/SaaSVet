@@ -1,4 +1,4 @@
-"""ORM enforcement for immutable B7A definitions and disabled future states."""
+"""ORM enforcement for immutable definitions, consent and execution evidence."""
 from django.core.exceptions import ValidationError
 from django.db import models
 from apps.core.models import TenantQuerySet
@@ -49,10 +49,6 @@ def validate_operation(operation):
         raise ValidationError(str(exc)) from exc
     if spec.authorization_mode != operation.authorization_mode:
         raise ValidationError('Authorization mode differs from manifest')
-    # B7B adds only the private, validated proposal/consent writers. B8 stays shut.
-    if (operation.execution_state != 'NOT_STARTED'
-            or operation.result or operation.result_code or operation.executed_at):
-        raise ValidationError('B7B cannot execute business operations')
     old = None
     if operation.pk:
         old = type(operation).all_objects.select_for_update().filter(pk=operation.pk).first()
@@ -73,6 +69,9 @@ def validate_operation(operation):
                     old.consent_state == 'PENDING' and operation.consent_state in allowed):
                 raise ValidationError('Terminal operation cannot be revived')
     if old is None:
+        if (operation.execution_state != 'NOT_STARTED'
+                or operation.result or operation.result_code or operation.executed_at):
+            raise ValidationError('New operations cannot carry execution evidence')
         if (operation.consent_state != 'PENDING' or operation.proposal_message_id
                 or operation.authorization_message_id or operation.authorized_at
                 or operation.consent_decided_at or operation.authorization_channel

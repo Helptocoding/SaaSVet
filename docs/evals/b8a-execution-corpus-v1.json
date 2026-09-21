@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "scope": "B8A; effects are isolated fake SQL domain rows, never real appointments or pets",
+  "cases": [
+    {"id": "EX01", "scenario": "valid", "status": "SUCCEEDED", "effects": 1},
+    {"id": "EX02", "scenario": "expired", "status": "DENIED", "effects": 0},
+    {"id": "EX03", "scenario": "digest", "status": "DENIED", "effects": 0},
+    {"id": "EX04", "scenario": "identity", "status": "DENIED", "effects": 0},
+    {"id": "EX05", "scenario": "binding", "status": "DENIED", "effects": 0},
+    {"id": "EX06", "scenario": "ownership", "status": "DENIED", "effects": 0},
+    {"id": "EX07", "scenario": "permission", "status": "DENIED", "effects": 0},
+    {"id": "EX08", "scenario": "takeover", "status": "DENIED", "effects": 0},
+    {"id": "EX09", "scenario": "safety", "status": "DENIED", "effects": 0},
+    {"id": "EX10", "scenario": "precondition", "status": "DENIED", "effects": 0},
+    {"id": "EX11", "scenario": "executed_retry", "status": "SUCCEEDED", "effects": 1},
+    {"id": "EX12", "scenario": "uncertain_retry", "status": "UNCERTAIN", "effects": 0},
+    {"id": "EX13", "scenario": "correction", "status": "DENIED", "effects": 0},
+    {"id": "EX14", "scenario": "revocation", "status": "DENIED", "effects": 0},
+    {"id": "EX15", "scenario": "containment", "status": "DENIED", "effects": 0},
+    {"id": "EX16", "scenario": "incomplete_evidence", "status": "DENIED", "effects": 0},
+    {"id": "EX17", "scenario": "no_emission", "status": "DENIED", "effects": 0},
+    {"id": "EX18", "scenario": "stale_causality", "status": "DENIED", "effects": 0},
+    {"id": "EX19", "scenario": "kind_disabled", "status": "DENIED", "effects": 0},
+    {"id": "EX20", "scenario": "reconcile", "status": "SUCCEEDED", "effects": 1}
+  ]
+}

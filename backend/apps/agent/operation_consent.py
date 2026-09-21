@@ -141,6 +141,48 @@ def authorization_evidence(operation):
         'ACCEPT' if operation.consent_state == 'AUTHORIZED' else 'REJECT', operation.consent_decided_at)
 
 
+def execution_authorization_evidence(operation):
+    """Recheck the protected B7B evidence, not just the historical state bit.
+
+    Does not re-authorize, consult a model, renew TTL or require the old lease.
+    The execution guard separately checks current authority and expiry.
+    """
+    from apps.channels.events import event_from_message
+    evidence = authorization_evidence(operation)
+    response = operation.authorization_message
+    work = response.turn_work
+    if (evidence.decision != 'ACCEPT' or operation.authorized_at != evidence.decision_at
+            or not operation.created_at <= evidence.decision_at < operation.expires_at
+            or not is_proposal_emitted(operation)
+            or not response.is_active or response.status not in ('pending', 'processed')
+            or not valid_provider_id(response.external_message_id)
+            or operation.conversation.channel_account.channel_type != 'whatsapp'
+            or work.ownership_epoch != evidence.ownership_epoch
+            or work.anchor_message_id != response.pk or work.cursor_message_id != response.pk
+            or work.anchor_created_at != response.created_at or work.cursor_created_at != response.created_at
+            or Message.objects.filter(turn_work=work, direction='in').count() != 1):
+        raise ValueError('Invalid execution authorization evidence')
+    received = datetime.fromisoformat(response.raw_metadata[RECEIPT_KEY]['received_at'])
+    if not evidence.proposal_emission_evidence.observed_at < received <= evidence.decision_at:
+        raise ValueError('Consent decision is not causally subsequent')
+    event = event_from_message(response)
+    if event.body_source != 'text' or event.event_type != 'text':
+        raise ValueError('Unsupported consent event')
+    verdict = classify(event.text, operation)
+    if verdict.decision != 'ACCEPT':
+        raise ValueError('Response did not authorize the operation')
+    if event.reply_to_id:
+        matches = Message.objects.filter(organization_id=operation.organization_id,
+            conversation_id=operation.conversation_id, channel_account_id=response.channel_account_id,
+            contact_id=operation.contact_id, direction='out', external_message_id=event.reply_to_id)
+        if (not valid_provider_id(event.reply_to_id) or matches.count() != 1
+                or matches.first().pk != operation.proposal_message_id):
+            raise ValueError('Consent reply does not identify the exact proposal')
+    elif verdict.reason != 'exact_token':
+        raise ValueError('Unreferenced consent requires the exact proposal token')
+    return evidence
+
+
 def _persist_decision(operation, response, verdict, now):
     from .operation_model_contract import _lifecycle
     operation.consent_state = 'AUTHORIZED' if verdict.decision == 'ACCEPT' else 'REJECTED'

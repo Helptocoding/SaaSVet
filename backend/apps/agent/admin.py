@@ -6,13 +6,19 @@ from .models import ConversationOperation
 
 @admin.register(ConversationOperation)
 class ConversationOperationAdmin(admin.ModelAdmin):
-    list_display = ('operation_kind', 'proposal_stage', 'consent_state', 'execution_state', 'created_at', 'age',
+    list_display = ('operation_kind', 'proposal_stage', 'consent_state', 'execution_stage', 'created_at', 'age',
                     'expires_at', 'replaces_id', 'binding_revision', 'identity_revision', 'ownership_epoch')
     list_filter = ('operation_kind', 'consent_state', 'execution_state')
     fields = readonly_fields = ('operation_key', 'operation_kind', 'consent_state',
         'execution_state', 'created_at', 'updated_at', 'age', 'expires_at', 'replaces_id', 'binding_revision',
         'identity_revision', 'ownership_epoch', 'invalidation_reason', 'proposal_stage',
-        'proposal_message_id', 'authorization_message_id', 'consent_decided_at')
+        'proposal_message_id', 'authorization_message_id', 'consent_decided_at',
+        'execution_stage', 'result_code', 'executed_at')
+
+    @admin.display(description='Ejecución / reconciliación')
+    def execution_stage(self, obj):
+        from .operation_execution import execution_stage
+        return execution_stage(obj)
 
     @admin.display(description='Propuesta / emisión')
     def proposal_stage(self, obj):

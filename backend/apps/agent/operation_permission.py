@@ -1,4 +1,4 @@
-"""Effect-proportional eligibility to propose; never consent or a WRITE guard."""
+"""Current effect-proportional actor permission; independent of consent/gates."""
 from dataclasses import dataclass
 from . import identity
 from .capabilities import OPERATIONS, WRITE_BUSINESS
@@ -11,12 +11,14 @@ class ActorPermission:
     evidence: dict
 
 
-def actor_permission(conversation, goal, capability):
+def actor_permission(conversation, goal, capability, *, purpose='propose'):
     from .models import ContactIdentity, Conversation
     spec = OPERATIONS.get(capability)
     contact = conversation.contact
     def deny(result, reason):
         return ActorPermission(result, reason, {})
+    if purpose not in ('propose', 'execute'):
+        return deny('FORBIDDEN', 'unknown_permission_purpose')
     if not spec or spec.effect != WRITE_BUSINESS or not spec.operation_kind:
         return deny('FORBIDDEN', 'unsupported_capability')
     if (not conversation.is_active or conversation.state != Conversation.STATE_ACTIVE or conversation.claimed_by_id
@@ -39,7 +41,7 @@ def actor_permission(conversation, goal, capability):
         validate_entities(goal, conversation, {})
     except ValueError:
         return deny('FORBIDDEN', 'entity_scope')
-    return ActorPermission('ALLOWED_TO_PROPOSE', 'current_relationship', {
+    return ActorPermission('ALLOWED_TO_EXECUTE' if purpose == 'execute' else 'ALLOWED_TO_PROPOSE', 'current_relationship', {
         'policy_version': 1, 'capability': capability,
         'identity_policy': spec.identity_policy,
         'verification_level': contact.verification_level, 'linked_via': contact.linked_via,

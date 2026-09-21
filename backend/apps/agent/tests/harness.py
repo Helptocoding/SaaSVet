@@ -212,6 +212,12 @@ def legacy_write_component(target):
             boundary = patch('apps.agent.intake.CONTAINED_WRITES', frozenset())
             boundary.start()
             self.addCleanup(boundary.stop)
+            # Historical inactive components only; B8A acceptance never uses
+            # this decorator. No runtime setting can reopen either boundary.
+            for boundary_name in ('legacy_write_denied', 'agent_api_write_denied'):
+                guard_boundary = patch('apps.agent.operation_execution.' + boundary_name, return_value=False)
+                guard_boundary.start()
+                self.addCleanup(guard_boundary.stop)
             semantic_boundary = patch('apps.agent.confirmations.binding_is_current',
                                       side_effect=component_binding_check)
             semantic_boundary.start()
@@ -229,7 +235,9 @@ def legacy_write_component(target):
 
     @wraps(target)
     def component_test(*args, **kwargs):
-        with patch('apps.agent.intake.CONTAINED_WRITES', frozenset()), patch(
+        with patch('apps.agent.operation_execution.legacy_write_denied', return_value=False), patch(
+                'apps.agent.operation_execution.agent_api_write_denied', return_value=False), patch(
+                'apps.agent.intake.CONTAINED_WRITES', frozenset()), patch(
                 'apps.agent.confirmations.binding_is_current',
                 side_effect=component_binding_check), patch(
                 'apps.agent.confirmations.stage_pending', side_effect=seed_pending), patch(

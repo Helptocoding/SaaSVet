@@ -3328,6 +3328,13 @@ def run_tool(name, args, *, conversation, executor, triggered_by=None, turn_cont
             triggered_by_message=triggered_by,
         )
         return ToolOutcome(ok=False, client_error='autonomous_writes_paused')
+    from .operation_execution import legacy_write_denied
+    if EFFECTS.get(name) == WRITE_BUSINESS and legacy_write_denied():
+        # Operation keys and execution contexts come from the server, never
+        # planner tool arguments. No legacy handler can invoke a domain adapter.
+        executor.record_local(tool_name=name, policy_decision='denied',
+            summary={'reason': 'operation_guard_required'}, triggered_by_message=triggered_by)
+        return ToolOutcome(kind='ERROR', error_kind='forbidden', client_error='operation_guard_required')
     if name == BEGIN_OPERATION_TOOL:
         executor.record_local(
             tool_name=name,

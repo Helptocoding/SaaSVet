@@ -93,6 +93,9 @@ AGENT_LLM_BASE_URL = config('AGENT_LLM_BASE_URL', default='')
 # B5 technical circuit; enable only after veterinary/operational activation review.
 AGENT_SAFETY_AUTOMATION_ENABLED = config('AGENT_SAFETY_AUTOMATION_ENABLED', default=False, cast=bool)
 AGENT_B7B_CONSENT_ENABLED = config('AGENT_B7B_CONSENT_ENABLED', default=False, cast=bool)
+# B8A: closed release registry AND explicit per-kind flags are required.
+# Not env-populated: activating future adapters requires a reviewed release.
+AGENT_OPERATION_EXECUTION_ENABLED = {}
 AGENT_LLM_API_KEY = config('AGENT_LLM_API_KEY', default='')
 AGENT_LLM_MODEL_PLANNER = config('AGENT_LLM_MODEL_PLANNER', default='')
 # Router/clasificación barata; vacío = usa el planner para todo.
