@@ -1063,3 +1063,25 @@ Actor permission y las tres revisiones se revalidan. Terminales no se transfiere
 CONTEXTUAL_DECLARATION permanece deshabilitado. El inspector admin distingue
 consentimiento y ejecución. El flag B7B nace apagado; B0 mantiene WRITE contenido
 incluso con AUTHORIZED. No guard ni efectos B8. [Contrato](contrato-consentimiento-causal-b7bmd).
+
+### Enmienda B8B — efecto local de creación (2026-09-21)
+
+CREATE_APPOINTMENT tiene un adapter real detrás de
+execute_authorized_operation(UUID, ExecutionContext). La definición proviene
+solo de ConversationOperation.parameters v1. El adapter reconstruye
+AppointmentCommand y comparte appointments.creation.create_appointment con
+AppointmentSerializer de la API humana; walk-in conserva su ruta existente.
+
+Guard B8A, revalidación de entidades/horario/disponibilidad, INSERT de Appointment,
+source_operation único y resultado de ejecución comparten LOCAL_ATOMIC.
+Se reutilizan locks de veterinario y la exclusión PostgreSQL de intervalos.
+Reconcile compara UUID/digest/entidades/intervalo/zona/reason y cadena de estado;
+la inconsistencia no produce otro efecto. Cache dashboard pasa a on_commit
+idempotente. No se añade cola ni servicio de agenda paralelo.
+
+El registro técnico de CREATE no abre B0 ni su flag; los otros cuatro kinds
+siguen sin adapter. El containment de release B0 continúa fijo; las fixtures de
+aceptación lo abren únicamente en tests, sin habilitar el dispatch legacy.
+Activación PENDING_ACTIVATION_REQUIREMENTS. Estado y evidencia, sin extrapolar
+a B8C–B8E: [contrato B8B](contrato-create-appointment-b8bmd) y
+[acta B8B](implementacion-b8b-agente-whatsapp-2026-09-21md).

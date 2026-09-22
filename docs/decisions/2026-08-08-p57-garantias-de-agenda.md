@@ -791,3 +791,18 @@ allowlist — comprobado, no supuesto.
 | `phone_match` no basta | ídem |
 | Hueco perdido tras crear la mascota → se le dice que quedó registrada, **sin escalar** | ídem |
 | Todo `client_error` que emite una herramienta tiene copy propio (el gate de la errata) | `ToolErrorCopyIsReachableTests` |
+
+## Enmienda B8B, 2026-09-21 — autoridad compartida de creación
+
+La extracción mínima de creación programada vive en appointments/creation.py.
+AppointmentSerializer (POST normal/create-with-patient) y el adapter restringido
+CREATE_APPOINTMENT usan esa autoridad. La exclusión appointment_no_overlap_per_vet
+y ACTIVE_STATUSES no cambian; los intervalos adyacentes siguen siendo compatibles.
+Walk-in mantiene su ruta y no se ofrece como escape de un conflicto programado.
+
+El servicio exige OrganizationSchedule para el comando autónomo y preserva la
+política histórica de recepción fuera de horario. La misma función de ventanas
+alimenta el READ del agente. La nueva referencia source_operation es nullable,
+única y protectiva; no se asigna a citas humanas/legacy. Su digest no es un campo
+clínico ni se expone en el serializer público. Decisión, DST, locks y límites:
+[contrato B8B](../contrato-create-appointment-b8bmd).

@@ -80,15 +80,25 @@ operación/digest/propuesta/consentimiento; reprogramación está fuera de B8B.
 
 ## Gates, aceptación y rollback
 
-### Evidencia al reanudar el 2026-09-21
+### Evidencia de cierre técnico, 2026-09-22
 
-El estado permanece **PARTIAL**. Corridas ya observadas: 7 pruebas de dominio y
-37 de integración B8B aprobadas; corrida de 21 escenarios multiproceso con 20
-aprobados y un timeout de conexión de recovery. Ese escenario de recovery se
-repitió y aprobó por separado (1 test, 21.432 s). Esto no se presenta como una
-corrida completa verde. La regresión Agenda/B8A y el inventario completo B0–B8A
-siguen pendientes de obtener un resultado verificable. Tampoco se atribuyen
-métricas al corpus nuevo antes de ejecutarlo.
+**COMPLETED en alcance técnico B8B** sobre PostgreSQL 16.15 y dependencias
+fijadas en requirements.lock (Django 6.0.5). B8B 83/83, Agenda 99/99 y dashboard
+63/63; inventario B0–B8A completo de 1224 IDs aprobados. Son 1462 tests únicos
+(7 de dominio se ejecutan tanto en B8B como en Agenda), sin failures/errors/
+skips/xfail en los resultados aceptados. La regresión B0–B8A se acredita por
+1137 IDs únicos con `ok` explícito en dos ejecuciones interrumpidas y 87/87 en
+la corrida final; cobertura deduplicada exacta del inventario B8A. No se
+presenta como una única invocación completa verde.
+
+Los 21 escenarios B8B multiproceso usan 41 PIDs de workers independientes y
+14 observaciones de espera de lock PostgreSQL. Incluyen overlaps parciales,
+GiST sin helper, ambos órdenes de corrección/takeover/revocación y recovery.
+Corpus: 20 escenarios, las cuatro métricas críticas en cero. Checks/migración
+verdes. Evidencia por test/proceso/escenario, entorno, hashes y límites en
+[aceptación](evals/b8b-acceptance-resultsjson) y
+[acta](implementacion-b8b-agente-whatsapp-2026-09-21md). Corridas iniciales y
+fallos de desarrollo quedan separados de la aceptación final.
 
 Runner versionado: `backend/apps/agent/tests/run_b8b_acceptance.py`; ejecutar desde
 `backend`, con `DATABASE_URL` explícita a PostgreSQL local aislado:
@@ -101,8 +111,8 @@ python -m apps.agent.tests.run_b8b_acceptance --suite checks --database test_b8b
 ```
 
 El runner registra inventario, fallos, skips, procesos y corpus; B0–B8A exige
-los 1224 IDs únicos del acta B8A. No cuenta skips/xfail como aceptación. Los
-artefactos nuevos del corpus/runner aún necesitan su propia ejecución verde.
+los 1224 IDs únicos del acta B8A. No cuenta skips/xfail como aceptación.
+El inventario ejecutado y los resultados del corpus se conservan en el JSON.
 El runner acelera únicamente contraseñas sintéticas de fixtures mediante el
 hasher MD5 de Django; no cambia hashes de parámetros/consentimiento ni settings
 de producción. Cada resultado registra el hasher efectivamente utilizado.

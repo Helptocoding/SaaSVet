@@ -1,0 +1,71 @@
+# Reporte técnico B8B — CREATE_APPOINTMENT
+
+**COMPLETED técnico**: aceptación sobre PostgreSQL 16.15 y requirements.lock.
+No hay deploy ni activación; PENDING_ACTIVATION_REQUIREMENTS permanece.
+
+| # | Elemento | Resultado técnico |
+| --- | --- | --- |
+| 1 | Estado B8B | COMPLETED exclusivamente en alcance técnico B8B. 1462 tests únicos aceptados, producción cerrada. |
+| 2 | Commit base | `64cda7fe75456279b22d11fde72d7c2a77c8d2f7`, cierre B8A verificado. |
+| 3 | Commit implementación | `bf53c9579a8913494b444ceb62ae6f7adf9710d7` (incluye conteo de efectos sin vínculo en corpus). |
+| 4 | Commit final/documental | Resolver con `git log -1 --format=%H -- docs/reporte-tecnico-b8b-2026-09-21md`; el documento no se referencia por su propio hash. |
+| 5 | Migraciones | `appointments.0016_appointment_source_operation`: dos campos aditivos nullable, sin backfill. |
+| 6 | Runtime | agent/appointment_execution.py, operation_execution.py, admin.py, clinic_context.py, tools.py; appointments/creation.py, models.py, serializers.py, views.py; dashboard/signals.py. |
+| 7 | Contrato descubierto | Modelo Appointment real, sin Service FK ni owner FK; contrato congelado con fuentes del baseline en `contrato-create-appointment-b8bmd`. |
+| 8 | Autoridad común | AppointmentSerializer.create y adapter convergen en appointments.creation.create_appointment; walk-in conserva su autoridad existente. |
+| 9 | Campos Appointment | organization, pet, veterinarian nullable, date/start/end locales, start/end UTC, timezone_at_creation, reason, category, notes, status, cancellation_reason, walk_in, public_id, idempotency_key y auditoría; B8B agrega procedencia. |
+| 10 | Estado inicial | scheduled; category=general_consultation, walk_in=False, notes vacías. |
+| 11 | Duración | Extremos start/end locales autorizados del mismo día; ocupación comparada con los instantes UTC correspondientes. Sin duración inventada/default aplicado por adapter. |
+| 12 | Veterinarian | FK User exacta, activa, tenant y rol VET según B7A/B8A v1. Dominio humano admite NULL; no se amplía schema ni se elige sustituto. |
+| 13 | Reason | Texto canónico consentido, no service_id. Si la sanitización humana lo cambiaría, falla la precondition. |
+| 14 | Timezone | Organization.timezone; fecha/hora visible local, anchors UTC y timezone_at_creation. Cambio de zona bloquea; hora DST ambigua/inexistente rechazada. |
+| 15 | OrganizationSchedule | Ventana semanal vigente y descanso opcional; ausencia, cierre o intervalo fuera de ventana bloquean. No excepciones ni overnight inventados. Recepción mantiene su política histórica. |
+| 16 | Estados de ocupación | ACTIVE_STATUSES existente: scheduled, confirmed, in_progress. done, canceled, no_show no bloquean. Sin vet no reserva recurso. |
+| 17 | Overlap | Intervalos semiabiertos: existing.start < requested.end AND existing.end > requested.start. Adyacentes permitidos; fallback local conservador para legacy sin anchors. |
+| 18 | Exclusión PostgreSQL | User FOR UPDATE por vet/PK ordenada y GiST existente appointment_no_overlap_per_vet; sin mutex en memoria ni lock exclusivo global de clínica. |
+| 19 | Evidencia multiproceso | 21/21 escenarios en PostgreSQL 16.15: 41 PIDs independientes y 14 esperas de lock observadas en pg_stat_activity; prueba omitiendo locks de aplicación verifica GiST. IDs/PIDs/resultados en JSON. |
+| 20 | Source/evidence | Appointment.source_operation apunta al operation_key; source_parameters_digest; EffectEvidence con public_id y created_at. No PII duplicada ni metadata en reason. |
+| 21 | Unicidad | OneToOne/UNIQUE en DB: como máximo una fila por operation_key; múltiples NULL humanos válidos. PROTECT evita borrado por cascada. |
+| 22 | validate_preconditions | Recanonicaliza y convierte a comando tipado; revalida tenant, pet/owner/contact exactos, activos, vet, timezone, futuro, horario y disponibilidad bajo locks. |
+| 23 | reconcile | UUID global para detectar tenant contradictorio, comparación de digest/entidades/intervalo/zona/reason/defaults/cadena de estados; exacto=SUCCEEDED, ausente=ABSENT, contradicción=UNCERTAIN. |
+| 24 | execute | Servicio común con segunda validación inmediata; ningún argumento alternativo del LLM, fallback ni reasignación. Confirmación por reconciliación exacta. |
+| 25 | LOCAL_ATOMIC | Guard final, locks/preconditions, disponibilidad, Appointment, procedencia, intento y resultado comparten transacción PostgreSQL. Sin red/cola externa. |
+| 26 | Side effects | Auditoría/model validation transaccional e invalidación cache dashboard. No envío externo, MedicalRecord, Invoice, Payment ni StockMovement implícitos en scheduled. |
+| 27 | Tratamiento | Cache idempotente on_commit robust; fallo postcommit conserva negocio y TTL existente permite recuperación. Retry no vuelve a emitir creación ni invalidación por INSERT. |
+| 28 | Gates | B0 cerrado, flag exacta True requerida, B7B habilitado explícitamente y guard completo. Registro técnico no equivale a apertura de release. |
+| 29 | Único adapter | Solo CREATE_APPOINTMENT; RESCHEDULE/CANCEL/CONFIRM_ATTENDANCE/REGISTER_PET disabled/sin adapter aun con flags genéricas. |
+| 30 | Idempotencia | Secuencial, worker duplicado y carrera por misma UUID producen una sola cita, mismo EffectEvidence. Claves distintas no son replay entre sí. |
+| 31 | Recovery | Consultar vínculo durable antes de execute; procesos nuevos tras commit reconcilian; crash antes de commit revierte efecto/ledger. |
+| 32 | SUCCEEDED | Requiere Appointment exacto durable; terminal CREATE reconcilia además del ledger. Evolución de estado legítima conserva historia. |
+| 33 | FAILED | Ausencia definitiva probada por adapter y guard. Preconditions previas se conservan como DENIED/BLOCKED_BY_PRECONDITIONS del contrato B8A, sin retry automático. |
+| 34 | UNCERTAIN | DB error/evidencia contradictoria no se convierten en éxito o nuevo INSERT; requiere inspección/reconciliación. Ledger terminal histórico se preserva. |
+| 35 | Slot unavailable | Resultado slot_unavailable definitivo para ese comando; cero cambio de horario, cero apropiación causal de cita humana equivalente. |
+| 36 | Correction race | Si gana antes del efecto, cero cita; si llega después del commit, la cita de las 10 permanece. Nueva hora pertenece a nueva operación y futura B8C. |
+| 37 | Takeover race | Ambos órdenes probados: humano primero bloquea; efecto primero queda confirmado y no se repite. |
+| 38 | Revocation race | Inbound revocatorio y revocación de permiso real probados en ambos órdenes; lo posterior no revierte negocio. |
+| 39 | Tests B8B | 83/83 en PostgreSQL 16.15/Django 6.0.5: 37 integración/guards reales, 18 corpus, 21 multiproceso, 7 dominio; cero fallos/errores/skips/xfail. |
+| 40 | Tests PostgreSQL | Misma operación, slot, overlaps parciales anterior/posterior, vets distintos, GiST directo, races y recovery, con procesos independientes. |
+| 41 | Failure injection | FI01 antes de disponibilidad; FI02 tras lock; FI03 tras INSERT; FI04 callback cache; FI05/06 carreras; FI07/08 corrección/takeover; FI09 error DB; FI10 evidencia corrupta. |
+| 42 | Corpus | 20 escenarios ejecutados: unauthorized_appointments_created=0; duplicate_appointments_from_same_operation=0; forbidden_operation_kinds_executed=0; invalid_slot_conflicts_created=0. Cuenta todas las citas del escenario; sin extrapolación universal. |
+| 43 | B0–B8A | 1224/1224 IDs exactos en PostgreSQL 16: 1137 IDs únicos con ok explícito en dos logs interrumpidos + 87/87 finales; cobertura deduplicada validada. No se afirma una única invocación verde. B8A conserva fake adapter histórico. |
+| 44 | Agenda/humana | 99/99 en PostgreSQL 16: creación, endpoint, walk-in, cancelación, listado, disponibilidad, atender ahora, permisos y mutaciones concurrentes. Dashboard afectado: 63/63. |
+| 45 | Checks | migrate, Django check y makemigrations --check --dry-run verdes en PostgreSQL 16, sin drift; UNIQUE/FK/GiST observadas en catálogo. compileall y git diff --check verdes. |
+| 46 | Observabilidad | Nueve eventos cerrados appointment_execution_requested/precondition_failed/slot_unavailable/schedule_closed/created/reconciled/duplicate_suppressed/evidence_mismatch/execution_uncertain; sin IDs/PII como labels. |
+| 47 | Inspector | Readonly: consentimiento, execution gate, vínculo, resultado y reconciliación; sin botón de ejecución. |
+| 48 | Desviaciones | Reutiliza GiST existente; no nueva constraint de overlap. Horario restrictivo solo autónomo preserva recepción. Campo digest nullable tras probar inserts legacy. B0 continúa contención fija y apertura solo fixture, sin habilitar dispatch legacy. |
+| 49 | Riesgos residuales | Identidad/activación operativa pendientes; no semántica universal del lenguaje. Direct SQL administrativo puede corromper parámetros (se detecta en reconcile). Cache es best effort. Cambios clínicos posteriores de parámetros requieren inspección; B8C no implementado. |
+| 50 | Rollback | Cerrar CREATE y mantener B0; conservar citas/operaciones/AuthorizationEvidence/vínculos/ledger. No borrar negocio ni resetear SUCCEEDED. |
+| 51 | Documentación | Contrato, ADR, acta, JSON de aceptación y corpus; enmiendas mínimas a plan, Agenda, arquitectura, spec y runbook. |
+| 52 | Hallazgos afectados | H01/H02/H05/H06/H08/H18: evidencia acotada por primera vez con Appointment real. No cierre universal ni auditoría H01–H20. Ninguna garantía transferida automáticamente a B8C–B8E. |
+| 53 | Readiness B8C | Frontera/evidencia reutilizables; B8C necesita contrato, preconditions y pruebas propias. No se inicia. |
+| 54 | Producción | Autonomous WRITE permanece cerrado; flags vacías y contención B0 intacta. Sin deploy. |
+| 55 | Activación | PENDING_ACTIVATION_REQUIREMENTS preservado. |
+| 56 | Alcance excluido | B8C–B9, E1–E5, P-A/P-B no implementados. |
+| 57 | Recomendación | Cerrar B8B técnico con la evidencia acotada registrada. Mantener WRITE cerrado y PENDING_ACTIVATION_REQUIREMENTS; detenerse sin desplegar ni iniciar B8C. |
+
+Cambios preexistentes ajenos excluidos de commits B8B: eliminaciones
+DEPLOY_VPS_PLAN.md/DEPLOY_VPS_STATUS.md y auditoría 2026-09-10 untracked.
+
+Fuentes de entorno: PostgreSQL 16 es la major declarada por CI/compose del repo;
+el paquete portable de aceptación se obtiene de [EDB](https://www.enterprisedb.com/download-postgresql-binaries).
+Las dependencias se instalan en un venv temporal aislado desde requirements.lock.

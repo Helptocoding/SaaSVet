@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-21**. Estado: **B0–B8A cerradas técnicamente en su alcance; B8B–B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-22**. Estado: **B0–B8B cerradas técnicamente en su alcance; B8C–B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -663,12 +663,22 @@ Cada ID es una unidad **independiente**, no una tarea conjunta. Dependen de B8A 
 
 | ID / capacidad | Cambio concreto y alcance | Pruebas y cierre específico |
 | --- | --- | --- |
-| B8B crear cita | Integrar el guard con AppointmentListCreateView/servicio local; reusar Appointment.idempotency_key, serializers, locks y exclusión de solapamientos. | EXEC/SEC: disponibilidad actual bajo locks, mismo UUID/digest produce una cita; crash y respuesta perdida no duplican; rutas AGENT sin guard denegadas. |
+| B8B crear cita | **COMPLETED técnico (2026-09-22)**: `AppointmentCommand`/servicio común, adapter `LOCAL_ATOMIC`, evidencia nullable única `source_operation`, horario OrganizationSchedule, timezone y reconciliación exacta. Producción cerrada. | PostgreSQL 16: B8B 83/83 (21 multiproceso), B0–B8A 1224/1224 por inventario exacto, Agenda 99/99 y dashboard 63/63; 1462 IDs únicos, corpus 20 y cuatro métricas críticas cero. Ver [contrato B8B](contrato-create-appointment-b8bmd), [acta](implementacion-b8b-agente-whatsapp-2026-09-21md), [ADR](decisions/2026-09-21-b8b-create-appointmentmd) y [aceptación](evals/b8b-acceptance-resultsjson). |
 | B8C reprogramar/cancelar | AppointmentDetailView/update_status: cita exacta, estado mutable, permiso titular, horario destino actual y locks existentes; sin mutación por READ. | AUTH/EXEC/SEC: replay no duplica transición, corrección invalida destino anterior, otro owner/familiar prohibido no muta; conflicto y staff concurrente conservan verdad de dominio. |
 | B8D confirmar asistencia | confirm_appointment/update_status y renderer: contrato válido de autorización contextual antes de habilitarlo; cita exacta y transición idempotente. | ATT/EXEC: pregunta forzando PATCH denegada, declaración válida actualiza una cita; 409 no comunica éxito; ya confirmado exige evidencia canónica. |
 | B8E registrar solo mascota | tools.py y patients/views.py::PetViewSet: propietario autorizado, datos propuestos, alta individual sin cita implícita. | ID/SEC/EXEC: replay devuelve misma Pet; owner distinto rechazado; pérdida de respuesta no duplica; petición de alta no crea cita. |
 
 **Objetivo/actual → objetivo.** Aplicar la frontera común a la operación seleccionada; actualmente las garantías no están uniformadas. **Hallazgos:** H01/H02/H05/H06/H08/H18; B8D debe demostrar además H20. **Invariantes:** I01–I07/I09/I12–I14.
+
+**Evidencia específica B8B (2026-09-22).** H01/H02/H18 incorporan pruebas del
+guard con Appointment real y pet/owner/contact/veterinario exactos; H05 vincula
+SUCCEEDED a evidencia de dominio reconciliada; H06 prueba idempotencia/recovery
+del WRITE local; H08 prueba corrección, takeover y revocación frente al commit
+real en ambos órdenes. Estado y métricas verificadas en el
+[acta B8B](implementacion-b8b-agente-whatsapp-2026-09-21md) y
+[reporte técnico](reporte-tecnico-b8b-2026-09-21md). Esto se distingue de la
+aceptación B8A con adapter fake. No cierra universalmente H01/H18 ni transfiere
+garantías de Agenda a B8C–B8E. No se realiza una auditoría transversal H01–H20.
 
 **Cambios comunes.** Integrar operación/request canónicos con operation_execution.py propuesto, mantener serializers/locks de negocio y respuesta tipada B2. Denegar rutas AGENT alternativas que eludan ese adaptador. No alterar flujos staff, no ampliar identidad y no crear nueva capability. Tests en test_write_tools.py, test_commit_preconditions.py, tests de appointments/patients y test_operation_execution.py propuesto, usando HTTP real/PostgreSQL en fronteras de commit.
 

@@ -1,0 +1,136 @@
+# Acta B8B — CREATE_APPOINTMENT real
+
+**COMPLETED en alcance técnico B8B, 2026-09-22.** Implementación iniciada el 21.
+Producción continúa con
+autonomous WRITE cerrado; sin deploy. `PENDING_ACTIVATION_REQUIREMENTS` permanece.
+
+## Base, commits y cambios ajenos
+
+- Baseline confirmado: `64cda7fe75456279b22d11fde72d7c2a77c8d2f7`,
+  `docs(agent): close B8A execution guard acceptance`.
+- Implementación: `bf53c9579a8913494b444ceb62ae6f7adf9710d7`.
+- Commit documental: resolver con
+  `git log -1 --format=%H -- docs/implementacion-b8b-agente-whatsapp-2026-09-21md`.
+  El hash de un commit no se incrusta en su propio contenido.
+- Status inicial y final ajeno a B8B: eliminaciones preexistentes de
+  DEPLOY_VPS_PLAN.md y DEPLOY_VPS_STATUS.md; auditoría 2026-09-10 untracked.
+  Se conservan fuera de ambos commits.
+- Migración aditiva `appointments.0016_appointment_source_operation`: OneToOne
+  nullable/UNIQUE/PROTECT por operation_key y digest nullable. Sin backfill,
+  sin borrado legacy ni nueva constraint de overlap.
+
+## Contrato y efecto
+
+El [contrato real](contrato-create-appointment-b8bmd) se congeló antes del
+adapter. Appointment no tiene Service ni owner FK; owner se valida mediante
+Pet. El comando tipado usa exclusivamente los parámetros canónicos v1 y las
+preconditions/referencias durables de ConversationOperation. Crea scheduled,
+general_consultation, sin walk-in, con pet/vet/reason/intervalo exactos. La
+duración respeta los extremos start/end autorizados; la ocupación se compara
+entre instantes UTC. No se selecciona otro profesional u horario.
+
+AppointmentSerializer y el adapter comparten appointments.creation; walk-in
+mantiene su autoridad existente. Organization.timezone determina locales/UTC;
+el adapter rechaza DST ambiguo/inexistente y cambios de zona. OrganizationSchedule
+semanal y breaks se validan completos para B8B; recepción conserva su política
+histórica fuera de horario. No excepciones/overnight inventados.
+
+ACTIVE_STATUSES conserva scheduled/confirmed/in_progress; done/canceled/no_show
+liberan recurso. Intervalos [start,end): existing.start < requested.end AND
+existing.end > requested.start. Vet nullable no ocupa recurso; vets diferentes
+admiten la misma hora. Locks ordenados de User serializan al mismo veterinario;
+la GiST existente appointment_no_overlap_per_vet protege intervalos UTC entre
+escritores aunque uno omita el helper. Legacy sin anchors usa prechequeo local
+conservador; no se atribuye a GiST cobertura sobre sus filas excluidas.
+
+Guard B8A, preconditions, disponibilidad, INSERT, vínculo, intento y SUCCEEDED
+comparten LOCAL_ATOMIC. Reconcile consulta el UUID durable y compara digest,
+entidades persistidas, intervalo/locales/UTC/zona/reason y cadena de estado.
+Owner/contact vigente se valida antes del efecto. La evidencia contradictoria
+produce UNCERTAIN y ningún segundo INSERT. Una cita humana equivalente sin
+source_operation no se reclama como efecto; disponibilidad puede bloquearla.
+
+Corrección/takeover/revocación antes del efecto impiden crear; después del commit
+conservan la cita histórica. Una nueva hora necesita nuevos parámetros, digest,
+operación, propuesta y consentimiento; B8C no forma parte de este cierre.
+
+## Aceptación ejecutada
+
+Entorno aislado Windows/Python 3.13.2, PostgreSQL **16.15** (major 16 declarada
+por CI/compose), Django **6.0.5**, psycopg 3.3.4 y DRF 3.17.1 desde requirements.lock.
+PostgreSQL portable oficial EDB, loopback; ningún servicio de producción tocado.
+El hasher MD5 se limita a contraseñas sintéticas de fixtures; no cambia hashes
+de consentimiento ni configuración de producción.
+
+| Suite | Evidencia aceptada |
+| --- | --- |
+| B8B | 83/83: 37 integración/guards reales, 18 corpus, 21 multiproceso, 7 dominio |
+| B0–B8A | 1224/1224 IDs exactos: 1137 con `ok` explícito en logs interrumpidos + 87/87 finales, sin duplicados en el conteo |
+| Agenda/humana | 99/99, incluidos endpoint, walk-in, cancelación, listado, disponibilidad, atender ahora y permisos |
+| Dashboard | 63/63, regresión de la invalidación cache afectada |
+| Total único | 1462; los 7 tests de dominio aparecen en B8B y Agenda |
+| Checks | migrate, Django check, makemigrations --check --dry-run, compileall y git diff --check verdes |
+
+Resultados aceptados: cero failures/errors/skips/xfail. La ejecución inicial
+de B0–B8A en PostgreSQL 16 y su primera reanudación se interrumpieron al detenerse
+el entorno local. No tienen exit final verde ni se cuentan tests incompletos.
+Se preservan logs/hashes/IDs con `ok` explícito (1124 y 185 pruebas completadas,
+con repeticiones: 1137 IDs únicos) y se ejecutan los 87 restantes. El agregador
+deduplica los resultados y verifica la cobertura exacta del inventario B8A;
+no se presenta como una única corrida ininterrumpida. Las primeras corridas
+verdes PostgreSQL 18.3/Django 6.0.3 no sustituyen esta aceptación de major/deps.
+
+21 escenarios multiproceso B8B, **41 PIDs independientes**, **14 esperas de lock**
+observadas en PostgreSQL: misma operación; operaciones distintas/mismo slot;
+overlap anterior y posterior; GiST omitiendo locks de aplicación; veterinarios
+distintos; corrección/takeover/revocación/permiso en ambos órdenes; kills antes
+de disponibilidad, tras lock y tras INSERT; recovery en otro proceso tras commit
+y fallo postcommit. FI-01..10 incluyen también error DB y evidencia contradictoria.
+No threads/mocks sustituyen la prueba de exclusión entre procesos.
+
+Corpus versionado: **20 escenarios** (18 secuenciales + 2 multiproceso).
+
+| Métrica crítica | Observado |
+| --- | --- |
+| unauthorized_appointments_created | 0 |
+| duplicate_appointments_from_same_operation | 0 |
+| forbidden_operation_kinds_executed | 0 |
+| invalid_slot_conflicts_created | 0 |
+
+El conteo considera todas las citas del escenario, incluso las que carecen de
+source_operation, descontando únicamente fixtures manuales explícitas y efectos
+esperados. Se mide el corpus ejecutado; no se extrapola a garantías universales.
+Inventarios, resultados por escenario, PIDs, locks, hashes, logs/checks y entorno:
+[JSON de aceptación](evals/b8b-acceptance-resultsjson). Reproducción por runner
+versionado en el contrato; el inventario baseline se deriva del acta B8A.
+
+## Side effects, gates, observabilidad y rollback
+
+No MedicalRecord, Invoice, Payment ni StockMovement implícitos al crear scheduled;
+defaults clínicos intactos. Dashboard invalida cache idempotente mediante
+on_commit robusto; un fallo conserva la cita y el TTL existente permite recuperar
+cache. Un retry no repite INSERT ni su signal de creación. No notificación/cola
+externa nueva. Nueve eventos cerrados sin PII/IDs como labels y admin readonly
+permiten inspeccionar gate, vínculo, resultado y reconciliación sin ejecutar.
+
+Solo CREATE_APPOINTMENT tiene adapter real. Los otros cuatro kinds siguen
+disabled/sin adapter aun con flags accidentales. B0 permanece contenido y flags
+de producción vacías; apertura exclusivamente mediante fixtures controladas.
+No se agrega un switch de activación B9 ni se reabre el dispatch legacy.
+
+Rollback: cerrar CREATE y mantener B0; preservar citas, operaciones,
+AuthorizationEvidence, vínculos y ledger. No cancelar/borrar negocio, revertir
+procedencia ni resetear SUCCEEDED. UNCERTAIN requiere inspección.
+
+## Hallazgos y límites
+
+H01/H02/H05/H06/H08/H18 reciben evidencia acotada de guard con Appointment real,
+distinta del fake adapter de B8A. No se hace auditoría H01–H20 ni cierre universal;
+B8C–B8E deben demostrar sus propias invariantes. Identidad/activación operativa
+siguen pendientes; SQL administrativo puede corromper datos y reconciliación lo
+detecta; cache es best effort; cambios clínicos posteriores exigen inspección.
+La ordenación causal es la de commits locales, no de mensajes remotos no recibidos.
+
+[Reporte técnico de 57 puntos](reporte-tecnico-b8b-2026-09-21md).
+Recomendación: cerrar B8B exclusivamente en alcance técnico, preservar
+PENDING_ACTIVATION_REQUIREMENTS y detenerse. B8C–B9/E1–E5/P-A/P-B no implementados.

@@ -779,3 +779,20 @@ Humano activo y safety conservan precedencia; teléfonos ambiguos o permiso
 revocado bloquean. Propuestas UNCERTAIN necesitan reconciliación y respuesta nueva.
 No se migra consentimiento histórico. WRITE autónomo sigue cerrado por B0,
 activación PENDING_ACTIVATION_REQUIREMENTS. [Contrato B7B](contrato-consentimiento-causal-b7bmd).
+
+### Enmienda B8B — CREATE_APPOINTMENT detrás del guard (2026-09-21)
+
+Una autorización exacta no crea por sí sola una cita. Con los gates de aceptación
+abiertos, el guard puede crear únicamente la mascota, veterinario, fecha,
+intervalo y reason consentidos. Si el horario ya no está disponible o la clínica
+está cerrada, el resultado tipado bloquea ese comando: no elige otro horario.
+Cambiar la hora exige nueva operación, propuesta y consentimiento.
+
+La cita nace scheduled, con origen técnico durable separado de los campos
+clínicos. Repetir la operación reconcilia el mismo efecto; una cita manual
+equivalente sin vínculo causal no se apropia como resultado del agente.
+Corrección, takeover o revocación después del commit conservan la cita y su
+historia. Este corte no implementa reprogramación/cancelación/asistencia/alta de
+mascota ni nueva comunicación autónoma. Producción permanece contenida por B0;
+PENDING_ACTIVATION_REQUIREMENTS sigue vigente.
+[Contrato y evidencia B8B](contrato-create-appointment-b8bmd).

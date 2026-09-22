@@ -527,3 +527,30 @@ guard de las validaciones todavía pendientes de B8B–B8E.
 [Acta y reproducción de pruebas](../implementacion-b8a-agente-whatsapp-2026-09-21md)
 y [evidencia versionada](../evals/b8a-acceptance-results.json). El cierre técnico
 de B8A no cambia el registro PENDING_ACTIVATION_REQUIREMENTS.
+
+## B8B — creación transaccional, gates cerrados
+
+B8B registra técnicamente solo CREATE_APPOINTMENT. Mantener B0 contenido y
+AGENT_OPERATION_EXECUTION_ENABLED vacío (o CREATE_APPOINTMENT=False).
+La apertura del containment en fixtures no es configuración de producción;
+el release B0 sigue sin un interruptor que reabra rutas legacy.
+
+Ante un incidente: cerrar inmediatamente la flag CREATE_APPOINTMENT, conservar
+B0 y suspender nuevos intentos. Preservar Appointment.source_operation,
+source_parameters_digest, ConversationOperation, AuthorizationEvidence y
+ToolExecution. No borrar citas, revertir la migración de procedencia, resetear
+SUCCEEDED ni convertir UNCERTAIN en NOT_STARTED. El rollback de feature no
+revierte el negocio.
+
+El inspector readonly muestra gate, vínculo Appointment y reconciliación.
+UNCERTAIN por evidencia contradictoria requiere inspección; jamás duplicar o
+inferir un vínculo para una cita humana. SLOT_UNAVAILABLE/schedule_closed son
+preconditions definitivas del comando, sin retry esperando que cambie el mundo.
+Nueva hora significa nueva definición/operación/consentimiento.
+
+La invalidación dashboard es on_commit, idempotente y con TTL de cache existente;
+su fallo no deshace una cita confirmada. No hay notificaciones externas ni
+MedicalRecord/Invoice/Payment/StockMovement implícitos al crear scheduled.
+[Contrato B8B](../contrato-create-appointment-b8bmd),
+[acta y resultados](../implementacion-b8b-agente-whatsapp-2026-09-21md).
+PENDING_ACTIVATION_REQUIREMENTS permanece; no desplegar por este cierre técnico.
