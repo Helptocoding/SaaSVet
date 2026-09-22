@@ -1,4 +1,4 @@
-"""B8A server-side boundary. All production adapters and release gates CLOSED.
+"""B8A server-side boundary. Production autonomous WRITE gates remain CLOSED.
 
 Only local DB effects may be added under this contract. No HTTP, LLM, durable
 RUNNING state, arbitrary request parameters or provider exactly-once claim.
@@ -29,7 +29,7 @@ GATE_REASONS = frozenset(('containment_closed', 'kind_disabled', 'flag_disabled'
     'adapter_missing', 'adapter_contract_disabled', 'consent_feature_disabled'))
 PRECONDITION_REASONS = frozenset(('entity_inactive', 'entity_scope', 'appointment_changed',
     'appointment_not_mutable', 'schedule_elapsed', 'slot_unavailable', 'invalid_pet_data',
-    'domain_conflict', 'precondition_failed'))
+    'domain_conflict', 'precondition_failed', 'schedule_closed', 'invalid_local_time'))
 FAILURE_REASONS = PRECONDITION_REASONS | {'definitive_rejection', 'reconciled_no_effect'}
 
 
@@ -109,8 +109,10 @@ class Registration:
     adapter: OperationAdapter | None = None
 
 
+from .appointment_execution import CreateAppointmentAdapter
+
 REGISTRY = MappingProxyType({
-    'CREATE_APPOINTMENT': Registration('create_appointment'),
+    'CREATE_APPOINTMENT': Registration('create_appointment', enabled=True, adapter=CreateAppointmentAdapter()),
     'RESCHEDULE_APPOINTMENT': Registration('reschedule_appointment'),
     'CANCEL_APPOINTMENT': Registration('cancel_appointment'),
     'CONFIRM_ATTENDANCE': Registration('confirm_appointment'),
@@ -393,6 +395,9 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
                 organization_id=conv.organization_id, conversation=conv).first()
             operation = ConversationOperation.objects.select_for_update().get(pk=candidate.pk)
             operation.conversation, operation.contact, operation.goal = conv, conv.contact, goal
+            if operation.operation_kind == 'CREATE_APPOINTMENT':
+                from .appointment_execution import observe as observe_appointment
+                observe_appointment('appointment_execution_requested')
             reason = _definition_reason(operation, conv, goal, context)
             if reason:
                 return _deny(operation, reason)
@@ -411,6 +416,23 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
                     'REQUIRES_STEP_UP': 'requires_step_up'}.get(permission.result, 'permission_forbidden'),
                     event='execution_permission_denied')
             if operation.execution_state in ('SUCCEEDED', 'FAILED'):
+                terminal_adapter = REGISTRY[operation.operation_kind].adapter
+                if getattr(terminal_adapter, 'reconcile_terminal', False):
+                    prior = _reconcile(terminal_adapter, operation, context)
+                    ledger = _prior_result(operation)
+                    consistent = (
+                        operation.execution_state == 'SUCCEEDED' and prior.status == 'SUCCEEDED'
+                        and prior.evidence == ledger.evidence and ledger.status == 'SUCCEEDED'
+                    ) or (
+                        operation.execution_state == 'FAILED' and prior.status == 'ABSENT'
+                        and prior.proves_absence_for(operation) and ledger.status == 'FAILED'
+                    )
+                    if not consistent:
+                        observe_appointment('appointment_execution_uncertain')
+                        return ExecutionResult('UNCERTAIN', 'appointment_evidence_mismatch',
+                            operation.operation_key, reconciliation_required=True)
+                    observe_appointment('appointment_duplicate_suppressed')
+                    return ledger
                 return _prior_result(operation)
             entry = REGISTRY[operation.operation_kind]
             # Reconciliation can run after expiry or a closed execution gate. It

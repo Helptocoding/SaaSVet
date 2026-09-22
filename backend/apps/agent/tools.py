@@ -1043,7 +1043,8 @@ def _day_occupancy(org, executor, day, *, tool_name, triggered_by=None,
     rows = source.data
     occupancy = {}
     for row in rows:
-        if row.get('status') not in ('scheduled', 'confirmed', 'in_progress'):
+        from apps.appointments.services import ACTIVE_STATUSES
+        if row.get('status') not in ACTIVE_STATUSES:
             continue
         vet_pk = row.get('veterinarian')
         if vet_pk is None:

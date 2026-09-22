@@ -1,0 +1,123 @@
+# Contrato B8B — CREATE_APPOINTMENT v1
+
+Congelado antes de escribir el adapter, 2026-09-21. Base obligatoria existente y
+HEAD verificado: `64cda7fe75456279b22d11fde72d7c2a77c8d2f7`,
+`docs(agent): close B8A execution guard acceptance`. `git status --short` inicial:
+dos eliminaciones ajenas (`DEPLOY_VPS_PLAN.md`, `DEPLOY_VPS_STATUS.md`) y
+`docs/auditoria-agente-conversacional-veterinario-2026-09-10.md` untracked.
+No se incluyen en B8B. Grafo consultado; contenía símbolos retirados como
+`services.create_appointment`, por lo que se contrastaron los archivos actuales.
+
+## Contrato real CREATE_APPOINTMENT
+
+| Pregunta | Evidencia del baseline / regla congelada |
+| --- | --- |
+| Campos reales | `appointments/models.py:Appointment`: organization, pet PROTECT, veterinarian nullable SET_NULL, date, start_time, end_time, start_datetime/end_datetime nullable, timezone_at_creation, reason(255), category, notes, cancellation_reason, status, walk_in, idempotency_key, public_id; auditoría/is_active de `core/models.py:OrganizationalModel`. No owner FK (es pet.owner), source ni service_id. |
+| Estado inicial | Modelo y creación humana normal: scheduled; category=general_consultation, notes vacías, walk_in=False. POST humano permite status explícito; no se cambia su lifecycle. |
+| Duración | Intervalo explícito start_time→end_time en el mismo día, CHECK end_time>start_time. No duración implícita del modelo. Settings propone 30 min; UI/READ agent usan normalmente 30. B7A v1 exige ambos extremos: B8B conserva el intervalo autorizado, sin recalcularlo desde settings. |
+| Profesional | FK User. POST permite null; UI muestra VET/ADMIN; walk-in exige usuario activo con appointment.create_walkin. B7A `_SCHEDULE` exige veterinarian_id y B8A exige VET activo del tenant: B8B respeta ese alcance más estrecho, sin elegir/reasignar. |
+| Reason | Texto clínico/administrativo libre, obligatorio, máximo 255. No catálogo Service. Serializer humano sanitiza texto. B8B conserva exactamente el reason canónico consentido; si sanitización humana lo cambiaría, rechaza la precondition y exige nueva definición, nunca reescribe. |
+| Ocupación | `appointments/services.py:ACTIVE_STATUSES` = scheduled, confirmed, in_progress. done, canceled (una sola l), no_show liberan recurso. Sin veterinario no se reserva recurso; distintos veterinarios permiten misma hora. |
+| Overlap | Intervalos UTC semiabiertos [start,end): existing.start < requested.end AND existing.end > requested.start. Adyacentes válidas. No slots persistidos ni igualdad de hora como exclusión. |
+| PostgreSQL | Ya existe `appointment_no_overlap_per_vet`, migración 0014: GiST / btree_gist sobre organization =, veterinarian =, tstzrange &&; parcial para los tres estados activos, vet no null e instantes no null. `lock_veterinarians` toma User FOR UPDATE por PK ordenada antes de cita. No constraint nueva de overlap, no lock global de clínica. |
+| Legacy | Constraint no excluye is_active=False; filas activas por status con instantes continúan bloqueando aun si un manager las oculta. La lectura final común debe usar all_objects para coincidir con PostgreSQL. Filas sin instantes quedan fuera de la exclusión histórica; para B8B se considera además su intervalo local del mismo día (conservador), sin backfill. |
+| OrganizationSchedule | `organizations/models.py`: weekday 1–7, is_closed, opens_at/closes_at, descanso opcional break_start/break_end. No excepciones por fecha ni overnight. `agent/clinic_context.weekday_ranges` ya limita READ a ventanas completas, sin inventar horario si faltan filas. POST humano no impone horario: gap real, no se atribuye una validación inexistente. |
+| Política de horario B8B | Nuevo efecto autónomo exige intervalo completo dentro de una ventana vigente. Lectura READ y validación comparten ventanas del dominio. Se mantiene la permisividad histórica de la ruta humana y de walk-ins; no se añade por sorpresa una prohibición global a recepción. El servicio común valida horario explícitamente para el comando restringido B8B. No es una reserva ni otra Agenda. |
+| Timezone | Organization.timezone, default America/Mexico_City, ZoneInfo validada. API persiste fecha/hora local e instantes UTC con timezone_at_creation. `core/datetime_utils.local_date_time_to_utc` elige fold=0; no detecta horas inexistentes DST. B8B rechaza horas inexistentes o ambiguas, porque schema v1 no consiente un fold. Un cambio de timezone respecto a preconditions.clinic_timezone bloquea. |
+| Autoridad de creación | En baseline no hay servicio de creación vigente: `AppointmentListCreateView.create` → AppointmentSerializer.validate → serializer.save dentro de atomic y locks de vet. create-with-patient también usa serializer; walk-in usa create propio y regla distinta. Se extrae únicamente creación validada e intervalos a `appointments/creation.py`; serializer.create y adapter convergen allí. |
+| Permisos | Human API usa HybridPermission(resource=appointment); AGENT mutante bloqueado por B8A. B8B revalida actor_permission/execution_authorization_evidence; contacto verificado/familiar permitido debe seguir enlazado al owner exacto de pet activa, no teléfono=propietario. |
+| Side effects | OrganizationalModel.save: full_clean, created_at/updated_at y auditoría thread-local. post_save Appointment: invalidación de cache dashboard (actualmente inmediata/externa). Notificaciones de citas derivadas de consulta (`notifications/builders.py`), no envío al crear. No signal de MedicalRecord, Invoice, Payment, StockMovement ni webhook. AppointmentStatusChange se crea en transiciones, no al crear scheduled. |
+| Tratamiento side effects | Mover únicamente invalidación de cache de Appointment a on_commit robusto: antes de commit puede repoblarse con datos antiguos. Invalidación idempotente, cache con TTL existente; fallo no revierte negocio y retry no recrea cita. Observabilidad también on_commit, sin PII. No nuevo envío/cola. auto_create_medical_record=False no cambia; auto_create_invoice_on_done fue retirado por organizations/0012, no se reintroduce. |
+| Frontend | `pages/appointments.jsx` propone intervalos/slots de 30 min y límites visuales 07–20; no implementa horario canónico/locks. No se toma UI como autoridad. |
+
+## Comando, locks y evidencia
+
+Única entrada autónoma: `execute_authorized_operation(UUID, ExecutionContext)`.
+Los parámetros provienen exclusivamente de ConversationOperation.parameters v1
+recanonicalizados y convertidos a comando tipado (IDs exactos, date/time reales).
+Owner/organization y timezone vienen del binding/precondition durable, nunca del LLM.
+La ausencia del veterinario requerido en v1 falla; no se amplía el schema B7A.
+
+Orden B8A intacto: Conversation → TurnWork → ContactIdentity → Goal → Operation.
+Después: Organization FOR SHARE (protege timezone sin serializar lectores),
+OrganizationSchedule aplicable FOR SHARE (protege ventana frente a PUT), veterinario
+FOR UPDATE, owner/pet FOR SHARE, revalidación final y create. Lecturas compartidas
+no son mutex global. El lock del vet cubre todos sus overlaps, no solo start_time.
+El prechequeo legible se repite bajo locks; GiST existente es defensa final incluso
+si otro escritor ignora el helper. No mutex en memoria ni AppointmentSlot.
+
+Appointment incorpora source_operation OneToOne nullable, to_field=operation_key,
+on_delete=PROTECT, y source_parameters_digest también nullable. Unicidad global por
+UUID en DB; humanos/legacy NULL, sin backfill. El digest obligatorio para un
+efecto del agente se valida contra la operación, no se exige a inserts legacy.
+No UUID técnico en reason ni serializer público.
+Se protege modificación ordinaria del enlace/digest; validación de tenant/pet/tipo.
+El UUID público de Appointment y created_at forman EffectEvidence sin PII nueva.
+
+`validate_preconditions`: revalidar entidades exactas/activas, relación owner/contact,
+timezone autorizada, intervalo válido y futuro, horario/breaks y disponibilidad
+actual bajo los locks anteriores. Fallos definitivos son PRECONDITION_FAILED con
+razón cerrada; slot_unavailable no mueve horario ni reintenta al liberarse.
+
+`reconcile`: consultar por source_operation_key sin ocultar filas inactivas ni de
+tenant contradictorio. Ausente prueba no efecto; enlace/digest/tenant/pet/vet/
+fecha/hora/UTC/zona/reason/defaults contradictorios → UNCERTAIN, nunca segundo create.
+Estado scheduled inicial; evolución legítima posterior del estado conserva efecto
+histórico (AppointmentStatusChange evidencia la cadena). Cambios de parámetros
+posteriores conservan enlace pero exigen inspección; B8B no implementa B8C.
+Una cita humana equivalente sin enlace no pertenece a la operación: slot_unavailable.
+
+`execute`: mismo servicio común, dentro de atomic del guard, sin HTTP/LLM/cola.
+Guard+preconditions+disponibilidad+Appointment+enlace+attempt+SUCCEEDED comparten
+commit local. Crash antes de commit revierte todo. SUCCEEDED se confirma con
+reconcile; retries terminales de CREATE también consultan el objeto durable.
+Ledger/evidencia inconsistente no se repara inventando éxito ni crea otro objeto.
+FAILED exige ausencia comprobada; UNCERTAIN nunca reintenta automáticamente.
+
+Corrección/takeover/revocación que gana el lock causal antes del efecto bloquea.
+Después del commit no revierte ni borra el Appointment. Nueva hora requiere nueva
+operación/digest/propuesta/consentimiento; reprogramación está fuera de B8B.
+
+## Gates, aceptación y rollback
+
+### Evidencia al reanudar el 2026-09-21
+
+El estado permanece **PARTIAL**. Corridas ya observadas: 7 pruebas de dominio y
+37 de integración B8B aprobadas; corrida de 21 escenarios multiproceso con 20
+aprobados y un timeout de conexión de recovery. Ese escenario de recovery se
+repitió y aprobó por separado (1 test, 21.432 s). Esto no se presenta como una
+corrida completa verde. La regresión Agenda/B8A y el inventario completo B0–B8A
+siguen pendientes de obtener un resultado verificable. Tampoco se atribuyen
+métricas al corpus nuevo antes de ejecutarlo.
+
+Runner versionado: `backend/apps/agent/tests/run_b8b_acceptance.py`; ejecutar desde
+`backend`, con `DATABASE_URL` explícita a PostgreSQL local aislado:
+
+```text
+python -m apps.agent.tests.run_b8b_acceptance --suite b8b --database test_b8b_final --output <directorio-local>/b8b
+python -m apps.agent.tests.run_b8b_acceptance --suite baseline --database test_b8b_baseline --output <directorio-local>/baseline
+python -m apps.agent.tests.run_b8b_acceptance --suite agenda --database test_b8b_agenda --output <directorio-local>/agenda
+python -m apps.agent.tests.run_b8b_acceptance --suite checks --database test_b8b_final --output <directorio-local>/checks
+```
+
+El runner registra inventario, fallos, skips, procesos y corpus; B0–B8A exige
+los 1224 IDs únicos del acta B8A. No cuenta skips/xfail como aceptación. Los
+artefactos nuevos del corpus/runner aún necesitan su propia ejecución verde.
+El runner acelera únicamente contraseñas sintéticas de fixtures mediante el
+hasher MD5 de Django; no cambia hashes de parámetros/consentimiento ni settings
+de producción. Cada resultado registra el hasher efectivamente utilizado.
+
+Solo CREATE_APPOINTMENT puede tener adapter real LOCAL_ATOMIC registrado. Para
+ejecutar requiere B0 abierto + flag estrictamente True + B7B + todos los guards.
+Defaults de producción intactos/cerrados; los otros cuatro kinds sin adapter y
+release disabled aun con flags accidentales. Tests habilitan únicamente su entorno.
+PENDING_ACTIVATION_REQUIREMENTS permanece; sin deploy ni B8C–B9/E/P.
+
+Cierre solo con pruebas reales PostgreSQL multiproceso de misma UUID, mismo recurso,
+overlaps, corrección/takeover/revocación en ambos órdenes, kill antes de commit y
+recovery, además de regresiones B0–B8A y humanas. Corpus versionado mide cuatro
+métricas críticas sobre escenarios concretos, sin extrapolación universal.
+
+Rollback: cerrar flag CREATE_APPOINTMENT y mantener B0 cerrado. Preservar citas,
+operaciones, AuthorizationEvidence, vínculos y SUCCEEDED. No migración inversa que
+borre procedencia ni cancelación automática. Cierre de feature no revierte negocio.

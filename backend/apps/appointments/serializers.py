@@ -17,6 +17,20 @@ from .services import (
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        # Same authority used by B8B, with reception's existing hours policy.
+        # Technical provenance is not an API field and is never read from data.
+        from .creation import AppointmentCommand, create_appointment
+        data = validated_data
+        return create_appointment(AppointmentCommand(
+            organization_id=data['organization'].pk, pet_id=data['pet'].pk,
+            veterinarian_id=getattr(data.get('veterinarian'), 'pk', None),
+            date=data['date'], start_time=data['start_time'], end_time=data['end_time'],
+            reason=data['reason'], category=data.get('category', 'general_consultation'),
+            notes=data.get('notes', ''), status=data.get('status', 'scheduled'),
+            cancellation_reason=data.get('cancellation_reason', ''),
+            idempotency_key=data.get('idempotency_key')))
+
     # INV-A (ADR p57, §3.2 exigencia 1) — la precondición atómica de estado va
     # DECLARADA. DRF descarta en silencio las claves desconocidas: un
     # `expected_state` no declarado se perdería y el PATCH pasaría
@@ -100,7 +114,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def validate_veterinarian(self, value):
         request = self.context.get('request')
-        if request and value.organization_id != request.user.organization_id:
+        if request and value is not None and value.organization_id != request.user.organization_id:
             raise serializers.ValidationError('Veterinario fuera de tu organización')
         return value
 

@@ -24,7 +24,10 @@ def _invalidate_org_dashboard(org_id):
 @receiver(post_delete, sender=Appointment)
 def invalidate_on_appointment_change(sender, instance, **kwargs):
     if instance.organization_id:
-        _invalidate_org_dashboard(instance.organization_id)
+        # B8B: invalidating before COMMIT permits re-caching the old agenda.
+        # Cache invalidation is idempotent/best effort, never a clinical write.
+        org_id = instance.organization_id
+        transaction.on_commit(lambda: _invalidate_org_dashboard(org_id), robust=True)
 
 
 @receiver(post_save, sender=MedicalRecord)

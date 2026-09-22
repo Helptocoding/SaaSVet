@@ -80,7 +80,8 @@ class OperationExecutionTests(ExecutionFixtures, TestCase):
     def test_gate_02_schema_and_authorization_do_not_enable_kind(self):
         self.authorized()
         with patch('apps.agent.intake.write_is_contained', return_value=False):
-            self.assertEqual(self.execute().reason, 'kind_disabled')
+            # B8B registers CREATE, but schema/consent cannot open its flag.
+            self.assertEqual(self.execute().reason, 'flag_disabled')
 
     def test_gate_04_unknown_capability(self):
         self.authorized()
@@ -88,9 +89,14 @@ class OperationExecutionTests(ExecutionFixtures, TestCase):
         self.assertEqual(self.execute().reason, 'capability_mismatch')
 
     def test_registry_all_five_kinds_closed(self):
+        from django.conf import settings
         self.assertEqual(set(execution.REGISTRY), set(ConversationOperation.KINDS))
         self.assertTrue(all(not entry.enabled and entry.adapter is None
-                            for entry in execution.REGISTRY.values()))
+                            for kind, entry in execution.REGISTRY.items() if kind != 'CREATE_APPOINTMENT'))
+        # B8B is technically present, effective production execution stays closed.
+        self.assertTrue(execution.REGISTRY['CREATE_APPOINTMENT'].enabled)
+        self.assertIsNotNone(execution.REGISTRY['CREATE_APPOINTMENT'].adapter)
+        self.assertEqual(getattr(settings, 'AGENT_OPERATION_EXECUTION_ENABLED', {}), {})
 
     def test_auth_02_rejected(self):
         self.proposal()

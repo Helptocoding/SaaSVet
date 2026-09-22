@@ -43,13 +43,8 @@ def weekday_ranges(organization, weekday_index):
     horario (G1)."""
     rows = _schedule_rows(organization)
     row = rows.get(weekday_index + 1)  # OrganizationSchedule: 1=lunes
-    if row is None or row.is_closed or not (row.opens_at and row.closes_at):
-        return []
-    opens, closes = _hhmm(row.opens_at), _hhmm(row.closes_at)
-    if row.has_break and row.break_start and row.break_end:
-        return [[opens, _hhmm(row.break_start)],
-                [_hhmm(row.break_end), closes]]
-    return [[opens, closes]]
+    from apps.appointments.creation import schedule_windows
+    return [[_hhmm(start), _hhmm(end)] for start, end in schedule_windows(row)]
 
 
 _WD_KEY = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')

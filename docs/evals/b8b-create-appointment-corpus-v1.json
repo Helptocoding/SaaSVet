@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "phase": "B8B",
+  "cases": [
+    {
+      "id": "CA01",
+      "scenario": "happy_path",
+      "status": "SUCCEEDED",
+      "effects": 1
+    },
+    {
+      "id": "CA02",
+      "scenario": "slot_occupied",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA03",
+      "scenario": "partial_overlap",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA04",
+      "scenario": "clinic_closed",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA05",
+      "scenario": "pet_stale",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA06",
+      "scenario": "identity_stale",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA07",
+      "scenario": "binding_stale",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA08",
+      "scenario": "permission_revoked",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA09",
+      "scenario": "takeover",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA10",
+      "scenario": "correction",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA11",
+      "scenario": "revocation",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA12",
+      "scenario": "duplicate_retry",
+      "status": "SUCCEEDED",
+      "effects": 1
+    },
+    {
+      "id": "CA13",
+      "scenario": "evidence_mismatch",
+      "status": "UNCERTAIN",
+      "effects": 1
+    },
+    {
+      "id": "CA14",
+      "scenario": "operation_expired",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA15",
+      "scenario": "b0_closed",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA16",
+      "scenario": "create_flag_closed",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA17",
+      "scenario": "other_kind_accidental_flag",
+      "status": "DENIED",
+      "effects": 0
+    },
+    {
+      "id": "CA18",
+      "scenario": "manual_equivalent_appointment",
+      "status": "DENIED",
+      "effects": 0
+    }
+  ],
+  "process_cases": [
+    {
+      "id": "CA19",
+      "scenario": "concurrent_same_operation",
+      "test_id": "apps.agent.tests.test_b8b_processes.B8BProcessTests.test_idem02_fi05_same_operation_one_durable_effect"
+    },
+    {
+      "id": "CA20",
+      "scenario": "concurrent_different_operations",
+      "test_id": "apps.agent.tests.test_b8b_processes.B8BProcessTests.test_conflict01_fi06_distinct_operations_same_slot"
+    }
+  ],
+  "metric_definitions": {
+    "unauthorized_appointments_created": "All Appointment rows exceeding explicit manual fixtures plus allowed effects; includes unexpected unlinked writes",
+    "duplicate_appointments_from_same_operation": "Additional Appointment rows sharing a non-null source operation",
+    "forbidden_operation_kinds_executed": "Linked appointments whose operation kind is not CREATE_APPOINTMENT",
+    "invalid_slot_conflicts_created": "Pairs of active-status, same-org/same-vet, non-null UTC intervals that overlap"
+  },
+  "scope": "Fixed isolated scenarios only; no extrapolation to universal guarantees"
+}

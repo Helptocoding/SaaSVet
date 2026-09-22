@@ -22,6 +22,7 @@ from apps.users.models import User
 
 from .models import Appointment, AppointmentStatusChange
 from .serializers import AppointmentSerializer, AppointmentStatusChangeSerializer
+from .creation import CreationRejected
 from .services import (
     ACTIVE_STATUSES,
     NO_OVERLAP_EXCEPTIONS,
@@ -144,6 +145,13 @@ class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
                 # exclusión y el perdedor se lleva un 500 en vez de slot_taken.
                 lock_veterinarians(org.pk, getattr(vet, 'pk', None))
                 serializer.save(organization=org, idempotency_key=key)
+        except CreationRejected as exc:
+            # The shared precheck runs after the vet lock: a concurrent human
+            # retry can now see the winner. Preserve the existing 200 replay.
+            existing = replay_appointment(org, key) if exc.reason == 'slot_unavailable' else None
+            if existing is not None:
+                return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+            raise
         except NO_OVERLAP_EXCEPTIONS as exc:
             # INV-D: el pre-chequeo del serializer perdió la carrera y la
             # restricción de exclusión rechazó. Mismo desenlace de negocio que
@@ -704,6 +712,13 @@ def create_with_patient(request):
             )
             serializer.is_valid(raise_exception=True)
             appt = serializer.save(organization=org, idempotency_key=idem_key)
+    except CreationRejected as exc:
+        # Outside atomic: Owner/Pet from this losing request have rolled back.
+        replay = replay_appointment(org, idem_key) if exc.reason == 'slot_unavailable' else None
+        if replay is not None:
+            return Response(AppointmentSerializer(replay, context={'request': request}).data,
+                            status=status.HTTP_200_OK)
+        raise
     except NO_OVERLAP_EXCEPTIONS as exc:
         # INV-D: perdió la carrera del cupo. El rollback ya deshizo el
         # Owner/Pet de esta transacción — cero huérfanos, cero citas.

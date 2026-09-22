@@ -2,6 +2,7 @@
 import json
 from contextlib import ExitStack
 from pathlib import Path
+from types import MappingProxyType
 from datetime import timedelta
 from unittest.mock import patch, Mock
 from django.test import TestCase, override_settings
@@ -62,7 +63,9 @@ class B8ACorpusTests(ExecutionFixtures, TestCase):
             elif scenario == 'stale_causality':
                 self.tamper(authorized_at=self.op.created_at, consent_decided_at=self.op.created_at)
             elif scenario == 'kind_disabled':
-                execution.REGISTRY['CREATE_APPOINTMENT'] = execution.Registration('create_appointment')
+                registry = dict(execution.REGISTRY)
+                registry['CREATE_APPOINTMENT'] = execution.Registration('create_appointment')
+                stack.enter_context(patch.object(execution, 'REGISTRY', MappingProxyType(registry)))
             elif scenario == 'reconcile':
                 adapter.execute(self.op, self.context)
                 adapter.execute = Mock(side_effect=AssertionError('duplicate effect'))

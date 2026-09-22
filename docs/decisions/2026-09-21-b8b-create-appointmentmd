@@ -1,0 +1,50 @@
+# ADR B8B — creación de cita detrás de B8A
+
+Fecha: 2026-09-21. Estado: implementación técnica en validación.
+
+## Decisión
+
+`CREATE_APPOINTMENT` usa el único entry point de B8A y un adapter
+`LOCAL_ATOMIC`. El adapter reconstruye un `AppointmentCommand` tipado desde los
+parámetros v1 canónicos de `ConversationOperation`; no acepta parámetros del
+LLM ni resuelve mascotas por nombre.
+
+La creación reutiliza `appointments.creation.create_appointment`, que comparte
+la construcción de intervalos, tenant/owner/pet/veterinarian, timezone y la
+restricción de solapamiento con la API humana. El adapter añade la política
+estricta de horario para la acción autónoma. La ruta humana mantiene su política
+histórica y sigue admitiendo citas sin `operation_key`.
+
+## Invariantes
+
+- El pet debe ser el FK exacto de la operación, activo, del tenant y del owner
+  enlazado al ContactIdentity.
+- El veterinario debe ser el FK exacto, activo, del tenant y con rol VET; no se
+  asigna un candidato alternativo.
+- `scheduled` es el estado inicial; `walk_in=False`; reason es el texto canónico.
+- La disponibilidad usa intervalos UTC semiabiertos y los estados
+  `scheduled`, `confirmed`, `in_progress`. La constraint existente
+  `appointment_no_overlap_per_vet` es la defensa final PostgreSQL; el lock
+  ordenado de la fila User evita deadlocks del prechequeo.
+- OrganizationSchedule debe contener completamente el intervalo y respetar
+  descansos. DST inexistente o ambiguo falla cerrado.
+- `Appointment.source_operation` es nullable para legacy, único por
+  `operation_key`, `PROTECT` y no se expone en el serializer.
+
+## Reconciliación y fallos
+
+La consulta de procedencia se hace antes de `execute`. Una fila exacta produce
+`SUCCEEDED`/duplicate; una fila contradictoria produce `UNCERTAIN` sin crear otra;
+ausencia comprobada permite el primer intento. `SLOT_UNAVAILABLE` y horario
+cerrado son fallos definitivos de precondition. La operación no cambia de hora.
+
+La transacción incluye guard, locks, validación, INSERT, evidencia y ledger. El
+cache dashboard se invalida con `on_commit`; no se añaden MedicalRecord,
+Invoice, Payment ni InventoryMovement.
+
+## Gate y rollback
+
+Solo la entrada CREATE tiene adapter registrado. B0, la flag exacta y todos los
+guards siguen cerrados por defecto; los otros cuatro kinds permanecen sin
+adapter. El rollback cierra CREATE, conserva citas/evidencia/operaciones y no
+borra ni cancela citas creadas.

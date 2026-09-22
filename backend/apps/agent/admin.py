@@ -13,7 +13,22 @@ class ConversationOperationAdmin(admin.ModelAdmin):
         'execution_state', 'created_at', 'updated_at', 'age', 'expires_at', 'replaces_id', 'binding_revision',
         'identity_revision', 'ownership_epoch', 'invalidation_reason', 'proposal_stage',
         'proposal_message_id', 'authorization_message_id', 'consent_decided_at',
-        'execution_stage', 'result_code', 'executed_at')
+        'execution_stage', 'result_code', 'executed_at', 'execution_gate', 'appointment_effect')
+
+    @admin.display(description='Execution gate')
+    def execution_gate(self, obj):
+        from .operation_execution import REGISTRY, _gate
+        entry = REGISTRY.get(obj.operation_kind)
+        return _gate(obj, entry) or 'OPEN (guard required)' if entry else 'CLOSED'
+
+    @admin.display(description='Appointment / reconciliación')
+    def appointment_effect(self, obj):
+        if obj.operation_kind != 'CREATE_APPOINTMENT':
+            return 'No adapter'
+        from .appointment_execution import CreateAppointmentAdapter
+        result = CreateAppointmentAdapter().reconcile(obj, None)
+        return {'ABSENT': 'None', 'SUCCEEDED': 'Linked / reconciled',
+                'UNCERTAIN': 'Linked / evidence mismatch; inspection required'}.get(result.status, 'UNCERTAIN')
 
     @admin.display(description='Ejecución / reconciliación')
     def execution_stage(self, obj):

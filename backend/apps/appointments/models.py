@@ -79,12 +79,37 @@ class Appointment(PublicIdMixin, OrganizationalModel):
         max_length=64, null=True, blank=True, editable=False,
     )
 
+    # B8B causal provenance, separate from human request idempotency. Clinical
+    # rows survive retention mistakes: deleting the operation is PROTECTED.
+    source_operation = models.OneToOneField(
+        'agent.ConversationOperation', to_field='operation_key',
+        on_delete=models.PROTECT, null=True, blank=True, editable=False,
+        related_name='created_appointment',
+    )
+    source_parameters_digest = models.CharField(max_length=64, null=True, blank=True, default=None, editable=False)
+
     def clean(self):
         org = self.organization_id
         if org and self.pet_id and self.pet.organization_id != org:
             raise ValidationError("La mascota no pertenece a la misma organizacion que la cita.")
         if org and self.veterinarian_id and self.veterinarian.organization_id != org:
             raise ValidationError("El veterinario no pertenece a la misma organizacion que la cita.")
+        if self.source_operation_id:
+            operation = self.source_operation
+            if (operation.organization_id != org or operation.pet_id != self.pet_id
+                    or operation.operation_kind != 'CREATE_APPOINTMENT'
+                    or operation.parameters_digest != self.source_parameters_digest):
+                raise ValidationError('La procedencia de la cita no coincide con su operación.')
+        elif self.source_parameters_digest:
+            raise ValidationError('El digest exige una operación de origen.')
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            previous = type(self).all_objects.filter(pk=self.pk).values_list(
+                'source_operation_id', 'source_parameters_digest').first()
+            if previous and previous != (self.source_operation_id, self.source_parameters_digest):
+                raise ValidationError('La procedencia de una cita es inmutable.')
+        return super().save(*args, **kwargs)
 
     @property
     def medical_record_ids(self):
