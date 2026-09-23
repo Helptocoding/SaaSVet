@@ -1,0 +1,56 @@
+# B8C: transiciones de Agenda con identidad y evidencia histórica exactas
+
+Fecha: 2026-09-22. Estado: aceptado, cierre técnico 2026-09-23.
+Base: `220cf4bc0906dea62ab1de3baf3c26b78d62321b`.
+
+Una cita mutable puede cambiar legítimamente después de un efecto confirmado.
+Comparar solo su estado actual no distingue una cancelación humana de la operación
+autorizada ni permite reconocer una reprogramación histórica sin deshacer otra.
+
+Decisión: dos adapters LOCAL_ATOMIC en el registry B8A, sin entradas HTTP/LLM,
+con comandos tipados y FK persistida. Agenda comparte set_schedule_fields y
+cancel_locked con las rutas humanas; disponibilidad/horarios/UTC usan B8B.
+Las validaciones humanas existentes se conservan. El alcance autónomo mantiene
+scheduled/confirmed futuras de B7A, no extiende /status/ a in_progress.
+
+Los parámetros v1 mantienen su significado. Nuevas definiciones B8C usan
+preconditions schema 2: expected_state anterior más appointment_snapshot incluido
+en digest_bindings. Los digests preconditions v1 siguen verificables; esas
+operaciones no cumplen el nuevo contrato de efecto. No backfill ni consentimiento
+inferido. El snapshot no utiliza updated_at, que no es una versión de negocio fiable.
+
+Se añade AppointmentMutationEffect con UUID único de operación, tenant, cita,
+kind, digest, before/after y timestamp. FKs PROTECT y trigger PostgreSQL de alcance
+e inmutabilidad. Reconcile compara la transición contra la definición histórica,
+no contra la hora actual. source_operation B8B conserva su significado de creación;
+AppointmentStatusChange conserva su significado de transición de estado. No se
+fabrican status changes para un movimiento horario ni un event sourcing general.
+
+Esto enmienda expresamente «ninguna tabla nueva» de la receta B8B–B8E del plan:
+el encargo B8C exige efectos históricos diferenciados y autoriza este mecanismo
+si la auditoría existente no basta. La justificación y contrato se congelaron
+antes del adapter en [contrato](../contrato-appointment-mutations-b8cmd).
+
+Locks: autoridad B8A → org/horario SHARE → veterinarios autorizados ordenados →
+cita UPDATE → owner/pet SHARE. Se compara el snapshot bajo esos locks. Una
+reasignación humana a otro veterinario produce stale; no se amplía el conjunto
+de locks después de bloquear la cita. GiST conserva exclusión UTC [start,end).
+Un destino idéntico es appointment_no_change sin SUCCEEDED, señales ni auditoría.
+
+La transición, auditoría de cancelación, efecto y resultado son un solo commit.
+Antes de cada intento se reconcilia. Ausencia demostrada permite evaluar; prueba
+contradictoria mantiene UNCERTAIN. El momento registrado es observado dentro de
+la transacción y solo se ofrece tras commit; no se presenta como hora física WAL.
+Cache on_commit es idempotente y tiene TTL; no hay proveedor externo nuevo.
+
+Gates por kind y B0 permanecen apagados en producción; B8D/E siguen DISABLED,
+contextual B7B cerrado. No despliegue. Rollback funcional: cerrar flags, preservar
+schema/evidencia/resultados, reconciliar pendientes; no deshacer citas ni migración
+inversa destructiva. Riesgos de identidad débil, proveedores externos, pérdida
+eléctrica y activación operacional no se resuelven aquí.
+
+Aceptación: 147 IDs B8C y 1462 IDs de regresión exacta cubiertos; corpus de 24
+escenarios con seis métricas críticas cero; 41 escenarios multiproceso reales.
+Interrupciones, repeticiones, fallos iniciales y límites quedan explícitos en el
+[acta](../implementacion-b8c-agente-whatsapp-2026-09-22md) y
+[registro](../evals/b8c-acceptance-resultsjson). No autoriza activación ni despliegue.

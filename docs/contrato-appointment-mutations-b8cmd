@@ -1,0 +1,111 @@
+# Contrato B8C — reprogramación y cancelación
+
+Congelado antes de implementar, 2026-09-22. Baseline/HEAD:
+`220cf4bc0906dea62ab1de3baf3c26b78d62321b`, cierre documental B8B.
+Árbol inicial: D DEPLOY_VPS_PLAN.md, D DEPLOY_VPS_STATUS.md,
+?? docs/auditoria-agente-conversacional-veterinario-2026-09-10.md. Son ajenos.
+
+## Autoridad observada
+
+PATCH/PUT AppointmentDetailView bloquea veterinarios por PK y después Appointment,
+compara expected_state y ejecuta AppointmentSerializer. Permite cambiar fecha,
+ambos extremos y veterinario nullable; también campos genéricos y status. No tiene
+una máquina de estados de reprogramación. El serializer exige destino futuro,
+end > start y disponibilidad si status ocupa agenda. No valida OrganizationSchedule.
+El frontend propone slots de 30 minutos; eso no define duración de dominio.
+
+PATCH /status/ usa ALLOWED_TRANSITIONS: scheduled/confirmed → canceled;
+in_progress → canceled también figura en la tabla, pero se rechaza si el inicio
+ya pasó. done no tiene salidas; canceled/no_show pueden volver a scheduled por
+acción humana explícita. DELETE deprecado solo cancela scheduled/confirmed futuras.
+PATCH genérico no aplica esa máquina; se preserva su semántica histórica.
+El estado real es `canceled`. Cancelar cambia status y, si se suministra un motivo
+no vacío, cancellation_reason. /status/ registra AppointmentStatusChange con actor,
+from/to, razón y created_at. DELETE registra una razón administrativa de auditoría.
+No hay canceled_at dedicado. Reprogramar no crea un status change.
+
+Las rutas usan OrganizationalModel.save/full_clean. updated_at auto_now NO es una
+versión fiable: saves con update_fields=['status'] no lo incluyen y QuerySet.update
+lo omite. No se usa como precondition. Caché dashboard: on_commit robusto de B8B.
+Notificaciones próximas/atrasadas se derivan de status e instante actual, con clave
+por cita/instante. No hay envío remoto ni cola de recordatorios en estos write-paths.
+Cancelar no borra ni modifica MedicalRecord, Invoice, Payment, Prescription,
+VaccineRecord. No impone restricciones financieras/clinicas adicionales; conservar
+sus relaciones no equivale a cancelar consultas, cargos o pagos.
+
+## Alcance autónomo congelado
+
+Ambos kinds conservan el subconjunto B7A: scheduled/confirmed, inicio aún futuro,
+cita/pet/owner exactos, activos y contacto titular vigente. in_progress, done,
+canceled/no_show quedan bloqueados; nunca reactivación ni compensación. walk_in no
+tiene permiso nuevo: solo sería elegible si cumple ese mismo estado/futuro; el
+walk-in normal en consulta queda bloqueado. No se cambia la política humana.
+
+Reprogramación solo modifica date/start_time/end_time/veterinarian e instantes UTC
+y timezone_at_creation correspondientes. Conserva estado, pet, motivo y resto.
+Ambos extremos y profesional destino son explícitos; no duración ni slot alternativo.
+Se permite cambiar veterinario al VET activo exacto autorizado. Un destino idéntico
+se rechaza como appointment_no_change sin efecto ni auditoría duplicada.
+Se reutiliza B8B para zona/DST, ventanas actuales, intervalos UTC [start,end),
+adyacencia válida y ocupación scheduled/confirmed/in_progress con all_objects.
+La cita propia se excluye del conflicto. Cambio de timezone, hora ambigua o
+inexistente, clínica cerrada, intervalo ocupado: nueva propuesta, nunca reinterpretar.
+
+## Snapshot y compatibilidad
+
+Parámetros v1 no cambian: B7A ya contiene cita exacta, ambos extremos destino,
+veterinario destino y motivo opcional de cancelación; proposal B7B muestra origen,
+destino, mascota y veterinarios. Se amplía únicamente preconditions a schema=2
+para nuevas definiciones B8C. expected_state v1 permanece intacto y se agrega
+appointment_snapshot versionado al digest solo en schema 2: identidad pública,
+tenant/pet, estado, fecha/extremos locales exactos, instantes UTC, zona almacenada,
+veterinario, walk_in, actividad y motivo de cancelación. No depende de updated_at,
+notas, caché ni auditoría. La ausencia de anchors UTC también es explícita.
+Operaciones legacy schema 1 siguen verificando sus digests históricos, pero B8C
+no las ejecuta ni completa por inferencia. Nueva definición/propuesta/consentimiento.
+El renderer schema 2 muestra también segundos/microsegundos originales si existen;
+el renderer histórico schema 1 conserva su texto. No se trunca precisión autorizada.
+
+## Locks, transición y evidencia
+
+B8A Conversation → TurnWork → ContactIdentity → Goal → Operation; después
+Organization/Schedule FOR SHARE → veterinarios origen/destino por PK → Appointment
+FOR UPDATE → owner/pet FOR SHARE. Se contrasta el snapshot DESPUÉS de bloquear.
+El recurso original se toma de la definición: si cambió, fallar stale sin adquirir
+un veterinario nuevo fuera de orden. Humanos conservan peek/retry y el mismo orden.
+GiST appointment_no_overlap_per_vet es defensa final compartida con B8B.
+No mutex en memoria, locks durante HTTP/LLM ni segunda Agenda.
+
+Enmienda explícita a §7 B8B–B8E: su frase «ninguna tabla nueva» no representa el
+historial exigido en este encargo. source_operation B8B representa SOLO creación;
+AppointmentStatusChange carece de intervalos/destinos y no representa reprogramación.
+Se autoriza un ledger mínimo AppointmentMutationEffect, una fila inmutable por UUID,
+FKs PROTECT, tenant, digest, kind, cita exacta, before/after y committed_at. Sin backfill
+ni event sourcing general. Mantiene distintas operaciones sobre una misma cita.
+El timestamp se observa dentro de atomic y se expone solo tras commit, como B8A.
+La cancelación autónoma registra status audit con changed_by NULL: no inventa un
+usuario técnico o humano. Su autor causal queda identificado por la operación,
+el contacto y AuthorizationEvidence protegidos, enlazados por el ledger.
+
+Reconcile consulta UUID global para detectar evidencia contradictoria de tenant;
+compara digest/scope y transición completa contra definición. No exige que la cita
+siga en el destino histórico. Efecto exacto → SUCCEEDED sin UPDATE; ausencia probada
+→ validación/ejecución si elegible; contradicción → UNCERTAIN sin retry ciego.
+Estado canceled por sí solo jamás prueba efecto propio. Cambios humanos posteriores
+no son deshechos por retry. source_operation/source_parameters_digest no se tocan.
+
+Guard final, locks, snapshot, transición, status audit cuando corresponda, ledger,
+ToolExecution y resultado comparten LOCAL_ATOMIC. Fallo precommit revierte negocio;
+error de resultado dudoso es UNCERTAIN; FAILED solo con ausencia probada y causa
+definitiva. Efectos externos no obtienen garantía exactly-once de PostgreSQL.
+
+## Contención y límites
+
+Solo execute_authorized_operation(key, context) despacha; no endpoint/serializer
+desde LLM, no WRITE legacy, no permisos AGENT PATCH/DELETE. B0 y flags de los tres
+adapters permanecen OFF en producción. CONFIRM_ATTENDANCE/REGISTER_PET DISABLED.
+B7B contextual sin cambios; B8D/B8E/B9/E1–E5/P-A/P-B fuera. Activación
+PENDING_ACTIVATION_REQUIREMENTS, sin despliegue. Cierre sujeto a aceptación real,
+no al happy path. Rollback cierra gates y conserva operaciones/efectos; no compensa.
+El lector mínimo de definiciones/evidencias schema 2 es esta entrega B8C; cerrar
+flags no requiere volver a un binario que desconoce su digest.

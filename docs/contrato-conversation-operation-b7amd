@@ -210,3 +210,9 @@ existentes result/result_code/executed_at. No modifica definiciones, digest,
 expiry ni decisiones históricas. La ausencia de RUNNING durable se conserva;
 los cinco adapters reales y B0 siguen cerrados. Este addendum no reescribe el
 estado histórico de la entrega B7A descrita arriba.
+
+Addendum B8C (2026-09-22): parámetros v1 inalterados. Nuevas definiciones de
+reprogramación/cancelación usan preconditions schema 2 con appointment_snapshot
+incluido en digest_bindings; schema 1 conserva su algoritmo histórico. B8C exige
+schema 2 antes del efecto, sin ampliar propuestas o consentimientos legacy.
+Ver [contrato de mutaciones](contrato-appointment-mutations-b8cmd).

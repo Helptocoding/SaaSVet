@@ -1,0 +1,273 @@
+# B8C — reprogramación y cancelación por operación autorizada
+
+Fecha de implementación: 2026-09-22. Cierre documental: 2026-09-23.
+Estado: **COMPLETED en alcance técnico B8C**; este documento no autoriza producción.
+Base confirmada de cierre B8B:
+`220cf4bc0906dea62ab1de3baf3c26b78d62321b`. Rama inicial `develop`, HEAD en esa base.
+Cambios preexistentes ajenos, excluidos: eliminación de `DEPLOY_VPS_PLAN.md` y
+`DEPLOY_VPS_STATUS.md`, y `docs/auditoria-agente-conversacional-veterinario-2026-09-10.md`
+sin seguimiento. No se restauran, mezclan ni incluyen en los commits B8C.
+
+Commit de implementación: `c86c3ed38d5f056622b313b074a95c9d3a118fef`.
+El commit documental posterior contiene esta acta, contratos, plan y evidencia;
+su SHA completo se entrega en el reporte final. No se mezclan cambios ajenos.
+
+## Resultado y contrato
+
+Dos adapters reales, tipados y LOCAL_ATOMIC se registran exclusivamente bajo
+`execute_authorized_operation(operation_key, execution_context)`. No se agrega tool
+WRITE, llamada LLM→endpoint/serializer ni permiso AGENT sobre PATCH/DELETE. Los
+contratos [de dominio](contrato-appointment-mutations-b8cmd) y
+[ADR](decisions/2026-09-22-b8c-appointment-mutationsmd) congelan la inspección dirigida
+de Agenda antes de implementar. No se repitió H01–H20.
+
+Archivos runtime del alcance:
+
+| Ruta bajo backend/apps | Cambio |
+|---|---|
+| agent/appointment_mutation_execution.py | adapters tipados, reconciliación histórica y eventos B8C |
+| agent/operation_execution.py | registro de dos kinds, no-op tipado y eventos de resultado |
+| agent/operations.py | snapshot/digest preconditions 2 y propuesta exacta |
+| agent/admin.py | inspección readonly de efecto histórico y estado actual |
+| appointments/mutations.py | comandos/transiciones compartidas, preconditions y ledger atómico |
+| appointments/models.py | AppointmentMutationEffect con scope y protección histórica |
+| appointments/migrations/0017_appointment_mutation_effect.py | tabla, unicidad, FKs, constraint kind y trigger |
+| appointments/creation.py | exclusión de la propia cita en consulta de conflictos compartida |
+| appointments/serializers.py | transformación horaria común en update humano |
+| appointments/views.py | cancelación y tabla de transiciones compartidas |
+
+Los demás archivos de código son fixtures, suites y runner de aceptación; no se
+modifican settings de producción, herramientas WRITE legacy ni permisos de endpoints.
+Documentos afectados: plan canónico y su inventario H01/H02/H05/H06/H08/H18;
+contratos B7A/B8A y nuevo B8C; módulos Agenda/agente; especificación funcional,
+runbook, ADR, acta, corpus y resultados. Se respeta la convención `...md`/`...json`
+sin punto que usan las entregas B7A–B8B.
+
+La reprogramación autónoma admite scheduled/confirmed futuras y cambia solamente
+fecha, extremos explícitos, veterinario exacto autorizado y sus anchors UTC/zona.
+Conserva duración únicamente si los extremos autorizados así lo indican; no calcula
+duración ni sustituto durante execute. Un destino idéntico se rechaza sin efecto.
+La cancelación usa `canceled`, conserva la cita y todas sus relaciones clínicas y
+financieras, y registra status audit y motivo canónico opcional. No cancela por
+inferencia otra cita de la mascota. done/in_progress/canceled/no_show son
+incompatibles en la ruta autónoma. El walk_in no recibe excepciones nuevas.
+
+La autoridad compartida reside en Agenda: `set_schedule_fields`, `cancel_locked`,
+tabla de transiciones existente, conversión/ventanas/disponibilidad B8B y locks de
+veterinarios. Se extrae solo esa frontera. La ruta humana mantiene sus diferencias:
+PATCH genérico acepta campos/estados históricos; /status/ aplica su máquina; DELETE
+deprecado es cancelación, nunca borrado físico. El humano no adquiere las restricciones
+autónomas de horario operativo. El frontend no define la autoridad de duración.
+
+## Definición, identidad y snapshot
+
+`parameters_schema_version=1` permanece intacto. Los parámetros existentes ya
+incluían cita exacta, destino con ambos extremos y veterinario, y motivo opcional.
+Nuevas propuestas RESCHEDULE/CANCEL usan `preconditions.schema=2`, añadiendo un
+snapshot de negocio incluido en el digest: PK/UUID/tenant/pet, estado, fecha y
+extremos locales exactos, UTC nullable, zona almacenada, vet, walk_in, actividad y
+motivo de cancelación. El renderer muestra origen, destino cuando aplica y precisión
+original; no inventa datos de operaciones antiguas. `updated_at` no sirve como versión
+porque update_fields y QuerySet.update pueden omitirlo. Notas y caché no invalidan.
+
+El adapter obtiene la cita por FK persistida y contrasta el ID canónico. Tenant,
+pet, owner/contact activos y compatibles y snapshot se revalidan bajo lock.
+Appointment no se resuelve por texto, teléfono ni búsqueda posterior. Se conserva
+operation_key, digest, revisión de binding/identidad y epoch. Corrección de campos
+crea otra definición/propuesta/consentimiento, sin ajustar la operación autorizada.
+Los digests schema 1 continúan verificables; los adapters B8C los rechazan cerrados.
+
+B8A conserva evidencia B7B emitida/causal, autorización contextual congelada,
+permiso actual del actor, expiración, identidad, binding, ownership, safety y
+takeover. Revocación/corrección/takeover que gana el commit bloquea el efecto;
+un evento posterior no deshace un efecto ya confirmado.
+
+## Concurrencia, evidencia y recuperación
+
+Orden: Conversation → TurnWork → ContactIdentity → Goal → Operation → org/horario
+FOR SHARE → veterinarios original/destino ordenados por PK → Appointment FOR UPDATE
+→ owner/pet FOR SHARE. La comparación del snapshot ocurre después del lock. Un
+vet original cambiado produce stale; no se adquieren nuevos recursos fuera de orden.
+La ruta humana ya comparte esos locks y su expected_state. Dos operaciones sobre
+la misma cita no se protegen solo con el lock de Operation.
+
+Destino validado con OrganizationSchedule actual, timezone y DST estrictos B8B,
+intervalos UTC [start,end), adyacencia permitida y ocupación
+scheduled/confirmed/in_progress. La cita propia se excluye; las demás no.
+GiST `appointment_no_overlap_per_vet` sigue siendo defensa final común para
+INSERT B8B y UPDATE B8C. Ningún READ reserva un slot ni permite sustitución.
+
+Migración aditiva `appointments.0017_appointment_mutation_effect`: ledger mínimo
+AppointmentMutationEffect, UUID de operación único, FKs PROTECT, tenant, kind,
+digest, before/after y committed_at. Trigger PostgreSQL verifica alcance y rechaza
+UPDATE/DELETE. No backfill ni uso de source_operation como campo de última modificación.
+Se conservan efectos diferentes de creación, reprogramación y cancelación.
+
+La prueba identifica el origen/destino exactos de la reprogramación o el estado,
+intervalo y veterinario originales y estado canceled de cancelación. committed_at
+es un timestamp observado dentro de la transacción y publicado después del commit;
+no pretende ser timestamp físico WAL. Cancelación autónoma deja changed_by NULL en
+el status audit; contacto/operación/AuthorizationEvidence identifican al actor causal.
+
+Antes de un efecto se reconcilia por UUID/digest/transición completa. Prueba exacta
+histórica → SUCCEEDED sin escribir de nuevo, aunque la cita haya cambiado después.
+Ausencia acreditada permite validar y ejecutar si conserva elegibilidad. Evidencia
+contradictoria/incompleta → UNCERTAIN, sin retry ciego. Una cancelación humana no
+prueba éxito propio. No se reactivan/revierten citas para satisfacer un retry.
+
+Guard final, transición, auditoría, ledger, ToolExecution y execution result se
+confirman en una transacción coherente. Un rechazo de precondition es DENIED sin
+efecto; un rechazo definitivo durante ejecución solo es FAILED con ausencia probada.
+Error dudoso se conserva UNCERTAIN. La recuperación B8A de UNCERTAIN no se amplía
+a reintentos automáticos. Cache se invalida on_commit robusto; notificaciones se
+derivan de estado/instante actual. No se introducen llamadas externas bajo locks.
+
+## Evidencia de aceptación
+
+Inventario actual B8C: 82 pruebas de dominio/guard, 41 de PostgreSQL multiproceso
+y 24 escenarios del corpus con adapters reales (147 IDs únicos). La regresión usa
+exactamente los 1462 IDs de la unión publicada en B8B, incluidos Agenda humana,
+walk-in, dashboard/signals y creación B8B. Repeticiones y reparaciones se contabilizan
+separadas, no como IDs nuevos. El registro final se publica en
+[b8c-acceptance-resultsjson](evals/b8c-acceptance-resultsjson).
+
+Resultado final: **1609 IDs únicos cubiertos y aprobados**, 147 B8C + 1462 baseline.
+No es una única invocación ininterrumpida. Pasadas completas seleccionadas:
+La unión baseline conserva los 1224 IDs B0–B8A, 83 B8B, 99 Agenda y 63 dashboard
+publicados anteriormente, con siete IDs compartidos: 1462 únicos.
+
+| Ejecución | Tests | Resultado y alcance |
+|---|---:|---|
+| unit_final | 78 | OK, dominio/guard B8C |
+| unit_added | 8 | OK, cuatro IDs nuevos y cuatro verificaciones reforzadas; unión funcional 82 |
+| corpus_final | 24 | OK, adapters reales, las seis métricas críticas = 0 |
+| process_added | 3 | OK, reparación de crash y GiST adicional |
+| processes_resume | 41 | OK, inventario multiproceso completo, 78 PIDs, 29 esperas PostgreSQL Lock |
+| baseline_resume | 189 | OK, complementa los 1273 `ok` del log parcial para cubrir exactamente 1462 |
+| baseline_boundary | 1 | OK, repite además el último `ok` del log parcial para acreditar su teardown completo |
+
+Todas estas pasadas terminaron con exit_code 0, cero failures/errors/skips/xfail.
+Checks Django sin incidencias; migrate desde base vacía aplicado; makemigrations
+--check --dry-run sin deriva. PostgreSQL confirmó GiST, unicidad de operation_id,
+FKs, constraint de kind y trigger inmutable de la migración 0017. git diff --check
+sin errores. La cadena de migraciones incluye y conserva la evidencia B8B.
+Los resultados JSON incluyen IDs, hashes de logs/runtime/corpus, procesos y
+límites; las ejecuciones parciales no se hacen pasar por completas.
+El check staged detectó una línea vacía final en un archivo de tests nuevo;
+se retiró y se repitió el check antes del commit de implementación.
+
+Entorno aislado local: PostgreSQL 16.15, Python 3.13.2, Django 6.0.5,
+psycopg 3.3.4 y DRF 3.17.1, dependencias del entorno B8B conservado. Puerto local
+25432; bases de tests con prefijos test_b8c_/test_b8b_. Hash de passwords de fixtures
+MD5; no cambio de configuración productiva. Los workers verifican versión y base.
+
+La sesión inicial se interrumpió sin cierre de suite: 124 casos B8C iniciados y
+1275 de regresión. Se conserva el log parcial y su SHA-256; no se declara una pasada
+completa verde. La regresión recupera 1273 resultados `ok` y ejecuta por ID los otros
+189 (dos fallos iniciales incluidos). B8C vuelve a ejecutar íntegros los 41 casos
+multiproceso para conservar PIDs/resultados/esperas, porque el primer proceso no
+alcanzó a exportarlos. El runner ahora también registra evidencia incremental.
+
+Fallos de desarrollo conservados: factura de fixture sin Checkout, dos fixtures
+con Organization.slug inexistente y ALTER TRIGGER con eventos FK pendientes;
+se corrigieron los fixtures y pasaron en unit_final. Una base dev reutilizada no
+tenía la última versión del trigger; se actualizó exclusivamente esa base, y después
+la cadena completa de migraciones pasó desde una base vacía independiente. El primer
+check apuntó a una base aún inexistente: error de conexión, cero tests; la ejecución
+posterior completa sí creó/verificó el schema. Un intento de continuación ocurrió
+durante recovery de PostgreSQL y tampoco ejecutó tests.
+
+El fallo inicial kill_after_evidence y los dos fallos B8B coincidieron con pausas
+largas/cambios del reloj (el log registra fencing tras varias horas). No se recuperó
+el traceback final del proceso interrumpido y no se atribuye una causa concluyente
+sin él. Se repiten esos IDs conservando el fallo anterior en el registro. El estado
+final depende de las ejecuciones posteriores, no de descartar el log inicial.
+
+Reproducción desde backend, con DATABASE_URL explícita a PostgreSQL local aislado:
+`python -m apps.agent.tests.run_b8c_acceptance --suite b8c --database test_b8c_acceptance --output <prefijo>`;
+`--suite baseline --database test_b8b_b8c_baseline` exige exactamente 1462 IDs.
+`targeted` y `baseline-repair` requieren `--ids-file` JSON y validan su inventario.
+`checks` requiere una base aislada creada previamente y ejecuta migrate, check,
+makemigrations --check --dry-run y consulta constraints/trigger. La salida JSON
+incluye cada ID; el log incluye fallos, y el journal conserva éxitos/procesos parciales.
+
+| Requisito | Evidencia específica |
+|---|---|
+| RES-01–03 | destino exacto, cambio de vet explícito, duración 75 min, sin sustitución |
+| RES-04–05, 11–12 | snapshot/estado/tenant/pet y guard real |
+| RES-06–10 | slot ocupado, overlap parcial, self exclusion, adyacencia, cierre, DST/zona |
+| RES-13–15 | retry, dos efectos históricos consecutivos, cambio humano posterior, no-op |
+| CAN-01–07 | cancelación/motivo exactos, ajena, done/in_progress, stale, otra cita, tenant |
+| CAN-08–10 | retry/historia, reactivación humana, conservación clínica/financiera |
+| B8A ambos kinds | evidencia/emisión/causalidad/digest, pending/rejected, TTL/replaces, revisiones, permiso, safety, gates |
+| Concurrencia | misma cita, reprogramar/cancelar, B8B CREATE, destino compartido, intercambio vets, humano, corrección/revocación/takeover, duplicados |
+| B8C-FI-01 | kill_before_locks, ambos kinds, después del guard |
+| B8C-FI-02 | kill_after_appointment, snapshot tras lock, ambos kinds |
+| B8C-FI-03 | kill_after_mutation, antes del ledger, ambos kinds |
+| B8C-FI-04 | kill_after_evidence, antes de commit, ambos kinds |
+| B8C-FI-05 | kill_after_commit_historical_retry, ambos kinds |
+| B8C-FI-06 | race_same y race_cancel, ambos órdenes |
+| B8C-FI-07 | endpoint PATCH humano real, ambos kinds/órdenes |
+| B8C-FI-08 | evidencia corrupta deliberada en base aislada → UNCERTAIN |
+| B8C-FI-09 | error SQL real al insertar evidencia, rollback de mutación/auditoría |
+| B8C-FI-10 | retry con cambio legítimo posterior, sin revertir destino/estado |
+
+Las barreras pausan procesos independientes en la transacción real; se mata el
+worker y se observa rollback/recuperación con conexión diferente. Los tests de carrera
+registran PIDs y espera real `pg_stat_activity.wait_event_type=Lock`. Los hooks
+controlan fronteras; no sustituyen adapters ni simulan el commit con una excepción
+de mock. La prueba GiST adicional evita locks de aplicación deliberadamente para
+enfrentar UPDATE a INSERT B8B. No es una prueba de pérdida eléctrica.
+
+El [corpus v1](evals/b8c-appointment-mutations-corpus-v1json) distingue su alcance
+real_adapter de multiprocess. Mide cambios de filas/evidencia y conflictos, no
+clasificación LLM simulada. Cierre exige cero unauthorized_appointment_mutations,
+wrong_appointment_mutations, duplicate_effects_per_operation,
+stale_snapshot_overwrites, invalid_destination_slot_conflicts y
+forbidden_operation_kinds_executed. No se extrapola a garantía universal.
+
+## Operación, límites y rollback
+
+Observabilidad: vocabulario cerrado appointment_reschedule_requested/succeeded/stale/
+slot_unavailable, appointment_cancel_requested/succeeded/stale y
+appointment_mutation_reconciled/evidence_mismatch/uncertain, prefijo AGENT_B8C.
+Labels limitados a count/schema; no teléfono, mascota, UUID ni motivo libre.
+Inspector readonly distingue kind, consentimiento, ejecución, cita, transición
+histórica, estado actual y reconciliación. No presenta el destino histórico como
+horario necesariamente vigente ni agrega un control de ejecución.
+
+La única desviación de alcance del plan es explícita: su receta «ninguna tabla
+nueva» se enmienda por el ledger mínimo autorizado en este encargo, porque
+source_operation y status audit no prueban las modificaciones requeridas. No se
+agrega event sourcing, workflow compuesto ni refactor transversal. Tres tests
+previos actualizan solo la expectativa de registro B8C; B8D/E siguen sin adapters.
+
+H01/H02/H18 reciben evidencia de consentimiento/permiso con ambos dominios reales;
+H05 de resultado respaldado; H06 de idempotencia/crash; H08 de precedencia frente
+al commit. No se cierran universalmente ni se transfieren garantías de CREATE sin
+prueba B8C. Persisten teléfonos compartidos/reciclados, step-up no implementado,
+exactly-once externo no demostrado, pérdida eléctrica no probada y gates operativos.
+E1–E5 y P-A/P-B continúan abiertos. Readiness B8D: base reutilizable, fase no iniciada
+ni autorizada; requiere encargo, contrato, pruebas y gate propios.
+
+La reconciliación histórica descrita aquí es la de RESCHEDULE/CANCEL. Los campos
+source_operation/source_parameters_digest y created_at de creación B8B se
+preservan y el caso creación→cancelación mantiene ambas pruebas. No se amplía el
+adapter CREATE para tolerar todos los cambios posteriores de horario: su contrato
+anterior puede devolver UNCERTAIN al contrastar la cita actual tras una reprogramación.
+Eso no revierte B8C ni elimina su historia y requiere inspección de la evidencia;
+no se presenta como una nueva garantía de recuperación del adapter B8B.
+
+Rollback funcional: mantener/cerrar B0 y flags, preservar schema 2 y ledger,
+reconciliar operaciones pendientes con el lector B8C. No revertir las citas ni
+eliminar la migración/evidencia; volver a un lector que desconoce el nuevo digest
+no es un rollback compatible. Sin efectos autónomos productivos de esta entrega.
+
+CREATE_APPOINTMENT tiene su adapter previo y producción OFF; RESCHEDULE_APPOINTMENT
+y CANCEL_APPOINTMENT tienen adapters B8C y producción OFF; CONFIRM_ATTENDANCE y
+REGISTER_PET permanecen DISABLED aun con flags accidentales. B8B no se despliega.
+WRITE autónomo continúa cerrado y activación PENDING_ACTIVATION_REQUIREMENTS.
+No hubo despliegue ni avance B8D–B9/E1–E5/P-A/P-B.
+
+Recomendación: cerrar B8C técnicamente y detener el trabajo en esta fase.
+La aceptación no abre WRITE ni autoriza B8D o activación beta.

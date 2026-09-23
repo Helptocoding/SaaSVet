@@ -601,3 +601,19 @@ por el sistema de permisos `HybridPermission`.
 
 Las transiciones invalidas retornan `400` con `error` descriptivo que incluye el estado actual
 y el estado solicitado.
+
+## Mutaciones autorizadas B8C (2026-09-22)
+
+`mutations.py` comparte la transformación acotada de horario con el serializer y
+la cancelación/auditoría con `/status/` y DELETE. Las reglas humanas no cambian.
+Los adapters restringidos exigen scheduled/confirmed futura, snapshot exacto bajo
+locks, relación owner/pet vigente y, al mover, OrganizationSchedule/zona/destino
+actuales. Orden: veterinarios por PK antes de Appointment. Se excluye la cita propia
+del overlap; GiST sigue siendo la exclusión definitiva. No se elimina ningún
+registro clínico o financiero ni se cancela su contenido por inferencia.
+
+AppointmentMutationEffect conserva transiciones por operation_key, distintas de
+source_operation (creación) y de AppointmentStatusChange (estado). Es inmutable,
+tenant-safe y sin backfill. Un retry puede reconocer una hora histórica aunque
+la cita haya cambiado después. No-op se rechaza sin señales. Cache on_commit y
+notificaciones derivadas conservan sus contratos. [Contrato B8C](../contrato-appointment-mutations-b8cmd).

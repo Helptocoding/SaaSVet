@@ -1406,3 +1406,13 @@ Admin de solo lectura distingue propuesta/emisión/consentimiento/NOT_STARTED.
 AGENT_B7B_* usa count/schema; flag AGENT_B7B_CONSENT_ENABLED apagado por defecto.
 Legacy no recibe consentimiento sintético. AUTHORIZED no ejecuta negocio;
 WRITE continúa contenido. [Contrato B7B](../contrato-consentimiento-causal-b7bmd).
+
+## Adapters B8C (2026-09-22)
+
+RESCHEDULE_APPOINTMENT y CANCEL_APPOINTMENT entran solo por
+execute_authorized_operation(UUID, ExecutionContext). No se habilitan tools WRITE
+legacy ni PATCH/DELETE AGENT. FK exacta y preconditions schema 2 se contrastan bajo
+locks; el ledger de Agenda prueba la transición histórica por UUID/digest. El
+inspector readonly separa evidencia histórica, cita actual y reconciliación.
+La evidencia histórica no afirma que el horario destino siga vigente. B0/flags
+de producción OFF; asistencia/registro siguen DISABLED. [Contrato B8C](../contrato-appointment-mutations-b8cmd).

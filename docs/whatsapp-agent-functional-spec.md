@@ -796,3 +796,16 @@ historia. Este corte no implementa reprogramación/cancelación/asistencia/alta 
 mascota ni nueva comunicación autónoma. Producción permanece contenida por B0;
 PENDING_ACTIVATION_REQUIREMENTS sigue vigente.
 [Contrato y evidencia B8B](contrato-create-appointment-b8bmd).
+
+### B8C — reprogramación y cancelación exactas (2026-09-22)
+
+Dos adapters de Agenda consumen exclusivamente ConversationOperation y B8A.
+Conservan cita/mascota/owner exactos y verifican el snapshot original bajo lock.
+Destino ocupado, estado incompatible o cambio humano requieren nueva definición;
+no se sustituye el horario ni se transfiere consentimiento. Cancelar usa `canceled`
+y conserva registros clínicos/financieros. El ledger histórico distingue el efecto
+propio de una actuación humana y permite replay sin revertir cambios posteriores.
+Solo un SUCCEEDED con evidencia durable confirma el efecto; DENIED/FAILED no lo
+afirman y UNCERTAIN requiere reconciliación. No se añade un mensaje remoto ni se
+abre una tool legacy. Producción OFF, activación PENDING_ACTIVATION_REQUIREMENTS.
+[Contrato B8C](contrato-appointment-mutations-b8cmd).

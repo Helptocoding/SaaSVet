@@ -115,3 +115,11 @@ PostgreSQL real con procesos separados, barriers y kill para RACE/FI; regresión
 de los 1135 IDs B0–B7B. Los efectos del dominio aislado de prueba NO acreditan agenda,
 asistencia ni Pet reales. La validación de cada adapter continúa pendiente B8B–B8E.
 Sin skips/xfail ni sumas duplicadas. Activación PENDING_ACTIVATION_REQUIREMENTS.
+
+Addendum B8C (2026-09-22): el registry entrega también reprogramación/cancelación,
+con gates efectivos cerrados y el mismo protocolo LOCAL_ATOMIC. Reconciliación
+terminal consulta AppointmentMutationEffect; la evidencia es histórica y no una
+afirmación del estado actual de Appointment. preconditions schema 2 añade el
+snapshot sin reinterpretar digest/consentimiento legacy. Se añade razón cerrada
+appointment_no_change y observabilidad B8C al resultado confirmado/incierto.
+No se modifica la autorización contextual ni se habilitan B8D/E.

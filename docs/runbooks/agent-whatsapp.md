@@ -554,3 +554,28 @@ MedicalRecord/Invoice/Payment/StockMovement implícitos al crear scheduled.
 [Contrato B8B](../contrato-create-appointment-b8bmd),
 [acta y resultados](../implementacion-b8b-agente-whatsapp-2026-09-21md).
 PENDING_ACTIVATION_REQUIREMENTS permanece; no desplegar por este cierre técnico.
+
+## B8C: mutaciones históricas y rollback
+
+Requiere appointments.0017_appointment_mutation_effect, guard B8A y preconditions
+schema 2. No migrar ni autorizar propuestas legacy por inferencia. Producción:
+B0 cerrado y AGENT_OPERATION_EXECUTION_ENABLED sin habilitaciones; registrar un
+adapter no concede autoridad. PENDING_ACTIVATION_REQUIREMENTS sigue vigente.
+
+Ante stale/slot_unavailable/no_change: no sustituir fecha, veterinario ni parámetros;
+una nueva petición exige operación/propuesta/consentimiento nuevos. Canceled por
+un humano no prueba efecto de CANCEL_APPOINTMENT. Ante UNCERTAIN reconciliar UUID,
+digest, tenant y transición; nunca retry ciego. El inspector muestra separadamente
+AppointmentMutationEffect y Appointment actual. No tiene controles de ejecución.
+
+Rollback: cerrar flags RESCHEDULE_APPOINTMENT/CANCEL_APPOINTMENT, mantener B0 y
+conservar operaciones, resultados, source_operation, status audit y ledger B8C.
+No revertir 0017 sobre evidencia ni restaurar automáticamente horarios/citas.
+Cache usa on_commit/TTL existente; no hay mensajes remotos que PostgreSQL pueda
+deshacer. B8D/E y autorización contextual siguen cerrados; no despliegue en B8C.
+
+Aceptación local reproducible (DATABASE_URL explícita a PostgreSQL loopback):
+`python -m apps.agent.tests.run_b8c_acceptance --suite b8c --database test_b8c_acceptance --output <ruta>/b8c`.
+Suite baseline exige `test_b8b_` por compatibilidad con workers B8B y verifica los
+1462 IDs previos (incluye Agenda/Dashboard). Suites unit/processes/corpus son
+ejecuciones parciales identificadas; checks aplica migraciones y detecta deriva.
