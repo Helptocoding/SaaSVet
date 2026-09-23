@@ -23,6 +23,24 @@ class ConversationOperationAdmin(admin.ModelAdmin):
 
     @admin.display(description='Appointment / reconciliación')
     def appointment_effect(self, obj):
+        if obj.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+            from .operation_execution import REGISTRY
+            from apps.appointments.models import Appointment, AppointmentMutationEffect
+            effect = AppointmentMutationEffect.objects.filter(operation_id=obj.operation_key,
+                organization_id=obj.organization_id).first()
+            current = Appointment.all_objects.filter(pk=obj.appointment_id,
+                organization_id=obj.organization_id).values('public_id', 'status', 'date',
+                    'start_time', 'end_time', 'veterinarian_id').first()
+            result = REGISTRY[obj.operation_kind].adapter.reconcile(obj, None)
+            visible = ('public_id', 'status', 'date', 'start_time', 'end_time',
+                       'start_datetime', 'end_datetime', 'veterinarian_id')
+            def display_snapshot(value):
+                return {k: value.get(k) for k in visible} if isinstance(value, dict) else 'INVALID_EVIDENCE'
+            return {'reconciliation': result.status, 'appointment': obj.appointment_id,
+                'historical_effect': {'before': display_snapshot(effect.before),
+                    'after': display_snapshot(effect.after),
+                    'committed_at': effect.committed_at} if effect else None,
+                'current_appointment': current}
         if obj.operation_kind != 'CREATE_APPOINTMENT':
             return 'No adapter'
         from .appointment_execution import CreateAppointmentAdapter

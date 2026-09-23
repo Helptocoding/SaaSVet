@@ -113,7 +113,7 @@ def appointment_interval(org, day, start, end, *, strict_local=False):
     return start_utc, end_utc
 
 
-def slot_conflicts(command, start_utc, end_utc):
+def slot_conflicts(command, start_utc, end_utc, *, exclude_appointment_id=None):
     if command.veterinarian_id is None or command.status not in ACTIVE_STATUSES:
         return False
     # all_objects matches GiST: is_active is deliberately NOT its predicate.
@@ -123,7 +123,7 @@ def slot_conflicts(command, start_utc, end_utc):
             Q(start_datetime__lt=end_utc, end_datetime__gt=start_utc)
             | (Q(start_datetime__isnull=True) | Q(end_datetime__isnull=True))
             & Q(date=command.date, start_time__lt=command.end_time, end_time__gt=command.start_time)
-        ).exists()
+        ).exclude(pk=exclude_appointment_id).exists()
 
 
 def validate_creation(command, *, require_schedule=False, expected_timezone=None, owner_id=None):

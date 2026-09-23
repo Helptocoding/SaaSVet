@@ -29,7 +29,7 @@ GATE_REASONS = frozenset(('containment_closed', 'kind_disabled', 'flag_disabled'
     'adapter_missing', 'adapter_contract_disabled', 'consent_feature_disabled'))
 PRECONDITION_REASONS = frozenset(('entity_inactive', 'entity_scope', 'appointment_changed',
     'appointment_not_mutable', 'schedule_elapsed', 'slot_unavailable', 'invalid_pet_data',
-    'domain_conflict', 'precondition_failed', 'schedule_closed', 'invalid_local_time'))
+    'domain_conflict', 'precondition_failed', 'schedule_closed', 'invalid_local_time', 'appointment_no_change'))
 FAILURE_REASONS = PRECONDITION_REASONS | {'definitive_rejection', 'reconciled_no_effect'}
 
 
@@ -110,11 +110,12 @@ class Registration:
 
 
 from .appointment_execution import CreateAppointmentAdapter
+from .appointment_mutation_execution import RescheduleAppointmentAdapter, CancelAppointmentAdapter
 
 REGISTRY = MappingProxyType({
     'CREATE_APPOINTMENT': Registration('create_appointment', enabled=True, adapter=CreateAppointmentAdapter()),
-    'RESCHEDULE_APPOINTMENT': Registration('reschedule_appointment'),
-    'CANCEL_APPOINTMENT': Registration('cancel_appointment'),
+    'RESCHEDULE_APPOINTMENT': Registration('reschedule_appointment', enabled=True, adapter=RescheduleAppointmentAdapter()),
+    'CANCEL_APPOINTMENT': Registration('cancel_appointment', enabled=True, adapter=CancelAppointmentAdapter()),
     'CONFIRM_ATTENDANCE': Registration('confirm_appointment'),
     'REGISTER_PET': Registration('register_pet_only'),
 })
@@ -321,12 +322,19 @@ def _authority_reason(operation, conv, goal, work, context):
 def _uncertain(operation, reason):
     _record(operation, 'UNCERTAIN', reason)
     observe('execution_uncertain')
+    if operation.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+        from .appointment_mutation_execution import observe as observe_mutation
+        observe_mutation('appointment_mutation_uncertain')
     return ExecutionResult('UNCERTAIN', reason, operation.operation_key, reconciliation_required=True)
 
 
 def _success(operation, evidence, *, reconciled=False):
     _record(operation, 'SUCCEEDED', 'effect_confirmed', evidence)
     observe('execution_reconciled' if reconciled else 'execution_succeeded')
+    if not reconciled and operation.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+        from .appointment_mutation_execution import observe as observe_mutation
+        observe_mutation('appointment_' + ('reschedule' if operation.operation_kind ==
+            'RESCHEDULE_APPOINTMENT' else 'cancel') + '_succeeded')
     return ExecutionResult('SUCCEEDED', 'effect_confirmed', operation.operation_key, evidence,
                            duplicate=reconciled)
 
@@ -398,6 +406,10 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
             if operation.operation_kind == 'CREATE_APPOINTMENT':
                 from .appointment_execution import observe as observe_appointment
                 observe_appointment('appointment_execution_requested')
+            elif operation.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+                from .appointment_mutation_execution import observe as observe_mutation
+                observe_mutation('appointment_' + ('reschedule' if operation.operation_kind ==
+                    'RESCHEDULE_APPOINTMENT' else 'cancel') + '_requested')
             reason = _definition_reason(operation, conv, goal, context)
             if reason:
                 return _deny(operation, reason)
@@ -428,10 +440,14 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
                         and prior.proves_absence_for(operation) and ledger.status == 'FAILED'
                     )
                     if not consistent:
-                        observe_appointment('appointment_execution_uncertain')
+                        if operation.operation_kind == 'CREATE_APPOINTMENT':
+                            observe_appointment('appointment_execution_uncertain')
+                        else:
+                            observe_mutation('appointment_mutation_uncertain')
                         return ExecutionResult('UNCERTAIN', 'appointment_evidence_mismatch',
                             operation.operation_key, reconciliation_required=True)
-                    observe_appointment('appointment_duplicate_suppressed')
+                    if operation.operation_kind == 'CREATE_APPOINTMENT':
+                        observe_appointment('appointment_duplicate_suppressed')
                     return ledger
                 return _prior_result(operation)
             entry = REGISTRY[operation.operation_kind]

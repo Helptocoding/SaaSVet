@@ -68,23 +68,7 @@ def _raw_pk(value):
         return None
 
 
-ALLOWED_TRANSITIONS = {
-    'scheduled':   {'confirmed', 'in_progress', 'canceled', 'no_show'},
-    'confirmed':   {'in_progress', 'canceled', 'no_show'},
-    'in_progress': {'done', 'canceled'},
-    'done':        set(),
-    'canceled':    {'scheduled'},
-    'no_show':     {'scheduled'},
-}
-
-
-def _appointment_has_started(appointment):
-    """Returns whether the appointment is already in the past."""
-    if appointment.start_datetime is not None:
-        return appointment.start_datetime <= timezone.now()
-    return local_date_time_to_utc(
-        appointment.organization, appointment.date, appointment.start_time,
-    ) <= timezone.now()
+from .mutations import ALLOWED_TRANSITIONS, appointment_has_started as _appointment_has_started, cancel_locked
 
 
 class AppointmentListCreateView(TenantQueryMixin, generics.ListCreateAPIView):
@@ -270,17 +254,8 @@ class AppointmentDetailView(PublicIdLookupMixin, TenantQueryMixin, generics.Retr
                 # cancelaciones por DELETE quedan invisibles a cualquier
                 # métrica analítica derivada del audit log.
                 # Ver docs/analytics-schema-audit.md §2.1.
-                previous_status = locked.status
-                locked.status = 'canceled'
-                locked.save(update_fields=['status'])
-                AppointmentStatusChange.objects.create(
-                    appointment=locked,
-                    from_status=previous_status,
-                    to_status='canceled',
-                    changed_by=request.user,
-                    reason='Cancelación por DELETE /appointments/<id>/',
-                    organization=locked.organization,
-                )
+                cancel_locked(locked, actor=request.user,
+                    audit_reason='Cancelación por DELETE /appointments/<id>/')
             return self._deprecated(Response(status=status.HTTP_200_OK), request)
 
         return retry_on_vet_lock_race(_do)
@@ -428,16 +403,15 @@ def update_status(request, pk):
                             }
                         )
 
-                locked.save(update_fields=update_fields)
-
-                AppointmentStatusChange.objects.create(
-                    appointment=locked,
-                    from_status=from_status,
-                    to_status=new_status,
-                    changed_by=request.user,
-                    reason=cancellation_reason,
-                    organization=locked.organization,
-                )
+                if new_status == 'canceled':
+                    locked.status = from_status
+                    cancel_locked(locked, reason=cancellation_reason, actor=request.user)
+                else:
+                    locked.save(update_fields=update_fields)
+                    AppointmentStatusChange.objects.create(
+                        appointment=locked, from_status=from_status, to_status=new_status,
+                        changed_by=request.user, reason=cancellation_reason,
+                        organization=locked.organization)
         except NO_OVERLAP_EXCEPTIONS as exc:
             if is_no_overlap_violation(exc):
                 raise SlotTaken() from exc

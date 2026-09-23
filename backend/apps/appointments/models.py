@@ -200,3 +200,37 @@ class AppointmentStatusChange(OrganizationalModel):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class AppointmentMutationEffect(models.Model):
+    """B8C proof of one historical transition, independent of current appointment."""
+    organization = models.ForeignKey('organizations.Organization', on_delete=models.PROTECT)
+    operation = models.OneToOneField('agent.ConversationOperation', to_field='operation_key',
+        on_delete=models.PROTECT, related_name='appointment_mutation_effect')
+    appointment = models.ForeignKey(Appointment, on_delete=models.PROTECT, related_name='mutation_effects')
+    kind = models.CharField(max_length=32, choices=[
+        ('RESCHEDULE_APPOINTMENT', 'RESCHEDULE_APPOINTMENT'), ('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT')])
+    parameters_digest = models.CharField(max_length=64)
+    before = models.JSONField()
+    after = models.JSONField()
+    committed_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError('Appointment effect evidence is immutable.')
+        operation = self.operation
+        if (operation.organization_id != self.organization_id
+                or self.appointment.organization_id != self.organization_id
+                or operation.appointment_id != self.appointment_id
+                or operation.parameters_digest != self.parameters_digest
+                or operation.operation_kind != self.kind
+                or operation.consent_state != 'AUTHORIZED'
+                or operation.preconditions.get('appointment_snapshot') != self.before):
+            raise ValidationError('Appointment effect scope does not match its operation.')
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    class Meta:
+        constraints = [models.CheckConstraint(
+            condition=models.Q(kind__in=['RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT']),
+            name='appointment_mutation_kind_valid')]

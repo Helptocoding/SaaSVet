@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "phase": "B8C",
+  "scope": "real_adapters; PostgreSQL process tests separately reported",
+  "universal_guarantee": false,
+  "cases": [
+    {
+      "id": "RES-C01",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "success",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "RES-C02",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "retry",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "RES-C03",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "historical",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "RES-C04",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "stale",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C05",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "human_canceled",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C06",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "done",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C07",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "in_progress",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C08",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "digest",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C09",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "revoked",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C10",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "b0",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C11",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "closed",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C12",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "occupied",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C13",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "overlap",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "RES-C14",
+      "kind": "RESCHEDULE_APPOINTMENT",
+      "scenario": "adjacent",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "CAN-C01",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "success",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "CAN-C02",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "retry",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "CAN-C03",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "historical",
+      "effects": 1,
+      "status": "SUCCEEDED"
+    },
+    {
+      "id": "CAN-C04",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "stale",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "CAN-C05",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "human_canceled",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "CAN-C06",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "done",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "CAN-C07",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "in_progress",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "CAN-C08",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "digest",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "CAN-C09",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "revoked",
+      "effects": 0,
+      "status": "DENIED"
+    },
+    {
+      "id": "CAN-C10",
+      "kind": "CANCEL_APPOINTMENT",
+      "scenario": "b0",
+      "effects": 0,
+      "status": "DENIED"
+    }
+  ]
+}

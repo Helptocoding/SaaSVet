@@ -43,12 +43,15 @@ def invalidate_pending(*, organization_id, reason, **scope):
 
 
 def digest_bindings(operation):
-    return {'organization_id': operation.organization_id,
+    result = {'organization_id': operation.organization_id,
             'conversation_id': operation.conversation_id, 'contact_id': operation.contact_id,
             'owner_id': operation.owner_id, 'pet_id': operation.pet_id,
             'appointment_id': operation.appointment_id,
             'expected_state': operation.preconditions.get('expected_state'),
             'clinic_timezone': operation.preconditions.get('clinic_timezone')}
+    if operation.preconditions.get('schema') == 2:
+        result['appointment_snapshot'] = operation.preconditions.get('appointment_snapshot')
+    return result
 
 
 def _appointment_state(appointment):
@@ -58,7 +61,7 @@ def _appointment_state(appointment):
             'veterinarian_id': appointment.veterinarian_id, 'pet_id': appointment.pet_id}
 
 
-def _slot_vet(conversation, parameters):
+def _slot_vet(conversation, parameters, *, exclude_appointment_id=None):
     from apps.appointments.models import Appointment
     from .models import AgentSettings
     from .tools import _scheduling_vets
@@ -74,7 +77,7 @@ def _slot_vet(conversation, parameters):
             continue
         if not Appointment.objects.for_organization(conversation.organization_id).filter(
                 veterinarian=vet, date=day, status__in=('scheduled', 'confirmed', 'in_progress'),
-                start_time__lt=end, end_time__gt=start).exists():
+                start_time__lt=end, end_time__gt=start).exclude(pk=exclude_appointment_id).exists():
             return vet
     raise PreparationDenied('slot_unavailable')
 
@@ -114,6 +117,10 @@ def definition_from_matter(conversation, goal, capability):
             raise PreparationDenied('appointment_not_mutable')
         params['appointment_id'] = appointment.pk
         preconditions['expected_state'] = _appointment_state(appointment)
+        if spec.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+            from apps.appointments.mutations import appointment_snapshot
+            preconditions['schema'] = 2
+            preconditions['appointment_snapshot'] = appointment_snapshot(appointment)
         preconditions['labels']['original_veterinarian'] = (
             appointment.veterinarian.get_full_name() or appointment.veterinarian.username
             if appointment.veterinarian_id else 'sin asignar')
@@ -135,7 +142,8 @@ def definition_from_matter(conversation, goal, capability):
             params.update(pet_id=goal.bound_pet_id, reason=values.get('reason') or values.get('service'))
             probe.update(pet_id=params['pet_id'], reason=params['reason'])
         canonicalize(spec.operation_kind, probe)
-        vet = _slot_vet(conversation, params)
+        vet = _slot_vet(conversation, params, exclude_appointment_id=(
+            goal.bound_appointment_id if spec.operation_kind == 'RESCHEDULE_APPOINTMENT' else None))
         params['veterinarian_id'] = vet.pk
         preconditions['labels']['veterinarian'] = vet.get_full_name() or vet.username
         preconditions['slot_observation'] = {k: provenance.get(k) for k in
@@ -181,6 +189,10 @@ def _stale_reason(operation, conversation, goal):
         observe('digest_schema_validation_failure')
         return 'definition_corrupted'
     if operation.appointment_id:
+        if operation.preconditions.get('schema') == 2:
+            from apps.appointments.mutations import appointment_snapshot
+            if appointment_snapshot(operation.appointment) != operation.preconditions.get('appointment_snapshot'):
+                return 'appointment_changed'
         if _appointment_state(operation.appointment) != operation.preconditions.get('expected_state'):
             return 'appointment_changed'
         old = operation.preconditions['expected_state']
@@ -193,6 +205,8 @@ def _stale_reason(operation, conversation, goal):
         current_bindings = {**digest_bindings(operation),
             'expected_state': current_preconditions.get('expected_state'),
             'clinic_timezone': current_preconditions['clinic_timezone']}
+        if operation.preconditions.get('schema') == 2:
+            current_bindings['appointment_snapshot'] = current_preconditions.get('appointment_snapshot')
         if digest(operation.operation_kind, current_params, bindings=current_bindings) != operation.parameters_digest:
             return 'definition_changed'
     except (PreparationDenied, InvalidParameters, ValueError):
@@ -373,6 +387,13 @@ def render(operation):
     p, pre = operation.parameters, operation.preconditions
     pet = pre['labels'].get('pet', '')
     old = pre.get('expected_state', {})
+    if pre.get('schema') == 2:
+        # Preserve v1 rendering verbatim. New proposals also expose any original
+        # sub-minute precision accepted by the human API, without truncation.
+        old = {**old, **{key: pre['appointment_snapshot'][key]
+                       for key in ('date', 'start_time', 'end_time')}}
+        old['start_time'] = old['start_time'].removesuffix(':00')
+        old['end_time'] = old['end_time'].removesuffix(':00')
     original = (f"{pet}, {old.get('date')} {old.get('start_time')}–{old.get('end_time')}"
                 f" ({pre['clinic_timezone']}), veterinario {pre['labels'].get('original_veterinarian', 'sin asignar')}")
     kind = operation.operation_kind

@@ -200,7 +200,8 @@ class B8BCreateTests(AppointmentExecutionFixtures, TestCase):
         self.assertTrue(execution.REGISTRY['CREATE_APPOINTMENT'].adapter.reconcile_terminal)
         with enabled_create(), override_settings(AGENT_OPERATION_EXECUTION_ENABLED={
                 kind: True for kind in execution.REGISTRY}):
-            for kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT', 'CONFIRM_ATTENDANCE', 'REGISTER_PET'):
+            # B8C registers mutations separately; B8D/E remain release-disabled.
+            for kind in ('CONFIRM_ATTENDANCE', 'REGISTER_PET'):
                 with self.subTest(kind=kind):
                     entry = execution.REGISTRY[kind]
                     self.assertFalse(entry.enabled)

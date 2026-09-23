@@ -92,7 +92,8 @@ class OperationExecutionTests(ExecutionFixtures, TestCase):
         from django.conf import settings
         self.assertEqual(set(execution.REGISTRY), set(ConversationOperation.KINDS))
         self.assertTrue(all(not entry.enabled and entry.adapter is None
-                            for kind, entry in execution.REGISTRY.items() if kind != 'CREATE_APPOINTMENT'))
+                            for kind, entry in execution.REGISTRY.items()
+                            if kind in ('CONFIRM_ATTENDANCE', 'REGISTER_PET')))
         # B8B is technically present, effective production execution stays closed.
         self.assertTrue(execution.REGISTRY['CREATE_APPOINTMENT'].enabled)
         self.assertIsNotNone(execution.REGISTRY['CREATE_APPOINTMENT'].adapter)

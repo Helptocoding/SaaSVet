@@ -17,6 +17,20 @@ from .services import (
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        # Validation and locks remain in the human endpoint. Share only the
+        # schedule transformation with the restricted B8C command; one save.
+        if 'start_datetime' in validated_data and any(
+                key in validated_data for key in ('date', 'start_time', 'end_time', 'veterinarian')):
+            from .mutations import set_schedule_fields
+            set_schedule_fields(instance,
+                day=validated_data.get('date', instance.date),
+                start=validated_data.get('start_time', instance.start_time),
+                end=validated_data.get('end_time', instance.end_time),
+                veterinarian_id=getattr(validated_data.get('veterinarian', instance.veterinarian), 'pk', None),
+                org=self.context['request'].user.organization)
+        return super().update(instance, validated_data)
+
     def create(self, validated_data):
         # Same authority used by B8B, with reception's existing hours policy.
         # Technical provenance is not an API field and is never read from data.
