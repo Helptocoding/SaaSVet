@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "operation": "CONFIRM_ATTENDANCE",
+  "cases": [
+    {"id":"CONF-C01","scenario":"token","expected_effects":1},
+    {"id":"CONF-C02","scenario":"declaration","expected_effects":1},
+    {"id":"CONF-C03","scenario":"retry","expected_effects":1},
+    {"id":"CONF-C04","scenario":"historical_done","expected_effects":1},
+    {"id":"CONF-C05","scenario":"human_confirmed","expected_effects":0},
+    {"id":"CONF-C06","scenario":"canceled","expected_effects":0},
+    {"id":"CONF-C07","scenario":"in_progress","expected_effects":0},
+    {"id":"CONF-C08","scenario":"done","expected_effects":0},
+    {"id":"CONF-C09","scenario":"snapshot","expected_effects":0},
+    {"id":"CONF-C10","scenario":"question","text":"¿Mi cita está confirmada?","expected_effects":0},
+    {"id":"CONF-C11","scenario":"question","text":"Me puedes decir si mi cita está confirmada","expected_effects":0},
+    {"id":"CONF-C12","scenario":"question","text":"Sí","expected_effects":0},
+    {"id":"CONF-C13","scenario":"question","text":"Sí confirmo que asistiré pero para Max","expected_effects":0},
+    {"id":"CONF-C14","scenario":"question","text":"Sí confirmo que asistiré y cancela la otra","expected_effects":0},
+    {"id":"CONF-C15","scenario":"question","text":"No 👍","expected_effects":0},
+    {"id":"CONF-C16","scenario":"unreferenced","expected_effects":0},
+    {"id":"CONF-C17","scenario":"wrong_appointment","expected_effects":0},
+    {"id":"CONF-C18","scenario":"tenant","expected_effects":0},
+    {"id":"CONF-C19","scenario":"owner","expected_effects":0},
+    {"id":"CONF-C20","scenario":"gate","expected_effects":0},
+    {"id":"CONF-C21","scenario":"pending","expected_effects":0},
+    {"id":"CONF-C22","scenario":"evidence","expected_effects":0},
+    {"id":"CONF-C23","scenario":"correction","expected_effects":0},
+    {"id":"CONF-C24","scenario":"revocation","expected_effects":0},
+    {"id":"CONF-C25","scenario":"takeover","expected_effects":0},
+    {"id":"CONF-C26","scenario":"register_pet_flag","expected_effects":0}
+  ]
+}

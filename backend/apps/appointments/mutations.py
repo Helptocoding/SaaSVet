@@ -23,7 +23,7 @@ from .creation import (_share_rows, appointment_interval, schedule_windows, slot
 from .models import Appointment, AppointmentStatusChange, AppointmentMutationEffect
 from .services import lock_veterinarians, NO_OVERLAP_EXCEPTIONS, is_no_overlap_violation
 
-MUTATION_KINDS = frozenset(('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'))
+MUTATION_KINDS = frozenset(('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT', 'CONFIRM_ATTENDANCE'))
 ALLOWED_TRANSITIONS = {
     'scheduled': {'confirmed', 'in_progress', 'canceled', 'no_show'},
     'confirmed': {'in_progress', 'canceled', 'no_show'},
@@ -107,10 +107,32 @@ def cancel_locked(appointment, *, reason='', actor=None, audit_reason=None):
         reason=reason if audit_reason is None else audit_reason)
 
 
+def confirm_locked(appointment, *, actor=None):
+    """Human Agenda confirmation: intention to attend, no clinical side effects.
+
+    Caller holds veterinarians then Appointment in its transaction. Human policy
+    has no future-date restriction; the autonomous command validates it separately.
+    """
+    if not connection.in_atomic_block:
+        raise MutationRejected('precondition_failed')
+    if 'confirmed' not in ALLOWED_TRANSITIONS.get(appointment.status, set()):
+        raise MutationRejected('appointment_not_mutable')
+    previous = appointment.status
+    appointment.status = 'confirmed'
+    appointment.save(update_fields=['status'])
+    return AppointmentStatusChange.objects.create(
+        organization_id=appointment.organization_id, appointment=appointment,
+        from_status=previous, to_status='confirmed', changed_by=actor, reason='')
+
+
 def expected_after(command):
     """Pure authorized transition used both at effect and historical reconciliation."""
     after = dict(command.original)
-    if command.kind == 'CANCEL_APPOINTMENT':
+    if command.kind == 'CONFIRM_ATTENDANCE':
+        if after['status'] != 'scheduled':
+            raise MutationRejected('appointment_not_mutable')
+        after['status'] = 'confirmed'
+    elif command.kind == 'CANCEL_APPOINTMENT':
         after['status'] = 'canceled'
         if command.cancellation_reason:
             after['cancellation_reason'] = command.cancellation_reason
@@ -156,6 +178,12 @@ def validate_mutation(command):
         raise MutationRejected('entity_inactive')
     if appointment.status not in ('scheduled', 'confirmed'):
         raise MutationRejected('appointment_not_mutable')
+    if command.kind == 'CONFIRM_ATTENDANCE':
+        if appointment.status != 'scheduled':
+            raise MutationRejected('appointment_not_mutable')
+        from apps.medical_records.models import MedicalRecord
+        if MedicalRecord.all_objects.filter(appointment_id=appointment.pk).exists():
+            raise MutationRejected('appointment_not_mutable')
     original_start, original_end = appointment_interval(org, appointment.date,
         appointment.start_time, appointment.end_time, strict_local=True)
     if ((appointment.start_datetime is not None and appointment.start_datetime != original_start)
@@ -167,7 +195,7 @@ def validate_mutation(command):
     if command.kind == 'CANCEL_APPOINTMENT':
         if sanitize_text(command.cancellation_reason, max_length=100) != command.cancellation_reason:
             raise MutationRejected('precondition_failed')
-    else:
+    elif command.kind == 'RESCHEDULE_APPOINTMENT':
         if not User.objects.filter(pk=command.veterinarian_id, organization_id=org.pk,
                                    is_active=True, role='VET').exists():
             raise MutationRejected('entity_scope')
@@ -194,8 +222,11 @@ def mutate_appointment(command):
     appointment, org = validate_mutation(command)
     try:
         with transaction.atomic():
+            status_change = None
             if command.kind == 'CANCEL_APPOINTMENT':
                 cancel_locked(appointment, reason=command.cancellation_reason)
+            elif command.kind == 'CONFIRM_ATTENDANCE':
+                status_change = confirm_locked(appointment)
             else:
                 set_schedule_fields(appointment, day=command.date, start=command.start_time,
                     end=command.end_time, veterinarian_id=command.veterinarian_id, org=org,
@@ -208,7 +239,8 @@ def mutate_appointment(command):
             return AppointmentMutationEffect.objects.create(organization_id=org.pk,
                 operation_id=command.operation_key, parameters_digest=command.parameters_digest,
                 kind=command.kind, appointment=appointment, before=command.original,
-                after=appointment_snapshot(appointment), committed_at=stamp)
+                after=appointment_snapshot(appointment), committed_at=stamp,
+                status_change=status_change)
     except NO_OVERLAP_EXCEPTIONS as exc:
         if is_no_overlap_violation(exc):
             raise MutationRejected('slot_unavailable') from exc

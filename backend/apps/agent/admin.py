@@ -23,7 +23,7 @@ class ConversationOperationAdmin(admin.ModelAdmin):
 
     @admin.display(description='Appointment / reconciliación')
     def appointment_effect(self, obj):
-        if obj.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+        if obj.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT', 'CONFIRM_ATTENDANCE'):
             from .operation_execution import REGISTRY
             from apps.appointments.models import Appointment, AppointmentMutationEffect
             effect = AppointmentMutationEffect.objects.filter(operation_id=obj.operation_key,
@@ -39,6 +39,7 @@ class ConversationOperationAdmin(admin.ModelAdmin):
             return {'reconciliation': result.status, 'appointment': obj.appointment_id,
                 'historical_effect': {'before': display_snapshot(effect.before),
                     'after': display_snapshot(effect.after),
+                    'status_change_id': effect.status_change_id,
                     'committed_at': effect.committed_at} if effect else None,
                 'current_appointment': current}
         if obj.operation_kind != 'CREATE_APPOINTMENT':

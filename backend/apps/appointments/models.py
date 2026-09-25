@@ -209,7 +209,10 @@ class AppointmentMutationEffect(models.Model):
         on_delete=models.PROTECT, related_name='appointment_mutation_effect')
     appointment = models.ForeignKey(Appointment, on_delete=models.PROTECT, related_name='mutation_effects')
     kind = models.CharField(max_length=32, choices=[
-        ('RESCHEDULE_APPOINTMENT', 'RESCHEDULE_APPOINTMENT'), ('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT')])
+        ('RESCHEDULE_APPOINTMENT', 'RESCHEDULE_APPOINTMENT'), ('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT'),
+        ('CONFIRM_ATTENDANCE', 'CONFIRM_ATTENDANCE')])
+    status_change = models.OneToOneField(AppointmentStatusChange, on_delete=models.PROTECT,
+        null=True, blank=True, related_name='mutation_effect')
     parameters_digest = models.CharField(max_length=64)
     before = models.JSONField()
     after = models.JSONField()
@@ -232,5 +235,5 @@ class AppointmentMutationEffect(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(
-            condition=models.Q(kind__in=['RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT']),
+            condition=models.Q(kind__in=['RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT', 'CONFIRM_ATTENDANCE']),
             name='appointment_mutation_kind_valid')]

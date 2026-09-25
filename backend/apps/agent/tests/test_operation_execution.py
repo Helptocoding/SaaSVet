@@ -93,7 +93,7 @@ class OperationExecutionTests(ExecutionFixtures, TestCase):
         self.assertEqual(set(execution.REGISTRY), set(ConversationOperation.KINDS))
         self.assertTrue(all(not entry.enabled and entry.adapter is None
                             for kind, entry in execution.REGISTRY.items()
-                            if kind in ('CONFIRM_ATTENDANCE', 'REGISTER_PET')))
+                            if kind == 'REGISTER_PET'))
         # B8B is technically present, effective production execution stays closed.
         self.assertTrue(execution.REGISTRY['CREATE_APPOINTMENT'].enabled)
         self.assertIsNotNone(execution.REGISTRY['CREATE_APPOINTMENT'].adapter)
@@ -141,6 +141,8 @@ class OperationExecutionTests(ExecutionFixtures, TestCase):
     def test_auth_09_contextual_mode_disabled(self):
         self.bind_appointment(name='confirm_appointment')
         self.op = self.prepare('confirm_appointment')
+        from .b8d_support import make_legacy_attendance
+        make_legacy_attendance(self.op)
         self.context = execution.ExecutionContext(self.witness, self.conv.contact_id, 'confirm_appointment')
         self.denied('consent_not_authorized')
         # Even injected terminal state cannot enable contextual mode. No B7B

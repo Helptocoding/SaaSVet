@@ -194,7 +194,7 @@ class B8CMutationTests(MutationFixtures, TestCase):
         from types import SimpleNamespace
         from apps.agent.operation_execution import REGISTRY, _gate
         with enabled_mutations(), override_settings(AGENT_OPERATION_EXECUTION_ENABLED={kind: True for kind in REGISTRY}):
-            for kind in ('CONFIRM_ATTENDANCE', 'REGISTER_PET'):
+            for kind in ('REGISTER_PET',):
                 self.assertIsNone(REGISTRY[kind].adapter)
                 self.assertFalse(REGISTRY[kind].enabled)
                 self.assertEqual(_gate(SimpleNamespace(operation_kind=kind), REGISTRY[kind]), 'kind_disabled')
@@ -401,7 +401,7 @@ def guard_case(kind, scenario):
         else:
             self.authorized()
         registry = dict(execution.REGISTRY)
-        flags = {'RESCHEDULE_APPOINTMENT': True, 'CANCEL_APPOINTMENT': True}
+        flags = {kind: True}
         if scenario == 'missing_evidence': self.tamper(authorization_message_id=self.op.source_message_id)
         elif scenario == 'digest': self.tamper(parameters_digest='0' * 64)
         elif scenario == 'proposal_not_emitted': Message.objects.filter(pk=self.msg.pk).update(status='pending')
@@ -420,7 +420,9 @@ def guard_case(kind, scenario):
                                        reason_code=HumanHandoff.REASON_EXPLICIT)
         elif scenario == 'kind_flag': flags[kind] = False
         elif scenario == 'adapter_missing': registry[kind] = replace(registry[kind], adapter=None)
-        elif scenario == 'contextual': self.tamper(authorization_mode='CONTEXTUAL_DECLARATION')
+        elif scenario == 'contextual': self.tamper(authorization_mode=(
+            'EXPLICIT_CONFIRMATION' if kind == 'CONFIRM_ATTENDANCE' else 'CONTEXTUAL_DECLARATION'),
+            authorization_policy_version=1)
         elif scenario == 'revocation': self.response('No, olvida la propuesta')
         elif scenario == 'correction': self.correct()
         elif scenario == 'tenant':

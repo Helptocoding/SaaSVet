@@ -14,6 +14,7 @@ from . import durable, operations
 
 RECEIPT_KEY = '_b7b_receipt'
 POLICY_VERSION = 1
+ATTENDANCE_POLICY_VERSION = 2
 logger = logging.getLogger('agent.events')
 
 
@@ -37,14 +38,43 @@ def proposal_token(operation):
 
 
 def render_proposal(operation):
+    if attendance_contract(operation):
+        return (operations.render(operation) + '\nPara declarar tu intención de asistir, '
+            'responde citando este mensaje: SÍ CONFIRMO QUE ASISTIRÉ. También puedes responder '
+            'CONFIRMAR ' + proposal_token(operation) + '. Para rechazarla responde NO. '
+            'Tu declaración quedará registrada; la operación sigue pendiente de ejecución.')
     return (operations.render(operation) + '\n¿Confirmas esta propuesta exacta? '
         'Para aceptarla responde CONFIRMAR ' + proposal_token(operation)
         + '. Para rechazarla responde NO. La confirmación no ejecuta la operación.')
 
 
+def attendance_contract(operation):
+    """Only newly defined B8D cards can open this bounded contextual channel."""
+    pre = operation.preconditions
+    snapshot = pre.get('appointment_snapshot', {})
+    return (operation.operation_kind == 'CONFIRM_ATTENDANCE'
+        and operation.authorization_mode == 'CONTEXTUAL_DECLARATION'
+        and pre.get('schema') == 3 and pre.get('attendance_contract') == 1
+        and isinstance(snapshot, dict) and snapshot.get('schema') == 1
+        and snapshot.get('status') == 'scheduled'
+        and snapshot.get('appointment_id') == operation.appointment_id
+        and snapshot.get('organization_id') == operation.organization_id
+        and snapshot.get('pet_id') == operation.pet_id)
+
+
+def authorization_mode_enabled(operation):
+    return operation.authorization_mode == 'EXPLICIT_CONFIRMATION' or attendance_contract(operation)
+
+
+def authorization_policy(operation):
+    return ATTENDANCE_POLICY_VERSION if attendance_contract(operation) else POLICY_VERSION
+
+
 def has_proposal_snapshot(operation):
     # B7A never emitted proposals. Old appointment definitions have no visible
     # original-vet snapshot; do not turn the renderer's fallback into a fact.
+    if operation.authorization_mode == 'CONTEXTUAL_DECLARATION' and not attendance_contract(operation):
+        return False
     return not operation.appointment_id or bool(
         operation.preconditions.get('labels', {}).get('original_veterinarian'))
 
@@ -142,7 +172,7 @@ def publish_proposal(witness, operation, *, ordinal):
             or durable.has_new_input(work)):
         raise ValueError('Proposal scope/cursor mismatch')
     operation = operations.revalidate(operation)
-    if operation.consent_state != 'PENDING' or operation.authorization_mode != 'EXPLICIT_CONFIRMATION':
+    if operation.consent_state != 'PENDING' or not authorization_mode_enabled(operation):
         return None
     if not has_proposal_snapshot(operation):
         ConversationOperation.objects.filter(pk=operation.pk).retire_pending(

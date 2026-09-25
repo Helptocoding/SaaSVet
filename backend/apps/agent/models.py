@@ -280,7 +280,11 @@ class ConversationOperation(OrganizationalModel):
             models.UniqueConstraint(fields=['source_turn', 'stage_key'], name='operation_causal_stage_unique'),
             models.CheckConstraint(condition=~models.Q(consent_state__in=('AUTHORIZED', 'REJECTED')) |
                 (models.Q(consent_decided_at__isnull=False) & models.Q(proposal_message__isnull=False)
-                 & models.Q(authorization_message__isnull=False) & models.Q(authorization_policy_version=1)
+                 & models.Q(authorization_message__isnull=False)
+                 & (models.Q(authorization_policy_version=1) | models.Q(
+                     authorization_policy_version=2, operation_kind='CONFIRM_ATTENDANCE',
+                     authorization_mode='CONTEXTUAL_DECLARATION',
+                     preconditions__contains={'schema': 3, 'attendance_contract': 1}))
                  & models.Q(authorization_policy_version__isnull=False)
                  & models.Q(authorization_channel='whatsapp')), name='operation_b7b_decision_evidence'),
             models.UniqueConstraint(fields=['goal'], condition=models.Q(consent_state='PENDING'), name='operation_one_pending_matter'),

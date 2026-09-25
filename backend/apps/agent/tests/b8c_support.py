@@ -22,8 +22,9 @@ class MutationFixtures(AppointmentExecutionFixtures):
     capability = 'reschedule_appointment'
 
     def mutation(self, kind='RESCHEDULE_APPOINTMENT', appointment=None):
-        self.capability = kind.lower()
-        name = goals.RESCHEDULE if kind == 'RESCHEDULE_APPOINTMENT' else goals.CANCEL
+        self.capability = 'confirm_appointment' if kind == 'CONFIRM_ATTENDANCE' else kind.lower()
+        name = {'RESCHEDULE_APPOINTMENT': goals.RESCHEDULE, 'CANCEL_APPOINTMENT': goals.CANCEL,
+                'CONFIRM_ATTENDANCE': 'confirm_appointment'}[kind]
         if appointment is not None:
             from apps.agent import tools, matter_binding
             from django.utils import timezone

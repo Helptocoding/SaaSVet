@@ -347,6 +347,8 @@ class OperationConsentTests(ConsentFixtures, TestCase):
         from apps.agent import goals
         self.bind_appointment(name='confirm_appointment')
         self.op = self.prepare('confirm_appointment')
+        from .b8d_support import make_legacy_attendance
+        make_legacy_attendance(self.op)
         self.assertEqual(self.op.authorization_mode, 'CONTEXTUAL_DECLARATION')
         durable.finalize_turn(self.witness, proposal_operation=self.op)
         self.op.refresh_from_db()

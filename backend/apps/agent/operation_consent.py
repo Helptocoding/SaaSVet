@@ -12,7 +12,8 @@ from apps.channels.providers import valid_provider_id
 from . import durable, operations
 from .durable import db_now
 from .operation_proposals import (RECEIPT_KEY, POLICY_VERSION, enabled, observe,
-    proposal_token, render_proposal, is_proposal_emitted, EmissionEvidence)
+    proposal_token, render_proposal, is_proposal_emitted, EmissionEvidence,
+    attendance_contract, authorization_mode_enabled, authorization_policy)
 
 
 @dataclass(frozen=True)
@@ -46,7 +47,7 @@ class AuthorizationEvidence:
                 or not valid_provider_id(self.proposal_provider_message_id)
                 or not isinstance(self.proposal_emission_evidence, EmissionEvidence)
                 or self.decision not in ('ACCEPT', 'REJECT')
-                or self.authorization_mode != 'EXPLICIT_CONFIRMATION'
+                or self.authorization_mode not in ('EXPLICIT_CONFIRMATION', 'CONTEXTUAL_DECLARATION')
                 or not self.decision_at or self.decision_at.tzinfo is None
                 or any(type(x) is not int or x <= 0 for x in (self.proposal_message_id,
                     self.response_message_id, self.response_turn_id, self.actor_contact_id))):
@@ -78,6 +79,10 @@ def classify(text, operation=None):
         return Evaluation('REJECT', 'explicit_rejection')
     if operation and value == 'confirmar ' + proposal_token(operation).lower():
         return Evaluation('ACCEPT', 'exact_token')
+    if operation and attendance_contract(operation):
+        if value == 'si confirmo que asistire':
+            return Evaluation('ACCEPT', 'attendance_declaration')
+        return Evaluation('AMBIGUOUS', 'attendance_declaration_required')
     if value in {'si confirmo', 'confirmo esa cita', 'si cancelala', 'si'}:
         if value == 'si cancelala' and operation and operation.operation_kind != 'CANCEL_APPOINTMENT':
             return Evaluation('AMBIGUOUS', 'action_mismatch')
@@ -131,7 +136,8 @@ def authorization_evidence(operation):
             or not response.turn_work_id or response.turn_work.organization_id != operation.organization_id
             or response.turn_work.conversation_id != operation.conversation_id
             or operation.authorization_channel != 'whatsapp'
-            or operation.authorization_policy_version != POLICY_VERSION):
+            or not authorization_mode_enabled(operation)
+            or operation.authorization_policy_version != authorization_policy(operation)):
         raise ValueError('Consent evidence scope mismatch')
     return AuthorizationEvidence(operation.operation_key, operation.parameters_digest,
         operation.proposal_message_id, operation.proposal_message.external_message_id,
@@ -190,7 +196,7 @@ def _persist_decision(operation, response, verdict, now):
     operation.consent_decided_at = now
     operation.authorized_at = now if verdict.decision == 'ACCEPT' else None
     operation.authorization_channel = 'whatsapp'
-    operation.authorization_policy_version = POLICY_VERSION
+    operation.authorization_policy_version = authorization_policy(operation)
     authorization_evidence(operation)
     token = _lifecycle.set('decision')
     try:
@@ -298,7 +304,7 @@ def evaluate_turn(witness):
         if verdict.reason in ('correction', 'conditional'):
             operations.invalidate_pending(organization_id=conv.organization_id,
                 pk=op.pk, reason='consent_' + verdict.reason)
-        if op.authorization_mode != 'EXPLICIT_CONFIRMATION':
+        if not authorization_mode_enabled(op):
             return Evaluation('AMBIGUOUS', 'contextual_mode_disabled', op.pk)
         if verdict.decision in ('ACCEPT', 'REJECT'):
             if referenced is None and (

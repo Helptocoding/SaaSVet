@@ -110,13 +110,16 @@ class Registration:
 
 
 from .appointment_execution import CreateAppointmentAdapter
-from .appointment_mutation_execution import RescheduleAppointmentAdapter, CancelAppointmentAdapter
+from .appointment_mutation_execution import (RescheduleAppointmentAdapter, CancelAppointmentAdapter,
+    ConfirmAttendanceAdapter)
+from .operation_proposals import authorization_mode_enabled
+from apps.appointments.mutations import MUTATION_KINDS
 
 REGISTRY = MappingProxyType({
     'CREATE_APPOINTMENT': Registration('create_appointment', enabled=True, adapter=CreateAppointmentAdapter()),
     'RESCHEDULE_APPOINTMENT': Registration('reschedule_appointment', enabled=True, adapter=RescheduleAppointmentAdapter()),
     'CANCEL_APPOINTMENT': Registration('cancel_appointment', enabled=True, adapter=CancelAppointmentAdapter()),
-    'CONFIRM_ATTENDANCE': Registration('confirm_appointment'),
+    'CONFIRM_ATTENDANCE': Registration('confirm_appointment', enabled=True, adapter=ConfirmAttendanceAdapter()),
     'REGISTER_PET': Registration('register_pet_only'),
 })
 
@@ -322,7 +325,7 @@ def _authority_reason(operation, conv, goal, work, context):
 def _uncertain(operation, reason):
     _record(operation, 'UNCERTAIN', reason)
     observe('execution_uncertain')
-    if operation.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+    if operation.operation_kind in MUTATION_KINDS:
         from .appointment_mutation_execution import observe as observe_mutation
         observe_mutation('appointment_mutation_uncertain')
     return ExecutionResult('UNCERTAIN', reason, operation.operation_key, reconciliation_required=True)
@@ -331,12 +334,17 @@ def _uncertain(operation, reason):
 def _success(operation, evidence, *, reconciled=False):
     _record(operation, 'SUCCEEDED', 'effect_confirmed', evidence)
     observe('execution_reconciled' if reconciled else 'execution_succeeded')
-    if not reconciled and operation.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+    if not reconciled and operation.operation_kind in MUTATION_KINDS:
         from .appointment_mutation_execution import observe as observe_mutation
-        observe_mutation('appointment_' + ('reschedule' if operation.operation_kind ==
-            'RESCHEDULE_APPOINTMENT' else 'cancel') + '_succeeded')
+        observe_mutation(_mutation_prefix(operation.operation_kind) + '_succeeded')
     return ExecutionResult('SUCCEEDED', 'effect_confirmed', operation.operation_key, evidence,
                            duplicate=reconciled)
+
+
+def _mutation_prefix(kind):
+    return {'RESCHEDULE_APPOINTMENT': 'appointment_reschedule',
+            'CANCEL_APPOINTMENT': 'appointment_cancel',
+            'CONFIRM_ATTENDANCE': 'appointment_confirm'}[kind]
 
 
 def _reconcile(adapter, operation, context):
@@ -406,16 +414,15 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
             if operation.operation_kind == 'CREATE_APPOINTMENT':
                 from .appointment_execution import observe as observe_appointment
                 observe_appointment('appointment_execution_requested')
-            elif operation.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+            elif operation.operation_kind in MUTATION_KINDS:
                 from .appointment_mutation_execution import observe as observe_mutation
-                observe_mutation('appointment_' + ('reschedule' if operation.operation_kind ==
-                    'RESCHEDULE_APPOINTMENT' else 'cancel') + '_requested')
+                observe_mutation(_mutation_prefix(operation.operation_kind) + '_requested')
             reason = _definition_reason(operation, conv, goal, context)
             if reason:
                 return _deny(operation, reason)
             if operation.consent_state != 'AUTHORIZED':
                 return _deny(operation, 'consent_not_authorized')
-            if operation.authorization_mode != 'EXPLICIT_CONFIRMATION':
+            if not authorization_mode_enabled(operation):
                 return _deny(operation, 'authorization_mode_disabled')
             try:
                 operation_consent.execution_authorization_evidence(operation)

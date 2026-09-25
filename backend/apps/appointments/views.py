@@ -406,6 +406,10 @@ def update_status(request, pk):
                 if new_status == 'canceled':
                     locked.status = from_status
                     cancel_locked(locked, reason=cancellation_reason, actor=request.user)
+                elif new_status == 'confirmed':
+                    from .mutations import confirm_locked
+                    locked.status = from_status
+                    confirm_locked(locked, actor=request.user)
                 else:
                     locked.save(update_fields=update_fields)
                     AppointmentStatusChange.objects.create(

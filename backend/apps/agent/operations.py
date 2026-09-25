@@ -49,8 +49,10 @@ def digest_bindings(operation):
             'appointment_id': operation.appointment_id,
             'expected_state': operation.preconditions.get('expected_state'),
             'clinic_timezone': operation.preconditions.get('clinic_timezone')}
-    if operation.preconditions.get('schema') == 2:
+    if operation.preconditions.get('schema') in (2, 3):
         result['appointment_snapshot'] = operation.preconditions.get('appointment_snapshot')
+    if operation.preconditions.get('schema') == 3:
+        result['attendance_contract'] = operation.preconditions.get('attendance_contract')
     return result
 
 
@@ -117,10 +119,14 @@ def definition_from_matter(conversation, goal, capability):
             raise PreparationDenied('appointment_not_mutable')
         params['appointment_id'] = appointment.pk
         preconditions['expected_state'] = _appointment_state(appointment)
-        if spec.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT'):
+        if spec.operation_kind in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT', 'CONFIRM_ATTENDANCE'):
             from apps.appointments.mutations import appointment_snapshot
             preconditions['schema'] = 2
             preconditions['appointment_snapshot'] = appointment_snapshot(appointment)
+            if spec.operation_kind == 'CONFIRM_ATTENDANCE':
+                if appointment.status != 'scheduled':
+                    raise PreparationDenied('appointment_not_mutable')
+                preconditions.update(schema=3, attendance_contract=1)
         preconditions['labels']['original_veterinarian'] = (
             appointment.veterinarian.get_full_name() or appointment.veterinarian.username
             if appointment.veterinarian_id else 'sin asignar')
@@ -189,7 +195,7 @@ def _stale_reason(operation, conversation, goal):
         observe('digest_schema_validation_failure')
         return 'definition_corrupted'
     if operation.appointment_id:
-        if operation.preconditions.get('schema') == 2:
+        if operation.preconditions.get('schema') in (2, 3):
             from apps.appointments.mutations import appointment_snapshot
             if appointment_snapshot(operation.appointment) != operation.preconditions.get('appointment_snapshot'):
                 return 'appointment_changed'
@@ -205,7 +211,7 @@ def _stale_reason(operation, conversation, goal):
         current_bindings = {**digest_bindings(operation),
             'expected_state': current_preconditions.get('expected_state'),
             'clinic_timezone': current_preconditions['clinic_timezone']}
-        if operation.preconditions.get('schema') == 2:
+        if operation.preconditions.get('schema') in (2, 3):
             current_bindings['appointment_snapshot'] = current_preconditions.get('appointment_snapshot')
         if digest(operation.operation_kind, current_params, bindings=current_bindings) != operation.parameters_digest:
             return 'definition_changed'
@@ -387,7 +393,7 @@ def render(operation):
     p, pre = operation.parameters, operation.preconditions
     pet = pre['labels'].get('pet', '')
     old = pre.get('expected_state', {})
-    if pre.get('schema') == 2:
+    if pre.get('schema') in (2, 3):
         # Preserve v1 rendering verbatim. New proposals also expose any original
         # sub-minute precision accepted by the human API, without truncation.
         old = {**old, **{key: pre['appointment_snapshot'][key]
@@ -406,6 +412,9 @@ def render(operation):
         reason = f" Motivo: {p['cancellation_reason']}." if p.get('cancellation_reason') else ''
         return f"Cancelar {original}." + reason
     if kind == 'CONFIRM_ATTENDANCE':
+        if pre.get('schema') == 3:
+            return (f"Confirmar que asistirás a la cita de {original}; "
+                    f"referencia {pre['appointment_snapshot']['public_id']}.")
         return f"Confirmar asistencia: {original}; estado: confirmed."
     text = f"Registrar mascota {p['name']} en tu expediente; especie: {p.get('species', 'sin especificar')}."
     if p.get('birth_date'):

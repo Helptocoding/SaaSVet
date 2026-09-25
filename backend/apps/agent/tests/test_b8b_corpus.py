@@ -92,7 +92,7 @@ class B8BCorpusTests(AppointmentExecutionFixtures, TestCase):
                 stack.enter_context(override_settings(AGENT_OPERATION_EXECUTION_ENABLED={
                     kind: True for kind in execution.REGISTRY if kind != 'CREATE_APPOINTMENT'}))
                 for kind, entry in execution.REGISTRY.items():
-                    if kind in ('CONFIRM_ATTENDANCE', 'REGISTER_PET'):
+                    if kind == 'REGISTER_PET':
                         self.assertEqual(execution._gate(SimpleNamespace(operation_kind=kind), entry),
                                          'kind_disabled')
                         self.assertIsNone(entry.adapter)

@@ -4,7 +4,7 @@ from datetime import date, time
 from django.db import transaction
 from apps.appointments.models import AppointmentMutationEffect
 from apps.appointments.mutations import (MutationCommand, MutationRejected,
-    validate_mutation, mutate_appointment, expected_after)
+    validate_mutation, mutate_appointment, expected_after, MUTATION_KINDS)
 from apps.appointments.creation import CreationRejected
 from .operation_schema import canonicalize
 
@@ -14,6 +14,7 @@ EVENTS = frozenset((
     'appointment_cancel_requested', 'appointment_cancel_succeeded', 'appointment_cancel_stale',
     'appointment_mutation_reconciled', 'appointment_mutation_evidence_mismatch',
     'appointment_mutation_uncertain',
+    'appointment_confirm_requested', 'appointment_confirm_succeeded', 'appointment_confirm_stale',
 ))
 logger = logging.getLogger('agent.events')
 
@@ -30,12 +31,17 @@ def command_for(operation):
                      version=operation.parameters_schema_version)
     pre = operation.preconditions
     old = pre.get('appointment_snapshot')
-    if (operation.operation_kind not in ('RESCHEDULE_APPOINTMENT', 'CANCEL_APPOINTMENT')
+    expected_schema = 3 if operation.operation_kind == 'CONFIRM_ATTENDANCE' else 2
+    if (operation.operation_kind not in MUTATION_KINDS
             or p != operation.parameters or p['appointment_id'] != operation.appointment_id
-            or pre.get('schema') != 2 or not isinstance(old, dict) or old.get('schema') != 1
+            or pre.get('schema') != expected_schema or not isinstance(old, dict) or old.get('schema') != 1
             or old.get('appointment_id') != operation.appointment_id
             or old.get('organization_id') != operation.organization_id or old.get('pet_id') != operation.pet_id):
         raise MutationRejected('precondition_failed')
+    if operation.operation_kind == 'CONFIRM_ATTENDANCE':
+        from .operation_proposals import attendance_contract
+        if not attendance_contract(operation):
+            raise MutationRejected('precondition_failed')
     return MutationCommand(kind=operation.operation_kind, organization_id=operation.organization_id,
         appointment_id=operation.appointment_id, pet_id=operation.pet_id, owner_id=operation.owner_id,
         operation_key=operation.operation_key, parameters_digest=operation.parameters_digest,
@@ -87,7 +93,8 @@ class _AppointmentMutationAdapter:
                     and effect.appointment_id == operation.appointment_id
                     and effect.parameters_digest == operation.parameters_digest
                     and effect.before == command.original and effect.after == expected_after(command)
-                    and effect.before != effect.after and evidence.matches(operation)):
+                    and effect.before != effect.after and evidence.matches(operation)
+                    and self._audit_matches(effect)):
                 observe('appointment_mutation_reconciled')
                 return AdapterResult('SUCCEEDED', evidence)
         except (ValueError, KeyError, TypeError, CreationRejected):
@@ -95,6 +102,16 @@ class _AppointmentMutationAdapter:
         observe('appointment_mutation_evidence_mismatch')
         observe('appointment_mutation_uncertain')
         return AdapterResult('UNCERTAIN', reason='appointment_evidence_mismatch')
+
+    def _audit_matches(self, effect):
+        if self.kind != 'CONFIRM_ATTENDANCE':
+            return True
+        audit = effect.status_change
+        return bool(audit and audit.organization_id == effect.organization_id
+            and audit.appointment_id == effect.appointment_id
+            and audit.from_status == 'scheduled' and audit.to_status == 'confirmed'
+            and audit.changed_by_id is None and audit.reason == ''
+            and effect.operation.authorized_at <= audit.created_at <= effect.committed_at)
 
     def execute(self, operation, context):
         from .operation_execution import AdapterResult
@@ -117,3 +134,8 @@ class RescheduleAppointmentAdapter(_AppointmentMutationAdapter):
 class CancelAppointmentAdapter(_AppointmentMutationAdapter):
     kind = 'CANCEL_APPOINTMENT'
     prefix = 'appointment_cancel'
+
+
+class ConfirmAttendanceAdapter(_AppointmentMutationAdapter):
+    kind = 'CONFIRM_ATTENDANCE'
+    prefix = 'appointment_confirm'
