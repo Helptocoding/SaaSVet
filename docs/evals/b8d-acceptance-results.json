@@ -2,8 +2,8 @@
   "schema_version": 1,
   "phase": "B8D",
   "operation": "CONFIRM_ATTENDANCE",
-  "status": "PARTIAL",
-  "generated_at": "2026-09-25T06:24:23.894828+00:00",
+  "status": "COMPLETED",
+  "generated_at": "2026-09-25T07:00:58.522233+00:00",
   "baseline_commit": "b0d2d347ecb3b50ec0637122ec2460480b81dced",
   "implementation_commit": "5a308c6e29174056ddce15cd14b2eebfbe776489",
   "source_apps_agent_appointments_sha256": "d15efff616ae045a4756c31b52e211f722422112223d03bc086dfc2035968edb",
@@ -20,40 +20,10 @@
   "coverage": {
     "baseline_b0_b8b_agenda": {
       "expected_unique": 1462,
-      "approved_unique": 1447,
-      "missing_ids": [
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition",
-        "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner",
-        "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500",
-        "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian",
-        "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
-      ],
+      "approved_unique": 1462,
+      "missing_ids": [],
       "extra_ids": [],
-      "unresolved_failed_ids": [
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect",
-        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition",
-        "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian",
-        "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
-      ]
+      "unresolved_failed_ids": []
     },
     "baseline_b8c": {
       "expected_unique": 147,
@@ -94,7 +64,8 @@
     "Baseline initial invocation was intentionally stopped after 547 approved IDs and remaining IDs partitioned across independent databases.",
     "Local PostgreSQL stopped accepting connections during initial process/regression invocations. Their errors/timeouts and teardown errors are retained; missing IDs are rerun on new local databases cloned from final schema.",
     "The original baseline/B8C invocations began before agent.0027 was added; policy-1 coverage was retained. Remaining B7B/B8A coverage, B8D policy-2 tests, recovery invocations and final migration checks use the final schema.",
-    "ThreadPoolExecutor in process tests reads stdout only. Effects, locks, commits, human API transitions, SQL errors and killed workers use independent processes and actual PostgreSQL."
+    "ThreadPoolExecutor in process tests reads stdout only. Effects, locks, commits, human API transitions, SQL errors and killed workers use independent processes and actual PostgreSQL.",
+    "Closure 2026-09-25: initial recovery preflight blocked; the server then completed recovery naturally. A fresh local database was fully migrated; exactly 15 original missing IDs passed in 15 separate invocations. All original failures, interruptions and prior runs are retained. No runtime/test/fixture changes."
   ],
   "migrations": [
     "agent.0027_attendance_consent_policy",
@@ -1560,6 +1531,231 @@
       "exit_code": 0,
       "seconds": 6.8110095000010915,
       "log_sha256": "8db876395ebcab21c01ba0ec2824dcd92abac571b8abc6baac060ed6262a5f9d"
+    },
+    "closure_recovered_final": {
+      "exit_code": 0,
+      "seconds": 5.4932291000004625,
+      "django_check": "PASSED",
+      "makemigrations_check_dry_run": "PASSED",
+      "migrate_check": "PASSED",
+      "showmigrations_plan": "ALL_APPLIED",
+      "pending_migrations": [],
+      "server": [
+        false,
+        "test_b8b_b8d_closure_20260925",
+        "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit"
+      ],
+      "other_client_sessions": [],
+      "waiting_locks": [],
+      "final_preflight": {
+        "at_utc": "2026-09-25T07:00:34.348031+00:00",
+        "server": [
+          [
+            "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+            false,
+            "b8b",
+            "C:/Users/LAP/AppData/Local/Temp/vet-b8b-pg16-data",
+            "127.0.0.1/32",
+            25432,
+            "7688148963531070156"
+          ]
+        ],
+        "sessions": [
+          [
+            2220,
+            null,
+            null,
+            "",
+            "checkpointer",
+            null,
+            "Activity",
+            "CheckpointerMain",
+            null
+          ],
+          [
+            19532,
+            null,
+            null,
+            "",
+            "walwriter",
+            null,
+            "Activity",
+            "WalWriterMain",
+            null
+          ],
+          [
+            26820,
+            null,
+            null,
+            "",
+            "background writer",
+            null,
+            "Activity",
+            "BgWriterHibernate",
+            null
+          ],
+          [
+            28400,
+            null,
+            "b8b_test",
+            "",
+            "logical replication launcher",
+            null,
+            "Activity",
+            "LogicalLauncherMain",
+            null
+          ],
+          [
+            32168,
+            null,
+            null,
+            "",
+            "autovacuum launcher",
+            null,
+            "Activity",
+            "AutoVacuumMain",
+            null
+          ]
+        ],
+        "waiting_locks": [],
+        "prepared_transactions": [],
+        "databases": [
+          [
+            "b8b",
+            true
+          ],
+          [
+            "test_b8b_b8c_baseline",
+            true
+          ],
+          [
+            "test_b8b_b8c_repair",
+            true
+          ],
+          [
+            "test_b8b_b8d_baseline",
+            true
+          ],
+          [
+            "test_b8b_b8d_closure_20260925",
+            true
+          ],
+          [
+            "test_b8b_b8d_part1",
+            true
+          ],
+          [
+            "test_b8b_b8d_part2",
+            true
+          ],
+          [
+            "test_b8b_b8d_part3",
+            true
+          ],
+          [
+            "test_b8b_b8d_resume1",
+            true
+          ],
+          [
+            "test_b8b_b8d_resume2",
+            true
+          ],
+          [
+            "test_b8b_b8d_resume3",
+            true
+          ],
+          [
+            "test_b8b_pg16_agenda",
+            true
+          ],
+          [
+            "test_b8b_pg16_b8b",
+            true
+          ],
+          [
+            "test_b8b_pg16_baseline",
+            true
+          ],
+          [
+            "test_b8b_pg16_baseline_final",
+            true
+          ],
+          [
+            "test_b8b_pg16_baseline_resume",
+            true
+          ],
+          [
+            "test_b8c_acceptance",
+            true
+          ],
+          [
+            "test_b8c_b8d_regression",
+            true
+          ],
+          [
+            "test_b8c_b8d_resume",
+            true
+          ],
+          [
+            "test_b8c_checks",
+            true
+          ],
+          [
+            "test_b8c_dev",
+            true
+          ],
+          [
+            "test_b8d_acceptance",
+            true
+          ],
+          [
+            "test_b8d_corpus",
+            true
+          ],
+          [
+            "test_b8d_resume",
+            true
+          ]
+        ],
+        "migrations": {
+          "test_b8d_acceptance": {
+            "pending": [],
+            "b8d_applied": [
+              [
+                "agent",
+                "0027_attendance_consent_policy"
+              ],
+              [
+                "appointments",
+                "0018_confirm_attendance_effect"
+              ]
+            ]
+          },
+          "test_b8b_b8d_baseline": {
+            "pending": [
+              [
+                "agent",
+                "0027_attendance_consent_policy",
+                false
+              ]
+            ],
+            "b8d_applied": [
+              [
+                "appointments",
+                "0018_confirm_attendance_effect"
+              ]
+            ]
+          }
+        },
+        "gates": {
+          "B0_closed": true,
+          "AGENT_OPERATION_EXECUTION_ENABLED": {},
+          "AGENT_B7B_CONSENT_ENABLED": false,
+          "REGISTER_PET_has_adapter": false,
+          "REGISTER_PET_enabled": false
+        }
+      },
+      "git_diff_check": "PASSED"
     }
   },
   "runs": {
@@ -8757,6 +8953,906 @@
         "exit_code": 0,
         "seconds": 984.8605735000019
       }
+    },
+    "vet_b8d_closure_case01": {
+      "tests": 1,
+      "test_ids": [
+        "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 26.231966599996667,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case01.log": {
+          "sha256": "1ecdfbaf5b2d5caad577ac7b657b25482149e47b2787dd3e67b60e92fa8fd15e",
+          "bytes": 1270
+        },
+        "vet_b8d_closure_case01.results.json": {
+          "sha256": "3b4ab5dc1adec11aa0b0227d183f1917c996ebb930e56b8cedcbfe227154ee28",
+          "bytes": 509
+        },
+        "vet_b8d_closure_case01.results.passed.jsonl": {
+          "sha256": "804a820bddb839381adcbb1224859212d61475bdfa30df7e36b3c3744425a565",
+          "bytes": 171
+        },
+        "vet_b8d_closure_case01.exit.json": {
+          "sha256": "32ca7417c8c3144480b3d5618f06c8f73a5ba622c4a9906f45a26a68ef3a61fe",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case01.ids.json": {
+          "sha256": "05bf495a876bd4c62798bc04e7de60754ed28b037cfdb4d3b30ad3e05bae6a6d",
+          "bytes": 142
+        },
+        "vet_b8d_closure_case01.subprocesses.jsonl": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "vet_b8d_closure_case01.receipt.json": {
+          "sha256": "5a459bf2135074ed1622c47add4b5aa8fdfdffb69d12ecc4397b800369810e02",
+          "bytes": 2137
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 26.28041179999127
+      }
+    },
+    "vet_b8d_closure_case02": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 33.836506399995415,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case02.log": {
+          "sha256": "f5b7c1c4693e30f281130c127db51257b4666c292aac70b2482f147886a32f22",
+          "bytes": 5422
+        },
+        "vet_b8d_closure_case02.results.json": {
+          "sha256": "19c57dff3b454b63acb591075213e3c5b95a51999fb59960f871342a93ed79db",
+          "bytes": 451
+        },
+        "vet_b8d_closure_case02.results.passed.jsonl": {
+          "sha256": "a9e56de4c5e7285e4d919828983788eb1a5480e67eb9e672f70e3e821a57b9ea",
+          "bytes": 113
+        },
+        "vet_b8d_closure_case02.exit.json": {
+          "sha256": "2cfa5abf6e9b8d3be8fd6272d7c1e883c3d2a14542c42d6806976ae970ac3941",
+          "bytes": 135
+        },
+        "vet_b8d_closure_case02.ids.json": {
+          "sha256": "2802288e7417bfebd75fd9b7282b84f7348bcb3ab5952b4519055d3898dfb6ed",
+          "bytes": 84
+        },
+        "vet_b8d_closure_case02.subprocesses.jsonl": {
+          "sha256": "03e662f4ed863c4b4ab68ef80eeaa5cc012290c8da71c3549fe6660bf8024496",
+          "bytes": 192
+        },
+        "vet_b8d_closure_case02.receipt.json": {
+          "sha256": "43625a21c71e4249b4e4e825668b1e20646278195b97dba0466b586af4a59ebb",
+          "bytes": 2476
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 33.882345100006205
+      }
+    },
+    "vet_b8d_closure_case03": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 33.254427500010934,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case03.log": {
+          "sha256": "93b24f047ca20acb376cbe03ac03445803992292475e839a5f747357ec2f05f6",
+          "bytes": 4127
+        },
+        "vet_b8d_closure_case03.results.json": {
+          "sha256": "8c916868917b06056ccc7c24b4a9fbac8dcded9e186af04bc15385c6a1cbab41",
+          "bytes": 464
+        },
+        "vet_b8d_closure_case03.results.passed.jsonl": {
+          "sha256": "25588c20373c6c58e6f64828cb2446fd65750a5bf7fcc387043b920be6746e20",
+          "bytes": 126
+        },
+        "vet_b8d_closure_case03.exit.json": {
+          "sha256": "3b768c144c10fbfbb78a3dc316d19346fd5e70e12b5a153b96dc981343adf960",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case03.ids.json": {
+          "sha256": "2316f830d51f45c0c031257f4b0103c4ca08c2831e0cb3089515ebb687ba4c99",
+          "bytes": 97
+        },
+        "vet_b8d_closure_case03.subprocesses.jsonl": {
+          "sha256": "c27762d0d82f0f3df88c5384dc041d319b9b5efddeee7a27aa3063429ab716d9",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case03.receipt.json": {
+          "sha256": "abb41440acf368fb3ef28cf7811fb008b835ed16a63f7fe39ba96d4806198025",
+          "bytes": 2988
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 33.29626439999265
+      }
+    },
+    "vet_b8d_closure_case04": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 32.41560550000577,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case04.log": {
+          "sha256": "57a5a121f3089c4e86ab0684e2973599e271074e330bc32f15d48a2a9fa2d5da",
+          "bytes": 4112
+        },
+        "vet_b8d_closure_case04.results.json": {
+          "sha256": "93b61858bad3ec1a080e1ad069e1988136013a26c4b02d6f5dbb4c9485d357de",
+          "bytes": 454
+        },
+        "vet_b8d_closure_case04.results.passed.jsonl": {
+          "sha256": "5de857a5c370357fd96c1fee5a88c7113e40a7ba195c563a02fe415ef6063dc9",
+          "bytes": 117
+        },
+        "vet_b8d_closure_case04.exit.json": {
+          "sha256": "ef5a6b5bc68198e1f483a4cb595f8fd516e0954fe2d258049ac9d2117767a556",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case04.ids.json": {
+          "sha256": "6d31b7cf7d44f1f7f3fb288521dbeef9522eddb9c2e3cf7f3801b1ba360b6d25",
+          "bytes": 88
+        },
+        "vet_b8d_closure_case04.subprocesses.jsonl": {
+          "sha256": "41d300e5c661c53e7ac2ab448b0358540ffaccf8745b42f9bbd7dc50596b021d",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case04.receipt.json": {
+          "sha256": "e1c301972e1c4ecf6911ae7810abcd7d6f8f9492c43fbfc58930b9b920fd4cc0",
+          "bytes": 2969
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 32.47162520000711
+      }
+    },
+    "vet_b8d_closure_case05": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 33.79736289998982,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case05.log": {
+          "sha256": "eeab90d2b6c4199ab3ab60b24ce1674c9c3f05c67951fe6ed6137281bb3873cb",
+          "bytes": 4148
+        },
+        "vet_b8d_closure_case05.results.json": {
+          "sha256": "fa9d4f71fa41d9b89ec4f09f2a3fd79cd475edfef967e660bdb4270f676926a8",
+          "bytes": 472
+        },
+        "vet_b8d_closure_case05.results.passed.jsonl": {
+          "sha256": "0667f259fdd07c04469095687232168ee1e11a0a5f63cec6ee8358f97c0fbde2",
+          "bytes": 135
+        },
+        "vet_b8d_closure_case05.exit.json": {
+          "sha256": "1db7666389cebb046e993a012802589c40e4fab6ce54c01479efaad0a2ea13b6",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case05.ids.json": {
+          "sha256": "d6b7d2ad43ad3704c1f62c7513efd84e82de5455a6952d8f97f16e082d2e9e98",
+          "bytes": 106
+        },
+        "vet_b8d_closure_case05.subprocesses.jsonl": {
+          "sha256": "07a56aa5ca93fb62ab3aa3bd6281f109025f27d14d2a1dc1a3943ee7b8958ce4",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case05.receipt.json": {
+          "sha256": "66deb5e5db239cd9886d70b7c61d498e5a7b0c19f44abec63505fc2b9fe8e49b",
+          "bytes": 3005
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 33.84267840000393
+      }
+    },
+    "vet_b8d_closure_case06": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 32.084215299997595,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case06.log": {
+          "sha256": "0e1ee318b52cabceff44a83138efb62ba1b0e1fd0e4300a9343569f6a0e97072",
+          "bytes": 4110
+        },
+        "vet_b8d_closure_case06.results.json": {
+          "sha256": "1b57cfa3e3ab46b2f56c9b9e7db789ad9fc64998e73d333a6e71f455e767061f",
+          "bytes": 453
+        },
+        "vet_b8d_closure_case06.results.passed.jsonl": {
+          "sha256": "f62458b708ffe14e6ee717e31578c5f4d9758836f0e92064c64031afda85fdea",
+          "bytes": 115
+        },
+        "vet_b8d_closure_case06.exit.json": {
+          "sha256": "7d1483ea35afe2d4653b4612cf2fdb9c07e25ffb1dea8a17192d32406c8f76af",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case06.ids.json": {
+          "sha256": "c9b7cc3ab385e375f2582fe5ef34983e42bd93a0b1c6e7c3050ca49db344b40c",
+          "bytes": 86
+        },
+        "vet_b8d_closure_case06.subprocesses.jsonl": {
+          "sha256": "74eddb1cacd41ea722ba27da8c1f111825a44cb62d60bf383e6ac5e26ecdbeb4",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case06.receipt.json": {
+          "sha256": "d25d6b41f1d3508cbc65f4abb74ab87654aba6f052c4723563abcc88a9ae3ead",
+          "bytes": 2966
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 32.12468960000842
+      }
+    },
+    "vet_b8d_closure_case07": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 39.36461910000071,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case07.log": {
+          "sha256": "94f9dba0732c23c08d91857cdf571e1415d666d837bea82d27afdee52d1257f2",
+          "bytes": 4148
+        },
+        "vet_b8d_closure_case07.results.json": {
+          "sha256": "da347630935c90133e15c2c472b3c508fa2dca201653f945ef08442791649412",
+          "bytes": 470
+        },
+        "vet_b8d_closure_case07.results.passed.jsonl": {
+          "sha256": "3781d423451d1bfc877ea31c24298162d17219e371cbca89c5c355ec8d976660",
+          "bytes": 133
+        },
+        "vet_b8d_closure_case07.exit.json": {
+          "sha256": "23c9e50e5267dd22a588839b26fa65501c2b303dd6b01f6fdccc23cd7b0f7832",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case07.ids.json": {
+          "sha256": "0dd132b6e0d2e5e2b0bd198dc47c99759dd882933433bff4b40d02e807b16ac3",
+          "bytes": 104
+        },
+        "vet_b8d_closure_case07.subprocesses.jsonl": {
+          "sha256": "d92980d45c9a6a1091f5481bf05f36ebc441a379cd6b249cbb7cc7ed870cf8b0",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case07.receipt.json": {
+          "sha256": "72be6743c9ac804c79ec1945d34cbd85ecfeb3aa3d81a9727327c1b85cadccdd",
+          "bytes": 3016
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 39.41316369999549
+      }
+    },
+    "vet_b8d_closure_case08": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 34.668725199997425,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case08.log": {
+          "sha256": "ee47b4cd7714518fb4a702bd2f8bcddea3d8e344368effd063807d09958dc840",
+          "bytes": 4145
+        },
+        "vet_b8d_closure_case08.results.json": {
+          "sha256": "05eb5b6122942594bc1aed2d46c886a6dddae445068533ec5ec8dd582a173ed0",
+          "bytes": 469
+        },
+        "vet_b8d_closure_case08.results.passed.jsonl": {
+          "sha256": "05fde43e6fcb2af861be01b6bc0170519e35f30d5b0ee444d67b8fc9632c5494",
+          "bytes": 131
+        },
+        "vet_b8d_closure_case08.exit.json": {
+          "sha256": "e5fc8ad83f673dcd83726cc2845df0791d960c1707e62ad56c49eb6d43ca80f2",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case08.ids.json": {
+          "sha256": "a29c02fbeac2f33dd41436ca0143f624a79689cf4ded8acc1a6e3146d1608ed5",
+          "bytes": 102
+        },
+        "vet_b8d_closure_case08.subprocesses.jsonl": {
+          "sha256": "50fadc729d5ca0b2c7adcea1b28ee38a43dff36e04c33ddc5aa7a6e02808a891",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case08.receipt.json": {
+          "sha256": "5c75a0df46b6880b1d145dad67c363d98d44886fab775d08bd5aee9892629bb7",
+          "bytes": 2997
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 34.71337459998904
+      }
+    },
+    "vet_b8d_closure_case09": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 32.45662110000558,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case09.log": {
+          "sha256": "d4b3d6940ab1972e35504da3cd4ed10a0ee3238031b278d3d935c728b6ec71b2",
+          "bytes": 4538
+        },
+        "vet_b8d_closure_case09.results.json": {
+          "sha256": "a3705d4ac6148fcc84a202a5b47e4b6d6323b79df2b22046032bcf57571ad725",
+          "bytes": 482
+        },
+        "vet_b8d_closure_case09.results.passed.jsonl": {
+          "sha256": "dc3b6818fccd6780f411c07d84391191ce734b0043b9fe15d7aca500724121f0",
+          "bytes": 145
+        },
+        "vet_b8d_closure_case09.exit.json": {
+          "sha256": "41ffe9ef78aa9a894289df6461476e0be84614d3927831e8f0cd27b45b22db1a",
+          "bytes": 135
+        },
+        "vet_b8d_closure_case09.ids.json": {
+          "sha256": "12d418fe269d30abf17c877e18ff6f4f353cdde77c8b07fa5dd9bd217d65085d",
+          "bytes": 116
+        },
+        "vet_b8d_closure_case09.subprocesses.jsonl": {
+          "sha256": "d69f30247db0bdd6679bb67daa72afd1d4b4f2a5718146c3d5c6560ddeb1db37",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case09.receipt.json": {
+          "sha256": "6a9d1f01ee3995db5791d7c7ca282fb57dfae30b6cd95f19ed3f62bb7458ff53",
+          "bytes": 3026
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 32.498752900006366
+      }
+    },
+    "vet_b8d_closure_case10": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 28.746074899987434,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case10.log": {
+          "sha256": "3e9ea4ee65ff42ced1b019a9c870dd9a1b38ca6efef03e831f48b998a97d5ec5",
+          "bytes": 5495
+        },
+        "vet_b8d_closure_case10.results.json": {
+          "sha256": "b4c87484229fa6d9db506b7d9bbd749327fdba69f9245089fe422d623e0c7d4b",
+          "bytes": 479
+        },
+        "vet_b8d_closure_case10.results.passed.jsonl": {
+          "sha256": "5089753f5263dfd3b5109b97fbfc63fd014a6ce71318c0569c004651059c8a90",
+          "bytes": 141
+        },
+        "vet_b8d_closure_case10.exit.json": {
+          "sha256": "c6b34166d7135d861ba529665c0505fae6cea6b93301a5beb9462f86231cb684",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case10.ids.json": {
+          "sha256": "d5202c557c80e293ff7e125e263653c3dec9227fbd488a81c4b4d775dabac47d",
+          "bytes": 112
+        },
+        "vet_b8d_closure_case10.subprocesses.jsonl": {
+          "sha256": "4b2492b815df4564b732389a88822ece500cb700a8737e31bbd73bdacdc37b85",
+          "bytes": 192
+        },
+        "vet_b8d_closure_case10.receipt.json": {
+          "sha256": "6cdbec47e5631fcffa51e3686e0214c52fb83bbe87552756c41da28d77775c0f",
+          "bytes": 2546
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 28.81207539999741
+      }
+    },
+    "vet_b8d_closure_case11": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 34.959130799994455,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case11.log": {
+          "sha256": "2587a14b85c735767c83e355f15c5e1fdd3a950a5d29967592ecd6e5cc911470",
+          "bytes": 4162
+        },
+        "vet_b8d_closure_case11.results.json": {
+          "sha256": "3091f3ce74022c9214986470c74651461899720b1f1d2783e43298e8ba49c810",
+          "bytes": 470
+        },
+        "vet_b8d_closure_case11.results.passed.jsonl": {
+          "sha256": "70cf7a247bb427d3c070959e5ac1c5b970d359f08c71ad22713f4b18d9d46180",
+          "bytes": 132
+        },
+        "vet_b8d_closure_case11.exit.json": {
+          "sha256": "c90085edb247575458212266621d7c4e8bf57b662f9a689920840a86aea5d4e3",
+          "bytes": 135
+        },
+        "vet_b8d_closure_case11.ids.json": {
+          "sha256": "ff06e4b5074a6cff1388934a3ab624a4ca1d53d44c105fd31f1d7691064b0817",
+          "bytes": 103
+        },
+        "vet_b8d_closure_case11.subprocesses.jsonl": {
+          "sha256": "b807fab51220bec8a7a2619c61cf8d7778be1d1446ea296aa9e70ef89f33029e",
+          "bytes": 384
+        },
+        "vet_b8d_closure_case11.receipt.json": {
+          "sha256": "e772325cf031ee1ef03f5373b403086ac85127363fca454f2bcae0e8b8860e44",
+          "bytes": 3000
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 35.006505400000606
+      }
+    },
+    "vet_b8d_closure_case12": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 29.35973599999852,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case12.log": {
+          "sha256": "ebf0f277d6d4a654d15c574f3f628c1a62160d5ad75b4fc0ac5edc73a1fec203",
+          "bytes": 5203
+        },
+        "vet_b8d_closure_case12.results.json": {
+          "sha256": "2adc479d1209238c03360b0924fbccf03ff6ab7dbf865dd34da021a07a7835e6",
+          "bytes": 494
+        },
+        "vet_b8d_closure_case12.results.passed.jsonl": {
+          "sha256": "62af47226384cf763cd4b8538d8b51955544e8e4c64166b50e006c2b598806e7",
+          "bytes": 157
+        },
+        "vet_b8d_closure_case12.exit.json": {
+          "sha256": "150d5e6862f2ca8df0eb30a1ef1a3c42da3990481554326b3bc436863dfc5624",
+          "bytes": 135
+        },
+        "vet_b8d_closure_case12.ids.json": {
+          "sha256": "424dc567b7eb577919d1d3e58382e554786ca65cde8c8385154fd1bcd0b8e51c",
+          "bytes": 128
+        },
+        "vet_b8d_closure_case12.subprocesses.jsonl": {
+          "sha256": "4af0ce1e0d2f29672361369dda6e7769cdbff02d310a4bdab094a9f769405498",
+          "bytes": 192
+        },
+        "vet_b8d_closure_case12.receipt.json": {
+          "sha256": "325e6dfde611c3ee609f92a50b0aa1b066d4878443baa2ce38d9a03c9044b270",
+          "bytes": 2576
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 29.400565799995093
+      }
+    },
+    "vet_b8d_closure_case13": {
+      "tests": 1,
+      "test_ids": [
+        "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 25.818843100001686,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case13.log": {
+          "sha256": "315ceda7db10901c51a4b406ce90835503745456bb15e25ad4024707faa6c6e7",
+          "bytes": 2318
+        },
+        "vet_b8d_closure_case13.results.json": {
+          "sha256": "6e84f6808ae3d36ab0cb58ec029cbac2eae7b63c668bc0e21805f88deb44c40c",
+          "bytes": 484
+        },
+        "vet_b8d_closure_case13.results.passed.jsonl": {
+          "sha256": "74c8a0314c05b749af0aa8ce9db4cc264d1f1cac4194ec284bae4937ba12a68d",
+          "bytes": 146
+        },
+        "vet_b8d_closure_case13.exit.json": {
+          "sha256": "d1e1ea28441f1c79f9d091cc78d553ee296968e853c4496607f3067f067d6573",
+          "bytes": 135
+        },
+        "vet_b8d_closure_case13.ids.json": {
+          "sha256": "79ce293196ecc4338e12f835dc6191c959ed17174c0ebbac33a98ebcfa59b029",
+          "bytes": 117
+        },
+        "vet_b8d_closure_case13.subprocesses.jsonl": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "vet_b8d_closure_case13.receipt.json": {
+          "sha256": "9770eff1c9ae151c7a973154d0f06561bbb5aeb69c35a7d39d26eb3300392d4e",
+          "bytes": 2076
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 25.915353400007007
+      }
+    },
+    "vet_b8d_closure_case14": {
+      "tests": 1,
+      "test_ids": [
+        "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 87.38335350000125,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case14.log": {
+          "sha256": "e2914c5ce9c942ea324551ea296d4ed18757fa3589f0fc1dbb4583550b0e9e4b",
+          "bytes": 282404
+        },
+        "vet_b8d_closure_case14.results.json": {
+          "sha256": "cce7f7658df19f096a4b55d985090199a305e8bc987a5a053ca668be95e5ea6e",
+          "bytes": 485
+        },
+        "vet_b8d_closure_case14.results.passed.jsonl": {
+          "sha256": "b30dc7d770c1f84c6617662b4ee46b4ddbadf3e33713d5e7d96fd08e3ea31664",
+          "bytes": 148
+        },
+        "vet_b8d_closure_case14.exit.json": {
+          "sha256": "d24f0f32a5fc83bf2078953399a882c7e4ed78d9be1b585ac87a6ba49ef4bbcc",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case14.ids.json": {
+          "sha256": "263d388b3ffd906c9e58ccf40a7a6c37298382e7fa1b256ceb2cc64a23a4f675",
+          "bytes": 119
+        },
+        "vet_b8d_closure_case14.subprocesses.jsonl": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "vet_b8d_closure_case14.receipt.json": {
+          "sha256": "dbe0126df5f0076335f5592e3b1c326c8b279c9a511f62c999c73683708192b7",
+          "bytes": 2086
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 87.42392549999931
+      }
+    },
+    "vet_b8d_closure_case15": {
+      "tests": 1,
+      "test_ids": [
+        "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
+      ],
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "xfail": 0,
+      "unexpected_successes": 0,
+      "failed_ids": [],
+      "seconds": 155.2051455000037,
+      "exit_code": 0,
+      "database_vendor": "postgresql",
+      "processes": [],
+      "corpus": [],
+      "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher",
+      "group": "baseline_b0_b8b_agenda",
+      "completed_runner": true,
+      "passed_ids": [
+        "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
+      ],
+      "passed_unique": 1,
+      "artifacts": {
+        "vet_b8d_closure_case15.log": {
+          "sha256": "d45f3d579a536bd35193bdbc3339c7b775f7755bc95fdbffdb9b455f4f64c675",
+          "bytes": 1170
+        },
+        "vet_b8d_closure_case15.results.json": {
+          "sha256": "9d237a3d988ad039042b93678fb83b8a5253cb66acc8488a5cf2430f26793d6e",
+          "bytes": 475
+        },
+        "vet_b8d_closure_case15.results.passed.jsonl": {
+          "sha256": "4bc36d351c95a0852588de501709048633cf3c34e3adb81c1d8fc03393bbf652",
+          "bytes": 138
+        },
+        "vet_b8d_closure_case15.exit.json": {
+          "sha256": "5955928b6d8105a1d908e0ef17658b2556a5e305e03bcfb94211aa7fa77d0676",
+          "bytes": 134
+        },
+        "vet_b8d_closure_case15.ids.json": {
+          "sha256": "395cc503d47e6e75dc2ba3c4cb334e4009779378ae1086ea1d2323c2fadfebff",
+          "bytes": 109
+        },
+        "vet_b8d_closure_case15.subprocesses.jsonl": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "vet_b8d_closure_case15.receipt.json": {
+          "sha256": "517586a810fc5faf73fd27017ded77b5123b671f6a8d320a901590286f8e1df4",
+          "bytes": 2065
+        }
+      },
+      "invocation": {
+        "suite": "baseline-repair",
+        "database": "test_b8b_b8d_closure_20260925",
+        "exit_code": 0,
+        "seconds": 155.2588481999992
+      }
     }
   },
   "production": {
@@ -8769,5 +9865,3562 @@
     "deployment_performed": false,
     "b8e_implemented": false
   },
-  "rollback": "Close CONFIRM_ATTENDANCE flag; preserve B0 containment and all confirmation/audit/evidence history. No automatic scheduled transition or reverse migration with B8D data."
+  "rollback": "Close CONFIRM_ATTENDANCE flag; preserve B0 containment and all confirmation/audit/evidence history. No automatic scheduled transition or reverse migration with B8D data.",
+  "closure_acceptance": {
+    "initial_head": "0e57b0faace7f29f85f28d8ec20d134143fc5d11",
+    "runtime_changed": false,
+    "tests_changed": false,
+    "historical_migrations_changed": false,
+    "runtime_fingerprint_matches_previous_acceptance": true,
+    "prior_acceptance_sha256": "225fb8efd539bdf3b19a5b0a4b06f48223a5e8c72f0a20eaa7c65decec0f6d75",
+    "prior_coverage": {
+      "baseline_b0_b8b_agenda": {
+        "expected_unique": 1462,
+        "approved_unique": 1447,
+        "missing_ids": [
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition",
+          "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner",
+          "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500",
+          "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian",
+          "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
+        ],
+        "extra_ids": [],
+        "unresolved_failed_ids": [
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect",
+          "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition",
+          "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian",
+          "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
+        ]
+      },
+      "baseline_b8c": {
+        "expected_unique": 147,
+        "approved_unique": 147,
+        "missing_ids": [],
+        "extra_ids": [],
+        "unresolved_failed_ids": []
+      },
+      "functional": {
+        "expected_unique": 64,
+        "approved_unique": 64,
+        "missing_ids": [],
+        "extra_ids": [],
+        "unresolved_failed_ids": []
+      },
+      "corpus": {
+        "expected_unique": 26,
+        "approved_unique": 26,
+        "missing_ids": [],
+        "extra_ids": [],
+        "unresolved_failed_ids": []
+      },
+      "processes": {
+        "expected_unique": 27,
+        "approved_unique": 27,
+        "missing_ids": [],
+        "extra_ids": [],
+        "unresolved_failed_ids": []
+      }
+    },
+    "preflight_history": [
+      {
+        "status": "BLOCKED",
+        "classification": "E_POSTGRESQL_RECOVERY_CONNECTION",
+        "tests_started": false,
+        "observed_cluster_state": "in crash recovery",
+        "postmaster_pid_file_state": "starting",
+        "pg_isready": "rejecting connections",
+        "reason": "Expected local cluster had not reached a consistent recovery state. Testing stopped during recovery."
+      },
+      {
+        "status": "PASSED",
+        "recovery_completed_naturally": true,
+        "server_ready_at_local": "2026-09-25 00:41:27.029 CST",
+        "no_restart_or_reset": true,
+        "no_databases_deleted": true,
+        "details": {
+          "at_utc": "2026-09-25T06:44:55.038164+00:00",
+          "server": [
+            [
+              "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+              false,
+              "b8b",
+              "C:/Users/LAP/AppData/Local/Temp/vet-b8b-pg16-data",
+              "127.0.0.1/32",
+              25432,
+              "7688148963531070156"
+            ]
+          ],
+          "sessions": [
+            [
+              2220,
+              null,
+              null,
+              "",
+              "checkpointer",
+              null,
+              "Activity",
+              "CheckpointerMain",
+              null
+            ],
+            [
+              19532,
+              null,
+              null,
+              "",
+              "walwriter",
+              null,
+              "Activity",
+              "WalWriterMain",
+              null
+            ],
+            [
+              26820,
+              null,
+              null,
+              "",
+              "background writer",
+              null,
+              "Activity",
+              "BgWriterHibernate",
+              null
+            ],
+            [
+              28400,
+              null,
+              "b8b_test",
+              "",
+              "logical replication launcher",
+              null,
+              "Activity",
+              "LogicalLauncherMain",
+              null
+            ],
+            [
+              32168,
+              null,
+              null,
+              "",
+              "autovacuum launcher",
+              null,
+              "Activity",
+              "AutoVacuumMain",
+              null
+            ]
+          ],
+          "waiting_locks": [],
+          "prepared_transactions": [],
+          "databases": [
+            [
+              "b8b",
+              true
+            ],
+            [
+              "test_b8b_b8c_baseline",
+              true
+            ],
+            [
+              "test_b8b_b8c_repair",
+              true
+            ],
+            [
+              "test_b8b_b8d_baseline",
+              true
+            ],
+            [
+              "test_b8b_b8d_part1",
+              true
+            ],
+            [
+              "test_b8b_b8d_part2",
+              true
+            ],
+            [
+              "test_b8b_b8d_part3",
+              true
+            ],
+            [
+              "test_b8b_b8d_resume1",
+              true
+            ],
+            [
+              "test_b8b_b8d_resume2",
+              true
+            ],
+            [
+              "test_b8b_b8d_resume3",
+              true
+            ],
+            [
+              "test_b8b_pg16_agenda",
+              true
+            ],
+            [
+              "test_b8b_pg16_b8b",
+              true
+            ],
+            [
+              "test_b8b_pg16_baseline",
+              true
+            ],
+            [
+              "test_b8b_pg16_baseline_final",
+              true
+            ],
+            [
+              "test_b8b_pg16_baseline_resume",
+              true
+            ],
+            [
+              "test_b8c_acceptance",
+              true
+            ],
+            [
+              "test_b8c_b8d_regression",
+              true
+            ],
+            [
+              "test_b8c_b8d_resume",
+              true
+            ],
+            [
+              "test_b8c_checks",
+              true
+            ],
+            [
+              "test_b8c_dev",
+              true
+            ],
+            [
+              "test_b8d_acceptance",
+              true
+            ],
+            [
+              "test_b8d_corpus",
+              true
+            ],
+            [
+              "test_b8d_resume",
+              true
+            ]
+          ],
+          "migrations": {
+            "test_b8d_acceptance": {
+              "pending": [],
+              "b8d_applied": [
+                [
+                  "agent",
+                  "0027_attendance_consent_policy"
+                ],
+                [
+                  "appointments",
+                  "0018_confirm_attendance_effect"
+                ]
+              ]
+            },
+            "test_b8b_b8d_baseline": {
+              "pending": [
+                [
+                  "agent",
+                  "0027_attendance_consent_policy",
+                  false
+                ]
+              ],
+              "b8d_applied": [
+                [
+                  "appointments",
+                  "0018_confirm_attendance_effect"
+                ]
+              ]
+            }
+          },
+          "gates": {
+            "B0_closed": true,
+            "AGENT_OPERATION_EXECUTION_ENABLED": {},
+            "AGENT_B7B_CONSENT_ENABLED": false,
+            "REGISTER_PET_has_adapter": false,
+            "REGISTER_PET_enabled": false
+          }
+        },
+        "archived_baseline_database_note": "test_b8b_b8d_baseline lacks agent.0027 as expected from its pre-migration run; left untouched. New isolated acceptance database was created empty and migrated fully before any recovered test."
+      }
+    ],
+    "postgresql_setup": {
+      "database": "test_b8b_b8d_closure_20260925",
+      "created_empty_local_database": true,
+      "seconds": 160.17187160000321,
+      "pending_migrations": [],
+      "applied_migrations": [
+        [
+          "admin",
+          "0001_initial"
+        ],
+        [
+          "admin",
+          "0002_logentry_remove_auto_add"
+        ],
+        [
+          "admin",
+          "0003_logentry_add_action_flag_choices"
+        ],
+        [
+          "agent",
+          "0001_initial"
+        ],
+        [
+          "agent",
+          "0002_initial"
+        ],
+        [
+          "agent",
+          "0003_conversation_total_llm_calls_humanhandoff_llmcall_and_more"
+        ],
+        [
+          "agent",
+          "0004_agentsettings_default_veterinarian_and_more"
+        ],
+        [
+          "agent",
+          "0005_contactidentity_linked_via"
+        ],
+        [
+          "agent",
+          "0006_conversation_processing_until"
+        ],
+        [
+          "agent",
+          "0007_contactidentity_proactive_opt_out"
+        ],
+        [
+          "agent",
+          "0008_conversationgoal"
+        ],
+        [
+          "agent",
+          "0009_remove_agentsettings_business_hours"
+        ],
+        [
+          "agent",
+          "0010_turndecision"
+        ],
+        [
+          "agent",
+          "0011_alter_humanhandoff_reason_code"
+        ],
+        [
+          "agent",
+          "0012_commitment_lifecycle"
+        ],
+        [
+          "agent",
+          "0013_identity_commitments"
+        ],
+        [
+          "agent",
+          "0014_contactidentity_auto_rematch_blocked"
+        ],
+        [
+          "agent",
+          "0015_contact_identity_verification"
+        ],
+        [
+          "agent",
+          "0016_f2_message_contact_and_close_reason"
+        ],
+        [
+          "agent",
+          "0017_contactidentity_public_id"
+        ],
+        [
+          "agent",
+          "0018_f5_drop_conversation_summary"
+        ],
+        [
+          "agent",
+          "0019_conversation_intake_path"
+        ],
+        [
+          "agent",
+          "0020_conversationgoal_authorization_message"
+        ],
+        [
+          "agent",
+          "0021_turn_operation_assessment"
+        ],
+        [
+          "agent",
+          "0022_conversation_ownership_epoch_turnwork"
+        ],
+        [
+          "agent",
+          "0023_humanhandoff_acknowledged_at_and_more"
+        ],
+        [
+          "agent",
+          "0024_matter_binding_b6"
+        ],
+        [
+          "agent",
+          "0025_conversation_operation_b7a"
+        ],
+        [
+          "agent",
+          "0026_b7b_consent_evidence"
+        ],
+        [
+          "agent",
+          "0027_attendance_consent_policy"
+        ],
+        [
+          "analytics",
+          "0001_initial"
+        ],
+        [
+          "analytics",
+          "0002_metricadjustment"
+        ],
+        [
+          "appointments",
+          "0001_initial"
+        ],
+        [
+          "appointments",
+          "0002_appointment_end_datetime_appointment_start_datetime_and_more"
+        ],
+        [
+          "appointments",
+          "0003_backfill_start_end_datetime"
+        ],
+        [
+          "appointments",
+          "0004_appointment_created_at_appointment_created_by_and_more"
+        ],
+        [
+          "appointments",
+          "0005_appointment_appointment_end_after_start"
+        ],
+        [
+          "appointments",
+          "0006_appointment_appointment_organiz_abc1ec_idx"
+        ],
+        [
+          "appointments",
+          "0007_add_cancellation_reason_and_new_statuses"
+        ],
+        [
+          "appointments",
+          "0008_appointmentstatuschange"
+        ],
+        [
+          "appointments",
+          "0009_add_public_id_to_exposed_models"
+        ],
+        [
+          "appointments",
+          "0010_appointment_walk_in"
+        ],
+        [
+          "appointments",
+          "0011_appointment_idx_appt_org_start_status"
+        ],
+        [
+          "appointments",
+          "0012_alter_appointment_end_datetime_and_more"
+        ],
+        [
+          "appointments",
+          "0013_appointment_idempotency_key_and_more"
+        ],
+        [
+          "appointments",
+          "0014_appointment_no_overlap_per_vet"
+        ],
+        [
+          "appointments",
+          "0015_appointment_category"
+        ],
+        [
+          "appointments",
+          "0016_appointment_source_operation"
+        ],
+        [
+          "appointments",
+          "0017_appointment_mutation_effect"
+        ],
+        [
+          "appointments",
+          "0018_confirm_attendance_effect"
+        ],
+        [
+          "auth",
+          "0001_initial"
+        ],
+        [
+          "auth",
+          "0002_alter_permission_name_max_length"
+        ],
+        [
+          "auth",
+          "0003_alter_user_email_max_length"
+        ],
+        [
+          "auth",
+          "0004_alter_user_username_opts"
+        ],
+        [
+          "auth",
+          "0005_alter_user_last_login_null"
+        ],
+        [
+          "auth",
+          "0006_require_contenttypes_0002"
+        ],
+        [
+          "auth",
+          "0007_alter_validators_add_error_messages"
+        ],
+        [
+          "auth",
+          "0008_alter_user_username_max_length"
+        ],
+        [
+          "auth",
+          "0009_alter_user_last_name_max_length"
+        ],
+        [
+          "auth",
+          "0010_alter_group_name_max_length"
+        ],
+        [
+          "auth",
+          "0011_update_proxy_permissions"
+        ],
+        [
+          "auth",
+          "0012_alter_user_first_name_max_length"
+        ],
+        [
+          "billing",
+          "0001_initial"
+        ],
+        [
+          "billing",
+          "0002_initial"
+        ],
+        [
+          "billing",
+          "0003_invoice_invoice_type_invoice_medical_record"
+        ],
+        [
+          "billing",
+          "0004_invoiceitem_presentation_alter_invoice_status_and_more"
+        ],
+        [
+          "billing",
+          "0005_invoiceitem_discount"
+        ],
+        [
+          "billing",
+          "0006_invoice_is_active_invoice_updated_by_and_more"
+        ],
+        [
+          "billing",
+          "0007_remove_invoiceitem_billing_inv_organiz_6da732_idx_and_more"
+        ],
+        [
+          "billing",
+          "0008_remove_product_legacy_xor_constraint"
+        ],
+        [
+          "billing",
+          "0009_remove_invoiceitem_invoiceitem_exactly_one_source_and_more"
+        ],
+        [
+          "billing",
+          "0010_invoice_medical_record_onetoone_invoiceitem_unique"
+        ],
+        [
+          "billing",
+          "0011_alter_invoice_pet"
+        ],
+        [
+          "billing",
+          "0012_add_public_id_to_exposed_models"
+        ],
+        [
+          "billing",
+          "0013_unique_invoice_service"
+        ],
+        [
+          "billing",
+          "0014_service_base_price_positive"
+        ],
+        [
+          "billing",
+          "0015_invoice_paid_status_requires_paid_at"
+        ],
+        [
+          "billing",
+          "0016_invoice_anchor_completeness"
+        ],
+        [
+          "billing",
+          "0017_invoice_anchor_backfill_and_constraints"
+        ],
+        [
+          "billing",
+          "0018_invoice_idx_inv_org_status_paid_and_more"
+        ],
+        [
+          "billing",
+          "0019_payment"
+        ],
+        [
+          "billing",
+          "0020_payment_cash_session"
+        ],
+        [
+          "billing",
+          "0021_externalprescriptionattestation"
+        ],
+        [
+          "billing",
+          "0022_creditnote_creditnoteitem_refundpayment_and_more"
+        ],
+        [
+          "billing",
+          "0023_invoiceitem_dispensed_from_prescription_item"
+        ],
+        [
+          "billing",
+          "0024_invoice_idx_invoice_org_created_id"
+        ],
+        [
+          "billing",
+          "0025_invoiceitem_lot"
+        ],
+        [
+          "billing",
+          "0026_checkout_checkoutestimate_checkoutevent_checkoutitem_and_more"
+        ],
+        [
+          "billing",
+          "0026_checkout_checkoutitem_commandreceipt_and_more"
+        ],
+        [
+          "billing",
+          "0027_alter_checkoutprescriptionselection_eligible_remaining_at_open"
+        ],
+        [
+          "billing",
+          "0028_checkout_dispute"
+        ],
+        [
+          "billing",
+          "0029_external_attestation_corrections"
+        ],
+        [
+          "billing",
+          "0030_collection_case_public_id"
+        ],
+        [
+          "billing",
+          "0031_rename_invoice_void_anchor"
+        ],
+        [
+          "billing",
+          "0032_reconcile_checkout_schema"
+        ],
+        [
+          "billing",
+          "0033_repair_checkout_billing_schema"
+        ],
+        [
+          "billing",
+          "0034_contract_legacy_invoice_anchors"
+        ],
+        [
+          "billing",
+          "0035_unit_snapshots_and_multilot_returns"
+        ],
+        [
+          "cash",
+          "0001_initial"
+        ],
+        [
+          "cash",
+          "0002_cashmovement"
+        ],
+        [
+          "channels",
+          "0001_initial"
+        ],
+        [
+          "channels",
+          "0002_channelaccount_access_token_encrypted_and_more"
+        ],
+        [
+          "channels",
+          "0003_message_process_attempts"
+        ],
+        [
+          "channels",
+          "0004_f2_message_contact_and_close_reason"
+        ],
+        [
+          "channels",
+          "0005_f2_backfill_message_contact"
+        ],
+        [
+          "channels",
+          "0006_f2_message_contact_index"
+        ],
+        [
+          "channels",
+          "0007_channelaccount_public_id"
+        ],
+        [
+          "channels",
+          "0008_message_semantic_operation"
+        ],
+        [
+          "channels",
+          "0009_message_idempotency_key"
+        ],
+        [
+          "channels",
+          "0010_message_processing_failure_notice"
+        ],
+        [
+          "channels",
+          "0011_message_origin_epoch_message_output_ordinal_and_more"
+        ],
+        [
+          "channels",
+          "0012_b3_scope_and_membership"
+        ],
+        [
+          "channels",
+          "0013_b4_durable_sender"
+        ],
+        [
+          "channels",
+          "0014_alter_message_semantic_type"
+        ],
+        [
+          "channels",
+          "0015_b7b_receipt_guard"
+        ],
+        [
+          "contenttypes",
+          "0001_initial"
+        ],
+        [
+          "contenttypes",
+          "0002_remove_content_type_name"
+        ],
+        [
+          "core",
+          "0001_rbac_models"
+        ],
+        [
+          "imports",
+          "0001_initial"
+        ],
+        [
+          "imports",
+          "0002_alter_importjob_entity_type"
+        ],
+        [
+          "inventory",
+          "0001_initial"
+        ],
+        [
+          "inventory",
+          "0002_product_category_product_requires_prescription"
+        ],
+        [
+          "inventory",
+          "0003_product_sale_price"
+        ],
+        [
+          "inventory",
+          "0004_add_internal_code_and_presentation"
+        ],
+        [
+          "inventory",
+          "0005_data_create_presentations"
+        ],
+        [
+          "inventory",
+          "0006_add_presentation_fks_to_movements"
+        ],
+        [
+          "inventory",
+          "0007_data_populate_presentation_fks"
+        ],
+        [
+          "inventory",
+          "0008_finalize_inventory_restructure"
+        ],
+        [
+          "inventory",
+          "0009_alter_presentation_organization"
+        ],
+        [
+          "inventory",
+          "0010_stockmovement_invoice"
+        ],
+        [
+          "inventory",
+          "0011_medicalrecordproduct_created_at_and_more"
+        ],
+        [
+          "inventory",
+          "0012_presentation_presentation_stock_non_negative_and_more"
+        ],
+        [
+          "inventory",
+          "0013_alter_presentation_options_and_more"
+        ],
+        [
+          "inventory",
+          "0014_add_public_id_to_exposed_models"
+        ],
+        [
+          "inventory",
+          "0015_stockmovement_idx_stockmov_org_pres_created"
+        ],
+        [
+          "inventory",
+          "0016_remove_presentation_inventory_p_product_3223d8_idx_and_more"
+        ],
+        [
+          "inventory",
+          "0017_medicalrecordproduct_cost_behavior"
+        ],
+        [
+          "inventory",
+          "0018_adr_p31_product_stock_and_presentation_format"
+        ],
+        [
+          "inventory",
+          "0019_presentation_barcode_unique_index"
+        ],
+        [
+          "inventory",
+          "0020_stockmovement_idx_stockmov_org_created_id"
+        ],
+        [
+          "inventory",
+          "0021_product_manufacturer_product_tracks_lots_and_more"
+        ],
+        [
+          "inventory",
+          "0022_medicalrecordproduct_lot"
+        ],
+        [
+          "inventory",
+          "0023_product_default_cost_behavior"
+        ],
+        [
+          "inventory",
+          "0024_product_extra_data"
+        ],
+        [
+          "inventory",
+          "0025_presentation_conversion_factor_positive"
+        ],
+        [
+          "inventory",
+          "0026_medical_record_product_factor_snapshot"
+        ],
+        [
+          "legal",
+          "0001_initial"
+        ],
+        [
+          "medical_records",
+          "0001_initial"
+        ],
+        [
+          "medical_records",
+          "0002_medicalrecord_veterinarian_alter_medicalrecord_pet"
+        ],
+        [
+          "medical_records",
+          "0003_alter_medicalrecord_options_and_more"
+        ],
+        [
+          "medical_records",
+          "0004_medicalrecord_created_by_medicalrecord_is_active_and_more"
+        ],
+        [
+          "medical_records",
+          "0005_medicalrecord_medical_rec_organiz_12d8fd_idx"
+        ],
+        [
+          "medical_records",
+          "0006_medicalrecord_close_fields"
+        ],
+        [
+          "medical_records",
+          "0007_add_medicalrecordservice"
+        ],
+        [
+          "medical_records",
+          "0008_vaccinerecord"
+        ],
+        [
+          "medical_records",
+          "0009_allow_blank_diagnosis_treatment"
+        ],
+        [
+          "medical_records",
+          "0010_add_public_id_to_exposed_models"
+        ],
+        [
+          "medical_records",
+          "0011_alter_medicalrecord_diagnosis_and_more"
+        ],
+        [
+          "medical_records",
+          "0012_add_consultation_type"
+        ],
+        [
+          "medical_records",
+          "0013_create_vitalsigns"
+        ],
+        [
+          "medical_records",
+          "0014_medicalrecord_closed_status_requires_closed_at"
+        ],
+        [
+          "medical_records",
+          "0015_medicalrecord_closed_at_provenance"
+        ],
+        [
+          "medical_records",
+          "0016_rename_medical_rec_medical_9efa5c_idx_medical_rec_medical_a94e83_idx_and_more"
+        ],
+        [
+          "medical_records",
+          "0017_alter_medicalrecord_pet_alter_vaccinerecord_pet"
+        ],
+        [
+          "medical_records",
+          "0018_day6_vaccine_public_id"
+        ],
+        [
+          "medical_records",
+          "0019_medicalrecord_consultation_draft"
+        ],
+        [
+          "medical_records",
+          "0020_consultationassessment"
+        ],
+        [
+          "medical_records",
+          "0021_vaccinerecord_lot_vaccinerecord_lot_expiry_and_more"
+        ],
+        [
+          "medical_records",
+          "0022_surgeryrecord"
+        ],
+        [
+          "medical_records",
+          "0023_emergencyrecord"
+        ],
+        [
+          "medical_records",
+          "0024_medicalrecord_originated_from"
+        ],
+        [
+          "notifications",
+          "0001_initial"
+        ],
+        [
+          "organizations",
+          "0001_initial"
+        ],
+        [
+          "organizations",
+          "0002_organization_timezone_and_more"
+        ],
+        [
+          "organizations",
+          "0003_organization_tax_rate"
+        ],
+        [
+          "organizations",
+          "0004_org_default_timezone_mexico"
+        ],
+        [
+          "organizations",
+          "0005_organizationsettings"
+        ],
+        [
+          "organizations",
+          "0006_alter_organizationsettings_auto_create_invoice_on_done_and_more"
+        ],
+        [
+          "organizations",
+          "0007_sync_org_settings_data"
+        ],
+        [
+          "organizations",
+          "0008_day6_add_public_id"
+        ],
+        [
+          "organizations",
+          "0009_organizationsettings_require_open_cash_session"
+        ],
+        [
+          "organizations",
+          "0010_organization_is_demo"
+        ],
+        [
+          "organizations",
+          "0011_clinic_configuration_phase1"
+        ],
+        [
+          "organizations",
+          "0012_remove_organizationsettings_auto_create_invoice_on_done_and_more"
+        ],
+        [
+          "patients",
+          "0001_initial"
+        ],
+        [
+          "patients",
+          "0002_alter_owner_organization_alter_pet_organization"
+        ],
+        [
+          "patients",
+          "0003_alter_pet_owner"
+        ],
+        [
+          "patients",
+          "0004_pet_birth_date_pet_color_pet_sex_alter_pet_breed"
+        ],
+        [
+          "patients",
+          "0005_owner_created_at_owner_created_by_owner_is_active_and_more"
+        ],
+        [
+          "patients",
+          "0006_remove_pet_patients_pe_organiz_ac3681_idx_and_more"
+        ],
+        [
+          "patients",
+          "0007_remove_owner_patients_ow_organiz_e2fb0a_idx_and_more"
+        ],
+        [
+          "patients",
+          "0008_pet_is_generic"
+        ],
+        [
+          "patients",
+          "0009_add_public_id_to_exposed_models"
+        ],
+        [
+          "patients",
+          "0010_unique_generic_pet_per_organization"
+        ],
+        [
+          "patients",
+          "0011_alter_pet_owner"
+        ],
+        [
+          "patients",
+          "0012_owner_owner_name_trgm_pet_pet_name_trgm"
+        ],
+        [
+          "patients",
+          "0013_owner_legacy_id_pet_legacy_id_and_more"
+        ],
+        [
+          "patients",
+          "0014_alter_owner_phone"
+        ],
+        [
+          "patients",
+          "0015_alter_pet_species"
+        ],
+        [
+          "patients",
+          "0016_owner_extra_data_pet_extra_data"
+        ],
+        [
+          "patients",
+          "0017_owner_owner_phone_trgm_owner_owner_legacy_trgm_and_more"
+        ],
+        [
+          "patients",
+          "0018_owner_phone_normalized"
+        ],
+        [
+          "prescriptions",
+          "0001_initial"
+        ],
+        [
+          "prescriptions",
+          "0002_prescription_created_by_prescription_is_active_and_more"
+        ],
+        [
+          "prescriptions",
+          "0003_remove_prescriptionitem_prescriptio_organiz_e427c3_idx_and_more"
+        ],
+        [
+          "prescriptions",
+          "0004_add_public_id_to_exposed_models"
+        ],
+        [
+          "prescriptions",
+          "0005_prescription_idx_presc_org_created"
+        ],
+        [
+          "prescriptions",
+          "0006_alter_prescription_pet"
+        ],
+        [
+          "sessions",
+          "0001_initial"
+        ],
+        [
+          "token_blacklist",
+          "0001_initial"
+        ],
+        [
+          "token_blacklist",
+          "0002_outstandingtoken_jti_hex"
+        ],
+        [
+          "token_blacklist",
+          "0003_auto_20171017_2007"
+        ],
+        [
+          "token_blacklist",
+          "0004_auto_20171017_2013"
+        ],
+        [
+          "token_blacklist",
+          "0005_remove_outstandingtoken_jti"
+        ],
+        [
+          "token_blacklist",
+          "0006_auto_20171017_2113"
+        ],
+        [
+          "token_blacklist",
+          "0007_auto_20171017_2214"
+        ],
+        [
+          "token_blacklist",
+          "0008_migrate_to_bigautofield"
+        ],
+        [
+          "token_blacklist",
+          "0010_fix_migrate_to_bigautofield"
+        ],
+        [
+          "token_blacklist",
+          "0011_linearizes_history"
+        ],
+        [
+          "token_blacklist",
+          "0012_alter_outstandingtoken_user"
+        ],
+        [
+          "token_blacklist",
+          "0013_alter_blacklistedtoken_options_and_more"
+        ],
+        [
+          "users",
+          "0001_initial"
+        ],
+        [
+          "users",
+          "0002_simplify_roles"
+        ],
+        [
+          "users",
+          "0003_seed_test_data"
+        ],
+        [
+          "users",
+          "0004_seed_more_test_data"
+        ],
+        [
+          "users",
+          "0005_user_users_user_organiz_5da7d7_idx"
+        ],
+        [
+          "users",
+          "0006_alter_user_organization"
+        ],
+        [
+          "users",
+          "0007_day6_add_public_id"
+        ],
+        [
+          "users",
+          "0008_user_password_must_change_and_more"
+        ],
+        [
+          "users",
+          "0009_dedup_user_email"
+        ],
+        [
+          "users",
+          "0010_user_email_ci_unique"
+        ],
+        [
+          "users",
+          "0011_user_is_service_account_alter_user_role"
+        ]
+      ]
+    },
+    "server_log_recovery_evidence": [
+      "2026-09-25 00:22:42.136 CST [25944] LOG:  starting PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "2026-09-25 00:38:03.782 CST [7260] FATAL:  the database system is not yet accepting connections",
+      "2026-09-25 00:38:03.782 CST [7260] DETAIL:  Consistent recovery state has not been yet reached.",
+      "2026-09-25 00:41:00.225 CST [4844] LOG:  redo done at 0/51160D50 system usage: CPU: user: 22.20 s, system: 461.57 s, elapsed: 674.47 s",
+      "2026-09-25 00:41:02.040 CST [2220] LOG:  checkpoint starting: end-of-recovery immediate wait",
+      "2026-09-25 00:41:18.294 CST [31628] FATAL:  the database system is not yet accepting connections",
+      "2026-09-25 00:41:18.294 CST [31628] DETAIL:  Consistent recovery state has not been yet reached.",
+      "2026-09-25 00:41:19.332 CST [31860] FATAL:  the database system is not yet accepting connections",
+      "2026-09-25 00:41:19.332 CST [31860] DETAIL:  Consistent recovery state has not been yet reached.",
+      "2026-09-25 00:41:26.026 CST [2220] LOG:  checkpoint complete: wrote 4685 buffers (28.6%); 0 WAL file(s) added, 0 removed, 5 recycled; write=9.194 s, sync=14.620 s, total=24.012 s; sync files=4219, longest=0.089 s, average=0.004 s; distance=72863 kB, estimate=72863 kB; lsn=0/51163530, redo lsn=0/51163530",
+      "2026-09-25 00:41:27.029 CST [25944] LOG:  database system is ready to accept connections",
+      "2026-09-25 00:48:35.840 CST [2220] LOG:  checkpoint complete: wrote 1343 buffers (8.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=148.537 s, sync=5.101 s, total=153.753 s; sync files=2307, longest=0.049 s, average=0.003 s; distance=9173 kB, estimate=66494 kB; lsn=0/51FC1EE8, redo lsn=0/51A589D0",
+      "2026-09-25 00:52:19.094 CST [2220] LOG:  checkpoint complete: wrote 479 buffers (2.9%); 0 WAL file(s) added, 0 removed, 1 recycled; write=53.138 s, sync=16.977 s, total=76.934 s; sync files=4843, longest=0.094 s, average=0.004 s; distance=9539 kB, estimate=60798 kB; lsn=0/525B4AD0, redo lsn=0/523A9960",
+      "2026-09-25 00:56:59.217 CST [2220] LOG:  checkpoint complete: wrote 271 buffers (1.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=29.155 s, sync=10.877 s, total=57.114 s; sync files=6514, longest=0.032 s, average=0.002 s; distance=8713 kB, estimate=55590 kB; lsn=0/52D4E580, redo lsn=0/52C2BFA0"
+    ],
+    "diagnostic_notes": [
+      "Initial inline PowerShell inventories failed due quoting and were replaced by a .ps1 file. Only the diagnostic shell was interrupted; no PostgreSQL or suite process was killed to recover the environment.",
+      "First migration assertion found missing agent.0027 in archived baseline database; no test ran against that schema. Fresh isolated database has both B8D migrations.",
+      "Initial recovery-state assertion in the evidence recorder stopped twice because the cluster had transitioned to healthy; no assertion was part of a product test. SQL health was then fully rechecked before test execution."
+    ],
+    "inventory_clarification": "Original group of 13 concurrency cases contains 11 B8AProcessTests cases using independent processes, one Inbox case and one Agenda 500-race case that historically use threads with independent PostgreSQL connections. Those two were not replaced or represented as multiprocess tests.",
+    "recovered_tests": [
+      {
+        "test_id": "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian",
+        "suite": "apps.appointments.tests.test_vet_lock_race",
+        "at_utc": "2026-09-25T06:48:27.211239+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 30.053452799998922,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 26.231966599996667,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": false,
+        "subprocess_audit": [],
+        "observed_postgresql_workers": [],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 23.125,
+        "artifacts": {
+          "vet_b8d_closure_case01.log": {
+            "sha256": "1ecdfbaf5b2d5caad577ac7b657b25482149e47b2787dd3e67b60e92fa8fd15e",
+            "bytes": 1270
+          },
+          "vet_b8d_closure_case01.results.json": {
+            "sha256": "3b4ab5dc1adec11aa0b0227d183f1917c996ebb930e56b8cedcbfe227154ee28",
+            "bytes": 509
+          },
+          "vet_b8d_closure_case01.results.passed.jsonl": {
+            "sha256": "804a820bddb839381adcbb1224859212d61475bdfa30df7e36b3c3744425a565",
+            "bytes": 171
+          },
+          "vet_b8d_closure_case01.exit.json": {
+            "sha256": "32ca7417c8c3144480b3d5618f06c8f73a5ba622c4a9906f45a26a68ef3a61fe",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case01.ids.json": {
+            "sha256": "05bf495a876bd4c62798bc04e7de60754ed28b037cfdb4d3b30ad3e05bae6a6d",
+            "bytes": 142
+          },
+          "vet_b8d_closure_case01.subprocesses.jsonl": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "vet_b8d_closure_case01.receipt.json": {
+            "sha256": "5a459bf2135074ed1622c47add4b5aa8fdfdffb69d12ecc4397b800369810e02",
+            "bytes": 2137
+          }
+        },
+        "concurrency_model": "original_service_test_controlled_race"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:49:14.941762+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 37.268787499997416,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 33.836506399995415,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84181.3694374,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_32516",
+            "backend_pids": [
+              32036
+            ],
+            "wait_types": [
+              "Client"
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 30.74,
+        "artifacts": {
+          "vet_b8d_closure_case02.log": {
+            "sha256": "f5b7c1c4693e30f281130c127db51257b4666c292aac70b2482f147886a32f22",
+            "bytes": 5422
+          },
+          "vet_b8d_closure_case02.results.json": {
+            "sha256": "19c57dff3b454b63acb591075213e3c5b95a51999fb59960f871342a93ed79db",
+            "bytes": 451
+          },
+          "vet_b8d_closure_case02.results.passed.jsonl": {
+            "sha256": "a9e56de4c5e7285e4d919828983788eb1a5480e67eb9e672f70e3e821a57b9ea",
+            "bytes": 113
+          },
+          "vet_b8d_closure_case02.exit.json": {
+            "sha256": "2cfa5abf6e9b8d3be8fd6272d7c1e883c3d2a14542c42d6806976ae970ac3941",
+            "bytes": 135
+          },
+          "vet_b8d_closure_case02.ids.json": {
+            "sha256": "2802288e7417bfebd75fd9b7282b84f7348bcb3ab5952b4519055d3898dfb6ed",
+            "bytes": 84
+          },
+          "vet_b8d_closure_case02.subprocesses.jsonl": {
+            "sha256": "03e662f4ed863c4b4ab68ef80eeaa5cc012290c8da71c3549fe6660bf8024496",
+            "bytes": 192
+          },
+          "vet_b8d_closure_case02.receipt.json": {
+            "sha256": "43625a21c71e4249b4e4e825668b1e20646278195b97dba0466b586af4a59ebb",
+            "bytes": 2476
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:49:51.972263+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 36.51913489999424,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 33.254427500010934,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84217.7745321,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84222.9764555,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_32560",
+            "backend_pids": [
+              33016
+            ],
+            "wait_types": [
+              "Client",
+              null
+            ]
+          },
+          {
+            "application_name": "b8a_33156",
+            "backend_pids": [
+              23164
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 30.938,
+        "artifacts": {
+          "vet_b8d_closure_case03.log": {
+            "sha256": "93b24f047ca20acb376cbe03ac03445803992292475e839a5f747357ec2f05f6",
+            "bytes": 4127
+          },
+          "vet_b8d_closure_case03.results.json": {
+            "sha256": "8c916868917b06056ccc7c24b4a9fbac8dcded9e186af04bc15385c6a1cbab41",
+            "bytes": 464
+          },
+          "vet_b8d_closure_case03.results.passed.jsonl": {
+            "sha256": "25588c20373c6c58e6f64828cb2446fd65750a5bf7fcc387043b920be6746e20",
+            "bytes": 126
+          },
+          "vet_b8d_closure_case03.exit.json": {
+            "sha256": "3b768c144c10fbfbb78a3dc316d19346fd5e70e12b5a153b96dc981343adf960",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case03.ids.json": {
+            "sha256": "2316f830d51f45c0c031257f4b0103c4ca08c2831e0cb3089515ebb687ba4c99",
+            "bytes": 97
+          },
+          "vet_b8d_closure_case03.subprocesses.jsonl": {
+            "sha256": "c27762d0d82f0f3df88c5384dc041d319b9b5efddeee7a27aa3063429ab716d9",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case03.receipt.json": {
+            "sha256": "abb41440acf368fb3ef28cf7811fb008b835ed16a63f7fe39ba96d4806198025",
+            "bytes": 2988
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:50:28.257207+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 35.74565660000371,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 32.41560550000577,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84255.4709664,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84259.1971787,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_32528",
+            "backend_pids": [
+              28252
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_33436",
+            "backend_pids": [
+              29160
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 29.425,
+        "artifacts": {
+          "vet_b8d_closure_case04.log": {
+            "sha256": "57a5a121f3089c4e86ab0684e2973599e271074e330bc32f15d48a2a9fa2d5da",
+            "bytes": 4112
+          },
+          "vet_b8d_closure_case04.results.json": {
+            "sha256": "93b61858bad3ec1a080e1ad069e1988136013a26c4b02d6f5dbb4c9485d357de",
+            "bytes": 454
+          },
+          "vet_b8d_closure_case04.results.passed.jsonl": {
+            "sha256": "5de857a5c370357fd96c1fee5a88c7113e40a7ba195c563a02fe415ef6063dc9",
+            "bytes": 117
+          },
+          "vet_b8d_closure_case04.exit.json": {
+            "sha256": "ef5a6b5bc68198e1f483a4cb595f8fd516e0954fe2d258049ac9d2117767a556",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case04.ids.json": {
+            "sha256": "6d31b7cf7d44f1f7f3fb288521dbeef9522eddb9c2e3cf7f3801b1ba360b6d25",
+            "bytes": 88
+          },
+          "vet_b8d_closure_case04.subprocesses.jsonl": {
+            "sha256": "41d300e5c661c53e7ac2ab448b0358540ffaccf8745b42f9bbd7dc50596b021d",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case04.receipt.json": {
+            "sha256": "e1c301972e1c4ecf6911ae7810abcd7d6f8f9492c43fbfc58930b9b920fd4cc0",
+            "bytes": 2969
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:51:06.337712+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 37.51375620000181,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 33.79736289998982,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84291.9771441,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84296.5969911,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_33656",
+            "backend_pids": [
+              30780
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_14852",
+            "backend_pids": [
+              29936
+            ],
+            "wait_types": [
+              "Client",
+              null
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 31.021,
+        "artifacts": {
+          "vet_b8d_closure_case05.log": {
+            "sha256": "eeab90d2b6c4199ab3ab60b24ce1674c9c3f05c67951fe6ed6137281bb3873cb",
+            "bytes": 4148
+          },
+          "vet_b8d_closure_case05.results.json": {
+            "sha256": "fa9d4f71fa41d9b89ec4f09f2a3fd79cd475edfef967e660bdb4270f676926a8",
+            "bytes": 472
+          },
+          "vet_b8d_closure_case05.results.passed.jsonl": {
+            "sha256": "0667f259fdd07c04469095687232168ee1e11a0a5f63cec6ee8358f97c0fbde2",
+            "bytes": 135
+          },
+          "vet_b8d_closure_case05.exit.json": {
+            "sha256": "1db7666389cebb046e993a012802589c40e4fab6ce54c01479efaad0a2ea13b6",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case05.ids.json": {
+            "sha256": "d6b7d2ad43ad3704c1f62c7513efd84e82de5455a6952d8f97f16e082d2e9e98",
+            "bytes": 106
+          },
+          "vet_b8d_closure_case05.subprocesses.jsonl": {
+            "sha256": "07a56aa5ca93fb62ab3aa3bd6281f109025f27d14d2a1dc1a3943ee7b8958ce4",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case05.receipt.json": {
+            "sha256": "66deb5e5db239cd9886d70b7c61d498e5a7b0c19f44abec63505fc2b9fe8e49b",
+            "bytes": 3005
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:51:42.383099+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 35.22184459998971,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 32.084215299997595,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84330.0634378,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84333.7060509,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_20884",
+            "backend_pids": [
+              32740
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_31688",
+            "backend_pids": [
+              33336
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 29.181,
+        "artifacts": {
+          "vet_b8d_closure_case06.log": {
+            "sha256": "0e1ee318b52cabceff44a83138efb62ba1b0e1fd0e4300a9343569f6a0e97072",
+            "bytes": 4110
+          },
+          "vet_b8d_closure_case06.results.json": {
+            "sha256": "1b57cfa3e3ab46b2f56c9b9e7db789ad9fc64998e73d333a6e71f455e767061f",
+            "bytes": 453
+          },
+          "vet_b8d_closure_case06.results.passed.jsonl": {
+            "sha256": "f62458b708ffe14e6ee717e31578c5f4d9758836f0e92064c64031afda85fdea",
+            "bytes": 115
+          },
+          "vet_b8d_closure_case06.exit.json": {
+            "sha256": "7d1483ea35afe2d4653b4612cf2fdb9c07e25ffb1dea8a17192d32406c8f76af",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case06.ids.json": {
+            "sha256": "c9b7cc3ab385e375f2582fe5ef34983e42bd93a0b1c6e7c3050ca49db344b40c",
+            "bytes": 86
+          },
+          "vet_b8d_closure_case06.subprocesses.jsonl": {
+            "sha256": "74eddb1cacd41ea722ba27da8c1f111825a44cb62d60bf383e6ac5e26ecdbeb4",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case06.receipt.json": {
+            "sha256": "d25d6b41f1d3508cbc65f4abb74ab87654aba6f052c4723563abcc88a9ae3ead",
+            "bytes": 2966
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:52:26.140398+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 43.20214799999667,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 39.36461910000071,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84367.1243702,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84373.2246258,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_30000",
+            "backend_pids": [
+              28852
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_27556",
+            "backend_pids": [
+              17880
+            ],
+            "wait_types": [
+              null,
+              "IO",
+              "Client"
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 36.11,
+        "artifacts": {
+          "vet_b8d_closure_case07.log": {
+            "sha256": "94f9dba0732c23c08d91857cdf571e1415d666d837bea82d27afdee52d1257f2",
+            "bytes": 4148
+          },
+          "vet_b8d_closure_case07.results.json": {
+            "sha256": "da347630935c90133e15c2c472b3c508fa2dca201653f945ef08442791649412",
+            "bytes": 470
+          },
+          "vet_b8d_closure_case07.results.passed.jsonl": {
+            "sha256": "3781d423451d1bfc877ea31c24298162d17219e371cbca89c5c355ec8d976660",
+            "bytes": 133
+          },
+          "vet_b8d_closure_case07.exit.json": {
+            "sha256": "23c9e50e5267dd22a588839b26fa65501c2b303dd6b01f6fdccc23cd7b0f7832",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case07.ids.json": {
+            "sha256": "0dd132b6e0d2e5e2b0bd198dc47c99759dd882933433bff4b40d02e807b16ac3",
+            "bytes": 104
+          },
+          "vet_b8d_closure_case07.subprocesses.jsonl": {
+            "sha256": "d92980d45c9a6a1091f5481bf05f36ebc441a379cd6b249cbb7cc7ed870cf8b0",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case07.receipt.json": {
+            "sha256": "72be6743c9ac804c79ec1945d34cbd85ecfeb3aa3d81a9727327c1b85cadccdd",
+            "bytes": 3016
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:53:05.064703+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 38.40896119999525,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 34.668725199997425,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84410.8427191,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84415.0311553,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_2664",
+            "backend_pids": [
+              31192
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_32540",
+            "backend_pids": [
+              23992
+            ],
+            "wait_types": [
+              "Client",
+              null
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 31.642,
+        "artifacts": {
+          "vet_b8d_closure_case08.log": {
+            "sha256": "ee47b4cd7714518fb4a702bd2f8bcddea3d8e344368effd063807d09958dc840",
+            "bytes": 4145
+          },
+          "vet_b8d_closure_case08.results.json": {
+            "sha256": "05eb5b6122942594bc1aed2d46c886a6dddae445068533ec5ec8dd582a173ed0",
+            "bytes": 469
+          },
+          "vet_b8d_closure_case08.results.passed.jsonl": {
+            "sha256": "05fde43e6fcb2af861be01b6bc0170519e35f30d5b0ee444d67b8fc9632c5494",
+            "bytes": 131
+          },
+          "vet_b8d_closure_case08.exit.json": {
+            "sha256": "e5fc8ad83f673dcd83726cc2845df0791d960c1707e62ad56c49eb6d43ca80f2",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case08.ids.json": {
+            "sha256": "a29c02fbeac2f33dd41436ca0143f624a79689cf4ded8acc1a6e3146d1608ed5",
+            "bytes": 102
+          },
+          "vet_b8d_closure_case08.subprocesses.jsonl": {
+            "sha256": "50fadc729d5ca0b2c7adcea1b28ee38a43dff36e04c33ddc5aa7a6e02808a891",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case08.receipt.json": {
+            "sha256": "5c75a0df46b6880b1d145dad67c363d98d44886fab775d08bd5aee9892629bb7",
+            "bytes": 2997
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:53:41.236615+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 35.696530700006406,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 32.45662110000558,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84448.4748588,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84453.1072439,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_28568",
+            "backend_pids": [
+              33372
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_28852",
+            "backend_pids": [
+              27484
+            ],
+            "wait_types": [
+              "Client",
+              null
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 29.925,
+        "artifacts": {
+          "vet_b8d_closure_case09.log": {
+            "sha256": "d4b3d6940ab1972e35504da3cd4ed10a0ee3238031b278d3d935c728b6ec71b2",
+            "bytes": 4538
+          },
+          "vet_b8d_closure_case09.results.json": {
+            "sha256": "a3705d4ac6148fcc84a202a5b47e4b6d6323b79df2b22046032bcf57571ad725",
+            "bytes": 482
+          },
+          "vet_b8d_closure_case09.results.passed.jsonl": {
+            "sha256": "dc3b6818fccd6780f411c07d84391191ce734b0043b9fe15d7aca500724121f0",
+            "bytes": 145
+          },
+          "vet_b8d_closure_case09.exit.json": {
+            "sha256": "41ffe9ef78aa9a894289df6461476e0be84614d3927831e8f0cd27b45b22db1a",
+            "bytes": 135
+          },
+          "vet_b8d_closure_case09.ids.json": {
+            "sha256": "12d418fe269d30abf17c877e18ff6f4f353cdde77c8b07fa5dd9bd217d65085d",
+            "bytes": 116
+          },
+          "vet_b8d_closure_case09.subprocesses.jsonl": {
+            "sha256": "d69f30247db0bdd6679bb67daa72afd1d4b4f2a5718146c3d5c6560ddeb1db37",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case09.receipt.json": {
+            "sha256": "6a9d1f01ee3995db5791d7c7ca282fb57dfae30b6cd95f19ed3f62bb7458ff53",
+            "bytes": 3026
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:54:14.867415+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 33.06129630000214,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 28.746074899987434,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84485.5729514,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_24800",
+            "backend_pids": [
+              29716
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 25.552,
+        "artifacts": {
+          "vet_b8d_closure_case10.log": {
+            "sha256": "3e9ea4ee65ff42ced1b019a9c870dd9a1b38ca6efef03e831f48b998a97d5ec5",
+            "bytes": 5495
+          },
+          "vet_b8d_closure_case10.results.json": {
+            "sha256": "b4c87484229fa6d9db506b7d9bbd749327fdba69f9245089fe422d623e0c7d4b",
+            "bytes": 479
+          },
+          "vet_b8d_closure_case10.results.passed.jsonl": {
+            "sha256": "5089753f5263dfd3b5109b97fbfc63fd014a6ce71318c0569c004651059c8a90",
+            "bytes": 141
+          },
+          "vet_b8d_closure_case10.exit.json": {
+            "sha256": "c6b34166d7135d861ba529665c0505fae6cea6b93301a5beb9462f86231cb684",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case10.ids.json": {
+            "sha256": "d5202c557c80e293ff7e125e263653c3dec9227fbd488a81c4b4d775dabac47d",
+            "bytes": 112
+          },
+          "vet_b8d_closure_case10.subprocesses.jsonl": {
+            "sha256": "4b2492b815df4564b732389a88822ece500cb700a8737e31bbd73bdacdc37b85",
+            "bytes": 192
+          },
+          "vet_b8d_closure_case10.receipt.json": {
+            "sha256": "6cdbec47e5631fcffa51e3686e0214c52fb83bbe87552756c41da28d77775c0f",
+            "bytes": 2546
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:54:54.381451+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 38.959726000000956,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 34.959130799994455,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84519.3807699,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          },
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84524.5305732,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_20672",
+            "backend_pids": [
+              6768
+            ],
+            "wait_types": [
+              null,
+              "Client"
+            ]
+          },
+          {
+            "application_name": "b8a_32124",
+            "backend_pids": [
+              23984
+            ],
+            "wait_types": [
+              "Client",
+              null
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 31.697,
+        "artifacts": {
+          "vet_b8d_closure_case11.log": {
+            "sha256": "2587a14b85c735767c83e355f15c5e1fdd3a950a5d29967592ecd6e5cc911470",
+            "bytes": 4162
+          },
+          "vet_b8d_closure_case11.results.json": {
+            "sha256": "3091f3ce74022c9214986470c74651461899720b1f1d2783e43298e8ba49c810",
+            "bytes": 470
+          },
+          "vet_b8d_closure_case11.results.passed.jsonl": {
+            "sha256": "70cf7a247bb427d3c070959e5ac1c5b970d359f08c71ad22713f4b18d9d46180",
+            "bytes": 132
+          },
+          "vet_b8d_closure_case11.exit.json": {
+            "sha256": "c90085edb247575458212266621d7c4e8bf57b662f9a689920840a86aea5d4e3",
+            "bytes": 135
+          },
+          "vet_b8d_closure_case11.ids.json": {
+            "sha256": "ff06e4b5074a6cff1388934a3ab624a4ca1d53d44c105fd31f1d7691064b0817",
+            "bytes": 103
+          },
+          "vet_b8d_closure_case11.subprocesses.jsonl": {
+            "sha256": "b807fab51220bec8a7a2619c61cf8d7778be1d1446ea296aa9e70ef89f33029e",
+            "bytes": 384
+          },
+          "vet_b8d_closure_case11.receipt.json": {
+            "sha256": "e772325cf031ee1ef03f5373b403086ac85127363fca454f2bcae0e8b8860e44",
+            "bytes": 3000
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition",
+        "suite": "apps.agent.tests.test_b8a_processes",
+        "at_utc": "2026-09-25T06:55:27.405002+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 32.53017610000097,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 29.35973599999852,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": true,
+        "subprocess_audit": [
+          {
+            "event": "subprocess.Popen",
+            "at_monotonic": 84558.4404957,
+            "executable": "None",
+            "argv_prefix": [
+              "C",
+              ":",
+              "\\",
+              "U",
+              "s",
+              "e"
+            ],
+            "cwd": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\backend"
+          }
+        ],
+        "observed_postgresql_workers": [
+          {
+            "application_name": "b8a_3788",
+            "backend_pids": [
+              21620
+            ],
+            "wait_types": [
+              "Client",
+              null
+            ]
+          }
+        ],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 26.259,
+        "artifacts": {
+          "vet_b8d_closure_case12.log": {
+            "sha256": "ebf0f277d6d4a654d15c574f3f628c1a62160d5ad75b4fc0ac5edc73a1fec203",
+            "bytes": 5203
+          },
+          "vet_b8d_closure_case12.results.json": {
+            "sha256": "2adc479d1209238c03360b0924fbccf03ff6ab7dbf865dd34da021a07a7835e6",
+            "bytes": 494
+          },
+          "vet_b8d_closure_case12.results.passed.jsonl": {
+            "sha256": "62af47226384cf763cd4b8538d8b51955544e8e4c64166b50e006c2b598806e7",
+            "bytes": 157
+          },
+          "vet_b8d_closure_case12.exit.json": {
+            "sha256": "150d5e6862f2ca8df0eb30a1ef1a3c42da3990481554326b3bc436863dfc5624",
+            "bytes": 135
+          },
+          "vet_b8d_closure_case12.ids.json": {
+            "sha256": "424dc567b7eb577919d1d3e58382e554786ca65cde8c8385154fd1bcd0b8e51c",
+            "bytes": 128
+          },
+          "vet_b8d_closure_case12.subprocesses.jsonl": {
+            "sha256": "4af0ce1e0d2f29672361369dda6e7769cdbff02d310a4bdab094a9f769405498",
+            "bytes": 192
+          },
+          "vet_b8d_closure_case12.receipt.json": {
+            "sha256": "325e6dfde611c3ee609f92a50b0aa1b066d4878443baa2ce38d9a03c9044b270",
+            "bytes": 2576
+          }
+        },
+        "concurrency_model": "independent_processes_postgresql"
+      },
+      {
+        "test_id": "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner",
+        "suite": "apps.agent.tests.test_inbox_api",
+        "at_utc": "2026-09-25T06:55:57.738058+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 29.661338999998407,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 25.818843100001686,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": false,
+        "subprocess_audit": [],
+        "observed_postgresql_workers": [],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 22.28,
+        "artifacts": {
+          "vet_b8d_closure_case13.log": {
+            "sha256": "315ceda7db10901c51a4b406ce90835503745456bb15e25ad4024707faa6c6e7",
+            "bytes": 2318
+          },
+          "vet_b8d_closure_case13.results.json": {
+            "sha256": "6e84f6808ae3d36ab0cb58ec029cbac2eae7b63c668bc0e21805f88deb44c40c",
+            "bytes": 484
+          },
+          "vet_b8d_closure_case13.results.passed.jsonl": {
+            "sha256": "74c8a0314c05b749af0aa8ce9db4cc264d1f1cac4194ec284bae4937ba12a68d",
+            "bytes": 146
+          },
+          "vet_b8d_closure_case13.exit.json": {
+            "sha256": "d1e1ea28441f1c79f9d091cc78d553ee296968e853c4496607f3067f067d6573",
+            "bytes": 135
+          },
+          "vet_b8d_closure_case13.ids.json": {
+            "sha256": "79ce293196ecc4338e12f835dc6191c959ed17174c0ebbac33a98ebcfa59b029",
+            "bytes": 117
+          },
+          "vet_b8d_closure_case13.subprocesses.jsonl": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "vet_b8d_closure_case13.receipt.json": {
+            "sha256": "9770eff1c9ae151c7a973154d0f06561bbb5aeb69c35a7d39d26eb3300392d4e",
+            "bytes": 2076
+          }
+        },
+        "concurrency_model": "original_threads_independent_postgresql_connections"
+      },
+      {
+        "test_id": "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500",
+        "suite": "apps.appointments.tests.test_no_overlap",
+        "at_utc": "2026-09-25T06:57:28.883725+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 90.57670629999484,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 87.38335350000125,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": false,
+        "subprocess_audit": [],
+        "observed_postgresql_workers": [],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 84.986,
+        "artifacts": {
+          "vet_b8d_closure_case14.log": {
+            "sha256": "e2914c5ce9c942ea324551ea296d4ed18757fa3589f0fc1dbb4583550b0e9e4b",
+            "bytes": 282404
+          },
+          "vet_b8d_closure_case14.results.json": {
+            "sha256": "cce7f7658df19f096a4b55d985090199a305e8bc987a5a053ca668be95e5ea6e",
+            "bytes": 485
+          },
+          "vet_b8d_closure_case14.results.passed.jsonl": {
+            "sha256": "b30dc7d770c1f84c6617662b4ee46b4ddbadf3e33713d5e7d96fd08e3ea31664",
+            "bytes": 148
+          },
+          "vet_b8d_closure_case14.exit.json": {
+            "sha256": "d24f0f32a5fc83bf2078953399a882c7e4ed78d9be1b585ac87a6ba49ef4bbcc",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case14.ids.json": {
+            "sha256": "263d388b3ffd906c9e58ccf40a7a6c37298382e7fa1b256ceb2cc64a23a4f675",
+            "bytes": 119
+          },
+          "vet_b8d_closure_case14.subprocesses.jsonl": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "vet_b8d_closure_case14.receipt.json": {
+            "sha256": "dbe0126df5f0076335f5592e3b1c326c8b279c9a511f62c999c73683708192b7",
+            "bytes": 2086
+          }
+        },
+        "concurrency_model": "original_threads_independent_postgresql_connections"
+      },
+      {
+        "test_id": "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence",
+        "suite": "apps.channels.tests.test_b4_migration",
+        "at_utc": "2026-09-25T07:00:07.884809+00:00",
+        "result": "PASSED",
+        "seconds_including_runner": 158.38413920000312,
+        "reason": null,
+        "exit_code": 0,
+        "runner_result": {
+          "tests": 1,
+          "test_ids": [
+            "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
+          ],
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "xfail": 0,
+          "unexpected_successes": 0,
+          "failed_ids": [],
+          "seconds": 155.2051455000037,
+          "exit_code": 0,
+          "database_vendor": "postgresql",
+          "processes": [],
+          "corpus": [],
+          "fixture_password_hasher": "django.contrib.auth.hashers.MD5PasswordHasher"
+        },
+        "postgresql_before": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "postgresql_after": {
+          "operational": true,
+          "new_connection": true,
+          "in_recovery": false,
+          "database": "test_b8b_b8d_closure_20260925",
+          "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+          "other_client_sessions": [],
+          "waiting_locks": [],
+          "b8d_applied_migrations": [
+            [
+              "agent",
+              "0027_attendance_consent_policy"
+            ],
+            [
+              "appointments",
+              "0018_confirm_attendance_effect"
+            ]
+          ]
+        },
+        "spawned_test_child_processes": false,
+        "subprocess_audit": [],
+        "observed_postgresql_workers": [],
+        "monitor_errors": [],
+        "original_id_and_assertions_unchanged": true,
+        "test_duration_seconds": 152.026,
+        "artifacts": {
+          "vet_b8d_closure_case15.log": {
+            "sha256": "d45f3d579a536bd35193bdbc3339c7b775f7755bc95fdbffdb9b455f4f64c675",
+            "bytes": 1170
+          },
+          "vet_b8d_closure_case15.results.json": {
+            "sha256": "9d237a3d988ad039042b93678fb83b8a5253cb66acc8488a5cf2430f26793d6e",
+            "bytes": 475
+          },
+          "vet_b8d_closure_case15.results.passed.jsonl": {
+            "sha256": "4bc36d351c95a0852588de501709048633cf3c34e3adb81c1d8fc03393bbf652",
+            "bytes": 138
+          },
+          "vet_b8d_closure_case15.exit.json": {
+            "sha256": "5955928b6d8105a1d908e0ef17658b2556a5e305e03bcfb94211aa7fa77d0676",
+            "bytes": 134
+          },
+          "vet_b8d_closure_case15.ids.json": {
+            "sha256": "395cc503d47e6e75dc2ba3c4cb334e4009779378ae1086ea1d2323c2fadfebff",
+            "bytes": 109
+          },
+          "vet_b8d_closure_case15.subprocesses.jsonl": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "vet_b8d_closure_case15.receipt.json": {
+            "sha256": "517586a810fc5faf73fd27017ded77b5123b671f6a8d320a901590286f8e1df4",
+            "bytes": 2065
+          }
+        },
+        "concurrency_model": "original_migration_test"
+      }
+    ],
+    "recovered_ids": [
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_fi01_crash_before_locks",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race07_fi03_independent_commit_before_ledger_reconciles",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race08_fi02_crash_after_authorization_before_effect",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race09_retry_uncertain_has_no_blind_effect",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race10_replacement_during_preparation_cannot_execute_old_definition",
+      "apps.agent.tests.test_inbox_api.InboxSendIdempotencyRaceTests.test_two_real_concurrent_sends_replay_single_winner",
+      "apps.appointments.tests.test_no_overlap.RepeatedConcurrentCreationTests.test_five_hundred_races_never_produce_a_500",
+      "apps.appointments.tests.test_vet_lock_race.LockAppointmentAndVeterinariansServiceTests.test_retry_recovers_and_locks_the_real_veterinarian",
+      "apps.channels.tests.test_b4_migration.B4MigrationTests.test_legacy_rows_keep_states_ids_and_null_evidence"
+    ],
+    "recovered_unique": 15,
+    "product_failures": 0,
+    "fixture_changes": 0,
+    "runtime_changes": 0,
+    "independent_worker_processes_started": 19,
+    "observed_b8a_worker_application_names": [
+      "b8a_14852",
+      "b8a_20672",
+      "b8a_20884",
+      "b8a_24800",
+      "b8a_2664",
+      "b8a_27556",
+      "b8a_28568",
+      "b8a_28852",
+      "b8a_30000",
+      "b8a_31688",
+      "b8a_32124",
+      "b8a_32516",
+      "b8a_32528",
+      "b8a_32540",
+      "b8a_32560",
+      "b8a_33156",
+      "b8a_33436",
+      "b8a_33656",
+      "b8a_3788"
+    ],
+    "observed_b8a_workers_waiting_on_lock": [],
+    "final_checks": {
+      "exit_code": 0,
+      "seconds": 5.4932291000004625,
+      "django_check": "PASSED",
+      "makemigrations_check_dry_run": "PASSED",
+      "migrate_check": "PASSED",
+      "showmigrations_plan": "ALL_APPLIED",
+      "pending_migrations": [],
+      "server": [
+        false,
+        "test_b8b_b8d_closure_20260925",
+        "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit"
+      ],
+      "other_client_sessions": [],
+      "waiting_locks": [],
+      "final_preflight": {
+        "at_utc": "2026-09-25T07:00:34.348031+00:00",
+        "server": [
+          [
+            "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+            false,
+            "b8b",
+            "C:/Users/LAP/AppData/Local/Temp/vet-b8b-pg16-data",
+            "127.0.0.1/32",
+            25432,
+            "7688148963531070156"
+          ]
+        ],
+        "sessions": [
+          [
+            2220,
+            null,
+            null,
+            "",
+            "checkpointer",
+            null,
+            "Activity",
+            "CheckpointerMain",
+            null
+          ],
+          [
+            19532,
+            null,
+            null,
+            "",
+            "walwriter",
+            null,
+            "Activity",
+            "WalWriterMain",
+            null
+          ],
+          [
+            26820,
+            null,
+            null,
+            "",
+            "background writer",
+            null,
+            "Activity",
+            "BgWriterHibernate",
+            null
+          ],
+          [
+            28400,
+            null,
+            "b8b_test",
+            "",
+            "logical replication launcher",
+            null,
+            "Activity",
+            "LogicalLauncherMain",
+            null
+          ],
+          [
+            32168,
+            null,
+            null,
+            "",
+            "autovacuum launcher",
+            null,
+            "Activity",
+            "AutoVacuumMain",
+            null
+          ]
+        ],
+        "waiting_locks": [],
+        "prepared_transactions": [],
+        "databases": [
+          [
+            "b8b",
+            true
+          ],
+          [
+            "test_b8b_b8c_baseline",
+            true
+          ],
+          [
+            "test_b8b_b8c_repair",
+            true
+          ],
+          [
+            "test_b8b_b8d_baseline",
+            true
+          ],
+          [
+            "test_b8b_b8d_closure_20260925",
+            true
+          ],
+          [
+            "test_b8b_b8d_part1",
+            true
+          ],
+          [
+            "test_b8b_b8d_part2",
+            true
+          ],
+          [
+            "test_b8b_b8d_part3",
+            true
+          ],
+          [
+            "test_b8b_b8d_resume1",
+            true
+          ],
+          [
+            "test_b8b_b8d_resume2",
+            true
+          ],
+          [
+            "test_b8b_b8d_resume3",
+            true
+          ],
+          [
+            "test_b8b_pg16_agenda",
+            true
+          ],
+          [
+            "test_b8b_pg16_b8b",
+            true
+          ],
+          [
+            "test_b8b_pg16_baseline",
+            true
+          ],
+          [
+            "test_b8b_pg16_baseline_final",
+            true
+          ],
+          [
+            "test_b8b_pg16_baseline_resume",
+            true
+          ],
+          [
+            "test_b8c_acceptance",
+            true
+          ],
+          [
+            "test_b8c_b8d_regression",
+            true
+          ],
+          [
+            "test_b8c_b8d_resume",
+            true
+          ],
+          [
+            "test_b8c_checks",
+            true
+          ],
+          [
+            "test_b8c_dev",
+            true
+          ],
+          [
+            "test_b8d_acceptance",
+            true
+          ],
+          [
+            "test_b8d_corpus",
+            true
+          ],
+          [
+            "test_b8d_resume",
+            true
+          ]
+        ],
+        "migrations": {
+          "test_b8d_acceptance": {
+            "pending": [],
+            "b8d_applied": [
+              [
+                "agent",
+                "0027_attendance_consent_policy"
+              ],
+              [
+                "appointments",
+                "0018_confirm_attendance_effect"
+              ]
+            ]
+          },
+          "test_b8b_b8d_baseline": {
+            "pending": [
+              [
+                "agent",
+                "0027_attendance_consent_policy",
+                false
+              ]
+            ],
+            "b8d_applied": [
+              [
+                "appointments",
+                "0018_confirm_attendance_effect"
+              ]
+            ]
+          }
+        },
+        "gates": {
+          "B0_closed": true,
+          "AGENT_OPERATION_EXECUTION_ENABLED": {},
+          "AGENT_B7B_CONSENT_ENABLED": false,
+          "REGISTER_PET_has_adapter": false,
+          "REGISTER_PET_enabled": false
+        }
+      },
+      "git_diff_check": "PASSED"
+    },
+    "prior_runs_preserved": true,
+    "prior_checks_preserved": true,
+    "production": {
+      "autonomous_write": "CLOSED",
+      "b0_containment": "CLOSED",
+      "AGENT_OPERATION_EXECUTION_ENABLED": {},
+      "AGENT_B7B_CONSENT_ENABLED_default": false,
+      "REGISTER_PET": "DISABLED; no adapter",
+      "activation": "PENDING_ACTIVATION_REQUIREMENTS",
+      "deployment_performed": false,
+      "b8e_implemented": false
+    },
+    "original_asserted_pg_lock_wait_ids": [
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race01_fi08_two_executors_one_effect",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race02_fi07_correction_wins",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race03_effect_before_correction_is_not_undone",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race04_fi06_takeover_wins",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race05_effect_before_takeover_is_not_undone",
+      "apps.agent.tests.test_b8a_processes.B8AProcessTests.test_race06_revocation_committed_before_effect"
+    ],
+    "lock_evidence_note": "Six original race01-race06 tests passed blocked(), which queries pg_stat_activity and requires Lock before releasing the first worker. External 50ms observer captured workers but no brief Lock windows; zero external samples is preserved, not presented as test assertion evidence.",
+    "subprocess_audit_limitation": "Windows audit argv was a command string; the observer stored a character prefix rather than command arguments. Launch event counts are retained; worker identity is established by PostgreSQL application_name=b8a_<PID>, not that prefix."
+  }
 }
