@@ -809,3 +809,19 @@ Solo un SUCCEEDED con evidencia durable confirma el efecto; DENIED/FAILED no lo
 afirman y UNCERTAIN requiere reconciliación. No se añade un mensaje remoto ni se
 abre una tool legacy. Producción OFF, activación PENDING_ACTIVATION_REQUIREMENTS.
 [Contrato B8C](contrato-appointment-mutations-b8cmd).
+
+### B8D — confirmar intención de asistir (2026-09-23)
+
+Este addendum sustituye únicamente el bloqueo técnico de CONTEXTUAL_DECLARATION
+para definiciones nuevas de CONFIRM_ATTENDANCE schema 3. Se muestra la cita exacta
+(referencia pública, mascota, fecha, intervalo, zona y veterinario). La respuesta
+«sí confirmo que asistiré» exige reply-to a esa tarjeta emitida; alternativamente,
+el código CONFIRMAR identifica la propuesta. Sin paráfrasis abiertas ni segundo
+ritual. Un mensaje anterior a emisión, pregunta, condición, corrección o «sí» aislado
+no autoriza. Registrar consentimiento no afirma que Agenda haya cambiado.
+
+El adapter cambia scheduled→confirmed únicamente tras guard y snapshot bajo lock.
+No equivale a llegada o consulta. Cita cambiada/confirmada por humano requiere nueva
+decisión; no se atribuye al agente. Éxito/retry exige evidencia durable propia y
+conserva transiciones posteriores. Producción permanece OFF y sin B8E.
+[Contrato B8D](contrato-confirm-attendance-b8d.md), [acta](implementacion-b8d-agente-whatsapp-2026-09-23.md).

@@ -579,3 +579,26 @@ Aceptación local reproducible (DATABASE_URL explícita a PostgreSQL loopback):
 Suite baseline exige `test_b8b_` por compatibilidad con workers B8B y verifica los
 1462 IDs previos (incluye Agenda/Dashboard). Suites unit/processes/corpus son
 ejecuciones parciales identificadas; checks aplica migraciones y detecta deriva.
+
+## B8D: confirmación de asistencia, inspección y rollback
+
+Sin activación ni despliegue. B0 sigue cerrado y flags de ejecución vacías.
+CREATE B8B, RESCHEDULE/CANCEL B8C y CONFIRM B8D tienen adapters; REGISTER_PET no.
+PENDING_ACTIVATION_REQUIREMENTS permanece; terminar B8D no abre B9 ni B8E.
+
+Para inspección, buscar ConversationOperation por su clave exacta y comprobar
+schema 3/attendance_contract 1, policy 2, emisión B4 y AuthorizationEvidence.
+AppointmentMutationEffect enlaza cita, digest, before scheduled, after confirmed,
+timestamp y AppointmentStatusChange exacto. El inspector distingue efecto histórico
+de estado actual. confirmed humano sin ledger propio no acredita éxito del agente.
+UNCERTAIN se investiga; nunca borrar evidence, cambiar a NOT_STARTED o reintentar
+con nueva clave para eludir el resultado. Un retry válido consulta la historia y
+no devuelve a confirmed una cita que avanzó a in_progress/done.
+
+Migraciones aditivas: agent.0027_attendance_consent_policy y
+appointments.0018_confirm_attendance_effect, sin backfill. Rollback funcional:
+cerrar flag CONFIRM_ATTENDANCE, mantener contención B0 y lector B8D compatible;
+preservar citas/operaciones/consentimiento/auditoría/efectos. No compensar a scheduled,
+no migración inversa sobre evidencia nueva. Cache es best effort on_commit;
+la transición no envía notificaciones externas ni promete exactly-once remoto.
+[Contrato](../contrato-confirm-attendance-b8d.md), [resultados](../evals/b8d-acceptance-results.json).

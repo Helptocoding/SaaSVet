@@ -216,3 +216,8 @@ reprogramación/cancelación usan preconditions schema 2 con appointment_snapsho
 incluido en digest_bindings; schema 1 conserva su algoritmo histórico. B8C exige
 schema 2 antes del efecto, sin ampliar propuestas o consentimientos legacy.
 Ver [contrato de mutaciones](contrato-appointment-mutations-b8cmd).
+
+Addendum B8D (2026-09-23): nuevas definiciones CONFIRM_ATTENDANCE mantienen
+parámetros v1 y usan preconditions schema 3 con appointment_snapshot B8C y
+attendance_contract=1 incluidos en digest. Schema 1/2 históricos no adquieren
+permiso nuevo. [Contrato](contrato-confirm-attendance-b8d.md).

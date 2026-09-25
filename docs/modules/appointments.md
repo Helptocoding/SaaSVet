@@ -617,3 +617,20 @@ source_operation (creación) y de AppointmentStatusChange (estado). Es inmutable
 tenant-safe y sin backfill. Un retry puede reconocer una hora histórica aunque
 la cita haya cambiado después. No-op se rechaza sin señales. Cache on_commit y
 notificaciones derivadas conservan sus contratos. [Contrato B8C](../contrato-appointment-mutations-b8cmd).
+
+## Confirmación autónoma B8D (2026-09-23)
+
+`confirm_locked` comparte con `/status/` la transición scheduled→confirmed y su
+auditoría. confirmed declara intención de asistir; in_progress inicia atención.
+El endpoint humano conserva sus validaciones, incluida confirmación de fechas
+pasadas. El comando autónomo requiere cita futura/activa y snapshot exacto bajo
+lock, owner/contacto vigentes y ausencia de MedicalRecord asociado. No inicia
+consulta ni crea cobros. Walk-in normal in_progress queda bloqueado.
+
+AppointmentMutationEffect admite CONFIRM_ATTENDANCE y enlaza una auditoría única
+protegida. Replay prueba la transición histórica aunque la cita ya esté done;
+no actualiza su estado ni reutiliza source_operation de creación B8B. Una confirmación
+humana previa sin esta evidencia no es efecto propio. Migraciones agent.0027 y
+appointments.0018 aditivas; rollback cierra gates y conserva historia.
+Producción OFF, sin despliegue. [Contrato](../contrato-confirm-attendance-b8d.md)
+y [aceptación](../implementacion-b8d-agente-whatsapp-2026-09-23.md).

@@ -1416,3 +1416,15 @@ locks; el ledger de Agenda prueba la transición histórica por UUID/digest. El
 inspector readonly separa evidencia histórica, cita actual y reconciliación.
 La evidencia histórica no afirma que el horario destino siga vigente. B0/flags
 de producción OFF; asistencia/registro siguen DISABLED. [Contrato B8C](../contrato-appointment-mutations-b8cmd).
+
+## Adapter B8D (2026-09-23)
+
+El registry incorpora CONFIRM_ATTENDANCE por execute_authorized_operation, bajo
+B0 y flag específica (ambos cerrados). REGISTER_PET continúa DISABLED/sin adapter.
+Preconditions schema 3/attendance_contract 1 y parámetros v1 identifican una cita
+exacta. Modo contextual policy 2: tarjeta emitida determinista, reply-to con
+«sí confirmo que asistiré» o token exacto. Preguntas/afirmaciones libres y legacy
+no conceden permiso. Emisión, causalidad, revisiones y TTL B7B/B8A se conservan.
+Ledger histórico B8C con auditoría única permite replay sin transición ni cache
+duplicada. Inspector distingue confirmed histórico de estado actual. Producción
+OFF, PENDING_ACTIVATION_REQUIREMENTS y sin B8E. [Contrato](../contrato-confirm-attendance-b8d.md).

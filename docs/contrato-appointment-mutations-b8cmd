@@ -109,3 +109,13 @@ PENDING_ACTIVATION_REQUIREMENTS, sin despliegue. Cierre sujeto a aceptación rea
 no al happy path. Rollback cierra gates y conserva operaciones/efectos; no compensa.
 El lector mínimo de definiciones/evidencias schema 2 es esta entrega B8C; cerrar
 flags no requiere volver a un binario que desconoce su digest.
+
+## Addendum B8D (2026-09-24)
+
+El ledger compartido admite también CONFIRM_ATTENDANCE mediante la migración
+appointments.0018: OneToOne nullable/PROTECT a AppointmentStatusChange, requerido
+por trigger para confirmaciones nuevas. Las filas y la reconciliación B8C conservan
+su contrato sin backfill. B8D reutiliza el snapshot íntegro bajo preconditions 3 y
+añade attendance_contract=1; no cambia schema 2 de reprogramación/cancelación.
+CONFIRM_ATTENDANCE tiene adapter LOCAL_ATOMIC con gate productivo cerrado;
+REGISTER_PET permanece DISABLED. [Contrato B8D](contrato-confirm-attendance-b8d.md).
