@@ -91,7 +91,7 @@ class OperationExecutionTests(ExecutionFixtures, TestCase):
     def test_registry_all_five_kinds_closed(self):
         from django.conf import settings
         self.assertEqual(set(execution.REGISTRY), set(ConversationOperation.KINDS))
-        self.assertTrue(all(not entry.enabled and entry.adapter is None
+        self.assertTrue(all(entry.enabled and entry.adapter is not None
                             for kind, entry in execution.REGISTRY.items()
                             if kind == 'REGISTER_PET'))
         # B8B is technically present, effective production execution stays closed.

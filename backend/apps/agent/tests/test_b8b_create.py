@@ -198,15 +198,14 @@ class B8BCreateTests(AppointmentExecutionFixtures, TestCase):
     def test_only_create_registered_all_other_flags_stay_closed(self):
         from types import SimpleNamespace
         self.assertTrue(execution.REGISTRY['CREATE_APPOINTMENT'].adapter.reconcile_terminal)
-        with enabled_create(), override_settings(AGENT_OPERATION_EXECUTION_ENABLED={
-                kind: True for kind in execution.REGISTRY}):
-            # B8D registers attendance; B8E remains release-disabled.
+        with enabled_create():
+            # Historical test ID retained: delivery never opens another kind's flag.
             for kind in ('REGISTER_PET',):
                 with self.subTest(kind=kind):
                     entry = execution.REGISTRY[kind]
-                    self.assertFalse(entry.enabled)
-                    self.assertIsNone(entry.adapter)
-                    self.assertEqual(execution._gate(SimpleNamespace(operation_kind=kind), entry), 'kind_disabled')
+                    self.assertTrue(entry.enabled)
+                    self.assertIsNotNone(entry.adapter)
+                    self.assertEqual(execution._gate(SimpleNamespace(operation_kind=kind), entry), 'flag_disabled')
 
     def test_create_gate_remains_closed_by_default_and_requires_explicit_true(self):
         self.authorized()

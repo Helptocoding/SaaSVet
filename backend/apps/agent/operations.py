@@ -53,6 +53,9 @@ def digest_bindings(operation):
         result['appointment_snapshot'] = operation.preconditions.get('appointment_snapshot')
     if operation.preconditions.get('schema') == 3:
         result['attendance_contract'] = operation.preconditions.get('attendance_contract')
+    if operation.preconditions.get('schema') == 4:
+        result['registration_contract'] = operation.preconditions.get('registration_contract')
+        result['owner_snapshot'] = operation.preconditions.get('owner_snapshot')
     return result
 
 
@@ -160,12 +163,30 @@ def definition_from_matter(conversation, goal, capability):
         if values.get('reason'):
             params['cancellation_reason'] = values['reason']
     elif spec.operation_kind == 'REGISTER_PET':
+        from apps.patients.creation import owner_snapshot, validate_fields
+        from datetime import date
+        if goal.bound_pet_id or goal.bound_appointment_id or goal.bound_owner.is_generic:
+            raise PreparationDenied('registration_scope')
         params = {'owner_id': goal.bound_owner_id, 'name': values.get('pet_name')}
         for field, slot in (('species', 'pet_species'), ('birth_date', 'pet_birth_date')):
             if values.get(slot):
                 params[field] = values[slot]
-        if params.get('birth_date') and params['birth_date'] > timezone.now().date().isoformat():
-            raise PreparationDenied('birth_date_in_future')
+        for slot in ('pet_name', 'pet_species', 'pet_birth_date'):
+            if values.get(slot) and goal.slots[slot]['provenance']['source_type'] not in (
+                    'USER_EXPLICIT', 'USER_CORRECTION'):
+                raise PreparationDenied('explicit_pet_data_required')
+        params = canonicalize(spec.operation_kind, params)
+        fields = {key: value for key, value in params.items() if key != 'owner_id'}
+        if 'birth_date' in fields:
+            fields['birth_date'] = date.fromisoformat(fields['birth_date'])
+        from rest_framework.exceptions import ValidationError
+        try:
+            if validate_fields(fields, conversation.organization) != fields:
+                raise PreparationDenied('noncanonical_pet_data')
+        except ValidationError as exc:
+            raise PreparationDenied('invalid_pet_data') from exc
+        preconditions.update(schema=4, registration_contract=1,
+            owner_snapshot=owner_snapshot(goal.bound_owner))
     return canonicalize(spec.operation_kind, params), preconditions
 
 
@@ -213,6 +234,9 @@ def _stale_reason(operation, conversation, goal):
             'clinic_timezone': current_preconditions['clinic_timezone']}
         if operation.preconditions.get('schema') in (2, 3):
             current_bindings['appointment_snapshot'] = current_preconditions.get('appointment_snapshot')
+        if operation.preconditions.get('schema') == 4:
+            current_bindings['owner_snapshot'] = current_preconditions.get('owner_snapshot')
+            current_bindings['registration_contract'] = current_preconditions.get('registration_contract')
         if digest(operation.operation_kind, current_params, bindings=current_bindings) != operation.parameters_digest:
             return 'definition_changed'
     except (PreparationDenied, InvalidParameters, ValueError):
@@ -416,6 +440,11 @@ def render(operation):
             return (f"Confirmar que asistirás a la cita de {original}; "
                     f"referencia {pre['appointment_snapshot']['public_id']}.")
         return f"Confirmar asistencia: {original}; estado: confirmed."
+    if pre.get('schema') == 4:
+        return (f"Registrar mascota {p['name']} para el propietario {pre['owner_snapshot']['name']}; "
+            f"especie: {p.get('species', 'pendiente (no proporcionada)')}; "
+            f"nacimiento: {p.get('birth_date', 'desconocido (no proporcionado)')}; "
+            'sexo: desconocido; raza y color: sin especificar. Solo se registra la mascota.')
     text = f"Registrar mascota {p['name']} en tu expediente; especie: {p.get('species', 'sin especificar')}."
     if p.get('birth_date'):
         text += f" Nacimiento: {p['birth_date']}."

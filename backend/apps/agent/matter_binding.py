@@ -17,7 +17,8 @@ SOURCE_TYPES = frozenset({'USER_EXPLICIT', 'USER_CORRECTION', 'TOOL_RESULT',
                           'DERIVED', 'SYSTEM_DEFAULT'})
 ENTITY_FIELDS = {'owner': 'bound_owner_id', 'pet': 'bound_pet_id',
                  'appointment': 'bound_appointment_id'}
-BASE_FIELDS = frozenset({'owner', 'pet', 'appointment', 'date', 'time', 'service', 'reason'})
+PET_DEFINITION_FIELDS = frozenset({'pet_name', 'pet_species', 'pet_birth_date'})
+BASE_FIELDS = frozenset({'owner', 'pet', 'appointment', 'date', 'time', 'service', 'reason'}) | PET_DEFINITION_FIELDS
 # Conservative endpoint dependencies. Explicit date/service/time are independent.
 DEPENDENCY_RULES = {
     'owner': {'pet', 'appointment', 'pet_handle', 'appointment_handle',
@@ -276,7 +277,8 @@ def change(goal, conversation, updates, *, context, message_id,
                 target.slots.pop(key, None)
                 continue
             deps = {'owner': ('owner',), 'pet': ('owner', 'pet'),
-                    'appointment': ('owner', 'pet', 'appointment')}.get(key, ())
+                    'appointment': ('owner', 'pet', 'appointment')}.get(
+                        key, ('owner',) if key in PET_DEFINITION_FIELDS else ())
             prov = source(target, context, message_id,
                           'DERIVED' if key == 'owner' else source_type, deps)
             if key == 'owner':

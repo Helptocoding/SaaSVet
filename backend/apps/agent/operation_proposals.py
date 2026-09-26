@@ -75,6 +75,9 @@ def has_proposal_snapshot(operation):
     # original-vet snapshot; do not turn the renderer's fallback into a fact.
     if operation.authorization_mode == 'CONTEXTUAL_DECLARATION' and not attendance_contract(operation):
         return False
+    if operation.operation_kind == 'REGISTER_PET':
+        from .pet_execution import registration_contract
+        return registration_contract(operation)
     return not operation.appointment_id or bool(
         operation.preconditions.get('labels', {}).get('original_veterinarian'))
 

@@ -1,5 +1,3 @@
-import re
-
 from django.db import transaction
 from rest_framework import serializers
 
@@ -7,24 +5,16 @@ from apps.core.datetime_utils import serializer_today
 
 from apps.core.validators import validate_mx_phone
 
-from .models import Pet, Owner, SPECIES_CHOICES
+from .models import Pet, Owner
 from .services import change_owner_phone, resolve_owner_for_phone
+from .creation import (NAME_REGEX, create_pet, validate_name as _validate_name,
+    validate_species as creation_species, validate_birth_date as creation_birth_date,
+    lock_organization, PetCreationRejected)
 
-NAME_REGEX = re.compile(r"^[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ\' \-]+$")
 # `PHONE_REGEX` se retiró (D4 del inventario, decisión §4.7.4): era una TERCERA
 # regla de formato de teléfono, más laxa que la del dominio (aceptaba rellenos
 # como `0000000000` que `validate_mx_phone` rechaza). La forma la valida ahora
 # `OwnerSerializer.validate_phone`, también en la escritura anidada de mascota.
-
-
-def _validate_name(value, field_label="Nombre"):
-    if not value or not value.strip():
-        raise serializers.ValidationError(f"{field_label} es requerido.")
-    if not NAME_REGEX.match(value.strip()):
-        raise serializers.ValidationError(
-            f"{field_label} solo puede contener letras, números, espacios, acentos, apóstrofes y guiones."
-        )
-    return value.strip()
 
 
 class OwnerSerializer(serializers.ModelSerializer):
@@ -154,23 +144,12 @@ class PetSerializer(serializers.ModelSerializer):
         # Especie OPCIONAL en captura manual: vacía => '' ("pendiente", se completa
         # después). Mismo criterio que el importador y el registro rápido de citas.
         # Si el usuario SÍ captura una especie, debe ser válida (SPECIES_CHOICES).
-        if not value or not value.strip():
-            return ''
-        if value.strip().lower() not in SPECIES_CHOICES:
-            raise serializers.ValidationError(
-                f"Especie inválida. Opciones: {', '.join(SPECIES_CHOICES)}."
-            )
-        return value.strip().lower()
+        return creation_species(value)
 
     def validate_birth_date(self, value):
         # Fecha de nacimiento OPCIONAL (alineado con importador y registro rápido).
         # Si viene un valor, no puede ser futura.
-        if value is None:
-            return None
-        # Día local de la clínica, no del servidor (ver `serializer_today`).
-        if value > serializer_today(self):
-            raise serializers.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
-        return value
+        return creation_birth_date(value, serializer_today(self))
 
     def validate(self, attrs):
         request = self.context['request']
@@ -216,6 +195,7 @@ class PetSerializer(serializers.ModelSerializer):
         owner_data = validated_data.pop('owner', None)
 
         with transaction.atomic():
+            organization = lock_organization(organization.pk)
             if owner_public_id is not None:
                 owner = self._resolve_owner_reference(organization, owner_public_id)
             else:
@@ -229,11 +209,13 @@ class PetSerializer(serializers.ModelSerializer):
                     name=owner_data['name'],
                     match_name=True,
                 )
-            return Pet.objects.create(
-                owner=owner,
-                organization=organization,
-                **validated_data
-            )
+            try:
+                return create_pet(organization_id=organization.pk, owner_id=owner.pk,
+                                  fields=validated_data)
+            except PetCreationRejected as exc:
+                raise serializers.ValidationError({
+                    'owner_public_id': 'El cliente no está disponible para registrar esta mascota.'
+                }) from exc
 
     def _resolve_owner_reference(self, organization, owner_public_id):
         """Modo referencia: el expediente que una persona ya eligió.

@@ -13,7 +13,26 @@ class ConversationOperationAdmin(admin.ModelAdmin):
         'execution_state', 'created_at', 'updated_at', 'age', 'expires_at', 'replaces_id', 'binding_revision',
         'identity_revision', 'ownership_epoch', 'invalidation_reason', 'proposal_stage',
         'proposal_message_id', 'authorization_message_id', 'consent_decided_at',
-        'execution_stage', 'result_code', 'executed_at', 'execution_gate', 'appointment_effect')
+        'execution_stage', 'result_code', 'executed_at', 'execution_gate', 'appointment_effect', 'pet_effect')
+
+    @admin.display(description='Registro de mascota / reconciliación')
+    def pet_effect(self, obj):
+        if obj.operation_kind != 'REGISTER_PET':
+            return 'Not applicable'
+        from .pet_execution import RegisterPetAdapter, definition_digest_matches
+        from apps.patients.models import Pet, PetRegistrationEffect
+        effect = PetRegistrationEffect.objects.filter(operation_id=obj.operation_key,
+            organization_id=obj.organization_id).first()
+        result = RegisterPetAdapter().reconcile(obj, None)
+        current = Pet.all_objects.filter(pk=effect.pet_id, organization_id=obj.organization_id).values(
+            'public_id', 'owner_id', 'name', 'species', 'birth_date', 'sex', 'breed', 'color',
+            'is_active').first() if effect else None
+        return {'owner': obj.owner_id, 'reconciliation': result.status,
+            'digest_match': (effect.parameters_digest == obj.parameters_digest
+                and definition_digest_matches(obj)) if effect else None,
+            'historical_creation': {'definition': effect.definition,
+                'committed_at': effect.committed_at, 'pet_id': effect.pet_id} if effect else None,
+            'current_pet': current}
 
     @admin.display(description='Execution gate')
     def execution_gate(self, obj):

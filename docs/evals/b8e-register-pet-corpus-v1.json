@@ -1,0 +1,161 @@
+{
+  "schema": 1,
+  "phase": "B8E",
+  "operation": "REGISTER_PET",
+  "scope": "Real adapter, synthetic isolated local data; metrics apply only to executed corpus.",
+  "metrics": [
+    "unauthorized_pets_created",
+    "wrong_owner_pets_created",
+    "duplicate_pets_from_same_operation",
+    "human_created_pets_claimed_as_agent_effect",
+    "inferred_clinical_fields_persisted",
+    "forbidden_operation_kinds_executed",
+    "wrong_tenant_pets_created"
+  ],
+  "cases": [
+    {
+      "id": "B8E-C-01",
+      "scenario": "guard:pending"
+    },
+    {
+      "id": "B8E-C-02",
+      "scenario": "guard:rejected"
+    },
+    {
+      "id": "B8E-C-03",
+      "scenario": "guard:missing_evidence"
+    },
+    {
+      "id": "B8E-C-04",
+      "scenario": "guard:digest"
+    },
+    {
+      "id": "B8E-C-05",
+      "scenario": "guard:proposal_not_emitted"
+    },
+    {
+      "id": "B8E-C-06",
+      "scenario": "guard:not_causal"
+    },
+    {
+      "id": "B8E-C-07",
+      "scenario": "guard:binding"
+    },
+    {
+      "id": "B8E-C-08",
+      "scenario": "guard:identity"
+    },
+    {
+      "id": "B8E-C-09",
+      "scenario": "guard:ownership"
+    },
+    {
+      "id": "B8E-C-10",
+      "scenario": "guard:correction"
+    },
+    {
+      "id": "B8E-C-11",
+      "scenario": "guard:takeover"
+    },
+    {
+      "id": "B8E-C-12",
+      "scenario": "guard:handoff"
+    },
+    {
+      "id": "B8E-C-13",
+      "scenario": "guard:revocation"
+    },
+    {
+      "id": "B8E-C-14",
+      "scenario": "guard:owner_inactive"
+    },
+    {
+      "id": "B8E-C-15",
+      "scenario": "guard:contact_owner"
+    },
+    {
+      "id": "B8E-C-16",
+      "scenario": "guard:owner_tenant"
+    },
+    {
+      "id": "B8E-C-17",
+      "scenario": "guard:owner_snapshot"
+    },
+    {
+      "id": "B8E-C-18",
+      "scenario": "guard:tenant"
+    },
+    {
+      "id": "B8E-C-19",
+      "scenario": "guard:replaced"
+    },
+    {
+      "id": "B8E-C-20",
+      "scenario": "guard:expired"
+    },
+    {
+      "id": "B8E-C-21",
+      "scenario": "guard:permission"
+    },
+    {
+      "id": "B8E-C-22",
+      "scenario": "guard:safety"
+    },
+    {
+      "id": "B8E-C-23",
+      "scenario": "guard:contextual"
+    },
+    {
+      "id": "B8E-C-24",
+      "scenario": "guard:b0"
+    },
+    {
+      "id": "B8E-C-25",
+      "scenario": "guard:flag"
+    },
+    {
+      "id": "B8E-C-26",
+      "scenario": "guard:consent_gate"
+    },
+    {
+      "id": "B8E-C-27",
+      "scenario": "guard:adapter_missing"
+    },
+    {
+      "id": "B8E-C-28",
+      "scenario": "guard:kind_disabled"
+    },
+    {
+      "id": "B8E-C-29",
+      "scenario": "test_pet_01_authorized_exact_owner_tenant_and_definition"
+    },
+    {
+      "id": "B8E-C-30",
+      "scenario": "test_pet_29_30_defaults_and_unknowns"
+    },
+    {
+      "id": "B8E-C-31",
+      "scenario": "test_pet_26_27_28_no_implicit_entities"
+    },
+    {
+      "id": "B8E-C-32",
+      "scenario": "test_pet_12_retry_after_human_changes"
+    },
+    {
+      "id": "B8E-C-33",
+      "scenario": "test_pet_14_human_equivalent_never_claimed"
+    },
+    {
+      "id": "B8E-C-34",
+      "scenario": "test_pet_16_17_other_owner_and_tenant_never_reused"
+    },
+    {
+      "id": "B8E-C-35",
+      "scenario": "test_pet_08_inferred_source_not_authorized"
+    },
+    {
+      "id": "B8E-C-36",
+      "scenario": "test_correction_requires_new_definition_and_consent"
+    }
+  ]
+}

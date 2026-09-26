@@ -12,7 +12,7 @@ from uuid import UUID
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models, transaction
+from django.db import DatabaseError, models, transaction
 from django.db.models import Q
 
 from . import durable, intake, operation_consent, operation_permission
@@ -113,6 +113,7 @@ from .appointment_execution import CreateAppointmentAdapter
 from .appointment_mutation_execution import (RescheduleAppointmentAdapter, CancelAppointmentAdapter,
     ConfirmAttendanceAdapter)
 from .operation_proposals import authorization_mode_enabled
+from .pet_execution import RegisterPetAdapter, observe as observe_pet
 from apps.appointments.mutations import MUTATION_KINDS
 
 REGISTRY = MappingProxyType({
@@ -120,7 +121,7 @@ REGISTRY = MappingProxyType({
     'RESCHEDULE_APPOINTMENT': Registration('reschedule_appointment', enabled=True, adapter=RescheduleAppointmentAdapter()),
     'CANCEL_APPOINTMENT': Registration('cancel_appointment', enabled=True, adapter=CancelAppointmentAdapter()),
     'CONFIRM_ATTENDANCE': Registration('confirm_appointment', enabled=True, adapter=ConfirmAttendanceAdapter()),
-    'REGISTER_PET': Registration('register_pet_only'),
+    'REGISTER_PET': Registration('register_pet_only', enabled=True, adapter=RegisterPetAdapter()),
 })
 
 
@@ -325,6 +326,8 @@ def _authority_reason(operation, conv, goal, work, context):
 def _uncertain(operation, reason):
     _record(operation, 'UNCERTAIN', reason)
     observe('execution_uncertain')
+    if operation.operation_kind == 'REGISTER_PET':
+        observe_pet('pet_registration_uncertain')
     if operation.operation_kind in MUTATION_KINDS:
         from .appointment_mutation_execution import observe as observe_mutation
         observe_mutation('appointment_mutation_uncertain')
@@ -334,6 +337,8 @@ def _uncertain(operation, reason):
 def _success(operation, evidence, *, reconciled=False):
     _record(operation, 'SUCCEEDED', 'effect_confirmed', evidence)
     observe('execution_reconciled' if reconciled else 'execution_succeeded')
+    if not reconciled and operation.operation_kind == 'REGISTER_PET':
+        observe_pet('pet_registration_succeeded')
     if not reconciled and operation.operation_kind in MUTATION_KINDS:
         from .appointment_mutation_execution import observe as observe_mutation
         observe_mutation(_mutation_prefix(operation.operation_kind) + '_succeeded')
@@ -396,6 +401,7 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
     from .models import ConversationOperation, ConversationGoal, ContactIdentity, ToolExecution
     if not isinstance(context, ExecutionContext) or not isinstance(operation_key, UUID):
         return _deny(None, 'invalid_execution_context')
+    operation = None
     try:
         with transaction.atomic():
             conv, work = durable.lock_witness(context.witness)
@@ -411,6 +417,8 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
                 organization_id=conv.organization_id, conversation=conv).first()
             operation = ConversationOperation.objects.select_for_update().get(pk=candidate.pk)
             operation.conversation, operation.contact, operation.goal = conv, conv.contact, goal
+            if operation.operation_kind == 'REGISTER_PET':
+                observe_pet('pet_registration_requested')
             if operation.operation_kind == 'CREATE_APPOINTMENT':
                 from .appointment_execution import observe as observe_appointment
                 observe_appointment('appointment_execution_requested')
@@ -449,9 +457,12 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
                     if not consistent:
                         if operation.operation_kind == 'CREATE_APPOINTMENT':
                             observe_appointment('appointment_execution_uncertain')
-                        else:
+                        elif operation.operation_kind in MUTATION_KINDS:
                             observe_mutation('appointment_mutation_uncertain')
-                        return ExecutionResult('UNCERTAIN', 'appointment_evidence_mismatch',
+                        else:
+                            observe_pet('pet_registration_uncertain')
+                        return ExecutionResult('UNCERTAIN', ('pet_registration_evidence_mismatch'
+                            if operation.operation_kind == 'REGISTER_PET' else 'appointment_evidence_mismatch'),
                             operation.operation_key, reconciliation_required=True)
                     if operation.operation_kind == 'CREATE_APPOINTMENT':
                         observe_appointment('appointment_duplicate_suppressed')
@@ -542,6 +553,14 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
         return _deny(None, 'ownership_lost')
     except TimeoutError:
         return _deny(None, 'deadline_elapsed')
+    except DatabaseError:
+        if operation is None or operation.operation_kind != 'REGISTER_PET':
+            raise
+        # A COMMIT acknowledgement may be lost. Do not rewrite a possibly
+        # committed ledger or report absence; the next entry must reconcile it.
+        observe_pet('pet_registration_uncertain')
+        return ExecutionResult('UNCERTAIN', 'commit_observation_failed', operation_key,
+                               reconciliation_required=True)
 
 
 def execution_stage(operation):

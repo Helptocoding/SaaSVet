@@ -4,7 +4,6 @@ from contextlib import ExitStack
 from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.db.models import Count
@@ -91,11 +90,9 @@ class B8BCorpusTests(AppointmentExecutionFixtures, TestCase):
             elif scenario == 'other_kind_accidental_flag':
                 stack.enter_context(override_settings(AGENT_OPERATION_EXECUTION_ENABLED={
                     kind: True for kind in execution.REGISTRY if kind != 'CREATE_APPOINTMENT'}))
-                for kind, entry in execution.REGISTRY.items():
-                    if kind == 'REGISTER_PET':
-                        self.assertEqual(execution._gate(SimpleNamespace(operation_kind=kind), entry),
-                                         'kind_disabled')
-                        self.assertIsNone(entry.adapter)
+                self.assertIsNotNone(execution.REGISTRY['REGISTER_PET'].adapter)
+                self.assertEqual(execution._gate(self.op, execution.REGISTRY['CREATE_APPOINTMENT']),
+                                 'flag_disabled')
             result = self.execute()
             manual_fixture = int(scenario in ('slot_occupied', 'manual_equivalent_appointment', 'partial_overlap'))
             metrics = domain_metrics(case['effects'], existing_appointments=manual_fixture)

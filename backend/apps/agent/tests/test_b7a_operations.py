@@ -396,9 +396,8 @@ class ConversationOperationTests(OperationFixtures, TestCase):
         self.goal.save()
         self.change({'owner': self.owner.pk, 'pet': None})
         for key, value in [('pet_name', 'Nala'), ('pet_species', 'felino'), ('pet_birth_date', '2020-01-02')]:
-            binding.record_derived(self.goal, self.conv, key, value, context=self.ctx,
-                message_id=self.ctx.anchor.message_id, expected_snapshot=binding.snapshot(self.goal),
-                source_type='DERIVED')
+            binding.change(self.goal, self.conv, {key: value}, context=self.ctx,
+                message_id=self.ctx.anchor.message_id, expected_revision=self.goal.binding_revision)
         op = self.prepare('register_pet_only')
         self.assertEqual(op.parameters, {'owner_id': self.owner.pk, 'name': 'Nala',
             'species': 'felino', 'birth_date': '2020-01-02'})

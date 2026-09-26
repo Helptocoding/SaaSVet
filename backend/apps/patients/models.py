@@ -95,6 +95,22 @@ class Owner(PublicIdMixin, OrganizationalModel):
         ]
 
 
+class PetRegistrationEffect(models.Model):
+    """Immutable historical creation, independent from mutable Pet fields.
+
+    PostgreSQL verifies INSERT scope/definition and rejects UPDATE/DELETE.
+    Human and legacy pets have no row. Never backfill provenance.
+    """
+    operation = models.OneToOneField('agent.ConversationOperation', to_field='operation_key',
+        on_delete=models.PROTECT, related_name='pet_registration_effect')
+    organization = models.ForeignKey('organizations.Organization', on_delete=models.PROTECT)
+    owner = models.ForeignKey(Owner, on_delete=models.PROTECT)
+    pet = models.OneToOneField('Pet', on_delete=models.PROTECT, related_name='registration_effect')
+    parameters_digest = models.CharField(max_length=64)
+    definition = models.JSONField()
+    committed_at = models.DateTimeField()
+
+
 class Pet(PublicIdMixin, OrganizationalModel):
     SEX_CHOICES = (
         ('male', 'Macho'),
@@ -104,8 +120,7 @@ class Pet(PublicIdMixin, OrganizationalModel):
 
     name = models.CharField(max_length=255)
     # blank=True para migración de clínicas: expedientes viejos a veces no traen
-    # especie (Sprint import). '' = especie pendiente. El alta MANUAL la sigue
-    # exigiendo vía PetSerializer.validate_species — solo el importador admite ''.
+    # especie (Sprint import). '' = especie pendiente también en alta manual.
     species = models.CharField(max_length=100, blank=True, default='')
     breed = models.CharField(max_length=100, blank=True, default='')
     birth_date = models.DateField(null=True, blank=True)

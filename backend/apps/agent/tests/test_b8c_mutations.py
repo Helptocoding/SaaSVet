@@ -193,11 +193,11 @@ class B8CMutationTests(MutationFixtures, TestCase):
     def test_unimplemented_kinds_ignore_accidental_flags(self):
         from types import SimpleNamespace
         from apps.agent.operation_execution import REGISTRY, _gate
-        with enabled_mutations(), override_settings(AGENT_OPERATION_EXECUTION_ENABLED={kind: True for kind in REGISTRY}):
+        with enabled_mutations():
             for kind in ('REGISTER_PET',):
-                self.assertIsNone(REGISTRY[kind].adapter)
-                self.assertFalse(REGISTRY[kind].enabled)
-                self.assertEqual(_gate(SimpleNamespace(operation_kind=kind), REGISTRY[kind]), 'kind_disabled')
+                self.assertIsNotNone(REGISTRY[kind].adapter)
+                self.assertTrue(REGISTRY[kind].enabled)
+                self.assertEqual(_gate(SimpleNamespace(operation_kind=kind), REGISTRY[kind]), 'flag_disabled')
 
     def test_snapshot_ignores_notes_but_detects_utc_and_walkin(self):
         self.mutation()

@@ -269,10 +269,10 @@ class B8DAttendanceTests(AttendanceFixtures, TestCase):
         self.authorized()
         self.assertEqual(settings.AGENT_OPERATION_EXECUTION_ENABLED, {})
         self.assert_no_effect(self.execute())
-        with enabled_attendance(), override_settings(AGENT_OPERATION_EXECUTION_ENABLED={'REGISTER_PET': True}):
+        with enabled_attendance():
             entry = execution.REGISTRY['REGISTER_PET']
-            self.assertIsNone(entry.adapter)
-            self.assertEqual(execution._gate(SimpleNamespace(operation_kind='REGISTER_PET'), entry), 'kind_disabled')
+            self.assertIsNotNone(entry.adapter)
+            self.assertEqual(execution._gate(SimpleNamespace(operation_kind='REGISTER_PET'), entry), 'flag_disabled')
 
     def test_legacy_attendance_never_gains_consent(self):
         from apps.agent import durable
