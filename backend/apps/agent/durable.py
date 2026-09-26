@@ -215,6 +215,13 @@ def finalize_turn(witness, *, outputs=(), changes=None, outcome='completed', pro
             consent = evaluate_turn(witness)
             outputs = (() if consent.reason in ('human_ownership', 'safety', 'disabled')
                        else [{'body': reply_text(consent)}])
+            # B9 harness integration: the worker reaches the existing B8A
+            # boundary while its B3 witness is still live. Closed releases keep
+            # the historical consent-only response. No provider IO here.
+            from .operation_execution import consent_execution_output
+            execution_output = consent_execution_output(witness, consent)
+            if execution_output is not None:
+                outputs = [execution_output]
             outcome = 'consent_' + consent.decision.lower()
         if not deferred and proposal_operation is not None and not proposal_operation.proposal_message_id:
             # One canonical output; never mix a free-form planner question with

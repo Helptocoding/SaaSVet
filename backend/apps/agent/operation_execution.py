@@ -563,6 +563,46 @@ def execute_authorized_operation(operation_key, context: ExecutionContext):
                                reconciliation_required=True)
 
 
+def consent_execution_output(witness, consent):
+    """Connect worker consent to B8A, inside B3 finalization, never from a tool.
+
+    The preliminary gate only avoids scheduling effects in a closed release.
+    execute_authorized_operation remains the final authority and revalidates
+    every guard. Effect, evidence, receipt and TurnWork completion share the
+    caller's transaction; retry cannot observe a half-published local effect.
+    """
+    from .models import ConversationOperation
+    from apps.channels.models import Message
+    if consent.decision != 'ACCEPT' or not consent.operation_id:
+        return None
+    if not transaction.get_connection().in_atomic_block:
+        raise RuntimeError('Consent execution requires B3 finalization')
+    operation = ConversationOperation.objects.filter(
+        pk=consent.operation_id, organization_id=witness.organization_id,
+        conversation_id=witness.conversation_id).first()
+    if operation is None:
+        return None
+    entry = REGISTRY.get(operation.operation_kind)
+    if entry is None or _gate(operation, entry):
+        return None
+    result = execute_authorized_operation(operation.operation_key,
+        ExecutionContext(witness, operation.contact_id, entry.capability))
+    if (result.status == 'SUCCEEDED' and isinstance(result.evidence, EffectEvidence)
+            and result.evidence.matches(operation)):
+        body = {
+            'CREATE_APPOINTMENT': 'La cita de esa solicitud quedó agendada.',
+            'RESCHEDULE_APPOINTMENT': 'La cita de esa solicitud quedó reprogramada.',
+            'CANCEL_APPOINTMENT': 'La cita de esa solicitud quedó cancelada.',
+            'CONFIRM_ATTENDANCE': 'La asistencia a esa cita quedó confirmada.',
+            'REGISTER_PET': 'Tu mascota quedó registrada en tu expediente.',
+        }[operation.operation_kind]
+        return {'body': body, 'semantic_type': Message.SEMANTIC_OPERATION_RECEIPT,
+                'operation_key': str(operation.operation_key)}
+    # No free-form result, inferred success, automatic retry or notification claim.
+    return {'body': ('No pude verificar el resultado de la operación. '
+                     'El equipo debe revisarlo antes de intentarlo de nuevo.')}
+
+
 def execution_stage(operation):
     if operation.execution_state == 'NOT_STARTED' and _contradictory_record(operation):
         return 'INCONSISTENT / RECONCILIATION_PENDING'

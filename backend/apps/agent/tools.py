@@ -1344,6 +1344,10 @@ def check_appointment_slot(conversation, executor, args, triggered_by=None):
     available = state == 'available'
     return ToolOutcome(
         kind='READ', validated=True, completeness='complete',
+        # This result is derived after the real occupancy READ completes. B7A
+        # requires the observation time; omitting it made an available slot
+        # unusable when the B3 worker prepared its operation.
+        observed_at=timezone.now(),
         scope=_scope(conversation, date=date_str, time=time_str[:5]),
         data={'date': date_str, 'time': time_str[:5], 'available': available,
               'end_time': _appt_end_time(time_str[:5]),

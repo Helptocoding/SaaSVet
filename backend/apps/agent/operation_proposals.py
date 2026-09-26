@@ -45,7 +45,8 @@ def render_proposal(operation):
             'Tu declaración quedará registrada; la operación sigue pendiente de ejecución.')
     return (operations.render(operation) + '\n¿Confirmas esta propuesta exacta? '
         'Para aceptarla responde CONFIRMAR ' + proposal_token(operation)
-        + '. Para rechazarla responde NO. La confirmación no ejecuta la operación.')
+        + '. Para rechazarla responde NO. La operación solo se realizará si siguen vigentes '
+          'los permisos y las condiciones de esta propuesta.')
 
 
 def attendance_contract(operation):

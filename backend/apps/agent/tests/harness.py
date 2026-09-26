@@ -22,6 +22,10 @@ from apps.agent import guards, planner
 from apps.agent.executor import ToolExecutor
 from apps.channels.models import Message
 
+# B9A composes HTTP -> B3 worker -> B4 sender. Legacy helpers below remain
+# component tests; their queued rows are not evidence of provider acceptance.
+from .b9a_harness import ApplicationHarness
+
 _UUID_RE = guards.UUID_RE
 
 # Fuente única: las listas vinculantes viven en `guards.py` y corren en

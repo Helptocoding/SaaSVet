@@ -194,10 +194,16 @@ class AgentApiPermissionsTests(APITestCase):
             )
 
     def test_agent_can_reach_appointment_create_in_f2(self):
-        """F2: ya NO es 403 (tiene appointment.create). Body vacío → cae en la
-        validación del serializer (400), prueba de que el permiso pasó."""
+        """Historical ID: B8A supersedes F2's direct API WRITE permission.
+
+        The role may retain appointment.create, but an AGENT token must not
+        replace execute_authorized_operation or reach the serializer directly.
+        """
+        from apps.appointments.models import Appointment
+        before = Appointment.objects.count()
         r = self.client.post("/api/appointments/", {})
-        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST, r.content)
+        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN, r.content)
+        self.assertEqual(Appointment.objects.count(), before)
 
     def test_agent_cannot_destroy_appointments_in_f2(self):
         """El agente cancela vía PATCH /status/ (deja lineage de auditoría);

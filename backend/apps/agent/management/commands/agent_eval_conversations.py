@@ -1,5 +1,9 @@
 """
-agent_eval_conversations — Evaluación MULTI-TURNO con LLM real (É-F5).
+agent_eval_conversations — Application E2E or legacy planner diagnostic.
+
+--application-e2e uses the B9A signed HTTP/worker/sender scripts with committed
+test fixtures and controlled external wire. B9 integral acceptance is pending.
+The description below concerns the historical real-LLM component mode only.
 
 `agent_eval` mide escenarios de UN mensaje. Todo lo que É-F5 cambió es
 multi-turno: el fallo del piloto tardó cinco turnos en aparecer y la conv 12
@@ -84,14 +88,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--json', action='store_true')
+        from ..e2e_evaluation import add_arguments
+        add_arguments(parser)
         parser.add_argument('--repeat', type=int, default=1,
                             help='corridas por conversación (el modelo varía)')
 
     def handle(self, *args, **options):
+        from ..e2e_evaluation import run
+        if run(self, options, conversations=True):
+            return
         if not getattr(settings, 'AGENT_LLM_API_KEY', ''):
             msg = "agent_eval_conversations: LLM no configurado — skip."
             self.stdout.write(msg if not options['json']
-                              else jsonlib.dumps({"skipped": True}))
+                              else jsonlib.dumps({"skipped": True, "scope": "planner_component", "beta_acceptance": "PENDING"}))
             return
 
         runs = []
@@ -112,7 +121,8 @@ class Command(BaseCommand):
         report = self._aggregate(runs)
         if options['json']:
             self.stdout.write(jsonlib.dumps(
-                {'conversaciones': runs, 'global': report},
+                {'scope': 'planner_component', 'beta_acceptance': 'PENDING',
+                 'conversaciones': runs, 'global': report},
                 ensure_ascii=False, default=str))
             return
         self._render(runs, report)

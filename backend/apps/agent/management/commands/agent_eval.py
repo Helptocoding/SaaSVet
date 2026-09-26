@@ -1,11 +1,12 @@
 """
-agent_eval — Evaluación conversacional con LLM REAL (É-F1 PR-13, nightly).
+agent_eval — Component diagnostic or isolated application E2E.
 
-NO bloqueante (spec §9.1): mide la calidad de la generación contra escenarios
-con elementos obligatorios/prohibidos y reporta % de aciertos. El gate del
-piloto (spec §10) es ≥95 % en 5 corridas.
+--application-e2e runs signed HTTP, the B3 worker and B4 sender with controlled
+external wire and committed fixtures in an explicit PostgreSQL test database.
+It reports B9A harness evidence, not integral B9/model promotion acceptance.
 
-Aislamiento: corre TODO dentro de una transacción que se revierte al final —
+The historical default is only a planner component diagnostic with a real LLM.
+Aislamiento de ese modo: corre dentro de una transacción que se revierte al final —
 la evaluación crea una org scratch + fixtures, ejecuta el planner real y no
 deja rastro en la base. Si el LLM no está configurado, sale 0 (skip).
 
@@ -91,12 +92,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--json', action='store_true')
+        from ..e2e_evaluation import add_arguments
+        add_arguments(parser)
 
     def handle(self, *args, **options):
+        from ..e2e_evaluation import run
+        if run(self, options):
+            return
+        # Historical diagnostic only. B9 acceptance uses application-e2e;
+        # a planner-only run or missing key does not approve a beta release.
         if not getattr(settings, 'AGENT_LLM_API_KEY', ''):
             msg = "agent_eval: LLM no configurado (AGENT_LLM_API_KEY) — skip."
             self.stdout.write(msg if not options['json']
-                              else jsonlib.dumps({"skipped": True}))
+                              else jsonlib.dumps({"skipped": True, "scope": "planner_component", "beta_acceptance": "PENDING"}))
             return
 
         results = []
@@ -115,6 +123,7 @@ class Command(BaseCommand):
 
         if options['json']:
             self.stdout.write(jsonlib.dumps({
+                "scope": "planner_component", "beta_acceptance": "PENDING",
                 "passed": passed, "total": total, "rate": rate,
                 "results": results,
             }, ensure_ascii=False))
