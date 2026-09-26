@@ -602,3 +602,31 @@ preservar citas/operaciones/consentimiento/auditoría/efectos. No compensar a sc
 no migración inversa sobre evidencia nueva. Cache es best effort on_commit;
 la transición no envía notificaciones externas ni promete exactly-once remoto.
 [Contrato](../contrato-confirm-attendance-b8d.md), [resultados](../evals/b8d-acceptance-results.json).
+## B8E: registro individual de mascota, inspección y rollback
+
+Los cinco adapters están implementados y productivamente OFF. Mantener B0 cerrado,
+AGENT_B7B_CONSENT_ENABLED=False, AGENT_OPERATION_EXECUTION_ENABLED={} y
+PENDING_ACTIVATION_REQUIREMENTS. B8E no autoriza B9 ni despliegue.
+
+Ante duda, inspeccionar ConversationOperation y AuthorizationEvidence; el panel
+readonly `pet_effect` distingue la definición histórica de PetRegistrationEffect
+del estado actual del Pet. Verificar owner/tenant/UUID/digest/committed_at. Una
+mascota humana parecida jamás prueba el efecto del agente. No enlazarla manualmente
+para resolver una operación pendiente. Una inconsistencia devuelve UNCERTAIN;
+investigar la evidencia antes de cualquier decisión. No blind retry ni edición de
+provenance. Los eventos B8E tienen vocabulario cerrado y no usan PII como labels.
+
+Si una edición humana mantiene el lock del propietario, la precondition B8E usa
+NOWAIT y devuelve rechazo temporal `precondition_infrastructure`, sin crear Pet.
+Esto libera ContactIdentity para que el signal humano pueda completar su revocación.
+Un nuevo intento pasa de nuevo por todo B8A; si cambió el binding o la identidad,
+necesita una nueva definición y consentimiento. No tratar ese rechazo como éxito.
+
+Rollback normal: cerrar REGISTER_PET, conservar contención y lector de schema 4.
+Preservar Pet, ConversationOperation, AuthorizationEvidence, PetRegistrationEffect,
+ToolExecution y result. No DELETE, reset de SUCCEEDED ni desvincular provenance.
+La migración patients.0019 es aditiva; no revertirla sobre evidencia comprometida.
+
+Reproducción local y pruebas por ID: [acta](../implementacion-b8e-agente-whatsapp-2026-09-25.md).
+Política de identidad física, teléfonos compartidos/reciclados, step-up y cobertura
+humana sigue pendiente en los gates operativos originales.

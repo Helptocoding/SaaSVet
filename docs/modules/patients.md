@@ -434,3 +434,33 @@ Comportamiento DELETE actual:
 - Owner generico (`is_generic=True`) → **409 Conflict** mismo guard.
 
 Frontend pivotara a "Archivar/Desactivar" usando `is_active=False` (separate PR). Soft-delete real es deuda Fase 2 A5.
+## Registro individual autorizado B8E (2026-09-25)
+
+El POST humano de mascotas y REGISTER_PET comparten `apps.patients.creation`:
+nombre validado/recortado, especie opcional de catálogo normalizada, nacimiento
+opcional no futuro según fecha local, full_clean, tenant y auditoría del modelo.
+El servicio recibe owner exacto; el modo humano de alta anidada conserva su
+resolución explícita previa. Bloquea Organization y Owner FOR SHARE, en ese orden.
+La precondition del agente usa Owner NOWAIT para evitar un ciclo con el signal
+humano de cambio de teléfono, que puede revocar ContactIdentity bajo lock de Owner.
+Una edición concurrente causa rechazo temporal antes del INSERT; las altas de
+mascotas distintas mantienen locks compartidos compatibles.
+No hay deduplicación global por nombre/especie. Dos mascotas homónimas son válidas.
+
+El adapter requiere binding/identidad/consentimiento persistidos y solo admite
+owner_id/name, species/birth_date opcionales. Los campos omitidos conservan los
+defaults reales: species='', birth_date=NULL, sex=unknown, breed/color='',
+is_generic=False, is_active=True, legacy_id='', extra_data=[]. No infiere datos
+clínicos ni crea owner/cita/historial/vacuna/factura. El alta Pet no tiene signals
+que generen esos registros; auto_create_medical_record=False se conserva.
+
+`PetRegistrationEffect` guarda operación UUID única, Pet exacto único, owner,
+tenant, digest, definición original y fecha transaccional. El trigger protege
+inmutabilidad y concordancia al insertar. El Pet sigue editable: un retry reconoce
+su creación histórica sin restaurar valores anteriores. Humanos, importadores y
+legacy siguen sin evidencia del agente; no hay backfill ni cambios en sus reglas
+específicas de importación. Rollback funcional cierra el adapter sin borrar negocio.
+
+Producción OFF, B0 cerrado, PENDING_ACTIVATION_REQUIREMENTS. Véase
+[contrato B8E](../contrato-register-pet-b8e.md) y
+[aceptación](../implementacion-b8e-agente-whatsapp-2026-09-25.md).

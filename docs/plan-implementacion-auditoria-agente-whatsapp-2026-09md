@@ -1,6 +1,6 @@
 # Plan de implementación — Auditoría agente WhatsApp
 
-Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-25**. Estado: **B0–B8D cerradas técnicamente en su alcance; B8D completó recuperación de 15 IDs históricos y regresión 1462/1462; B8E–B9/E/P pendientes y activación no autorizada**.
+Fecha de inicio de planificación: **2026-09-11**. Validación inicial contra repositorio: **2026-09-12**. Revisión de simplificación del plan: **2026-09-13** (solo documento; sin nueva auditoría ni ejecución de cambios). Seguimiento de implementación: **2026-09-26**. Estado: **B0–B8E cerradas técnicamente en su alcance; B8E acreditó 1.726/1.726 IDs históricos y 2.097/2.097 en la unión de aceptación. B9/E/P pendientes y activación no autorizada**.
 
 Fuente de verdad inicial: [auditoría H01–H20](auditoria-agente-conversacional-veterinario-2026-09-10.md). Base contrastada: `857f4a5a8638cf0398096af8661f29b072ce1caa`, HEAD observado durante la planificación inicial, no revalidado por esta revisión documental. Se conserva el nombre de archivo solicitado, incluido el sufijo `2026-09md`.
 
@@ -666,7 +666,7 @@ Cada ID es una unidad **independiente**, no una tarea conjunta. Dependen de B8A 
 | B8B crear cita | **COMPLETED técnico (2026-09-22)**: `AppointmentCommand`/servicio común, adapter `LOCAL_ATOMIC`, evidencia nullable única `source_operation`, horario OrganizationSchedule, timezone y reconciliación exacta. Producción cerrada. | PostgreSQL 16: B8B 83/83 (21 multiproceso), B0–B8A 1224/1224 por inventario exacto, Agenda 99/99 y dashboard 63/63; 1462 IDs únicos, corpus 20 y cuatro métricas críticas cero. Ver [contrato B8B](contrato-create-appointment-b8bmd), [acta](implementacion-b8b-agente-whatsapp-2026-09-21md), [ADR](decisions/2026-09-21-b8b-create-appointmentmd) y [aceptación](evals/b8b-acceptance-resultsjson). |
 | B8C reprogramar/cancelar | COMPLETED técnico 2026-09-23: dos adapters LOCAL_ATOMIC, FK exacta, snapshot schema 2 bajo lock y ledger histórico de transición. Producción OFF. | 147 IDs B8C (82 dominio/guard, 41 multiproceso, 24 corpus), 1462 IDs exactos de regresión cubiertos, métricas críticas cero; pasadas parciales/repetidas distinguidas. [Contrato](contrato-appointment-mutations-b8cmd), [ADR](decisions/2026-09-22-b8c-appointment-mutationsmd), [acta](implementacion-b8c-agente-whatsapp-2026-09-22md), [evidencia](evals/b8c-acceptance-resultsjson). |
 | B8D confirmar asistencia | COMPLETED técnico, 2026-09-25: adapter LOCAL_ATOMIC, scheduled→confirmed futura, snapshot schema 3, autorización contextual acotada y 117/117 pruebas B8D aprobadas; regresión B0–B8B/Agenda 1462/1462, B8C 147/147. Los 15 IDs pendientes aprobaron individualmente tras recovery natural del PostgreSQL local; corridas previas preservadas y checks finales verdes. Producción OFF. | Reutiliza ledger B8C con auditoría enlazada; replay histórico no revierte in_progress/done ni atribuye efecto humano. [Contrato](contrato-confirm-attendance-b8d.md), [ADR](decisions/2026-09-23-b8d-confirm-attendance.md), [acta](implementacion-b8d-agente-whatsapp-2026-09-23.md), [aceptación](evals/b8d-acceptance-results.json). |
-| B8E registrar solo mascota | tools.py y patients/views.py::PetViewSet: propietario autorizado, datos propuestos, alta individual sin cita implícita. | ID/SEC/EXEC: replay devuelve misma Pet; owner distinto rechazado; pérdida de respuesta no duplica; petición de alta no crea cita. |
+| B8E registrar solo mascota | COMPLETED técnico, 2026-09-26. REGISTER_PET LOCAL_ATOMIC mediante guard B8A, owner exacto y servicio común patients.creation. 55 funcionales + 36 corpus + 29 multiproceso; histórico 1.726/1.726 y dominios 430/430, unión 2.097/2.097. Producción OFF. | PetRegistrationEffect inmutable/único, parámetros v1 y preconditions 4; no alta de owner/cita/clínica. Implementación `f8df61d9ec4b3fa9c64b4956acfdcb1716102cc2`. [Contrato](contrato-register-pet-b8e.md), [ADR](decisions/2026-09-25-b8e-register-pet.md), [acta](implementacion-b8e-agente-whatsapp-2026-09-25.md), [aceptación](evals/b8e-acceptance-results.json). |
 
 **Objetivo/actual → objetivo.** Aplicar la frontera común a la operación seleccionada; actualmente las garantías no están uniformadas. **Hallazgos:** H01/H02/H05/H06/H08/H18; B8D debe demostrar además H20. **Invariantes:** I01–I07/I09/I12–I14.
 
@@ -1096,6 +1096,24 @@ Ningún hallazgo se declara corregido por este plan. “Fase” indica dónde se
 | H20 | CR1/CR2 | Declaración de asistencia exacta y resultado confirmado/already_done/conflict diferenciado | B7B/B2/B8D | confirm_appointment, manifiesto, ledger/API, renderizador | ATT-01/02, RESULT-03, EXEC-01 | Pregunta nunca PATCH; declaración exacta autoriza solo cita vigente; conflicto no comunica éxito genérico |
 
 Cierre se evalúa en el alcance explícitamente habilitado: operaciones no adaptadas permanecen denegadas/supervisadas. H12 no se declara completamente cerrado antes de E2; H13 requiere validar también su integración con la escritura elegida. E3/E4 no son requisitos universales de cierre si el circuito/ perfil básico ya cumplen el criterio.
+
+### 13.1 Evidencia acotada B8E
+
+Esta ampliación de trazabilidad no cierra transversalmente H01–H20. La aceptación
+por ID y el estado de ejecución constan en el [acta B8E](implementacion-b8e-agente-whatsapp-2026-09-25.md).
+
+| Hallazgo | Aporte específico B8E | Límite conservado |
+| --- | --- | --- |
+| H01 | Definición Pet inmutable, propuesta visible, corrección con nueva operación/consentimiento | No autorización universal de WRITE |
+| H02 | B7B/B8A rechazan propuesta no emitida, evidencia ausente y respuesta no causal | No garantía de entrega externa |
+| H05 | Éxito solo con ledger exacto; ninguna mascota humana parecida se atribuye al agente; sin inferencia clínica | No evaluación clínica ni grounding universal |
+| H06 | Unicidad de operación en PostgreSQL, kill/rollback/retry y lectura histórica tras edición | No pérdida eléctrica ni exactly-once externo |
+| H08 | Corrección/revocación/takeover/handoff antes del efecto lo bloquean; evento posterior preserva Pet | No compensación destructiva ni revocación remota |
+| H18 | Owner exacto del binding persistido, tenant/revisiones/actividad/permiso revalidados bajo locks | Teléfonos compartidos/reciclados, step-up e identidad física pendientes |
+| H12/H13 | Tres slots explícitos de registro dependen del owner; su corrección invalida el consentimiento anterior | E1/E2 y referencias generales fuera de alcance |
+
+B0, consentimiento productivo y los cinco adapters permanecen OFF.
+PENDING_ACTIVATION_REQUIREMENTS; sin B9, E1–E5, P-A/P-B ni deploy.
 
 ## 14. Matriz de capacidades y activación por fase
 

@@ -1428,3 +1428,22 @@ no conceden permiso. Emisión, causalidad, revisiones y TTL B7B/B8A se conservan
 Ledger histórico B8C con auditoría única permite replay sin transición ni cache
 duplicada. Inspector distingue confirmed histórico de estado actual. Producción
 OFF, PENDING_ACTIVATION_REQUIREMENTS y sin B8E. [Contrato](../contrato-confirm-attendance-b8d.md).
+## Adapter B8E — REGISTER_PET (2026-09-25)
+
+Nueva alta individual por `execute_authorized_operation(operation_key, context)`.
+B6.change registra explícitamente pet_name/pet_species/pet_birth_date e invalida
+operaciones al corregirlos. No se añade extractor ni tool legacy. B7A conserva
+parámetros v1; preconditions 4/registration_contract 1 incluye snapshot del owner
+en el digest. B7B muestra propietario, definición y desconocidos. Schema legacy
+no obtiene ejecución retroactiva; CONTEXTUAL_DECLARATION no se habilita para Pet.
+
+LOCAL_ATOMIC incluye guard final, locks, alta por patients.creation, ledger
+PetRegistrationEffect, ToolExecution y resultado. La conciliación usa operation_key
+exacta, nunca similitud de mascotas. Historia y estado actual se distinguen en el
+inspector readonly. No hay creación implícita de owner, cita ni clínica.
+
+Los cinco adapters existen; todos siguen productivamente OFF. B0 cerrado,
+AGENT_B7B_CONSENT_ENABLED=False, AGENT_OPERATION_EXECUTION_ENABLED={} y
+PENDING_ACTIVATION_REQUIREMENTS. Sin deploy, B9 ni extensiones E/P.
+[Contrato](../contrato-register-pet-b8e.md), [ADR](../decisions/2026-09-25-b8e-register-pet.md),
+[acta](../implementacion-b8e-agente-whatsapp-2026-09-25.md).

@@ -1156,3 +1156,14 @@ Todos los eventos se emiten a stdout en formato JSON (Docker stdout — `docker 
 - `ExternalPrescriptionAttestation`: append-only.
 - `CashMovement`: append-only (ADR p39 — corrección = contra-movimiento).
 - `OrganizationTimezoneAudit`: cada cambio de timezone de la org.
+## Operación REGISTER_PET B8E (2026-09-25)
+
+El alta autónoma individual usa exclusivamente una ConversationOperation autorizada
+por B7B y el guard B8A. No usa endpoints/serializers desde el LLM. El owner procede
+de ContactIdentity→Goal→Operation; no hay búsqueda por teléfono/nombre durante execute.
+Patients comparte su creación humana de referencia con el adapter y guarda un ledger
+histórico exacto e inmutable. Se permiten mascotas parecidas distintas; se impide
+repetir el efecto de la misma operación. No crea owner, cita ni MedicalRecord.
+
+Los cinco adapters permanecen OFF; no deploy ni B9. Contrato y evidencia:
+[B8E](contrato-register-pet-b8e.md), [acta](implementacion-b8e-agente-whatsapp-2026-09-25.md).

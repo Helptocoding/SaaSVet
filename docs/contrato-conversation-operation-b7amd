@@ -221,3 +221,18 @@ Addendum B8D (2026-09-23): nuevas definiciones CONFIRM_ATTENDANCE mantienen
 parámetros v1 y usan preconditions schema 3 con appointment_snapshot B8C y
 attendance_contract=1 incluidos en digest. Schema 1/2 históricos no adquieren
 permiso nuevo. [Contrato](contrato-confirm-attendance-b8d.md).
+## Addendum B8E (2026-09-25)
+
+REGISTER_PET conserva parámetros v1: owner_id/name requeridos, species/birth_date
+opcionales. Las nuevas definiciones exigen fuente USER_EXPLICIT/USER_CORRECTION
+de B6.change, preconditions schema 4 y registration_contract=1. Snapshot del owner
+exacto (incluida etiqueta visible y huella de clave de contacto) participa en digest.
+La corrección cambia binding_revision y exige nueva operación/propuesta/consentimiento.
+No se permiten sex/breed/color ni datos clínicos adicionales como parámetros.
+
+La propuesta informa propietario y valores/unknowns. El adapter LOCAL_ATOMIC usa
+el servicio humano de creación y prueba el efecto mediante PetRegistrationEffect
+inmutable, único por operación y Pet. Replays no sobrescriben modificaciones humanas.
+Schema anterior no se reinterpreta; no se habilita modo contextual para registrar.
+Cinco adapters implementados, cero habilitados en producción. B0 y consentimiento
+productivo siguen cerrados. [Contrato B8E](contrato-register-pet-b8e.md).

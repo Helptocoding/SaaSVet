@@ -825,3 +825,20 @@ No equivale a llegada o consulta. Cita cambiada/confirmada por humano requiere n
 decisión; no se atribuye al agente. Éxito/retry exige evidencia durable propia y
 conserva transiciones posteriores. Producción permanece OFF y sin B8E.
 [Contrato B8D](contrato-confirm-attendance-b8d.md), [acta](implementacion-b8d-agente-whatsapp-2026-09-23.md).
+## B8E — registro individual propuesto y autorizado (2026-09-25)
+
+La propuesta de alta identifica al propietario exacto y muestra nombre de mascota,
+especie y nacimiento explícitos o desconocidos, sexo desconocido y raza/color sin
+especificar. Solo nombre y owner son obligatorios en el dominio actual. Pedir registrar
+una mascota no crea un owner ni agenda una cita. El schema B7A no captura sexo/raza/color;
+solicitudes sobre esos datos requieren otro flujo, sin inferir ni ocultar escrituras.
+
+Una corrección de nombre/especie/nacimiento invalida la propuesta y genera otra
+definición con consentimiento nuevo. Cualquier inbound posterior bloquea la operación
+anterior, incluso una corrección de un campo no soportado. Un replay devuelve el
+Pet históricamente creado y conserva sus ediciones posteriores. Mascotas homónimas
+humanas o de otra operación no se deduplican ni se reclaman como efecto propio.
+
+Esta especificación describe el adapter bajo gates de prueba. B0, consentimiento
+productivo y los cinco adapters siguen OFF; PENDING_ACTIVATION_REQUIREMENTS.
+[Contrato](contrato-register-pet-b8e.md), [acta](implementacion-b8e-agente-whatsapp-2026-09-25.md).
