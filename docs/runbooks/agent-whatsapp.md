@@ -660,3 +660,31 @@ La migración patients.0019 es aditiva; no revertirla sobre evidencia comprometi
 Reproducción local y pruebas por ID: [acta](../implementacion-b8e-agente-whatsapp-2026-09-25.md).
 Política de identidad física, teléfonos compartidos/reciclados, step-up y cobertura
 humana sigue pendiente en los gates operativos originales.
+
+## B9: inspección del presupuesto operativo por trabajo
+
+[Contrato](../contrato-presupuesto-turnwork-b9b.md) y
+[ADR](../decisions/2026-09-27-b9b-turnwork-budget.md). Como operador autorizado,
+seleccionar explícitamente organización y TurnWork:
+
+```text
+rtk proxy python manage.py agent_inspect_llm_budget --organization-id <id> --turn-work-id <id>
+```
+
+Readonly: límite, llamadas admitidas/restantes, tokens máximos reservados,
+usage disponible, admissions sin observación y coherencia de contadores. No
+consulta otros tenants al proporcionar un ID cruzado. No devuelve conversación.
+Una fila sin recorded_at puede corresponder a crash antes o después de envío;
+no afirmar coste cero, no decrementar contadores ni repetir HTTP con su UUID.
+NULL en contadores legacy bloquea nuevas admisiones del trabajo: investigar o
+retirar capacidad siguiendo B3; nunca rellenar historia con cero.
+
+Ante agotamiento se reutiliza REASON_BUDGET y T0_BUDGET, sin otra llamada LLM.
+Error DB antes de admisión impide HTTP; error al registrar usage conserva la
+admisión y el flujo de recuperación B3. No conceder WRITE por tener cupo.
+
+Rollback: pausar planners/deshabilitar AgentSettings, conservar sender, fencing,
+0028, contadores y LLMCall. No ejecutar migración inversa en producción ni
+reactivar writers previos que omitan admisión. Este trabajo no despliega ni
+activa clínicas. B0 cerrado, B7B=False, execution flags={} y
+PENDING_ACTIVATION_REQUIREMENTS. B9 canónica permanece IN_PROGRESS.

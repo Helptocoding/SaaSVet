@@ -702,6 +702,8 @@ Sin despliegue ni avance de fases posteriores. El acta conserva fallos e interru
 
 ### Fase B9 — Evaluación y límites mínimos para activar beta
 
+**Seguimiento del componente de presupuesto 2026-09-27:** B9B interno **COMPLETED técnico** (2.236 históricos + 34 nuevos + 12 provider = 2.282 IDs únicos aceptados; corpus crítico en cero y checks verdes), limitado a R03/R05/R11 del mapa, según [contrato por TurnWork](contrato-presupuesto-turnwork-b9b.md) y [acta](implementacion-b9b-agente-whatsapp-2026-09-27.md). No se modifica el alcance de B9 ni se declara aceptación integral; B9 permanece IN_PROGRESS, producción cerrada y sin deploy. El seguimiento B9A siguiente conserva su corte histórico.
+
 **Seguimiento 2026-09-27: B9 IN_PROGRESS.** Hito interno B9A (harness HTTP/worker/sender) **COMPLETED técnico**, según [mapa de asignación única](mapa-interno-b9-2026-09-26.md), [contrato](contrato-harness-b9a.md) y [acta](implementacion-b9a-agente-whatsapp-2026-09-26.md): 45/45 IDs B9A, 2.097/2.097 históricos, 94 adicionales y checks verdes. B9A–B9E no son fases canónicas nuevas; el alcance de esta sección permanece intacto. B9B–B9E no implementados, PROFILE-BETA-1/EVAL/COST/SCALE pendientes. B0 cerrado, B7B=False, execution flags={} y PENDING_ACTIVATION_REQUIREMENTS; sin deploy.
 
 

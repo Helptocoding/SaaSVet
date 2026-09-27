@@ -1457,3 +1457,18 @@ controlado. El worker conecta consentimiento B7B con el guard único B8A bajo
 la transacción B3; B0/B7B/flags siguen cerrados por defecto. No se activan clínicas
 ni se amplía el alcance administrativo de los cinco adapters. B9 permanece
 IN_PROGRESS; B9B–B9E no están implementados por este hito.
+
+## B9: proveedor y presupuesto operativo (2026-09-27)
+
+[Contrato B9B](../contrato-presupuesto-turnwork-b9b.md). Los tres call sites
+comparten admisión durable por TurnWork antes del POST no streaming compatible
+con OpenAI. La selección de modelos por rol es configuración, no retry remoto.
+Cada retry del planner obtiene otra admisión; el proveedor no ofrece en este
+adapter un mecanismo de idempotencia/consulta de resultado recuperado.
+Timeout o usage ausente conservan cupo. El adapter preserva enteros de usage
+no negativos, incluidos ceros explícitos; otros valores son NULL. Un JSON de
+argumentos inválido conserva el usage que sí reportó el proveedor. No se
+introducen precios, cache o fallback nuevos. Privacy: sin prompts/respuestas
+en contabilidad; errores y finish_reason usan vocabularios cerrados.
+
+Sin deploy ni activación. B9 IN_PROGRESS; aceptación del componente en curso.

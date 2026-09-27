@@ -339,3 +339,13 @@ Cautelas (deben pesar en el veredicto del auditor):
 - El **Gate F2 (piloto de 2 semanas)** no está cerrado por definición.
 
 Recomendación: **encender en piloto acotado** (una clínica, con datos cargados, tras ensayo propio, con el equipo de recepción vigilando la bandeja y el kill switch a mano), medir con las métricas de `/inbox`, y **condicionar la apertura amplia a: (a) <1% de citas erróneas/duplicadas en 2 semanas, (b) decisión formal sobre el tratamiento de datos con el proveedor LLM, (c) plan para RLS o aceptación explícita del riesgo de convención.**
+
+## Seguimiento B9 — componente de presupuesto (2026-09-27)
+
+H16/H19 reciben el componente de contabilidad por TurnWork y su corpus; no se
+cierran por esta implementación. El componente técnico está aceptado con 2.282
+IDs únicos, corpus crítico en cero y checks verdes; el gate
+integral EVAL/COST/SCALE corresponde al hito B9E. Se preservan los informes de
+discrepancia anteriores: el encargo corregido retiró billing, periodos y estados
+no canónicos. Ver contrato-presupuesto-turnwork-b9b.md. No readiness, activación
+ni despliegue; PENDING_ACTIVATION_REQUIREMENTS permanece.

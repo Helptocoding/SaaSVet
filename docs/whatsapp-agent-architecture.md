@@ -1101,3 +1101,18 @@ usan fixtures explícitas del asunto/campo B6 porque el baseline no contiene sus
 extractores completos. B9 canónica sigue IN_PROGRESS; este hito no implementa
 presupuesto, límites de concurrencia, readiness o PROFILE-BETA-1. Producción sigue
 cerrada.
+
+## B9: componente interno de presupuesto por TurnWork (2026-09-27)
+
+[Contrato B9B](contrato-presupuesto-turnwork-b9b.md): cada llamada del planner,
+autorizador o verificador pasa por llm_budget.complete. Una transacción durable
+Conversation → TurnWork valida witness B3, inserta LLMCall e incrementa llamadas
+y máximo de salida admitidos. Commit precede al HTTP; finalize_turn conserva
+LOCAL_ATOMIC sin incorporar esta admisión a su rollback. Una observación tardía
+actualiza usage una sola vez, sin autorizar dominio o publicación. No devolución
+por crash/timeout/retry. No tabla de billing ni state machine nueva.
+
+Usage ausente/malformado permanece NULL. Constantes de release y límites de
+entrada/salida están en el contrato; no presupuesto monetario o periodos.
+La aceptación del componente está en curso. B9 canónica IN_PROGRESS; pendientes
+concurrencia general, activación/readiness y PROFILE-BETA-1. Producción cerrada.

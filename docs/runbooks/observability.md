@@ -354,3 +354,19 @@ releases set-commits --auto` en el deploy con las mismas credenciales.
 ## Siguiente
 
 Capa 8 — pre-launch security review (auditoría completa antes de invitar usuarios reales). NO requiere VPS, todo se valida contra compose local + bundle build.
+
+## B9: evidencia operativa LLM
+
+Eventos cerrados llm_budget_admitted, llm_budget_rejected, llm_budget_exhausted,
+llm_usage_recorded y llm_usage_unavailable; único atributo agregado purpose
+(planner/operation_authorizer/operation_verifier). No etiquetas de tenant,
+conversación, teléfono o contenido. Una caída inmediatamente después del commit
+puede omitir el log: la autoridad es TurnWork/LLMCall, no el evento de logging.
+
+metrics.compute_llm_usage exige organización y admite filtro TurnWork. Expone
+roles, retries, errores, admitted_calls y unknown_usage_calls; los subtotales
+conocidos están separados del total desconocido. Coste permanece desconocido.
+El inspector readonly detecta admisiones sin observación y discrepancias de
+contadores. Responsable: operador técnico del agente; acción: investigar la
+evidencia y retirar capacidad si procede, sin reponer cupo ni borrar filas.
+Esto aporta evidencia COST de componente; no PASS de PROFILE-BETA-1/EVAL/SCALE.

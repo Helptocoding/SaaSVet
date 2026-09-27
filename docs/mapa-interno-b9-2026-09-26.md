@@ -41,6 +41,15 @@ dependencia de activación según categoría/plazo. H16/H19 no se cierran en A.
 
 ## Dependencias y límites
 
+Seguimiento 2026-09-27: la continuación corregida autoriza R03/R05/R11 de B9B,
+respetando R12. Presupuesto por TurnWork y contabilidad: **COMPLETED técnico**
+del componente interno. Regresión: 2.236/2.236 históricos, 34/34 nuevos y
+12/12 adicionales de provider (2.282 únicos); corpus crítico en cero y checks
+verdes. B9 canónica permanece IN_PROGRESS; B9C/B9D/B9E pendientes. Ver [contrato](contrato-presupuesto-turnwork-b9b.md)
+y [acta](implementacion-b9b-agente-whatsapp-2026-09-27.md). Los dos informes de
+discrepancia permanecen como historia. B9 canónica sigue IN_PROGRESS; B9C/B9D/B9E
+no se adelantan. El párrafo «Solo A» siguiente describe la entrega B9A original.
+
 Orden de trabajo: A → B → C → D → E. A aporta las interfaces reutilizadas por los
 demás; E es dueño de aceptación integral. D puede quedar cerrado mientras falta
 el reporte E; esto no exige una dependencia circular de implementación.

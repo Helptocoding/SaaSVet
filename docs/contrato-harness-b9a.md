@@ -191,3 +191,13 @@ El [acta](implementacion-b9a-agente-whatsapp-2026-09-26.md) registra resultados 
 ID y limitaciones. B9 sigue IN_PROGRESS. B9B–B9E, PROFILE-BETA-1, EVAL/COST/SCALE,
 E1–E5 y P-A/P-B quedan fuera de esta entrega. PENDING_ACTIVATION_REQUIREMENTS,
 B0 cerrado, B7B=False y execution flags={} permanecen. No se despliega.
+
+## Extensión B9 de presupuesto operativo (2026-09-27)
+
+El wire LLM exige observar una LLMCall admitida bajo el witness B3 antes de
+simular la respuesta. Se conserva la aserción de HTTP fuera de transacción.
+Los escenarios B9B reutilizan el conductor, con usage normal/ausente/malformado,
+error, timeout y retry. La traza observa admit/record sin reemplazar el servicio
+ni editar directamente su evidencia. El fake ya acepta estos payloads y errores;
+no necesita pricing ni fallback ficticio. La aceptación se registra separadamente
+de los 45 IDs B9A y no acredita el perfil integral.
