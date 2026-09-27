@@ -1447,3 +1447,13 @@ AGENT_B7B_CONSENT_ENABLED=False, AGENT_OPERATION_EXECUTION_ENABLED={} y
 PENDING_ACTIVATION_REQUIREMENTS. Sin deploy, B9 ni extensiones E/P.
 [Contrato](../contrato-register-pet-b8e.md), [ADR](../decisions/2026-09-25-b8e-register-pet.md),
 [acta](../implementacion-b8e-agente-whatsapp-2026-09-25.md).
+
+## B9A: harness de aplicación bajo contención
+
+[Contrato](../contrato-harness-b9a.md) y [acta](../implementacion-b9a-agente-whatsapp-2026-09-26.md).
+Los comandos eval ofrecen `--application-e2e` con PostgreSQL local aislado y
+artefacto requerido. Recorren HTTP, worker y sender reales con proveedor externo
+controlado. El worker conecta consentimiento B7B con el guard único B8A bajo
+la transacción B3; B0/B7B/flags siguen cerrados por defecto. No se activan clínicas
+ni se amplía el alcance administrativo de los cinco adapters. B9 permanece
+IN_PROGRESS; B9B–B9E no están implementados por este hito.

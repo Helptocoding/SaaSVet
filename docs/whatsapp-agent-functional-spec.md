@@ -1,5 +1,17 @@
 # Especificación funcional del agente WhatsApp (v1.1)
 
+## Verificación B9A bajo contención — 2026-09-26
+
+El [harness de aplicación](contrato-harness-b9a.md) distingue texto generado,
+Message encolado, aceptación del proveedor y delivered/read por señal. Los
+acuses de la suite son simulados; el cliente de prueba solo confirma propuestas
+emitidas causalmente. La confirmación B7B puede alcanzar B8A desde el worker
+cuando los gates de test están abiertos, con recibo respaldado por evidencia.
+Los defaults productivos permanecen cerrados y ninguna clínica queda activada.
+Las fixtures de asunto de asistencia/datos de mascota no amplían el lenguaje
+soportado. B9 sigue IN_PROGRESS; presupuesto, límites, readiness y aceptación
+integral permanecen en los siguientes hitos internos.
+
 > **Frontera vigente B4 (2026-09-16):** Inbox distingue pendiente, envío en
 > curso, aceptación, entrega, lectura e incertidumbre. Takeover no cancela un
 > intento ya admitido. La sección B4 final y el [contrato sender](contrato-sender-durable-b4.md)

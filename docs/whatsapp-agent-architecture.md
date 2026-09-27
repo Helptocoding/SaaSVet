@@ -1085,3 +1085,19 @@ aceptación lo abren únicamente en tests, sin habilitar el dispatch legacy.
 Activación PENDING_ACTIVATION_REQUIREMENTS. Estado y evidencia, sin extrapolar
 a B8C–B8E: [contrato B8B](contrato-create-appointment-b8bmd) y
 [acta B8B](implementacion-b8b-agente-whatsapp-2026-09-21md).
+
+## B9A: composición de fronteras de aplicación
+
+El [contrato B9A](contrato-harness-b9a.md) documenta el pipeline real de prueba:
+HTTP firmado → Message → claim TurnWork → worker/C1/B5/B6 → B7A/propuesta →
+sender B4 → wire Meta controlado → confirmación HTTP → B7B/AuthorizationEvidence
+→ guard único B8A → adapter/dominio/evidence → recibo → sender. La confirmación,
+efecto local, evidencia, recibo y completion comparten la transacción final B3.
+READ usa RequestsTransport/JWT con loopback por Django/DRF; LLM/Meta se sustituyen
+únicamente en wire. No se omiten leasing/fencing ni se marca sent al encolar.
+
+La suite distingue etapas y prueba procesos independientes. Asistencia y registro
+usan fixtures explícitas del asunto/campo B6 porque el baseline no contiene sus
+extractores completos. B9 canónica sigue IN_PROGRESS; este hito no implementa
+presupuesto, límites de concurrencia, readiness o PROFILE-BETA-1. Producción sigue
+cerrada.

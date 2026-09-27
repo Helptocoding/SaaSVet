@@ -1,5 +1,35 @@
 # Runbook: Agente WhatsApp + Inbox
 
+## B9A — evaluación aislada, sin activación
+
+El [harness B9A](../contrato-harness-b9a.md) compone webhook firmado, worker B3 y
+sender B4 con wire externo controlado. Usar PostgreSQL **local de pruebas** y
+un prefijo de artefacto nuevo; nunca ejecutar sobre la base productiva.
+Desde backend, con DATABASE_URL local explícita. En el entorno del proceso
+principal establecer también `DISABLE_SENTRY=True`, `SENTRY_DSN` vacío y
+`REDIS_URL` vacío antes de invocar manage.py; el runner aplica esos valores a sus
+subprocesos. No copiar credenciales de proveedores a este entorno.
+
+```text
+rtk proxy python manage.py agent_eval --application-e2e --e2e-database test_b8b_b9a_command --e2e-output <ruta>/read
+rtk proxy python manage.py agent_eval_conversations --application-e2e --e2e-database test_b8b_b9a_command --e2e-output <ruta>/conversations
+```
+
+Los comandos ejecutan las mismas pruebas aisladas: commits reales, sin Meta/LLM
+comerciales. Inspeccionar `.results.json`, `.exit.json`, journals por ID y etapas.
+Interrupted/skipped/fail no acredita aceptación. `response_generated` es texto
+candidato observado; `outbound_queued` no implica accepted, y sent es alias de
+provider_accepted. delivered/read solo aparecen con status simulado correlacionado.
+No presentar estos acuses como entrega Meta. Los comandos sin ese argumento
+siguen siendo diagnósticos históricos de planner y no aprueban B9.
+
+La integración worker→B8A conserva B0/consent/flags y todas las preconditions.
+Efecto local/evidence/recibo/completion comparten la transacción B3. Un error al
+publicar el recibo revierte el efecto; una aceptación externa incierta mantiene
+las reglas B4 sin blind retry. Mantener B0 cerrado, B7B=False y execution flags={}.
+B9 sigue IN_PROGRESS y PENDING_ACTIVATION_REQUIREMENTS. Estado de las pruebas:
+[acta B9A](../implementacion-b9a-agente-whatsapp-2026-09-26.md).
+
 ## B3: despliegue controlado y rollback
 
 Contrato vigente: [trabajo durable B3](../contrato-trabajo-durable-b3.md) y
