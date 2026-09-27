@@ -67,6 +67,7 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
     `TurnDecision.objects.create` revienta, el turno responde igual y solo
     se pierde el rastro de ESE turno.
     """
+    from . import llm_budget
     started = time.monotonic()
     turn_context = context_from_inputs(
         conversation, turn_context=turn_context, burst_messages=burst_messages,
@@ -74,13 +75,19 @@ def handle_inbound(conversation, *, agent_settings=None, llm_client=None,
     )
     source_messages = messages_for_turn(conversation, turn_context)
     triggered_by = source_messages[-1] if source_messages else None
-    result = _handle_inbound_inner(
-        conversation, agent_settings=agent_settings, llm_client=llm_client,
-        executor=executor, triggered_by=triggered_by, turn_context=turn_context,
-        source_messages=source_messages,
-        operation_authorizer=operation_authorizer,
-        operation_verifier=operation_verifier,
-    )
+    try:
+        result = _handle_inbound_inner(
+            conversation, agent_settings=agent_settings, llm_client=llm_client,
+            executor=executor, triggered_by=triggered_by, turn_context=turn_context,
+            source_messages=source_messages,
+            operation_authorizer=operation_authorizer,
+            operation_verifier=operation_verifier,
+        )
+    except llm_budget.BudgetRejected as exc:
+        policy.escalate_to_human(conversation, reason_code=HumanHandoff.REASON_BUDGET)
+        enqueue_outbound(conversation, tier0.T0_BUDGET, author='system')
+        result = {'decision': 'llm_budget_exhausted', 'llm_calls': 0,
+                  'tools': 0, 'reason': exc.reason}
     # El árbitro corre AQUÍ, con el saliente ya encolado (É-F5 Fase 4, p56
     # §5-bis): clasifica qué le pasó al compromiso y aplica sus efectos. Encolar
     # no acredita emisión ni lectura del saliente.
@@ -1576,6 +1583,8 @@ def _bump_budget(conversation):
 
 
 def _persist_llm_call(conversation, llm_client, result):
+    if getattr(result, 'llm_call_id', None):
+        return
     create_local(LLMCall,
         organization=conversation.organization,
         conversation=conversation,
@@ -1613,18 +1622,24 @@ def _complete_with_retry(conversation, llm_client, *, system, messages,
     except (TypeError, ValueError):
         delay_seconds = 0.0
 
+    from . import llm_budget
+    retry_of = None
     for attempt in range(max_retries + 1):
         if current_changes() is not None:
             from .durable import check_turn_deadline
             check_turn_deadline(current_changes().witness)
         try:
-            return llm_client.complete(
+            return llm_budget.complete(
+                conversation, llm_client, purpose='planner',
+                prompt_version=prompts.PROMPT_VERSION, retry_of=retry_of,
                 system=system, messages=messages, tools=tool_specs,
                 tool_choice='required',
             )
         except LLMError as exc:
             try:
-                _persist_llm_error(conversation, llm_client, exc)
+                retry_of = getattr(exc, 'llm_call_id', None)
+                if retry_of is None:
+                    _persist_llm_error(conversation, llm_client, exc)
             except Exception:
                 logger.exception("AGENT_LLMCALL_ERROR_PERSIST_FAILED")
 

@@ -45,6 +45,17 @@ class PolicyDecision:
 
 
 def _budget_exhausted(conversation):
+    from .turn_changes import current_changes
+    changes = current_changes()
+    if changes is not None:
+        from .durable import witness_query
+        changes.scope(conversation)
+        work = witness_query(changes.witness).first()
+        return (work is None or work.llm_calls_admitted is None or
+                work.llm_output_tokens_reserved is None or
+                work.llm_calls_admitted >= work.llm_call_limit or
+                work.llm_output_tokens_reserved >= work.llm_output_token_limit)
+    # Historical helpers have no TurnWork; this is not production admission.
     cap = getattr(settings, 'AGENT_MAX_LLM_TURNS_PER_CONVERSATION', 15)
     return conversation.total_llm_calls >= cap
 

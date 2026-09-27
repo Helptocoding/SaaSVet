@@ -278,6 +278,34 @@ def compute_goal_metrics(organization, date_from, date_to):
     }
 
 
+def compute_llm_usage(organization, *, turn_work_id=None):
+    """B9 COST component evidence, tenant scoped; unknown totals stay unknown.
+
+    No profile gate or economic estimate. Known subtotals never stand in for
+    complete usage, and legacy rows do not masquerade as admitted B9 calls.
+    """
+    from .models import LLMCall
+    calls = LLMCall.objects.filter(organization=organization)
+    if turn_work_id is not None:
+        calls = calls.filter(turn_work_id=turn_work_id)
+    rows = list(calls.values('purpose', 'admission_id', 'recorded_at', 'input_tokens',
+                            'output_tokens', 'retry_of_id', 'error'))
+    unknown = sum(r['recorded_at'] is None or r['input_tokens'] is None or
+                  r['output_tokens'] is None for r in rows)
+    input_known = sum(r['input_tokens'] or 0 for r in rows if r['recorded_at'] is not None)
+    output_known = sum(r['output_tokens'] or 0 for r in rows if r['recorded_at'] is not None)
+    from .llm_budget import PURPOSES
+    return {'calls': len(rows), 'admitted_calls': sum(r['admission_id'] is not None for r in rows),
+        'roles': {role: sum(r['purpose'] == role for r in rows) for role in PURPOSES},
+        'retries': sum(r['retry_of_id'] is not None for r in rows),
+        'provider_failures': sum(bool(r['error']) for r in rows),
+        'unknown_usage_calls': unknown, 'known_input_tokens': input_known,
+        'known_output_tokens': output_known,
+        'input_tokens': None if unknown else input_known,
+        'output_tokens': None if unknown else output_known,
+        'cost_estimate': None, 'profile_beta_1': 'PENDING'}
+
+
 def compute_business_metrics(organization, date_from, date_to):
     """KPIs comerciales del periodo [date_from, date_to). Read-only, org-scoped.
     `citas_creadas`/`cancelaciones` = ejecuciones CONFIRMADAS (el commit tras el

@@ -177,7 +177,8 @@ class EstimateCostTests(SimpleTestCase):
         Misma familia que la regla de calendario: un test no debe depender de
         estado ambiental que no declara.
         """
-        self.assertEqual(estimate_cost(1_000_000, 1_000_000), Decimal('0.000000'))
+        # B9: zero configuration means no pricing, not free provider usage.
+        self.assertIsNone(estimate_cost(1_000_000, 1_000_000))
 
     @override_settings(AGENT_LLM_COST_PER_MTOK_INPUT=0.27,
                        AGENT_LLM_COST_PER_MTOK_OUTPUT=1.10)

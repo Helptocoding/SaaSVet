@@ -320,7 +320,10 @@ def _classify(conversation, client, turn_data: str, permitted: list[str]):
     if current_changes() is not None:
         from .durable import check_turn_deadline
         check_turn_deadline(current_changes().witness)
-    result = client.complete(
+    from . import llm_budget
+    result = llm_budget.complete(
+        conversation, client, purpose='operation_authorizer',
+        prompt_version=AUTHORIZER_PROMPT_VERSION,
         system=AUTHORIZER_SYSTEM_PROMPT,
         messages=[{
             'role': 'user',
@@ -346,7 +349,10 @@ def _verify(conversation, client, turn_data: str, operation: str):
     if current_changes() is not None:
         from .durable import check_turn_deadline
         check_turn_deadline(current_changes().witness)
-    result = client.complete(
+    from . import llm_budget
+    result = llm_budget.complete(
+        conversation, client, purpose='operation_verifier',
+        prompt_version=VERIFIER_PROMPT_VERSION,
         system=VERIFIER_SYSTEM_PROMPT,
         messages=[{
             'role': 'user',
@@ -369,6 +375,8 @@ def _verify(conversation, client, turn_data: str, operation: str):
 
 
 def _persist_llm_call(conversation, client, result, prompt_version: str) -> None:
+    if getattr(result, 'llm_call_id', None):
+        return
     create_local(LLMCall,
         organization=conversation.organization,
         conversation=conversation,

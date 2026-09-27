@@ -11,8 +11,8 @@ Sin SDKs: ``requests`` (ya en el lock). El planner consume la interfaz
 ``complete()``; los tests usan ``StubLLMClient`` (determinista — la suite
 CI de la spec §9.1 corre sin red ni proveedor).
 
-PII: este módulo no loguea prompts ni respuestas (regla R15); la
-contabilidad vive en el modelo LLMCall (la persiste el planner).
+PII: este módulo no loguea prompts ni respuestas (regla R15); llm_budget
+persiste admisión y observación en LLMCall para los tres call sites del agente.
 """
 import json
 import logging
@@ -25,7 +25,7 @@ from django.conf import settings
 
 logger = logging.getLogger('agent.events')
 
-DEFAULT_TIMEOUT = 30
+DEFAULT_TIMEOUT = 10
 DEFAULT_MAX_TOKENS = 600
 DEFAULT_TEMPERATURE = 0.3
 
@@ -33,9 +33,10 @@ DEFAULT_TEMPERATURE = 0.3
 class LLMError(Exception):
     """Fallo del proveedor. `retryable`: timeout/5xx/429 sí; 4xx no."""
 
-    def __init__(self, message, retryable):
+    def __init__(self, message, retryable, usage=None):
         super().__init__(message)
         self.retryable = retryable
+        self.usage = usage
 
 
 @dataclass
@@ -43,7 +44,7 @@ class LLMResult:
     """Salida normalizada de una llamada.
 
     kind: 'text' (respuesta libre) | 'tool_call' (el modelo pide una tool).
-    Los tokens vienen del campo `usage` del proveedor (0 si no lo reporta).
+    Los tokens vienen del campo `usage` del proveedor (None si no lo reporta).
     """
 
     kind: str
@@ -55,24 +56,24 @@ class LLMResult:
     # asigna uno sintético (W1-3).
     tool_call_id: str = ''
     finish_reason: str = ''
-    input_tokens: int = 0
-    output_tokens: int = 0
+    input_tokens: int | None = None
+    output_tokens: int | None = None
     model_id: str = ''
     latency_ms: int = 0
 
 
 def estimate_cost(input_tokens, output_tokens):
-    """Costo estimado con el pricing por env (0 si no está configurado).
+    """Legacy estimate with explicit env pricing; unknown is None.
 
     AGENT_LLM_COST_PER_MTOK_INPUT/OUTPUT = USD por millón de tokens del
     proveedor elegido. Contabilidad (R11), no facturación.
     """
     price_in = getattr(settings, 'AGENT_LLM_COST_PER_MTOK_INPUT', 0.0)
     price_out = getattr(settings, 'AGENT_LLM_COST_PER_MTOK_OUTPUT', 0.0)
-    total = (
-        (input_tokens / 1_000_000) * price_in
-        + (output_tokens / 1_000_000) * price_out
-    )
+    if input_tokens is None or output_tokens is None or not price_in or not price_out:
+        return None
+    total = (Decimal(input_tokens) * Decimal(str(price_in))
+             + Decimal(output_tokens) * Decimal(str(price_out))) / Decimal(1_000_000)
     # LLMCall.cost_estimate es DecimalField(max_digits=10, decimal_places=6):
     # el float trae ruido de precisión (0.0000747900...01) → cuantizar a 6
     # decimales antes de persistir, o Django lo rechaza. Cap defensivo a
@@ -101,8 +102,8 @@ class OpenAICompatibleClient:
                  temperature=DEFAULT_TEMPERATURE, tool_choice='auto'):
         """messages = [{'role': 'user'|'assistant'|'tool', 'content': ...}].
 
-        Devuelve LLMResult; levanta LLMError. El caller (planner) decide
-        reintentos y persiste LLMCall.
+        Devuelve LLMResult; levanta LLMError. El caller decide reintentos;
+        llm_budget hace admisión y registra cada intento antes del siguiente.
         """
         if not self.base_url or not self.api_key or not self.model:
             raise LLMError(
@@ -139,19 +140,27 @@ class OpenAICompatibleClient:
 
         try:
             data = response.json()
-            choice = data['choices'][0]
-            message = choice.get('message') or {}
-        except (ValueError, KeyError, IndexError):
+            if not isinstance(data, dict):
+                raise ValueError
+        except (ValueError, TypeError):
             raise LLMError("respuesta no parseable", retryable=False)
 
-        usage = data.get('usage') or {}
+        usage = data.get('usage')
+        usage = usage if isinstance(usage, dict) else {}
         base = {
-            'finish_reason': choice.get('finish_reason', ''),
-            'input_tokens': usage.get('prompt_tokens', 0) or 0,
-            'output_tokens': usage.get('completion_tokens', 0) or 0,
+            'input_tokens': valid_token_count(usage.get('prompt_tokens')),
+            'output_tokens': valid_token_count(usage.get('completion_tokens')),
             'model_id': data.get('model', self.model),
             'latency_ms': latency_ms,
         }
+        try:
+            choice = data['choices'][0]
+            message = choice.get('message') or {}
+            if not isinstance(message, dict):
+                raise ValueError
+        except (ValueError, TypeError, AttributeError, KeyError, IndexError):
+            raise LLMError('respuesta no parseable', retryable=False, usage=base)
+        base['finish_reason'] = choice.get('finish_reason', '')
 
         tool_calls = message.get('tool_calls') or []
         if tool_calls:
@@ -164,7 +173,7 @@ class OpenAICompatibleClient:
             except ValueError:
                 # Args malformados = el modelo alucinó JSON: NO retryable a
                 # ciegas — el planner lo trata como turno fallido (fallback).
-                raise LLMError("tool_args no parseables", retryable=False)
+                raise LLMError("tool_args no parseables", retryable=False, usage=base)
             return LLMResult(
                 kind='tool_call',
                 tool_name=function.get('name', ''),
@@ -174,6 +183,11 @@ class OpenAICompatibleClient:
             )
 
         return LLMResult(kind='text', text=message.get('content') or '', **base)
+
+
+def valid_token_count(value):
+    """Only provider integers in the storage range; absence is never zero."""
+    return value if type(value) is int and 0 <= value <= 2147483647 else None
 
 
 class StubLLMClient:

@@ -97,7 +97,8 @@ class ApplicationHarness:
             if module.startswith('apps.agent.') and name in {
                     'claim_turn', 'context_for_work', 'handle_inbound', 'finalize_turn',
                     'publish_proposal', 'evaluate_turn', 'execute_authorized_operation',
-                    'validate_preconditions', 'execute', 'dispatch_claim', 'admit_dispatch'}:
+                    'validate_preconditions', 'execute', 'dispatch_claim', 'admit_dispatch',
+                    'admit', 'record'}:
                 caller = frame.f_back
                 self.calls.append({'module': module, 'function': name,
                     'caller': caller.f_globals.get('__name__', '') + '.' + caller.f_code.co_name})
@@ -142,6 +143,18 @@ class ApplicationHarness:
         self.wire.append(event)
         if connection.in_atomic_block:
             raise AssertionError('External IO under transaction')
+        if boundary == 'llm':
+            from apps.agent.turn_changes import current_changes
+            from apps.agent.models import LLMCall
+            changes = current_changes()
+            if changes is not None:
+                witness = changes.witness
+                call = LLMCall.objects.filter(organization_id=witness.organization_id,
+                    turn_work_id=witness.turn_work_id, admission_lease_token=witness.lease_token,
+                    admitted_at__isnull=False, recorded_at__isnull=True).order_by('-id').first()
+                event['admission_observed'] = call is not None
+                if call is None:
+                    raise AssertionError('LLM wire without durable admission')
         if self.callback:
             self.callback(boundary, event)
         if boundary == 'llm':

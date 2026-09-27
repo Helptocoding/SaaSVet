@@ -333,8 +333,22 @@ class TurnWork(OrganizationalModel):
     outcome_code = models.CharField(max_length=64, blank=True, default='')
     ownership_epoch = models.PositiveBigIntegerField(default=0)
 
+    # B9 operational admission survives finalize_turn rollback/restart.
+    # Existing rows migrate as unknown (NULL), only new work defaults to zero.
+    llm_calls_admitted = models.PositiveIntegerField(null=True, default=0)
+    llm_output_tokens_reserved = models.PositiveIntegerField(null=True, default=0)
+    llm_call_limit = models.PositiveIntegerField(default=30)
+    llm_output_token_limit = models.PositiveIntegerField(default=18000)
+
     class Meta:
         constraints = [
+            models.CheckConstraint(condition=(models.Q(llm_calls_admitted__isnull=True) |
+                models.Q(llm_calls_admitted__lte=models.F('llm_call_limit'))),
+                name='turnwork_llm_calls_limit'),
+            models.CheckConstraint(condition=(models.Q(llm_output_tokens_reserved__isnull=True) |
+                models.Q(llm_output_tokens_reserved__lte=models.F('llm_output_token_limit'))),
+                name='turnwork_llm_tokens_limit'),
+
             models.UniqueConstraint(fields=['conversation', 'anchor_message'],
                                     name='turnwork_unique_anchor'),
             models.UniqueConstraint(fields=['conversation'],
@@ -689,7 +703,7 @@ class ToolExecution(OrganizationalModel):
 
 
 class LLMCall(OrganizationalModel):
-    """Auditoría/costos append-only de cada llamada al LLM (É-F1, R11).
+    """Evidence per call; B9 inserts admission and records observation once.
 
     Proveedor-agnóstico: `provider`/`model_id` son datos, no supuestos
     (el proveedor es elección del PO — feedback 2026-07-17). No guarda el
@@ -699,15 +713,25 @@ class LLMCall(OrganizationalModel):
     conversation = models.ForeignKey(
         Conversation, on_delete=models.PROTECT, related_name='llm_calls',
     )
+    turn_work = models.ForeignKey(TurnWork, on_delete=models.PROTECT,
+        null=True, blank=True, related_name='llm_calls')
+    admission_id = models.UUIDField(null=True, blank=True, unique=True)
+    admitted_at = models.DateTimeField(null=True, blank=True)
+    recorded_at = models.DateTimeField(null=True, blank=True)
+    admission_lease_token = models.UUIDField(null=True, blank=True)
+    admission_epoch = models.PositiveBigIntegerField(null=True, blank=True)
+    purpose = models.CharField(max_length=24, blank=True, default='', choices=[
+        ('planner', 'planner'), ('operation_authorizer', 'operation_authorizer'),
+        ('operation_verifier', 'operation_verifier')])
+    reserved_output_tokens = models.PositiveIntegerField(null=True, blank=True)
     provider = models.CharField(max_length=32, blank=True, default='')
     model_id = models.CharField(max_length=64)
     prompt_version = models.CharField(max_length=32, blank=True, default='')
-    input_tokens = models.PositiveIntegerField(default=0)
-    output_tokens = models.PositiveIntegerField(default=0)
-    # Estimado con AGENT_LLM_COST_PER_MTOK_* (env por proveedor); 0 = sin
-    # pricing configurado. Contabilidad, no facturación.
+    input_tokens = models.PositiveIntegerField(null=True, blank=True, default=None)
+    output_tokens = models.PositiveIntegerField(null=True, blank=True, default=None)
+    # Legacy optional estimate; NULL means unknown. Not budget authority.
     cost_estimate = models.DecimalField(
-        max_digits=10, decimal_places=6, default=0,
+        max_digits=10, decimal_places=6, null=True, blank=True, default=None,
     )
     latency_ms = models.PositiveIntegerField(null=True, blank=True)
     finish_reason = models.CharField(max_length=32, blank=True, default='')
@@ -718,6 +742,14 @@ class LLMCall(OrganizationalModel):
     error = models.CharField(max_length=200, blank=True, default='')
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(condition=(models.Q(admission_id__isnull=True) |
+                (models.Q(turn_work__isnull=False, admitted_at__isnull=False,
+                          admission_lease_token__isnull=False, admission_epoch__isnull=False,
+                          reserved_output_tokens__isnull=False, reserved_output_tokens__gt=0) &
+                 models.Q(purpose__in=['planner', 'operation_authorizer', 'operation_verifier']))),
+                name='llmcall_admission_evidence'),
+        ]
         indexes = [
             models.Index(fields=['organization', 'created_at']),
         ]
