@@ -111,6 +111,8 @@ class B8BProcessTests(AppointmentExecutionFixtures, TransactionTestCase):
         contact.verification_level = 'staff_verified'
         contact.verified_at = timezone.now()
         contact.save()
+        from .b9c_legacy_fixture import legacy_parallel_domain_claim
+        self.claim = lambda: legacy_parallel_domain_claim(self, self.conv)
         self.witness = self.claim()
         self.ctx = durable.context_for_work(self.witness)
         self.goal = ConversationGoal.objects.create(organization=self.org, conversation=self.conv,
@@ -129,6 +131,8 @@ class B8BProcessTests(AppointmentExecutionFixtures, TransactionTestCase):
         self.authorized()
         snapshot = self.snapshot()
         self.__dict__.update(saved)
+        if 'claim' not in saved:
+            del self.claim
         if 'wa_id' not in saved:
             del self.wa_id
         self.assertNotEqual(snapshot['contact_id'], self.conv.contact_id)

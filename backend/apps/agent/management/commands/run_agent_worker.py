@@ -35,7 +35,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--once', action='store_true',
                             help='Un solo ciclo y salir (smoke/tests)')
-        parser.add_argument('--poll', type=float, default=2.0,
+        parser.add_argument('--poll', type=float, default=1.0,
                             help='Segundos de espera cuando no hay trabajo')
         parser.add_argument('--batch', type=int, default=10)
         parser.add_argument('--mode', choices=('planner', 'sender', 'both'), default='both',

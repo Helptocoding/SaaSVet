@@ -129,6 +129,7 @@ def retain_interrupted_safety(conversation, work):
         _record(conversation, work, assessment)
 
 
+@transaction.atomic
 def receive_safety(message):
     """Webhook fast path under existing Conversation lock; DB only, never LLM/HTTP.
 
@@ -138,7 +139,8 @@ def receive_safety(message):
     if not automation_enabled() or message.status == 'discarded':
         return
     from .turn_context import build_turn_context
-    conv = message.conversation
+    conv = Conversation.objects.select_for_update().get(
+        pk=message.conversation_id, organization_id=message.organization_id)
     assessment = safety.assess_context(conv, build_turn_context(conv, [message]))
     if assessment.classification == safety.NO_SIGNAL:
         return
@@ -147,11 +149,18 @@ def receive_safety(message):
     message.save(update_fields=['semantic_type', 'available_at'])
     if TurnWork.objects.filter(conversation=conv, status__in=TurnWork.NON_TERMINAL).exists():
         return
-    witness = durable.claim_turn(conv.pk)
+    # B9: this DB/approved-template fast path is not a planner. Reuse the B3
+    # membership/token primitive but complete it inside THIS transaction. It
+    # cannot leave a second committed PROCESSING work while the org is busy.
+    # Do not take Organization after Conversation (the planner lock order).
+    witness = durable._claim_turn_locked(conv)
     if witness:
         # Reevaluate the actual fixed membership, not the single-event preview.
         assessment = safety.assess_context(conv, durable.context_for_work(witness))
         finalize_safety(witness, assessment)
+        if not TurnWork.objects.filter(pk=witness.turn_work_id,
+                status=TurnWork.COMPLETED, outcome_code='safety_handoff').exists():
+            raise RuntimeError('Inline safety must complete atomically')
 
 
 def acknowledge(conversation, actor):

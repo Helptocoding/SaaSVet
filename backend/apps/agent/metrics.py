@@ -278,6 +278,24 @@ def compute_goal_metrics(organization, date_from, date_to):
     }
 
 
+def compute_concurrency(organization):
+    """Readonly B9 capacity snapshot, never an admission or force-release API.
+
+    Each value is an observation, not a claim of historical peak or queue SLO.
+    Existing B3 claim/expiry events supply history; B9E measures its profile.
+    """
+    from .durable import active_org_work, ORG_ACTIVE_WORK_LIMIT
+    from .models import TurnWork
+    from apps.channels.models import Message
+    active = active_org_work(organization.pk).count()
+    return {'scope': 'organization', 'limit': ORG_ACTIVE_WORK_LIMIT,
+            'active': active, 'saturated': active >= ORG_ACTIVE_WORK_LIMIT,
+            'pending_work': TurnWork.objects.filter(
+                organization=organization, status=TurnWork.PENDING).count(),
+            'unassigned_inbound': Message.objects.filter(organization=organization,
+                direction='in', status='pending', turn_work__isnull=True).count()}
+
+
 def compute_llm_usage(organization, *, turn_work_id=None):
     """B9 COST component evidence, tenant scoped; unknown totals stay unknown.
 

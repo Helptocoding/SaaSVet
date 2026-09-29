@@ -1,4 +1,4 @@
-"""B3 local authority. Lock order: Conversation -> TurnWork -> Message.
+"""B3 local authority. Claim: Organization -> Conversation -> TurnWork -> Message.
 
 No network calls inside these transactions. The sender's remote uncertainty
 and durable dispatch lifecycle belong to B4.
@@ -22,6 +22,9 @@ MAX_ATTEMPTS = 3  # Existing worker policy.
 RETRY_DELAY = timedelta(seconds=30)
 LEASE = timedelta(minutes=15)
 TURN_DEADLINE = timedelta(minutes=12)
+# B9 §7 change 3: one authoritative planner work per organization. This is
+# a release contract, not a per-replica setting or a provider/rate limit.
+ORG_ACTIVE_WORK_LIMIT = 1
 
 
 class OwnershipLost(RuntimeError):
@@ -93,76 +96,135 @@ def lock_witness(witness):
     return conv, work
 
 
+def active_org_work(organization_id):
+    """DB-derived capacity; no counter or second ownership authority.
+
+    organization_id may be an OuterRef for the poller's candidate query.
+    Expiry/epoch revocation invalidates local authority, not remote HTTP.
+    """
+    return TurnWork.objects.filter(
+        organization_id=organization_id, status=TurnWork.PROCESSING,
+        lease_expires_at__gt=Now(),
+        conversation__organization_id=F('organization_id'),
+        conversation__ownership_epoch=F('ownership_epoch'))
+
+
+def _concurrency_event(outcome):
+    # Closed, low-cardinality vocabulary. Telemetry cannot undo a committed
+    # claim or become the capacity authority.
+    def emit():
+        try:
+            logger.info('AGENT_CONCURRENCY_' + outcome.upper(), extra={
+                'event': 'AGENT_CONCURRENCY_' + outcome.upper(),
+                'scope': 'organization', 'limit': ORG_ACTIVE_WORK_LIMIT})
+        except Exception:
+            pass
+    transaction.on_commit(emit)
+
+
 def claim_turn(conversation_id, *, eligible_at=None):
     """Create fixed membership or reclaim the same work with a fresh token.
 
     eligible_at is the existing polling/test drain clock; it NEVER decides
     lease validity, retries, CAS or ownership.
     """
+    from apps.organizations.models import Organization
     with transaction.atomic():
+        org_id = Conversation.objects.filter(pk=conversation_id).values_list(
+            'organization_id', flat=True).first()
+        if org_id is None:
+            return None
+        # No KEY UPDATE: inbound/domain FK checks must not wait for a quota
+        # lock. SKIP LOCKED means defer to another poll, never lose the input.
+        org = Organization.objects.select_for_update(
+            no_key=True, skip_locked=True).filter(pk=org_id).first()
+        if org is None:
+            _concurrency_event('deferred')
+            return None
         conv = (Conversation.objects.select_for_update(skip_locked=True, of=('self',))
                 .select_related('organization', 'channel_account', 'contact')
-                .filter(pk=conversation_id).first())
+                .filter(pk=conversation_id, organization_id=org_id).first())
         if conv is None:
             return None
-        now = db_now()
-        work = (TurnWork.objects.select_for_update().filter(conversation=conv,
-                    organization_id=conv.organization_id,
-                    status__in=TurnWork.NON_TERMINAL).first())
-        reclaimed = False
-        if work:
-            if work.ownership_epoch != conv.ownership_epoch:
-                _terminal_failure(work, conv, 'ownership_changed', now)
+        # All claimers hold this org row. Concurrent release can only reduce
+        # occupancy; it cannot create an N+1 race. Check before any membership,
+        # attempt, lease or budget mutation, including expired-work reclaim.
+        if active_org_work(org_id).exists():
+            _concurrency_event('saturated')
+            return None
+        witness = _claim_turn_locked(conv, eligible_at=eligible_at)
+        if witness is not None:
+            _concurrency_event('admitted')
+        return witness
+
+
+def _claim_turn_locked(conv, *, eligible_at=None):
+    """B3 primitive; caller holds Conversation in an atomic transaction.
+
+    Planners enter through claim_turn and its organizational admission.
+    B5 receipt uses this only inside atomic safety completion: it never commits
+    PROCESSING or dispatches a planner/provider and cannot acquire planner quota.
+    """
+    if not connection.in_atomic_block:
+        raise RuntimeError('Claim requires a Conversation transaction')
+    now = db_now()
+    work = (TurnWork.objects.select_for_update().filter(conversation=conv,
+                organization_id=conv.organization_id,
+                status__in=TurnWork.NON_TERMINAL).first())
+    reclaimed = False
+    if work:
+        if work.ownership_epoch != conv.ownership_epoch:
+            _terminal_failure(work, conv, 'ownership_changed', now)
+            return None
+        if work.status == TurnWork.PROCESSING:
+            if work.lease_expires_at > now:
                 return None
-            if work.status == TurnWork.PROCESSING:
-                if work.lease_expires_at > now:
-                    return None
-                _event('lease_expired', work)
-                reclaimed = True
-            elif work.next_attempt_at and work.next_attempt_at > now:
-                return None
-            if work.attempts >= MAX_ATTEMPTS:
-                _terminal_failure(work, conv, 'attempts_exhausted', now)
-                return None
-        else:
-            members = list(Message.objects.for_organization(conv.organization_id)
-                .filter(conversation=conv, direction='in', status='pending',
-                        turn_work__isnull=True)
-                .filter(Q(available_at__isnull=True) |
-                        Q(available_at__lte=eligible_at or now))
-                .order_by('created_at', 'id'))
-            if not members:
-                return None
-            context = build_turn_context(conv, members, now=now)
-            work = TurnWork.objects.create(
-                organization_id=conv.organization_id, conversation=conv,
-                anchor_message=members[-1], anchor_created_at=context.anchor.created_at,
-                cursor_message_id=context.history_before.message_id,
-                cursor_created_at=context.history_before.created_at,
-                context_at=now, clinic_timezone=context.clinic_timezone,
-                ownership_epoch=conv.ownership_epoch)
-            Message.objects.for_organization(conv.organization_id).filter(
-                pk__in=context.inbound_ids, conversation=conv, turn_work__isnull=True
-            ).update(turn_work=work)
-            _event('created', work, oldest_pending_age_seconds=max(
-                0, (now - members[0].created_at).total_seconds()))
-        old_token, old_status = work.lease_token, work.status
-        token = uuid4()
-        count = TurnWork.objects.filter(pk=work.pk, lease_token=old_token,
-            status=old_status, ownership_epoch=conv.ownership_epoch,
-            organization_id=conv.organization_id).update(
-                status=TurnWork.PROCESSING, lease_token=token,
-                lease_expires_at=now + LEASE, claimed_at=now,
-                attempts=F('attempts') + 1, next_attempt_at=None)
-        if count != 1:
-            raise OwnershipLost('Claim CAS failed')
+            _event('lease_expired', work)
+            reclaimed = True
+        elif work.next_attempt_at and work.next_attempt_at > now:
+            return None
+        if work.attempts >= MAX_ATTEMPTS:
+            _terminal_failure(work, conv, 'attempts_exhausted', now)
+            return None
+    else:
+        members = list(Message.objects.for_organization(conv.organization_id)
+            .filter(conversation=conv, direction='in', status='pending',
+                    turn_work__isnull=True)
+            .filter(Q(available_at__isnull=True) |
+                    Q(available_at__lte=eligible_at or now))
+            .order_by('created_at', 'id'))
+        if not members:
+            return None
+        context = build_turn_context(conv, members, now=now)
+        work = TurnWork.objects.create(
+            organization_id=conv.organization_id, conversation=conv,
+            anchor_message=members[-1], anchor_created_at=context.anchor.created_at,
+            cursor_message_id=context.history_before.message_id,
+            cursor_created_at=context.history_before.created_at,
+            context_at=now, clinic_timezone=context.clinic_timezone,
+            ownership_epoch=conv.ownership_epoch)
         Message.objects.for_organization(conv.organization_id).filter(
-            turn_work=work, direction='in').update(process_attempts=F('process_attempts') + 1)
-        Conversation.objects.filter(pk=conv.pk).update(processing_until=now + LEASE)
-        work.attempts += 1
-        _event('reclaimed' if reclaimed else 'claimed', work)
-        return OwnershipWitness(conv.organization_id, conv.pk, work.pk,
-                                token, conv.ownership_epoch)
+            pk__in=context.inbound_ids, conversation=conv, turn_work__isnull=True
+        ).update(turn_work=work)
+        _event('created', work, oldest_pending_age_seconds=max(
+            0, (now - members[0].created_at).total_seconds()))
+    old_token, old_status = work.lease_token, work.status
+    token = uuid4()
+    count = TurnWork.objects.filter(pk=work.pk, lease_token=old_token,
+        status=old_status, ownership_epoch=conv.ownership_epoch,
+        organization_id=conv.organization_id).update(
+            status=TurnWork.PROCESSING, lease_token=token,
+            lease_expires_at=now + LEASE, claimed_at=now,
+            attempts=F('attempts') + 1, next_attempt_at=None)
+    if count != 1:
+        raise OwnershipLost('Claim CAS failed')
+    Message.objects.for_organization(conv.organization_id).filter(
+        turn_work=work, direction='in').update(process_attempts=F('process_attempts') + 1)
+    Conversation.objects.filter(pk=conv.pk).update(processing_until=now + LEASE)
+    work.attempts += 1
+    _event('reclaimed' if reclaimed else 'claimed', work)
+    return OwnershipWitness(conv.organization_id, conv.pk, work.pk,
+                            token, conv.ownership_epoch)
 
 
 def context_for_work(witness):

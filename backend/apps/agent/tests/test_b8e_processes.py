@@ -106,6 +106,8 @@ class B8EProcessTests(RegistrationFixtures, TransactionTestCase):
         contact = self.conv.contact
         contact.owner, contact.verification_level, contact.verified_at = self.owner, 'staff_verified', timezone.now()
         contact.save()
+        from .b9c_legacy_fixture import legacy_parallel_domain_claim
+        self.claim = lambda: legacy_parallel_domain_claim(self, self.conv)
         self.witness = self.claim()
         self.ctx = durable.context_for_work(self.witness)
         self.goal = ConversationGoal.objects.create(organization=self.org, conversation=self.conv, name=goals.ADD_PET_ONLY)
@@ -114,6 +116,7 @@ class B8EProcessTests(RegistrationFixtures, TransactionTestCase):
         self.authorized()
         data = self.snapshot()
         self.__dict__.update(saved)
+        if 'claim' not in saved: del self.claim
         if 'wa_id' not in saved: del self.wa_id
         return data
 

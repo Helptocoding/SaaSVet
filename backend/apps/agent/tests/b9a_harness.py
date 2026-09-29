@@ -66,12 +66,17 @@ class ApplicationHarness:
         self.calls = []
         self.contexts = []
         self.generated = []
+        self.capacity = []
         self.serial = 0
         self.callback = None
         self.client = Client()
 
     def trace(self, frame, event, arg):
         module, name = frame.f_globals.get('__name__', ''), frame.f_code.co_name
+        if event == 'return' and module == 'apps.agent.durable' and name == 'claim_turn' and arg is not None:
+            self.capacity.append({'stage': 'claim',
+                'active': durable.active_org_work(arg.organization_id).count(),
+                'limit': durable.ORG_ACTIVE_WORK_LIMIT})
         # Volatile generation witness, deliberately independent of committed
         # Message rows. A failed/fenced publication can have generated > queued.
         if event == 'call' and module == 'apps.agent.outbound' and name == 'enqueue_outbound':
@@ -155,6 +160,12 @@ class ApplicationHarness:
                 event['admission_observed'] = call is not None
                 if call is None:
                     raise AssertionError('LLM wire without durable admission')
+                active = durable.active_org_work(witness.organization_id)
+                event['concurrency_active'] = active.count()
+                event['concurrency_observed'] = active.filter(
+                    pk=witness.turn_work_id, lease_token=witness.lease_token).exists()
+                if event['concurrency_active'] != 1 or not event['concurrency_observed']:
+                    raise AssertionError('LLM wire without exclusive B3 org claim')
         if self.callback:
             self.callback(boundary, event)
         if boundary == 'llm':

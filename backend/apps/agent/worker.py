@@ -35,6 +35,7 @@ logger = logging.getLogger('agent.events')
 
 def process_pending_conversations(batch=10, now=None):
     """Poll durable retries/recovery and unassigned inbound using existing loop."""
+    from django.db.models import Exists, OuterRef
     from django.db.models.functions import Now
     from .models import TurnWork
     from . import durable
@@ -47,7 +48,12 @@ def process_pending_conversations(batch=10, now=None):
     incoming = Message.objects.filter(direction='in', status='pending',
         turn_work__isnull=True).filter(Q(available_at__isnull=True) |
         Q(available_at__lte=now or Now())).values('conversation_id')
+    # Exclude busy orgs BEFORE the batch cap: a noisy tenant's backlog must
+    # not hide other orgs. This is advisory selection; claim rechecks under
+    # the organizational row lock. No round-robin/fairness state is added.
     conv_ids = list(Conversation.objects.filter(due | Q(pk__in=incoming))
+                    .alias(org_busy=Exists(durable.active_org_work(OuterRef('organization_id'))))
+                    .filter(org_busy=False)
                     .order_by('last_activity_at', 'pk').values_list('pk', flat=True)
                     .distinct()[:batch])
     processed = 0
