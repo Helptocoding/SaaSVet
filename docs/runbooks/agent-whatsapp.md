@@ -688,3 +688,39 @@ Rollback: pausar planners/deshabilitar AgentSettings, conservar sender, fencing,
 reactivar writers previos que omitan admisión. Este trabajo no despliega ni
 activa clínicas. B0 cerrado, B7B=False, execution flags={} y
 PENDING_ACTIVATION_REQUIREMENTS. B9 canónica permanece IN_PROGRESS.
+
+## B9C — Saturación, recuperación y topología
+
+El despliegue definido tiene dos planners secuenciales con batch 1/poll 1 s y
+sender separado con poll 1 s. No multiplicar planners sin cambiar el contrato
+y repetir los gates correspondientes. B9C no desplegó esta definición ni abrió
+gates. El límite organizativo es un trabajo con autoridad por org; no depende
+de cada réplica ni de la presencia de AgentSettings.
+
+Ante saturación, observar TurnWork PROCESSING/lease/epoch y Message pendiente:
+el inbound ya es durable y esperará polling. No crear otro trabajo manualmente,
+poner active=0, borrar leases, devolver budget ni usar force release. Completion,
+failure/retry o invalidación B3 retiran ocupación. Tras crash, el claim committed
+ocupa hasta expiry/invalidation; reclaim usa token nuevo y presupuesto anterior.
+Restart no libera por sí solo. El resultado externo tardío no restaura ownership.
+
+El operador autorizado puede usar `compute_concurrency(organization)` dentro del
+contexto técnico existente y relacionar sus resultados con TurnWork/Conversation
+del mismo tenant: límite, activo, saturación, PENDING y inbound no asignado.
+No se añade CLI/UI ni capacidad de mutación. Eventos B3 registran expiry/reclaim/
+fencing; eventos B9C ADMITTED/SATURATED/DEFERRED distinguen admisión y contención.
+El snapshot no es máximo histórico ni SLO; cola y latencia integral pertenecen B9E.
+
+Safety de recepción no espera LLM de otra conversación: su trabajo/caso/guidance
+se completan en una sola transacción DB. Takeover humano no adquiere cupo. Sender
+continúa independientemente; Meta incierto conserva reglas B4, sin retry ciego.
+Si ya hay trabajo no terminal en la misma conversación, se preserva la señal
+pendiente y la continuación B5, sin cambiar miembros del trabajo en curso.
+
+Antes de un despliegue futuro: drenar writers antiguos que no toman Organization.
+Si existen varias leases legacy válidas por org, no se admite otra; dejar drenar
+o aplicar recovery B3. Rollback operativo retira autonomía/reduce carga y conserva
+sender, fencing, datos y admissions. Timeouts de lectura no prometen deadline
+absoluto de red. Ver [contrato B9C](../contrato-concurrencia-b9c.md) y
+[evidencia](../implementacion-b9c-agente-whatsapp-2026-09-27.md).
+B0 cerrado, B7B=False, execution flags={}, PENDING_ACTIVATION_REQUIREMENTS.

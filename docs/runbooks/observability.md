@@ -370,3 +370,25 @@ El inspector readonly detecta admisiones sin observación y discrepancias de
 contadores. Responsable: operador técnico del agente; acción: investigar la
 evidencia y retirar capacidad si procede, sin reponer cupo ni borrar filas.
 Esto aporta evidencia COST de componente; no PASS de PROFILE-BETA-1/EVAL/SCALE.
+
+## B9C — Observación de capacidad
+
+`compute_concurrency(org)` consulta, sin escribir, límite de release, trabajos
+activos con lease/epoch válidos, saturación, trabajos PENDING e inbound pendiente
+sin TurnWork. Cada valor es una observación, no autorización ni lectura atómica
+de toda la cola. El tenant es argumento de consulta para operadores autorizados,
+no label de series. No se persiste nuevo contenido conversacional.
+
+Eventos de vocabulario cerrado: `AGENT_CONCURRENCY_ADMITTED`,
+`AGENT_CONCURRENCY_SATURATED`, `AGENT_CONCURRENCY_DEFERRED`; scope organization y
+limit 1. No UUID/phone/user/prompt como labels. Se emiten después del commit y
+pueden faltar por crash; TurnWork sigue siendo autoridad. B3 aporta completed,
+failed, lease_expired, reclaimed y fencing_reject; no segundo contador de release.
+
+Acción del operador técnico: ante saturación persistente, revisar cola y leases
+del tenant autorizado, causa de retry/provider y fencing; retirar capacidad o
+reducir carga según runbook, nunca resetear tokens/contadores. No nuevas alertas
+sin responsable ni thresholds de rendimiento. El corpus registra snapshots en
+claim/wire y journals PID/backend independientes; sus métricas de invariantes
+no sustituyen colas/p95/muestras de PROFILE-BETA-1. Ver
+[acta B9C](../implementacion-b9c-agente-whatsapp-2026-09-27.md).

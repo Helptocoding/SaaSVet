@@ -1116,3 +1116,32 @@ Usage ausente/malformado permanece NULL. Constantes de release y límites de
 entrada/salida están en el contrato; no presupuesto monetario o periodos.
 La aceptación del componente está en curso. B9 canónica IN_PROGRESS; pendientes
 concurrencia general, activación/readiness y PROFILE-BETA-1. Producción cerrada.
+
+## B9C — Admisión organizativa del planner
+
+La capacidad es el conjunto de TurnWork committed PROCESSING con lease futura,
+tenant coherente y ownership_epoch vigente. El límite de release es uno por
+organización, agregado entre procesos; el unique B3 mantiene uno no terminal
+por conversación. No existe un segundo ledger de slots. Organization se bloquea
+con NO KEY UPDATE SKIP LOCKED antes de Conversation/TurnWork/Message, dentro de
+una transacción corta. El claim revalida el conjunto antes de mutar membresía,
+intentos o token. La selección previa excluye orgs ocupadas antes de LIMIT, sin
+introducir round-robin ni prometer fairness fuerte.
+
+Commit del claim → witness → contexto/planner → admisión B9B por llamada → HTTP
+sin locks → finalización B3/B7/B8. Completion/failure/retry/invalidation dejan
+de ocupar; expiry retira autoridad y reclaim cambia token sin restituir budget.
+Saturación deja Message pendiente y vuelve a polling, sin gastar presupuesto.
+Restart deriva la misma ocupación de PostgreSQL. Un HTTP ya admitido puede
+terminar tarde; no concede nueva autoridad ni garantiza cancelación remota.
+
+Safety B5 detectable en recepción completa membresía, caso y guidance en una
+única transacción DB, sin planner/LLM/HTTP y sin confirmar otro PROCESSING.
+SQL rollback conserva el inbound mediante el fallback de recepción. Takeover
+no espera cupo; sender sigue su permiso B4/B5 independiente. Compose fija dos
+planners secuenciales (batch 1/poll 1 s) y sender (poll 1 s). No es límite global
+durable dos ni permiso para autoscaling; no se ejecutó deploy.
+
+Contrato, lifecycle, locks, timeouts y riesgos: [B9C](contrato-concurrencia-b9c.md).
+Evidencia: [acta](implementacion-b9c-agente-whatsapp-2026-09-27.md). B9E aún debe
+medir PROFILE-BETA-1; B9 permanece IN_PROGRESS y producción cerrada.

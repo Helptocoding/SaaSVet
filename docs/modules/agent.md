@@ -1472,3 +1472,32 @@ introducen precios, cache o fallback nuevos. Privacy: sin prompts/respuestas
 en contabilidad; errores y finish_reason usan vocabularios cerrados.
 
 Sin deploy ni activación. B9 IN_PROGRESS; aceptación del componente en curso.
+
+## B9C — Concurrencia de trabajo por organización
+
+`durable.claim_turn` serializa adquisiciones con la fila Organization existente
+(NO KEY UPDATE SKIP LOCKED). `active_org_work` deriva ocupación de TurnWork,
+lease DB, tenant y epoch. La constante de release `ORG_ACTIVE_WORK_LIMIT = 1`
+no es config opcional ni presupuesto por minuto. Ausencia de AgentSettings
+mantiene el límite. No modelos/campos/migraciones nuevos.
+
+`process_pending_conversations` excluye orgs ocupadas antes del corte del lote;
+el claim atómico sigue siendo autoridad. Saturación no incrementa intentos,
+asigna miembros ni consume LLMCall. B3 conserva retry, 15 min lease, 12 min
+deadline, token/epoch y máximo tres intentos; completion/retry/failure/takeover/
+expiry retiran ocupación según esa máquina existente. B9B conserva consumo del
+mismo trabajo tras recuperación. Ningún lock cubre provider HTTP.
+
+`_claim_turn_locked` es primitiva interna B3: solo el claim admitido y la
+recepción safety atómica pueden llamarla. Safety debe completar todo antes del
+commit; nunca entrega otro planner ni confirma un segundo PROCESSING. El
+webhook conserva su fallback de inbound pendiente ante error SQL. Permisos de
+guidance, takeover, consentimiento B7B y guard B8A mantienen autoridad propia.
+
+`compute_concurrency(org)` expone snapshot readonly; no force-release. Harness
+B9A observa capacidad antes de wire y registros de claim; corpus B9C prueba
+N=1, carrera, crash/restart, stale y SCALE-01/02 con PostgreSQL multiproceso.
+Ver [contrato](../contrato-concurrencia-b9c.md),
+[ADR](../decisions/2026-09-27-b9c-turnwork-concurrency.md) y
+[acta](../implementacion-b9c-agente-whatsapp-2026-09-27.md).
+B9E conserva aceptación integral; no hay nuevas capacidades activadas.

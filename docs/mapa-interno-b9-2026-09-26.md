@@ -98,3 +98,18 @@ incluye entregables, aceptación, perfil, métricas, dependencias y restriccione
 
 **Documentación.** Runbook de agente, arquitectura, CI/evals y acta de perfil/capacidades/versión mínima compatible. P-A aporta política revisada; P-B demuestra el mecanismo de retención aplicable.
 **Riesgos eliminados:** falso verde por row/skip y contador parcial en rutas migradas. **Reducidos:** saturación/coste dentro del perfil. **Abiertos:** otra carga, deriva LLM, proveedor, identidad débil y cobertura humana; ampliar alcance requiere repetir gates pertinentes.
+
+## Seguimiento B9C — 2026-09-27
+
+R04/R12 implementados: límite de un TurnWork con autoridad por organización,
+claim atómico sobre Organization existente, dos planners secuenciales fijos,
+sender separado y safety de recepción independiente del LLM. El selector
+excluye orgs ocupadas antes de cortar el lote. Se reutilizan B3 y B9B, sin tabla,
+estado, contador de concurrencia ni migración nuevos. La regresión y aceptación
+se registran en el [acta B9C](implementacion-b9c-agente-whatsapp-2026-09-27.md).
+
+B9C: **COMPLETED técnico**, 2.309 IDs únicos aceptados (2.282 históricos + 27 nuevos), cero pendientes y seis métricas críticas en cero. B9 canónica: **IN_PROGRESS**. Los estados anteriores
+son historia de sus respectivos hitos. B9D conserva R13; B9E conserva R01/R06–R10/
+R15 y PROFILE-BETA-1. Las pruebas SCALE de componente no aprueban el perfil
+integral ni cierran H16/H19. Siguiente componente pendiente: B9D, sin iniciarlo
+en esta entrega. B0 cerrado; PENDING_ACTIVATION_REQUIREMENTS; cero activaciones.

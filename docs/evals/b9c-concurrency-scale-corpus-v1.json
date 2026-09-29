@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "corpus_id": "b9c-concurrency-scale-v1",
+  "baseline": "e9792c09e5830f058e8f143db7f4fcd93eef03fe",
+  "canonical_requirements": [
+    "R04",
+    "R12",
+    "C4",
+    "I09",
+    "I10",
+    "I13",
+    "SCALE-01",
+    "SCALE-02"
+  ],
+  "unit": "committed authoritative PROCESSING TurnWork per organization",
+  "limit": 1,
+  "topology": {
+    "planners": 2,
+    "sender": 1,
+    "poll_seconds": 1
+  },
+  "scope": "component invariants; no integral PROFILE-BETA-1 acceptance",
+  "test_ids": [
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_saturation_durable_http_later_e2e_without_budget_consumption",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_01_noisy_backlog_cannot_hide_healthy_org_before_batch_limit",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_retry_releases_capacity_and_reacquisition_obeys_other_work",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_expiry_old_worker_cannot_budget_publish_or_release_other_claim",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_eligibility_clock_cannot_expire_live_capacity",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_duplicate_claim_preserves_token_attempts_and_membership",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_sql_failure_acquisition_or_recovery_rolls_back_capacity",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_budget_exhausted_releases_turn_without_provider",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_takeover_without_quota_revokes_epoch_and_allows_other_conversation",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_02_safety_http_and_sender_progress_while_org_saturated",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_missing_settings_still_has_finite_release_limit",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_inline_safety_sql_failure_cannot_commit_second_processing_work",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_observability_readonly_tenant_scoped_and_closed_events",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_no_time_period_quota_immediate_next_work_after_completion",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_e2e_write_through_concurrency_consent_and_guard",
+    "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_closed_production_and_fixed_process_topology"
+  ],
+  "process_test_ids": [
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_07_three_processes_compete_last_slot_distinct_conversations",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_org_lock_defers_claim_but_does_not_block_inbound_fk",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_01_kill_before_claim_or_before_commit_leaves_no_capacity",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_02_08_kill_after_claim_restart_preserves_capacity_until_expiry",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_live_takeover_fences_old_worker_without_waiting_for_org_capacity",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender",
+    "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta"
+  ],
+  "expected_critical_metrics": {
+    "max_active_above_limit": 0,
+    "duplicate_slot_ownership": 0,
+    "stale_worker_progress": 0,
+    "lost_work_on_saturation": 0,
+    "capacity_leak_after_recovery": 0,
+    "cross_tenant_limit_violation": 0
+  },
+  "metric_assertion_proofs": {
+    "max_active_above_limit": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_07_three_processes_compete_last_slot_distinct_conversations",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta"
+    ],
+    "duplicate_slot_ownership": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_duplicate_claim_preserves_token_attempts_and_membership",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_07_three_processes_compete_last_slot_distinct_conversations"
+    ],
+    "stale_worker_progress": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_expiry_old_worker_cannot_budget_publish_or_release_other_claim",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_live_takeover_fences_old_worker_without_waiting_for_org_capacity"
+    ],
+    "lost_work_on_saturation": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_saturation_durable_http_later_e2e_without_budget_consumption",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_retry_releases_capacity_and_reacquisition_obeys_other_work",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_02_safety_http_and_sender_progress_while_org_saturated",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta"
+    ],
+    "capacity_leak_after_recovery": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_sql_failure_acquisition_or_recovery_rolls_back_capacity",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_inline_safety_sql_failure_cannot_commit_second_processing_work",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_02_08_kill_after_claim_restart_preserves_capacity_until_expiry",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers"
+    ],
+    "cross_tenant_limit_violation": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_01_noisy_backlog_cannot_hide_healthy_org_before_batch_limit",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender"
+    ]
+  },
+  "method": "Assertions plus claim/wire snapshots and independent Python/PG process journals. Missing/failed/skipped proof is incomplete, never zero.",
+  "failure_injection": {
+    "B9C-FI-01": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_01_kill_before_claim_or_before_commit_leaves_no_capacity"
+    ],
+    "B9C-FI-02": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_02_08_kill_after_claim_restart_preserves_capacity_until_expiry"
+    ],
+    "B9C-FI-03": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers"
+    ],
+    "B9C-FI-04": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers"
+    ],
+    "B9C-FI-05": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim"
+    ],
+    "B9C-FI-06": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_expiry_old_worker_cannot_budget_publish_or_release_other_claim",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_live_takeover_fences_old_worker_without_waiting_for_org_capacity"
+    ],
+    "B9C-FI-07": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_07_three_processes_compete_last_slot_distinct_conversations",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_org_lock_defers_claim_but_does_not_block_inbound_fk"
+    ],
+    "B9C-FI-08": [
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_02_08_kill_after_claim_restart_preserves_capacity_until_expiry"
+    ],
+    "B9C-FI-09": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_sql_failure_acquisition_or_recovery_rolls_back_capacity",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_inline_safety_sql_failure_cannot_commit_second_processing_work"
+    ],
+    "B9C-FI-10": [
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers"
+    ]
+  },
+  "limits": [
+    "No remote cancellation or distributed exactly-once.",
+    "Lease expiry is controlled by fixture; real PostgreSQL clock validates witness.",
+    "Slow Meta is held by a bounded barrier, not a latency/SLO benchmark.",
+    "No new inspector UI/force-release; readonly compute_concurrency and existing B3 records.",
+    "Inline reception safety completes atomically, never commits another active planner claim."
+  ],
+  "request_case_mapping": {
+    "B9C-SCALE-01": {
+      "meaning": "debajo del límite",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations"
+    },
+    "B9C-SCALE-02": {
+      "meaning": "exactamente en límite",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations"
+    },
+    "B9C-SCALE-03": {
+      "meaning": "sobre límite",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations"
+    },
+    "B9C-SCALE-04": {
+      "meaning": "carrera último cupo",
+      "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_07_three_processes_compete_last_slot_distinct_conversations"
+    },
+    "B9C-SCALE-05": {
+      "meaning": "saturación conserva trabajo",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_saturation_durable_http_later_e2e_without_budget_consumption"
+    },
+    "B9C-SCALE-06": {
+      "meaning": "recovery",
+      "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers"
+    },
+    "B9C-SCALE-07": {
+      "meaning": "lease expiry",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_expiry_old_worker_cannot_budget_publish_or_release_other_claim"
+    },
+    "B9C-SCALE-08": {
+      "meaning": "stale worker",
+      "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim"
+    },
+    "B9C-SCALE-09": {
+      "meaning": "restart",
+      "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_02_08_kill_after_claim_restart_preserves_capacity_until_expiry"
+    },
+    "B9C-SCALE-10": {
+      "meaning": "duplicate worker",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_duplicate_claim_preserves_token_attempts_and_membership"
+    },
+    "B9C-SCALE-11": {
+      "meaning": "trabajos independientes",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_retry_releases_capacity_and_reacquisition_obeys_other_work"
+    },
+    "B9C-SCALE-12": {
+      "meaning": "tenants con límites independientes",
+      "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender"
+    },
+    "B9C-SCALE-13": {
+      "meaning": "B9B agotado",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_budget_exhausted_releases_turn_without_provider"
+    },
+    "B9C-SCALE-14": {
+      "meaning": "B9B disponible",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_saturation_durable_http_later_e2e_without_budget_consumption"
+    },
+    "B9C-SCALE-15": {
+      "meaning": "provider timeout",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion"
+    },
+    "B9C-SCALE-16": {
+      "meaning": "handoff",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_02_safety_http_and_sender_progress_while_org_saturated"
+    },
+    "B9C-SCALE-17": {
+      "meaning": "takeover",
+      "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_live_takeover_fences_old_worker_without_waiting_for_org_capacity"
+    },
+    "B9C-SCALE-18": {
+      "meaning": "B7B preservado",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_e2e_write_through_concurrency_consent_and_guard"
+    },
+    "B9C-SCALE-19": {
+      "meaning": "B8A preservado",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_e2e_write_through_concurrency_consent_and_guard"
+    },
+    "B9C-SCALE-20": {
+      "meaning": "E2E B9A",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_saturation_durable_http_later_e2e_without_budget_consumption"
+    },
+    "B9C-SCALE-21": {
+      "meaning": "missing config",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_missing_settings_still_has_finite_release_limit"
+    },
+    "B9C-SCALE-22": {
+      "meaning": "observability",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_observability_readonly_tenant_scoped_and_closed_events"
+    },
+    "B9C-SCALE-23": {
+      "meaning": "inspección readonly; nueva CLI no requerida por B9",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_observability_readonly_tenant_scoped_and_closed_events"
+    },
+    "B9C-SCALE-24": {
+      "meaning": "sin rate limiting nuevo",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_no_time_period_quota_immediate_next_work_after_completion"
+    },
+    "B9C-SCALE-25": {
+      "meaning": "defaults productivos cerrados",
+      "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_closed_production_and_fixed_process_topology"
+    }
+  },
+  "request_case_id_note": "Prefixed B9C-SCALE to distinguish the request examples from canonical SCALE-01/SCALE-02, whose meanings are retained."
+}

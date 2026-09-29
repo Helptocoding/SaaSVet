@@ -349,3 +349,20 @@ integral EVAL/COST/SCALE corresponde al hito B9E. Se preservan los informes de
 discrepancia anteriores: el encargo corregido retiró billing, periodos y estados
 no canónicos. Ver contrato-presupuesto-turnwork-b9b.md. No readiness, activación
 ni despliegue; PENDING_ACTIVATION_REQUIREMENTS permanece.
+
+## Evidencia parcial H16/H19 — B9C
+
+B9C entrega R04/R12: exclusión agregada por organización reutilizando claim B3,
+topología fija de planners/sender y configuración de release finita. Sin nueva
+tabla/contador de slots, rate limiting, billing ni cuota distribuida global.
+La evidencia SCALE de componente cubre saturación durable, dos tenants, sender
+y safety con LLM bloqueado, Meta lento/incierto, crash/restart, recovery y rechazo
+stale, además de independencia del presupuesto B9B.
+
+H16/H19 mantienen cierre integral pendiente. B9E es dueño de PROFILE-BETA-1,
+gates EVAL/COST/SCALE, reporte de cola/p95/muestras/errores y aceptación por alcance;
+B9D conserva readiness/activación. No se afirma rendimiento para carga real ni
+cancelación de una llamada externa ya admitida. Evidencia, fallos preliminares y
+regresión exacta: [acta B9C](implementacion-b9c-agente-whatsapp-2026-09-27.md) y
+[recibo](evals/b9c-acceptance-results.json).
+B9 canónica IN_PROGRESS; B0 cerrado y PENDING_ACTIVATION_REQUIREMENTS.
