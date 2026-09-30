@@ -33,10 +33,10 @@ from .tier0 import render_first_reply
 
 logger = logging.getLogger('agent.events')
 
-def process_pending_conversations(batch=10, now=None):
-    """Poll durable retries/recovery and unassigned inbound using existing loop."""
-    from django.db.models import Exists, OuterRef
-    from django.db.models.functions import Now
+def _pending_conversation_candidates(now=None, excluded=()):
+    """Advisory E4 selection; B3/B9C claim remains the sole authority."""
+    from django.db.models import Exists, F, OuterRef, Subquery, Window
+    from django.db.models.functions import Now, RowNumber
     from .models import TurnWork
     from . import durable
     due = (Q(turn_works__status=TurnWork.PROCESSING,
@@ -48,26 +48,43 @@ def process_pending_conversations(batch=10, now=None):
     incoming = Message.objects.filter(direction='in', status='pending',
         turn_work__isnull=True).filter(Q(available_at__isnull=True) |
         Q(available_at__lte=now or Now())).values('conversation_id')
-    # Exclude busy orgs BEFORE the batch cap: a noisy tenant's backlog must
-    # not hide other orgs. This is advisory selection; claim rechecks under
-    # the organizational row lock. No round-robin/fairness state is added.
-    conv_ids = list(Conversation.objects.filter(due | Q(pk__in=incoming))
-                    .alias(org_busy=Exists(durable.active_org_work(OuterRef('organization_id'))))
-                    .filter(org_busy=False)
-                    .order_by('last_activity_at', 'pk').values_list('pk', flat=True)
-                    .distinct()[:batch])
+    latest = TurnWork.objects.filter(organization_id=OuterRef('organization_id'),
+        claimed_at__isnull=False).order_by('-claimed_at').values('claimed_at')[:1]
+    # Exclude busy orgs before ranking/limit. Keep one conversation per org
+    # so a competing planner's miss can fall through to another org. Prefer
+    # least recently claimed orgs using existing durable history, not a cursor.
+    return (Conversation.objects.filter(due | Q(pk__in=incoming)).exclude(pk__in=excluded)
+        .alias(org_busy=Exists(durable.active_org_work(OuterRef('organization_id'))))
+        .filter(org_busy=False)
+        .annotate(org_last_claim=Subquery(latest), org_candidate=Window(RowNumber(),
+            partition_by=[F('organization_id')],
+            order_by=[F('last_activity_at').asc(), F('pk').asc()]))
+        .filter(org_candidate=1)
+        .order_by(F('org_last_claim').asc(nulls_first=True), 'last_activity_at', 'pk')
+        .values_list('pk', flat=True)[:3])
+
+
+def process_pending_conversations(batch=10, now=None):
+    """Poll durable retries/recovery and unassigned inbound using existing loop."""
+    from . import durable
     processed = 0
-    for conv_id in conv_ids:
-        witness = _claim_turn(conv_id, now)
-        if witness is None:
-            continue
-        try:
-            _run_turn(witness)
-        except durable.OwnershipLost:
-            pass  # Durable state belongs to the newer owner; never release it.
-        except Exception as exc:
-            _handle_turn_failure(witness, exc)
-        processed += 1
+    attempted = set()
+    while processed < batch:
+        for conv_id in list(_pending_conversation_candidates(now, attempted)):
+            attempted.add(conv_id)
+            witness = _claim_turn(conv_id, now)
+            if witness is None:
+                continue
+            try:
+                _run_turn(witness)
+            except durable.OwnershipLost:
+                pass  # Durable state belongs to the newer owner; never release it.
+            except Exception as exc:
+                _handle_turn_failure(witness, exc)
+            processed += 1
+            break  # Recheck eligibility/capacity/recency after each success.
+        else:
+            break  # Bounded misses; return to the existing polling loop.
     return processed
 
 
