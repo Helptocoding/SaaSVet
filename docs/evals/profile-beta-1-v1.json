@@ -1,0 +1,73 @@
+{
+  "schema_version": "profile-beta-1-v1",
+  "frozen_against_commit": "21cf91c0ae0242f83675dc9691c600bf4d63e5ab",
+  "authority": {
+    "path": "docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md",
+    "sha256": "8ee3fa103b7d43cd708cdeea97a0dd656653ebe1de6b1295aeb7b08f329b72e0",
+    "lines": [710, 715, 716, 717, 718, 719, 721, 723, 725, 727, 729, 731, 733]
+  },
+  "candidate_scope": {
+    "read_public": ["get_clinic_info", "get_service_catalog", "check_appointment_slot"],
+    "read_public_outside_candidate": ["get_offered_specialties", "check_product_availability", "find_available_slots"],
+    "read_personal": ["list_my_pets", "get_appointments", "get_vaccine_status"],
+    "read_personal_outside_candidate": ["get_recent_product_queries"],
+    "write_kinds": ["CREATE_APPOINTMENT", "RESCHEDULE_APPOINTMENT", "CANCEL_APPOINTMENT", "CONFIRM_ATTENDANCE", "REGISTER_PET"],
+    "control": ["request_human", "safety_guidance"],
+    "release_grants_productive": []
+  },
+  "topology": {
+    "database": "isolated PostgreSQL with fsync and synchronous_commit enabled",
+    "planner_processes": 2,
+    "planner_batch": 1,
+    "sender_processes": 1,
+    "poll_max_seconds": 1,
+    "organizations": 3,
+    "max_active_processing_per_organization": 1
+  },
+  "base_workload": {
+    "warmup_seconds": 30,
+    "measurement_seconds": 300,
+    "healthy_organizations": 2,
+    "healthy_inbound_interval_seconds_per_organization": 10,
+    "noisy_organizations": 1,
+    "noisy_inbound_interval_seconds": 1,
+    "noisy_inbounds_distributed_across_conversations": true,
+    "controlled_provider": {
+      "llm_calls_per_basic_turn": 1,
+      "llm_seconds_per_call": 0.5,
+      "read_seconds_per_basic_turn": 0.1,
+      "meta_acceptance_seconds_per_basic_turn": 0.2,
+      "deterministic_response_and_usage": true
+    }
+  },
+  "separate_injections": [
+    "one noisy-organization LLM call blocked until 10-second timeout",
+    "Meta acceptance takes 2 seconds per send",
+    "duplicate signed webhook",
+    "saturation with reception-detectable safety guidance"
+  ],
+  "canonical_gates": {
+    "base_and_blocked_llm_healthy_inbound_to_claim_p95_seconds_max": 10,
+    "base_and_blocked_llm_safety_persist_to_dispatch_admission_p95_seconds_max": 5,
+    "base_outbox_commit_to_dispatch_admission_p95_seconds_max": 5,
+    "meta_slow": ["durable_state", "bounded_concurrency", "no_blind_retry"],
+    "critical_corpus_and_injection_violations_max": 0,
+    "failed_or_skipped_gate_is_green": false
+  },
+  "component_limits_from_b9b_b9c": {
+    "admitted_llm_calls_per_turnwork_max": 30,
+    "reserved_output_tokens_per_turnwork_max": 18000,
+    "output_tokens_per_llm_call_max": 600,
+    "llm_request_json_utf8_bytes_max": 65536,
+    "llm_requests_timeout_seconds": 10,
+    "concurrent_turnworks_per_organization_max": 1
+  },
+  "required_reporting": ["queue", "sample_count", "maximum", "errors", "p95", "first_run", "final_run", "corpus", "source_hashes", "postgresql_process_ids"],
+  "source_corpus": {
+    "b9a_harness_sha256": "300147768ef5de6ea017e74e02bec120def2f295c176664756654a6d94fdcf1f",
+    "b9b_corpus_sha256": "fa206cdbebadaf47184b50b73955b638a883b13e72c56d49a2eb503e2fe59609",
+    "b9c_corpus_sha256": "33b3ca64a50541e7ce9509c21b71c605fa2b0180c631f9d80b0deaab92886c61",
+    "b9d_corpus_sha256": "2c376e975f2736e6df95785c3ce5e62303c387c026510ee21e9e5c625344f4eb"
+  },
+  "non_goals": ["production_activation", "real_Meta_traffic", "unbounded_stress", "monetary_pricing", "E1_to_E5", "P-A_or_P-B_implementation"]
+}
