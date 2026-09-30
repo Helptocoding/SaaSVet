@@ -788,3 +788,25 @@ con pausa, drain y versión compatible descrita arriba. Preservar Message,
 TurnWork, LLMCall, ConversationOperation, AuthorizationEvidence,
 ToolExecution, efecto de dominio y outbox; clasificar envíos inciertos antes de
 reabrir. [Decisión B9E](../reporte-aceptacion-b9-profile-beta-1-2026-09-29.md).
+
+## B3/C4/W1 v1 — compatibilidad y rollback futuros
+
+La [enmienda FROZEN](../contrato-elegibilidad-preclaim-b3-c4-w1-v1.md) conserva
+rolling 8 s/cap 25 s antes de READY y hace monotónica la elegibilidad ordinaria
+preclaim. READY no concede autoridad ni capacidad. Los workers baseline E4 y
+los nuevos interpretan los mismos deadlines; un writer baseline aún puede
+retirar READY. Por ello, una promoción futura requiere corte coordinado de
+todos los procesos que hacen ingest antes de afirmar la nueva garantía.
+No basta actualizar únicamente los planners. La matriz de compatibilidad y
+secuencia contractual están en la enmienda; los gates de release siguen vigentes.
+
+Rollback de política revierte runtime, conservando Messages, TurnWork,
+membership, budgets consumidos, AuthorizationEvidence, effects y outbox.
+No desasigna miembros, no devuelve presupuesto y no reconstruye el silencio
+histórico de una ráfaga ya promovida. Mantener la contención y observación
+correspondientes a la versión elegida.
+
+El [acta](../implementacion-elegibilidad-monotonica-preclaim-2026-09-30.md)
+verifica la semántica y registra PERFORMANCE_STOP: diagnóstico LLM bloqueado
+p95 sano 10.381673 s >10 s; cero reruns de acceptance. Esto no autoriza promoción,
+reapertura B9E, activación ni deploy. Producción sigue cerrada.

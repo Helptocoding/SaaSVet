@@ -26,3 +26,9 @@ backend/apps/agent/tests/e4*.py text eol=lf
 docs/evals/e4-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/evals/e4-*.log -diff
 docs/diagnostico-e4-capacidad-scheduling-2026-09-30.md text eol=lf
+
+# W1 monotonic test evidence follows the same byte-preservation convention.
+backend/apps/agent/tests/w1_mono*.py text eol=lf
+backend/apps/agent/tests/test_w1_mono*.py text eol=lf
+docs/evals/w1-mono/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evals/w1-mono/*.log -diff

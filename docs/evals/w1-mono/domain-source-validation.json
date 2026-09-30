@@ -1,0 +1,77 @@
+{
+  "reason": "Inherited source receipts hash the agent tree; these unchanged historical domain tests are checked against both Git cuts, normalized LF.",
+  "files": {
+    "backend/apps/channels/tests/test_b4_transport.py": {
+      "current_raw_sha256": "13b61437796c4a3f46f29bc00aa8c5d1c1798ce32ca86a2428ee3c176a0cf04e",
+      "current_lf_sha256": "13b61437796c4a3f46f29bc00aa8c5d1c1798ce32ca86a2428ee3c176a0cf04e",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "13b61437796c4a3f46f29bc00aa8c5d1c1798ce32ca86a2428ee3c176a0cf04e",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "13b61437796c4a3f46f29bc00aa8c5d1c1798ce32ca86a2428ee3c176a0cf04e"
+      }
+    },
+    "backend/apps/appointments/tests/test_preconditions.py": {
+      "current_raw_sha256": "83811c7b5e731640d0aef68b600ed106804a8ff4eb131c996e903b658382694e",
+      "current_lf_sha256": "83811c7b5e731640d0aef68b600ed106804a8ff4eb131c996e903b658382694e",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "83811c7b5e731640d0aef68b600ed106804a8ff4eb131c996e903b658382694e",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "83811c7b5e731640d0aef68b600ed106804a8ff4eb131c996e903b658382694e"
+      }
+    },
+    "backend/apps/channels/tests/test_b4_migration.py": {
+      "current_raw_sha256": "f8778416a6291b56f110f99dc5e3f8ba360fbcc1c7165505ec33aa50eef6ada3",
+      "current_lf_sha256": "f8778416a6291b56f110f99dc5e3f8ba360fbcc1c7165505ec33aa50eef6ada3",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "f8778416a6291b56f110f99dc5e3f8ba360fbcc1c7165505ec33aa50eef6ada3",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "f8778416a6291b56f110f99dc5e3f8ba360fbcc1c7165505ec33aa50eef6ada3"
+      }
+    },
+    "backend/apps/channels/tests/test_token.py": {
+      "current_raw_sha256": "1d85232b5e58089940879fd5377ba8fec5e607b332f5f74524401cb1162d2b2c",
+      "current_lf_sha256": "1d85232b5e58089940879fd5377ba8fec5e607b332f5f74524401cb1162d2b2c",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "1d85232b5e58089940879fd5377ba8fec5e607b332f5f74524401cb1162d2b2c",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "1d85232b5e58089940879fd5377ba8fec5e607b332f5f74524401cb1162d2b2c"
+      }
+    },
+    "backend/apps/channels/tests/test_webhook.py": {
+      "current_raw_sha256": "126105ac1859e325302aed615c0d157de6b092f7552e2b8e381ece3513e52a70",
+      "current_lf_sha256": "126105ac1859e325302aed615c0d157de6b092f7552e2b8e381ece3513e52a70",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "126105ac1859e325302aed615c0d157de6b092f7552e2b8e381ece3513e52a70",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "126105ac1859e325302aed615c0d157de6b092f7552e2b8e381ece3513e52a70"
+      }
+    },
+    "backend/apps/channels/tests/test_models.py": {
+      "current_raw_sha256": "ef89c3b72266409335f4cc0d96b37f8d7b97ea7dce9fc00adc70de2231e7994f",
+      "current_lf_sha256": "ef89c3b72266409335f4cc0d96b37f8d7b97ea7dce9fc00adc70de2231e7994f",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "ef89c3b72266409335f4cc0d96b37f8d7b97ea7dce9fc00adc70de2231e7994f",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "ef89c3b72266409335f4cc0d96b37f8d7b97ea7dce9fc00adc70de2231e7994f"
+      }
+    },
+    "backend/apps/channels/tests/test_providers.py": {
+      "current_raw_sha256": "207fdf6df52e185762689a001a8f781fec20f8e2a21d70417c56fdbaef6b98a0",
+      "current_lf_sha256": "207fdf6df52e185762689a001a8f781fec20f8e2a21d70417c56fdbaef6b98a0",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "207fdf6df52e185762689a001a8f781fec20f8e2a21d70417c56fdbaef6b98a0",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "207fdf6df52e185762689a001a8f781fec20f8e2a21d70417c56fdbaef6b98a0"
+      }
+    },
+    "backend/apps/channels/tests/test_b4_webhook.py": {
+      "current_raw_sha256": "3ca147dcc650776857961e6aaf286a2310df2515b23248291d4c9d72a2663090",
+      "current_lf_sha256": "3ca147dcc650776857961e6aaf286a2310df2515b23248291d4c9d72a2663090",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "3ca147dcc650776857961e6aaf286a2310df2515b23248291d4c9d72a2663090",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "3ca147dcc650776857961e6aaf286a2310df2515b23248291d4c9d72a2663090"
+      }
+    },
+    "backend/apps/appointments/tests/test_creation_domain.py": {
+      "current_raw_sha256": "2730238e04846fec5af4d48ea88626bf0b631cc5a52b53c7569f92b50bd47a60",
+      "current_lf_sha256": "2730238e04846fec5af4d48ea88626bf0b631cc5a52b53c7569f92b50bd47a60",
+      "git_cut_lf_sha256": {
+        "623a80930883fd0473ac6fe4697a417f763dad4c": "2730238e04846fec5af4d48ea88626bf0b631cc5a52b53c7569f92b50bd47a60",
+        "83285eb096a568dbeb1d67a5c98001dc0bee8352": "2730238e04846fec5af4d48ea88626bf0b631cc5a52b53c7569f92b50bd47a60"
+      }
+    }
+  }
+}

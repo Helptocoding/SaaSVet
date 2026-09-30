@@ -1,0 +1,92 @@
+{
+  "status": "CLEANED",
+  "cluster": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-w1-mono-pg16-data",
+  "port": 35442,
+  "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "other_clients": [],
+  "waiting_locks": 0,
+  "prepared_transactions": 0,
+  "dropped_databases": [
+    "test_b8b_w1_mono_diag_base",
+    "test_b8b_w1_mono_diag_blocked",
+    "test_b8b_w1_mono_diagnostic",
+    "test_b8b_w1_mono_recovery_0",
+    "test_b8b_w1_mono_recovery_1",
+    "test_b8b_w1_mono_recovery_2",
+    "test_b8b_w1_mono_regression",
+    "test_b8b_w1_mono_supplemental",
+    "test_b8b_w1_mono_targeted",
+    "test_b8b_w1_mono_template"
+  ],
+  "fixture_counts": {
+    "test_b8b_w1_mono_diag_base": {
+      "organizations_organization": 3,
+      "agent_turnwork": 188,
+      "channels_message": 568,
+      "agent_llmcall": 332
+    },
+    "test_b8b_w1_mono_diag_blocked": {
+      "organizations_organization": 3,
+      "agent_turnwork": 211,
+      "channels_message": 599,
+      "agent_llmcall": 378
+    },
+    "test_b8b_w1_mono_diagnostic": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_recovery_0": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_recovery_1": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_recovery_2": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_regression": {
+      "organizations_organization": 1,
+      "agent_turnwork": 1,
+      "channels_message": 1,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_supplemental": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_targeted": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    },
+    "test_b8b_w1_mono_template": {
+      "organizations_organization": 0,
+      "agent_turnwork": 0,
+      "channels_message": 0,
+      "agent_llmcall": 0
+    }
+  },
+  "remaining_databases": [],
+  "server_log_sha256": "7ccc79890916ea51c679b3089cab7e31aafecfa283b8c860ee86d0d5265a3915",
+  "stop_exit_code": 0,
+  "stop_output": "waiting for server to shut down.... done\nserver stopped",
+  "port_closed": true,
+  "data_directory_absent": true,
+  "log_absent": true
+}

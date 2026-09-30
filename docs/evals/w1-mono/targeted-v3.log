@@ -1,0 +1,143 @@
+Found 31 test(s).
+Using existing test database for alias 'default' ('test_b8b_w1_mono_targeted')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_legacy_null_is_ready_and_new_member_is_also_eligible (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_legacy_null_is_ready_and_new_member_is_also_eligible) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:19Z", "organization_id": 15, "contact_id": 15, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:19Z", "organization_id": 15, "conversation_id": 15, "request_id": "-"}
+ok
+test_stale_application_clock_cannot_withdraw_ready (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_stale_application_clock_cannot_withdraw_ready) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:20Z", "organization_id": 16, "contact_id": 16, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:20Z", "organization_id": 16, "conversation_id": 16, "request_id": "-"}
+ok
+test_w1_mono_01_before_8_minus_epsilon_extends (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_01_before_8_minus_epsilon_extends) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:21Z", "organization_id": 17, "contact_id": 17, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:21Z", "organization_id": 17, "conversation_id": 17, "request_id": "-"}
+ok
+test_w1_mono_02_exactly_8_latches (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_02_exactly_8_latches) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:22Z", "organization_id": 18, "contact_id": 18, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:22Z", "organization_id": 18, "conversation_id": 18, "request_id": "-"}
+ok
+test_w1_mono_03_after_8_plus_epsilon_latches (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_03_after_8_plus_epsilon_latches) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:23Z", "organization_id": 19, "contact_id": 19, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:23Z", "organization_id": 19, "conversation_id": 19, "request_id": "-"}
+ok
+test_w1_mono_04_ingest_wins_all_members_freeze_in_claim (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_04_ingest_wins_all_members_freeze_in_claim) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:24Z", "organization_id": 20, "contact_id": 20, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:24Z", "organization_id": 20, "conversation_id": 20, "request_id": "-"}
+ok
+test_w1_mono_05_claim_wins_new_input_defers_and_continues (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_05_claim_wins_new_input_defers_and_continues) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:25Z", "organization_id": 21, "contact_id": 21, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:25Z", "organization_id": 21, "conversation_id": 21, "request_id": "-"}
+ok
+test_w1_mono_06_preclaim_date_correction_is_in_original_context (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_06_preclaim_date_correction_is_in_original_context) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:26Z", "organization_id": 22, "contact_id": 22, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:26Z", "organization_id": 22, "conversation_id": 22, "request_id": "-"}
+ok
+test_w1_mono_07_fragments_and_equal_timestamp_order (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_07_fragments_and_equal_timestamp_order) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:27Z", "organization_id": 23, "contact_id": 23, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:27Z", "organization_id": 23, "conversation_id": 23, "request_id": "-"}
+ok
+test_w1_mono_08_hard_cap_25_survives_rolling (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_08_hard_cap_25_survives_rolling) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:29Z", "organization_id": 24, "contact_id": 24, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:29Z", "organization_id": 24, "conversation_id": 24, "request_id": "-"}
+ok
+test_w1_mono_09_safety_before_ready_is_immediate (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_09_safety_before_ready_is_immediate) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:30Z", "organization_id": 25, "contact_id": 25, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:30Z", "organization_id": 25, "conversation_id": 25, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:17:30Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:17:31Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:17:31Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_w1_mono_10_takeover_fences_ready_claim (apps.agent.tests.test_w1_monotonic.MonotonicEligibilityTests.test_w1_mono_10_takeover_fences_ready_claim) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:32Z", "organization_id": 26, "contact_id": 26, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:32Z", "organization_id": 26, "conversation_id": 26, "request_id": "-"}
+C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-09-30T15:17:32Z", "request_id": "896c834c-bf75-4231-9d95-618bc8a29a41", "user_id": 6, "organization_id": 26, "role": "ADMIN", "endpoint": "/api/inbox/conversations/22e23ea9-dcc7-42bf-a30e-4e892709f27c/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-09-30T15:17:33Z", "turn_work_id": 25, "conversation_id": 26, "request_id": "-"}
+ok
+test_postclaim_correction_keeps_authorization_history_blocks_effect_and_defers (apps.agent.tests.test_w1_mono_causal.MonotonicCausalTests.test_postclaim_correction_keeps_authorization_history_blocks_effect_and_defers) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:34Z", "organization_id": 27, "contact_id": 27, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:34Z", "organization_id": 27, "conversation_id": 27, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-09-30T15:17:35Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:17:37Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:17:37Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_preclaim_ready_consent_plus_correction_cannot_authorize_old_digest (apps.agent.tests.test_w1_mono_causal.MonotonicCausalTests.test_preclaim_ready_consent_plus_correction_cannot_authorize_old_digest) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:38Z", "organization_id": 28, "contact_id": 28, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:38Z", "organization_id": 28, "conversation_id": 28, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-09-30T15:17:39Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:17:41Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_fi_01_crash_before_persist (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_01_crash_before_persist) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:17:42Z", "organization_id": 29, "contact_id": 29, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:17:42Z", "organization_id": 29, "conversation_id": 29, "request_id": "-"}
+ok
+test_fi_02_crash_after_persist_before_deadlines (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_02_crash_after_persist_before_deadlines) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:18:30Z", "organization_id": 30, "contact_id": 30, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:18:30Z", "organization_id": 30, "conversation_id": 30, "request_id": "-"}
+ok
+test_fi_03_crash_after_deadlines_before_commit (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_03_crash_after_deadlines_before_commit) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:19:18Z", "organization_id": 31, "contact_id": 31, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:19:18Z", "organization_id": 31, "conversation_id": 31, "request_id": "-"}
+ok
+test_fi_05_lost_commit_response_redelivery_deduplicates (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_05_lost_commit_response_redelivery_deduplicates) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:20:05Z", "organization_id": 32, "contact_id": 32, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:20:05Z", "organization_id": 32, "conversation_id": 32, "request_id": "-"}
+ok
+test_fi_08_retry_keeps_work_members_and_attempts (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_08_retry_keeps_work_members_and_attempts) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:21:09Z", "organization_id": 33, "contact_id": 33, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:21:09Z", "organization_id": 33, "conversation_id": 33, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-09-30T15:21:09Z", "oldest_pending_age_seconds": 0.090905, "turn_work_id": 35, "conversation_id": 33, "organization_id": 33, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-09-30T15:21:09Z", "turn_work_id": 35, "conversation_id": 33, "organization_id": 33, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-09-30T15:21:09Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_RETRY_SCHEDULED", "level": "INFO", "ts": "2026-09-30T15:21:09Z", "outcome_code": "injected_retry", "turn_work_id": 35, "conversation_id": 33, "organization_id": 33, "attempts": 1, "request_id": "-"}
+ok
+test_fi_09_concurrent_takeover_fences_live_worker (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_09_concurrent_takeover_fences_live_worker) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:22:07Z", "organization_id": 34, "contact_id": 34, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:22:08Z", "organization_id": 34, "conversation_id": 34, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-09-30T15:22:18Z", "request_id": "0bcd626c-f274-42da-903a-45781e985c6a", "user_id": 9, "organization_id": 34, "role": "ADMIN", "endpoint": "/api/inbox/conversations/def401bc-4fda-45b9-a09d-044645bf0029/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "AGENT_TURN_FAILED", "level": "INFO", "ts": "2026-09-30T15:22:18Z", "outcome_code": "takeover", "turn_work_id": 36, "conversation_id": 34, "organization_id": 34, "attempts": 1, "request_id": "0bcd626c-f274-42da-903a-45781e985c6a"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-09-30T15:22:18Z", "conversation_id": 34, "ownership_epoch": 1, "outcome_code": "takeover", "discarded_outbounds": 0, "request_id": "0bcd626c-f274-42da-903a-45781e985c6a"}
+ok
+test_fi_10_safety_while_live_worker_preserves_continuation (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_fi_10_safety_while_live_worker_preserves_continuation) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:22:53Z", "organization_id": 35, "contact_id": 35, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:22:53Z", "organization_id": 35, "conversation_id": 35, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:23:03Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-09-30T15:23:04Z", "oldest_pending_age_seconds": 1.035288, "turn_work_id": 38, "conversation_id": 35, "organization_id": 35, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-09-30T15:23:04Z", "turn_work_id": 38, "conversation_id": 35, "organization_id": 35, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-09-30T15:23:04Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T15:23:04Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_HANDOFF_CREATED", "level": "INFO", "ts": "2026-09-30T15:23:05Z", "classification": "URGENT", "pending_age_seconds": 0.018953, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-09-30T15:23:05Z", "turn_work_id": 38, "conversation_id": 35, "organization_id": 35, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_TURN_OWNERSHIP_CHANGED", "level": "INFO", "ts": "2026-09-30T15:23:05Z", "conversation_id": 35, "ownership_epoch": 1, "outcome_code": "safety_handoff", "discarded_outbounds": 0, "request_id": "-"}
+ok
+test_race_01_ingest_wins_ready_contains_a_b (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_01_ingest_wins_ready_contains_a_b) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:23:52Z", "organization_id": 36, "contact_id": 36, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:23:52Z", "organization_id": 36, "conversation_id": 36, "request_id": "-"}
+ok
+test_race_02_claim_wins_b_continuation (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_02_claim_wins_b_continuation) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:24:57Z", "organization_id": 37, "contact_id": 37, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:24:57Z", "organization_id": 37, "conversation_id": 37, "request_id": "-"}
+{"event": "AGENT_TURN_DEFERRED_TO_NEW_INPUT", "level": "INFO", "ts": "2026-09-30T15:25:17Z", "turn_work_id": 40, "conversation_id": 37, "organization_id": 37, "attempts": 1, "request_id": "-"}
+ok
+test_race_03_two_inbounds (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_03_two_inbounds) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:26:01Z", "organization_id": 38, "contact_id": 38, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:26:02Z", "organization_id": 38, "conversation_id": 38, "request_id": "-"}
+ok
+test_race_04_three_inbounds (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_04_three_inbounds) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:27:23Z", "organization_id": 39, "contact_id": 39, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:27:23Z", "organization_id": 39, "conversation_id": 39, "request_id": "-"}
+ok
+test_race_05_duplicate_inbound (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_05_duplicate_inbound) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:28:40Z", "organization_id": 40, "contact_id": 40, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:28:40Z", "organization_id": 40, "conversation_id": 40, "request_id": "-"}
+ok
+test_race_06_fi_04_claim_crash_after_locks (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_06_fi_04_claim_crash_after_locks) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:29:27Z", "organization_id": 41, "contact_id": 41, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:29:27Z", "organization_id": 41, "conversation_id": 41, "request_id": "-"}
+ok
+test_race_07_fi_06_07_restart_reclaims_same_members (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_07_fi_06_07_restart_reclaims_same_members) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:30:12Z", "organization_id": 42, "contact_id": 42, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:30:12Z", "organization_id": 42, "conversation_id": 42, "request_id": "-"}
+ok
+test_race_08_stale_worker_cannot_publish (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_08_stale_worker_cannot_publish) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:30:58Z", "organization_id": 43, "contact_id": 43, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:30:58Z", "organization_id": 43, "conversation_id": 43, "request_id": "-"}
+ok
+test_race_09_two_conversations_same_org_n1 (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_09_two_conversations_same_org_n1) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:31:40Z", "organization_id": 44, "contact_id": 44, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:31:40Z", "organization_id": 44, "conversation_id": 44, "request_id": "-"}
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:31:40Z", "organization_id": 44, "contact_id": 45, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:31:40Z", "organization_id": 44, "conversation_id": 45, "request_id": "-"}
+ok
+test_race_10_two_organizations_independent (apps.agent.tests.test_w1_mono_processes.MonotonicProcessTests.test_race_10_two_organizations_independent) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:32:23Z", "organization_id": 45, "contact_id": 46, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:32:23Z", "organization_id": 45, "conversation_id": 46, "request_id": "-"}
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T15:32:24Z", "organization_id": 46, "contact_id": 47, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T15:32:24Z", "organization_id": 46, "conversation_id": 47, "request_id": "-"}
+ok
+
+----------------------------------------------------------------------
+Ran 31 tests in 948.378s
+
+OK
+Preserving test database for alias 'default' ('test_b8b_w1_mono_targeted')...
+{"suite": "targeted", "database": "test_b8b_w1_mono_targeted", "exit_code": 0, "seconds": 954.6566208000004}

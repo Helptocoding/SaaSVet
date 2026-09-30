@@ -1,0 +1,1390 @@
+{
+  "scenario": "base",
+  "window_utc": [
+    "2026-09-30T22:17:56.967825+00:00",
+    "2026-09-30T22:22:56.967825+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 55960,
+      "backend_pid": 19488,
+      "role": "planner-1",
+      "scenario": "base"
+    },
+    {
+      "pid": 53356,
+      "backend_pid": 47844,
+      "role": "planner-2",
+      "scenario": "base"
+    },
+    {
+      "pid": 39272,
+      "backend_pid": 37580,
+      "role": "sender",
+      "scenario": "base"
+    }
+  ],
+  "inbound_count": 360,
+  "outbound_count": 153,
+  "healthy_claim": {
+    "count": 60,
+    "p95_seconds": 9.42965,
+    "max_seconds": 10.456949,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 20,
+    "p95_seconds": 3.303541,
+    "max_seconds": 3.303541
+  },
+  "outbox_dispatch": {
+    "count": 153,
+    "p95_seconds": 2.627568,
+    "max_seconds": 3.303541,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 1,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 6,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 13,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 18,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 20,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 23,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 25,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 24,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 30,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 25,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 35,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 29,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 40,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 34,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 45,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 37,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 50,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 42,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 44,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 60,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 45,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 65,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 49,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 70,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 53,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 75,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 56,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 80,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 60,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 85,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 62,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 90,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 63,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 95,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 67,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 100,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 71,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 105,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 73,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 110,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 78,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 115,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 81,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 120,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 82,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 125,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 86,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 130,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 91,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 135,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 94,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 140,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 99,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 145,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 101,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 150,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 102,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 155,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 105,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 160,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 110,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 165,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 114,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 170,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 119,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 175,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 121,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 180,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 123,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 185,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 127,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 190,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 131,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 195,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 134,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 200,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 139,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 205,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 141,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 210,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 143,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 215,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 146,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 220,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 151,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 225,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 154,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 230,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 158,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 235,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 160,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 240,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 161,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 245,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 164,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 250,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 168,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 255,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 171,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 260,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 175,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 265,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 178,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 270,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 179,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 275,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 182,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 280,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 187,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 285,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 190,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 290,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 195,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 295,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 197,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 305,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 202,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 310,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 206,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 315,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 209,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 320,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 213,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 325,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 216,
+      "pending_outbound": 1,
+      "active_work": []
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      33,
+      33,
+      330
+    ],
+    "safety": 22,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "PROCESSING",
+      "count": 1
+    },
+    {
+      "status": "COMPLETED",
+      "count": 187
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "sent",
+      "count": 171
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 216,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": true,
+    "safety_dispatch_p95_le_5": true,
+    "outbox_dispatch_p95_le_5": true
+  },
+  "technical_pass": true,
+  "monotonic_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "organizations": [
+      {
+        "organization": 0,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 20,
+          "p50_seconds": 7.943687,
+          "p95_seconds": 7.96102,
+          "max_seconds": 7.96102
+        },
+        "eligible_to_claim": {
+          "count": 20,
+          "p50_seconds": 0.460349,
+          "p95_seconds": 1.100595,
+          "max_seconds": 1.100595
+        },
+        "persisted_to_claim": {
+          "count": 20,
+          "p50_seconds": 8.402804,
+          "p95_seconds": 9.053096,
+          "max_seconds": 9.053096
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 30,
+        "calls": 40,
+        "calls_per_work": 1.3333333333333333,
+        "calls_per_dialogue": 3.6363636363636362,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 10
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 20
+          }
+        ],
+        "deferrals": 6
+      },
+      {
+        "organization": 1,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 20,
+          "p50_seconds": 7.941861,
+          "p95_seconds": 7.964723,
+          "max_seconds": 7.964723
+        },
+        "eligible_to_claim": {
+          "count": 20,
+          "p50_seconds": 1.132511,
+          "p95_seconds": 2.506953,
+          "max_seconds": 2.506953
+        },
+        "persisted_to_claim": {
+          "count": 20,
+          "p50_seconds": 9.097234,
+          "p95_seconds": 10.456949,
+          "max_seconds": 10.456949
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 29,
+        "calls": 38,
+        "calls_per_work": 1.3103448275862069,
+        "calls_per_dialogue": 3.4545454545454546,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 10
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 19
+          }
+        ],
+        "deferrals": 9
+      },
+      {
+        "organization": 2,
+        "healthy": false,
+        "persisted_to_eligible": {
+          "count": 300,
+          "p50_seconds": 7.940815,
+          "p95_seconds": 7.960432,
+          "max_seconds": 7.973516
+        },
+        "eligible_to_claim": {
+          "count": 93,
+          "p50_seconds": 146.801169,
+          "p95_seconds": 214.41308,
+          "max_seconds": 219.865053
+        },
+        "persisted_to_claim": {
+          "count": 93,
+          "p50_seconds": 154.711163,
+          "p95_seconds": 222.342486,
+          "max_seconds": 227.808234
+        },
+        "missing_claim": 207,
+        "joined_ready_inbounds": 0,
+        "works": 108,
+        "calls": 216,
+        "calls_per_work": 2.0,
+        "calls_per_dialogue": 2.0,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 2,
+            "count": 108
+          }
+        ],
+        "deferrals": 0
+      }
+    ],
+    "eligibility": "max(created_at, available_at); NULL => created_at",
+    "acceptance_run": false,
+    "profile_conditions": "PROFILE-BETA-1 v1 unchanged"
+  },
+  "e4_classification": "DIAGNOSTIC_ONLY",
+  "e4_overrides": {},
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "smoke_only": false
+}

@@ -1,0 +1,21 @@
+{
+  "classification": "LOCAL_TOOLING_CLEANUP",
+  "terminated_own_sessions": [
+    {
+      "session_id": 64005,
+      "purpose": "Stalled PowerShell -File W1 test wrapper from excluded launcher attempt",
+      "method": "Interrupt through its original exec session",
+      "exit_code": 1,
+      "accepted_test_ids": []
+    },
+    {
+      "session_id": 12103,
+      "purpose": "Read-only local PG activity inspection during cleanup; no test or acceptance run",
+      "method": "Interrupt through its original exec session",
+      "exit_code": 1,
+      "accepted_test_ids": []
+    }
+  ],
+  "fixture_cleanup": "cleanup.json: own cluster stopped, own 10 DBs retired, port closed, data/log absent",
+  "production_touched": false
+}

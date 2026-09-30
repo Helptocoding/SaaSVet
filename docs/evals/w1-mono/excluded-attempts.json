@@ -1,0 +1,22 @@
+{
+  "checks": {
+    "status": "interrupted",
+    "reason": "Dedicated cluster was still initializing; checks-retry is the completed receipt"
+  },
+  "targeted": {
+    "status": "interrupted",
+    "reason": "Harness imported a TestCase class and selected unintended historical IDs; fake safety clock needed consistent DB time. Fixed harness, no runtime relaxation."
+  },
+  "targeted-v2": {
+    "status": "not_started",
+    "reason": "Windows shell launcher did not reach runner; no IDs admitted"
+  },
+  "supplemental": {
+    "status": "setup_failed",
+    "reason": "Runner raced unfinished database clone; completed clone before supplemental-v2"
+  },
+  "supplemental-v2": {
+    "status": "not_started",
+    "reason": "Windows PowerShell launchers stalled before Python/receipt creation; terminated only identified own PIDs and used Python wrapper. No test IDs lost or runtime changes."
+  }
+}

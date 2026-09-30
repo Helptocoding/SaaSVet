@@ -1,0 +1,302 @@
+{
+  "classification": "DIAGNOSTIC_ONLY",
+  "source": "diagnostic-blocked.json",
+  "read_only": true,
+  "window_utc": [
+    "2026-09-30T22:32:36.982221+00:00",
+    "2026-09-30T22:37:36.982221+00:00"
+  ],
+  "organization_index": 1,
+  "joined_ready": 7,
+  "proof": "Earlier A and later B share an expired deadline and the same frozen work; no second quiet window.",
+  "cases": [
+    {
+      "inbound": {
+        "id": 82,
+        "created_at": "2026-09-30 16:32:57.143004-06:00",
+        "available_at": "2026-09-30 16:32:55.104000-06:00",
+        "turn_work_id": 22,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 22,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:32:57.337160-06:00",
+        "anchor_message_id": 82,
+        "anchor_created_at": "2026-09-30 16:32:57.143004-06:00",
+        "cursor_message_id": 65,
+        "cursor_created_at": "2026-09-30 16:32:47.142379-06:00"
+      },
+      "members": [
+        {
+          "id": 65,
+          "created_at": "2026-09-30 16:32:47.142379-06:00",
+          "available_at": "2026-09-30 16:32:55.104000-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 82,
+          "created_at": "2026-09-30 16:32:57.143004-06:00",
+          "available_at": "2026-09-30 16:32:55.104000-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    },
+    {
+      "inbound": {
+        "id": 187,
+        "created_at": "2026-09-30 16:33:57.127728-06:00",
+        "available_at": "2026-09-30 16:33:55.181174-06:00",
+        "turn_work_id": 58,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 58,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:33:57.400147-06:00",
+        "anchor_message_id": 187,
+        "anchor_created_at": "2026-09-30 16:33:57.127728-06:00",
+        "cursor_message_id": 171,
+        "cursor_created_at": "2026-09-30 16:33:47.230898-06:00"
+      },
+      "members": [
+        {
+          "id": 171,
+          "created_at": "2026-09-30 16:33:47.230898-06:00",
+          "available_at": "2026-09-30 16:33:55.181174-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 187,
+          "created_at": "2026-09-30 16:33:57.127728-06:00",
+          "available_at": "2026-09-30 16:33:55.181174-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    },
+    {
+      "inbound": {
+        "id": 240,
+        "created_at": "2026-09-30 16:34:27.186448-06:00",
+        "available_at": "2026-09-30 16:34:25.182916-06:00",
+        "turn_work_id": 76,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 76,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:34:27.846331-06:00",
+        "anchor_message_id": 240,
+        "anchor_created_at": "2026-09-30 16:34:27.186448-06:00",
+        "cursor_message_id": 223,
+        "cursor_created_at": "2026-09-30 16:34:17.234983-06:00"
+      },
+      "members": [
+        {
+          "id": 223,
+          "created_at": "2026-09-30 16:34:17.234983-06:00",
+          "available_at": "2026-09-30 16:34:25.182916-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 240,
+          "created_at": "2026-09-30 16:34:27.186448-06:00",
+          "available_at": "2026-09-30 16:34:25.182916-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    },
+    {
+      "inbound": {
+        "id": 404,
+        "created_at": "2026-09-30 16:35:57.210060-06:00",
+        "available_at": "2026-09-30 16:35:55.165134-06:00",
+        "turn_work_id": 134,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 134,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:35:57.552671-06:00",
+        "anchor_message_id": 404,
+        "anchor_created_at": "2026-09-30 16:35:57.210060-06:00",
+        "cursor_message_id": 386,
+        "cursor_created_at": "2026-09-30 16:35:47.217550-06:00"
+      },
+      "members": [
+        {
+          "id": 386,
+          "created_at": "2026-09-30 16:35:47.217550-06:00",
+          "available_at": "2026-09-30 16:35:55.165134-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 404,
+          "created_at": "2026-09-30 16:35:57.210060-06:00",
+          "available_at": "2026-09-30 16:35:55.165134-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    },
+    {
+      "inbound": {
+        "id": 459,
+        "created_at": "2026-09-30 16:36:27.194264-06:00",
+        "available_at": "2026-09-30 16:36:25.133918-06:00",
+        "turn_work_id": 154,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 154,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:36:27.552318-06:00",
+        "anchor_message_id": 459,
+        "anchor_created_at": "2026-09-30 16:36:27.194264-06:00",
+        "cursor_message_id": 441,
+        "cursor_created_at": "2026-09-30 16:36:17.170645-06:00"
+      },
+      "members": [
+        {
+          "id": 441,
+          "created_at": "2026-09-30 16:36:17.170645-06:00",
+          "available_at": "2026-09-30 16:36:25.133918-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 459,
+          "created_at": "2026-09-30 16:36:27.194264-06:00",
+          "available_at": "2026-09-30 16:36:25.133918-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    },
+    {
+      "inbound": {
+        "id": 515,
+        "created_at": "2026-09-30 16:36:57.228962-06:00",
+        "available_at": "2026-09-30 16:36:55.147565-06:00",
+        "turn_work_id": 174,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 174,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:36:57.334358-06:00",
+        "anchor_message_id": 515,
+        "anchor_created_at": "2026-09-30 16:36:57.228962-06:00",
+        "cursor_message_id": 496,
+        "cursor_created_at": "2026-09-30 16:36:47.192971-06:00"
+      },
+      "members": [
+        {
+          "id": 496,
+          "created_at": "2026-09-30 16:36:47.192971-06:00",
+          "available_at": "2026-09-30 16:36:55.147565-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 515,
+          "created_at": "2026-09-30 16:36:57.228962-06:00",
+          "available_at": "2026-09-30 16:36:55.147565-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    },
+    {
+      "inbound": {
+        "id": 571,
+        "created_at": "2026-09-30 16:37:27.251150-06:00",
+        "available_at": "2026-09-30 16:37:25.172673-06:00",
+        "turn_work_id": 194,
+        "conversation_id": 14,
+        "organization_id": 2
+      },
+      "work": {
+        "id": 194,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-09-30 16:37:27.500833-06:00",
+        "anchor_message_id": 571,
+        "anchor_created_at": "2026-09-30 16:37:27.251150-06:00",
+        "cursor_message_id": 553,
+        "cursor_created_at": "2026-09-30 16:37:17.223759-06:00"
+      },
+      "members": [
+        {
+          "id": 553,
+          "created_at": "2026-09-30 16:37:17.223759-06:00",
+          "available_at": "2026-09-30 16:37:25.172673-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        },
+        {
+          "id": 571,
+          "created_at": "2026-09-30 16:37:27.251150-06:00",
+          "available_at": "2026-09-30 16:37:25.172673-06:00",
+          "organization_id": 2,
+          "conversation_id": 14
+        }
+      ],
+      "second_quiet_window": false,
+      "common_expired_deadline": true,
+      "exact_scope": true,
+      "last_anchor": true,
+      "first_cursor": true
+    }
+  ],
+  "retained_fields": "Technical IDs/timestamps only; no payload or identity fields."
+}

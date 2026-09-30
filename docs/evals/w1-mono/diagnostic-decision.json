@@ -1,0 +1,21 @@
+{
+  "classification": "TECHNICAL_CANDIDATE",
+  "status": "PERFORMANCE_STOP",
+  "semantics": "IMPLEMENTED / VERIFIED_SEMANTICS",
+  "reason": "Reextensión eliminada. Base: p95 sano 9.429650 s (60/60, missing=0). LLM bloqueado: p95 sano 10.381673 s (60/60, missing=0), superior al mismo gate original de 10 s; máximo 10.611348 s. En org sana 1, persisted→eligible p95=7.974574 s y eligible→claim p95=2.663415 s. El tramo residual no ofrece margen razonable en estas condiciones. STOP sin gastar un rerun de acceptance; no se suman p95 marginales para decidir el gate.",
+  "next_step": "Un encargo separado debe evaluar un mecanismo E4 adicional sobre el tramo residual eligible→claim, con la evidencia actual. B9E solo puede reabrirse mediante autorización explícita posterior.",
+  "original_healthy_gate_seconds": 10,
+  "diagnostic_scenarios": ["base", "blocked_llm"],
+  "profile_conditions": "PROFILE-BETA-1 v1 unchanged",
+  "acceptance_profile_runs": 0,
+  "profile_rerun_authorization_condition_satisfied": false,
+  "direct_causal_evidence": "ready-profile-causality.json: 7 B de org sana 1 heredan un deadline común vencido con A, ingresan al mismo work y preservan anchor último/cursor primero; sin segundo silencio. Además corpus y journals de fronteras/reloj/locks reales.",
+  "interpretation": "Los diagnósticos son fixtures locales con providers fake. Diferencias entre escenarios no prueban ahorro ni mejoría causal por sí solas. La causalidad de READY está probada directamente.",
+  "formal_B9E_reopened": false,
+  "B9": "IN_PROGRESS",
+  "B9E": "FAIL",
+  "historical_PROFILE_BETA_1": "FAIL",
+  "E4_selector": "KEEP",
+  "production": "CLOSED / PENDING_ACTIVATION_REQUIREMENTS",
+  "deployed": false
+}

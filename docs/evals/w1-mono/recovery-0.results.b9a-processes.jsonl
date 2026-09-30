@@ -1,0 +1,11 @@
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "READY", "pid": 56560, "backend_pid": 55868}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "READY", "pid": 55660, "backend_pid": 45296}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "BOUNDARY", "pid": 56560, "backend_pid": 55868}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "PG_LOCK", "first": 55868, "second": 45296, "blocking_pids": [55868]}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "RESULT", "pid": 56560, "backend_pid": 55868, "admitted": true, "call_id": 25}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "RESULT", "pid": 55660, "backend_pid": 45296, "admitted": false, "call_id": 25}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "READY", "pid": 51280, "backend_pid": 57224}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "BOUNDARY", "pid": 51280, "backend_pid": 57224}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "READY", "pid": 54828, "backend_pid": 54332}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "RESULT", "pid": 54828, "backend_pid": 54332, "admitted": true, "call_id": 27}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "RESULT", "pid": 51280, "backend_pid": 57224, "admitted": true, "call_id": 26}

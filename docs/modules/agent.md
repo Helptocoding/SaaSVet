@@ -1552,3 +1552,19 @@ ordinario anterior al claim se incorpora elegible al mismo conjunto. El claim
 sigue congelando membership/TurnContext/anchor/cursor, con continuación B3
 para input posterior. READY no concede autoridad ni capacidad. Los recibos
 históricos y gates productivos cerrados conservan su estado.
+
+## Implementación de elegibilidad monotónica — 2026-09-30
+
+Enmienda congelada `2f259f4d21802d00e705c3f7fc71e7e26f5694fa`; runtime/tests
+`83285eb096a568dbeb1d67a5c98001dc0bee8352`. Ingest usa DB now fresco después
+del mutex Conversation y conserva el deadline vencido para todo inbound
+ordinario preclaim. No crea estado READY durable, TurnWork anticipado ni schema.
+El selector E4 permanece KEEP y la continuación postclaim conserva su frontera.
+
+Ver [acta de 60 campos y evidencia](../implementacion-elegibilidad-monotonica-preclaim-2026-09-30.md):
+758 IDs únicos aprobados, incluidos 33 nuevos; races/FI con PostgreSQL real.
+La causalidad se prueba directamente, incluyendo 7 incorporaciones READY bajo
+condiciones del perfil. Diagnóstico sano p95 base 9.429650 s; LLM bloqueado
+10.381673 s frente al gate original 10 s. **VERIFIED_SEMANTICS / PERFORMANCE_STOP**:
+no se gastó rerun de acceptance. Hace falta una decisión E4 adicional separada.
+B9 IN_PROGRESS, B9E FAIL, PROFILE histórico FAIL; producción cerrada, sin deploy.

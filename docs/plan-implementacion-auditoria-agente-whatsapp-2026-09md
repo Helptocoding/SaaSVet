@@ -1367,3 +1367,18 @@ ordinario anterior al claim se incorpora elegible al mismo conjunto. El claim
 sigue congelando membership/TurnContext/anchor/cursor, con continuación B3
 para input posterior. READY no concede autoridad ni capacidad. Los recibos
 históricos y gates productivos cerrados conservan su estado.
+
+## Seguimiento de elegibilidad monotónica preclaim — 2026-09-30
+
+Implementación posterior a la enmienda FROZEN, con 758 IDs únicos aprobados
+(33 nuevos + 725 de regresión), cero skips/xfail/pendientes requeridos y sin
+migraciones. El claim continúa siendo la frontera de contexto y capacidad.
+Los controles de reloj, serialización, corrección, autorización y recuperación
+constan en el [acta](implementacion-elegibilidad-monotonica-preclaim-2026-09-30.md).
+
+Resultado: **IMPLEMENTED / VERIFIED_SEMANTICS; PERFORMANCE_STOP**. Eliminada la
+reextensión, el diagnóstico con LLM bloqueado aún da p95 sano 10.381673 s >10 s
+con el denominador original de 60. No se ejecutó el rerun condicional de PROFILE.
+Selector E4 KEEP; B9A/B/C/D COMPLETED, B9 IN_PROGRESS, B9E FAIL y PROFILE histórico
+FAIL intactos. Requiere encargo separado para el tramo residual eligible→claim.
+PENDING_ACTIVATION_REQUIREMENTS, cero clínicas activadas y sin deploy.
