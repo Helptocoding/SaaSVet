@@ -1357,3 +1357,13 @@ owners Inbox/veterinario-safety/privacidad, canal alternativo validado y revisi�
 veterinaria de corpus/protocolo. WRITE autónomo sigue cerrado. En este corte histórico B5, B6+ aún no estaba implementado; el cierre B6 posterior consta en su sección y acta.
 
 **COMPLETED en alcance técnico B5 (2026-09-17).** Implementación `5db10495449511ae1985d311d2fae62b062baf75`. Aceptación: 926 tests únicos (877 backend + 49 frontend), 0 fallos/errores/skips/xfail; corpus 125, TP=53/FN=0/TN=72/FP=0, críticos 47/47. H03 mitigado para corpus implementado y H04 cerrado técnicamente por separación de evidencia. VETERINARY_REVIEW_REQUIRED; PENDING_ACTIVATION_REQUIREMENTS; WRITE cerrado. Sin deploy ni B6–B9/E/P. Ver acta para límites, migraciones, races y rollback.
+
+
+## Enmienda B3/C4/W1 v1 — 2026-09-30 (FROZEN)
+
+La espera preclaim queda enmendada por [elegibilidad monotónica preclaim](contrato-elegibilidad-preclaim-b3-c4-w1-v1.md).
+Antes de READY se conservan 8 s / cap 25 s; después del vencimiento, inbound
+ordinario anterior al claim se incorpora elegible al mismo conjunto. El claim
+sigue congelando membership/TurnContext/anchor/cursor, con continuación B3
+para input posterior. READY no concede autoridad ni capacidad. Los recibos
+históricos y gates productivos cerrados conservan su estado.

@@ -192,3 +192,13 @@ El sender toma Conversation→Message; no espera Meta bajo locks. La autoridad
 de procesamiento TurnWork y su publicación atómica permanecen como aquí se
 definieron. El helper de invalidación descarta además SENDING sin admisión;
 los admitidos conservan la posibilidad de registrar su resultado externo.
+
+
+## Enmienda B3/C4/W1 v1 — 2026-09-30 (FROZEN)
+
+La espera preclaim queda enmendada por [elegibilidad monotónica preclaim](contrato-elegibilidad-preclaim-b3-c4-w1-v1.md).
+Antes de READY se conservan 8 s / cap 25 s; después del vencimiento, inbound
+ordinario anterior al claim se incorpora elegible al mismo conjunto. El claim
+sigue congelando membership/TurnContext/anchor/cursor, con continuación B3
+para input posterior. READY no concede autoridad ni capacidad. Los recibos
+históricos y gates productivos cerrados conservan su estado.
