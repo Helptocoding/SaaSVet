@@ -53,10 +53,11 @@ class LocalTestAdapter:
 
 @contextmanager
 def enabled_test_adapter(adapter=None):
+    from .b9d_support import approved_test_release
     adapter = adapter or LocalTestAdapter()
     registry = dict(execution.REGISTRY)
     registry['CREATE_APPOINTMENT'] = replace(registry['CREATE_APPOINTMENT'], enabled=True, adapter=adapter)
-    with patch.object(execution, 'REGISTRY', registry), patch(
+    with approved_test_release(), patch.object(execution, 'REGISTRY', registry), patch(
             'apps.agent.intake.write_is_contained', return_value=False), override_settings(
             AGENT_OPERATION_EXECUTION_ENABLED={'CREATE_APPOINTMENT': True}):
         yield adapter

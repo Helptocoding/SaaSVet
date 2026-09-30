@@ -11,7 +11,8 @@ from .b8b_support import AppointmentExecutionFixtures
 
 @contextmanager
 def enabled_mutations():
-    with patch('apps.agent.intake.write_is_contained', return_value=False), override_settings(
+    from .b9d_support import approved_test_release
+    with approved_test_release(), patch('apps.agent.intake.write_is_contained', return_value=False), override_settings(
             AGENT_B7B_CONSENT_ENABLED=True, AGENT_OPERATION_EXECUTION_ENABLED={
                 'CREATE_APPOINTMENT': True, 'RESCHEDULE_APPOINTMENT': True,
                 'CANCEL_APPOINTMENT': True}):

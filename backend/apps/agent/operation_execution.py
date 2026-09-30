@@ -26,7 +26,8 @@ EVENTS = frozenset(('execution_guard_denied', 'execution_guard_allowed', 'execut
     'execution_started', 'execution_succeeded', 'execution_failed', 'execution_uncertain',
     'execution_reconciled', 'execution_duplicate_suppressed'))
 GATE_REASONS = frozenset(('containment_closed', 'kind_disabled', 'flag_disabled',
-    'adapter_missing', 'adapter_contract_disabled', 'consent_feature_disabled'))
+    'adapter_missing', 'adapter_contract_disabled', 'consent_feature_disabled',
+    'beta_requirements_pending', 'beta_capability_not_approved', 'beta_operation_predates_approval'))
 PRECONDITION_REASONS = frozenset(('entity_inactive', 'entity_scope', 'appointment_changed',
     'appointment_not_mutable', 'schedule_elapsed', 'slot_unavailable', 'invalid_pet_data',
     'domain_conflict', 'precondition_failed', 'schedule_closed', 'invalid_local_time', 'appointment_no_change'))
@@ -167,7 +168,8 @@ def _gate(operation, entry):
         return 'adapter_missing'
     if getattr(entry.adapter, 'transaction_mode', None) != 'LOCAL_ATOMIC':
         return 'adapter_contract_disabled'
-    return ''
+    from .beta_release import write_gate
+    return write_gate(operation)
 
 
 def _record(operation, status, reason, evidence=None):

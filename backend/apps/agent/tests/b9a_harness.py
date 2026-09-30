@@ -247,7 +247,8 @@ class ApplicationHarness:
 def write_gates():
     """Test only. Never import this context manager from application runtime."""
     from apps.agent.operation_execution import REGISTRY
-    with override_settings(AGENT_B7B_CONSENT_ENABLED=True,
+    from .b9d_support import approved_test_release
+    with approved_test_release(), override_settings(AGENT_B7B_CONSENT_ENABLED=True,
             AGENT_OPERATION_EXECUTION_ENABLED={kind: True for kind in REGISTRY}), patch(
             'apps.agent.intake.CONTAINED_WRITES', frozenset()):
         yield
