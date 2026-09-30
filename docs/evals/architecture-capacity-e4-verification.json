@@ -1,0 +1,25 @@
+{
+  "classification": "DOCUMENT_AND_OFFLINE_DERIVATION_VERIFICATION",
+  "source_content_matches_baseline_head": 229,
+  "direct_blob_hash_matches": 217,
+  "checkout_crlf_only": [
+    "backend/apps/agent/durable.py",
+    "backend/apps/agent/models.py",
+    "backend/apps/agent/services.py",
+    "backend/apps/agent/tests/test_w1_experience.py",
+    "backend/apps/agent/worker.py",
+    "backend/apps/channels/models.py",
+    "docs/contrato-concurrencia-b9c.md",
+    "docs/contrato-presupuesto-turnwork-b9b.md",
+    "docs/contrato-trabajo-durable-b3.md",
+    "docs/mapa-interno-b9-2026-09-26.md",
+    "docs/modules/agent.md",
+    "docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md"
+  ],
+  "numbered_fields": 30,
+  "relative_links_valid": true,
+  "derivation_byte_reproducible": true,
+  "production_tests_or_load_runs": 0,
+  "document_sha256": "2d5e0812bc37823f2e585b5891b8a7270e9cc5a116725c8575e90d6da637919f",
+  "analysis_sha256": "9abbc212441204f088aa0df23e491b5d0ee70bd2a0fdbefdb91d833accb0a42c"
+}
