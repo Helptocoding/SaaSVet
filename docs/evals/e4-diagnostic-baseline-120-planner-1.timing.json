@@ -1,0 +1,8295 @@
+{
+  "schema": "e4-timing-v2",
+  "role": "planner-1",
+  "classification": "DIAGNOSTIC_ONLY",
+  "events": [
+    {
+      "event": "poll",
+      "time": 1790789052.039233,
+      "start": 1790789051.973979,
+      "queue": {},
+      "healthy_eligible": [],
+      "observer_seconds": 0.06524920463562012
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789052.0588555,
+      "start": 1790789052.0553105,
+      "duration": 0.0035369396209716797
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789052.058983,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789053.0742774,
+      "start": 1790789053.0632918,
+      "queue": {},
+      "healthy_eligible": [],
+      "observer_seconds": 0.010982036590576172
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789053.0883234,
+      "start": 1790789053.0849242,
+      "duration": 0.003390073776245117
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789053.0885003,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789054.1089628,
+      "start": 1790789054.0982115,
+      "queue": {},
+      "healthy_eligible": [],
+      "observer_seconds": 0.010747909545898438
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789054.1231601,
+      "start": 1790789054.119618,
+      "duration": 0.003534078598022461
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789054.1233673,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789055.2399988,
+      "start": 1790789055.2076764,
+      "queue": {},
+      "healthy_eligible": [],
+      "observer_seconds": 0.0323183536529541
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789055.2780561,
+      "start": 1790789055.274118,
+      "duration": 0.003931760787963867
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789055.2782407,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789056.2910717,
+      "start": 1790789056.2822564,
+      "queue": {
+        "3": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008813142776489258
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789056.3088727,
+      "start": 1790789056.3050215,
+      "duration": 0.0038454532623291016
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789056.3090487,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789057.320993,
+      "start": 1790789057.312517,
+      "queue": {
+        "3": {
+          "pending": 6,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008473396301269531
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789057.3334444,
+      "start": 1790789057.3282077,
+      "duration": 0.005230426788330078
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789057.3336236,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789058.3429866,
+      "start": 1790789058.336907,
+      "queue": {
+        "3": {
+          "pending": 7,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.00607752799987793
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789058.3541455,
+      "start": 1790789058.3507507,
+      "duration": 0.003387928009033203
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789058.3543432,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789059.363273,
+      "start": 1790789059.357609,
+      "queue": {
+        "3": {
+          "pending": 8,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.005660295486450195
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789059.3736515,
+      "start": 1790789059.3712564,
+      "duration": 0.002388477325439453
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789059.3738172,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789060.3851635,
+      "start": 1790789060.3766313,
+      "queue": {
+        "3": {
+          "pending": 9,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008529424667358398
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789060.3926778,
+      "start": 1790789060.3904462,
+      "duration": 0.002223491668701172
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789060.392855,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789061.4012072,
+      "start": 1790789061.3959413,
+      "queue": {
+        "3": {
+          "pending": 10,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.0052642822265625
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789061.4104466,
+      "start": 1790789061.4074473,
+      "duration": 0.0029935836791992188
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789061.4106042,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789062.4204426,
+      "start": 1790789062.4139423,
+      "queue": {
+        "3": {
+          "pending": 10,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.006497621536254883
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789062.4297564,
+      "start": 1790789062.426708,
+      "duration": 0.0030426979064941406
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789062.4298751,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789063.4377892,
+      "start": 1790789063.4329407,
+      "queue": {
+        "3": {
+          "pending": 12,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.004845857620239258
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789063.445025,
+      "start": 1790789063.442652,
+      "duration": 0.002366781234741211
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789063.4451983,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789064.4550993,
+      "start": 1790789064.4491465,
+      "queue": {
+        "3": {
+          "pending": 12,
+          "eligible": 3,
+          "blocked": 3,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.005950212478637695
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789064.4641438,
+      "start": 1790789064.461109,
+      "duration": 0.0030291080474853516
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789064.464421,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789065.4743266,
+      "start": 1790789065.468067,
+      "queue": {
+        "3": {
+          "pending": 13,
+          "eligible": 5,
+          "blocked": 5,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.006256580352783203
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789065.488256,
+      "start": 1790789065.485578,
+      "duration": 0.0026721954345703125
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789065.4884224,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789066.5082552,
+      "start": 1790789066.4921606,
+      "queue": {
+        "3": {
+          "pending": 14,
+          "eligible": 6,
+          "blocked": 6,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.016091346740722656
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789066.5623724,
+      "start": 1790789066.558329,
+      "duration": 0.004036903381347656
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789066.5625532,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789067.5729952,
+      "start": 1790789067.5672424,
+      "queue": {
+        "3": {
+          "pending": 15,
+          "eligible": 7,
+          "blocked": 7,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.005749940872192383
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789067.5844364,
+      "start": 1790789067.579206,
+      "duration": 0.005223989486694336
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789067.584636,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789068.5994668,
+      "start": 1790789068.5881884,
+      "queue": {
+        "3": {
+          "pending": 16,
+          "eligible": 8,
+          "blocked": 0,
+          "claimable": 8
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.011275053024291992
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789068.6119037,
+      "start": 1790789068.6083412,
+      "duration": 0.0035545825958251953
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789068.6121235,
+      "conversation": 4
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.635134,
+      "table": "organizations_organization",
+      "start": 1790789068.6214614,
+      "duration": 0.01362919807434082,
+      "conversation": 4,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789068.6351423,
+      "start": 1790789068.6214614,
+      "conversation": 4
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.6943266,
+      "table": "agent_conversation",
+      "start": 1790789068.6470773,
+      "duration": 0.047223806381225586,
+      "conversation": 4,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.706023,
+      "table": "agent_turnwork",
+      "start": 1790789068.7040374,
+      "duration": 0.0019693374633789062,
+      "conversation": 4,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.7788942,
+      "table": "channels_message",
+      "start": 1790789068.773535,
+      "duration": 0.005326747894287109,
+      "conversation": 4,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.784939,
+      "table": "agent_turnwork",
+      "start": 1790789068.7812521,
+      "duration": 0.003667593002319336,
+      "conversation": 4,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.7886927,
+      "table": "channels_message",
+      "start": 1790789068.7866814,
+      "duration": 0.001992940902709961,
+      "conversation": 4,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789068.7912812,
+      "table": "agent_conversation",
+      "start": 1790789068.789589,
+      "duration": 0.001676321029663086,
+      "conversation": 4,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789068.7995512,
+      "conversation": 4,
+      "work": 4
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789069.1274598,
+      "work": 4
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789069.2336373,
+      "work": 4,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789069.7340848,
+      "work": 4,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789069.7580612,
+      "work": 4
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789069.768672,
+      "work": 4
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789071.3970227,
+      "work": 4
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789071.4067965,
+      "work": 4
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789071.4583054,
+      "work": 4,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789071.9585745,
+      "work": 4,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789071.9685311,
+      "work": 4
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789072.0101602,
+      "work": 4
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789072.500836,
+      "work": 4
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789072.500913,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789073.5131524,
+      "start": 1790789073.506317,
+      "queue": {
+        "3": {
+          "pending": 20,
+          "eligible": 12,
+          "blocked": 0,
+          "claimable": 12
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.006832122802734375
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789073.5263956,
+      "start": 1790789073.5228505,
+      "duration": 0.003537893295288086
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789073.5266428,
+      "conversation": 5
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.5309408,
+      "table": "organizations_organization",
+      "start": 1790789073.5298977,
+      "duration": 0.0010211467742919922,
+      "conversation": 5,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789073.5309541,
+      "start": 1790789073.5298977,
+      "conversation": 5
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.5439885,
+      "table": "agent_conversation",
+      "start": 1790789073.541294,
+      "duration": 0.0026628971099853516,
+      "conversation": 5,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.5549595,
+      "table": "agent_turnwork",
+      "start": 1790789073.55368,
+      "duration": 0.001257181167602539,
+      "conversation": 5,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.6095762,
+      "table": "channels_message",
+      "start": 1790789073.6071174,
+      "duration": 0.002438783645629883,
+      "conversation": 5,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.6133394,
+      "table": "agent_turnwork",
+      "start": 1790789073.611676,
+      "duration": 0.0016400814056396484,
+      "conversation": 5,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.6188989,
+      "table": "channels_message",
+      "start": 1790789073.6166563,
+      "duration": 0.0022246837615966797,
+      "conversation": 5,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789073.6213834,
+      "table": "agent_conversation",
+      "start": 1790789073.619832,
+      "duration": 0.00153350830078125,
+      "conversation": 5,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789073.6300302,
+      "conversation": 5,
+      "work": 6
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789073.7919183,
+      "work": 6
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789073.8534722,
+      "work": 6,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789074.3540905,
+      "work": 6,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789074.3611822,
+      "work": 6
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789074.3720224,
+      "work": 6
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789074.555529,
+      "work": 6
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789074.5631568,
+      "work": 6
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789074.613019,
+      "work": 6,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789075.1135485,
+      "work": 6,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789075.1210308,
+      "work": 6
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789075.1472802,
+      "work": 6
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789075.361969,
+      "work": 6
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789075.3620188,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789076.3711283,
+      "start": 1790789076.365015,
+      "queue": {
+        "3": {
+          "pending": 21,
+          "eligible": 13,
+          "blocked": 13,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.0061109066009521484
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789076.3818223,
+      "start": 1790789076.3785837,
+      "duration": 0.0032281875610351562
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789076.3822918,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789077.3906696,
+      "start": 1790789077.385977,
+      "queue": {
+        "3": {
+          "pending": 22,
+          "eligible": 14,
+          "blocked": 0,
+          "claimable": 14
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.004689693450927734
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789077.400863,
+      "start": 1790789077.3980155,
+      "duration": 0.0028426647186279297
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789077.401054,
+      "conversation": 7
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.4047203,
+      "table": "organizations_organization",
+      "start": 1790789077.403816,
+      "duration": 0.0008928775787353516,
+      "conversation": 7,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789077.4047258,
+      "start": 1790789077.403816,
+      "conversation": 7
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.4096847,
+      "table": "agent_conversation",
+      "start": 1790789077.407996,
+      "duration": 0.0016679763793945312,
+      "conversation": 7,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.4169102,
+      "table": "agent_turnwork",
+      "start": 1790789077.4158309,
+      "duration": 0.0010602474212646484,
+      "conversation": 7,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.4620526,
+      "table": "channels_message",
+      "start": 1790789077.4599981,
+      "duration": 0.002040386199951172,
+      "conversation": 7,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.465392,
+      "table": "agent_turnwork",
+      "start": 1790789077.4636319,
+      "duration": 0.001718759536743164,
+      "conversation": 7,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.4688447,
+      "table": "channels_message",
+      "start": 1790789077.467154,
+      "duration": 0.001674652099609375,
+      "conversation": 7,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789077.4706569,
+      "table": "agent_conversation",
+      "start": 1790789077.4697187,
+      "duration": 0.0009245872497558594,
+      "conversation": 7,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789077.4742434,
+      "conversation": 7,
+      "work": 8
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789077.57665,
+      "work": 8
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789077.6836762,
+      "work": 8,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789078.18448,
+      "work": 8,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789078.1893876,
+      "work": 8
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789078.2023687,
+      "work": 8
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789078.3568637,
+      "work": 8
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789078.3648903,
+      "work": 8
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789078.4088883,
+      "work": 8,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789078.9090106,
+      "work": 8,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789078.9129517,
+      "work": 8
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789078.93715,
+      "work": 8
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789079.1457183,
+      "work": 8
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789079.14578,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789080.1764355,
+      "start": 1790789080.1585517,
+      "queue": {
+        "3": {
+          "pending": 22,
+          "eligible": 14,
+          "blocked": 14,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.017880916595458984
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789080.2035334,
+      "start": 1790789080.1906922,
+      "duration": 0.012834787368774414
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789080.2037444,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789081.214941,
+      "start": 1790789081.2079234,
+      "queue": {
+        "3": {
+          "pending": 23,
+          "eligible": 16,
+          "blocked": 16,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      },
+      "healthy_eligible": [
+        16,
+        29,
+        30
+      ],
+      "observer_seconds": 0.007014274597167969
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789081.230563,
+      "start": 1790789081.2269871,
+      "duration": 0.003570556640625
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789081.2307737,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.235459,
+      "table": "organizations_organization",
+      "start": 1790789081.2344933,
+      "duration": 0.0009484291076660156,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789081.235467,
+      "start": 1790789081.2344933,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.245292,
+      "table": "agent_conversation",
+      "start": 1790789081.2424142,
+      "duration": 0.002848386764526367,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.2560897,
+      "table": "agent_turnwork",
+      "start": 1790789081.2547061,
+      "duration": 0.001359701156616211,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.2970824,
+      "table": "channels_message",
+      "start": 1790789081.2954957,
+      "duration": 0.001575469970703125,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.299847,
+      "table": "agent_turnwork",
+      "start": 1790789081.2985587,
+      "duration": 0.0012767314910888672,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.303186,
+      "table": "channels_message",
+      "start": 1790789081.3013573,
+      "duration": 0.0018160343170166016,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789081.3047729,
+      "table": "agent_conversation",
+      "start": 1790789081.3038237,
+      "duration": 0.0009322166442871094,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789081.320188,
+      "conversation": 13,
+      "work": 10
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789081.4679415,
+      "work": 10
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789081.5253532,
+      "work": 10,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789082.0258913,
+      "work": 10,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789082.0384164,
+      "work": 10
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789082.0478349,
+      "work": 10
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789082.284291,
+      "work": 10
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789082.2984333,
+      "work": 10
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789082.3693879,
+      "work": 10,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789082.869612,
+      "work": 10,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789082.8749504,
+      "work": 10
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789082.9108133,
+      "work": 10
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789083.2944725,
+      "work": 10
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789083.294549,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789084.309965,
+      "start": 1790789084.302216,
+      "queue": {
+        "3": {
+          "pending": 25,
+          "eligible": 18,
+          "blocked": 18,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      },
+      "healthy_eligible": [
+        16,
+        30
+      ],
+      "observer_seconds": 0.007745265960693359
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789084.3604662,
+      "start": 1790789084.3513398,
+      "duration": 0.009119749069213867
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789084.3607,
+      "conversation": 14
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.3726983,
+      "table": "organizations_organization",
+      "start": 1790789084.3703487,
+      "duration": 0.002290487289428711,
+      "conversation": 14,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789084.3727286,
+      "start": 1790789084.3703487,
+      "conversation": 14
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.391132,
+      "table": "agent_conversation",
+      "start": 1790789084.3881712,
+      "duration": 0.002930164337158203,
+      "conversation": 14,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.4087787,
+      "table": "agent_turnwork",
+      "start": 1790789084.4037027,
+      "duration": 0.0050547122955322266,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.4703383,
+      "table": "channels_message",
+      "start": 1790789084.4682622,
+      "duration": 0.002062559127807617,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.4734218,
+      "table": "agent_turnwork",
+      "start": 1790789084.4721568,
+      "duration": 0.0012488365173339844,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.476557,
+      "table": "channels_message",
+      "start": 1790789084.4749203,
+      "duration": 0.0016243457794189453,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789084.4778802,
+      "table": "agent_conversation",
+      "start": 1790789084.4771318,
+      "duration": 0.0007338523864746094,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789084.4851737,
+      "conversation": 14,
+      "work": 14
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789084.6874807,
+      "work": 14
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789084.7623022,
+      "work": 14,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789085.2629516,
+      "work": 14,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789085.2715757,
+      "work": 14
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789085.3071196,
+      "work": 14
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789085.5219707,
+      "work": 14
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789085.5390844,
+      "work": 14
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789085.602541,
+      "work": 14,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789086.160085,
+      "work": 14,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789086.1748226,
+      "work": 14
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789086.2301645,
+      "work": 14
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789086.4616158,
+      "work": 14
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789086.4616659,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789087.470368,
+      "start": 1790789087.4647806,
+      "queue": {
+        "3": {
+          "pending": 28,
+          "eligible": 20,
+          "blocked": 0,
+          "claimable": 20
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.005585908889770508
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789087.4777112,
+      "start": 1790789087.4747987,
+      "duration": 0.0029077529907226562
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789087.47789,
+      "conversation": 11
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.4830017,
+      "table": "organizations_organization",
+      "start": 1790789087.48114,
+      "duration": 0.0018274784088134766,
+      "conversation": 11,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789087.483011,
+      "start": 1790789087.48114,
+      "conversation": 11
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.4912815,
+      "table": "agent_conversation",
+      "start": 1790789087.488498,
+      "duration": 0.0027599334716796875,
+      "conversation": 11,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.498753,
+      "table": "agent_turnwork",
+      "start": 1790789087.4971137,
+      "duration": 0.0015215873718261719,
+      "conversation": 11,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.5356789,
+      "table": "channels_message",
+      "start": 1790789087.5339434,
+      "duration": 0.0017192363739013672,
+      "conversation": 11,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.5386267,
+      "table": "agent_turnwork",
+      "start": 1790789087.5374084,
+      "duration": 0.0012083053588867188,
+      "conversation": 11,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.5408955,
+      "table": "channels_message",
+      "start": 1790789087.5395277,
+      "duration": 0.0013544559478759766,
+      "conversation": 11,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789087.5424054,
+      "table": "agent_conversation",
+      "start": 1790789087.5415592,
+      "duration": 0.0008347034454345703,
+      "conversation": 11,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789087.551691,
+      "conversation": 11,
+      "work": 16
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789087.6514087,
+      "work": 16
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789087.6889205,
+      "work": 16,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789088.1894343,
+      "work": 16,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789088.1994324,
+      "work": 16
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789088.2060125,
+      "work": 16
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789088.3479588,
+      "work": 16
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789088.355667,
+      "work": 16
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789088.3899856,
+      "work": 16,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789088.8901825,
+      "work": 16,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789088.8943317,
+      "work": 16
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789088.9142387,
+      "work": 16
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789089.0982773,
+      "work": 16
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789089.0983377,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789090.107438,
+      "start": 1790789090.1012816,
+      "queue": {
+        "3": {
+          "pending": 28,
+          "eligible": 20,
+          "blocked": 20,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.00615382194519043
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789090.118598,
+      "start": 1790789090.1132033,
+      "duration": 0.0053882598876953125
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789090.118786,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789091.1580749,
+      "start": 1790789091.1222405,
+      "queue": {
+        "3": {
+          "pending": 29,
+          "eligible": 20,
+          "blocked": 20,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.03583097457885742
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789091.2669723,
+      "start": 1790789091.2620392,
+      "duration": 0.004923582077026367
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789091.2673218,
+      "conversation": 15
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.3005126,
+      "table": "organizations_organization",
+      "start": 1790789091.298937,
+      "duration": 0.0015561580657958984,
+      "conversation": 15,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789091.3005214,
+      "start": 1790789091.298937,
+      "conversation": 15
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.321795,
+      "table": "agent_conversation",
+      "start": 1790789091.3118074,
+      "duration": 0.009954690933227539,
+      "conversation": 15,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.3318653,
+      "table": "agent_turnwork",
+      "start": 1790789091.3301806,
+      "duration": 0.0016558170318603516,
+      "conversation": 15,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.453163,
+      "table": "channels_message",
+      "start": 1790789091.4514396,
+      "duration": 0.0017077922821044922,
+      "conversation": 15,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.4565048,
+      "table": "agent_turnwork",
+      "start": 1790789091.4550204,
+      "duration": 0.0014672279357910156,
+      "conversation": 15,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.459909,
+      "table": "channels_message",
+      "start": 1790789091.4580588,
+      "duration": 0.0018341541290283203,
+      "conversation": 15,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789091.4622908,
+      "table": "agent_conversation",
+      "start": 1790789091.460863,
+      "duration": 0.0014123916625976562,
+      "conversation": 15,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789091.4659805,
+      "conversation": 15,
+      "work": 18
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789091.658159,
+      "work": 18
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789091.713442,
+      "work": 18,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789092.2224119,
+      "work": 18,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789092.2903144,
+      "work": 18
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789092.3457165,
+      "work": 18
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789092.629121,
+      "work": 18
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789092.6428545,
+      "work": 18
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789092.7127326,
+      "work": 18,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789093.2128563,
+      "work": 18,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789093.2329965,
+      "work": 18
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789093.2689326,
+      "work": 18
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789093.695181,
+      "work": 18
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789093.6952426,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789094.7091303,
+      "start": 1790789094.7000446,
+      "queue": {
+        "3": {
+          "pending": 31,
+          "eligible": 23,
+          "blocked": 23,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009082317352294922
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789094.7321968,
+      "start": 1790789094.7280478,
+      "duration": 0.00414276123046875
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789094.732412,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789095.7435458,
+      "start": 1790789095.7364058,
+      "queue": {
+        "3": {
+          "pending": 32,
+          "eligible": 24,
+          "blocked": 24,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.007136821746826172
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789095.757645,
+      "start": 1790789095.7538373,
+      "duration": 0.003801107406616211
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789095.757846,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789096.7731836,
+      "start": 1790789096.7633314,
+      "queue": {
+        "3": {
+          "pending": 33,
+          "eligible": 25,
+          "blocked": 0,
+          "claimable": 25
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009849309921264648
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789096.7885618,
+      "start": 1790789096.785732,
+      "duration": 0.0028226375579833984
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789096.7888024,
+      "conversation": 17
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.7929928,
+      "table": "organizations_organization",
+      "start": 1790789096.792167,
+      "duration": 0.0008127689361572266,
+      "conversation": 17,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789096.7929986,
+      "start": 1790789096.792167,
+      "conversation": 17
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.801683,
+      "table": "agent_conversation",
+      "start": 1790789096.7987192,
+      "duration": 0.002940654754638672,
+      "conversation": 17,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.810733,
+      "table": "agent_turnwork",
+      "start": 1790789096.809414,
+      "duration": 0.001299142837524414,
+      "conversation": 17,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.8540196,
+      "table": "channels_message",
+      "start": 1790789096.8524117,
+      "duration": 0.0015940666198730469,
+      "conversation": 17,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.8565283,
+      "table": "agent_turnwork",
+      "start": 1790789096.85522,
+      "duration": 0.0012955665588378906,
+      "conversation": 17,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.8590713,
+      "table": "channels_message",
+      "start": 1790789096.857579,
+      "duration": 0.0014755725860595703,
+      "conversation": 17,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789096.861206,
+      "table": "agent_conversation",
+      "start": 1790789096.8599763,
+      "duration": 0.0012080669403076172,
+      "conversation": 17,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789096.8635263,
+      "conversation": 17,
+      "work": 20
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789096.994565,
+      "work": 20
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789097.0413156,
+      "work": 20,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789097.5418246,
+      "work": 20,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789097.54705,
+      "work": 20
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789097.5633473,
+      "work": 20
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789097.7448685,
+      "work": 20
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789097.7577052,
+      "work": 20
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789097.803765,
+      "work": 20,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789098.304464,
+      "work": 20,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789098.3141172,
+      "work": 20
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789098.3397012,
+      "work": 20
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789098.5507936,
+      "work": 20
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789098.5509717,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789099.5635648,
+      "start": 1790789099.5555482,
+      "queue": {
+        "3": {
+          "pending": 34,
+          "eligible": 26,
+          "blocked": 26,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.00801396369934082
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789099.5763125,
+      "start": 1790789099.5726912,
+      "duration": 0.003615140914916992
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789099.5764968,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789100.5960038,
+      "start": 1790789100.5844731,
+      "queue": {
+        "3": {
+          "pending": 35,
+          "eligible": 26,
+          "blocked": 0,
+          "claimable": 26
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [
+        65
+      ],
+      "observer_seconds": 0.011527776718139648
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789100.6300092,
+      "start": 1790789100.6261961,
+      "duration": 0.003806591033935547
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789100.6302423,
+      "conversation": 19
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.6384118,
+      "table": "organizations_organization",
+      "start": 1790789100.63701,
+      "duration": 0.0013828277587890625,
+      "conversation": 19,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789100.638421,
+      "start": 1790789100.63701,
+      "conversation": 19
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.6465774,
+      "table": "agent_conversation",
+      "start": 1790789100.6444223,
+      "duration": 0.0021033287048339844,
+      "conversation": 19,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.660636,
+      "table": "agent_turnwork",
+      "start": 1790789100.6592941,
+      "duration": 0.0013179779052734375,
+      "conversation": 19,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.718286,
+      "table": "channels_message",
+      "start": 1790789100.7155013,
+      "duration": 0.002767801284790039,
+      "conversation": 19,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.7230437,
+      "table": "agent_turnwork",
+      "start": 1790789100.7207704,
+      "duration": 0.0022559165954589844,
+      "conversation": 19,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.7264647,
+      "table": "channels_message",
+      "start": 1790789100.7246735,
+      "duration": 0.0017697811126708984,
+      "conversation": 19,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789100.7284286,
+      "table": "agent_conversation",
+      "start": 1790789100.7274013,
+      "duration": 0.0010135173797607422,
+      "conversation": 19,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789100.7383318,
+      "conversation": 19,
+      "work": 22
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789100.9235942,
+      "work": 22
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789100.984264,
+      "work": 22,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789101.4855063,
+      "work": 22,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789101.5003042,
+      "work": 22
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789101.5097775,
+      "work": 22
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789101.6949666,
+      "work": 22
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789101.7072487,
+      "work": 22
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789101.7619054,
+      "work": 22,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789102.2622716,
+      "work": 22,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789102.270293,
+      "work": 22
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789102.310767,
+      "work": 22
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789102.5909803,
+      "work": 22
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789102.591073,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789103.6036608,
+      "start": 1790789103.5947833,
+      "queue": {
+        "3": {
+          "pending": 37,
+          "eligible": 29,
+          "blocked": 0,
+          "claimable": 29
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.00887441635131836
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789103.6262624,
+      "start": 1790789103.6182895,
+      "duration": 0.007965803146362305
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789103.6265607,
+      "conversation": 20
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.633145,
+      "table": "organizations_organization",
+      "start": 1790789103.6320066,
+      "duration": 0.001117706298828125,
+      "conversation": 20,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789103.6331556,
+      "start": 1790789103.6320066,
+      "conversation": 20
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.654632,
+      "table": "agent_conversation",
+      "start": 1790789103.6511664,
+      "duration": 0.003432750701904297,
+      "conversation": 20,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.6656406,
+      "table": "agent_turnwork",
+      "start": 1790789103.6640413,
+      "duration": 0.0015769004821777344,
+      "conversation": 20,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.7260363,
+      "table": "channels_message",
+      "start": 1790789103.7236829,
+      "duration": 0.00232696533203125,
+      "conversation": 20,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.7335963,
+      "table": "agent_turnwork",
+      "start": 1790789103.729394,
+      "duration": 0.00418400764465332,
+      "conversation": 20,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.7368593,
+      "table": "channels_message",
+      "start": 1790789103.7353072,
+      "duration": 0.0015325546264648438,
+      "conversation": 20,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789103.738907,
+      "table": "agent_conversation",
+      "start": 1790789103.7378018,
+      "duration": 0.0010750293731689453,
+      "conversation": 20,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789103.7474847,
+      "conversation": 20,
+      "work": 24
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789103.903024,
+      "work": 24
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789103.9666321,
+      "work": 24,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789104.4668694,
+      "work": 24,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789104.481161,
+      "work": 24
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789104.491573,
+      "work": 24
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789104.697627,
+      "work": 24
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789104.7081213,
+      "work": 24
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789104.7801163,
+      "work": 24,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789105.2805037,
+      "work": 24,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789105.2900152,
+      "work": 24
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789105.3523715,
+      "work": 24
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789105.638465,
+      "work": 24
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789105.638528,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789106.6573992,
+      "start": 1790789106.642145,
+      "queue": {
+        "3": {
+          "pending": 38,
+          "eligible": 30,
+          "blocked": 30,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.015251636505126953
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789106.682921,
+      "start": 1790789106.678241,
+      "duration": 0.00467228889465332
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789106.683138,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789107.6969388,
+      "start": 1790789107.6887915,
+      "queue": {
+        "3": {
+          "pending": 39,
+          "eligible": 31,
+          "blocked": 31,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008144140243530273
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789107.7096674,
+      "start": 1790789107.7065375,
+      "duration": 0.003122568130493164
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789107.7098858,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789108.7246528,
+      "start": 1790789108.7131248,
+      "queue": {
+        "3": {
+          "pending": 40,
+          "eligible": 32,
+          "blocked": 0,
+          "claimable": 32
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.011524677276611328
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789108.7343767,
+      "start": 1790789108.730162,
+      "duration": 0.004208564758300781
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789108.7346144,
+      "conversation": 22
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.7388816,
+      "table": "organizations_organization",
+      "start": 1790789108.7381194,
+      "duration": 0.0007488727569580078,
+      "conversation": 22,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789108.738887,
+      "start": 1790789108.7381194,
+      "conversation": 22
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.7460675,
+      "table": "agent_conversation",
+      "start": 1790789108.743436,
+      "duration": 0.0026030540466308594,
+      "conversation": 22,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.75783,
+      "table": "agent_turnwork",
+      "start": 1790789108.7562747,
+      "duration": 0.001538991928100586,
+      "conversation": 22,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.7991838,
+      "table": "channels_message",
+      "start": 1790789108.7975843,
+      "duration": 0.0015869140625,
+      "conversation": 22,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.802878,
+      "table": "agent_turnwork",
+      "start": 1790789108.8015952,
+      "duration": 0.0012695789337158203,
+      "conversation": 22,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.805562,
+      "table": "channels_message",
+      "start": 1790789108.8043115,
+      "duration": 0.0012385845184326172,
+      "conversation": 22,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789108.807071,
+      "table": "agent_conversation",
+      "start": 1790789108.8061302,
+      "duration": 0.0009281635284423828,
+      "conversation": 22,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789108.8089094,
+      "conversation": 22,
+      "work": 26
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789108.9345949,
+      "work": 26
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789109.001738,
+      "work": 26,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789109.5021806,
+      "work": 26,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789109.5066066,
+      "work": 26
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789109.517507,
+      "work": 26
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789109.682391,
+      "work": 26
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789109.6904802,
+      "work": 26
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789109.7293925,
+      "work": 26,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789110.2295082,
+      "work": 26,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789110.2375195,
+      "work": 26
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789110.2783794,
+      "work": 26
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789110.5061302,
+      "work": 26
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789110.5062006,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789111.5413651,
+      "start": 1790789111.5139084,
+      "queue": {
+        "3": {
+          "pending": 42,
+          "eligible": 34,
+          "blocked": 0,
+          "claimable": 34
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      },
+      "healthy_eligible": [
+        66,
+        82
+      ],
+      "observer_seconds": 0.027454376220703125
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789111.5667894,
+      "start": 1790789111.5624604,
+      "duration": 0.004320621490478516
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789111.5670664,
+      "conversation": 23
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.572185,
+      "table": "organizations_organization",
+      "start": 1790789111.5712237,
+      "duration": 0.0009448528289794922,
+      "conversation": 23,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789111.5721934,
+      "start": 1790789111.5712237,
+      "conversation": 23
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.579925,
+      "table": "agent_conversation",
+      "start": 1790789111.5771422,
+      "duration": 0.0027511119842529297,
+      "conversation": 23,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.5975492,
+      "table": "agent_turnwork",
+      "start": 1790789111.596105,
+      "duration": 0.0014276504516601562,
+      "conversation": 23,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.642177,
+      "table": "channels_message",
+      "start": 1790789111.6407382,
+      "duration": 0.0014238357543945312,
+      "conversation": 23,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.6452389,
+      "table": "agent_turnwork",
+      "start": 1790789111.6437702,
+      "duration": 0.0014536380767822266,
+      "conversation": 23,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.6482427,
+      "table": "channels_message",
+      "start": 1790789111.646723,
+      "duration": 0.0015020370483398438,
+      "conversation": 23,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789111.6514142,
+      "table": "agent_conversation",
+      "start": 1790789111.6491146,
+      "duration": 0.0022802352905273438,
+      "conversation": 23,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789111.6570096,
+      "conversation": 23,
+      "work": 28
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789111.7650998,
+      "work": 28
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789111.8020346,
+      "work": 28,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789112.3021934,
+      "work": 28,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789112.3102195,
+      "work": 28
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789112.3203647,
+      "work": 28
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789112.4795048,
+      "work": 28
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789112.4893565,
+      "work": 28
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789112.5391498,
+      "work": 28,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789113.039489,
+      "work": 28,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789113.044644,
+      "work": 28
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789113.070071,
+      "work": 28
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789113.3252132,
+      "work": 28
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789113.3252795,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789114.3377485,
+      "start": 1790789114.328713,
+      "queue": {
+        "3": {
+          "pending": 43,
+          "eligible": 36,
+          "blocked": 0,
+          "claimable": 36
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009032726287841797
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789114.3484893,
+      "start": 1790789114.3448923,
+      "duration": 0.0035905838012695312
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789114.348734,
+      "conversation": 24
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.355973,
+      "table": "organizations_organization",
+      "start": 1790789114.3548524,
+      "duration": 0.0011010169982910156,
+      "conversation": 24,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789114.3559823,
+      "start": 1790789114.3548524,
+      "conversation": 24
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.3640556,
+      "table": "agent_conversation",
+      "start": 1790789114.361278,
+      "duration": 0.002743959426879883,
+      "conversation": 24,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.3767703,
+      "table": "agent_turnwork",
+      "start": 1790789114.3752894,
+      "duration": 0.0014591217041015625,
+      "conversation": 24,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.440939,
+      "table": "channels_message",
+      "start": 1790789114.4392164,
+      "duration": 0.001703500747680664,
+      "conversation": 24,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.4448395,
+      "table": "agent_turnwork",
+      "start": 1790789114.4431117,
+      "duration": 0.0017099380493164062,
+      "conversation": 24,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.4501755,
+      "table": "channels_message",
+      "start": 1790789114.4472308,
+      "duration": 0.002923250198364258,
+      "conversation": 24,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789114.4531567,
+      "table": "agent_conversation",
+      "start": 1790789114.4519997,
+      "duration": 0.0011401176452636719,
+      "conversation": 24,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789114.4591022,
+      "conversation": 24,
+      "work": 32
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789114.5913603,
+      "work": 32
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789114.632693,
+      "work": 32,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789115.1331048,
+      "work": 32,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789115.1423802,
+      "work": 32
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789115.1539357,
+      "work": 32
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789115.3259673,
+      "work": 32
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789115.335194,
+      "work": 32
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789115.4508507,
+      "work": 32,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789115.951265,
+      "work": 32,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789115.9572968,
+      "work": 32
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789115.9905884,
+      "work": 32
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789116.26121,
+      "work": 32
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789116.261401,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789117.2970805,
+      "start": 1790789117.2754817,
+      "queue": {
+        "3": {
+          "pending": 44,
+          "eligible": 37,
+          "blocked": 37,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.02159571647644043
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789117.3370535,
+      "start": 1790789117.332373,
+      "duration": 0.004674434661865234
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789117.3372438,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789118.3687754,
+      "start": 1790789118.3427355,
+      "queue": {
+        "3": {
+          "pending": 45,
+          "eligible": 38,
+          "blocked": 38,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.026036739349365234
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789118.408115,
+      "start": 1790789118.404009,
+      "duration": 0.004099130630493164
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789118.4083092,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789119.4611013,
+      "start": 1790789119.4268997,
+      "queue": {
+        "3": {
+          "pending": 47,
+          "eligible": 39,
+          "blocked": 0,
+          "claimable": 39
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.03419804573059082
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789119.5230289,
+      "start": 1790789119.518974,
+      "duration": 0.00404810905456543
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789119.5232692,
+      "conversation": 26
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.5285854,
+      "table": "organizations_organization",
+      "start": 1790789119.5274425,
+      "duration": 0.0011243820190429688,
+      "conversation": 26,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789119.5285943,
+      "start": 1790789119.5274425,
+      "conversation": 26
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.541284,
+      "table": "agent_conversation",
+      "start": 1790789119.5382912,
+      "duration": 0.0029630661010742188,
+      "conversation": 26,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.554004,
+      "table": "agent_turnwork",
+      "start": 1790789119.552601,
+      "duration": 0.0013816356658935547,
+      "conversation": 26,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.6140544,
+      "table": "channels_message",
+      "start": 1790789119.6116855,
+      "duration": 0.002349376678466797,
+      "conversation": 26,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.6293197,
+      "table": "agent_turnwork",
+      "start": 1790789119.6159651,
+      "duration": 0.013336420059204102,
+      "conversation": 26,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.6368608,
+      "table": "channels_message",
+      "start": 1790789119.6309278,
+      "duration": 0.005891323089599609,
+      "conversation": 26,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789119.6389358,
+      "table": "agent_conversation",
+      "start": 1790789119.6377723,
+      "duration": 0.0011467933654785156,
+      "conversation": 26,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789119.6408694,
+      "conversation": 26,
+      "work": 34
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789119.7785459,
+      "work": 34
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789119.8194604,
+      "work": 34,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789120.3200293,
+      "work": 34,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789120.3278468,
+      "work": 34
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789120.3379514,
+      "work": 34
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789120.502204,
+      "work": 34
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789120.5101368,
+      "work": 34
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789120.5586798,
+      "work": 34,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789121.0590916,
+      "work": 34,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789121.0641463,
+      "work": 34
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789121.090742,
+      "work": 34
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789121.310983,
+      "work": 34
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789121.3110483,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789122.3233733,
+      "start": 1790789122.31418,
+      "queue": {
+        "3": {
+          "pending": 48,
+          "eligible": 41,
+          "blocked": 0,
+          "claimable": 41
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009190559387207031
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789122.3364184,
+      "start": 1790789122.331431,
+      "duration": 0.0049822330474853516
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789122.3366332,
+      "conversation": 27
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789122.3405845,
+      "table": "organizations_organization",
+      "start": 1790789122.3397477,
+      "duration": 0.0008211135864257812,
+      "conversation": 27,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789122.3405914,
+      "start": 1790789122.3397477,
+      "conversation": 27
+    },
+    {
+      "event": "claim_miss",
+      "time": 1790789122.3415124,
+      "conversation": 27,
+      "work": null
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789122.3415468,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789123.3497565,
+      "start": 1790789123.344346,
+      "queue": {
+        "3": {
+          "pending": 49,
+          "eligible": 41,
+          "blocked": 41,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.005406618118286133
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789123.3606572,
+      "start": 1790789123.357458,
+      "duration": 0.003192901611328125
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789123.360848,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789124.369997,
+      "start": 1790789124.363756,
+      "queue": {
+        "3": {
+          "pending": 50,
+          "eligible": 42,
+          "blocked": 0,
+          "claimable": 42
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.006238698959350586
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789124.3800988,
+      "start": 1790789124.3768628,
+      "duration": 0.0032312870025634766
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789124.3802917,
+      "conversation": 28
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.3847842,
+      "table": "organizations_organization",
+      "start": 1790789124.383778,
+      "duration": 0.0009853839874267578,
+      "conversation": 28,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789124.3847926,
+      "start": 1790789124.383778,
+      "conversation": 28
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.3897457,
+      "table": "agent_conversation",
+      "start": 1790789124.387526,
+      "duration": 0.0021910667419433594,
+      "conversation": 28,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.3971894,
+      "table": "agent_turnwork",
+      "start": 1790789124.3961186,
+      "duration": 0.0010521411895751953,
+      "conversation": 28,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.4291127,
+      "table": "channels_message",
+      "start": 1790789124.4277747,
+      "duration": 0.0013225078582763672,
+      "conversation": 28,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.432118,
+      "table": "agent_turnwork",
+      "start": 1790789124.4307263,
+      "duration": 0.0013773441314697266,
+      "conversation": 28,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.4345028,
+      "table": "channels_message",
+      "start": 1790789124.4334219,
+      "duration": 0.0010654926300048828,
+      "conversation": 28,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789124.4360662,
+      "table": "agent_conversation",
+      "start": 1790789124.4352198,
+      "duration": 0.000835418701171875,
+      "conversation": 28,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789124.4375663,
+      "conversation": 28,
+      "work": 36
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789124.5296614,
+      "work": 36
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789124.5620995,
+      "work": 36,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789125.0626955,
+      "work": 36,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789125.0696118,
+      "work": 36
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789125.0754602,
+      "work": 36
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789125.225998,
+      "work": 36
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789125.2340434,
+      "work": 36
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789125.2735035,
+      "work": 36,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789125.7737672,
+      "work": 36,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789125.7809298,
+      "work": 36
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789125.7966516,
+      "work": 36
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789125.9305065,
+      "work": 36
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789125.9305482,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789126.945703,
+      "start": 1790789126.9373288,
+      "queue": {
+        "3": {
+          "pending": 51,
+          "eligible": 43,
+          "blocked": 0,
+          "claimable": 43
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008370161056518555
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789126.966026,
+      "start": 1790789126.9617164,
+      "duration": 0.004300117492675781
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789126.9663165,
+      "conversation": 29
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789126.9718773,
+      "table": "organizations_organization",
+      "start": 1790789126.9710007,
+      "duration": 0.0008599758148193359,
+      "conversation": 29,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789126.9718864,
+      "start": 1790789126.9710007,
+      "conversation": 29
+    },
+    {
+      "event": "claim_miss",
+      "time": 1790789126.9727693,
+      "conversation": 29,
+      "work": null
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789126.9727988,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789127.9890356,
+      "start": 1790789127.9771233,
+      "queue": {
+        "3": {
+          "pending": 51,
+          "eligible": 43,
+          "blocked": 43,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.011909246444702148
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789128.006729,
+      "start": 1790789128.0010126,
+      "duration": 0.005711078643798828
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789128.006905,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789129.0277066,
+      "start": 1790789129.0108702,
+      "queue": {
+        "3": {
+          "pending": 52,
+          "eligible": 44,
+          "blocked": 0,
+          "claimable": 44
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.016833066940307617
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789129.0433872,
+      "start": 1790789129.0388129,
+      "duration": 0.00456690788269043
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789129.043626,
+      "conversation": 30
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.0486634,
+      "table": "organizations_organization",
+      "start": 1790789129.047644,
+      "duration": 0.00099945068359375,
+      "conversation": 30,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789129.0486734,
+      "start": 1790789129.047644,
+      "conversation": 30
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.0663605,
+      "table": "agent_conversation",
+      "start": 1790789129.0632775,
+      "duration": 0.003051280975341797,
+      "conversation": 30,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.0813863,
+      "table": "agent_turnwork",
+      "start": 1790789129.079933,
+      "duration": 0.0014293193817138672,
+      "conversation": 30,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.156441,
+      "table": "channels_message",
+      "start": 1790789129.15471,
+      "duration": 0.0017142295837402344,
+      "conversation": 30,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.1684804,
+      "table": "agent_turnwork",
+      "start": 1790789129.158415,
+      "duration": 0.010042667388916016,
+      "conversation": 30,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.1715612,
+      "table": "channels_message",
+      "start": 1790789129.1702085,
+      "duration": 0.0013382434844970703,
+      "conversation": 30,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789129.1746469,
+      "table": "agent_conversation",
+      "start": 1790789129.1723113,
+      "duration": 0.0023200511932373047,
+      "conversation": 30,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789129.176585,
+      "conversation": 30,
+      "work": 38
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789129.3279245,
+      "work": 38
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789129.4059653,
+      "work": 38,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789129.9061155,
+      "work": 38,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789129.9244149,
+      "work": 38
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789129.9353375,
+      "work": 38
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789130.1147468,
+      "work": 38
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789130.1257148,
+      "work": 38
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789130.176387,
+      "work": 38,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789130.676857,
+      "work": 38,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789130.6858752,
+      "work": 38
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789130.7293115,
+      "work": 38
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789131.0346715,
+      "work": 38
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789131.0348186,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789132.095373,
+      "start": 1790789132.0386355,
+      "queue": {
+        "3": {
+          "pending": 54,
+          "eligible": 46,
+          "blocked": 0,
+          "claimable": 46
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      },
+      "healthy_eligible": [
+        118
+      ],
+      "observer_seconds": 0.05673480033874512
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789132.1126447,
+      "start": 1790789132.107649,
+      "duration": 0.004990339279174805
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789132.1128652,
+      "conversation": 31
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.119477,
+      "table": "organizations_organization",
+      "start": 1790789132.1175756,
+      "duration": 0.0018813610076904297,
+      "conversation": 31,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789132.119487,
+      "start": 1790789132.1175756,
+      "conversation": 31
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.1409574,
+      "table": "agent_conversation",
+      "start": 1790789132.1251104,
+      "duration": 0.01581716537475586,
+      "conversation": 31,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.1525264,
+      "table": "agent_turnwork",
+      "start": 1790789132.1504698,
+      "duration": 0.0020258426666259766,
+      "conversation": 31,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.243787,
+      "table": "channels_message",
+      "start": 1790789132.2412117,
+      "duration": 0.002555370330810547,
+      "conversation": 31,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.2477272,
+      "table": "agent_turnwork",
+      "start": 1790789132.2459254,
+      "duration": 0.0017817020416259766,
+      "conversation": 31,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.2535267,
+      "table": "channels_message",
+      "start": 1790789132.2506328,
+      "duration": 0.0028772354125976562,
+      "conversation": 31,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789132.2576542,
+      "table": "agent_conversation",
+      "start": 1790789132.2543128,
+      "duration": 0.0033254623413085938,
+      "conversation": 31,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789132.2631598,
+      "conversation": 31,
+      "work": 40
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789132.4802203,
+      "work": 40
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789132.5556736,
+      "work": 40,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789133.0557907,
+      "work": 40,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789133.0693157,
+      "work": 40
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789133.10281,
+      "work": 40
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789133.3085523,
+      "work": 40
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789133.3203318,
+      "work": 40
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789133.4294221,
+      "work": 40,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789133.9299498,
+      "work": 40,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789133.936041,
+      "work": 40
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789133.9631903,
+      "work": 40
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789134.1961641,
+      "work": 40
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789134.19623,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789135.2224538,
+      "start": 1790789135.2027016,
+      "queue": {
+        "3": {
+          "pending": 55,
+          "eligible": 48,
+          "blocked": 48,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.019748687744140625
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789135.2431555,
+      "start": 1790789135.2386057,
+      "duration": 0.00454401969909668
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789135.2433467,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789136.2583811,
+      "start": 1790789136.2473493,
+      "queue": {
+        "3": {
+          "pending": 56,
+          "eligible": 49,
+          "blocked": 0,
+          "claimable": 49
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.011028289794921875
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789136.2798088,
+      "start": 1790789136.270346,
+      "duration": 0.009456872940063477
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789136.2800431,
+      "conversation": 33
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.2955084,
+      "table": "organizations_organization",
+      "start": 1790789136.2945795,
+      "duration": 0.0009126663208007812,
+      "conversation": 33,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789136.2955167,
+      "start": 1790789136.2945795,
+      "conversation": 33
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.308016,
+      "table": "agent_conversation",
+      "start": 1790789136.3048017,
+      "duration": 0.0031554698944091797,
+      "conversation": 33,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.3217733,
+      "table": "agent_turnwork",
+      "start": 1790789136.3194954,
+      "duration": 0.002257823944091797,
+      "conversation": 33,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.371563,
+      "table": "channels_message",
+      "start": 1790789136.3701668,
+      "duration": 0.0013849735260009766,
+      "conversation": 33,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.3748894,
+      "table": "agent_turnwork",
+      "start": 1790789136.3733683,
+      "duration": 0.0015094280242919922,
+      "conversation": 33,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.3777127,
+      "table": "channels_message",
+      "start": 1790789136.3762288,
+      "duration": 0.0014650821685791016,
+      "conversation": 33,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789136.3799648,
+      "table": "agent_conversation",
+      "start": 1790789136.3788185,
+      "duration": 0.0011320114135742188,
+      "conversation": 33,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789136.3850162,
+      "conversation": 33,
+      "work": 42
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789136.5237873,
+      "work": 42
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789136.6248608,
+      "work": 42,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789137.1252794,
+      "work": 42,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789137.1301756,
+      "work": 42
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789137.140376,
+      "work": 42
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789137.3718445,
+      "work": 42
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789137.3903706,
+      "work": 42
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789137.4583154,
+      "work": 42,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789137.9587042,
+      "work": 42,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789137.9662166,
+      "work": 42
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789137.991923,
+      "work": 42
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789138.2800698,
+      "work": 42
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789138.280135,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789139.3021982,
+      "start": 1790789139.2878509,
+      "queue": {
+        "3": {
+          "pending": 58,
+          "eligible": 51,
+          "blocked": 0,
+          "claimable": 51
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.014343738555908203
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789139.3384826,
+      "start": 1790789139.3334596,
+      "duration": 0.005017757415771484
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789139.3387046,
+      "conversation": 34
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789139.345247,
+      "table": "organizations_organization",
+      "start": 1790789139.3440096,
+      "duration": 0.0012195110321044922,
+      "conversation": 34,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789139.3452554,
+      "start": 1790789139.3440096,
+      "conversation": 34
+    },
+    {
+      "event": "claim_miss",
+      "time": 1790789139.3463414,
+      "conversation": 34,
+      "work": null
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789139.3463745,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789140.3646042,
+      "start": 1790789140.3516862,
+      "queue": {
+        "3": {
+          "pending": 59,
+          "eligible": 50,
+          "blocked": 50,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      },
+      "healthy_eligible": [
+        133
+      ],
+      "observer_seconds": 0.012914657592773438
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789140.3866675,
+      "start": 1790789140.3763144,
+      "duration": 0.01034688949584961
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789140.3869166,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.3952062,
+      "table": "organizations_organization",
+      "start": 1790789140.3942788,
+      "duration": 0.0009107589721679688,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789140.3952146,
+      "start": 1790789140.3942788,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.4091358,
+      "table": "agent_conversation",
+      "start": 1790789140.4017348,
+      "duration": 0.007368326187133789,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.422936,
+      "table": "agent_turnwork",
+      "start": 1790789140.4213378,
+      "duration": 0.001575469970703125,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.46948,
+      "table": "channels_message",
+      "start": 1790789140.4678504,
+      "duration": 0.0016117095947265625,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.4727015,
+      "table": "agent_turnwork",
+      "start": 1790789140.4713962,
+      "duration": 0.0012869834899902344,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.4761262,
+      "table": "channels_message",
+      "start": 1790789140.4741607,
+      "duration": 0.0019457340240478516,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789140.4786437,
+      "table": "agent_conversation",
+      "start": 1790789140.4774992,
+      "duration": 0.0011293888092041016,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789140.4822352,
+      "conversation": 13,
+      "work": 44
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789140.625234,
+      "work": 44
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789140.6701272,
+      "work": 44,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789141.1706638,
+      "work": 44,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789141.1746871,
+      "work": 44
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789141.1826546,
+      "work": 44
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789141.3319201,
+      "work": 44
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789141.339551,
+      "work": 44
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789141.396255,
+      "work": 44,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789141.896533,
+      "work": 44,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789141.909506,
+      "work": 44
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789141.9571376,
+      "work": 44
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789142.582387,
+      "work": 44
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789142.5824592,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789143.61429,
+      "start": 1790789143.5925918,
+      "queue": {
+        "3": {
+          "pending": 59,
+          "eligible": 53,
+          "blocked": 53,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      },
+      "healthy_eligible": [
+        118,
+        134
+      ],
+      "observer_seconds": 0.02169489860534668
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789143.6535585,
+      "start": 1790789143.6472502,
+      "duration": 0.006302833557128906
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789143.653789,
+      "conversation": 14
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.6606789,
+      "table": "organizations_organization",
+      "start": 1790789143.659513,
+      "duration": 0.0011458396911621094,
+      "conversation": 14,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789143.6606889,
+      "start": 1790789143.659513,
+      "conversation": 14
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.687634,
+      "table": "agent_conversation",
+      "start": 1790789143.6794763,
+      "duration": 0.008122920989990234,
+      "conversation": 14,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.7069325,
+      "table": "agent_turnwork",
+      "start": 1790789143.705087,
+      "duration": 0.0018241405487060547,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.7644644,
+      "table": "channels_message",
+      "start": 1790789143.762202,
+      "duration": 0.0022449493408203125,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.7710395,
+      "table": "agent_turnwork",
+      "start": 1790789143.7690535,
+      "duration": 0.0019652843475341797,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.7761357,
+      "table": "channels_message",
+      "start": 1790789143.7726996,
+      "duration": 0.0034186840057373047,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789143.7790694,
+      "table": "agent_conversation",
+      "start": 1790789143.777459,
+      "duration": 0.0015957355499267578,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789143.810633,
+      "conversation": 14,
+      "work": 47
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789144.061726,
+      "work": 47
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789144.1353045,
+      "work": 47,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789144.6363294,
+      "work": 47,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789144.6669886,
+      "work": 47
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789144.7026544,
+      "work": 47
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789144.9776955,
+      "work": 47
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789145.0014622,
+      "work": 47
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789145.0720203,
+      "work": 47,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789145.572462,
+      "work": 47,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789145.5847292,
+      "work": 47
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789145.6395278,
+      "work": 47
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789146.0411184,
+      "work": 47
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789146.0411937,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789147.057643,
+      "start": 1790789147.0462382,
+      "queue": {
+        "3": {
+          "pending": 63,
+          "eligible": 55,
+          "blocked": 55,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.01140141487121582
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789147.0751429,
+      "start": 1790789147.0705583,
+      "duration": 0.004579067230224609
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789147.075358,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789148.093746,
+      "start": 1790789148.08156,
+      "queue": {
+        "3": {
+          "pending": 64,
+          "eligible": 56,
+          "blocked": 56,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.012181758880615234
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789148.109534,
+      "start": 1790789148.104389,
+      "duration": 0.005138397216796875
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789148.1097767,
+      "conversation": 39
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.115254,
+      "table": "organizations_organization",
+      "start": 1790789148.114163,
+      "duration": 0.0010688304901123047,
+      "conversation": 39,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789148.1152647,
+      "start": 1790789148.114163,
+      "conversation": 39
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.1484993,
+      "table": "agent_conversation",
+      "start": 1790789148.1305437,
+      "duration": 0.016460657119750977,
+      "conversation": 39,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.1727977,
+      "table": "agent_turnwork",
+      "start": 1790789148.1676502,
+      "duration": 0.005127906799316406,
+      "conversation": 39,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.2965508,
+      "table": "channels_message",
+      "start": 1790789148.2946908,
+      "duration": 0.0018427371978759766,
+      "conversation": 39,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.302649,
+      "table": "agent_turnwork",
+      "start": 1790789148.2985933,
+      "duration": 0.004017829895019531,
+      "conversation": 39,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.3082137,
+      "table": "channels_message",
+      "start": 1790789148.306114,
+      "duration": 0.0020818710327148438,
+      "conversation": 39,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789148.3102243,
+      "table": "agent_conversation",
+      "start": 1790789148.3090804,
+      "duration": 0.001130819320678711,
+      "conversation": 39,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789148.3128817,
+      "conversation": 39,
+      "work": 50
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789148.710278,
+      "work": 50
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789148.77882,
+      "work": 50,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789149.2791104,
+      "work": 50,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789149.288577,
+      "work": 50
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789149.3013093,
+      "work": 50
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789149.5066679,
+      "work": 50
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789149.5221207,
+      "work": 50
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789149.5777688,
+      "work": 50,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789150.078358,
+      "work": 50,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789150.101535,
+      "work": 50
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789150.246791,
+      "work": 50
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789150.6456532,
+      "work": 50
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789150.6457295,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789151.6602275,
+      "start": 1790789151.649479,
+      "queue": {
+        "3": {
+          "pending": 66,
+          "eligible": 56,
+          "blocked": 56,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.010744571685791016
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789151.6778204,
+      "start": 1790789151.6732464,
+      "duration": 0.004567623138427734
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789151.6780305,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789152.7014985,
+      "start": 1790789152.6815286,
+      "queue": {
+        "3": {
+          "pending": 66,
+          "eligible": 57,
+          "blocked": 57,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.019963741302490234
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789152.729642,
+      "start": 1790789152.7245684,
+      "duration": 0.005066871643066406
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789152.729836,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789153.7798946,
+      "start": 1790789153.7431653,
+      "queue": {
+        "3": {
+          "pending": 68,
+          "eligible": 60,
+          "blocked": 0,
+          "claimable": 60
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.036725521087646484
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789153.8317397,
+      "start": 1790789153.821558,
+      "duration": 0.010175228118896484
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789153.8353727,
+      "conversation": 41
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789153.8584676,
+      "table": "organizations_organization",
+      "start": 1790789153.857442,
+      "duration": 0.0010077953338623047,
+      "conversation": 41,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789153.8584764,
+      "start": 1790789153.857442,
+      "conversation": 41
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789153.897103,
+      "table": "agent_conversation",
+      "start": 1790789153.8872526,
+      "duration": 0.009818315505981445,
+      "conversation": 41,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789153.9220097,
+      "table": "agent_turnwork",
+      "start": 1790789153.9206634,
+      "duration": 0.0013246536254882812,
+      "conversation": 41,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789154.0547674,
+      "table": "channels_message",
+      "start": 1790789154.0411725,
+      "duration": 0.013573646545410156,
+      "conversation": 41,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789154.0606496,
+      "table": "agent_turnwork",
+      "start": 1790789154.0565488,
+      "duration": 0.004081010818481445,
+      "conversation": 41,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789154.0642893,
+      "table": "channels_message",
+      "start": 1790789154.0624225,
+      "duration": 0.0018489360809326172,
+      "conversation": 41,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789154.0669625,
+      "table": "agent_conversation",
+      "start": 1790789154.0652804,
+      "duration": 0.0016620159149169922,
+      "conversation": 41,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789154.0709686,
+      "conversation": 41,
+      "work": 52
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789154.457214,
+      "work": 52
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789154.5127552,
+      "work": 52,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789155.0128365,
+      "work": 52,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789155.0183861,
+      "work": 52
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789155.02703,
+      "work": 52
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789155.177526,
+      "work": 52
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789155.1858244,
+      "work": 52
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789155.22065,
+      "work": 52,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789155.7207887,
+      "work": 52,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789155.7286901,
+      "work": 52
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789155.7462726,
+      "work": 52
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789155.905105,
+      "work": 52
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789155.9051533,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789156.9166467,
+      "start": 1790789156.9083116,
+      "queue": {
+        "3": {
+          "pending": 69,
+          "eligible": 61,
+          "blocked": 61,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008330583572387695
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789156.928302,
+      "start": 1790789156.9242136,
+      "duration": 0.004081249237060547
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789156.9284968,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789157.9395397,
+      "start": 1790789157.9318066,
+      "queue": {
+        "3": {
+          "pending": 70,
+          "eligible": 62,
+          "blocked": 62,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.0077304840087890625
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789157.9484394,
+      "start": 1790789157.9455626,
+      "duration": 0.00286865234375
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789157.9486187,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789158.9606507,
+      "start": 1790789158.9524171,
+      "queue": {
+        "3": {
+          "pending": 71,
+          "eligible": 63,
+          "blocked": 0,
+          "claimable": 63
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008231163024902344
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789158.9725375,
+      "start": 1790789158.9682672,
+      "duration": 0.004264116287231445
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789158.972929,
+      "conversation": 43
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789158.9777153,
+      "table": "organizations_organization",
+      "start": 1790789158.9768288,
+      "duration": 0.0008721351623535156,
+      "conversation": 43,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789158.9777215,
+      "start": 1790789158.9768288,
+      "conversation": 43
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789158.9831455,
+      "table": "agent_conversation",
+      "start": 1790789158.9801955,
+      "duration": 0.002912759780883789,
+      "conversation": 43,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789158.9921286,
+      "table": "agent_turnwork",
+      "start": 1790789158.9909754,
+      "duration": 0.0011336803436279297,
+      "conversation": 43,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789159.0331776,
+      "table": "channels_message",
+      "start": 1790789159.0313957,
+      "duration": 0.0017626285552978516,
+      "conversation": 43,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789159.0370452,
+      "table": "agent_turnwork",
+      "start": 1790789159.0354502,
+      "duration": 0.0015823841094970703,
+      "conversation": 43,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789159.0399098,
+      "table": "channels_message",
+      "start": 1790789159.0384324,
+      "duration": 0.0014615058898925781,
+      "conversation": 43,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789159.0415423,
+      "table": "agent_conversation",
+      "start": 1790789159.0406508,
+      "duration": 0.0008804798126220703,
+      "conversation": 43,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789159.0467477,
+      "conversation": 43,
+      "work": 54
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789159.1944048,
+      "work": 54
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789159.2357147,
+      "work": 54,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789159.7359617,
+      "work": 54,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789159.743005,
+      "work": 54
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789159.7493765,
+      "work": 54
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789159.913592,
+      "work": 54
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789159.923262,
+      "work": 54
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789159.964035,
+      "work": 54,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789160.4645941,
+      "work": 54,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789160.47096,
+      "work": 54
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789160.4910958,
+      "work": 54
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789160.6630075,
+      "work": 54
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789160.6630685,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789161.6761324,
+      "start": 1790789161.6670024,
+      "queue": {
+        "3": {
+          "pending": 73,
+          "eligible": 65,
+          "blocked": 0,
+          "claimable": 65
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      },
+      "healthy_eligible": [
+        169
+      ],
+      "observer_seconds": 0.009127140045166016
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789161.6891403,
+      "start": 1790789161.6847885,
+      "duration": 0.00434565544128418
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789161.6893697,
+      "conversation": 44
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.6945784,
+      "table": "organizations_organization",
+      "start": 1790789161.6934755,
+      "duration": 0.0010852813720703125,
+      "conversation": 44,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789161.6945875,
+      "start": 1790789161.6934755,
+      "conversation": 44
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.7028651,
+      "table": "agent_conversation",
+      "start": 1790789161.699085,
+      "duration": 0.0037488937377929688,
+      "conversation": 44,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.7113643,
+      "table": "agent_turnwork",
+      "start": 1790789161.7102597,
+      "duration": 0.001085519790649414,
+      "conversation": 44,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.7508628,
+      "table": "channels_message",
+      "start": 1790789161.748896,
+      "duration": 0.00194549560546875,
+      "conversation": 44,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.7548327,
+      "table": "agent_turnwork",
+      "start": 1790789161.7531102,
+      "duration": 0.0017046928405761719,
+      "conversation": 44,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.7572646,
+      "table": "channels_message",
+      "start": 1790789161.7561836,
+      "duration": 0.0010683536529541016,
+      "conversation": 44,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789161.758828,
+      "table": "agent_conversation",
+      "start": 1790789161.757828,
+      "duration": 0.000990152359008789,
+      "conversation": 44,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789161.7638493,
+      "conversation": 44,
+      "work": 56
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789161.8676088,
+      "work": 56
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789161.9070988,
+      "work": 56,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789162.4097538,
+      "work": 56,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789162.4578977,
+      "work": 56
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789162.4773085,
+      "work": 56
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789162.7132974,
+      "work": 56
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789162.7335923,
+      "work": 56
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789162.8257222,
+      "work": 56,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789163.3263237,
+      "work": 56,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789163.331205,
+      "work": 56
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789163.3604262,
+      "work": 56
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789163.562823,
+      "work": 56
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789163.5628839,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789164.5821593,
+      "start": 1790789164.5663044,
+      "queue": {
+        "3": {
+          "pending": 74,
+          "eligible": 66,
+          "blocked": 66,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.01585221290588379
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789164.6036005,
+      "start": 1790789164.5989645,
+      "duration": 0.0046291351318359375
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789164.603793,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789165.6358743,
+      "start": 1790789165.6172695,
+      "queue": {
+        "3": {
+          "pending": 75,
+          "eligible": 67,
+          "blocked": 67,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.018599748611450195
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789165.6772225,
+      "start": 1790789165.6657476,
+      "duration": 0.011467695236206055
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789165.6774528,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789166.710408,
+      "start": 1790789166.6830893,
+      "queue": {
+        "3": {
+          "pending": 76,
+          "eligible": 68,
+          "blocked": 0,
+          "claimable": 68
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.02731490135192871
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789166.7375088,
+      "start": 1790789166.7299595,
+      "duration": 0.007543087005615234
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789166.7377536,
+      "conversation": 46
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.7428703,
+      "table": "organizations_organization",
+      "start": 1790789166.7418516,
+      "duration": 0.001001119613647461,
+      "conversation": 46,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789166.742879,
+      "start": 1790789166.7418516,
+      "conversation": 46
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.765343,
+      "table": "agent_conversation",
+      "start": 1790789166.7599225,
+      "duration": 0.0053882598876953125,
+      "conversation": 46,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.7799656,
+      "table": "agent_turnwork",
+      "start": 1790789166.7785637,
+      "duration": 0.0013797283172607422,
+      "conversation": 46,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.8472893,
+      "table": "channels_message",
+      "start": 1790789166.8453944,
+      "duration": 0.0018777847290039062,
+      "conversation": 46,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.858876,
+      "table": "agent_turnwork",
+      "start": 1790789166.857126,
+      "duration": 0.0017313957214355469,
+      "conversation": 46,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.8626,
+      "table": "channels_message",
+      "start": 1790789166.86064,
+      "duration": 0.0019409656524658203,
+      "conversation": 46,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789166.8644915,
+      "table": "agent_conversation",
+      "start": 1790789166.8634846,
+      "duration": 0.0009918212890625,
+      "conversation": 46,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789166.8666651,
+      "conversation": 46,
+      "work": 58
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789167.1224527,
+      "work": 58
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789167.1985915,
+      "work": 58,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789167.6990733,
+      "work": 58,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789167.7045166,
+      "work": 58
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789167.7139516,
+      "work": 58
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789167.8864691,
+      "work": 58
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789167.8948033,
+      "work": 58
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789167.9562635,
+      "work": 58,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789168.4566617,
+      "work": 58,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789168.4706297,
+      "work": 58
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789168.5087678,
+      "work": 58
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789168.9216945,
+      "work": 58
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789168.9217687,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789169.9461372,
+      "start": 1790789169.929714,
+      "queue": {
+        "3": {
+          "pending": 77,
+          "eligible": 69,
+          "blocked": 69,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.016419172286987305
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789169.9741485,
+      "start": 1790789169.9693835,
+      "duration": 0.0047588348388671875
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789169.974325,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789170.991662,
+      "start": 1790789170.979969,
+      "queue": {
+        "3": {
+          "pending": 78,
+          "eligible": 70,
+          "blocked": 70,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      },
+      "healthy_eligible": [
+        169,
+        185,
+        186
+      ],
+      "observer_seconds": 0.011688947677612305
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789171.0212297,
+      "start": 1790789171.0143077,
+      "duration": 0.0069124698638916016
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789171.0214891,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.034436,
+      "table": "organizations_organization",
+      "start": 1790789171.0329459,
+      "duration": 0.001470804214477539,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789171.0344565,
+      "start": 1790789171.0329459,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.0655715,
+      "table": "agent_conversation",
+      "start": 1790789171.0620182,
+      "duration": 0.003518342971801758,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.0808313,
+      "table": "agent_turnwork",
+      "start": 1790789171.079344,
+      "duration": 0.0014498233795166016,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.2628472,
+      "table": "channels_message",
+      "start": 1790789171.2608569,
+      "duration": 0.0019745826721191406,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.269112,
+      "table": "agent_turnwork",
+      "start": 1790789171.265225,
+      "duration": 0.0038633346557617188,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.287801,
+      "table": "channels_message",
+      "start": 1790789171.2719877,
+      "duration": 0.01579594612121582,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789171.294166,
+      "table": "agent_conversation",
+      "start": 1790789171.28866,
+      "duration": 0.0054891109466552734,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789171.308477,
+      "conversation": 13,
+      "work": 60
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789171.709156,
+      "work": 60
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789171.7660916,
+      "work": 60,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789172.2665634,
+      "work": 60,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789172.273611,
+      "work": 60
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789172.2832859,
+      "work": 60
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789172.4766011,
+      "work": 60
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789172.4906464,
+      "work": 60
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789172.5529897,
+      "work": 60,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789173.054175,
+      "work": 60,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789173.0635817,
+      "work": 60
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789173.1319644,
+      "work": 60
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789173.4944046,
+      "work": 60
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789173.4944763,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789174.518691,
+      "start": 1790789174.501684,
+      "queue": {
+        "3": {
+          "pending": 79,
+          "eligible": 73,
+          "blocked": 73,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      },
+      "healthy_eligible": [
+        169,
+        186
+      ],
+      "observer_seconds": 0.01700305938720703
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789174.5707161,
+      "start": 1790789174.5650866,
+      "duration": 0.005623340606689453
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789174.5709562,
+      "conversation": 14
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.5824444,
+      "table": "organizations_organization",
+      "start": 1790789174.580699,
+      "duration": 0.0017275810241699219,
+      "conversation": 14,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789174.5824544,
+      "start": 1790789174.580699,
+      "conversation": 14
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.6058676,
+      "table": "agent_conversation",
+      "start": 1790789174.597666,
+      "duration": 0.008171319961547852,
+      "conversation": 14,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.6155381,
+      "table": "agent_turnwork",
+      "start": 1790789174.614165,
+      "duration": 0.0013515949249267578,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.6718335,
+      "table": "channels_message",
+      "start": 1790789174.6674747,
+      "duration": 0.004345893859863281,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.6747231,
+      "table": "agent_turnwork",
+      "start": 1790789174.673562,
+      "duration": 0.0011489391326904297,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.6779969,
+      "table": "channels_message",
+      "start": 1790789174.6761708,
+      "duration": 0.0018093585968017578,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789174.6799724,
+      "table": "agent_conversation",
+      "start": 1790789174.6787832,
+      "duration": 0.0011742115020751953,
+      "conversation": 14,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789174.682251,
+      "conversation": 14,
+      "work": 64
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789174.8913815,
+      "work": 64
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789174.9822254,
+      "work": 64,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789175.4829652,
+      "work": 64,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789175.4899936,
+      "work": 64
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789175.5029643,
+      "work": 64
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789175.6754386,
+      "work": 64
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789175.6830533,
+      "work": 64
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789175.7303443,
+      "work": 64,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789176.2308202,
+      "work": 64,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789176.2387724,
+      "work": 64
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789176.2698028,
+      "work": 64
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789176.5739434,
+      "work": 64
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789176.5740128,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789177.6132138,
+      "start": 1790789177.595868,
+      "queue": {
+        "3": {
+          "pending": 82,
+          "eligible": 75,
+          "blocked": 75,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.017342805862426758
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789177.6538875,
+      "start": 1790789177.6461642,
+      "duration": 0.007716178894042969
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789177.6540904,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789178.7560241,
+      "start": 1790789178.700667,
+      "queue": {
+        "3": {
+          "pending": 83,
+          "eligible": 76,
+          "blocked": 76,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.05535244941711426
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789178.8286858,
+      "start": 1790789178.8100035,
+      "duration": 0.018677234649658203
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789178.8288646,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789179.8614693,
+      "start": 1790789179.838695,
+      "queue": {
+        "3": {
+          "pending": 85,
+          "eligible": 77,
+          "blocked": 0,
+          "claimable": 77
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.02276778221130371
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789179.880573,
+      "start": 1790789179.8737688,
+      "duration": 0.006796836853027344
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789179.88081,
+      "conversation": 50
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789179.8887599,
+      "table": "organizations_organization",
+      "start": 1790789179.8877606,
+      "duration": 0.0009799003601074219,
+      "conversation": 50,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789179.8887694,
+      "start": 1790789179.8877606,
+      "conversation": 50
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789179.9006076,
+      "table": "agent_conversation",
+      "start": 1790789179.895265,
+      "duration": 0.005309104919433594,
+      "conversation": 50,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789179.9286108,
+      "table": "agent_turnwork",
+      "start": 1790789179.926206,
+      "duration": 0.0023310184478759766,
+      "conversation": 50,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789180.0256813,
+      "table": "channels_message",
+      "start": 1790789180.015299,
+      "duration": 0.01036524772644043,
+      "conversation": 50,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789180.0375476,
+      "table": "agent_turnwork",
+      "start": 1790789180.0357146,
+      "duration": 0.0018165111541748047,
+      "conversation": 50,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789180.0407498,
+      "table": "channels_message",
+      "start": 1790789180.0391936,
+      "duration": 0.001538991928100586,
+      "conversation": 50,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789180.0427775,
+      "table": "agent_conversation",
+      "start": 1790789180.0416234,
+      "duration": 0.0011396408081054688,
+      "conversation": 50,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789180.0450363,
+      "conversation": 50,
+      "work": 66
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789180.2469454,
+      "work": 66
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789180.2971556,
+      "work": 66,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789180.7977269,
+      "work": 66,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789180.8033001,
+      "work": 66
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789180.8133533,
+      "work": 66
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789180.9988194,
+      "work": 66
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789181.0315323,
+      "work": 66
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789181.0995207,
+      "work": 66,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789181.600099,
+      "work": 66,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789181.6061945,
+      "work": 66
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789181.6462667,
+      "work": 66
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789181.9877906,
+      "work": 66
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789181.9878657,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789183.0340219,
+      "start": 1790789183.0088415,
+      "queue": {
+        "3": {
+          "pending": 86,
+          "eligible": 78,
+          "blocked": 78,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.02517557144165039
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789183.0988934,
+      "start": 1790789183.0816698,
+      "duration": 0.01721787452697754
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789183.0991163,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789184.1319053,
+      "start": 1790789184.1089768,
+      "queue": {
+        "3": {
+          "pending": 87,
+          "eligible": 79,
+          "blocked": 79,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.022925853729248047
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789184.157478,
+      "start": 1790789184.1450675,
+      "duration": 0.012403488159179688
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789184.1577177,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789185.1957457,
+      "start": 1790789185.1699429,
+      "queue": {
+        "3": {
+          "pending": 88,
+          "eligible": 80,
+          "blocked": 80,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.025799274444580078
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789185.2552414,
+      "start": 1790789185.249214,
+      "duration": 0.006021022796630859
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789185.2554243,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789186.2787676,
+      "start": 1790789186.262525,
+      "queue": {
+        "3": {
+          "pending": 89,
+          "eligible": 81,
+          "blocked": 0,
+          "claimable": 81
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.01623821258544922
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789186.2945814,
+      "start": 1790789186.290262,
+      "duration": 0.004313468933105469
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789186.294814,
+      "conversation": 52
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.299611,
+      "table": "organizations_organization",
+      "start": 1790789186.2986689,
+      "duration": 0.0009245872497558594,
+      "conversation": 52,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789186.299619,
+      "start": 1790789186.2986689,
+      "conversation": 52
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.3154101,
+      "table": "agent_conversation",
+      "start": 1790789186.3118036,
+      "duration": 0.003571748733520508,
+      "conversation": 52,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.343727,
+      "table": "agent_turnwork",
+      "start": 1790789186.3424346,
+      "duration": 0.0012722015380859375,
+      "conversation": 52,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.4166377,
+      "table": "channels_message",
+      "start": 1790789186.409962,
+      "duration": 0.006661653518676758,
+      "conversation": 52,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.4221249,
+      "table": "agent_turnwork",
+      "start": 1790789186.4199972,
+      "duration": 0.002106904983520508,
+      "conversation": 52,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.4252703,
+      "table": "channels_message",
+      "start": 1790789186.4237819,
+      "duration": 0.0014719963073730469,
+      "conversation": 52,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789186.4271922,
+      "table": "agent_conversation",
+      "start": 1790789186.4260669,
+      "duration": 0.0011096000671386719,
+      "conversation": 52,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789186.4329765,
+      "conversation": 52,
+      "work": 68
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789186.630833,
+      "work": 68
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789186.6935275,
+      "work": 68,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789187.1936471,
+      "work": 68,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789187.2005928,
+      "work": 68
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789187.2122943,
+      "work": 68
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789187.399455,
+      "work": 68
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789187.4133573,
+      "work": 68
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789187.4769468,
+      "work": 68,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789187.9775326,
+      "work": 68,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789187.9826164,
+      "work": 68
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789188.0214717,
+      "work": 68
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789188.5057797,
+      "work": 68
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789188.505845,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789189.5429435,
+      "start": 1790789189.5217776,
+      "queue": {
+        "3": {
+          "pending": 91,
+          "eligible": 83,
+          "blocked": 83,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.021162033081054688
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789189.587515,
+      "start": 1790789189.5747645,
+      "duration": 0.012743234634399414
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789189.5877206,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789190.6201293,
+      "start": 1790789190.6060781,
+      "queue": {
+        "3": {
+          "pending": 92,
+          "eligible": 83,
+          "blocked": 83,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      },
+      "healthy_eligible": [
+        220,
+        221
+      ],
+      "observer_seconds": 0.014042854309082031
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789190.6572063,
+      "start": 1790789190.6411471,
+      "duration": 0.01605224609375
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789190.657433,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.668523,
+      "table": "organizations_organization",
+      "start": 1790789190.6672657,
+      "duration": 0.0012378692626953125,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789190.6685321,
+      "start": 1790789190.6672657,
+      "conversation": 13
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.678337,
+      "table": "agent_conversation",
+      "start": 1790789190.6751318,
+      "duration": 0.0031740665435791016,
+      "conversation": 13,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.6909635,
+      "table": "agent_turnwork",
+      "start": 1790789190.688832,
+      "duration": 0.0021088123321533203,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.764905,
+      "table": "channels_message",
+      "start": 1790789190.7628942,
+      "duration": 0.0019905567169189453,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.772778,
+      "table": "agent_turnwork",
+      "start": 1790789190.7708488,
+      "duration": 0.0019104480743408203,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.7766595,
+      "table": "channels_message",
+      "start": 1790789190.774702,
+      "duration": 0.0019347667694091797,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789190.7788665,
+      "table": "agent_conversation",
+      "start": 1790789190.77767,
+      "duration": 0.001180410385131836,
+      "conversation": 13,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789190.7810903,
+      "conversation": 13,
+      "work": 70
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789191.1584115,
+      "work": 70
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789191.2433703,
+      "work": 70,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789191.7434855,
+      "work": 70,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789191.750376,
+      "work": 70
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789191.7731993,
+      "work": 70
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789191.9756875,
+      "work": 70
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789191.9890642,
+      "work": 70
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789192.0642893,
+      "work": 70,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789192.5648699,
+      "work": 70,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789192.6256838,
+      "work": 70
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789192.674092,
+      "work": 70
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789193.0208306,
+      "work": 70
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789193.0209088,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789194.0406148,
+      "start": 1790789194.0257437,
+      "queue": {
+        "3": {
+          "pending": 94,
+          "eligible": 86,
+          "blocked": 86,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.014865636825561523
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789194.0660641,
+      "start": 1790789194.0552874,
+      "duration": 0.01076960563659668
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789194.0662642,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789195.080294,
+      "start": 1790789195.0711663,
+      "queue": {
+        "3": {
+          "pending": 95,
+          "eligible": 87,
+          "blocked": 0,
+          "claimable": 87
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009124755859375
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789195.0956733,
+      "start": 1790789195.0907047,
+      "duration": 0.0049626827239990234
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789195.0959017,
+      "conversation": 55
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.101246,
+      "table": "organizations_organization",
+      "start": 1790789195.099989,
+      "duration": 0.0012371540069580078,
+      "conversation": 55,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789195.1012542,
+      "start": 1790789195.099989,
+      "conversation": 55
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.1116452,
+      "table": "agent_conversation",
+      "start": 1790789195.1077213,
+      "duration": 0.003895282745361328,
+      "conversation": 55,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.126079,
+      "table": "agent_turnwork",
+      "start": 1790789195.1229722,
+      "duration": 0.003083467483520508,
+      "conversation": 55,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.1826007,
+      "table": "channels_message",
+      "start": 1790789195.1807573,
+      "duration": 0.0018274784088134766,
+      "conversation": 55,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.1898646,
+      "table": "agent_turnwork",
+      "start": 1790789195.1881883,
+      "duration": 0.001659393310546875,
+      "conversation": 55,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.1955733,
+      "table": "channels_message",
+      "start": 1790789195.1921592,
+      "duration": 0.0033981800079345703,
+      "conversation": 55,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789195.1977553,
+      "table": "agent_conversation",
+      "start": 1790789195.196407,
+      "duration": 0.001333475112915039,
+      "conversation": 55,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789195.2042503,
+      "conversation": 55,
+      "work": 72
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789195.3700943,
+      "work": 72
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789195.428149,
+      "work": 72,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789195.928342,
+      "work": 72,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789195.9331703,
+      "work": 72
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789195.942322,
+      "work": 72
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789196.1164675,
+      "work": 72
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789196.1276333,
+      "work": 72
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789196.1813076,
+      "work": 72,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789196.6818376,
+      "work": 72,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789196.6876712,
+      "work": 72
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789196.7126062,
+      "work": 72
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789196.9925838,
+      "work": 72
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789196.9926693,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789198.0149553,
+      "start": 1790789197.9963527,
+      "queue": {
+        "3": {
+          "pending": 96,
+          "eligible": 88,
+          "blocked": 88,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.018599510192871094
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789198.0453534,
+      "start": 1790789198.035761,
+      "duration": 0.009585857391357422
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789198.0455644,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789199.0583546,
+      "start": 1790789199.049373,
+      "queue": {
+        "3": {
+          "pending": 97,
+          "eligible": 89,
+          "blocked": 89,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.008978843688964844
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789199.0739975,
+      "start": 1790789199.069465,
+      "duration": 0.004527091979980469
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789199.0741868,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789200.0934222,
+      "start": 1790789200.0813062,
+      "queue": {
+        "3": {
+          "pending": 98,
+          "eligible": 90,
+          "blocked": 0,
+          "claimable": 90
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.012111425399780273
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789200.1145644,
+      "start": 1790789200.1071076,
+      "duration": 0.007451057434082031
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789200.114783,
+      "conversation": 57
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.123714,
+      "table": "organizations_organization",
+      "start": 1790789200.1225436,
+      "duration": 0.0011532306671142578,
+      "conversation": 57,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789200.1237226,
+      "start": 1790789200.1225436,
+      "conversation": 57
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.1321533,
+      "table": "agent_conversation",
+      "start": 1790789200.1290324,
+      "duration": 0.0030906200408935547,
+      "conversation": 57,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.1446686,
+      "table": "agent_turnwork",
+      "start": 1790789200.1423414,
+      "duration": 0.0023076534271240234,
+      "conversation": 57,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.2025478,
+      "table": "channels_message",
+      "start": 1790789200.2002175,
+      "duration": 0.0023009777069091797,
+      "conversation": 57,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.2070103,
+      "table": "agent_turnwork",
+      "start": 1790789200.2054,
+      "duration": 0.0015947818756103516,
+      "conversation": 57,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.2100496,
+      "table": "channels_message",
+      "start": 1790789200.20851,
+      "duration": 0.001524209976196289,
+      "conversation": 57,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789200.2116196,
+      "table": "agent_conversation",
+      "start": 1790789200.210637,
+      "duration": 0.0009696483612060547,
+      "conversation": 57,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789200.2149656,
+      "conversation": 57,
+      "work": 74
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789200.4144843,
+      "work": 74
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789200.4731061,
+      "work": 74,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789200.974034,
+      "work": 74,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789200.9795985,
+      "work": 74
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789200.991758,
+      "work": 74
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789201.1772127,
+      "work": 74
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789201.1925576,
+      "work": 74
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789201.2421787,
+      "work": 74,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789201.7426016,
+      "work": 74,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789201.7498865,
+      "work": 74
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789201.795133,
+      "work": 74
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789202.1115806,
+      "work": 74
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789202.1116493,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789203.1323462,
+      "start": 1790789203.11868,
+      "queue": {
+        "3": {
+          "pending": 99,
+          "eligible": 92,
+          "blocked": 0,
+          "claimable": 92
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      },
+      "healthy_eligible": [
+        221,
+        236
+      ],
+      "observer_seconds": 0.013662099838256836
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789203.1653616,
+      "start": 1790789203.1598783,
+      "duration": 0.005477190017700195
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789203.1656268,
+      "conversation": 58
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.1719086,
+      "table": "organizations_organization",
+      "start": 1790789203.1708348,
+      "duration": 0.0010552406311035156,
+      "conversation": 58,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789203.1719172,
+      "start": 1790789203.1708348,
+      "conversation": 58
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.1810577,
+      "table": "agent_conversation",
+      "start": 1790789203.1781144,
+      "duration": 0.0029141902923583984,
+      "conversation": 58,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.196706,
+      "table": "agent_turnwork",
+      "start": 1790789203.1920683,
+      "duration": 0.0046160221099853516,
+      "conversation": 58,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.274562,
+      "table": "channels_message",
+      "start": 1790789203.271918,
+      "duration": 0.002627134323120117,
+      "conversation": 58,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.2795978,
+      "table": "agent_turnwork",
+      "start": 1790789203.2771087,
+      "duration": 0.002473115921020508,
+      "conversation": 58,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.285553,
+      "table": "channels_message",
+      "start": 1790789203.2819376,
+      "duration": 0.00359344482421875,
+      "conversation": 58,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789203.2885911,
+      "table": "agent_conversation",
+      "start": 1790789203.287404,
+      "duration": 0.0011708736419677734,
+      "conversation": 58,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789203.291863,
+      "conversation": 58,
+      "work": 76
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789203.547799,
+      "work": 76
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789203.6109626,
+      "work": 76,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789204.1110575,
+      "work": 76,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789204.1226969,
+      "work": 76
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789204.1313214,
+      "work": 76
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789204.3604205,
+      "work": 76
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789204.3785012,
+      "work": 76
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789204.5122514,
+      "work": 76,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789205.0125525,
+      "work": 76,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789205.0423467,
+      "work": 76
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789205.138289,
+      "work": 76
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789205.4977038,
+      "work": 76
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789205.4977698,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789206.5318258,
+      "start": 1790789206.506727,
+      "queue": {
+        "3": {
+          "pending": 98,
+          "eligible": 95,
+          "blocked": 0,
+          "claimable": 95
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.02509474754333496
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789206.5791748,
+      "start": 1790789206.5615802,
+      "duration": 0.017588376998901367
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789206.579394,
+      "conversation": 59
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.5883107,
+      "table": "organizations_organization",
+      "start": 1790789206.5837119,
+      "duration": 0.004577159881591797,
+      "conversation": 59,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789206.5883203,
+      "start": 1790789206.5837119,
+      "conversation": 59
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.6263423,
+      "table": "agent_conversation",
+      "start": 1790789206.6211946,
+      "duration": 0.0051152706146240234,
+      "conversation": 59,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.6625588,
+      "table": "agent_turnwork",
+      "start": 1790789206.6523533,
+      "duration": 0.010182380676269531,
+      "conversation": 59,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.7890904,
+      "table": "channels_message",
+      "start": 1790789206.7795196,
+      "duration": 0.009552240371704102,
+      "conversation": 59,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.7947767,
+      "table": "agent_turnwork",
+      "start": 1790789206.7909238,
+      "duration": 0.003830432891845703,
+      "conversation": 59,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.7986457,
+      "table": "channels_message",
+      "start": 1790789206.7964227,
+      "duration": 0.0022013187408447266,
+      "conversation": 59,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789206.800938,
+      "table": "agent_conversation",
+      "start": 1790789206.799606,
+      "duration": 0.001300811767578125,
+      "conversation": 59,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789206.822055,
+      "conversation": 59,
+      "work": 78
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789207.1714032,
+      "work": 78
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789207.256529,
+      "work": 78,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789207.7571254,
+      "work": 78,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789207.7660503,
+      "work": 78
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789207.7782938,
+      "work": 78
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789208.013726,
+      "work": 78
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789208.0279794,
+      "work": 78
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789208.1107783,
+      "work": 78,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789208.6109717,
+      "work": 78,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789208.6155393,
+      "work": 78
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789208.6706574,
+      "work": 78
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789209.0791526,
+      "work": 78
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789209.0792289,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789210.0911918,
+      "start": 1790789210.0821834,
+      "queue": {
+        "3": {
+          "pending": 96,
+          "eligible": 96,
+          "blocked": 96,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009005308151245117
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789210.1023972,
+      "start": 1790789210.0978842,
+      "duration": 0.004506111145019531
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789210.1026614,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789211.1170008,
+      "start": 1790789211.1071634,
+      "queue": {
+        "3": {
+          "pending": 96,
+          "eligible": 96,
+          "blocked": 96,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009833335876464844
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789211.1333425,
+      "start": 1790789211.1286016,
+      "duration": 0.004733085632324219
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789211.133579,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789212.1500766,
+      "start": 1790789212.1398647,
+      "queue": {
+        "3": {
+          "pending": 96,
+          "eligible": 96,
+          "blocked": 0,
+          "claimable": 96
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.0102081298828125
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789212.1706169,
+      "start": 1790789212.163887,
+      "duration": 0.0067217350006103516
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789212.1709898,
+      "conversation": 61
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.1775703,
+      "table": "organizations_organization",
+      "start": 1790789212.1765602,
+      "duration": 0.0009918212890625,
+      "conversation": 61,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789212.1775794,
+      "start": 1790789212.1765602,
+      "conversation": 61
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.1911778,
+      "table": "agent_conversation",
+      "start": 1790789212.187062,
+      "duration": 0.004083871841430664,
+      "conversation": 61,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.2019281,
+      "table": "agent_turnwork",
+      "start": 1790789212.200195,
+      "duration": 0.0017061233520507812,
+      "conversation": 61,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.270478,
+      "table": "channels_message",
+      "start": 1790789212.2657197,
+      "duration": 0.0047338008880615234,
+      "conversation": 61,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.2754934,
+      "table": "agent_turnwork",
+      "start": 1790789212.2735918,
+      "duration": 0.0018815994262695312,
+      "conversation": 61,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.2790043,
+      "table": "channels_message",
+      "start": 1790789212.2772388,
+      "duration": 0.0017485618591308594,
+      "conversation": 61,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789212.2812388,
+      "table": "agent_conversation",
+      "start": 1790789212.2798915,
+      "duration": 0.0013325214385986328,
+      "conversation": 61,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789212.2885416,
+      "conversation": 61,
+      "work": 80
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789212.4711094,
+      "work": 80
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789212.5386884,
+      "work": 80,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789213.0390618,
+      "work": 80,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789213.0566373,
+      "work": 80
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789213.066969,
+      "work": 80
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789213.2274501,
+      "work": 80
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789213.2371607,
+      "work": 80
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789213.284357,
+      "work": 80,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789213.7848558,
+      "work": 80,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789213.7945602,
+      "work": 80
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789213.829275,
+      "work": 80
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789214.0757837,
+      "work": 80
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789214.0758636,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789215.1438859,
+      "start": 1790789215.0982497,
+      "queue": {
+        "3": {
+          "pending": 94,
+          "eligible": 94,
+          "blocked": 94,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.04563021659851074
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789215.275211,
+      "start": 1790789215.2661812,
+      "duration": 0.009022235870361328
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789215.2754276,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789216.2911267,
+      "start": 1790789216.2792845,
+      "queue": {
+        "3": {
+          "pending": 94,
+          "eligible": 94,
+          "blocked": 94,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.011839151382446289
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789216.3118124,
+      "start": 1790789216.3074832,
+      "duration": 0.004323720932006836
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789216.3119907,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789217.325081,
+      "start": 1790789217.3158393,
+      "queue": {
+        "3": {
+          "pending": 94,
+          "eligible": 94,
+          "blocked": 0,
+          "claimable": 94
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.009238481521606445
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789217.3369818,
+      "start": 1790789217.332758,
+      "duration": 0.004217863082885742
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790789217.337164,
+      "conversation": 63
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.3429327,
+      "table": "organizations_organization",
+      "start": 1790789217.3418539,
+      "duration": 0.0010597705841064453,
+      "conversation": 63,
+      "skip_locked": true
+    },
+    {
+      "event": "capacity_check_start",
+      "time": 1790789217.3429413,
+      "start": 1790789217.3418539,
+      "conversation": 63
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.3541412,
+      "table": "agent_conversation",
+      "start": 1790789217.3492649,
+      "duration": 0.004843950271606445,
+      "conversation": 63,
+      "skip_locked": true
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.3682034,
+      "table": "agent_turnwork",
+      "start": 1790789217.3667843,
+      "duration": 0.0013964176177978516,
+      "conversation": 63,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.4208364,
+      "table": "channels_message",
+      "start": 1790789217.4186883,
+      "duration": 0.00211334228515625,
+      "conversation": 63,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.4246542,
+      "table": "agent_turnwork",
+      "start": 1790789217.422712,
+      "duration": 0.0019237995147705078,
+      "conversation": 63,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.4300618,
+      "table": "channels_message",
+      "start": 1790789217.4277697,
+      "duration": 0.002271890640258789,
+      "conversation": 63,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_sql",
+      "time": 1790789217.4319706,
+      "table": "agent_conversation",
+      "start": 1790789217.4309328,
+      "duration": 0.0010232925415039062,
+      "conversation": 63,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790789217.4354203,
+      "conversation": 63,
+      "work": 82
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789217.609368,
+      "work": 82
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789217.6631172,
+      "work": 82,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789218.1637733,
+      "work": 82,
+      "call": 1
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789218.1689074,
+      "work": 82
+    },
+    {
+      "event": "tool_start",
+      "time": 1790789218.1831567,
+      "work": 82
+    },
+    {
+      "event": "tool_end",
+      "time": 1790789218.3718715,
+      "work": 82
+    },
+    {
+      "event": "llm_start",
+      "time": 1790789218.3828762,
+      "work": 82
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790789218.4430869,
+      "work": 82,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790789218.94383,
+      "work": 82,
+      "call": 2
+    },
+    {
+      "event": "llm_end",
+      "time": 1790789218.949481,
+      "work": 82
+    },
+    {
+      "event": "finalize_start",
+      "time": 1790789218.9760816,
+      "work": 82
+    },
+    {
+      "event": "finalize_end",
+      "time": 1790789219.2826393,
+      "work": 82
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789219.2827082,
+      "processed": 1
+    },
+    {
+      "event": "poll",
+      "time": 1790789220.302905,
+      "start": 1790789220.2921162,
+      "queue": {
+        "3": {
+          "pending": 92,
+          "eligible": 92,
+          "blocked": 92,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.01078486442565918
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789220.3177693,
+      "start": 1790789220.3129919,
+      "duration": 0.004770755767822266
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789220.3180652,
+      "processed": 0
+    },
+    {
+      "event": "poll",
+      "time": 1790789221.3375564,
+      "start": 1790789221.3239481,
+      "queue": {
+        "3": {
+          "pending": 92,
+          "eligible": 92,
+          "blocked": 92,
+          "claimable": 0
+        }
+      },
+      "healthy_eligible": [],
+      "observer_seconds": 0.013605117797851562
+    },
+    {
+      "event": "candidate_query",
+      "time": 1790789221.3614092,
+      "start": 1790789221.3570387,
+      "duration": 0.0043642520904541016
+    },
+    {
+      "event": "poll_end",
+      "time": 1790789221.3616,
+      "processed": 0
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+﻿{
+    "schema":  "e4-cleanup-v2",
+    "first_cleanup_exit":  1,
+    "first_cleanup_error":  "Get-FileHash unavailable after verified database removal and PostgreSQL stop",
+    "initial_preflight_receipt_available":  false,
+    "initial_script_verified":  [
+                                    "own data directory/port",
+                                    "zero prepared transactions",
+                                    "zero test clients",
+                                    "only whitelisted databases",
+                                    "zero remaining test databases",
+                                    "stopped own PostgreSQL process tree"
+                                ],
+    "remaining_test_databases":  0,
+    "pg_isready_exit":  2,
+    "server_stopped":  true,
+    "own_postmaster_pid":  22496,
+    "remaining_e4_python_processes":  0,
+    "postgres_process_ids_after":  [
+                                       7136,
+                                       7748,
+                                       7880,
+                                       7900,
+                                       7908,
+                                       7920,
+                                       7936,
+                                       10416,
+                                       10400,
+                                       10572
+                                   ],
+    "data_directory_removed":  true,
+    "raw_log_removed":  true,
+    "raw_log_sha256":  "2d33271fc50dda2a28c313816691f5b0e383adc91c88f485c4409bf933957542",
+    "production_accessed":  false,
+    "evidence_note":  "Initial script reached the hash step after all its assertions; offline resume verifies stop and finishes artifact closure. Initial database names/PIDs were not persisted and are not reconstructed."
+}

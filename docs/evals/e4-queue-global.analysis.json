@@ -1,0 +1,3066 @@
+{
+  "schema": "e4-global-queue-v1",
+  "classification": "DIAGNOSTIC_ONLY",
+  "source": "e4-diagnostic-baseline-planner-*.timing.json",
+  "definition": "Sum organizations within each original poll snapshot; not sum of maxima",
+  "statistics": {
+    "pending": {
+      "n": 379,
+      "p50": 110,
+      "p95": 200,
+      "max": 206
+    },
+    "eligible": {
+      "n": 379,
+      "p50": 102,
+      "p95": 197,
+      "max": 201
+    },
+    "blocked": {
+      "n": 379,
+      "p50": 30,
+      "p95": 192,
+      "max": 200
+    },
+    "claimable": {
+      "n": 379,
+      "p50": 0,
+      "p95": 181,
+      "max": 201
+    }
+  },
+  "series": [
+    {
+      "time": 1790785091.307556,
+      "role": "planner-2",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785091.6920998,
+      "role": "planner-1",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785092.3441625,
+      "role": "planner-2",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785092.7328634,
+      "role": "planner-1",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785093.4206474,
+      "role": "planner-2",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785093.765071,
+      "role": "planner-1",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785094.4853094,
+      "role": "planner-2",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785094.825915,
+      "role": "planner-1",
+      "pending": 0,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785095.534416,
+      "role": "planner-2",
+      "pending": 2,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785095.899752,
+      "role": "planner-1",
+      "pending": 3,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785096.580676,
+      "role": "planner-2",
+      "pending": 5,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785096.9487453,
+      "role": "planner-1",
+      "pending": 5,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785097.6143298,
+      "role": "planner-2",
+      "pending": 6,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785097.9799788,
+      "role": "planner-1",
+      "pending": 6,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785098.71975,
+      "role": "planner-2",
+      "pending": 7,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785099.0241363,
+      "role": "planner-1",
+      "pending": 7,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785099.7554827,
+      "role": "planner-2",
+      "pending": 8,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785100.0684173,
+      "role": "planner-1",
+      "pending": 8,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785100.790784,
+      "role": "planner-2",
+      "pending": 9,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785101.0938408,
+      "role": "planner-1",
+      "pending": 9,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785101.828121,
+      "role": "planner-2",
+      "pending": 10,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785102.1215315,
+      "role": "planner-1",
+      "pending": 10,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785102.8524992,
+      "role": "planner-2",
+      "pending": 13,
+      "eligible": 0,
+      "blocked": 0,
+      "claimable": 0
+    },
+    {
+      "time": 1790785103.146542,
+      "role": "planner-1",
+      "pending": 13,
+      "eligible": 1,
+      "blocked": 0,
+      "claimable": 1
+    },
+    {
+      "time": 1790785103.8751597,
+      "role": "planner-2",
+      "pending": 13,
+      "eligible": 3,
+      "blocked": 3,
+      "claimable": 0
+    },
+    {
+      "time": 1790785104.9045703,
+      "role": "planner-2",
+      "pending": 14,
+      "eligible": 4,
+      "blocked": 4,
+      "claimable": 0
+    },
+    {
+      "time": 1790785105.956204,
+      "role": "planner-2",
+      "pending": 15,
+      "eligible": 5,
+      "blocked": 5,
+      "claimable": 0
+    },
+    {
+      "time": 1790785106.999302,
+      "role": "planner-2",
+      "pending": 16,
+      "eligible": 6,
+      "blocked": 0,
+      "claimable": 6
+    },
+    {
+      "time": 1790785107.5378761,
+      "role": "planner-1",
+      "pending": 16,
+      "eligible": 6,
+      "blocked": 6,
+      "claimable": 0
+    },
+    {
+      "time": 1790785108.5731332,
+      "role": "planner-1",
+      "pending": 17,
+      "eligible": 7,
+      "blocked": 7,
+      "claimable": 0
+    },
+    {
+      "time": 1790785109.6114898,
+      "role": "planner-1",
+      "pending": 18,
+      "eligible": 8,
+      "blocked": 8,
+      "claimable": 0
+    },
+    {
+      "time": 1790785110.6421125,
+      "role": "planner-1",
+      "pending": 19,
+      "eligible": 11,
+      "blocked": 0,
+      "claimable": 11
+    },
+    {
+      "time": 1790785111.6252909,
+      "role": "planner-2",
+      "pending": 19,
+      "eligible": 11,
+      "blocked": 9,
+      "claimable": 2
+    },
+    {
+      "time": 1790785113.7024,
+      "role": "planner-1",
+      "pending": 22,
+      "eligible": 11,
+      "blocked": 0,
+      "claimable": 11
+    },
+    {
+      "time": 1790785114.526972,
+      "role": "planner-2",
+      "pending": 22,
+      "eligible": 11,
+      "blocked": 11,
+      "claimable": 0
+    },
+    {
+      "time": 1790785115.548886,
+      "role": "planner-2",
+      "pending": 23,
+      "eligible": 12,
+      "blocked": 0,
+      "claimable": 12
+    },
+    {
+      "time": 1790785116.511971,
+      "role": "planner-1",
+      "pending": 23,
+      "eligible": 12,
+      "blocked": 12,
+      "claimable": 0
+    },
+    {
+      "time": 1790785117.5396993,
+      "role": "planner-1",
+      "pending": 24,
+      "eligible": 13,
+      "blocked": 0,
+      "claimable": 13
+    },
+    {
+      "time": 1790785118.4390354,
+      "role": "planner-2",
+      "pending": 24,
+      "eligible": 13,
+      "blocked": 13,
+      "claimable": 0
+    },
+    {
+      "time": 1790785119.4714904,
+      "role": "planner-2",
+      "pending": 25,
+      "eligible": 14,
+      "blocked": 0,
+      "claimable": 14
+    },
+    {
+      "time": 1790785120.3965392,
+      "role": "planner-1",
+      "pending": 25,
+      "eligible": 14,
+      "blocked": 13,
+      "claimable": 1
+    },
+    {
+      "time": 1790785122.3115828,
+      "role": "planner-2",
+      "pending": 25,
+      "eligible": 18,
+      "blocked": 0,
+      "claimable": 18
+    },
+    {
+      "time": 1790785123.255281,
+      "role": "planner-1",
+      "pending": 24,
+      "eligible": 18,
+      "blocked": 16,
+      "claimable": 2
+    },
+    {
+      "time": 1790785125.1132393,
+      "role": "planner-2",
+      "pending": 25,
+      "eligible": 17,
+      "blocked": 0,
+      "claimable": 17
+    },
+    {
+      "time": 1790785126.1340365,
+      "role": "planner-1",
+      "pending": 25,
+      "eligible": 17,
+      "blocked": 17,
+      "claimable": 0
+    },
+    {
+      "time": 1790785127.1642668,
+      "role": "planner-1",
+      "pending": 26,
+      "eligible": 18,
+      "blocked": 0,
+      "claimable": 18
+    },
+    {
+      "time": 1790785127.852366,
+      "role": "planner-2",
+      "pending": 26,
+      "eligible": 18,
+      "blocked": 18,
+      "claimable": 0
+    },
+    {
+      "time": 1790785128.8765268,
+      "role": "planner-2",
+      "pending": 27,
+      "eligible": 19,
+      "blocked": 19,
+      "claimable": 0
+    },
+    {
+      "time": 1790785129.9011657,
+      "role": "planner-2",
+      "pending": 28,
+      "eligible": 20,
+      "blocked": 0,
+      "claimable": 20
+    },
+    {
+      "time": 1790785129.9307153,
+      "role": "planner-1",
+      "pending": 28,
+      "eligible": 20,
+      "blocked": 0,
+      "claimable": 20
+    },
+    {
+      "time": 1790785130.9946144,
+      "role": "planner-1",
+      "pending": 28,
+      "eligible": 19,
+      "blocked": 19,
+      "claimable": 0
+    },
+    {
+      "time": 1790785132.024122,
+      "role": "planner-1",
+      "pending": 29,
+      "eligible": 21,
+      "blocked": 0,
+      "claimable": 21
+    },
+    {
+      "time": 1790785132.766985,
+      "role": "planner-2",
+      "pending": 31,
+      "eligible": 21,
+      "blocked": 21,
+      "claimable": 0
+    },
+    {
+      "time": 1790785133.7932553,
+      "role": "planner-2",
+      "pending": 32,
+      "eligible": 22,
+      "blocked": 22,
+      "claimable": 0
+    },
+    {
+      "time": 1790785134.8263679,
+      "role": "planner-2",
+      "pending": 33,
+      "eligible": 23,
+      "blocked": 0,
+      "claimable": 23
+    },
+    {
+      "time": 1790785134.8709643,
+      "role": "planner-1",
+      "pending": 33,
+      "eligible": 23,
+      "blocked": 0,
+      "claimable": 23
+    },
+    {
+      "time": 1790785135.9261189,
+      "role": "planner-1",
+      "pending": 33,
+      "eligible": 23,
+      "blocked": 23,
+      "claimable": 0
+    },
+    {
+      "time": 1790785136.9944413,
+      "role": "planner-1",
+      "pending": 34,
+      "eligible": 24,
+      "blocked": 0,
+      "claimable": 24
+    },
+    {
+      "time": 1790785137.8357055,
+      "role": "planner-2",
+      "pending": 34,
+      "eligible": 24,
+      "blocked": 24,
+      "claimable": 0
+    },
+    {
+      "time": 1790785138.8803399,
+      "role": "planner-2",
+      "pending": 35,
+      "eligible": 25,
+      "blocked": 25,
+      "claimable": 0
+    },
+    {
+      "time": 1790785139.9266276,
+      "role": "planner-2",
+      "pending": 36,
+      "eligible": 26,
+      "blocked": 0,
+      "claimable": 26
+    },
+    {
+      "time": 1790785139.9859307,
+      "role": "planner-1",
+      "pending": 36,
+      "eligible": 26,
+      "blocked": 0,
+      "claimable": 26
+    },
+    {
+      "time": 1790785141.3466804,
+      "role": "planner-1",
+      "pending": 36,
+      "eligible": 28,
+      "blocked": 26,
+      "claimable": 2
+    },
+    {
+      "time": 1790785143.1077747,
+      "role": "planner-2",
+      "pending": 39,
+      "eligible": 28,
+      "blocked": 0,
+      "claimable": 28
+    },
+    {
+      "time": 1790785144.2917254,
+      "role": "planner-1",
+      "pending": 39,
+      "eligible": 29,
+      "blocked": 29,
+      "claimable": 0
+    },
+    {
+      "time": 1790785145.319516,
+      "role": "planner-1",
+      "pending": 40,
+      "eligible": 30,
+      "blocked": 0,
+      "claimable": 30
+    },
+    {
+      "time": 1790785146.0764122,
+      "role": "planner-2",
+      "pending": 40,
+      "eligible": 29,
+      "blocked": 29,
+      "claimable": 0
+    },
+    {
+      "time": 1790785147.108424,
+      "role": "planner-2",
+      "pending": 41,
+      "eligible": 30,
+      "blocked": 30,
+      "claimable": 0
+    },
+    {
+      "time": 1790785148.13262,
+      "role": "planner-2",
+      "pending": 42,
+      "eligible": 31,
+      "blocked": 0,
+      "claimable": 31
+    },
+    {
+      "time": 1790785148.270389,
+      "role": "planner-1",
+      "pending": 41,
+      "eligible": 30,
+      "blocked": 30,
+      "claimable": 0
+    },
+    {
+      "time": 1790785149.3035367,
+      "role": "planner-1",
+      "pending": 42,
+      "eligible": 31,
+      "blocked": 31,
+      "claimable": 0
+    },
+    {
+      "time": 1790785150.3305845,
+      "role": "planner-1",
+      "pending": 44,
+      "eligible": 33,
+      "blocked": 0,
+      "claimable": 33
+    },
+    {
+      "time": 1790785150.9971018,
+      "role": "planner-2",
+      "pending": 43,
+      "eligible": 35,
+      "blocked": 32,
+      "claimable": 3
+    },
+    {
+      "time": 1790785153.101488,
+      "role": "planner-1",
+      "pending": 43,
+      "eligible": 36,
+      "blocked": 0,
+      "claimable": 36
+    },
+    {
+      "time": 1790785153.8286512,
+      "role": "planner-2",
+      "pending": 44,
+      "eligible": 36,
+      "blocked": 34,
+      "claimable": 2
+    },
+    {
+      "time": 1790785155.9656785,
+      "role": "planner-1",
+      "pending": 44,
+      "eligible": 36,
+      "blocked": 0,
+      "claimable": 36
+    },
+    {
+      "time": 1790785156.7056398,
+      "role": "planner-2",
+      "pending": 44,
+      "eligible": 36,
+      "blocked": 36,
+      "claimable": 0
+    },
+    {
+      "time": 1790785157.7474399,
+      "role": "planner-2",
+      "pending": 45,
+      "eligible": 37,
+      "blocked": 37,
+      "claimable": 0
+    },
+    {
+      "time": 1790785158.7832987,
+      "role": "planner-2",
+      "pending": 46,
+      "eligible": 38,
+      "blocked": 0,
+      "claimable": 38
+    },
+    {
+      "time": 1790785158.8998222,
+      "role": "planner-1",
+      "pending": 45,
+      "eligible": 37,
+      "blocked": 37,
+      "claimable": 0
+    },
+    {
+      "time": 1790785159.9253795,
+      "role": "planner-1",
+      "pending": 46,
+      "eligible": 38,
+      "blocked": 38,
+      "claimable": 0
+    },
+    {
+      "time": 1790785160.948505,
+      "role": "planner-1",
+      "pending": 47,
+      "eligible": 38,
+      "blocked": 0,
+      "claimable": 38
+    },
+    {
+      "time": 1790785161.5386872,
+      "role": "planner-2",
+      "pending": 47,
+      "eligible": 38,
+      "blocked": 38,
+      "claimable": 0
+    },
+    {
+      "time": 1790785162.5628045,
+      "role": "planner-2",
+      "pending": 50,
+      "eligible": 40,
+      "blocked": 40,
+      "claimable": 0
+    },
+    {
+      "time": 1790785163.5868685,
+      "role": "planner-2",
+      "pending": 51,
+      "eligible": 41,
+      "blocked": 0,
+      "claimable": 41
+    },
+    {
+      "time": 1790785163.79676,
+      "role": "planner-1",
+      "pending": 50,
+      "eligible": 40,
+      "blocked": 40,
+      "claimable": 0
+    },
+    {
+      "time": 1790785164.8245065,
+      "role": "planner-1",
+      "pending": 51,
+      "eligible": 41,
+      "blocked": 41,
+      "claimable": 0
+    },
+    {
+      "time": 1790785165.851509,
+      "role": "planner-1",
+      "pending": 52,
+      "eligible": 42,
+      "blocked": 0,
+      "claimable": 42
+    },
+    {
+      "time": 1790785166.370681,
+      "role": "planner-2",
+      "pending": 51,
+      "eligible": 42,
+      "blocked": 42,
+      "claimable": 0
+    },
+    {
+      "time": 1790785167.4168446,
+      "role": "planner-2",
+      "pending": 52,
+      "eligible": 43,
+      "blocked": 43,
+      "claimable": 0
+    },
+    {
+      "time": 1790785168.4601357,
+      "role": "planner-2",
+      "pending": 54,
+      "eligible": 44,
+      "blocked": 0,
+      "claimable": 44
+    },
+    {
+      "time": 1790785168.7639678,
+      "role": "planner-1",
+      "pending": 53,
+      "eligible": 43,
+      "blocked": 43,
+      "claimable": 0
+    },
+    {
+      "time": 1790785169.7988324,
+      "role": "planner-1",
+      "pending": 54,
+      "eligible": 44,
+      "blocked": 44,
+      "claimable": 0
+    },
+    {
+      "time": 1790785170.8320546,
+      "role": "planner-1",
+      "pending": 55,
+      "eligible": 47,
+      "blocked": 0,
+      "claimable": 47
+    },
+    {
+      "time": 1790785171.3083062,
+      "role": "planner-2",
+      "pending": 54,
+      "eligible": 47,
+      "blocked": 45,
+      "claimable": 2
+    },
+    {
+      "time": 1790785173.6562395,
+      "role": "planner-1",
+      "pending": 58,
+      "eligible": 47,
+      "blocked": 0,
+      "claimable": 47
+    },
+    {
+      "time": 1790785174.0295355,
+      "role": "planner-2",
+      "pending": 57,
+      "eligible": 46,
+      "blocked": 46,
+      "claimable": 0
+    },
+    {
+      "time": 1790785175.0525854,
+      "role": "planner-2",
+      "pending": 58,
+      "eligible": 47,
+      "blocked": 47,
+      "claimable": 0
+    },
+    {
+      "time": 1790785176.0722773,
+      "role": "planner-2",
+      "pending": 59,
+      "eligible": 48,
+      "blocked": 0,
+      "claimable": 48
+    },
+    {
+      "time": 1790785176.3723776,
+      "role": "planner-1",
+      "pending": 58,
+      "eligible": 48,
+      "blocked": 48,
+      "claimable": 0
+    },
+    {
+      "time": 1790785177.4006703,
+      "role": "planner-1",
+      "pending": 60,
+      "eligible": 49,
+      "blocked": 49,
+      "claimable": 0
+    },
+    {
+      "time": 1790785178.4268441,
+      "role": "planner-1",
+      "pending": 61,
+      "eligible": 50,
+      "blocked": 0,
+      "claimable": 50
+    },
+    {
+      "time": 1790785178.8566113,
+      "role": "planner-2",
+      "pending": 60,
+      "eligible": 49,
+      "blocked": 49,
+      "claimable": 0
+    },
+    {
+      "time": 1790785179.8849182,
+      "role": "planner-2",
+      "pending": 61,
+      "eligible": 50,
+      "blocked": 50,
+      "claimable": 0
+    },
+    {
+      "time": 1790785180.92584,
+      "role": "planner-2",
+      "pending": 62,
+      "eligible": 54,
+      "blocked": 0,
+      "claimable": 54
+    },
+    {
+      "time": 1790785181.3147848,
+      "role": "planner-1",
+      "pending": 61,
+      "eligible": 54,
+      "blocked": 51,
+      "claimable": 3
+    },
+    {
+      "time": 1790785183.74987,
+      "role": "planner-2",
+      "pending": 61,
+      "eligible": 55,
+      "blocked": 0,
+      "claimable": 55
+    },
+    {
+      "time": 1790785184.1905706,
+      "role": "planner-1",
+      "pending": 62,
+      "eligible": 54,
+      "blocked": 52,
+      "claimable": 2
+    },
+    {
+      "time": 1790785186.6324568,
+      "role": "planner-2",
+      "pending": 63,
+      "eligible": 55,
+      "blocked": 0,
+      "claimable": 55
+    },
+    {
+      "time": 1790785187.102477,
+      "role": "planner-1",
+      "pending": 62,
+      "eligible": 54,
+      "blocked": 54,
+      "claimable": 0
+    },
+    {
+      "time": 1790785188.1248171,
+      "role": "planner-1",
+      "pending": 63,
+      "eligible": 55,
+      "blocked": 55,
+      "claimable": 0
+    },
+    {
+      "time": 1790785189.1489303,
+      "role": "planner-1",
+      "pending": 64,
+      "eligible": 56,
+      "blocked": 0,
+      "claimable": 56
+    },
+    {
+      "time": 1790785189.3914602,
+      "role": "planner-2",
+      "pending": 63,
+      "eligible": 56,
+      "blocked": 56,
+      "claimable": 0
+    },
+    {
+      "time": 1790785190.423484,
+      "role": "planner-2",
+      "pending": 65,
+      "eligible": 56,
+      "blocked": 56,
+      "claimable": 0
+    },
+    {
+      "time": 1790785191.4519353,
+      "role": "planner-2",
+      "pending": 66,
+      "eligible": 56,
+      "blocked": 0,
+      "claimable": 56
+    },
+    {
+      "time": 1790785192.118908,
+      "role": "planner-1",
+      "pending": 65,
+      "eligible": 57,
+      "blocked": 57,
+      "claimable": 0
+    },
+    {
+      "time": 1790785193.151329,
+      "role": "planner-1",
+      "pending": 68,
+      "eligible": 58,
+      "blocked": 58,
+      "claimable": 0
+    },
+    {
+      "time": 1790785194.1812534,
+      "role": "planner-1",
+      "pending": 69,
+      "eligible": 59,
+      "blocked": 0,
+      "claimable": 59
+    },
+    {
+      "time": 1790785194.336185,
+      "role": "planner-2",
+      "pending": 68,
+      "eligible": 59,
+      "blocked": 59,
+      "claimable": 0
+    },
+    {
+      "time": 1790785195.3602965,
+      "role": "planner-2",
+      "pending": 69,
+      "eligible": 60,
+      "blocked": 60,
+      "claimable": 0
+    },
+    {
+      "time": 1790785196.3873484,
+      "role": "planner-2",
+      "pending": 71,
+      "eligible": 61,
+      "blocked": 0,
+      "claimable": 61
+    },
+    {
+      "time": 1790785196.944839,
+      "role": "planner-1",
+      "pending": 70,
+      "eligible": 60,
+      "blocked": 60,
+      "claimable": 0
+    },
+    {
+      "time": 1790785197.9717078,
+      "role": "planner-1",
+      "pending": 71,
+      "eligible": 61,
+      "blocked": 61,
+      "claimable": 0
+    },
+    {
+      "time": 1790785198.9987705,
+      "role": "planner-1",
+      "pending": 72,
+      "eligible": 62,
+      "blocked": 0,
+      "claimable": 62
+    },
+    {
+      "time": 1790785199.1090078,
+      "role": "planner-2",
+      "pending": 71,
+      "eligible": 61,
+      "blocked": 61,
+      "claimable": 0
+    },
+    {
+      "time": 1790785200.1348486,
+      "role": "planner-2",
+      "pending": 72,
+      "eligible": 62,
+      "blocked": 62,
+      "claimable": 0
+    },
+    {
+      "time": 1790785201.2571874,
+      "role": "planner-2",
+      "pending": 73,
+      "eligible": 65,
+      "blocked": 0,
+      "claimable": 65
+    },
+    {
+      "time": 1790785201.9226584,
+      "role": "planner-1",
+      "pending": 73,
+      "eligible": 65,
+      "blocked": 63,
+      "claimable": 2
+    },
+    {
+      "time": 1790785204.4350998,
+      "role": "planner-2",
+      "pending": 77,
+      "eligible": 66,
+      "blocked": 0,
+      "claimable": 66
+    },
+    {
+      "time": 1790785204.7444065,
+      "role": "planner-1",
+      "pending": 76,
+      "eligible": 65,
+      "blocked": 65,
+      "claimable": 0
+    },
+    {
+      "time": 1790785205.7805138,
+      "role": "planner-1",
+      "pending": 77,
+      "eligible": 66,
+      "blocked": 66,
+      "claimable": 0
+    },
+    {
+      "time": 1790785206.8063586,
+      "role": "planner-1",
+      "pending": 78,
+      "eligible": 67,
+      "blocked": 0,
+      "claimable": 67
+    },
+    {
+      "time": 1790785207.1878388,
+      "role": "planner-2",
+      "pending": 77,
+      "eligible": 66,
+      "blocked": 66,
+      "claimable": 0
+    },
+    {
+      "time": 1790785208.2274513,
+      "role": "planner-2",
+      "pending": 78,
+      "eligible": 67,
+      "blocked": 67,
+      "claimable": 0
+    },
+    {
+      "time": 1790785209.2545798,
+      "role": "planner-2",
+      "pending": 79,
+      "eligible": 68,
+      "blocked": 0,
+      "claimable": 68
+    },
+    {
+      "time": 1790785209.570791,
+      "role": "planner-1",
+      "pending": 79,
+      "eligible": 68,
+      "blocked": 68,
+      "claimable": 0
+    },
+    {
+      "time": 1790785210.5952091,
+      "role": "planner-1",
+      "pending": 80,
+      "eligible": 71,
+      "blocked": 68,
+      "claimable": 3
+    },
+    {
+      "time": 1790785212.0227287,
+      "role": "planner-2",
+      "pending": 80,
+      "eligible": 72,
+      "blocked": 0,
+      "claimable": 72
+    },
+    {
+      "time": 1790785213.5073698,
+      "role": "planner-1",
+      "pending": 79,
+      "eligible": 73,
+      "blocked": 71,
+      "claimable": 2
+    },
+    {
+      "time": 1790785214.902315,
+      "role": "planner-2",
+      "pending": 80,
+      "eligible": 72,
+      "blocked": 0,
+      "claimable": 72
+    },
+    {
+      "time": 1790785216.4862177,
+      "role": "planner-1",
+      "pending": 81,
+      "eligible": 73,
+      "blocked": 73,
+      "claimable": 0
+    },
+    {
+      "time": 1790785217.517421,
+      "role": "planner-1",
+      "pending": 82,
+      "eligible": 74,
+      "blocked": 0,
+      "claimable": 74
+    },
+    {
+      "time": 1790785217.7523613,
+      "role": "planner-2",
+      "pending": 81,
+      "eligible": 73,
+      "blocked": 73,
+      "claimable": 0
+    },
+    {
+      "time": 1790785218.780206,
+      "role": "planner-2",
+      "pending": 82,
+      "eligible": 74,
+      "blocked": 74,
+      "claimable": 0
+    },
+    {
+      "time": 1790785219.8127103,
+      "role": "planner-2",
+      "pending": 83,
+      "eligible": 75,
+      "blocked": 0,
+      "claimable": 75
+    },
+    {
+      "time": 1790785220.3957255,
+      "role": "planner-1",
+      "pending": 83,
+      "eligible": 74,
+      "blocked": 74,
+      "claimable": 0
+    },
+    {
+      "time": 1790785221.4262304,
+      "role": "planner-1",
+      "pending": 84,
+      "eligible": 74,
+      "blocked": 74,
+      "claimable": 0
+    },
+    {
+      "time": 1790785222.458609,
+      "role": "planner-1",
+      "pending": 85,
+      "eligible": 77,
+      "blocked": 0,
+      "claimable": 77
+    },
+    {
+      "time": 1790785222.5712016,
+      "role": "planner-2",
+      "pending": 86,
+      "eligible": 77,
+      "blocked": 77,
+      "claimable": 0
+    },
+    {
+      "time": 1790785223.603148,
+      "role": "planner-2",
+      "pending": 87,
+      "eligible": 77,
+      "blocked": 77,
+      "claimable": 0
+    },
+    {
+      "time": 1790785224.639863,
+      "role": "planner-2",
+      "pending": 88,
+      "eligible": 78,
+      "blocked": 0,
+      "claimable": 78
+    },
+    {
+      "time": 1790785225.2603993,
+      "role": "planner-1",
+      "pending": 87,
+      "eligible": 77,
+      "blocked": 77,
+      "claimable": 0
+    },
+    {
+      "time": 1790785226.3103704,
+      "role": "planner-1",
+      "pending": 88,
+      "eligible": 79,
+      "blocked": 79,
+      "claimable": 0
+    },
+    {
+      "time": 1790785227.3565607,
+      "role": "planner-1",
+      "pending": 89,
+      "eligible": 80,
+      "blocked": 0,
+      "claimable": 80
+    },
+    {
+      "time": 1790785227.5092611,
+      "role": "planner-2",
+      "pending": 89,
+      "eligible": 79,
+      "blocked": 79,
+      "claimable": 0
+    },
+    {
+      "time": 1790785228.5425591,
+      "role": "planner-2",
+      "pending": 90,
+      "eligible": 80,
+      "blocked": 80,
+      "claimable": 0
+    },
+    {
+      "time": 1790785229.5649154,
+      "role": "planner-2",
+      "pending": 91,
+      "eligible": 81,
+      "blocked": 0,
+      "claimable": 81
+    },
+    {
+      "time": 1790785230.1228743,
+      "role": "planner-1",
+      "pending": 90,
+      "eligible": 80,
+      "blocked": 80,
+      "claimable": 0
+    },
+    {
+      "time": 1790785231.15269,
+      "role": "planner-1",
+      "pending": 91,
+      "eligible": 83,
+      "blocked": 81,
+      "claimable": 2
+    },
+    {
+      "time": 1790785232.3126771,
+      "role": "planner-2",
+      "pending": 91,
+      "eligible": 84,
+      "blocked": 0,
+      "claimable": 84
+    },
+    {
+      "time": 1790785233.8212147,
+      "role": "planner-1",
+      "pending": 94,
+      "eligible": 83,
+      "blocked": 83,
+      "claimable": 0
+    },
+    {
+      "time": 1790785234.8473847,
+      "role": "planner-1",
+      "pending": 95,
+      "eligible": 84,
+      "blocked": 0,
+      "claimable": 84
+    },
+    {
+      "time": 1790785235.0680776,
+      "role": "planner-2",
+      "pending": 94,
+      "eligible": 83,
+      "blocked": 83,
+      "claimable": 0
+    },
+    {
+      "time": 1790785236.1138003,
+      "role": "planner-2",
+      "pending": 95,
+      "eligible": 84,
+      "blocked": 84,
+      "claimable": 0
+    },
+    {
+      "time": 1790785237.1499486,
+      "role": "planner-2",
+      "pending": 96,
+      "eligible": 85,
+      "blocked": 0,
+      "claimable": 85
+    },
+    {
+      "time": 1790785237.7301486,
+      "role": "planner-1",
+      "pending": 96,
+      "eligible": 85,
+      "blocked": 85,
+      "claimable": 0
+    },
+    {
+      "time": 1790785238.7704716,
+      "role": "planner-1",
+      "pending": 97,
+      "eligible": 86,
+      "blocked": 86,
+      "claimable": 0
+    },
+    {
+      "time": 1790785239.8146243,
+      "role": "planner-1",
+      "pending": 98,
+      "eligible": 87,
+      "blocked": 0,
+      "claimable": 87
+    },
+    {
+      "time": 1790785240.2838063,
+      "role": "planner-2",
+      "pending": 97,
+      "eligible": 87,
+      "blocked": 86,
+      "claimable": 1
+    },
+    {
+      "time": 1790785243.168058,
+      "role": "planner-1",
+      "pending": 98,
+      "eligible": 91,
+      "blocked": 0,
+      "claimable": 91
+    },
+    {
+      "time": 1790785243.4141097,
+      "role": "planner-2",
+      "pending": 97,
+      "eligible": 91,
+      "blocked": 89,
+      "claimable": 2
+    },
+    {
+      "time": 1790785246.5091689,
+      "role": "planner-1",
+      "pending": 100,
+      "eligible": 92,
+      "blocked": 0,
+      "claimable": 92
+    },
+    {
+      "time": 1790785246.5908015,
+      "role": "planner-2",
+      "pending": 100,
+      "eligible": 92,
+      "blocked": 0,
+      "claimable": 92
+    },
+    {
+      "time": 1790785247.631905,
+      "role": "planner-2",
+      "pending": 100,
+      "eligible": 92,
+      "blocked": 92,
+      "claimable": 0
+    },
+    {
+      "time": 1790785248.6753025,
+      "role": "planner-2",
+      "pending": 101,
+      "eligible": 93,
+      "blocked": 0,
+      "claimable": 93
+    },
+    {
+      "time": 1790785249.3992238,
+      "role": "planner-1",
+      "pending": 101,
+      "eligible": 93,
+      "blocked": 93,
+      "claimable": 0
+    },
+    {
+      "time": 1790785250.4310308,
+      "role": "planner-1",
+      "pending": 102,
+      "eligible": 93,
+      "blocked": 93,
+      "claimable": 0
+    },
+    {
+      "time": 1790785251.4618096,
+      "role": "planner-1",
+      "pending": 103,
+      "eligible": 93,
+      "blocked": 0,
+      "claimable": 93
+    },
+    {
+      "time": 1790785251.5830958,
+      "role": "planner-2",
+      "pending": 102,
+      "eligible": 92,
+      "blocked": 92,
+      "claimable": 0
+    },
+    {
+      "time": 1790785252.6124709,
+      "role": "planner-2",
+      "pending": 104,
+      "eligible": 95,
+      "blocked": 95,
+      "claimable": 0
+    },
+    {
+      "time": 1790785253.6402783,
+      "role": "planner-2",
+      "pending": 106,
+      "eligible": 96,
+      "blocked": 0,
+      "claimable": 96
+    },
+    {
+      "time": 1790785254.1954248,
+      "role": "planner-1",
+      "pending": 105,
+      "eligible": 95,
+      "blocked": 95,
+      "claimable": 0
+    },
+    {
+      "time": 1790785255.2244449,
+      "role": "planner-1",
+      "pending": 106,
+      "eligible": 96,
+      "blocked": 96,
+      "claimable": 0
+    },
+    {
+      "time": 1790785256.2549002,
+      "role": "planner-1",
+      "pending": 107,
+      "eligible": 97,
+      "blocked": 0,
+      "claimable": 97
+    },
+    {
+      "time": 1790785256.3670497,
+      "role": "planner-2",
+      "pending": 107,
+      "eligible": 98,
+      "blocked": 0,
+      "claimable": 98
+    },
+    {
+      "time": 1790785257.4034386,
+      "role": "planner-2",
+      "pending": 108,
+      "eligible": 98,
+      "blocked": 98,
+      "claimable": 0
+    },
+    {
+      "time": 1790785258.4386876,
+      "role": "planner-2",
+      "pending": 109,
+      "eligible": 99,
+      "blocked": 0,
+      "claimable": 99
+    },
+    {
+      "time": 1790785259.184423,
+      "role": "planner-1",
+      "pending": 108,
+      "eligible": 98,
+      "blocked": 98,
+      "claimable": 0
+    },
+    {
+      "time": 1790785260.2155387,
+      "role": "planner-1",
+      "pending": 109,
+      "eligible": 99,
+      "blocked": 99,
+      "claimable": 0
+    },
+    {
+      "time": 1790785261.36439,
+      "role": "planner-1",
+      "pending": 110,
+      "eligible": 102,
+      "blocked": 0,
+      "claimable": 102
+    },
+    {
+      "time": 1790785261.4126408,
+      "role": "planner-2",
+      "pending": 110,
+      "eligible": 103,
+      "blocked": 0,
+      "claimable": 103
+    },
+    {
+      "time": 1790785262.449952,
+      "role": "planner-2",
+      "pending": 111,
+      "eligible": 102,
+      "blocked": 101,
+      "claimable": 1
+    },
+    {
+      "time": 1790785263.5412698,
+      "role": "planner-2",
+      "pending": 114,
+      "eligible": 102,
+      "blocked": 0,
+      "claimable": 102
+    },
+    {
+      "time": 1790785264.3230357,
+      "role": "planner-1",
+      "pending": 113,
+      "eligible": 102,
+      "blocked": 102,
+      "claimable": 0
+    },
+    {
+      "time": 1790785265.348023,
+      "role": "planner-1",
+      "pending": 115,
+      "eligible": 103,
+      "blocked": 0,
+      "claimable": 103
+    },
+    {
+      "time": 1790785266.301056,
+      "role": "planner-2",
+      "pending": 114,
+      "eligible": 103,
+      "blocked": 103,
+      "claimable": 0
+    },
+    {
+      "time": 1790785267.3300235,
+      "role": "planner-2",
+      "pending": 115,
+      "eligible": 104,
+      "blocked": 0,
+      "claimable": 104
+    },
+    {
+      "time": 1790785268.084811,
+      "role": "planner-1",
+      "pending": 115,
+      "eligible": 103,
+      "blocked": 103,
+      "claimable": 0
+    },
+    {
+      "time": 1790785269.1162083,
+      "role": "planner-1",
+      "pending": 116,
+      "eligible": 104,
+      "blocked": 104,
+      "claimable": 0
+    },
+    {
+      "time": 1790785270.1515403,
+      "role": "planner-1",
+      "pending": 117,
+      "eligible": 105,
+      "blocked": 0,
+      "claimable": 105
+    },
+    {
+      "time": 1790785270.1624448,
+      "role": "planner-2",
+      "pending": 117,
+      "eligible": 105,
+      "blocked": 0,
+      "claimable": 105
+    },
+    {
+      "time": 1790785271.213334,
+      "role": "planner-2",
+      "pending": 117,
+      "eligible": 109,
+      "blocked": 105,
+      "claimable": 4
+    },
+    {
+      "time": 1790785273.0628464,
+      "role": "planner-1",
+      "pending": 116,
+      "eligible": 109,
+      "blocked": 0,
+      "claimable": 109
+    },
+    {
+      "time": 1790785274.3617523,
+      "role": "planner-2",
+      "pending": 117,
+      "eligible": 110,
+      "blocked": 108,
+      "claimable": 2
+    },
+    {
+      "time": 1790785276.074678,
+      "role": "planner-1",
+      "pending": 117,
+      "eligible": 109,
+      "blocked": 0,
+      "claimable": 109
+    },
+    {
+      "time": 1790785277.3031518,
+      "role": "planner-2",
+      "pending": 117,
+      "eligible": 109,
+      "blocked": 109,
+      "claimable": 0
+    },
+    {
+      "time": 1790785278.3367498,
+      "role": "planner-2",
+      "pending": 118,
+      "eligible": 111,
+      "blocked": 0,
+      "claimable": 111
+    },
+    {
+      "time": 1790785279.0717137,
+      "role": "planner-1",
+      "pending": 118,
+      "eligible": 110,
+      "blocked": 110,
+      "claimable": 0
+    },
+    {
+      "time": 1790785280.118935,
+      "role": "planner-1",
+      "pending": 119,
+      "eligible": 111,
+      "blocked": 111,
+      "claimable": 0
+    },
+    {
+      "time": 1790785281.152647,
+      "role": "planner-1",
+      "pending": 120,
+      "eligible": 111,
+      "blocked": 0,
+      "claimable": 111
+    },
+    {
+      "time": 1790785281.3151376,
+      "role": "planner-2",
+      "pending": 119,
+      "eligible": 110,
+      "blocked": 110,
+      "claimable": 0
+    },
+    {
+      "time": 1790785282.3706863,
+      "role": "planner-2",
+      "pending": 120,
+      "eligible": 112,
+      "blocked": 112,
+      "claimable": 0
+    },
+    {
+      "time": 1790785283.4125357,
+      "role": "planner-2",
+      "pending": 124,
+      "eligible": 114,
+      "blocked": 0,
+      "claimable": 114
+    },
+    {
+      "time": 1790785284.0832863,
+      "role": "planner-1",
+      "pending": 123,
+      "eligible": 113,
+      "blocked": 113,
+      "claimable": 0
+    },
+    {
+      "time": 1790785285.1302252,
+      "role": "planner-1",
+      "pending": 124,
+      "eligible": 114,
+      "blocked": 114,
+      "claimable": 0
+    },
+    {
+      "time": 1790785286.180165,
+      "role": "planner-1",
+      "pending": 125,
+      "eligible": 115,
+      "blocked": 0,
+      "claimable": 115
+    },
+    {
+      "time": 1790785286.3105066,
+      "role": "planner-2",
+      "pending": 124,
+      "eligible": 115,
+      "blocked": 115,
+      "claimable": 0
+    },
+    {
+      "time": 1790785287.345056,
+      "role": "planner-2",
+      "pending": 125,
+      "eligible": 115,
+      "blocked": 115,
+      "claimable": 0
+    },
+    {
+      "time": 1790785288.4020488,
+      "role": "planner-2",
+      "pending": 126,
+      "eligible": 117,
+      "blocked": 0,
+      "claimable": 117
+    },
+    {
+      "time": 1790785289.066119,
+      "role": "planner-1",
+      "pending": 126,
+      "eligible": 116,
+      "blocked": 116,
+      "claimable": 0
+    },
+    {
+      "time": 1790785290.1111035,
+      "role": "planner-1",
+      "pending": 127,
+      "eligible": 117,
+      "blocked": 117,
+      "claimable": 0
+    },
+    {
+      "time": 1790785291.172409,
+      "role": "planner-1",
+      "pending": 128,
+      "eligible": 120,
+      "blocked": 0,
+      "claimable": 120
+    },
+    {
+      "time": 1790785291.4200578,
+      "role": "planner-2",
+      "pending": 127,
+      "eligible": 120,
+      "blocked": 118,
+      "claimable": 2
+    },
+    {
+      "time": 1790785294.0825589,
+      "role": "planner-1",
+      "pending": 131,
+      "eligible": 120,
+      "blocked": 0,
+      "claimable": 120
+    },
+    {
+      "time": 1790785294.2335505,
+      "role": "planner-2",
+      "pending": 130,
+      "eligible": 119,
+      "blocked": 119,
+      "claimable": 0
+    },
+    {
+      "time": 1790785295.257552,
+      "role": "planner-2",
+      "pending": 131,
+      "eligible": 120,
+      "blocked": 120,
+      "claimable": 0
+    },
+    {
+      "time": 1790785296.2849545,
+      "role": "planner-2",
+      "pending": 132,
+      "eligible": 122,
+      "blocked": 0,
+      "claimable": 122
+    },
+    {
+      "time": 1790785296.7959242,
+      "role": "planner-1",
+      "pending": 132,
+      "eligible": 121,
+      "blocked": 121,
+      "claimable": 0
+    },
+    {
+      "time": 1790785297.8259366,
+      "role": "planner-1",
+      "pending": 133,
+      "eligible": 122,
+      "blocked": 122,
+      "claimable": 0
+    },
+    {
+      "time": 1790785298.8576384,
+      "role": "planner-1",
+      "pending": 134,
+      "eligible": 123,
+      "blocked": 0,
+      "claimable": 123
+    },
+    {
+      "time": 1790785299.143975,
+      "role": "planner-2",
+      "pending": 133,
+      "eligible": 122,
+      "blocked": 122,
+      "claimable": 0
+    },
+    {
+      "time": 1790785300.1797583,
+      "role": "planner-2",
+      "pending": 134,
+      "eligible": 123,
+      "blocked": 123,
+      "claimable": 0
+    },
+    {
+      "time": 1790785301.2290242,
+      "role": "planner-2",
+      "pending": 135,
+      "eligible": 127,
+      "blocked": 0,
+      "claimable": 127
+    },
+    {
+      "time": 1790785301.7430034,
+      "role": "planner-1",
+      "pending": 135,
+      "eligible": 127,
+      "blocked": 124,
+      "claimable": 3
+    },
+    {
+      "time": 1790785304.167458,
+      "role": "planner-2",
+      "pending": 136,
+      "eligible": 128,
+      "blocked": 0,
+      "claimable": 128
+    },
+    {
+      "time": 1790785304.6677246,
+      "role": "planner-1",
+      "pending": 136,
+      "eligible": 128,
+      "blocked": 126,
+      "claimable": 2
+    },
+    {
+      "time": 1790785307.0307338,
+      "role": "planner-2",
+      "pending": 136,
+      "eligible": 128,
+      "blocked": 0,
+      "claimable": 128
+    },
+    {
+      "time": 1790785307.6049166,
+      "role": "planner-1",
+      "pending": 136,
+      "eligible": 128,
+      "blocked": 128,
+      "claimable": 0
+    },
+    {
+      "time": 1790785308.636034,
+      "role": "planner-1",
+      "pending": 137,
+      "eligible": 129,
+      "blocked": 129,
+      "claimable": 0
+    },
+    {
+      "time": 1790785309.6644156,
+      "role": "planner-1",
+      "pending": 138,
+      "eligible": 130,
+      "blocked": 0,
+      "claimable": 130
+    },
+    {
+      "time": 1790785309.7767599,
+      "role": "planner-2",
+      "pending": 137,
+      "eligible": 129,
+      "blocked": 129,
+      "claimable": 0
+    },
+    {
+      "time": 1790785310.8098521,
+      "role": "planner-2",
+      "pending": 138,
+      "eligible": 129,
+      "blocked": 129,
+      "claimable": 0
+    },
+    {
+      "time": 1790785311.839725,
+      "role": "planner-2",
+      "pending": 139,
+      "eligible": 131,
+      "blocked": 0,
+      "claimable": 131
+    },
+    {
+      "time": 1790785312.4877684,
+      "role": "planner-1",
+      "pending": 139,
+      "eligible": 131,
+      "blocked": 131,
+      "claimable": 0
+    },
+    {
+      "time": 1790785313.5650527,
+      "role": "planner-1",
+      "pending": 142,
+      "eligible": 132,
+      "blocked": 132,
+      "claimable": 0
+    },
+    {
+      "time": 1790785314.61161,
+      "role": "planner-1",
+      "pending": 143,
+      "eligible": 133,
+      "blocked": 0,
+      "claimable": 133
+    },
+    {
+      "time": 1790785314.7707713,
+      "role": "planner-2",
+      "pending": 142,
+      "eligible": 132,
+      "blocked": 132,
+      "claimable": 0
+    },
+    {
+      "time": 1790785315.8078628,
+      "role": "planner-2",
+      "pending": 143,
+      "eligible": 133,
+      "blocked": 133,
+      "claimable": 0
+    },
+    {
+      "time": 1790785316.853603,
+      "role": "planner-2",
+      "pending": 144,
+      "eligible": 134,
+      "blocked": 0,
+      "claimable": 134
+    },
+    {
+      "time": 1790785317.5292547,
+      "role": "planner-1",
+      "pending": 144,
+      "eligible": 134,
+      "blocked": 134,
+      "claimable": 0
+    },
+    {
+      "time": 1790785318.5691876,
+      "role": "planner-1",
+      "pending": 145,
+      "eligible": 135,
+      "blocked": 135,
+      "claimable": 0
+    },
+    {
+      "time": 1790785319.6073446,
+      "role": "planner-1",
+      "pending": 146,
+      "eligible": 136,
+      "blocked": 0,
+      "claimable": 136
+    },
+    {
+      "time": 1790785319.7586706,
+      "role": "planner-2",
+      "pending": 145,
+      "eligible": 135,
+      "blocked": 135,
+      "claimable": 0
+    },
+    {
+      "time": 1790785320.8423653,
+      "role": "planner-2",
+      "pending": 146,
+      "eligible": 138,
+      "blocked": 136,
+      "claimable": 2
+    },
+    {
+      "time": 1790785322.549517,
+      "role": "planner-1",
+      "pending": 148,
+      "eligible": 138,
+      "blocked": 0,
+      "claimable": 138
+    },
+    {
+      "time": 1790785323.6347396,
+      "role": "planner-2",
+      "pending": 149,
+      "eligible": 138,
+      "blocked": 138,
+      "claimable": 0
+    },
+    {
+      "time": 1790785324.6737552,
+      "role": "planner-2",
+      "pending": 150,
+      "eligible": 139,
+      "blocked": 0,
+      "claimable": 139
+    },
+    {
+      "time": 1790785325.424865,
+      "role": "planner-1",
+      "pending": 150,
+      "eligible": 139,
+      "blocked": 139,
+      "claimable": 0
+    },
+    {
+      "time": 1790785326.4713478,
+      "role": "planner-1",
+      "pending": 151,
+      "eligible": 140,
+      "blocked": 140,
+      "claimable": 0
+    },
+    {
+      "time": 1790785327.5161674,
+      "role": "planner-1",
+      "pending": 152,
+      "eligible": 141,
+      "blocked": 0,
+      "claimable": 141
+    },
+    {
+      "time": 1790785327.6577532,
+      "role": "planner-2",
+      "pending": 151,
+      "eligible": 140,
+      "blocked": 140,
+      "claimable": 0
+    },
+    {
+      "time": 1790785328.7025712,
+      "role": "planner-2",
+      "pending": 152,
+      "eligible": 141,
+      "blocked": 141,
+      "claimable": 0
+    },
+    {
+      "time": 1790785329.7440667,
+      "role": "planner-2",
+      "pending": 153,
+      "eligible": 142,
+      "blocked": 0,
+      "claimable": 142
+    },
+    {
+      "time": 1790785330.4956205,
+      "role": "planner-1",
+      "pending": 153,
+      "eligible": 144,
+      "blocked": 141,
+      "claimable": 3
+    },
+    {
+      "time": 1790785332.7378502,
+      "role": "planner-2",
+      "pending": 153,
+      "eligible": 146,
+      "blocked": 0,
+      "claimable": 146
+    },
+    {
+      "time": 1790785333.4769044,
+      "role": "planner-1",
+      "pending": 152,
+      "eligible": 146,
+      "blocked": 144,
+      "claimable": 2
+    },
+    {
+      "time": 1790785335.6381063,
+      "role": "planner-2",
+      "pending": 154,
+      "eligible": 146,
+      "blocked": 0,
+      "claimable": 146
+    },
+    {
+      "time": 1790785336.4567754,
+      "role": "planner-1",
+      "pending": 154,
+      "eligible": 146,
+      "blocked": 146,
+      "claimable": 0
+    },
+    {
+      "time": 1790785337.4945266,
+      "role": "planner-1",
+      "pending": 155,
+      "eligible": 147,
+      "blocked": 147,
+      "claimable": 0
+    },
+    {
+      "time": 1790785338.5447056,
+      "role": "planner-2",
+      "pending": 155,
+      "eligible": 147,
+      "blocked": 147,
+      "claimable": 0
+    },
+    {
+      "time": 1790785339.5883238,
+      "role": "planner-2",
+      "pending": 156,
+      "eligible": 148,
+      "blocked": 0,
+      "claimable": 148
+    },
+    {
+      "time": 1790785340.4969485,
+      "role": "planner-1",
+      "pending": 156,
+      "eligible": 147,
+      "blocked": 147,
+      "claimable": 0
+    },
+    {
+      "time": 1790785341.534608,
+      "role": "planner-1",
+      "pending": 157,
+      "eligible": 148,
+      "blocked": 0,
+      "claimable": 148
+    },
+    {
+      "time": 1790785342.5031512,
+      "role": "planner-2",
+      "pending": 157,
+      "eligible": 149,
+      "blocked": 149,
+      "claimable": 0
+    },
+    {
+      "time": 1790785343.5452619,
+      "role": "planner-2",
+      "pending": 160,
+      "eligible": 150,
+      "blocked": 0,
+      "claimable": 150
+    },
+    {
+      "time": 1790785344.4591913,
+      "role": "planner-1",
+      "pending": 160,
+      "eligible": 150,
+      "blocked": 150,
+      "claimable": 0
+    },
+    {
+      "time": 1790785345.4898257,
+      "role": "planner-1",
+      "pending": 161,
+      "eligible": 151,
+      "blocked": 0,
+      "claimable": 151
+    },
+    {
+      "time": 1790785346.412182,
+      "role": "planner-2",
+      "pending": 160,
+      "eligible": 151,
+      "blocked": 151,
+      "claimable": 0
+    },
+    {
+      "time": 1790785347.4391046,
+      "role": "planner-2",
+      "pending": 162,
+      "eligible": 152,
+      "blocked": 0,
+      "claimable": 152
+    },
+    {
+      "time": 1790785348.296155,
+      "role": "planner-1",
+      "pending": 161,
+      "eligible": 151,
+      "blocked": 151,
+      "claimable": 0
+    },
+    {
+      "time": 1790785349.3448741,
+      "role": "planner-1",
+      "pending": 162,
+      "eligible": 153,
+      "blocked": 0,
+      "claimable": 153
+    },
+    {
+      "time": 1790785350.2300909,
+      "role": "planner-2",
+      "pending": 162,
+      "eligible": 152,
+      "blocked": 152,
+      "claimable": 0
+    },
+    {
+      "time": 1790785351.2729106,
+      "role": "planner-2",
+      "pending": 163,
+      "eligible": 155,
+      "blocked": 0,
+      "claimable": 155
+    },
+    {
+      "time": 1790785352.2944682,
+      "role": "planner-1",
+      "pending": 163,
+      "eligible": 156,
+      "blocked": 154,
+      "claimable": 2
+    },
+    {
+      "time": 1790785353.3975089,
+      "role": "planner-1",
+      "pending": 166,
+      "eligible": 155,
+      "blocked": 0,
+      "claimable": 155
+    },
+    {
+      "time": 1790785354.3242705,
+      "role": "planner-2",
+      "pending": 166,
+      "eligible": 155,
+      "blocked": 155,
+      "claimable": 0
+    },
+    {
+      "time": 1790785355.3602035,
+      "role": "planner-2",
+      "pending": 167,
+      "eligible": 156,
+      "blocked": 0,
+      "claimable": 156
+    },
+    {
+      "time": 1790785356.213679,
+      "role": "planner-1",
+      "pending": 167,
+      "eligible": 155,
+      "blocked": 155,
+      "claimable": 0
+    },
+    {
+      "time": 1790785357.2435372,
+      "role": "planner-1",
+      "pending": 168,
+      "eligible": 156,
+      "blocked": 0,
+      "claimable": 156
+    },
+    {
+      "time": 1790785358.1911068,
+      "role": "planner-2",
+      "pending": 168,
+      "eligible": 156,
+      "blocked": 156,
+      "claimable": 0
+    },
+    {
+      "time": 1790785359.2253716,
+      "role": "planner-2",
+      "pending": 169,
+      "eligible": 157,
+      "blocked": 0,
+      "claimable": 157
+    },
+    {
+      "time": 1790785359.9946408,
+      "role": "planner-1",
+      "pending": 169,
+      "eligible": 157,
+      "blocked": 157,
+      "claimable": 0
+    },
+    {
+      "time": 1790785361.0300174,
+      "role": "planner-1",
+      "pending": 170,
+      "eligible": 162,
+      "blocked": 158,
+      "claimable": 4
+    },
+    {
+      "time": 1790785362.1088939,
+      "role": "planner-2",
+      "pending": 169,
+      "eligible": 161,
+      "blocked": 0,
+      "claimable": 161
+    },
+    {
+      "time": 1790785363.8985848,
+      "role": "planner-1",
+      "pending": 169,
+      "eligible": 162,
+      "blocked": 160,
+      "claimable": 2
+    },
+    {
+      "time": 1790785365.186836,
+      "role": "planner-2",
+      "pending": 169,
+      "eligible": 161,
+      "blocked": 0,
+      "claimable": 161
+    },
+    {
+      "time": 1790785366.9339259,
+      "role": "planner-1",
+      "pending": 170,
+      "eligible": 162,
+      "blocked": 162,
+      "claimable": 0
+    },
+    {
+      "time": 1790785367.9635863,
+      "role": "planner-1",
+      "pending": 171,
+      "eligible": 163,
+      "blocked": 0,
+      "claimable": 163
+    },
+    {
+      "time": 1790785368.013657,
+      "role": "planner-2",
+      "pending": 171,
+      "eligible": 163,
+      "blocked": 0,
+      "claimable": 163
+    },
+    {
+      "time": 1790785369.066245,
+      "role": "planner-2",
+      "pending": 171,
+      "eligible": 163,
+      "blocked": 163,
+      "claimable": 0
+    },
+    {
+      "time": 1790785370.1056533,
+      "role": "planner-2",
+      "pending": 172,
+      "eligible": 164,
+      "blocked": 0,
+      "claimable": 164
+    },
+    {
+      "time": 1790785370.845349,
+      "role": "planner-1",
+      "pending": 172,
+      "eligible": 163,
+      "blocked": 163,
+      "claimable": 0
+    },
+    {
+      "time": 1790785371.8894417,
+      "role": "planner-1",
+      "pending": 173,
+      "eligible": 164,
+      "blocked": 164,
+      "claimable": 0
+    },
+    {
+      "time": 1790785372.9262006,
+      "role": "planner-1",
+      "pending": 176,
+      "eligible": 166,
+      "blocked": 0,
+      "claimable": 166
+    },
+    {
+      "time": 1790785373.0615342,
+      "role": "planner-2",
+      "pending": 175,
+      "eligible": 165,
+      "blocked": 165,
+      "claimable": 0
+    },
+    {
+      "time": 1790785374.0942125,
+      "role": "planner-2",
+      "pending": 176,
+      "eligible": 166,
+      "blocked": 166,
+      "claimable": 0
+    },
+    {
+      "time": 1790785375.135769,
+      "role": "planner-2",
+      "pending": 177,
+      "eligible": 167,
+      "blocked": 0,
+      "claimable": 167
+    },
+    {
+      "time": 1790785375.7404907,
+      "role": "planner-1",
+      "pending": 177,
+      "eligible": 167,
+      "blocked": 167,
+      "claimable": 0
+    },
+    {
+      "time": 1790785376.7814555,
+      "role": "planner-1",
+      "pending": 178,
+      "eligible": 168,
+      "blocked": 168,
+      "claimable": 0
+    },
+    {
+      "time": 1790785377.828394,
+      "role": "planner-1",
+      "pending": 179,
+      "eligible": 169,
+      "blocked": 0,
+      "claimable": 169
+    },
+    {
+      "time": 1790785378.0774376,
+      "role": "planner-2",
+      "pending": 178,
+      "eligible": 168,
+      "blocked": 168,
+      "claimable": 0
+    },
+    {
+      "time": 1790785379.13366,
+      "role": "planner-2",
+      "pending": 179,
+      "eligible": 169,
+      "blocked": 169,
+      "claimable": 0
+    },
+    {
+      "time": 1790785380.176266,
+      "role": "planner-2",
+      "pending": 180,
+      "eligible": 170,
+      "blocked": 0,
+      "claimable": 170
+    },
+    {
+      "time": 1790785380.7289517,
+      "role": "planner-1",
+      "pending": 180,
+      "eligible": 172,
+      "blocked": 170,
+      "claimable": 2
+    },
+    {
+      "time": 1790785382.9696717,
+      "role": "planner-2",
+      "pending": 183,
+      "eligible": 172,
+      "blocked": 0,
+      "claimable": 172
+    },
+    {
+      "time": 1790785383.490665,
+      "role": "planner-1",
+      "pending": 183,
+      "eligible": 172,
+      "blocked": 172,
+      "claimable": 0
+    },
+    {
+      "time": 1790785384.5192327,
+      "role": "planner-1",
+      "pending": 184,
+      "eligible": 173,
+      "blocked": 173,
+      "claimable": 0
+    },
+    {
+      "time": 1790785385.5670068,
+      "role": "planner-1",
+      "pending": 185,
+      "eligible": 174,
+      "blocked": 0,
+      "claimable": 174
+    },
+    {
+      "time": 1790785385.812911,
+      "role": "planner-2",
+      "pending": 184,
+      "eligible": 173,
+      "blocked": 173,
+      "claimable": 0
+    },
+    {
+      "time": 1790785386.851608,
+      "role": "planner-2",
+      "pending": 185,
+      "eligible": 174,
+      "blocked": 174,
+      "claimable": 0
+    },
+    {
+      "time": 1790785387.8859887,
+      "role": "planner-2",
+      "pending": 186,
+      "eligible": 175,
+      "blocked": 0,
+      "claimable": 175
+    },
+    {
+      "time": 1790785388.55488,
+      "role": "planner-1",
+      "pending": 186,
+      "eligible": 175,
+      "blocked": 175,
+      "claimable": 0
+    },
+    {
+      "time": 1790785389.5982418,
+      "role": "planner-1",
+      "pending": 187,
+      "eligible": 176,
+      "blocked": 176,
+      "claimable": 0
+    },
+    {
+      "time": 1790785390.6268058,
+      "role": "planner-1",
+      "pending": 188,
+      "eligible": 177,
+      "blocked": 0,
+      "claimable": 177
+    },
+    {
+      "time": 1790785390.7952204,
+      "role": "planner-2",
+      "pending": 187,
+      "eligible": 179,
+      "blocked": 176,
+      "claimable": 3
+    },
+    {
+      "time": 1790785393.4963841,
+      "role": "planner-1",
+      "pending": 188,
+      "eligible": 181,
+      "blocked": 0,
+      "claimable": 181
+    },
+    {
+      "time": 1790785393.6965237,
+      "role": "planner-2",
+      "pending": 188,
+      "eligible": 180,
+      "blocked": 178,
+      "claimable": 2
+    },
+    {
+      "time": 1790785396.2337482,
+      "role": "planner-1",
+      "pending": 188,
+      "eligible": 180,
+      "blocked": 0,
+      "claimable": 180
+    },
+    {
+      "time": 1790785396.483494,
+      "role": "planner-2",
+      "pending": 188,
+      "eligible": 180,
+      "blocked": 180,
+      "claimable": 0
+    },
+    {
+      "time": 1790785397.515339,
+      "role": "planner-2",
+      "pending": 189,
+      "eligible": 181,
+      "blocked": 181,
+      "claimable": 0
+    },
+    {
+      "time": 1790785398.55156,
+      "role": "planner-2",
+      "pending": 190,
+      "eligible": 182,
+      "blocked": 0,
+      "claimable": 182
+    },
+    {
+      "time": 1790785399.1458693,
+      "role": "planner-1",
+      "pending": 189,
+      "eligible": 181,
+      "blocked": 181,
+      "claimable": 0
+    },
+    {
+      "time": 1790785400.1788864,
+      "role": "planner-1",
+      "pending": 190,
+      "eligible": 182,
+      "blocked": 182,
+      "claimable": 0
+    },
+    {
+      "time": 1790785401.225537,
+      "role": "planner-1",
+      "pending": 191,
+      "eligible": 182,
+      "blocked": 0,
+      "claimable": 182
+    },
+    {
+      "time": 1790785401.6639068,
+      "role": "planner-2",
+      "pending": 191,
+      "eligible": 183,
+      "blocked": 183,
+      "claimable": 0
+    },
+    {
+      "time": 1790785402.7247627,
+      "role": "planner-2",
+      "pending": 193,
+      "eligible": 184,
+      "blocked": 184,
+      "claimable": 0
+    },
+    {
+      "time": 1790785403.765178,
+      "role": "planner-2",
+      "pending": 195,
+      "eligible": 185,
+      "blocked": 0,
+      "claimable": 185
+    },
+    {
+      "time": 1790785404.300831,
+      "role": "planner-1",
+      "pending": 194,
+      "eligible": 185,
+      "blocked": 185,
+      "claimable": 0
+    },
+    {
+      "time": 1790785405.3337078,
+      "role": "planner-1",
+      "pending": 195,
+      "eligible": 186,
+      "blocked": 186,
+      "claimable": 0
+    },
+    {
+      "time": 1790785406.3724582,
+      "role": "planner-1",
+      "pending": 197,
+      "eligible": 187,
+      "blocked": 0,
+      "claimable": 187
+    },
+    {
+      "time": 1790785406.564235,
+      "role": "planner-2",
+      "pending": 196,
+      "eligible": 186,
+      "blocked": 186,
+      "claimable": 0
+    },
+    {
+      "time": 1790785407.5859828,
+      "role": "planner-2",
+      "pending": 197,
+      "eligible": 187,
+      "blocked": 187,
+      "claimable": 0
+    },
+    {
+      "time": 1790785408.6099494,
+      "role": "planner-2",
+      "pending": 198,
+      "eligible": 188,
+      "blocked": 0,
+      "claimable": 188
+    },
+    {
+      "time": 1790785409.0374074,
+      "role": "planner-1",
+      "pending": 197,
+      "eligible": 187,
+      "blocked": 187,
+      "claimable": 0
+    },
+    {
+      "time": 1790785410.0831418,
+      "role": "planner-1",
+      "pending": 198,
+      "eligible": 188,
+      "blocked": 188,
+      "claimable": 0
+    },
+    {
+      "time": 1790785411.1269772,
+      "role": "planner-1",
+      "pending": 199,
+      "eligible": 191,
+      "blocked": 0,
+      "claimable": 191
+    },
+    {
+      "time": 1790785411.5320253,
+      "role": "planner-2",
+      "pending": 199,
+      "eligible": 191,
+      "blocked": 189,
+      "claimable": 2
+    },
+    {
+      "time": 1790785414.0199757,
+      "role": "planner-1",
+      "pending": 202,
+      "eligible": 191,
+      "blocked": 0,
+      "claimable": 191
+    },
+    {
+      "time": 1790785414.3155096,
+      "role": "planner-2",
+      "pending": 201,
+      "eligible": 191,
+      "blocked": 191,
+      "claimable": 0
+    },
+    {
+      "time": 1790785415.3520913,
+      "role": "planner-2",
+      "pending": 202,
+      "eligible": 192,
+      "blocked": 192,
+      "claimable": 0
+    },
+    {
+      "time": 1790785416.3935142,
+      "role": "planner-2",
+      "pending": 203,
+      "eligible": 193,
+      "blocked": 0,
+      "claimable": 193
+    },
+    {
+      "time": 1790785416.952078,
+      "role": "planner-1",
+      "pending": 203,
+      "eligible": 192,
+      "blocked": 192,
+      "claimable": 0
+    },
+    {
+      "time": 1790785417.9845974,
+      "role": "planner-1",
+      "pending": 204,
+      "eligible": 193,
+      "blocked": 193,
+      "claimable": 0
+    },
+    {
+      "time": 1790785419.0218189,
+      "role": "planner-1",
+      "pending": 205,
+      "eligible": 194,
+      "blocked": 0,
+      "claimable": 194
+    },
+    {
+      "time": 1790785419.3563132,
+      "role": "planner-2",
+      "pending": 204,
+      "eligible": 194,
+      "blocked": 194,
+      "claimable": 0
+    },
+    {
+      "time": 1790785420.4112206,
+      "role": "planner-2",
+      "pending": 205,
+      "eligible": 195,
+      "blocked": 194,
+      "claimable": 1
+    },
+    {
+      "time": 1790785421.963252,
+      "role": "planner-1",
+      "pending": 206,
+      "eligible": 198,
+      "blocked": 0,
+      "claimable": 198
+    },
+    {
+      "time": 1790785423.3062265,
+      "role": "planner-2",
+      "pending": 205,
+      "eligible": 199,
+      "blocked": 197,
+      "claimable": 2
+    },
+    {
+      "time": 1790785424.8583386,
+      "role": "planner-1",
+      "pending": 203,
+      "eligible": 198,
+      "blocked": 0,
+      "claimable": 198
+    },
+    {
+      "time": 1790785426.3431633,
+      "role": "planner-2",
+      "pending": 202,
+      "eligible": 199,
+      "blocked": 199,
+      "claimable": 0
+    },
+    {
+      "time": 1790785427.3923693,
+      "role": "planner-2",
+      "pending": 202,
+      "eligible": 200,
+      "blocked": 0,
+      "claimable": 200
+    },
+    {
+      "time": 1790785427.9216292,
+      "role": "planner-1",
+      "pending": 201,
+      "eligible": 199,
+      "blocked": 199,
+      "claimable": 0
+    },
+    {
+      "time": 1790785428.9550467,
+      "role": "planner-1",
+      "pending": 201,
+      "eligible": 200,
+      "blocked": 200,
+      "claimable": 0
+    },
+    {
+      "time": 1790785430.002525,
+      "role": "planner-1",
+      "pending": 201,
+      "eligible": 201,
+      "blocked": 0,
+      "claimable": 201
+    },
+    {
+      "time": 1790785430.2859688,
+      "role": "planner-2",
+      "pending": 200,
+      "eligible": 200,
+      "blocked": 200,
+      "claimable": 0
+    },
+    {
+      "time": 1790785431.3396094,
+      "role": "planner-2",
+      "pending": 200,
+      "eligible": 200,
+      "blocked": 200,
+      "claimable": 0
+    },
+    {
+      "time": 1790785432.3632581,
+      "role": "planner-2",
+      "pending": 200,
+      "eligible": 200,
+      "blocked": 0,
+      "claimable": 200
+    },
+    {
+      "time": 1790785432.862511,
+      "role": "planner-1",
+      "pending": 199,
+      "eligible": 199,
+      "blocked": 199,
+      "claimable": 0
+    },
+    {
+      "time": 1790785433.8958178,
+      "role": "planner-1",
+      "pending": 199,
+      "eligible": 199,
+      "blocked": 199,
+      "claimable": 0
+    },
+    {
+      "time": 1790785434.9294195,
+      "role": "planner-1",
+      "pending": 199,
+      "eligible": 199,
+      "blocked": 0,
+      "claimable": 199
+    },
+    {
+      "time": 1790785435.1156764,
+      "role": "planner-2",
+      "pending": 198,
+      "eligible": 198,
+      "blocked": 198,
+      "claimable": 0
+    },
+    {
+      "time": 1790785436.1633756,
+      "role": "planner-2",
+      "pending": 198,
+      "eligible": 198,
+      "blocked": 198,
+      "claimable": 0
+    },
+    {
+      "time": 1790785437.197974,
+      "role": "planner-2",
+      "pending": 198,
+      "eligible": 198,
+      "blocked": 0,
+      "claimable": 198
+    },
+    {
+      "time": 1790785437.9261777,
+      "role": "planner-1",
+      "pending": 197,
+      "eligible": 197,
+      "blocked": 197,
+      "claimable": 0
+    },
+    {
+      "time": 1790785438.9804797,
+      "role": "planner-1",
+      "pending": 197,
+      "eligible": 197,
+      "blocked": 197,
+      "claimable": 0
+    },
+    {
+      "time": 1790785440.0357962,
+      "role": "planner-1",
+      "pending": 197,
+      "eligible": 197,
+      "blocked": 0,
+      "claimable": 197
+    },
+    {
+      "time": 1790785440.1981707,
+      "role": "planner-2",
+      "pending": 196,
+      "eligible": 196,
+      "blocked": 196,
+      "claimable": 0
+    },
+    {
+      "time": 1790785441.2930365,
+      "role": "planner-2",
+      "pending": 196,
+      "eligible": 196,
+      "blocked": 196,
+      "claimable": 0
+    },
+    {
+      "time": 1790785442.335586,
+      "role": "planner-2",
+      "pending": 196,
+      "eligible": 196,
+      "blocked": 0,
+      "claimable": 196
+    }
+  ]
+}

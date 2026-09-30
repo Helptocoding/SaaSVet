@@ -1,0 +1,5501 @@
+{
+  "schema": "e4-collection-v1",
+  "classification": "DIAGNOSTIC_ONLY",
+  "receipt": "e4-diagnostic-efficient.json",
+  "environment": [
+    "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+    "on",
+    "on"
+  ],
+  "distributions": {
+    "persisted_to_claim": {
+      "n": 24,
+      "p50": 8.863689,
+      "p75": 11.826732,
+      "p90": 21.295855,
+      "p95": 21.773134,
+      "p99": 22.470835,
+      "max": 22.470835
+    },
+    "safety_claim": {
+      "n": 8,
+      "p50": 0.121042,
+      "p75": 0.145516,
+      "p90": 0.154511,
+      "p95": 0.154511,
+      "p99": 0.154511,
+      "max": 0.154511
+    },
+    "ordinary_claim": {
+      "n": 16,
+      "p50": 10.963494,
+      "p75": 21.056536,
+      "p90": 21.773134,
+      "p95": 22.470835,
+      "p99": 22.470835,
+      "max": 22.470835
+    },
+    "eligible_delay": {
+      "n": 16,
+      "p50": 7.950731992721558,
+      "p75": 17.906704902648926,
+      "p90": 18.028362035751343,
+      "p95": 18.06355094909668,
+      "p99": 18.06355094909668,
+      "max": 18.06355094909668
+    },
+    "first_observation_to_claim": {
+      "n": 16,
+      "p50": 2.7262003421783447,
+      "p75": 3.805922746658325,
+      "p90": 13.095224857330322,
+      "p95": 14.298600435256958,
+      "p99": 14.298600435256958,
+      "max": 14.298600435256958
+    },
+    "eligible_to_poll": {
+      "n": 16,
+      "p50": 0.301973819732666,
+      "p75": 0.7354881763458252,
+      "p90": 0.8715312480926514,
+      "p95": 0.8782570362091064,
+      "p99": 0.8782570362091064,
+      "max": 0.8782570362091064
+    },
+    "poll_to_candidate": {
+      "n": 16,
+      "p50": 2.706782341003418,
+      "p75": 3.7425718307495117,
+      "p90": 3.7902274131774902,
+      "p95": 3.7902274131774902,
+      "p99": 3.7902274131774902,
+      "max": 3.7902274131774902
+    },
+    "candidate_to_capacity": {
+      "n": 16,
+      "p50": 0.003963947296142578,
+      "p75": 0.0053102970123291016,
+      "p90": 0.005358219146728516,
+      "p95": 0.009430885314941406,
+      "p99": 0.009430885314941406,
+      "max": 0.009430885314941406
+    },
+    "capacity_to_locks": {
+      "n": 16,
+      "p50": 0.0777437686920166,
+      "p75": 0.08186531066894531,
+      "p90": 0.10884356498718262,
+      "p95": 0.10884356498718262,
+      "p99": 0.10884356498718262,
+      "max": 0.10884356498718262
+    },
+    "locks_to_commit": {
+      "n": 16,
+      "p50": 0.0025632381439208984,
+      "p75": 0.004311800003051758,
+      "p90": 0.006681919097900391,
+      "p95": 0.0068666934967041016,
+      "p99": 0.0068666934967041016,
+      "max": 0.0068666934967041016
+    },
+    "candidate_to_commit": {
+      "n": 16,
+      "p50": 0.08467698097229004,
+      "p75": 0.09251117706298828,
+      "p90": 0.11703944206237793,
+      "p95": 0.11703944206237793,
+      "p99": 0.11703944206237793,
+      "max": 0.11703944206237793
+    },
+    "persisted_to_commit": {
+      "n": 16,
+      "p50": 11.036587238311768,
+      "p75": 21.129629373550415,
+      "p90": 21.836631298065186,
+      "p95": 22.52076292037964,
+      "p99": 22.52076292037964,
+      "max": 22.52076292037964
+    }
+  },
+  "service": {
+    "claim_to_completion": {
+      "n": 85,
+      "p50": 1.711847,
+      "p75": 1.777964,
+      "p90": 1.848499,
+      "p95": 1.893818,
+      "p99": 2.94584,
+      "max": 2.94584
+    },
+    "calls_per_work": {
+      "n": 85,
+      "p50": 2,
+      "p75": 2,
+      "p90": 2,
+      "p95": 2,
+      "p99": 2,
+      "max": 2
+    },
+    "claim_to_first_admission": {
+      "n": 85,
+      "p50": 0.224414,
+      "p75": 0.256054,
+      "p90": 0.299654,
+      "p95": 0.330565,
+      "p99": 0.468163,
+      "max": 0.468163
+    },
+    "first_dispatch_to_response": {
+      "n": 85,
+      "p50": 0.5004055500030518,
+      "p75": 0.5005710124969482,
+      "p90": 0.5007610321044922,
+      "p95": 0.5014729499816895,
+      "p99": 0.5073657035827637,
+      "max": 0.5073657035827637
+    },
+    "first_response_to_tool_completed": {
+      "n": 85,
+      "p50": 0.18248319625854492,
+      "p75": 0.19347333908081055,
+      "p90": 0.22615551948547363,
+      "p95": 0.2479703426361084,
+      "p99": 1.0473651885986328,
+      "max": 1.0473651885986328
+    },
+    "tool_to_second_admission": {
+      "n": 85,
+      "p50": 0.03204607963562012,
+      "p75": 0.037242889404296875,
+      "p90": 0.04449343681335449,
+      "p95": 0.052185773849487305,
+      "p99": 0.11364197731018066,
+      "max": 0.11364197731018066
+    },
+    "second_dispatch_to_response": {
+      "n": 85,
+      "p50": 0.5003981590270996,
+      "p75": 0.5005476474761963,
+      "p90": 0.5006849765777588,
+      "p95": 0.5008289813995361,
+      "p99": 0.502875566482544,
+      "max": 0.502875566482544
+    },
+    "second_response_to_completion": {
+      "n": 85,
+      "p50": 0.22054791450500488,
+      "p75": 0.24684453010559082,
+      "p90": 0.3111274242401123,
+      "p95": 0.3408324718475342,
+      "p99": 0.39429616928100586,
+      "max": 0.39429616928100586
+    }
+  },
+  "critical": {
+    "cross_tenant": 0,
+    "budget_violations": 0,
+    "failed": 0,
+    "max_active_observed": 1,
+    "unclaimed_healthy": 0
+  },
+  "polling": {
+    "start_to_start": {
+      "n": 183,
+      "p50": 1.060997724533081,
+      "p75": 2.770221710205078,
+      "p90": 2.86279559135437,
+      "p95": 2.915529489517212,
+      "p99": 3.9260222911834717,
+      "max": 4.054010629653931
+    },
+    "polls": 185,
+    "empty": 100,
+    "nonempty": 85,
+    "misses": 4,
+    "observer_cost": {
+      "n": 185,
+      "p50": 0.008290290832519531,
+      "p75": 0.010796308517456055,
+      "p90": 0.013653993606567383,
+      "p95": 0.018645048141479492,
+      "p99": 0.09071040153503418,
+      "max": 0.1353006362915039
+    }
+  },
+  "sql_execution_seconds": {
+    "candidate_query": {
+      "n": 185,
+      "p50": 0.004262447357177734,
+      "p75": 0.004969358444213867,
+      "p90": 0.005850791931152344,
+      "p95": 0.0069386959075927734,
+      "p99": 0.017023324966430664,
+      "max": 0.029017210006713867
+    },
+    "organizations_organization": {
+      "n": 89,
+      "p50": 0.0009462833404541016,
+      "p75": 0.0011048316955566406,
+      "p90": 0.0014264583587646484,
+      "p95": 0.0016071796417236328,
+      "p99": 0.008396148681640625,
+      "max": 0.008396148681640625
+    },
+    "agent_conversation": {
+      "n": 170,
+      "p50": 0.0018663406372070312,
+      "p75": 0.002937793731689453,
+      "p90": 0.0035321712493896484,
+      "p95": 0.004674673080444336,
+      "p99": 0.026885271072387695,
+      "max": 0.028224945068359375
+    },
+    "agent_turnwork": {
+      "n": 170,
+      "p50": 0.0013811588287353516,
+      "p75": 0.0016429424285888672,
+      "p90": 0.002360820770263672,
+      "p95": 0.003359079360961914,
+      "p99": 0.006417036056518555,
+      "max": 0.007354736328125
+    },
+    "channels_message": {
+      "n": 170,
+      "p50": 0.001644134521484375,
+      "p75": 0.0018985271453857422,
+      "p90": 0.0025098323822021484,
+      "p95": 0.003627300262451172,
+      "p99": 0.008559703826904297,
+      "max": 0.013672828674316406
+    }
+  },
+  "query": "SELECT \"pk\" FROM ( SELECT * FROM ( SELECT \"agent_conversation\".\"id\" AS \"pk\", ROW_NUMBER() OVER (PARTITION BY \"agent_conversation\".\"organization_id\" ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, \"agent_conversation\".\"id\" ASC) AS \"qual0\", \"agent_conversation\".\"last_activity_at\" AS \"qual1\" FROM \"agent_conversation\" LEFT OUTER JOIN \"agent_turnwork\" ON (\"agent_conversation\".\"id\" = \"agent_turnwork\".\"conversation_id\") WHERE (\"agent_conversation\".\"is_active\" AND ((\"agent_turnwork\".\"lease_expires_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = PROCESSING) OR (\"agent_turnwork\".\"next_attempt_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = PENDING) OR (\"agent_turnwork\".\"next_attempt_at\" IS NULL AND \"agent_turnwork\".\"status\" = PENDING) OR \"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = in AND U0.\"status\" = pending AND U0.\"turn_work_id\" IS NULL AND (U0.\"available_at\" IS NULL OR U0.\"available_at\" <= (STATEMENT_TIMESTAMP()))))) AND NOT EXISTS(SELECT 1 AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\") AND U0.\"status\" = PROCESSING) LIMIT 1)) ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, 1 ASC ) \"qualify\" WHERE \"qual0\" = 1 ) \"qualify_mask\" ORDER BY \"qual1\" ASC, 1 ASC LIMIT 3",
+  "query_plan": [
+    {
+      "Plan": {
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 53.47,
+        "Total Cost": 53.84,
+        "Plan Rows": 1,
+        "Plan Width": 16,
+        "Actual Startup Time": 0.843,
+        "Actual Total Time": 0.846,
+        "Actual Rows": 1,
+        "Actual Loops": 1,
+        "Shared Hit Blocks": 31,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Alias": "qualify",
+            "Startup Cost": 53.47,
+            "Total Cost": 53.84,
+            "Plan Rows": 1,
+            "Plan Width": 16,
+            "Actual Startup Time": 0.838,
+            "Actual Total Time": 0.841,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Filter": "(qualify.qual0 = 1)",
+            "Rows Removed by Filter": 0,
+            "Shared Hit Blocks": 31,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Parent Relationship": "Subquery",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 53.47,
+                "Total Cost": 53.53,
+                "Plan Rows": 25,
+                "Plan Width": 32,
+                "Actual Startup Time": 0.833,
+                "Actual Total Time": 0.836,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Sort Key": [
+                  "agent_conversation.last_activity_at",
+                  "agent_conversation.id"
+                ],
+                "Sort Method": "quicksort",
+                "Sort Space Used": 25,
+                "Sort Space Type": "Memory",
+                "Shared Hit Blocks": 31,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "WindowAgg",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 52.32,
+                    "Total Cost": 52.89,
+                    "Plan Rows": 25,
+                    "Plan Width": 32,
+                    "Actual Startup Time": 0.811,
+                    "Actual Total Time": 0.83,
+                    "Actual Rows": 1,
+                    "Actual Loops": 1,
+                    "Run Condition": "(row_number() OVER (?) <= 1)",
+                    "Shared Hit Blocks": 31,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Sort",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 52.32,
+                        "Total Cost": 52.39,
+                        "Plan Rows": 25,
+                        "Plan Width": 24,
+                        "Actual Startup Time": 0.782,
+                        "Actual Total Time": 0.789,
+                        "Actual Rows": 80,
+                        "Actual Loops": 1,
+                        "Sort Key": [
+                          "agent_conversation.organization_id",
+                          "agent_conversation.last_activity_at",
+                          "agent_conversation.id"
+                        ],
+                        "Sort Method": "quicksort",
+                        "Sort Space Used": 28,
+                        "Sort Space Type": "Memory",
+                        "Shared Hit Blocks": 31,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Hash Join",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Join Type": "Anti",
+                            "Startup Cost": 45.99,
+                            "Total Cost": 51.74,
+                            "Plan Rows": 25,
+                            "Plan Width": 24,
+                            "Actual Startup Time": 0.682,
+                            "Actual Total Time": 0.731,
+                            "Actual Rows": 80,
+                            "Actual Loops": 1,
+                            "Inner Unique": false,
+                            "Hash Cond": "(agent_conversation.organization_id = u0.organization_id)",
+                            "Shared Hit Blocks": 31,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Hash Join",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Join Type": "Right",
+                                "Startup Cost": 32.14,
+                                "Total Cost": 37.37,
+                                "Plan Rows": 81,
+                                "Plan Width": 24,
+                                "Actual Startup Time": 0.628,
+                                "Actual Total Time": 0.665,
+                                "Actual Rows": 80,
+                                "Actual Loops": 1,
+                                "Inner Unique": true,
+                                "Hash Cond": "(agent_turnwork.conversation_id = agent_conversation.id)",
+                                "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 1))",
+                                "Rows Removed by Filter": 95,
+                                "Shared Hit Blocks": 27,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Seq Scan",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Relation Name": "agent_turnwork",
+                                    "Alias": "agent_turnwork",
+                                    "Startup Cost": 0.0,
+                                    "Total Cost": 4.95,
+                                    "Plan Rows": 95,
+                                    "Plan Width": 34,
+                                    "Actual Startup Time": 0.016,
+                                    "Actual Total Time": 0.064,
+                                    "Actual Rows": 95,
+                                    "Actual Loops": 1,
+                                    "Shared Hit Blocks": 4,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0
+                                  },
+                                  {
+                                    "Node Type": "Hash",
+                                    "Parent Relationship": "Inner",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Startup Cost": 7.62,
+                                    "Total Cost": 7.62,
+                                    "Plan Rows": 162,
+                                    "Plan Width": 24,
+                                    "Actual Startup Time": 0.21,
+                                    "Actual Total Time": 0.21,
+                                    "Actual Rows": 162,
+                                    "Actual Loops": 1,
+                                    "Hash Buckets": 1024,
+                                    "Original Hash Buckets": 1024,
+                                    "Hash Batches": 1,
+                                    "Original Hash Batches": 1,
+                                    "Peak Memory Usage": 17,
+                                    "Shared Hit Blocks": 6,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Seq Scan",
+                                        "Parent Relationship": "Outer",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Relation Name": "agent_conversation",
+                                        "Alias": "agent_conversation",
+                                        "Startup Cost": 0.0,
+                                        "Total Cost": 7.62,
+                                        "Plan Rows": 162,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.03,
+                                        "Actual Total Time": 0.157,
+                                        "Actual Rows": 162,
+                                        "Actual Loops": 1,
+                                        "Filter": "is_active",
+                                        "Rows Removed by Filter": 0,
+                                        "Shared Hit Blocks": 6,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Seq Scan",
+                                    "Parent Relationship": "SubPlan",
+                                    "Subplan Name": "SubPlan 1",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Relation Name": "channels_message",
+                                    "Alias": "u0_1",
+                                    "Startup Cost": 0.0,
+                                    "Total Cost": 22.46,
+                                    "Plan Rows": 12,
+                                    "Plan Width": 8,
+                                    "Actual Startup Time": 0.026,
+                                    "Actual Total Time": 0.195,
+                                    "Actual Rows": 80,
+                                    "Actual Loops": 1,
+                                    "Filter": "(is_active AND (turn_work_id IS NULL) AND ((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text) AND ((available_at IS NULL) OR (available_at <= statement_timestamp())))",
+                                    "Rows Removed by Filter": 193,
+                                    "Shared Hit Blocks": 17,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Hash",
+                                "Parent Relationship": "Inner",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Startup Cost": 13.84,
+                                "Total Cost": 13.84,
+                                "Plan Rows": 1,
+                                "Plan Width": 8,
+                                "Actual Startup Time": 0.034,
+                                "Actual Total Time": 0.034,
+                                "Actual Rows": 0,
+                                "Actual Loops": 1,
+                                "Hash Buckets": 1024,
+                                "Original Hash Buckets": 1024,
+                                "Hash Batches": 1,
+                                "Original Hash Batches": 1,
+                                "Peak Memory Usage": 8,
+                                "Shared Hit Blocks": 4,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Join Type": "Inner",
+                                    "Startup Cost": 0.14,
+                                    "Total Cost": 13.84,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Actual Startup Time": 0.033,
+                                    "Actual Total Time": 0.034,
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 1,
+                                    "Inner Unique": true,
+                                    "Shared Hit Blocks": 4,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Seq Scan",
+                                        "Parent Relationship": "Outer",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Relation Name": "agent_turnwork",
+                                        "Alias": "u0",
+                                        "Startup Cost": 0.0,
+                                        "Total Cost": 5.66,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.033,
+                                        "Actual Total Time": 0.033,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 1,
+                                        "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))",
+                                        "Rows Removed by Filter": 95,
+                                        "Shared Hit Blocks": 4,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Inner",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "agent_conversation_pkey",
+                                        "Relation Name": "agent_conversation",
+                                        "Alias": "u2",
+                                        "Startup Cost": 0.14,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.0,
+                                        "Actual Total Time": 0.0,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Index Cond": "(id = u0.conversation_id)",
+                                        "Rows Removed by Index Recheck": 0,
+                                        "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))",
+                                        "Rows Removed by Filter": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 191,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 15.215,
+      "Triggers": [],
+      "Execution Time": 1.003
+    }
+  ],
+  "sql_duration_is_lock_wait_upper_bound": true,
+  "lock_wait_samples": [
+    {
+      "second": 0,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ]
+    },
+    {
+      "second": 5,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 10,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 15,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 20,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 25,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 30,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 35,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 40,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 45,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 50,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 55,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 60,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 65,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 70,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 75,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ]
+    },
+    {
+      "second": 80,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 85,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 90,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 95,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 100,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 105,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 110,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 115,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 120,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 125,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 130,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 135,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 140,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    },
+    {
+      "second": 145,
+      "waits": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ]
+    }
+  ],
+  "indexes": [
+    [
+      "agent_conversation_pkey",
+      "CREATE UNIQUE INDEX agent_conversation_pkey ON public.agent_conversation USING btree (id)"
+    ],
+    [
+      "agent_conversation_public_id_key",
+      "CREATE UNIQUE INDEX agent_conversation_public_id_key ON public.agent_conversation USING btree (public_id)"
+    ],
+    [
+      "agent_conve_organiz_34081f_idx",
+      "CREATE INDEX agent_conve_organiz_34081f_idx ON public.agent_conversation USING btree (organization_id, state, last_activity_at DESC)"
+    ],
+    [
+      "agent_conve_contact_b658a2_idx",
+      "CREATE INDEX agent_conve_contact_b658a2_idx ON public.agent_conversation USING btree (contact_id, created_at DESC)"
+    ],
+    [
+      "agent_conversation_channel_account_id_b929d3ce",
+      "CREATE INDEX agent_conversation_channel_account_id_b929d3ce ON public.agent_conversation USING btree (channel_account_id)"
+    ],
+    [
+      "agent_conversation_claimed_by_id_62f9da56",
+      "CREATE INDEX agent_conversation_claimed_by_id_62f9da56 ON public.agent_conversation USING btree (claimed_by_id)"
+    ],
+    [
+      "agent_conversation_contact_id_36ec89e7",
+      "CREATE INDEX agent_conversation_contact_id_36ec89e7 ON public.agent_conversation USING btree (contact_id)"
+    ],
+    [
+      "agent_conversation_created_by_id_4cf1b1e4",
+      "CREATE INDEX agent_conversation_created_by_id_4cf1b1e4 ON public.agent_conversation USING btree (created_by_id)"
+    ],
+    [
+      "agent_conversation_organization_id_1ef62d10",
+      "CREATE INDEX agent_conversation_organization_id_1ef62d10 ON public.agent_conversation USING btree (organization_id)"
+    ],
+    [
+      "agent_conversation_updated_by_id_01e8413e",
+      "CREATE INDEX agent_conversation_updated_by_id_01e8413e ON public.agent_conversation USING btree (updated_by_id)"
+    ],
+    [
+      "channels_message_pkey",
+      "CREATE UNIQUE INDEX channels_message_pkey ON public.channels_message USING btree (id)"
+    ],
+    [
+      "channels_me_organiz_7ba1d3_idx",
+      "CREATE INDEX channels_me_organiz_7ba1d3_idx ON public.channels_message USING btree (organization_id, conversation_id, created_at)"
+    ],
+    [
+      "channels_me_directi_c93e59_idx",
+      "CREATE INDEX channels_me_directi_c93e59_idx ON public.channels_message USING btree (direction, status)"
+    ],
+    [
+      "message_unique_inbound_wamid",
+      "CREATE UNIQUE INDEX message_unique_inbound_wamid ON public.channels_message USING btree (channel_account_id, external_message_id) WHERE (((direction)::text = 'in'::text) AND (external_message_id IS NOT NULL))"
+    ],
+    [
+      "channels_message_channel_account_id_03bba5b5",
+      "CREATE INDEX channels_message_channel_account_id_03bba5b5 ON public.channels_message USING btree (channel_account_id)"
+    ],
+    [
+      "channels_message_conversation_id_af5ca503",
+      "CREATE INDEX channels_message_conversation_id_af5ca503 ON public.channels_message USING btree (conversation_id)"
+    ],
+    [
+      "channels_message_created_by_id_094f21e0",
+      "CREATE INDEX channels_message_created_by_id_094f21e0 ON public.channels_message USING btree (created_by_id)"
+    ],
+    [
+      "channels_message_human_author_id_51a3db10",
+      "CREATE INDEX channels_message_human_author_id_51a3db10 ON public.channels_message USING btree (human_author_id)"
+    ],
+    [
+      "channels_message_organization_id_940b6f9e",
+      "CREATE INDEX channels_message_organization_id_940b6f9e ON public.channels_message USING btree (organization_id)"
+    ],
+    [
+      "channels_message_updated_by_id_f72e1ea0",
+      "CREATE INDEX channels_message_updated_by_id_f72e1ea0 ON public.channels_message USING btree (updated_by_id)"
+    ],
+    [
+      "channels_message_contact_id_f609c902",
+      "CREATE INDEX channels_message_contact_id_f609c902 ON public.channels_message USING btree (contact_id)"
+    ],
+    [
+      "channels_me_organiz_c00b67_idx",
+      "CREATE INDEX channels_me_organiz_c00b67_idx ON public.channels_message USING btree (organization_id, contact_id, channel_account_id, created_at)"
+    ],
+    [
+      "message_unique_operation_receipt",
+      "CREATE UNIQUE INDEX message_unique_operation_receipt ON public.channels_message USING btree (conversation_id, operation_key) WHERE (((direction)::text = 'out'::text) AND ((semantic_type)::text = 'operation_receipt'::text) AND (NOT ((operation_key)::text = ''::text)))"
+    ],
+    [
+      "channels_me_convers_c68da0_idx",
+      "CREATE INDEX channels_me_convers_c68da0_idx ON public.channels_message USING btree (conversation_id, semantic_type, created_at)"
+    ],
+    [
+      "message_unique_idempotency_per_org",
+      "CREATE UNIQUE INDEX message_unique_idempotency_per_org ON public.channels_message USING btree (organization_id, idempotency_key) WHERE (((direction)::text = 'out'::text) AND ((author_type)::text = 'human_staff'::text) AND (idempotency_key IS NOT NULL))"
+    ],
+    [
+      "message_unique_processing_failure_notice",
+      "CREATE UNIQUE INDEX message_unique_processing_failure_notice ON public.channels_message USING btree (conversation_id, semantic_type) WHERE (((direction)::text = 'out'::text) AND ((semantic_type)::text = 'processing_failure'::text))"
+    ],
+    [
+      "message_unique_turn_output",
+      "CREATE UNIQUE INDEX message_unique_turn_output ON public.channels_message USING btree (turn_work_id, output_ordinal) WHERE (((direction)::text = 'out'::text) AND (output_ordinal IS NOT NULL) AND (turn_work_id IS NOT NULL))"
+    ],
+    [
+      "channels_message_turn_work_id_20ce3041",
+      "CREATE INDEX channels_message_turn_work_id_20ce3041 ON public.channels_message USING btree (turn_work_id)"
+    ],
+    [
+      "message_send_ready",
+      "CREATE INDEX message_send_ready ON public.channels_message USING btree (direction, status, next_attempt_at)"
+    ],
+    [
+      "message_send_expiry",
+      "CREATE INDEX message_send_expiry ON public.channels_message USING btree (send_lease_until) WHERE ((status)::text = 'sending'::text)"
+    ],
+    [
+      "message_status_lookup",
+      "CREATE INDEX message_status_lookup ON public.channels_message USING btree (organization_id, channel_account_id, external_message_id) WHERE ((direction)::text = 'out'::text)"
+    ],
+    [
+      "channels_message_supersedes_message_id_2e4376d0",
+      "CREATE INDEX channels_message_supersedes_message_id_2e4376d0 ON public.channels_message USING btree (supersedes_message_id)"
+    ],
+    [
+      "agent_turnwork_pkey",
+      "CREATE UNIQUE INDEX agent_turnwork_pkey ON public.agent_turnwork USING btree (id)"
+    ],
+    [
+      "turnwork_unique_anchor",
+      "CREATE UNIQUE INDEX turnwork_unique_anchor ON public.agent_turnwork USING btree (conversation_id, anchor_message_id)"
+    ],
+    [
+      "turnwork_one_nonterminal",
+      "CREATE UNIQUE INDEX turnwork_one_nonterminal ON public.agent_turnwork USING btree (conversation_id) WHERE ((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PROCESSING'::character varying])::text[]))"
+    ],
+    [
+      "agent_turnwork_anchor_message_id_3fcc70f5",
+      "CREATE INDEX agent_turnwork_anchor_message_id_3fcc70f5 ON public.agent_turnwork USING btree (anchor_message_id)"
+    ],
+    [
+      "agent_turnwork_conversation_id_e15ceb51",
+      "CREATE INDEX agent_turnwork_conversation_id_e15ceb51 ON public.agent_turnwork USING btree (conversation_id)"
+    ],
+    [
+      "agent_turnwork_created_by_id_3261ae87",
+      "CREATE INDEX agent_turnwork_created_by_id_3261ae87 ON public.agent_turnwork USING btree (created_by_id)"
+    ],
+    [
+      "agent_turnwork_organization_id_4c7f7bfe",
+      "CREATE INDEX agent_turnwork_organization_id_4c7f7bfe ON public.agent_turnwork USING btree (organization_id)"
+    ],
+    [
+      "agent_turnwork_updated_by_id_5ed3892a",
+      "CREATE INDEX agent_turnwork_updated_by_id_5ed3892a ON public.agent_turnwork USING btree (updated_by_id)"
+    ],
+    [
+      "turnwork_poll_retry",
+      "CREATE INDEX turnwork_poll_retry ON public.agent_turnwork USING btree (status, next_attempt_at)"
+    ],
+    [
+      "turnwork_poll_lease",
+      "CREATE INDEX turnwork_poll_lease ON public.agent_turnwork USING btree (status, lease_expires_at)"
+    ]
+  ],
+  "timing_samples": [
+    {
+      "id": 48,
+      "organization": 0,
+      "work": 12,
+      "ordinary": false,
+      "T0": 1790786418.464974,
+      "T1": 1790786418.507038,
+      "claimed_at": 1790786418.587763,
+      "persisted_to_claim": 0.122789
+    },
+    {
+      "id": 50,
+      "organization": 1,
+      "work": 14,
+      "ordinary": false,
+      "T0": 1790786418.920773,
+      "T1": 1790786418.954492,
+      "claimed_at": 1790786419.00475,
+      "persisted_to_claim": 0.083977
+    },
+    {
+      "id": 52,
+      "organization": 2,
+      "work": 44,
+      "ordinary": true,
+      "T0": 1790786419.423574,
+      "T1": 1790786427.356965,
+      "claimed_at": 1790786473.392853,
+      "persisted_to_claim": 53.969279,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786473.3719468,
+      "T4": 1790786473.375649,
+      "T5": 1790786473.44892,
+      "T6": 1790786473.450753
+    },
+    {
+      "id": 53,
+      "organization": 2,
+      "work": 45,
+      "ordinary": true,
+      "T0": 1790786419.640097,
+      "T1": 1790786427.576557,
+      "claimed_at": 1790786475.3477,
+      "persisted_to_claim": 55.707603,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786475.3263593,
+      "T4": 1790786475.331751,
+      "T5": 1790786475.4121237,
+      "T6": 1790786475.414066
+    },
+    {
+      "id": 54,
+      "organization": 2,
+      "work": 46,
+      "ordinary": true,
+      "T0": 1790786420.435406,
+      "T1": 1790786428.379454,
+      "claimed_at": 1790786477.262937,
+      "persisted_to_claim": 56.827531,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786477.2419345,
+      "T4": 1790786477.2459123,
+      "T5": 1790786477.3204877,
+      "T6": 1790786477.3256736
+    },
+    {
+      "id": 57,
+      "organization": 2,
+      "work": 50,
+      "ordinary": true,
+      "T0": 1790786421.417991,
+      "T1": 1790786429.357751,
+      "claimed_at": 1790786480.077744,
+      "persisted_to_claim": 58.659753,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786480.062071,
+      "T4": 1790786480.0659175,
+      "T5": 1790786480.135218,
+      "T6": 1790786480.152561
+    },
+    {
+      "id": 58,
+      "organization": 2,
+      "work": 52,
+      "ordinary": true,
+      "T0": 1790786422.456232,
+      "T1": 1790786430.379874,
+      "claimed_at": 1790786482.817943,
+      "persisted_to_claim": 60.361711,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786482.7998078,
+      "T4": 1790786482.803789,
+      "T5": 1790786482.8755589,
+      "T6": 1790786482.8773687
+    },
+    {
+      "id": 60,
+      "organization": 2,
+      "work": 53,
+      "ordinary": true,
+      "T0": 1790786423.451796,
+      "T1": 1790786431.390659,
+      "claimed_at": 1790786484.803966,
+      "persisted_to_claim": 61.35217,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786484.7872026,
+      "T4": 1790786484.791172,
+      "T5": 1790786484.855112,
+      "T6": 1790786484.8565996
+    },
+    {
+      "id": 61,
+      "organization": 2,
+      "work": 54,
+      "ordinary": true,
+      "T0": 1790786424.412618,
+      "T1": 1790786432.362802,
+      "claimed_at": 1790786486.621674,
+      "persisted_to_claim": 62.209056,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786486.6004248,
+      "T4": 1790786486.604532,
+      "T5": 1790786486.6796153,
+      "T6": 1790786486.6815019
+    },
+    {
+      "id": 62,
+      "organization": 2,
+      "work": 55,
+      "ordinary": true,
+      "T0": 1790786425.418382,
+      "T1": 1790786433.364262,
+      "claimed_at": 1790786488.710395,
+      "persisted_to_claim": 63.292013,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786488.683975,
+      "T4": 1790786488.689768,
+      "T5": 1790786488.7774553,
+      "T6": 1790786488.7795315
+    },
+    {
+      "id": 64,
+      "organization": 2,
+      "work": 56,
+      "ordinary": true,
+      "T0": 1790786426.453569,
+      "T1": 1790786434.380751,
+      "claimed_at": 1790786491.457265,
+      "persisted_to_claim": 65.003696,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786491.4414585,
+      "T4": 1790786491.4442677,
+      "T5": 1790786491.509839,
+      "T6": 1790786491.5115087
+    },
+    {
+      "id": 65,
+      "organization": 2,
+      "work": 57,
+      "ordinary": true,
+      "T0": 1790786427.425165,
+      "T1": 1790786435.374925,
+      "claimed_at": 1790786493.578126,
+      "persisted_to_claim": 66.152961,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786493.5627682,
+      "T4": 1790786493.5669725,
+      "T5": 1790786493.635589,
+      "T6": 1790786493.640982
+    },
+    {
+      "id": 67,
+      "organization": 0,
+      "work": 23,
+      "ordinary": true,
+      "T0": 1790786428.402991,
+      "T1": 1790786436.349324,
+      "claimed_at": 1790786436.419335,
+      "persisted_to_claim": 8.016344,
+      "first_eligible_observation": 1790786436.372272,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786436.372272,
+      "T3": 1790786436.3999708,
+      "T4": 1790786436.405281,
+      "T5": 1790786436.4843645,
+      "T6": 1790786436.4912312
+    },
+    {
+      "id": 68,
+      "organization": 1,
+      "work": 32,
+      "ordinary": true,
+      "T0": 1790786428.505961,
+      "T1": 1790786446.569512,
+      "claimed_at": 1790786449.801816,
+      "persisted_to_claim": 21.295855,
+      "first_eligible_observation": 1790786446.7677472,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786446.7677472,
+      "T3": 1790786449.767937,
+      "T4": 1790786449.7732952,
+      "T5": 1790786449.8821387,
+      "T6": 1790786449.8849764
+    },
+    {
+      "id": 69,
+      "organization": 2,
+      "work": 58,
+      "ordinary": true,
+      "T0": 1790786428.623282,
+      "T1": 1790786436.580622,
+      "claimed_at": 1790786496.241999,
+      "persisted_to_claim": 67.618717,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786496.225466,
+      "T4": 1790786496.2287374,
+      "T5": 1790786496.297699,
+      "T6": 1790786496.3014152
+    },
+    {
+      "id": 70,
+      "organization": 2,
+      "work": 60,
+      "ordinary": true,
+      "T0": 1790786429.416245,
+      "T1": 1790786437.369919,
+      "claimed_at": 1790786498.942087,
+      "persisted_to_claim": 69.525842,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786498.9248846,
+      "T4": 1790786498.9285955,
+      "T5": 1790786498.99888,
+      "T6": 1790786499.0008447
+    },
+    {
+      "id": 71,
+      "organization": 2,
+      "work": 61,
+      "ordinary": true,
+      "T0": 1790786430.4203,
+      "T1": 1790786438.364236,
+      "claimed_at": 1790786501.138461,
+      "persisted_to_claim": 70.718161,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786501.1067755,
+      "T4": 1790786501.110691,
+      "T5": 1790786501.2152421,
+      "T6": 1790786501.21945
+    },
+    {
+      "id": 73,
+      "organization": 2,
+      "work": 62,
+      "ordinary": true,
+      "T0": 1790786431.467054,
+      "T1": 1790786439.399024,
+      "claimed_at": 1790786502.895889,
+      "persisted_to_claim": 71.428835,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786502.8811827,
+      "T4": 1790786502.884869,
+      "T5": 1790786502.9447649,
+      "T6": 1790786502.9514806
+    },
+    {
+      "id": 74,
+      "organization": 2,
+      "work": 63,
+      "ordinary": true,
+      "T0": 1790786432.511403,
+      "T1": 1790786440.423768,
+      "claimed_at": 1790786504.895921,
+      "persisted_to_claim": 72.384518,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786504.881026,
+      "T4": 1790786504.8840487,
+      "T5": 1790786504.9445264,
+      "T6": 1790786504.951434
+    },
+    {
+      "id": 76,
+      "organization": 2,
+      "work": 64,
+      "ordinary": true,
+      "T0": 1790786433.426618,
+      "T1": 1790786441.378849,
+      "claimed_at": 1790786506.615575,
+      "persisted_to_claim": 73.188957,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786506.5971625,
+      "T4": 1790786506.6012516,
+      "T5": 1790786506.6674716,
+      "T6": 1790786506.6709976
+    },
+    {
+      "id": 77,
+      "organization": 2,
+      "work": 68,
+      "ordinary": true,
+      "T0": 1790786434.453606,
+      "T1": 1790786442.39763,
+      "claimed_at": 1790786509.331644,
+      "persisted_to_claim": 74.878038,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786509.3102605,
+      "T4": 1790786509.3146107,
+      "T5": 1790786509.382112,
+      "T6": 1790786509.386375
+    },
+    {
+      "id": 79,
+      "organization": 2,
+      "work": 70,
+      "ordinary": true,
+      "T0": 1790786435.441568,
+      "T1": 1790786443.377206,
+      "claimed_at": 1790786512.270896,
+      "persisted_to_claim": 76.829328,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786512.2442899,
+      "T4": 1790786512.2486181,
+      "T5": 1790786512.3638082,
+      "T6": 1790786512.366768
+    },
+    {
+      "id": 80,
+      "organization": 2,
+      "work": 71,
+      "ordinary": true,
+      "T0": 1790786436.444213,
+      "T1": 1790786444.379972,
+      "claimed_at": 1790786514.232686,
+      "persisted_to_claim": 77.788473,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786514.2168434,
+      "T4": 1790786514.2201302,
+      "T5": 1790786514.2808132,
+      "T6": 1790786514.2831545
+    },
+    {
+      "id": 81,
+      "organization": 2,
+      "work": 72,
+      "ordinary": true,
+      "T0": 1790786437.416678,
+      "T1": 1790786445.360058,
+      "claimed_at": 1790786516.132183,
+      "persisted_to_claim": 78.715505,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786516.1017375,
+      "T4": 1790786516.1081042,
+      "T5": 1790786516.184993,
+      "T6": 1790786516.1877232
+    },
+    {
+      "id": 84,
+      "organization": 0,
+      "work": 28,
+      "ordinary": true,
+      "T0": 1790786438.490927,
+      "T1": 1790786446.393122,
+      "claimed_at": 1790786446.80216,
+      "persisted_to_claim": 8.311233,
+      "first_eligible_observation": 1790786446.7677472,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786446.7677472,
+      "T3": 1790786446.785979,
+      "T4": 1790786446.7895155,
+      "T5": 1790786446.8613255,
+      "T6": 1790786446.8656373
+    },
+    {
+      "id": 85,
+      "organization": 1,
+      "work": 32,
+      "ordinary": true,
+      "T0": 1790786438.625763,
+      "T1": 1790786446.569512,
+      "claimed_at": 1790786449.801816,
+      "persisted_to_claim": 11.176053,
+      "first_eligible_observation": 1790786446.7677472,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786446.7677472,
+      "T3": 1790786449.767937,
+      "T4": 1790786449.7732952,
+      "T5": 1790786449.8821387,
+      "T6": 1790786449.8849764
+    },
+    {
+      "id": 86,
+      "organization": 2,
+      "work": 73,
+      "ordinary": true,
+      "T0": 1790786438.775899,
+      "T1": 1790786446.721375,
+      "claimed_at": 1790786517.980586,
+      "persisted_to_claim": 79.204687,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786517.970037,
+      "T4": 1790786517.972529,
+      "T5": 1790786518.029613,
+      "T6": 1790786518.0351624
+    },
+    {
+      "id": 87,
+      "organization": 2,
+      "work": 74,
+      "ordinary": true,
+      "T0": 1790786439.655214,
+      "T1": 1790786447.580486,
+      "claimed_at": 1790786519.851852,
+      "persisted_to_claim": 80.196638,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786519.835251,
+      "T4": 1790786519.8394227,
+      "T5": 1790786519.8965328,
+      "T6": 1790786519.9011455
+    },
+    {
+      "id": 88,
+      "organization": 2,
+      "work": 75,
+      "ordinary": true,
+      "T0": 1790786440.470016,
+      "T1": 1790786448.394838,
+      "claimed_at": 1790786521.719078,
+      "persisted_to_claim": 81.249062,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786521.7071276,
+      "T4": 1790786521.7095656,
+      "T5": 1790786521.7648413,
+      "T6": 1790786521.770424
+    },
+    {
+      "id": 90,
+      "organization": 2,
+      "work": 76,
+      "ordinary": true,
+      "T0": 1790786441.451743,
+      "T1": 1790786449.391796,
+      "claimed_at": 1790786523.638712,
+      "persisted_to_claim": 82.186969,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786523.6250865,
+      "T4": 1790786523.6279185,
+      "T5": 1790786523.6820188,
+      "T6": 1790786523.6834097
+    },
+    {
+      "id": 91,
+      "organization": 2,
+      "work": 77,
+      "ordinary": true,
+      "T0": 1790786442.423597,
+      "T1": 1790786450.368211,
+      "claimed_at": 1790786525.558516,
+      "persisted_to_claim": 83.134919,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786525.5417485,
+      "T4": 1790786525.545266,
+      "T5": 1790786525.6122873,
+      "T6": 1790786525.6142201
+    },
+    {
+      "id": 93,
+      "organization": 2,
+      "work": 79,
+      "ordinary": true,
+      "T0": 1790786443.444119,
+      "T1": 1790786451.384243,
+      "claimed_at": 1790786528.339696,
+      "persisted_to_claim": 84.895577,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786528.3201678,
+      "T4": 1790786528.3239717,
+      "T5": 1790786528.411666,
+      "T6": 1790786528.415665
+    },
+    {
+      "id": 94,
+      "organization": 2,
+      "work": 80,
+      "ordinary": true,
+      "T0": 1790786444.422932,
+      "T1": 1790786452.368347,
+      "claimed_at": 1790786530.333171,
+      "persisted_to_claim": 85.910239,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786530.3140292,
+      "T4": 1790786530.3170094,
+      "T5": 1790786530.3968644,
+      "T6": 1790786530.3990405
+    },
+    {
+      "id": 95,
+      "organization": 2,
+      "work": 81,
+      "ordinary": true,
+      "T0": 1790786445.422383,
+      "T1": 1790786453.369479,
+      "claimed_at": 1790786532.264965,
+      "persisted_to_claim": 86.842582,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786532.247741,
+      "T4": 1790786532.2506247,
+      "T5": 1790786532.3160117,
+      "T6": 1790786532.3180163
+    },
+    {
+      "id": 97,
+      "organization": 2,
+      "work": 82,
+      "ordinary": true,
+      "T0": 1790786446.428341,
+      "T1": 1790786454.368239,
+      "claimed_at": 1790786534.108574,
+      "persisted_to_claim": 87.680233,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786534.0940201,
+      "T4": 1790786534.0974917,
+      "T5": 1790786534.1655858,
+      "T6": 1790786534.178497
+    },
+    {
+      "id": 98,
+      "organization": 2,
+      "work": 83,
+      "ordinary": true,
+      "T0": 1790786447.458844,
+      "T1": 1790786455.399093,
+      "claimed_at": 1790786535.977038,
+      "persisted_to_claim": 88.518194,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786535.9590197,
+      "T4": 1790786535.962414,
+      "T5": 1790786536.0241578,
+      "T6": 1790786536.0295687
+    },
+    {
+      "id": 100,
+      "organization": 0,
+      "work": 29,
+      "ordinary": false,
+      "T0": 1790786448.507563,
+      "T1": 1790786448.568439,
+      "claimed_at": 1790786448.653079,
+      "persisted_to_claim": 0.145516
+    },
+    {
+      "id": 103,
+      "organization": 1,
+      "work": 31,
+      "ordinary": false,
+      "T0": 1790786449.174971,
+      "T1": 1790786449.217556,
+      "claimed_at": 1790786449.285671,
+      "persisted_to_claim": 0.1107
+    },
+    {
+      "id": 105,
+      "organization": 2,
+      "work": 85,
+      "ordinary": true,
+      "T0": 1790786449.805758,
+      "T1": 1790786457.713215,
+      "claimed_at": 1790786538.576396,
+      "persisted_to_claim": 88.770638,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786538.5571613,
+      "T4": 1790786538.5606058,
+      "T5": 1790786538.6297004,
+      "T6": 1790786538.6352484
+    },
+    {
+      "id": 106,
+      "organization": 2,
+      "work": 87,
+      "ordinary": true,
+      "T0": 1790786450.080118,
+      "T1": 1790786457.999923,
+      "claimed_at": 1790786541.338607,
+      "persisted_to_claim": 91.258489,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786541.3187191,
+      "T4": 1790786541.324332,
+      "T5": 1790786541.4149,
+      "T6": 1790786541.4163685
+    },
+    {
+      "id": 107,
+      "organization": 2,
+      "work": 88,
+      "ordinary": true,
+      "T0": 1790786450.608517,
+      "T1": 1790786458.442311,
+      "claimed_at": 1790786543.407809,
+      "persisted_to_claim": 92.799292,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786543.3898587,
+      "T4": 1790786543.3937547,
+      "T5": 1790786543.461646,
+      "T6": 1790786543.4663665
+    },
+    {
+      "id": 109,
+      "organization": 2,
+      "work": 89,
+      "ordinary": true,
+      "T0": 1790786451.446323,
+      "T1": 1790786459.378687,
+      "claimed_at": 1790786545.19072,
+      "persisted_to_claim": 93.744397,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786545.1704586,
+      "T4": 1790786545.1744163,
+      "T5": 1790786545.2387989,
+      "T6": 1790786545.2418132
+    },
+    {
+      "id": 111,
+      "organization": 2,
+      "work": 90,
+      "ordinary": true,
+      "T0": 1790786452.409893,
+      "T1": 1790786460.358561,
+      "claimed_at": 1790786547.119055,
+      "persisted_to_claim": 94.709162,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786547.106178,
+      "T4": 1790786547.108511,
+      "T5": 1790786547.1537318,
+      "T6": 1790786547.155966
+    },
+    {
+      "id": 112,
+      "organization": 2,
+      "work": 91,
+      "ordinary": true,
+      "T0": 1790786453.490059,
+      "T1": 1790786461.411331,
+      "claimed_at": 1790786548.841967,
+      "persisted_to_claim": 95.351908,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786548.827459,
+      "T4": 1790786548.8300104,
+      "T5": 1790786548.8941667,
+      "T6": 1790786548.8996053
+    },
+    {
+      "id": 114,
+      "organization": 2,
+      "work": 92,
+      "ordinary": true,
+      "T0": 1790786454.440925,
+      "T1": 1790786462.367156,
+      "claimed_at": 1790786550.845135,
+      "persisted_to_claim": 96.40421,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786550.826221,
+      "T4": 1790786550.830726,
+      "T5": 1790786550.899547,
+      "T6": 1790786550.9015043
+    },
+    {
+      "id": 115,
+      "organization": 2,
+      "work": 93,
+      "ordinary": true,
+      "T0": 1790786455.498029,
+      "T1": 1790786463.404722,
+      "claimed_at": 1790786552.662362,
+      "persisted_to_claim": 97.164333,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786552.6442552,
+      "T4": 1790786552.647791,
+      "T5": 1790786552.7221596,
+      "T6": 1790786552.7245035
+    },
+    {
+      "id": 116,
+      "organization": 2,
+      "work": 94,
+      "ordinary": true,
+      "T0": 1790786456.463508,
+      "T1": 1790786464.394266,
+      "claimed_at": 1790786554.724505,
+      "persisted_to_claim": 98.260997,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786554.7000325,
+      "T4": 1790786554.7042835,
+      "T5": 1790786554.8008182,
+      "T6": 1790786554.8061476
+    },
+    {
+      "id": 118,
+      "organization": 2,
+      "work": 95,
+      "ordinary": true,
+      "T0": 1790786457.497457,
+      "T1": 1790786465.418661,
+      "claimed_at": 1790786557.545441,
+      "persisted_to_claim": 100.047984,
+      "first_eligible_observation": null,
+      "T2": null,
+      "T3": 1790786557.5333986,
+      "T4": 1790786557.5359454,
+      "T5": 1790786557.5864174,
+      "T6": 1790786557.5917
+    },
+    {
+      "id": 119,
+      "organization": 0,
+      "work": 41,
+      "ordinary": true,
+      "T0": 1790786458.403922,
+      "T1": 1790786466.341933,
+      "claimed_at": 1790786467.7364,
+      "persisted_to_claim": 9.332478,
+      "first_eligible_observation": 1790786466.7323215,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786466.7323215,
+      "T3": 1790786467.717757,
+      "T4": 1790786467.7212644,
+      "T5": 1790786467.7926524,
+      "T6": 1790786467.7945385
+    },
+    {
+      "id": 120,
+      "organization": 1,
+      "work": 51,
+      "ordinary": true,
+      "T0": 1790786458.560087,
+      "T1": 1790786476.489511,
+      "claimed_at": 1790786481.030922,
+      "persisted_to_claim": 22.470835,
+      "first_eligible_observation": 1790786466.7323215,
+      "eligibility_extended_after_observation": true,
+      "T2": 1790786477.2249992,
+      "T3": 1790786481.0152266,
+      "T4": 1790786481.0183477,
+      "T5": 1790786481.0785856,
+      "T6": 1790786481.08085
+    },
+    {
+      "id": 136,
+      "organization": 0,
+      "work": 47,
+      "ordinary": true,
+      "T0": 1790786468.407856,
+      "T1": 1790786476.353468,
+      "claimed_at": 1790786478.202988,
+      "persisted_to_claim": 9.795132,
+      "first_eligible_observation": 1790786477.2249992,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786477.2249992,
+      "T3": 1790786478.1767254,
+      "T4": 1790786478.1861563,
+      "T5": 1790786478.272769,
+      "T6": 1790786478.2749214
+    },
+    {
+      "id": 138,
+      "organization": 1,
+      "work": 51,
+      "ordinary": true,
+      "T0": 1790786468.554699,
+      "T1": 1790786476.489511,
+      "claimed_at": 1790786481.030922,
+      "persisted_to_claim": 12.476223,
+      "first_eligible_observation": 1790786477.2249992,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786477.2249992,
+      "T3": 1790786481.0152266,
+      "T4": 1790786481.0183477,
+      "T5": 1790786481.0785856,
+      "T6": 1790786481.08085
+    },
+    {
+      "id": 153,
+      "organization": 0,
+      "work": 48,
+      "ordinary": false,
+      "T0": 1790786478.557342,
+      "T1": 1790786478.618775,
+      "claimed_at": 1790786478.711853,
+      "persisted_to_claim": 0.154511
+    },
+    {
+      "id": 156,
+      "organization": 1,
+      "work": 49,
+      "ordinary": false,
+      "T0": 1790786479.110137,
+      "T1": 1790786479.145738,
+      "claimed_at": 1790786479.190892,
+      "persisted_to_claim": 0.080755
+    },
+    {
+      "id": 174,
+      "organization": 0,
+      "work": 59,
+      "ordinary": true,
+      "T0": 1790786488.416649,
+      "T1": 1790786496.367381,
+      "claimed_at": 1790786497.280338,
+      "persisted_to_claim": 8.863689,
+      "first_eligible_observation": 1790786497.2456381,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786497.2456381,
+      "T3": 1790786497.2614965,
+      "T4": 1790786497.2650087,
+      "T5": 1790786497.3454819,
+      "T6": 1790786497.3474398
+    },
+    {
+      "id": 175,
+      "organization": 1,
+      "work": 69,
+      "ordinary": true,
+      "T0": 1790786488.567729,
+      "T1": 1790786506.474434,
+      "claimed_at": 1790786510.340863,
+      "persisted_to_claim": 21.773134,
+      "first_eligible_observation": 1790786497.2456381,
+      "eligibility_extended_after_observation": true,
+      "T2": 1790786506.5804732,
+      "T3": 1790786510.323045,
+      "T4": 1790786510.3273299,
+      "T5": 1790786510.401797,
+      "T6": 1790786510.4043603
+    },
+    {
+      "id": 190,
+      "organization": 0,
+      "work": 65,
+      "ordinary": true,
+      "T0": 1790786498.397911,
+      "T1": 1790786506.35568,
+      "claimed_at": 1790786507.571262,
+      "persisted_to_claim": 9.173351,
+      "first_eligible_observation": 1790786506.5804732,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786506.5804732,
+      "T3": 1790786507.5532067,
+      "T4": 1790786507.5567126,
+      "T5": 1790786507.6344564,
+      "T6": 1790786507.6378837
+    },
+    {
+      "id": 191,
+      "organization": 1,
+      "work": 69,
+      "ordinary": true,
+      "T0": 1790786498.514131,
+      "T1": 1790786506.474434,
+      "claimed_at": 1790786510.340863,
+      "persisted_to_claim": 11.826732,
+      "first_eligible_observation": 1790786506.5804732,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786506.5804732,
+      "T3": 1790786510.323045,
+      "T4": 1790786510.3273299,
+      "T5": 1790786510.401797,
+      "T6": 1790786510.4043603
+    },
+    {
+      "id": 207,
+      "organization": 0,
+      "work": 66,
+      "ordinary": false,
+      "T0": 1790786508.409598,
+      "T1": 1790786508.447189,
+      "claimed_at": 1790786508.53064,
+      "persisted_to_claim": 0.121042
+    },
+    {
+      "id": 209,
+      "organization": 1,
+      "work": 67,
+      "ordinary": false,
+      "T0": 1790786509.007801,
+      "T1": 1790786509.050071,
+      "claimed_at": 1790786509.10337,
+      "persisted_to_claim": 0.095569
+    },
+    {
+      "id": 227,
+      "organization": 0,
+      "work": 78,
+      "ordinary": true,
+      "T0": 1790786518.423316,
+      "T1": 1790786526.374141,
+      "claimed_at": 1790786526.45826,
+      "persisted_to_claim": 8.034944,
+      "first_eligible_observation": 1790786526.4221947,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786526.4221947,
+      "T3": 1790786526.4387136,
+      "T4": 1790786526.4422717,
+      "T5": 1790786526.5150342,
+      "T6": 1790786526.5170174
+    },
+    {
+      "id": 228,
+      "organization": 1,
+      "work": 86,
+      "ordinary": true,
+      "T0": 1790786518.539466,
+      "T1": 1790786536.567828,
+      "claimed_at": 1790786539.596002,
+      "persisted_to_claim": 21.056536,
+      "first_eligible_observation": 1790786528.2992594,
+      "eligibility_extended_after_observation": true,
+      "T2": 1790786536.8698018,
+      "T3": 1790786539.576584,
+      "T4": 1790786539.580548,
+      "T5": 1790786539.6624134,
+      "T6": 1790786539.6690953
+    },
+    {
+      "id": 245,
+      "organization": 0,
+      "work": 84,
+      "ordinary": true,
+      "T0": 1790786528.477268,
+      "T1": 1790786536.405306,
+      "claimed_at": 1790786536.898229,
+      "persisted_to_claim": 8.420961,
+      "first_eligible_observation": 1790786536.8698018,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786536.8698018,
+      "T3": 1790786536.8827245,
+      "T4": 1790786536.8859723,
+      "T5": 1790786536.9518003,
+      "T6": 1790786536.9536278
+    },
+    {
+      "id": 246,
+      "organization": 1,
+      "work": 86,
+      "ordinary": true,
+      "T0": 1790786528.632508,
+      "T1": 1790786536.567828,
+      "claimed_at": 1790786539.596002,
+      "persisted_to_claim": 10.963494,
+      "first_eligible_observation": 1790786536.8698018,
+      "eligibility_extended_after_observation": false,
+      "T2": 1790786536.8698018,
+      "T3": 1790786539.576584,
+      "T4": 1790786539.580548,
+      "T5": 1790786539.6624134,
+      "T6": 1790786539.6690953
+    }
+  ],
+  "queue_timeline": [
+    {
+      "time": 1790786387.6516502,
+      "queue": {}
+    },
+    {
+      "time": 1790786387.9093137,
+      "queue": {}
+    },
+    {
+      "time": 1790786388.6951232,
+      "queue": {}
+    },
+    {
+      "time": 1790786388.9694877,
+      "queue": {}
+    },
+    {
+      "time": 1790786389.732808,
+      "queue": {}
+    },
+    {
+      "time": 1790786390.0244997,
+      "queue": {}
+    },
+    {
+      "time": 1790786390.7627811,
+      "queue": {
+        "3": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786391.0663464,
+      "queue": {
+        "3": {
+          "pending": 3,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786391.7956705,
+      "queue": {
+        "3": {
+          "pending": 4,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786392.0974848,
+      "queue": {
+        "3": {
+          "pending": 4,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786392.8287778,
+      "queue": {
+        "3": {
+          "pending": 5,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786393.1233003,
+      "queue": {
+        "3": {
+          "pending": 5,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786393.8866127,
+      "queue": {
+        "3": {
+          "pending": 6,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786394.1536672,
+      "queue": {
+        "3": {
+          "pending": 6,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786394.9131155,
+      "queue": {
+        "3": {
+          "pending": 7,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786395.1772642,
+      "queue": {
+        "3": {
+          "pending": 7,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786395.944512,
+      "queue": {
+        "3": {
+          "pending": 8,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786396.203309,
+      "queue": {
+        "3": {
+          "pending": 8,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786396.9753635,
+      "queue": {
+        "3": {
+          "pending": 9,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786397.2297297,
+      "queue": {
+        "3": {
+          "pending": 9,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786397.9936378,
+      "queue": {
+        "3": {
+          "pending": 10,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786398.255184,
+      "queue": {
+        "3": {
+          "pending": 10,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786399.0173342,
+      "queue": {
+        "3": {
+          "pending": 11,
+          "eligible": 3,
+          "blocked": 0,
+          "claimable": 3
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786399.289009,
+      "queue": {
+        "3": {
+          "pending": 10,
+          "eligible": 2,
+          "blocked": 2,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786400.3253682,
+      "queue": {
+        "3": {
+          "pending": 11,
+          "eligible": 3,
+          "blocked": 3,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786401.3858542,
+      "queue": {
+        "3": {
+          "pending": 12,
+          "eligible": 4,
+          "blocked": 4,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786402.4224577,
+      "queue": {
+        "3": {
+          "pending": 13,
+          "eligible": 6,
+          "blocked": 0,
+          "claimable": 6
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786403.071434,
+      "queue": {
+        "3": {
+          "pending": 13,
+          "eligible": 5,
+          "blocked": 5,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786404.1082263,
+      "queue": {
+        "3": {
+          "pending": 14,
+          "eligible": 6,
+          "blocked": 6,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786405.1409774,
+      "queue": {
+        "3": {
+          "pending": 15,
+          "eligible": 7,
+          "blocked": 7,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786406.1722007,
+      "queue": {
+        "3": {
+          "pending": 16,
+          "eligible": 8,
+          "blocked": 0,
+          "claimable": 8
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786406.3518002,
+      "queue": {
+        "3": {
+          "pending": 15,
+          "eligible": 7,
+          "blocked": 7,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786408.9932077,
+      "queue": {
+        "3": {
+          "pending": 18,
+          "eligible": 10,
+          "blocked": 0,
+          "claimable": 10
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786409.2435794,
+      "queue": {
+        "3": {
+          "pending": 17,
+          "eligible": 9,
+          "blocked": 9,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786410.278204,
+      "queue": {
+        "3": {
+          "pending": 18,
+          "eligible": 10,
+          "blocked": 10,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786411.3027103,
+      "queue": {
+        "3": {
+          "pending": 19,
+          "eligible": 11,
+          "blocked": 0,
+          "claimable": 11
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786411.7032278,
+      "queue": {
+        "3": {
+          "pending": 19,
+          "eligible": 11,
+          "blocked": 11,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786412.735496,
+      "queue": {
+        "3": {
+          "pending": 20,
+          "eligible": 12,
+          "blocked": 12,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786413.7571578,
+      "queue": {
+        "3": {
+          "pending": 21,
+          "eligible": 13,
+          "blocked": 0,
+          "claimable": 13
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786414.1062987,
+      "queue": {
+        "3": {
+          "pending": 20,
+          "eligible": 12,
+          "blocked": 12,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786415.1315088,
+      "queue": {
+        "3": {
+          "pending": 21,
+          "eligible": 13,
+          "blocked": 13,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786416.1615937,
+      "queue": {
+        "3": {
+          "pending": 22,
+          "eligible": 14,
+          "blocked": 0,
+          "claimable": 14
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786416.519912,
+      "queue": {
+        "3": {
+          "pending": 22,
+          "eligible": 13,
+          "blocked": 13,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786418.858779,
+      "queue": {
+        "3": {
+          "pending": 23,
+          "eligible": 16,
+          "blocked": 0,
+          "claimable": 16
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786419.2251666,
+      "queue": {
+        "3": {
+          "pending": 22,
+          "eligible": 15,
+          "blocked": 15,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786421.6290452,
+      "queue": {
+        "3": {
+          "pending": 26,
+          "eligible": 18,
+          "blocked": 0,
+          "claimable": 18
+        }
+      }
+    },
+    {
+      "time": 1790786422.0991728,
+      "queue": {
+        "3": {
+          "pending": 25,
+          "eligible": 17,
+          "blocked": 17,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786423.1304317,
+      "queue": {
+        "3": {
+          "pending": 26,
+          "eligible": 18,
+          "blocked": 18,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786424.149207,
+      "queue": {
+        "3": {
+          "pending": 27,
+          "eligible": 19,
+          "blocked": 0,
+          "claimable": 19
+        }
+      }
+    },
+    {
+      "time": 1790786424.4626472,
+      "queue": {
+        "3": {
+          "pending": 27,
+          "eligible": 19,
+          "blocked": 19,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786425.4851623,
+      "queue": {
+        "3": {
+          "pending": 28,
+          "eligible": 20,
+          "blocked": 20,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786426.513572,
+      "queue": {
+        "3": {
+          "pending": 29,
+          "eligible": 20,
+          "blocked": 0,
+          "claimable": 20
+        }
+      }
+    },
+    {
+      "time": 1790786426.867716,
+      "queue": {
+        "3": {
+          "pending": 28,
+          "eligible": 19,
+          "blocked": 19,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786427.8952134,
+      "queue": {
+        "3": {
+          "pending": 29,
+          "eligible": 21,
+          "blocked": 21,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786428.9173288,
+      "queue": {
+        "3": {
+          "pending": 30,
+          "eligible": 22,
+          "blocked": 0,
+          "claimable": 22
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786429.2199414,
+      "queue": {
+        "3": {
+          "pending": 29,
+          "eligible": 21,
+          "blocked": 21,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786430.2565403,
+      "queue": {
+        "3": {
+          "pending": 30,
+          "eligible": 22,
+          "blocked": 22,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786431.2996526,
+      "queue": {
+        "3": {
+          "pending": 31,
+          "eligible": 23,
+          "blocked": 0,
+          "claimable": 23
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786431.572344,
+      "queue": {
+        "3": {
+          "pending": 31,
+          "eligible": 23,
+          "blocked": 23,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786432.6301947,
+      "queue": {
+        "3": {
+          "pending": 32,
+          "eligible": 24,
+          "blocked": 24,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786433.6590068,
+      "queue": {
+        "3": {
+          "pending": 33,
+          "eligible": 25,
+          "blocked": 0,
+          "claimable": 25
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786434.1962936,
+      "queue": {
+        "3": {
+          "pending": 32,
+          "eligible": 24,
+          "blocked": 24,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786435.2220676,
+      "queue": {
+        "3": {
+          "pending": 33,
+          "eligible": 25,
+          "blocked": 25,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786436.2621524,
+      "queue": {
+        "3": {
+          "pending": 34,
+          "eligible": 26,
+          "blocked": 0,
+          "claimable": 26
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786436.372272,
+      "queue": {
+        "3": {
+          "pending": 34,
+          "eligible": 26,
+          "blocked": 0,
+          "claimable": 26
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786439.0993106,
+      "queue": {
+        "3": {
+          "pending": 36,
+          "eligible": 28,
+          "blocked": 0,
+          "claimable": 28
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786439.430015,
+      "queue": {
+        "3": {
+          "pending": 35,
+          "eligible": 27,
+          "blocked": 27,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786440.465594,
+      "queue": {
+        "3": {
+          "pending": 36,
+          "eligible": 29,
+          "blocked": 29,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786441.4984937,
+      "queue": {
+        "3": {
+          "pending": 38,
+          "eligible": 30,
+          "blocked": 0,
+          "claimable": 30
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786442.0020542,
+      "queue": {
+        "3": {
+          "pending": 37,
+          "eligible": 29,
+          "blocked": 29,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786443.0231075,
+      "queue": {
+        "3": {
+          "pending": 38,
+          "eligible": 30,
+          "blocked": 30,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786444.050254,
+      "queue": {
+        "3": {
+          "pending": 39,
+          "eligible": 31,
+          "blocked": 0,
+          "claimable": 31
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786444.2720947,
+      "queue": {
+        "3": {
+          "pending": 38,
+          "eligible": 30,
+          "blocked": 30,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786445.305253,
+      "queue": {
+        "3": {
+          "pending": 39,
+          "eligible": 31,
+          "blocked": 31,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786446.334569,
+      "queue": {
+        "3": {
+          "pending": 40,
+          "eligible": 32,
+          "blocked": 0,
+          "claimable": 32
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786446.7677472,
+      "queue": {
+        "3": {
+          "pending": 40,
+          "eligible": 32,
+          "blocked": 32,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786449.1998162,
+      "queue": {
+        "3": {
+          "pending": 41,
+          "eligible": 34,
+          "blocked": 0,
+          "claimable": 34
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786449.7377,
+      "queue": {
+        "3": {
+          "pending": 40,
+          "eligible": 34,
+          "blocked": 34,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786452.2715101,
+      "queue": {
+        "3": {
+          "pending": 44,
+          "eligible": 36,
+          "blocked": 0,
+          "claimable": 36
+        }
+      }
+    },
+    {
+      "time": 1790786452.930165,
+      "queue": {
+        "3": {
+          "pending": 44,
+          "eligible": 36,
+          "blocked": 36,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786453.9583585,
+      "queue": {
+        "3": {
+          "pending": 45,
+          "eligible": 37,
+          "blocked": 37,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786454.9973137,
+      "queue": {
+        "3": {
+          "pending": 46,
+          "eligible": 38,
+          "blocked": 0,
+          "claimable": 38
+        }
+      }
+    },
+    {
+      "time": 1790786455.0467622,
+      "queue": {
+        "3": {
+          "pending": 46,
+          "eligible": 38,
+          "blocked": 0,
+          "claimable": 38
+        }
+      }
+    },
+    {
+      "time": 1790786456.0870295,
+      "queue": {
+        "3": {
+          "pending": 46,
+          "eligible": 38,
+          "blocked": 38,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786457.1149268,
+      "queue": {
+        "3": {
+          "pending": 47,
+          "eligible": 38,
+          "blocked": 0,
+          "claimable": 38
+        }
+      }
+    },
+    {
+      "time": 1790786457.9580636,
+      "queue": {
+        "3": {
+          "pending": 47,
+          "eligible": 38,
+          "blocked": 38,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786459.0027738,
+      "queue": {
+        "3": {
+          "pending": 48,
+          "eligible": 40,
+          "blocked": 0,
+          "claimable": 40
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786459.923407,
+      "queue": {
+        "3": {
+          "pending": 48,
+          "eligible": 40,
+          "blocked": 40,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786460.951033,
+      "queue": {
+        "3": {
+          "pending": 49,
+          "eligible": 41,
+          "blocked": 0,
+          "claimable": 41
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786461.759872,
+      "queue": {
+        "3": {
+          "pending": 49,
+          "eligible": 41,
+          "blocked": 41,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786462.7834396,
+      "queue": {
+        "3": {
+          "pending": 50,
+          "eligible": 42,
+          "blocked": 0,
+          "claimable": 42
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786463.759524,
+      "queue": {
+        "3": {
+          "pending": 50,
+          "eligible": 42,
+          "blocked": 42,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786464.8226852,
+      "queue": {
+        "3": {
+          "pending": 51,
+          "eligible": 43,
+          "blocked": 0,
+          "claimable": 43
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786465.6941562,
+      "queue": {
+        "3": {
+          "pending": 51,
+          "eligible": 43,
+          "blocked": 43,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786466.7323215,
+      "queue": {
+        "3": {
+          "pending": 52,
+          "eligible": 44,
+          "blocked": 0,
+          "claimable": 44
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786467.6910794,
+      "queue": {
+        "3": {
+          "pending": 52,
+          "eligible": 44,
+          "blocked": 44,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786469.5079286,
+      "queue": {
+        "3": {
+          "pending": 54,
+          "eligible": 46,
+          "blocked": 0,
+          "claimable": 46
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786470.4257104,
+      "queue": {
+        "3": {
+          "pending": 53,
+          "eligible": 46,
+          "blocked": 46,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786471.4656832,
+      "queue": {
+        "3": {
+          "pending": 54,
+          "eligible": 47,
+          "blocked": 0,
+          "claimable": 47
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786472.3188584,
+      "queue": {
+        "3": {
+          "pending": 54,
+          "eligible": 46,
+          "blocked": 46,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786473.352213,
+      "queue": {
+        "3": {
+          "pending": 55,
+          "eligible": 47,
+          "blocked": 0,
+          "claimable": 47
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786474.254094,
+      "queue": {
+        "3": {
+          "pending": 55,
+          "eligible": 47,
+          "blocked": 47,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786475.2946355,
+      "queue": {
+        "3": {
+          "pending": 56,
+          "eligible": 48,
+          "blocked": 0,
+          "claimable": 48
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786476.1911037,
+      "queue": {
+        "3": {
+          "pending": 56,
+          "eligible": 48,
+          "blocked": 48,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786477.2249992,
+      "queue": {
+        "3": {
+          "pending": 57,
+          "eligible": 49,
+          "blocked": 0,
+          "claimable": 49
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786478.152106,
+      "queue": {
+        "3": {
+          "pending": 57,
+          "eligible": 49,
+          "blocked": 49,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786480.0481102,
+      "queue": {
+        "3": {
+          "pending": 59,
+          "eligible": 51,
+          "blocked": 0,
+          "claimable": 51
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786480.9991646,
+      "queue": {
+        "3": {
+          "pending": 59,
+          "eligible": 51,
+          "blocked": 51,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786482.783631,
+      "queue": {
+        "3": {
+          "pending": 61,
+          "eligible": 53,
+          "blocked": 0,
+          "claimable": 53
+        }
+      }
+    },
+    {
+      "time": 1790786483.7475057,
+      "queue": {
+        "3": {
+          "pending": 61,
+          "eligible": 53,
+          "blocked": 53,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786484.7723804,
+      "queue": {
+        "3": {
+          "pending": 62,
+          "eligible": 54,
+          "blocked": 0,
+          "claimable": 54
+        }
+      }
+    },
+    {
+      "time": 1790786485.5375605,
+      "queue": {
+        "3": {
+          "pending": 62,
+          "eligible": 54,
+          "blocked": 54,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786486.58219,
+      "queue": {
+        "3": {
+          "pending": 63,
+          "eligible": 54,
+          "blocked": 54,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786487.605634,
+      "queue": {
+        "3": {
+          "pending": 63,
+          "eligible": 54,
+          "blocked": 54,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786488.6418989,
+      "queue": {
+        "3": {
+          "pending": 63,
+          "eligible": 56,
+          "blocked": 0,
+          "claimable": 56
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786489.355905,
+      "queue": {
+        "3": {
+          "pending": 63,
+          "eligible": 55,
+          "blocked": 55,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786490.3958168,
+      "queue": {
+        "3": {
+          "pending": 64,
+          "eligible": 57,
+          "blocked": 57,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786491.425979,
+      "queue": {
+        "3": {
+          "pending": 65,
+          "eligible": 58,
+          "blocked": 0,
+          "claimable": 58
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786491.4711435,
+      "queue": {
+        "3": {
+          "pending": 65,
+          "eligible": 58,
+          "blocked": 0,
+          "claimable": 58
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786492.5116706,
+      "queue": {
+        "3": {
+          "pending": 66,
+          "eligible": 58,
+          "blocked": 58,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786493.54286,
+      "queue": {
+        "3": {
+          "pending": 67,
+          "eligible": 59,
+          "blocked": 0,
+          "claimable": 59
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786494.1511807,
+      "queue": {
+        "3": {
+          "pending": 66,
+          "eligible": 58,
+          "blocked": 58,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786495.1778624,
+      "queue": {
+        "3": {
+          "pending": 67,
+          "eligible": 59,
+          "blocked": 59,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786496.2073703,
+      "queue": {
+        "3": {
+          "pending": 68,
+          "eligible": 60,
+          "blocked": 0,
+          "claimable": 60
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786496.2104585,
+      "queue": {
+        "3": {
+          "pending": 68,
+          "eligible": 60,
+          "blocked": 0,
+          "claimable": 60
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786497.2456381,
+      "queue": {
+        "3": {
+          "pending": 68,
+          "eligible": 60,
+          "blocked": 60,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786498.901785,
+      "queue": {
+        "3": {
+          "pending": 70,
+          "eligible": 62,
+          "blocked": 0,
+          "claimable": 62
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786500.0521595,
+      "queue": {
+        "3": {
+          "pending": 70,
+          "eligible": 62,
+          "blocked": 62,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786501.0863488,
+      "queue": {
+        "3": {
+          "pending": 71,
+          "eligible": 63,
+          "blocked": 0,
+          "claimable": 63
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786501.8447816,
+      "queue": {
+        "3": {
+          "pending": 71,
+          "eligible": 63,
+          "blocked": 63,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786502.8715394,
+      "queue": {
+        "3": {
+          "pending": 72,
+          "eligible": 64,
+          "blocked": 0,
+          "claimable": 64
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786503.8404467,
+      "queue": {
+        "3": {
+          "pending": 72,
+          "eligible": 64,
+          "blocked": 64,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786504.8685448,
+      "queue": {
+        "3": {
+          "pending": 73,
+          "eligible": 65,
+          "blocked": 0,
+          "claimable": 65
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786505.5534117,
+      "queue": {
+        "3": {
+          "pending": 73,
+          "eligible": 65,
+          "blocked": 65,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786506.5804732,
+      "queue": {
+        "3": {
+          "pending": 74,
+          "eligible": 65,
+          "blocked": 0,
+          "claimable": 65
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786507.5317578,
+      "queue": {
+        "3": {
+          "pending": 74,
+          "eligible": 66,
+          "blocked": 66,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786509.2921505,
+      "queue": {
+        "3": {
+          "pending": 74,
+          "eligible": 67,
+          "blocked": 0,
+          "claimable": 67
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786510.3060682,
+      "queue": {
+        "3": {
+          "pending": 75,
+          "eligible": 67,
+          "blocked": 67,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786512.227854,
+      "queue": {
+        "3": {
+          "pending": 77,
+          "eligible": 69,
+          "blocked": 0,
+          "claimable": 69
+        }
+      }
+    },
+    {
+      "time": 1790786513.180057,
+      "queue": {
+        "3": {
+          "pending": 77,
+          "eligible": 69,
+          "blocked": 69,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786514.2046807,
+      "queue": {
+        "3": {
+          "pending": 78,
+          "eligible": 70,
+          "blocked": 0,
+          "claimable": 70
+        }
+      }
+    },
+    {
+      "time": 1790786515.0439754,
+      "queue": {
+        "3": {
+          "pending": 78,
+          "eligible": 70,
+          "blocked": 70,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786516.0781066,
+      "queue": {
+        "3": {
+          "pending": 79,
+          "eligible": 71,
+          "blocked": 0,
+          "claimable": 71
+        }
+      }
+    },
+    {
+      "time": 1790786516.9244924,
+      "queue": {
+        "3": {
+          "pending": 79,
+          "eligible": 70,
+          "blocked": 70,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786517.9594414,
+      "queue": {
+        "3": {
+          "pending": 80,
+          "eligible": 72,
+          "blocked": 0,
+          "claimable": 72
+        }
+      }
+    },
+    {
+      "time": 1790786518.8010464,
+      "queue": {
+        "3": {
+          "pending": 80,
+          "eligible": 72,
+          "blocked": 72,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786519.825086,
+      "queue": {
+        "3": {
+          "pending": 81,
+          "eligible": 73,
+          "blocked": 0,
+          "claimable": 73
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786520.6610568,
+      "queue": {
+        "3": {
+          "pending": 81,
+          "eligible": 73,
+          "blocked": 73,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786521.693954,
+      "queue": {
+        "3": {
+          "pending": 82,
+          "eligible": 74,
+          "blocked": 0,
+          "claimable": 74
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786522.565271,
+      "queue": {
+        "3": {
+          "pending": 82,
+          "eligible": 74,
+          "blocked": 74,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786523.6101434,
+      "queue": {
+        "3": {
+          "pending": 83,
+          "eligible": 75,
+          "blocked": 0,
+          "claimable": 75
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786524.4745011,
+      "queue": {
+        "3": {
+          "pending": 82,
+          "eligible": 75,
+          "blocked": 75,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786525.5256667,
+      "queue": {
+        "3": {
+          "pending": 84,
+          "eligible": 76,
+          "blocked": 0,
+          "claimable": 76
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786526.4221947,
+      "queue": {
+        "3": {
+          "pending": 83,
+          "eligible": 75,
+          "blocked": 75,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786528.2992594,
+      "queue": {
+        "3": {
+          "pending": 85,
+          "eligible": 77,
+          "blocked": 0,
+          "claimable": 77
+        },
+        "2": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786529.240785,
+      "queue": {
+        "3": {
+          "pending": 85,
+          "eligible": 77,
+          "blocked": 77,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786530.2994576,
+      "queue": {
+        "3": {
+          "pending": 86,
+          "eligible": 78,
+          "blocked": 0,
+          "claimable": 78
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786531.2061324,
+      "queue": {
+        "3": {
+          "pending": 86,
+          "eligible": 78,
+          "blocked": 78,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786532.2337444,
+      "queue": {
+        "3": {
+          "pending": 87,
+          "eligible": 79,
+          "blocked": 0,
+          "claimable": 79
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786533.046981,
+      "queue": {
+        "3": {
+          "pending": 87,
+          "eligible": 79,
+          "blocked": 79,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786534.0769677,
+      "queue": {
+        "3": {
+          "pending": 88,
+          "eligible": 80,
+          "blocked": 0,
+          "claimable": 80
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786534.9148972,
+      "queue": {
+        "3": {
+          "pending": 88,
+          "eligible": 80,
+          "blocked": 80,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786535.9435751,
+      "queue": {
+        "3": {
+          "pending": 89,
+          "eligible": 81,
+          "blocked": 0,
+          "claimable": 81
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 0,
+          "blocked": 0,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786536.8698018,
+      "queue": {
+        "3": {
+          "pending": 89,
+          "eligible": 81,
+          "blocked": 81,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        },
+        "1": {
+          "pending": 1,
+          "eligible": 1,
+          "blocked": 0,
+          "claimable": 1
+        }
+      }
+    },
+    {
+      "time": 1790786538.5459096,
+      "queue": {
+        "3": {
+          "pending": 90,
+          "eligible": 83,
+          "blocked": 0,
+          "claimable": 83
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786539.5525777,
+      "queue": {
+        "3": {
+          "pending": 89,
+          "eligible": 83,
+          "blocked": 83,
+          "claimable": 0
+        },
+        "2": {
+          "pending": 2,
+          "eligible": 2,
+          "blocked": 0,
+          "claimable": 2
+        }
+      }
+    },
+    {
+      "time": 1790786541.302634,
+      "queue": {
+        "3": {
+          "pending": 89,
+          "eligible": 84,
+          "blocked": 0,
+          "claimable": 84
+        }
+      }
+    },
+    {
+      "time": 1790786542.3401244,
+      "queue": {
+        "3": {
+          "pending": 88,
+          "eligible": 84,
+          "blocked": 84,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786543.3761244,
+      "queue": {
+        "3": {
+          "pending": 88,
+          "eligible": 85,
+          "blocked": 0,
+          "claimable": 85
+        }
+      }
+    },
+    {
+      "time": 1790786544.1116009,
+      "queue": {
+        "3": {
+          "pending": 87,
+          "eligible": 85,
+          "blocked": 85,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786545.1498342,
+      "queue": {
+        "3": {
+          "pending": 87,
+          "eligible": 86,
+          "blocked": 0,
+          "claimable": 86
+        }
+      }
+    },
+    {
+      "time": 1790786546.0725644,
+      "queue": {
+        "3": {
+          "pending": 86,
+          "eligible": 86,
+          "blocked": 86,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786547.0945845,
+      "queue": {
+        "3": {
+          "pending": 86,
+          "eligible": 86,
+          "blocked": 0,
+          "claimable": 86
+        }
+      }
+    },
+    {
+      "time": 1790786547.7874205,
+      "queue": {
+        "3": {
+          "pending": 85,
+          "eligible": 85,
+          "blocked": 85,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786548.8137403,
+      "queue": {
+        "3": {
+          "pending": 85,
+          "eligible": 85,
+          "blocked": 0,
+          "claimable": 85
+        }
+      }
+    },
+    {
+      "time": 1790786549.7714872,
+      "queue": {
+        "3": {
+          "pending": 84,
+          "eligible": 84,
+          "blocked": 84,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786550.8072941,
+      "queue": {
+        "3": {
+          "pending": 84,
+          "eligible": 84,
+          "blocked": 0,
+          "claimable": 84
+        }
+      }
+    },
+    {
+      "time": 1790786551.5854323,
+      "queue": {
+        "3": {
+          "pending": 83,
+          "eligible": 83,
+          "blocked": 83,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786552.6271062,
+      "queue": {
+        "3": {
+          "pending": 83,
+          "eligible": 83,
+          "blocked": 0,
+          "claimable": 83
+        }
+      }
+    },
+    {
+      "time": 1790786553.5917423,
+      "queue": {
+        "3": {
+          "pending": 82,
+          "eligible": 82,
+          "blocked": 82,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786554.6735008,
+      "queue": {
+        "3": {
+          "pending": 82,
+          "eligible": 82,
+          "blocked": 0,
+          "claimable": 82
+        }
+      }
+    },
+    {
+      "time": 1790786555.4548528,
+      "queue": {
+        "3": {
+          "pending": 81,
+          "eligible": 81,
+          "blocked": 81,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786556.4867876,
+      "queue": {
+        "3": {
+          "pending": 81,
+          "eligible": 81,
+          "blocked": 81,
+          "claimable": 0
+        }
+      }
+    },
+    {
+      "time": 1790786557.521738,
+      "queue": {
+        "3": {
+          "pending": 81,
+          "eligible": 81,
+          "blocked": 0,
+          "claimable": 81
+        }
+      }
+    },
+    {
+      "time": 1790786557.5297647,
+      "queue": {
+        "3": {
+          "pending": 81,
+          "eligible": 81,
+          "blocked": 0,
+          "claimable": 81
+        }
+      }
+    }
+  ]
+}

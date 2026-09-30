@@ -20,3 +20,9 @@ docs/evals/b9e-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-
 docs/evals/b9e-*.log -diff
 docs/evals/profile-beta-1-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/reporte-aceptacion-b9-profile-beta-1-2026-09-29.md text eol=lf
+
+# E4 test evidence preserves bytes independently of the historical B9E receipts.
+backend/apps/agent/tests/e4*.py text eol=lf
+docs/evals/e4-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evals/e4-*.log -diff
+docs/diagnostico-e4-capacidad-scheduling-2026-09-30.md text eol=lf

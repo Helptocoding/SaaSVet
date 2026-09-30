@@ -1,0 +1,11 @@
+[
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_01_idle_org_precedes_older_recently_claimed_noisy_org",
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_02_claim_miss_falls_through_to_distinct_org_with_batch_one",
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_03_busy_org_excluded_before_lookahead",
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_04_larger_batch_reselects_after_success_without_repeat_conversation",
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_05_all_misses_are_bounded_and_leave_work_durable",
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_06_recovery_keeps_work_membership_and_changes_token",
+  "apps.agent.tests.test_e4_selection.E4SelectionTests.test_e4_sel_07_future_retry_and_future_inbound_are_ineligible",
+  "apps.agent.tests.test_e4_processes.E4ProcessTests.test_e4_proc_01_collision_falls_through_to_other_tenant_same_poll",
+  "apps.agent.tests.test_e4_processes.E4ProcessTests.test_e4_proc_02_colliding_planners_cannot_take_second_slot_same_org"
+]

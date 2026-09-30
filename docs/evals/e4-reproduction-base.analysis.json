@@ -1,0 +1,2403 @@
+{
+  "schema": "e4-collection-v1",
+  "classification": "DIAGNOSTIC_ONLY",
+  "receipt": "e4-reproduction-base.json",
+  "environment": [
+    "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+    "on",
+    "on"
+  ],
+  "distributions": {
+    "persisted_to_claim": {
+      "n": 60,
+      "p50": 8.540524,
+      "p75": 11.526504,
+      "p90": 21.482832,
+      "p95": 22.141079,
+      "p99": 22.585115,
+      "max": 22.585115
+    },
+    "safety_claim": {
+      "n": 20,
+      "p50": 0.11561,
+      "p75": 0.124683,
+      "p90": 0.154522,
+      "p95": 0.171192,
+      "p99": 0.171192,
+      "max": 0.171192
+    },
+    "ordinary_claim": {
+      "n": 40,
+      "p50": 10.985781,
+      "p75": 20.765017,
+      "p90": 21.700541,
+      "p95": 22.495052,
+      "p99": 22.585115,
+      "max": 22.585115
+    },
+    "eligible_delay": {
+      "n": 40,
+      "p50": 7.942514896392822,
+      "p75": 17.931106090545654,
+      "p90": 17.993571043014526,
+      "p95": 18.051777839660645,
+      "p99": 18.1158230304718,
+      "max": 18.1158230304718
+    }
+  },
+  "service": {
+    "claim_to_completion": {
+      "n": 173,
+      "p50": 1.811326,
+      "p75": 1.900317,
+      "p90": 1.979987,
+      "p95": 2.056337,
+      "p99": 2.582845,
+      "max": 2.724265
+    },
+    "calls_per_work": {
+      "n": 173,
+      "p50": 2,
+      "p75": 2,
+      "p90": 2,
+      "p95": 2,
+      "p99": 2,
+      "max": 2
+    },
+    "claim_to_first_admission": {
+      "n": 173,
+      "p50": 0.258861,
+      "p75": 0.299807,
+      "p90": 0.346363,
+      "p95": 0.401589,
+      "p99": 0.562862,
+      "max": 0.600101
+    }
+  },
+  "critical": {
+    "cross_tenant": 0,
+    "budget_violations": 0,
+    "failed": 0,
+    "max_active_observed": 1,
+    "unclaimed_healthy": 0
+  },
+  "polling": {
+    "start_to_start": {
+      "n": 0,
+      "p50": null,
+      "p75": null,
+      "p90": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "polls": 0,
+    "empty": 0,
+    "nonempty": 0,
+    "misses": 0,
+    "observer_cost": {
+      "n": 0,
+      "p50": null,
+      "p75": null,
+      "p90": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    }
+  },
+  "sql_execution_seconds": {},
+  "query": "SELECT DISTINCT \"agent_conversation\".\"id\" AS \"pk\", \"agent_conversation\".\"last_activity_at\" FROM \"agent_conversation\" LEFT OUTER JOIN \"agent_turnwork\" ON (\"agent_conversation\".\"id\" = \"agent_turnwork\".\"conversation_id\") WHERE (\"agent_conversation\".\"is_active\" AND ((\"agent_turnwork\".\"lease_expires_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = PROCESSING) OR (\"agent_turnwork\".\"next_attempt_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = PENDING) OR (\"agent_turnwork\".\"next_attempt_at\" IS NULL AND \"agent_turnwork\".\"status\" = PENDING) OR \"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = in AND U0.\"status\" = pending AND U0.\"turn_work_id\" IS NULL AND (U0.\"available_at\" IS NULL OR U0.\"available_at\" <= (STATEMENT_TIMESTAMP()))))) AND NOT EXISTS(SELECT 1 AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\") AND U0.\"status\" = PROCESSING) LIMIT 1)) ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, 1 ASC LIMIT 1",
+  "query_plan": [
+    {
+      "Plan": {
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 88.65,
+        "Total Cost": 88.66,
+        "Plan Rows": 1,
+        "Plan Width": 16,
+        "Actual Startup Time": 2.789,
+        "Actual Total Time": 2.796,
+        "Actual Rows": 1,
+        "Actual Loops": 1,
+        "Shared Hit Blocks": 53,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 88.65,
+            "Total Cost": 88.79,
+            "Plan Rows": 53,
+            "Plan Width": 16,
+            "Actual Startup Time": 2.784,
+            "Actual Total Time": 2.79,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Sort Key": [
+              "agent_conversation.last_activity_at",
+              "agent_conversation.id"
+            ],
+            "Sort Method": "top-N heapsort",
+            "Sort Space Used": 25,
+            "Sort Space Type": "Memory",
+            "Shared Hit Blocks": 53,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Aggregate",
+                "Strategy": "Hashed",
+                "Partial Mode": "Simple",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 87.86,
+                "Total Cost": 88.39,
+                "Plan Rows": 53,
+                "Plan Width": 16,
+                "Actual Startup Time": 2.602,
+                "Actual Total Time": 2.689,
+                "Actual Rows": 189,
+                "Actual Loops": 1,
+                "Group Key": [
+                  "agent_conversation.last_activity_at",
+                  "agent_conversation.id"
+                ],
+                "Planned Partitions": 0,
+                "HashAgg Batches": 1,
+                "Peak Memory Usage": 48,
+                "Disk Usage": 0,
+                "Shared Hit Blocks": 53,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Right",
+                    "Startup Cost": 76.62,
+                    "Total Cost": 87.59,
+                    "Plan Rows": 53,
+                    "Plan Width": 16,
+                    "Actual Startup Time": 2.043,
+                    "Actual Total Time": 2.347,
+                    "Actual Rows": 189,
+                    "Actual Loops": 1,
+                    "Inner Unique": false,
+                    "Hash Cond": "(agent_turnwork.conversation_id = agent_conversation.id)",
+                    "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 1))",
+                    "Rows Removed by Filter": 195,
+                    "Shared Hit Blocks": 53,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "agent_turnwork",
+                        "Alias": "agent_turnwork",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 8.69,
+                        "Plan Rows": 169,
+                        "Plan Width": 34,
+                        "Actual Startup Time": 0.028,
+                        "Actual Total Time": 0.186,
+                        "Actual Rows": 195,
+                        "Actual Loops": 1,
+                        "Shared Hit Blocks": 7,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 29.73,
+                        "Total Cost": 29.73,
+                        "Plan Rows": 105,
+                        "Plan Width": 16,
+                        "Actual Startup Time": 0.747,
+                        "Actual Total Time": 0.751,
+                        "Actual Rows": 354,
+                        "Actual Loops": 1,
+                        "Hash Buckets": 1024,
+                        "Original Hash Buckets": 1024,
+                        "Hash Batches": 1,
+                        "Original Hash Batches": 1,
+                        "Peak Memory Usage": 25,
+                        "Shared Hit Blocks": 12,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Hash Join",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Join Type": "Anti",
+                            "Startup Cost": 16.36,
+                            "Total Cost": 29.73,
+                            "Plan Rows": 105,
+                            "Plan Width": 16,
+                            "Actual Startup Time": 0.113,
+                            "Actual Total Time": 0.575,
+                            "Actual Rows": 354,
+                            "Actual Loops": 1,
+                            "Inner Unique": false,
+                            "Hash Cond": "(agent_conversation.organization_id = u0.organization_id)",
+                            "Shared Hit Blocks": 12,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Seq Scan",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Relation Name": "agent_conversation",
+                                "Alias": "agent_conversation",
+                                "Startup Cost": 0.0,
+                                "Total Cost": 11.23,
+                                "Plan Rows": 323,
+                                "Plan Width": 24,
+                                "Actual Startup Time": 0.032,
+                                "Actual Total Time": 0.319,
+                                "Actual Rows": 354,
+                                "Actual Loops": 1,
+                                "Filter": "is_active",
+                                "Rows Removed by Filter": 0,
+                                "Shared Hit Blocks": 8,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0
+                              },
+                              {
+                                "Node Type": "Hash",
+                                "Parent Relationship": "Inner",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Startup Cost": 16.35,
+                                "Total Cost": 16.35,
+                                "Plan Rows": 1,
+                                "Plan Width": 8,
+                                "Actual Startup Time": 0.052,
+                                "Actual Total Time": 0.054,
+                                "Actual Rows": 0,
+                                "Actual Loops": 1,
+                                "Hash Buckets": 1024,
+                                "Original Hash Buckets": 1024,
+                                "Hash Batches": 1,
+                                "Original Hash Batches": 1,
+                                "Peak Memory Usage": 8,
+                                "Shared Hit Blocks": 4,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Join Type": "Inner",
+                                    "Startup Cost": 0.29,
+                                    "Total Cost": 16.35,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Actual Startup Time": 0.052,
+                                    "Actual Total Time": 0.053,
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 1,
+                                    "Inner Unique": true,
+                                    "Shared Hit Blocks": 4,
+                                    "Shared Read Blocks": 0,
+                                    "Shared Dirtied Blocks": 0,
+                                    "Shared Written Blocks": 0,
+                                    "Local Hit Blocks": 0,
+                                    "Local Read Blocks": 0,
+                                    "Local Dirtied Blocks": 0,
+                                    "Local Written Blocks": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Outer",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "turnwork_poll_retry",
+                                        "Relation Name": "agent_turnwork",
+                                        "Alias": "u0",
+                                        "Startup Cost": 0.14,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.051,
+                                        "Actual Total Time": 0.051,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 1,
+                                        "Index Cond": "((status)::text = 'PROCESSING'::text)",
+                                        "Rows Removed by Index Recheck": 0,
+                                        "Filter": "(is_active AND (lease_expires_at > statement_timestamp()))",
+                                        "Rows Removed by Filter": 0,
+                                        "Shared Hit Blocks": 4,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Parent Relationship": "Inner",
+                                        "Parallel Aware": false,
+                                        "Async Capable": false,
+                                        "Scan Direction": "Forward",
+                                        "Index Name": "agent_conversation_pkey",
+                                        "Relation Name": "agent_conversation",
+                                        "Alias": "u2",
+                                        "Startup Cost": 0.15,
+                                        "Total Cost": 8.17,
+                                        "Plan Rows": 1,
+                                        "Plan Width": 24,
+                                        "Actual Startup Time": 0.0,
+                                        "Actual Total Time": 0.0,
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Index Cond": "(id = u0.conversation_id)",
+                                        "Rows Removed by Index Recheck": 0,
+                                        "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))",
+                                        "Rows Removed by Filter": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Shared Dirtied Blocks": 0,
+                                        "Shared Written Blocks": 0,
+                                        "Local Hit Blocks": 0,
+                                        "Local Read Blocks": 0,
+                                        "Local Dirtied Blocks": 0,
+                                        "Local Written Blocks": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "SubPlan",
+                        "Subplan Name": "SubPlan 1",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "channels_message",
+                        "Alias": "u0_1",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 45.48,
+                        "Plan Rows": 38,
+                        "Plan Width": 8,
+                        "Actual Startup Time": 0.126,
+                        "Actual Total Time": 0.601,
+                        "Actual Rows": 189,
+                        "Actual Loops": 1,
+                        "Filter": "(is_active AND (turn_work_id IS NULL) AND ((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text) AND ((available_at IS NULL) OR (available_at <= statement_timestamp())))",
+                        "Rows Removed by Filter": 396,
+                        "Shared Hit Blocks": 34,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 88,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 3.792,
+      "Triggers": [],
+      "Execution Time": 3.13
+    }
+  ],
+  "indexes": [
+    [
+      "agent_conversation_pkey",
+      "CREATE UNIQUE INDEX agent_conversation_pkey ON public.agent_conversation USING btree (id)"
+    ],
+    [
+      "agent_conversation_public_id_key",
+      "CREATE UNIQUE INDEX agent_conversation_public_id_key ON public.agent_conversation USING btree (public_id)"
+    ],
+    [
+      "agent_conve_organiz_34081f_idx",
+      "CREATE INDEX agent_conve_organiz_34081f_idx ON public.agent_conversation USING btree (organization_id, state, last_activity_at DESC)"
+    ],
+    [
+      "agent_conve_contact_b658a2_idx",
+      "CREATE INDEX agent_conve_contact_b658a2_idx ON public.agent_conversation USING btree (contact_id, created_at DESC)"
+    ],
+    [
+      "agent_conversation_channel_account_id_b929d3ce",
+      "CREATE INDEX agent_conversation_channel_account_id_b929d3ce ON public.agent_conversation USING btree (channel_account_id)"
+    ],
+    [
+      "agent_conversation_claimed_by_id_62f9da56",
+      "CREATE INDEX agent_conversation_claimed_by_id_62f9da56 ON public.agent_conversation USING btree (claimed_by_id)"
+    ],
+    [
+      "agent_conversation_contact_id_36ec89e7",
+      "CREATE INDEX agent_conversation_contact_id_36ec89e7 ON public.agent_conversation USING btree (contact_id)"
+    ],
+    [
+      "agent_conversation_created_by_id_4cf1b1e4",
+      "CREATE INDEX agent_conversation_created_by_id_4cf1b1e4 ON public.agent_conversation USING btree (created_by_id)"
+    ],
+    [
+      "agent_conversation_organization_id_1ef62d10",
+      "CREATE INDEX agent_conversation_organization_id_1ef62d10 ON public.agent_conversation USING btree (organization_id)"
+    ],
+    [
+      "agent_conversation_updated_by_id_01e8413e",
+      "CREATE INDEX agent_conversation_updated_by_id_01e8413e ON public.agent_conversation USING btree (updated_by_id)"
+    ],
+    [
+      "channels_message_pkey",
+      "CREATE UNIQUE INDEX channels_message_pkey ON public.channels_message USING btree (id)"
+    ],
+    [
+      "channels_me_organiz_7ba1d3_idx",
+      "CREATE INDEX channels_me_organiz_7ba1d3_idx ON public.channels_message USING btree (organization_id, conversation_id, created_at)"
+    ],
+    [
+      "channels_me_directi_c93e59_idx",
+      "CREATE INDEX channels_me_directi_c93e59_idx ON public.channels_message USING btree (direction, status)"
+    ],
+    [
+      "message_unique_inbound_wamid",
+      "CREATE UNIQUE INDEX message_unique_inbound_wamid ON public.channels_message USING btree (channel_account_id, external_message_id) WHERE (((direction)::text = 'in'::text) AND (external_message_id IS NOT NULL))"
+    ],
+    [
+      "channels_message_channel_account_id_03bba5b5",
+      "CREATE INDEX channels_message_channel_account_id_03bba5b5 ON public.channels_message USING btree (channel_account_id)"
+    ],
+    [
+      "channels_message_conversation_id_af5ca503",
+      "CREATE INDEX channels_message_conversation_id_af5ca503 ON public.channels_message USING btree (conversation_id)"
+    ],
+    [
+      "channels_message_created_by_id_094f21e0",
+      "CREATE INDEX channels_message_created_by_id_094f21e0 ON public.channels_message USING btree (created_by_id)"
+    ],
+    [
+      "channels_message_human_author_id_51a3db10",
+      "CREATE INDEX channels_message_human_author_id_51a3db10 ON public.channels_message USING btree (human_author_id)"
+    ],
+    [
+      "channels_message_organization_id_940b6f9e",
+      "CREATE INDEX channels_message_organization_id_940b6f9e ON public.channels_message USING btree (organization_id)"
+    ],
+    [
+      "channels_message_updated_by_id_f72e1ea0",
+      "CREATE INDEX channels_message_updated_by_id_f72e1ea0 ON public.channels_message USING btree (updated_by_id)"
+    ],
+    [
+      "channels_message_contact_id_f609c902",
+      "CREATE INDEX channels_message_contact_id_f609c902 ON public.channels_message USING btree (contact_id)"
+    ],
+    [
+      "channels_me_organiz_c00b67_idx",
+      "CREATE INDEX channels_me_organiz_c00b67_idx ON public.channels_message USING btree (organization_id, contact_id, channel_account_id, created_at)"
+    ],
+    [
+      "message_unique_operation_receipt",
+      "CREATE UNIQUE INDEX message_unique_operation_receipt ON public.channels_message USING btree (conversation_id, operation_key) WHERE (((direction)::text = 'out'::text) AND ((semantic_type)::text = 'operation_receipt'::text) AND (NOT ((operation_key)::text = ''::text)))"
+    ],
+    [
+      "channels_me_convers_c68da0_idx",
+      "CREATE INDEX channels_me_convers_c68da0_idx ON public.channels_message USING btree (conversation_id, semantic_type, created_at)"
+    ],
+    [
+      "message_unique_idempotency_per_org",
+      "CREATE UNIQUE INDEX message_unique_idempotency_per_org ON public.channels_message USING btree (organization_id, idempotency_key) WHERE (((direction)::text = 'out'::text) AND ((author_type)::text = 'human_staff'::text) AND (idempotency_key IS NOT NULL))"
+    ],
+    [
+      "message_unique_processing_failure_notice",
+      "CREATE UNIQUE INDEX message_unique_processing_failure_notice ON public.channels_message USING btree (conversation_id, semantic_type) WHERE (((direction)::text = 'out'::text) AND ((semantic_type)::text = 'processing_failure'::text))"
+    ],
+    [
+      "message_unique_turn_output",
+      "CREATE UNIQUE INDEX message_unique_turn_output ON public.channels_message USING btree (turn_work_id, output_ordinal) WHERE (((direction)::text = 'out'::text) AND (output_ordinal IS NOT NULL) AND (turn_work_id IS NOT NULL))"
+    ],
+    [
+      "channels_message_turn_work_id_20ce3041",
+      "CREATE INDEX channels_message_turn_work_id_20ce3041 ON public.channels_message USING btree (turn_work_id)"
+    ],
+    [
+      "message_send_ready",
+      "CREATE INDEX message_send_ready ON public.channels_message USING btree (direction, status, next_attempt_at)"
+    ],
+    [
+      "message_send_expiry",
+      "CREATE INDEX message_send_expiry ON public.channels_message USING btree (send_lease_until) WHERE ((status)::text = 'sending'::text)"
+    ],
+    [
+      "message_status_lookup",
+      "CREATE INDEX message_status_lookup ON public.channels_message USING btree (organization_id, channel_account_id, external_message_id) WHERE ((direction)::text = 'out'::text)"
+    ],
+    [
+      "channels_message_supersedes_message_id_2e4376d0",
+      "CREATE INDEX channels_message_supersedes_message_id_2e4376d0 ON public.channels_message USING btree (supersedes_message_id)"
+    ],
+    [
+      "agent_turnwork_pkey",
+      "CREATE UNIQUE INDEX agent_turnwork_pkey ON public.agent_turnwork USING btree (id)"
+    ],
+    [
+      "turnwork_unique_anchor",
+      "CREATE UNIQUE INDEX turnwork_unique_anchor ON public.agent_turnwork USING btree (conversation_id, anchor_message_id)"
+    ],
+    [
+      "turnwork_one_nonterminal",
+      "CREATE UNIQUE INDEX turnwork_one_nonterminal ON public.agent_turnwork USING btree (conversation_id) WHERE ((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PROCESSING'::character varying])::text[]))"
+    ],
+    [
+      "agent_turnwork_anchor_message_id_3fcc70f5",
+      "CREATE INDEX agent_turnwork_anchor_message_id_3fcc70f5 ON public.agent_turnwork USING btree (anchor_message_id)"
+    ],
+    [
+      "agent_turnwork_conversation_id_e15ceb51",
+      "CREATE INDEX agent_turnwork_conversation_id_e15ceb51 ON public.agent_turnwork USING btree (conversation_id)"
+    ],
+    [
+      "agent_turnwork_created_by_id_3261ae87",
+      "CREATE INDEX agent_turnwork_created_by_id_3261ae87 ON public.agent_turnwork USING btree (created_by_id)"
+    ],
+    [
+      "agent_turnwork_organization_id_4c7f7bfe",
+      "CREATE INDEX agent_turnwork_organization_id_4c7f7bfe ON public.agent_turnwork USING btree (organization_id)"
+    ],
+    [
+      "agent_turnwork_updated_by_id_5ed3892a",
+      "CREATE INDEX agent_turnwork_updated_by_id_5ed3892a ON public.agent_turnwork USING btree (updated_by_id)"
+    ],
+    [
+      "turnwork_poll_retry",
+      "CREATE INDEX turnwork_poll_retry ON public.agent_turnwork USING btree (status, next_attempt_at)"
+    ],
+    [
+      "turnwork_poll_lease",
+      "CREATE INDEX turnwork_poll_lease ON public.agent_turnwork USING btree (status, lease_expires_at)"
+    ]
+  ],
+  "timing_samples": [
+    {
+      "id": 47,
+      "organization": 0,
+      "work": 14,
+      "ordinary": false,
+      "T0": 1790784705.281824,
+      "T1": 1790784705.329749,
+      "claimed_at": 1790784705.395505,
+      "persisted_to_claim": 0.113681
+    },
+    {
+      "id": 50,
+      "organization": 1,
+      "work": 15,
+      "ordinary": false,
+      "T0": 1790784705.849564,
+      "T1": 1790784705.898309,
+      "claimed_at": 1790784705.963065,
+      "persisted_to_claim": 0.113501
+    },
+    {
+      "id": 52,
+      "organization": 2,
+      "work": 44,
+      "ordinary": true,
+      "T0": 1790784706.438317,
+      "T1": 1790784714.371018,
+      "claimed_at": 1790784761.994817,
+      "persisted_to_claim": 55.5565
+    },
+    {
+      "id": 53,
+      "organization": 2,
+      "work": 46,
+      "ordinary": true,
+      "T0": 1790784706.667192,
+      "T1": 1790784714.604292,
+      "claimed_at": 1790784764.701169,
+      "persisted_to_claim": 58.033977
+    },
+    {
+      "id": 55,
+      "organization": 2,
+      "work": 50,
+      "ordinary": true,
+      "T0": 1790784707.213886,
+      "T1": 1790784715.147899,
+      "claimed_at": 1790784767.754351,
+      "persisted_to_claim": 60.540465
+    },
+    {
+      "id": 56,
+      "organization": 2,
+      "work": 51,
+      "ordinary": true,
+      "T0": 1790784708.295236,
+      "T1": 1790784716.153526,
+      "claimed_at": 1790784770.030609,
+      "persisted_to_claim": 61.735373
+    },
+    {
+      "id": 58,
+      "organization": 2,
+      "work": 52,
+      "ordinary": true,
+      "T0": 1790784709.241342,
+      "T1": 1790784717.180688,
+      "claimed_at": 1790784772.752026,
+      "persisted_to_claim": 63.510684
+    },
+    {
+      "id": 60,
+      "organization": 2,
+      "work": 53,
+      "ordinary": true,
+      "T0": 1790784710.210708,
+      "T1": 1790784718.140137,
+      "claimed_at": 1790784774.849398,
+      "persisted_to_claim": 64.63869
+    },
+    {
+      "id": 61,
+      "organization": 2,
+      "work": 54,
+      "ordinary": true,
+      "T0": 1790784711.244803,
+      "T1": 1790784719.175265,
+      "claimed_at": 1790784777.441545,
+      "persisted_to_claim": 66.196742
+    },
+    {
+      "id": 62,
+      "organization": 2,
+      "work": 55,
+      "ordinary": true,
+      "T0": 1790784712.239851,
+      "T1": 1790784720.17362,
+      "claimed_at": 1790784779.621212,
+      "persisted_to_claim": 67.381361
+    },
+    {
+      "id": 64,
+      "organization": 2,
+      "work": 56,
+      "ordinary": true,
+      "T0": 1790784713.272658,
+      "T1": 1790784721.173961,
+      "claimed_at": 1790784782.354011,
+      "persisted_to_claim": 69.081353
+    },
+    {
+      "id": 65,
+      "organization": 2,
+      "work": 58,
+      "ordinary": true,
+      "T0": 1790784714.2154,
+      "T1": 1790784722.164027,
+      "claimed_at": 1790784785.055136,
+      "persisted_to_claim": 70.839736
+    },
+    {
+      "id": 67,
+      "organization": 0,
+      "work": 24,
+      "ordinary": true,
+      "T0": 1790784715.201471,
+      "T1": 1790784723.142068,
+      "claimed_at": 1790784723.400334,
+      "persisted_to_claim": 8.198863
+    },
+    {
+      "id": 68,
+      "organization": 1,
+      "work": 33,
+      "ordinary": true,
+      "T0": 1790784715.369845,
+      "T1": 1790784733.485668,
+      "claimed_at": 1790784737.070386,
+      "persisted_to_claim": 21.700541
+    },
+    {
+      "id": 69,
+      "organization": 2,
+      "work": 59,
+      "ordinary": true,
+      "T0": 1790784715.544561,
+      "T1": 1790784723.478651,
+      "claimed_at": 1790784787.280222,
+      "persisted_to_claim": 71.735661
+    },
+    {
+      "id": 70,
+      "organization": 2,
+      "work": 60,
+      "ordinary": true,
+      "T0": 1790784716.250595,
+      "T1": 1790784724.176947,
+      "claimed_at": 1790784789.805716,
+      "persisted_to_claim": 73.555121
+    },
+    {
+      "id": 71,
+      "organization": 2,
+      "work": 61,
+      "ordinary": true,
+      "T0": 1790784717.22515,
+      "T1": 1790784725.16798,
+      "claimed_at": 1790784792.112362,
+      "persisted_to_claim": 74.887212
+    },
+    {
+      "id": 73,
+      "organization": 2,
+      "work": 63,
+      "ordinary": true,
+      "T0": 1790784718.246698,
+      "T1": 1790784726.161665,
+      "claimed_at": 1790784795.107314,
+      "persisted_to_claim": 76.860616
+    },
+    {
+      "id": 74,
+      "organization": 2,
+      "work": 67,
+      "ordinary": true,
+      "T0": 1790784719.226148,
+      "T1": 1790784727.168611,
+      "claimed_at": 1790784797.983412,
+      "persisted_to_claim": 78.757264
+    },
+    {
+      "id": 76,
+      "organization": 2,
+      "work": 68,
+      "ordinary": true,
+      "T0": 1790784720.189921,
+      "T1": 1790784728.129643,
+      "claimed_at": 1790784800.534916,
+      "persisted_to_claim": 80.344995
+    },
+    {
+      "id": 77,
+      "organization": 2,
+      "work": 69,
+      "ordinary": true,
+      "T0": 1790784721.224337,
+      "T1": 1790784729.162968,
+      "claimed_at": 1790784802.687506,
+      "persisted_to_claim": 81.463169
+    },
+    {
+      "id": 78,
+      "organization": 2,
+      "work": 70,
+      "ordinary": true,
+      "T0": 1790784722.184347,
+      "T1": 1790784730.129965,
+      "claimed_at": 1790784805.469207,
+      "persisted_to_claim": 83.28486
+    },
+    {
+      "id": 80,
+      "organization": 2,
+      "work": 71,
+      "ordinary": true,
+      "T0": 1790784723.235538,
+      "T1": 1790784731.170053,
+      "claimed_at": 1790784807.574589,
+      "persisted_to_claim": 84.339051
+    },
+    {
+      "id": 81,
+      "organization": 2,
+      "work": 72,
+      "ordinary": true,
+      "T0": 1790784724.23674,
+      "T1": 1790784732.172395,
+      "claimed_at": 1790784809.394914,
+      "persisted_to_claim": 85.158174
+    },
+    {
+      "id": 84,
+      "organization": 0,
+      "work": 29,
+      "ordinary": true,
+      "T0": 1790784725.388571,
+      "T1": 1790784733.313905,
+      "claimed_at": 1790784733.871121,
+      "persisted_to_claim": 8.48255
+    },
+    {
+      "id": 85,
+      "organization": 1,
+      "work": 33,
+      "ordinary": true,
+      "T0": 1790784725.543882,
+      "T1": 1790784733.485668,
+      "claimed_at": 1790784737.070386,
+      "persisted_to_claim": 11.526504
+    },
+    {
+      "id": 86,
+      "organization": 2,
+      "work": 73,
+      "ordinary": true,
+      "T0": 1790784725.710323,
+      "T1": 1790784733.643321,
+      "claimed_at": 1790784811.307337,
+      "persisted_to_claim": 85.597014
+    },
+    {
+      "id": 87,
+      "organization": 2,
+      "work": 74,
+      "ordinary": true,
+      "T0": 1790784726.221961,
+      "T1": 1790784734.15898,
+      "claimed_at": 1790784813.108842,
+      "persisted_to_claim": 86.886881
+    },
+    {
+      "id": 88,
+      "organization": 2,
+      "work": 76,
+      "ordinary": true,
+      "T0": 1790784727.223535,
+      "T1": 1790784735.15228,
+      "claimed_at": 1790784816.063598,
+      "persisted_to_claim": 88.840063
+    },
+    {
+      "id": 90,
+      "organization": 2,
+      "work": 77,
+      "ordinary": true,
+      "T0": 1790784728.224475,
+      "T1": 1790784736.15204,
+      "claimed_at": 1790784818.117892,
+      "persisted_to_claim": 89.893417
+    },
+    {
+      "id": 91,
+      "organization": 2,
+      "work": 78,
+      "ordinary": true,
+      "T0": 1790784729.219031,
+      "T1": 1790784737.149541,
+      "claimed_at": 1790784820.041852,
+      "persisted_to_claim": 90.822821
+    },
+    {
+      "id": 93,
+      "organization": 2,
+      "work": 79,
+      "ordinary": true,
+      "T0": 1790784730.25702,
+      "T1": 1790784738.177113,
+      "claimed_at": 1790784821.883258,
+      "persisted_to_claim": 91.626238
+    },
+    {
+      "id": 94,
+      "organization": 2,
+      "work": 80,
+      "ordinary": true,
+      "T0": 1790784731.350609,
+      "T1": 1790784739.245375,
+      "claimed_at": 1790784823.709325,
+      "persisted_to_claim": 92.358716
+    },
+    {
+      "id": 95,
+      "organization": 2,
+      "work": 84,
+      "ordinary": true,
+      "T0": 1790784732.256822,
+      "T1": 1790784740.146887,
+      "claimed_at": 1790784826.559151,
+      "persisted_to_claim": 94.302329
+    },
+    {
+      "id": 97,
+      "organization": 2,
+      "work": 86,
+      "ordinary": true,
+      "T0": 1790784733.185265,
+      "T1": 1790784741.13228,
+      "claimed_at": 1790784829.539458,
+      "persisted_to_claim": 96.354193
+    },
+    {
+      "id": 98,
+      "organization": 2,
+      "work": 87,
+      "ordinary": true,
+      "T0": 1790784734.253876,
+      "T1": 1790784742.162094,
+      "claimed_at": 1790784831.511609,
+      "persisted_to_claim": 97.257733
+    },
+    {
+      "id": 100,
+      "organization": 0,
+      "work": 30,
+      "ordinary": false,
+      "T0": 1790784735.22184,
+      "T1": 1790784735.267345,
+      "claimed_at": 1790784735.342979,
+      "persisted_to_claim": 0.121139
+    },
+    {
+      "id": 103,
+      "organization": 1,
+      "work": 31,
+      "ordinary": false,
+      "T0": 1790784736.115995,
+      "T1": 1790784736.161495,
+      "claimed_at": 1790784736.216612,
+      "persisted_to_claim": 0.100617
+    },
+    {
+      "id": 105,
+      "organization": 2,
+      "work": 88,
+      "ordinary": true,
+      "T0": 1790784736.665999,
+      "T1": 1790784744.603907,
+      "claimed_at": 1790784833.467411,
+      "persisted_to_claim": 96.801412
+    },
+    {
+      "id": 106,
+      "organization": 2,
+      "work": 89,
+      "ordinary": true,
+      "T0": 1790784736.909675,
+      "T1": 1790784744.841588,
+      "claimed_at": 1790784835.202897,
+      "persisted_to_claim": 98.293222
+    },
+    {
+      "id": 107,
+      "organization": 2,
+      "work": 90,
+      "ordinary": true,
+      "T0": 1790784737.244137,
+      "T1": 1790784745.163868,
+      "claimed_at": 1790784837.182664,
+      "persisted_to_claim": 99.938527
+    },
+    {
+      "id": 109,
+      "organization": 2,
+      "work": 91,
+      "ordinary": true,
+      "T0": 1790784738.244678,
+      "T1": 1790784746.171646,
+      "claimed_at": 1790784840.146379,
+      "persisted_to_claim": 101.901701
+    },
+    {
+      "id": 111,
+      "organization": 2,
+      "work": 92,
+      "ordinary": true,
+      "T0": 1790784739.33372,
+      "T1": 1790784747.2235,
+      "claimed_at": 1790784842.355337,
+      "persisted_to_claim": 103.021617
+    },
+    {
+      "id": 112,
+      "organization": 2,
+      "work": 93,
+      "ordinary": true,
+      "T0": 1790784740.272618,
+      "T1": 1790784748.185435,
+      "claimed_at": 1790784844.140356,
+      "persisted_to_claim": 103.867738
+    },
+    {
+      "id": 113,
+      "organization": 2,
+      "work": 94,
+      "ordinary": true,
+      "T0": 1790784741.244949,
+      "T1": 1790784749.172517,
+      "claimed_at": 1790784846.17884,
+      "persisted_to_claim": 104.933891
+    },
+    {
+      "id": 115,
+      "organization": 2,
+      "work": 95,
+      "ordinary": true,
+      "T0": 1790784742.289926,
+      "T1": 1790784750.197311,
+      "claimed_at": 1790784848.927265,
+      "persisted_to_claim": 106.637339
+    },
+    {
+      "id": 116,
+      "organization": 2,
+      "work": 96,
+      "ordinary": true,
+      "T0": 1790784743.276943,
+      "T1": 1790784751.183034,
+      "claimed_at": 1790784851.0229,
+      "persisted_to_claim": 107.745957
+    },
+    {
+      "id": 118,
+      "organization": 2,
+      "work": 97,
+      "ordinary": true,
+      "T0": 1790784744.23805,
+      "T1": 1790784752.168556,
+      "claimed_at": 1790784853.903567,
+      "persisted_to_claim": 109.665517
+    },
+    {
+      "id": 119,
+      "organization": 0,
+      "work": 41,
+      "ordinary": true,
+      "T0": 1790784745.218857,
+      "T1": 1790784753.127322,
+      "claimed_at": 1790784754.595094,
+      "persisted_to_claim": 9.376237
+    },
+    {
+      "id": 120,
+      "organization": 1,
+      "work": 49,
+      "ordinary": true,
+      "T0": 1790784745.363497,
+      "T1": 1790784763.357068,
+      "claimed_at": 1790784766.128514,
+      "persisted_to_claim": 20.765017
+    },
+    {
+      "id": 121,
+      "organization": 2,
+      "work": 101,
+      "ordinary": true,
+      "T0": 1790784745.511332,
+      "T1": 1790784753.456719,
+      "claimed_at": 1790784856.885621,
+      "persisted_to_claim": 111.374289
+    },
+    {
+      "id": 123,
+      "organization": 2,
+      "work": 103,
+      "ordinary": true,
+      "T0": 1790784746.227699,
+      "T1": 1790784754.172446,
+      "claimed_at": 1790784859.639149,
+      "persisted_to_claim": 113.41145
+    },
+    {
+      "id": 124,
+      "organization": 2,
+      "work": 104,
+      "ordinary": true,
+      "T0": 1790784747.220208,
+      "T1": 1790784755.170511,
+      "claimed_at": 1790784861.709017,
+      "persisted_to_claim": 114.488809
+    },
+    {
+      "id": 125,
+      "organization": 2,
+      "work": 105,
+      "ordinary": true,
+      "T0": 1790784748.216366,
+      "T1": 1790784756.172456,
+      "claimed_at": 1790784863.556811,
+      "persisted_to_claim": 115.340445
+    },
+    {
+      "id": 127,
+      "organization": 2,
+      "work": 106,
+      "ordinary": true,
+      "T0": 1790784749.202725,
+      "T1": 1790784757.157551,
+      "claimed_at": 1790784865.590337,
+      "persisted_to_claim": 116.387612
+    },
+    {
+      "id": 128,
+      "organization": 2,
+      "work": 107,
+      "ordinary": true,
+      "T0": 1790784750.214384,
+      "T1": 1790784758.149003,
+      "claimed_at": 1790784867.471769,
+      "persisted_to_claim": 117.257385
+    },
+    {
+      "id": 130,
+      "organization": 2,
+      "work": 108,
+      "ordinary": true,
+      "T0": 1790784751.221518,
+      "T1": 1790784759.143486,
+      "claimed_at": 1790784869.350963,
+      "persisted_to_claim": 118.129445
+    },
+    {
+      "id": 131,
+      "organization": 2,
+      "work": 109,
+      "ordinary": true,
+      "T0": 1790784752.261714,
+      "T1": 1790784760.187233,
+      "claimed_at": 1790784871.31948,
+      "persisted_to_claim": 119.057766
+    },
+    {
+      "id": 132,
+      "organization": 2,
+      "work": 110,
+      "ordinary": true,
+      "T0": 1790784753.247363,
+      "T1": 1790784761.186447,
+      "claimed_at": 1790784873.30466,
+      "persisted_to_claim": 120.057297
+    },
+    {
+      "id": 134,
+      "organization": 2,
+      "work": 112,
+      "ordinary": true,
+      "T0": 1790784754.305123,
+      "T1": 1790784762.195041,
+      "claimed_at": 1790784876.252879,
+      "persisted_to_claim": 121.947756
+    },
+    {
+      "id": 135,
+      "organization": 0,
+      "work": 45,
+      "ordinary": true,
+      "T0": 1790784755.249223,
+      "T1": 1790784763.13718,
+      "claimed_at": 1790784763.205114,
+      "persisted_to_claim": 7.955891
+    },
+    {
+      "id": 136,
+      "organization": 1,
+      "work": 49,
+      "ordinary": true,
+      "T0": 1790784755.426718,
+      "T1": 1790784763.357068,
+      "claimed_at": 1790784766.128514,
+      "persisted_to_claim": 10.701796
+    },
+    {
+      "id": 137,
+      "organization": 2,
+      "work": 113,
+      "ordinary": true,
+      "T0": 1790784755.610747,
+      "T1": 1790784763.532819,
+      "claimed_at": 1790784878.151394,
+      "persisted_to_claim": 122.540647
+    },
+    {
+      "id": 139,
+      "organization": 2,
+      "work": 114,
+      "ordinary": true,
+      "T0": 1790784756.233462,
+      "T1": 1790784764.169572,
+      "claimed_at": 1790784880.110319,
+      "persisted_to_claim": 123.876857
+    },
+    {
+      "id": 140,
+      "organization": 2,
+      "work": 115,
+      "ordinary": true,
+      "T0": 1790784757.277953,
+      "T1": 1790784765.184882,
+      "claimed_at": 1790784881.937325,
+      "persisted_to_claim": 124.659372
+    },
+    {
+      "id": 141,
+      "organization": 2,
+      "work": 117,
+      "ordinary": true,
+      "T0": 1790784758.21989,
+      "T1": 1790784766.16246,
+      "claimed_at": 1790784884.866584,
+      "persisted_to_claim": 126.646694
+    },
+    {
+      "id": 143,
+      "organization": 2,
+      "work": 120,
+      "ordinary": true,
+      "T0": 1790784759.215456,
+      "T1": 1790784767.171708,
+      "claimed_at": 1790784886.917786,
+      "persisted_to_claim": 127.70233
+    },
+    {
+      "id": 144,
+      "organization": 2,
+      "work": 122,
+      "ordinary": true,
+      "T0": 1790784760.194227,
+      "T1": 1790784768.157314,
+      "claimed_at": 1790784889.900444,
+      "persisted_to_claim": 129.706217
+    },
+    {
+      "id": 146,
+      "organization": 2,
+      "work": 123,
+      "ordinary": true,
+      "T0": 1790784761.184282,
+      "T1": 1790784769.141765,
+      "claimed_at": 1790784891.869201,
+      "persisted_to_claim": 130.684919
+    },
+    {
+      "id": 147,
+      "organization": 2,
+      "work": 124,
+      "ordinary": true,
+      "T0": 1790784762.214739,
+      "T1": 1790784770.175092,
+      "claimed_at": 1790784893.715027,
+      "persisted_to_claim": 131.500288
+    },
+    {
+      "id": 148,
+      "organization": 2,
+      "work": 125,
+      "ordinary": true,
+      "T0": 1790784763.241729,
+      "T1": 1790784771.168195,
+      "claimed_at": 1790784895.584324,
+      "persisted_to_claim": 132.342595
+    },
+    {
+      "id": 150,
+      "organization": 2,
+      "work": 126,
+      "ordinary": true,
+      "T0": 1790784764.26158,
+      "T1": 1790784772.174511,
+      "claimed_at": 1790784898.518537,
+      "persisted_to_claim": 134.256957
+    },
+    {
+      "id": 152,
+      "organization": 0,
+      "work": 47,
+      "ordinary": false,
+      "T0": 1790784765.24903,
+      "T1": 1790784765.297664,
+      "claimed_at": 1790784765.373713,
+      "persisted_to_claim": 0.124683
+    },
+    {
+      "id": 154,
+      "organization": 1,
+      "work": 48,
+      "ordinary": false,
+      "T0": 1790784765.939034,
+      "T1": 1790784765.989667,
+      "claimed_at": 1790784766.054644,
+      "persisted_to_claim": 0.11561
+    },
+    {
+      "id": 156,
+      "organization": 2,
+      "work": 127,
+      "ordinary": true,
+      "T0": 1790784766.552103,
+      "T1": 1790784774.481938,
+      "claimed_at": 1790784900.569744,
+      "persisted_to_claim": 134.017641
+    },
+    {
+      "id": 158,
+      "organization": 2,
+      "work": 128,
+      "ordinary": true,
+      "T0": 1790784766.814261,
+      "T1": 1790784774.742682,
+      "claimed_at": 1790784902.513335,
+      "persisted_to_claim": 135.699074
+    },
+    {
+      "id": 159,
+      "organization": 2,
+      "work": 130,
+      "ordinary": true,
+      "T0": 1790784767.25644,
+      "T1": 1790784775.185056,
+      "claimed_at": 1790784905.214139,
+      "persisted_to_claim": 137.957699
+    },
+    {
+      "id": 161,
+      "organization": 2,
+      "work": 131,
+      "ordinary": true,
+      "T0": 1790784768.207728,
+      "T1": 1790784776.140552,
+      "claimed_at": 1790784907.068398,
+      "persisted_to_claim": 138.86067
+    },
+    {
+      "id": 162,
+      "organization": 2,
+      "work": 132,
+      "ordinary": true,
+      "T0": 1790784769.337137,
+      "T1": 1790784777.195746,
+      "claimed_at": 1790784908.968053,
+      "persisted_to_claim": 139.630916
+    },
+    {
+      "id": 164,
+      "organization": 2,
+      "work": 133,
+      "ordinary": true,
+      "T0": 1790784770.209304,
+      "T1": 1790784778.144785,
+      "claimed_at": 1790784910.897101,
+      "persisted_to_claim": 140.687797
+    },
+    {
+      "id": 165,
+      "organization": 2,
+      "work": 134,
+      "ordinary": true,
+      "T0": 1790784771.200469,
+      "T1": 1790784779.142677,
+      "claimed_at": 1790784912.914049,
+      "persisted_to_claim": 141.71358
+    },
+    {
+      "id": 167,
+      "organization": 2,
+      "work": 137,
+      "ordinary": true,
+      "T0": 1790784772.202996,
+      "T1": 1790784780.157657,
+      "claimed_at": 1790784915.918266,
+      "persisted_to_claim": 143.71527
+    },
+    {
+      "id": 168,
+      "organization": 2,
+      "work": 140,
+      "ordinary": true,
+      "T0": 1790784773.192922,
+      "T1": 1790784781.144618,
+      "claimed_at": 1790784918.674401,
+      "persisted_to_claim": 145.481479
+    },
+    {
+      "id": 169,
+      "organization": 2,
+      "work": 141,
+      "ordinary": true,
+      "T0": 1790784774.169831,
+      "T1": 1790784782.128839,
+      "claimed_at": 1790784920.599217,
+      "persisted_to_claim": 146.429386
+    },
+    {
+      "id": 171,
+      "organization": 0,
+      "work": 57,
+      "ordinary": true,
+      "T0": 1790784775.195125,
+      "T1": 1790784783.147705,
+      "claimed_at": 1790784783.555119,
+      "persisted_to_claim": 8.359994
+    },
+    {
+      "id": 172,
+      "organization": 1,
+      "work": 66,
+      "ordinary": true,
+      "T0": 1790784775.298696,
+      "T1": 1790784793.335941,
+      "claimed_at": 1790784796.753564,
+      "persisted_to_claim": 21.454868
+    },
+    {
+      "id": 173,
+      "organization": 2,
+      "work": 142,
+      "ordinary": true,
+      "T0": 1790784775.431266,
+      "T1": 1790784783.37762,
+      "claimed_at": 1790784923.491862,
+      "persisted_to_claim": 148.060596
+    },
+    {
+      "id": 174,
+      "organization": 2,
+      "work": 143,
+      "ordinary": true,
+      "T0": 1790784776.186211,
+      "T1": 1790784784.139352,
+      "claimed_at": 1790784925.625261,
+      "persisted_to_claim": 149.43905
+    },
+    {
+      "id": 176,
+      "organization": 2,
+      "work": 144,
+      "ordinary": true,
+      "T0": 1790784777.221874,
+      "T1": 1790784785.155351,
+      "claimed_at": 1790784928.409062,
+      "persisted_to_claim": 151.187188
+    },
+    {
+      "id": 177,
+      "organization": 2,
+      "work": 145,
+      "ordinary": true,
+      "T0": 1790784778.263517,
+      "T1": 1790784786.195371,
+      "claimed_at": 1790784930.786702,
+      "persisted_to_claim": 152.523185
+    },
+    {
+      "id": 179,
+      "organization": 2,
+      "work": 146,
+      "ordinary": true,
+      "T0": 1790784779.240942,
+      "T1": 1790784787.160184,
+      "claimed_at": 1790784933.189909,
+      "persisted_to_claim": 153.948967
+    },
+    {
+      "id": 180,
+      "organization": 2,
+      "work": 148,
+      "ordinary": true,
+      "T0": 1790784780.241695,
+      "T1": 1790784788.171633,
+      "claimed_at": 1790784936.09811,
+      "persisted_to_claim": 155.856415
+    },
+    {
+      "id": 181,
+      "organization": 2,
+      "work": 149,
+      "ordinary": true,
+      "T0": 1790784781.221278,
+      "T1": 1790784789.146939,
+      "claimed_at": 1790784938.530461,
+      "persisted_to_claim": 157.309183
+    },
+    {
+      "id": 183,
+      "organization": 2,
+      "work": 150,
+      "ordinary": true,
+      "T0": 1790784782.26534,
+      "T1": 1790784790.19012,
+      "claimed_at": 1790784941.019252,
+      "persisted_to_claim": 158.753912
+    },
+    {
+      "id": 184,
+      "organization": 2,
+      "work": 151,
+      "ordinary": true,
+      "T0": 1790784783.188525,
+      "T1": 1790784791.136298,
+      "claimed_at": 1790784943.368503,
+      "persisted_to_claim": 160.179978
+    },
+    {
+      "id": 186,
+      "organization": 2,
+      "work": 155,
+      "ordinary": true,
+      "T0": 1790784784.193531,
+      "T1": 1790784792.145514,
+      "claimed_at": 1790784946.240354,
+      "persisted_to_claim": 162.046823
+    },
+    {
+      "id": 188,
+      "organization": 0,
+      "work": 62,
+      "ordinary": true,
+      "T0": 1790784785.273316,
+      "T1": 1790784793.227541,
+      "claimed_at": 1790784793.807221,
+      "persisted_to_claim": 8.533905
+    },
+    {
+      "id": 189,
+      "organization": 1,
+      "work": 66,
+      "ordinary": true,
+      "T0": 1790784785.380193,
+      "T1": 1790784793.335941,
+      "claimed_at": 1790784796.753564,
+      "persisted_to_claim": 11.373371
+    },
+    {
+      "id": 190,
+      "organization": 2,
+      "work": 157,
+      "ordinary": true,
+      "T0": 1790784785.500448,
+      "T1": 1790784793.456029,
+      "claimed_at": 1790784949.156535,
+      "persisted_to_claim": 163.656087
+    },
+    {
+      "id": 191,
+      "organization": 2,
+      "work": 158,
+      "ordinary": true,
+      "T0": 1790784786.191539,
+      "T1": 1790784794.143918,
+      "claimed_at": 1790784951.931855,
+      "persisted_to_claim": 165.740316
+    },
+    {
+      "id": 193,
+      "organization": 2,
+      "work": 159,
+      "ordinary": true,
+      "T0": 1790784787.229451,
+      "T1": 1790784795.147847,
+      "claimed_at": 1790784954.584302,
+      "persisted_to_claim": 167.354851
+    },
+    {
+      "id": 194,
+      "organization": 2,
+      "work": 160,
+      "ordinary": true,
+      "T0": 1790784788.223285,
+      "T1": 1790784796.163336,
+      "claimed_at": 1790784957.095768,
+      "persisted_to_claim": 168.872483
+    },
+    {
+      "id": 196,
+      "organization": 2,
+      "work": 161,
+      "ordinary": true,
+      "T0": 1790784789.228266,
+      "T1": 1790784797.160377,
+      "claimed_at": 1790784959.591745,
+      "persisted_to_claim": 170.363479
+    },
+    {
+      "id": 197,
+      "organization": 2,
+      "work": 162,
+      "ordinary": true,
+      "T0": 1790784790.221947,
+      "T1": 1790784798.158273,
+      "claimed_at": 1790784962.009529,
+      "persisted_to_claim": 171.787582
+    },
+    {
+      "id": 198,
+      "organization": 2,
+      "work": 164,
+      "ordinary": true,
+      "T0": 1790784791.231763,
+      "T1": 1790784799.166269,
+      "claimed_at": 1790784964.846135,
+      "persisted_to_claim": 173.614372
+    },
+    {
+      "id": 200,
+      "organization": 2,
+      "work": 165,
+      "ordinary": true,
+      "T0": 1790784792.336021,
+      "T1": 1790784800.194901,
+      "claimed_at": 1790784967.269516,
+      "persisted_to_claim": 174.933495
+    },
+    {
+      "id": 201,
+      "organization": 2,
+      "work": 166,
+      "ordinary": true,
+      "T0": 1790784793.233789,
+      "T1": 1790784801.165478,
+      "claimed_at": 1790784969.69879,
+      "persisted_to_claim": 176.465001
+    },
+    {
+      "id": 203,
+      "organization": 2,
+      "work": 167,
+      "ordinary": true,
+      "T0": 1790784794.250305,
+      "T1": 1790784802.179707,
+      "claimed_at": 1790784972.356679,
+      "persisted_to_claim": 178.106374
+    },
+    {
+      "id": 204,
+      "organization": 0,
+      "work": 64,
+      "ordinary": false,
+      "T0": 1790784795.191541,
+      "T1": 1790784795.233383,
+      "claimed_at": 1790784795.29775,
+      "persisted_to_claim": 0.106209
+    },
+    {
+      "id": 207,
+      "organization": 1,
+      "work": 65,
+      "ordinary": false,
+      "T0": 1790784795.762938,
+      "T1": 1790784795.797887,
+      "claimed_at": 1790784795.849642,
+      "persisted_to_claim": 0.086704
+    },
+    {
+      "id": 209,
+      "organization": 2,
+      "work": 169,
+      "ordinary": true,
+      "T0": 1790784796.260614,
+      "T1": 1790784804.207721,
+      "claimed_at": 1790784975.000484,
+      "persisted_to_claim": 178.73987
+    },
+    {
+      "id": 210,
+      "organization": 2,
+      "work": 173,
+      "ordinary": true,
+      "T0": 1790784796.458851,
+      "T1": 1790784804.409134,
+      "claimed_at": 1790784978.166351,
+      "persisted_to_claim": 181.7075
+    },
+    {
+      "id": 212,
+      "organization": 2,
+      "work": 174,
+      "ordinary": true,
+      "T0": 1790784797.218979,
+      "T1": 1790784805.168408,
+      "claimed_at": 1790784980.571759,
+      "persisted_to_claim": 183.35278
+    },
+    {
+      "id": 213,
+      "organization": 2,
+      "work": 175,
+      "ordinary": true,
+      "T0": 1790784798.211772,
+      "T1": 1790784806.170903,
+      "claimed_at": 1790784983.327364,
+      "persisted_to_claim": 185.115592
+    },
+    {
+      "id": 215,
+      "organization": 2,
+      "work": 176,
+      "ordinary": true,
+      "T0": 1790784799.216579,
+      "T1": 1790784807.161547,
+      "claimed_at": 1790784985.46467,
+      "persisted_to_claim": 186.248091
+    },
+    {
+      "id": 217,
+      "organization": 2,
+      "work": 177,
+      "ordinary": true,
+      "T0": 1790784800.240494,
+      "T1": 1790784808.170507,
+      "claimed_at": 1790784987.125383,
+      "persisted_to_claim": 186.884889
+    },
+    {
+      "id": 218,
+      "organization": 2,
+      "work": 178,
+      "ordinary": true,
+      "T0": 1790784801.259794,
+      "T1": 1790784809.19275,
+      "claimed_at": 1790784989.18496,
+      "persisted_to_claim": 187.925166
+    },
+    {
+      "id": 219,
+      "organization": 2,
+      "work": 179,
+      "ordinary": true,
+      "T0": 1790784802.261553,
+      "T1": 1790784810.195318,
+      "claimed_at": 1790784991.948333,
+      "persisted_to_claim": 189.68678
+    },
+    {
+      "id": 221,
+      "organization": 2,
+      "work": 180,
+      "ordinary": true,
+      "T0": 1790784803.259054,
+      "T1": 1790784811.188537,
+      "claimed_at": 1790784994.230172,
+      "persisted_to_claim": 190.971118
+    },
+    {
+      "id": 222,
+      "organization": 2,
+      "work": 182,
+      "ordinary": true,
+      "T0": 1790784804.237642,
+      "T1": 1790784812.176874,
+      "claimed_at": 1790784997.176666,
+      "persisted_to_claim": 192.939024
+    },
+    {
+      "id": 224,
+      "organization": 0,
+      "work": 75,
+      "ordinary": true,
+      "T0": 1790784805.207831,
+      "T1": 1790784813.143871,
+      "claimed_at": 1790784814.103579,
+      "persisted_to_claim": 8.895748
+    },
+    {
+      "id": 225,
+      "organization": 1,
+      "work": 85,
+      "ordinary": true,
+      "T0": 1790784805.370424,
+      "T1": 1790784823.337105,
+      "claimed_at": 1790784827.511503,
+      "persisted_to_claim": 22.141079
+    },
+    {
+      "id": 226,
+      "organization": 2,
+      "work": 183,
+      "ordinary": true,
+      "T0": 1790784805.565043,
+      "T1": 1790784813.477722,
+      "claimed_at": 1790784998.898788,
+      "persisted_to_claim": 193.333745
+    },
+    {
+      "id": 227,
+      "organization": 2,
+      "work": 184,
+      "ordinary": true,
+      "T0": 1790784806.224805,
+      "T1": 1790784814.168631,
+      "claimed_at": 1790785000.940607,
+      "persisted_to_claim": 194.715802
+    },
+    {
+      "id": 228,
+      "organization": 2,
+      "work": 185,
+      "ordinary": true,
+      "T0": 1790784807.242744,
+      "T1": 1790784815.152472,
+      "claimed_at": 1790785003.690289,
+      "persisted_to_claim": 196.447545
+    },
+    {
+      "id": 230,
+      "organization": 2,
+      "work": 187,
+      "ordinary": true,
+      "T0": 1790784808.21369,
+      "T1": 1790784816.166464,
+      "claimed_at": 1790785006.668038,
+      "persisted_to_claim": 198.454348
+    },
+    {
+      "id": 232,
+      "organization": 2,
+      "work": 189,
+      "ordinary": true,
+      "T0": 1790784809.215536,
+      "T1": 1790784817.161305,
+      "claimed_at": 1790785009.43866,
+      "persisted_to_claim": 200.223124
+    },
+    {
+      "id": 233,
+      "organization": 2,
+      "work": 190,
+      "ordinary": true,
+      "T0": 1790784810.208231,
+      "T1": 1790784818.162408,
+      "claimed_at": 1790785011.737282,
+      "persisted_to_claim": 201.529051
+    },
+    {
+      "id": 235,
+      "organization": 2,
+      "work": 191,
+      "ordinary": true,
+      "T0": 1790784811.236888,
+      "T1": 1790784819.17752,
+      "claimed_at": 1790785014.231546,
+      "persisted_to_claim": 202.994658
+    },
+    {
+      "id": 236,
+      "organization": 2,
+      "work": 192,
+      "ordinary": true,
+      "T0": 1790784812.230331,
+      "T1": 1790784820.163063,
+      "claimed_at": 1790785016.61859,
+      "persisted_to_claim": 204.388259
+    },
+    {
+      "id": 238,
+      "organization": 2,
+      "work": 193,
+      "ordinary": true,
+      "T0": 1790784813.246289,
+      "T1": 1790784821.161839,
+      "claimed_at": 1790785019.205395,
+      "persisted_to_claim": 205.959106
+    },
+    {
+      "id": 239,
+      "organization": 2,
+      "work": 194,
+      "ordinary": true,
+      "T0": 1790784814.325851,
+      "T1": 1790784822.204018,
+      "claimed_at": 1790785021.421134,
+      "persisted_to_claim": 207.095283
+    },
+    {
+      "id": 241,
+      "organization": 0,
+      "work": 81,
+      "ordinary": true,
+      "T0": 1790784815.232826,
+      "T1": 1790784823.154611,
+      "claimed_at": 1790784824.64447,
+      "persisted_to_claim": 9.411644
+    },
+    {
+      "id": 242,
+      "organization": 1,
+      "work": 85,
+      "ordinary": true,
+      "T0": 1790784815.40726,
+      "T1": 1790784823.337105,
+      "claimed_at": 1790784827.511503,
+      "persisted_to_claim": 12.104243
+    },
+    {
+      "id": 243,
+      "organization": 2,
+      "work": 195,
+      "ordinary": true,
+      "T0": 1790784815.582854,
+      "T1": 1790784823.511925,
+      "claimed_at": 1790785024.00594,
+      "persisted_to_claim": 208.423086
+    },
+    {
+      "id": 257,
+      "organization": 0,
+      "work": 82,
+      "ordinary": false,
+      "T0": 1790784825.221263,
+      "T1": 1790784825.256863,
+      "claimed_at": 1790784825.317955,
+      "persisted_to_claim": 0.096692
+    },
+    {
+      "id": 260,
+      "organization": 1,
+      "work": 83,
+      "ordinary": false,
+      "T0": 1790784825.857674,
+      "T1": 1790784825.91333,
+      "claimed_at": 1790784825.999583,
+      "persisted_to_claim": 0.141909
+    },
+    {
+      "id": 278,
+      "organization": 0,
+      "work": 98,
+      "ordinary": true,
+      "T0": 1790784835.192332,
+      "T1": 1790784853.134316,
+      "claimed_at": 1790784854.939147,
+      "persisted_to_claim": 19.746815
+    },
+    {
+      "id": 279,
+      "organization": 1,
+      "work": 102,
+      "ordinary": true,
+      "T0": 1790784835.321424,
+      "T1": 1790784853.25253,
+      "claimed_at": 1790784857.906539,
+      "persisted_to_claim": 22.585115
+    },
+    {
+      "id": 294,
+      "organization": 0,
+      "work": 98,
+      "ordinary": true,
+      "T0": 1790784845.182602,
+      "T1": 1790784853.134316,
+      "claimed_at": 1790784854.939147,
+      "persisted_to_claim": 9.756545
+    },
+    {
+      "id": 295,
+      "organization": 1,
+      "work": 102,
+      "ordinary": true,
+      "T0": 1790784845.300957,
+      "T1": 1790784853.25253,
+      "claimed_at": 1790784857.906539,
+      "persisted_to_claim": 12.605582
+    },
+    {
+      "id": 310,
+      "organization": 0,
+      "work": 99,
+      "ordinary": false,
+      "T0": 1790784855.206374,
+      "T1": 1790784855.249573,
+      "claimed_at": 1790784855.318004,
+      "persisted_to_claim": 0.11163
+    },
+    {
+      "id": 313,
+      "organization": 1,
+      "work": 100,
+      "ordinary": false,
+      "T0": 1790784855.908043,
+      "T1": 1790784855.973641,
+      "claimed_at": 1790784856.079235,
+      "persisted_to_claim": 0.171192
+    },
+    {
+      "id": 330,
+      "organization": 0,
+      "work": 111,
+      "ordinary": true,
+      "T0": 1790784865.220575,
+      "T1": 1790784873.155633,
+      "claimed_at": 1790784874.181834,
+      "persisted_to_claim": 8.961259
+    },
+    {
+      "id": 331,
+      "organization": 1,
+      "work": 121,
+      "ordinary": true,
+      "T0": 1790784865.373473,
+      "T1": 1790784883.355389,
+      "claimed_at": 1790784887.868525,
+      "persisted_to_claim": 22.495052
+    },
+    {
+      "id": 348,
+      "organization": 0,
+      "work": 116,
+      "ordinary": true,
+      "T0": 1790784875.282148,
+      "T1": 1790784883.19853,
+      "claimed_at": 1790784883.822672,
+      "persisted_to_claim": 8.540524
+    },
+    {
+      "id": 349,
+      "organization": 1,
+      "work": 121,
+      "ordinary": true,
+      "T0": 1790784875.404188,
+      "T1": 1790784883.355389,
+      "claimed_at": 1790784887.868525,
+      "persisted_to_claim": 12.464337
+    },
+    {
+      "id": 364,
+      "organization": 0,
+      "work": 118,
+      "ordinary": false,
+      "T0": 1790784885.241979,
+      "T1": 1790784885.29529,
+      "claimed_at": 1790784885.360726,
+      "persisted_to_claim": 0.118747
+    },
+    {
+      "id": 367,
+      "organization": 1,
+      "work": 119,
+      "ordinary": false,
+      "T0": 1790784885.912432,
+      "T1": 1790784885.964151,
+      "claimed_at": 1790784886.036341,
+      "persisted_to_claim": 0.123909
+    },
+    {
+      "id": 384,
+      "organization": 0,
+      "work": 129,
+      "ordinary": true,
+      "T0": 1790784895.220946,
+      "T1": 1790784903.149509,
+      "claimed_at": 1790784903.343248,
+      "persisted_to_claim": 8.122302
+    },
+    {
+      "id": 386,
+      "organization": 1,
+      "work": 139,
+      "ordinary": true,
+      "T0": 1790784895.372823,
+      "T1": 1790784913.287473,
+      "claimed_at": 1790784916.809267,
+      "persisted_to_claim": 21.436444
+    },
+    {
+      "id": 402,
+      "organization": 0,
+      "work": 135,
+      "ordinary": true,
+      "T0": 1790784905.214328,
+      "T1": 1790784913.158397,
+      "claimed_at": 1790784913.79723,
+      "persisted_to_claim": 8.582902
+    },
+    {
+      "id": 403,
+      "organization": 1,
+      "work": 139,
+      "ordinary": true,
+      "T0": 1790784905.344958,
+      "T1": 1790784913.287473,
+      "claimed_at": 1790784916.809267,
+      "persisted_to_claim": 11.464309
+    },
+    {
+      "id": 419,
+      "organization": 0,
+      "work": 136,
+      "ordinary": false,
+      "T0": 1790784915.255013,
+      "T1": 1790784915.299161,
+      "claimed_at": 1790784915.409535,
+      "persisted_to_claim": 0.154522
+    },
+    {
+      "id": 422,
+      "organization": 1,
+      "work": 138,
+      "ordinary": false,
+      "T0": 1790784916.064626,
+      "T1": 1790784916.110882,
+      "claimed_at": 1790784916.173485,
+      "persisted_to_claim": 0.108859
+    },
+    {
+      "id": 438,
+      "organization": 0,
+      "work": 147,
+      "ordinary": true,
+      "T0": 1790784925.213974,
+      "T1": 1790784933.161613,
+      "claimed_at": 1790784933.577824,
+      "persisted_to_claim": 8.36385
+    },
+    {
+      "id": 440,
+      "organization": 1,
+      "work": 156,
+      "ordinary": true,
+      "T0": 1790784925.339921,
+      "T1": 1790784943.316331,
+      "claimed_at": 1790784946.822753,
+      "persisted_to_claim": 21.482832
+    },
+    {
+      "id": 455,
+      "organization": 0,
+      "work": 152,
+      "ordinary": true,
+      "T0": 1790784935.229374,
+      "T1": 1790784943.160124,
+      "claimed_at": 1790784943.761524,
+      "persisted_to_claim": 8.53215
+    },
+    {
+      "id": 456,
+      "organization": 1,
+      "work": 156,
+      "ordinary": true,
+      "T0": 1790784935.391112,
+      "T1": 1790784943.316331,
+      "claimed_at": 1790784946.822753,
+      "persisted_to_claim": 11.431641
+    },
+    {
+      "id": 471,
+      "organization": 0,
+      "work": 153,
+      "ordinary": false,
+      "T0": 1790784945.250737,
+      "T1": 1790784945.314345,
+      "claimed_at": 1790784945.370854,
+      "persisted_to_claim": 0.120117
+    },
+    {
+      "id": 474,
+      "organization": 1,
+      "work": 154,
+      "ordinary": false,
+      "T0": 1790784946.019694,
+      "T1": 1790784946.066319,
+      "claimed_at": 1790784946.133877,
+      "persisted_to_claim": 0.114183
+    },
+    {
+      "id": 490,
+      "organization": 0,
+      "work": 163,
+      "ordinary": true,
+      "T0": 1790784955.275983,
+      "T1": 1790784963.187019,
+      "claimed_at": 1790784963.365656,
+      "persisted_to_claim": 8.089673
+    },
+    {
+      "id": 491,
+      "organization": 1,
+      "work": 172,
+      "ordinary": true,
+      "T0": 1790784955.427745,
+      "T1": 1790784973.364588,
+      "claimed_at": 1790784976.416077,
+      "persisted_to_claim": 20.988332
+    },
+    {
+      "id": 507,
+      "organization": 0,
+      "work": 168,
+      "ordinary": true,
+      "T0": 1790784965.287072,
+      "T1": 1790784973.209717,
+      "claimed_at": 1790784973.592416,
+      "persisted_to_claim": 8.305344
+    },
+    {
+      "id": 508,
+      "organization": 1,
+      "work": 172,
+      "ordinary": true,
+      "T0": 1790784965.430296,
+      "T1": 1790784973.364588,
+      "claimed_at": 1790784976.416077,
+      "persisted_to_claim": 10.985781
+    },
+    {
+      "id": 524,
+      "organization": 0,
+      "work": 170,
+      "ordinary": false,
+      "T0": 1790784975.25138,
+      "T1": 1790784975.28466,
+      "claimed_at": 1790784975.342563,
+      "persisted_to_claim": 0.091183
+    },
+    {
+      "id": 526,
+      "organization": 1,
+      "work": 171,
+      "ordinary": false,
+      "T0": 1790784976.054846,
+      "T1": 1790784976.112977,
+      "claimed_at": 1790784976.189918,
+      "persisted_to_claim": 0.135072
+    },
+    {
+      "id": 543,
+      "organization": 0,
+      "work": 181,
+      "ordinary": true,
+      "T0": 1790784985.242667,
+      "T1": 1790784993.182059,
+      "claimed_at": 1790784994.948805,
+      "persisted_to_claim": 9.706138
+    },
+    {
+      "id": 544,
+      "organization": 1,
+      "work": 188,
+      "ordinary": true,
+      "T0": 1790784985.343259,
+      "T1": 1790785003.395037,
+      "claimed_at": 1790785006.864338,
+      "persisted_to_claim": 21.521079
+    },
+    {
+      "id": 559,
+      "organization": 0,
+      "work": 186,
+      "ordinary": true,
+      "T0": 1790784995.286976,
+      "T1": 1790785003.174369,
+      "claimed_at": 1790785003.895438,
+      "persisted_to_claim": 8.608462
+    },
+    {
+      "id": 560,
+      "organization": 1,
+      "work": 188,
+      "ordinary": true,
+      "T0": 1790784995.478357,
+      "T1": 1790785003.395037,
+      "claimed_at": 1790785006.864338,
+      "persisted_to_claim": 11.385981
+    }
+  ],
+  "queue_timeline": []
+}
