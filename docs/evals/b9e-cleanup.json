@@ -1,0 +1,46 @@
+{
+  "schema_version": "b9e-cleanup-v1",
+  "checked_at_utc": "2026-09-30T15:19:11.485616+00:00",
+  "isolated_port": 35439,
+  "databases_before": [
+    "postgres",
+    "template0",
+    "template1",
+    "test_b8b_b9e_corpus",
+    "test_b9e_blocked",
+    "test_b9e_duplicate",
+    "test_b9e_meta",
+    "test_b9e_profile",
+    "test_b9e_saturation",
+    "test_b9e_smoke",
+    "test_b9e_template"
+  ],
+  "active_client_sessions_before": [],
+  "prepared_transactions_before": [],
+  "waiting_locks_before": [],
+  "dropped_databases": [
+    "test_b8b_b9e_corpus",
+    "test_b9e_blocked",
+    "test_b9e_duplicate",
+    "test_b9e_meta",
+    "test_b9e_profile",
+    "test_b9e_saturation",
+    "test_b9e_smoke",
+    "test_b9e_template"
+  ],
+  "databases_after": [
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "cluster_stopped": true,
+  "data_directory_removed": true,
+  "verified_absolute_data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b9e-pg16-data",
+  "port_closed": true,
+  "postgresql_source_logs_sha256": {
+    "vet-b9e-pg16.log": "2bf535a5be4ccf8d724b331ffaefccf8e197de0d40728013396137d3c9106f59",
+    "vet-b9e-pg16-recovery.log": "88995ae1747120786453d71e31b124605e3e754b5d7f2988e0aebdd2cf283de0"
+  },
+  "lifecycle_receipt": "b9e-postgresql-lifecycle.log",
+  "final_checked_at_utc": "2026-09-30T15:46:20.505835+00:00"
+}

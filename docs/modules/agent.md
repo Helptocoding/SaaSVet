@@ -1520,3 +1520,25 @@ el proceso de release con revisión humana y referencias externas. Los permisos
 de Inbox/AgentSettings no conceden ese acceso al código. Mantener las referencias
 privadas fuera de logs/prompts. [Contrato](../contrato-beta-release-b9d.md),
 [acta](../implementacion-b9d-agente-whatsapp-2026-09-29.md).
+
+## B9E — aceptación PROFILE-BETA-1 (2026-09-29)
+
+El perfil técnico congelado se ejecutó con PostgreSQL real aislado, dos planners,
+un sender y los proveedores controlados B9A. El primer ensayo base incumplió el
+p95 canónico inbound sano→claim (21,726 s frente a 10 s); la variante con LLM
+bloqueado también (22,049 s). Las demás fronteras medidas no revierten ese
+fallo. El runner real hace dos llamadas LLM por turno READ básico, mientras el
+modelo del perfil especifica una. No se redujo el threshold ni se alteró runtime.
+
+La READ pública mantiene acceso sin identidad con WRITE cerrado; la personal
+requiere verificación vigente, vínculo owner/pet y tenant. El gate de release B9D
+se aplica a WRITE, no se traslada automáticamente a READ. Esta constatación
+técnica no aprueba la READ para una clínica real. Ver
+[perfil](../evals/profile-beta-1-v1.json),
+[método](../evals/profile-beta-1-methodology.md),
+[resultados](../evals/b9e-load-summary.json) y
+[decisión](../reporte-aceptacion-b9-profile-beta-1-2026-09-29.md).
+
+B9 sigue IN_PROGRESS, PROFILE-BETA-1 FAIL y activación
+PENDING_ACTIVATION_REQUIREMENTS. Los defaults productivos continúan cerrados;
+no hubo clínica activada ni despliegue.

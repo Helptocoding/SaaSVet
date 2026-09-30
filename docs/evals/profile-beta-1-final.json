@@ -1,0 +1,732 @@
+{
+  "schema_version": "profile-beta-1-final-v1",
+  "closed_local_date": "2026-09-30",
+  "initial_run_local_date": "2026-09-29",
+  "baseline": "21cf91c0ae0242f83675dc9691c600bf4d63e5ab",
+  "runtime_commit": "21cf91c0ae0242f83675dc9691c600bf4d63e5ab",
+  "runtime_fixes": [],
+  "threshold_freeze_commit": "9147928",
+  "environment": {
+    "python": "3.13.2 (tags/v3.13.2:4f8bb39, Feb  4 2025, 15:23:48) [MSC v.1942 64 bit (AMD64)]",
+    "django": "6.0.5",
+    "psycopg": "3.3.4",
+    "requirements": "backend/requirements.lock",
+    "postgresql": "16.15",
+    "providers": "B9A controlled boundaries, no external APIs"
+  },
+  "documentation_acceptance_commit": "Commit containing this artifact; SHA reported with final delivery",
+  "b9e_status": "FAIL",
+  "canonical_b9_status": "IN_PROGRESS",
+  "technical_status": "FAIL",
+  "operational_activation_status": "PENDING_ACTIVATION_REQUIREMENTS",
+  "failure_ids": [
+    "B9E-LOAD-01-CLAIM",
+    "B9E-LOAD-02-CLAIM",
+    "B9E-LOAD-01-MODEL"
+  ],
+  "first_run": "b9e-first-base.json",
+  "final_run": {
+    "same_unfixed_candidate": true,
+    "load_rerun_performed": false,
+    "decision_receipt": "b9e-load-summary.json"
+  },
+  "load_summary": {
+    "schema_version": "b9e-load-summary-v1",
+    "postgresql_port": 35439,
+    "profile_sha256": "ff0834449d1915b395be58e7cdbab09e39917fe0ddf3cc90e3f187fdfdc9f311",
+    "scenarios": {
+      "base": {
+        "receipt": "b9e-first-base.json",
+        "receipt_sha256": "c81a1c6df32fdb8ae00710c913ad68ba392127f91142f6bfc3ab57c995e72f6c",
+        "logs_sha256": {
+          "b9e-first-base-planner-1.log": "b6abf78845f27f4661a817991c2a797fb07a961ac8915d39d4fa20184003e91b",
+          "b9e-first-base-planner-2.log": "8866a602f8d66cb75a659c32f1c93ad8014aa369ce42c0680d0ff96c0eed1896",
+          "b9e-first-base-sender.log": "c0986e9aee80601749f260e3bf6c2cd3ca728c413badbb69b111b8f6e9250c4a"
+        },
+        "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+        "fsync": "on",
+        "synchronous_commit": "on",
+        "inbound_count": 360,
+        "healthy_claim": {
+          "count": 60,
+          "p95_seconds": 21.725759,
+          "max_seconds": 22.371192,
+          "missing": 0
+        },
+        "safety_dispatch": {
+          "count": 20,
+          "p95_seconds": 2.77829,
+          "max_seconds": 2.77829
+        },
+        "outbox_dispatch": {
+          "count": 171,
+          "p95_seconds": 2.386334,
+          "max_seconds": 2.825158,
+          "missing": 0
+        },
+        "max_pending_inbound_observed": 198,
+        "max_active_per_org_observed": 1,
+        "llm": {
+          "admitted_calls": 354,
+          "unknown_usage_calls": 0,
+          "provider_failures": 0,
+          "retries": 0,
+          "reserved_output_tokens_total": 212400,
+          "known_output_tokens_subtotal": 3540,
+          "max_calls_per_turnwork": 2,
+          "max_reserved_tokens_per_turnwork": 1200,
+          "budget_violations": 0
+        },
+        "outbound": {
+          "attempts_above_one": 0,
+          "max_attempts": 1,
+          "uncertain_count": 0
+        },
+        "cross_tenant_message_rows": 0,
+        "variant_gates": {
+          "healthy_claim_p95_le_10": false,
+          "safety_dispatch_p95_le_5": true,
+          "outbox_dispatch_p95_le_5": true
+        },
+        "variant_gate_pass": false,
+        "postgresql_process_ids": [
+          {
+            "pid": 87928,
+            "backend_pid": 85760,
+            "role": "planner-1",
+            "scenario": "base"
+          },
+          {
+            "pid": 88060,
+            "backend_pid": 85848,
+            "role": "planner-2",
+            "scenario": "base"
+          },
+          {
+            "pid": 81408,
+            "backend_pid": 86956,
+            "role": "sender",
+            "scenario": "base"
+          }
+        ]
+      },
+      "blocked_llm": {
+        "receipt": "b9e-first-blocked.json",
+        "receipt_sha256": "8a3ab406db9d7b1eb5d7a00fed1b9f95df87857a75d747bfb5ac553189b3e696",
+        "logs_sha256": {
+          "b9e-first-blocked-planner-1.log": "22f4f52040d2d2920cb531d40def3d0a268a87f5dea4cf335bee48cc93547d42",
+          "b9e-first-blocked-planner-2.log": "9a9910682f1fd7170d6ea9b9785cb1b4d5b58033ea70783b74180f831376aaf4",
+          "b9e-first-blocked-sender.log": "65942b229342ca5fe53c766cb3deb5232fa5217ad85e596b451f3dbf76456f84"
+        },
+        "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+        "fsync": "on",
+        "synchronous_commit": "on",
+        "inbound_count": 360,
+        "healthy_claim": {
+          "count": 60,
+          "p95_seconds": 22.048948,
+          "max_seconds": 22.920572,
+          "missing": 0
+        },
+        "safety_dispatch": {
+          "count": 20,
+          "p95_seconds": 2.936003,
+          "max_seconds": 2.936003
+        },
+        "outbox_dispatch": {
+          "count": 166,
+          "p95_seconds": 2.321892,
+          "max_seconds": 3.160084,
+          "missing": 0
+        },
+        "max_pending_inbound_observed": 200,
+        "max_active_per_org_observed": 1,
+        "llm": {
+          "admitted_calls": 346,
+          "unknown_usage_calls": 1,
+          "provider_failures": 1,
+          "retries": 1,
+          "reserved_output_tokens_total": 207600,
+          "known_output_tokens_subtotal": 3450,
+          "max_calls_per_turnwork": 2,
+          "max_reserved_tokens_per_turnwork": 1200,
+          "budget_violations": 0
+        },
+        "outbound": {
+          "attempts_above_one": 0,
+          "max_attempts": 1,
+          "uncertain_count": 0
+        },
+        "cross_tenant_message_rows": 0,
+        "variant_gates": {
+          "healthy_claim_p95_le_10": false,
+          "safety_dispatch_p95_le_5": true
+        },
+        "variant_gate_pass": false,
+        "postgresql_process_ids": [
+          {
+            "pid": 81412,
+            "backend_pid": 87312,
+            "role": "planner-1",
+            "scenario": "blocked_llm"
+          },
+          {
+            "pid": 86948,
+            "backend_pid": 88016,
+            "role": "planner-2",
+            "scenario": "blocked_llm"
+          },
+          {
+            "pid": 88668,
+            "backend_pid": 74224,
+            "role": "sender",
+            "scenario": "blocked_llm"
+          }
+        ]
+      },
+      "meta_slow": {
+        "receipt": "b9e-first-meta.json",
+        "receipt_sha256": "a204e0173fec054c6918896c8eb3ec6224940d1f170beea9372c9632d4d35423",
+        "logs_sha256": {
+          "b9e-first-meta-planner-1.log": "2e944bdd08084674840e77e54e3adaca488263f3f631f1a147c91b8fc8bdbff7",
+          "b9e-first-meta-planner-2.log": "b30cf721403df549c5164187fd6965088690f4e41884071ab48da25d54fee9a8",
+          "b9e-first-meta-sender.log": "971a817eb6eaae68473e7979cdb14816d58feb37cfc142a3d0cdf805eee7d660"
+        },
+        "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+        "fsync": "on",
+        "synchronous_commit": "on",
+        "inbound_count": 360,
+        "healthy_claim": {
+          "count": 60,
+          "p95_seconds": 21.492441,
+          "max_seconds": 23.15175,
+          "missing": 0
+        },
+        "safety_dispatch": {
+          "count": 14,
+          "p95_seconds": 114.136948,
+          "max_seconds": 114.136948
+        },
+        "outbox_dispatch": {
+          "count": 113,
+          "p95_seconds": 119.533238,
+          "max_seconds": 120.919262,
+          "missing": 55
+        },
+        "max_pending_inbound_observed": 201,
+        "max_active_per_org_observed": 1,
+        "llm": {
+          "admitted_calls": 344,
+          "unknown_usage_calls": 0,
+          "provider_failures": 0,
+          "retries": 0,
+          "reserved_output_tokens_total": 206400,
+          "known_output_tokens_subtotal": 3440,
+          "max_calls_per_turnwork": 2,
+          "max_reserved_tokens_per_turnwork": 1200,
+          "budget_violations": 0
+        },
+        "outbound": {
+          "attempts_above_one": 0,
+          "max_attempts": 1,
+          "uncertain_count": 0
+        },
+        "cross_tenant_message_rows": 0,
+        "variant_gates": {
+          "durable_outbound_state": true,
+          "bounded_concurrency": true,
+          "no_blind_retry": true
+        },
+        "variant_gate_pass": true,
+        "postgresql_process_ids": [
+          {
+            "pid": 89560,
+            "backend_pid": 91052,
+            "role": "planner-1",
+            "scenario": "meta_slow"
+          },
+          {
+            "pid": 90400,
+            "backend_pid": 86744,
+            "role": "planner-2",
+            "scenario": "meta_slow"
+          },
+          {
+            "pid": 90292,
+            "backend_pid": 90680,
+            "role": "sender",
+            "scenario": "meta_slow"
+          }
+        ]
+      },
+      "duplicate": {
+        "receipt": "b9e-first-duplicate.json",
+        "receipt_sha256": "522cd0d51103b31058716bc672143e6ef3d1b841edef4aee038c1d6f68bb8a6a",
+        "logs_sha256": {
+          "b9e-first-duplicate-planner-1.log": "7e0835ca24c774c67f62fa49f5901a4ed579c601eaabba9f9a9beb856362128b",
+          "b9e-first-duplicate-planner-2.log": "bab3caffaff475b4b64578fa0f98890e475f132caa0ee6f7b7aead9b6b175836",
+          "b9e-first-duplicate-sender.log": "bf34f1cd6d8a320a97c532e4700613ea05f4188caf6e404abf9b152cc69cb2f8"
+        },
+        "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+        "fsync": "on",
+        "synchronous_commit": "on",
+        "inbound_count": 360,
+        "healthy_claim": {
+          "count": 60,
+          "p95_seconds": 21.987769,
+          "max_seconds": 22.247341,
+          "missing": 0
+        },
+        "safety_dispatch": {
+          "count": 20,
+          "p95_seconds": 3.393692,
+          "max_seconds": 3.393692
+        },
+        "outbox_dispatch": {
+          "count": 171,
+          "p95_seconds": 2.474596,
+          "max_seconds": 3.393692,
+          "missing": 0
+        },
+        "max_pending_inbound_observed": 195,
+        "max_active_per_org_observed": 1,
+        "llm": {
+          "admitted_calls": 356,
+          "unknown_usage_calls": 0,
+          "provider_failures": 0,
+          "retries": 0,
+          "reserved_output_tokens_total": 213600,
+          "known_output_tokens_subtotal": 3560,
+          "max_calls_per_turnwork": 2,
+          "max_reserved_tokens_per_turnwork": 1200,
+          "budget_violations": 0
+        },
+        "outbound": {
+          "attempts_above_one": 0,
+          "max_attempts": 1,
+          "uncertain_count": 0
+        },
+        "cross_tenant_message_rows": 0,
+        "variant_gates": {
+          "duplicate_webhook_deduplicated": true
+        },
+        "variant_gate_pass": true,
+        "postgresql_process_ids": [
+          {
+            "pid": 90816,
+            "backend_pid": 32080,
+            "role": "planner-1",
+            "scenario": "duplicate"
+          },
+          {
+            "pid": 26676,
+            "backend_pid": 68208,
+            "role": "planner-2",
+            "scenario": "duplicate"
+          },
+          {
+            "pid": 90168,
+            "backend_pid": 90640,
+            "role": "sender",
+            "scenario": "duplicate"
+          }
+        ]
+      },
+      "saturation": {
+        "receipt": "b9e-first-saturation.json",
+        "receipt_sha256": "1ad176b10fd2340a7b74005f9204eabeeb381a73edc87bc585dd079a34fb3b5c",
+        "logs_sha256": {
+          "b9e-first-saturation-planner-1.log": "ffcecff1d3d86c7449f296fed7d55c39d1140a00915d83a950f874201999e57d",
+          "b9e-first-saturation-planner-2.log": "3fa576d12865b7f5ee73cd9954cbba7712b7fefa998f2710d1bbf209574bb748",
+          "b9e-first-saturation-sender.log": "f764ee64239ced2a6fe33b01e0d415d58277a514a61c428f739e0899b6d20f47"
+        },
+        "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+        "fsync": "on",
+        "synchronous_commit": "on",
+        "inbound_count": 360,
+        "healthy_claim": {
+          "count": 60,
+          "p95_seconds": 0.138755,
+          "max_seconds": 0.166686,
+          "missing": 0
+        },
+        "safety_dispatch": {
+          "count": 60,
+          "p95_seconds": 2.172611,
+          "max_seconds": 2.374721
+        },
+        "outbox_dispatch": {
+          "count": 197,
+          "p95_seconds": 1.907812,
+          "max_seconds": 2.374721,
+          "missing": 0
+        },
+        "max_pending_inbound_observed": 184,
+        "max_active_per_org_observed": 1,
+        "llm": {
+          "admitted_calls": 306,
+          "unknown_usage_calls": 0,
+          "provider_failures": 0,
+          "retries": 0,
+          "reserved_output_tokens_total": 183600,
+          "known_output_tokens_subtotal": 3060,
+          "max_calls_per_turnwork": 2,
+          "max_reserved_tokens_per_turnwork": 1200,
+          "budget_violations": 0
+        },
+        "outbound": {
+          "attempts_above_one": 0,
+          "max_attempts": 1,
+          "uncertain_count": 0
+        },
+        "cross_tenant_message_rows": 0,
+        "variant_gates": {
+          "safety_admitted_under_saturation": true,
+          "bounded_concurrency": true,
+          "saturation_observed": true
+        },
+        "variant_gate_pass": true,
+        "postgresql_process_ids": [
+          {
+            "pid": 80180,
+            "backend_pid": 28344,
+            "role": "planner-1",
+            "scenario": "saturation"
+          },
+          {
+            "pid": 91736,
+            "backend_pid": 74372,
+            "role": "planner-2",
+            "scenario": "saturation"
+          },
+          {
+            "pid": 84728,
+            "backend_pid": 88588,
+            "role": "sender",
+            "scenario": "saturation"
+          }
+        ]
+      }
+    },
+    "profile_technical_status": "FAIL"
+  },
+  "directed_corpus": {
+    "schema_version": "b9e-directed-corpus-v1",
+    "initial_run": {
+      "status": "INTERRUPTED_INFRA",
+      "passed_ids": [
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_confirmation_cannot_cross_tenant_proposal_reference",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_02_personal_read_uses_authenticated_domain_http",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_03_duplicate_signed_http_is_one_message_and_work",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_09_uncertain_no_blind_retry_then_signed_reconciliation",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_11_takeover_during_llm_fences_publication",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_12_safety_precedes_llm_and_normal_write",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_15_client_cannot_reply_to_pending_and_forged_early_reply_is_not_causal",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_16_correction_retires_old_proposal_before_effect",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_17_duplicate_confirmation_and_worker_do_not_repeat_effect",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_effect_and_consent_roll_back_with_receipt_sql_failure",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_takeover_after_authorizable_proposal_blocks_write",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_worker_reaches_b8a_and_denies_inactive_definition",
+        "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_provider_accepted_process_killed_local_response_lost_is_uncertain",
+        "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_two_http_processes_deduplicate_then_worker_runs_once",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_01_02_03_available_last_slot_and_exhausted",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_07_12_timeout_retry_counted_without_refund",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_14_missing_and_malformed_usage_are_unknown",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_cost_01_authorizer_verifier_planner_share_budget",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_budget_exhausted_releases_turn_without_provider",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta",
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_appointments_scoped_to_verified_owner",
+        "apps.agent.tests.test_identity.IdentityTests.test_verification_expiry",
+        "apps.agent.tests.test_inbox_api.InboxResetIdentityTests.test_reset_identity_is_tenant_scoped",
+        "apps.agent.tests.test_planner.PlannerPolicyShortCircuitTests.test_human_active_is_silent",
+        "apps.agent.tests.test_planner.PlannerVerificationTests.test_unverified_personal_tool_executes_nothing",
+        "apps.agent.tests.test_tools.ToolsThroughRealApiTests.test_verification_floor_blocks_personal_tools"
+      ],
+      "receipt": "b9e-corpus-first.results.passed.jsonl",
+      "log": "b9e-corpus-first.log",
+      "terminal_summary_available": false,
+      "reason": "PostgreSQL became unavailable before three READ IDs completed"
+    },
+    "recovery_run": {
+      "receipt": "b9e-corpus-recovery.results.json",
+      "exact_recovered_ids": [
+        "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_vaccine_status_requires_conversation_pet_handle",
+        "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_public_clinic_info_with_productive_write_defaults_closed",
+        "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_public_slot_check_is_read_not_reservation"
+      ]
+    },
+    "selected_unique": 46,
+    "accepted_unique": 46,
+    "passed_ids": [
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_confirmation_cannot_cross_tenant_proposal_reference",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_02_personal_read_uses_authenticated_domain_http",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_03_duplicate_signed_http_is_one_message_and_work",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_09_uncertain_no_blind_retry_then_signed_reconciliation",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_11_takeover_during_llm_fences_publication",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_12_safety_precedes_llm_and_normal_write",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_15_client_cannot_reply_to_pending_and_forged_early_reply_is_not_causal",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_16_correction_retires_old_proposal_before_effect",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_17_duplicate_confirmation_and_worker_do_not_repeat_effect",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_effect_and_consent_roll_back_with_receipt_sql_failure",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_takeover_after_authorizable_proposal_blocks_write",
+      "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_worker_reaches_b8a_and_denies_inactive_definition",
+      "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_provider_accepted_process_killed_local_response_lost_is_uncertain",
+      "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_two_http_processes_deduplicate_then_worker_runs_once",
+      "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_01_02_03_available_last_slot_and_exhausted",
+      "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_07_12_timeout_retry_counted_without_refund",
+      "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_14_missing_and_malformed_usage_are_unknown",
+      "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_cost_01_authorizer_verifier_planner_share_budget",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_budget_exhausted_releases_turn_without_provider",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+      "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender",
+      "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta",
+      "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+      "apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+      "apps.agent.tests.test_b9d_release.BetaCreateTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+      "apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+      "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+      "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+      "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_appointments_scoped_to_verified_owner",
+      "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_vaccine_status_requires_conversation_pet_handle",
+      "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_public_clinic_info_with_productive_write_defaults_closed",
+      "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_public_slot_check_is_read_not_reservation",
+      "apps.agent.tests.test_identity.IdentityTests.test_verification_expiry",
+      "apps.agent.tests.test_inbox_api.InboxResetIdentityTests.test_reset_identity_is_tenant_scoped",
+      "apps.agent.tests.test_planner.PlannerPolicyShortCircuitTests.test_human_active_is_silent",
+      "apps.agent.tests.test_planner.PlannerVerificationTests.test_unverified_personal_tool_executes_nothing",
+      "apps.agent.tests.test_tools.ToolsThroughRealApiTests.test_verification_floor_blocks_personal_tools"
+    ],
+    "pending_ids": [],
+    "failed_final_ids": [],
+    "skips_final": 0,
+    "xfail_final": 0,
+    "status": "PASS_DIRECTED_CORPUS_ONLY",
+    "historical_full_regression_rerun": false,
+    "not_an_integral_profile_pass": true
+  },
+  "failure_injection_status": {
+    "B9E-FI-01": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-02": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-03": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-04": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-05": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-06": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-07": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-08": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-09": "IMPLEMENTED_AND_PROVEN",
+    "B9E-FI-10": "IMPLEMENTED_AND_PROVEN"
+  },
+  "historical_regression": {
+    "baseline_receipt": "b9d-acceptance-results.json",
+    "baseline_unique_ids": 2384,
+    "full_exact_rerun_after_green_profile": "NOT_RUN_PROFILE_FAILED",
+    "current_directed_unique_ids": 46,
+    "historical_ids_rerun_directed": 42,
+    "new_b9e_ids": 4,
+    "historical_not_rerun_count": 2342,
+    "historical_not_rerun_ids_derivation": "Union of test_ids/passed_ids in b9d-acceptance-results.json minus b9e-corpus-final.json passed_ids",
+    "historical_not_rerun_ids_sha256": "005768f901816aadc02d437a5997d39cac549a64485d5dfea34cecdb687ea198",
+    "b9d_b9c_b9b_b9a_b0_b8e_full_candidate_pass_claimed": false,
+    "historical_ids_not_rerun": "Not treated as accepted or zero pending on this candidate"
+  },
+  "checks": {
+    "receipt": "b9e-checks.exit.json",
+    "log": "b9e-checks.log",
+    "django_check": "PASS",
+    "makemigrations_check_dry_run": "PASS",
+    "migrate_check": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "artifact_verification": "b9e-artifact-verification.json",
+  "cleanup": {
+    "schema_version": "b9e-cleanup-v1",
+    "checked_at_utc": "2026-09-30T15:19:11.485616+00:00",
+    "isolated_port": 35439,
+    "databases_before": [
+      "postgres",
+      "template0",
+      "template1",
+      "test_b8b_b9e_corpus",
+      "test_b9e_blocked",
+      "test_b9e_duplicate",
+      "test_b9e_meta",
+      "test_b9e_profile",
+      "test_b9e_saturation",
+      "test_b9e_smoke",
+      "test_b9e_template"
+    ],
+    "active_client_sessions_before": [],
+    "prepared_transactions_before": [],
+    "waiting_locks_before": [],
+    "dropped_databases": [
+      "test_b8b_b9e_corpus",
+      "test_b9e_blocked",
+      "test_b9e_duplicate",
+      "test_b9e_meta",
+      "test_b9e_profile",
+      "test_b9e_saturation",
+      "test_b9e_smoke",
+      "test_b9e_template"
+    ],
+    "databases_after": [
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "cluster_stopped": true,
+    "data_directory_removed": true,
+    "verified_absolute_data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-b9e-pg16-data",
+    "port_closed": true,
+    "postgresql_source_logs_sha256": {
+      "vet-b9e-pg16.log": "2bf535a5be4ccf8d724b331ffaefccf8e197de0d40728013396137d3c9106f59",
+      "vet-b9e-pg16-recovery.log": "88995ae1747120786453d71e31b124605e3e754b5d7f2988e0aebdd2cf283de0"
+    },
+    "lifecycle_receipt": "b9e-postgresql-lifecycle.log",
+    "final_checked_at_utc": "2026-09-30T15:46:20.505835+00:00"
+  },
+  "production": {
+    "b0_default": "CLOSED",
+    "b7b_consent_default": false,
+    "operation_execution_flags_default": {},
+    "release_grants": [],
+    "clinics_activated": 0,
+    "deploy_performed": false,
+    "production_environment_inspected": false
+  },
+  "operational_requirements_satisfied_real": [],
+  "operational_requirements_receipt": "profile-beta-1-operational-readiness.md",
+  "preexisting_changes_preserved_and_excluded": [
+    "D DEPLOY_VPS_PLAN.md",
+    "D DEPLOY_VPS_STATUS.md",
+    "?? docs/auditoria-agente-conversacional-veterinario-2026-09-10.md",
+    "?? docs/discrepancia-encargo-b9-2026-09-26.md"
+  ],
+  "coverage_limits": [
+    "R01-R15 matrix frozen before load; detailed I01-I14 rows added afterward. No claim of fully granular pre-run freeze.",
+    "Original first base runner hash recorded, but no byte-identical source snapshot retained before variant harness edits.",
+    "Actual basic READ uses two LLM calls; canonical model specifies one. Exact one-call workload not accredited.",
+    "Sampled capacity maxima do not prove unobserved peaks; exact exclusion tests supply their separate evidence.",
+    "No real LLM, real Meta, clinical universal guarantee, physical identity guarantee or strong fairness.",
+    "No new E1-E5 or P-A/P-B implementation; no runtime change or activation."
+  ],
+  "next_decision": "Reject this profile promotion. Version a permitted scope/load decision or commission measured E4 separately, then rerun the frozen gate and exact regressions.",
+  "sha256_manifest": {
+    ".gitattributes": "3658a7d042dc53785fc31692d6e803ff03b3d889bd1c73b20259957bbf5fccc2",
+    ".github/workflows/ci.yml": "75867e10b249b148a01b7f6bae7d6c2a7c665967e88da7792d9dd14dd64467fe",
+    "backend/apps/agent/tests/b9a_harness.py": "300147768ef5de6ea017e74e02bec120def2f295c176664756654a6d94fdcf1f",
+    "backend/apps/agent/tests/b9e_collect.py": "c75a1ba720f04f372a51b1de89dc9bf1ea3efb4127c2c591bc2ad56e79610e21",
+    "backend/apps/agent/tests/b9e_profile.py": "a09b3318f27f1b2970270a03cb90f46034628d5af39e448b3baceabfdf53da75",
+    "backend/apps/agent/tests/test_b9e_read_scope.py": "30626efdd0212838e8baca72e2e23e91a91ae877ab99fe7feefcd2b7fbd50459",
+    "backend/requirements.lock": "563ca769181e1ba0e2e3b4d51ee52ef3f4266b2b6e005969c05f74dfae54094f",
+    "docs/evals/b9e-artifact-verification.json": "ca81d09dd936231d2297d3f34ea1532cf0c5881bfce1a91f745d523f4b1988ac",
+    "docs/evals/b9e-checks.exit.json": "c645e0f7564429131282a2cc9edaf664fd8271ab642ca7deb2c2d7ac6b2312cc",
+    "docs/evals/b9e-checks.log": "ddd52e2f5ee76132c1a183ca9f33316afa091f913da99ab982ea1e9e76d540ec",
+    "docs/evals/b9e-checks.selected.json": "7f453adc460934579ffb14719517cfa7a2fd343896334a2420696b45b34e02c9",
+    "docs/evals/b9e-cleanup.json": "4cdf17c11de1ef6d9a267abd9d99646b265caee6acaee307aaa5f7081d7450df",
+    "docs/evals/b9e-corpus-final.json": "65daf5a59c7ce112f8a4fa8adfc3e23a5f9fe48726fcae7db0a4f3d33b2d20d9",
+    "docs/evals/b9e-corpus-first.log": "81aa9b56af4d5a15ab24be1b216b8d00b4b1c4bcbbf21c9fc4ba44407c0f8333",
+    "docs/evals/b9e-corpus-first.results.b9a-pipeline.jsonl": "c6b6c576600786e0f070389e748dcdf9a90a95525249dfe7a6474d9867e8dcd5",
+    "docs/evals/b9e-corpus-first.results.b9a-processes.jsonl": "f52774af10ce3b6cd39260dbb9e5d34aa3c5e26e3af042fc44523c3fa87b583a",
+    "docs/evals/b9e-corpus-first.results.b9b-corpus.jsonl": "03e75fc845a9b6b0149d084bfe3ebb8c665b8d27aed0ee6030a342c1a7151e98",
+    "docs/evals/b9e-corpus-first.results.b9c-corpus.jsonl": "5510d71edcfa43875b62be1cb4dc0d91e0903cca2c979b63974f5bbd09dbf9c1",
+    "docs/evals/b9e-corpus-first.results.b9c-processes.jsonl": "411f39a428895fdc6ebcea191f8dc6d85cb7fd96ca4b6c67306c769e57377f12",
+    "docs/evals/b9e-corpus-first.results.inventory.json": "bc1f81951d59e5b14c20aaf3df76c266b23ba8931648ee14133383841ebe82bf",
+    "docs/evals/b9e-corpus-first.results.passed.jsonl": "91bcf007b06dfc37e9ec25659d7d612cd8ff9ef3e498202c963ce0f6055cf868",
+    "docs/evals/b9e-corpus-first.results.sources.json": "a3eeef0f326cc09eb8a292f494c2eeb67e605a7ecb90e1b9d87dfef26d42745e",
+    "docs/evals/b9e-corpus-first.selected.json": "bc1f81951d59e5b14c20aaf3df76c266b23ba8931648ee14133383841ebe82bf",
+    "docs/evals/b9e-corpus-recovery-selected.json": "a2ddaacc41a13200b3d4954a635477e159ca474f8c6e456b8add0b9b2982620a",
+    "docs/evals/b9e-corpus-recovery.exit.json": "69dd707de4b3ed0fdbc8ae9f5be00fbd4b39e8f368882717f2736a9056661cc1",
+    "docs/evals/b9e-corpus-recovery.log": "bbe9cb1e7fadcd577d78c80e692f33784a97af5129191709a74c23791421dc2b",
+    "docs/evals/b9e-corpus-recovery.results.inventory.json": "a977c9fe4d25076d216c4554a2bf3c24d6ac61778432d2e76ca03fa91d67673a",
+    "docs/evals/b9e-corpus-recovery.results.json": "cb815b2360a43d93f8c9e04b0989eed4262f7fff029f50db09a040b7681b1edb",
+    "docs/evals/b9e-corpus-recovery.results.passed.jsonl": "4cea18748c495722706ec35ee1bc37e1c9cc735a884e7ee1c5acda47dd0f1567",
+    "docs/evals/b9e-corpus-recovery.results.sources.json": "c125f42f32daa5061827a532dbab1c35999a94b8d7add67ba1ecc9ecd7f477a2",
+    "docs/evals/b9e-corpus-recovery.selected.json": "a977c9fe4d25076d216c4554a2bf3c24d6ac61778432d2e76ca03fa91d67673a",
+    "docs/evals/b9e-corpus-selected.json": "8eb3013b81d6a3d984113c588a5642652ec4fa5b3dcddf465b95f44360f21409",
+    "docs/evals/b9e-first-base-driver.log": "4f4a5dcbbd41c23fbd983f6a6de77487df0878e7eb24153d444f159eccac8a59",
+    "docs/evals/b9e-first-base-planner-1.log": "b6abf78845f27f4661a817991c2a797fb07a961ac8915d39d4fa20184003e91b",
+    "docs/evals/b9e-first-base-planner-2.log": "8866a602f8d66cb75a659c32f1c93ad8014aa369ce42c0680d0ff96c0eed1896",
+    "docs/evals/b9e-first-base-sender.log": "c0986e9aee80601749f260e3bf6c2cd3ca728c413badbb69b111b8f6e9250c4a",
+    "docs/evals/b9e-first-base.json": "c81a1c6df32fdb8ae00710c913ad68ba392127f91142f6bfc3ab57c995e72f6c",
+    "docs/evals/b9e-first-blocked-driver.log": "1e2bc83d5a0cc2e1b541bf761efa02b2c551564e7d676202b39c4e340e999c60",
+    "docs/evals/b9e-first-blocked-planner-1.log": "22f4f52040d2d2920cb531d40def3d0a268a87f5dea4cf335bee48cc93547d42",
+    "docs/evals/b9e-first-blocked-planner-2.log": "9a9910682f1fd7170d6ea9b9785cb1b4d5b58033ea70783b74180f831376aaf4",
+    "docs/evals/b9e-first-blocked-sender.log": "65942b229342ca5fe53c766cb3deb5232fa5217ad85e596b451f3dbf76456f84",
+    "docs/evals/b9e-first-blocked.json": "8a3ab406db9d7b1eb5d7a00fed1b9f95df87857a75d747bfb5ac553189b3e696",
+    "docs/evals/b9e-first-duplicate-driver.log": "3ea22c002f04829fd17931e27bd98ac194908d74376ab27ac259d000012e37e4",
+    "docs/evals/b9e-first-duplicate-planner-1.log": "7e0835ca24c774c67f62fa49f5901a4ed579c601eaabba9f9a9beb856362128b",
+    "docs/evals/b9e-first-duplicate-planner-2.log": "bab3caffaff475b4b64578fa0f98890e475f132caa0ee6f7b7aead9b6b175836",
+    "docs/evals/b9e-first-duplicate-sender.log": "bf34f1cd6d8a320a97c532e4700613ea05f4188caf6e404abf9b152cc69cb2f8",
+    "docs/evals/b9e-first-duplicate.json": "522cd0d51103b31058716bc672143e6ef3d1b841edef4aee038c1d6f68bb8a6a",
+    "docs/evals/b9e-first-meta-driver.log": "35f0ad05198cd0f14d33ba74858483ada15fe231a758fadaf03d362fa23d81a2",
+    "docs/evals/b9e-first-meta-planner-1.log": "2e944bdd08084674840e77e54e3adaca488263f3f631f1a147c91b8fc8bdbff7",
+    "docs/evals/b9e-first-meta-planner-2.log": "b30cf721403df549c5164187fd6965088690f4e41884071ab48da25d54fee9a8",
+    "docs/evals/b9e-first-meta-sender.log": "971a817eb6eaae68473e7979cdb14816d58feb37cfc142a3d0cdf805eee7d660",
+    "docs/evals/b9e-first-meta.json": "a204e0173fec054c6918896c8eb3ec6224940d1f170beea9372c9632d4d35423",
+    "docs/evals/b9e-first-run-analysis.md": "7a9a5d2f4bede65361b770e2124fe5a3be6a87b615895c28ff0164bbbcc3dddc",
+    "docs/evals/b9e-first-saturation-driver.log": "b6a35bdce35568a1c9201e93f47afb216ba99f29b522c953af65207ffbe314b0",
+    "docs/evals/b9e-first-saturation-planner-1.log": "ffcecff1d3d86c7449f296fed7d55c39d1140a00915d83a950f874201999e57d",
+    "docs/evals/b9e-first-saturation-planner-2.log": "3fa576d12865b7f5ee73cd9954cbba7712b7fefa998f2710d1bbf209574bb748",
+    "docs/evals/b9e-first-saturation-sender.log": "f764ee64239ced2a6fe33b01e0d415d58277a514a61c428f739e0899b6d20f47",
+    "docs/evals/b9e-first-saturation.json": "1ad176b10fd2340a7b74005f9204eabeeb381a73edc87bc585dd079a34fb3b5c",
+    "docs/evals/b9e-load-summary.json": "4f832682a370876b2a018136fe20659b80bec677f2ff6688b1a8cd4e2e465cb7",
+    "docs/evals/b9e-postgresql-lifecycle.log": "40a65c54938897ba6e318f3e48ec76ec79e7e37363f57ca0d23f54618e84d7eb",
+    "docs/evals/profile-beta-1-corpus-v1.json": "d2c5cc67ff651654dafb19b2c1eebf52aba08c55cb5fd9c2c76cf334d792330a",
+    "docs/evals/profile-beta-1-failure-injection.md": "28d855519be1bba40c550559eb56b56262fedcc0a1c27bf1a1756bf47877ee16",
+    "docs/evals/profile-beta-1-methodology.md": "48251eca301620a5e9a1f8ce1cbde9cb20d5927b1de9fc77b76b79ba0eea12c0",
+    "docs/evals/profile-beta-1-operational-readiness.md": "2f79382e274cc9475e7e4eb2ef85b9d9d9c1436dbccffee69a7dc215d40aaaf5",
+    "docs/evals/profile-beta-1-read-scope.md": "7a6418ff44fa7abdbfc8db0e3aa5186003f1850c1bb1fcc5e531ef56af1420df",
+    "docs/evals/profile-beta-1-requirements-matrix.md": "03acc61e5ca2fd12d641ad64be1c88964efbb97f820d3b657591d7f8eed25f7b",
+    "docs/evals/profile-beta-1-v1.json": "ff0834449d1915b395be58e7cdbab09e39917fe0ddf3cc90e3f187fdfdc9f311",
+    "docs/modules/agent.md": "5ca14c48eec082e65340eeeff1a5a74266360d35509da0283af546a64b71db3c",
+    "docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md": "8ee3fa103b7d43cd708cdeea97a0dd656653ebe1de6b1295aeb7b08f329b72e0",
+    "docs/reporte-aceptacion-b9-profile-beta-1-2026-09-29.md": "9db747954d4a18353fca9fb7b43d1d377f7fb8a268329e77ce504f0a066f6ddd",
+    "docs/runbooks/agent-whatsapp.md": "637bc436f53b287022d0180e80dcb5aa6bf401fc84c583894a126d9ba8114795",
+    "docs/runbooks/observability.md": "9419cf8affd10de7a9fe2b78c34590515fe78233b776c65fe8728900fd46d505",
+    "docs/whatsapp-agent-architecture.md": "cbb8832108ef9eea6124c2376bb5973b56a8ad511be5594b32fdfe191511582a",
+    "docs/whatsapp-agent-audit-dossier.md": "bc65d3d3a3eb14dac9c9da7cce942b3d5c68e1cc9146f1a6e3baf3d25f62d86b"
+  },
+  "source_sha256_lf_normalized": {
+    "backend/apps/agent/tests/b9e_profile.py": "a09b3318f27f1b2970270a03cb90f46034628d5af39e448b3baceabfdf53da75",
+    "backend/apps/agent/tests/b9e_collect.py": "c75a1ba720f04f372a51b1de89dc9bf1ea3efb4127c2c591bc2ad56e79610e21",
+    "backend/apps/agent/tests/test_b9e_read_scope.py": "30626efdd0212838e8baca72e2e23e91a91ae877ab99fe7feefcd2b7fbd50459",
+    "backend/apps/agent/tests/b9a_harness.py": "300147768ef5de6ea017e74e02bec120def2f295c176664756654a6d94fdcf1f",
+    "backend/requirements.lock": "9d234a99a1513773616f5b68143707dad3ab04193184fd54c848e5391cebda7a",
+    ".github/workflows/ci.yml": "75867e10b249b148a01b7f6bae7d6c2a7c665967e88da7792d9dd14dd64467fe",
+    ".gitattributes": "3658a7d042dc53785fc31692d6e803ff03b3d889bd1c73b20259957bbf5fccc2",
+    "docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md": "15e79369b5c974d998852c5433da804bd36084b6166bf7ec597cdcb0ab5088e0",
+    "docs/reporte-aceptacion-b9-profile-beta-1-2026-09-29.md": "9db747954d4a18353fca9fb7b43d1d377f7fb8a268329e77ce504f0a066f6ddd",
+    "docs/whatsapp-agent-architecture.md": "299fa4c31b16997ad05353911b97726567d80260fad379fc8473f26476974cfd",
+    "docs/whatsapp-agent-audit-dossier.md": "68c33a7b53a0076aa5b631360d418859d046f255448e384545894bfc7fa8a802",
+    "docs/modules/agent.md": "0a97a8b9be4c417d7e8462c99124e3960a1cc58670d90b0a365a0c835324a9ad",
+    "docs/runbooks/agent-whatsapp.md": "e42bdde2400f51e77a0899bca1c813b602bd870a242a596de2de1674a269f688",
+    "docs/runbooks/observability.md": "8a72b1b2a76e3337c69f0569a652843013483868545e0a4afd96d15d8e6a0c1f"
+  },
+  "hash_method": "sha256_manifest covers local exact bytes; evidence attributes preserve them. source_sha256_lf_normalized supplies cross-platform source comparison. No normalization of raw receipt/log bytes."
+}

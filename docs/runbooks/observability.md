@@ -414,3 +414,21 @@ historia. La auditoría durable de cambios está en commits/revisión de release
 registros externos; los logs pueden faltar por crash y no sustituyen esa autoridad.
 No alertas o dashboard nuevos sin responsable. El corpus B9D mide invariantes de
 componente; no p95, carga real ni aprobación PROFILE-BETA-1.
+
+## B9E — lectura del ensayo de aceptación
+
+[El recibo de carga](../evals/b9e-load-summary.json) separa persistencia→claim,
+guidance→admisión de dispatch y commit de outbox→admisión de dispatch. No
+confundir admisión con entrega de Meta. Incluye tamaño de muestra, p95, máximo,
+faltantes, cola observada, `LLMCall`/usage desconocido, intentos outbound,
+violaciones de budget, actividad máxima por organización y PIDs de procesos.
+Cada variante tiene recibo y logs separados; la ventana de Meta lento exige
+durabilidad y no retry ciego, no el SLO de la variante base.
+
+El operador puede seguir TurnWork/leases y B9C con `compute_concurrency`,
+outbox/uncertainty con el inspector B4, operación/autorización/ejecución con
+los inspectores B7/B8, presupuesto con LLMCall/inspector B9B, y gates con
+`agent_inspect_beta`. Son consultas readonly, siempre limitadas a la organización
+autorizada. El p95 sano incumplido impide promoción aun cuando los contadores de
+seguridad sean cero. Los logs de aceptación no contienen cuerpo clínico,
+teléfono, prompt ni secretos como labels.

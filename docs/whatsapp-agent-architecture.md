@@ -1167,3 +1167,20 @@ binding/identity revisions, consentimiento, cupo B9C y contabilidad B9B.
 Sin tablas/migraciones/flags nuevos. `agent_inspect_beta --organization-id ID`
 expone solo un snapshot readonly. Ver [contrato](contrato-beta-release-b9d.md)
 y [acta](implementacion-b9d-agente-whatsapp-2026-09-29.md).
+
+## B9E — Ensayo integral PROFILE-BETA-1 (2026-09-29)
+
+El contrato y thresholds se congelaron antes de medir. La carga temporal de
+30 s + 300 s sobre PostgreSQL 16.15 local, dos planners/batch 1 y un sender
+atraviesa webhook firmado, TurnWork/worker, READ por API interna cuando aplica
+y sender con wire LLM/Meta controlado. El camino público observado consume dos
+llamadas LLM por READ, no la llamada única del modelo de carga canónico.
+Las variantes base y LLM bloqueado superaron el p95 permitido de persistencia
+inbound sana a claim (21,73 s y 22,05 s frente a ≤10 s). Safety y outbox base
+conservaron sus gates; Meta lento mantuvo estado durable sin retry ciego;
+duplicado y guidance bajo saturación conservaron sus invariantes específicas.
+La cola ruidosa alcanzó 200 inbound pending observados. El resultado integral
+es **FAIL**: no se abre producción ni se cambia el límite para declararlo verde.
+No se añadió scheduler/fairness E4 ni se tocó runtime. Ver [contrato congelado](evals/profile-beta-1-v1.json),
+[metodología](evals/profile-beta-1-methodology.md) y
+[recibo agregado](evals/b9e-load-summary.json).

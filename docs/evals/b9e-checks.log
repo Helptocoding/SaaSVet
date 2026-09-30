@@ -1,0 +1,9 @@
+Operations to perform:
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+No changes detected
+PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit
+[["patients_petregistra_operation_id_a293f022_fk_agent_con", "FOREIGN KEY (operation_id) REFERENCES agent_conversationoperation(operation_key) DEFERRABLE INITIALLY DEFERRED"], ["patients_petregistra_organization_id_df4599b6_fk_organizat", "FOREIGN KEY (organization_id) REFERENCES organizations_organization(id) DEFERRABLE INITIALLY DEFERRED"], ["patients_petregistra_owner_id_be550899_fk_patients_", "FOREIGN KEY (owner_id) REFERENCES patients_owner(id) DEFERRABLE INITIALLY DEFERRED"], ["patients_petregistra_pet_id_418b7e2e_fk_patients_", "FOREIGN KEY (pet_id) REFERENCES patients_pet(id) DEFERRABLE INITIALLY DEFERRED"], ["patients_petregistrationeffect_operation_id_key", "UNIQUE (operation_id)"], ["patients_petregistrationeffect_pet_id_key", "UNIQUE (pet_id)"], ["patients_petregistrationeffect_pkey", "PRIMARY KEY (id)"]]
+{"suite": "checks", "database": "test_b8b_b9e_corpus", "exit_code": 0, "seconds": 3.5863626999998814}

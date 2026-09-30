@@ -1,0 +1,380 @@
+{
+  "schema_version": "b9e-load-summary-v1",
+  "postgresql_port": 35439,
+  "profile_sha256": "ff0834449d1915b395be58e7cdbab09e39917fe0ddf3cc90e3f187fdfdc9f311",
+  "scenarios": {
+    "base": {
+      "receipt": "b9e-first-base.json",
+      "receipt_sha256": "c81a1c6df32fdb8ae00710c913ad68ba392127f91142f6bfc3ab57c995e72f6c",
+      "logs_sha256": {
+        "b9e-first-base-planner-1.log": "b6abf78845f27f4661a817991c2a797fb07a961ac8915d39d4fa20184003e91b",
+        "b9e-first-base-planner-2.log": "8866a602f8d66cb75a659c32f1c93ad8014aa369ce42c0680d0ff96c0eed1896",
+        "b9e-first-base-sender.log": "c0986e9aee80601749f260e3bf6c2cd3ca728c413badbb69b111b8f6e9250c4a"
+      },
+      "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "fsync": "on",
+      "synchronous_commit": "on",
+      "inbound_count": 360,
+      "healthy_claim": {
+        "count": 60,
+        "p95_seconds": 21.725759,
+        "max_seconds": 22.371192,
+        "missing": 0
+      },
+      "safety_dispatch": {
+        "count": 20,
+        "p95_seconds": 2.77829,
+        "max_seconds": 2.77829
+      },
+      "outbox_dispatch": {
+        "count": 171,
+        "p95_seconds": 2.386334,
+        "max_seconds": 2.825158,
+        "missing": 0
+      },
+      "max_pending_inbound_observed": 198,
+      "max_active_per_org_observed": 1,
+      "llm": {
+        "admitted_calls": 354,
+        "unknown_usage_calls": 0,
+        "provider_failures": 0,
+        "retries": 0,
+        "reserved_output_tokens_total": 212400,
+        "known_output_tokens_subtotal": 3540,
+        "max_calls_per_turnwork": 2,
+        "max_reserved_tokens_per_turnwork": 1200,
+        "budget_violations": 0
+      },
+      "outbound": {
+        "attempts_above_one": 0,
+        "max_attempts": 1,
+        "uncertain_count": 0
+      },
+      "cross_tenant_message_rows": 0,
+      "variant_gates": {
+        "healthy_claim_p95_le_10": false,
+        "safety_dispatch_p95_le_5": true,
+        "outbox_dispatch_p95_le_5": true
+      },
+      "variant_gate_pass": false,
+      "postgresql_process_ids": [
+        {
+          "pid": 87928,
+          "backend_pid": 85760,
+          "role": "planner-1",
+          "scenario": "base"
+        },
+        {
+          "pid": 88060,
+          "backend_pid": 85848,
+          "role": "planner-2",
+          "scenario": "base"
+        },
+        {
+          "pid": 81408,
+          "backend_pid": 86956,
+          "role": "sender",
+          "scenario": "base"
+        }
+      ]
+    },
+    "blocked_llm": {
+      "receipt": "b9e-first-blocked.json",
+      "receipt_sha256": "8a3ab406db9d7b1eb5d7a00fed1b9f95df87857a75d747bfb5ac553189b3e696",
+      "logs_sha256": {
+        "b9e-first-blocked-planner-1.log": "22f4f52040d2d2920cb531d40def3d0a268a87f5dea4cf335bee48cc93547d42",
+        "b9e-first-blocked-planner-2.log": "9a9910682f1fd7170d6ea9b9785cb1b4d5b58033ea70783b74180f831376aaf4",
+        "b9e-first-blocked-sender.log": "65942b229342ca5fe53c766cb3deb5232fa5217ad85e596b451f3dbf76456f84"
+      },
+      "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "fsync": "on",
+      "synchronous_commit": "on",
+      "inbound_count": 360,
+      "healthy_claim": {
+        "count": 60,
+        "p95_seconds": 22.048948,
+        "max_seconds": 22.920572,
+        "missing": 0
+      },
+      "safety_dispatch": {
+        "count": 20,
+        "p95_seconds": 2.936003,
+        "max_seconds": 2.936003
+      },
+      "outbox_dispatch": {
+        "count": 166,
+        "p95_seconds": 2.321892,
+        "max_seconds": 3.160084,
+        "missing": 0
+      },
+      "max_pending_inbound_observed": 200,
+      "max_active_per_org_observed": 1,
+      "llm": {
+        "admitted_calls": 346,
+        "unknown_usage_calls": 1,
+        "provider_failures": 1,
+        "retries": 1,
+        "reserved_output_tokens_total": 207600,
+        "known_output_tokens_subtotal": 3450,
+        "max_calls_per_turnwork": 2,
+        "max_reserved_tokens_per_turnwork": 1200,
+        "budget_violations": 0
+      },
+      "outbound": {
+        "attempts_above_one": 0,
+        "max_attempts": 1,
+        "uncertain_count": 0
+      },
+      "cross_tenant_message_rows": 0,
+      "variant_gates": {
+        "healthy_claim_p95_le_10": false,
+        "safety_dispatch_p95_le_5": true
+      },
+      "variant_gate_pass": false,
+      "postgresql_process_ids": [
+        {
+          "pid": 81412,
+          "backend_pid": 87312,
+          "role": "planner-1",
+          "scenario": "blocked_llm"
+        },
+        {
+          "pid": 86948,
+          "backend_pid": 88016,
+          "role": "planner-2",
+          "scenario": "blocked_llm"
+        },
+        {
+          "pid": 88668,
+          "backend_pid": 74224,
+          "role": "sender",
+          "scenario": "blocked_llm"
+        }
+      ]
+    },
+    "meta_slow": {
+      "receipt": "b9e-first-meta.json",
+      "receipt_sha256": "a204e0173fec054c6918896c8eb3ec6224940d1f170beea9372c9632d4d35423",
+      "logs_sha256": {
+        "b9e-first-meta-planner-1.log": "2e944bdd08084674840e77e54e3adaca488263f3f631f1a147c91b8fc8bdbff7",
+        "b9e-first-meta-planner-2.log": "b30cf721403df549c5164187fd6965088690f4e41884071ab48da25d54fee9a8",
+        "b9e-first-meta-sender.log": "971a817eb6eaae68473e7979cdb14816d58feb37cfc142a3d0cdf805eee7d660"
+      },
+      "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "fsync": "on",
+      "synchronous_commit": "on",
+      "inbound_count": 360,
+      "healthy_claim": {
+        "count": 60,
+        "p95_seconds": 21.492441,
+        "max_seconds": 23.15175,
+        "missing": 0
+      },
+      "safety_dispatch": {
+        "count": 14,
+        "p95_seconds": 114.136948,
+        "max_seconds": 114.136948
+      },
+      "outbox_dispatch": {
+        "count": 113,
+        "p95_seconds": 119.533238,
+        "max_seconds": 120.919262,
+        "missing": 55
+      },
+      "max_pending_inbound_observed": 201,
+      "max_active_per_org_observed": 1,
+      "llm": {
+        "admitted_calls": 344,
+        "unknown_usage_calls": 0,
+        "provider_failures": 0,
+        "retries": 0,
+        "reserved_output_tokens_total": 206400,
+        "known_output_tokens_subtotal": 3440,
+        "max_calls_per_turnwork": 2,
+        "max_reserved_tokens_per_turnwork": 1200,
+        "budget_violations": 0
+      },
+      "outbound": {
+        "attempts_above_one": 0,
+        "max_attempts": 1,
+        "uncertain_count": 0
+      },
+      "cross_tenant_message_rows": 0,
+      "variant_gates": {
+        "durable_outbound_state": true,
+        "bounded_concurrency": true,
+        "no_blind_retry": true
+      },
+      "variant_gate_pass": true,
+      "postgresql_process_ids": [
+        {
+          "pid": 89560,
+          "backend_pid": 91052,
+          "role": "planner-1",
+          "scenario": "meta_slow"
+        },
+        {
+          "pid": 90400,
+          "backend_pid": 86744,
+          "role": "planner-2",
+          "scenario": "meta_slow"
+        },
+        {
+          "pid": 90292,
+          "backend_pid": 90680,
+          "role": "sender",
+          "scenario": "meta_slow"
+        }
+      ]
+    },
+    "duplicate": {
+      "receipt": "b9e-first-duplicate.json",
+      "receipt_sha256": "522cd0d51103b31058716bc672143e6ef3d1b841edef4aee038c1d6f68bb8a6a",
+      "logs_sha256": {
+        "b9e-first-duplicate-planner-1.log": "7e0835ca24c774c67f62fa49f5901a4ed579c601eaabba9f9a9beb856362128b",
+        "b9e-first-duplicate-planner-2.log": "bab3caffaff475b4b64578fa0f98890e475f132caa0ee6f7b7aead9b6b175836",
+        "b9e-first-duplicate-sender.log": "bf34f1cd6d8a320a97c532e4700613ea05f4188caf6e404abf9b152cc69cb2f8"
+      },
+      "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "fsync": "on",
+      "synchronous_commit": "on",
+      "inbound_count": 360,
+      "healthy_claim": {
+        "count": 60,
+        "p95_seconds": 21.987769,
+        "max_seconds": 22.247341,
+        "missing": 0
+      },
+      "safety_dispatch": {
+        "count": 20,
+        "p95_seconds": 3.393692,
+        "max_seconds": 3.393692
+      },
+      "outbox_dispatch": {
+        "count": 171,
+        "p95_seconds": 2.474596,
+        "max_seconds": 3.393692,
+        "missing": 0
+      },
+      "max_pending_inbound_observed": 195,
+      "max_active_per_org_observed": 1,
+      "llm": {
+        "admitted_calls": 356,
+        "unknown_usage_calls": 0,
+        "provider_failures": 0,
+        "retries": 0,
+        "reserved_output_tokens_total": 213600,
+        "known_output_tokens_subtotal": 3560,
+        "max_calls_per_turnwork": 2,
+        "max_reserved_tokens_per_turnwork": 1200,
+        "budget_violations": 0
+      },
+      "outbound": {
+        "attempts_above_one": 0,
+        "max_attempts": 1,
+        "uncertain_count": 0
+      },
+      "cross_tenant_message_rows": 0,
+      "variant_gates": {
+        "duplicate_webhook_deduplicated": true
+      },
+      "variant_gate_pass": true,
+      "postgresql_process_ids": [
+        {
+          "pid": 90816,
+          "backend_pid": 32080,
+          "role": "planner-1",
+          "scenario": "duplicate"
+        },
+        {
+          "pid": 26676,
+          "backend_pid": 68208,
+          "role": "planner-2",
+          "scenario": "duplicate"
+        },
+        {
+          "pid": 90168,
+          "backend_pid": 90640,
+          "role": "sender",
+          "scenario": "duplicate"
+        }
+      ]
+    },
+    "saturation": {
+      "receipt": "b9e-first-saturation.json",
+      "receipt_sha256": "1ad176b10fd2340a7b74005f9204eabeeb381a73edc87bc585dd079a34fb3b5c",
+      "logs_sha256": {
+        "b9e-first-saturation-planner-1.log": "ffcecff1d3d86c7449f296fed7d55c39d1140a00915d83a950f874201999e57d",
+        "b9e-first-saturation-planner-2.log": "3fa576d12865b7f5ee73cd9954cbba7712b7fefa998f2710d1bbf209574bb748",
+        "b9e-first-saturation-sender.log": "f764ee64239ced2a6fe33b01e0d415d58277a514a61c428f739e0899b6d20f47"
+      },
+      "postgresql_version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "fsync": "on",
+      "synchronous_commit": "on",
+      "inbound_count": 360,
+      "healthy_claim": {
+        "count": 60,
+        "p95_seconds": 0.138755,
+        "max_seconds": 0.166686,
+        "missing": 0
+      },
+      "safety_dispatch": {
+        "count": 60,
+        "p95_seconds": 2.172611,
+        "max_seconds": 2.374721
+      },
+      "outbox_dispatch": {
+        "count": 197,
+        "p95_seconds": 1.907812,
+        "max_seconds": 2.374721,
+        "missing": 0
+      },
+      "max_pending_inbound_observed": 184,
+      "max_active_per_org_observed": 1,
+      "llm": {
+        "admitted_calls": 306,
+        "unknown_usage_calls": 0,
+        "provider_failures": 0,
+        "retries": 0,
+        "reserved_output_tokens_total": 183600,
+        "known_output_tokens_subtotal": 3060,
+        "max_calls_per_turnwork": 2,
+        "max_reserved_tokens_per_turnwork": 1200,
+        "budget_violations": 0
+      },
+      "outbound": {
+        "attempts_above_one": 0,
+        "max_attempts": 1,
+        "uncertain_count": 0
+      },
+      "cross_tenant_message_rows": 0,
+      "variant_gates": {
+        "safety_admitted_under_saturation": true,
+        "bounded_concurrency": true,
+        "saturation_observed": true
+      },
+      "variant_gate_pass": true,
+      "postgresql_process_ids": [
+        {
+          "pid": 80180,
+          "backend_pid": 28344,
+          "role": "planner-1",
+          "scenario": "saturation"
+        },
+        {
+          "pid": 91736,
+          "backend_pid": 74372,
+          "role": "planner-2",
+          "scenario": "saturation"
+        },
+        {
+          "pid": 84728,
+          "backend_pid": 88588,
+          "role": "sender",
+          "scenario": "saturation"
+        }
+      ]
+    }
+  },
+  "profile_technical_status": "FAIL"
+}

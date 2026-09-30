@@ -10,3 +10,13 @@ Caddyfile      text eol=lf
 *.conf         text eol=lf
 *.yml          text eol=lf
 *.yaml         text eol=lf
+
+# B9E evidence hashes cover exact bytes, including Windows subprocess CRCRLF.
+# Preserve receipts on checkout; raw logs are not code whitespace diffs.
+.gitattributes text eol=lf
+backend/apps/agent/tests/b9e*.py text eol=lf
+backend/apps/agent/tests/test_b9e*.py text eol=lf
+docs/evals/b9e-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evals/b9e-*.log -diff
+docs/evals/profile-beta-1-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/reporte-aceptacion-b9-profile-beta-1-2026-09-29.md text eol=lf

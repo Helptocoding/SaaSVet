@@ -1,0 +1,25 @@
+{
+  "schema_version": "b9e-artifact-verification-v1",
+  "log_files_scanned": 24,
+  "raw_prompt_or_payload_fields": 0,
+  "load_prompt_phone_or_fake_secret_matches": 0,
+  "long_numeric_candidates": 34,
+  "classified_uuid_suffixes": 33,
+  "classified_fractional_seconds": 1,
+  "unclassified_phone_candidates": 0,
+  "python_compile": "PASS",
+  "git_diff_check": "PASS",
+  "tracked_runtime_diff_against_baseline": [],
+  "scope": "Pattern scan of B9E logs and source compile, not a universal secret/privacy audit",
+  "source_snapshots": {
+    "first": {
+      "files": 261,
+      "mismatches": []
+    },
+    "recovery": {
+      "files": 262,
+      "mismatches": []
+    },
+    "additional_recovery_source": "backend/apps/agent/tests/b9e_collect.py (read-only evidence collector)"
+  }
+}

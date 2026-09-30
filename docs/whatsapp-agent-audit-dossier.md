@@ -383,3 +383,16 @@ de protocolo, cobertura y privacidad; validar forma de evidencia no acredita su 
 La opinión de piloto de §21 es histórica y no es autorización vigente frente al
 plan canónico ni frente a B0. Estado vigente: PENDING_ACTIVATION_REQUIREMENTS,
 B9 IN_PROGRESS, PROFILE-BETA-1 no evaluado, cero clínicas activadas, sin deploy.
+
+## Evidencia B9E — PROFILE-BETA-1 (2026-09-29)
+
+La aceptación acotada en PostgreSQL real confirmó varias fronteras de seguridad,
+presupuesto y durabilidad, pero **no** cumplió el p95 canónico de claim sano:
+21,726 s en base y 22,049 s con LLM bloqueado frente al máximo 10 s. Por ello
+PROFILE-BETA-1 = FAIL y B9 = IN_PROGRESS. H16/H19 mantienen cierre integral
+pendiente; H03/H04/H17 requieren además evidencia humana/privacidad real.
+H01/H18 no reciben una garantía universal de consentimiento o identidad por
+esta medición. El detalle de H01–H20 y los límites de la conclusión están en la
+[decisión B9E](reporte-aceptacion-b9-profile-beta-1-2026-09-29.md).
+El release productivo sigue vacío: B0 cerrado, B7B=False, execution flags={},
+PENDING_ACTIVATION_REQUIREMENTS, cero clínicas activadas y sin deploy.

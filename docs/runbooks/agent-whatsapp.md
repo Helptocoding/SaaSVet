@@ -772,3 +772,19 @@ satisfechos. Release productivo vacío; B0 cerrado, B7B=False, execution flags={
 PENDING_ACTIVATION_REQUIREMENTS y cero clínicas activadas. B9E conserva perfil y
 aceptación integral. [Contrato](../contrato-beta-release-b9d.md) y
 [acta](../implementacion-b9d-agente-whatsapp-2026-09-29.md).
+
+## B9E — decisión de promoción del perfil
+
+La medición de [PROFILE-BETA-1](../evals/profile-beta-1-v1.json) falló en la
+latencia de claim saludable bajo carga fija. No promover este perfil, no aumentar
+su tasa autorizada y no abrir gates. Antes de una nueva candidatura, definir un
+alcance/carga permitido distinto mediante decisión versionada o resolver, en
+trabajo separado, la capacidad/fairness demostrada por la cola. Conservar los
+recibos iniciales y ejecutar otra aceptación completa con criterios congelados
+antes de cualquier promoción.
+
+Si en una promoción futura se pierde una condición operativa, aplicar la retirada
+con pausa, drain y versión compatible descrita arriba. Preservar Message,
+TurnWork, LLMCall, ConversationOperation, AuthorizationEvidence,
+ToolExecution, efecto de dominio y outbox; clasificar envíos inciertos antes de
+reabrir. [Decisión B9E](../reporte-aceptacion-b9-profile-beta-1-2026-09-29.md).
