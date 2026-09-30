@@ -724,3 +724,51 @@ sender, fencing, datos y admissions. Timeouts de lectura no prometen deadline
 absoluto de red. Ver [contrato B9C](../contrato-concurrencia-b9c.md) y
 [evidencia](../implementacion-b9c-agente-whatsapp-2026-09-27.md).
 B0 cerrado, B7B=False, execution flags={}, PENDING_ACTIVATION_REQUIREMENTS.
+
+## B9D — Inspección, retirada y nueva aprobación
+
+`python manage.py agent_inspect_beta --organization-id ID` es una consulta
+operacional readonly para personal con acceso autorizado al host/DB. Requiere
+org existente; no crea configuración. `implementation=INSTALLED` solo informa
+presencia de software. `status=READY` significa aprobación estructural completa
+del alcance del release, sin conceder identidad, consentimiento ni ejecución.
+`approved_capabilities`, `missing`, `write_gates` y `operation_checks_required`
+explican el snapshot. `agent_enabled` describe la configuración previa y no
+responde por sí solo si una operación puede ejecutarse. No hay ACTIVE persistido.
+
+La aprobación real requiere el artefacto B9E y evidencia externa revisada del
+piloto/alcance/tasa, Inbox/cobertura, protocolo/corpus veterinario, simulacro,
+privacidad/retención aplicable, fallback, riesgo de identidad y cutover compatible.
+El operador de release verifica cada referencia, autoridad, revisión, fecha y
+correspondencia con candidato/capacidades. La fuente es el release revisado; no
+acepta FAQ, env, instrucciones del agente ni un checkbox. TEST_EVIDENCE nunca
+satisface el entorno productivo. No introducir datos personales de responsables
+en el manifest: usar identificadores del registro operacional autorizado.
+
+Procedimiento para retirar/reducir alcance por pérdida de requisito:
+
+1. Contener nuevos WRITE con los switches existentes y pausar admisión/planners
+   del alcance afectado. Registrar el motivo y la evidencia operacional.
+2. Identificar trabajos/HTTP en vuelo; drenar o clasificar incertidumbre con B3/B4/B8.
+   Conservar sender, ledger, mensajes, fences y admissions B9B; no borrar ni reponer.
+3. Retirar org/capability de la lista revisada y cortar todos los writers a una
+   versión compatible que incluya este guard. No hot reload ni procesos viejos
+   coexistiendo con nuevas aprobaciones. Revertir a código que omita B9D no es
+   rollback compatible; mantener contención si no se puede cumplir el corte.
+4. Inspeccionar colas/leases y comprobar el alcance denegado antes de reabrir
+   únicamente el alcance conservado. La observación READY anterior no autoriza.
+
+Una reaprobación exige nuevos registros de aprobación humana con fecha nueva,
+evidencia aún válida, gates pertinentes y nuevo corte. B8A rechaza operaciones
+creadas antes de `approved_at`, aunque estén AUTHORIZED; preparar nueva operación
+y consentimiento mediante las rutas existentes. Efectos ya committed siguen
+reconciliables, sin compensación ni replay del adapter. Cambiar solo `enabled`
+no retira/reaprueba el manifest ni cancela HTTP ya admitido. La ausencia sobrevenida
+de un responsable externo no es detectable automáticamente: exige actuación del
+operador y cobertura acordada. No se introduce rotación/on-call ni nueva identidad.
+
+B9D no cambia secretos, despliega, selecciona pilotos ni declara requisitos reales
+satisfechos. Release productivo vacío; B0 cerrado, B7B=False, execution flags={},
+PENDING_ACTIVATION_REQUIREMENTS y cero clínicas activadas. B9E conserva perfil y
+aceptación integral. [Contrato](../contrato-beta-release-b9d.md) y
+[acta](../implementacion-b9d-agente-whatsapp-2026-09-29.md).

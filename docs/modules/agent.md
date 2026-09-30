@@ -1501,3 +1501,22 @@ Ver [contrato](../contrato-concurrencia-b9c.md),
 [ADR](../decisions/2026-09-27-b9c-turnwork-concurrency.md) y
 [acta](../implementacion-b9c-agente-whatsapp-2026-09-27.md).
 B9E conserva aceptación integral; no hay nuevas capacidades activadas.
+## B9D — Readiness por release (2026-09-29)
+
+- `beta_release.py`: valores inmutables Evidence/OrganizationApproval/Release,
+  fuente productiva vacía y derivación READY/PENDING_ACTIVATION_REQUIREMENTS.
+- `operation_execution.py`: consume el gate después de las autoridades
+  existentes y antes de nuevos efectos. No altera conciliación de resultados.
+- `management/commands/agent_inspect_beta.py`: consulta de organización explícita,
+  sin crear AgentSettings ni cambiar approvals.
+- `tests/test_b9d_release.py`: requisitos/procedencia, scopes, cinco adapters,
+  retirada, nueva aprobación, operación antigua, rollback SQL e inspector.
+- `tests/b9d_support.py`: solo PostgreSQL test_ y TEST_EVIDENCE; no es evidencia
+  operacional. Los harness históricos la abren explícitamente junto a sus gates.
+
+No se agregan modelos ORM, migraciones, API administrativa ni flags. Una
+capability del LLM no puede aprobar el release. La edición autorizada ocurre en
+el proceso de release con revisión humana y referencias externas. Los permisos
+de Inbox/AgentSettings no conceden ese acceso al código. Mantener las referencias
+privadas fuera de logs/prompts. [Contrato](../contrato-beta-release-b9d.md),
+[acta](../implementacion-b9d-agente-whatsapp-2026-09-29.md).

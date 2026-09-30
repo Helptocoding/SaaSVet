@@ -366,3 +366,20 @@ cancelación de una llamada externa ya admitida. Evidencia, fallos preliminares 
 regresión exacta: [acta B9C](implementacion-b9c-agente-whatsapp-2026-09-27.md) y
 [recibo](evals/b9c-acceptance-results.json).
 B9 canónica IN_PROGRESS; B0 cerrado y PENDING_ACTIVATION_REQUIREMENTS.
+
+## Evidencia parcial H16/H19 — B9D (2026-09-29)
+
+R13 incorpora lista de release por org/capability, evidencia con procedencia,
+derivación de readiness, gate en B8A e inspector readonly. El release está vacío;
+no existen aprobaciones operativas reales. No nueva tabla/API de activación,
+workflow de compliance, migration ni activation_revision. La retirada y nueva
+aprobación requieren corte compatible con drain; no se promete revocación en
+caliente entre versiones. [Acta y aceptación](implementacion-b9d-agente-whatsapp-2026-09-29.md),
+[contrato](contrato-beta-release-b9d.md) y [hallazgos](hallazgos-b9d-2026-09-29.md).
+
+H16/H19 no se cierran integralmente. H01/H18 conservan sus límites de
+consentimiento/permiso e identidad débil. H03/H04/H17 mantienen los requisitos
+de protocolo, cobertura y privacidad; validar forma de evidencia no acredita su contenido.
+La opinión de piloto de §21 es histórica y no es autorización vigente frente al
+plan canónico ni frente a B0. Estado vigente: PENDING_ACTIVATION_REQUIREMENTS,
+B9 IN_PROGRESS, PROFILE-BETA-1 no evaluado, cero clínicas activadas, sin deploy.

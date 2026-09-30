@@ -1,0 +1,525 @@
+{
+  "schema_version": "b9d-beta-gates-corpus-v1",
+  "baseline": "4f6d199dc4f8b38e5d48582f9ee289bf8dcfdb17",
+  "evidence_environment": "TEST_EVIDENCE",
+  "profile_beta_1": "NOT_YET_EVALUATED",
+  "method": "Deterministic component assertions with real PostgreSQL/domain adapters; no real people/provider communications. Existing integration/process regressions compose consent, fences, budget and capacity.",
+  "metrics": {
+    "unauthorized_release_approvals": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-01",
+        "BETA-02",
+        "BETA-08",
+        "BETA-10",
+        "BETA-23",
+        "BETA-30"
+      ]
+    },
+    "writes_while_not_ready": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-01",
+        "BETA-06",
+        "BETA-19",
+        "BETA-20"
+      ]
+    },
+    "cross_tenant_approvals": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-23"
+      ]
+    },
+    "requirements_bypassed": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-02",
+        "BETA-03",
+        "BETA-04",
+        "BETA-05",
+        "BETA-06",
+        "BETA-08",
+        "BETA-31"
+      ]
+    },
+    "legacy_orgs_auto_enabled": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-01",
+        "BETA-27",
+        "BETA-30"
+      ]
+    },
+    "agent_self_certifications": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-25"
+      ]
+    },
+    "old_operations_revived": {
+      "unit": "critical violations asserted by referenced cases",
+      "expected": 0,
+      "cases": [
+        "BETA-21",
+        "BETA-22"
+      ]
+    }
+  },
+  "omitted_metrics": {
+    "writes_while_inactive": "No separate ACTIVE state; BETA-01/08/10/11 cover release and existing gates",
+    "cross_tenant_activations": "Named cross_tenant_approvals to avoid inventing ACTIVE"
+  },
+  "cases": [
+    {
+      "id": "BETA-01",
+      "scenario": "Legacy org with enabled/FAQ/general configuration",
+      "expected": "No release approval or new domain effect",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaInspectorTests.test_readonly_legacy_defaults_and_no_migration_activation",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-02",
+      "scenario": "Pilot missing or merely selected",
+      "expected": "No READY approval",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_pilot_scope_and_rate",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_pilot_selection_alone_does_not_approve_autonomy"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-03",
+      "scenario": "Inbox owner/coverage evidence missing",
+      "expected": "PENDING_ACTIVATION_REQUIREMENTS",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_inbox_drill",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_inbox_owner_and_coverage"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-04",
+      "scenario": "Veterinary protocol/corpus review missing",
+      "expected": "PENDING_ACTIVATION_REQUIREMENTS",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_veterinary_protocol_and_corpus"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-05",
+      "scenario": "Applicable privacy/retention review missing",
+      "expected": "PENDING_ACTIVATION_REQUIREMENTS",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_privacy_policy_and_applicable_retention"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-06",
+      "scenario": "Validated fallback evidence missing",
+      "expected": "No READY or WRITE effect",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_validated_fallback"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-07",
+      "scenario": "Complete synthetic operational and technical records",
+      "expected": "READY only under explicit TEST_EVIDENCE policy",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_complete_synthetic_evidence_is_explicitly_test_only",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_test_evidence_never_certifies_real_operational_readiness"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-08",
+      "scenario": "Invalid/missing/duplicate/failed/skipped evidence or candidate",
+      "expected": "No approved capabilities",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_duplicate_requirement_and_unknown_requirement_are_closed",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_duplicate_tenant_and_invalid_candidate_are_closed",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_provenance_missing_future_failed_or_skipped_is_closed"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-09",
+      "scenario": "Inactive",
+      "expected": "No separate ACTIVE state",
+      "test_ids": [],
+      "adaptation": "NOT_APPLICABLE: release approval plus existing runtime gates; absence tested by BETA-01/02/08"
+    },
+    {
+      "id": "BETA-10",
+      "scenario": "Explicit org/capability approval",
+      "expected": "Only exact org/capability can reach existing WRITE adapter with all other gates open",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_explicit_lists_deny_wildcards_unknown_control_and_composite",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_org_cannot_expand_release_or_omit_capability_scope"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-11",
+      "scenario": "B0 closed despite release approval",
+      "expected": "No WRITE",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_b0_still_precedes_beta_approval",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_b0_still_precedes_beta_approval",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_b0_still_precedes_beta_approval",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_b0_still_precedes_beta_approval",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_b0_still_precedes_beta_approval"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-12",
+      "scenario": "B7 authorization invalid",
+      "expected": "Pending/rejected/expired/incomplete/digest-mismatched consent never executes",
+      "test_ids": [
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_auth_01_pending_never_executes",
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_auth_02_rejected",
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_auth_05_incomplete_evidence",
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_auth_06_digest_mismatch",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_auth_01_pending_never_executes",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_auth_02_rejected",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_auth_05_incomplete_evidence",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_auth_06_digest_mismatch"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-13",
+      "scenario": "B8 invalid precondition",
+      "expected": "No effect and definitive failure cannot be erased by retry",
+      "test_ids": [
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_blocked_precondition_survives_intervening_permission_denial",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_definitive_precondition_failure_cannot_be_retried"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-14",
+      "scenario": "Safety handoff",
+      "expected": "Existing human precedence preserved",
+      "test_ids": [
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_rev_07_safety_handoff",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_rev_07_safety_handoff"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-15",
+      "scenario": "Takeover",
+      "expected": "Existing epoch/ownership fences prevent WRITE and late publication",
+      "test_ids": [
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_rev_06_takeover",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_11_takeover_during_llm_fences_publication",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_takeover_after_authorizable_proposal_blocks_write",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_rev_06_takeover"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-16",
+      "scenario": "Permission revoked",
+      "expected": "Existing actor permission prevents effect",
+      "test_ids": [
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_permission_revocation_is_real_contact_state",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_rev_04_permission_revoked"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-17",
+      "scenario": "Binding revision stale",
+      "expected": "Existing B6/B8 guard rejects",
+      "test_ids": [
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_rev_01_binding_revision",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_rev_01_binding_revision"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-18",
+      "scenario": "Identity revision stale",
+      "expected": "Existing B7/B8 guard rejects",
+      "test_ids": [
+        "apps.agent.tests.test_b8b_create.B8BCreateTests.test_rev_02_identity_revision",
+        "apps.agent.tests.test_operation_execution.OperationExecutionTests.test_rev_02_identity_revision"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-19",
+      "scenario": "Requirement withdrawn in replacement release",
+      "expected": "Derived readiness closes; no budget/witness reset",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_requirement_loss_blocks_without_altering_budget_or_witness",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_requirement_loss_blocks_without_altering_budget_or_witness"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-20",
+      "scenario": "Approval withdrawn",
+      "expected": "Old READY snapshot does not authorize; committed effect remains reconcilable",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_withdrawal_keeps_committed_effect_reconcilable"
+      ],
+      "adaptation": "Controlled immutable release cutover, not concurrent mutable DB approval"
+    },
+    {
+      "id": "BETA-21",
+      "scenario": "Reapproval with new date",
+      "expected": "New human approval required; old operation cannot execute",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_new_approval_does_not_revive_previously_authorized_operation",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_new_approval_does_not_revive_previously_authorized_operation",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_new_approval_does_not_revive_previously_authorized_operation",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_new_approval_does_not_revive_previously_authorized_operation",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_new_approval_does_not_revive_previously_authorized_operation",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_reapproval_date_requires_matching_human_approval_evidence"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-22",
+      "scenario": "Old operation",
+      "expected": "Predating operation blocked, committed result reconciled without second effect",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_withdrawal_keeps_committed_effect_reconcilable",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_reapproval_rejects_old_operation_without_new_revision"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-23",
+      "scenario": "Cross-tenant release/evidence",
+      "expected": "Approval cannot be borrowed from another org",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_other_tenant_and_read_approval_cannot_enable_write",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_other_tenant_and_read_approval_cannot_enable_write",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_other_tenant_and_read_approval_cannot_enable_write",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_other_tenant_and_read_approval_cannot_enable_write",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_other_tenant_and_read_approval_cannot_enable_write",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_other_organization_cannot_borrow_approval"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-24",
+      "scenario": "Unauthorized administrative operator",
+      "expected": "No mutating administrative surface added",
+      "test_ids": [],
+      "adaptation": "NOT_APPLICABLE to new RBAC: only host-authorized readonly command; existing users/Inbox RBAC regression remains required"
+    },
+    {
+      "id": "BETA-25",
+      "scenario": "Agent self-certification",
+      "expected": "Unknown tools and immutable release; no readiness writer",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaInspectorTests.test_agent_tool_arguments_cannot_self_certify",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_immutable_release_and_no_agent_self_certification_capability"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-26",
+      "scenario": "Readonly inspection",
+      "expected": "No settings creation/mutation; unknown org rejected; no private references emitted",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaInspectorTests.test_no_settings_created_and_unknown_org_rejected",
+        "apps.agent.tests.test_b9d_release.BetaInspectorTests.test_readonly_legacy_defaults_and_no_migration_activation",
+        "apps.agent.tests.test_b9d_release.BetaInspectorTests.test_test_evidence_visible_and_no_pii_or_documents_in_snapshot"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-27",
+      "scenario": "Migration",
+      "expected": "No B9D migration/schema/backfill; legacy remains unapproved",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaInspectorTests.test_readonly_legacy_defaults_and_no_migration_activation"
+      ],
+      "adaptation": "No new persistence required; migrate/checks receipt verifies existing schema with empty release"
+    },
+    {
+      "id": "BETA-28",
+      "scenario": "Five WRITE adapters and SQL failure injection",
+      "expected": "Actual adapters commit at most once; outer SQL failure rolls local effect and evidence back",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_sql_rollback_after_effect_preserves_existing_atomicity",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaCancelTests.test_sql_rollback_after_effect_preserves_existing_atomicity",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaCreateTests.test_sql_rollback_after_effect_preserves_existing_atomicity",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_sql_rollback_after_effect_preserves_existing_atomicity",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_approved_exact_capability_reaches_real_adapter_once",
+        "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_sql_rollback_after_effect_preserves_existing_atomicity"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-29",
+      "scenario": "B9B/B9C preservation",
+      "expected": "Exact 34+12 provider and 27 IDs; no reset/capacity bypass",
+      "test_ids": [
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_accounting_does_not_duplicate_conversation_content",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_01_02_03_available_last_slot_and_exhausted",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_04_09_admission_survives_later_rollback",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_05_stale_token_epoch_lease_tenant_and_work",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_06_duplicate_admission_is_observation_not_new_dispatch",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_07_12_timeout_retry_counted_without_refund",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_08_restart_does_not_restore_slot",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_10_13_success_usage_and_no_locks_at_wire",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_11_provider_error_preserves_admission",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_14_missing_and_malformed_usage_are_unknown",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_15_exhausted_produces_existing_deterministic_fallback",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_16_17_tenant_and_turn_isolation_inspector",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_18_e2e_read_has_accounting_before_sender",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_19_write_preserves_guard_with_accounting",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_20_gates_closed",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_cost_01_authorizer_verifier_planner_share_budget",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_cost_metrics_do_not_coalesce_unknown_or_leak_tenants",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_duplicate_record_does_not_overwrite_observed_usage",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_fi_01_10_sql_failure_before_commit_does_not_consume",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_fi_10_sql_failure_after_provider_retains_unknown",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_input_limit_rejects_before_provider_and_admission",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_invalid_admission_and_retry_scope_do_not_consume",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_legacy_migration_keeps_counters_unknown_and_new_defaults_zero",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_malformed_tool_keeps_provider_usage",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_nested_application_transaction_is_rejected_before_dispatch",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_provider_explicit_zero_is_known_zero",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_same_tenant_new_work_has_independent_budget",
+        "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_token_limit_unknown_legacy_and_constraints",
+        "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_01_process_death_before_admission_commit_has_no_consumption",
+        "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_02_04_process_death_after_commit_restart_has_no_free_slot",
+        "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once",
+        "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock",
+        "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_08_stale_witness_process_cannot_admit",
+        "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock",
+        "apps.agent.tests.test_llm.EstimateCostTests.test_cost_from_env_pricing",
+        "apps.agent.tests.test_llm.EstimateCostTests.test_tiny_cost_quantized_to_6_decimals",
+        "apps.agent.tests.test_llm.EstimateCostTests.test_zero_without_pricing",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_429_and_5xx_are_retryable",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_4xx_is_not_retryable",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_malformed_tool_args_is_non_retryable",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_network_error_is_retryable",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_specialized_roles_use_configured_model_or_router_fallback",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_text_response_and_request_shape",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_tool_call_response",
+        "apps.agent.tests.test_llm.OpenAICompatibleClientTests.test_unconfigured_fails_closed_without_network",
+        "apps.agent.tests.test_llm.StubLLMClientTests.test_scripted_results_and_call_recording",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_budget_exhausted_releases_turn_without_provider",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_closed_production_and_fixed_process_topology",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_duplicate_claim_preserves_token_attempts_and_membership",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_e2e_write_through_concurrency_consent_and_guard",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_eligibility_clock_cannot_expire_live_capacity",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_expiry_old_worker_cannot_budget_publish_or_release_other_claim",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_inline_safety_sql_failure_cannot_commit_second_processing_work",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_missing_settings_still_has_finite_release_limit",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_no_time_period_quota_immediate_next_work_after_completion",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_observability_readonly_tenant_scoped_and_closed_events",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_retry_releases_capacity_and_reacquisition_obeys_other_work",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_saturation_durable_http_later_e2e_without_budget_consumption",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_01_noisy_backlog_cannot_hide_healthy_org_before_batch_limit",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_02_safety_http_and_sender_progress_while_org_saturated",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_sql_failure_acquisition_or_recovery_rolls_back_capacity",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_takeover_without_quota_revokes_epoch_and_allows_other_conversation",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_01_kill_before_claim_or_before_commit_leaves_no_capacity",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_02_08_kill_after_claim_restart_preserves_capacity_until_expiry",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_07_three_processes_compete_last_slot_distinct_conversations",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_live_takeover_fences_old_worker_without_waiting_for_org_capacity",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_org_lock_defers_claim_but_does_not_block_inbound_fk",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender",
+        "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-30",
+      "scenario": "Production defaults",
+      "expected": "Empty real release, B0 closed, B7B=False, execution flags={}",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_production_default_is_empty_and_closed",
+        "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_closed_production_and_fixed_process_topology"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-31",
+      "scenario": "Additional canonical gates",
+      "expected": "Identity residual risk, compatible rollback, human approval and technical CI/eval/profile all required",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_candidate_eval",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_compatible_cutover_and_rollback",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_critical_ci",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_human_approval",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_identity_residual_risk",
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_missing_profile_beta_1"
+      ],
+      "adaptation": null
+    },
+    {
+      "id": "BETA-32",
+      "scenario": "READ public/personal and CONTROL",
+      "expected": "Existing behavior preserved; READ-only approval never grants WRITE",
+      "test_ids": [
+        "apps.agent.tests.test_b9d_release.ReleaseEvidenceTests.test_read_only_release_does_not_approve_write",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct",
+        "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_02_personal_read_uses_authenticated_domain_http"
+      ],
+      "adaptation": "READ promotion remains an operational release gate; no indiscriminate runtime READ shutdown or new per-READ human review mechanism"
+    }
+  ]
+}

@@ -1145,3 +1145,25 @@ durable dos ni permiso para autoscaling; no se ejecutó deploy.
 Contrato, lifecycle, locks, timeouts y riesgos: [B9C](contrato-concurrencia-b9c.md).
 Evidencia: [acta](implementacion-b9c-agente-whatsapp-2026-09-27.md). B9E aún debe
 medir PROFILE-BETA-1; B9 permanece IN_PROGRESS y producción cerrada.
+## B9D — Aprobación del alcance de release (2026-09-29)
+
+`beta_release.py` mantiene una única lista de release inmutable, inicialmente
+vacía, con grants explícitos por organización y capability. Los registros
+tipados de evidencia exigen org, autoridad, fecha, referencia, revisión y PASS
+sin fallos/omisiones. Se valida el alcance/procedencia declarada; el contenido
+clínico/legal y los artefactos técnicos los verifica la autoridad humana.
+
+`operation_execution._gate` consume esa aprobación dentro de la transacción
+B8A y antes de los cinco efectos nuevos. No hay endpoint escritor ni una nueva
+frontera WRITE. Los ledgers committed conservan reconciliación. READ/CONTROL
+siguen bajo su política actual; la lista también declara el alcance
+READ que una promoción operacional puede aprobar. No se crea un modo autónomo
+nuevo ni se abre tráfico por completar B9D.
+
+Retiro/reaprobación usa pausa, drain y corte compatible de release; no hot reload
+ni coexistencia de writers con manifiestos distintos. La fecha de nueva aprobación
+impide ejecutar operaciones creadas antes de ella. Se preservan sender, epochs,
+binding/identity revisions, consentimiento, cupo B9C y contabilidad B9B.
+Sin tablas/migraciones/flags nuevos. `agent_inspect_beta --organization-id ID`
+expone solo un snapshot readonly. Ver [contrato](contrato-beta-release-b9d.md)
+y [acta](implementacion-b9d-agente-whatsapp-2026-09-29.md).

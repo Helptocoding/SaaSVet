@@ -392,3 +392,25 @@ sin responsable ni thresholds de rendimiento. El corpus registra snapshots en
 claim/wire y journals PID/backend independientes; sus métricas de invariantes
 no sustituyen colas/p95/muestras de PROFILE-BETA-1. Ver
 [acta B9C](../implementacion-b9c-agente-whatsapp-2026-09-27.md).
+
+## B9D — Motivos del gate e inspección
+
+La frontera B8A reutiliza `execution_gate_closed` con vocabulario finito:
+`beta_requirements_pending`, `beta_capability_not_approved` y
+`beta_operation_predates_approval`. El resultado de ejecución conserva el motivo;
+no se agregan labels de tenant, persona, teléfono, operación o documento a las
+series. Los eventos de cierre existentes no equivalen a audit de aprobación.
+
+El inspector `agent_inspect_beta --organization-id ID` muestra requisitos faltantes,
+gates y capacidades aprobadas sin nombres de clínica, documentos ni referencias
+de evidencia. Es un snapshot readonly, no un permiso reusable ni una medición
+histórica. Separar INSTALLED, READY y efectividad de gates por operación. Un
+snapshot TEST_EVIDENCE solo pertenece a pruebas aisladas; no acredita operación.
+
+Acción del operador técnico: investigar el registro de release y la evidencia
+externa autorizada; si falta cobertura/evidencia, retirar/reducir alcance con
+pausa/drain/corte del runbook. No rellenar approvals desde el runtime ni borrar
+historia. La auditoría durable de cambios está en commits/revisión de release y
+registros externos; los logs pueden faltar por crash y no sustituyen esa autoridad.
+No alertas o dashboard nuevos sin responsable. El corpus B9D mide invariantes de
+componente; no p95, carga real ni aprobación PROFILE-BETA-1.

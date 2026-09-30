@@ -113,3 +113,24 @@ son historia de sus respectivos hitos. B9D conserva R13; B9E conserva R01/R06–
 R15 y PROFILE-BETA-1. Las pruebas SCALE de componente no aprueban el perfil
 integral ni cierran H16/H19. Siguiente componente pendiente: B9D, sin iniciarlo
 en esta entrega. B0 cerrado; PENDING_ACTIVATION_REQUIREMENTS; cero activaciones.
+
+## Seguimiento B9D — 2026-09-29
+
+B9D **COMPLETED técnico**: 2.384/2.384 IDs únicos, cero pendientes, corpus
+crítico y checks verdes. Siguiente hito: B9E, sin iniciarlo en esta entrega.
+
+R13 se implementa como aprobación inmutable por release/org/capability y gate
+adicional en la frontera B8A. No se añaden tabla de cohorts, activation_revision,
+workflow ni estado ACTIVE. READY se deriva de evidencia con procedencia; la lista
+productiva está vacía. El [contrato](contrato-beta-release-b9d.md), la
+[extracción literal](evals/b9d-requirements.json) y el
+[ADR](decisions/2026-09-28-b9d-beta-release-gates.md) separan software, aprobación
+operativa y ejecución efectiva. El [acta](implementacion-b9d-agente-whatsapp-2026-09-29.md)
+registra la aceptación y el baseline para B9E.
+
+B9 permanece IN_PROGRESS. B9E conserva R01/R06–R10/R15, PROFILE-BETA-1,
+CI/eval del candidato y aceptación integral EVAL/COST/SCALE. La validación de
+estructura de esos recibos no los fabrica ni ejecuta. P-A/P-B, revisión
+veterinaria, piloto y cobertura/fallback humanos conservan autoridad externa.
+B0 cerrado, B7B=False, execution flags={}, PENDING_ACTIVATION_REQUIREMENTS,
+cero clínicas activadas, sin deploy.
