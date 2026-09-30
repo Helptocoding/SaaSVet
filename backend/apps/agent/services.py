@@ -36,8 +36,8 @@ logger = logging.getLogger('agent.events')
 # una persona escribiendo. "Hola" / "quiero una cita" / "para mañana" salían
 # como tres turnos y tres respuestas.
 #
-# Ahora cada entrante EMPUJA el vencimiento de todos los pendientes de su
-# conversación: el turno arranca cuando el cliente lleva QUIET_WINDOW callado.
+# Antes de READY cada entrante empuja el deadline común. Enmienda B3/C4/W1
+# v1: una espera ya satisfecha no se reinicia antes del claim.
 # Sin timers ni jobs — una columna y un UPDATE. MAX_WAIT evita que alguien que
 # escribe sin parar se quede sin respuesta.
 QUIET_WINDOW = timedelta(seconds=8)
@@ -354,7 +354,6 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
     contact = resolve_contact_identity(channel_account, wa_id, profile_name)
     conversation = get_or_create_open_conversation(contact, channel_account)
 
-    now = timezone.now()
     message = Message(
         organization=org,
         channel_account=channel_account,
@@ -370,7 +369,6 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
             Message.STATUS_DISCARDED if contact.is_blocked
             else Message.STATUS_PENDING
         ),
-        available_at=now + QUIET_WINDOW,
     )
     try:
         while True:
@@ -378,7 +376,11 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
                 conversation = Conversation.objects.select_for_update().get(
                     pk=conversation.pk, organization_id=org.pk)
                 if conversation.state != Conversation.STATE_CLOSED:
+                    # Decide READY with fresh DB time after waiting for the
+                    # Conversation mutex. B7's pre-lock receipt stays above.
+                    now = db_now()
                     message.conversation = conversation
+                    message.available_at = now + QUIET_WINDOW
                     message.save()
                     conversation.last_inbound_at = now
                     conversation.last_activity_at = now
@@ -407,13 +409,12 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
 
 
 def _extend_quiet_window(conversation, now):
-    """Reinicia la ventana de silencio de TODOS los pendientes del hilo.
+    """B3/C4/W1 v1: rolling 8s/cap 25s until READY, then latch eligibility.
 
-    Es el debounce: mientras el cliente siga escribiendo, el turno espera.
-    El tope duro (`MAX_WAIT` desde el mensaje más viejo) garantiza respuesta
-    aunque no pare de escribir.
+    Caller holds Conversation and supplies fresh DB time. The newly persisted
+    inbound joins the same expired deadline; membership still freezes in claim.
     """
-    from django.db.models import Min
+    from django.db.models import Min, Q
     pending = Message.objects.for_organization(
         conversation.organization,
     ).filter(
@@ -421,10 +422,18 @@ def _extend_quiet_window(conversation, now):
         direction=Message.DIRECTION_IN,
         status=Message.STATUS_PENDING, turn_work__isnull=True,
     ).exclude(semantic_type=Message.SEMANTIC_SAFETY_SIGNAL)
-    oldest = pending.aggregate(first=Min('created_at'))['first'] or now
-    target = min(now + QUIET_WINDOW, oldest + MAX_WAIT)
-    if target < now:
+    deadlines = pending.aggregate(
+        first=Min('created_at'),
+        ready=Min('available_at', filter=Q(available_at__lte=now)),
+        legacy_ready=Min('pk', filter=Q(available_at__isnull=True)),
+    )
+    if deadlines['ready'] is not None:
+        target = deadlines['ready']
+    elif deadlines['legacy_ready'] is not None:
         target = now
+    else:
+        oldest = deadlines['first'] or now
+        target = max(now, min(now + QUIET_WINDOW, oldest + MAX_WAIT))
     pending.update(available_at=target)
 
 
