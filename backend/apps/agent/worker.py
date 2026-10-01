@@ -48,8 +48,24 @@ def _pending_conversation_candidates(now=None, excluded=()):
     incoming = Message.objects.filter(direction='in', status='pending',
         turn_work__isnull=True).filter(Q(available_at__isnull=True) |
         Q(available_at__lte=now or Now())).values('conversation_id')
+    pending_safety = Message.objects.filter(direction='in', status='pending',
+        semantic_type=Message.SEMANTIC_SAFETY_SIGNAL).values('conversation_id')
     latest = TurnWork.objects.filter(organization_id=OuterRef('organization_id'),
         claimed_at__isnull=False).order_by('-claimed_at').values('claimed_at')[:1]
+    # E4: yield one existing release poll before starting another turn for a
+    # recently served org if an idle, less recently served org is about to be
+    # eligible. This readonly observation reserves neither capacity nor budget;
+    # the B3/B9C claim still revalidates every selected candidate.
+    clock = now or Now()
+    upcoming = (Message.objects.filter(direction='in', status='pending', turn_work__isnull=True,
+        available_at__gt=clock, available_at__lte=clock + timedelta(seconds=1))
+        .exclude(organization_id=OuterRef('organization_id'))
+        .exclude(semantic_type=Message.SEMANTIC_SAFETY_SIGNAL)
+        .alias(upcoming_busy=Exists(durable.active_org_work(OuterRef('organization_id'))),
+               upcoming_last_claim=Subquery(latest))
+        .filter(upcoming_busy=False)
+        .filter(Q(upcoming_last_claim__isnull=True) |
+                Q(upcoming_last_claim__lt=OuterRef('org_last_claim'))))
     # Exclude busy orgs before ranking/limit. Keep one conversation per org
     # so a competing planner's miss can fall through to another org. Prefer
     # least recently claimed orgs using existing durable history, not a cursor.
@@ -59,6 +75,8 @@ def _pending_conversation_candidates(now=None, excluded=()):
         .annotate(org_last_claim=Subquery(latest), org_candidate=Window(RowNumber(),
             partition_by=[F('organization_id')],
             order_by=[F('last_activity_at').asc(), F('pk').asc()]))
+        .alias(less_served_soon=Exists(upcoming))
+        .filter(Q(pk__in=pending_safety) | Q(org_last_claim__isnull=True) | Q(less_served_soon=False))
         .filter(org_candidate=1)
         .order_by(F('org_last_claim').asc(nulls_first=True), 'last_activity_at', 'pk')
         .values_list('pk', flat=True)[:3])
