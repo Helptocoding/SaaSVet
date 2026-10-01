@@ -1,0 +1,25 @@
+{
+  "status": "ROOT_CAUSE_CONFIRMED",
+  "baseline": "f051c27002986193772ced0fb1e00e19822d26ef",
+  "runtime_modified_at_gate": false,
+  "cause": "Advisory recency consistently chooses org 0 first; other planner starts noisy shortly before healthy readiness, then service plus external one-second pause delays org 1. Existing misses already fall through.",
+  "selected_mechanism": "One-poll bounded yield to an idle less-recently-claimed org with known ordinary inbound deadline within the existing one-second poll.",
+  "evidence": [
+    "baseline-base-v2.analysis.json",
+    "baseline-blocked.analysis.json",
+    "ablation-no-noisy.analysis.json",
+    "ablation-no-pause.analysis.json",
+    "ablation-batch-three.analysis.json",
+    "ablation-fast-provider.analysis.json",
+    "candidate-bounded-yield.analysis.json"
+  ],
+  "candidate_control": {
+    "measurement_seconds": 120,
+    "global_p95": 8.905804,
+    "org1_eligible_claim_p95": 0.964356,
+    "near_ready_noisy_starts": 0,
+    "acceptance": false
+  },
+  "authority": "E4 canonical coordination by measured candidate selection; B3/B9C claim unchanged; no new persistence; frozen PROFILE runner unchanged.",
+  "single_runtime_change": true
+}

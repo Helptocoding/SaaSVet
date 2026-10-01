@@ -1,0 +1,6176 @@
+{
+  "scenario": "blocked_llm",
+  "window_utc": [
+    "2026-10-01T03:01:15.802272+00:00",
+    "2026-10-01T03:06:15.802272+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 83700,
+      "backend_pid": 56436,
+      "role": "planner-1",
+      "scenario": "blocked_llm"
+    },
+    {
+      "pid": 48644,
+      "backend_pid": 86972,
+      "role": "planner-2",
+      "scenario": "blocked_llm"
+    },
+    {
+      "pid": 91724,
+      "backend_pid": 88996,
+      "role": "sender",
+      "scenario": "blocked_llm"
+    }
+  ],
+  "inbound_count": 360,
+  "outbound_count": 121,
+  "healthy_claim": {
+    "count": 60,
+    "p95_seconds": 9.798881,
+    "max_seconds": 11.996844,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 20,
+    "p95_seconds": 3.97304,
+    "max_seconds": 3.97304
+  },
+  "outbox_dispatch": {
+    "count": 121,
+    "p95_seconds": 2.65429,
+    "max_seconds": 3.97304,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 1,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 6,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 13,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 18,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 20,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 23,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 25,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 24,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 30,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 27,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 35,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 32,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 40,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 39,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 45,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 42,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 50,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 47,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 48,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 60,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 50,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 65,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 54,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 70,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 59,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 75,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 62,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 80,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 67,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 85,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 70,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 90,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 72,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        },
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 95,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 75,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 100,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 80,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 105,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 83,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 110,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 89,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 115,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 91,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 120,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 93,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 125,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 96,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 130,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 101,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 135,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 104,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 140,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 110,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 145,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 112,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 150,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 114,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 155,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 118,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 160,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 123,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 165,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 126,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 170,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 131,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 175,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 134,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 180,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 136,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 185,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 140,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 190,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 145,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 195,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 149,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 200,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 154,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 205,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 156,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 210,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 158,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 215,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 162,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 220,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 167,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 225,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 171,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 230,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 176,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 235,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 177,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 240,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 179,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 245,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 183,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 250,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 188,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 255,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 191,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 260,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 196,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 265,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 199,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 270,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 201,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 275,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 205,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 280,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 210,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 285,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 214,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 290,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 218,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 295,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 221,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 300,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 223,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 305,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 227,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 310,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 232,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 315,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 236,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 320,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 241,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 325,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 243,
+      "pending_outbound": 1,
+      "active_work": []
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      33,
+      33,
+      330
+    ],
+    "safety": 22,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "COMPLETED",
+      "count": 155
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "pending",
+      "count": 1
+    },
+    {
+      "status": "sent",
+      "count": 135
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 243,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": true,
+    "safety_dispatch_p95_le_5": true
+  },
+  "technical_pass": true,
+  "monotonic_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "organizations": [
+      {
+        "organization": 0,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 20,
+          "p50_seconds": 7.919503,
+          "p95_seconds": 7.934014,
+          "max_seconds": 7.934014
+        },
+        "eligible_to_claim": {
+          "count": 20,
+          "p50_seconds": 0.688355,
+          "p95_seconds": 1.566856,
+          "max_seconds": 1.566856
+        },
+        "persisted_to_claim": {
+          "count": 20,
+          "p50_seconds": 8.620301,
+          "p95_seconds": 9.496238,
+          "max_seconds": 9.496238
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 30,
+        "calls": 40,
+        "calls_per_work": 1.3333333333333333,
+        "calls_per_dialogue": 3.6363636363636362,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 10
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 20
+          }
+        ],
+        "deferrals": 10
+      },
+      {
+        "organization": 1,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 20,
+          "p50_seconds": 7.921937,
+          "p95_seconds": 7.942308,
+          "max_seconds": 7.942308
+        },
+        "eligible_to_claim": {
+          "count": 20,
+          "p50_seconds": 1.3686,
+          "p95_seconds": 4.074907,
+          "max_seconds": 4.074907
+        },
+        "persisted_to_claim": {
+          "count": 20,
+          "p50_seconds": 8.938758,
+          "p95_seconds": 11.996844,
+          "max_seconds": 11.996844
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 2,
+        "works": 28,
+        "calls": 36,
+        "calls_per_work": 1.2857142857142858,
+        "calls_per_dialogue": 3.272727272727273,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 10
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 18
+          }
+        ],
+        "deferrals": 8
+      },
+      {
+        "organization": 2,
+        "healthy": false,
+        "persisted_to_eligible": {
+          "count": 300,
+          "p50_seconds": 7.917845,
+          "p95_seconds": 7.936537,
+          "max_seconds": 7.94571
+        },
+        "eligible_to_claim": {
+          "count": 62,
+          "p50_seconds": 167.115262,
+          "p95_seconds": 242.569178,
+          "max_seconds": 247.665876
+        },
+        "persisted_to_claim": {
+          "count": 62,
+          "p50_seconds": 175.02965,
+          "p95_seconds": 250.494346,
+          "max_seconds": 255.552532
+        },
+        "missing_claim": 238,
+        "joined_ready_inbounds": 0,
+        "works": 81,
+        "calls": 162,
+        "calls_per_work": 2.0,
+        "calls_per_dialogue": 2.0,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 2,
+            "count": 81
+          }
+        ],
+        "deferrals": 0
+      }
+    ],
+    "eligibility": "max(created_at, available_at); NULL => created_at",
+    "acceptance_run": false,
+    "profile_conditions": "PROFILE-BETA-1 v1 unchanged"
+  },
+  "claim_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "acceptance_run": false,
+    "postgresql": [
+      "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "on",
+      "on"
+    ],
+    "cross_tenant_or_membership": 0,
+    "selector_plan": [
+      {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 496587.84,
+          "Total Cost": 496588.71,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Actual Startup Time": 242.384,
+          "Actual Total Time": 242.395,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 14031,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 496587.84,
+              "Total Cost": 496588.71,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Actual Startup Time": 242.383,
+              "Actual Total Time": 242.394,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Filter": "(qualify.qual0 = 1)",
+              "Rows Removed by Filter": 0,
+              "Shared Hit Blocks": 14031,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 496587.84,
+                  "Total Cost": 496587.98,
+                  "Plan Rows": 58,
+                  "Plan Width": 40,
+                  "Actual Startup Time": 242.377,
+                  "Actual Total Time": 242.387,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 25,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 14031,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 165426.54,
+                      "Total Cost": 496586.14,
+                      "Plan Rows": 58,
+                      "Plan Width": 40,
+                      "Actual Startup Time": 242.139,
+                      "Actual Total Time": 242.376,
+                      "Actual Rows": 1,
+                      "Actual Loops": 1,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Shared Hit Blocks": 14031,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Incremental Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 165426.54,
+                          "Total Cost": 496111.12,
+                          "Plan Rows": 58,
+                          "Plan Width": 24,
+                          "Actual Startup Time": 241.511,
+                          "Actual Total Time": 241.539,
+                          "Actual Rows": 238,
+                          "Actual Loops": 1,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Presorted Key": [
+                            "agent_conversation.organization_id"
+                          ],
+                          "Full-sort Groups": {
+                            "Group Count": 1,
+                            "Sort Methods Used": [
+                              "quicksort"
+                            ],
+                            "Sort Space Memory": {
+                              "Average Sort Space Used": 28,
+                              "Peak Sort Space Used": 28
+                            }
+                          },
+                          "Pre-sorted Groups": {
+                            "Group Count": 1,
+                            "Sort Methods Used": [
+                              "quicksort"
+                            ],
+                            "Sort Space Memory": {
+                              "Average Sort Space Used": 36,
+                              "Peak Sort Space Used": 36
+                            }
+                          },
+                          "Shared Hit Blocks": 14019,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Left",
+                              "Startup Cost": 84.64,
+                              "Total Cost": 496109.1,
+                              "Plan Rows": 58,
+                              "Plan Width": 24,
+                              "Actual Startup Time": 15.04,
+                              "Actual Total Time": 240.877,
+                              "Actual Rows": 238,
+                              "Actual Loops": 1,
+                              "Inner Unique": false,
+                              "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                              "Rows Removed by Filter": 155,
+                              "Shared Hit Blocks": 14019,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Nested Loop",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Anti",
+                                  "Startup Cost": 41.73,
+                                  "Total Cost": 496030.05,
+                                  "Plan Rows": 116,
+                                  "Plan Width": 24,
+                                  "Actual Startup Time": 1.004,
+                                  "Actual Total Time": 234.476,
+                                  "Actual Rows": 354,
+                                  "Actual Loops": 1,
+                                  "Inner Unique": false,
+                                  "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                                  "Rows Removed by Join Filter": 0,
+                                  "Shared Hit Blocks": 13508,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Index Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Scan Direction": "Forward",
+                                      "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                      "Relation Name": "agent_conversation",
+                                      "Alias": "agent_conversation",
+                                      "Startup Cost": 41.44,
+                                      "Total Cost": 496011.96,
+                                      "Plan Rows": 266,
+                                      "Plan Width": 24,
+                                      "Actual Startup Time": 0.981,
+                                      "Actual Total Time": 233.717,
+                                      "Actual Rows": 354,
+                                      "Actual Loops": 1,
+                                      "Filter": "(is_active AND ((hashed SubPlan 3) OR ((SubPlan 4) IS NULL) OR (NOT (SubPlan 8))))",
+                                      "Rows Removed by Filter": 0,
+                                      "Shared Hit Blocks": 13507,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Seq Scan",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 3",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "channels_message",
+                                          "Alias": "u0_3",
+                                          "Startup Cost": 0.0,
+                                          "Total Cost": 41.27,
+                                          "Plan Rows": 7,
+                                          "Plan Width": 8,
+                                          "Actual Startup Time": 0.463,
+                                          "Actual Total Time": 0.463,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 1,
+                                          "Filter": "(is_active AND ((direction)::text = 'in'::text) AND ((semantic_type)::text = 'safety_signal'::text) AND ((status)::text = 'pending'::text))",
+                                          "Rows Removed by Filter": 532,
+                                          "Shared Hit Blocks": 32,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        },
+                                        {
+                                          "Node Type": "Limit",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 4",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Startup Cost": 8.17,
+                                          "Total Cost": 8.17,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Actual Startup Time": 0.246,
+                                          "Actual Total Time": 0.246,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 354,
+                                          "Shared Hit Blocks": 2124,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 8.17,
+                                              "Total Cost": 8.29,
+                                              "Plan Rows": 51,
+                                              "Plan Width": 8,
+                                              "Actual Startup Time": 0.242,
+                                              "Actual Total Time": 0.242,
+                                              "Actual Rows": 1,
+                                              "Actual Loops": 354,
+                                              "Sort Key": [
+                                                "u0_4.claimed_at DESC"
+                                              ],
+                                              "Sort Method": "top-N heapsort",
+                                              "Sort Space Used": 25,
+                                              "Sort Space Type": "Memory",
+                                              "Shared Hit Blocks": 2124,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_4",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 7.91,
+                                                  "Plan Rows": 51,
+                                                  "Plan Width": 8,
+                                                  "Actual Startup Time": 0.011,
+                                                  "Actual Total Time": 0.187,
+                                                  "Actual Rows": 88,
+                                                  "Actual Loops": 354,
+                                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))",
+                                                  "Rows Removed by Filter": 67,
+                                                  "Shared Hit Blocks": 2124,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "SubPlan",
+                                          "Subplan Name": "SubPlan 8",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Anti",
+                                          "Startup Cost": 20.6,
+                                          "Total Cost": 1392.8,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 0,
+                                          "Actual Startup Time": 0.401,
+                                          "Actual Total Time": 0.401,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 354,
+                                          "Inner Unique": false,
+                                          "Join Filter": "(u0_8.organization_id = v0.organization_id)",
+                                          "Rows Removed by Join Filter": 0,
+                                          "Shared Hit Blocks": 11328,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Limit",
+                                              "Parent Relationship": "InitPlan",
+                                              "Subplan Name": "InitPlan 7 (returns $7)",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Startup Cost": 8.17,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 8.17,
+                                                  "Total Cost": 8.29,
+                                                  "Plan Rows": 51,
+                                                  "Plan Width": 8,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Sort Key": [
+                                                    "u0_7.claimed_at DESC"
+                                                  ],
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Alias": "u0_7",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 7.91,
+                                                      "Plan Rows": 51,
+                                                      "Plan Width": 8,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))",
+                                                      "Rows Removed by Filter": 0,
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0,
+                                                      "Shared Dirtied Blocks": 0,
+                                                      "Shared Written Blocks": 0,
+                                                      "Local Hit Blocks": 0,
+                                                      "Local Read Blocks": 0,
+                                                      "Local Dirtied Blocks": 0,
+                                                      "Local Written Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Bitmap Heap Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "channels_message",
+                                              "Alias": "v0",
+                                              "Startup Cost": 12.14,
+                                              "Total Cost": 1370.52,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Actual Startup Time": 0.361,
+                                              "Actual Total Time": 0.361,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 354,
+                                              "Recheck Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text) AND (turn_work_id IS NULL))",
+                                              "Rows Removed by Index Recheck": 0,
+                                              "Filter": "(is_active AND (organization_id <> agent_conversation.organization_id) AND ((semantic_type)::text <> 'safety_signal'::text) AND (available_at > statement_timestamp()) AND (available_at <= (statement_timestamp() + '00:00:01'::interval)) AND (((SubPlan 5) IS NULL) OR ((SubPlan 6) < $7)))",
+                                              "Rows Removed by Filter": 238,
+                                              "Exact Heap Blocks": 10620,
+                                              "Lossy Heap Blocks": 0,
+                                              "Shared Hit Blocks": 11328,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "BitmapAnd",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 12.14,
+                                                  "Total Cost": 12.14,
+                                                  "Plan Rows": 81,
+                                                  "Plan Width": 0,
+                                                  "Actual Startup Time": 0.079,
+                                                  "Actual Total Time": 0.079,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 354,
+                                                  "Shared Hit Blocks": 708,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Bitmap Index Scan",
+                                                      "Parent Relationship": "Member",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Index Name": "message_send_ready",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 5.94,
+                                                      "Plan Rows": 179,
+                                                      "Plan Width": 0,
+                                                      "Actual Startup Time": 0.055,
+                                                      "Actual Total Time": 0.055,
+                                                      "Actual Rows": 315,
+                                                      "Actual Loops": 354,
+                                                      "Index Cond": "(((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text))",
+                                                      "Shared Hit Blocks": 354,
+                                                      "Shared Read Blocks": 0,
+                                                      "Shared Dirtied Blocks": 0,
+                                                      "Shared Written Blocks": 0,
+                                                      "Local Hit Blocks": 0,
+                                                      "Local Read Blocks": 0,
+                                                      "Local Dirtied Blocks": 0,
+                                                      "Local Written Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0
+                                                    },
+                                                    {
+                                                      "Node Type": "Bitmap Index Scan",
+                                                      "Parent Relationship": "Member",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Index Name": "channels_message_turn_work_id_20ce3041",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 5.95,
+                                                      "Plan Rows": 240,
+                                                      "Plan Width": 0,
+                                                      "Actual Startup Time": 0.02,
+                                                      "Actual Total Time": 0.02,
+                                                      "Actual Rows": 261,
+                                                      "Actual Loops": 354,
+                                                      "Index Cond": "(turn_work_id IS NULL)",
+                                                      "Shared Hit Blocks": 354,
+                                                      "Shared Read Blocks": 0,
+                                                      "Shared Dirtied Blocks": 0,
+                                                      "Shared Written Blocks": 0,
+                                                      "Local Hit Blocks": 0,
+                                                      "Local Read Blocks": 0,
+                                                      "Local Dirtied Blocks": 0,
+                                                      "Local Written Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 5",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 8.17,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 8.17,
+                                                      "Total Cost": 8.29,
+                                                      "Plan Rows": 51,
+                                                      "Plan Width": 8,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Sort Key": [
+                                                        "u0_5.claimed_at DESC"
+                                                      ],
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0,
+                                                      "Shared Dirtied Blocks": 0,
+                                                      "Shared Written Blocks": 0,
+                                                      "Local Hit Blocks": 0,
+                                                      "Local Read Blocks": 0,
+                                                      "Local Dirtied Blocks": 0,
+                                                      "Local Written Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_5",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 7.91,
+                                                          "Plan Rows": 51,
+                                                          "Plan Width": 8,
+                                                          "Actual Startup Time": 0.0,
+                                                          "Actual Total Time": 0.0,
+                                                          "Actual Rows": 0,
+                                                          "Actual Loops": 0,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))",
+                                                          "Rows Removed by Filter": 0,
+                                                          "Shared Hit Blocks": 0,
+                                                          "Shared Read Blocks": 0,
+                                                          "Shared Dirtied Blocks": 0,
+                                                          "Shared Written Blocks": 0,
+                                                          "Local Hit Blocks": 0,
+                                                          "Local Read Blocks": 0,
+                                                          "Local Dirtied Blocks": 0,
+                                                          "Local Written Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Parent Relationship": "SubPlan",
+                                                  "Subplan Name": "SubPlan 6",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Startup Cost": 8.17,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 8,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Parent Relationship": "Outer",
+                                                      "Parallel Aware": false,
+                                                      "Async Capable": false,
+                                                      "Startup Cost": 8.17,
+                                                      "Total Cost": 8.29,
+                                                      "Plan Rows": 51,
+                                                      "Plan Width": 8,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Sort Key": [
+                                                        "u0_6.claimed_at DESC"
+                                                      ],
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0,
+                                                      "Shared Dirtied Blocks": 0,
+                                                      "Shared Written Blocks": 0,
+                                                      "Local Hit Blocks": 0,
+                                                      "Local Read Blocks": 0,
+                                                      "Local Dirtied Blocks": 0,
+                                                      "Local Written Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Parent Relationship": "Outer",
+                                                          "Parallel Aware": false,
+                                                          "Async Capable": false,
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Alias": "u0_6",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 7.91,
+                                                          "Plan Rows": 51,
+                                                          "Plan Width": 8,
+                                                          "Actual Startup Time": 0.0,
+                                                          "Actual Total Time": 0.0,
+                                                          "Actual Rows": 0,
+                                                          "Actual Loops": 0,
+                                                          "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = v0.organization_id))",
+                                                          "Rows Removed by Filter": 0,
+                                                          "Shared Hit Blocks": 0,
+                                                          "Shared Read Blocks": 0,
+                                                          "Shared Dirtied Blocks": 0,
+                                                          "Shared Written Blocks": 0,
+                                                          "Local Hit Blocks": 0,
+                                                          "Local Read Blocks": 0,
+                                                          "Local Dirtied Blocks": 0,
+                                                          "Local Written Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Join Type": "Inner",
+                                              "Startup Cost": 0.29,
+                                              "Total Cost": 14.1,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 8,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Inner Unique": true,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Parent Relationship": "Outer",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Scan Direction": "Forward",
+                                                  "Index Name": "turnwork_poll_retry",
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Alias": "u0_8",
+                                                  "Startup Cost": 0.14,
+                                                  "Total Cost": 5.92,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Index Cond": "((status)::text = 'PROCESSING'::text)",
+                                                  "Rows Removed by Index Recheck": 0,
+                                                  "Filter": "(is_active AND (lease_expires_at > statement_timestamp()))",
+                                                  "Rows Removed by Filter": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Parent Relationship": "Inner",
+                                                  "Parallel Aware": false,
+                                                  "Async Capable": false,
+                                                  "Scan Direction": "Forward",
+                                                  "Index Name": "agent_conversation_pkey",
+                                                  "Relation Name": "agent_conversation",
+                                                  "Alias": "u2_1",
+                                                  "Startup Cost": 0.15,
+                                                  "Total Cost": 8.17,
+                                                  "Plan Rows": 1,
+                                                  "Plan Width": 24,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Index Cond": "(id = u0_8.conversation_id)",
+                                                  "Rows Removed by Index Recheck": 0,
+                                                  "Filter": "((organization_id = u0_8.organization_id) AND (ownership_epoch = u0_8.ownership_epoch))",
+                                                  "Rows Removed by Filter": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Shared Dirtied Blocks": 0,
+                                                  "Shared Written Blocks": 0,
+                                                  "Local Hit Blocks": 0,
+                                                  "Local Read Blocks": 0,
+                                                  "Local Dirtied Blocks": 0,
+                                                  "Local Written Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Materialize",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 0.29,
+                                      "Total Cost": 14.1,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Actual Startup Time": 0.0,
+                                      "Actual Total Time": 0.0,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 354,
+                                      "Shared Hit Blocks": 1,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Join Type": "Inner",
+                                          "Startup Cost": 0.29,
+                                          "Total Cost": 14.1,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 8,
+                                          "Actual Startup Time": 0.02,
+                                          "Actual Total Time": 0.021,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 1,
+                                          "Inner Unique": true,
+                                          "Shared Hit Blocks": 1,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Scan Direction": "Forward",
+                                              "Index Name": "turnwork_poll_retry",
+                                              "Relation Name": "agent_turnwork",
+                                              "Alias": "u0",
+                                              "Startup Cost": 0.14,
+                                              "Total Cost": 5.92,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Actual Startup Time": 0.02,
+                                              "Actual Total Time": 0.02,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 1,
+                                              "Index Cond": "((status)::text = 'PROCESSING'::text)",
+                                              "Rows Removed by Index Recheck": 0,
+                                              "Filter": "(is_active AND (lease_expires_at > statement_timestamp()))",
+                                              "Rows Removed by Filter": 0,
+                                              "Shared Hit Blocks": 1,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Parent Relationship": "Inner",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Scan Direction": "Forward",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Alias": "u2",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Index Cond": "(id = u0.conversation_id)",
+                                              "Rows Removed by Index Recheck": 0,
+                                              "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))",
+                                              "Rows Removed by Filter": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Scan Direction": "Forward",
+                                  "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "agent_turnwork",
+                                  "Startup Cost": 0.14,
+                                  "Total Cost": 0.28,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 34,
+                                  "Actual Startup Time": 0.006,
+                                  "Actual Total Time": 0.01,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 354,
+                                  "Index Cond": "(conversation_id = agent_conversation.id)",
+                                  "Rows Removed by Index Recheck": 0,
+                                  "Shared Hit Blocks": 479,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                },
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "SubPlan",
+                                  "Subplan Name": "SubPlan 2",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "channels_message",
+                                  "Alias": "u0_2",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 42.6,
+                                  "Plan Rows": 66,
+                                  "Plan Width": 8,
+                                  "Actual Startup Time": 0.031,
+                                  "Actual Total Time": 0.597,
+                                  "Actual Rows": 238,
+                                  "Actual Loops": 1,
+                                  "Filter": "(is_active AND (turn_work_id IS NULL) AND ((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text) AND ((available_at IS NULL) OR (available_at <= statement_timestamp())))",
+                                  "Rows Removed by Filter": 294,
+                                  "Shared Hit Blocks": 32,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 8.17,
+                          "Total Cost": 8.17,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Actual Startup Time": 0.36,
+                          "Actual Total Time": 0.361,
+                          "Actual Rows": 1,
+                          "Actual Loops": 2,
+                          "Shared Hit Blocks": 12,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 8.17,
+                              "Total Cost": 8.29,
+                              "Plan Rows": 51,
+                              "Plan Width": 8,
+                              "Actual Startup Time": 0.358,
+                              "Actual Total Time": 0.358,
+                              "Actual Rows": 1,
+                              "Actual Loops": 2,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Sort Method": "top-N heapsort",
+                              "Sort Space Used": 25,
+                              "Sort Space Type": "Memory",
+                              "Shared Hit Blocks": 12,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 7.91,
+                                  "Plan Rows": 51,
+                                  "Plan Width": 8,
+                                  "Actual Startup Time": 0.015,
+                                  "Actual Total Time": 0.12,
+                                  "Actual Rows": 92,
+                                  "Actual Loops": 2,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))",
+                                  "Rows Removed by Filter": 63,
+                                  "Shared Hit Blocks": 12,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 143,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 21.708,
+        "Triggers": [],
+        "Execution Time": 243.396
+      }
+    ],
+    "healthy_messages": [
+      {
+        "id": 44,
+        "organization_id": 1,
+        "conversation_id": 35,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:01:16.020078+00:00",
+        "available_at": "2026-10-01 03:01:16.099034+00:00",
+        "turn_work_id": 11,
+        "turn_work__claimed_at": "2026-10-01 03:01:16.196453+00:00"
+      },
+      {
+        "id": 47,
+        "organization_id": 2,
+        "conversation_id": 36,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:01:16.799134+00:00",
+        "available_at": "2026-10-01 03:01:16.863965+00:00",
+        "turn_work_id": 12,
+        "turn_work__claimed_at": "2026-10-01 03:01:16.972326+00:00"
+      },
+      {
+        "id": 59,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:01:25.960851+00:00",
+        "available_at": "2026-10-01 03:01:33.889850+00:00",
+        "turn_work_id": 16,
+        "turn_work__claimed_at": "2026-10-01 03:01:34.894839+00:00"
+      },
+      {
+        "id": 60,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:01:26.138542+00:00",
+        "available_at": "2026-10-01 03:01:34.070854+00:00",
+        "turn_work_id": 17,
+        "turn_work__claimed_at": "2026-10-01 03:01:36.496296+00:00"
+      },
+      {
+        "id": 75,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:01:35.988760+00:00",
+        "available_at": "2026-10-01 03:01:43.880638+00:00",
+        "turn_work_id": 20,
+        "turn_work__claimed_at": "2026-10-01 03:01:44.025163+00:00"
+      },
+      {
+        "id": 76,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:01:36.204072+00:00",
+        "available_at": "2026-10-01 03:01:34.070854+00:00",
+        "turn_work_id": 17,
+        "turn_work__claimed_at": "2026-10-01 03:01:36.496296+00:00"
+      },
+      {
+        "id": 90,
+        "organization_id": 1,
+        "conversation_id": 67,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:01:45.961274+00:00",
+        "available_at": "2026-10-01 03:01:46.022805+00:00",
+        "turn_work_id": 22,
+        "turn_work__claimed_at": "2026-10-01 03:01:46.103276+00:00"
+      },
+      {
+        "id": 93,
+        "organization_id": 2,
+        "conversation_id": 68,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:01:46.841533+00:00",
+        "available_at": "2026-10-01 03:01:46.913973+00:00",
+        "turn_work_id": 23,
+        "turn_work__claimed_at": "2026-10-01 03:01:46.982851+00:00"
+      },
+      {
+        "id": 109,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:01:55.978688+00:00",
+        "available_at": "2026-10-01 03:02:03.873602+00:00",
+        "turn_work_id": 30,
+        "turn_work__claimed_at": "2026-10-01 03:02:04.140770+00:00"
+      },
+      {
+        "id": 110,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:01:56.180167+00:00",
+        "available_at": "2026-10-01 03:02:04.110027+00:00",
+        "turn_work_id": 31,
+        "turn_work__claimed_at": "2026-10-01 03:02:04.532393+00:00"
+      },
+      {
+        "id": 124,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:05.955702+00:00",
+        "available_at": "2026-10-01 03:02:13.874083+00:00",
+        "turn_work_id": 35,
+        "turn_work__claimed_at": "2026-10-01 03:02:14.134906+00:00"
+      },
+      {
+        "id": 125,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:06.158222+00:00",
+        "available_at": "2026-10-01 03:02:14.075971+00:00",
+        "turn_work_id": 36,
+        "turn_work__claimed_at": "2026-10-01 03:02:15.662007+00:00"
+      },
+      {
+        "id": 139,
+        "organization_id": 1,
+        "conversation_id": 99,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:02:16.009849+00:00",
+        "available_at": "2026-10-01 03:02:16.098583+00:00",
+        "turn_work_id": 37,
+        "turn_work__claimed_at": "2026-10-01 03:02:16.209313+00:00"
+      },
+      {
+        "id": 142,
+        "organization_id": 2,
+        "conversation_id": 100,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:02:16.818553+00:00",
+        "available_at": "2026-10-01 03:02:16.871432+00:00",
+        "turn_work_id": 38,
+        "turn_work__claimed_at": "2026-10-01 03:02:16.995187+00:00"
+      },
+      {
+        "id": 158,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:25.928780+00:00",
+        "available_at": "2026-10-01 03:02:33.846867+00:00",
+        "turn_work_id": 45,
+        "turn_work__claimed_at": "2026-10-01 03:02:34.670187+00:00"
+      },
+      {
+        "id": 159,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:26.111709+00:00",
+        "available_at": "2026-10-01 03:02:34.035775+00:00",
+        "turn_work_id": 46,
+        "turn_work__claimed_at": "2026-10-01 03:02:34.770203+00:00"
+      },
+      {
+        "id": 173,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:35.926386+00:00",
+        "available_at": "2026-10-01 03:02:43.858332+00:00",
+        "turn_work_id": 50,
+        "turn_work__claimed_at": "2026-10-01 03:02:44.546687+00:00"
+      },
+      {
+        "id": 174,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:36.081882+00:00",
+        "available_at": "2026-10-01 03:02:44.024190+00:00",
+        "turn_work_id": 51,
+        "turn_work__claimed_at": "2026-10-01 03:02:45.578166+00:00"
+      },
+      {
+        "id": 188,
+        "organization_id": 1,
+        "conversation_id": 131,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:02:45.961618+00:00",
+        "available_at": "2026-10-01 03:02:46.012035+00:00",
+        "turn_work_id": 52,
+        "turn_work__claimed_at": "2026-10-01 03:02:46.093968+00:00"
+      },
+      {
+        "id": 191,
+        "organization_id": 2,
+        "conversation_id": 132,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:02:46.692144+00:00",
+        "available_at": "2026-10-01 03:02:46.765366+00:00",
+        "turn_work_id": 53,
+        "turn_work__claimed_at": "2026-10-01 03:02:46.849130+00:00"
+      },
+      {
+        "id": 207,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:55.931360+00:00",
+        "available_at": "2026-10-01 03:03:03.861232+00:00",
+        "turn_work_id": 60,
+        "turn_work__claimed_at": "2026-10-01 03:03:04.491938+00:00"
+      },
+      {
+        "id": 208,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:02:56.084402+00:00",
+        "available_at": "2026-10-01 03:03:04.026508+00:00",
+        "turn_work_id": 61,
+        "turn_work__claimed_at": "2026-10-01 03:03:05.023160+00:00"
+      },
+      {
+        "id": 222,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:05.922609+00:00",
+        "available_at": "2026-10-01 03:03:13.856623+00:00",
+        "turn_work_id": 64,
+        "turn_work__claimed_at": "2026-10-01 03:03:14.328400+00:00"
+      },
+      {
+        "id": 223,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:06.128333+00:00",
+        "available_at": "2026-10-01 03:03:14.026971+00:00",
+        "turn_work_id": 65,
+        "turn_work__claimed_at": "2026-10-01 03:03:14.911399+00:00"
+      },
+      {
+        "id": 236,
+        "organization_id": 1,
+        "conversation_id": 163,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:03:16.058454+00:00",
+        "available_at": "2026-10-01 03:03:16.147880+00:00",
+        "turn_work_id": 66,
+        "turn_work__claimed_at": "2026-10-01 03:03:16.244431+00:00"
+      },
+      {
+        "id": 239,
+        "organization_id": 2,
+        "conversation_id": 164,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:03:16.836216+00:00",
+        "available_at": "2026-10-01 03:03:16.903279+00:00",
+        "turn_work_id": 67,
+        "turn_work__claimed_at": "2026-10-01 03:03:16.994055+00:00"
+      },
+      {
+        "id": 255,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:25.920673+00:00",
+        "available_at": "2026-10-01 03:03:33.846191+00:00",
+        "turn_work_id": 74,
+        "turn_work__claimed_at": "2026-10-01 03:03:34.584766+00:00"
+      },
+      {
+        "id": 256,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:26.132996+00:00",
+        "available_at": "2026-10-01 03:03:34.044049+00:00",
+        "turn_work_id": 75,
+        "turn_work__claimed_at": "2026-10-01 03:03:34.928833+00:00"
+      },
+      {
+        "id": 270,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:35.942093+00:00",
+        "available_at": "2026-10-01 03:03:43.861596+00:00",
+        "turn_work_id": 78,
+        "turn_work__claimed_at": "2026-10-01 03:03:44.342246+00:00"
+      },
+      {
+        "id": 271,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:36.115924+00:00",
+        "available_at": "2026-10-01 03:03:44.052989+00:00",
+        "turn_work_id": 79,
+        "turn_work__claimed_at": "2026-10-01 03:03:44.789821+00:00"
+      },
+      {
+        "id": 284,
+        "organization_id": 1,
+        "conversation_id": 195,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:03:45.963849+00:00",
+        "available_at": "2026-10-01 03:03:46.025429+00:00",
+        "turn_work_id": 80,
+        "turn_work__claimed_at": "2026-10-01 03:03:46.156729+00:00"
+      },
+      {
+        "id": 288,
+        "organization_id": 2,
+        "conversation_id": 196,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:03:46.935253+00:00",
+        "available_at": "2026-10-01 03:03:47.020796+00:00",
+        "turn_work_id": 81,
+        "turn_work__claimed_at": "2026-10-01 03:03:47.271605+00:00"
+      },
+      {
+        "id": 303,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:55.931641+00:00",
+        "available_at": "2026-10-01 03:04:03.861023+00:00",
+        "turn_work_id": 88,
+        "turn_work__claimed_at": "2026-10-01 03:04:05.427879+00:00"
+      },
+      {
+        "id": 304,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:03:56.168922+00:00",
+        "available_at": "2026-10-01 03:04:04.053616+00:00",
+        "turn_work_id": 89,
+        "turn_work__claimed_at": "2026-10-01 03:04:05.458373+00:00"
+      },
+      {
+        "id": 318,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:05.977619+00:00",
+        "available_at": "2026-10-01 03:04:13.894093+00:00",
+        "turn_work_id": 92,
+        "turn_work__claimed_at": "2026-10-01 03:04:14.741561+00:00"
+      },
+      {
+        "id": 319,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:06.194202+00:00",
+        "available_at": "2026-10-01 03:04:14.083204+00:00",
+        "turn_work_id": 93,
+        "turn_work__claimed_at": "2026-10-01 03:04:14.823499+00:00"
+      },
+      {
+        "id": 332,
+        "organization_id": 1,
+        "conversation_id": 227,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:04:16.030271+00:00",
+        "available_at": "2026-10-01 03:04:16.101064+00:00",
+        "turn_work_id": 94,
+        "turn_work__claimed_at": "2026-10-01 03:04:16.207166+00:00"
+      },
+      {
+        "id": 334,
+        "organization_id": 2,
+        "conversation_id": 228,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:04:16.963429+00:00",
+        "available_at": "2026-10-01 03:04:17.060673+00:00",
+        "turn_work_id": 95,
+        "turn_work__claimed_at": "2026-10-01 03:04:17.165308+00:00"
+      },
+      {
+        "id": 350,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:26.000285+00:00",
+        "available_at": "2026-10-01 03:04:33.923700+00:00",
+        "turn_work_id": 102,
+        "turn_work__claimed_at": "2026-10-01 03:04:34.770816+00:00"
+      },
+      {
+        "id": 351,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:26.288691+00:00",
+        "available_at": "2026-10-01 03:04:34.210628+00:00",
+        "turn_work_id": 104,
+        "turn_work__claimed_at": "2026-10-01 03:04:38.285535+00:00"
+      },
+      {
+        "id": 366,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:35.984131+00:00",
+        "available_at": "2026-10-01 03:04:43.883301+00:00",
+        "turn_work_id": 107,
+        "turn_work__claimed_at": "2026-10-01 03:04:44.428282+00:00"
+      },
+      {
+        "id": 367,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:36.209240+00:00",
+        "available_at": "2026-10-01 03:04:34.210628+00:00",
+        "turn_work_id": 104,
+        "turn_work__claimed_at": "2026-10-01 03:04:38.285535+00:00"
+      },
+      {
+        "id": 382,
+        "organization_id": 1,
+        "conversation_id": 259,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:04:45.945613+00:00",
+        "available_at": "2026-10-01 03:04:46.007357+00:00",
+        "turn_work_id": 108,
+        "turn_work__claimed_at": "2026-10-01 03:04:46.127119+00:00"
+      },
+      {
+        "id": 385,
+        "organization_id": 2,
+        "conversation_id": 260,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:04:46.804026+00:00",
+        "available_at": "2026-10-01 03:04:46.856667+00:00",
+        "turn_work_id": 110,
+        "turn_work__claimed_at": "2026-10-01 03:04:46.919414+00:00"
+      },
+      {
+        "id": 400,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:56.095823+00:00",
+        "available_at": "2026-10-01 03:05:03.869816+00:00",
+        "turn_work_id": 116,
+        "turn_work__claimed_at": "2026-10-01 03:05:04.262051+00:00"
+      },
+      {
+        "id": 401,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:04:56.350247+00:00",
+        "available_at": "2026-10-01 03:05:04.234688+00:00",
+        "turn_work_id": 117,
+        "turn_work__claimed_at": "2026-10-01 03:05:04.545436+00:00"
+      },
+      {
+        "id": 415,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:05.935165+00:00",
+        "available_at": "2026-10-01 03:05:13.847558+00:00",
+        "turn_work_id": 120,
+        "turn_work__claimed_at": "2026-10-01 03:05:14.573893+00:00"
+      },
+      {
+        "id": 416,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:06.111545+00:00",
+        "available_at": "2026-10-01 03:05:14.043087+00:00",
+        "turn_work_id": 121,
+        "turn_work__claimed_at": "2026-10-01 03:05:14.902163+00:00"
+      },
+      {
+        "id": 429,
+        "organization_id": 1,
+        "conversation_id": 291,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:05:15.953967+00:00",
+        "available_at": "2026-10-01 03:05:16.001853+00:00",
+        "turn_work_id": 122,
+        "turn_work__claimed_at": "2026-10-01 03:05:16.086068+00:00"
+      },
+      {
+        "id": 432,
+        "organization_id": 2,
+        "conversation_id": 292,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:05:16.661648+00:00",
+        "available_at": "2026-10-01 03:05:16.739096+00:00",
+        "turn_work_id": 123,
+        "turn_work__claimed_at": "2026-10-01 03:05:16.889450+00:00"
+      },
+      {
+        "id": 448,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:25.987585+00:00",
+        "available_at": "2026-10-01 03:05:33.899579+00:00",
+        "turn_work_id": 130,
+        "turn_work__claimed_at": "2026-10-01 03:05:34.485956+00:00"
+      },
+      {
+        "id": 449,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:26.197268+00:00",
+        "available_at": "2026-10-01 03:05:34.113489+00:00",
+        "turn_work_id": 131,
+        "turn_work__claimed_at": "2026-10-01 03:05:35.996149+00:00"
+      },
+      {
+        "id": 463,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:35.919448+00:00",
+        "available_at": "2026-10-01 03:05:43.852197+00:00",
+        "turn_work_id": 134,
+        "turn_work__claimed_at": "2026-10-01 03:05:44.421069+00:00"
+      },
+      {
+        "id": 464,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:36.197934+00:00",
+        "available_at": "2026-10-01 03:05:44.078653+00:00",
+        "turn_work_id": 135,
+        "turn_work__claimed_at": "2026-10-01 03:05:45.447253+00:00"
+      },
+      {
+        "id": 477,
+        "organization_id": 1,
+        "conversation_id": 323,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:05:45.987072+00:00",
+        "available_at": "2026-10-01 03:05:46.040448+00:00",
+        "turn_work_id": 136,
+        "turn_work__claimed_at": "2026-10-01 03:05:46.106442+00:00"
+      },
+      {
+        "id": 480,
+        "organization_id": 2,
+        "conversation_id": 324,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 03:05:46.728874+00:00",
+        "available_at": "2026-10-01 03:05:46.778490+00:00",
+        "turn_work_id": 137,
+        "turn_work__claimed_at": "2026-10-01 03:05:46.868477+00:00"
+      },
+      {
+        "id": 496,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:55.997205+00:00",
+        "available_at": "2026-10-01 03:06:03.893155+00:00",
+        "turn_work_id": 144,
+        "turn_work__claimed_at": "2026-10-01 03:06:05.379849+00:00"
+      },
+      {
+        "id": 497,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:05:56.217536+00:00",
+        "available_at": "2026-10-01 03:06:04.141797+00:00",
+        "turn_work_id": 145,
+        "turn_work__claimed_at": "2026-10-01 03:06:05.666198+00:00"
+      },
+      {
+        "id": 511,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:06:05.953969+00:00",
+        "available_at": "2026-10-01 03:06:13.883617+00:00",
+        "turn_work_id": 148,
+        "turn_work__claimed_at": "2026-10-01 03:06:15.277830+00:00"
+      },
+      {
+        "id": 512,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 03:06:06.136501+00:00",
+        "available_at": "2026-10-01 03:06:14.069174+00:00",
+        "turn_work_id": 149,
+        "turn_work__claimed_at": "2026-10-01 03:06:15.480038+00:00"
+      }
+    ],
+    "conversations": [
+      {
+        "id": 116,
+        "organization_id": 3
+      },
+      {
+        "id": 180,
+        "organization_id": 3
+      },
+      {
+        "id": 244,
+        "organization_id": 3
+      },
+      {
+        "id": 1,
+        "organization_id": 1
+      },
+      {
+        "id": 117,
+        "organization_id": 3
+      },
+      {
+        "id": 245,
+        "organization_id": 3
+      },
+      {
+        "id": 118,
+        "organization_id": 3
+      },
+      {
+        "id": 3,
+        "organization_id": 3
+      },
+      {
+        "id": 119,
+        "organization_id": 3
+      },
+      {
+        "id": 2,
+        "organization_id": 2
+      },
+      {
+        "id": 181,
+        "organization_id": 3
+      },
+      {
+        "id": 11,
+        "organization_id": 3
+      },
+      {
+        "id": 12,
+        "organization_id": 3
+      },
+      {
+        "id": 15,
+        "organization_id": 3
+      },
+      {
+        "id": 16,
+        "organization_id": 3
+      },
+      {
+        "id": 17,
+        "organization_id": 3
+      },
+      {
+        "id": 18,
+        "organization_id": 3
+      },
+      {
+        "id": 182,
+        "organization_id": 3
+      },
+      {
+        "id": 19,
+        "organization_id": 3
+      },
+      {
+        "id": 20,
+        "organization_id": 3
+      },
+      {
+        "id": 21,
+        "organization_id": 3
+      },
+      {
+        "id": 120,
+        "organization_id": 3
+      },
+      {
+        "id": 183,
+        "organization_id": 3
+      },
+      {
+        "id": 25,
+        "organization_id": 3
+      },
+      {
+        "id": 246,
+        "organization_id": 3
+      },
+      {
+        "id": 22,
+        "organization_id": 3
+      },
+      {
+        "id": 184,
+        "organization_id": 3
+      },
+      {
+        "id": 23,
+        "organization_id": 3
+      },
+      {
+        "id": 24,
+        "organization_id": 3
+      },
+      {
+        "id": 33,
+        "organization_id": 3
+      },
+      {
+        "id": 26,
+        "organization_id": 3
+      },
+      {
+        "id": 27,
+        "organization_id": 3
+      },
+      {
+        "id": 34,
+        "organization_id": 3
+      },
+      {
+        "id": 37,
+        "organization_id": 3
+      },
+      {
+        "id": 28,
+        "organization_id": 3
+      },
+      {
+        "id": 38,
+        "organization_id": 3
+      },
+      {
+        "id": 39,
+        "organization_id": 3
+      },
+      {
+        "id": 40,
+        "organization_id": 3
+      },
+      {
+        "id": 41,
+        "organization_id": 3
+      },
+      {
+        "id": 42,
+        "organization_id": 3
+      },
+      {
+        "id": 43,
+        "organization_id": 3
+      },
+      {
+        "id": 44,
+        "organization_id": 3
+      },
+      {
+        "id": 45,
+        "organization_id": 3
+      },
+      {
+        "id": 46,
+        "organization_id": 3
+      },
+      {
+        "id": 47,
+        "organization_id": 3
+      },
+      {
+        "id": 4,
+        "organization_id": 3
+      },
+      {
+        "id": 5,
+        "organization_id": 3
+      },
+      {
+        "id": 35,
+        "organization_id": 1
+      },
+      {
+        "id": 6,
+        "organization_id": 3
+      },
+      {
+        "id": 36,
+        "organization_id": 2
+      },
+      {
+        "id": 7,
+        "organization_id": 3
+      },
+      {
+        "id": 8,
+        "organization_id": 3
+      },
+      {
+        "id": 29,
+        "organization_id": 3
+      },
+      {
+        "id": 9,
+        "organization_id": 3
+      },
+      {
+        "id": 32,
+        "organization_id": 3
+      },
+      {
+        "id": 247,
+        "organization_id": 3
+      },
+      {
+        "id": 156,
+        "organization_id": 3
+      },
+      {
+        "id": 64,
+        "organization_id": 3
+      },
+      {
+        "id": 48,
+        "organization_id": 3
+      },
+      {
+        "id": 308,
+        "organization_id": 3
+      },
+      {
+        "id": 309,
+        "organization_id": 3
+      },
+      {
+        "id": 10,
+        "organization_id": 3
+      },
+      {
+        "id": 66,
+        "organization_id": 3
+      },
+      {
+        "id": 69,
+        "organization_id": 3
+      },
+      {
+        "id": 70,
+        "organization_id": 3
+      },
+      {
+        "id": 71,
+        "organization_id": 3
+      },
+      {
+        "id": 57,
+        "organization_id": 3
+      },
+      {
+        "id": 58,
+        "organization_id": 3
+      },
+      {
+        "id": 72,
+        "organization_id": 3
+      },
+      {
+        "id": 59,
+        "organization_id": 3
+      },
+      {
+        "id": 73,
+        "organization_id": 3
+      },
+      {
+        "id": 60,
+        "organization_id": 3
+      },
+      {
+        "id": 74,
+        "organization_id": 3
+      },
+      {
+        "id": 61,
+        "organization_id": 3
+      },
+      {
+        "id": 75,
+        "organization_id": 3
+      },
+      {
+        "id": 62,
+        "organization_id": 3
+      },
+      {
+        "id": 76,
+        "organization_id": 3
+      },
+      {
+        "id": 63,
+        "organization_id": 3
+      },
+      {
+        "id": 312,
+        "organization_id": 3
+      },
+      {
+        "id": 77,
+        "organization_id": 3
+      },
+      {
+        "id": 78,
+        "organization_id": 3
+      },
+      {
+        "id": 79,
+        "organization_id": 3
+      },
+      {
+        "id": 310,
+        "organization_id": 3
+      },
+      {
+        "id": 80,
+        "organization_id": 3
+      },
+      {
+        "id": 68,
+        "organization_id": 2
+      },
+      {
+        "id": 81,
+        "organization_id": 3
+      },
+      {
+        "id": 82,
+        "organization_id": 3
+      },
+      {
+        "id": 311,
+        "organization_id": 3
+      },
+      {
+        "id": 67,
+        "organization_id": 1
+      },
+      {
+        "id": 88,
+        "organization_id": 3
+      },
+      {
+        "id": 89,
+        "organization_id": 3
+      },
+      {
+        "id": 90,
+        "organization_id": 3
+      },
+      {
+        "id": 91,
+        "organization_id": 3
+      },
+      {
+        "id": 92,
+        "organization_id": 3
+      },
+      {
+        "id": 93,
+        "organization_id": 3
+      },
+      {
+        "id": 94,
+        "organization_id": 3
+      },
+      {
+        "id": 95,
+        "organization_id": 3
+      },
+      {
+        "id": 96,
+        "organization_id": 3
+      },
+      {
+        "id": 97,
+        "organization_id": 3
+      },
+      {
+        "id": 98,
+        "organization_id": 3
+      },
+      {
+        "id": 65,
+        "organization_id": 3
+      },
+      {
+        "id": 30,
+        "organization_id": 3
+      },
+      {
+        "id": 49,
+        "organization_id": 3
+      },
+      {
+        "id": 173,
+        "organization_id": 3
+      },
+      {
+        "id": 50,
+        "organization_id": 3
+      },
+      {
+        "id": 83,
+        "organization_id": 3
+      },
+      {
+        "id": 174,
+        "organization_id": 3
+      },
+      {
+        "id": 189,
+        "organization_id": 3
+      },
+      {
+        "id": 31,
+        "organization_id": 3
+      },
+      {
+        "id": 163,
+        "organization_id": 1
+      },
+      {
+        "id": 185,
+        "organization_id": 3
+      },
+      {
+        "id": 194,
+        "organization_id": 3
+      },
+      {
+        "id": 190,
+        "organization_id": 3
+      },
+      {
+        "id": 186,
+        "organization_id": 3
+      },
+      {
+        "id": 175,
+        "organization_id": 3
+      },
+      {
+        "id": 187,
+        "organization_id": 3
+      },
+      {
+        "id": 176,
+        "organization_id": 3
+      },
+      {
+        "id": 164,
+        "organization_id": 2
+      },
+      {
+        "id": 188,
+        "organization_id": 3
+      },
+      {
+        "id": 165,
+        "organization_id": 3
+      },
+      {
+        "id": 157,
+        "organization_id": 3
+      },
+      {
+        "id": 158,
+        "organization_id": 3
+      },
+      {
+        "id": 191,
+        "organization_id": 3
+      },
+      {
+        "id": 159,
+        "organization_id": 3
+      },
+      {
+        "id": 160,
+        "organization_id": 3
+      },
+      {
+        "id": 51,
+        "organization_id": 3
+      },
+      {
+        "id": 161,
+        "organization_id": 3
+      },
+      {
+        "id": 192,
+        "organization_id": 3
+      },
+      {
+        "id": 177,
+        "organization_id": 3
+      },
+      {
+        "id": 162,
+        "organization_id": 3
+      },
+      {
+        "id": 193,
+        "organization_id": 3
+      },
+      {
+        "id": 166,
+        "organization_id": 3
+      },
+      {
+        "id": 167,
+        "organization_id": 3
+      },
+      {
+        "id": 168,
+        "organization_id": 3
+      },
+      {
+        "id": 169,
+        "organization_id": 3
+      },
+      {
+        "id": 170,
+        "organization_id": 3
+      },
+      {
+        "id": 197,
+        "organization_id": 3
+      },
+      {
+        "id": 171,
+        "organization_id": 3
+      },
+      {
+        "id": 172,
+        "organization_id": 3
+      },
+      {
+        "id": 178,
+        "organization_id": 3
+      },
+      {
+        "id": 179,
+        "organization_id": 3
+      },
+      {
+        "id": 195,
+        "organization_id": 1
+      },
+      {
+        "id": 196,
+        "organization_id": 2
+      },
+      {
+        "id": 198,
+        "organization_id": 3
+      },
+      {
+        "id": 199,
+        "organization_id": 3
+      },
+      {
+        "id": 200,
+        "organization_id": 3
+      },
+      {
+        "id": 201,
+        "organization_id": 3
+      },
+      {
+        "id": 52,
+        "organization_id": 3
+      },
+      {
+        "id": 202,
+        "organization_id": 3
+      },
+      {
+        "id": 203,
+        "organization_id": 3
+      },
+      {
+        "id": 204,
+        "organization_id": 3
+      },
+      {
+        "id": 205,
+        "organization_id": 3
+      },
+      {
+        "id": 115,
+        "organization_id": 3
+      },
+      {
+        "id": 121,
+        "organization_id": 3
+      },
+      {
+        "id": 99,
+        "organization_id": 1
+      },
+      {
+        "id": 103,
+        "organization_id": 3
+      },
+      {
+        "id": 122,
+        "organization_id": 3
+      },
+      {
+        "id": 123,
+        "organization_id": 3
+      },
+      {
+        "id": 100,
+        "organization_id": 2
+      },
+      {
+        "id": 124,
+        "organization_id": 3
+      },
+      {
+        "id": 125,
+        "organization_id": 3
+      },
+      {
+        "id": 104,
+        "organization_id": 3
+      },
+      {
+        "id": 126,
+        "organization_id": 3
+      },
+      {
+        "id": 105,
+        "organization_id": 3
+      },
+      {
+        "id": 106,
+        "organization_id": 3
+      },
+      {
+        "id": 127,
+        "organization_id": 3
+      },
+      {
+        "id": 107,
+        "organization_id": 3
+      },
+      {
+        "id": 108,
+        "organization_id": 3
+      },
+      {
+        "id": 128,
+        "organization_id": 3
+      },
+      {
+        "id": 109,
+        "organization_id": 3
+      },
+      {
+        "id": 110,
+        "organization_id": 3
+      },
+      {
+        "id": 129,
+        "organization_id": 3
+      },
+      {
+        "id": 111,
+        "organization_id": 3
+      },
+      {
+        "id": 112,
+        "organization_id": 3
+      },
+      {
+        "id": 130,
+        "organization_id": 3
+      },
+      {
+        "id": 113,
+        "organization_id": 3
+      },
+      {
+        "id": 114,
+        "organization_id": 3
+      },
+      {
+        "id": 139,
+        "organization_id": 3
+      },
+      {
+        "id": 132,
+        "organization_id": 2
+      },
+      {
+        "id": 131,
+        "organization_id": 1
+      },
+      {
+        "id": 140,
+        "organization_id": 3
+      },
+      {
+        "id": 133,
+        "organization_id": 3
+      },
+      {
+        "id": 134,
+        "organization_id": 3
+      },
+      {
+        "id": 135,
+        "organization_id": 3
+      },
+      {
+        "id": 136,
+        "organization_id": 3
+      },
+      {
+        "id": 137,
+        "organization_id": 3
+      },
+      {
+        "id": 138,
+        "organization_id": 3
+      },
+      {
+        "id": 141,
+        "organization_id": 3
+      },
+      {
+        "id": 142,
+        "organization_id": 3
+      },
+      {
+        "id": 143,
+        "organization_id": 3
+      },
+      {
+        "id": 144,
+        "organization_id": 3
+      },
+      {
+        "id": 145,
+        "organization_id": 3
+      },
+      {
+        "id": 146,
+        "organization_id": 3
+      },
+      {
+        "id": 147,
+        "organization_id": 3
+      },
+      {
+        "id": 148,
+        "organization_id": 3
+      },
+      {
+        "id": 149,
+        "organization_id": 3
+      },
+      {
+        "id": 150,
+        "organization_id": 3
+      },
+      {
+        "id": 151,
+        "organization_id": 3
+      },
+      {
+        "id": 152,
+        "organization_id": 3
+      },
+      {
+        "id": 153,
+        "organization_id": 3
+      },
+      {
+        "id": 154,
+        "organization_id": 3
+      },
+      {
+        "id": 155,
+        "organization_id": 3
+      },
+      {
+        "id": 260,
+        "organization_id": 2
+      },
+      {
+        "id": 53,
+        "organization_id": 3
+      },
+      {
+        "id": 54,
+        "organization_id": 3
+      },
+      {
+        "id": 56,
+        "organization_id": 3
+      },
+      {
+        "id": 248,
+        "organization_id": 3
+      },
+      {
+        "id": 85,
+        "organization_id": 3
+      },
+      {
+        "id": 84,
+        "organization_id": 3
+      },
+      {
+        "id": 249,
+        "organization_id": 3
+      },
+      {
+        "id": 261,
+        "organization_id": 3
+      },
+      {
+        "id": 86,
+        "organization_id": 3
+      },
+      {
+        "id": 87,
+        "organization_id": 3
+      },
+      {
+        "id": 250,
+        "organization_id": 3
+      },
+      {
+        "id": 102,
+        "organization_id": 3
+      },
+      {
+        "id": 251,
+        "organization_id": 3
+      },
+      {
+        "id": 252,
+        "organization_id": 3
+      },
+      {
+        "id": 253,
+        "organization_id": 3
+      },
+      {
+        "id": 254,
+        "organization_id": 3
+      },
+      {
+        "id": 255,
+        "organization_id": 3
+      },
+      {
+        "id": 256,
+        "organization_id": 3
+      },
+      {
+        "id": 257,
+        "organization_id": 3
+      },
+      {
+        "id": 262,
+        "organization_id": 3
+      },
+      {
+        "id": 258,
+        "organization_id": 3
+      },
+      {
+        "id": 263,
+        "organization_id": 3
+      },
+      {
+        "id": 264,
+        "organization_id": 3
+      },
+      {
+        "id": 259,
+        "organization_id": 1
+      },
+      {
+        "id": 273,
+        "organization_id": 3
+      },
+      {
+        "id": 274,
+        "organization_id": 3
+      },
+      {
+        "id": 265,
+        "organization_id": 3
+      },
+      {
+        "id": 266,
+        "organization_id": 3
+      },
+      {
+        "id": 267,
+        "organization_id": 3
+      },
+      {
+        "id": 268,
+        "organization_id": 3
+      },
+      {
+        "id": 269,
+        "organization_id": 3
+      },
+      {
+        "id": 270,
+        "organization_id": 3
+      },
+      {
+        "id": 271,
+        "organization_id": 3
+      },
+      {
+        "id": 272,
+        "organization_id": 3
+      },
+      {
+        "id": 275,
+        "organization_id": 3
+      },
+      {
+        "id": 276,
+        "organization_id": 3
+      },
+      {
+        "id": 277,
+        "organization_id": 3
+      },
+      {
+        "id": 278,
+        "organization_id": 3
+      },
+      {
+        "id": 279,
+        "organization_id": 3
+      },
+      {
+        "id": 290,
+        "organization_id": 3
+      },
+      {
+        "id": 280,
+        "organization_id": 3
+      },
+      {
+        "id": 285,
+        "organization_id": 3
+      },
+      {
+        "id": 281,
+        "organization_id": 3
+      },
+      {
+        "id": 282,
+        "organization_id": 3
+      },
+      {
+        "id": 283,
+        "organization_id": 3
+      },
+      {
+        "id": 284,
+        "organization_id": 3
+      },
+      {
+        "id": 286,
+        "organization_id": 3
+      },
+      {
+        "id": 287,
+        "organization_id": 3
+      },
+      {
+        "id": 288,
+        "organization_id": 3
+      },
+      {
+        "id": 289,
+        "organization_id": 3
+      },
+      {
+        "id": 206,
+        "organization_id": 3
+      },
+      {
+        "id": 207,
+        "organization_id": 3
+      },
+      {
+        "id": 291,
+        "organization_id": 1
+      },
+      {
+        "id": 208,
+        "organization_id": 3
+      },
+      {
+        "id": 313,
+        "organization_id": 3
+      },
+      {
+        "id": 209,
+        "organization_id": 3
+      },
+      {
+        "id": 210,
+        "organization_id": 3
+      },
+      {
+        "id": 293,
+        "organization_id": 3
+      },
+      {
+        "id": 211,
+        "organization_id": 3
+      },
+      {
+        "id": 212,
+        "organization_id": 3
+      },
+      {
+        "id": 213,
+        "organization_id": 3
+      },
+      {
+        "id": 294,
+        "organization_id": 3
+      },
+      {
+        "id": 214,
+        "organization_id": 3
+      },
+      {
+        "id": 292,
+        "organization_id": 2
+      },
+      {
+        "id": 215,
+        "organization_id": 3
+      },
+      {
+        "id": 216,
+        "organization_id": 3
+      },
+      {
+        "id": 217,
+        "organization_id": 3
+      },
+      {
+        "id": 295,
+        "organization_id": 3
+      },
+      {
+        "id": 218,
+        "organization_id": 3
+      },
+      {
+        "id": 219,
+        "organization_id": 3
+      },
+      {
+        "id": 296,
+        "organization_id": 3
+      },
+      {
+        "id": 220,
+        "organization_id": 3
+      },
+      {
+        "id": 221,
+        "organization_id": 3
+      },
+      {
+        "id": 297,
+        "organization_id": 3
+      },
+      {
+        "id": 222,
+        "organization_id": 3
+      },
+      {
+        "id": 223,
+        "organization_id": 3
+      },
+      {
+        "id": 298,
+        "organization_id": 3
+      },
+      {
+        "id": 224,
+        "organization_id": 3
+      },
+      {
+        "id": 225,
+        "organization_id": 3
+      },
+      {
+        "id": 299,
+        "organization_id": 3
+      },
+      {
+        "id": 226,
+        "organization_id": 3
+      },
+      {
+        "id": 300,
+        "organization_id": 3
+      },
+      {
+        "id": 239,
+        "organization_id": 3
+      },
+      {
+        "id": 227,
+        "organization_id": 1
+      },
+      {
+        "id": 301,
+        "organization_id": 3
+      },
+      {
+        "id": 302,
+        "organization_id": 3
+      },
+      {
+        "id": 228,
+        "organization_id": 2
+      },
+      {
+        "id": 229,
+        "organization_id": 3
+      },
+      {
+        "id": 303,
+        "organization_id": 3
+      },
+      {
+        "id": 230,
+        "organization_id": 3
+      },
+      {
+        "id": 231,
+        "organization_id": 3
+      },
+      {
+        "id": 304,
+        "organization_id": 3
+      },
+      {
+        "id": 232,
+        "organization_id": 3
+      },
+      {
+        "id": 233,
+        "organization_id": 3
+      },
+      {
+        "id": 234,
+        "organization_id": 3
+      },
+      {
+        "id": 235,
+        "organization_id": 3
+      },
+      {
+        "id": 236,
+        "organization_id": 3
+      },
+      {
+        "id": 237,
+        "organization_id": 3
+      },
+      {
+        "id": 238,
+        "organization_id": 3
+      },
+      {
+        "id": 240,
+        "organization_id": 3
+      },
+      {
+        "id": 241,
+        "organization_id": 3
+      },
+      {
+        "id": 242,
+        "organization_id": 3
+      },
+      {
+        "id": 243,
+        "organization_id": 3
+      },
+      {
+        "id": 55,
+        "organization_id": 3
+      },
+      {
+        "id": 335,
+        "organization_id": 3
+      },
+      {
+        "id": 324,
+        "organization_id": 2
+      },
+      {
+        "id": 314,
+        "organization_id": 3
+      },
+      {
+        "id": 336,
+        "organization_id": 3
+      },
+      {
+        "id": 315,
+        "organization_id": 3
+      },
+      {
+        "id": 316,
+        "organization_id": 3
+      },
+      {
+        "id": 317,
+        "organization_id": 3
+      },
+      {
+        "id": 305,
+        "organization_id": 3
+      },
+      {
+        "id": 306,
+        "organization_id": 3
+      },
+      {
+        "id": 318,
+        "organization_id": 3
+      },
+      {
+        "id": 307,
+        "organization_id": 3
+      },
+      {
+        "id": 319,
+        "organization_id": 3
+      },
+      {
+        "id": 320,
+        "organization_id": 3
+      },
+      {
+        "id": 321,
+        "organization_id": 3
+      },
+      {
+        "id": 325,
+        "organization_id": 3
+      },
+      {
+        "id": 322,
+        "organization_id": 3
+      },
+      {
+        "id": 337,
+        "organization_id": 3
+      },
+      {
+        "id": 326,
+        "organization_id": 3
+      },
+      {
+        "id": 327,
+        "organization_id": 3
+      },
+      {
+        "id": 323,
+        "organization_id": 1
+      },
+      {
+        "id": 328,
+        "organization_id": 3
+      },
+      {
+        "id": 329,
+        "organization_id": 3
+      },
+      {
+        "id": 330,
+        "organization_id": 3
+      },
+      {
+        "id": 331,
+        "organization_id": 3
+      },
+      {
+        "id": 332,
+        "organization_id": 3
+      },
+      {
+        "id": 333,
+        "organization_id": 3
+      },
+      {
+        "id": 334,
+        "organization_id": 3
+      },
+      {
+        "id": 338,
+        "organization_id": 3
+      },
+      {
+        "id": 339,
+        "organization_id": 3
+      },
+      {
+        "id": 340,
+        "organization_id": 3
+      },
+      {
+        "id": 341,
+        "organization_id": 3
+      },
+      {
+        "id": 342,
+        "organization_id": 3
+      },
+      {
+        "id": 343,
+        "organization_id": 3
+      },
+      {
+        "id": 344,
+        "organization_id": 3
+      },
+      {
+        "id": 348,
+        "organization_id": 3
+      },
+      {
+        "id": 345,
+        "organization_id": 3
+      },
+      {
+        "id": 346,
+        "organization_id": 3
+      },
+      {
+        "id": 349,
+        "organization_id": 3
+      },
+      {
+        "id": 347,
+        "organization_id": 3
+      },
+      {
+        "id": 350,
+        "organization_id": 3
+      },
+      {
+        "id": 351,
+        "organization_id": 3
+      },
+      {
+        "id": 352,
+        "organization_id": 3
+      },
+      {
+        "id": 353,
+        "organization_id": 3
+      },
+      {
+        "id": 354,
+        "organization_id": 3
+      },
+      {
+        "id": 14,
+        "organization_id": 2
+      },
+      {
+        "id": 13,
+        "organization_id": 1
+      },
+      {
+        "id": 101,
+        "organization_id": 3
+      }
+    ],
+    "works": [
+      {
+        "id": 1,
+        "organization_id": 1,
+        "conversation_id": 1,
+        "claimed_at": "2026-10-01 03:00:46.988207+00:00",
+        "completed_at": "2026-10-01 03:00:47.358688+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 44,
+        "organization_id": 3,
+        "conversation_id": 30,
+        "claimed_at": "2026-10-01 03:02:31.291663+00:00",
+        "completed_at": "2026-10-01 03:02:33.503990+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 2,
+        "organization_id": 2,
+        "conversation_id": 2,
+        "claimed_at": "2026-10-01 03:00:47.871194+00:00",
+        "completed_at": "2026-10-01 03:00:48.179489+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 3,
+        "organization_id": 3,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 03:00:57.336422+00:00",
+        "completed_at": "2026-10-01 03:01:01.205074+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 21,
+        "organization_id": 3,
+        "conversation_id": 15,
+        "claimed_at": "2026-10-01 03:01:44.653405+00:00",
+        "completed_at": "2026-10-01 03:01:46.903897+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 4,
+        "organization_id": 3,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 03:01:01.585274+00:00",
+        "completed_at": "2026-10-01 03:01:06.096656+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 5,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:01:04.679452+00:00",
+        "completed_at": "2026-10-01 03:01:06.836897+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 9,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:01:14.340004+00:00",
+        "completed_at": "2026-10-01 03:01:16.414451+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 6,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:01:07.223423+00:00",
+        "completed_at": "2026-10-01 03:01:09.326854+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 7,
+        "organization_id": 3,
+        "conversation_id": 5,
+        "claimed_at": "2026-10-01 03:01:07.953091+00:00",
+        "completed_at": "2026-10-01 03:01:09.890445+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 11,
+        "organization_id": 1,
+        "conversation_id": 35,
+        "claimed_at": "2026-10-01 03:01:16.196453+00:00",
+        "completed_at": "2026-10-01 03:01:16.495404+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 8,
+        "organization_id": 3,
+        "conversation_id": 6,
+        "claimed_at": "2026-10-01 03:01:10.481480+00:00",
+        "completed_at": "2026-10-01 03:01:12.509986+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 12,
+        "organization_id": 2,
+        "conversation_id": 36,
+        "claimed_at": "2026-10-01 03:01:16.972326+00:00",
+        "completed_at": "2026-10-01 03:01:17.262143+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 10,
+        "organization_id": 3,
+        "conversation_id": 7,
+        "claimed_at": "2026-10-01 03:01:14.775247+00:00",
+        "completed_at": "2026-10-01 03:01:26.947021+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 3
+      },
+      {
+        "id": 15,
+        "organization_id": 3,
+        "conversation_id": 10,
+        "claimed_at": "2026-10-01 03:01:33.055372+00:00",
+        "completed_at": "2026-10-01 03:01:35.319474+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 19,
+        "organization_id": 3,
+        "conversation_id": 12,
+        "claimed_at": "2026-10-01 03:01:40.826729+00:00",
+        "completed_at": "2026-10-01 03:01:42.860303+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 13,
+        "organization_id": 3,
+        "conversation_id": 8,
+        "claimed_at": "2026-10-01 03:01:27.344082+00:00",
+        "completed_at": "2026-10-01 03:01:29.368416+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 14,
+        "organization_id": 3,
+        "conversation_id": 9,
+        "claimed_at": "2026-10-01 03:01:30.335434+00:00",
+        "completed_at": "2026-10-01 03:01:32.564495+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 16,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:01:34.894839+00:00",
+        "completed_at": "2026-10-01 03:01:37.104002+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 17,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:01:36.496296+00:00",
+        "completed_at": "2026-10-01 03:01:38.564474+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 18,
+        "organization_id": 3,
+        "conversation_id": 11,
+        "claimed_at": "2026-10-01 03:01:38.218719+00:00",
+        "completed_at": "2026-10-01 03:01:40.292899+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 23,
+        "organization_id": 2,
+        "conversation_id": 68,
+        "claimed_at": "2026-10-01 03:01:46.982851+00:00",
+        "completed_at": "2026-10-01 03:01:47.247449+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 20,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:01:44.025163+00:00",
+        "completed_at": "2026-10-01 03:01:46.099980+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 22,
+        "organization_id": 1,
+        "conversation_id": 67,
+        "claimed_at": "2026-10-01 03:01:46.103276+00:00",
+        "completed_at": "2026-10-01 03:01:46.421029+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 28,
+        "organization_id": 3,
+        "conversation_id": 20,
+        "claimed_at": "2026-10-01 03:01:57.988944+00:00",
+        "completed_at": "2026-10-01 03:02:00.104787+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 25,
+        "organization_id": 3,
+        "conversation_id": 17,
+        "claimed_at": "2026-10-01 03:01:50.240076+00:00",
+        "completed_at": "2026-10-01 03:01:52.213932+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 24,
+        "organization_id": 3,
+        "conversation_id": 16,
+        "claimed_at": "2026-10-01 03:01:47.238952+00:00",
+        "completed_at": "2026-10-01 03:01:49.276805+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 27,
+        "organization_id": 3,
+        "conversation_id": 19,
+        "claimed_at": "2026-10-01 03:01:55.530333+00:00",
+        "completed_at": "2026-10-01 03:01:57.522210+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 26,
+        "organization_id": 3,
+        "conversation_id": 18,
+        "claimed_at": "2026-10-01 03:01:52.584978+00:00",
+        "completed_at": "2026-10-01 03:01:54.658449+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 29,
+        "organization_id": 3,
+        "conversation_id": 21,
+        "claimed_at": "2026-10-01 03:02:00.981246+00:00",
+        "completed_at": "2026-10-01 03:02:02.978336+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 30,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:02:04.140770+00:00",
+        "completed_at": "2026-10-01 03:02:06.185812+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 31,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:02:04.532393+00:00",
+        "completed_at": "2026-10-01 03:02:06.577924+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 32,
+        "organization_id": 3,
+        "conversation_id": 22,
+        "claimed_at": "2026-10-01 03:02:07.310755+00:00",
+        "completed_at": "2026-10-01 03:02:09.345963+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 33,
+        "organization_id": 3,
+        "conversation_id": 23,
+        "claimed_at": "2026-10-01 03:02:09.970813+00:00",
+        "completed_at": "2026-10-01 03:02:11.863291+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 34,
+        "organization_id": 3,
+        "conversation_id": 24,
+        "claimed_at": "2026-10-01 03:02:12.625939+00:00",
+        "completed_at": "2026-10-01 03:02:14.530561+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 36,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:02:15.662007+00:00",
+        "completed_at": "2026-10-01 03:02:17.966755+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 35,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:02:14.134906+00:00",
+        "completed_at": "2026-10-01 03:02:16.255241+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 43,
+        "organization_id": 3,
+        "conversation_id": 29,
+        "claimed_at": "2026-10-01 03:02:28.396790+00:00",
+        "completed_at": "2026-10-01 03:02:30.881742+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 72,
+        "organization_id": 3,
+        "conversation_id": 48,
+        "claimed_at": "2026-10-01 03:03:28.716112+00:00",
+        "completed_at": "2026-10-01 03:03:31.010883+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 39,
+        "organization_id": 3,
+        "conversation_id": 25,
+        "claimed_at": "2026-10-01 03:02:17.463431+00:00",
+        "completed_at": "2026-10-01 03:02:19.611639+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 79,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:03:44.789821+00:00",
+        "completed_at": "2026-10-01 03:03:46.824595+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 45,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:02:34.670187+00:00",
+        "completed_at": "2026-10-01 03:02:36.871561+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 73,
+        "organization_id": 3,
+        "conversation_id": 49,
+        "claimed_at": "2026-10-01 03:03:31.665214+00:00",
+        "completed_at": "2026-10-01 03:03:33.742591+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 41,
+        "organization_id": 3,
+        "conversation_id": 27,
+        "claimed_at": "2026-10-01 03:02:23.021865+00:00",
+        "completed_at": "2026-10-01 03:02:25.026445+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 60,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:03:04.491938+00:00",
+        "completed_at": "2026-10-01 03:03:06.463492+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 48,
+        "organization_id": 3,
+        "conversation_id": 32,
+        "claimed_at": "2026-10-01 03:02:40.308554+00:00",
+        "completed_at": "2026-10-01 03:02:42.255017+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 90,
+        "organization_id": 3,
+        "conversation_id": 58,
+        "claimed_at": "2026-10-01 03:04:08.837586+00:00",
+        "completed_at": "2026-10-01 03:04:10.890781+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 75,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:03:34.928833+00:00",
+        "completed_at": "2026-10-01 03:03:36.759017+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 86,
+        "organization_id": 3,
+        "conversation_id": 56,
+        "claimed_at": "2026-10-01 03:03:59.439473+00:00",
+        "completed_at": "2026-10-01 03:04:01.456867+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 50,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:02:44.546687+00:00",
+        "completed_at": "2026-10-01 03:02:46.535099+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 83,
+        "organization_id": 3,
+        "conversation_id": 53,
+        "claimed_at": "2026-10-01 03:03:50.494791+00:00",
+        "completed_at": "2026-10-01 03:03:52.493292+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 62,
+        "organization_id": 3,
+        "conversation_id": 42,
+        "claimed_at": "2026-10-01 03:03:07.707888+00:00",
+        "completed_at": "2026-10-01 03:03:09.704956+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 54,
+        "organization_id": 3,
+        "conversation_id": 34,
+        "claimed_at": "2026-10-01 03:02:47.720912+00:00",
+        "completed_at": "2026-10-01 03:02:49.828748+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 77,
+        "organization_id": 3,
+        "conversation_id": 51,
+        "claimed_at": "2026-10-01 03:03:40.268110+00:00",
+        "completed_at": "2026-10-01 03:03:42.229637+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 56,
+        "organization_id": 3,
+        "conversation_id": 38,
+        "claimed_at": "2026-10-01 03:02:52.207271+00:00",
+        "completed_at": "2026-10-01 03:02:54.386949+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 64,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:03:14.328400+00:00",
+        "completed_at": "2026-10-01 03:03:16.371484+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 58,
+        "organization_id": 3,
+        "conversation_id": 40,
+        "claimed_at": "2026-10-01 03:02:57.816896+00:00",
+        "completed_at": "2026-10-01 03:02:59.743596+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 84,
+        "organization_id": 3,
+        "conversation_id": 54,
+        "claimed_at": "2026-10-01 03:03:53.699385+00:00",
+        "completed_at": "2026-10-01 03:03:55.694583+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 88,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:04:05.427879+00:00",
+        "completed_at": "2026-10-01 03:04:07.474981+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 68,
+        "organization_id": 3,
+        "conversation_id": 44,
+        "claimed_at": "2026-10-01 03:03:17.591170+00:00",
+        "completed_at": "2026-10-01 03:03:19.609383+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 97,
+        "organization_id": 3,
+        "conversation_id": 61,
+        "claimed_at": "2026-10-01 03:04:21.183551+00:00",
+        "completed_at": "2026-10-01 03:04:23.351706+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 70,
+        "organization_id": 3,
+        "conversation_id": 46,
+        "claimed_at": "2026-10-01 03:03:23.230796+00:00",
+        "completed_at": "2026-10-01 03:03:25.202515+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 93,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:04:14.823499+00:00",
+        "completed_at": "2026-10-01 03:04:17.251082+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 99,
+        "organization_id": 3,
+        "conversation_id": 63,
+        "claimed_at": "2026-10-01 03:04:26.944395+00:00",
+        "completed_at": "2026-10-01 03:04:28.997310+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 101,
+        "organization_id": 3,
+        "conversation_id": 65,
+        "claimed_at": "2026-10-01 03:04:32.799436+00:00",
+        "completed_at": "2026-10-01 03:04:34.789481+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 103,
+        "organization_id": 3,
+        "conversation_id": 66,
+        "claimed_at": "2026-10-01 03:04:36.173574+00:00",
+        "completed_at": "2026-10-01 03:04:38.342932+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 109,
+        "organization_id": 3,
+        "conversation_id": 71,
+        "claimed_at": "2026-10-01 03:04:46.361429+00:00",
+        "completed_at": "2026-10-01 03:04:48.469440+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 105,
+        "organization_id": 3,
+        "conversation_id": 69,
+        "claimed_at": "2026-10-01 03:04:39.586289+00:00",
+        "completed_at": "2026-10-01 03:04:41.573870+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 106,
+        "organization_id": 3,
+        "conversation_id": 70,
+        "claimed_at": "2026-10-01 03:04:42.922726+00:00",
+        "completed_at": "2026-10-01 03:04:44.998283+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 112,
+        "organization_id": 3,
+        "conversation_id": 73,
+        "claimed_at": "2026-10-01 03:04:52.454861+00:00",
+        "completed_at": "2026-10-01 03:04:54.401041+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 114,
+        "organization_id": 3,
+        "conversation_id": 75,
+        "claimed_at": "2026-10-01 03:04:58.364231+00:00",
+        "completed_at": "2026-10-01 03:05:00.414983+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 116,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:05:04.262051+00:00",
+        "completed_at": "2026-10-01 03:05:06.143026+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 37,
+        "organization_id": 1,
+        "conversation_id": 99,
+        "claimed_at": "2026-10-01 03:02:16.209313+00:00",
+        "completed_at": "2026-10-01 03:02:16.506474+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 46,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:02:34.770203+00:00",
+        "completed_at": "2026-10-01 03:02:36.788627+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 38,
+        "organization_id": 2,
+        "conversation_id": 100,
+        "claimed_at": "2026-10-01 03:02:16.995187+00:00",
+        "completed_at": "2026-10-01 03:02:17.262363+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 91,
+        "organization_id": 3,
+        "conversation_id": 59,
+        "claimed_at": "2026-10-01 03:04:11.381040+00:00",
+        "completed_at": "2026-10-01 03:04:13.409952+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 74,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:03:34.584766+00:00",
+        "completed_at": "2026-10-01 03:03:36.393311+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 47,
+        "organization_id": 3,
+        "conversation_id": 31,
+        "claimed_at": "2026-10-01 03:02:37.965074+00:00",
+        "completed_at": "2026-10-01 03:02:40.027233+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 85,
+        "organization_id": 3,
+        "conversation_id": 55,
+        "claimed_at": "2026-10-01 03:03:56.013905+00:00",
+        "completed_at": "2026-10-01 03:03:58.382655+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 61,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:03:05.023160+00:00",
+        "completed_at": "2026-10-01 03:03:07.071812+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 76,
+        "organization_id": 3,
+        "conversation_id": 50,
+        "claimed_at": "2026-10-01 03:03:37.554654+00:00",
+        "completed_at": "2026-10-01 03:03:39.489482+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 49,
+        "organization_id": 3,
+        "conversation_id": 33,
+        "claimed_at": "2026-10-01 03:02:42.390068+00:00",
+        "completed_at": "2026-10-01 03:02:44.431454+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 51,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:02:45.578166+00:00",
+        "completed_at": "2026-10-01 03:02:47.598813+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 78,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:03:44.342246+00:00",
+        "completed_at": "2026-10-01 03:03:46.376098+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 63,
+        "organization_id": 3,
+        "conversation_id": 43,
+        "claimed_at": "2026-10-01 03:03:10.639218+00:00",
+        "completed_at": "2026-10-01 03:03:12.556272+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 55,
+        "organization_id": 3,
+        "conversation_id": 37,
+        "claimed_at": "2026-10-01 03:02:49.987656+00:00",
+        "completed_at": "2026-10-01 03:02:52.058397+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 87,
+        "organization_id": 3,
+        "conversation_id": 57,
+        "claimed_at": "2026-10-01 03:04:02.140607+00:00",
+        "completed_at": "2026-10-01 03:04:04.164187+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 82,
+        "organization_id": 3,
+        "conversation_id": 52,
+        "claimed_at": "2026-10-01 03:03:47.805440+00:00",
+        "completed_at": "2026-10-01 03:03:50.034443+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 57,
+        "organization_id": 3,
+        "conversation_id": 39,
+        "claimed_at": "2026-10-01 03:02:55.540233+00:00",
+        "completed_at": "2026-10-01 03:02:57.372505+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 59,
+        "organization_id": 3,
+        "conversation_id": 41,
+        "claimed_at": "2026-10-01 03:03:00.724157+00:00",
+        "completed_at": "2026-10-01 03:03:02.623223+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 65,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:03:14.911399+00:00",
+        "completed_at": "2026-10-01 03:03:16.970498+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 89,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:04:05.458373+00:00",
+        "completed_at": "2026-10-01 03:04:07.575525+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 69,
+        "organization_id": 3,
+        "conversation_id": 45,
+        "claimed_at": "2026-10-01 03:03:20.492514+00:00",
+        "completed_at": "2026-10-01 03:03:22.451428+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 92,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:04:14.741561+00:00",
+        "completed_at": "2026-10-01 03:04:17.164112+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 98,
+        "organization_id": 3,
+        "conversation_id": 62,
+        "claimed_at": "2026-10-01 03:04:24.563831+00:00",
+        "completed_at": "2026-10-01 03:04:26.501645+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 71,
+        "organization_id": 3,
+        "conversation_id": 47,
+        "claimed_at": "2026-10-01 03:03:25.960861+00:00",
+        "completed_at": "2026-10-01 03:03:28.055711+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 107,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:04:44.428282+00:00",
+        "completed_at": "2026-10-01 03:04:46.531185+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 96,
+        "organization_id": 3,
+        "conversation_id": 60,
+        "claimed_at": "2026-10-01 03:04:18.574374+00:00",
+        "completed_at": "2026-10-01 03:04:20.872478+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 104,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:04:38.285535+00:00",
+        "completed_at": "2026-10-01 03:04:40.406489+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 100,
+        "organization_id": 3,
+        "conversation_id": 64,
+        "claimed_at": "2026-10-01 03:04:30.090557+00:00",
+        "completed_at": "2026-10-01 03:04:32.192546+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 102,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:04:34.770816+00:00",
+        "completed_at": "2026-10-01 03:04:36.832296+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 111,
+        "organization_id": 3,
+        "conversation_id": 72,
+        "claimed_at": "2026-10-01 03:04:49.144184+00:00",
+        "completed_at": "2026-10-01 03:04:51.314716+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 117,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:05:04.545436+00:00",
+        "completed_at": "2026-10-01 03:05:06.407351+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 113,
+        "organization_id": 3,
+        "conversation_id": 74,
+        "claimed_at": "2026-10-01 03:04:55.214110+00:00",
+        "completed_at": "2026-10-01 03:04:57.456387+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 115,
+        "organization_id": 3,
+        "conversation_id": 76,
+        "claimed_at": "2026-10-01 03:05:01.444421+00:00",
+        "completed_at": "2026-10-01 03:05:03.329290+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 118,
+        "organization_id": 3,
+        "conversation_id": 77,
+        "claimed_at": "2026-10-01 03:05:07.374120+00:00",
+        "completed_at": "2026-10-01 03:05:09.284852+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 119,
+        "organization_id": 3,
+        "conversation_id": 78,
+        "claimed_at": "2026-10-01 03:05:10.144422+00:00",
+        "completed_at": "2026-10-01 03:05:12.167592+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 120,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:05:14.573893+00:00",
+        "completed_at": "2026-10-01 03:05:16.602037+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 131,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:05:35.996149+00:00",
+        "completed_at": "2026-10-01 03:05:38.199421+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 40,
+        "organization_id": 3,
+        "conversation_id": 26,
+        "claimed_at": "2026-10-01 03:02:20.240998+00:00",
+        "completed_at": "2026-10-01 03:02:22.187055+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 128,
+        "organization_id": 3,
+        "conversation_id": 83,
+        "claimed_at": "2026-10-01 03:05:29.267197+00:00",
+        "completed_at": "2026-10-01 03:05:31.472847+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 52,
+        "organization_id": 1,
+        "conversation_id": 131,
+        "claimed_at": "2026-10-01 03:02:46.093968+00:00",
+        "completed_at": "2026-10-01 03:02:46.354902+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 80,
+        "organization_id": 1,
+        "conversation_id": 195,
+        "claimed_at": "2026-10-01 03:03:46.156729+00:00",
+        "completed_at": "2026-10-01 03:03:46.529771+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 42,
+        "organization_id": 3,
+        "conversation_id": 28,
+        "claimed_at": "2026-10-01 03:02:25.561164+00:00",
+        "completed_at": "2026-10-01 03:02:27.517673+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 53,
+        "organization_id": 2,
+        "conversation_id": 132,
+        "claimed_at": "2026-10-01 03:02:46.849130+00:00",
+        "completed_at": "2026-10-01 03:02:47.099074+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 81,
+        "organization_id": 2,
+        "conversation_id": 196,
+        "claimed_at": "2026-10-01 03:03:47.271605+00:00",
+        "completed_at": "2026-10-01 03:03:47.705163+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 66,
+        "organization_id": 1,
+        "conversation_id": 163,
+        "claimed_at": "2026-10-01 03:03:16.244431+00:00",
+        "completed_at": "2026-10-01 03:03:16.541661+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 129,
+        "organization_id": 3,
+        "conversation_id": 84,
+        "claimed_at": "2026-10-01 03:05:32.477514+00:00",
+        "completed_at": "2026-10-01 03:05:34.671884+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 67,
+        "organization_id": 2,
+        "conversation_id": 164,
+        "claimed_at": "2026-10-01 03:03:16.994055+00:00",
+        "completed_at": "2026-10-01 03:03:17.291565+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 94,
+        "organization_id": 1,
+        "conversation_id": 227,
+        "claimed_at": "2026-10-01 03:04:16.207166+00:00",
+        "completed_at": "2026-10-01 03:04:16.565902+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 134,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:05:44.421069+00:00",
+        "completed_at": "2026-10-01 03:05:46.470816+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 95,
+        "organization_id": 2,
+        "conversation_id": 228,
+        "claimed_at": "2026-10-01 03:04:17.165308+00:00",
+        "completed_at": "2026-10-01 03:04:17.557773+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 108,
+        "organization_id": 1,
+        "conversation_id": 259,
+        "claimed_at": "2026-10-01 03:04:46.127119+00:00",
+        "completed_at": "2026-10-01 03:04:46.499174+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 130,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:05:34.485956+00:00",
+        "completed_at": "2026-10-01 03:05:36.430353+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 132,
+        "organization_id": 3,
+        "conversation_id": 85,
+        "claimed_at": "2026-10-01 03:05:37.744208+00:00",
+        "completed_at": "2026-10-01 03:05:39.875839+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 110,
+        "organization_id": 2,
+        "conversation_id": 260,
+        "claimed_at": "2026-10-01 03:04:46.919414+00:00",
+        "completed_at": "2026-10-01 03:04:47.212772+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 124,
+        "organization_id": 3,
+        "conversation_id": 79,
+        "claimed_at": "2026-10-01 03:05:17.836608+00:00",
+        "completed_at": "2026-10-01 03:05:19.748551+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 122,
+        "organization_id": 1,
+        "conversation_id": 291,
+        "claimed_at": "2026-10-01 03:05:16.086068+00:00",
+        "completed_at": "2026-10-01 03:05:16.359135+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 121,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:05:14.902163+00:00",
+        "completed_at": "2026-10-01 03:05:16.994567+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 123,
+        "organization_id": 2,
+        "conversation_id": 292,
+        "claimed_at": "2026-10-01 03:05:16.889450+00:00",
+        "completed_at": "2026-10-01 03:05:17.178386+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 135,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:05:45.447253+00:00",
+        "completed_at": "2026-10-01 03:05:47.475828+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 133,
+        "organization_id": 3,
+        "conversation_id": 86,
+        "claimed_at": "2026-10-01 03:05:40.772913+00:00",
+        "completed_at": "2026-10-01 03:05:42.813978+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 125,
+        "organization_id": 3,
+        "conversation_id": 80,
+        "claimed_at": "2026-10-01 03:05:20.577579+00:00",
+        "completed_at": "2026-10-01 03:05:22.483642+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 136,
+        "organization_id": 1,
+        "conversation_id": 323,
+        "claimed_at": "2026-10-01 03:05:46.106442+00:00",
+        "completed_at": "2026-10-01 03:05:46.409797+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 126,
+        "organization_id": 3,
+        "conversation_id": 81,
+        "claimed_at": "2026-10-01 03:05:23.443873+00:00",
+        "completed_at": "2026-10-01 03:05:25.353508+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 137,
+        "organization_id": 2,
+        "conversation_id": 324,
+        "claimed_at": "2026-10-01 03:05:46.868477+00:00",
+        "completed_at": "2026-10-01 03:05:47.126200+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 138,
+        "organization_id": 3,
+        "conversation_id": 87,
+        "claimed_at": "2026-10-01 03:05:47.811070+00:00",
+        "completed_at": "2026-10-01 03:05:49.765270+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 127,
+        "organization_id": 3,
+        "conversation_id": 82,
+        "claimed_at": "2026-10-01 03:05:26.306570+00:00",
+        "completed_at": "2026-10-01 03:05:28.388347+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 139,
+        "organization_id": 3,
+        "conversation_id": 88,
+        "claimed_at": "2026-10-01 03:05:50.088605+00:00",
+        "completed_at": "2026-10-01 03:05:51.944631+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 140,
+        "organization_id": 3,
+        "conversation_id": 89,
+        "claimed_at": "2026-10-01 03:05:52.422237+00:00",
+        "completed_at": "2026-10-01 03:05:54.521914+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 141,
+        "organization_id": 3,
+        "conversation_id": 90,
+        "claimed_at": "2026-10-01 03:05:55.886415+00:00",
+        "completed_at": "2026-10-01 03:05:58.015705+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 142,
+        "organization_id": 3,
+        "conversation_id": 91,
+        "claimed_at": "2026-10-01 03:05:59.013512+00:00",
+        "completed_at": "2026-10-01 03:06:01.218212+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 143,
+        "organization_id": 3,
+        "conversation_id": 92,
+        "claimed_at": "2026-10-01 03:06:02.219482+00:00",
+        "completed_at": "2026-10-01 03:06:04.311959+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 144,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:06:05.379849+00:00",
+        "completed_at": "2026-10-01 03:06:07.244519+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 145,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:06:05.666198+00:00",
+        "completed_at": "2026-10-01 03:06:07.514077+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 147,
+        "organization_id": 3,
+        "conversation_id": 94,
+        "claimed_at": "2026-10-01 03:06:12.096533+00:00",
+        "completed_at": "2026-10-01 03:06:14.089026+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 149,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 03:06:15.480038+00:00",
+        "completed_at": "2026-10-01 03:06:17.361820+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 151,
+        "organization_id": 3,
+        "conversation_id": 96,
+        "claimed_at": "2026-10-01 03:06:21.488313+00:00",
+        "completed_at": "2026-10-01 03:06:23.405434+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 153,
+        "organization_id": 3,
+        "conversation_id": 98,
+        "claimed_at": "2026-10-01 03:06:27.322594+00:00",
+        "completed_at": "2026-10-01 03:06:29.293213+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 146,
+        "organization_id": 3,
+        "conversation_id": 93,
+        "claimed_at": "2026-10-01 03:06:08.613129+00:00",
+        "completed_at": "2026-10-01 03:06:10.827378+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 148,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 03:06:15.277830+00:00",
+        "completed_at": "2026-10-01 03:06:17.120598+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 150,
+        "organization_id": 3,
+        "conversation_id": 95,
+        "claimed_at": "2026-10-01 03:06:18.516712+00:00",
+        "completed_at": "2026-10-01 03:06:20.539663+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 152,
+        "organization_id": 3,
+        "conversation_id": 97,
+        "claimed_at": "2026-10-01 03:06:24.448949+00:00",
+        "completed_at": "2026-10-01 03:06:26.280730+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 154,
+        "organization_id": 3,
+        "conversation_id": 101,
+        "claimed_at": "2026-10-01 03:06:30.304158+00:00",
+        "completed_at": "2026-10-01 03:06:32.452377+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 155,
+        "organization_id": 3,
+        "conversation_id": 102,
+        "claimed_at": "2026-10-01 03:06:33.498544+00:00",
+        "completed_at": "2026-10-01 03:06:35.510041+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 156,
+        "organization_id": 3,
+        "conversation_id": 103,
+        "claimed_at": "2026-10-01 03:06:36.487019+00:00",
+        "completed_at": null,
+        "status": "PROCESSING",
+        "outcome_code": "",
+        "llm_calls_admitted": 0
+      }
+    ]
+  },
+  "e4_classification": "DIAGNOSTIC_ONLY",
+  "e4_overrides": {},
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "smoke_only": false
+}

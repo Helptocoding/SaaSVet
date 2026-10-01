@@ -1,0 +1,5661 @@
+{
+  "scenario": "blocked_llm",
+  "window_utc": [
+    "2026-10-01T00:04:37.116716+00:00",
+    "2026-10-01T00:09:37.116716+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 66756,
+      "backend_pid": 69792,
+      "role": "planner-1",
+      "scenario": "blocked_llm"
+    },
+    {
+      "pid": 70028,
+      "backend_pid": 20820,
+      "role": "planner-2",
+      "scenario": "blocked_llm"
+    },
+    {
+      "pid": 75788,
+      "backend_pid": 76300,
+      "role": "sender",
+      "scenario": "blocked_llm"
+    }
+  ],
+  "inbound_count": 360,
+  "outbound_count": 147,
+  "healthy_claim": {
+    "count": 60,
+    "p95_seconds": 10.39652,
+    "max_seconds": 10.588053,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 20,
+    "p95_seconds": 3.117009,
+    "max_seconds": 3.117009
+  },
+  "outbox_dispatch": {
+    "count": 147,
+    "p95_seconds": 2.543384,
+    "max_seconds": 3.117009,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 1,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 6,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 13,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 18,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 20,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 22,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 25,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 24,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 30,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 26,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 35,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 31,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 40,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 38,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 45,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 41,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 50,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 45,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 47,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 60,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 49,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 65,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 53,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 70,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 58,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 75,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 61,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 80,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          "IO",
+          "WALWrite",
+          1
+        ]
+      ],
+      "pending_inbound": 66,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 85,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 67,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 90,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 69,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 95,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 73,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 100,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 78,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 105,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 81,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 110,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 85,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 115,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 88,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 120,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 89,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 125,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 93,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 130,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 98,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 135,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 101,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 140,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 104,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 145,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 108,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 150,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 109,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 155,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 113,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 160,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 117,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 165,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 120,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 170,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 124,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 175,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 127,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 180,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 129,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 185,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 132,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 190,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 137,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 195,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 140,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 200,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 144,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 205,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 145,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 210,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 147,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 215,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 151,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 220,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 155,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 225,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 158,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 230,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 162,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 235,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 164,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 240,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 165,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 245,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 169,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 250,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 173,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 255,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 176,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 260,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 180,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 265,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 182,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 270,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 183,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 275,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 187,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 280,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 192,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 285,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 195,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 290,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 200,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 295,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          "IO",
+          "WALWrite",
+          1
+        ]
+      ],
+      "pending_inbound": 201,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 300,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 203,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 305,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 207,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 310,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 212,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 315,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 215,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 320,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 219,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 325,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 222,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      33,
+      33,
+      330
+    ],
+    "safety": 22,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "PROCESSING",
+      "count": 1
+    },
+    {
+      "status": "COMPLETED",
+      "count": 174
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "sent",
+      "count": 164
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 222,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": false,
+    "safety_dispatch_p95_le_5": true
+  },
+  "technical_pass": false,
+  "monotonic_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "organizations": [
+      {
+        "organization": 0,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 20,
+          "p50_seconds": 7.943464,
+          "p95_seconds": 7.951843,
+          "max_seconds": 7.951843
+        },
+        "eligible_to_claim": {
+          "count": 20,
+          "p50_seconds": 0.300933,
+          "p95_seconds": 1.056157,
+          "max_seconds": 1.056157
+        },
+        "persisted_to_claim": {
+          "count": 20,
+          "p50_seconds": 8.240101,
+          "p95_seconds": 8.976122,
+          "max_seconds": 8.976122
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 30,
+        "calls": 40,
+        "calls_per_work": 1.3333333333333333,
+        "calls_per_dialogue": 3.6363636363636362,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 10
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 20
+          }
+        ],
+        "deferrals": 6
+      },
+      {
+        "organization": 1,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 20,
+          "p50_seconds": 7.934228,
+          "p95_seconds": 7.951351,
+          "max_seconds": 7.951351
+        },
+        "eligible_to_claim": {
+          "count": 20,
+          "p50_seconds": 0.847075,
+          "p95_seconds": 2.644549,
+          "max_seconds": 2.644549
+        },
+        "persisted_to_claim": {
+          "count": 20,
+          "p50_seconds": 8.793251,
+          "p95_seconds": 10.588053,
+          "max_seconds": 10.588053
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 6,
+        "works": 23,
+        "calls": 26,
+        "calls_per_work": 1.1304347826086956,
+        "calls_per_dialogue": 2.3636363636363638,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 10
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 13
+          }
+        ],
+        "deferrals": 3
+      },
+      {
+        "organization": 2,
+        "healthy": false,
+        "persisted_to_eligible": {
+          "count": 300,
+          "p50_seconds": 7.942718,
+          "p95_seconds": 7.949142,
+          "max_seconds": 7.953203
+        },
+        "eligible_to_claim": {
+          "count": 86,
+          "p50_seconds": 152.356907,
+          "p95_seconds": 219.704102,
+          "max_seconds": 226.846682
+        },
+        "persisted_to_claim": {
+          "count": 86,
+          "p50_seconds": 160.281016,
+          "p95_seconds": 227.650328,
+          "max_seconds": 234.794762
+        },
+        "missing_claim": 214,
+        "joined_ready_inbounds": 0,
+        "works": 103,
+        "calls": 206,
+        "calls_per_work": 2.0,
+        "calls_per_dialogue": 2.0,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 2,
+            "count": 103
+          }
+        ],
+        "deferrals": 0
+      }
+    ],
+    "eligibility": "max(created_at, available_at); NULL => created_at",
+    "acceptance_run": false,
+    "profile_conditions": "PROFILE-BETA-1 v1 unchanged"
+  },
+  "claim_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "acceptance_run": false,
+    "postgresql": [
+      "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "on",
+      "on"
+    ],
+    "cross_tenant_or_membership": 0,
+    "selector_plan": [
+      {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 837.12,
+          "Total Cost": 838.04,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Actual Startup Time": 4.468,
+          "Actual Total Time": 4.475,
+          "Actual Rows": 0,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 57,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 837.12,
+              "Total Cost": 838.04,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Actual Startup Time": 4.466,
+              "Actual Total Time": 4.473,
+              "Actual Rows": 0,
+              "Actual Loops": 1,
+              "Filter": "(qualify.qual0 = 1)",
+              "Rows Removed by Filter": 0,
+              "Shared Hit Blocks": 57,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 837.12,
+                  "Total Cost": 837.28,
+                  "Plan Rows": 61,
+                  "Plan Width": 40,
+                  "Actual Startup Time": 4.461,
+                  "Actual Total Time": 4.467,
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 25,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 57,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 92.95,
+                      "Total Cost": 835.32,
+                      "Plan Rows": 61,
+                      "Plan Width": 40,
+                      "Actual Startup Time": 4.45,
+                      "Actual Total Time": 4.456,
+                      "Actual Rows": 0,
+                      "Actual Loops": 1,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Shared Hit Blocks": 57,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 92.95,
+                          "Total Cost": 93.1,
+                          "Plan Rows": 61,
+                          "Plan Width": 24,
+                          "Actual Startup Time": 4.434,
+                          "Actual Total Time": 4.439,
+                          "Actual Rows": 0,
+                          "Actual Loops": 1,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Sort Method": "quicksort",
+                          "Sort Space Used": 25,
+                          "Sort Space Type": "Memory",
+                          "Shared Hit Blocks": 57,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Hash Join",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Anti",
+                              "Startup Cost": 78.17,
+                              "Total Cost": 91.14,
+                              "Plan Rows": 61,
+                              "Plan Width": 24,
+                              "Actual Startup Time": 4.429,
+                              "Actual Total Time": 4.434,
+                              "Actual Rows": 0,
+                              "Actual Loops": 1,
+                              "Inner Unique": false,
+                              "Hash Cond": "(agent_conversation.organization_id = u0.organization_id)",
+                              "Shared Hit Blocks": 57,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Hash Join",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Right",
+                                  "Startup Cost": 61.8,
+                                  "Total Cost": 73.64,
+                                  "Plan Rows": 159,
+                                  "Plan Width": 24,
+                                  "Actual Startup Time": 2.871,
+                                  "Actual Total Time": 3.903,
+                                  "Actual Rows": 214,
+                                  "Actual Loops": 1,
+                                  "Inner Unique": true,
+                                  "Hash Cond": "(agent_turnwork.conversation_id = agent_conversation.id)",
+                                  "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                                  "Rows Removed by Filter": 175,
+                                  "Shared Hit Blocks": 52,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Relation Name": "agent_turnwork",
+                                      "Alias": "agent_turnwork",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 11.22,
+                                      "Plan Rows": 222,
+                                      "Plan Width": 34,
+                                      "Actual Startup Time": 0.067,
+                                      "Actual Total Time": 0.274,
+                                      "Actual Rows": 175,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 9,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    },
+                                    {
+                                      "Node Type": "Hash",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 12.16,
+                                      "Total Cost": 12.16,
+                                      "Plan Rows": 316,
+                                      "Plan Width": 24,
+                                      "Actual Startup Time": 0.425,
+                                      "Actual Total Time": 0.426,
+                                      "Actual Rows": 354,
+                                      "Actual Loops": 1,
+                                      "Hash Buckets": 1024,
+                                      "Original Hash Buckets": 1024,
+                                      "Hash Batches": 1,
+                                      "Original Hash Batches": 1,
+                                      "Peak Memory Usage": 28,
+                                      "Shared Hit Blocks": 9,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Seq Scan",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "agent_conversation",
+                                          "Alias": "agent_conversation",
+                                          "Startup Cost": 0.0,
+                                          "Total Cost": 12.16,
+                                          "Plan Rows": 316,
+                                          "Plan Width": 24,
+                                          "Actual Startup Time": 0.031,
+                                          "Actual Total Time": 0.266,
+                                          "Actual Rows": 354,
+                                          "Actual Loops": 1,
+                                          "Filter": "is_active",
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 9,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Parent Relationship": "SubPlan",
+                                      "Subplan Name": "SubPlan 2",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Relation Name": "channels_message",
+                                      "Alias": "u0_2",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 45.56,
+                                      "Plan Rows": 54,
+                                      "Plan Width": 8,
+                                      "Actual Startup Time": 0.034,
+                                      "Actual Total Time": 1.699,
+                                      "Actual Rows": 214,
+                                      "Actual Loops": 1,
+                                      "Filter": "(is_active AND (turn_work_id IS NULL) AND ((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text) AND ((available_at IS NULL) OR (available_at <= statement_timestamp())))",
+                                      "Rows Removed by Filter": 346,
+                                      "Shared Hit Blocks": 34,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Hash",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Startup Cost": 16.35,
+                                  "Total Cost": 16.35,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 8,
+                                  "Actual Startup Time": 0.178,
+                                  "Actual Total Time": 0.179,
+                                  "Actual Rows": 1,
+                                  "Actual Loops": 1,
+                                  "Hash Buckets": 1024,
+                                  "Original Hash Buckets": 1024,
+                                  "Hash Batches": 1,
+                                  "Original Hash Batches": 1,
+                                  "Peak Memory Usage": 9,
+                                  "Shared Hit Blocks": 5,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Join Type": "Inner",
+                                      "Startup Cost": 0.29,
+                                      "Total Cost": 16.35,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Actual Startup Time": 0.164,
+                                      "Actual Total Time": 0.168,
+                                      "Actual Rows": 1,
+                                      "Actual Loops": 1,
+                                      "Inner Unique": true,
+                                      "Shared Hit Blocks": 5,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Scan Direction": "Forward",
+                                          "Index Name": "turnwork_poll_lease",
+                                          "Relation Name": "agent_turnwork",
+                                          "Alias": "u0",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 8.17,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 24,
+                                          "Actual Startup Time": 0.09,
+                                          "Actual Total Time": 0.092,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 1,
+                                          "Index Cond": "(((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))",
+                                          "Rows Removed by Index Recheck": 0,
+                                          "Filter": "is_active",
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 3,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        },
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Parent Relationship": "Inner",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Scan Direction": "Forward",
+                                          "Index Name": "agent_conversation_pkey",
+                                          "Relation Name": "agent_conversation",
+                                          "Alias": "u2",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 8.17,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 24,
+                                          "Actual Startup Time": 0.037,
+                                          "Actual Total Time": 0.037,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 1,
+                                          "Index Cond": "(id = u0.conversation_id)",
+                                          "Rows Removed by Index Recheck": 0,
+                                          "Filter": "((organization_id = u0.organization_id) AND (ownership_epoch = u0.ownership_epoch))",
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 2,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 12.15,
+                          "Total Cost": 12.15,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Actual Startup Time": 0.0,
+                          "Actual Total Time": 0.0,
+                          "Actual Rows": 0,
+                          "Actual Loops": 0,
+                          "Shared Hit Blocks": 0,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 12.15,
+                              "Total Cost": 12.33,
+                              "Plan Rows": 74,
+                              "Plan Width": 8,
+                              "Actual Startup Time": 0.0,
+                              "Actual Total Time": 0.0,
+                              "Actual Rows": 0,
+                              "Actual Loops": 0,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Shared Hit Blocks": 0,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 11.78,
+                                  "Plan Rows": 74,
+                                  "Plan Width": 8,
+                                  "Actual Startup Time": 0.0,
+                                  "Actual Total Time": 0.0,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 0,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))",
+                                  "Rows Removed by Filter": 0,
+                                  "Shared Hit Blocks": 0,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 30,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 3.538,
+        "Triggers": [],
+        "Execution Time": 4.741
+      }
+    ],
+    "healthy_messages": [
+      {
+        "id": 45,
+        "organization_id": 1,
+        "conversation_id": 35,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:04:37.262037+00:00",
+        "available_at": "2026-10-01 00:04:37.315030+00:00",
+        "turn_work_id": 11,
+        "turn_work__claimed_at": "2026-10-01 00:04:37.410467+00:00"
+      },
+      {
+        "id": 48,
+        "organization_id": 2,
+        "conversation_id": 36,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:04:38.216042+00:00",
+        "available_at": "2026-10-01 00:04:38.321564+00:00",
+        "turn_work_id": 13,
+        "turn_work__claimed_at": "2026-10-01 00:04:38.435635+00:00"
+      },
+      {
+        "id": 60,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:04:47.232593+00:00",
+        "available_at": "2026-10-01 00:04:55.177349+00:00",
+        "turn_work_id": 17,
+        "turn_work__claimed_at": "2026-10-01 00:04:55.861267+00:00"
+      },
+      {
+        "id": 61,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:04:47.381082+00:00",
+        "available_at": "2026-10-01 00:04:55.315310+00:00",
+        "turn_work_id": 18,
+        "turn_work__claimed_at": "2026-10-01 00:04:57.777602+00:00"
+      },
+      {
+        "id": 76,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:04:57.317465+00:00",
+        "available_at": "2026-10-01 00:05:05.230503+00:00",
+        "turn_work_id": 21,
+        "turn_work__claimed_at": "2026-10-01 00:05:05.438505+00:00"
+      },
+      {
+        "id": 77,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:04:57.500552+00:00",
+        "available_at": "2026-10-01 00:04:55.315310+00:00",
+        "turn_work_id": 18,
+        "turn_work__claimed_at": "2026-10-01 00:04:57.777602+00:00"
+      },
+      {
+        "id": 91,
+        "organization_id": 1,
+        "conversation_id": 67,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:05:07.272527+00:00",
+        "available_at": "2026-10-01 00:05:07.322067+00:00",
+        "turn_work_id": 23,
+        "turn_work__claimed_at": "2026-10-01 00:05:07.436116+00:00"
+      },
+      {
+        "id": 95,
+        "organization_id": 2,
+        "conversation_id": 68,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:05:08.143498+00:00",
+        "available_at": "2026-10-01 00:05:08.193731+00:00",
+        "turn_work_id": 24,
+        "turn_work__claimed_at": "2026-10-01 00:05:08.287390+00:00"
+      },
+      {
+        "id": 110,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:17.242807+00:00",
+        "available_at": "2026-10-01 00:05:25.168246+00:00",
+        "turn_work_id": 32,
+        "turn_work__claimed_at": "2026-10-01 00:05:26.067301+00:00"
+      },
+      {
+        "id": 111,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:17.463408+00:00",
+        "available_at": "2026-10-01 00:05:25.358347+00:00",
+        "turn_work_id": 33,
+        "turn_work__claimed_at": "2026-10-01 00:05:27.848603+00:00"
+      },
+      {
+        "id": 126,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:27.308826+00:00",
+        "available_at": "2026-10-01 00:05:35.211881+00:00",
+        "turn_work_id": 37,
+        "turn_work__claimed_at": "2026-10-01 00:05:35.438594+00:00"
+      },
+      {
+        "id": 127,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:27.567952+00:00",
+        "available_at": "2026-10-01 00:05:25.358347+00:00",
+        "turn_work_id": 33,
+        "turn_work__claimed_at": "2026-10-01 00:05:27.848603+00:00"
+      },
+      {
+        "id": 142,
+        "organization_id": 1,
+        "conversation_id": 99,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:05:37.294184+00:00",
+        "available_at": "2026-10-01 00:05:37.393810+00:00",
+        "turn_work_id": 38,
+        "turn_work__claimed_at": "2026-10-01 00:05:37.549782+00:00"
+      },
+      {
+        "id": 145,
+        "organization_id": 2,
+        "conversation_id": 100,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:05:38.280574+00:00",
+        "available_at": "2026-10-01 00:05:38.337957+00:00",
+        "turn_work_id": 40,
+        "turn_work__claimed_at": "2026-10-01 00:05:38.431625+00:00"
+      },
+      {
+        "id": 160,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:47.334979+00:00",
+        "available_at": "2026-10-01 00:05:55.234621+00:00",
+        "turn_work_id": 47,
+        "turn_work__claimed_at": "2026-10-01 00:05:55.731079+00:00"
+      },
+      {
+        "id": 161,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:47.688404+00:00",
+        "available_at": "2026-10-01 00:05:55.561633+00:00",
+        "turn_work_id": 48,
+        "turn_work__claimed_at": "2026-10-01 00:05:57.072013+00:00"
+      },
+      {
+        "id": 176,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:57.237499+00:00",
+        "available_at": "2026-10-01 00:06:05.182804+00:00",
+        "turn_work_id": 52,
+        "turn_work__claimed_at": "2026-10-01 00:06:06.086009+00:00"
+      },
+      {
+        "id": 177,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:05:57.536932+00:00",
+        "available_at": "2026-10-01 00:06:05.483108+00:00",
+        "turn_work_id": 53,
+        "turn_work__claimed_at": "2026-10-01 00:06:06.330183+00:00"
+      },
+      {
+        "id": 191,
+        "organization_id": 1,
+        "conversation_id": 131,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:06:07.241398+00:00",
+        "available_at": "2026-10-01 00:06:07.281688+00:00",
+        "turn_work_id": 54,
+        "turn_work__claimed_at": "2026-10-01 00:06:07.339492+00:00"
+      },
+      {
+        "id": 193,
+        "organization_id": 2,
+        "conversation_id": 132,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:06:07.763292+00:00",
+        "available_at": "2026-10-01 00:06:07.804611+00:00",
+        "turn_work_id": 55,
+        "turn_work__claimed_at": "2026-10-01 00:06:07.861142+00:00"
+      },
+      {
+        "id": 210,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:17.202716+00:00",
+        "available_at": "2026-10-01 00:06:25.148464+00:00",
+        "turn_work_id": 63,
+        "turn_work__claimed_at": "2026-10-01 00:06:25.631042+00:00"
+      },
+      {
+        "id": 211,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:17.337625+00:00",
+        "available_at": "2026-10-01 00:06:25.282156+00:00",
+        "turn_work_id": 64,
+        "turn_work__claimed_at": "2026-10-01 00:06:26.052036+00:00"
+      },
+      {
+        "id": 227,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:27.447879+00:00",
+        "available_at": "2026-10-01 00:06:35.394101+00:00",
+        "turn_work_id": 68,
+        "turn_work__claimed_at": "2026-10-01 00:06:35.650212+00:00"
+      },
+      {
+        "id": 228,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:27.582982+00:00",
+        "available_at": "2026-10-01 00:06:35.526604+00:00",
+        "turn_work_id": 69,
+        "turn_work__claimed_at": "2026-10-01 00:06:35.990082+00:00"
+      },
+      {
+        "id": 242,
+        "organization_id": 1,
+        "conversation_id": 163,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:06:37.249926+00:00",
+        "available_at": "2026-10-01 00:06:37.293930+00:00",
+        "turn_work_id": 70,
+        "turn_work__claimed_at": "2026-10-01 00:06:37.355019+00:00"
+      },
+      {
+        "id": 246,
+        "organization_id": 2,
+        "conversation_id": 164,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:06:37.789974+00:00",
+        "available_at": "2026-10-01 00:06:37.833804+00:00",
+        "turn_work_id": 71,
+        "turn_work__claimed_at": "2026-10-01 00:06:37.895946+00:00"
+      },
+      {
+        "id": 261,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:47.232608+00:00",
+        "available_at": "2026-10-01 00:06:55.175810+00:00",
+        "turn_work_id": 79,
+        "turn_work__claimed_at": "2026-10-01 00:06:55.267037+00:00"
+      },
+      {
+        "id": 263,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:47.370196+00:00",
+        "available_at": "2026-10-01 00:06:55.316230+00:00",
+        "turn_work_id": 80,
+        "turn_work__claimed_at": "2026-10-01 00:06:55.638785+00:00"
+      },
+      {
+        "id": 278,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:57.236187+00:00",
+        "available_at": "2026-10-01 00:07:05.183055+00:00",
+        "turn_work_id": 84,
+        "turn_work__claimed_at": "2026-10-01 00:07:05.369390+00:00"
+      },
+      {
+        "id": 280,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:06:57.417394+00:00",
+        "available_at": "2026-10-01 00:07:05.363510+00:00",
+        "turn_work_id": 85,
+        "turn_work__claimed_at": "2026-10-01 00:07:05.742103+00:00"
+      },
+      {
+        "id": 295,
+        "organization_id": 1,
+        "conversation_id": 195,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:07:07.265648+00:00",
+        "available_at": "2026-10-01 00:07:07.307636+00:00",
+        "turn_work_id": 86,
+        "turn_work__claimed_at": "2026-10-01 00:07:07.368241+00:00"
+      },
+      {
+        "id": 298,
+        "organization_id": 2,
+        "conversation_id": 196,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:07:07.813574+00:00",
+        "available_at": "2026-10-01 00:07:07.857223+00:00",
+        "turn_work_id": 87,
+        "turn_work__claimed_at": "2026-10-01 00:07:07.915971+00:00"
+      },
+      {
+        "id": 314,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:17.196720+00:00",
+        "available_at": "2026-10-01 00:07:25.148563+00:00",
+        "turn_work_id": 96,
+        "turn_work__claimed_at": "2026-10-01 00:07:25.308112+00:00"
+      },
+      {
+        "id": 315,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:17.318981+00:00",
+        "available_at": "2026-10-01 00:07:25.270332+00:00",
+        "turn_work_id": 97,
+        "turn_work__claimed_at": "2026-10-01 00:07:27.676546+00:00"
+      },
+      {
+        "id": 331,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:27.212645+00:00",
+        "available_at": "2026-10-01 00:07:35.160938+00:00",
+        "turn_work_id": 101,
+        "turn_work__claimed_at": "2026-10-01 00:07:35.241332+00:00"
+      },
+      {
+        "id": 332,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:27.352727+00:00",
+        "available_at": "2026-10-01 00:07:25.270332+00:00",
+        "turn_work_id": 97,
+        "turn_work__claimed_at": "2026-10-01 00:07:27.676546+00:00"
+      },
+      {
+        "id": 348,
+        "organization_id": 1,
+        "conversation_id": 227,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:07:37.249469+00:00",
+        "available_at": "2026-10-01 00:07:37.292451+00:00",
+        "turn_work_id": 103,
+        "turn_work__claimed_at": "2026-10-01 00:07:37.353745+00:00"
+      },
+      {
+        "id": 351,
+        "organization_id": 2,
+        "conversation_id": 228,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:07:37.788710+00:00",
+        "available_at": "2026-10-01 00:07:37.831294+00:00",
+        "turn_work_id": 104,
+        "turn_work__claimed_at": "2026-10-01 00:07:37.889552+00:00"
+      },
+      {
+        "id": 367,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:47.212430+00:00",
+        "available_at": "2026-10-01 00:07:55.155894+00:00",
+        "turn_work_id": 113,
+        "turn_work__claimed_at": "2026-10-01 00:07:55.245630+00:00"
+      },
+      {
+        "id": 368,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:47.358733+00:00",
+        "available_at": "2026-10-01 00:07:55.299435+00:00",
+        "turn_work_id": 114,
+        "turn_work__claimed_at": "2026-10-01 00:07:57.818115+00:00"
+      },
+      {
+        "id": 384,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:57.251184+00:00",
+        "available_at": "2026-10-01 00:08:05.190352+00:00",
+        "turn_work_id": 118,
+        "turn_work__claimed_at": "2026-10-01 00:08:05.491285+00:00"
+      },
+      {
+        "id": 385,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:07:57.395681+00:00",
+        "available_at": "2026-10-01 00:07:55.299435+00:00",
+        "turn_work_id": 114,
+        "turn_work__claimed_at": "2026-10-01 00:07:57.818115+00:00"
+      },
+      {
+        "id": 401,
+        "organization_id": 1,
+        "conversation_id": 259,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:08:07.294241+00:00",
+        "available_at": "2026-10-01 00:08:07.339456+00:00",
+        "turn_work_id": 120,
+        "turn_work__claimed_at": "2026-10-01 00:08:07.402090+00:00"
+      },
+      {
+        "id": 404,
+        "organization_id": 2,
+        "conversation_id": 260,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:08:07.860229+00:00",
+        "available_at": "2026-10-01 00:08:07.902074+00:00",
+        "turn_work_id": 121,
+        "turn_work__claimed_at": "2026-10-01 00:08:07.965542+00:00"
+      },
+      {
+        "id": 420,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:17.268085+00:00",
+        "available_at": "2026-10-01 00:08:25.216404+00:00",
+        "turn_work_id": 130,
+        "turn_work__claimed_at": "2026-10-01 00:08:25.830832+00:00"
+      },
+      {
+        "id": 421,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:17.408007+00:00",
+        "available_at": "2026-10-01 00:08:25.351511+00:00",
+        "turn_work_id": 131,
+        "turn_work__claimed_at": "2026-10-01 00:08:27.996060+00:00"
+      },
+      {
+        "id": 436,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:27.238741+00:00",
+        "available_at": "2026-10-01 00:08:35.187082+00:00",
+        "turn_work_id": 135,
+        "turn_work__claimed_at": "2026-10-01 00:08:35.589198+00:00"
+      },
+      {
+        "id": 437,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:27.382465+00:00",
+        "available_at": "2026-10-01 00:08:25.351511+00:00",
+        "turn_work_id": 131,
+        "turn_work__claimed_at": "2026-10-01 00:08:27.996060+00:00"
+      },
+      {
+        "id": 452,
+        "organization_id": 1,
+        "conversation_id": 291,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:08:37.268091+00:00",
+        "available_at": "2026-10-01 00:08:37.308665+00:00",
+        "turn_work_id": 137,
+        "turn_work__claimed_at": "2026-10-01 00:08:37.364929+00:00"
+      },
+      {
+        "id": 456,
+        "organization_id": 2,
+        "conversation_id": 292,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:08:37.791156+00:00",
+        "available_at": "2026-10-01 00:08:37.834895+00:00",
+        "turn_work_id": 138,
+        "turn_work__claimed_at": "2026-10-01 00:08:37.898419+00:00"
+      },
+      {
+        "id": 471,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:47.264328+00:00",
+        "available_at": "2026-10-01 00:08:55.184293+00:00",
+        "turn_work_id": 146,
+        "turn_work__claimed_at": "2026-10-01 00:08:56.240450+00:00"
+      },
+      {
+        "id": 472,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:47.452711+00:00",
+        "available_at": "2026-10-01 00:08:55.383819+00:00",
+        "turn_work_id": 147,
+        "turn_work__claimed_at": "2026-10-01 00:08:57.731316+00:00"
+      },
+      {
+        "id": 487,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:57.257397+00:00",
+        "available_at": "2026-10-01 00:09:05.182735+00:00",
+        "turn_work_id": 151,
+        "turn_work__claimed_at": "2026-10-01 00:09:05.450266+00:00"
+      },
+      {
+        "id": 488,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:08:57.588976+00:00",
+        "available_at": "2026-10-01 00:08:55.383819+00:00",
+        "turn_work_id": 147,
+        "turn_work__claimed_at": "2026-10-01 00:08:57.731316+00:00"
+      },
+      {
+        "id": 503,
+        "organization_id": 1,
+        "conversation_id": 323,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:09:07.224939+00:00",
+        "available_at": "2026-10-01 00:09:07.310690+00:00",
+        "turn_work_id": 152,
+        "turn_work__claimed_at": "2026-10-01 00:09:07.443009+00:00"
+      },
+      {
+        "id": 506,
+        "organization_id": 2,
+        "conversation_id": 324,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:09:08.024935+00:00",
+        "available_at": "2026-10-01 00:09:08.113246+00:00",
+        "turn_work_id": 154,
+        "turn_work__claimed_at": "2026-10-01 00:09:08.218274+00:00"
+      },
+      {
+        "id": 521,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:09:17.230634+00:00",
+        "available_at": "2026-10-01 00:09:25.156558+00:00",
+        "turn_work_id": 161,
+        "turn_work__claimed_at": "2026-10-01 00:09:25.520168+00:00"
+      },
+      {
+        "id": 522,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:09:17.393231+00:00",
+        "available_at": "2026-10-01 00:09:25.329428+00:00",
+        "turn_work_id": 162,
+        "turn_work__claimed_at": "2026-10-01 00:09:27.231104+00:00"
+      },
+      {
+        "id": 537,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:09:27.336279+00:00",
+        "available_at": "2026-10-01 00:09:35.210666+00:00",
+        "turn_work_id": 166,
+        "turn_work__claimed_at": "2026-10-01 00:09:35.286862+00:00"
+      },
+      {
+        "id": 538,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:09:27.691062+00:00",
+        "available_at": "2026-10-01 00:09:35.516971+00:00",
+        "turn_work_id": 167,
+        "turn_work__claimed_at": "2026-10-01 00:09:37.455140+00:00"
+      }
+    ],
+    "conversations": [
+      {
+        "id": 12,
+        "organization_id": 3
+      },
+      {
+        "id": 126,
+        "organization_id": 3
+      },
+      {
+        "id": 253,
+        "organization_id": 3
+      },
+      {
+        "id": 189,
+        "organization_id": 3
+      },
+      {
+        "id": 1,
+        "organization_id": 1
+      },
+      {
+        "id": 254,
+        "organization_id": 3
+      },
+      {
+        "id": 190,
+        "organization_id": 3
+      },
+      {
+        "id": 3,
+        "organization_id": 3
+      },
+      {
+        "id": 2,
+        "organization_id": 2
+      },
+      {
+        "id": 127,
+        "organization_id": 3
+      },
+      {
+        "id": 17,
+        "organization_id": 3
+      },
+      {
+        "id": 18,
+        "organization_id": 3
+      },
+      {
+        "id": 19,
+        "organization_id": 3
+      },
+      {
+        "id": 191,
+        "organization_id": 3
+      },
+      {
+        "id": 20,
+        "organization_id": 3
+      },
+      {
+        "id": 21,
+        "organization_id": 3
+      },
+      {
+        "id": 22,
+        "organization_id": 3
+      },
+      {
+        "id": 23,
+        "organization_id": 3
+      },
+      {
+        "id": 24,
+        "organization_id": 3
+      },
+      {
+        "id": 128,
+        "organization_id": 3
+      },
+      {
+        "id": 25,
+        "organization_id": 3
+      },
+      {
+        "id": 26,
+        "organization_id": 3
+      },
+      {
+        "id": 27,
+        "organization_id": 3
+      },
+      {
+        "id": 28,
+        "organization_id": 3
+      },
+      {
+        "id": 29,
+        "organization_id": 3
+      },
+      {
+        "id": 30,
+        "organization_id": 3
+      },
+      {
+        "id": 31,
+        "organization_id": 3
+      },
+      {
+        "id": 32,
+        "organization_id": 3
+      },
+      {
+        "id": 33,
+        "organization_id": 3
+      },
+      {
+        "id": 39,
+        "organization_id": 3
+      },
+      {
+        "id": 40,
+        "organization_id": 3
+      },
+      {
+        "id": 41,
+        "organization_id": 3
+      },
+      {
+        "id": 42,
+        "organization_id": 3
+      },
+      {
+        "id": 43,
+        "organization_id": 3
+      },
+      {
+        "id": 34,
+        "organization_id": 3
+      },
+      {
+        "id": 44,
+        "organization_id": 3
+      },
+      {
+        "id": 45,
+        "organization_id": 3
+      },
+      {
+        "id": 46,
+        "organization_id": 3
+      },
+      {
+        "id": 47,
+        "organization_id": 3
+      },
+      {
+        "id": 48,
+        "organization_id": 3
+      },
+      {
+        "id": 49,
+        "organization_id": 3
+      },
+      {
+        "id": 50,
+        "organization_id": 3
+      },
+      {
+        "id": 6,
+        "organization_id": 3
+      },
+      {
+        "id": 4,
+        "organization_id": 3
+      },
+      {
+        "id": 5,
+        "organization_id": 3
+      },
+      {
+        "id": 35,
+        "organization_id": 1
+      },
+      {
+        "id": 36,
+        "organization_id": 2
+      },
+      {
+        "id": 7,
+        "organization_id": 3
+      },
+      {
+        "id": 8,
+        "organization_id": 3
+      },
+      {
+        "id": 11,
+        "organization_id": 3
+      },
+      {
+        "id": 9,
+        "organization_id": 3
+      },
+      {
+        "id": 37,
+        "organization_id": 3
+      },
+      {
+        "id": 255,
+        "organization_id": 3
+      },
+      {
+        "id": 192,
+        "organization_id": 3
+      },
+      {
+        "id": 82,
+        "organization_id": 3
+      },
+      {
+        "id": 317,
+        "organization_id": 3
+      },
+      {
+        "id": 256,
+        "organization_id": 3
+      },
+      {
+        "id": 257,
+        "organization_id": 3
+      },
+      {
+        "id": 318,
+        "organization_id": 3
+      },
+      {
+        "id": 66,
+        "organization_id": 3
+      },
+      {
+        "id": 69,
+        "organization_id": 3
+      },
+      {
+        "id": 67,
+        "organization_id": 1
+      },
+      {
+        "id": 70,
+        "organization_id": 3
+      },
+      {
+        "id": 71,
+        "organization_id": 3
+      },
+      {
+        "id": 72,
+        "organization_id": 3
+      },
+      {
+        "id": 73,
+        "organization_id": 3
+      },
+      {
+        "id": 68,
+        "organization_id": 2
+      },
+      {
+        "id": 74,
+        "organization_id": 3
+      },
+      {
+        "id": 319,
+        "organization_id": 3
+      },
+      {
+        "id": 75,
+        "organization_id": 3
+      },
+      {
+        "id": 76,
+        "organization_id": 3
+      },
+      {
+        "id": 86,
+        "organization_id": 3
+      },
+      {
+        "id": 77,
+        "organization_id": 3
+      },
+      {
+        "id": 87,
+        "organization_id": 3
+      },
+      {
+        "id": 78,
+        "organization_id": 3
+      },
+      {
+        "id": 88,
+        "organization_id": 3
+      },
+      {
+        "id": 79,
+        "organization_id": 3
+      },
+      {
+        "id": 89,
+        "organization_id": 3
+      },
+      {
+        "id": 80,
+        "organization_id": 3
+      },
+      {
+        "id": 90,
+        "organization_id": 3
+      },
+      {
+        "id": 81,
+        "organization_id": 3
+      },
+      {
+        "id": 91,
+        "organization_id": 3
+      },
+      {
+        "id": 92,
+        "organization_id": 3
+      },
+      {
+        "id": 93,
+        "organization_id": 3
+      },
+      {
+        "id": 94,
+        "organization_id": 3
+      },
+      {
+        "id": 95,
+        "organization_id": 3
+      },
+      {
+        "id": 96,
+        "organization_id": 3
+      },
+      {
+        "id": 97,
+        "organization_id": 3
+      },
+      {
+        "id": 98,
+        "organization_id": 3
+      },
+      {
+        "id": 101,
+        "organization_id": 3
+      },
+      {
+        "id": 102,
+        "organization_id": 3
+      },
+      {
+        "id": 103,
+        "organization_id": 3
+      },
+      {
+        "id": 104,
+        "organization_id": 3
+      },
+      {
+        "id": 109,
+        "organization_id": 3
+      },
+      {
+        "id": 105,
+        "organization_id": 3
+      },
+      {
+        "id": 110,
+        "organization_id": 3
+      },
+      {
+        "id": 111,
+        "organization_id": 3
+      },
+      {
+        "id": 99,
+        "organization_id": 1
+      },
+      {
+        "id": 100,
+        "organization_id": 2
+      },
+      {
+        "id": 106,
+        "organization_id": 3
+      },
+      {
+        "id": 193,
+        "organization_id": 3
+      },
+      {
+        "id": 57,
+        "organization_id": 3
+      },
+      {
+        "id": 15,
+        "organization_id": 3
+      },
+      {
+        "id": 83,
+        "organization_id": 3
+      },
+      {
+        "id": 10,
+        "organization_id": 3
+      },
+      {
+        "id": 129,
+        "organization_id": 3
+      },
+      {
+        "id": 58,
+        "organization_id": 3
+      },
+      {
+        "id": 38,
+        "organization_id": 3
+      },
+      {
+        "id": 194,
+        "organization_id": 3
+      },
+      {
+        "id": 16,
+        "organization_id": 3
+      },
+      {
+        "id": 108,
+        "organization_id": 3
+      },
+      {
+        "id": 115,
+        "organization_id": 3
+      },
+      {
+        "id": 116,
+        "organization_id": 3
+      },
+      {
+        "id": 117,
+        "organization_id": 3
+      },
+      {
+        "id": 130,
+        "organization_id": 3
+      },
+      {
+        "id": 118,
+        "organization_id": 3
+      },
+      {
+        "id": 119,
+        "organization_id": 3
+      },
+      {
+        "id": 120,
+        "organization_id": 3
+      },
+      {
+        "id": 132,
+        "organization_id": 2
+      },
+      {
+        "id": 121,
+        "organization_id": 3
+      },
+      {
+        "id": 122,
+        "organization_id": 3
+      },
+      {
+        "id": 133,
+        "organization_id": 3
+      },
+      {
+        "id": 131,
+        "organization_id": 1
+      },
+      {
+        "id": 123,
+        "organization_id": 3
+      },
+      {
+        "id": 124,
+        "organization_id": 3
+      },
+      {
+        "id": 134,
+        "organization_id": 3
+      },
+      {
+        "id": 138,
+        "organization_id": 3
+      },
+      {
+        "id": 135,
+        "organization_id": 3
+      },
+      {
+        "id": 136,
+        "organization_id": 3
+      },
+      {
+        "id": 137,
+        "organization_id": 3
+      },
+      {
+        "id": 139,
+        "organization_id": 3
+      },
+      {
+        "id": 140,
+        "organization_id": 3
+      },
+      {
+        "id": 141,
+        "organization_id": 3
+      },
+      {
+        "id": 142,
+        "organization_id": 3
+      },
+      {
+        "id": 143,
+        "organization_id": 3
+      },
+      {
+        "id": 144,
+        "organization_id": 3
+      },
+      {
+        "id": 145,
+        "organization_id": 3
+      },
+      {
+        "id": 146,
+        "organization_id": 3
+      },
+      {
+        "id": 147,
+        "organization_id": 3
+      },
+      {
+        "id": 148,
+        "organization_id": 3
+      },
+      {
+        "id": 149,
+        "organization_id": 3
+      },
+      {
+        "id": 150,
+        "organization_id": 3
+      },
+      {
+        "id": 151,
+        "organization_id": 3
+      },
+      {
+        "id": 51,
+        "organization_id": 3
+      },
+      {
+        "id": 52,
+        "organization_id": 3
+      },
+      {
+        "id": 53,
+        "organization_id": 3
+      },
+      {
+        "id": 54,
+        "organization_id": 3
+      },
+      {
+        "id": 55,
+        "organization_id": 3
+      },
+      {
+        "id": 56,
+        "organization_id": 3
+      },
+      {
+        "id": 152,
+        "organization_id": 3
+      },
+      {
+        "id": 258,
+        "organization_id": 3
+      },
+      {
+        "id": 153,
+        "organization_id": 3
+      },
+      {
+        "id": 154,
+        "organization_id": 3
+      },
+      {
+        "id": 155,
+        "organization_id": 3
+      },
+      {
+        "id": 198,
+        "organization_id": 3
+      },
+      {
+        "id": 156,
+        "organization_id": 3
+      },
+      {
+        "id": 196,
+        "organization_id": 2
+      },
+      {
+        "id": 157,
+        "organization_id": 3
+      },
+      {
+        "id": 195,
+        "organization_id": 1
+      },
+      {
+        "id": 158,
+        "organization_id": 3
+      },
+      {
+        "id": 159,
+        "organization_id": 3
+      },
+      {
+        "id": 160,
+        "organization_id": 3
+      },
+      {
+        "id": 161,
+        "organization_id": 3
+      },
+      {
+        "id": 162,
+        "organization_id": 3
+      },
+      {
+        "id": 197,
+        "organization_id": 3
+      },
+      {
+        "id": 199,
+        "organization_id": 3
+      },
+      {
+        "id": 172,
+        "organization_id": 3
+      },
+      {
+        "id": 163,
+        "organization_id": 1
+      },
+      {
+        "id": 200,
+        "organization_id": 3
+      },
+      {
+        "id": 173,
+        "organization_id": 3
+      },
+      {
+        "id": 201,
+        "organization_id": 3
+      },
+      {
+        "id": 174,
+        "organization_id": 3
+      },
+      {
+        "id": 164,
+        "organization_id": 2
+      },
+      {
+        "id": 165,
+        "organization_id": 3
+      },
+      {
+        "id": 60,
+        "organization_id": 3
+      },
+      {
+        "id": 166,
+        "organization_id": 3
+      },
+      {
+        "id": 202,
+        "organization_id": 3
+      },
+      {
+        "id": 167,
+        "organization_id": 3
+      },
+      {
+        "id": 168,
+        "organization_id": 3
+      },
+      {
+        "id": 203,
+        "organization_id": 3
+      },
+      {
+        "id": 169,
+        "organization_id": 3
+      },
+      {
+        "id": 170,
+        "organization_id": 3
+      },
+      {
+        "id": 204,
+        "organization_id": 3
+      },
+      {
+        "id": 171,
+        "organization_id": 3
+      },
+      {
+        "id": 175,
+        "organization_id": 3
+      },
+      {
+        "id": 205,
+        "organization_id": 3
+      },
+      {
+        "id": 176,
+        "organization_id": 3
+      },
+      {
+        "id": 177,
+        "organization_id": 3
+      },
+      {
+        "id": 206,
+        "organization_id": 3
+      },
+      {
+        "id": 178,
+        "organization_id": 3
+      },
+      {
+        "id": 179,
+        "organization_id": 3
+      },
+      {
+        "id": 62,
+        "organization_id": 3
+      },
+      {
+        "id": 180,
+        "organization_id": 3
+      },
+      {
+        "id": 181,
+        "organization_id": 3
+      },
+      {
+        "id": 207,
+        "organization_id": 3
+      },
+      {
+        "id": 182,
+        "organization_id": 3
+      },
+      {
+        "id": 183,
+        "organization_id": 3
+      },
+      {
+        "id": 184,
+        "organization_id": 3
+      },
+      {
+        "id": 185,
+        "organization_id": 3
+      },
+      {
+        "id": 186,
+        "organization_id": 3
+      },
+      {
+        "id": 187,
+        "organization_id": 3
+      },
+      {
+        "id": 188,
+        "organization_id": 3
+      },
+      {
+        "id": 232,
+        "organization_id": 3
+      },
+      {
+        "id": 218,
+        "organization_id": 3
+      },
+      {
+        "id": 107,
+        "organization_id": 3
+      },
+      {
+        "id": 219,
+        "organization_id": 3
+      },
+      {
+        "id": 227,
+        "organization_id": 1
+      },
+      {
+        "id": 59,
+        "organization_id": 3
+      },
+      {
+        "id": 61,
+        "organization_id": 3
+      },
+      {
+        "id": 208,
+        "organization_id": 3
+      },
+      {
+        "id": 209,
+        "organization_id": 3
+      },
+      {
+        "id": 220,
+        "organization_id": 3
+      },
+      {
+        "id": 63,
+        "organization_id": 3
+      },
+      {
+        "id": 210,
+        "organization_id": 3
+      },
+      {
+        "id": 211,
+        "organization_id": 3
+      },
+      {
+        "id": 64,
+        "organization_id": 3
+      },
+      {
+        "id": 212,
+        "organization_id": 3
+      },
+      {
+        "id": 213,
+        "organization_id": 3
+      },
+      {
+        "id": 65,
+        "organization_id": 3
+      },
+      {
+        "id": 214,
+        "organization_id": 3
+      },
+      {
+        "id": 215,
+        "organization_id": 3
+      },
+      {
+        "id": 216,
+        "organization_id": 3
+      },
+      {
+        "id": 221,
+        "organization_id": 3
+      },
+      {
+        "id": 217,
+        "organization_id": 3
+      },
+      {
+        "id": 222,
+        "organization_id": 3
+      },
+      {
+        "id": 223,
+        "organization_id": 3
+      },
+      {
+        "id": 224,
+        "organization_id": 3
+      },
+      {
+        "id": 225,
+        "organization_id": 3
+      },
+      {
+        "id": 226,
+        "organization_id": 3
+      },
+      {
+        "id": 233,
+        "organization_id": 3
+      },
+      {
+        "id": 234,
+        "organization_id": 3
+      },
+      {
+        "id": 228,
+        "organization_id": 2
+      },
+      {
+        "id": 229,
+        "organization_id": 3
+      },
+      {
+        "id": 230,
+        "organization_id": 3
+      },
+      {
+        "id": 231,
+        "organization_id": 3
+      },
+      {
+        "id": 235,
+        "organization_id": 3
+      },
+      {
+        "id": 236,
+        "organization_id": 3
+      },
+      {
+        "id": 237,
+        "organization_id": 3
+      },
+      {
+        "id": 238,
+        "organization_id": 3
+      },
+      {
+        "id": 239,
+        "organization_id": 3
+      },
+      {
+        "id": 240,
+        "organization_id": 3
+      },
+      {
+        "id": 241,
+        "organization_id": 3
+      },
+      {
+        "id": 242,
+        "organization_id": 3
+      },
+      {
+        "id": 243,
+        "organization_id": 3
+      },
+      {
+        "id": 244,
+        "organization_id": 3
+      },
+      {
+        "id": 245,
+        "organization_id": 3
+      },
+      {
+        "id": 246,
+        "organization_id": 3
+      },
+      {
+        "id": 247,
+        "organization_id": 3
+      },
+      {
+        "id": 248,
+        "organization_id": 3
+      },
+      {
+        "id": 249,
+        "organization_id": 3
+      },
+      {
+        "id": 250,
+        "organization_id": 3
+      },
+      {
+        "id": 251,
+        "organization_id": 3
+      },
+      {
+        "id": 252,
+        "organization_id": 3
+      },
+      {
+        "id": 320,
+        "organization_id": 3
+      },
+      {
+        "id": 321,
+        "organization_id": 3
+      },
+      {
+        "id": 84,
+        "organization_id": 3
+      },
+      {
+        "id": 275,
+        "organization_id": 3
+      },
+      {
+        "id": 259,
+        "organization_id": 1
+      },
+      {
+        "id": 276,
+        "organization_id": 3
+      },
+      {
+        "id": 260,
+        "organization_id": 2
+      },
+      {
+        "id": 261,
+        "organization_id": 3
+      },
+      {
+        "id": 262,
+        "organization_id": 3
+      },
+      {
+        "id": 263,
+        "organization_id": 3
+      },
+      {
+        "id": 85,
+        "organization_id": 3
+      },
+      {
+        "id": 264,
+        "organization_id": 3
+      },
+      {
+        "id": 265,
+        "organization_id": 3
+      },
+      {
+        "id": 266,
+        "organization_id": 3
+      },
+      {
+        "id": 267,
+        "organization_id": 3
+      },
+      {
+        "id": 268,
+        "organization_id": 3
+      },
+      {
+        "id": 269,
+        "organization_id": 3
+      },
+      {
+        "id": 270,
+        "organization_id": 3
+      },
+      {
+        "id": 271,
+        "organization_id": 3
+      },
+      {
+        "id": 272,
+        "organization_id": 3
+      },
+      {
+        "id": 273,
+        "organization_id": 3
+      },
+      {
+        "id": 274,
+        "organization_id": 3
+      },
+      {
+        "id": 277,
+        "organization_id": 3
+      },
+      {
+        "id": 278,
+        "organization_id": 3
+      },
+      {
+        "id": 279,
+        "organization_id": 3
+      },
+      {
+        "id": 280,
+        "organization_id": 3
+      },
+      {
+        "id": 284,
+        "organization_id": 3
+      },
+      {
+        "id": 281,
+        "organization_id": 3
+      },
+      {
+        "id": 282,
+        "organization_id": 3
+      },
+      {
+        "id": 283,
+        "organization_id": 3
+      },
+      {
+        "id": 285,
+        "organization_id": 3
+      },
+      {
+        "id": 286,
+        "organization_id": 3
+      },
+      {
+        "id": 287,
+        "organization_id": 3
+      },
+      {
+        "id": 288,
+        "organization_id": 3
+      },
+      {
+        "id": 289,
+        "organization_id": 3
+      },
+      {
+        "id": 294,
+        "organization_id": 3
+      },
+      {
+        "id": 290,
+        "organization_id": 3
+      },
+      {
+        "id": 295,
+        "organization_id": 3
+      },
+      {
+        "id": 292,
+        "organization_id": 2
+      },
+      {
+        "id": 291,
+        "organization_id": 1
+      },
+      {
+        "id": 293,
+        "organization_id": 3
+      },
+      {
+        "id": 296,
+        "organization_id": 3
+      },
+      {
+        "id": 297,
+        "organization_id": 3
+      },
+      {
+        "id": 298,
+        "organization_id": 3
+      },
+      {
+        "id": 299,
+        "organization_id": 3
+      },
+      {
+        "id": 300,
+        "organization_id": 3
+      },
+      {
+        "id": 301,
+        "organization_id": 3
+      },
+      {
+        "id": 302,
+        "organization_id": 3
+      },
+      {
+        "id": 303,
+        "organization_id": 3
+      },
+      {
+        "id": 304,
+        "organization_id": 3
+      },
+      {
+        "id": 305,
+        "organization_id": 3
+      },
+      {
+        "id": 306,
+        "organization_id": 3
+      },
+      {
+        "id": 322,
+        "organization_id": 3
+      },
+      {
+        "id": 307,
+        "organization_id": 3
+      },
+      {
+        "id": 308,
+        "organization_id": 3
+      },
+      {
+        "id": 309,
+        "organization_id": 3
+      },
+      {
+        "id": 310,
+        "organization_id": 3
+      },
+      {
+        "id": 311,
+        "organization_id": 3
+      },
+      {
+        "id": 336,
+        "organization_id": 3
+      },
+      {
+        "id": 312,
+        "organization_id": 3
+      },
+      {
+        "id": 313,
+        "organization_id": 3
+      },
+      {
+        "id": 323,
+        "organization_id": 1
+      },
+      {
+        "id": 314,
+        "organization_id": 3
+      },
+      {
+        "id": 315,
+        "organization_id": 3
+      },
+      {
+        "id": 316,
+        "organization_id": 3
+      },
+      {
+        "id": 337,
+        "organization_id": 3
+      },
+      {
+        "id": 338,
+        "organization_id": 3
+      },
+      {
+        "id": 324,
+        "organization_id": 2
+      },
+      {
+        "id": 325,
+        "organization_id": 3
+      },
+      {
+        "id": 326,
+        "organization_id": 3
+      },
+      {
+        "id": 327,
+        "organization_id": 3
+      },
+      {
+        "id": 328,
+        "organization_id": 3
+      },
+      {
+        "id": 329,
+        "organization_id": 3
+      },
+      {
+        "id": 330,
+        "organization_id": 3
+      },
+      {
+        "id": 331,
+        "organization_id": 3
+      },
+      {
+        "id": 332,
+        "organization_id": 3
+      },
+      {
+        "id": 333,
+        "organization_id": 3
+      },
+      {
+        "id": 334,
+        "organization_id": 3
+      },
+      {
+        "id": 335,
+        "organization_id": 3
+      },
+      {
+        "id": 339,
+        "organization_id": 3
+      },
+      {
+        "id": 340,
+        "organization_id": 3
+      },
+      {
+        "id": 341,
+        "organization_id": 3
+      },
+      {
+        "id": 342,
+        "organization_id": 3
+      },
+      {
+        "id": 343,
+        "organization_id": 3
+      },
+      {
+        "id": 344,
+        "organization_id": 3
+      },
+      {
+        "id": 345,
+        "organization_id": 3
+      },
+      {
+        "id": 346,
+        "organization_id": 3
+      },
+      {
+        "id": 347,
+        "organization_id": 3
+      },
+      {
+        "id": 348,
+        "organization_id": 3
+      },
+      {
+        "id": 349,
+        "organization_id": 3
+      },
+      {
+        "id": 350,
+        "organization_id": 3
+      },
+      {
+        "id": 351,
+        "organization_id": 3
+      },
+      {
+        "id": 352,
+        "organization_id": 3
+      },
+      {
+        "id": 353,
+        "organization_id": 3
+      },
+      {
+        "id": 354,
+        "organization_id": 3
+      },
+      {
+        "id": 112,
+        "organization_id": 3
+      },
+      {
+        "id": 114,
+        "organization_id": 3
+      },
+      {
+        "id": 13,
+        "organization_id": 1
+      },
+      {
+        "id": 113,
+        "organization_id": 3
+      },
+      {
+        "id": 14,
+        "organization_id": 2
+      },
+      {
+        "id": 125,
+        "organization_id": 3
+      }
+    ],
+    "works": [
+      {
+        "id": 1,
+        "organization_id": 1,
+        "conversation_id": 1,
+        "claimed_at": "2026-10-01 00:04:08.567428+00:00",
+        "completed_at": "2026-10-01 00:04:09.242652+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 2,
+        "organization_id": 2,
+        "conversation_id": 2,
+        "claimed_at": "2026-10-01 00:04:09.876641+00:00",
+        "completed_at": "2026-10-01 00:04:10.283992+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 18,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:04:57.777602+00:00",
+        "completed_at": "2026-10-01 00:04:59.856728+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 3,
+        "organization_id": 3,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:04:18.794898+00:00",
+        "completed_at": "2026-10-01 00:04:23.269073+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 28,
+        "organization_id": 3,
+        "conversation_id": 20,
+        "claimed_at": "2026-10-01 00:05:16.485287+00:00",
+        "completed_at": "2026-10-01 00:05:18.515438+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 15,
+        "organization_id": 3,
+        "conversation_id": 10,
+        "claimed_at": "2026-10-01 00:04:51.611946+00:00",
+        "completed_at": "2026-10-01 00:04:53.668181+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 5,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:04:25.462481+00:00",
+        "completed_at": "2026-10-01 00:04:27.657978+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 4,
+        "organization_id": 3,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:04:23.617397+00:00",
+        "completed_at": "2026-10-01 00:04:27.706721+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 9,
+        "organization_id": 3,
+        "conversation_id": 7,
+        "claimed_at": "2026-10-01 00:04:34.777213+00:00",
+        "completed_at": "2026-10-01 00:04:36.921872+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 7,
+        "organization_id": 3,
+        "conversation_id": 5,
+        "claimed_at": "2026-10-01 00:04:29.108792+00:00",
+        "completed_at": "2026-10-01 00:04:31.477107+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 6,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:04:28.931728+00:00",
+        "completed_at": "2026-10-01 00:04:31.550711+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 11,
+        "organization_id": 1,
+        "conversation_id": 35,
+        "claimed_at": "2026-10-01 00:04:37.410467+00:00",
+        "completed_at": "2026-10-01 00:04:37.750874+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 10,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:04:35.790583+00:00",
+        "completed_at": "2026-10-01 00:04:37.971994+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 8,
+        "organization_id": 3,
+        "conversation_id": 6,
+        "claimed_at": "2026-10-01 00:04:32.642281+00:00",
+        "completed_at": "2026-10-01 00:04:34.687376+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 13,
+        "organization_id": 2,
+        "conversation_id": 36,
+        "claimed_at": "2026-10-01 00:04:38.435635+00:00",
+        "completed_at": "2026-10-01 00:04:38.830731+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 19,
+        "organization_id": 3,
+        "conversation_id": 12,
+        "claimed_at": "2026-10-01 00:04:58.818772+00:00",
+        "completed_at": "2026-10-01 00:05:01.000073+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 12,
+        "organization_id": 3,
+        "conversation_id": 8,
+        "claimed_at": "2026-10-01 00:04:38.062679+00:00",
+        "completed_at": "2026-10-01 00:04:49.464693+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 14,
+        "organization_id": 3,
+        "conversation_id": 9,
+        "claimed_at": "2026-10-01 00:04:49.520965+00:00",
+        "completed_at": "2026-10-01 00:04:51.542354+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 16,
+        "organization_id": 3,
+        "conversation_id": 11,
+        "claimed_at": "2026-10-01 00:04:54.780713+00:00",
+        "completed_at": "2026-10-01 00:04:56.710533+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 17,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:04:55.861267+00:00",
+        "completed_at": "2026-10-01 00:04:57.725851+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 21,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:05:05.438505+00:00",
+        "completed_at": "2026-10-01 00:05:07.729278+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 22,
+        "organization_id": 3,
+        "conversation_id": 16,
+        "claimed_at": "2026-10-01 00:05:05.681132+00:00",
+        "completed_at": "2026-10-01 00:05:07.813284+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 20,
+        "organization_id": 3,
+        "conversation_id": 15,
+        "claimed_at": "2026-10-01 00:05:02.220741+00:00",
+        "completed_at": "2026-10-01 00:05:04.564446+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 25,
+        "organization_id": 3,
+        "conversation_id": 17,
+        "claimed_at": "2026-10-01 00:05:08.839584+00:00",
+        "completed_at": "2026-10-01 00:05:10.860908+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 23,
+        "organization_id": 1,
+        "conversation_id": 67,
+        "claimed_at": "2026-10-01 00:05:07.436116+00:00",
+        "completed_at": "2026-10-01 00:05:07.815759+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 24,
+        "organization_id": 2,
+        "conversation_id": 68,
+        "claimed_at": "2026-10-01 00:05:08.287390+00:00",
+        "completed_at": "2026-10-01 00:05:08.575938+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 27,
+        "organization_id": 3,
+        "conversation_id": 19,
+        "claimed_at": "2026-10-01 00:05:14.071948+00:00",
+        "completed_at": "2026-10-01 00:05:16.299751+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 26,
+        "organization_id": 3,
+        "conversation_id": 18,
+        "claimed_at": "2026-10-01 00:05:10.993167+00:00",
+        "completed_at": "2026-10-01 00:05:13.259372+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 29,
+        "organization_id": 3,
+        "conversation_id": 21,
+        "claimed_at": "2026-10-01 00:05:19.489900+00:00",
+        "completed_at": "2026-10-01 00:05:21.412803+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 30,
+        "organization_id": 3,
+        "conversation_id": 22,
+        "claimed_at": "2026-10-01 00:05:21.708421+00:00",
+        "completed_at": "2026-10-01 00:05:23.912394+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 31,
+        "organization_id": 3,
+        "conversation_id": 23,
+        "claimed_at": "2026-10-01 00:05:24.613355+00:00",
+        "completed_at": "2026-10-01 00:05:26.729612+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 32,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:05:26.067301+00:00",
+        "completed_at": "2026-10-01 00:05:28.410117+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 34,
+        "organization_id": 3,
+        "conversation_id": 24,
+        "claimed_at": "2026-10-01 00:05:29.495228+00:00",
+        "completed_at": "2026-10-01 00:05:31.462625+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 33,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:05:27.848603+00:00",
+        "completed_at": "2026-10-01 00:05:30.114134+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 35,
+        "organization_id": 3,
+        "conversation_id": 25,
+        "claimed_at": "2026-10-01 00:05:32.304978+00:00",
+        "completed_at": "2026-10-01 00:05:34.341163+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 36,
+        "organization_id": 3,
+        "conversation_id": 26,
+        "claimed_at": "2026-10-01 00:05:34.657756+00:00",
+        "completed_at": "2026-10-01 00:05:36.659971+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 117,
+        "organization_id": 3,
+        "conversation_id": 83,
+        "claimed_at": "2026-10-01 00:08:02.895271+00:00",
+        "completed_at": "2026-10-01 00:08:04.699653+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 75,
+        "organization_id": 3,
+        "conversation_id": 52,
+        "claimed_at": "2026-10-01 00:06:45.664219+00:00",
+        "completed_at": "2026-10-01 00:06:47.365943+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 37,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:05:35.438594+00:00",
+        "completed_at": "2026-10-01 00:05:37.590843+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 51,
+        "organization_id": 3,
+        "conversation_id": 38,
+        "claimed_at": "2026-10-01 00:06:03.584862+00:00",
+        "completed_at": "2026-10-01 00:06:05.256563+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 83,
+        "organization_id": 3,
+        "conversation_id": 58,
+        "claimed_at": "2026-10-01 00:07:02.936222+00:00",
+        "completed_at": "2026-10-01 00:07:04.677332+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 41,
+        "organization_id": 3,
+        "conversation_id": 28,
+        "claimed_at": "2026-10-01 00:05:40.808706+00:00",
+        "completed_at": "2026-10-01 00:05:42.766947+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 65,
+        "organization_id": 3,
+        "conversation_id": 46,
+        "claimed_at": "2026-10-01 00:06:28.438786+00:00",
+        "completed_at": "2026-10-01 00:06:30.140904+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 53,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:06:06.330183+00:00",
+        "completed_at": "2026-10-01 00:06:08.069975+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 43,
+        "organization_id": 3,
+        "conversation_id": 30,
+        "claimed_at": "2026-10-01 00:05:46.087617+00:00",
+        "completed_at": "2026-10-01 00:05:48.544238+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 91,
+        "organization_id": 3,
+        "conversation_id": 62,
+        "claimed_at": "2026-10-01 00:07:15.393533+00:00",
+        "completed_at": "2026-10-01 00:07:17.030431+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 85,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:07:05.742103+00:00",
+        "completed_at": "2026-10-01 00:07:07.460170+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 57,
+        "organization_id": 3,
+        "conversation_id": 40,
+        "claimed_at": "2026-10-01 00:06:11.171560+00:00",
+        "completed_at": "2026-10-01 00:06:12.882854+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 45,
+        "organization_id": 3,
+        "conversation_id": 32,
+        "claimed_at": "2026-10-01 00:05:51.712915+00:00",
+        "completed_at": "2026-10-01 00:05:53.576301+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 59,
+        "organization_id": 3,
+        "conversation_id": 42,
+        "claimed_at": "2026-10-01 00:06:15.982632+00:00",
+        "completed_at": "2026-10-01 00:06:17.706952+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 47,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:05:55.731079+00:00",
+        "completed_at": "2026-10-01 00:05:57.596118+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 89,
+        "organization_id": 3,
+        "conversation_id": 60,
+        "claimed_at": "2026-10-01 00:07:10.563327+00:00",
+        "completed_at": "2026-10-01 00:07:12.287004+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 67,
+        "organization_id": 3,
+        "conversation_id": 48,
+        "claimed_at": "2026-10-01 00:06:33.243091+00:00",
+        "completed_at": "2026-10-01 00:06:34.933054+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 95,
+        "organization_id": 3,
+        "conversation_id": 66,
+        "claimed_at": "2026-10-01 00:07:24.918603+00:00",
+        "completed_at": "2026-10-01 00:07:26.618179+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 49,
+        "organization_id": 3,
+        "conversation_id": 34,
+        "claimed_at": "2026-10-01 00:05:58.649896+00:00",
+        "completed_at": "2026-10-01 00:06:00.314844+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 61,
+        "organization_id": 3,
+        "conversation_id": 44,
+        "claimed_at": "2026-10-01 00:06:20.812034+00:00",
+        "completed_at": "2026-10-01 00:06:22.524779+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 93,
+        "organization_id": 3,
+        "conversation_id": 64,
+        "claimed_at": "2026-10-01 00:07:20.131579+00:00",
+        "completed_at": "2026-10-01 00:07:21.818106+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 63,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:06:25.631042+00:00",
+        "completed_at": "2026-10-01 00:06:27.381101+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 77,
+        "organization_id": 3,
+        "conversation_id": 54,
+        "claimed_at": "2026-10-01 00:06:50.466828+00:00",
+        "completed_at": "2026-10-01 00:06:52.168676+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 69,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:06:35.990082+00:00",
+        "completed_at": "2026-10-01 00:06:37.762888+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 97,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:07:27.676546+00:00",
+        "completed_at": "2026-10-01 00:07:29.394319+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 101,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:07:35.241332+00:00",
+        "completed_at": "2026-10-01 00:07:36.975152+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 73,
+        "organization_id": 3,
+        "conversation_id": 50,
+        "claimed_at": "2026-10-01 00:06:40.868307+00:00",
+        "completed_at": "2026-10-01 00:06:42.552177+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 99,
+        "organization_id": 3,
+        "conversation_id": 70,
+        "claimed_at": "2026-10-01 00:07:30.444244+00:00",
+        "completed_at": "2026-10-01 00:07:32.133397+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 105,
+        "organization_id": 3,
+        "conversation_id": 73,
+        "claimed_at": "2026-10-01 00:07:38.031082+00:00",
+        "completed_at": "2026-10-01 00:07:39.724016+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 79,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:06:55.267037+00:00",
+        "completed_at": "2026-10-01 00:06:56.982034+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 107,
+        "organization_id": 3,
+        "conversation_id": 75,
+        "claimed_at": "2026-10-01 00:07:42.827090+00:00",
+        "completed_at": "2026-10-01 00:07:44.567078+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 81,
+        "organization_id": 3,
+        "conversation_id": 56,
+        "claimed_at": "2026-10-01 00:06:58.035026+00:00",
+        "completed_at": "2026-10-01 00:06:59.764807+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 109,
+        "organization_id": 3,
+        "conversation_id": 77,
+        "claimed_at": "2026-10-01 00:07:47.679272+00:00",
+        "completed_at": "2026-10-01 00:07:49.386559+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 111,
+        "organization_id": 3,
+        "conversation_id": 79,
+        "claimed_at": "2026-10-01 00:07:52.494368+00:00",
+        "completed_at": "2026-10-01 00:07:54.188216+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 113,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:07:55.245630+00:00",
+        "completed_at": "2026-10-01 00:07:56.980748+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 115,
+        "organization_id": 3,
+        "conversation_id": 81,
+        "claimed_at": "2026-10-01 00:07:58.042169+00:00",
+        "completed_at": "2026-10-01 00:07:59.725296+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 102,
+        "organization_id": 3,
+        "conversation_id": 72,
+        "claimed_at": "2026-10-01 00:07:35.743130+00:00",
+        "completed_at": "2026-10-01 00:07:37.453724+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 38,
+        "organization_id": 1,
+        "conversation_id": 99,
+        "claimed_at": "2026-10-01 00:05:37.549782+00:00",
+        "completed_at": "2026-10-01 00:05:37.892958+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 82,
+        "organization_id": 3,
+        "conversation_id": 57,
+        "claimed_at": "2026-10-01 00:07:00.444071+00:00",
+        "completed_at": "2026-10-01 00:07:02.263812+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 40,
+        "organization_id": 2,
+        "conversation_id": 100,
+        "claimed_at": "2026-10-01 00:05:38.431625+00:00",
+        "completed_at": "2026-10-01 00:05:38.701109+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 116,
+        "organization_id": 3,
+        "conversation_id": 82,
+        "claimed_at": "2026-10-01 00:08:00.590431+00:00",
+        "completed_at": "2026-10-01 00:08:02.382066+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 52,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:06:06.086009+00:00",
+        "completed_at": "2026-10-01 00:06:07.820797+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 92,
+        "organization_id": 3,
+        "conversation_id": 63,
+        "claimed_at": "2026-10-01 00:07:17.751509+00:00",
+        "completed_at": "2026-10-01 00:07:19.426265+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 84,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:07:05.369390+00:00",
+        "completed_at": "2026-10-01 00:07:07.083318+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 56,
+        "organization_id": 3,
+        "conversation_id": 39,
+        "claimed_at": "2026-10-01 00:06:08.879762+00:00",
+        "completed_at": "2026-10-01 00:06:10.578207+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 118,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:08:05.491285+00:00",
+        "completed_at": "2026-10-01 00:08:07.262093+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 68,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:06:35.650212+00:00",
+        "completed_at": "2026-10-01 00:06:37.351459+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 98,
+        "organization_id": 3,
+        "conversation_id": 69,
+        "claimed_at": "2026-10-01 00:07:28.148711+00:00",
+        "completed_at": "2026-10-01 00:07:29.847594+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 58,
+        "organization_id": 3,
+        "conversation_id": 41,
+        "claimed_at": "2026-10-01 00:06:13.682842+00:00",
+        "completed_at": "2026-10-01 00:06:15.386051+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 88,
+        "organization_id": 3,
+        "conversation_id": 59,
+        "claimed_at": "2026-10-01 00:07:08.141077+00:00",
+        "completed_at": "2026-10-01 00:07:09.839921+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 120,
+        "organization_id": 1,
+        "conversation_id": 259,
+        "claimed_at": "2026-10-01 00:08:07.402090+00:00",
+        "completed_at": "2026-10-01 00:08:07.618446+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 121,
+        "organization_id": 2,
+        "conversation_id": 260,
+        "claimed_at": "2026-10-01 00:08:07.965542+00:00",
+        "completed_at": "2026-10-01 00:08:08.167902+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 60,
+        "organization_id": 3,
+        "conversation_id": 43,
+        "claimed_at": "2026-10-01 00:06:18.491308+00:00",
+        "completed_at": "2026-10-01 00:06:20.198659+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 94,
+        "organization_id": 3,
+        "conversation_id": 65,
+        "claimed_at": "2026-10-01 00:07:22.529361+00:00",
+        "completed_at": "2026-10-01 00:07:24.251654+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 90,
+        "organization_id": 3,
+        "conversation_id": 61,
+        "claimed_at": "2026-10-01 00:07:12.950704+00:00",
+        "completed_at": "2026-10-01 00:07:14.663730+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 80,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:06:55.638785+00:00",
+        "completed_at": "2026-10-01 00:06:57.344304+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 72,
+        "organization_id": 3,
+        "conversation_id": 49,
+        "claimed_at": "2026-10-01 00:06:38.403964+00:00",
+        "completed_at": "2026-10-01 00:06:40.102040+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 62,
+        "organization_id": 3,
+        "conversation_id": 45,
+        "claimed_at": "2026-10-01 00:06:23.303083+00:00",
+        "completed_at": "2026-10-01 00:06:24.995417+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 122,
+        "organization_id": 3,
+        "conversation_id": 85,
+        "claimed_at": "2026-10-01 00:08:08.376923+00:00",
+        "completed_at": "2026-10-01 00:08:10.096465+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 64,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:06:26.052036+00:00",
+        "completed_at": "2026-10-01 00:06:27.744136+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 124,
+        "organization_id": 3,
+        "conversation_id": 87,
+        "claimed_at": "2026-10-01 00:08:13.300642+00:00",
+        "completed_at": "2026-10-01 00:08:15.097368+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 126,
+        "organization_id": 3,
+        "conversation_id": 89,
+        "claimed_at": "2026-10-01 00:08:18.250871+00:00",
+        "completed_at": "2026-10-01 00:08:19.970324+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 66,
+        "organization_id": 3,
+        "conversation_id": 47,
+        "claimed_at": "2026-10-01 00:06:30.843499+00:00",
+        "completed_at": "2026-10-01 00:06:32.546553+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 96,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:07:25.308112+00:00",
+        "completed_at": "2026-10-01 00:07:27.086042+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 74,
+        "organization_id": 3,
+        "conversation_id": 51,
+        "claimed_at": "2026-10-01 00:06:43.225944+00:00",
+        "completed_at": "2026-10-01 00:06:44.937650+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 100,
+        "organization_id": 3,
+        "conversation_id": 71,
+        "claimed_at": "2026-10-01 00:07:32.958266+00:00",
+        "completed_at": "2026-10-01 00:07:34.688141+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 76,
+        "organization_id": 3,
+        "conversation_id": 53,
+        "claimed_at": "2026-10-01 00:06:48.050068+00:00",
+        "completed_at": "2026-10-01 00:06:49.778952+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 108,
+        "organization_id": 3,
+        "conversation_id": 76,
+        "claimed_at": "2026-10-01 00:07:45.399485+00:00",
+        "completed_at": "2026-10-01 00:07:47.098878+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 78,
+        "organization_id": 3,
+        "conversation_id": 55,
+        "claimed_at": "2026-10-01 00:06:52.877291+00:00",
+        "completed_at": "2026-10-01 00:06:54.587743+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 106,
+        "organization_id": 3,
+        "conversation_id": 74,
+        "claimed_at": "2026-10-01 00:07:40.584736+00:00",
+        "completed_at": "2026-10-01 00:07:42.298966+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 110,
+        "organization_id": 3,
+        "conversation_id": 78,
+        "claimed_at": "2026-10-01 00:07:50.195022+00:00",
+        "completed_at": "2026-10-01 00:07:51.905294+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 112,
+        "organization_id": 3,
+        "conversation_id": 80,
+        "claimed_at": "2026-10-01 00:07:55.021615+00:00",
+        "completed_at": "2026-10-01 00:07:56.743493+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 114,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:07:57.818115+00:00",
+        "completed_at": "2026-10-01 00:07:59.534160+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 50,
+        "organization_id": 3,
+        "conversation_id": 37,
+        "claimed_at": "2026-10-01 00:06:00.909405+00:00",
+        "completed_at": "2026-10-01 00:06:02.985135+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 86,
+        "organization_id": 1,
+        "conversation_id": 195,
+        "claimed_at": "2026-10-01 00:07:07.368241+00:00",
+        "completed_at": "2026-10-01 00:07:07.577774+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 39,
+        "organization_id": 3,
+        "conversation_id": 27,
+        "claimed_at": "2026-10-01 00:05:37.786242+00:00",
+        "completed_at": "2026-10-01 00:05:40.041082+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 54,
+        "organization_id": 1,
+        "conversation_id": 131,
+        "claimed_at": "2026-10-01 00:06:07.339492+00:00",
+        "completed_at": "2026-10-01 00:06:07.545207+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 119,
+        "organization_id": 3,
+        "conversation_id": 84,
+        "claimed_at": "2026-10-01 00:08:05.762143+00:00",
+        "completed_at": "2026-10-01 00:08:07.502836+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 55,
+        "organization_id": 2,
+        "conversation_id": 132,
+        "claimed_at": "2026-10-01 00:06:07.861142+00:00",
+        "completed_at": "2026-10-01 00:06:08.065126+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 42,
+        "organization_id": 3,
+        "conversation_id": 29,
+        "claimed_at": "2026-10-01 00:05:43.291004+00:00",
+        "completed_at": "2026-10-01 00:05:45.527231+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 87,
+        "organization_id": 2,
+        "conversation_id": 196,
+        "claimed_at": "2026-10-01 00:07:07.915971+00:00",
+        "completed_at": "2026-10-01 00:07:08.123923+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 70,
+        "organization_id": 1,
+        "conversation_id": 163,
+        "claimed_at": "2026-10-01 00:06:37.355019+00:00",
+        "completed_at": "2026-10-01 00:06:37.549884+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 44,
+        "organization_id": 3,
+        "conversation_id": 31,
+        "claimed_at": "2026-10-01 00:05:48.733922+00:00",
+        "completed_at": "2026-10-01 00:05:50.729253+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 103,
+        "organization_id": 1,
+        "conversation_id": 227,
+        "claimed_at": "2026-10-01 00:07:37.353745+00:00",
+        "completed_at": "2026-10-01 00:07:37.558116+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 71,
+        "organization_id": 2,
+        "conversation_id": 164,
+        "claimed_at": "2026-10-01 00:06:37.895946+00:00",
+        "completed_at": "2026-10-01 00:06:38.103493+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 123,
+        "organization_id": 3,
+        "conversation_id": 86,
+        "claimed_at": "2026-10-01 00:08:10.634980+00:00",
+        "completed_at": "2026-10-01 00:08:12.368176+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 46,
+        "organization_id": 3,
+        "conversation_id": 33,
+        "claimed_at": "2026-10-01 00:05:53.914096+00:00",
+        "completed_at": "2026-10-01 00:05:56.012722+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 104,
+        "organization_id": 2,
+        "conversation_id": 228,
+        "claimed_at": "2026-10-01 00:07:37.889552+00:00",
+        "completed_at": "2026-10-01 00:07:38.095720+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 48,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:05:57.072013+00:00",
+        "completed_at": "2026-10-01 00:05:58.836347+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 125,
+        "organization_id": 3,
+        "conversation_id": 88,
+        "claimed_at": "2026-10-01 00:08:15.494328+00:00",
+        "completed_at": "2026-10-01 00:08:17.236545+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 138,
+        "organization_id": 2,
+        "conversation_id": 292,
+        "claimed_at": "2026-10-01 00:08:37.898419+00:00",
+        "completed_at": "2026-10-01 00:08:38.111387+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 131,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:08:27.996060+00:00",
+        "completed_at": "2026-10-01 00:08:29.723634+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 127,
+        "organization_id": 3,
+        "conversation_id": 90,
+        "claimed_at": "2026-10-01 00:08:20.363094+00:00",
+        "completed_at": "2026-10-01 00:08:22.068954+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 132,
+        "organization_id": 3,
+        "conversation_id": 93,
+        "claimed_at": "2026-10-01 00:08:28.521503+00:00",
+        "completed_at": "2026-10-01 00:08:30.208514+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 128,
+        "organization_id": 3,
+        "conversation_id": 91,
+        "claimed_at": "2026-10-01 00:08:23.080859+00:00",
+        "completed_at": "2026-10-01 00:08:24.771110+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 129,
+        "organization_id": 3,
+        "conversation_id": 92,
+        "claimed_at": "2026-10-01 00:08:25.194305+00:00",
+        "completed_at": "2026-10-01 00:08:26.915371+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 130,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:08:25.830832+00:00",
+        "completed_at": "2026-10-01 00:08:27.471344+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 134,
+        "organization_id": 3,
+        "conversation_id": 95,
+        "claimed_at": "2026-10-01 00:08:33.347863+00:00",
+        "completed_at": "2026-10-01 00:08:35.039481+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 133,
+        "organization_id": 3,
+        "conversation_id": 94,
+        "claimed_at": "2026-10-01 00:08:30.771203+00:00",
+        "completed_at": "2026-10-01 00:08:32.468377+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 135,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:08:35.589198+00:00",
+        "completed_at": "2026-10-01 00:08:37.310917+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 137,
+        "organization_id": 1,
+        "conversation_id": 291,
+        "claimed_at": "2026-10-01 00:08:37.364929+00:00",
+        "completed_at": "2026-10-01 00:08:37.572767+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 136,
+        "organization_id": 3,
+        "conversation_id": 96,
+        "claimed_at": "2026-10-01 00:08:36.096562+00:00",
+        "completed_at": "2026-10-01 00:08:37.787915+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 140,
+        "organization_id": 3,
+        "conversation_id": 98,
+        "claimed_at": "2026-10-01 00:08:40.903924+00:00",
+        "completed_at": "2026-10-01 00:08:42.605793+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 139,
+        "organization_id": 3,
+        "conversation_id": 97,
+        "claimed_at": "2026-10-01 00:08:38.380026+00:00",
+        "completed_at": "2026-10-01 00:08:40.077094+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 142,
+        "organization_id": 3,
+        "conversation_id": 102,
+        "claimed_at": "2026-10-01 00:08:46.872059+00:00",
+        "completed_at": "2026-10-01 00:08:48.844886+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 141,
+        "organization_id": 3,
+        "conversation_id": 101,
+        "claimed_at": "2026-10-01 00:08:43.455120+00:00",
+        "completed_at": "2026-10-01 00:08:46.008643+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 143,
+        "organization_id": 3,
+        "conversation_id": 103,
+        "claimed_at": "2026-10-01 00:08:49.215252+00:00",
+        "completed_at": "2026-10-01 00:08:51.395141+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 144,
+        "organization_id": 3,
+        "conversation_id": 104,
+        "claimed_at": "2026-10-01 00:08:52.085298+00:00",
+        "completed_at": "2026-10-01 00:08:54.100199+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 145,
+        "organization_id": 3,
+        "conversation_id": 105,
+        "claimed_at": "2026-10-01 00:08:54.594210+00:00",
+        "completed_at": "2026-10-01 00:08:56.645803+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 146,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:08:56.240450+00:00",
+        "completed_at": "2026-10-01 00:08:58.476041+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 148,
+        "organization_id": 3,
+        "conversation_id": 106,
+        "claimed_at": "2026-10-01 00:08:59.614600+00:00",
+        "completed_at": "2026-10-01 00:09:01.744710+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 147,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:08:57.731316+00:00",
+        "completed_at": "2026-10-01 00:08:59.929718+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 165,
+        "organization_id": 3,
+        "conversation_id": 118,
+        "claimed_at": "2026-10-01 00:09:34.362848+00:00",
+        "completed_at": "2026-10-01 00:09:36.330047+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 149,
+        "organization_id": 3,
+        "conversation_id": 107,
+        "claimed_at": "2026-10-01 00:09:02.285191+00:00",
+        "completed_at": "2026-10-01 00:09:04.371211+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 151,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:09:05.450266+00:00",
+        "completed_at": "2026-10-01 00:09:07.512913+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 155,
+        "organization_id": 3,
+        "conversation_id": 110,
+        "claimed_at": "2026-10-01 00:09:10.745724+00:00",
+        "completed_at": "2026-10-01 00:09:12.766294+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 167,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:09:37.455140+00:00",
+        "completed_at": "2026-10-01 00:09:39.548113+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 157,
+        "organization_id": 3,
+        "conversation_id": 112,
+        "claimed_at": "2026-10-01 00:09:15.973802+00:00",
+        "completed_at": "2026-10-01 00:09:18.109420+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 159,
+        "organization_id": 3,
+        "conversation_id": 114,
+        "claimed_at": "2026-10-01 00:09:21.389513+00:00",
+        "completed_at": "2026-10-01 00:09:23.379585+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 169,
+        "organization_id": 3,
+        "conversation_id": 120,
+        "claimed_at": "2026-10-01 00:09:40.647057+00:00",
+        "completed_at": "2026-10-01 00:09:42.701960+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 161,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:09:25.520168+00:00",
+        "completed_at": "2026-10-01 00:09:27.665274+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 163,
+        "organization_id": 3,
+        "conversation_id": 116,
+        "claimed_at": "2026-10-01 00:09:28.810048+00:00",
+        "completed_at": "2026-10-01 00:09:30.946952+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 171,
+        "organization_id": 3,
+        "conversation_id": 122,
+        "claimed_at": "2026-10-01 00:09:45.876462+00:00",
+        "completed_at": "2026-10-01 00:09:48.278743+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 173,
+        "organization_id": 3,
+        "conversation_id": 124,
+        "claimed_at": "2026-10-01 00:09:51.552301+00:00",
+        "completed_at": "2026-10-01 00:09:53.854228+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 175,
+        "organization_id": 3,
+        "conversation_id": 126,
+        "claimed_at": "2026-10-01 00:09:57.026620+00:00",
+        "completed_at": null,
+        "status": "PROCESSING",
+        "outcome_code": "",
+        "llm_calls_admitted": 1
+      },
+      {
+        "id": 166,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "claimed_at": "2026-10-01 00:09:35.286862+00:00",
+        "completed_at": "2026-10-01 00:09:37.373216+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 150,
+        "organization_id": 3,
+        "conversation_id": 108,
+        "claimed_at": "2026-10-01 00:09:04.947549+00:00",
+        "completed_at": "2026-10-01 00:09:06.928242+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 153,
+        "organization_id": 3,
+        "conversation_id": 109,
+        "claimed_at": "2026-10-01 00:09:08.056090+00:00",
+        "completed_at": "2026-10-01 00:09:10.089570+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 156,
+        "organization_id": 3,
+        "conversation_id": 111,
+        "claimed_at": "2026-10-01 00:09:13.299062+00:00",
+        "completed_at": "2026-10-01 00:09:15.393789+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 168,
+        "organization_id": 3,
+        "conversation_id": 119,
+        "claimed_at": "2026-10-01 00:09:38.471050+00:00",
+        "completed_at": "2026-10-01 00:09:40.469830+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 158,
+        "organization_id": 3,
+        "conversation_id": 113,
+        "claimed_at": "2026-10-01 00:09:18.638154+00:00",
+        "completed_at": "2026-10-01 00:09:20.890798+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 160,
+        "organization_id": 3,
+        "conversation_id": 115,
+        "claimed_at": "2026-10-01 00:09:24.134673+00:00",
+        "completed_at": "2026-10-01 00:09:26.124825+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 170,
+        "organization_id": 3,
+        "conversation_id": 121,
+        "claimed_at": "2026-10-01 00:09:43.644120+00:00",
+        "completed_at": "2026-10-01 00:09:45.671219+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 162,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "claimed_at": "2026-10-01 00:09:27.231104+00:00",
+        "completed_at": "2026-10-01 00:09:29.664883+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 164,
+        "organization_id": 3,
+        "conversation_id": 117,
+        "claimed_at": "2026-10-01 00:09:31.777434+00:00",
+        "completed_at": "2026-10-01 00:09:34.179865+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 172,
+        "organization_id": 3,
+        "conversation_id": 123,
+        "claimed_at": "2026-10-01 00:09:48.870422+00:00",
+        "completed_at": "2026-10-01 00:09:51.102435+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 174,
+        "organization_id": 3,
+        "conversation_id": 125,
+        "claimed_at": "2026-10-01 00:09:54.359839+00:00",
+        "completed_at": "2026-10-01 00:09:56.333646+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 152,
+        "organization_id": 1,
+        "conversation_id": 323,
+        "claimed_at": "2026-10-01 00:09:07.443009+00:00",
+        "completed_at": "2026-10-01 00:09:07.737244+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 154,
+        "organization_id": 2,
+        "conversation_id": 324,
+        "claimed_at": "2026-10-01 00:09:08.218274+00:00",
+        "completed_at": "2026-10-01 00:09:08.491324+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      }
+    ]
+  },
+  "e4_classification": "DIAGNOSTIC_ONLY",
+  "e4_overrides": {},
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "smoke_only": false
+}

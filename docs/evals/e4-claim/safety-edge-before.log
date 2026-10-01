@@ -1,0 +1,53 @@
+Found 1 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4claim_safety_edge_before')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld (apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T20:37:25Z", "organization_id": 1, "contact_id": 3, "verification_level": "unknown", "ambiguous": false, "request_id": "e5e65b13-0db9-419c-96e8-7893dd932ceb"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T20:37:26Z", "organization_id": 1, "conversation_id": 1, "request_id": "e5e65b13-0db9-419c-96e8-7893dd932ceb"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-09-30T20:37:26Z", "oldest_pending_age_seconds": 0.289815, "turn_work_id": 1, "conversation_id": 1, "organization_id": 1, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-09-30T20:37:26Z", "turn_work_id": 1, "conversation_id": 1, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-09-30T20:37:26Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-09-30T20:37:27Z", "turn_work_id": 1, "conversation_id": 1, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T20:37:27Z", "organization_id": 1, "contact_id": 4, "verification_level": "unknown", "ambiguous": false, "request_id": "a778f450-d4a9-4d72-a34b-30c64c9b827d"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T20:37:27Z", "organization_id": 1, "conversation_id": 2, "request_id": "a778f450-d4a9-4d72-a34b-30c64c9b827d"}
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T20:37:27Z", "organization_id": 2, "contact_id": 5, "verification_level": "unknown", "ambiguous": false, "request_id": "066eafdd-ffc9-425f-b483-eae2fb3b177c"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T20:37:27Z", "organization_id": 2, "conversation_id": 3, "request_id": "066eafdd-ffc9-425f-b483-eae2fb3b177c"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-09-30T20:37:28Z", "oldest_pending_age_seconds": 0.636503, "turn_work_id": 2, "conversation_id": 2, "organization_id": 1, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-09-30T20:37:28Z", "turn_work_id": 2, "conversation_id": 2, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-09-30T20:37:28Z", "scope": "organization", "limit": 1, "request_id": "-"}
+FAIL
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_e4_claim_yield.py", line 108, in test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld
+    self.assertEqual(signal.semantic_type, Message.SEMANTIC_SAFETY_SIGNAL)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '' != 'safety_signal'
++ safety_signal
+
+
+
+======================================================================
+FAIL: test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld (apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_e4_claim_yield.py", line 108, in test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld
+    self.assertEqual(signal.semantic_type, Message.SEMANTIC_SAFETY_SIGNAL)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '' != 'safety_signal'
++ safety_signal
+
+
+----------------------------------------------------------------------
+Ran 1 test in 36.432s
+
+FAILED (failures=1)
+Preserving test database for alias 'default' ('test_b8b_e4claim_safety_edge_before')...
+{"suite": "targeted", "database": "test_b8b_e4claim_safety_edge_before", "exit_code": 1, "seconds": 42.78281900000002}

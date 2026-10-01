@@ -1,0 +1,5985 @@
+{
+  "schema": "e4-claim-timing-v1",
+  "role": "planner-1",
+  "os_pid": 75764,
+  "classification": "DIAGNOSTIC_ONLY",
+  "events": [
+    {
+      "event": "planner_start",
+      "time": 1790813496.0700715,
+      "poll": 1
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813496.0700912,
+      "poll": 1
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813496.134344,
+      "poll": 1,
+      "start": 1790813496.0897872,
+      "duration": 0.04454994201660156
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813496.1345541,
+      "poll": 1,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813496.1345596,
+      "poll": 1,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813497.13761,
+      "poll": 2
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813497.1376266,
+      "poll": 2
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813497.1570854,
+      "poll": 2,
+      "start": 1790813497.1522064,
+      "duration": 0.004873991012573242
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813497.1572797,
+      "poll": 2,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813497.157286,
+      "poll": 2,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813498.161555,
+      "poll": 3
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813498.1615767,
+      "poll": 3
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813498.1829617,
+      "poll": 3,
+      "start": 1790813498.178035,
+      "duration": 0.004921436309814453
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813498.1831615,
+      "poll": 3,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813498.1831684,
+      "poll": 3,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813499.1970186,
+      "poll": 4
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813499.1970363,
+      "poll": 4
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813499.2210774,
+      "poll": 4,
+      "start": 1790813499.2164571,
+      "duration": 0.004614830017089844
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813499.2212822,
+      "poll": 4,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813499.2212899,
+      "poll": 4,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813500.2244833,
+      "poll": 5
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813500.224498,
+      "poll": 5
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813500.2406397,
+      "poll": 5,
+      "start": 1790813500.2369206,
+      "duration": 0.0037140846252441406
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813500.2408826,
+      "poll": 5,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813500.2408903,
+      "poll": 5,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813501.2446735,
+      "poll": 6
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813501.2447455,
+      "poll": 6
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813501.2737796,
+      "poll": 6,
+      "start": 1790813501.2675583,
+      "duration": 0.006216287612915039
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813501.273972,
+      "poll": 6,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813501.2739787,
+      "poll": 6,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813502.2777503,
+      "poll": 7
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813502.2777662,
+      "poll": 7
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813502.298205,
+      "poll": 7,
+      "start": 1790813502.294183,
+      "duration": 0.004016399383544922
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813502.2983823,
+      "poll": 7,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813502.2983887,
+      "poll": 7,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813503.3086953,
+      "poll": 8
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813503.3087108,
+      "poll": 8
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813503.3356292,
+      "poll": 8,
+      "start": 1790813503.3299806,
+      "duration": 0.005642414093017578
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813503.335833,
+      "poll": 8,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813503.33584,
+      "poll": 8,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813504.3394086,
+      "poll": 9
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813504.3394256,
+      "poll": 9
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813504.3662403,
+      "poll": 9,
+      "start": 1790813504.3607323,
+      "duration": 0.005501985549926758
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813504.3664525,
+      "poll": 9,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813504.3664598,
+      "poll": 9,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813505.3702743,
+      "poll": 10
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813505.370291,
+      "poll": 10
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813505.401845,
+      "poll": 10,
+      "start": 1790813505.3965998,
+      "duration": 0.005238533020019531
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813505.4020436,
+      "poll": 10,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813505.4020495,
+      "poll": 10,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813506.4069614,
+      "poll": 11
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813506.4069796,
+      "poll": 11
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813506.4304996,
+      "poll": 11,
+      "start": 1790813506.426075,
+      "duration": 0.004419565200805664
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813506.4306903,
+      "poll": 11,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813506.430697,
+      "poll": 11,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813507.4357004,
+      "poll": 12
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813507.4357197,
+      "poll": 12
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813507.459261,
+      "poll": 12,
+      "start": 1790813507.4544046,
+      "duration": 0.00484919548034668
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813507.4594858,
+      "poll": 12,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813507.4594932,
+      "poll": 12,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813508.4629023,
+      "poll": 13
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813508.4629202,
+      "poll": 13
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813508.5008347,
+      "poll": 13,
+      "start": 1790813508.4956875,
+      "duration": 0.005141496658325195
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813508.501065,
+      "poll": 13,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813508.5010748,
+      "poll": 13,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813509.5044458,
+      "poll": 14
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813509.5044599,
+      "poll": 14
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813509.5182056,
+      "poll": 14,
+      "start": 1790813509.515384,
+      "duration": 0.002816915512084961
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813509.5183847,
+      "poll": 14,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813509.5183897,
+      "poll": 14,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813510.5215197,
+      "poll": 15
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813510.521536,
+      "poll": 15
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813510.5365517,
+      "poll": 15,
+      "start": 1790813510.532639,
+      "duration": 0.003906726837158203
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813510.5367541,
+      "poll": 15,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813510.5367603,
+      "poll": 15,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813511.5399485,
+      "poll": 16
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813511.539964,
+      "poll": 16
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813511.55731,
+      "poll": 16,
+      "start": 1790813511.5533044,
+      "duration": 0.004000663757324219
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813511.5574439,
+      "poll": 16,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813511.557448,
+      "poll": 16,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813512.559892,
+      "poll": 17
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813512.5599031,
+      "poll": 17
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813512.5721009,
+      "poll": 17,
+      "start": 1790813512.5689816,
+      "duration": 0.003114938735961914
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813512.572228,
+      "poll": 17,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813512.5722318,
+      "poll": 17,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813513.574343,
+      "poll": 18
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813513.574354,
+      "poll": 18
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813513.5892317,
+      "poll": 18,
+      "start": 1790813513.5839195,
+      "duration": 0.005305767059326172
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813513.5894136,
+      "poll": 18,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813513.5894194,
+      "poll": 18,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813514.5928586,
+      "poll": 19
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813514.5928743,
+      "poll": 19
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813514.6149065,
+      "poll": 19,
+      "start": 1790813514.6105,
+      "duration": 0.004397869110107422
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813514.6151407,
+      "poll": 19,
+      "conversations": [
+        3
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813514.6151514,
+      "poll": 19,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813514.615298,
+      "poll": 19,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.6208196,
+      "poll": 19,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.62907,
+      "poll": 19,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813514.620807,
+      "duration": 0.00825643539428711,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.6389198,
+      "poll": 19,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.668865,
+      "poll": 19,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813514.6388986,
+      "duration": 0.0299530029296875,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.680196,
+      "poll": 19,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.6818333,
+      "poll": 19,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813514.6801789,
+      "duration": 0.0016460418701171875,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.7459166,
+      "poll": 19,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.7500043,
+      "poll": 19,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813514.7459075,
+      "duration": 0.004090070724487305,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.7512765,
+      "poll": 19,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.7540257,
+      "poll": 19,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813514.7512667,
+      "duration": 0.002750396728515625,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.7557704,
+      "poll": 19,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.757887,
+      "poll": 19,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813514.7557547,
+      "duration": 0.002123594284057617,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813514.7588227,
+      "poll": 19,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813514.7604687,
+      "poll": 19,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813514.7588115,
+      "duration": 0.0016489028930664062,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813514.7705233,
+      "poll": 19,
+      "conversation": 3,
+      "work": 3
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813515.3559635,
+      "poll": 19,
+      "work": 3,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813515.8562195,
+      "poll": 19,
+      "work": 3,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813516.9775949,
+      "poll": 19,
+      "work": 3,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813517.4777315,
+      "poll": 19,
+      "work": 3,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813517.7092185,
+      "poll": 19,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813518.7131443,
+      "poll": 20
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813518.7131603,
+      "poll": 20
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813518.7381105,
+      "poll": 20,
+      "start": 1790813518.7328348,
+      "duration": 0.005269527435302734
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813518.7383258,
+      "poll": 20,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813518.7383327,
+      "poll": 20,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813519.7419443,
+      "poll": 21
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813519.7419617,
+      "poll": 21
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813519.8512433,
+      "poll": 21,
+      "start": 1790813519.8462763,
+      "duration": 0.004960298538208008
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813519.851465,
+      "poll": 21,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813519.8514714,
+      "poll": 21,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813520.8549962,
+      "poll": 22
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813520.8550117,
+      "poll": 22
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813520.8768625,
+      "poll": 22,
+      "start": 1790813520.8724778,
+      "duration": 0.004379749298095703
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813520.877074,
+      "poll": 22,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813520.8770807,
+      "poll": 22,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813521.8807154,
+      "poll": 23
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813521.8807335,
+      "poll": 23
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813521.8994403,
+      "poll": 23,
+      "start": 1790813521.894793,
+      "duration": 0.004642486572265625
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813521.8996508,
+      "poll": 23,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813521.8996582,
+      "poll": 23,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813522.9035819,
+      "poll": 24
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813522.9036014,
+      "poll": 24
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813522.9328387,
+      "poll": 24,
+      "start": 1790813522.9281197,
+      "duration": 0.0047130584716796875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813522.9330826,
+      "poll": 24,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813522.9330904,
+      "poll": 24,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813523.9369543,
+      "poll": 25
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813523.93697,
+      "poll": 25
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813523.9573736,
+      "poll": 25,
+      "start": 1790813523.9529548,
+      "duration": 0.004413604736328125
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813523.957585,
+      "poll": 25,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813523.9575918,
+      "poll": 25,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813524.9616785,
+      "poll": 26
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813524.9616947,
+      "poll": 26
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813524.9896612,
+      "poll": 26,
+      "start": 1790813524.9849691,
+      "duration": 0.004686117172241211
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813524.989885,
+      "poll": 26,
+      "conversations": [
+        3,
+        4
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813524.989895,
+      "poll": 26,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813524.99002,
+      "poll": 26,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813524.9945989,
+      "poll": 26,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813524.9956808,
+      "poll": 26,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813524.9945853,
+      "duration": 0.0010881423950195312,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813525.000864,
+      "poll": 26,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813525.004092,
+      "poll": 26,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813525.0008414,
+      "duration": 0.003240346908569336,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813525.0123997,
+      "poll": 26,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813525.0134435,
+      "poll": 26,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813525.0123844,
+      "duration": 0.0010521411895751953,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813525.0762994,
+      "poll": 26,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813525.0783594,
+      "poll": 26,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813525.076284,
+      "duration": 0.0020673274993896484,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813525.0805779,
+      "poll": 26,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813525.0837383,
+      "poll": 26,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813525.080565,
+      "duration": 0.0031671524047851562,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813525.0853891,
+      "poll": 26,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813525.0873919,
+      "poll": 26,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813525.0853734,
+      "duration": 0.0020117759704589844,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813525.088174,
+      "poll": 26,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813525.0891366,
+      "poll": 26,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813525.0881648,
+      "duration": 0.0009663105010986328,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813525.0965216,
+      "poll": 26,
+      "conversation": 3,
+      "work": 5
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813525.3267279,
+      "poll": 26,
+      "work": 5,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813525.8270187,
+      "poll": 26,
+      "work": 5,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813526.075297,
+      "poll": 26,
+      "work": 5,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813526.5756192,
+      "poll": 26,
+      "work": 5,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813526.873802,
+      "poll": 26,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813527.8772628,
+      "poll": 27
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813527.877281,
+      "poll": 27
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813527.8895895,
+      "poll": 27,
+      "start": 1790813527.8858979,
+      "duration": 0.00368499755859375
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813527.889806,
+      "poll": 27,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813527.8898134,
+      "poll": 27,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813528.8929234,
+      "poll": 28
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813528.8929396,
+      "poll": 28
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813528.9130926,
+      "poll": 28,
+      "start": 1790813528.9082124,
+      "duration": 0.004873514175415039
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813528.9133046,
+      "poll": 28,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813528.9133115,
+      "poll": 28,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813529.917032,
+      "poll": 29
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813529.917044,
+      "poll": 29
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813529.930916,
+      "poll": 29,
+      "start": 1790813529.9281366,
+      "duration": 0.002774953842163086
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813529.9310975,
+      "poll": 29,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813529.9311028,
+      "poll": 29,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813530.934695,
+      "poll": 30
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813530.9347122,
+      "poll": 30
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813530.9629428,
+      "poll": 30,
+      "start": 1790813530.9581587,
+      "duration": 0.0047760009765625
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813530.9631467,
+      "poll": 30,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813530.9631536,
+      "poll": 30,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813531.9675083,
+      "poll": 31
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813531.9675255,
+      "poll": 31
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813531.994971,
+      "poll": 31,
+      "start": 1790813531.9909205,
+      "duration": 0.004043102264404297
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813531.9952114,
+      "poll": 31,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813531.9952188,
+      "poll": 31,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813533.0022068,
+      "poll": 32
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813533.0022278,
+      "poll": 32
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813533.0402465,
+      "poll": 32,
+      "start": 1790813533.0358868,
+      "duration": 0.004351377487182617
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813533.040472,
+      "poll": 32,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813533.0404825,
+      "poll": 32,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813534.0462148,
+      "poll": 33
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813534.0462306,
+      "poll": 33
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813534.0636153,
+      "poll": 33,
+      "start": 1790813534.0598643,
+      "duration": 0.003742218017578125
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813534.0638616,
+      "poll": 33,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813534.0638702,
+      "poll": 33,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813535.0671067,
+      "poll": 34
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813535.0671234,
+      "poll": 34
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813535.08377,
+      "poll": 34,
+      "start": 1790813535.0800147,
+      "duration": 0.003749847412109375
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813535.0839155,
+      "poll": 34,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813535.0839198,
+      "poll": 34,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813536.0881314,
+      "poll": 35
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813536.0881472,
+      "poll": 35
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813536.105995,
+      "poll": 35,
+      "start": 1790813536.102012,
+      "duration": 0.003977060317993164
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813536.1062074,
+      "poll": 35,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813536.106215,
+      "poll": 35,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813537.1097786,
+      "poll": 36
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813537.1097963,
+      "poll": 36
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813537.130194,
+      "poll": 36,
+      "start": 1790813537.1258957,
+      "duration": 0.004292011260986328
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813537.1304038,
+      "poll": 36,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813537.130411,
+      "poll": 36,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813538.133116,
+      "poll": 37
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813538.133129,
+      "poll": 37
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813538.1442122,
+      "poll": 37,
+      "start": 1790813538.141507,
+      "duration": 0.002701282501220703
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813538.1443436,
+      "poll": 37,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813538.1443474,
+      "poll": 37,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813539.1479998,
+      "poll": 38
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813539.148017,
+      "poll": 38
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813539.1636112,
+      "poll": 38,
+      "start": 1790813539.1602273,
+      "duration": 0.0033788681030273438
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813539.1637642,
+      "poll": 38,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813539.163771,
+      "poll": 38,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813540.1671689,
+      "poll": 39
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813540.167187,
+      "poll": 39
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813540.1843328,
+      "poll": 39,
+      "start": 1790813540.180747,
+      "duration": 0.0035810470581054688
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813540.1844885,
+      "poll": 39,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813540.184493,
+      "poll": 39,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813541.1873837,
+      "poll": 40
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813541.187398,
+      "poll": 40
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813541.2003984,
+      "poll": 40,
+      "start": 1790813541.1977332,
+      "duration": 0.0026602745056152344
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813541.2005434,
+      "poll": 40,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813541.2005491,
+      "poll": 40,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813542.2039065,
+      "poll": 41
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813542.2039244,
+      "poll": 41
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813542.22349,
+      "poll": 41,
+      "start": 1790813542.2195354,
+      "duration": 0.003948211669921875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813542.2236938,
+      "poll": 41,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813542.2237012,
+      "poll": 41,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813543.2270298,
+      "poll": 42
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813543.2270482,
+      "poll": 42
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813543.2431543,
+      "poll": 42,
+      "start": 1790813543.2391663,
+      "duration": 0.003981113433837891
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813543.2433667,
+      "poll": 42,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813543.2433732,
+      "poll": 42,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813544.2470958,
+      "poll": 43
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813544.2471447,
+      "poll": 43
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813544.2647324,
+      "poll": 43,
+      "start": 1790813544.2604532,
+      "duration": 0.004273653030395508
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813544.2649508,
+      "poll": 43,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813544.2649572,
+      "poll": 43,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813545.2686784,
+      "poll": 44
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813545.2686958,
+      "poll": 44
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813545.2874465,
+      "poll": 44,
+      "start": 1790813545.283158,
+      "duration": 0.004281759262084961
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813545.287691,
+      "poll": 44,
+      "conversations": [
+        3,
+        4
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813545.2876987,
+      "poll": 44,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813545.2878027,
+      "poll": 44,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.2912517,
+      "poll": 44,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.2923737,
+      "poll": 44,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813545.291238,
+      "duration": 0.0011286735534667969,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.297067,
+      "poll": 44,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.2993333,
+      "poll": 44,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813545.2970455,
+      "duration": 0.002277374267578125,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.3072517,
+      "poll": 44,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.3081355,
+      "poll": 44,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813545.3072405,
+      "duration": 0.0008902549743652344,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.3526356,
+      "poll": 44,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.35424,
+      "poll": 44,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813545.3526216,
+      "duration": 0.0016121864318847656,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.3562324,
+      "poll": 44,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.3576834,
+      "poll": 44,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813545.356218,
+      "duration": 0.0014586448669433594,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.3592105,
+      "poll": 44,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.360626,
+      "poll": 44,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813545.3591967,
+      "duration": 0.0014231204986572266,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813545.3614109,
+      "poll": 44,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813545.3623972,
+      "poll": 44,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813545.361401,
+      "duration": 0.000989675521850586,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813545.3671322,
+      "poll": 44,
+      "conversation": 3,
+      "work": 9
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813545.5737445,
+      "poll": 44,
+      "work": 9,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813546.0738893,
+      "poll": 44,
+      "work": 9,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813546.340987,
+      "poll": 44,
+      "work": 9,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813546.841336,
+      "poll": 44,
+      "work": 9,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813547.0049536,
+      "poll": 44,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813548.0088167,
+      "poll": 45
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813548.008839,
+      "poll": 45
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813548.0245364,
+      "poll": 45,
+      "start": 1790813548.0206203,
+      "duration": 0.003910064697265625
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813548.0247324,
+      "poll": 45,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813548.0247393,
+      "poll": 45,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813549.0291917,
+      "poll": 46
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813549.0292244,
+      "poll": 46
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813549.053255,
+      "poll": 46,
+      "start": 1790813549.048662,
+      "duration": 0.004586458206176758
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813549.0534713,
+      "poll": 46,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813549.0534785,
+      "poll": 46,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813550.0561244,
+      "poll": 47
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813550.056136,
+      "poll": 47
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813550.0752351,
+      "poll": 47,
+      "start": 1790813550.0708582,
+      "duration": 0.004370212554931641
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813550.0754476,
+      "poll": 47,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813550.0754542,
+      "poll": 47,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813551.0795255,
+      "poll": 48
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813551.079548,
+      "poll": 48
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813551.1404574,
+      "poll": 48,
+      "start": 1790813551.0985286,
+      "duration": 0.041922807693481445
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813551.1406548,
+      "poll": 48,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813551.1406622,
+      "poll": 48,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813552.1438,
+      "poll": 49
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813552.1438162,
+      "poll": 49
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813552.160015,
+      "poll": 49,
+      "start": 1790813552.1555731,
+      "duration": 0.004433870315551758
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813552.1602285,
+      "poll": 49,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813552.1602364,
+      "poll": 49,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813553.1638277,
+      "poll": 50
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813553.1638448,
+      "poll": 50
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813553.1784785,
+      "poll": 50,
+      "start": 1790813553.173409,
+      "duration": 0.005063295364379883
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813553.1786785,
+      "poll": 50,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813553.1786852,
+      "poll": 50,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813554.1821682,
+      "poll": 51
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813554.1821856,
+      "poll": 51
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813554.2018273,
+      "poll": 51,
+      "start": 1790813554.1974387,
+      "duration": 0.004381656646728516
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813554.202049,
+      "poll": 51,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813554.2020562,
+      "poll": 51,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813555.2053995,
+      "poll": 52
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813555.205415,
+      "poll": 52
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813555.2227645,
+      "poll": 52,
+      "start": 1790813555.2182639,
+      "duration": 0.004495143890380859
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813555.2229593,
+      "poll": 52,
+      "conversations": [
+        3,
+        4
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813555.2229688,
+      "poll": 52,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813555.223074,
+      "poll": 52,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.2269132,
+      "poll": 52,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.2278674,
+      "poll": 52,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813555.2269015,
+      "duration": 0.0009579658508300781,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.232859,
+      "poll": 52,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.2357688,
+      "poll": 52,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813555.2328422,
+      "duration": 0.002916574478149414,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.2445161,
+      "poll": 52,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.2458935,
+      "poll": 52,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813555.2444997,
+      "duration": 0.0013856887817382812,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.2861404,
+      "poll": 52,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.2882996,
+      "poll": 52,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813555.2861035,
+      "duration": 0.0021886825561523438,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.290133,
+      "poll": 52,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.291497,
+      "poll": 52,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813555.2901237,
+      "duration": 0.0013651847839355469,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.2929578,
+      "poll": 52,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.294572,
+      "poll": 52,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813555.2929454,
+      "duration": 0.0016183853149414062,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813555.2953374,
+      "poll": 52,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813555.2962754,
+      "poll": 52,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813555.2953277,
+      "duration": 0.0009407997131347656,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813555.29941,
+      "poll": 52,
+      "conversation": 3,
+      "work": 11
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813555.5739944,
+      "poll": 52,
+      "work": 11,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813556.0744746,
+      "poll": 52,
+      "work": 11,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813556.2822034,
+      "poll": 52,
+      "work": 11,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813556.7822738,
+      "poll": 52,
+      "work": 11,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813557.003367,
+      "poll": 52,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813558.0063083,
+      "poll": 53
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813558.006323,
+      "poll": 53
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813558.0230904,
+      "poll": 53,
+      "start": 1790813558.0191052,
+      "duration": 0.003978729248046875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813558.0233042,
+      "poll": 53,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813558.0233116,
+      "poll": 53,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813559.0258176,
+      "poll": 54
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813559.0258296,
+      "poll": 54
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813559.0408487,
+      "poll": 54,
+      "start": 1790813559.0380654,
+      "duration": 0.002778291702270508
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813559.041035,
+      "poll": 54,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813559.0410438,
+      "poll": 54,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813560.043771,
+      "poll": 55
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813560.043787,
+      "poll": 55
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813560.062141,
+      "poll": 55,
+      "start": 1790813560.057214,
+      "duration": 0.004920244216918945
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813560.062367,
+      "poll": 55,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813560.0623748,
+      "poll": 55,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813561.0654225,
+      "poll": 56
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813561.0654383,
+      "poll": 56
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813561.0809443,
+      "poll": 56,
+      "start": 1790813561.0781841,
+      "duration": 0.002754688262939453
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813561.0810997,
+      "poll": 56,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813561.0811062,
+      "poll": 56,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813562.0842292,
+      "poll": 57
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813562.0842447,
+      "poll": 57
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813562.1021876,
+      "poll": 57,
+      "start": 1790813562.0978637,
+      "duration": 0.0043184757232666016
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813562.1023886,
+      "poll": 57,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813562.102396,
+      "poll": 57,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813563.1054761,
+      "poll": 58
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813563.1054919,
+      "poll": 58
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813563.1216161,
+      "poll": 58,
+      "start": 1790813563.117122,
+      "duration": 0.004487514495849609
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813563.121825,
+      "poll": 58,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813563.1218321,
+      "poll": 58,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813564.12501,
+      "poll": 59
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813564.125026,
+      "poll": 59
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813564.1429691,
+      "poll": 59,
+      "start": 1790813564.1387637,
+      "duration": 0.004198789596557617
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813564.1431713,
+      "poll": 59,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813564.143179,
+      "poll": 59,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813565.14586,
+      "poll": 60
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813565.1458712,
+      "poll": 60
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813565.1597722,
+      "poll": 60,
+      "start": 1790813565.1562002,
+      "duration": 0.0035669803619384766
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813565.159961,
+      "poll": 60,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813565.1599674,
+      "poll": 60,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813566.163624,
+      "poll": 61
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813566.1636405,
+      "poll": 61
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813566.1788123,
+      "poll": 61,
+      "start": 1790813566.1755962,
+      "duration": 0.0032105445861816406
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813566.179018,
+      "poll": 61,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813566.1790252,
+      "poll": 61,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813567.1824355,
+      "poll": 62
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813567.182446,
+      "poll": 62
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813567.1944025,
+      "poll": 62,
+      "start": 1790813567.1908834,
+      "duration": 0.0035126209259033203
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813567.1946092,
+      "poll": 62,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813567.1946163,
+      "poll": 62,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813568.1979387,
+      "poll": 63
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813568.1979516,
+      "poll": 63
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813568.2201636,
+      "poll": 63,
+      "start": 1790813568.2156174,
+      "duration": 0.004539966583251953
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813568.2204287,
+      "poll": 63,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813568.2204359,
+      "poll": 63,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813569.2231987,
+      "poll": 64
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813569.2232141,
+      "poll": 64
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813569.2407978,
+      "poll": 64,
+      "start": 1790813569.2366433,
+      "duration": 0.004148006439208984
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813569.2409973,
+      "poll": 64,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813569.2410035,
+      "poll": 64,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813570.2441604,
+      "poll": 65
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813570.2441761,
+      "poll": 65
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813570.2622867,
+      "poll": 65,
+      "start": 1790813570.2585862,
+      "duration": 0.003694772720336914
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813570.2624786,
+      "poll": 65,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813570.2624846,
+      "poll": 65,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813571.2659254,
+      "poll": 66
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813571.2659419,
+      "poll": 66
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813571.276473,
+      "poll": 66,
+      "start": 1790813571.2735696,
+      "duration": 0.0028989315032958984
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813571.2766144,
+      "poll": 66,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813571.2766192,
+      "poll": 66,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813572.2802124,
+      "poll": 67
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813572.2802289,
+      "poll": 67
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813572.2993438,
+      "poll": 67,
+      "start": 1790813572.2947085,
+      "duration": 0.004628658294677734
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813572.2995622,
+      "poll": 67,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813572.2995694,
+      "poll": 67,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813573.3026469,
+      "poll": 68
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813573.3026621,
+      "poll": 68
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813573.3182971,
+      "poll": 68,
+      "start": 1790813573.3141625,
+      "duration": 0.004128694534301758
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813573.318489,
+      "poll": 68,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813573.3184958,
+      "poll": 68,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813574.321815,
+      "poll": 69
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813574.321833,
+      "poll": 69
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813574.3650455,
+      "poll": 69,
+      "start": 1790813574.3606062,
+      "duration": 0.0044329166412353516
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813574.3652544,
+      "poll": 69,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813574.3652613,
+      "poll": 69,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813575.3686364,
+      "poll": 70
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813575.3686528,
+      "poll": 70
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813575.4025033,
+      "poll": 70,
+      "start": 1790813575.3982573,
+      "duration": 0.0042400360107421875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813575.4027474,
+      "poll": 70,
+      "conversations": [
+        4
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813575.402755,
+      "poll": 70,
+      "conversation": 4
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813575.4028702,
+      "poll": 70,
+      "conversation": 4
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.4073606,
+      "poll": 70,
+      "table": "organizations_organization",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.4084423,
+      "poll": 70,
+      "table": "organizations_organization",
+      "conversation": 4,
+      "start": 1790813575.4073467,
+      "duration": 0.0010881423950195312,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.4150853,
+      "poll": 70,
+      "table": "agent_conversation",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.4182453,
+      "poll": 70,
+      "table": "agent_conversation",
+      "conversation": 4,
+      "start": 1790813575.4150624,
+      "duration": 0.0031723976135253906,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.4265316,
+      "poll": 70,
+      "table": "agent_turnwork",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.427997,
+      "poll": 70,
+      "table": "agent_turnwork",
+      "conversation": 4,
+      "start": 1790813575.4265163,
+      "duration": 0.0014729499816894531,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.4736557,
+      "poll": 70,
+      "table": "channels_message",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.4754148,
+      "poll": 70,
+      "table": "channels_message",
+      "conversation": 4,
+      "start": 1790813575.4736412,
+      "duration": 0.0017659664154052734,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.4772947,
+      "poll": 70,
+      "table": "agent_turnwork",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.4789865,
+      "poll": 70,
+      "table": "agent_turnwork",
+      "conversation": 4,
+      "start": 1790813575.4772823,
+      "duration": 0.0016963481903076172,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.4806416,
+      "poll": 70,
+      "table": "channels_message",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.4822993,
+      "poll": 70,
+      "table": "channels_message",
+      "conversation": 4,
+      "start": 1790813575.480627,
+      "duration": 0.001665353775024414,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813575.483142,
+      "poll": 70,
+      "table": "agent_conversation",
+      "conversation": 4
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813575.4842732,
+      "poll": 70,
+      "table": "agent_conversation",
+      "conversation": 4,
+      "start": 1790813575.4831316,
+      "duration": 0.0011339187622070312,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813575.4872901,
+      "poll": 70,
+      "conversation": 4,
+      "work": 16
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813575.7560675,
+      "poll": 70,
+      "work": 16,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813576.2564993,
+      "poll": 70,
+      "work": 16,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813576.5738597,
+      "poll": 70,
+      "work": 16,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813577.0773842,
+      "poll": 70,
+      "work": 16,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813577.3076446,
+      "poll": 70,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813578.3112898,
+      "poll": 71
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813578.3113048,
+      "poll": 71
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813578.3294063,
+      "poll": 71,
+      "start": 1790813578.3251324,
+      "duration": 0.00426793098449707
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813578.3295991,
+      "poll": 71,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813578.3296056,
+      "poll": 71,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813579.3337026,
+      "poll": 72
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813579.3337207,
+      "poll": 72
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813579.3624775,
+      "poll": 72,
+      "start": 1790813579.3583722,
+      "duration": 0.004099607467651367
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813579.3626883,
+      "poll": 72,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813579.362696,
+      "poll": 72,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813580.3660731,
+      "poll": 73
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813580.3660898,
+      "poll": 73
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813580.3821867,
+      "poll": 73,
+      "start": 1790813580.3777509,
+      "duration": 0.0044307708740234375
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813580.3823318,
+      "poll": 73,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813580.3823361,
+      "poll": 73,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813581.385546,
+      "poll": 74
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813581.3855608,
+      "poll": 74
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813581.40128,
+      "poll": 74,
+      "start": 1790813581.3971686,
+      "duration": 0.0041048526763916016
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813581.4015074,
+      "poll": 74,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813581.401513,
+      "poll": 74,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813582.4068553,
+      "poll": 75
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813582.4069,
+      "poll": 75
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813582.4280703,
+      "poll": 75,
+      "start": 1790813582.423629,
+      "duration": 0.004435062408447266
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813582.4282866,
+      "poll": 75,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813582.4282932,
+      "poll": 75,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813583.4343946,
+      "poll": 76
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813583.4344122,
+      "poll": 76
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813583.4708002,
+      "poll": 76,
+      "start": 1790813583.4665654,
+      "duration": 0.004229068756103516
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813583.4709883,
+      "poll": 76,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813583.4709947,
+      "poll": 76,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813584.4742327,
+      "poll": 77
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813584.4742515,
+      "poll": 77
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813584.493383,
+      "poll": 77,
+      "start": 1790813584.4895012,
+      "duration": 0.0038728713989257812
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813584.4936874,
+      "poll": 77,
+      "conversations": [
+        3
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813584.4936936,
+      "poll": 77,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813584.493828,
+      "poll": 77,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.4982052,
+      "poll": 77,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.4993567,
+      "poll": 77,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813584.4981916,
+      "duration": 0.0011565685272216797,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.5040717,
+      "poll": 77,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.5067031,
+      "poll": 77,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813584.50405,
+      "duration": 0.0026426315307617188,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.5141668,
+      "poll": 77,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.5156536,
+      "poll": 77,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813584.5141528,
+      "duration": 0.0014920234680175781,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.5523748,
+      "poll": 77,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.5535705,
+      "poll": 77,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813584.5523653,
+      "duration": 0.0011970996856689453,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.555495,
+      "poll": 77,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.5569725,
+      "poll": 77,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813584.5554848,
+      "duration": 0.0014803409576416016,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.5584695,
+      "poll": 77,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.5597172,
+      "poll": 77,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813584.5584562,
+      "duration": 0.0012538433074951172,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813584.5605092,
+      "poll": 77,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813584.5613174,
+      "poll": 77,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813584.5604997,
+      "duration": 0.0008113384246826172,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813584.5668738,
+      "poll": 77,
+      "conversation": 3,
+      "work": 17
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813584.7379677,
+      "poll": 77,
+      "work": 17,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813585.2381594,
+      "poll": 77,
+      "work": 17,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813585.4787145,
+      "poll": 77,
+      "work": 17,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813585.9808488,
+      "poll": 77,
+      "work": 17,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813586.2282608,
+      "poll": 77,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813587.231538,
+      "poll": 78
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813587.2315538,
+      "poll": 78
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813587.2622013,
+      "poll": 78,
+      "start": 1790813587.2566938,
+      "duration": 0.005501985549926758
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813587.262436,
+      "poll": 78,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813587.2624438,
+      "poll": 78,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813588.2655404,
+      "poll": 79
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813588.2655535,
+      "poll": 79
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813588.2796795,
+      "poll": 79,
+      "start": 1790813588.2757196,
+      "duration": 0.003954172134399414
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813588.2798727,
+      "poll": 79,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813588.2798789,
+      "poll": 79,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813589.2834916,
+      "poll": 80
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813589.283507,
+      "poll": 80
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813589.3081214,
+      "poll": 80,
+      "start": 1790813589.3038912,
+      "duration": 0.004224538803100586
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813589.3083365,
+      "poll": 80,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813589.3083434,
+      "poll": 80,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813590.3118923,
+      "poll": 81
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813590.3119097,
+      "poll": 81
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813590.3350227,
+      "poll": 81,
+      "start": 1790813590.330394,
+      "duration": 0.004621744155883789
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813590.3352284,
+      "poll": 81,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813590.3352344,
+      "poll": 81,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813591.3385897,
+      "poll": 82
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813591.3386075,
+      "poll": 82
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813591.3592508,
+      "poll": 82,
+      "start": 1790813591.355154,
+      "duration": 0.004090785980224609
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813591.3594542,
+      "poll": 82,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813591.3594608,
+      "poll": 82,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813592.3626466,
+      "poll": 83
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813592.362663,
+      "poll": 83
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813592.3806598,
+      "poll": 83,
+      "start": 1790813592.3768792,
+      "duration": 0.003774881362915039
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813592.3808463,
+      "poll": 83,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813592.3808517,
+      "poll": 83,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813593.384882,
+      "poll": 84
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813593.3848977,
+      "poll": 84
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813593.407539,
+      "poll": 84,
+      "start": 1790813593.4039009,
+      "duration": 0.003633260726928711
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813593.4076812,
+      "poll": 84,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813593.407686,
+      "poll": 84,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813594.4102838,
+      "poll": 85
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813594.4102993,
+      "poll": 85
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813594.4271343,
+      "poll": 85,
+      "start": 1790813594.4226193,
+      "duration": 0.00450897216796875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813594.4273567,
+      "poll": 85,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813594.4273634,
+      "poll": 85,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813595.4329028,
+      "poll": 86
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813595.4329202,
+      "poll": 86
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813595.461113,
+      "poll": 86,
+      "start": 1790813595.4565773,
+      "duration": 0.0045299530029296875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813595.4613173,
+      "poll": 86,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813595.4613242,
+      "poll": 86,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813596.4652393,
+      "poll": 87
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813596.4652557,
+      "poll": 87
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813596.4927242,
+      "poll": 87,
+      "start": 1790813596.488784,
+      "duration": 0.003936052322387695
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813596.4929245,
+      "poll": 87,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813596.492931,
+      "poll": 87,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813597.4999762,
+      "poll": 88
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813597.499999,
+      "poll": 88
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813597.5273106,
+      "poll": 88,
+      "start": 1790813597.5231717,
+      "duration": 0.004132509231567383
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813597.5275161,
+      "poll": 88,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813597.5275228,
+      "poll": 88,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813598.5326328,
+      "poll": 89
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813598.5326564,
+      "poll": 89
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813598.5501366,
+      "poll": 89,
+      "start": 1790813598.5472887,
+      "duration": 0.0028433799743652344
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813598.55028,
+      "poll": 89,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813598.5502844,
+      "poll": 89,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813599.5536523,
+      "poll": 90
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813599.5536685,
+      "poll": 90
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813599.5855784,
+      "poll": 90,
+      "start": 1790813599.581627,
+      "duration": 0.003945112228393555
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813599.5857885,
+      "poll": 90,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813599.5857973,
+      "poll": 90,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813600.5889165,
+      "poll": 91
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813600.588928,
+      "poll": 91
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813600.6038542,
+      "poll": 91,
+      "start": 1790813600.6003356,
+      "duration": 0.0035123825073242188
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813600.6040664,
+      "poll": 91,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813600.6040733,
+      "poll": 91,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813601.6076348,
+      "poll": 92
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813601.6076498,
+      "poll": 92
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813601.6242166,
+      "poll": 92,
+      "start": 1790813601.6202047,
+      "duration": 0.004005908966064453
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813601.6244152,
+      "poll": 92,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813601.6244211,
+      "poll": 92,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813602.6275446,
+      "poll": 93
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813602.6275601,
+      "poll": 93
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813602.642907,
+      "poll": 93,
+      "start": 1790813602.6393418,
+      "duration": 0.0035588741302490234
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813602.643104,
+      "poll": 93,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813602.6431105,
+      "poll": 93,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813603.6464913,
+      "poll": 94
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813603.6465075,
+      "poll": 94
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813603.6638072,
+      "poll": 94,
+      "start": 1790813603.6611397,
+      "duration": 0.00266265869140625
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813603.6639392,
+      "poll": 94,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813603.6639435,
+      "poll": 94,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813604.6679296,
+      "poll": 95
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813604.6679497,
+      "poll": 95
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813604.6841989,
+      "poll": 95,
+      "start": 1790813604.6802106,
+      "duration": 0.003983736038208008
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813604.6843946,
+      "poll": 95,
+      "conversations": [
+        3,
+        4
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813604.6844018,
+      "poll": 95,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813604.6844923,
+      "poll": 95,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.6880138,
+      "poll": 95,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.6888375,
+      "poll": 95,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813604.6880054,
+      "duration": 0.0008246898651123047,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.6933763,
+      "poll": 95,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.6958914,
+      "poll": 95,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813604.693357,
+      "duration": 0.002524137496948242,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.7018783,
+      "poll": 95,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.703037,
+      "poll": 95,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813604.7018638,
+      "duration": 0.00116729736328125,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.737678,
+      "poll": 95,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.7390532,
+      "poll": 95,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813604.7376647,
+      "duration": 0.00138092041015625,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.7408166,
+      "poll": 95,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.742319,
+      "poll": 95,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813604.7408035,
+      "duration": 0.0015075206756591797,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.7438242,
+      "poll": 95,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.7451477,
+      "poll": 95,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813604.7438135,
+      "duration": 0.0013260841369628906,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813604.7459922,
+      "poll": 95,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813604.7470021,
+      "poll": 95,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813604.7459822,
+      "duration": 0.0010123252868652344,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813604.7497025,
+      "poll": 95,
+      "conversation": 3,
+      "work": 21
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813604.9055355,
+      "poll": 95,
+      "work": 21,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813605.4057302,
+      "poll": 95,
+      "work": 21,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813605.5974739,
+      "poll": 95,
+      "work": 21,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813606.0978744,
+      "poll": 95,
+      "work": 21,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813606.3124676,
+      "poll": 95,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813607.3154573,
+      "poll": 96
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813607.3154724,
+      "poll": 96
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813607.3298862,
+      "poll": 96,
+      "start": 1790813607.3267486,
+      "duration": 0.0031311511993408203
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813607.3300982,
+      "poll": 96,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813607.3301055,
+      "poll": 96,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813608.3322425,
+      "poll": 97
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813608.332254,
+      "poll": 97
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813608.3420749,
+      "poll": 97,
+      "start": 1790813608.3394606,
+      "duration": 0.0026102066040039062
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813608.3422115,
+      "poll": 97,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813608.3422155,
+      "poll": 97,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813609.3449152,
+      "poll": 98
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813609.3449285,
+      "poll": 98
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813609.356767,
+      "poll": 98,
+      "start": 1790813609.3543365,
+      "duration": 0.0024251937866210938
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813609.3569915,
+      "poll": 98,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813609.3569975,
+      "poll": 98,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813610.3605206,
+      "poll": 99
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813610.3605363,
+      "poll": 99
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813610.383702,
+      "poll": 99,
+      "start": 1790813610.379791,
+      "duration": 0.003904104232788086
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813610.3839152,
+      "poll": 99,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813610.383922,
+      "poll": 99,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813611.3871188,
+      "poll": 100
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813611.3871346,
+      "poll": 100
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813611.5084486,
+      "poll": 100,
+      "start": 1790813611.40207,
+      "duration": 0.10637164115905762
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813611.5086749,
+      "poll": 100,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813611.5086825,
+      "poll": 100,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813612.5118394,
+      "poll": 101
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813612.511856,
+      "poll": 101
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813612.5298748,
+      "poll": 101,
+      "start": 1790813612.525776,
+      "duration": 0.0040929317474365234
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813612.5305524,
+      "poll": 101,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813612.530561,
+      "poll": 101,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813613.533289,
+      "poll": 102
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813613.5333009,
+      "poll": 102
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813613.5434127,
+      "poll": 102,
+      "start": 1790813613.5404737,
+      "duration": 0.0029337406158447266
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813613.543555,
+      "poll": 102,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813613.5435593,
+      "poll": 102,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813614.5467224,
+      "poll": 103
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813614.5467377,
+      "poll": 103
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813614.5658314,
+      "poll": 103,
+      "start": 1790813614.5615656,
+      "duration": 0.004259586334228516
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813614.5660572,
+      "poll": 103,
+      "conversations": [
+        3
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813614.5660648,
+      "poll": 103,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813614.5661747,
+      "poll": 103,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.5703657,
+      "poll": 103,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.5714734,
+      "poll": 103,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813614.5703516,
+      "duration": 0.0011129379272460938,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.5776694,
+      "poll": 103,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.5808482,
+      "poll": 103,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813614.577646,
+      "duration": 0.0031919479370117188,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.5894477,
+      "poll": 103,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.5910692,
+      "poll": 103,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813614.589431,
+      "duration": 0.001630544662475586,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.6357653,
+      "poll": 103,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.6381626,
+      "poll": 103,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813614.6357486,
+      "duration": 0.0024073123931884766,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.6401417,
+      "poll": 103,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.6416984,
+      "poll": 103,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813614.6401277,
+      "duration": 0.0015635490417480469,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.643403,
+      "poll": 103,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.6449487,
+      "poll": 103,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813614.6433878,
+      "duration": 0.0015530586242675781,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813614.645838,
+      "poll": 103,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813614.6468983,
+      "poll": 103,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813614.6458263,
+      "duration": 0.0010654926300048828,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813614.6504664,
+      "poll": 103,
+      "conversation": 3,
+      "work": 23
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813614.9005404,
+      "poll": 103,
+      "work": 23,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813615.4006708,
+      "poll": 103,
+      "work": 23,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813615.618209,
+      "poll": 103,
+      "work": 23,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813616.118768,
+      "poll": 103,
+      "work": 23,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813616.3292158,
+      "poll": 103,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813617.3321495,
+      "poll": 104
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813617.332161,
+      "poll": 104
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813617.3452156,
+      "poll": 104,
+      "start": 1790813617.3425364,
+      "duration": 0.002674579620361328
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813617.3453996,
+      "poll": 104,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813617.345405,
+      "poll": 104,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813618.3482647,
+      "poll": 105
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813618.3482797,
+      "poll": 105
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813618.3633358,
+      "poll": 105,
+      "start": 1790813618.3593297,
+      "duration": 0.003999471664428711
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813618.3635278,
+      "poll": 105,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813618.363534,
+      "poll": 105,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813619.366364,
+      "poll": 106
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813619.3663774,
+      "poll": 106
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813619.3781857,
+      "poll": 106,
+      "start": 1790813619.3747246,
+      "duration": 0.003457307815551758
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813619.3783157,
+      "poll": 106,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813619.3783193,
+      "poll": 106,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813620.3807847,
+      "poll": 107
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813620.3807957,
+      "poll": 107
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813620.3938015,
+      "poll": 107,
+      "start": 1790813620.3906815,
+      "duration": 0.003115415573120117
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813620.3940485,
+      "poll": 107,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813620.3940566,
+      "poll": 107,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813621.3970444,
+      "poll": 108
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813621.397059,
+      "poll": 108
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813621.411557,
+      "poll": 108,
+      "start": 1790813621.407822,
+      "duration": 0.0037298202514648438
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813621.4117396,
+      "poll": 108,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813621.4117453,
+      "poll": 108,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813622.4205737,
+      "poll": 109
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813622.4205892,
+      "poll": 109
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813622.441933,
+      "poll": 109,
+      "start": 1790813622.437767,
+      "duration": 0.0041599273681640625
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813622.4421413,
+      "poll": 109,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813622.4421504,
+      "poll": 109,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813623.4451132,
+      "poll": 110
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813623.4451275,
+      "poll": 110
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813623.463566,
+      "poll": 110,
+      "start": 1790813623.4589536,
+      "duration": 0.004606008529663086
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813623.4637642,
+      "poll": 110,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813623.4637709,
+      "poll": 110,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813624.4672785,
+      "poll": 111
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813624.4672956,
+      "poll": 111
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813624.485785,
+      "poll": 111,
+      "start": 1790813624.4817364,
+      "duration": 0.004043102264404297
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813624.4859874,
+      "poll": 111,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813624.4859934,
+      "poll": 111,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813625.4895694,
+      "poll": 112
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813625.4895887,
+      "poll": 112
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813625.506111,
+      "poll": 112,
+      "start": 1790813625.5022666,
+      "duration": 0.00383758544921875
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813625.5063052,
+      "poll": 112,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813625.5063117,
+      "poll": 112,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813626.5093176,
+      "poll": 113
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813626.5093324,
+      "poll": 113
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813626.529849,
+      "poll": 113,
+      "start": 1790813626.5253112,
+      "duration": 0.004532575607299805
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813626.5300581,
+      "poll": 113,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813626.5300643,
+      "poll": 113,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813627.5331554,
+      "poll": 114
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813627.5331671,
+      "poll": 114
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813627.5483582,
+      "poll": 114,
+      "start": 1790813627.5444007,
+      "duration": 0.003934621810913086
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813627.5485716,
+      "poll": 114,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813627.5485792,
+      "poll": 114,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813628.551311,
+      "poll": 115
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813628.551324,
+      "poll": 115
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813628.5637093,
+      "poll": 115,
+      "start": 1790813628.5595818,
+      "duration": 0.004121303558349609
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813628.5639286,
+      "poll": 115,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813628.563936,
+      "poll": 115,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813629.5669851,
+      "poll": 116
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813629.5669992,
+      "poll": 116
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813629.5797598,
+      "poll": 116,
+      "start": 1790813629.5772996,
+      "duration": 0.0024559497833251953
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813629.5798874,
+      "poll": 116,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813629.579891,
+      "poll": 116,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813630.5826561,
+      "poll": 117
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813630.5826697,
+      "poll": 117
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813630.5975833,
+      "poll": 117,
+      "start": 1790813630.5938153,
+      "duration": 0.0037641525268554688
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813630.5977192,
+      "poll": 117,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813630.5977232,
+      "poll": 117,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813631.6006625,
+      "poll": 118
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813631.6006758,
+      "poll": 118
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813631.6144302,
+      "poll": 118,
+      "start": 1790813631.6113412,
+      "duration": 0.003084897994995117
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813631.614569,
+      "poll": 118,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813631.6145732,
+      "poll": 118,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813632.6174982,
+      "poll": 119
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813632.6175117,
+      "poll": 119
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813632.6312406,
+      "poll": 119,
+      "start": 1790813632.6275718,
+      "duration": 0.003663778305053711
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813632.6314182,
+      "poll": 119,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813632.6314235,
+      "poll": 119,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813633.6353724,
+      "poll": 120
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813633.6353903,
+      "poll": 120
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813633.6544943,
+      "poll": 120,
+      "start": 1790813633.6502025,
+      "duration": 0.004285573959350586
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813633.6547036,
+      "poll": 120,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813633.6547105,
+      "poll": 120,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813634.657862,
+      "poll": 121
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813634.6578763,
+      "poll": 121
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813634.6712666,
+      "poll": 121,
+      "start": 1790813634.6685224,
+      "duration": 0.0027391910552978516
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813634.6714387,
+      "poll": 121,
+      "conversations": [
+        3,
+        4
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813634.6714442,
+      "poll": 121,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813634.671524,
+      "poll": 121,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.674591,
+      "poll": 121,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.6754978,
+      "poll": 121,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813634.6745794,
+      "duration": 0.0009133815765380859,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.6797278,
+      "poll": 121,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.6823657,
+      "poll": 121,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813634.6797101,
+      "duration": 0.0026454925537109375,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.6888335,
+      "poll": 121,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.6898756,
+      "poll": 121,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813634.6888201,
+      "duration": 0.0010502338409423828,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.7266612,
+      "poll": 121,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.72834,
+      "poll": 121,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813634.7266483,
+      "duration": 0.0016837120056152344,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.7303588,
+      "poll": 121,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.7320445,
+      "poll": 121,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813634.7303448,
+      "duration": 0.0016918182373046875,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.7337005,
+      "poll": 121,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.7353382,
+      "poll": 121,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813634.7336879,
+      "duration": 0.001642465591430664,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813634.7361298,
+      "poll": 121,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813634.7371514,
+      "poll": 121,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813634.7361202,
+      "duration": 0.0010249614715576172,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813634.7403646,
+      "poll": 121,
+      "conversation": 3,
+      "work": 27
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813634.9319453,
+      "poll": 121,
+      "work": 27,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813635.4324985,
+      "poll": 121,
+      "work": 27,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813635.6587121,
+      "poll": 121,
+      "work": 27,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813636.1588407,
+      "poll": 121,
+      "work": 27,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813636.3664849,
+      "poll": 121,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813637.369461,
+      "poll": 122
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813637.369476,
+      "poll": 122
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813637.3889852,
+      "poll": 122,
+      "start": 1790813637.3840556,
+      "duration": 0.004923582077026367
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813637.3892252,
+      "poll": 122,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813637.3892326,
+      "poll": 122,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813638.3934321,
+      "poll": 123
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813638.393448,
+      "poll": 123
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813638.4227183,
+      "poll": 123,
+      "start": 1790813638.4183924,
+      "duration": 0.004319906234741211
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813638.4229412,
+      "poll": 123,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813638.4229484,
+      "poll": 123,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813639.4264815,
+      "poll": 124
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813639.426501,
+      "poll": 124
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813639.445398,
+      "poll": 124,
+      "start": 1790813639.4403713,
+      "duration": 0.005021333694458008
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813639.4455543,
+      "poll": 124,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813639.4455593,
+      "poll": 124,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813640.4483995,
+      "poll": 125
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813640.4484146,
+      "poll": 125
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813640.4627955,
+      "poll": 125,
+      "start": 1790813640.4589357,
+      "duration": 0.0038552284240722656
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813640.4629743,
+      "poll": 125,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813640.46298,
+      "poll": 125,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813641.4653053,
+      "poll": 126
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813641.4653196,
+      "poll": 126
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813641.4812825,
+      "poll": 126,
+      "start": 1790813641.4774704,
+      "duration": 0.003805398941040039
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813641.4815147,
+      "poll": 126,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813641.4815216,
+      "poll": 126,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813642.4843874,
+      "poll": 127
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813642.4844027,
+      "poll": 127
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813642.4977422,
+      "poll": 127,
+      "start": 1790813642.4944866,
+      "duration": 0.0032501220703125
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813642.4979448,
+      "poll": 127,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813642.4979513,
+      "poll": 127,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813643.5012012,
+      "poll": 128
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813643.5012167,
+      "poll": 128
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813643.5160136,
+      "poll": 128,
+      "start": 1790813643.5125313,
+      "duration": 0.0034766197204589844
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813643.5162153,
+      "poll": 128,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813643.5162215,
+      "poll": 128,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813644.5193837,
+      "poll": 129
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813644.5194004,
+      "poll": 129
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813644.53774,
+      "poll": 129,
+      "start": 1790813644.5332823,
+      "duration": 0.00445246696472168
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813644.5379424,
+      "poll": 129,
+      "conversations": [
+        3
+      ]
+    },
+    {
+      "event": "candidate_selected",
+      "time": 1790813644.5379486,
+      "poll": 129,
+      "conversation": 3
+    },
+    {
+      "event": "claim_transaction_started",
+      "time": 1790813644.5380392,
+      "poll": 129,
+      "conversation": 3
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.5417879,
+      "poll": 129,
+      "table": "organizations_organization",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.5427685,
+      "poll": 129,
+      "table": "organizations_organization",
+      "conversation": 3,
+      "start": 1790813644.5417218,
+      "duration": 0.001039743423461914,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.547515,
+      "poll": 129,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.5505118,
+      "poll": 129,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813644.547494,
+      "duration": 0.003007173538208008,
+      "skip_locked": true
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.5583684,
+      "poll": 129,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.5596483,
+      "poll": 129,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813644.558353,
+      "duration": 0.001287698745727539,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.6075242,
+      "poll": 129,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.609161,
+      "poll": 129,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813644.607512,
+      "duration": 0.0016396045684814453,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.6109934,
+      "poll": 129,
+      "table": "agent_turnwork",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.6139948,
+      "poll": 129,
+      "table": "agent_turnwork",
+      "conversation": 3,
+      "start": 1790813644.6109788,
+      "duration": 0.003008127212524414,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.6156414,
+      "poll": 129,
+      "table": "channels_message",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.6173766,
+      "poll": 129,
+      "table": "channels_message",
+      "conversation": 3,
+      "start": 1790813644.6156273,
+      "duration": 0.001741170883178711,
+      "skip_locked": false
+    },
+    {
+      "event": "lock_requested",
+      "time": 1790813644.6181307,
+      "poll": 129,
+      "table": "agent_conversation",
+      "conversation": 3
+    },
+    {
+      "event": "lock_sql_returned",
+      "time": 1790813644.619115,
+      "poll": 129,
+      "table": "agent_conversation",
+      "conversation": 3,
+      "start": 1790813644.6181216,
+      "duration": 0.0009865760803222656,
+      "skip_locked": false
+    },
+    {
+      "event": "claim_commit",
+      "time": 1790813644.6220417,
+      "poll": 129,
+      "conversation": 3,
+      "work": 29
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813644.7947452,
+      "poll": 129,
+      "work": 29,
+      "call": 1
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813645.2952268,
+      "poll": 129,
+      "work": 29,
+      "call": 1
+    },
+    {
+      "event": "llm_dispatch",
+      "time": 1790813645.5223086,
+      "poll": 129,
+      "work": 29,
+      "call": 2
+    },
+    {
+      "event": "llm_response",
+      "time": 1790813646.0226762,
+      "poll": 129,
+      "work": 29,
+      "call": 2
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813646.2143524,
+      "poll": 129,
+      "processed": 1
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813647.2174454,
+      "poll": 130
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813647.2174628,
+      "poll": 130
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813647.2539327,
+      "poll": 130,
+      "start": 1790813647.2494917,
+      "duration": 0.004434347152709961
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813647.2541516,
+      "poll": 130,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813647.2541587,
+      "poll": 130,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813648.2573411,
+      "poll": 131
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813648.2573636,
+      "poll": 131
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813648.2726405,
+      "poll": 131,
+      "start": 1790813648.268442,
+      "duration": 0.0041921138763427734
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813648.272848,
+      "poll": 131,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813648.2728548,
+      "poll": 131,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813649.2759905,
+      "poll": 132
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813649.2760062,
+      "poll": 132
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813649.2940655,
+      "poll": 132,
+      "start": 1790813649.2893991,
+      "duration": 0.004660367965698242
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813649.2942617,
+      "poll": 132,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813649.2942681,
+      "poll": 132,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813650.2978017,
+      "poll": 133
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813650.2978191,
+      "poll": 133
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813650.3165846,
+      "poll": 133,
+      "start": 1790813650.3122094,
+      "duration": 0.004369497299194336
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813650.3167963,
+      "poll": 133,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813650.316803,
+      "poll": 133,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813651.319916,
+      "poll": 134
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813651.319932,
+      "poll": 134
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813651.3330603,
+      "poll": 134,
+      "start": 1790813651.3303974,
+      "duration": 0.0026569366455078125
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813651.3332503,
+      "poll": 134,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813651.3332558,
+      "poll": 134,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813652.3369205,
+      "poll": 135
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813652.3369336,
+      "poll": 135
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813652.3526382,
+      "poll": 135,
+      "start": 1790813652.348045,
+      "duration": 0.004587411880493164
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813652.3528495,
+      "poll": 135,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813652.3528554,
+      "poll": 135,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813653.355302,
+      "poll": 136
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813653.3553147,
+      "poll": 136
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813653.3649163,
+      "poll": 136,
+      "start": 1790813653.3623173,
+      "duration": 0.002594470977783203
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813653.3650534,
+      "poll": 136,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813653.3650572,
+      "poll": 136,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813654.3680663,
+      "poll": 137
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813654.3680801,
+      "poll": 137
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813654.3807611,
+      "poll": 137,
+      "start": 1790813654.3782427,
+      "duration": 0.0025136470794677734
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813654.38094,
+      "poll": 137,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813654.3809454,
+      "poll": 137,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813655.3835707,
+      "poll": 138
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813655.3835838,
+      "poll": 138
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813655.395469,
+      "poll": 138,
+      "start": 1790813655.393003,
+      "duration": 0.0024611949920654297
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813655.3956425,
+      "poll": 138,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813655.3956475,
+      "poll": 138,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813656.3999448,
+      "poll": 139
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813656.3999608,
+      "poll": 139
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813656.4199367,
+      "poll": 139,
+      "start": 1790813656.4160612,
+      "duration": 0.003870725631713867
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813656.4200773,
+      "poll": 139,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813656.4200811,
+      "poll": 139,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813657.422961,
+      "poll": 140
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813657.4229767,
+      "poll": 140
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813657.4379802,
+      "poll": 140,
+      "start": 1790813657.4341245,
+      "duration": 0.003851652145385742
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813657.4381406,
+      "poll": 140,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813657.438147,
+      "poll": 140,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813658.4418437,
+      "poll": 141
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813658.441859,
+      "poll": 141
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813658.4634614,
+      "poll": 141,
+      "start": 1790813658.4587405,
+      "duration": 0.004715442657470703
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813658.4636517,
+      "poll": 141,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813658.4636576,
+      "poll": 141,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813659.4673975,
+      "poll": 142
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813659.4674137,
+      "poll": 142
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813659.4841034,
+      "poll": 142,
+      "start": 1790813659.479581,
+      "duration": 0.0045168399810791016
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813659.484299,
+      "poll": 142,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813659.4843054,
+      "poll": 142,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813660.48736,
+      "poll": 143
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813660.4873767,
+      "poll": 143
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813660.5056467,
+      "poll": 143,
+      "start": 1790813660.500864,
+      "duration": 0.0047762393951416016
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813660.505869,
+      "poll": 143,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813660.505876,
+      "poll": 143,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813661.50972,
+      "poll": 144
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813661.509735,
+      "poll": 144
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813661.5309043,
+      "poll": 144,
+      "start": 1790813661.5263946,
+      "duration": 0.004502534866333008
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813661.5311196,
+      "poll": 144,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813661.5311272,
+      "poll": 144,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813662.5467324,
+      "poll": 145
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813662.546749,
+      "poll": 145
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813662.6188416,
+      "poll": 145,
+      "start": 1790813662.6123068,
+      "duration": 0.006529331207275391
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813662.6190443,
+      "poll": 145,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813662.6190515,
+      "poll": 145,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813663.621957,
+      "poll": 146
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813663.6219711,
+      "poll": 146
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813663.6357028,
+      "poll": 146,
+      "start": 1790813663.632259,
+      "duration": 0.0034384727478027344
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813663.6358774,
+      "poll": 146,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813663.6358829,
+      "poll": 146,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813664.6387117,
+      "poll": 147
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813664.6387265,
+      "poll": 147
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813664.6491973,
+      "poll": 147,
+      "start": 1790813664.6456866,
+      "duration": 0.0035054683685302734
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813664.6493378,
+      "poll": 147,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813664.6493416,
+      "poll": 147,
+      "processed": 0
+    },
+    {
+      "event": "planner_start",
+      "time": 1790813665.6526783,
+      "poll": 148
+    },
+    {
+      "event": "selection_start",
+      "time": 1790813665.6526892,
+      "poll": 148
+    },
+    {
+      "event": "selector_sql_returned",
+      "time": 1790813665.6609278,
+      "poll": 148,
+      "start": 1790813665.6585426,
+      "duration": 0.0023813247680664062
+    },
+    {
+      "event": "candidates_observed",
+      "time": 1790813665.6610522,
+      "poll": 148,
+      "conversations": []
+    },
+    {
+      "event": "planner_end",
+      "time": 1790813665.6610558,
+      "poll": 148,
+      "processed": 0
+    }
+  ]
+}

@@ -1,0 +1,1793 @@
+{
+  "scenario": "base",
+  "window_utc": [
+    "2026-10-01T00:12:06.365205+00:00",
+    "2026-10-01T00:14:06.365205+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 75764,
+      "backend_pid": 74732,
+      "role": "planner-1",
+      "scenario": "base"
+    },
+    {
+      "pid": 71932,
+      "backend_pid": 62668,
+      "role": "planner-2",
+      "scenario": "base"
+    },
+    {
+      "pid": 74864,
+      "backend_pid": 75444,
+      "role": "sender",
+      "scenario": "base"
+    }
+  ],
+  "inbound_count": 24,
+  "outbound_count": 22,
+  "healthy_claim": {
+    "count": 24,
+    "p95_seconds": 8.797841,
+    "max_seconds": 8.916855,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 8,
+    "p95_seconds": 3.141848,
+    "max_seconds": 3.141848
+  },
+  "outbox_dispatch": {
+    "count": 22,
+    "p95_seconds": 2.916505,
+    "max_seconds": 3.141848,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 20,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 4,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 25,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 30,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 4,
+      "active_work": []
+    },
+    {
+      "second": 35,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 40,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 45,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 50,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 4,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 60,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 65,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 70,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 75,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 80,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 3,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 85,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 90,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 95,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 100,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 105,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 110,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 115,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 120,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 125,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 0,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 130,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 135,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 140,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 145,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 2,
+      "pending_outbound": 0,
+      "active_work": []
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      15,
+      15,
+      0
+    ],
+    "safety": 10,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "COMPLETED",
+      "count": 30
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "sent",
+      "count": 25
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 4,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": true,
+    "safety_dispatch_p95_le_5": true,
+    "outbox_dispatch_p95_le_5": true
+  },
+  "technical_pass": true,
+  "monotonic_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "organizations": [
+      {
+        "organization": 0,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 8,
+          "p50_seconds": 7.941972,
+          "p95_seconds": 7.95435,
+          "max_seconds": 7.95435
+        },
+        "eligible_to_claim": {
+          "count": 8,
+          "p50_seconds": 0.262053,
+          "p95_seconds": 0.855869,
+          "max_seconds": 0.855869
+        },
+        "persisted_to_claim": {
+          "count": 8,
+          "p50_seconds": 8.211814,
+          "p95_seconds": 8.797841,
+          "max_seconds": 8.797841
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 12,
+        "calls": 16,
+        "calls_per_work": 1.3333333333333333,
+        "calls_per_dialogue": 3.2,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 4
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 8
+          }
+        ],
+        "deferrals": 1
+      },
+      {
+        "organization": 1,
+        "healthy": true,
+        "persisted_to_eligible": {
+          "count": 8,
+          "p50_seconds": 7.953436,
+          "p95_seconds": 7.959615,
+          "max_seconds": 7.959615
+        },
+        "eligible_to_claim": {
+          "count": 8,
+          "p50_seconds": 0.769515,
+          "p95_seconds": 1.034412,
+          "max_seconds": 1.034412
+        },
+        "persisted_to_claim": {
+          "count": 8,
+          "p50_seconds": 8.713228,
+          "p95_seconds": 8.916855,
+          "max_seconds": 8.916855
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 12,
+        "calls": 16,
+        "calls_per_work": 1.3333333333333333,
+        "calls_per_dialogue": 3.2,
+        "calls_per_work_distribution": [
+          {
+            "llm_calls_admitted": 0,
+            "count": 4
+          },
+          {
+            "llm_calls_admitted": 2,
+            "count": 8
+          }
+        ],
+        "deferrals": 2
+      },
+      {
+        "organization": 2,
+        "healthy": false,
+        "persisted_to_eligible": {
+          "count": 0,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "max_seconds": null
+        },
+        "eligible_to_claim": {
+          "count": 0,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "max_seconds": null
+        },
+        "persisted_to_claim": {
+          "count": 0,
+          "p50_seconds": null,
+          "p95_seconds": null,
+          "max_seconds": null
+        },
+        "missing_claim": 0,
+        "joined_ready_inbounds": 0,
+        "works": 0,
+        "calls": 0,
+        "calls_per_work": null,
+        "calls_per_dialogue": null,
+        "calls_per_work_distribution": [],
+        "deferrals": 0
+      }
+    ],
+    "eligibility": "max(created_at, available_at); NULL => created_at",
+    "acceptance_run": false,
+    "profile_conditions": "PROFILE-BETA-1 v1 unchanged"
+  },
+  "claim_diagnostic": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "acceptance_run": false,
+    "postgresql": [
+      "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "on",
+      "on"
+    ],
+    "cross_tenant_or_membership": 0,
+    "selector_plan": [
+      {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 18.47,
+          "Total Cost": 18.56,
+          "Plan Rows": 1,
+          "Plan Width": 24,
+          "Actual Startup Time": 0.848,
+          "Actual Total Time": 0.853,
+          "Actual Rows": 0,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 6,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Subquery Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Alias": "qualify",
+              "Startup Cost": 18.47,
+              "Total Cost": 18.56,
+              "Plan Rows": 1,
+              "Plan Width": 24,
+              "Actual Startup Time": 0.846,
+              "Actual Total Time": 0.852,
+              "Actual Rows": 0,
+              "Actual Loops": 1,
+              "Filter": "(qualify.qual0 = 1)",
+              "Rows Removed by Filter": 0,
+              "Shared Hit Blocks": 6,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Parent Relationship": "Subquery",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Startup Cost": 18.47,
+                  "Total Cost": 18.48,
+                  "Plan Rows": 6,
+                  "Plan Width": 40,
+                  "Actual Startup Time": 0.842,
+                  "Actual Total Time": 0.847,
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "((SubPlan 1)) NULLS FIRST",
+                    "agent_conversation.last_activity_at",
+                    "agent_conversation.id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 25,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 6,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "WindowAgg",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 10.26,
+                      "Total Cost": 18.39,
+                      "Plan Rows": 6,
+                      "Plan Width": 40,
+                      "Actual Startup Time": 0.833,
+                      "Actual Total Time": 0.838,
+                      "Actual Rows": 0,
+                      "Actual Loops": 1,
+                      "Run Condition": "(row_number() OVER (?) <= 1)",
+                      "Shared Hit Blocks": 6,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Sort",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 10.26,
+                          "Total Cost": 10.27,
+                          "Plan Rows": 6,
+                          "Plan Width": 24,
+                          "Actual Startup Time": 0.82,
+                          "Actual Total Time": 0.825,
+                          "Actual Rows": 0,
+                          "Actual Loops": 1,
+                          "Sort Key": [
+                            "agent_conversation.organization_id",
+                            "agent_conversation.last_activity_at",
+                            "agent_conversation.id"
+                          ],
+                          "Sort Method": "quicksort",
+                          "Sort Space Used": 25,
+                          "Sort Space Type": "Memory",
+                          "Shared Hit Blocks": 6,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Join Type": "Anti",
+                              "Startup Cost": 7.45,
+                              "Total Cost": 10.18,
+                              "Plan Rows": 6,
+                              "Plan Width": 24,
+                              "Actual Startup Time": 0.813,
+                              "Actual Total Time": 0.817,
+                              "Actual Rows": 0,
+                              "Actual Loops": 1,
+                              "Inner Unique": false,
+                              "Join Filter": "(u0.organization_id = agent_conversation.organization_id)",
+                              "Rows Removed by Join Filter": 0,
+                              "Shared Hit Blocks": 6,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Hash Join",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Join Type": "Right",
+                                  "Startup Cost": 6.05,
+                                  "Total Cost": 7.39,
+                                  "Plan Rows": 11,
+                                  "Plan Width": 24,
+                                  "Actual Startup Time": 0.812,
+                                  "Actual Total Time": 0.815,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 1,
+                                  "Inner Unique": true,
+                                  "Hash Cond": "(agent_turnwork.conversation_id = agent_conversation.id)",
+                                  "Filter": "(((agent_turnwork.lease_expires_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PROCESSING'::text)) OR ((agent_turnwork.next_attempt_at <= statement_timestamp()) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR ((agent_turnwork.next_attempt_at IS NULL) AND ((agent_turnwork.status)::text = 'PENDING'::text)) OR (hashed SubPlan 2))",
+                                  "Rows Removed by Filter": 30,
+                                  "Shared Hit Blocks": 6,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Relation Name": "agent_turnwork",
+                                      "Alias": "agent_turnwork",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 1.22,
+                                      "Plan Rows": 22,
+                                      "Plan Width": 34,
+                                      "Actual Startup Time": 0.019,
+                                      "Actual Total Time": 0.037,
+                                      "Actual Rows": 30,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 1,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    },
+                                    {
+                                      "Node Type": "Hash",
+                                      "Parent Relationship": "Inner",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Startup Cost": 1.1,
+                                      "Total Cost": 1.1,
+                                      "Plan Rows": 10,
+                                      "Plan Width": 24,
+                                      "Actual Startup Time": 0.058,
+                                      "Actual Total Time": 0.059,
+                                      "Actual Rows": 12,
+                                      "Actual Loops": 1,
+                                      "Hash Buckets": 1024,
+                                      "Original Hash Buckets": 1024,
+                                      "Hash Batches": 1,
+                                      "Original Hash Batches": 1,
+                                      "Peak Memory Usage": 9,
+                                      "Shared Hit Blocks": 1,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Seq Scan",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "agent_conversation",
+                                          "Alias": "agent_conversation",
+                                          "Startup Cost": 0.0,
+                                          "Total Cost": 1.1,
+                                          "Plan Rows": 10,
+                                          "Plan Width": 24,
+                                          "Actual Startup Time": 0.039,
+                                          "Actual Total Time": 0.046,
+                                          "Actual Rows": 12,
+                                          "Actual Loops": 1,
+                                          "Filter": "is_active",
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 1,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Parent Relationship": "SubPlan",
+                                      "Subplan Name": "SubPlan 2",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Relation Name": "channels_message",
+                                      "Alias": "u0_2",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 4.82,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Actual Startup Time": 0.655,
+                                      "Actual Total Time": 0.655,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 1,
+                                      "Filter": "(is_active AND (turn_work_id IS NULL) AND ((direction)::text = 'in'::text) AND ((status)::text = 'pending'::text) AND ((available_at IS NULL) OR (available_at <= statement_timestamp())))",
+                                      "Rows Removed by Filter": 55,
+                                      "Shared Hit Blocks": 4,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Materialize",
+                                  "Parent Relationship": "Inner",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Startup Cost": 1.4,
+                                  "Total Cost": 2.63,
+                                  "Plan Rows": 1,
+                                  "Plan Width": 8,
+                                  "Actual Startup Time": 0.0,
+                                  "Actual Total Time": 0.0,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 0,
+                                  "Shared Hit Blocks": 0,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Hash Join",
+                                      "Parent Relationship": "Outer",
+                                      "Parallel Aware": false,
+                                      "Async Capable": false,
+                                      "Join Type": "Inner",
+                                      "Startup Cost": 1.4,
+                                      "Total Cost": 2.62,
+                                      "Plan Rows": 1,
+                                      "Plan Width": 8,
+                                      "Actual Startup Time": 0.0,
+                                      "Actual Total Time": 0.0,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 0,
+                                      "Inner Unique": false,
+                                      "Hash Cond": "((u2.id = u0.conversation_id) AND (u2.organization_id = u0.organization_id) AND (u2.ownership_epoch = u0.ownership_epoch))",
+                                      "Shared Hit Blocks": 0,
+                                      "Shared Read Blocks": 0,
+                                      "Shared Dirtied Blocks": 0,
+                                      "Shared Written Blocks": 0,
+                                      "Local Hit Blocks": 0,
+                                      "Local Read Blocks": 0,
+                                      "Local Dirtied Blocks": 0,
+                                      "Local Written Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Seq Scan",
+                                          "Parent Relationship": "Outer",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Relation Name": "agent_conversation",
+                                          "Alias": "u2",
+                                          "Startup Cost": 0.0,
+                                          "Total Cost": 1.1,
+                                          "Plan Rows": 10,
+                                          "Plan Width": 24,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        },
+                                        {
+                                          "Node Type": "Hash",
+                                          "Parent Relationship": "Inner",
+                                          "Parallel Aware": false,
+                                          "Async Capable": false,
+                                          "Startup Cost": 1.39,
+                                          "Total Cost": 1.39,
+                                          "Plan Rows": 1,
+                                          "Plan Width": 24,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0,
+                                          "Shared Dirtied Blocks": 0,
+                                          "Shared Written Blocks": 0,
+                                          "Local Hit Blocks": 0,
+                                          "Local Read Blocks": 0,
+                                          "Local Dirtied Blocks": 0,
+                                          "Local Written Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Parent Relationship": "Outer",
+                                              "Parallel Aware": false,
+                                              "Async Capable": false,
+                                              "Relation Name": "agent_turnwork",
+                                              "Alias": "u0",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 1.39,
+                                              "Plan Rows": 1,
+                                              "Plan Width": 24,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Filter": "(is_active AND ((status)::text = 'PROCESSING'::text) AND (lease_expires_at > statement_timestamp()))",
+                                              "Rows Removed by Filter": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Shared Dirtied Blocks": 0,
+                                              "Shared Written Blocks": 0,
+                                              "Local Hit Blocks": 0,
+                                              "Local Read Blocks": 0,
+                                              "Local Dirtied Blocks": 0,
+                                              "Local Written Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "SubPlan",
+                          "Subplan Name": "SubPlan 1",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 1.33,
+                          "Total Cost": 1.33,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Actual Startup Time": 0.0,
+                          "Actual Total Time": 0.0,
+                          "Actual Rows": 0,
+                          "Actual Loops": 0,
+                          "Shared Hit Blocks": 0,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Sort",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Startup Cost": 1.33,
+                              "Total Cost": 1.36,
+                              "Plan Rows": 11,
+                              "Plan Width": 8,
+                              "Actual Startup Time": 0.0,
+                              "Actual Total Time": 0.0,
+                              "Actual Rows": 0,
+                              "Actual Loops": 0,
+                              "Sort Key": [
+                                "u0_1.claimed_at DESC"
+                              ],
+                              "Shared Hit Blocks": 0,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Seq Scan",
+                                  "Parent Relationship": "Outer",
+                                  "Parallel Aware": false,
+                                  "Async Capable": false,
+                                  "Relation Name": "agent_turnwork",
+                                  "Alias": "u0_1",
+                                  "Startup Cost": 0.0,
+                                  "Total Cost": 1.27,
+                                  "Plan Rows": 11,
+                                  "Plan Width": 8,
+                                  "Actual Startup Time": 0.0,
+                                  "Actual Total Time": 0.0,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 0,
+                                  "Filter": "(is_active AND (claimed_at IS NOT NULL) AND (organization_id = agent_conversation.organization_id))",
+                                  "Rows Removed by Filter": 0,
+                                  "Shared Hit Blocks": 0,
+                                  "Shared Read Blocks": 0,
+                                  "Shared Dirtied Blocks": 0,
+                                  "Shared Written Blocks": 0,
+                                  "Local Hit Blocks": 0,
+                                  "Local Read Blocks": 0,
+                                  "Local Dirtied Blocks": 0,
+                                  "Local Written Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 32,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 7.888,
+        "Triggers": [],
+        "Execution Time": 1.005
+      }
+    ],
+    "healthy_messages": [
+      {
+        "id": 9,
+        "organization_id": 1,
+        "conversation_id": 5,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:12:06.494641+00:00",
+        "available_at": "2026-10-01 00:12:06.563050+00:00",
+        "turn_work_id": 7,
+        "turn_work__claimed_at": "2026-10-01 00:12:06.657088+00:00"
+      },
+      {
+        "id": 13,
+        "organization_id": 2,
+        "conversation_id": 6,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:12:07.154218+00:00",
+        "available_at": "2026-10-01 00:12:07.191723+00:00",
+        "turn_work_id": 8,
+        "turn_work__claimed_at": "2026-10-01 00:12:07.239681+00:00"
+      },
+      {
+        "id": 15,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:16.506602+00:00",
+        "available_at": "2026-10-01 00:12:24.448574+00:00",
+        "turn_work_id": 9,
+        "turn_work__claimed_at": "2026-10-01 00:12:25.304443+00:00"
+      },
+      {
+        "id": 16,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:16.646526+00:00",
+        "available_at": "2026-10-01 00:12:24.598447+00:00",
+        "turn_work_id": 10,
+        "turn_work__claimed_at": "2026-10-01 00:12:25.386666+00:00"
+      },
+      {
+        "id": 17,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:26.509925+00:00",
+        "available_at": "2026-10-01 00:12:34.447414+00:00",
+        "turn_work_id": 11,
+        "turn_work__claimed_at": "2026-10-01 00:12:35.241440+00:00"
+      },
+      {
+        "id": 18,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:26.644088+00:00",
+        "available_at": "2026-10-01 00:12:34.587801+00:00",
+        "turn_work_id": 12,
+        "turn_work__claimed_at": "2026-10-01 00:12:35.357316+00:00"
+      },
+      {
+        "id": 19,
+        "organization_id": 1,
+        "conversation_id": 7,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:12:36.493491+00:00",
+        "available_at": "2026-10-01 00:12:36.529964+00:00",
+        "turn_work_id": 13,
+        "turn_work__claimed_at": "2026-10-01 00:12:36.579462+00:00"
+      },
+      {
+        "id": 21,
+        "organization_id": 2,
+        "conversation_id": 8,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:12:36.919714+00:00",
+        "available_at": "2026-10-01 00:12:36.961263+00:00",
+        "turn_work_id": 14,
+        "turn_work__claimed_at": "2026-10-01 00:12:37.026145+00:00"
+      },
+      {
+        "id": 25,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:46.509462+00:00",
+        "available_at": "2026-10-01 00:12:54.431449+00:00",
+        "turn_work_id": 15,
+        "turn_work__claimed_at": "2026-10-01 00:12:54.568211+00:00"
+      },
+      {
+        "id": 26,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:46.656946+00:00",
+        "available_at": "2026-10-01 00:12:54.611282+00:00",
+        "turn_work_id": 16,
+        "turn_work__claimed_at": "2026-10-01 00:12:55.423785+00:00"
+      },
+      {
+        "id": 28,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:56.553890+00:00",
+        "available_at": "2026-10-01 00:13:04.479646+00:00",
+        "turn_work_id": 17,
+        "turn_work__claimed_at": "2026-10-01 00:13:04.511632+00:00"
+      },
+      {
+        "id": 29,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:12:56.786944+00:00",
+        "available_at": "2026-10-01 00:13:04.669387+00:00",
+        "turn_work_id": 18,
+        "turn_work__claimed_at": "2026-10-01 00:13:05.703799+00:00"
+      },
+      {
+        "id": 31,
+        "organization_id": 1,
+        "conversation_id": 9,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:13:06.521338+00:00",
+        "available_at": "2026-10-01 00:13:06.567658+00:00",
+        "turn_work_id": 19,
+        "turn_work__claimed_at": "2026-10-01 00:13:06.649508+00:00"
+      },
+      {
+        "id": 33,
+        "organization_id": 2,
+        "conversation_id": 10,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:13:07.135290+00:00",
+        "available_at": "2026-10-01 00:13:07.185106+00:00",
+        "turn_work_id": 20,
+        "turn_work__claimed_at": "2026-10-01 00:13:07.261670+00:00"
+      },
+      {
+        "id": 36,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:16.464406+00:00",
+        "available_at": "2026-10-01 00:13:24.418756+00:00",
+        "turn_work_id": 21,
+        "turn_work__claimed_at": "2026-10-01 00:13:24.699504+00:00"
+      },
+      {
+        "id": 37,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:16.571769+00:00",
+        "available_at": "2026-10-01 00:13:24.531384+00:00",
+        "turn_work_id": 22,
+        "turn_work__claimed_at": "2026-10-01 00:13:24.927926+00:00"
+      },
+      {
+        "id": 39,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:26.501723+00:00",
+        "available_at": "2026-10-01 00:13:34.436078+00:00",
+        "turn_work_id": 23,
+        "turn_work__claimed_at": "2026-10-01 00:13:34.586463+00:00"
+      },
+      {
+        "id": 41,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:26.654566+00:00",
+        "available_at": "2026-10-01 00:13:34.599188+00:00",
+        "turn_work_id": 24,
+        "turn_work__claimed_at": "2026-10-01 00:13:34.835845+00:00"
+      },
+      {
+        "id": 44,
+        "organization_id": 1,
+        "conversation_id": 11,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:13:36.502665+00:00",
+        "available_at": "2026-10-01 00:13:36.543993+00:00",
+        "turn_work_id": 25,
+        "turn_work__claimed_at": "2026-10-01 00:13:36.599675+00:00"
+      },
+      {
+        "id": 46,
+        "organization_id": 2,
+        "conversation_id": 12,
+        "semantic_type": "safety_signal",
+        "created_at": "2026-10-01 00:13:36.946540+00:00",
+        "available_at": "2026-10-01 00:13:36.988495+00:00",
+        "turn_work_id": 26,
+        "turn_work__claimed_at": "2026-10-01 00:13:37.036002+00:00"
+      },
+      {
+        "id": 48,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:46.475390+00:00",
+        "available_at": "2026-10-01 00:13:54.425151+00:00",
+        "turn_work_id": 27,
+        "turn_work__claimed_at": "2026-10-01 00:13:54.687204+00:00"
+      },
+      {
+        "id": 49,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:46.597889+00:00",
+        "available_at": "2026-10-01 00:13:54.551471+00:00",
+        "turn_work_id": 28,
+        "turn_work__claimed_at": "2026-10-01 00:13:54.894674+00:00"
+      },
+      {
+        "id": 51,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:56.447080+00:00",
+        "available_at": "2026-10-01 00:14:04.399814+00:00",
+        "turn_work_id": 29,
+        "turn_work__claimed_at": "2026-10-01 00:14:04.555566+00:00"
+      },
+      {
+        "id": 53,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "semantic_type": "",
+        "created_at": "2026-10-01 00:13:56.608560+00:00",
+        "available_at": "2026-10-01 00:14:04.561996+00:00",
+        "turn_work_id": 30,
+        "turn_work__claimed_at": "2026-10-01 00:14:04.707128+00:00"
+      }
+    ],
+    "conversations": [
+      {
+        "id": 8,
+        "organization_id": 2
+      },
+      {
+        "id": 1,
+        "organization_id": 1
+      },
+      {
+        "id": 3,
+        "organization_id": 1
+      },
+      {
+        "id": 6,
+        "organization_id": 2
+      },
+      {
+        "id": 2,
+        "organization_id": 2
+      },
+      {
+        "id": 4,
+        "organization_id": 2
+      },
+      {
+        "id": 11,
+        "organization_id": 1
+      },
+      {
+        "id": 12,
+        "organization_id": 2
+      },
+      {
+        "id": 10,
+        "organization_id": 2
+      },
+      {
+        "id": 5,
+        "organization_id": 1
+      },
+      {
+        "id": 7,
+        "organization_id": 1
+      },
+      {
+        "id": 9,
+        "organization_id": 1
+      }
+    ],
+    "works": [
+      {
+        "id": 1,
+        "organization_id": 1,
+        "conversation_id": 1,
+        "claimed_at": "2026-10-01 00:11:37.571028+00:00",
+        "completed_at": "2026-10-01 00:11:37.862189+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 2,
+        "organization_id": 2,
+        "conversation_id": 2,
+        "claimed_at": "2026-10-01 00:11:38.261212+00:00",
+        "completed_at": "2026-10-01 00:11:38.483383+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 18,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:13:05.703799+00:00",
+        "completed_at": "2026-10-01 00:13:07.484216+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 20,
+        "organization_id": 2,
+        "conversation_id": 10,
+        "claimed_at": "2026-10-01 00:13:07.261670+00:00",
+        "completed_at": "2026-10-01 00:13:07.495813+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 9,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:12:25.304443+00:00",
+        "completed_at": "2026-10-01 00:12:26.992537+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 4,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:11:54.853619+00:00",
+        "completed_at": "2026-10-01 00:11:57.695917+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 3,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:11:54.675345+00:00",
+        "completed_at": "2026-10-01 00:11:57.695853+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 10,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:12:25.386666+00:00",
+        "completed_at": "2026-10-01 00:12:27.086013+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 5,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:12:05.009527+00:00",
+        "completed_at": "2026-10-01 00:12:06.854255+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 6,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:12:05.044069+00:00",
+        "completed_at": "2026-10-01 00:12:06.915200+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 7,
+        "organization_id": 1,
+        "conversation_id": 5,
+        "claimed_at": "2026-10-01 00:12:06.657088+00:00",
+        "completed_at": "2026-10-01 00:12:06.919143+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 8,
+        "organization_id": 2,
+        "conversation_id": 6,
+        "claimed_at": "2026-10-01 00:12:07.239681+00:00",
+        "completed_at": "2026-10-01 00:12:07.412512+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 15,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:12:54.568211+00:00",
+        "completed_at": "2026-10-01 00:12:56.413650+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 16,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:12:55.423785+00:00",
+        "completed_at": "2026-10-01 00:12:57.293936+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "deferred_to_new_input",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 13,
+        "organization_id": 1,
+        "conversation_id": 7,
+        "claimed_at": "2026-10-01 00:12:36.579462+00:00",
+        "completed_at": "2026-10-01 00:12:36.732704+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 11,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:12:35.241440+00:00",
+        "completed_at": "2026-10-01 00:12:36.981415+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 12,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:12:35.357316+00:00",
+        "completed_at": "2026-10-01 00:12:37.112391+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 14,
+        "organization_id": 2,
+        "conversation_id": 8,
+        "claimed_at": "2026-10-01 00:12:37.026145+00:00",
+        "completed_at": "2026-10-01 00:12:37.239107+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 17,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:13:04.511632+00:00",
+        "completed_at": "2026-10-01 00:13:06.209178+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 19,
+        "organization_id": 1,
+        "conversation_id": 9,
+        "claimed_at": "2026-10-01 00:13:06.649508+00:00",
+        "completed_at": "2026-10-01 00:13:06.893714+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 26,
+        "organization_id": 2,
+        "conversation_id": 12,
+        "claimed_at": "2026-10-01 00:13:37.036002+00:00",
+        "completed_at": "2026-10-01 00:13:37.221581+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 21,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:13:24.699504+00:00",
+        "completed_at": "2026-10-01 00:13:26.300260+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 22,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:13:24.927926+00:00",
+        "completed_at": "2026-10-01 00:13:26.569699+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 23,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:13:34.586463+00:00",
+        "completed_at": "2026-10-01 00:13:36.313596+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 24,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:13:34.835845+00:00",
+        "completed_at": "2026-10-01 00:13:36.519771+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 25,
+        "organization_id": 1,
+        "conversation_id": 11,
+        "claimed_at": "2026-10-01 00:13:36.599675+00:00",
+        "completed_at": "2026-10-01 00:13:36.778646+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "safety_handoff",
+        "llm_calls_admitted": 0
+      },
+      {
+        "id": 28,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:13:54.894674+00:00",
+        "completed_at": "2026-10-01 00:13:56.534950+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 27,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:13:54.687204+00:00",
+        "completed_at": "2026-10-01 00:13:56.355343+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 29,
+        "organization_id": 1,
+        "conversation_id": 3,
+        "claimed_at": "2026-10-01 00:14:04.555566+00:00",
+        "completed_at": "2026-10-01 00:14:06.204436+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      },
+      {
+        "id": 30,
+        "organization_id": 2,
+        "conversation_id": 4,
+        "claimed_at": "2026-10-01 00:14:04.707128+00:00",
+        "completed_at": "2026-10-01 00:14:06.387818+00:00",
+        "status": "COMPLETED",
+        "outcome_code": "planner_reply",
+        "llm_calls_admitted": 2
+      }
+    ]
+  },
+  "e4_classification": "DIAGNOSTIC_ONLY",
+  "e4_overrides": {
+    "E4_MEASURE_SECONDS": "120",
+    "E4_NO_NOISY": "1"
+  },
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 120,
+  "smoke_only": false
+}

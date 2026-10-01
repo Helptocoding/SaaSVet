@@ -1,0 +1,67 @@
+{
+  "protected_sources": {
+    "backend/apps/agent/worker.py": {
+      "baseline_sha256": "c71d5c5a64d6f0387da74cefc9f13aa92517db76cc4ca6c99f3238e9a97384e1",
+      "final_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e",
+      "unchanged": false
+    },
+    "backend/apps/agent/durable.py": {
+      "baseline_sha256": "5fd7d67164ef17b5ad82ce2e5380b3ce3207af438d63a86d7f85d3d98958fcd1",
+      "final_sha256": "5fd7d67164ef17b5ad82ce2e5380b3ce3207af438d63a86d7f85d3d98958fcd1",
+      "unchanged": true
+    },
+    "backend/apps/agent/services.py": {
+      "baseline_sha256": "783de992f3583d1637c1277c20503a94d98db014703b659e1e94c5220c8f55fb",
+      "final_sha256": "783de992f3583d1637c1277c20503a94d98db014703b659e1e94c5220c8f55fb",
+      "unchanged": true
+    },
+    "backend/apps/agent/management/commands/run_agent_worker.py": {
+      "baseline_sha256": "56d7656dece4322feac6204b89c37745f3d288e4400ad5cc3952b0b260812572",
+      "final_sha256": "56d7656dece4322feac6204b89c37745f3d288e4400ad5cc3952b0b260812572",
+      "unchanged": true
+    },
+    "backend/apps/agent/planner.py": {
+      "baseline_sha256": "7a6ec922a798b0cca80edf48fb0fc8951b80cb7af4c2d6e95656b68f70aff2a3",
+      "final_sha256": "7a6ec922a798b0cca80edf48fb0fc8951b80cb7af4c2d6e95656b68f70aff2a3",
+      "unchanged": true
+    },
+    "backend/apps/agent/llm_budget.py": {
+      "baseline_sha256": "b15c122c731b25ed5961e05fdbb193dfc05bfb2a8e762008971378497ab998de",
+      "final_sha256": "b15c122c731b25ed5961e05fdbb193dfc05bfb2a8e762008971378497ab998de",
+      "unchanged": true
+    },
+    "backend/apps/agent/sender.py": {
+      "baseline_sha256": "d4d087515f73b330b7ded38600a52d01ecd431f70e0c8f36689958ec12b08068",
+      "final_sha256": "d4d087515f73b330b7ded38600a52d01ecd431f70e0c8f36689958ec12b08068",
+      "unchanged": true
+    },
+    "backend/apps/agent/tests/b9e_profile.py": {
+      "baseline_sha256": "a09b3318f27f1b2970270a03cb90f46034628d5af39e448b3baceabfdf53da75",
+      "final_sha256": "a09b3318f27f1b2970270a03cb90f46034628d5af39e448b3baceabfdf53da75",
+      "unchanged": true
+    },
+    "docs/evals/profile-beta-1-v1.json": {
+      "baseline_sha256": "ff0834449d1915b395be58e7cdbab09e39917fe0ddf3cc90e3f187fdfdc9f311",
+      "final_sha256": "ff0834449d1915b395be58e7cdbab09e39917fe0ddf3cc90e3f187fdfdc9f311",
+      "unchanged": true
+    },
+    "docs/evals/profile-beta-1-methodology.md": {
+      "baseline_sha256": "48251eca301620a5e9a1f8ce1cbde9cb20d5927b1de9fc77b76b79ba0eea12c0",
+      "final_sha256": "48251eca301620a5e9a1f8ce1cbde9cb20d5927b1de9fc77b76b79ba0eea12c0",
+      "unchanged": true
+    }
+  },
+  "runtime_changed_paths": [
+    "backend/apps/agent/worker.py"
+  ],
+  "source_hash_projection": "raw checkout bytes; protected baseline/final compared on same host",
+  "privacy": {
+    "log_files_scanned": 58,
+    "total_artifacts_scanned": 202,
+    "matches": [],
+    "scope": "log/JSON/JSONL fixture phone, credential and content sentinels; no production metrics or payload traces"
+  },
+  "diagnostic_gate_eligible_for_optional_profile": true,
+  "formal_profile_rerun": false,
+  "migrations_added": false
+}

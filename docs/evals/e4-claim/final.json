@@ -1,0 +1,121 @@
+{
+  "status": "E4_IMPLEMENTED_VERIFIED_DIAGNOSTIC_GATE_GREEN",
+  "baseline": "f051c27002986193772ced0fb1e00e19822d26ef",
+  "runtime_commit": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+  "diagnostic_only": true,
+  "root_cause": "ROOT_CAUSE_CONFIRMED",
+  "improvement_count": 1,
+  "formal_profile_rerun": false,
+  "profile_candidate_integral": "NOT_RUN",
+  "historical_b9e": "FAIL",
+  "historical_profile": "FAIL",
+  "b9": "IN_PROGRESS",
+  "healthy_p95_base": 9.742585,
+  "healthy_p95_blocked": 9.798881,
+  "regression": {
+    "selected": 775,
+    "passed": 775,
+    "executed": 898,
+    "final_source_revalidated": 124,
+    "prototype_only_passed": 651,
+    "all_ids_on_final_source": false,
+    "preserved_first_attempt_failures": 1,
+    "unresolved_failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "xfail": 0,
+    "modules": {
+      "apps.agent.tests.test_b0_containment": 17,
+      "apps.agent.tests.test_b3_durable": 39,
+      "apps.agent.tests.test_b3_processes": 3,
+      "apps.agent.tests.test_b4_processes": 5,
+      "apps.agent.tests.test_b4_sender": 42,
+      "apps.agent.tests.test_b5_safety": 30,
+      "apps.agent.tests.test_b6_binding": 54,
+      "apps.agent.tests.test_b7a_operations": 49,
+      "apps.agent.tests.test_b9a_commands": 6,
+      "apps.agent.tests.test_b9a_e2e": 30,
+      "apps.agent.tests.test_b9a_processes": 9,
+      "apps.agent.tests.test_b9b_budget": 28,
+      "apps.agent.tests.test_b9b_processes": 6,
+      "apps.agent.tests.test_b9c_concurrency": 18,
+      "apps.agent.tests.test_b9c_processes": 9,
+      "apps.agent.tests.test_e4_claim_yield": 9,
+      "apps.agent.tests.test_e4_processes": 2,
+      "apps.agent.tests.test_e4_selection": 7,
+      "apps.agent.tests.test_e4_yield_processes": 2,
+      "apps.agent.tests.test_operation_consent": 55,
+      "apps.agent.tests.test_operation_execution": 53,
+      "apps.agent.tests.test_planner": 21,
+      "apps.agent.tests.test_release_service": 25,
+      "apps.agent.tests.test_services": 18,
+      "apps.agent.tests.test_w1_experience": 55,
+      "apps.agent.tests.test_w1_mono_causal": 2,
+      "apps.agent.tests.test_w1_mono_processes": 17,
+      "apps.agent.tests.test_w1_monotonic": 12,
+      "apps.agent.tests.test_worker": 12,
+      "apps.appointments.tests.test_creation_domain": 7,
+      "apps.appointments.tests.test_preconditions": 26,
+      "apps.channels.tests.test_b4_migration": 1,
+      "apps.channels.tests.test_b4_transport": 8,
+      "apps.channels.tests.test_b4_webhook": 8,
+      "apps.channels.tests.test_models": 5,
+      "apps.channels.tests.test_providers": 7,
+      "apps.channels.tests.test_token": 10,
+      "apps.channels.tests.test_webhook": 27,
+      "apps.patients.tests.test_owner_phone_identity": 41
+    },
+    "new_ids": [
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_01_yields_to_idle_less_recent_org_without_claim_or_budget",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_02_deadline_due_restores_original_recency_and_batch_one",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_03_far_future_does_not_delay_eligible_org",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_04_busy_upcoming_org_does_not_reserve_capacity",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_05_never_claimed_org_keeps_original_priority",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_06_more_recent_upcoming_org_does_not_delay_older_org",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_07_ready_join_stays_monotonic_while_selection_yields",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_08_safety_bypasses_forecast_and_occupied_org",
+      "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld",
+      "apps.agent.tests.test_e4_yield_processes.E4YieldProcessTests.test_e4_yield_proc_01_both_forecasts_reserve_nothing_then_collide_and_fall_through",
+      "apps.agent.tests.test_e4_yield_processes.E4YieldProcessTests.test_e4_yield_proc_02_stale_candidate_discarded_and_last_org_slot_revalidated"
+    ]
+  },
+  "checks": "PASS",
+  "migrations": 0,
+  "cleanup": "CLEANED",
+  "production": {
+    "state": "PENDING_ACTIVATION_REQUIREMENTS",
+    "B0": "CLOSED",
+    "B7B": false,
+    "execution_flags": {},
+    "release_grants": [],
+    "active_clinics": 0,
+    "deploy": false,
+    "evidence": "Preserved user baseline; no productive DB was contacted or activated"
+  },
+  "source_hashes": {
+    "backend/apps/agent/worker.py": {
+      "raw": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e",
+      "lf": "f92d7e0c5f5c4315b4bc0246678476e7d81038dcedf530e3068fe1c4e1fa8a76"
+    },
+    "backend/apps/agent/tests/e4_yield_process.py": {
+      "raw": "51994cc04a8a9e37eb1f10970f866132966e77ac77f0567ac0c1c59d41654df8",
+      "lf": "51994cc04a8a9e37eb1f10970f866132966e77ac77f0567ac0c1c59d41654df8"
+    },
+    "backend/apps/agent/tests/test_e4_claim_yield.py": {
+      "raw": "467c67f4a263f0bcdfb1d706f952eb93e381bd686729ef5e08db11e6080e0a06",
+      "lf": "467c67f4a263f0bcdfb1d706f952eb93e381bd686729ef5e08db11e6080e0a06"
+    },
+    "backend/apps/agent/tests/test_e4_yield_processes.py": {
+      "raw": "09b051267fbb04771df0c0cd62ddc52257e658e3ad3d8862f005f76c234cc009",
+      "lf": "09b051267fbb04771df0c0cd62ddc52257e658e3ad3d8862f005f76c234cc009"
+    }
+  },
+  "environment": {
+    "python": "3.13.2",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "postgresql": "16.15; fsync=on; synchronous_commit=on",
+    "django": "6.0.5"
+  },
+  "closed_utc": "2026-10-01T06:00:46.891079+00:00",
+  "next_step": "STOP; formal review/profile v1 integral later, no second tuning"
+}

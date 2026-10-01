@@ -25,6 +25,10 @@ docs/reporte-aceptacion-b9-profile-beta-1-2026-09-29.md text eol=lf
 backend/apps/agent/tests/e4*.py text eol=lf
 docs/evals/e4-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/evals/e4-*.log -diff
+docs/evals/e4-claim/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evals/e4-claim/*.log -diff
+backend/apps/agent/tests/test_e4*.py text eol=lf
+docs/diagnostico-e4-eligible-claim-2026-09-30.md text eol=lf
 docs/diagnostico-e4-capacidad-scheduling-2026-09-30.md text eol=lf
 
 # W1 monotonic test evidence follows the same byte-preservation convention.

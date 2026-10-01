@@ -1,0 +1,76 @@
+Found 1 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4claim_safety_edge_before_v2')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld (apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T20:44:46Z", "organization_id": 1, "contact_id": 3, "verification_level": "unknown", "ambiguous": false, "request_id": "c894b36a-234a-4564-929b-d2f0d274a6d1"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T20:44:46Z", "organization_id": 1, "conversation_id": 1, "request_id": "c894b36a-234a-4564-929b-d2f0d274a6d1"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T20:44:47Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "c894b36a-234a-4564-929b-d2f0d274a6d1"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-09-30T20:44:47Z", "oldest_pending_age_seconds": 0.702443, "turn_work_id": 1, "conversation_id": 1, "organization_id": 1, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-09-30T20:44:47Z", "turn_work_id": 1, "conversation_id": 1, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-09-30T20:44:47Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-09-30T20:44:47Z", "turn_work_id": 1, "conversation_id": 1, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T20:44:48Z", "organization_id": 1, "contact_id": 4, "verification_level": "unknown", "ambiguous": false, "request_id": "8e6893f2-9504-4c3e-8ec0-086600131b95"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T20:44:48Z", "organization_id": 1, "conversation_id": 2, "request_id": "8e6893f2-9504-4c3e-8ec0-086600131b95"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T20:44:48Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "8e6893f2-9504-4c3e-8ec0-086600131b95"}
+{"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-09-30T20:44:49Z", "organization_id": 2, "contact_id": 5, "verification_level": "unknown", "ambiguous": false, "request_id": "211eaf4f-489f-4671-804e-6c9d46cf9e8c"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-09-30T20:44:49Z", "organization_id": 2, "conversation_id": 3, "request_id": "211eaf4f-489f-4671-804e-6c9d46cf9e8c"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T20:44:49Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "211eaf4f-489f-4671-804e-6c9d46cf9e8c"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-09-30T20:44:50Z", "oldest_pending_age_seconds": 1.157475, "turn_work_id": 2, "conversation_id": 2, "organization_id": 1, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-09-30T20:44:50Z", "turn_work_id": 2, "conversation_id": 2, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-09-30T20:44:50Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-09-30T20:44:50Z", "classification": "URGENT", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "3769f37f-e609-4cfe-8914-1204edc42cd1"}
+{"event": "AGENT_TURN_DEFERRED_TO_NEW_INPUT", "level": "INFO", "ts": "2026-09-30T20:44:51Z", "turn_work_id": 2, "conversation_id": 2, "organization_id": 1, "attempts": 1, "request_id": "-"}
+FAIL
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\utils.py", line 458, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_e4_claim_yield.py", line 115, in test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld
+    self.assertEqual(list(worker._pending_conversation_candidates(clock)), [ready.conversation_id])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [2]
+
+Second list contains 1 additional elements.
+First extra element 0:
+2
+
+- []
++ [2]
+?  +
+
+
+
+======================================================================
+FAIL: test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld (apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\utils.py", line 458, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_e4_claim_yield.py", line 115, in test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld
+    self.assertEqual(list(worker._pending_conversation_candidates(clock)), [ready.conversation_id])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [2]
+
+Second list contains 1 additional elements.
+First extra element 0:
+2
+
+- []
++ [2]
+?  +
+
+
+----------------------------------------------------------------------
+Ran 1 test in 46.695s
+
+FAILED (failures=1)
+Preserving test database for alias 'default' ('test_b8b_e4claim_safety_edge_before_v2')...
+{"suite": "targeted", "database": "test_b8b_e4claim_safety_edge_before_v2", "exit_code": 1, "seconds": 52.32648209999752}

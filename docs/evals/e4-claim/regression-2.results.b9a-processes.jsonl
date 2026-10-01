@@ -1,0 +1,27 @@
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_01_process_death_before_admission_commit_has_no_consumption", "event": "READY", "pid": 78800, "backend_pid": 79272}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_01_process_death_before_admission_commit_has_no_consumption", "event": "BOUNDARY", "pid": 78800, "backend_pid": 79272}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_01_process_death_before_admission_commit_has_no_consumption", "event": "READY", "pid": 83904, "backend_pid": 87108}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_01_process_death_before_admission_commit_has_no_consumption", "event": "RESULT", "pid": 83904, "backend_pid": 87108, "admitted": true, "call_id": 86}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_02_04_process_death_after_commit_restart_has_no_free_slot", "event": "READY", "pid": 78304, "backend_pid": 84140}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_02_04_process_death_after_commit_restart_has_no_free_slot", "event": "BOUNDARY", "pid": 78304, "backend_pid": 84140}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_02_04_process_death_after_commit_restart_has_no_free_slot", "event": "READY", "pid": 48764, "backend_pid": 85980}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_02_04_process_death_after_commit_restart_has_no_free_slot", "event": "RESULT", "pid": 48764, "backend_pid": 85980, "admitted": false, "reason": "BudgetRejected"}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "READY", "pid": 83132, "backend_pid": 87580}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "READY", "pid": 85172, "backend_pid": 85884}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "BOUNDARY", "pid": 83132, "backend_pid": 87580}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "PG_LOCK", "first": 87580, "second": 85884, "blocking_pids": [87580]}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "RESULT", "pid": 83132, "backend_pid": 87580, "admitted": true, "call_id": 88}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_06_duplicate_admission_uuid_consumes_once", "event": "RESULT", "pid": 85172, "backend_pid": 85884, "admitted": false, "call_id": 88}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock", "event": "READY", "pid": 87016, "backend_pid": 84332}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock", "event": "READY", "pid": 87608, "backend_pid": 74228}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock", "event": "BOUNDARY", "pid": 87016, "backend_pid": 84332}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock", "event": "PG_LOCK", "first": 84332, "second": 74228, "blocking_pids": [84332]}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock", "event": "RESULT", "pid": 87016, "backend_pid": 84332, "admitted": true, "call_id": 89}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_07_two_processes_last_slot_with_observed_lock", "event": "RESULT", "pid": 87608, "backend_pid": 74228, "admitted": false, "reason": "BudgetRejected"}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_08_stale_witness_process_cannot_admit", "event": "READY", "pid": 87260, "backend_pid": 82216}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_fi_08_stale_witness_process_cannot_admit", "event": "RESULT", "pid": 87260, "backend_pid": 82216, "admitted": false, "reason": "OwnershipLost"}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "READY", "pid": 74556, "backend_pid": 32496}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "BOUNDARY", "pid": 74556, "backend_pid": 32496}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "READY", "pid": 80292, "backend_pid": 76160}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "RESULT", "pid": 80292, "backend_pid": 76160, "admitted": true, "call_id": 91}
+{"test_id": "apps.agent.tests.test_b9b_processes.B9BProcessTests.test_independent_tenants_progress_while_first_holds_budget_lock", "event": "RESULT", "pid": 74556, "backend_pid": 32496, "admitted": true, "call_id": 90}
