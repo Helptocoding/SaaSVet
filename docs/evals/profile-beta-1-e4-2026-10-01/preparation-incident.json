@@ -1,0 +1,18 @@
+{
+  "classification": "INFRASTRUCTURE_PREPARATION_FAILURE",
+  "formal_profile_variants_started": 0,
+  "canonical_tests_started": 0,
+  "cause": "Connection attempted before PostgreSQL startup completed; default libpq connection attempt waited until ConnectionTimeout. Corpus preparation was dispatched before initialization returned.",
+  "evidence": {
+    "postgresql_later_available": "16.15",
+    "databases_observed": [
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "no_corpus_exit_or_results": true,
+    "no_init_migration_log": true
+  },
+  "action": "Wait for initialization failure, then establish bounded local connection and migrate template. Frozen profile runner, corpus, runtime, timings and thresholds unchanged.",
+  "recorded_utc": "2026-10-01T06:40:51.054895+00:00"
+}

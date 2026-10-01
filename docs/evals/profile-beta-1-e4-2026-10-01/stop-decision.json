@@ -1,0 +1,24 @@
+{
+  "schema": "profile-beta-1-e4-stop-v1",
+  "PROFILE_BETA_1": "FAIL",
+  "classification": "PRODUCT_FAILURE",
+  "failed_gate": "B9E-LOAD-01-CLAIM",
+  "threshold_seconds": 10,
+  "observed_seconds": 10.015949,
+  "margin_seconds": -0.01594900000000088,
+  "no_rerun": true,
+  "executed_variants": [
+    "base"
+  ],
+  "unexecuted_variants": [
+    "blocked_llm",
+    "meta_slow",
+    "duplicate",
+    "saturation"
+  ],
+  "reason": "Mandatory STOP after first canonical product gate failure. These variants are not PASS, not measured and not silently missing.",
+  "B9E": "FAIL historical",
+  "B9": "IN_PROGRESS",
+  "production_activation": false,
+  "deploy": false
+}

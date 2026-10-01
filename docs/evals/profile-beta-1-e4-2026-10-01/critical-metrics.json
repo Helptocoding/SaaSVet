@@ -1,0 +1,73 @@
+{
+  "values": {
+    "unauthorized_writes": 0,
+    "cross_tenant_effects": 0,
+    "duplicate_domain_effects": 0,
+    "stale_worker_progress": 0,
+    "admissions_over_budget": 0,
+    "budget_restored_after_failure": 0,
+    "max_active_above_limit": 0,
+    "lost_work_on_saturation": 0,
+    "beta_gate_bypasses": 0,
+    "ready_reextensions": 0
+  },
+  "evidence_ids": {
+    "unauthorized_writes": [
+      "B9E-E2E-09",
+      "B9E-E2E-10",
+      "B9E-E2E-15",
+      "B9E-GATE-01",
+      "B9E-FI-05"
+    ],
+    "cross_tenant_effects": [
+      "B9E-E2E-09",
+      "B9E-SCALE-01",
+      "B9E-READ-04"
+    ],
+    "duplicate_domain_effects": [
+      "B9E-E2E-08",
+      "B9E-FI-08",
+      "B9E-FI-09",
+      "B9E-FI-10"
+    ],
+    "stale_worker_progress": [
+      "B9E-FI-04",
+      "B9E-FI-07"
+    ],
+    "admissions_over_budget": [
+      "B9E-COST-01",
+      "B9E-COST-02",
+      "B9E-SCALE-04"
+    ],
+    "budget_restored_after_failure": [
+      "B9E-COST-03",
+      "B9E-FI-01",
+      "B9E-FI-02"
+    ],
+    "max_active_above_limit": [
+      "B9E-SCALE-01",
+      "B9E-SCALE-03"
+    ],
+    "lost_work_on_saturation": [
+      "B9E-SCALE-03",
+      "B9E-FI-01"
+    ],
+    "beta_gate_bypasses": [
+      "B9E-GATE-01",
+      "B9E-GATE-02",
+      "B9E-GATE-03",
+      "B9E-GATE-04",
+      "B9E-GATE-05",
+      "B9E-FI-06"
+    ]
+  },
+  "interpretation": "Zero violations asserted by the exact canonical tests; SQL additionally checks tenant membership/budget and temporal samples check active limit. Not universal production counters.",
+  "current_sql": {
+    "cross_tenant_conversation": 0,
+    "cross_tenant_membership": 0,
+    "admissions_over_budget": 0
+  },
+  "max_active_observed": 1,
+  "ready_counter_scope": "0 observed logged reextensions; no deadline UPDATE or joined-READY inbound occurred in this timed workload. Nontrivial READY join semantics use existing final-source YIELD07/monotonic evidence.",
+  "stopped_variants": "blocked_llm/meta_slow/duplicate/saturation not measured after mandatory STOP"
+}

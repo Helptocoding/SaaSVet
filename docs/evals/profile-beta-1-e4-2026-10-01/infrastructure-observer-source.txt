@@ -1,0 +1,398 @@
+"""Launch frozen commands and collect read-only evidence; no runtime imports in loads."""
+import argparse
+import datetime as dt
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import shutil
+import socket
+import subprocess
+import sys
+import time
+
+import psycopg
+from psycopg import sql
+
+ROOT = Path(r'C:\Users\LAP\Desktop\VeterinariaSaaS')
+OUT = ROOT / 'docs/evals/profile-beta-1-e4-2026-10-01'
+TEMP = Path(os.environ['TEMP']).resolve()
+DATA = TEMP / 'vet-profile-beta1-e4-pg16-data'
+PG = TEMP / 'vet-b8b-pg16-bin/pgsql/bin'
+PY = TEMP / 'vet-b8b-locked/Scripts/python.exe'
+PORT = 35439
+PREFIX = 'test_b8b_pb1e4_'
+BASELINE = 'a83d7d7eafc8cb7e4c626bee60e79613f62da438'
+ENV = dict(os.environ, SECRET_KEY=__import__('secrets').token_urlsafe(48),
+    DEBUG='False', ENVIRONMENT='dev', DISABLE_SENTRY='True', SENTRY_DSN='',
+    REDIS_URL='', DISCORD_WEBHOOK_URL='', HEALTHCHECK_AGENT_WORKER_URL='',
+    HEALTHCHECK_AGENT_SENDER_URL='', PYTHONIOENCODING='utf-8')
+for key in list(ENV):
+    if key.startswith(('E4_', 'B8', 'B9', 'W1_')):
+        ENV.pop(key)
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+def write(name, value):
+    path = OUT/name
+    assert not path.exists(), f'Refuse overwrite: {path.name}'
+    path.write_text(json.dumps(value, indent=2, default=str)+'\n', encoding='utf-8')
+
+def command(args, **kw):
+    return subprocess.run(['rtk', 'proxy', *map(str, args)], check=True, **kw)
+
+def git(*args):
+    return subprocess.check_output(['rtk','proxy','git',*args],cwd=ROOT)
+
+def uri(database):
+    return f'postgresql://b9e@127.0.0.1:{PORT}/{database}'
+
+def immutable():
+    assert git('rev-parse','HEAD').decode().strip()==BASELINE
+    f=json.loads((OUT/'preflight.json').read_text())
+    drift=[p for p,h in f['source_sha256'].items() if not (ROOT/p).exists() or digest(ROOT/p)!=h]
+    assert not drift, f'Frozen source drift: {drift}'
+
+def preflight():
+    assert git('rev-parse','HEAD').decode().strip()==BASELINE
+    assert not OUT.exists(), 'Evaluation already reserved'
+    OUT.mkdir()
+    historic=json.loads((ROOT/'docs/evals/profile-beta-1-final.json').read_text())
+    profile=json.loads((ROOT/'docs/evals/profile-beta-1-v1.json').read_text())
+    relevant=['backend/apps/agent/tests/b9e_profile.py','backend/apps/agent/tests/b9e_collect.py',
+        'docs/evals/profile-beta-1-methodology.md','docs/evals/profile-beta-1-v1.json',
+        'docs/evals/profile-beta-1-corpus-v1.json','docs/evals/b9e-corpus-selected.json',
+        'backend/apps/agent/tests/b9a_harness.py', 'docs/evals/b9b-turnwork-budget-corpus-v1.json',
+        'docs/evals/b9c-concurrency-scale-corpus-v1.json','docs/evals/b9d-corpus.json']
+    comparisons=[]
+    for p in relevant[:7]:
+        expected=historic['sha256_manifest'].get(p)
+        if expected:
+            comparisons.append(dict(path=p,expected=expected,actual=digest(ROOT/p),match=expected==digest(ROOT/p)))
+    for p,key in zip(relevant[6:],['b9a_harness_sha256','b9b_corpus_sha256','b9c_corpus_sha256','b9d_corpus_sha256']):
+        expected=profile['source_corpus'][key]
+        actual=digest(ROOT/p)
+        normalized=hashlib.sha256((ROOT/p).read_bytes().replace(b'\r\n',b'\n')).hexdigest()
+        comparisons.append(dict(path=p,expected=expected,actual=actual,lf_normalized=normalized,match=expected in (actual,normalized)))
+    paths=[p for p in git('ls-files','-z','backend').decode().split('\0') if p]
+    paths+=relevant
+    paths+=['docs/plan-implementacion-auditoria-agente-whatsapp-2026-09md',
+        'docs/mapa-interno-b9-2026-09-26.md','docs/contrato-harness-b9a.md',
+        'docs/contrato-presupuesto-turnwork-b9b.md','docs/contrato-concurrencia-b9c.md',
+        'docs/contrato-beta-release-b9d.md','docs/reporte-aceptacion-b9-profile-beta-1-2026-09-29.md',
+        'docs/evals/profile-beta-1-final.json','docs/evals/profile-beta-1-requirements-matrix.md',
+        'docs/evals/profile-beta-1-read-scope.md','docs/evals/profile-beta-1-failure-injection.md',
+        'docs/evals/profile-beta-1-operational-readiness.md',
+        'docs/contrato-elegibilidad-preclaim-b3-c4-w1-v1.md',
+        'docs/implementacion-elegibilidad-monotonica-preclaim-2026-09-30.md',
+        'docs/diagnostico-e4-eligible-claim-2026-09-30.md',
+        'docs/evals/e4-claim/final.json','docs/evals/e4-claim/refinement.json',
+        'docs/evals/e4-claim/runtime-commit.json','docs/evals/e4-claim/manifest.sha256.json',
+        'docs/evals/e4-claim/postfix-final-base.json','docs/evals/e4-claim/postfix-final-blocked.json',
+        'docs/evals/e4-claim/regression-summary.json']
+    status=git('status','--porcelain=v1','--untracked-files=all').decode()
+    assert not any(line[3:].startswith('backend/') for line in status.splitlines())
+    receipt=dict(schema='profile-beta-1-e4-preflight-v1', recorded_utc=dt.datetime.now(dt.timezone.utc),
+        E4_RUNTIME_SHA='83ee3b24c84b170e22e401cb09a34da5320ae0a3', E4_DOCS_SHA=BASELINE,
+        PROFILE_BASELINE_SHA=BASELINE, first_formal_candidate_run=True,
+        historical_failed_profile='docs/evals/profile-beta-1-final.json',
+        preexisting_status=status, source_sha256={p:digest(ROOT/p) for p in sorted(set(paths))},
+        expected_hash_comparisons=comparisons, drift_detected=not all(c['match'] for c in comparisons),
+        runner='backend/apps/agent/tests/b9e_profile.py', methodology='docs/evals/profile-beta-1-methodology.md',
+        formal_commands_no_diagnostic_harness=True, canonical_unique_tests=46,
+        variants=['base','blocked_llm','meta_slow','duplicate','saturation'],
+        sql_observation=dict(boundary='PostgreSQL statement execution duration, not client roundtrip',
+            raw_statements='pipe memory only; never persisted', parameter_logging=0,
+            no_runtime_patch=True, observer_changes_no_profile_inputs=True,
+            overhead='server statement timing and pipe emission; no gate adjusted'),
+        privacy='Only technical IDs, closed status enums, timestamps, numeric metrics and hashes persisted')
+    write('preflight.json',receipt)
+    print(json.dumps({'baseline':BASELINE,'drift_detected':receipt['drift_detected'],'comparisons':comparisons}),flush=True)
+    assert not receipt['drift_detected'], 'STOP frozen contract drift'
+
+def server():
+    # Raw SQL is consumed in memory only. No postmaster logfile, logging collector,
+    # auto_explain or statement text is persisted by this observer.
+    command_line=[str(PG/'postgres.exe'),'-D',str(DATA),'-p',str(PORT),'-h','127.0.0.1',
+        '-c','logging_collector=off','-c','log_destination=stderr','-c','log_min_duration_statement=-1',
+        '-c','log_line_prefix=PB1|%m|%p|%d| ','-c','log_parameter_max_length=0',
+        '-c','log_parameter_max_length_on_error=0']
+    proc=subprocess.Popen(command_line,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
+        encoding='utf-8',errors='replace',creationflags=subprocess.CREATE_NO_WINDOW)
+    (OUT/'server-owner.json').write_text(json.dumps({'observer_pid':os.getpid(),'postgres_pid':proc.pid,'port':PORT}))
+    previous=None
+    availability={}
+    with (OUT/'sql-observations.jsonl').open('x',encoding='utf-8',buffering=1) as target:
+        def consume(record):
+            if not record:
+                return
+            timestamp,pid,database,body=record
+            duration=re.search(r'duration: ([0-9.]+) ms',body)
+            if duration and 'ROW_NUMBER()' in body and 'agent_conversation' in body and 'EXPLAIN' not in body:
+                target.write(json.dumps(dict(event='selector_sql',timestamp=timestamp,pid=int(pid),
+                    database=database,milliseconds=float(duration.group(1))))+'\n')
+            if duration and re.search(r'UPDATE "channels_message" SET "available_at"',body):
+                value=re.search(r'"available_at" = \'([^\']+)\'',body)
+                identifiers=re.search(r'"channels_message"\."id" IN \(([0-9, ]+)\)',body)
+                if not identifiers:
+                    identifiers=re.search(r'"channels_message"\."id" = ([0-9]+)',body)
+                if value and identifiers:
+                    new=dt.datetime.fromisoformat(value.group(1))
+                    observed=dt.datetime.fromisoformat(timestamp.replace(' UTC','+00:00'))
+                    ids=[int(x.strip()) for x in identifiers.group(1).split(',')]
+                    extended=[]
+                    for mid in ids:
+                        old=availability.get((database,mid))
+                        if old is not None and observed>=old and new>old:
+                            extended.append(mid)
+                        availability[(database,mid)]=new
+                    target.write(json.dumps(dict(event='availability_update',timestamp=timestamp,database=database,
+                        message_ids=ids,available_at=new.isoformat(),ready_reextensions=extended))+'\n')
+        for line in proc.stdout:
+            if line.startswith('PB1|'):
+                consume(previous)
+                bits=line.rstrip('\r\n').split('|',4)
+                previous=bits[1:]
+            elif previous:
+                previous[3]+=line
+        consume(previous)
+    code=proc.wait()
+    (OUT/'server-exit.json').write_text(json.dumps({'exit_code':code,'raw_sql_persisted':False}))
+
+def initialize():
+    immutable()
+    assert DATA.resolve().parent==TEMP and not DATA.exists()
+    with socket.socket() as probe:
+        assert probe.connect_ex(('127.0.0.1',PORT))!=0, 'Port occupied'
+    command([PG/'initdb.exe','-D',DATA,'-U','b9e','-A','trust','--encoding=UTF8','--locale=C'],stdout=subprocess.DEVNULL)
+    proc=subprocess.Popen([str(PY),'-X','utf8',str(Path(__file__).resolve()),'server'],
+        stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW)
+    deadline=time.monotonic()+30
+    while time.monotonic()<deadline:
+        try:
+            with psycopg.connect(uri('postgres'),autocommit=True,connect_timeout=3) as conn:
+                row=conn.execute("SELECT version(),current_setting('fsync'),current_setting('synchronous_commit'),current_setting('data_directory')").fetchone()
+                assert row[1:3]==('on','on') and '16.15' in row[0] and Path(row[3]).resolve()==DATA
+                conn.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(PREFIX+'template')))
+                break
+        except psycopg.OperationalError:
+            time.sleep(.2)
+    else:
+        raise RuntimeError('Own PostgreSQL did not start')
+    with (OUT/'init-migrate.log').open('x',encoding='utf-8') as log:
+        command([PY,'-X','utf8','manage.py','migrate','--noinput'],cwd=ROOT/'backend',
+            env=dict(ENV,DATABASE_URL=uri(PREFIX+'template')),stdout=log,stderr=subprocess.STDOUT)
+    write('infrastructure.json',dict(postgresql=row[0],fsync=row[1],synchronous_commit=row[2],port=PORT,
+        isolated=True,observer_pid=proc.pid,python=sys.version, no_production=True))
+    print('INITIALIZED isolated PostgreSQL 16.15',flush=True)
+
+def clone(database, observe_sql=False):
+    with psycopg.connect(uri('postgres'),autocommit=True,connect_timeout=3) as conn:
+        conn.execute(sql.SQL('CREATE DATABASE {} TEMPLATE {}').format(sql.Identifier(database),sql.Identifier(PREFIX+'template')))
+        if observe_sql:
+            conn.execute(sql.SQL('ALTER DATABASE {} SET log_min_duration_statement = 0').format(sql.Identifier(database)))
+
+def corpus():
+    immutable()
+    selected=json.loads((ROOT/'docs/evals/b9e-corpus-selected.json').read_text())
+    specification=json.loads((ROOT/'docs/evals/profile-beta-1-corpus-v1.json').read_text())
+    required={v for section in ('application_e2e','cross_component','failure_injection') for v in specification[section].values()}
+    assert set(selected)==required and len(selected)==46
+    assert not (OUT/'corpus.exit.json').exists()
+    clone(PREFIX+'corpus')
+    result=subprocess.run(['rtk','proxy',str(PY),'-X','utf8','-m','apps.agent.tests.run_b9a_acceptance',
+        '--suite','targeted','--database',PREFIX+'corpus','--ids-file',str(ROOT/'docs/evals/b9e-corpus-selected.json'),
+        '--output',str(OUT/'corpus')],cwd=ROOT/'backend',env=dict(ENV,DATABASE_URL=uri(PREFIX+'template')))
+    immutable()
+    print('CANONICAL CORPUS exit',result.returncode,flush=True)
+    raise SystemExit(result.returncode)
+
+def load(scenario):
+    immutable()
+    assert (OUT/'corpus.exit.json').exists() and json.loads((OUT/'corpus.exit.json').read_text())['exit_code']==0
+    order=['base','blocked_llm','meta_slow','duplicate','saturation']
+    for previous in order[:order.index(scenario)]:
+        r=json.loads((OUT/(previous+'.json')).read_text())
+        assert r['technical_pass'], 'STOP product FAIL; no later variants'
+    database=PREFIX+scenario
+    clone(database,observe_sql=True)
+    start=dt.datetime.now(dt.timezone.utc)
+    with (OUT/(scenario+'-driver.log')).open('x',encoding='utf-8') as log:
+        result=subprocess.run(['rtk','proxy',str(PY),'-X','utf8','-m','apps.agent.tests.b9e_profile',
+            '--scenario',scenario,'--output',str(OUT/(scenario+'.json'))],cwd=ROOT/'backend',
+            env=dict(ENV,DATABASE_URL=uri(database)),stdout=log,stderr=subprocess.STDOUT)
+    immutable()
+    write(scenario+'-invocation.json',dict(scenario=scenario,start=start,end=dt.datetime.now(dt.timezone.utc),
+        exit_code=result.returncode, frozen_runner=True,diagnostic_harness=False, database=database))
+    if result.returncode:
+        print('FORMAL RUN process error',scenario,result.returncode,flush=True)
+        raise SystemExit(result.returncode)
+    r=json.loads((OUT/(scenario+'.json')).read_text())
+    print(json.dumps(dict(scenario=scenario,technical_pass=r['technical_pass'],gates=r['gates'],healthy=r['healthy_claim'])),flush=True)
+
+def distribution(values):
+    values=sorted(values)
+    return dict(n=len(values),**{f'p{int(q*100)}':values[math.ceil(q*(len(values)-1))] if values else None for q in (.5,.75,.9,.95,.99)},max=max(values,default=None))
+
+def collect(scenario):
+    immutable()
+    os.environ.update(ENV,DATABASE_URL=uri(PREFIX+scenario),DJANGO_SETTINGS_MODULE='config.settings')
+    sys.path.insert(0,str(ROOT/'backend'))
+    import django
+    django.setup()
+    from django.db import connection
+    from apps.channels.models import Message
+    from apps.agent.models import TurnWork
+    from apps.agent import worker
+    from django.utils.dateparse import parse_datetime
+    from django.db.models import Sum, Count
+    receipt=json.loads((OUT/(scenario+'.json')).read_text())
+    start,end=map(parse_datetime,receipt['window_utc'])
+    orgs=receipt['fixture_organization_ids']
+    rows=[]
+    healthy=[]
+    healthy_missing=0
+    for i,org in enumerate(orgs):
+        msgs=list(Message.objects.filter(direction='in',organization_id=org,created_at__gte=start,created_at__lt=end).select_related('turn_work'))
+        ordinary=[m for m in msgs if m.semantic_type!=Message.SEMANTIC_SAFETY_SIGNAL]
+        pe,ec,pc,all_pc=[],[],[],[]
+        missing=joined=0
+        closed_rows=[]
+        for m in msgs:
+            eligible=max(m.created_at,m.available_at or m.created_at)
+            claim=m.turn_work.claimed_at if m.turn_work_id else None
+            closed_rows.append(dict(id=m.pk,org_index=i,conversation_id=m.conversation_id,work_id=m.turn_work_id,
+                created_at=m.created_at,available_at=m.available_at,claimed_at=claim,semantic_type=m.semantic_type))
+            if claim:
+                all_pc.append((claim-m.created_at).total_seconds())
+            elif m.semantic_type!=Message.SEMANTIC_SAFETY_GUIDANCE:
+                if i<2: healthy_missing+=1
+            if m in ordinary:
+                pe.append((eligible-m.created_at).total_seconds())
+                joined+=int(m.available_at is not None and m.available_at<m.created_at)
+                if claim:
+                    ec.append((claim-eligible).total_seconds()); pc.append((claim-m.created_at).total_seconds())
+                else: missing+=1
+        if i<2: healthy+=all_pc
+        works=TurnWork.objects.filter(organization_id=org,context_at__gte=start,context_at__lt=end)
+        work_count=works.count()
+        calls=works.aggregate(v=Sum('llm_calls_admitted'))['v'] or 0
+        pending=Message.objects.filter(direction='in',organization_id=org,status='pending')
+        oldest=pending.order_by('created_at').values_list('created_at',flat=True).first()
+        rows.append(dict(org_index=i,organization_id=org,healthy=i<2,inbound_n=len(msgs),
+            ordinary_persisted_to_eligible=distribution(pe),ordinary_eligible_to_claim=distribution(ec),
+            ordinary_persisted_to_claim=distribution(pc),all_persisted_to_claim=distribution(all_pc),
+            missing=missing,joined_READY=joined,works=work_count,calls=calls,
+            calls_per_work=calls/work_count if work_count else None,
+            calls_per_work_distribution=list(works.values('llm_calls_admitted').annotate(count=Count('pk'))),
+            deferrals=works.filter(outcome_code='deferred_to_new_input').count(),
+            pending_inbound=pending.count(),oldest_pending_age_seconds=(dt.datetime.now(dt.timezone.utc)-oldest).total_seconds() if oldest else None,
+            claims_total=TurnWork.objects.filter(organization_id=org,claimed_at__isnull=False).count(),messages=closed_rows))
+    selector=[]; reextensions=[]; updates=0
+    time.sleep(.2)
+    for line in (OUT/'sql-observations.jsonl').read_text().splitlines():
+        e=json.loads(line)
+        if e['database']!=PREFIX+scenario: continue
+        if e['event']=='selector_sql': selector.append(e['milliseconds'])
+        else:
+            updates+=1; reextensions+=e['ready_reextensions']
+    with connection.cursor() as c:
+        c.execute("SELECT count(*) FROM channels_message m JOIN agent_conversation v ON v.id=m.conversation_id WHERE m.organization_id<>v.organization_id")
+        cross_conversation=c.fetchone()[0]
+        c.execute("SELECT count(*) FROM channels_message m JOIN agent_turnwork w ON w.id=m.turn_work_id WHERE m.organization_id<>w.organization_id OR m.conversation_id<>w.conversation_id")
+        cross_membership=c.fetchone()[0]
+        c.execute('SELECT max(llm_calls_admitted),max(llm_output_tokens_reserved),count(*) FILTER (WHERE llm_calls_admitted>llm_call_limit OR llm_output_tokens_reserved>llm_output_token_limit) FROM agent_turnwork')
+        max_calls,max_reserved,over_budget=c.fetchone()
+        c.execute("SELECT count(*),count(*) FILTER (WHERE input_tokens IS NULL OR output_tokens IS NULL OR recorded_at IS NULL),count(*) FILTER (WHERE error<>''),count(*) FILTER (WHERE retry_of_id IS NOT NULL),COALESCE(sum(reserved_output_tokens),0) FROM agent_llmcall")
+        calls,unknown,failures,retries,reserved=c.fetchone()
+        c.execute('SET TRANSACTION READ ONLY') if False else None
+        c.execute("SET statement_timeout='30s'")
+        query,params=worker._pending_conversation_candidates().query.sql_with_params()
+        assert query.lstrip().startswith('SELECT') and not re.search(r'\bFOR (UPDATE|SHARE)\b',query)
+        c.execute('EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) '+query,params)
+        plan=c.fetchone()[0][0]
+    def numeric_plan(node):
+        allowed={'Node Type','Relation Name','Index Name','Startup Cost','Total Cost','Plan Rows','Actual Startup Time','Actual Total Time','Actual Rows','Actual Loops','Shared Hit Blocks','Shared Read Blocks','Planning Time','Execution Time'}
+        out={k:v for k,v in node.items() if k in allowed}
+        if 'Plans' in node: out['Plans']=[numeric_plan(n) for n in node['Plans']]
+        if 'Plan' in node: out['Plan']=numeric_plan(node['Plan'])
+        return out
+    healthy_stats=distribution(healthy)
+    assert healthy_stats['n']==receipt['healthy_claim']['count']
+    assert healthy_stats['p95']==receipt['healthy_claim']['p95_seconds']
+    write(scenario+'-diagnostics.json',dict(schema='profile-beta-1-e4-readonly-observation-v1',scenario=scenario,
+        gate_denominator='all healthy inbounds in canonical Message.created_at window; includes safety',
+        healthy=healthy_stats,healthy_missing=healthy_missing,margin_seconds=10-healthy_stats['p95'] if scenario in ('base','blocked_llm') else None,
+        organizations=rows,selector_sql_ms=distribution(selector),selector_boundary='PostgreSQL execution; excludes client/network/Python list evaluation',
+        selector_observation_cohort='all frozen worker selector executions including warmup and drain',
+        explain=numeric_plan(plan),availability_updates_observed=updates,ready_reextensions=len(reextensions),
+        ready_reextensions_message_ids=reextensions,ready_scope='Logged deadline updates; final-source semantic evidence additionally in hashed E4/monotonic receipts',
+        critical_sql=dict(cross_tenant_conversation=cross_conversation,cross_tenant_membership=cross_membership,admissions_over_budget=over_budget),
+        budget=dict(max_calls_per_work=max_calls,max_reserved_per_work=max_reserved,calls=calls,unknown_usage=unknown,failures=failures,retries=retries,reserved_tokens=reserved),
+        observation_only=True))
+    connection.close()
+    print(json.dumps(dict(scenario=scenario,healthy=healthy_stats,selector_ms=distribution(selector),explain_ms=plan['Execution Time'],ready_reextensions=len(reextensions))),flush=True)
+
+def checks():
+    immutable()
+    result=subprocess.run(['rtk','proxy',str(PY),'-X','utf8','-m','apps.agent.tests.run_b9a_acceptance',
+        '--suite','checks','--database',PREFIX+'template','--output',str(OUT/'checks')],cwd=ROOT/'backend',
+        env=dict(ENV,DATABASE_URL=uri(PREFIX+'template')))
+    diff=subprocess.run(['rtk','git','diff','--check'],cwd=ROOT,capture_output=True,encoding='utf-8')
+    write('git-diff-check.json',dict(exit_code=diff.returncode,output=diff.stdout+diff.stderr))
+    immutable()
+    print('CHECKS',result.returncode,'GIT DIFF CHECK',diff.returncode,flush=True)
+
+def cleanup():
+    assert DATA.resolve()==TEMP/'vet-profile-beta1-e4-pg16-data' and DATA.parent==TEMP
+    with psycopg.connect(uri('postgres'),autocommit=True) as conn:
+        row=conn.execute("SELECT current_setting('data_directory'),current_setting('fsync'),current_setting('synchronous_commit')").fetchone()
+        assert Path(row[0]).resolve()==DATA and row[1:]==('on','on')
+        clients=conn.execute("SELECT pid,datname FROM pg_stat_activity WHERE backend_type='client backend' AND pid<>pg_backend_pid()").fetchall()
+        waiting=conn.execute('SELECT count(*) FROM pg_locks WHERE NOT granted').fetchone()[0]
+        prepared=conn.execute('SELECT count(*) FROM pg_prepared_xacts').fetchone()[0]
+        assert not clients and waiting==prepared==0
+        names=[r[0] for r in conn.execute('SELECT datname FROM pg_database') if r[0].startswith(PREFIX)]
+        for name in names:
+            assert name.startswith(PREFIX)
+            conn.execute(sql.SQL('DROP DATABASE {}').format(sql.Identifier(name)))
+        remaining=[r[0] for r in conn.execute('SELECT datname FROM pg_database') if r[0].startswith(PREFIX)]
+    command([PG/'pg_ctl.exe','-D',DATA,'-m','fast','-w','stop'],stdout=subprocess.DEVNULL)
+    with socket.socket() as probe: closed=probe.connect_ex(('127.0.0.1',PORT))!=0
+    assert closed and not remaining
+    deadline=time.monotonic()+10
+    while not (OUT/'server-exit.json').exists() and time.monotonic()<deadline: time.sleep(.1)
+    assert (OUT/'server-exit.json').exists()
+    shutil.rmtree(DATA)
+    write('cleanup.json',dict(status='CLEANED',clients_own=0,locks_waiting_own=0,prepared_transactions_own=0,
+        dropped_databases=names,remaining_databases=remaining,port=PORT,port_closed=closed,
+        data_directory_absent=not DATA.exists(),raw_server_log_created=False,observer_exited=True,
+        fsync=row[1],synchronous_commit=row[2]))
+    print('CLEANED own isolated cluster',flush=True)
+
+parser=argparse.ArgumentParser()
+parser.add_argument('action',choices=['preflight','init','server','corpus','load','collect','checks','cleanup','resume-init'])
+parser.add_argument('--scenario',choices=['base','blocked_llm','meta_slow','duplicate','saturation'])
+args=parser.parse_args()
+if args.action=='preflight': preflight()
+elif args.action=='init': initialize()
+elif args.action=='server': server()
+elif args.action=='resume-init':
+    immutable()
+    with psycopg.connect(uri('postgres'),autocommit=True,connect_timeout=3) as conn:
+        row=conn.execute("SELECT version(),current_setting('fsync'),current_setting('synchronous_commit'),current_setting('data_directory')").fetchone()
+        assert '16.15' in row[0] and row[1:3]==('on','on') and Path(row[3]).resolve()==DATA
+        assert conn.execute('SELECT datname FROM pg_database WHERE datname=%s',(PREFIX+'template',)).fetchone() is None
+        conn.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(PREFIX+'template')))
+    with (OUT/'init-migrate.log').open('x',encoding='utf-8') as log:
+        command([PY,'-X','utf8','manage.py','migrate','--noinput'],cwd=ROOT/'backend',env=dict(ENV,DATABASE_URL=uri(PREFIX+'template')),stdout=log,stderr=subprocess.STDOUT)
+    write('infrastructure.json',dict(postgresql=row[0],fsync=row[1],synchronous_commit=row[2],port=PORT,isolated=True,python=sys.version,no_production=True,recovered_preparation=True))
+    print('INITIALIZED isolated PostgreSQL 16.15 and migrated template',flush=True)
+elif args.action=='corpus': corpus()
+elif args.action=='load': load(args.scenario)
+elif args.action=='collect': collect(args.scenario)
+elif args.action=='checks': checks()
+else: cleanup()

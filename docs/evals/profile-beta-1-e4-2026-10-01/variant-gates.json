@@ -1,0 +1,77 @@
+{
+  "variants": {
+    "blocked_llm": {
+      "status": "NOT_RUN_STOP_AFTER_PRODUCT_FAILURE",
+      "n": null,
+      "percentiles": null,
+      "margin": null
+    },
+    "meta_slow": {
+      "status": "NOT_RUN_STOP_AFTER_PRODUCT_FAILURE",
+      "n": null,
+      "percentiles": null,
+      "margin": null
+    },
+    "duplicate": {
+      "status": "NOT_RUN_STOP_AFTER_PRODUCT_FAILURE",
+      "n": null,
+      "percentiles": null,
+      "margin": null
+    },
+    "saturation": {
+      "status": "NOT_RUN_STOP_AFTER_PRODUCT_FAILURE",
+      "n": null,
+      "percentiles": null,
+      "margin": null
+    },
+    "base": {
+      "status": "FAIL",
+      "receipt": "base.json",
+      "diagnostics": "base-diagnostics.json",
+      "gates": [
+        {
+          "id": "B9E-LOAD-01-CLAIM",
+          "threshold_seconds": 10,
+          "observed_p95_seconds": 10.015949,
+          "margin_seconds": -0.01594900000000088,
+          "n": 60,
+          "missing": 0,
+          "status": "FAIL"
+        },
+        {
+          "id": "B9E-LOAD-01-SAFETY",
+          "threshold_seconds": 5,
+          "observed_p95_seconds": 3.661316,
+          "margin_seconds": 1.3386840000000002,
+          "n": 20,
+          "missing": 0,
+          "status": "PASS"
+        },
+        {
+          "id": "B9E-LOAD-01-OUTBOX",
+          "threshold_seconds": 5,
+          "observed_p95_seconds": 2.849466,
+          "margin_seconds": 2.150534,
+          "n": 126,
+          "missing": 0,
+          "status": "PASS"
+        }
+      ],
+      "healthy": {
+        "n": 60,
+        "p50": 8.469384,
+        "p75": 8.896047,
+        "p90": 9.407633,
+        "p95": 10.015949,
+        "p99": 10.385686,
+        "max": 10.385686
+      },
+      "healthy_missing": 0
+    }
+  },
+  "canonical_variants_required": 5,
+  "executed": 1,
+  "stopped": 4,
+  "complete_matrix_pass_claimed": false,
+  "denominator": "Global healthy n=60 including 20 safety inbounds; higher percentile"
+}

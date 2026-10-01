@@ -1,0 +1,210 @@
+{
+  "schema": "profile-beta-1-e4-corpus-decision-v1",
+  "status": "PASS",
+  "unique_selected": 46,
+  "unique_passed": 46,
+  "failed_ids": [],
+  "missing_ids": [],
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "xfail": 0,
+  "by_canonical_id": {
+    "application_e2e": {
+      "B9E-E2E-00A": {
+        "test_id": "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_public_clinic_info_with_productive_write_defaults_closed",
+        "status": "PASS"
+      },
+      "B9E-E2E-00B": {
+        "test_id": "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_public_slot_check_is_read_not_reservation",
+        "status": "PASS"
+      },
+      "B9E-E2E-00C": {
+        "test_id": "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_appointments_scoped_to_verified_owner",
+        "status": "PASS"
+      },
+      "B9E-E2E-00D": {
+        "test_id": "apps.agent.tests.test_b9e_read_scope.B9EReadScopeTests.test_personal_vaccine_status_requires_conversation_pet_handle",
+        "status": "PASS"
+      },
+      "B9E-E2E-01": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct",
+        "status": "PASS"
+      },
+      "B9E-E2E-02": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_02_personal_read_uses_authenticated_domain_http",
+        "status": "PASS"
+      },
+      "B9E-E2E-03": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline",
+        "status": "PASS"
+      },
+      "B9E-E2E-04": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline",
+        "status": "PASS"
+      },
+      "B9E-E2E-05": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline",
+        "status": "PASS"
+      },
+      "B9E-E2E-06": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture",
+        "status": "PASS"
+      },
+      "B9E-E2E-07": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture",
+        "status": "PASS"
+      },
+      "B9E-E2E-08": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_17_duplicate_confirmation_and_worker_do_not_repeat_effect",
+        "status": "PASS"
+      },
+      "B9E-E2E-09": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_confirmation_cannot_cross_tenant_proposal_reference",
+        "status": "PASS"
+      },
+      "B9E-E2E-10": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_takeover_after_authorizable_proposal_blocks_write",
+        "status": "PASS"
+      },
+      "B9E-E2E-11": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_09_uncertain_no_blind_retry_then_signed_reconciliation",
+        "status": "PASS"
+      },
+      "B9E-E2E-12": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_03_duplicate_signed_http_is_one_message_and_work",
+        "status": "PASS"
+      },
+      "B9E-E2E-13": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_16_correction_retires_old_proposal_before_effect",
+        "status": "PASS"
+      },
+      "B9E-E2E-14": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_12_safety_precedes_llm_and_normal_write",
+        "status": "PASS"
+      },
+      "B9E-E2E-15": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_15_client_cannot_reply_to_pending_and_forged_early_reply_is_not_causal",
+        "status": "PASS"
+      }
+    },
+    "cross_component": {
+      "B9E-READ-01": {
+        "test_id": "apps.agent.tests.test_tools.ToolsThroughRealApiTests.test_verification_floor_blocks_personal_tools",
+        "status": "PASS"
+      },
+      "B9E-READ-02": {
+        "test_id": "apps.agent.tests.test_planner.PlannerVerificationTests.test_unverified_personal_tool_executes_nothing",
+        "status": "PASS"
+      },
+      "B9E-READ-03": {
+        "test_id": "apps.agent.tests.test_identity.IdentityTests.test_verification_expiry",
+        "status": "PASS"
+      },
+      "B9E-READ-04": {
+        "test_id": "apps.agent.tests.test_inbox_api.InboxResetIdentityTests.test_reset_identity_is_tenant_scoped",
+        "status": "PASS"
+      },
+      "B9E-HUMAN-01": {
+        "test_id": "apps.agent.tests.test_planner.PlannerPolicyShortCircuitTests.test_human_active_is_silent",
+        "status": "PASS"
+      },
+      "B9E-COST-01": {
+        "test_id": "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_cost_01_authorizer_verifier_planner_share_budget",
+        "status": "PASS"
+      },
+      "B9E-COST-02": {
+        "test_id": "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_01_02_03_available_last_slot_and_exhausted",
+        "status": "PASS"
+      },
+      "B9E-COST-03": {
+        "test_id": "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_07_12_timeout_retry_counted_without_refund",
+        "status": "PASS"
+      },
+      "B9E-COST-04": {
+        "test_id": "apps.agent.tests.test_b9b_budget.B9BBudgetTests.test_bud_14_missing_and_malformed_usage_are_unknown",
+        "status": "PASS"
+      },
+      "B9E-SCALE-01": {
+        "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_01_two_planners_cross_tenant_and_independent_sender",
+        "status": "PASS"
+      },
+      "B9E-SCALE-02": {
+        "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_scale_02_guidance_during_blocked_llm_and_slow_meta",
+        "status": "PASS"
+      },
+      "B9E-SCALE-03": {
+        "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_scale_n_minus_one_n_n_plus_one_distinct_conversations",
+        "status": "PASS"
+      },
+      "B9E-SCALE-04": {
+        "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_budget_exhausted_releases_turn_without_provider",
+        "status": "PASS"
+      },
+      "B9E-GATE-01": {
+        "test_id": "apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "status": "PASS"
+      },
+      "B9E-GATE-02": {
+        "test_id": "apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "status": "PASS"
+      },
+      "B9E-GATE-03": {
+        "test_id": "apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "status": "PASS"
+      },
+      "B9E-GATE-04": {
+        "test_id": "apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "status": "PASS"
+      },
+      "B9E-GATE-05": {
+        "test_id": "apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open",
+        "status": "PASS"
+      }
+    },
+    "failure_injection": {
+      "B9E-FI-01": {
+        "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_03_04_10_kill_provider_or_publication_keeps_budget_and_recovers",
+        "status": "PASS"
+      },
+      "B9E-FI-02": {
+        "test_id": "apps.agent.tests.test_b9c_concurrency.B9CConcurrencyTests.test_provider_timeout_retry_keeps_budget_and_releases_only_at_completion",
+        "status": "PASS"
+      },
+      "B9E-FI-03": {
+        "test_id": "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_provider_accepted_process_killed_local_response_lost_is_uncertain",
+        "status": "PASS"
+      },
+      "B9E-FI-04": {
+        "test_id": "apps.agent.tests.test_b9c_processes.B9CProcessTests.test_fi_05_06_live_expired_worker_cannot_progress_after_other_claim",
+        "status": "PASS"
+      },
+      "B9E-FI-05": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_worker_reaches_b8a_and_denies_inactive_definition",
+        "status": "PASS"
+      },
+      "B9E-FI-06": {
+        "test_id": "apps.agent.tests.test_b9d_release.BetaCreateTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal",
+        "status": "PASS"
+      },
+      "B9E-FI-07": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_11_takeover_during_llm_fences_publication",
+        "status": "PASS"
+      },
+      "B9E-FI-08": {
+        "test_id": "apps.agent.tests.test_b9a_processes.B9AProcessTests.test_two_http_processes_deduplicate_then_worker_runs_once",
+        "status": "PASS"
+      },
+      "B9E-FI-09": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_17_duplicate_confirmation_and_worker_do_not_repeat_effect",
+        "status": "PASS"
+      },
+      "B9E-FI-10": {
+        "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_effect_and_consent_roll_back_with_receipt_sql_failure",
+        "status": "PASS"
+      }
+    }
+  },
+  "historical_2384_rerun": false,
+  "scope": "Exact canonical 46 tests; not final reopening or closure of B9E"
+}

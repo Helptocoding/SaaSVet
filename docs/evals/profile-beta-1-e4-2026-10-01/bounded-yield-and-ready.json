@@ -1,0 +1,86 @@
+{
+  "status": "VERIFIED_EXISTING_FINAL_SOURCE_EVIDENCE_AND_CURRENT_SOURCE_IMMUTABILITY",
+  "all_reexecuted_in_this_profile": false,
+  "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e",
+  "source_receipt": "docs/evals/e4-claim/regression-summary.json",
+  "coverage_by_id": {
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_02_deadline_due_restores_original_recency_and_batch_one": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_05_never_claimed_org_keeps_original_priority": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_03_far_future_does_not_delay_eligible_org": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_04_busy_upcoming_org_does_not_reserve_capacity": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_07_ready_join_stays_monotonic_while_selection_yields": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_01_yields_to_idle_less_recent_org_without_claim_or_budget": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_06_more_recent_upcoming_org_does_not_delay_older_org": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_yield_processes.E4YieldProcessTests.test_e4_yield_proc_01_both_forecasts_reserve_nothing_then_collide_and_fall_through": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_yield_processes.E4YieldProcessTests.test_e4_yield_proc_02_stale_candidate_discarded_and_last_org_slot_revalidated": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_08_safety_bypasses_forecast_and_occupied_org": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    },
+    "apps.agent.tests.test_e4_claim_yield.E4ClaimYieldTests.test_e4_yield_09_pending_safety_after_live_worker_is_not_withheld": {
+      "receipt": "regression-final-2.results.json",
+      "source_version": "final pending-safety exemption",
+      "hash_projection": "raw checkout bytes",
+      "worker_sha256": "917949b731461beb5829b9473d61265333fddc5a7108d1b58d9b5e091a381b2e"
+    }
+  },
+  "forecast_grants_claim": false,
+  "forecast_reserves_capacity": false,
+  "forecast_admits_budget": false,
+  "real_deadline_restores_selection": true,
+  "safety_bypass": true,
+  "busy_upcoming_reserves_nothing": true,
+  "never_claimed_priority_preserved": true,
+  "candidate_observation_advisory": true,
+  "pending_safety_after_W1": "Final-source YIELD09 prior receipt PASS; same source hash. Current canonical safety E2E/SCALE corpus and base dispatch gates PASS. No new scenario added.",
+  "ready_reextensions": 0,
+  "current_ready_scope": "0 observed logged reextensions; no deadline UPDATE or joined-READY inbound occurred in this timed workload. Nontrivial READY join semantics use existing final-source YIELD07/monotonic evidence.",
+  "limitation": "Does not establish universal fairness or completion of the stopped temporal matrix."
+}

@@ -1,0 +1,81 @@
+{
+  "EVAL": {
+    "status": "PASS_CANONICAL_CONTROLLED_CORPUS",
+    "scope": "19 application E2E IDs, READ negatives and bounded deterministic provider; no real-model or universal clinical accreditation"
+  },
+  "COST": {
+    "status": "PASS_CANONICAL_CORPUS_AND_BASE_SQL",
+    "scope": "durable admission, shared budget, caps/reserved tokens, no refund, timeout/retry, restart and unknown usage"
+  },
+  "SCALE": {
+    "status": "PASS_CANONICAL_CORPUS_AND_BASE_SAMPLES",
+    "scope": "N-1/N/N+1, two independent planners/sender, durable saturated work, budget/capacity/witness composition; other timed variants stopped"
+  },
+  "SAFETY": {
+    "status": "PASS_CANONICAL_CORPUS_AND_BASE_DISPATCH",
+    "scope": "safety, handoff/takeover, correction, consent/duplicates; pending-safety-after-W1 uses prior final-source proof"
+  },
+  "DURABILITY": {
+    "status": "PASS_CANONICAL_FI_01_10",
+    "scope": "crash/restart, lease expiry, stale worker, provider timeout, sender uncertainty, receipt SQL rollback; not power-loss or exactly-once remote guarantees"
+  },
+  "TENANT": {
+    "status": "PASS_CANONICAL_CORPUS_AND_BASE_SQL",
+    "violations": 0
+  },
+  "BETA_GATES": {
+    "status": "PASS_CANONICAL_CORPUS_AND_CLOSED_DEFAULTS",
+    "productive_grants": 0
+  },
+  "READ_PUBLIC": {
+    "status": "PASS",
+    "scope": [
+      "get_clinic_info",
+      "get_service_catalog",
+      "check_appointment_slot"
+    ]
+  },
+  "READ_PERSONAL": {
+    "status": "PASS",
+    "scope": [
+      "list_my_pets",
+      "get_appointments",
+      "get_vaccine_status"
+    ]
+  },
+  "CREATE_APPOINTMENT": {
+    "status": "PASS",
+    "canonical_id": "B9E-E2E-03",
+    "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline",
+    "pipeline": "signed HTTP inbound -> durable Message/TurnWork -> worker/provider/planner -> proposal/sender -> signed confirmation -> B7/B8 -> domain/evidence/outbound",
+    "explicit_fixtures": "Canonical existing-matter/B6 fixtures for attendance/registration, per B9A contract"
+  },
+  "RESCHEDULE_APPOINTMENT": {
+    "status": "PASS",
+    "canonical_id": "B9E-E2E-04",
+    "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline",
+    "pipeline": "signed HTTP inbound -> durable Message/TurnWork -> worker/provider/planner -> proposal/sender -> signed confirmation -> B7/B8 -> domain/evidence/outbound",
+    "explicit_fixtures": "Canonical existing-matter/B6 fixtures for attendance/registration, per B9A contract"
+  },
+  "CANCEL_APPOINTMENT": {
+    "status": "PASS",
+    "canonical_id": "B9E-E2E-05",
+    "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline",
+    "pipeline": "signed HTTP inbound -> durable Message/TurnWork -> worker/provider/planner -> proposal/sender -> signed confirmation -> B7/B8 -> domain/evidence/outbound",
+    "explicit_fixtures": "Canonical existing-matter/B6 fixtures for attendance/registration, per B9A contract"
+  },
+  "CONFIRM_ATTENDANCE": {
+    "status": "PASS",
+    "canonical_id": "B9E-E2E-06",
+    "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture",
+    "pipeline": "signed HTTP inbound -> durable Message/TurnWork -> worker/provider/planner -> proposal/sender -> signed confirmation -> B7/B8 -> domain/evidence/outbound",
+    "explicit_fixtures": "Canonical existing-matter/B6 fixtures for attendance/registration, per B9A contract"
+  },
+  "REGISTER_PET": {
+    "status": "PASS",
+    "canonical_id": "B9E-E2E-07",
+    "test_id": "apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture",
+    "pipeline": "signed HTTP inbound -> durable Message/TurnWork -> worker/provider/planner -> proposal/sender -> signed confirmation -> B7/B8 -> domain/evidence/outbound",
+    "explicit_fixtures": "Canonical existing-matter/B6 fixtures for attendance/registration, per B9A contract"
+  }
+}
