@@ -1,0 +1,63 @@
+{
+  "decision": "SQL_SCALING_PROBLEM_CONFIRMED",
+  "root_cause": "The bounded-yield forecast EXISTS is correlated to each outer Conversation. PostgreSQL executes a channels_message scan once per outer conversation, and the scan's work grows with the pending Message population.",
+  "runtime_sha": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+  "baseline_sha": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "measurement_boundary": "PostgreSQL EXPLAIN ANALYZE Execution Time; 5 warmups and 30 repetitions per point; real compiled ORM SQL",
+  "messages_matrix": {
+    "fixed_organizations": 3,
+    "fixed_conversations": 8,
+    "pending_messages": [10, 50, 100, 250, 500, 1000, 2000],
+    "p50_ms_first_last": [0.78, 35.326],
+    "p95_ms_first_last": [0.829, 43.488],
+    "forecast_scan_loops_first_last": [11, 11],
+    "root_shared_hit_first_last": [71, 2495],
+    "classification": "approximately linear over the material range, with plan and cache noise; cost increases materially while loops stay fixed"
+  },
+  "conversations_matrix": {
+    "fixed_organizations": 3,
+    "fixed_pending_messages": 2000,
+    "conversations": [10, 25, 50, 100, 250, 500, 1000],
+    "p50_ms_first_last": [24.299, 4889.216],
+    "p95_ms_first_last": [27.515, 5336.076],
+    "forecast_scan_loops_first_last": [13, 1003],
+    "root_shared_hit_first_last": [2944, 215477],
+    "classification": "roughly linear to mildly superlinear in this measured range; multi-second selector polls at 500-1000 conversations"
+  },
+  "organizations_matrix": "not run because independent Messages and Conversations matrices identify the causal mechanism sufficiently",
+  "representative_mixed_corrected": {
+    "organizations": 3,
+    "conversations": 354,
+    "pending_messages": 231,
+    "p50_ms": 97.99,
+    "p95_ms": 126.298,
+    "forecast_scan_loops": 356,
+    "root_shared_hit": 2415,
+    "healthy_ready_messages": 2,
+    "noisy_pending_messages": 229
+  },
+  "explain_conclusion": {
+    "dominant_node": "forecast correlated channels_message Seq Scan in this synthetic corpus; the historical PROFILE chose Bitmap Heap Scan for the same repeated Message work",
+    "loops_determined_by": "outer Conversation rows evaluated by the forecast, plus the three constant historical conversations in A/B; not by Organizations or Message count",
+    "b_1000_scan_loops": 1003,
+    "b_1000_scan_rows_removed_by_filter_per_loop": 1737,
+    "b_1000_scan_shared_hit": 214332,
+    "b_1000_root_shared_hit": 215477,
+    "b_1000_root_shared_read": 0,
+    "b_1000_temp_read": 0,
+    "b_1000_temp_written": 0,
+    "sort": "quicksort, maximum 25 kB in representative plans",
+    "heap_fetches": "not reported for the dominant Seq Scan"
+  },
+  "query_count": 1,
+  "django_n_plus_one": false,
+  "correlated_subquery": true,
+  "relation_to_formal_profile": "The corrected mixed case gives p50 97.990 ms and a representative 101.214 ms EXPLAIN, near the formal p50 97.497 ms and 127.583 ms plan. It does not reproduce PROFILE's p95/p99/max 291.922/422.705/622.632 ms because concurrency, data shape and worker conditions differ.",
+  "would_fix_without_profile": true,
+  "risk": "At fixed 2000 pending Messages, 500 and 1000 Conversations require about 2.3 and 4.9 seconds p50 per selector SQL invocation. The repeated scan can delay polling under a plausible accumulated backlog regardless of the formal PROFILE threshold.",
+  "runtime_changes": 0,
+  "migrations_added": 0,
+  "profile_run": false,
+  "b9e_run": false,
+  "optimization_implemented": false
+}

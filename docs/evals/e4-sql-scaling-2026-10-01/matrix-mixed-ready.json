@@ -1,0 +1,34 @@
+[
+  {
+    "kind": "mixed_ready",
+    "x": 354,
+    "organizations": 3,
+    "conversations": 354,
+    "historical_conversations": 3,
+    "pending_messages": 231,
+    "historical_messages": 3,
+    "ready_messages": 185,
+    "upcoming_messages": 46,
+    "safety_messages": 1,
+    "process_work": 0,
+    "historical_completed_work": 3,
+    "selector_sql_ms": {
+      "n": 30,
+      "p50": 97.99,
+      "p75": 107.377,
+      "p90": 123.714,
+      "p95": 126.298,
+      "p99": 129.349,
+      "max": 129.349
+    },
+    "coldish_first_explain_ms": 100.026,
+    "warmup": 5,
+    "query_count": 1,
+    "n_plus_one": false,
+    "selected_count": 2,
+    "planning_ms": 8.448,
+    "postgresql": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+    "fsync": "on",
+    "synchronous_commit": "on"
+  }
+]

@@ -1,0 +1,450 @@
+{
+  "conversations-10": {
+    "planning_ms": 2.729,
+    "execution_ms": 24.036,
+    "shared_hit": 2944,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 13,
+      "Actual Rows": 1,
+      "Actual Total Time": 1.735,
+      "Rows Removed by Filter": 1757,
+      "Shared Hit Blocks": 2872,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "conversations-100": {
+    "planning_ms": 5.833,
+    "execution_ms": 364.579,
+    "shared_hit": 22389,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 103,
+      "Actual Rows": 1,
+      "Actual Total Time": 3.465,
+      "Rows Removed by Filter": 1739,
+      "Shared Hit Blocks": 22192,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "conversations-1000": {
+    "planning_ms": 5.235,
+    "execution_ms": 4822.758,
+    "shared_hit": 215477,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 1003,
+      "Actual Rows": 1,
+      "Actual Total Time": 4.756,
+      "Rows Removed by Filter": 1737,
+      "Shared Hit Blocks": 214332,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "conversations-25": {
+    "planning_ms": 2.669,
+    "execution_ms": 51.352,
+    "shared_hit": 6249,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 28,
+      "Actual Rows": 1,
+      "Actual Total Time": 1.757,
+      "Rows Removed by Filter": 1746,
+      "Shared Hit Blocks": 6132,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "conversations-250": {
+    "planning_ms": 4.457,
+    "execution_ms": 708.259,
+    "shared_hit": 54856,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 253,
+      "Actual Rows": 1,
+      "Actual Total Time": 2.761,
+      "Rows Removed by Filter": 1738,
+      "Shared Hit Blocks": 54500,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "conversations-50": {
+    "planning_ms": 3.008,
+    "execution_ms": 140.073,
+    "shared_hit": 11556,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 53,
+      "Actual Rows": 1,
+      "Actual Total Time": 2.58,
+      "Rows Removed by Filter": 1739,
+      "Shared Hit Blocks": 11414,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "conversations-500": {
+    "planning_ms": 5.767,
+    "execution_ms": 2434.466,
+    "shared_hit": 108778,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 503,
+      "Actual Rows": 1,
+      "Actual Total Time": 4.785,
+      "Rows Removed by Filter": 1737,
+      "Shared Hit Blocks": 108158,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-10": {
+    "planning_ms": 2.728,
+    "execution_ms": 0.762,
+    "shared_hit": 71,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 0.027,
+      "Rows Removed by Filter": 12,
+      "Shared Hit Blocks": 44,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-100": {
+    "planning_ms": 2.808,
+    "execution_ms": 1.617,
+    "shared_hit": 166,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 0.102,
+      "Rows Removed by Filter": 90,
+      "Shared Hit Blocks": 143,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-1000": {
+    "planning_ms": 2.83,
+    "execution_ms": 13.761,
+    "shared_hit": 1276,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 1.064,
+      "Rows Removed by Filter": 876,
+      "Shared Hit Blocks": 1217,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-2000": {
+    "planning_ms": 2.896,
+    "execution_ms": 25.267,
+    "shared_hit": 2495,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 2.095,
+      "Rows Removed by Filter": 1748,
+      "Shared Hit Blocks": 2398,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-250": {
+    "planning_ms": 2.563,
+    "execution_ms": 3.241,
+    "shared_hit": 350,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 0.239,
+      "Rows Removed by Filter": 221,
+      "Shared Hit Blocks": 321,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-50": {
+    "planning_ms": 2.722,
+    "execution_ms": 1.195,
+    "shared_hit": 112,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 0.061,
+      "Rows Removed by Filter": 47,
+      "Shared Hit Blocks": 88,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "messages-500": {
+    "planning_ms": 2.875,
+    "execution_ms": 7.112,
+    "shared_hit": 656,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 11,
+      "Actual Rows": 1,
+      "Actual Total Time": 0.557,
+      "Rows Removed by Filter": 439,
+      "Shared Hit Blocks": 617,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "mixed-354": {
+    "planning_ms": 3.917,
+    "execution_ms": 45.002,
+    "shared_hit": 3110,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 356,
+      "Actual Rows": 0,
+      "Actual Total Time": 0.102,
+      "Rows Removed by Filter": 218,
+      "Shared Hit Blocks": 2724,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  },
+  "mixed_ready-354": {
+    "planning_ms": 8.448,
+    "execution_ms": 101.214,
+    "shared_hit": 2415,
+    "shared_read": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "forecast_scan": {
+      "Node Type": "Seq Scan",
+      "Index Name": null,
+      "Actual Loops": 356,
+      "Actual Rows": 0,
+      "Actual Total Time": 0.224,
+      "Rows Removed by Filter": 217,
+      "Shared Hit Blocks": 2028,
+      "Shared Read Blocks": 0,
+      "Heap Fetches": null
+    },
+    "max_sort_kb": 25,
+    "sort_methods": [
+      "quicksort"
+    ],
+    "window_loops": [
+      1
+    ],
+    "bitmap_heap_nodes": [],
+    "bitmap_index_nodes": []
+  }
+}

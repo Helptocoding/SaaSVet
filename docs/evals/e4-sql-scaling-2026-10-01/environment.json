@@ -1,0 +1,17 @@
+{
+  "baseline": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "runtime_sha": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+  "python": "3.13.2 (tags/v3.13.2:4f8bb39, Feb  4 2025, 15:23:48) [MSC v.1942 64 bit (AMD64)]",
+  "django": "6.0.5",
+  "psycopg": "3.3.4",
+  "cpu": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel",
+  "cpu_count": 8,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "postgresql_binary": "%TEMP%/vet-b8b-pg16-bin/pgsql/bin/postgres.exe",
+  "data_directory": "%TEMP%/vet-e4-sql-scaling-2026-10-01-data",
+  "port": 58776,
+  "isolated": true,
+  "no_production": true,
+  "cache_policy": "No OS cache flushing; first EXPLAIN is cold-ish only",
+  "measurement": "PostgreSQL EXPLAIN ANALYZE Execution Time, 5 warmups, 30 repetitions per point"
+}

@@ -1,0 +1,9 @@
+{
+  "selector": "apps.agent.worker._pending_conversation_candidates",
+  "instrumentation": "Django connection.execute_wrapper around one list(queryset) invocation in every measured fixture",
+  "points_checked": 16,
+  "statements_per_invocation": 1,
+  "n_plus_one_django_statements": false,
+  "postgresql_correlated_subplans_repeat": true,
+  "note": "A repeated PostgreSQL subplan is part of the single emitted SELECT. EXPLAIN repetitions are separate measurement statements."
+}

@@ -1,0 +1,19 @@
+{
+  "historical_python_access_denied": "not reproducible in current execution context",
+  "historical_exact_cause": "not demonstrable from retained evidence",
+  "isolated_python_path": "%TEMP%/vet-b8b-locked/Scripts/python.exe",
+  "isolated_python_version": "3.13.2",
+  "django": "6.0.5",
+  "psycopg": "3.3.4",
+  "direct_invocation": "success",
+  "nested_subprocess_invocation": "success",
+  "executable_acl": "inherited Modify for CodexSandboxUsers and full control for the local owner; no deny entry reported by icacls",
+  "postgresql_binary_version": "16.15",
+  "initial_pg_ctl_start_issue": "server reached ready state but rtk proxy wrapper did not return; isolated server stopped and its data directory removed before a direct postgres process launch",
+  "git_index_lock_present": false,
+  "active_git_process_at_preflight": false,
+  "git_status_read_succeeded": true,
+  "permissions_changed": false,
+  "administrator_execution": false,
+  "lock_deleted": false
+}

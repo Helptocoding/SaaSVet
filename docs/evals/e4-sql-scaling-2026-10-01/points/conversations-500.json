@@ -1,0 +1,32 @@
+{
+  "kind": "conversations",
+  "x": 500,
+  "organizations": 3,
+  "conversations": 500,
+  "historical_conversations": 3,
+  "pending_messages": 2000,
+  "historical_messages": 3,
+  "ready_messages": 1600,
+  "upcoming_messages": 400,
+  "safety_messages": 0,
+  "process_work": 0,
+  "historical_completed_work": 3,
+  "selector_sql_ms": {
+    "n": 30,
+    "p50": 2331.945,
+    "p75": 2448.846,
+    "p90": 2550.098,
+    "p95": 2679.216,
+    "p99": 2697.774,
+    "max": 2697.774
+  },
+  "coldish_first_explain_ms": 1450.779,
+  "warmup": 5,
+  "query_count": 1,
+  "n_plus_one": false,
+  "selected_count": 1,
+  "planning_ms": 5.767,
+  "postgresql": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+  "fsync": "on",
+  "synchronous_commit": "on"
+}
