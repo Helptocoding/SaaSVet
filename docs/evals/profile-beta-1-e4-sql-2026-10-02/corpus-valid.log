@@ -1,0 +1,175 @@
+Found 46 test(s).
+Using existing test database for alias 'default' ('test_b8b_pb1sql_corpus')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_unapproved_legacy_organization_blocked_even_with_other_gates_open (apps.agent.tests.test_b9d_release.BetaAttendanceTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-02T22:00:36Z", "organization_id": 1, "contact_id": 1, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:00:36Z", "organization_id": 1, "conversation_id": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:40Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:41Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_unapproved_legacy_organization_blocked_even_with_other_gates_open (apps.agent.tests.test_b9d_release.BetaCancelTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-02T22:00:42Z", "organization_id": 2, "contact_id": 2, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:00:42Z", "organization_id": 2, "conversation_id": 2, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:43Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:43Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:43Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:43Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:43Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:45Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:45Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_checked_ready_snapshot_cannot_authorize_after_withdrawal (apps.agent.tests.test_b9d_release.BetaCreateTests.test_checked_ready_snapshot_cannot_authorize_after_withdrawal) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-02T22:00:46Z", "organization_id": 3, "contact_id": 3, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:00:46Z", "organization_id": 3, "conversation_id": 3, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:48Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:49Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_unapproved_legacy_organization_blocked_even_with_other_gates_open (apps.agent.tests.test_b9d_release.BetaCreateTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-02T22:00:49Z", "organization_id": 4, "contact_id": 4, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:00:49Z", "organization_id": 4, "conversation_id": 4, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:50Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:51Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:52Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_unapproved_legacy_organization_blocked_even_with_other_gates_open (apps.agent.tests.test_b9d_release.BetaRegistrationTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-02T22:00:53Z", "organization_id": 5, "contact_id": 5, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:00:53Z", "organization_id": 5, "conversation_id": 5, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:53Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:54Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:54Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:54Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:55Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:55Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_unapproved_legacy_organization_blocked_even_with_other_gates_open (apps.agent.tests.test_b9d_release.BetaRescheduleTests.test_unapproved_legacy_organization_blocked_even_with_other_gates_open) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-02T22:00:57Z", "organization_id": 6, "contact_id": 6, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:00:57Z", "organization_id": 6, "conversation_id": 6, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:57Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:58Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:58Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:00:58Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_INVALIDATION_COUNT", "level": "INFO", "ts": "2026-10-02T22:00:58Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:00:59Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:00Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_verification_expiry (apps.agent.tests.test_identity.IdentityTests.test_verification_expiry) ... ok
+test_reset_identity_is_tenant_scoped (apps.agent.tests.test_inbox_api.InboxResetIdentityTests.test_reset_identity_is_tenant_scoped) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-02T22:01:05Z", "request_id": "fc5348a5-8b55-4ee9-983a-73210996b3aa", "user_id": 7, "organization_id": 8, "role": "ADMIN", "endpoint": "/api/inbox/conversations/d6088526-b0c9-4c79-a8cc-c3e46a434fcf/reset-identity/", "method": "POST", "required_permission": "agentinbox.config"}
+ok
+test_human_active_is_silent (apps.agent.tests.test_planner.PlannerPolicyShortCircuitTests.test_human_active_is_silent) ... {"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:07Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": true, "media_uninterpreted": false, "request_id": "-"}
+ok
+test_unverified_personal_tool_executes_nothing (apps.agent.tests.test_planner.PlannerVerificationTests.test_unverified_personal_tool_executes_nothing)
+La BARRERA, que es lo que de verdad protege los datos. ... {"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:10Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-02T22:01:11Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-02T22:01:11Z", "organization_id": 11, "conversation_id": 10, "goal": "identity_challenge", "status": "active", "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-02T22:01:11Z", "purpose": "planner", "request_id": "-"}
+ok
+test_verification_floor_blocks_personal_tools (apps.agent.tests.test_tools.ToolsThroughRealApiTests.test_verification_floor_blocks_personal_tools) ... ok
+test_confirmation_cannot_cross_tenant_proposal_reference (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_confirmation_cannot_cross_tenant_proposal_reference) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:01:17Z", "organization_id": 13, "conversation_id": 12, "request_id": "547d5db9-384d-4082-9ea1-f8b871f7a956"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:18Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:20Z", "oldest_pending_age_seconds": 1.289636, "turn_work_id": 13, "conversation_id": 12, "organization_id": 13, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:01:20Z", "turn_work_id": 13, "conversation_id": 12, "organization_id": 13, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:01:20Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:21Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_MATTER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:21Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:01:21Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:01:23Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:01:23Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-02T22:01:25Z", "request_id": "9fd9d969-5042-4e43-9ec8-4ba20e1cadc3", "user_id": 16, "organization_id": 13, "role": "AGENT", "endpoint": "/api/appointments/", "method": "GET", "required_permission": "appointment.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:01:25Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:01:25Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_B7A_OPERATION_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:30Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:30Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_PENDING", "level": "INFO", "ts": "2026-10-02T22:01:30Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-02T22:01:30Z", "turn_work_id": 13, "conversation_id": 12, "organization_id": 13, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:01:30Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:30Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:01:31Z", "message_id": 30, "attempts": 1, "outbound_pending_age_seconds": 2.087129, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:01:32Z", "message_id": 30, "dispatch_latency_seconds": 2.990692, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-02T22:01:33Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:01:33Z", "message_id": 30, "provider_acceptance_latency_seconds": 0.944151, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:01:33Z", "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:01:36Z", "organization_id": 14, "conversation_id": 13, "request_id": "48e19179-678a-42e0-8c90-ee48b2045502"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:36Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:38Z", "oldest_pending_age_seconds": 0.637217, "turn_work_id": 14, "conversation_id": 13, "organization_id": 14, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:01:38Z", "turn_work_id": 14, "conversation_id": 13, "organization_id": 14, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:01:38Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:38Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_MATTER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:01:39Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:01:39Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:01:39Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-02T22:01:40Z", "request_id": "6ac2d739-cadf-4bff-86ea-df6a2a977715", "user_id": 18, "organization_id": 14, "role": "AGENT", "endpoint": "/api/appointments/", "method": "GET", "required_permission": "appointment.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:01:40Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:01:40Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_B7A_OPERATION_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:44Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:44Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_PENDING", "level": "INFO", "ts": "2026-10-02T22:01:44Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-02T22:01:44Z", "turn_work_id": 14, "conversation_id": 13, "organization_id": 14, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:01:44Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:44Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:01:45Z", "message_id": 32, "attempts": 1, "outbound_pending_age_seconds": 1.291562, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:01:46Z", "message_id": 32, "dispatch_latency_seconds": 1.866763, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-02T22:01:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:01:47Z", "message_id": 32, "provider_acceptance_latency_seconds": 0.324108, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:01:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:01:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-02T22:01:50Z", "oldest_pending_age_seconds": 1.045634, "turn_work_id": 15, "conversation_id": 13, "organization_id": 14, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:01:50Z", "turn_work_id": 15, "conversation_id": 13, "organization_id": 14, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:01:50Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:51Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:01:52Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-02T22:01:54Z", "turn_work_id": 15, "conversation_id": 13, "organization_id": 14, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:01:54Z", "request_id": "-"}
+ok
+test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_01_public_read_queued_accepted_delivered_read_are_distinct) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:02:34Z", "organization_id": 15, "conversation_id": 14, "request_id": "28ef6b97-6241-461b-8b61-a4e62ae7eb84"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:02:34Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-02T22:02:34Z", "oldest_pending_age_seconds": 0.290469, "turn_work_id": 16, "conversation_id": 14, "organization_id": 15, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:02:34Z", "turn_work_id": 16, "conversation_id": 14, "organization_id": 15, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:02:34Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:02:35Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:02:35Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:02:35Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-02T22:02:35Z", "request_id": "2f295d4a-6054-412c-bf06-ef2e83ecba3b", "user_id": 20, "organization_id": 15, "role": "AGENT", "endpoint": "/api/billing/services/", "method": "GET", "required_permission": "service.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:02:36Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:02:36Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-02T22:02:36Z", "turn_work_id": 16, "conversation_id": 14, "organization_id": 15, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:02:37Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:02:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:02:37Z", "message_id": 36, "attempts": 1, "outbound_pending_age_seconds": 0.331165, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:02:37Z", "message_id": 36, "dispatch_latency_seconds": 0.531824, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:02:37Z", "message_id": 36, "provider_acceptance_latency_seconds": 0.226713, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:02:37Z", "request_id": "-"}
+{"event": "AGENT_SEND_WEBHOOK_DELIVERED", "level": "INFO", "ts": "2026-10-02T22:02:38Z", "message_id": 36, "delivery_latency_seconds": 0.302206, "request_id": "7775485e-0d58-44a0-8e3d-7ba85087e01c"}
+{"event": "AGENT_SEND_WEBHOOK_READ", "level": "INFO", "ts": "2026-10-02T22:02:38Z", "message_id": 36, "read_latency_seconds": 0.607262, "request_id": "def3a8e0-c632-4506-ae60-2f7903c9022d"}
+ok
+test_e2e_02_personal_read_uses_authenticated_domain_http (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_02_personal_read_uses_authenticated_domain_http) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-02T22:03:37Z", "organization_id": 16, "conversation_id": 15, "request_id": "201d05c8-e1c6-4fcc-87fb-8e39bf10c30f"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:03:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-02T22:03:39Z", "oldest_pending_age_seconds": 0.944193, "turn_work_id": 17, "conversation_id": 15, "organization_id": 16, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:03:39Z", "turn_work_id": 17, "conversation_id": 15, "organization_id": 16, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:03:39Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-02T22:03:40Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_MATTER_STARTED", "level": "INFO", "ts": "2026-10-02T22:03:40Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-02T22:03:40Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:03:42Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:03:42Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-02T22:03:42Z", "request_id": "b9a83ae5-30db-41b8-a91d-465d5fac8211", "user_id": 22, "organization_id": 16, "role": "AGENT", "endpoint": "/api/pets/", "method": "GET", "required_permission": "patient.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-02T22:03:43Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-02T22:03:43Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-02T22:03:45Z", "turn_work_id": 17, "conversation_id": 15, "organization_id": 16, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:03:45Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:03:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:03:46Z", "message_id": 38, "attempts": 1, "outbound_pending_age_seconds": 0.6411, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:03:47Z", "message_id": 38, "dispatch_latency_seconds": 1.284614, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:03:48Z", "message_id": 38, "provider_acceptance_latency_seconds": 0.656582, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:03:48Z", "request_id": "-"}
+ok

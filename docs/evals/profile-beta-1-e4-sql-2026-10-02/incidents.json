@@ -1,0 +1,31 @@
+{
+  "schema": "profile-beta-1-e4-sql-incidents-v1",
+  "classification": "HARNESS_PREPARATION_ONLY",
+  "incidents": [
+    {
+      "phase": "PostgreSQL startup, before tests",
+      "cause": "The evaluation-only lifecycle helper captured pg_ctl output while PostgreSQL inherited its pipe; the wrapper waited after the server was ready.",
+      "resolution": "Verified the isolated PostgreSQL server, stopped only the stuck wrapper process, and used inherited DEVNULL handles for later lifecycle commands.",
+      "profile_or_corpus_started": false,
+      "product_result": null
+    },
+    {
+      "phase": "Corpus command argument validation",
+      "cause": "The first isolated database name did not satisfy the frozen runner's test_b8b_ prefix validation.",
+      "evidence": ["corpus.log", "corpus.exit.json"],
+      "exit_code": 2,
+      "tests_started": 0,
+      "product_result": null
+    },
+    {
+      "phase": "Corpus preparation, before any completed formal corpus run",
+      "cause": "The environment wrapper supplied the corpus database as DATABASE_URL while the previous formal run supplied the migrated template. This could affect subprocess inheritance.",
+      "resolution": "Interrupted this incomplete run, retained its 14 successful journal entries solely as incident evidence, and ran all 46 canonical IDs from a new clone with the documented template DATABASE_URL.",
+      "evidence": ["corpus-valid.log", "corpus-valid.exit.json", "corpus-valid.results.passed.jsonl"],
+      "formal_acceptance_from_partial": false,
+      "product_failure_observed": false
+    }
+  ],
+  "completed_formal_corpus_runs": 1,
+  "completed_formal_variant_reruns": 0
+}

@@ -1,0 +1,1216 @@
+{
+  "schema": "profile-beta-1-e4-sql-evaluation-summary-v1",
+  "profile_result": "PROFILE_BETA_1_PASS",
+  "profile_baseline_sha": "08310461337a284386299ec47c54125f2139bf7f",
+  "e4_sql_runtime_sha": "38c4d458996435d6df56b1b337aeb8987fa1045a",
+  "frozen_hashes": {
+    "backend/apps/agent/tests/b9e_profile.py": "a09b3318f27f1b2970270a03cb90f46034628d5af39e448b3baceabfdf53da75",
+    "backend/apps/agent/tests/b9e_collect.py": "c75a1ba720f04f372a51b1de89dc9bf1ea3efb4127c2c591bc2ad56e79610e21",
+    "docs/evals/profile-beta-1-methodology.md": "48251eca301620a5e9a1f8ce1cbde9cb20d5927b1de9fc77b76b79ba0eea12c0",
+    "docs/evals/profile-beta-1-v1.json": "ff0834449d1915b395be58e7cdbab09e39917fe0ddf3cc90e3f187fdfdc9f311",
+    "docs/evals/profile-beta-1-corpus-v1.json": "d2c5cc67ff651654dafb19b2c1eebf52aba08c55cb5fd9c2c76cf334d792330a",
+    "docs/evals/b9e-corpus-selected.json": "8eb3013b81d6a3d984113c588a5642652ec4fa5b3dcddf465b95f44360f21409"
+  },
+  "corpus": {
+    "status": "PASS",
+    "unique_selected": 46,
+    "unique_passed": 46,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "xfail": 0
+  },
+  "scenarios": {
+    "base": {
+      "gates": {
+        "healthy_claim_p95_le_10": true,
+        "safety_dispatch_p95_le_5": true,
+        "outbox_dispatch_p95_le_5": true
+      },
+      "healthy_global": {
+        "n": 60,
+        "p50": 8.404651,
+        "p75": 9.045888,
+        "p90": 9.576117,
+        "p95": 9.81954,
+        "p99": 9.924789,
+        "max": 9.924789
+      },
+      "healthy_missing": 0,
+      "safety": {
+        "count": 20,
+        "p95_seconds": 3.135105,
+        "max_seconds": 3.135105
+      },
+      "outbox": {
+        "count": 135,
+        "p95_seconds": 2.697785,
+        "max_seconds": 3.387943,
+        "missing": 0
+      },
+      "selector_sql_ms": {
+        "n": 359,
+        "p50": 85.013,
+        "p75": 158.743,
+        "p90": 213.246,
+        "p95": 292.493,
+        "p99": 449.055,
+        "max": 603.593
+      },
+      "explain_execution_ms": 81.146,
+      "message_scan_nodes": [
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 227
+        },
+        {
+          "node": "Bitmap Heap Scan",
+          "loops": 354,
+          "rows": 0
+        },
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 0
+        }
+      ],
+      "ready_reextensions": 0,
+      "availability_updates_observed": 0,
+      "critical_sql": {
+        "cross_tenant_conversation": 0,
+        "cross_tenant_membership": 0,
+        "admissions_over_budget": 0
+      },
+      "budget": {
+        "max_calls_per_work": 2,
+        "max_reserved_per_work": 1200,
+        "calls": 292,
+        "unknown_usage": 0,
+        "failures": 0,
+        "retries": 0,
+        "reserved_tokens": 175200
+      },
+      "orgs": [
+        {
+          "org_index": 0,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.928725,
+            "p75": 7.937734,
+            "p90": 7.941114,
+            "p95": 7.944088,
+            "p99": 7.944088,
+            "max": 7.944088
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 0.682679,
+            "p75": 0.840605,
+            "p90": 1.263617,
+            "p95": 1.680556,
+            "p99": 1.680556,
+            "max": 1.680556
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 8.622094,
+            "p75": 8.77475,
+            "p90": 9.207705,
+            "p95": 9.595953,
+            "p99": 9.595953,
+            "max": 9.595953
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.298721,
+            "p75": 8.703305,
+            "p90": 9.066241,
+            "p95": 9.207705,
+            "p99": 9.595953,
+            "max": 9.595953
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 7,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 1,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.933506,
+            "p75": 7.939804,
+            "p90": 7.947529,
+            "p95": 7.950742,
+            "p99": 7.950742,
+            "max": 7.950742
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 1.177229,
+            "p75": 1.642611,
+            "p90": 1.972053,
+            "p95": 1.984548,
+            "p99": 1.984548,
+            "max": 1.984548
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 9.123854,
+            "p75": 9.576117,
+            "p90": 9.906248,
+            "p95": 9.924789,
+            "p99": 9.924789,
+            "max": 9.924789
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.827065,
+            "p75": 9.209381,
+            "p90": 9.81954,
+            "p95": 9.906248,
+            "p99": 9.924789,
+            "max": 9.924789
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 32,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 9,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 2,
+          "inbound_n": 300,
+          "missing": 227,
+          "ordinary_persisted_to_eligible": {
+            "n": 300,
+            "p50": 7.931264,
+            "p75": 7.941233,
+            "p90": 7.946373,
+            "p95": 7.949667,
+            "p99": 7.96071,
+            "max": 7.965182
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 73,
+            "p50": 145.828204,
+            "p75": 189.506019,
+            "p90": 219.036634,
+            "p95": 231.439824,
+            "p99": 237.828312,
+            "max": 237.828312
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 73,
+            "p50": 153.777823,
+            "p75": 197.353457,
+            "p90": 226.976352,
+            "p95": 239.348748,
+            "p99": 245.729489,
+            "max": 245.729489
+          },
+          "all_persisted_to_claim": {
+            "n": 73,
+            "p50": 153.777823,
+            "p75": 197.353457,
+            "p90": 226.976352,
+            "p95": 239.348748,
+            "p99": 245.729489,
+            "max": 245.729489
+          },
+          "pending_inbound": 227,
+          "oldest_pending_age_seconds": 316.40168,
+          "claims_total": 103,
+          "calls": 182,
+          "works": 91,
+          "deferrals": 0,
+          "joined_READY": 0
+        }
+      ],
+      "max_active_per_org_observed": 1,
+      "max_pending_inbound_sample": 232,
+      "turnwork_status_at_close": [
+        {
+          "status": "PROCESSING",
+          "count": 1
+        },
+        {
+          "status": "COMPLETED",
+          "count": 167
+        }
+      ],
+      "outbound_status_at_close": [
+        {
+          "status": "sent",
+          "count": 150
+        }
+      ],
+      "duplicates_sent": 0,
+      "generator_errors": []
+    },
+    "blocked_llm": {
+      "gates": {
+        "healthy_claim_p95_le_10": true,
+        "safety_dispatch_p95_le_5": true
+      },
+      "healthy_global": {
+        "n": 60,
+        "p50": 8.344942,
+        "p75": 8.998442,
+        "p90": 9.395545,
+        "p95": 9.717606,
+        "p99": 9.97509,
+        "max": 9.97509
+      },
+      "healthy_missing": 0,
+      "safety": {
+        "count": 20,
+        "p95_seconds": 3.047379,
+        "max_seconds": 3.047379
+      },
+      "outbox": {
+        "count": 128,
+        "p95_seconds": 2.846487,
+        "max_seconds": 3.581928,
+        "missing": 0
+      },
+      "selector_sql_ms": {
+        "n": 363,
+        "p50": 97.001,
+        "p75": 163.61,
+        "p90": 221.299,
+        "p95": 254.051,
+        "p99": 315.65,
+        "max": 538.909
+      },
+      "explain_execution_ms": 86.922,
+      "message_scan_nodes": [
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 235
+        },
+        {
+          "node": "Bitmap Heap Scan",
+          "loops": 354,
+          "rows": 0
+        },
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 0
+        }
+      ],
+      "ready_reextensions": 0,
+      "availability_updates_observed": 0,
+      "critical_sql": {
+        "cross_tenant_conversation": 0,
+        "cross_tenant_membership": 0,
+        "admissions_over_budget": 0
+      },
+      "budget": {
+        "max_calls_per_work": 2,
+        "max_reserved_per_work": 1200,
+        "calls": 278,
+        "unknown_usage": 1,
+        "failures": 1,
+        "retries": 1,
+        "reserved_tokens": 166800
+      },
+      "orgs": [
+        {
+          "org_index": 0,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.934382,
+            "p75": 7.943194,
+            "p90": 7.952111,
+            "p95": 7.95943,
+            "p99": 7.95943,
+            "max": 7.95943
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 0.756207,
+            "p75": 1.070023,
+            "p90": 1.196085,
+            "p95": 1.21429,
+            "p99": 1.21429,
+            "max": 1.21429
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 8.667855,
+            "p75": 9.018439,
+            "p90": 9.129076,
+            "p95": 9.14062,
+            "p99": 9.14062,
+            "max": 9.14062
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.329213,
+            "p75": 8.926735,
+            "p90": 9.070408,
+            "p95": 9.129076,
+            "p99": 9.14062,
+            "max": 9.14062
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 7,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 1,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.937121,
+            "p75": 7.945174,
+            "p90": 7.950815,
+            "p95": 7.950987,
+            "p99": 7.950987,
+            "max": 7.950987
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 1.068895,
+            "p75": 1.524889,
+            "p90": 1.772432,
+            "p95": 2.035028,
+            "p99": 2.035028,
+            "max": 2.035028
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 8.984285,
+            "p75": 9.475704,
+            "p90": 9.72052,
+            "p95": 9.97509,
+            "p99": 9.97509,
+            "max": 9.97509
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.796216,
+            "p75": 9.024979,
+            "p90": 9.717606,
+            "p95": 9.72052,
+            "p99": 9.97509,
+            "max": 9.97509
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 38,
+          "works": 29,
+          "deferrals": 8,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 2,
+          "inbound_n": 300,
+          "missing": 235,
+          "ordinary_persisted_to_eligible": {
+            "n": 300,
+            "p50": 7.931719,
+            "p75": 7.940009,
+            "p90": 7.945404,
+            "p95": 7.949785,
+            "p99": 7.957187,
+            "max": 7.960593
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 65,
+            "p50": 163.978784,
+            "p75": 208.897655,
+            "p90": 236.253537,
+            "p95": 240.951083,
+            "p99": 246.725752,
+            "max": 246.725752
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 65,
+            "p50": 171.89371,
+            "p75": 216.82334,
+            "p90": 244.209558,
+            "p95": 248.871752,
+            "p99": 254.641368,
+            "max": 254.641368
+          },
+          "all_persisted_to_claim": {
+            "n": 65,
+            "p50": 171.89371,
+            "p75": 216.82334,
+            "p90": 244.209558,
+            "p95": 248.871752,
+            "p99": 254.641368,
+            "max": 254.641368
+          },
+          "pending_inbound": 235,
+          "oldest_pending_age_seconds": 306.730358,
+          "claims_total": 95,
+          "calls": 166,
+          "works": 83,
+          "deferrals": 0,
+          "joined_READY": 0
+        }
+      ],
+      "max_active_per_org_observed": 1,
+      "max_pending_inbound_sample": 242,
+      "turnwork_status_at_close": [
+        {
+          "status": "PROCESSING",
+          "count": 1
+        },
+        {
+          "status": "COMPLETED",
+          "count": 160
+        }
+      ],
+      "outbound_status_at_close": [
+        {
+          "status": "sent",
+          "count": 145
+        }
+      ],
+      "duplicates_sent": 0,
+      "generator_errors": []
+    },
+    "meta_slow": {
+      "gates": {
+        "durable_outbound_state": true,
+        "bounded_concurrency": true,
+        "no_blind_retry": true
+      },
+      "healthy_global": {
+        "n": 60,
+        "p50": 8.569856,
+        "p75": 8.938411,
+        "p90": 9.415972,
+        "p95": 9.66169,
+        "p99": 10.235088,
+        "max": 10.235088
+      },
+      "healthy_missing": 0,
+      "safety": {
+        "count": 18,
+        "p95_seconds": 76.663536,
+        "max_seconds": 76.663536
+      },
+      "outbox": {
+        "count": 109,
+        "p95_seconds": 73.727401,
+        "max_seconds": 78.766013,
+        "missing": 21
+      },
+      "selector_sql_ms": {
+        "n": 358,
+        "p50": 99.468,
+        "p75": 146.752,
+        "p90": 214.009,
+        "p95": 249.929,
+        "p99": 346.989,
+        "max": 612.087
+      },
+      "explain_execution_ms": 202.397,
+      "message_scan_nodes": [
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 231
+        },
+        {
+          "node": "Bitmap Heap Scan",
+          "loops": 354,
+          "rows": 0
+        },
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 0
+        }
+      ],
+      "ready_reextensions": 0,
+      "availability_updates_observed": 0,
+      "critical_sql": {
+        "cross_tenant_conversation": 0,
+        "cross_tenant_membership": 0,
+        "admissions_over_budget": 0
+      },
+      "budget": {
+        "max_calls_per_work": 2,
+        "max_reserved_per_work": 1200,
+        "calls": 284,
+        "unknown_usage": 0,
+        "failures": 0,
+        "retries": 0,
+        "reserved_tokens": 170400
+      },
+      "orgs": [
+        {
+          "org_index": 0,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.916493,
+            "p75": 7.944907,
+            "p90": 7.949791,
+            "p95": 7.951414,
+            "p99": 7.951414,
+            "max": 7.951414
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 0.749358,
+            "p75": 0.893006,
+            "p90": 1.254964,
+            "p95": 1.817457,
+            "p99": 1.817457,
+            "max": 1.817457
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 8.623709,
+            "p75": 8.84442,
+            "p90": 9.169338,
+            "p95": 9.740456,
+            "p99": 9.740456,
+            "max": 9.740456
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.262778,
+            "p75": 8.686627,
+            "p90": 8.998807,
+            "p95": 9.169338,
+            "p99": 9.740456,
+            "max": 9.740456
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 7,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 1,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.925129,
+            "p75": 7.942671,
+            "p90": 7.953262,
+            "p95": 7.964795,
+            "p99": 7.964795,
+            "max": 7.964795
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 1.166004,
+            "p75": 1.482231,
+            "p90": 1.712726,
+            "p95": 2.304758,
+            "p99": 2.304758,
+            "max": 2.304758
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 9.082366,
+            "p75": 9.415972,
+            "p90": 9.66169,
+            "p95": 10.235088,
+            "p99": 10.235088,
+            "max": 10.235088
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.623724,
+            "p75": 9.167244,
+            "p90": 9.507354,
+            "p95": 9.66169,
+            "p99": 10.235088,
+            "max": 10.235088
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 32,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 9,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 2,
+          "inbound_n": 300,
+          "missing": 231,
+          "ordinary_persisted_to_eligible": {
+            "n": 300,
+            "p50": 7.92385,
+            "p75": 7.938113,
+            "p90": 7.949781,
+            "p95": 7.958321,
+            "p99": 7.965596,
+            "max": 7.972768
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 69,
+            "p50": 159.611383,
+            "p75": 204.113271,
+            "p90": 231.568584,
+            "p95": 237.496566,
+            "p99": 242.187522,
+            "max": 242.187522
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 69,
+            "p50": 167.576456,
+            "p75": 212.029145,
+            "p90": 239.525076,
+            "p95": 245.41637,
+            "p99": 250.047742,
+            "max": 250.047742
+          },
+          "all_persisted_to_claim": {
+            "n": 69,
+            "p50": 167.576456,
+            "p75": 212.029145,
+            "p90": 239.525076,
+            "p95": 245.41637,
+            "p99": 250.047742,
+            "max": 250.047742
+          },
+          "pending_inbound": 231,
+          "oldest_pending_age_seconds": 279.66917,
+          "claims_total": 99,
+          "calls": 174,
+          "works": 87,
+          "deferrals": 0,
+          "joined_READY": 0
+        }
+      ],
+      "max_active_per_org_observed": 1,
+      "max_pending_inbound_sample": 238,
+      "turnwork_status_at_close": [
+        {
+          "status": "PROCESSING",
+          "count": 1
+        },
+        {
+          "status": "COMPLETED",
+          "count": 163
+        }
+      ],
+      "outbound_status_at_close": [
+        {
+          "status": "sent",
+          "count": 116
+        },
+        {
+          "status": "pending",
+          "count": 29
+        },
+        {
+          "status": "sending",
+          "count": 1
+        }
+      ],
+      "duplicates_sent": 0,
+      "generator_errors": []
+    },
+    "duplicate": {
+      "gates": {
+        "duplicate_webhook_deduplicated": true
+      },
+      "healthy_global": {
+        "n": 60,
+        "p50": 8.396478,
+        "p75": 8.647247,
+        "p90": 9.232555,
+        "p95": 9.635552,
+        "p99": 9.672839,
+        "max": 9.672839
+      },
+      "healthy_missing": 0,
+      "safety": {
+        "count": 20,
+        "p95_seconds": 3.102358,
+        "max_seconds": 3.102358
+      },
+      "outbox": {
+        "count": 138,
+        "p95_seconds": 2.711909,
+        "max_seconds": 3.102358,
+        "missing": 0
+      },
+      "selector_sql_ms": {
+        "n": 371,
+        "p50": 77.992,
+        "p75": 155.875,
+        "p90": 218.085,
+        "p95": 253.942,
+        "p99": 330.64,
+        "max": 387.36
+      },
+      "explain_execution_ms": 101.552,
+      "message_scan_nodes": [
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 226
+        },
+        {
+          "node": "Bitmap Heap Scan",
+          "loops": 354,
+          "rows": 0
+        },
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 0
+        }
+      ],
+      "ready_reextensions": 0,
+      "availability_updates_observed": 0,
+      "critical_sql": {
+        "cross_tenant_conversation": 0,
+        "cross_tenant_membership": 0,
+        "admissions_over_budget": 0
+      },
+      "budget": {
+        "max_calls_per_work": 2,
+        "max_reserved_per_work": 1200,
+        "calls": 296,
+        "unknown_usage": 0,
+        "failures": 0,
+        "retries": 0,
+        "reserved_tokens": 177600
+      },
+      "orgs": [
+        {
+          "org_index": 0,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.929682,
+            "p75": 7.940592,
+            "p90": 7.95201,
+            "p95": 7.956211,
+            "p99": 7.956211,
+            "max": 7.956211
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 0.624372,
+            "p75": 0.840345,
+            "p90": 1.263197,
+            "p95": 1.302873,
+            "p99": 1.302873,
+            "max": 1.302873
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 8.530753,
+            "p75": 8.766519,
+            "p90": 9.173388,
+            "p95": 9.232555,
+            "p99": 9.232555,
+            "max": 9.232555
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.341729,
+            "p75": 8.647247,
+            "p90": 9.128579,
+            "p95": 9.173388,
+            "p99": 9.232555,
+            "max": 9.232555
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 8,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 1,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 20,
+            "p50": 7.935807,
+            "p75": 7.94431,
+            "p90": 7.96242,
+            "p95": 7.963701,
+            "p99": 7.963701,
+            "max": 7.963701
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 20,
+            "p50": 0.666691,
+            "p75": 1.535904,
+            "p90": 1.728615,
+            "p95": 1.775934,
+            "p99": 1.775934,
+            "max": 1.775934
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 20,
+            "p50": 8.601708,
+            "p75": 9.437929,
+            "p90": 9.669113,
+            "p95": 9.672839,
+            "p99": 9.672839,
+            "max": 9.672839
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 8.476017,
+            "p75": 8.617146,
+            "p90": 9.635552,
+            "p95": 9.669113,
+            "p99": 9.672839,
+            "max": 9.672839
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 40,
+          "works": 30,
+          "deferrals": 7,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 2,
+          "inbound_n": 300,
+          "missing": 226,
+          "ordinary_persisted_to_eligible": {
+            "n": 300,
+            "p50": 7.933964,
+            "p75": 7.945944,
+            "p90": 7.955278,
+            "p95": 7.958877,
+            "p99": 7.964001,
+            "max": 7.967516
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 74,
+            "p50": 145.655835,
+            "p75": 190.164681,
+            "p90": 221.201338,
+            "p95": 231.681821,
+            "p99": 237.512754,
+            "max": 237.512754
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 74,
+            "p50": 153.592047,
+            "p75": 198.115999,
+            "p90": 229.126256,
+            "p95": 239.649337,
+            "p99": 245.45835,
+            "max": 245.45835
+          },
+          "all_persisted_to_claim": {
+            "n": 74,
+            "p50": 153.592047,
+            "p75": 198.115999,
+            "p90": 229.126256,
+            "p95": 239.649337,
+            "p99": 245.45835,
+            "max": 245.45835
+          },
+          "pending_inbound": 226,
+          "oldest_pending_age_seconds": 282.093578,
+          "claims_total": 104,
+          "calls": 184,
+          "works": 92,
+          "deferrals": 0,
+          "joined_READY": 0
+        }
+      ],
+      "max_active_per_org_observed": 1,
+      "max_pending_inbound_sample": 232,
+      "turnwork_status_at_close": [
+        {
+          "status": "PROCESSING",
+          "count": 1
+        },
+        {
+          "status": "COMPLETED",
+          "count": 169
+        }
+      ],
+      "outbound_status_at_close": [
+        {
+          "status": "sent",
+          "count": 152
+        }
+      ],
+      "duplicates_sent": 17,
+      "generator_errors": []
+    },
+    "saturation": {
+      "gates": {
+        "safety_admitted_under_saturation": true,
+        "bounded_concurrency": true,
+        "saturation_observed": true
+      },
+      "healthy_global": {
+        "n": 60,
+        "p50": 0.146815,
+        "p75": 0.181431,
+        "p90": 0.216295,
+        "p95": 0.295114,
+        "p99": 0.433014,
+        "max": 0.433014
+      },
+      "healthy_missing": 0,
+      "safety": {
+        "count": 60,
+        "p95_seconds": 2.851365,
+        "max_seconds": 3.459321
+      },
+      "outbox": {
+        "count": 163,
+        "p95_seconds": 2.327455,
+        "max_seconds": 3.459321,
+        "missing": 0
+      },
+      "selector_sql_ms": {
+        "n": 366,
+        "p50": 111.524,
+        "p75": 236.872,
+        "p90": 347.617,
+        "p95": 397.033,
+        "p99": 573.875,
+        "max": 613.82
+      },
+      "explain_execution_ms": 226.811,
+      "message_scan_nodes": [
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 215
+        },
+        {
+          "node": "Bitmap Heap Scan",
+          "loops": 396,
+          "rows": 0
+        },
+        {
+          "node": "Seq Scan",
+          "loops": 1,
+          "rows": 0
+        }
+      ],
+      "ready_reextensions": 0,
+      "availability_updates_observed": 0,
+      "critical_sql": {
+        "cross_tenant_conversation": 0,
+        "cross_tenant_membership": 0,
+        "admissions_over_budget": 0
+      },
+      "budget": {
+        "max_calls_per_work": 2,
+        "max_reserved_per_work": 1200,
+        "calls": 230,
+        "unknown_usage": 0,
+        "failures": 0,
+        "retries": 0,
+        "reserved_tokens": 138000
+      },
+      "orgs": [
+        {
+          "org_index": 0,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 0,
+            "p50": null,
+            "p75": null,
+            "p90": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 0,
+            "p50": null,
+            "p75": null,
+            "p90": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 0,
+            "p50": null,
+            "p75": null,
+            "p90": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 0.140895,
+            "p75": 0.157378,
+            "p90": 0.216295,
+            "p95": 0.25187,
+            "p99": 0.295114,
+            "max": 0.295114
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 0,
+          "works": 30,
+          "deferrals": 0,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 1,
+          "inbound_n": 30,
+          "missing": 0,
+          "ordinary_persisted_to_eligible": {
+            "n": 0,
+            "p50": null,
+            "p75": null,
+            "p90": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 0,
+            "p50": null,
+            "p75": null,
+            "p90": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 0,
+            "p50": null,
+            "p75": null,
+            "p90": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "all_persisted_to_claim": {
+            "n": 30,
+            "p50": 0.14952,
+            "p75": 0.1829,
+            "p90": 0.229579,
+            "p95": 0.422247,
+            "p99": 0.433014,
+            "max": 0.433014
+          },
+          "pending_inbound": 0,
+          "oldest_pending_age_seconds": null,
+          "claims_total": 33,
+          "calls": 0,
+          "works": 30,
+          "deferrals": 0,
+          "joined_READY": 0
+        },
+        {
+          "org_index": 2,
+          "inbound_n": 300,
+          "missing": 215,
+          "ordinary_persisted_to_eligible": {
+            "n": 300,
+            "p50": 7.918247,
+            "p75": 7.930462,
+            "p90": 7.93557,
+            "p95": 7.939515,
+            "p99": 7.946791,
+            "max": 7.954372
+          },
+          "ordinary_eligible_to_claim": {
+            "n": 85,
+            "p50": 135.40287,
+            "p75": 179.31122,
+            "p90": 208.187906,
+            "p95": 215.257125,
+            "p99": 225.55907,
+            "max": 225.55907
+          },
+          "ordinary_persisted_to_claim": {
+            "n": 85,
+            "p50": 143.311488,
+            "p75": 187.165314,
+            "p90": 216.028244,
+            "p95": 223.154445,
+            "p99": 233.503118,
+            "max": 233.503118
+          },
+          "all_persisted_to_claim": {
+            "n": 85,
+            "p50": 143.311488,
+            "p75": 187.165314,
+            "p90": 216.028244,
+            "p95": 223.154445,
+            "p99": 233.503118,
+            "max": 233.503118
+          },
+          "pending_inbound": 215,
+          "oldest_pending_age_seconds": 374.16767,
+          "claims_total": 115,
+          "calls": 206,
+          "works": 103,
+          "deferrals": 0,
+          "joined_READY": 0
+        }
+      ],
+      "max_active_per_org_observed": 1,
+      "max_pending_inbound_sample": 219,
+      "turnwork_status_at_close": [
+        {
+          "status": "COMPLETED",
+          "count": 181
+        }
+      ],
+      "outbound_status_at_close": [
+        {
+          "status": "pending",
+          "count": 1
+        },
+        {
+          "status": "sent",
+          "count": 180
+        }
+      ],
+      "duplicates_sent": 0,
+      "generator_errors": []
+    }
+  },
+  "scope": "Local frozen synthetic evaluation; not a production measurement"
+}

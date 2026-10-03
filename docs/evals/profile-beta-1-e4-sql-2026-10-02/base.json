@@ -1,0 +1,763 @@
+{
+  "scenario": "base",
+  "window_utc": [
+    "2026-10-03T04:36:57.878436+00:00",
+    "2026-10-03T04:41:57.878436+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 43548,
+      "backend_pid": 37436,
+      "role": "planner-1",
+      "scenario": "base"
+    },
+    {
+      "pid": 42096,
+      "backend_pid": 41780,
+      "role": "planner-2",
+      "scenario": "base"
+    },
+    {
+      "pid": 42888,
+      "backend_pid": 43980,
+      "role": "sender",
+      "scenario": "base"
+    }
+  ],
+  "inbound_count": 360,
+  "outbound_count": 135,
+  "healthy_claim": {
+    "count": 60,
+    "p95_seconds": 9.81954,
+    "max_seconds": 9.924789,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 20,
+    "p95_seconds": 3.135105,
+    "max_seconds": 3.135105
+  },
+  "outbox_dispatch": {
+    "count": 135,
+    "p95_seconds": 2.697785,
+    "max_seconds": 3.387943,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "pending_inbound": 1,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "pending_inbound": 6,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "pending_inbound": 13,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "pending_inbound": 18,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 20,
+      "pending_inbound": 23,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 25,
+      "pending_inbound": 24,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 30,
+      "pending_inbound": 25,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 35,
+      "pending_inbound": 29,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 40,
+      "pending_inbound": 34,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 45,
+      "pending_inbound": 37,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 50,
+      "pending_inbound": 41,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "pending_inbound": 44,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 60,
+      "pending_inbound": 45,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 65,
+      "pending_inbound": 49,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 70,
+      "pending_inbound": 54,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 75,
+      "pending_inbound": 57,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 80,
+      "pending_inbound": 61,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 85,
+      "pending_inbound": 65,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 90,
+      "pending_inbound": 67,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        },
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 95,
+      "pending_inbound": 70,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 100,
+      "pending_inbound": 75,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 105,
+      "pending_inbound": 78,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 110,
+      "pending_inbound": 82,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 115,
+      "pending_inbound": 86,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 120,
+      "pending_inbound": 88,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 125,
+      "pending_inbound": 91,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 130,
+      "pending_inbound": 96,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 135,
+      "pending_inbound": 99,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 140,
+      "pending_inbound": 103,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 145,
+      "pending_inbound": 106,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 150,
+      "pending_inbound": 108,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 155,
+      "pending_inbound": 112,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 160,
+      "pending_inbound": 116,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 165,
+      "pending_inbound": 119,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 170,
+      "pending_inbound": 124,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 175,
+      "pending_inbound": 126,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 180,
+      "pending_inbound": 128,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        },
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 185,
+      "pending_inbound": 131,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 190,
+      "pending_inbound": 136,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 195,
+      "pending_inbound": 139,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 200,
+      "pending_inbound": 143,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 205,
+      "pending_inbound": 146,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 210,
+      "pending_inbound": 148,
+      "pending_outbound": 4,
+      "active_work": []
+    },
+    {
+      "second": 215,
+      "pending_inbound": 152,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 220,
+      "pending_inbound": 157,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 225,
+      "pending_inbound": 160,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 230,
+      "pending_inbound": 165,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 235,
+      "pending_inbound": 168,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 240,
+      "pending_inbound": 170,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 245,
+      "pending_inbound": 173,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 250,
+      "pending_inbound": 178,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 255,
+      "pending_inbound": 182,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 260,
+      "pending_inbound": 187,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 265,
+      "pending_inbound": 189,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 270,
+      "pending_inbound": 191,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 275,
+      "pending_inbound": 195,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 280,
+      "pending_inbound": 200,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 285,
+      "pending_inbound": 203,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 290,
+      "pending_inbound": 207,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 295,
+      "pending_inbound": 210,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 300,
+      "pending_inbound": 212,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 305,
+      "pending_inbound": 216,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 310,
+      "pending_inbound": 221,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 315,
+      "pending_inbound": 224,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 320,
+      "pending_inbound": 230,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 325,
+      "pending_inbound": 232,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      33,
+      33,
+      330
+    ],
+    "safety": 22,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "PROCESSING",
+      "count": 1
+    },
+    {
+      "status": "COMPLETED",
+      "count": 167
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "sent",
+      "count": 150
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 232,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": true,
+    "safety_dispatch_p95_le_5": true,
+    "outbox_dispatch_p95_le_5": true
+  },
+  "technical_pass": true,
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "smoke_only": false
+}

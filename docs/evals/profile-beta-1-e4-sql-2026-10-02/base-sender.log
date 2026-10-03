@@ -1,0 +1,977 @@
+B9E_READY {"pid": 42888, "backend_pid": 43980, "role": "sender", "scenario": "base"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:27Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:27Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:28Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:29Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:30Z", "message_id": 2, "attempts": 1, "outbound_pending_age_seconds": 0.579535, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:30Z", "message_id": 2, "dispatch_latency_seconds": 0.773328, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:31Z", "message_id": 2, "provider_acceptance_latency_seconds": 0.578545, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:31Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:32Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:32Z", "message_id": 4, "attempts": 1, "outbound_pending_age_seconds": 1.697683, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:32Z", "message_id": 4, "dispatch_latency_seconds": 1.803107, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:32Z", "message_id": 4, "provider_acceptance_latency_seconds": 0.329608, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:32Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:33Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:33Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:34Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:34Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:35Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:35Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:36Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:36Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:37Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:38Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:39Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:39Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:40Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:40Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:41Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:42Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:43Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:43Z", "message_id": 23, "attempts": 1, "outbound_pending_age_seconds": 0.754012, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:44Z", "message_id": 23, "dispatch_latency_seconds": 0.864191, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:44Z", "message_id": 23, "provider_acceptance_latency_seconds": 0.317168, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:44Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:45Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:46Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:46Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:47Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:47Z", "message_id": 28, "attempts": 1, "outbound_pending_age_seconds": 0.234586, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:47Z", "message_id": 28, "dispatch_latency_seconds": 0.408432, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:48Z", "message_id": 28, "provider_acceptance_latency_seconds": 0.309516, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:49Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:49Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:50Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:51Z", "message_id": 34, "attempts": 1, "outbound_pending_age_seconds": 0.772799, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:51Z", "message_id": 34, "dispatch_latency_seconds": 0.900832, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:51Z", "message_id": 34, "provider_acceptance_latency_seconds": 0.306917, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:51Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:52Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:52Z", "message_id": 36, "attempts": 1, "outbound_pending_age_seconds": 1.476462, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:53Z", "message_id": 36, "dispatch_latency_seconds": 1.593857, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:53Z", "message_id": 36, "provider_acceptance_latency_seconds": 0.357098, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:53Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:54Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:54Z", "message_id": 39, "attempts": 1, "outbound_pending_age_seconds": 1.010614, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:54Z", "message_id": 39, "dispatch_latency_seconds": 1.115752, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:54Z", "message_id": 39, "provider_acceptance_latency_seconds": 0.303636, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:54Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:55Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:56Z", "message_id": 42, "attempts": 1, "outbound_pending_age_seconds": 0.632223, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:56Z", "message_id": 42, "dispatch_latency_seconds": 0.733282, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:56Z", "message_id": 42, "provider_acceptance_latency_seconds": 0.285469, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:56Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:57Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:57Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:36:58Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:36:58Z", "message_id": 46, "attempts": 1, "outbound_pending_age_seconds": 0.225942, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:36:58Z", "message_id": 46, "dispatch_latency_seconds": 0.372182, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:36:59Z", "message_id": 46, "provider_acceptance_latency_seconds": 0.316403, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:36:59Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:00Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:00Z", "message_id": 47, "attempts": 1, "outbound_pending_age_seconds": 1.608744, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:00Z", "message_id": 47, "dispatch_latency_seconds": 1.73003, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:00Z", "message_id": 47, "provider_acceptance_latency_seconds": 0.305449, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:00Z", "message_id": 48, "attempts": 1, "outbound_pending_age_seconds": 2.160721, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:00Z", "message_id": 48, "dispatch_latency_seconds": 2.291809, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:01Z", "message_id": 48, "provider_acceptance_latency_seconds": 0.313299, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:01Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:02Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:02Z", "message_id": 50, "attempts": 1, "outbound_pending_age_seconds": 3.030148, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:02Z", "message_id": 50, "dispatch_latency_seconds": 3.135105, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:02Z", "message_id": 50, "provider_acceptance_latency_seconds": 0.303608, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:02Z", "message_id": 55, "attempts": 1, "outbound_pending_age_seconds": 1.464774, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:03Z", "message_id": 55, "dispatch_latency_seconds": 1.600857, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:03Z", "message_id": 55, "provider_acceptance_latency_seconds": 0.324157, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:03Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:04Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:04Z", "message_id": 58, "attempts": 1, "outbound_pending_age_seconds": 0.71348, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:04Z", "message_id": 58, "dispatch_latency_seconds": 0.791436, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:04Z", "message_id": 58, "provider_acceptance_latency_seconds": 0.274364, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:04Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:05Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:05Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:06Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:06Z", "message_id": 62, "attempts": 1, "outbound_pending_age_seconds": 0.58185, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:07Z", "message_id": 62, "dispatch_latency_seconds": 0.684238, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:07Z", "message_id": 62, "provider_acceptance_latency_seconds": 0.284775, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:07Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:08Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:08Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:09Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:09Z", "message_id": 67, "attempts": 1, "outbound_pending_age_seconds": 0.702969, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:09Z", "message_id": 67, "dispatch_latency_seconds": 0.813211, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:09Z", "message_id": 67, "provider_acceptance_latency_seconds": 0.310199, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:09Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:10Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:10Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:12Z", "message_id": 71, "attempts": 1, "outbound_pending_age_seconds": 0.497444, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:12Z", "message_id": 71, "dispatch_latency_seconds": 0.693351, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:12Z", "message_id": 71, "provider_acceptance_latency_seconds": 0.316647, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:12Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:13Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:14Z", "message_id": 74, "attempts": 1, "outbound_pending_age_seconds": 0.684247, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:14Z", "message_id": 74, "dispatch_latency_seconds": 0.807038, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:15Z", "message_id": 74, "provider_acceptance_latency_seconds": 0.322382, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:15Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:16Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:16Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:17Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:17Z", "message_id": 78, "attempts": 1, "outbound_pending_age_seconds": 0.513701, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:17Z", "message_id": 78, "dispatch_latency_seconds": 0.702173, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:18Z", "message_id": 78, "provider_acceptance_latency_seconds": 0.345348, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:18Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:19Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:19Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:20Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:20Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:21Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:21Z", "message_id": 86, "attempts": 1, "outbound_pending_age_seconds": 0.088003, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:21Z", "message_id": 86, "dispatch_latency_seconds": 0.175499, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:21Z", "message_id": 86, "provider_acceptance_latency_seconds": 0.277496, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:21Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:22Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:22Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:23Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:23Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:24Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:24Z", "message_id": 89, "attempts": 1, "outbound_pending_age_seconds": 0.991219, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:24Z", "message_id": 89, "dispatch_latency_seconds": 1.101195, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:25Z", "message_id": 89, "provider_acceptance_latency_seconds": 0.293257, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:25Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:26Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:26Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:27Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:27Z", "message_id": 93, "attempts": 1, "outbound_pending_age_seconds": 1.007523, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:27Z", "message_id": 93, "dispatch_latency_seconds": 1.127808, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:27Z", "message_id": 93, "provider_acceptance_latency_seconds": 0.314399, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:27Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:28Z", "message_id": 96, "attempts": 1, "outbound_pending_age_seconds": 0.385763, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:29Z", "message_id": 96, "dispatch_latency_seconds": 0.605756, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:29Z", "message_id": 96, "provider_acceptance_latency_seconds": 0.388221, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:29Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:30Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:30Z", "message_id": 98, "attempts": 1, "outbound_pending_age_seconds": 1.687926, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:30Z", "message_id": 98, "dispatch_latency_seconds": 1.784683, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:31Z", "message_id": 98, "provider_acceptance_latency_seconds": 0.294721, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:31Z", "message_id": 99, "attempts": 1, "outbound_pending_age_seconds": 1.844732, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:31Z", "message_id": 99, "dispatch_latency_seconds": 1.948363, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:31Z", "message_id": 99, "provider_acceptance_latency_seconds": 0.295674, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:31Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:32Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:32Z", "message_id": 100, "attempts": 1, "outbound_pending_age_seconds": 3.288895, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:32Z", "message_id": 100, "dispatch_latency_seconds": 3.387943, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:33Z", "message_id": 100, "provider_acceptance_latency_seconds": 0.287121, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:33Z", "message_id": 105, "attempts": 1, "outbound_pending_age_seconds": 1.307228, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:33Z", "message_id": 105, "dispatch_latency_seconds": 1.389539, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:33Z", "message_id": 105, "provider_acceptance_latency_seconds": 0.274149, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:33Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:34Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:34Z", "message_id": 109, "attempts": 1, "outbound_pending_age_seconds": 0.23603, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:34Z", "message_id": 109, "dispatch_latency_seconds": 0.332741, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:35Z", "message_id": 109, "provider_acceptance_latency_seconds": 0.278795, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:35Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:36Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:36Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:37Z", "message_id": 112, "attempts": 1, "outbound_pending_age_seconds": 0.319866, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:37Z", "message_id": 112, "dispatch_latency_seconds": 0.415853, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:37Z", "message_id": 112, "provider_acceptance_latency_seconds": 0.289777, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:37Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:38Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:39Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:39Z", "message_id": 118, "attempts": 1, "outbound_pending_age_seconds": 0.074613, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:39Z", "message_id": 118, "dispatch_latency_seconds": 0.164358, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:40Z", "message_id": 118, "provider_acceptance_latency_seconds": 0.293186, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:40Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:41Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:42Z", "message_id": 122, "attempts": 1, "outbound_pending_age_seconds": 0.176838, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:42Z", "message_id": 122, "dispatch_latency_seconds": 0.268901, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:42Z", "message_id": 122, "provider_acceptance_latency_seconds": 0.278736, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:42Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:43Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:43Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:44Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:44Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:45Z", "message_id": 125, "attempts": 1, "outbound_pending_age_seconds": 0.844209, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:45Z", "message_id": 125, "dispatch_latency_seconds": 0.916689, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:46Z", "message_id": 125, "provider_acceptance_latency_seconds": 0.279225, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:46Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:47Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIM_CONFLICT", "level": "INFO", "ts": "2026-10-02T22:37:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:49Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:49Z", "message_id": 129, "attempts": 1, "outbound_pending_age_seconds": 1.252455, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:49Z", "message_id": 129, "dispatch_latency_seconds": 1.347912, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:49Z", "message_id": 129, "provider_acceptance_latency_seconds": 0.280924, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:50Z", "message_id": 131, "attempts": 1, "outbound_pending_age_seconds": 1.375028, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:50Z", "message_id": 131, "dispatch_latency_seconds": 1.517685, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:50Z", "message_id": 131, "provider_acceptance_latency_seconds": 0.307588, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:50Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:51Z", "message_id": 137, "attempts": 1, "outbound_pending_age_seconds": 0.390317, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:51Z", "message_id": 137, "dispatch_latency_seconds": 0.595204, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:52Z", "message_id": 137, "provider_acceptance_latency_seconds": 0.394419, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:52Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:53Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:53Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:54Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:54Z", "message_id": 141, "attempts": 1, "outbound_pending_age_seconds": 0.349267, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:54Z", "message_id": 141, "dispatch_latency_seconds": 0.568751, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:55Z", "message_id": 141, "provider_acceptance_latency_seconds": 0.385211, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:55Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:56Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:56Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:57Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:57Z", "message_id": 144, "attempts": 1, "outbound_pending_age_seconds": 0.442705, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:57Z", "message_id": 144, "dispatch_latency_seconds": 0.516351, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:57Z", "message_id": 144, "provider_acceptance_latency_seconds": 0.283922, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:57Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:37:58Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:58Z", "message_id": 147, "attempts": 1, "outbound_pending_age_seconds": 0.608548, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:59Z", "message_id": 147, "dispatch_latency_seconds": 0.78121, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:59Z", "message_id": 147, "provider_acceptance_latency_seconds": 0.310194, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:37:59Z", "message_id": 148, "attempts": 1, "outbound_pending_age_seconds": 0.748102, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:37:59Z", "message_id": 148, "dispatch_latency_seconds": 0.848359, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:37:59Z", "message_id": 148, "provider_acceptance_latency_seconds": 0.295822, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:37:59Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:00Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "message_id": 150, "attempts": 1, "outbound_pending_age_seconds": 1.571939, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "message_id": 150, "dispatch_latency_seconds": 1.716765, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "message_id": 150, "provider_acceptance_latency_seconds": 0.297641, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "message_id": 153, "attempts": 1, "outbound_pending_age_seconds": 1.577927, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "message_id": 153, "dispatch_latency_seconds": 1.666985, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "message_id": 153, "provider_acceptance_latency_seconds": 0.296772, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:01Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:02Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:03Z", "message_id": 156, "attempts": 1, "outbound_pending_age_seconds": 1.931049, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:03Z", "message_id": 156, "dispatch_latency_seconds": 2.025404, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:03Z", "message_id": 156, "provider_acceptance_latency_seconds": 0.294082, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:03Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:04Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:04Z", "message_id": 159, "attempts": 1, "outbound_pending_age_seconds": 0.59161, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:04Z", "message_id": 159, "dispatch_latency_seconds": 0.74061, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:05Z", "message_id": 159, "provider_acceptance_latency_seconds": 0.308299, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:05Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:06Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:06Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:07Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:07Z", "message_id": 163, "attempts": 1, "outbound_pending_age_seconds": 0.807544, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:07Z", "message_id": 163, "dispatch_latency_seconds": 0.973491, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:07Z", "message_id": 163, "provider_acceptance_latency_seconds": 0.35384, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:07Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:08Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:08Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:09Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:10Z", "message_id": 169, "attempts": 1, "outbound_pending_age_seconds": 0.187064, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:10Z", "message_id": 169, "dispatch_latency_seconds": 0.326907, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:10Z", "message_id": 169, "provider_acceptance_latency_seconds": 0.310635, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:10Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:11Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:12Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:12Z", "message_id": 172, "attempts": 1, "outbound_pending_age_seconds": 0.564353, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:12Z", "message_id": 172, "dispatch_latency_seconds": 0.690281, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:13Z", "message_id": 172, "provider_acceptance_latency_seconds": 0.350729, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:14Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:15Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:15Z", "message_id": 177, "attempts": 1, "outbound_pending_age_seconds": 0.096777, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:15Z", "message_id": 177, "dispatch_latency_seconds": 0.182018, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:15Z", "message_id": 177, "provider_acceptance_latency_seconds": 0.285914, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:15Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:16Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:16Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:17Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:17Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:18Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:18Z", "message_id": 180, "attempts": 1, "outbound_pending_age_seconds": 0.79046, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:19Z", "message_id": 180, "dispatch_latency_seconds": 0.912261, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:19Z", "message_id": 180, "provider_acceptance_latency_seconds": 0.300087, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:19Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:20Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:20Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:21Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:21Z", "message_id": 187, "attempts": 1, "outbound_pending_age_seconds": 0.377774, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:21Z", "message_id": 187, "dispatch_latency_seconds": 0.501408, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:21Z", "message_id": 187, "provider_acceptance_latency_seconds": 0.318136, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:21Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:23Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:23Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:24Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:24Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:25Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:25Z", "message_id": 191, "attempts": 1, "outbound_pending_age_seconds": 1.093869, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:25Z", "message_id": 191, "dispatch_latency_seconds": 1.27945, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:25Z", "message_id": 191, "provider_acceptance_latency_seconds": 0.318478, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:25Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:26Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:26Z", "message_id": 194, "attempts": 1, "outbound_pending_age_seconds": 0.108991, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:26Z", "message_id": 194, "dispatch_latency_seconds": 0.201064, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:27Z", "message_id": 194, "provider_acceptance_latency_seconds": 0.279102, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:27Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:28Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:29Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:29Z", "message_id": 197, "attempts": 1, "outbound_pending_age_seconds": 0.994289, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:29Z", "message_id": 197, "dispatch_latency_seconds": 1.160618, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:29Z", "message_id": 197, "provider_acceptance_latency_seconds": 0.333621, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:30Z", "message_id": 198, "attempts": 1, "outbound_pending_age_seconds": 1.386706, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:30Z", "message_id": 198, "dispatch_latency_seconds": 1.48299, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:30Z", "message_id": 198, "provider_acceptance_latency_seconds": 0.279723, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:30Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:31Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:31Z", "message_id": 200, "attempts": 1, "outbound_pending_age_seconds": 2.173925, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:31Z", "message_id": 200, "dispatch_latency_seconds": 2.259667, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:31Z", "message_id": 200, "provider_acceptance_latency_seconds": 0.294443, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:32Z", "message_id": 202, "attempts": 1, "outbound_pending_age_seconds": 2.201178, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:32Z", "message_id": 202, "dispatch_latency_seconds": 2.293954, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:32Z", "message_id": 202, "provider_acceptance_latency_seconds": 0.300762, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:32Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:33Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:33Z", "message_id": 206, "attempts": 1, "outbound_pending_age_seconds": 2.012363, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:33Z", "message_id": 206, "dispatch_latency_seconds": 2.106646, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:33Z", "message_id": 206, "provider_acceptance_latency_seconds": 0.309079, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:33Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:35Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:35Z", "message_id": 209, "attempts": 1, "outbound_pending_age_seconds": 1.270282, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:35Z", "message_id": 209, "dispatch_latency_seconds": 1.392059, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:35Z", "message_id": 209, "provider_acceptance_latency_seconds": 0.298093, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:35Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:36Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:36Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:37Z", "message_id": 213, "attempts": 1, "outbound_pending_age_seconds": 0.796852, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:37Z", "message_id": 213, "dispatch_latency_seconds": 0.913421, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:38Z", "message_id": 213, "provider_acceptance_latency_seconds": 0.285901, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:38Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:39Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:39Z", "message_id": 219, "attempts": 1, "outbound_pending_age_seconds": 0.094629, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:39Z", "message_id": 219, "dispatch_latency_seconds": 0.17603, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:39Z", "message_id": 219, "provider_acceptance_latency_seconds": 0.266523, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:39Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:40Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:40Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:41Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:42Z", "message_id": 223, "attempts": 1, "outbound_pending_age_seconds": 0.553898, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:42Z", "message_id": 223, "dispatch_latency_seconds": 0.651168, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:43Z", "message_id": 223, "provider_acceptance_latency_seconds": 0.301405, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:43Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:44Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:44Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:45Z", "message_id": 226, "attempts": 1, "outbound_pending_age_seconds": 0.961518, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:45Z", "message_id": 226, "dispatch_latency_seconds": 1.044314, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:45Z", "message_id": 226, "provider_acceptance_latency_seconds": 0.275183, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:45Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:46Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:46Z", "message_id": 229, "attempts": 1, "outbound_pending_age_seconds": 0.621227, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:46Z", "message_id": 229, "dispatch_latency_seconds": 0.747873, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:47Z", "message_id": 229, "provider_acceptance_latency_seconds": 0.350385, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:49Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:49Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:50Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:51Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:52Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:52Z", "message_id": 237, "attempts": 1, "outbound_pending_age_seconds": 0.850672, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:52Z", "message_id": 237, "dispatch_latency_seconds": 0.969654, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:52Z", "message_id": 237, "provider_acceptance_latency_seconds": 0.320356, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:52Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:53Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:53Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:54Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:55Z", "message_id": 241, "attempts": 1, "outbound_pending_age_seconds": 0.297407, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:55Z", "message_id": 241, "dispatch_latency_seconds": 0.457515, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:55Z", "message_id": 241, "provider_acceptance_latency_seconds": 0.300984, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:55Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:56Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:56Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:57Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:57Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:38:58Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:58Z", "message_id": 246, "attempts": 1, "outbound_pending_age_seconds": 0.395035, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:58Z", "message_id": 246, "dispatch_latency_seconds": 0.503563, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:59Z", "message_id": 246, "provider_acceptance_latency_seconds": 0.300051, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:38:59Z", "message_id": 247, "attempts": 1, "outbound_pending_age_seconds": 0.700343, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:38:59Z", "message_id": 247, "dispatch_latency_seconds": 0.787264, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:38:59Z", "message_id": 247, "provider_acceptance_latency_seconds": 0.269359, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:38:59Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:00Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:00Z", "message_id": 249, "attempts": 1, "outbound_pending_age_seconds": 1.610877, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:00Z", "message_id": 249, "dispatch_latency_seconds": 1.726715, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:01Z", "message_id": 249, "provider_acceptance_latency_seconds": 0.315789, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:01Z", "message_id": 250, "attempts": 1, "outbound_pending_age_seconds": 2.187153, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:01Z", "message_id": 250, "dispatch_latency_seconds": 2.288672, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:01Z", "message_id": 250, "provider_acceptance_latency_seconds": 0.329539, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:01Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:02Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:02Z", "message_id": 255, "attempts": 1, "outbound_pending_age_seconds": 1.688891, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:03Z", "message_id": 255, "dispatch_latency_seconds": 1.795699, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:03Z", "message_id": 255, "provider_acceptance_latency_seconds": 0.283123, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:03Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:04Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:04Z", "message_id": 258, "attempts": 1, "outbound_pending_age_seconds": 1.268001, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:04Z", "message_id": 258, "dispatch_latency_seconds": 1.366246, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:04Z", "message_id": 258, "provider_acceptance_latency_seconds": 0.286229, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:04Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:05Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:06Z", "message_id": 261, "attempts": 1, "outbound_pending_age_seconds": 0.652274, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:06Z", "message_id": 261, "dispatch_latency_seconds": 0.745219, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:06Z", "message_id": 261, "provider_acceptance_latency_seconds": 0.283505, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:06Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:07Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:07Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:08Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:08Z", "message_id": 264, "attempts": 1, "outbound_pending_age_seconds": 1.072023, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:08Z", "message_id": 264, "dispatch_latency_seconds": 1.259374, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:09Z", "message_id": 264, "provider_acceptance_latency_seconds": 0.306431, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:09Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:10Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:10Z", "message_id": 269, "attempts": 1, "outbound_pending_age_seconds": 0.708682, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:10Z", "message_id": 269, "dispatch_latency_seconds": 0.810759, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:10Z", "message_id": 269, "provider_acceptance_latency_seconds": 0.281737, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:10Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:11Z", "message_id": 272, "attempts": 1, "outbound_pending_age_seconds": 0.140391, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:11Z", "message_id": 272, "dispatch_latency_seconds": 0.245213, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:12Z", "message_id": 272, "provider_acceptance_latency_seconds": 0.303439, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:12Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:13Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:14Z", "message_id": 275, "attempts": 1, "outbound_pending_age_seconds": 0.737298, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:14Z", "message_id": 275, "dispatch_latency_seconds": 0.851819, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:14Z", "message_id": 275, "provider_acceptance_latency_seconds": 0.284365, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:14Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:15Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:15Z", "message_id": 278, "attempts": 1, "outbound_pending_age_seconds": 0.110103, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:15Z", "message_id": 278, "dispatch_latency_seconds": 0.232104, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:16Z", "message_id": 278, "provider_acceptance_latency_seconds": 0.287783, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:16Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:17Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:17Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:18Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:18Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:19Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:19Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:20Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:20Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:21Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:21Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:22Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:22Z", "message_id": 287, "attempts": 1, "outbound_pending_age_seconds": 0.966552, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:22Z", "message_id": 287, "dispatch_latency_seconds": 1.063947, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:22Z", "message_id": 287, "provider_acceptance_latency_seconds": 0.290089, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:22Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:23Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:23Z", "message_id": 290, "attempts": 1, "outbound_pending_age_seconds": 0.092564, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:24Z", "message_id": 290, "dispatch_latency_seconds": 0.173372, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:24Z", "message_id": 290, "provider_acceptance_latency_seconds": 0.281576, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:24Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:25Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:25Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:26Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:26Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:27Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:27Z", "message_id": 294, "attempts": 1, "outbound_pending_age_seconds": 0.707167, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:27Z", "message_id": 294, "dispatch_latency_seconds": 0.808574, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:27Z", "message_id": 294, "provider_acceptance_latency_seconds": 0.336594, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:27Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "message_id": 296, "attempts": 1, "outbound_pending_age_seconds": 1.017262, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "message_id": 296, "dispatch_latency_seconds": 1.149983, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "message_id": 296, "provider_acceptance_latency_seconds": 0.293632, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "message_id": 298, "attempts": 1, "outbound_pending_age_seconds": 1.041489, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "message_id": 298, "dispatch_latency_seconds": 1.127902, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "message_id": 298, "provider_acceptance_latency_seconds": 0.279908, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:29Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:30Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:31Z", "message_id": 300, "attempts": 1, "outbound_pending_age_seconds": 1.944369, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:31Z", "message_id": 300, "dispatch_latency_seconds": 2.075098, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:31Z", "message_id": 300, "provider_acceptance_latency_seconds": 0.295679, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:31Z", "message_id": 303, "attempts": 1, "outbound_pending_age_seconds": 1.860462, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:31Z", "message_id": 303, "dispatch_latency_seconds": 1.944972, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:32Z", "message_id": 303, "provider_acceptance_latency_seconds": 0.287988, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:32Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:33Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:33Z", "message_id": 305, "attempts": 1, "outbound_pending_age_seconds": 2.139127, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:33Z", "message_id": 305, "dispatch_latency_seconds": 2.243781, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:33Z", "message_id": 305, "provider_acceptance_latency_seconds": 0.293766, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:33Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:34Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:34Z", "message_id": 309, "attempts": 1, "outbound_pending_age_seconds": 0.625443, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:34Z", "message_id": 309, "dispatch_latency_seconds": 0.721444, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:35Z", "message_id": 309, "provider_acceptance_latency_seconds": 0.304936, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:35Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:36Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:36Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:37Z", "message_id": 313, "attempts": 1, "outbound_pending_age_seconds": 0.933113, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:37Z", "message_id": 313, "dispatch_latency_seconds": 1.050133, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:37Z", "message_id": 313, "provider_acceptance_latency_seconds": 0.301931, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:37Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:38Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:39Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:39Z", "message_id": 319, "attempts": 1, "outbound_pending_age_seconds": 0.562913, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:39Z", "message_id": 319, "dispatch_latency_seconds": 0.666497, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:40Z", "message_id": 319, "provider_acceptance_latency_seconds": 0.315658, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:40Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:41Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:42Z", "message_id": 322, "attempts": 1, "outbound_pending_age_seconds": 0.840121, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:42Z", "message_id": 322, "dispatch_latency_seconds": 0.972798, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:42Z", "message_id": 322, "provider_acceptance_latency_seconds": 0.314145, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:42Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:43Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:43Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:44Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:44Z", "message_id": 326, "attempts": 1, "outbound_pending_age_seconds": 0.49276, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:45Z", "message_id": 326, "dispatch_latency_seconds": 0.616634, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:45Z", "message_id": 326, "provider_acceptance_latency_seconds": 0.287514, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:45Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:46Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:46Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:47Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:47Z", "message_id": 329, "attempts": 1, "outbound_pending_age_seconds": 0.726165, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:47Z", "message_id": 329, "dispatch_latency_seconds": 0.801692, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:47Z", "message_id": 329, "provider_acceptance_latency_seconds": 0.288085, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:49Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:49Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:50Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:52Z", "message_id": 337, "attempts": 1, "outbound_pending_age_seconds": 0.298981, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:52Z", "message_id": 337, "dispatch_latency_seconds": 0.464331, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:52Z", "message_id": 337, "provider_acceptance_latency_seconds": 0.38606, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:52Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:53Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:53Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:54Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:54Z", "message_id": 341, "attempts": 1, "outbound_pending_age_seconds": 0.436322, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:54Z", "message_id": 341, "dispatch_latency_seconds": 0.568456, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:55Z", "message_id": 341, "provider_acceptance_latency_seconds": 0.337404, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:55Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:56Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:56Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:57Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:57Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:58Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:39:58Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:39:59Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:39:59Z", "message_id": 346, "attempts": 1, "outbound_pending_age_seconds": 0.966948, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:39:59Z", "message_id": 346, "dispatch_latency_seconds": 1.060869, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:39:59Z", "message_id": 346, "provider_acceptance_latency_seconds": 0.294593, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:00Z", "message_id": 348, "attempts": 1, "outbound_pending_age_seconds": 1.170295, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:00Z", "message_id": 348, "dispatch_latency_seconds": 1.298235, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:00Z", "message_id": 348, "provider_acceptance_latency_seconds": 0.300998, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:00Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:01Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:01Z", "message_id": 349, "attempts": 1, "outbound_pending_age_seconds": 2.613109, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:01Z", "message_id": 349, "dispatch_latency_seconds": 2.697785, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:02Z", "message_id": 349, "provider_acceptance_latency_seconds": 0.313258, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:02Z", "message_id": 350, "attempts": 1, "outbound_pending_age_seconds": 2.78522, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:02Z", "message_id": 350, "dispatch_latency_seconds": 2.906127, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:02Z", "message_id": 350, "provider_acceptance_latency_seconds": 0.276592, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:02Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:03Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:03Z", "message_id": 355, "attempts": 1, "outbound_pending_age_seconds": 1.689804, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:03Z", "message_id": 355, "dispatch_latency_seconds": 1.816102, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:04Z", "message_id": 355, "provider_acceptance_latency_seconds": 0.304418, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:04Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:05Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:05Z", "message_id": 359, "attempts": 1, "outbound_pending_age_seconds": 0.811044, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:05Z", "message_id": 359, "dispatch_latency_seconds": 0.918265, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:05Z", "message_id": 359, "provider_acceptance_latency_seconds": 0.280144, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:05Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:06Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:06Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:07Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:07Z", "message_id": 363, "attempts": 1, "outbound_pending_age_seconds": 0.47702, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:07Z", "message_id": 363, "dispatch_latency_seconds": 0.583976, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:08Z", "message_id": 363, "provider_acceptance_latency_seconds": 0.322032, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:08Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:09Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:09Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:10Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:10Z", "message_id": 368, "attempts": 1, "outbound_pending_age_seconds": 0.571347, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:10Z", "message_id": 368, "dispatch_latency_seconds": 0.694812, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:10Z", "message_id": 368, "provider_acceptance_latency_seconds": 0.312414, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:10Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:11Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:12Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:12Z", "message_id": 372, "attempts": 1, "outbound_pending_age_seconds": 0.228349, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:12Z", "message_id": 372, "dispatch_latency_seconds": 0.325027, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:13Z", "message_id": 372, "provider_acceptance_latency_seconds": 0.276044, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:14Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:15Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:15Z", "message_id": 376, "attempts": 1, "outbound_pending_age_seconds": 0.318455, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:15Z", "message_id": 376, "dispatch_latency_seconds": 0.426793, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:15Z", "message_id": 376, "provider_acceptance_latency_seconds": 0.30603, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:15Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:16Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:16Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:17Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:17Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:18Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:18Z", "message_id": 379, "attempts": 1, "outbound_pending_age_seconds": 0.89598, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:19Z", "message_id": 379, "dispatch_latency_seconds": 0.995256, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:19Z", "message_id": 379, "provider_acceptance_latency_seconds": 0.287583, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:19Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:20Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:20Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:21Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:21Z", "message_id": 385, "attempts": 1, "outbound_pending_age_seconds": 0.428098, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:21Z", "message_id": 385, "dispatch_latency_seconds": 0.519179, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:21Z", "message_id": 385, "provider_acceptance_latency_seconds": 0.314748, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:21Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:22Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:22Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:23Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:24Z", "message_id": 389, "attempts": 1, "outbound_pending_age_seconds": 0.626955, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:24Z", "message_id": 389, "dispatch_latency_seconds": 0.722791, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:24Z", "message_id": 389, "provider_acceptance_latency_seconds": 0.306784, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:24Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:25Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:25Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:26Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:26Z", "message_id": 393, "attempts": 1, "outbound_pending_age_seconds": 0.110913, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:26Z", "message_id": 393, "dispatch_latency_seconds": 0.230961, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:27Z", "message_id": 393, "provider_acceptance_latency_seconds": 0.303755, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:27Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:28Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:29Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:29Z", "message_id": 396, "attempts": 1, "outbound_pending_age_seconds": 0.444668, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:29Z", "message_id": 396, "dispatch_latency_seconds": 0.562676, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:29Z", "message_id": 396, "provider_acceptance_latency_seconds": 0.29505, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:29Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:30Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:30Z", "message_id": 398, "attempts": 1, "outbound_pending_age_seconds": 1.426457, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:30Z", "message_id": 398, "dispatch_latency_seconds": 1.572632, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:31Z", "message_id": 398, "provider_acceptance_latency_seconds": 0.301618, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:31Z", "message_id": 399, "attempts": 1, "outbound_pending_age_seconds": 1.927269, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:31Z", "message_id": 399, "dispatch_latency_seconds": 2.056631, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:31Z", "message_id": 399, "provider_acceptance_latency_seconds": 0.293106, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:31Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:32Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:32Z", "message_id": 401, "attempts": 1, "outbound_pending_age_seconds": 3.218462, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:32Z", "message_id": 401, "dispatch_latency_seconds": 3.31045, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:33Z", "message_id": 401, "provider_acceptance_latency_seconds": 0.289647, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:33Z", "message_id": 406, "attempts": 1, "outbound_pending_age_seconds": 1.03863, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:33Z", "message_id": 406, "dispatch_latency_seconds": 1.152834, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:33Z", "message_id": 406, "provider_acceptance_latency_seconds": 0.307017, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:33Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:34Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:34Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:35Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:36Z", "message_id": 410, "attempts": 1, "outbound_pending_age_seconds": 0.809272, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:36Z", "message_id": 410, "dispatch_latency_seconds": 1.044539, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:36Z", "message_id": 410, "provider_acceptance_latency_seconds": 0.320583, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:36Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:37Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:38Z", "message_id": 413, "attempts": 1, "outbound_pending_age_seconds": 0.689562, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:38Z", "message_id": 413, "dispatch_latency_seconds": 0.781323, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:39Z", "message_id": 413, "provider_acceptance_latency_seconds": 0.28687, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:39Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:40Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:40Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:41Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:41Z", "message_id": 419, "attempts": 1, "outbound_pending_age_seconds": 0.714855, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:41Z", "message_id": 419, "dispatch_latency_seconds": 0.817241, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:41Z", "message_id": 419, "provider_acceptance_latency_seconds": 0.305978, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:42Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:43Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:43Z", "message_id": 423, "attempts": 1, "outbound_pending_age_seconds": 0.38801, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:43Z", "message_id": 423, "dispatch_latency_seconds": 0.504712, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:44Z", "message_id": 423, "provider_acceptance_latency_seconds": 0.295766, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:44Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:45Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:46Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:46Z", "message_id": 426, "attempts": 1, "outbound_pending_age_seconds": 0.464152, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:46Z", "message_id": 426, "dispatch_latency_seconds": 0.594373, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:46Z", "message_id": 426, "provider_acceptance_latency_seconds": 0.297677, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:46Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:47Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:49Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:49Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:50Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:51Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:52Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:53Z", "message_id": 436, "attempts": 1, "outbound_pending_age_seconds": 0.918965, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:53Z", "message_id": 436, "dispatch_latency_seconds": 1.083145, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:53Z", "message_id": 436, "provider_acceptance_latency_seconds": 0.317371, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:53Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:54Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:54Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:55Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:55Z", "message_id": 439, "attempts": 1, "outbound_pending_age_seconds": 0.586958, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:55Z", "message_id": 439, "dispatch_latency_seconds": 0.703078, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:56Z", "message_id": 439, "provider_acceptance_latency_seconds": 0.352027, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:56Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:57Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:57Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:58Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:58Z", "message_id": 444, "attempts": 1, "outbound_pending_age_seconds": 0.206453, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:40:58Z", "message_id": 444, "dispatch_latency_seconds": 0.32476, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:40:58Z", "message_id": 444, "provider_acceptance_latency_seconds": 0.318995, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:40:58Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:40:59Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:40:59Z", "message_id": 445, "attempts": 1, "outbound_pending_age_seconds": 1.523186, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:00Z", "message_id": 445, "dispatch_latency_seconds": 1.687927, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:00Z", "message_id": 445, "provider_acceptance_latency_seconds": 0.311255, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:00Z", "message_id": 447, "attempts": 1, "outbound_pending_age_seconds": 1.487079, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:00Z", "message_id": 447, "dispatch_latency_seconds": 1.590336, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:01Z", "message_id": 447, "provider_acceptance_latency_seconds": 0.312586, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:01Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:02Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:02Z", "message_id": 448, "attempts": 1, "outbound_pending_age_seconds": 2.989841, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:02Z", "message_id": 448, "dispatch_latency_seconds": 3.07309, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:02Z", "message_id": 448, "provider_acceptance_latency_seconds": 0.28779, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:02Z", "message_id": 453, "attempts": 1, "outbound_pending_age_seconds": 1.316867, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:02Z", "message_id": 453, "dispatch_latency_seconds": 1.41083, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:03Z", "message_id": 453, "provider_acceptance_latency_seconds": 0.287913, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:03Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:04Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:04Z", "message_id": 456, "attempts": 1, "outbound_pending_age_seconds": 0.906356, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:04Z", "message_id": 456, "dispatch_latency_seconds": 0.997018, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:04Z", "message_id": 456, "provider_acceptance_latency_seconds": 0.282256, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:04Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:05Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:05Z", "message_id": 459, "attempts": 1, "outbound_pending_age_seconds": 0.146953, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:05Z", "message_id": 459, "dispatch_latency_seconds": 0.295991, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:06Z", "message_id": 459, "provider_acceptance_latency_seconds": 0.323942, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:06Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:07Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:07Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:08Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:08Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:09Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:09Z", "message_id": 465, "attempts": 1, "outbound_pending_age_seconds": 0.536726, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:09Z", "message_id": 465, "dispatch_latency_seconds": 0.628915, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:09Z", "message_id": 465, "provider_acceptance_latency_seconds": 0.280926, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:09Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:10Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:10Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:11Z", "message_id": 469, "attempts": 1, "outbound_pending_age_seconds": 0.626077, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:11Z", "message_id": 469, "dispatch_latency_seconds": 0.723913, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:12Z", "message_id": 469, "provider_acceptance_latency_seconds": 0.297885, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:12Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:13Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:14Z", "message_id": 473, "attempts": 1, "outbound_pending_age_seconds": 0.130038, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:14Z", "message_id": 473, "dispatch_latency_seconds": 0.225115, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:14Z", "message_id": 473, "provider_acceptance_latency_seconds": 0.278162, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:14Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:15Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:15Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:16Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:16Z", "message_id": 476, "attempts": 1, "outbound_pending_age_seconds": 0.189933, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:17Z", "message_id": 476, "dispatch_latency_seconds": 0.294934, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:17Z", "message_id": 476, "provider_acceptance_latency_seconds": 0.29227, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:17Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:18Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:18Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:19Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:19Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:20Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:20Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:21Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:21Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:22Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:22Z", "message_id": 484, "attempts": 1, "outbound_pending_age_seconds": 1.042942, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:22Z", "message_id": 484, "dispatch_latency_seconds": 1.152203, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:23Z", "message_id": 484, "provider_acceptance_latency_seconds": 0.300806, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:23Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:24Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:24Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:25Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:25Z", "message_id": 488, "attempts": 1, "outbound_pending_age_seconds": 0.901971, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:25Z", "message_id": 488, "dispatch_latency_seconds": 1.029547, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:25Z", "message_id": 488, "provider_acceptance_latency_seconds": 0.322162, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:25Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:26Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:26Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:27Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:27Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:28Z", "message_id": 493, "attempts": 1, "outbound_pending_age_seconds": 0.330225, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:28Z", "message_id": 493, "dispatch_latency_seconds": 0.446956, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:29Z", "message_id": 493, "provider_acceptance_latency_seconds": 0.327516, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:29Z", "message_id": 494, "attempts": 1, "outbound_pending_age_seconds": 0.754166, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:29Z", "message_id": 494, "dispatch_latency_seconds": 0.846113, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:29Z", "message_id": 494, "provider_acceptance_latency_seconds": 0.291555, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:29Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:30Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:31Z", "message_id": 496, "attempts": 1, "outbound_pending_age_seconds": 2.064238, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:31Z", "message_id": 496, "dispatch_latency_seconds": 2.314193, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:31Z", "message_id": 496, "provider_acceptance_latency_seconds": 0.320503, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:31Z", "message_id": 497, "attempts": 1, "outbound_pending_age_seconds": 2.558751, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:31Z", "message_id": 497, "dispatch_latency_seconds": 2.70877, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:32Z", "message_id": 497, "provider_acceptance_latency_seconds": 0.306432, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:32Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:33Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:33Z", "message_id": 502, "attempts": 1, "outbound_pending_age_seconds": 1.339162, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:33Z", "message_id": 502, "dispatch_latency_seconds": 1.426194, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:33Z", "message_id": 502, "provider_acceptance_latency_seconds": 0.283174, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:33Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:34Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:34Z", "message_id": 506, "attempts": 1, "outbound_pending_age_seconds": 0.311509, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:34Z", "message_id": 506, "dispatch_latency_seconds": 0.38875, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:35Z", "message_id": 506, "provider_acceptance_latency_seconds": 0.270415, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:35Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:36Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:36Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:37Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:37Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:38Z", "message_id": 510, "attempts": 1, "outbound_pending_age_seconds": 0.831764, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:38Z", "message_id": 510, "dispatch_latency_seconds": 0.981263, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:38Z", "message_id": 510, "provider_acceptance_latency_seconds": 0.297075, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:38Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:39Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:39Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:40Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:40Z", "message_id": 515, "attempts": 1, "outbound_pending_age_seconds": 0.910462, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:40Z", "message_id": 515, "dispatch_latency_seconds": 1.018453, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:41Z", "message_id": 515, "provider_acceptance_latency_seconds": 0.316845, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:42Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:43Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:43Z", "message_id": 519, "attempts": 1, "outbound_pending_age_seconds": 0.460574, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:43Z", "message_id": 519, "dispatch_latency_seconds": 0.562297, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:43Z", "message_id": 519, "provider_acceptance_latency_seconds": 0.304913, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:43Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:44Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:44Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:45Z", "message_id": 523, "attempts": 1, "outbound_pending_age_seconds": 0.303262, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:46Z", "message_id": 523, "dispatch_latency_seconds": 0.416809, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:46Z", "message_id": 523, "provider_acceptance_latency_seconds": 0.284886, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:46Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:47Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:48Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:49Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:49Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:50Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:50Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:51Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:52Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:52Z", "message_id": 532, "attempts": 1, "outbound_pending_age_seconds": 0.462347, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:52Z", "message_id": 532, "dispatch_latency_seconds": 0.578438, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:53Z", "message_id": 532, "provider_acceptance_latency_seconds": 0.307366, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:53Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:54Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:54Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:55Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:55Z", "message_id": 536, "attempts": 1, "outbound_pending_age_seconds": 0.470823, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:41:55Z", "message_id": 536, "dispatch_latency_seconds": 0.614576, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:41:55Z", "message_id": 536, "provider_acceptance_latency_seconds": 0.333088, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:55Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:56Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:56Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:57Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:57Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:58Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:41:58Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:41:59Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:41:59Z", "message_id": 540, "attempts": 1, "outbound_pending_age_seconds": 0.176478, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:00Z", "message_id": 540, "dispatch_latency_seconds": 0.273988, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:00Z", "message_id": 540, "provider_acceptance_latency_seconds": 0.286075, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:42:00Z", "message_id": 541, "attempts": 1, "outbound_pending_age_seconds": 0.636421, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:00Z", "message_id": 541, "dispatch_latency_seconds": 0.715118, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:00Z", "message_id": 541, "provider_acceptance_latency_seconds": 0.274147, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:00Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:01Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:01Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:02Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:42:02Z", "message_id": 542, "attempts": 1, "outbound_pending_age_seconds": 0.143685, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:03Z", "message_id": 542, "dispatch_latency_seconds": 0.265453, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:03Z", "message_id": 542, "provider_acceptance_latency_seconds": 0.311941, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:03Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:04Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:04Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:05Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:42:05Z", "message_id": 543, "attempts": 1, "outbound_pending_age_seconds": 0.090186, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:05Z", "message_id": 543, "dispatch_latency_seconds": 0.179889, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:05Z", "message_id": 543, "provider_acceptance_latency_seconds": 0.273211, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:05Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:06Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:06Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:07Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:07Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:08Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:42:09Z", "message_id": 544, "attempts": 1, "outbound_pending_age_seconds": 0.87328, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:09Z", "message_id": 544, "dispatch_latency_seconds": 0.988838, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:09Z", "message_id": 544, "provider_acceptance_latency_seconds": 0.329543, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:09Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:10Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:10Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:42:12Z", "message_id": 545, "attempts": 1, "outbound_pending_age_seconds": 0.502539, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:12Z", "message_id": 545, "dispatch_latency_seconds": 0.800277, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:12Z", "message_id": 545, "provider_acceptance_latency_seconds": 0.33104, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:12Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:13Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-02T22:42:14Z", "message_id": 546, "attempts": 1, "outbound_pending_age_seconds": 0.328289, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-02T22:42:15Z", "message_id": 546, "dispatch_latency_seconds": 0.482316, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-02T22:42:15Z", "message_id": 546, "provider_acceptance_latency_seconds": 0.381264, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:15Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:16Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:16Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-02T22:42:17Z", "once": true, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-02T22:42:17Z", "request_id": "-"}
+B9E_RESULT {"pid": 42888, "backend_pid": 43980, "role": "sender", "wire": {"meta": 150}, "llm_calls_per_work": {}}

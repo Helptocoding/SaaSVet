@@ -1,0 +1,28 @@
+{
+  "status": "CLEANED",
+  "source": "infra.py stop stdout and server-exit.json",
+  "postgresql_version": "16.15",
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "clients_before_drop": 0,
+  "waiting_locks_before_drop": 0,
+  "prepared_transactions_before_drop": 0,
+  "dropped_databases": [
+    "test_b8b_pb1sql_base",
+    "test_b8b_pb1sql_blocked_llm",
+    "test_b8b_pb1sql_corpus",
+    "test_b8b_pb1sql_corpus_full",
+    "test_b8b_pb1sql_duplicate",
+    "test_b8b_pb1sql_meta_slow",
+    "test_b8b_pb1sql_saturation",
+    "test_b8b_pb1sql_template",
+    "test_b9e_sql_corpus",
+    "test_b9e_sql_template"
+  ],
+  "remaining_test_databases": 0,
+  "data_directory_absent": true,
+  "port": 35443,
+  "port_closed": true,
+  "observer_exit_code": 0,
+  "raw_sql_persisted_by_observer": false
+}

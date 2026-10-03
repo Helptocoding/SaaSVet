@@ -1,0 +1,31 @@
+{
+  "scope": "Zero forbidden outcomes asserted by the exact 46 PASS canonical tests, supplemented by per-variant SQL and temporal observations; not universal production counters.",
+  "values": {
+    "unauthorized_writes": 0,
+    "cross_tenant_effects": 0,
+    "duplicate_domain_effects": 0,
+    "stale_worker_progress": 0,
+    "admissions_over_budget": 0,
+    "budget_restored_after_failure": 0,
+    "max_active_above_limit": 0,
+    "lost_work_on_saturation": 0,
+    "beta_gate_bypasses": 0,
+    "ready_reextensions": 0
+  },
+  "corpus_evidence_ids": {
+    "unauthorized_writes": ["B9E-E2E-09", "B9E-E2E-10", "B9E-E2E-15", "B9E-GATE-01", "B9E-FI-05"],
+    "cross_tenant_effects": ["B9E-E2E-09", "B9E-SCALE-01", "B9E-READ-04"],
+    "duplicate_domain_effects": ["B9E-E2E-08", "B9E-FI-08", "B9E-FI-09", "B9E-FI-10"],
+    "stale_worker_progress": ["B9E-FI-04", "B9E-FI-07"],
+    "admissions_over_budget": ["B9E-COST-01", "B9E-COST-02", "B9E-SCALE-04"],
+    "budget_restored_after_failure": ["B9E-COST-03", "B9E-FI-01", "B9E-FI-02"],
+    "max_active_above_limit": ["B9E-SCALE-01", "B9E-SCALE-03"],
+    "lost_work_on_saturation": ["B9E-SCALE-03", "B9E-FI-01"],
+    "beta_gate_bypasses": ["B9E-GATE-01", "B9E-GATE-02", "B9E-GATE-03", "B9E-GATE-04", "B9E-GATE-05", "B9E-FI-06"]
+  },
+  "sql_per_variant": "evaluation-summary.json scenarios.*.critical_sql = 0 for cross-tenant conversation, membership, and over-budget admissions",
+  "active_per_org_max_observed": 1,
+  "duplicate_webhooks_emitted": 17,
+  "ready_scope": "0 logged reextensions in each variant, but 0 logged availability updates and 0 joined READY inbound in the timed cohort; nontrivial monotonic semantics are supported by existing same-source evidence.",
+  "saturation_scope": "Noisy pending backlog at close is not counted as lost work. The frozen SCALE/FI assertions and durable pending state support the violation count."
+}

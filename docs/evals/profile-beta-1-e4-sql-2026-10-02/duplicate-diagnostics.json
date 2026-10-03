@@ -1,0 +1,4394 @@
+{
+  "schema": "profile-beta-1-e4-readonly-observation-v1",
+  "scenario": "duplicate",
+  "gate_denominator": "all healthy inbounds in canonical Message.created_at window; includes safety",
+  "healthy": {
+    "n": 60,
+    "p50": 8.396478,
+    "p75": 8.647247,
+    "p90": 9.232555,
+    "p95": 9.635552,
+    "p99": 9.672839,
+    "max": 9.672839
+  },
+  "healthy_missing": 0,
+  "margin_seconds": null,
+  "organizations": [
+    {
+      "org_index": 0,
+      "organization_id": 1,
+      "healthy": true,
+      "inbound_n": 30,
+      "ordinary_persisted_to_eligible": {
+        "n": 20,
+        "p50": 7.929682,
+        "p75": 7.940592,
+        "p90": 7.95201,
+        "p95": 7.956211,
+        "p99": 7.956211,
+        "max": 7.956211
+      },
+      "ordinary_eligible_to_claim": {
+        "n": 20,
+        "p50": 0.624372,
+        "p75": 0.840345,
+        "p90": 1.263197,
+        "p95": 1.302873,
+        "p99": 1.302873,
+        "max": 1.302873
+      },
+      "ordinary_persisted_to_claim": {
+        "n": 20,
+        "p50": 8.530753,
+        "p75": 8.766519,
+        "p90": 9.173388,
+        "p95": 9.232555,
+        "p99": 9.232555,
+        "max": 9.232555
+      },
+      "all_persisted_to_claim": {
+        "n": 30,
+        "p50": 8.341729,
+        "p75": 8.647247,
+        "p90": 9.128579,
+        "p95": 9.173388,
+        "p99": 9.232555,
+        "max": 9.232555
+      },
+      "missing": 0,
+      "joined_READY": 0,
+      "works": 30,
+      "calls": 40,
+      "calls_per_work": 1.3333333333333333,
+      "calls_per_work_distribution": [
+        {
+          "llm_calls_admitted": 0,
+          "count": 10
+        },
+        {
+          "llm_calls_admitted": 2,
+          "count": 20
+        }
+      ],
+      "deferrals": 8,
+      "pending_inbound": 0,
+      "oldest_pending_age_seconds": null,
+      "claims_total": 33,
+      "messages": [
+        {
+          "id": 44,
+          "org_index": 0,
+          "conversation_id": 35,
+          "work_id": 12,
+          "created_at": "2026-10-03 05:10:40.410814+00:00",
+          "available_at": "2026-10-03 05:10:40.447538+00:00",
+          "claimed_at": "2026-10-03 05:10:40.502562+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 64,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 22,
+          "created_at": "2026-10-03 05:10:50.325519+00:00",
+          "available_at": "2026-10-03 05:10:58.274614+00:00",
+          "claimed_at": "2026-10-03 05:10:58.616610+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 81,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 27,
+          "created_at": "2026-10-03 05:11:00.398354+00:00",
+          "available_at": "2026-10-03 05:11:08.324546+00:00",
+          "claimed_at": "2026-10-03 05:11:08.687565+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 97,
+          "org_index": 0,
+          "conversation_id": 67,
+          "work_id": 29,
+          "created_at": "2026-10-03 05:11:10.356932+00:00",
+          "available_at": "2026-10-03 05:11:10.398084+00:00",
+          "claimed_at": "2026-10-03 05:11:10.450296+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 116,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 38,
+          "created_at": "2026-10-03 05:11:20.315693+00:00",
+          "available_at": "2026-10-03 05:11:28.271904+00:00",
+          "claimed_at": "2026-10-03 05:11:28.468653+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 133,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 43,
+          "created_at": "2026-10-03 05:11:30.383687+00:00",
+          "available_at": "2026-10-03 05:11:38.324279+00:00",
+          "claimed_at": "2026-10-03 05:11:38.803970+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 149,
+          "org_index": 0,
+          "conversation_id": 99,
+          "work_id": 45,
+          "created_at": "2026-10-03 05:11:40.388985+00:00",
+          "available_at": "2026-10-03 05:11:40.439421+00:00",
+          "claimed_at": "2026-10-03 05:11:40.522125+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 168,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 53,
+          "created_at": "2026-10-03 05:11:50.363028+00:00",
+          "available_at": "2026-10-03 05:11:58.315038+00:00",
+          "claimed_at": "2026-10-03 05:11:58.704757+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 183,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 58,
+          "created_at": "2026-10-03 05:12:00.421484+00:00",
+          "available_at": "2026-10-03 05:12:08.318020+00:00",
+          "claimed_at": "2026-10-03 05:12:08.952237+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 199,
+          "org_index": 0,
+          "conversation_id": 131,
+          "work_id": 60,
+          "created_at": "2026-10-03 05:12:10.406729+00:00",
+          "available_at": "2026-10-03 05:12:10.447852+00:00",
+          "claimed_at": "2026-10-03 05:12:10.522295+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 218,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 69,
+          "created_at": "2026-10-03 05:12:20.440484+00:00",
+          "available_at": "2026-10-03 05:12:28.357231+00:00",
+          "claimed_at": "2026-10-03 05:12:28.863575+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 234,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 74,
+          "created_at": "2026-10-03 05:12:30.440868+00:00",
+          "available_at": "2026-10-03 05:12:38.306250+00:00",
+          "claimed_at": "2026-10-03 05:12:39.569447+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 249,
+          "org_index": 0,
+          "conversation_id": 163,
+          "work_id": 76,
+          "created_at": "2026-10-03 05:12:40.455356+00:00",
+          "available_at": "2026-10-03 05:12:40.531507+00:00",
+          "claimed_at": "2026-10-03 05:12:40.679399+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 269,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 85,
+          "created_at": "2026-10-03 05:12:50.349471+00:00",
+          "available_at": "2026-10-03 05:12:58.287060+00:00",
+          "claimed_at": "2026-10-03 05:12:59.077844+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 284,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 90,
+          "created_at": "2026-10-03 05:13:00.349511+00:00",
+          "available_at": "2026-10-03 05:13:08.297955+00:00",
+          "claimed_at": "2026-10-03 05:13:09.522899+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 299,
+          "org_index": 0,
+          "conversation_id": 195,
+          "work_id": 92,
+          "created_at": "2026-10-03 05:13:10.394430+00:00",
+          "available_at": "2026-10-03 05:13:10.428371+00:00",
+          "claimed_at": "2026-10-03 05:13:10.472484+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 318,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 100,
+          "created_at": "2026-10-03 05:13:20.398428+00:00",
+          "available_at": "2026-10-03 05:13:28.303463+00:00",
+          "claimed_at": "2026-10-03 05:13:28.862232+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 333,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 105,
+          "created_at": "2026-10-03 05:13:30.380274+00:00",
+          "available_at": "2026-10-03 05:13:38.309956+00:00",
+          "claimed_at": "2026-10-03 05:13:39.612829+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 348,
+          "org_index": 0,
+          "conversation_id": 227,
+          "work_id": 107,
+          "created_at": "2026-10-03 05:13:40.383990+00:00",
+          "available_at": "2026-10-03 05:13:40.428609+00:00",
+          "claimed_at": "2026-10-03 05:13:40.477586+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 367,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 115,
+          "created_at": "2026-10-03 05:13:50.402424+00:00",
+          "available_at": "2026-10-03 05:13:58.323246+00:00",
+          "claimed_at": "2026-10-03 05:13:58.659166+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 382,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 120,
+          "created_at": "2026-10-03 05:14:00.358813+00:00",
+          "available_at": "2026-10-03 05:14:08.295014+00:00",
+          "claimed_at": "2026-10-03 05:14:08.919386+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 397,
+          "org_index": 0,
+          "conversation_id": 259,
+          "work_id": 122,
+          "created_at": "2026-10-03 05:14:10.409850+00:00",
+          "available_at": "2026-10-03 05:14:10.461209+00:00",
+          "claimed_at": "2026-10-03 05:14:10.528631+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 416,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 130,
+          "created_at": "2026-10-03 05:14:20.384684+00:00",
+          "available_at": "2026-10-03 05:14:28.298466+00:00",
+          "claimed_at": "2026-10-03 05:14:28.835950+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 431,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 134,
+          "created_at": "2026-10-03 05:14:30.360397+00:00",
+          "available_at": "2026-10-03 05:14:38.295136+00:00",
+          "claimed_at": "2026-10-03 05:14:39.017064+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 445,
+          "org_index": 0,
+          "conversation_id": 291,
+          "work_id": 136,
+          "created_at": "2026-10-03 05:14:40.368669+00:00",
+          "available_at": "2026-10-03 05:14:40.407038+00:00",
+          "claimed_at": "2026-10-03 05:14:40.456433+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 464,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 144,
+          "created_at": "2026-10-03 05:14:50.396157+00:00",
+          "available_at": "2026-10-03 05:14:58.322858+00:00",
+          "claimed_at": "2026-10-03 05:14:59.043404+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 479,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 148,
+          "created_at": "2026-10-03 05:15:00.394175+00:00",
+          "available_at": "2026-10-03 05:15:08.320349+00:00",
+          "claimed_at": "2026-10-03 05:15:09.160694+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 493,
+          "org_index": 0,
+          "conversation_id": 323,
+          "work_id": 150,
+          "created_at": "2026-10-03 05:15:10.351038+00:00",
+          "available_at": "2026-10-03 05:15:10.406635+00:00",
+          "claimed_at": "2026-10-03 05:15:10.467185+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 512,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 158,
+          "created_at": "2026-10-03 05:15:20.395195+00:00",
+          "available_at": "2026-10-03 05:15:28.313587+00:00",
+          "claimed_at": "2026-10-03 05:15:29.497733+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 527,
+          "org_index": 0,
+          "conversation_id": 13,
+          "work_id": 162,
+          "created_at": "2026-10-03 05:15:30.350574+00:00",
+          "available_at": "2026-10-03 05:15:38.286350+00:00",
+          "claimed_at": "2026-10-03 05:15:38.570852+00:00",
+          "semantic_type": ""
+        }
+      ]
+    },
+    {
+      "org_index": 1,
+      "organization_id": 2,
+      "healthy": true,
+      "inbound_n": 30,
+      "ordinary_persisted_to_eligible": {
+        "n": 20,
+        "p50": 7.935807,
+        "p75": 7.94431,
+        "p90": 7.96242,
+        "p95": 7.963701,
+        "p99": 7.963701,
+        "max": 7.963701
+      },
+      "ordinary_eligible_to_claim": {
+        "n": 20,
+        "p50": 0.666691,
+        "p75": 1.535904,
+        "p90": 1.728615,
+        "p95": 1.775934,
+        "p99": 1.775934,
+        "max": 1.775934
+      },
+      "ordinary_persisted_to_claim": {
+        "n": 20,
+        "p50": 8.601708,
+        "p75": 9.437929,
+        "p90": 9.669113,
+        "p95": 9.672839,
+        "p99": 9.672839,
+        "max": 9.672839
+      },
+      "all_persisted_to_claim": {
+        "n": 30,
+        "p50": 8.476017,
+        "p75": 8.617146,
+        "p90": 9.635552,
+        "p95": 9.669113,
+        "p99": 9.672839,
+        "max": 9.672839
+      },
+      "missing": 0,
+      "joined_READY": 0,
+      "works": 30,
+      "calls": 40,
+      "calls_per_work": 1.3333333333333333,
+      "calls_per_work_distribution": [
+        {
+          "llm_calls_admitted": 0,
+          "count": 10
+        },
+        {
+          "llm_calls_admitted": 2,
+          "count": 20
+        }
+      ],
+      "deferrals": 7,
+      "pending_inbound": 0,
+      "oldest_pending_age_seconds": null,
+      "claims_total": 33,
+      "messages": [
+        {
+          "id": 47,
+          "org_index": 1,
+          "conversation_id": 36,
+          "work_id": 13,
+          "created_at": "2026-10-03 05:10:40.917050+00:00",
+          "available_at": "2026-10-03 05:10:40.970474+00:00",
+          "claimed_at": "2026-10-03 05:10:41.043362+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 65,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 23,
+          "created_at": "2026-10-03 05:10:50.476597+00:00",
+          "available_at": "2026-10-03 05:10:58.417877+00:00",
+          "claimed_at": "2026-10-03 05:10:58.823315+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 83,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 28,
+          "created_at": "2026-10-03 05:11:00.545699+00:00",
+          "available_at": "2026-10-03 05:11:08.503310+00:00",
+          "claimed_at": "2026-10-03 05:11:08.877684+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 101,
+          "org_index": 1,
+          "conversation_id": 68,
+          "work_id": 30,
+          "created_at": "2026-10-03 05:11:10.759656+00:00",
+          "available_at": "2026-10-03 05:11:10.793960+00:00",
+          "claimed_at": "2026-10-03 05:11:10.852057+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 117,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 39,
+          "created_at": "2026-10-03 05:11:20.415884+00:00",
+          "available_at": "2026-10-03 05:11:28.378304+00:00",
+          "claimed_at": "2026-10-03 05:11:28.812362+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 135,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 44,
+          "created_at": "2026-10-03 05:11:30.730782+00:00",
+          "available_at": "2026-10-03 05:11:38.677064+00:00",
+          "claimed_at": "2026-10-03 05:11:39.206799+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 152,
+          "org_index": 1,
+          "conversation_id": 100,
+          "work_id": 46,
+          "created_at": "2026-10-03 05:11:41.140972+00:00",
+          "available_at": "2026-10-03 05:11:41.206814+00:00",
+          "claimed_at": "2026-10-03 05:11:41.293653+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 169,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 54,
+          "created_at": "2026-10-03 05:11:50.467447+00:00",
+          "available_at": "2026-10-03 05:11:58.431148+00:00",
+          "claimed_at": "2026-10-03 05:11:58.828130+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 185,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 59,
+          "created_at": "2026-10-03 05:12:00.939159+00:00",
+          "available_at": "2026-10-03 05:12:08.881047+00:00",
+          "claimed_at": "2026-10-03 05:12:09.547738+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 202,
+          "org_index": 1,
+          "conversation_id": 132,
+          "work_id": 61,
+          "created_at": "2026-10-03 05:12:11.036372+00:00",
+          "available_at": "2026-10-03 05:12:11.084176+00:00",
+          "claimed_at": "2026-10-03 05:12:11.195148+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 219,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 70,
+          "created_at": "2026-10-03 05:12:20.606714+00:00",
+          "available_at": "2026-10-03 05:12:28.542693+00:00",
+          "claimed_at": "2026-10-03 05:12:30.078597+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 235,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 75,
+          "created_at": "2026-10-03 05:12:30.710750+00:00",
+          "available_at": "2026-10-03 05:12:38.603929+00:00",
+          "claimed_at": "2026-10-03 05:12:40.379863+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 251,
+          "org_index": 1,
+          "conversation_id": 164,
+          "work_id": 77,
+          "created_at": "2026-10-03 05:12:41.200514+00:00",
+          "available_at": "2026-10-03 05:12:41.248655+00:00",
+          "claimed_at": "2026-10-03 05:12:41.359042+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 270,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 86,
+          "created_at": "2026-10-03 05:12:50.489567+00:00",
+          "available_at": "2026-10-03 05:12:58.433877+00:00",
+          "claimed_at": "2026-10-03 05:12:59.091275+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 285,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 91,
+          "created_at": "2026-10-03 05:13:00.485314+00:00",
+          "available_at": "2026-10-03 05:13:08.429538+00:00",
+          "claimed_at": "2026-10-03 05:13:10.158153+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 301,
+          "org_index": 1,
+          "conversation_id": 196,
+          "work_id": 93,
+          "created_at": "2026-10-03 05:13:10.826698+00:00",
+          "available_at": "2026-10-03 05:13:10.863803+00:00",
+          "claimed_at": "2026-10-03 05:13:10.912689+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 319,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 101,
+          "created_at": "2026-10-03 05:13:20.594069+00:00",
+          "available_at": "2026-10-03 05:13:28.512077+00:00",
+          "claimed_at": "2026-10-03 05:13:29.116647+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 334,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 106,
+          "created_at": "2026-10-03 05:13:30.581345+00:00",
+          "available_at": "2026-10-03 05:13:38.492904+00:00",
+          "claimed_at": "2026-10-03 05:13:40.216897+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 350,
+          "org_index": 1,
+          "conversation_id": 228,
+          "work_id": 108,
+          "created_at": "2026-10-03 05:13:40.902542+00:00",
+          "available_at": "2026-10-03 05:13:40.950856+00:00",
+          "claimed_at": "2026-10-03 05:13:41.012146+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 368,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 116,
+          "created_at": "2026-10-03 05:13:50.596933+00:00",
+          "available_at": "2026-10-03 05:13:58.506635+00:00",
+          "claimed_at": "2026-10-03 05:13:59.177666+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 383,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 121,
+          "created_at": "2026-10-03 05:14:00.575739+00:00",
+          "available_at": "2026-10-03 05:14:08.466249+00:00",
+          "claimed_at": "2026-10-03 05:14:10.013668+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 400,
+          "org_index": 1,
+          "conversation_id": 260,
+          "work_id": 123,
+          "created_at": "2026-10-03 05:14:10.997590+00:00",
+          "available_at": "2026-10-03 05:14:11.046597+00:00",
+          "claimed_at": "2026-10-03 05:14:11.113187+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 417,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 131,
+          "created_at": "2026-10-03 05:14:20.639199+00:00",
+          "available_at": "2026-10-03 05:14:28.544615+00:00",
+          "claimed_at": "2026-10-03 05:14:28.915161+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 432,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 135,
+          "created_at": "2026-10-03 05:14:30.541287+00:00",
+          "available_at": "2026-10-03 05:14:38.477094+00:00",
+          "claimed_at": "2026-10-03 05:14:39.055540+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 449,
+          "org_index": 1,
+          "conversation_id": 292,
+          "work_id": 137,
+          "created_at": "2026-10-03 05:14:40.928308+00:00",
+          "available_at": "2026-10-03 05:14:40.966843+00:00",
+          "claimed_at": "2026-10-03 05:14:41.018676+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 465,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 145,
+          "created_at": "2026-10-03 05:14:50.566021+00:00",
+          "available_at": "2026-10-03 05:14:58.495936+00:00",
+          "claimed_at": "2026-10-03 05:14:59.183167+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 480,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 149,
+          "created_at": "2026-10-03 05:15:00.616264+00:00",
+          "available_at": "2026-10-03 05:15:08.525752+00:00",
+          "claimed_at": "2026-10-03 05:15:09.168776+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 497,
+          "org_index": 1,
+          "conversation_id": 324,
+          "work_id": 151,
+          "created_at": "2026-10-03 05:15:11.112989+00:00",
+          "available_at": "2026-10-03 05:15:11.172042+00:00",
+          "claimed_at": "2026-10-03 05:15:11.245829+00:00",
+          "semantic_type": "safety_signal"
+        },
+        {
+          "id": 513,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 159,
+          "created_at": "2026-10-03 05:15:20.550438+00:00",
+          "available_at": "2026-10-03 05:15:28.483995+00:00",
+          "claimed_at": "2026-10-03 05:15:29.540297+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 528,
+          "org_index": 1,
+          "conversation_id": 14,
+          "work_id": 163,
+          "created_at": "2026-10-03 05:15:30.558581+00:00",
+          "available_at": "2026-10-03 05:15:38.471695+00:00",
+          "claimed_at": "2026-10-03 05:15:39.670718+00:00",
+          "semantic_type": ""
+        }
+      ]
+    },
+    {
+      "org_index": 2,
+      "organization_id": 3,
+      "healthy": false,
+      "inbound_n": 300,
+      "ordinary_persisted_to_eligible": {
+        "n": 300,
+        "p50": 7.933964,
+        "p75": 7.945944,
+        "p90": 7.955278,
+        "p95": 7.958877,
+        "p99": 7.964001,
+        "max": 7.967516
+      },
+      "ordinary_eligible_to_claim": {
+        "n": 74,
+        "p50": 145.655835,
+        "p75": 190.164681,
+        "p90": 221.201338,
+        "p95": 231.681821,
+        "p99": 237.512754,
+        "max": 237.512754
+      },
+      "ordinary_persisted_to_claim": {
+        "n": 74,
+        "p50": 153.592047,
+        "p75": 198.115999,
+        "p90": 229.126256,
+        "p95": 239.649337,
+        "p99": 245.45835,
+        "max": 245.45835
+      },
+      "all_persisted_to_claim": {
+        "n": 74,
+        "p50": 153.592047,
+        "p75": 198.115999,
+        "p90": 229.126256,
+        "p95": 239.649337,
+        "p99": 245.45835,
+        "max": 245.45835
+      },
+      "missing": 226,
+      "joined_READY": 0,
+      "works": 92,
+      "calls": 184,
+      "calls_per_work": 2.0,
+      "calls_per_work_distribution": [
+        {
+          "llm_calls_admitted": 2,
+          "count": 92
+        }
+      ],
+      "deferrals": 0,
+      "pending_inbound": 226,
+      "oldest_pending_age_seconds": 282.093578,
+      "claims_total": 104,
+      "messages": [
+        {
+          "id": 50,
+          "org_index": 2,
+          "conversation_id": 37,
+          "work_id": 51,
+          "created_at": "2026-10-03 05:10:41.522814+00:00",
+          "available_at": "2026-10-03 05:10:49.470542+00:00",
+          "claimed_at": "2026-10-03 05:11:52.322352+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 51,
+          "org_index": 2,
+          "conversation_id": 38,
+          "work_id": 52,
+          "created_at": "2026-10-03 05:10:41.767616+00:00",
+          "available_at": "2026-10-03 05:10:49.698902+00:00",
+          "claimed_at": "2026-10-03 05:11:54.733311+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 52,
+          "org_index": 2,
+          "conversation_id": 39,
+          "work_id": 55,
+          "created_at": "2026-10-03 05:10:42.361210+00:00",
+          "available_at": "2026-10-03 05:10:50.293856+00:00",
+          "claimed_at": "2026-10-03 05:12:01.833644+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 54,
+          "org_index": 2,
+          "conversation_id": 40,
+          "work_id": 56,
+          "created_at": "2026-10-03 05:10:43.353013+00:00",
+          "available_at": "2026-10-03 05:10:51.296876+00:00",
+          "claimed_at": "2026-10-03 05:12:04.035046+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 55,
+          "org_index": 2,
+          "conversation_id": 41,
+          "work_id": 57,
+          "created_at": "2026-10-03 05:10:44.364802+00:00",
+          "available_at": "2026-10-03 05:10:52.318818+00:00",
+          "claimed_at": "2026-10-03 05:12:06.713235+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 56,
+          "org_index": 2,
+          "conversation_id": 42,
+          "work_id": 62,
+          "created_at": "2026-10-03 05:10:45.345901+00:00",
+          "available_at": "2026-10-03 05:10:53.308812+00:00",
+          "claimed_at": "2026-10-03 05:12:11.860408+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 58,
+          "org_index": 2,
+          "conversation_id": 43,
+          "work_id": 63,
+          "created_at": "2026-10-03 05:10:46.319968+00:00",
+          "available_at": "2026-10-03 05:10:54.283969+00:00",
+          "claimed_at": "2026-10-03 05:12:14.857936+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 59,
+          "org_index": 2,
+          "conversation_id": 44,
+          "work_id": 64,
+          "created_at": "2026-10-03 05:10:47.348855+00:00",
+          "available_at": "2026-10-03 05:10:55.303283+00:00",
+          "claimed_at": "2026-10-03 05:12:17.148898+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 61,
+          "org_index": 2,
+          "conversation_id": 45,
+          "work_id": 65,
+          "created_at": "2026-10-03 05:10:48.355365+00:00",
+          "available_at": "2026-10-03 05:10:56.298975+00:00",
+          "claimed_at": "2026-10-03 05:12:19.757701+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 62,
+          "org_index": 2,
+          "conversation_id": 46,
+          "work_id": 66,
+          "created_at": "2026-10-03 05:10:49.370636+00:00",
+          "available_at": "2026-10-03 05:10:57.318067+00:00",
+          "claimed_at": "2026-10-03 05:12:22.114392+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 66,
+          "org_index": 2,
+          "conversation_id": 47,
+          "work_id": 67,
+          "created_at": "2026-10-03 05:10:50.623023+00:00",
+          "available_at": "2026-10-03 05:10:58.566737+00:00",
+          "claimed_at": "2026-10-03 05:12:24.836828+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 67,
+          "org_index": 2,
+          "conversation_id": 48,
+          "work_id": 68,
+          "created_at": "2026-10-03 05:10:51.353707+00:00",
+          "available_at": "2026-10-03 05:10:59.300912+00:00",
+          "claimed_at": "2026-10-03 05:12:27.140079+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 69,
+          "org_index": 2,
+          "conversation_id": 49,
+          "work_id": 71,
+          "created_at": "2026-10-03 05:10:52.380866+00:00",
+          "available_at": "2026-10-03 05:11:00.326616+00:00",
+          "claimed_at": "2026-10-03 05:12:31.843618+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 70,
+          "org_index": 2,
+          "conversation_id": 50,
+          "work_id": 72,
+          "created_at": "2026-10-03 05:10:53.341354+00:00",
+          "available_at": "2026-10-03 05:11:01.298879+00:00",
+          "claimed_at": "2026-10-03 05:12:34.082907+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 72,
+          "org_index": 2,
+          "conversation_id": 51,
+          "work_id": 73,
+          "created_at": "2026-10-03 05:10:54.378727+00:00",
+          "available_at": "2026-10-03 05:11:02.310046+00:00",
+          "claimed_at": "2026-10-03 05:12:36.862441+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 73,
+          "org_index": 2,
+          "conversation_id": 52,
+          "work_id": 78,
+          "created_at": "2026-10-03 05:10:55.421461+00:00",
+          "available_at": "2026-10-03 05:11:03.382632+00:00",
+          "claimed_at": "2026-10-03 05:12:42.814253+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 75,
+          "org_index": 2,
+          "conversation_id": 53,
+          "work_id": 79,
+          "created_at": "2026-10-03 05:10:56.320162+00:00",
+          "available_at": "2026-10-03 05:11:04.282272+00:00",
+          "claimed_at": "2026-10-03 05:12:44.669317+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 76,
+          "org_index": 2,
+          "conversation_id": 54,
+          "work_id": 80,
+          "created_at": "2026-10-03 05:10:57.347471+00:00",
+          "available_at": "2026-10-03 05:11:05.303727+00:00",
+          "claimed_at": "2026-10-03 05:12:46.711343+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 78,
+          "org_index": 2,
+          "conversation_id": 55,
+          "work_id": 81,
+          "created_at": "2026-10-03 05:10:58.322648+00:00",
+          "available_at": "2026-10-03 05:11:06.281449+00:00",
+          "claimed_at": "2026-10-03 05:12:48.477342+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 79,
+          "org_index": 2,
+          "conversation_id": 56,
+          "work_id": 82,
+          "created_at": "2026-10-03 05:10:59.399074+00:00",
+          "available_at": "2026-10-03 05:11:07.337479+00:00",
+          "claimed_at": "2026-10-03 05:12:50.634633+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 84,
+          "org_index": 2,
+          "conversation_id": 57,
+          "work_id": 83,
+          "created_at": "2026-10-03 05:11:00.709622+00:00",
+          "available_at": "2026-10-03 05:11:08.642575+00:00",
+          "claimed_at": "2026-10-03 05:12:52.523900+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 85,
+          "org_index": 2,
+          "conversation_id": 58,
+          "work_id": 84,
+          "created_at": "2026-10-03 05:11:01.412010+00:00",
+          "available_at": "2026-10-03 05:11:09.336103+00:00",
+          "claimed_at": "2026-10-03 05:12:54.832355+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 86,
+          "org_index": 2,
+          "conversation_id": 59,
+          "work_id": 87,
+          "created_at": "2026-10-03 05:11:02.402470+00:00",
+          "available_at": "2026-10-03 05:11:10.312665+00:00",
+          "claimed_at": "2026-10-03 05:13:01.936267+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 87,
+          "org_index": 2,
+          "conversation_id": 60,
+          "work_id": 88,
+          "created_at": "2026-10-03 05:11:03.376387+00:00",
+          "available_at": "2026-10-03 05:11:11.304545+00:00",
+          "claimed_at": "2026-10-03 05:13:04.214511+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 89,
+          "org_index": 2,
+          "conversation_id": 61,
+          "work_id": 89,
+          "created_at": "2026-10-03 05:11:04.381557+00:00",
+          "available_at": "2026-10-03 05:11:12.315370+00:00",
+          "claimed_at": "2026-10-03 05:13:07.072516+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 90,
+          "org_index": 2,
+          "conversation_id": 62,
+          "work_id": 94,
+          "created_at": "2026-10-03 05:11:05.382692+00:00",
+          "available_at": "2026-10-03 05:11:13.314546+00:00",
+          "claimed_at": "2026-10-03 05:13:12.370260+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 92,
+          "org_index": 2,
+          "conversation_id": 63,
+          "work_id": 95,
+          "created_at": "2026-10-03 05:11:06.385712+00:00",
+          "available_at": "2026-10-03 05:11:14.330089+00:00",
+          "claimed_at": "2026-10-03 05:13:15.263121+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 93,
+          "org_index": 2,
+          "conversation_id": 64,
+          "work_id": 96,
+          "created_at": "2026-10-03 05:11:07.429281+00:00",
+          "available_at": "2026-10-03 05:11:15.342494+00:00",
+          "claimed_at": "2026-10-03 05:13:17.649771+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 95,
+          "org_index": 2,
+          "conversation_id": 65,
+          "work_id": 97,
+          "created_at": "2026-10-03 05:11:08.422369+00:00",
+          "available_at": "2026-10-03 05:11:16.353592+00:00",
+          "claimed_at": "2026-10-03 05:13:20.782553+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 96,
+          "org_index": 2,
+          "conversation_id": 66,
+          "work_id": 98,
+          "created_at": "2026-10-03 05:11:09.352872+00:00",
+          "available_at": "2026-10-03 05:11:17.302029+00:00",
+          "claimed_at": "2026-10-03 05:13:23.509222+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 103,
+          "org_index": 2,
+          "conversation_id": 69,
+          "work_id": 99,
+          "created_at": "2026-10-03 05:11:11.196559+00:00",
+          "available_at": "2026-10-03 05:11:19.150276+00:00",
+          "claimed_at": "2026-10-03 05:13:26.246933+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 104,
+          "org_index": 2,
+          "conversation_id": 70,
+          "work_id": 102,
+          "created_at": "2026-10-03 05:11:11.407635+00:00",
+          "available_at": "2026-10-03 05:11:19.353579+00:00",
+          "claimed_at": "2026-10-03 05:13:31.836203+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 105,
+          "org_index": 2,
+          "conversation_id": 71,
+          "work_id": 103,
+          "created_at": "2026-10-03 05:11:12.351506+00:00",
+          "available_at": "2026-10-03 05:11:20.300978+00:00",
+          "claimed_at": "2026-10-03 05:13:34.286720+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 107,
+          "org_index": 2,
+          "conversation_id": 72,
+          "work_id": 104,
+          "created_at": "2026-10-03 05:11:13.386274+00:00",
+          "available_at": "2026-10-03 05:11:21.329847+00:00",
+          "claimed_at": "2026-10-03 05:13:37.193210+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 108,
+          "org_index": 2,
+          "conversation_id": 73,
+          "work_id": 109,
+          "created_at": "2026-10-03 05:11:14.350220+00:00",
+          "available_at": "2026-10-03 05:11:22.301348+00:00",
+          "claimed_at": "2026-10-03 05:13:42.459349+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 109,
+          "org_index": 2,
+          "conversation_id": 74,
+          "work_id": 110,
+          "created_at": "2026-10-03 05:11:15.395372+00:00",
+          "available_at": "2026-10-03 05:11:23.333489+00:00",
+          "claimed_at": "2026-10-03 05:13:45.379799+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 111,
+          "org_index": 2,
+          "conversation_id": 75,
+          "work_id": 111,
+          "created_at": "2026-10-03 05:11:16.385045+00:00",
+          "available_at": "2026-10-03 05:11:24.318948+00:00",
+          "claimed_at": "2026-10-03 05:13:47.718167+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 112,
+          "org_index": 2,
+          "conversation_id": 76,
+          "work_id": 112,
+          "created_at": "2026-10-03 05:11:17.384857+00:00",
+          "available_at": "2026-10-03 05:11:25.321069+00:00",
+          "claimed_at": "2026-10-03 05:13:50.976904+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 114,
+          "org_index": 2,
+          "conversation_id": 77,
+          "work_id": 113,
+          "created_at": "2026-10-03 05:11:18.386917+00:00",
+          "available_at": "2026-10-03 05:11:26.325464+00:00",
+          "claimed_at": "2026-10-03 05:13:53.380236+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 115,
+          "org_index": 2,
+          "conversation_id": 78,
+          "work_id": 114,
+          "created_at": "2026-10-03 05:11:19.380312+00:00",
+          "available_at": "2026-10-03 05:11:27.315336+00:00",
+          "claimed_at": "2026-10-03 05:13:56.312023+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 119,
+          "org_index": 2,
+          "conversation_id": 79,
+          "work_id": 117,
+          "created_at": "2026-10-03 05:11:20.585283+00:00",
+          "available_at": "2026-10-03 05:11:28.509030+00:00",
+          "claimed_at": "2026-10-03 05:14:01.818828+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 120,
+          "org_index": 2,
+          "conversation_id": 80,
+          "work_id": 118,
+          "created_at": "2026-10-03 05:11:21.339649+00:00",
+          "available_at": "2026-10-03 05:11:29.296776+00:00",
+          "claimed_at": "2026-10-03 05:14:04.673398+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 121,
+          "org_index": 2,
+          "conversation_id": 81,
+          "work_id": 119,
+          "created_at": "2026-10-03 05:11:22.361923+00:00",
+          "available_at": "2026-10-03 05:11:30.325819+00:00",
+          "claimed_at": "2026-10-03 05:14:07.186905+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 123,
+          "org_index": 2,
+          "conversation_id": 82,
+          "work_id": 124,
+          "created_at": "2026-10-03 05:11:23.337000+00:00",
+          "available_at": "2026-10-03 05:11:31.295888+00:00",
+          "claimed_at": "2026-10-03 05:14:11.964980+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 124,
+          "org_index": 2,
+          "conversation_id": 83,
+          "work_id": 125,
+          "created_at": "2026-10-03 05:11:24.377885+00:00",
+          "available_at": "2026-10-03 05:11:32.329622+00:00",
+          "claimed_at": "2026-10-03 05:14:14.378928+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 126,
+          "org_index": 2,
+          "conversation_id": 84,
+          "work_id": 126,
+          "created_at": "2026-10-03 05:11:25.406629+00:00",
+          "available_at": "2026-10-03 05:11:33.334580+00:00",
+          "claimed_at": "2026-10-03 05:14:17.761191+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 127,
+          "org_index": 2,
+          "conversation_id": 85,
+          "work_id": 127,
+          "created_at": "2026-10-03 05:11:26.356905+00:00",
+          "available_at": "2026-10-03 05:11:34.304685+00:00",
+          "claimed_at": "2026-10-03 05:14:20.161625+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 128,
+          "org_index": 2,
+          "conversation_id": 86,
+          "work_id": 128,
+          "created_at": "2026-10-03 05:11:27.360562+00:00",
+          "available_at": "2026-10-03 05:11:35.303639+00:00",
+          "claimed_at": "2026-10-03 05:14:23.515980+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 130,
+          "org_index": 2,
+          "conversation_id": 87,
+          "work_id": 129,
+          "created_at": "2026-10-03 05:11:28.386402+00:00",
+          "available_at": "2026-10-03 05:11:36.325410+00:00",
+          "claimed_at": "2026-10-03 05:14:25.916056+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 131,
+          "org_index": 2,
+          "conversation_id": 88,
+          "work_id": 132,
+          "created_at": "2026-10-03 05:11:29.358671+00:00",
+          "available_at": "2026-10-03 05:11:37.299106+00:00",
+          "claimed_at": "2026-10-03 05:14:31.974147+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 136,
+          "org_index": 2,
+          "conversation_id": 89,
+          "work_id": 133,
+          "created_at": "2026-10-03 05:11:30.926880+00:00",
+          "available_at": "2026-10-03 05:11:38.850765+00:00",
+          "claimed_at": "2026-10-03 05:14:34.613306+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 137,
+          "org_index": 2,
+          "conversation_id": 90,
+          "work_id": 138,
+          "created_at": "2026-10-03 05:11:31.411560+00:00",
+          "available_at": "2026-10-03 05:11:39.330971+00:00",
+          "claimed_at": "2026-10-03 05:14:42.093836+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 138,
+          "org_index": 2,
+          "conversation_id": 91,
+          "work_id": 139,
+          "created_at": "2026-10-03 05:11:32.416116+00:00",
+          "available_at": "2026-10-03 05:11:40.342728+00:00",
+          "claimed_at": "2026-10-03 05:14:44.561030+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 140,
+          "org_index": 2,
+          "conversation_id": 92,
+          "work_id": 140,
+          "created_at": "2026-10-03 05:11:33.367615+00:00",
+          "available_at": "2026-10-03 05:11:41.305876+00:00",
+          "claimed_at": "2026-10-03 05:14:47.676667+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 141,
+          "org_index": 2,
+          "conversation_id": 93,
+          "work_id": 141,
+          "created_at": "2026-10-03 05:11:34.379053+00:00",
+          "available_at": "2026-10-03 05:11:42.333324+00:00",
+          "claimed_at": "2026-10-03 05:14:50.396769+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 142,
+          "org_index": 2,
+          "conversation_id": 94,
+          "work_id": 142,
+          "created_at": "2026-10-03 05:11:35.384087+00:00",
+          "available_at": "2026-10-03 05:11:43.335405+00:00",
+          "claimed_at": "2026-10-03 05:14:53.500086+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 144,
+          "org_index": 2,
+          "conversation_id": 95,
+          "work_id": 143,
+          "created_at": "2026-10-03 05:11:36.359419+00:00",
+          "available_at": "2026-10-03 05:11:44.297954+00:00",
+          "claimed_at": "2026-10-03 05:14:55.929382+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 145,
+          "org_index": 2,
+          "conversation_id": 96,
+          "work_id": 146,
+          "created_at": "2026-10-03 05:11:37.390660+00:00",
+          "available_at": "2026-10-03 05:11:45.331525+00:00",
+          "claimed_at": "2026-10-03 05:15:02.281064+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 147,
+          "org_index": 2,
+          "conversation_id": 97,
+          "work_id": 147,
+          "created_at": "2026-10-03 05:11:38.395238+00:00",
+          "available_at": "2026-10-03 05:11:46.312830+00:00",
+          "claimed_at": "2026-10-03 05:15:04.918693+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 148,
+          "org_index": 2,
+          "conversation_id": 98,
+          "work_id": 152,
+          "created_at": "2026-10-03 05:11:39.490767+00:00",
+          "available_at": "2026-10-03 05:11:47.370020+00:00",
+          "claimed_at": "2026-10-03 05:15:12.408484+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 155,
+          "org_index": 2,
+          "conversation_id": 101,
+          "work_id": 153,
+          "created_at": "2026-10-03 05:11:41.864033+00:00",
+          "available_at": "2026-10-03 05:11:49.787156+00:00",
+          "claimed_at": "2026-10-03 05:15:15.075119+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 156,
+          "org_index": 2,
+          "conversation_id": 102,
+          "work_id": 154,
+          "created_at": "2026-10-03 05:11:42.167586+00:00",
+          "available_at": "2026-10-03 05:11:50.072574+00:00",
+          "claimed_at": "2026-10-03 05:15:18.320466+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 157,
+          "org_index": 2,
+          "conversation_id": 103,
+          "work_id": 155,
+          "created_at": "2026-10-03 05:11:42.483526+00:00",
+          "available_at": "2026-10-03 05:11:50.381274+00:00",
+          "claimed_at": "2026-10-03 05:15:20.939757+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 158,
+          "org_index": 2,
+          "conversation_id": 104,
+          "work_id": 156,
+          "created_at": "2026-10-03 05:11:43.397649+00:00",
+          "available_at": "2026-10-03 05:11:51.312142+00:00",
+          "claimed_at": "2026-10-03 05:15:23.902818+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 160,
+          "org_index": 2,
+          "conversation_id": 105,
+          "work_id": 157,
+          "created_at": "2026-10-03 05:11:44.486784+00:00",
+          "available_at": "2026-10-03 05:11:52.328683+00:00",
+          "claimed_at": "2026-10-03 05:15:26.314262+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 161,
+          "org_index": 2,
+          "conversation_id": 106,
+          "work_id": 160,
+          "created_at": "2026-10-03 05:11:45.488090+00:00",
+          "available_at": "2026-10-03 05:11:53.347279+00:00",
+          "claimed_at": "2026-10-03 05:15:32.670822+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 162,
+          "org_index": 2,
+          "conversation_id": 107,
+          "work_id": 161,
+          "created_at": "2026-10-03 05:11:46.426177+00:00",
+          "available_at": "2026-10-03 05:11:54.351095+00:00",
+          "claimed_at": "2026-10-03 05:15:35.552433+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 164,
+          "org_index": 2,
+          "conversation_id": 108,
+          "work_id": 164,
+          "created_at": "2026-10-03 05:11:47.416305+00:00",
+          "available_at": "2026-10-03 05:11:55.337831+00:00",
+          "claimed_at": "2026-10-03 05:15:41.588227+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 165,
+          "org_index": 2,
+          "conversation_id": 109,
+          "work_id": 165,
+          "created_at": "2026-10-03 05:11:48.410764+00:00",
+          "available_at": "2026-10-03 05:11:56.350312+00:00",
+          "claimed_at": "2026-10-03 05:15:44.201095+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 167,
+          "org_index": 2,
+          "conversation_id": 110,
+          "work_id": 166,
+          "created_at": "2026-10-03 05:11:49.381886+00:00",
+          "available_at": "2026-10-03 05:11:57.329544+00:00",
+          "claimed_at": "2026-10-03 05:15:47.365736+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 170,
+          "org_index": 2,
+          "conversation_id": 111,
+          "work_id": 167,
+          "created_at": "2026-10-03 05:11:50.568498+00:00",
+          "available_at": "2026-10-03 05:11:58.536014+00:00",
+          "claimed_at": "2026-10-03 05:15:50.217835+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 171,
+          "org_index": 2,
+          "conversation_id": 112,
+          "work_id": 168,
+          "created_at": "2026-10-03 05:11:51.371225+00:00",
+          "available_at": "2026-10-03 05:11:59.324166+00:00",
+          "claimed_at": "2026-10-03 05:15:53.143151+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 173,
+          "org_index": 2,
+          "conversation_id": 113,
+          "work_id": 169,
+          "created_at": "2026-10-03 05:11:52.376873+00:00",
+          "available_at": "2026-10-03 05:12:00.326345+00:00",
+          "claimed_at": "2026-10-03 05:15:55.720665+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 174,
+          "org_index": 2,
+          "conversation_id": 114,
+          "work_id": 170,
+          "created_at": "2026-10-03 05:11:53.398068+00:00",
+          "available_at": "2026-10-03 05:12:01.343664+00:00",
+          "claimed_at": "2026-10-03 05:15:58.856418+00:00",
+          "semantic_type": ""
+        },
+        {
+          "id": 176,
+          "org_index": 2,
+          "conversation_id": 115,
+          "work_id": null,
+          "created_at": "2026-10-03 05:11:54.355845+00:00",
+          "available_at": "2026-10-03 05:12:02.306441+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 177,
+          "org_index": 2,
+          "conversation_id": 116,
+          "work_id": null,
+          "created_at": "2026-10-03 05:11:55.397488+00:00",
+          "available_at": "2026-10-03 05:12:03.346364+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 178,
+          "org_index": 2,
+          "conversation_id": 117,
+          "work_id": null,
+          "created_at": "2026-10-03 05:11:56.398329+00:00",
+          "available_at": "2026-10-03 05:12:04.311289+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 180,
+          "org_index": 2,
+          "conversation_id": 118,
+          "work_id": null,
+          "created_at": "2026-10-03 05:11:57.514406+00:00",
+          "available_at": "2026-10-03 05:12:05.391548+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 181,
+          "org_index": 2,
+          "conversation_id": 119,
+          "work_id": null,
+          "created_at": "2026-10-03 05:11:58.430226+00:00",
+          "available_at": "2026-10-03 05:12:06.352158+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 182,
+          "org_index": 2,
+          "conversation_id": 120,
+          "work_id": null,
+          "created_at": "2026-10-03 05:11:59.428682+00:00",
+          "available_at": "2026-10-03 05:12:07.322004+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 186,
+          "org_index": 2,
+          "conversation_id": 121,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:01.105657+00:00",
+          "available_at": "2026-10-03 05:12:09.042552+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 187,
+          "org_index": 2,
+          "conversation_id": 122,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:01.426038+00:00",
+          "available_at": "2026-10-03 05:12:09.354300+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 188,
+          "org_index": 2,
+          "conversation_id": 123,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:02.356875+00:00",
+          "available_at": "2026-10-03 05:12:10.300148+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 189,
+          "org_index": 2,
+          "conversation_id": 124,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:03.372003+00:00",
+          "available_at": "2026-10-03 05:12:11.316698+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 191,
+          "org_index": 2,
+          "conversation_id": 125,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:04.373597+00:00",
+          "available_at": "2026-10-03 05:12:12.325977+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 192,
+          "org_index": 2,
+          "conversation_id": 126,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:05.375187+00:00",
+          "available_at": "2026-10-03 05:12:13.326465+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 194,
+          "org_index": 2,
+          "conversation_id": 127,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:06.398541+00:00",
+          "available_at": "2026-10-03 05:12:14.337422+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 195,
+          "org_index": 2,
+          "conversation_id": 128,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:07.383462+00:00",
+          "available_at": "2026-10-03 05:12:15.326508+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 196,
+          "org_index": 2,
+          "conversation_id": 129,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:08.393624+00:00",
+          "available_at": "2026-10-03 05:12:16.318112+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 198,
+          "org_index": 2,
+          "conversation_id": 130,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:09.404120+00:00",
+          "available_at": "2026-10-03 05:12:17.331355+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 205,
+          "org_index": 2,
+          "conversation_id": 133,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:11.862815+00:00",
+          "available_at": "2026-10-03 05:12:19.779134+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 206,
+          "org_index": 2,
+          "conversation_id": 134,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:12.178717+00:00",
+          "available_at": "2026-10-03 05:12:20.080510+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 207,
+          "org_index": 2,
+          "conversation_id": 135,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:12.573914+00:00",
+          "available_at": "2026-10-03 05:12:20.429415+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 208,
+          "org_index": 2,
+          "conversation_id": 136,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:13.392522+00:00",
+          "available_at": "2026-10-03 05:12:21.328083+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 210,
+          "org_index": 2,
+          "conversation_id": 137,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:14.430350+00:00",
+          "available_at": "2026-10-03 05:12:22.328622+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 211,
+          "org_index": 2,
+          "conversation_id": 138,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:15.373166+00:00",
+          "available_at": "2026-10-03 05:12:23.307443+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 212,
+          "org_index": 2,
+          "conversation_id": 139,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:16.399374+00:00",
+          "available_at": "2026-10-03 05:12:24.335980+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 214,
+          "org_index": 2,
+          "conversation_id": 140,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:17.388623+00:00",
+          "available_at": "2026-10-03 05:12:25.321976+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 215,
+          "org_index": 2,
+          "conversation_id": 141,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:18.470596+00:00",
+          "available_at": "2026-10-03 05:12:26.324990+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 217,
+          "org_index": 2,
+          "conversation_id": 142,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:19.380596+00:00",
+          "available_at": "2026-10-03 05:12:27.317133+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 220,
+          "org_index": 2,
+          "conversation_id": 143,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:20.786823+00:00",
+          "available_at": "2026-10-03 05:12:28.715681+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 221,
+          "org_index": 2,
+          "conversation_id": 144,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:21.370299+00:00",
+          "available_at": "2026-10-03 05:12:29.307032+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 223,
+          "org_index": 2,
+          "conversation_id": 145,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:22.413400+00:00",
+          "available_at": "2026-10-03 05:12:30.355981+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 224,
+          "org_index": 2,
+          "conversation_id": 146,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:23.405966+00:00",
+          "available_at": "2026-10-03 05:12:31.337022+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 226,
+          "org_index": 2,
+          "conversation_id": 147,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:24.394422+00:00",
+          "available_at": "2026-10-03 05:12:32.342004+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 227,
+          "org_index": 2,
+          "conversation_id": 148,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:25.375828+00:00",
+          "available_at": "2026-10-03 05:12:33.317902+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 228,
+          "org_index": 2,
+          "conversation_id": 149,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:26.368509+00:00",
+          "available_at": "2026-10-03 05:12:34.305370+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 230,
+          "org_index": 2,
+          "conversation_id": 150,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:27.397166+00:00",
+          "available_at": "2026-10-03 05:12:35.341084+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 231,
+          "org_index": 2,
+          "conversation_id": 151,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:28.386644+00:00",
+          "available_at": "2026-10-03 05:12:36.329866+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 233,
+          "org_index": 2,
+          "conversation_id": 152,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:29.462295+00:00",
+          "available_at": "2026-10-03 05:12:37.328165+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 236,
+          "org_index": 2,
+          "conversation_id": 153,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:30.860204+00:00",
+          "available_at": "2026-10-03 05:12:38.820418+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 237,
+          "org_index": 2,
+          "conversation_id": 154,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:31.394831+00:00",
+          "available_at": "2026-10-03 05:12:39.329773+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 238,
+          "org_index": 2,
+          "conversation_id": 155,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:32.342846+00:00",
+          "available_at": "2026-10-03 05:12:40.301263+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 239,
+          "org_index": 2,
+          "conversation_id": 156,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:33.337938+00:00",
+          "available_at": "2026-10-03 05:12:41.288813+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 241,
+          "org_index": 2,
+          "conversation_id": 157,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:34.409129+00:00",
+          "available_at": "2026-10-03 05:12:42.336216+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 242,
+          "org_index": 2,
+          "conversation_id": 158,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:35.391779+00:00",
+          "available_at": "2026-10-03 05:12:43.335277+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 244,
+          "org_index": 2,
+          "conversation_id": 159,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:36.378447+00:00",
+          "available_at": "2026-10-03 05:12:44.313769+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 245,
+          "org_index": 2,
+          "conversation_id": 160,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:37.501836+00:00",
+          "available_at": "2026-10-03 05:12:45.363152+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 246,
+          "org_index": 2,
+          "conversation_id": 161,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:38.444637+00:00",
+          "available_at": "2026-10-03 05:12:46.369462+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 248,
+          "org_index": 2,
+          "conversation_id": 162,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:39.375989+00:00",
+          "available_at": "2026-10-03 05:12:47.305045+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 254,
+          "org_index": 2,
+          "conversation_id": 165,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:41.924507+00:00",
+          "available_at": "2026-10-03 05:12:49.878669+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 255,
+          "org_index": 2,
+          "conversation_id": 166,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:42.151334+00:00",
+          "available_at": "2026-10-03 05:12:50.091342+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 256,
+          "org_index": 2,
+          "conversation_id": 167,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:42.396609+00:00",
+          "available_at": "2026-10-03 05:12:50.323360+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 258,
+          "org_index": 2,
+          "conversation_id": 168,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:43.412472+00:00",
+          "available_at": "2026-10-03 05:12:51.331611+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 259,
+          "org_index": 2,
+          "conversation_id": 169,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:44.422101+00:00",
+          "available_at": "2026-10-03 05:12:52.343436+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 261,
+          "org_index": 2,
+          "conversation_id": 170,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:45.364079+00:00",
+          "available_at": "2026-10-03 05:12:53.316774+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 263,
+          "org_index": 2,
+          "conversation_id": 171,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:46.362329+00:00",
+          "available_at": "2026-10-03 05:12:54.321804+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 264,
+          "org_index": 2,
+          "conversation_id": 172,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:47.338702+00:00",
+          "available_at": "2026-10-03 05:12:55.304596+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 266,
+          "org_index": 2,
+          "conversation_id": 173,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:48.368224+00:00",
+          "available_at": "2026-10-03 05:12:56.291415+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 267,
+          "org_index": 2,
+          "conversation_id": 174,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:49.378400+00:00",
+          "available_at": "2026-10-03 05:12:57.314672+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 271,
+          "org_index": 2,
+          "conversation_id": 175,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:50.641730+00:00",
+          "available_at": "2026-10-03 05:12:58.597008+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 272,
+          "org_index": 2,
+          "conversation_id": 176,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:51.364276+00:00",
+          "available_at": "2026-10-03 05:12:59.320084+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 274,
+          "org_index": 2,
+          "conversation_id": 177,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:52.384114+00:00",
+          "available_at": "2026-10-03 05:13:00.297395+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 275,
+          "org_index": 2,
+          "conversation_id": 178,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:53.516002+00:00",
+          "available_at": "2026-10-03 05:13:01.352602+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 276,
+          "org_index": 2,
+          "conversation_id": 179,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:54.494500+00:00",
+          "available_at": "2026-10-03 05:13:02.394827+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 278,
+          "org_index": 2,
+          "conversation_id": 180,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:55.474846+00:00",
+          "available_at": "2026-10-03 05:13:03.412312+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 279,
+          "org_index": 2,
+          "conversation_id": 181,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:56.369064+00:00",
+          "available_at": "2026-10-03 05:13:04.316633+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 281,
+          "org_index": 2,
+          "conversation_id": 182,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:57.396144+00:00",
+          "available_at": "2026-10-03 05:13:05.337037+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 282,
+          "org_index": 2,
+          "conversation_id": 183,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:58.338738+00:00",
+          "available_at": "2026-10-03 05:13:06.286218+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 283,
+          "org_index": 2,
+          "conversation_id": 184,
+          "work_id": null,
+          "created_at": "2026-10-03 05:12:59.370218+00:00",
+          "available_at": "2026-10-03 05:13:07.311491+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 286,
+          "org_index": 2,
+          "conversation_id": 185,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:00.752757+00:00",
+          "available_at": "2026-10-03 05:13:08.662562+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 287,
+          "org_index": 2,
+          "conversation_id": 186,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:01.419618+00:00",
+          "available_at": "2026-10-03 05:13:09.363560+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 288,
+          "org_index": 2,
+          "conversation_id": 187,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:02.424674+00:00",
+          "available_at": "2026-10-03 05:13:10.354459+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 289,
+          "org_index": 2,
+          "conversation_id": 188,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:03.373812+00:00",
+          "available_at": "2026-10-03 05:13:11.320845+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 291,
+          "org_index": 2,
+          "conversation_id": 189,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:04.347475+00:00",
+          "available_at": "2026-10-03 05:13:12.296513+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 292,
+          "org_index": 2,
+          "conversation_id": 190,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:05.377465+00:00",
+          "available_at": "2026-10-03 05:13:13.308322+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 294,
+          "org_index": 2,
+          "conversation_id": 191,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:06.441122+00:00",
+          "available_at": "2026-10-03 05:13:14.332791+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 295,
+          "org_index": 2,
+          "conversation_id": 192,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:07.399723+00:00",
+          "available_at": "2026-10-03 05:13:15.325060+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 296,
+          "org_index": 2,
+          "conversation_id": 193,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:08.392777+00:00",
+          "available_at": "2026-10-03 05:13:16.335449+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 298,
+          "org_index": 2,
+          "conversation_id": 194,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:09.374440+00:00",
+          "available_at": "2026-10-03 05:13:17.330561+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 304,
+          "org_index": 2,
+          "conversation_id": 197,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:11.267339+00:00",
+          "available_at": "2026-10-03 05:13:19.229791+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 305,
+          "org_index": 2,
+          "conversation_id": 198,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:11.445279+00:00",
+          "available_at": "2026-10-03 05:13:19.407374+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 307,
+          "org_index": 2,
+          "conversation_id": 199,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:12.355834+00:00",
+          "available_at": "2026-10-03 05:13:20.304813+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 308,
+          "org_index": 2,
+          "conversation_id": 200,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:13.407027+00:00",
+          "available_at": "2026-10-03 05:13:21.320535+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 310,
+          "org_index": 2,
+          "conversation_id": 201,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:14.398315+00:00",
+          "available_at": "2026-10-03 05:13:22.324475+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 311,
+          "org_index": 2,
+          "conversation_id": 202,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:15.407411+00:00",
+          "available_at": "2026-10-03 05:13:23.336970+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 312,
+          "org_index": 2,
+          "conversation_id": 203,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:16.402639+00:00",
+          "available_at": "2026-10-03 05:13:24.315680+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 314,
+          "org_index": 2,
+          "conversation_id": 204,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:17.422518+00:00",
+          "available_at": "2026-10-03 05:13:25.356482+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 315,
+          "org_index": 2,
+          "conversation_id": 205,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:18.448510+00:00",
+          "available_at": "2026-10-03 05:13:26.355445+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 316,
+          "org_index": 2,
+          "conversation_id": 206,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:19.388365+00:00",
+          "available_at": "2026-10-03 05:13:27.306404+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 320,
+          "org_index": 2,
+          "conversation_id": 207,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:20.880893+00:00",
+          "available_at": "2026-10-03 05:13:28.754082+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 321,
+          "org_index": 2,
+          "conversation_id": 208,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:21.442728+00:00",
+          "available_at": "2026-10-03 05:13:29.351592+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 322,
+          "org_index": 2,
+          "conversation_id": 209,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:22.378015+00:00",
+          "available_at": "2026-10-03 05:13:30.326596+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 324,
+          "org_index": 2,
+          "conversation_id": 210,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:23.510773+00:00",
+          "available_at": "2026-10-03 05:13:31.383224+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 325,
+          "org_index": 2,
+          "conversation_id": 211,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:24.455513+00:00",
+          "available_at": "2026-10-03 05:13:32.345371+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 326,
+          "org_index": 2,
+          "conversation_id": 212,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:25.361297+00:00",
+          "available_at": "2026-10-03 05:13:33.298796+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 328,
+          "org_index": 2,
+          "conversation_id": 213,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:26.396786+00:00",
+          "available_at": "2026-10-03 05:13:34.328706+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 329,
+          "org_index": 2,
+          "conversation_id": 214,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:27.384592+00:00",
+          "available_at": "2026-10-03 05:13:35.337998+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 331,
+          "org_index": 2,
+          "conversation_id": 215,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:28.344952+00:00",
+          "available_at": "2026-10-03 05:13:36.296808+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 332,
+          "org_index": 2,
+          "conversation_id": 216,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:29.355103+00:00",
+          "available_at": "2026-10-03 05:13:37.301261+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 335,
+          "org_index": 2,
+          "conversation_id": 217,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:30.792896+00:00",
+          "available_at": "2026-10-03 05:13:38.728586+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 336,
+          "org_index": 2,
+          "conversation_id": 218,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:31.355934+00:00",
+          "available_at": "2026-10-03 05:13:39.299965+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 337,
+          "org_index": 2,
+          "conversation_id": 219,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:32.405435+00:00",
+          "available_at": "2026-10-03 05:13:40.349738+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 338,
+          "org_index": 2,
+          "conversation_id": 220,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:33.417967+00:00",
+          "available_at": "2026-10-03 05:13:41.339617+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 340,
+          "org_index": 2,
+          "conversation_id": 221,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:34.382925+00:00",
+          "available_at": "2026-10-03 05:13:42.310553+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 341,
+          "org_index": 2,
+          "conversation_id": 222,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:35.396152+00:00",
+          "available_at": "2026-10-03 05:13:43.321238+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 343,
+          "org_index": 2,
+          "conversation_id": 223,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:36.480595+00:00",
+          "available_at": "2026-10-03 05:13:44.391939+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 344,
+          "org_index": 2,
+          "conversation_id": 224,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:37.448384+00:00",
+          "available_at": "2026-10-03 05:13:45.365724+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 345,
+          "org_index": 2,
+          "conversation_id": 225,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:38.361838+00:00",
+          "available_at": "2026-10-03 05:13:46.301532+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 347,
+          "org_index": 2,
+          "conversation_id": 226,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:39.420852+00:00",
+          "available_at": "2026-10-03 05:13:47.347127+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 353,
+          "org_index": 2,
+          "conversation_id": 229,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:41.414369+00:00",
+          "available_at": "2026-10-03 05:13:49.367856+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 354,
+          "org_index": 2,
+          "conversation_id": 230,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:41.598300+00:00",
+          "available_at": "2026-10-03 05:13:49.556521+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 356,
+          "org_index": 2,
+          "conversation_id": 231,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:42.343102+00:00",
+          "available_at": "2026-10-03 05:13:50.297381+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 357,
+          "org_index": 2,
+          "conversation_id": 232,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:43.411179+00:00",
+          "available_at": "2026-10-03 05:13:51.327257+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 359,
+          "org_index": 2,
+          "conversation_id": 233,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:44.365165+00:00",
+          "available_at": "2026-10-03 05:13:52.288902+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 360,
+          "org_index": 2,
+          "conversation_id": 234,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:45.392351+00:00",
+          "available_at": "2026-10-03 05:13:53.307441+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 361,
+          "org_index": 2,
+          "conversation_id": 235,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:46.398492+00:00",
+          "available_at": "2026-10-03 05:13:54.318540+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 363,
+          "org_index": 2,
+          "conversation_id": 236,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:47.427675+00:00",
+          "available_at": "2026-10-03 05:13:55.370107+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 364,
+          "org_index": 2,
+          "conversation_id": 237,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:48.400501+00:00",
+          "available_at": "2026-10-03 05:13:56.326635+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 365,
+          "org_index": 2,
+          "conversation_id": 238,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:49.520159+00:00",
+          "available_at": "2026-10-03 05:13:57.363787+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 369,
+          "org_index": 2,
+          "conversation_id": 239,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:50.830617+00:00",
+          "available_at": "2026-10-03 05:13:58.735951+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 370,
+          "org_index": 2,
+          "conversation_id": 240,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:51.422525+00:00",
+          "available_at": "2026-10-03 05:13:59.329516+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 371,
+          "org_index": 2,
+          "conversation_id": 241,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:52.497894+00:00",
+          "available_at": "2026-10-03 05:14:00.364883+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 373,
+          "org_index": 2,
+          "conversation_id": 242,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:53.435895+00:00",
+          "available_at": "2026-10-03 05:14:01.346744+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 374,
+          "org_index": 2,
+          "conversation_id": 243,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:54.393359+00:00",
+          "available_at": "2026-10-03 05:14:02.325211+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 376,
+          "org_index": 2,
+          "conversation_id": 244,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:55.388401+00:00",
+          "available_at": "2026-10-03 05:14:03.340274+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 377,
+          "org_index": 2,
+          "conversation_id": 245,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:56.366768+00:00",
+          "available_at": "2026-10-03 05:14:04.313824+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 378,
+          "org_index": 2,
+          "conversation_id": 246,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:57.364757+00:00",
+          "available_at": "2026-10-03 05:14:05.314163+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 380,
+          "org_index": 2,
+          "conversation_id": 247,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:58.405092+00:00",
+          "available_at": "2026-10-03 05:14:06.333708+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 381,
+          "org_index": 2,
+          "conversation_id": 248,
+          "work_id": null,
+          "created_at": "2026-10-03 05:13:59.434490+00:00",
+          "available_at": "2026-10-03 05:14:07.349434+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 384,
+          "org_index": 2,
+          "conversation_id": 249,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:00.780628+00:00",
+          "available_at": "2026-10-03 05:14:08.715058+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 385,
+          "org_index": 2,
+          "conversation_id": 250,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:01.402453+00:00",
+          "available_at": "2026-10-03 05:14:09.345302+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 386,
+          "org_index": 2,
+          "conversation_id": 251,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:02.413072+00:00",
+          "available_at": "2026-10-03 05:14:10.339026+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 387,
+          "org_index": 2,
+          "conversation_id": 252,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:03.372002+00:00",
+          "available_at": "2026-10-03 05:14:11.298980+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 389,
+          "org_index": 2,
+          "conversation_id": 253,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:04.404459+00:00",
+          "available_at": "2026-10-03 05:14:12.330525+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 390,
+          "org_index": 2,
+          "conversation_id": 254,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:05.406800+00:00",
+          "available_at": "2026-10-03 05:14:13.323189+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 391,
+          "org_index": 2,
+          "conversation_id": 255,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:06.387099+00:00",
+          "available_at": "2026-10-03 05:14:14.313375+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 393,
+          "org_index": 2,
+          "conversation_id": 256,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:07.359802+00:00",
+          "available_at": "2026-10-03 05:14:15.304543+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 394,
+          "org_index": 2,
+          "conversation_id": 257,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:08.355851+00:00",
+          "available_at": "2026-10-03 05:14:16.313024+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 396,
+          "org_index": 2,
+          "conversation_id": 258,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:09.376005+00:00",
+          "available_at": "2026-10-03 05:14:17.332619+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 402,
+          "org_index": 2,
+          "conversation_id": 261,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:11.580967+00:00",
+          "available_at": "2026-10-03 05:14:19.514835+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 404,
+          "org_index": 2,
+          "conversation_id": 262,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:11.882958+00:00",
+          "available_at": "2026-10-03 05:14:19.803763+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 405,
+          "org_index": 2,
+          "conversation_id": 263,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:12.419144+00:00",
+          "available_at": "2026-10-03 05:14:20.355306+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 406,
+          "org_index": 2,
+          "conversation_id": 264,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:13.428226+00:00",
+          "available_at": "2026-10-03 05:14:21.343000+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 408,
+          "org_index": 2,
+          "conversation_id": 265,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:14.499626+00:00",
+          "available_at": "2026-10-03 05:14:22.397811+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 409,
+          "org_index": 2,
+          "conversation_id": 266,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:15.389576+00:00",
+          "available_at": "2026-10-03 05:14:23.315027+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 411,
+          "org_index": 2,
+          "conversation_id": 267,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:16.432900+00:00",
+          "available_at": "2026-10-03 05:14:24.336688+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 412,
+          "org_index": 2,
+          "conversation_id": 268,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:17.465663+00:00",
+          "available_at": "2026-10-03 05:14:25.367340+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 413,
+          "org_index": 2,
+          "conversation_id": 269,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:18.448667+00:00",
+          "available_at": "2026-10-03 05:14:26.361971+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 414,
+          "org_index": 2,
+          "conversation_id": 270,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:19.428908+00:00",
+          "available_at": "2026-10-03 05:14:27.354411+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 418,
+          "org_index": 2,
+          "conversation_id": 271,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:20.894139+00:00",
+          "available_at": "2026-10-03 05:14:28.805675+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 419,
+          "org_index": 2,
+          "conversation_id": 272,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:21.375246+00:00",
+          "available_at": "2026-10-03 05:14:29.309103+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 421,
+          "org_index": 2,
+          "conversation_id": 273,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:22.416602+00:00",
+          "available_at": "2026-10-03 05:14:30.351013+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 422,
+          "org_index": 2,
+          "conversation_id": 274,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:23.389280+00:00",
+          "available_at": "2026-10-03 05:14:31.311976+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 423,
+          "org_index": 2,
+          "conversation_id": 275,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:24.374498+00:00",
+          "available_at": "2026-10-03 05:14:32.322182+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 425,
+          "org_index": 2,
+          "conversation_id": 276,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:25.321402+00:00",
+          "available_at": "2026-10-03 05:14:33.281744+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 426,
+          "org_index": 2,
+          "conversation_id": 277,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:26.371493+00:00",
+          "available_at": "2026-10-03 05:14:34.326241+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 427,
+          "org_index": 2,
+          "conversation_id": 278,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:27.392373+00:00",
+          "available_at": "2026-10-03 05:14:35.332683+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 429,
+          "org_index": 2,
+          "conversation_id": 279,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:28.378294+00:00",
+          "available_at": "2026-10-03 05:14:36.317306+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 430,
+          "org_index": 2,
+          "conversation_id": 280,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:29.423835+00:00",
+          "available_at": "2026-10-03 05:14:37.348196+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 433,
+          "org_index": 2,
+          "conversation_id": 281,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:30.773960+00:00",
+          "available_at": "2026-10-03 05:14:38.680425+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 434,
+          "org_index": 2,
+          "conversation_id": 282,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:31.448376+00:00",
+          "available_at": "2026-10-03 05:14:39.373787+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 435,
+          "org_index": 2,
+          "conversation_id": 283,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:32.438638+00:00",
+          "available_at": "2026-10-03 05:14:40.350386+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 436,
+          "org_index": 2,
+          "conversation_id": 284,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:33.428262+00:00",
+          "available_at": "2026-10-03 05:14:41.360295+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 438,
+          "org_index": 2,
+          "conversation_id": 285,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:34.431058+00:00",
+          "available_at": "2026-10-03 05:14:42.352022+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 439,
+          "org_index": 2,
+          "conversation_id": 286,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:35.427489+00:00",
+          "available_at": "2026-10-03 05:14:43.350311+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 440,
+          "org_index": 2,
+          "conversation_id": 287,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:36.456016+00:00",
+          "available_at": "2026-10-03 05:14:44.338035+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 442,
+          "org_index": 2,
+          "conversation_id": 288,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:37.374037+00:00",
+          "available_at": "2026-10-03 05:14:45.316740+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 443,
+          "org_index": 2,
+          "conversation_id": 289,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:38.376660+00:00",
+          "available_at": "2026-10-03 05:14:46.334662+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 444,
+          "org_index": 2,
+          "conversation_id": 290,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:39.398274+00:00",
+          "available_at": "2026-10-03 05:14:47.342523+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 451,
+          "org_index": 2,
+          "conversation_id": 293,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:41.475928+00:00",
+          "available_at": "2026-10-03 05:14:49.403156+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 452,
+          "org_index": 2,
+          "conversation_id": 294,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:41.735806+00:00",
+          "available_at": "2026-10-03 05:14:49.677193+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 453,
+          "org_index": 2,
+          "conversation_id": 295,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:42.380292+00:00",
+          "available_at": "2026-10-03 05:14:50.310200+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 454,
+          "org_index": 2,
+          "conversation_id": 296,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:43.399912+00:00",
+          "available_at": "2026-10-03 05:14:51.339579+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 456,
+          "org_index": 2,
+          "conversation_id": 297,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:44.407604+00:00",
+          "available_at": "2026-10-03 05:14:52.338382+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 457,
+          "org_index": 2,
+          "conversation_id": 298,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:45.395648+00:00",
+          "available_at": "2026-10-03 05:14:53.335310+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 458,
+          "org_index": 2,
+          "conversation_id": 299,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:46.386707+00:00",
+          "available_at": "2026-10-03 05:14:54.315873+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 460,
+          "org_index": 2,
+          "conversation_id": 300,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:47.435686+00:00",
+          "available_at": "2026-10-03 05:14:55.355394+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 461,
+          "org_index": 2,
+          "conversation_id": 301,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:48.436573+00:00",
+          "available_at": "2026-10-03 05:14:56.333541+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 462,
+          "org_index": 2,
+          "conversation_id": 302,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:49.501162+00:00",
+          "available_at": "2026-10-03 05:14:57.362656+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 466,
+          "org_index": 2,
+          "conversation_id": 303,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:50.817912+00:00",
+          "available_at": "2026-10-03 05:14:58.697785+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 467,
+          "org_index": 2,
+          "conversation_id": 304,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:51.417162+00:00",
+          "available_at": "2026-10-03 05:14:59.307797+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 469,
+          "org_index": 2,
+          "conversation_id": 305,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:52.417327+00:00",
+          "available_at": "2026-10-03 05:15:00.361609+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 470,
+          "org_index": 2,
+          "conversation_id": 306,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:53.375189+00:00",
+          "available_at": "2026-10-03 05:15:01.319157+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 471,
+          "org_index": 2,
+          "conversation_id": 307,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:54.392209+00:00",
+          "available_at": "2026-10-03 05:15:02.337146+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 473,
+          "org_index": 2,
+          "conversation_id": 308,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:55.402395+00:00",
+          "available_at": "2026-10-03 05:15:03.360024+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 474,
+          "org_index": 2,
+          "conversation_id": 309,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:56.412938+00:00",
+          "available_at": "2026-10-03 05:15:04.342415+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 475,
+          "org_index": 2,
+          "conversation_id": 310,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:57.399195+00:00",
+          "available_at": "2026-10-03 05:15:05.334829+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 477,
+          "org_index": 2,
+          "conversation_id": 311,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:58.423655+00:00",
+          "available_at": "2026-10-03 05:15:06.350206+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 478,
+          "org_index": 2,
+          "conversation_id": 312,
+          "work_id": null,
+          "created_at": "2026-10-03 05:14:59.472459+00:00",
+          "available_at": "2026-10-03 05:15:07.372631+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 481,
+          "org_index": 2,
+          "conversation_id": 313,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:00.845092+00:00",
+          "available_at": "2026-10-03 05:15:08.775481+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 482,
+          "org_index": 2,
+          "conversation_id": 314,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:01.380496+00:00",
+          "available_at": "2026-10-03 05:15:09.319799+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 483,
+          "org_index": 2,
+          "conversation_id": 315,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:02.434170+00:00",
+          "available_at": "2026-10-03 05:15:10.352266+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 484,
+          "org_index": 2,
+          "conversation_id": 316,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:03.448754+00:00",
+          "available_at": "2026-10-03 05:15:11.364848+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 486,
+          "org_index": 2,
+          "conversation_id": 317,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:04.400386+00:00",
+          "available_at": "2026-10-03 05:15:12.322305+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 487,
+          "org_index": 2,
+          "conversation_id": 318,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:05.423703+00:00",
+          "available_at": "2026-10-03 05:15:13.330115+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 488,
+          "org_index": 2,
+          "conversation_id": 319,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:06.396688+00:00",
+          "available_at": "2026-10-03 05:15:14.336620+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 490,
+          "org_index": 2,
+          "conversation_id": 320,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:07.358327+00:00",
+          "available_at": "2026-10-03 05:15:15.315165+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 491,
+          "org_index": 2,
+          "conversation_id": 321,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:08.348543+00:00",
+          "available_at": "2026-10-03 05:15:16.302501+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 492,
+          "org_index": 2,
+          "conversation_id": 322,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:09.376628+00:00",
+          "available_at": "2026-10-03 05:15:17.315260+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 499,
+          "org_index": 2,
+          "conversation_id": 325,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:11.787443+00:00",
+          "available_at": "2026-10-03 05:15:19.709685+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 500,
+          "org_index": 2,
+          "conversation_id": 326,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:12.086884+00:00",
+          "available_at": "2026-10-03 05:15:19.998260+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 501,
+          "org_index": 2,
+          "conversation_id": 327,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:12.400477+00:00",
+          "available_at": "2026-10-03 05:15:20.329231+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 502,
+          "org_index": 2,
+          "conversation_id": 328,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:13.462084+00:00",
+          "available_at": "2026-10-03 05:15:21.369914+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 504,
+          "org_index": 2,
+          "conversation_id": 329,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:14.526523+00:00",
+          "available_at": "2026-10-03 05:15:22.385912+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 505,
+          "org_index": 2,
+          "conversation_id": 330,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:15.415520+00:00",
+          "available_at": "2026-10-03 05:15:23.346481+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 506,
+          "org_index": 2,
+          "conversation_id": 331,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:16.409756+00:00",
+          "available_at": "2026-10-03 05:15:24.339651+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 508,
+          "org_index": 2,
+          "conversation_id": 332,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:17.366256+00:00",
+          "available_at": "2026-10-03 05:15:25.325133+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 509,
+          "org_index": 2,
+          "conversation_id": 333,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:18.406365+00:00",
+          "available_at": "2026-10-03 05:15:26.326537+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 510,
+          "org_index": 2,
+          "conversation_id": 334,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:19.416837+00:00",
+          "available_at": "2026-10-03 05:15:27.310350+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 514,
+          "org_index": 2,
+          "conversation_id": 335,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:20.781019+00:00",
+          "available_at": "2026-10-03 05:15:28.690912+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 515,
+          "org_index": 2,
+          "conversation_id": 336,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:21.390711+00:00",
+          "available_at": "2026-10-03 05:15:29.329507+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 516,
+          "org_index": 2,
+          "conversation_id": 337,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:22.383216+00:00",
+          "available_at": "2026-10-03 05:15:30.328386+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 518,
+          "org_index": 2,
+          "conversation_id": 338,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:23.349102+00:00",
+          "available_at": "2026-10-03 05:15:31.292652+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 519,
+          "org_index": 2,
+          "conversation_id": 339,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:24.364894+00:00",
+          "available_at": "2026-10-03 05:15:32.318162+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 520,
+          "org_index": 2,
+          "conversation_id": 340,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:25.366610+00:00",
+          "available_at": "2026-10-03 05:15:33.325503+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 522,
+          "org_index": 2,
+          "conversation_id": 341,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:26.433393+00:00",
+          "available_at": "2026-10-03 05:15:34.365748+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 523,
+          "org_index": 2,
+          "conversation_id": 342,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:27.398324+00:00",
+          "available_at": "2026-10-03 05:15:35.329580+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 525,
+          "org_index": 2,
+          "conversation_id": 343,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:28.389582+00:00",
+          "available_at": "2026-10-03 05:15:36.323141+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 526,
+          "org_index": 2,
+          "conversation_id": 344,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:29.408019+00:00",
+          "available_at": "2026-10-03 05:15:37.312872+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 529,
+          "org_index": 2,
+          "conversation_id": 345,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:30.750022+00:00",
+          "available_at": "2026-10-03 05:15:38.687595+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 530,
+          "org_index": 2,
+          "conversation_id": 346,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:31.448120+00:00",
+          "available_at": "2026-10-03 05:15:39.369108+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 531,
+          "org_index": 2,
+          "conversation_id": 347,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:32.438178+00:00",
+          "available_at": "2026-10-03 05:15:40.344745+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 532,
+          "org_index": 2,
+          "conversation_id": 348,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:33.387387+00:00",
+          "available_at": "2026-10-03 05:15:41.313913+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 533,
+          "org_index": 2,
+          "conversation_id": 349,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:34.409843+00:00",
+          "available_at": "2026-10-03 05:15:42.336363+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 535,
+          "org_index": 2,
+          "conversation_id": 350,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:35.430206+00:00",
+          "available_at": "2026-10-03 05:15:43.317742+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 536,
+          "org_index": 2,
+          "conversation_id": 351,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:36.375747+00:00",
+          "available_at": "2026-10-03 05:15:44.321624+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 538,
+          "org_index": 2,
+          "conversation_id": 352,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:37.381553+00:00",
+          "available_at": "2026-10-03 05:15:45.334440+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 539,
+          "org_index": 2,
+          "conversation_id": 353,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:38.386387+00:00",
+          "available_at": "2026-10-03 05:15:46.343527+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        },
+        {
+          "id": 540,
+          "org_index": 2,
+          "conversation_id": 354,
+          "work_id": null,
+          "created_at": "2026-10-03 05:15:39.335173+00:00",
+          "available_at": "2026-10-03 05:15:47.289250+00:00",
+          "claimed_at": null,
+          "semantic_type": ""
+        }
+      ]
+    }
+  ],
+  "selector_sql_ms": {
+    "n": 371,
+    "p50": 77.992,
+    "p75": 155.875,
+    "p90": 218.085,
+    "p95": 253.942,
+    "p99": 330.64,
+    "max": 387.36
+  },
+  "selector_boundary": "PostgreSQL execution; excludes client/network/Python list evaluation",
+  "selector_observation_cohort": "all frozen worker selector executions including warmup and drain",
+  "explain": {
+    "Planning Time": 10.251,
+    "Execution Time": 101.552,
+    "Plan": {
+      "Node Type": "Limit",
+      "Startup Cost": 43346.15,
+      "Total Cost": 43346.99,
+      "Plan Rows": 1,
+      "Actual Startup Time": 101.165,
+      "Actual Total Time": 101.172,
+      "Actual Rows": 1,
+      "Actual Loops": 1,
+      "Shared Hit Blocks": 15116,
+      "Shared Read Blocks": 0,
+      "Plans": [
+        {
+          "Node Type": "Subquery Scan",
+          "Startup Cost": 43346.15,
+          "Total Cost": 43346.99,
+          "Plan Rows": 1,
+          "Actual Startup Time": 101.164,
+          "Actual Total Time": 101.171,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 15116,
+          "Shared Read Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Startup Cost": 43346.15,
+              "Total Cost": 43346.29,
+              "Plan Rows": 56,
+              "Actual Startup Time": 101.16,
+              "Actual Total Time": 101.166,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 15116,
+              "Shared Read Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "WindowAgg",
+                  "Startup Cost": 14332.31,
+                  "Total Cost": 43344.53,
+                  "Plan Rows": 56,
+                  "Actual Startup Time": 101.064,
+                  "Actual Total Time": 101.16,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 15116,
+                  "Shared Read Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Incremental Sort",
+                      "Startup Cost": 14332.31,
+                      "Total Cost": 42817.99,
+                      "Plan Rows": 56,
+                      "Actual Startup Time": 100.959,
+                      "Actual Total Time": 100.973,
+                      "Actual Rows": 226,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 15102,
+                      "Shared Read Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Startup Cost": 89.86,
+                          "Total Cost": 42816.05,
+                          "Plan Rows": 56,
+                          "Actual Startup Time": 11.424,
+                          "Actual Total Time": 100.704,
+                          "Actual Rows": 226,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 15102,
+                          "Shared Read Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Startup Cost": 44.31,
+                              "Total Cost": 42733.92,
+                              "Plan Rows": 112,
+                              "Actual Startup Time": 0.514,
+                              "Actual Total Time": 97.922,
+                              "Actual Rows": 354,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 14575,
+                              "Shared Read Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                  "Relation Name": "agent_conversation",
+                                  "Startup Cost": 44.02,
+                                  "Total Cost": 42713.58,
+                                  "Plan Rows": 266,
+                                  "Actual Startup Time": 0.479,
+                                  "Actual Total Time": 97.563,
+                                  "Actual Rows": 354,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 14572,
+                                  "Shared Read Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Relation Name": "channels_message",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 43.85,
+                                      "Plan Rows": 7,
+                                      "Actual Startup Time": 0.202,
+                                      "Actual Total Time": 0.202,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 34,
+                                      "Shared Read Blocks": 0
+                                    },
+                                    {
+                                      "Node Type": "Limit",
+                                      "Startup Cost": 9.38,
+                                      "Total Cost": 9.38,
+                                      "Plan Rows": 1,
+                                      "Actual Startup Time": 0.099,
+                                      "Actual Total Time": 0.099,
+                                      "Actual Rows": 1,
+                                      "Actual Loops": 354,
+                                      "Shared Hit Blocks": 2478,
+                                      "Shared Read Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Sort",
+                                          "Startup Cost": 9.38,
+                                          "Total Cost": 9.52,
+                                          "Plan Rows": 56,
+                                          "Actual Startup Time": 0.097,
+                                          "Actual Total Time": 0.097,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 354,
+                                          "Shared Hit Blocks": 2478,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Relation Name": "agent_turnwork",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 9.1,
+                                              "Plan Rows": 56,
+                                              "Actual Startup Time": 0.004,
+                                              "Actual Total Time": 0.077,
+                                              "Actual Rows": 99,
+                                              "Actual Loops": 354,
+                                              "Shared Hit Blocks": 2478,
+                                              "Shared Read Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Startup Cost": 54.81,
+                                      "Total Cost": 111.07,
+                                      "Plan Rows": 1,
+                                      "Actual Startup Time": 0.171,
+                                      "Actual Total Time": 0.171,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 354,
+                                      "Shared Hit Blocks": 12036,
+                                      "Shared Read Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Limit",
+                                          "Startup Cost": 9.38,
+                                          "Total Cost": 9.38,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Startup Cost": 9.38,
+                                              "Total Cost": 9.52,
+                                              "Plan Rows": 56,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 9.1,
+                                                  "Plan Rows": 56,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Startup Cost": 45.14,
+                                          "Total Cost": 85.32,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.159,
+                                          "Actual Total Time": 0.159,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 354,
+                                          "Shared Hit Blocks": 12036,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Unique",
+                                              "Startup Cost": 45.0,
+                                              "Total Cost": 45.01,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.159,
+                                              "Actual Total Time": 0.159,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 354,
+                                              "Shared Hit Blocks": 12036,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Startup Cost": 45.0,
+                                                  "Total Cost": 45.01,
+                                                  "Plan Rows": 1,
+                                                  "Actual Startup Time": 0.159,
+                                                  "Actual Total Time": 0.159,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 354,
+                                                  "Shared Hit Blocks": 12036,
+                                                  "Shared Read Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Bitmap Heap Scan",
+                                                      "Relation Name": "channels_message",
+                                                      "Startup Cost": 5.86,
+                                                      "Total Cost": 44.99,
+                                                      "Plan Rows": 1,
+                                                      "Actual Startup Time": 0.156,
+                                                      "Actual Total Time": 0.156,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 354,
+                                                      "Shared Hit Blocks": 12036,
+                                                      "Shared Read Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Bitmap Index Scan",
+                                                          "Index Name": "message_send_ready",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 5.86,
+                                                          "Plan Rows": 171,
+                                                          "Actual Startup Time": 0.018,
+                                                          "Actual Total Time": 0.018,
+                                                          "Actual Rows": 294,
+                                                          "Actual Loops": 354,
+                                                          "Shared Hit Blocks": 354,
+                                                          "Shared Read Blocks": 0
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Index Only Scan",
+                                              "Index Name": "organizations_organization_pkey",
+                                              "Relation Name": "organizations_organization",
+                                              "Startup Cost": 0.14,
+                                              "Total Cost": 26.92,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Startup Cost": 9.38,
+                                                  "Total Cost": 9.38,
+                                                  "Plan Rows": 1,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Startup Cost": 9.38,
+                                                      "Total Cost": 9.52,
+                                                      "Plan Rows": 56,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 9.1,
+                                                          "Plan Rows": 56,
+                                                          "Actual Startup Time": 0.0,
+                                                          "Actual Total Time": 0.0,
+                                                          "Actual Rows": 0,
+                                                          "Actual Loops": 0,
+                                                          "Shared Hit Blocks": 0,
+                                                          "Shared Read Blocks": 0
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Limit",
+                                                  "Startup Cost": 9.38,
+                                                  "Total Cost": 9.38,
+                                                  "Plan Rows": 1,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Sort",
+                                                      "Startup Cost": 9.38,
+                                                      "Total Cost": 9.52,
+                                                      "Plan Rows": 56,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Relation Name": "agent_turnwork",
+                                                          "Startup Cost": 0.0,
+                                                          "Total Cost": 9.1,
+                                                          "Plan Rows": 56,
+                                                          "Actual Startup Time": 0.0,
+                                                          "Actual Total Time": 0.0,
+                                                          "Actual Rows": 0,
+                                                          "Actual Loops": 0,
+                                                          "Shared Hit Blocks": 0,
+                                                          "Shared Read Blocks": 0
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Startup Cost": 0.29,
+                                          "Total Cost": 16.35,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Index Name": "turnwork_poll_retry",
+                                              "Relation Name": "agent_turnwork",
+                                              "Startup Cost": 0.14,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Materialize",
+                                  "Startup Cost": 0.29,
+                                  "Total Cost": 16.35,
+                                  "Plan Rows": 1,
+                                  "Actual Startup Time": 0.0,
+                                  "Actual Total Time": 0.0,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 354,
+                                  "Shared Hit Blocks": 3,
+                                  "Shared Read Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Startup Cost": 0.29,
+                                      "Total Cost": 16.35,
+                                      "Plan Rows": 1,
+                                      "Actual Startup Time": 0.032,
+                                      "Actual Total Time": 0.032,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 3,
+                                      "Shared Read Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Index Name": "turnwork_poll_retry",
+                                          "Relation Name": "agent_turnwork",
+                                          "Startup Cost": 0.14,
+                                          "Total Cost": 8.17,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.032,
+                                          "Actual Total Time": 0.032,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 1,
+                                          "Shared Hit Blocks": 3,
+                                          "Shared Read Blocks": 0
+                                        },
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Index Name": "agent_conversation_pkey",
+                                          "Relation Name": "agent_conversation",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 8.17,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Index Scan",
+                              "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                              "Relation Name": "agent_turnwork",
+                              "Startup Cost": 0.14,
+                              "Total Cost": 0.3,
+                              "Plan Rows": 1,
+                              "Actual Startup Time": 0.003,
+                              "Actual Total Time": 0.003,
+                              "Actual Rows": 0,
+                              "Actual Loops": 354,
+                              "Shared Hit Blocks": 493,
+                              "Shared Read Blocks": 0
+                            },
+                            {
+                              "Node Type": "Seq Scan",
+                              "Relation Name": "channels_message",
+                              "Startup Cost": 0.0,
+                              "Total Cost": 45.26,
+                              "Plan Rows": 57,
+                              "Actual Startup Time": 0.028,
+                              "Actual Total Time": 0.422,
+                              "Actual Rows": 226,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 34,
+                              "Shared Read Blocks": 0
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "Node Type": "Limit",
+                      "Startup Cost": 9.38,
+                      "Total Cost": 9.38,
+                      "Plan Rows": 1,
+                      "Actual Startup Time": 0.063,
+                      "Actual Total Time": 0.063,
+                      "Actual Rows": 1,
+                      "Actual Loops": 2,
+                      "Shared Hit Blocks": 14,
+                      "Shared Read Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Sort",
+                          "Startup Cost": 9.38,
+                          "Total Cost": 9.52,
+                          "Plan Rows": 56,
+                          "Actual Startup Time": 0.062,
+                          "Actual Total Time": 0.062,
+                          "Actual Rows": 1,
+                          "Actual Loops": 2,
+                          "Shared Hit Blocks": 14,
+                          "Shared Read Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Seq Scan",
+                              "Relation Name": "agent_turnwork",
+                              "Startup Cost": 0.0,
+                              "Total Cost": 9.1,
+                              "Plan Rows": 56,
+                              "Actual Startup Time": 0.006,
+                              "Actual Total Time": 0.049,
+                              "Actual Rows": 104,
+                              "Actual Loops": 2,
+                              "Shared Hit Blocks": 14,
+                              "Shared Read Blocks": 0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "availability_updates_observed": 0,
+  "ready_reextensions": 0,
+  "ready_reextensions_message_ids": [],
+  "ready_scope": "Logged deadline updates; final-source semantic evidence additionally in hashed E4/monotonic receipts",
+  "critical_sql": {
+    "cross_tenant_conversation": 0,
+    "cross_tenant_membership": 0,
+    "admissions_over_budget": 0
+  },
+  "budget": {
+    "max_calls_per_work": 2,
+    "max_reserved_per_work": 1200,
+    "calls": 296,
+    "unknown_usage": 0,
+    "failures": 0,
+    "retries": 0,
+    "reserved_tokens": 177600
+  },
+  "observation_only": true
+}

@@ -1,0 +1,18 @@
+{
+  "database": "test_b8b_pb1sql_corpus",
+  "command": [
+    "-m",
+    "apps.agent.tests.run_b9a_acceptance",
+    "--suite",
+    "targeted",
+    "--database",
+    "test_b8b_pb1sql_corpus",
+    "--ids-file",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\b9e-corpus-selected.json",
+    "--output",
+    "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\profile-beta-1-e4-sql-2026-10-02\\corpus-valid"
+  ],
+  "started_utc": "2026-10-03T04:00:23.732559+00:00",
+  "finished_utc": "2026-10-03T04:03:48.819490+00:00",
+  "exit_code": 1
+}

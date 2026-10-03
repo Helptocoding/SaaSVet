@@ -1,0 +1,23 @@
+{
+  "boundary": "Message(OUT).created_at to send_admitted_at in canonical measurement window",
+  "outbox": {
+    "n": 109,
+    "p50": 52.193541,
+    "p75": 65.80374,
+    "p90": 71.442534,
+    "p95": 73.727401,
+    "p99": 76.663536,
+    "max": 78.766013,
+    "missing": 21
+  },
+  "safety": {
+    "n": 18,
+    "p50": 59.33133,
+    "p75": 66.659936,
+    "p90": 73.727401,
+    "p95": 76.663536,
+    "p99": 76.663536,
+    "max": 76.663536,
+    "missing": 2
+  }
+}
