@@ -1,0 +1,25 @@
+{
+  "sql": "SELECT \"pk\" FROM ( SELECT * FROM ( SELECT \"agent_conversation\".\"id\" AS \"pk\", ROW_NUMBER() OVER (PARTITION BY \"agent_conversation\".\"organization_id\" ORDER BY \"agent_conversation\".\"last_activity_at\" ASC, \"agent_conversation\".\"id\" ASC) AS \"qual0\", (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) AS \"qual1\", \"agent_conversation\".\"last_activity_at\" AS \"qual2\" FROM \"agent_conversation\" LEFT OUTER JOIN \"agent_turnwork\" ON (\"agent_conversation\".\"id\" = \"agent_turnwork\".\"conversation_id\") WHERE (\"agent_conversation\".\"is_active\" AND ((\"agent_turnwork\".\"lease_expires_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" <= (STATEMENT_TIMESTAMP()) AND \"agent_turnwork\".\"status\" = %s) OR (\"agent_turnwork\".\"next_attempt_at\" IS NULL AND \"agent_turnwork\".\"status\" = %s) OR \"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"status\" = %s AND U0.\"turn_work_id\" IS NULL AND (U0.\"available_at\" IS NULL OR U0.\"available_at\" <= %s)))) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND (\"agent_conversation\".\"id\" IN (SELECT U0.\"conversation_id\" AS \"conversation_id\" FROM \"channels_message\" U0 WHERE (U0.\"is_active\" AND U0.\"direction\" = %s AND U0.\"semantic_type\" = %s AND U0.\"status\" = %s)) OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR NOT EXISTS(SELECT %s AS \"a\" FROM \"channels_message\" V0 WHERE (V0.\"is_active\" AND V0.\"available_at\" > %s AND V0.\"available_at\" <= %s AND V0.\"direction\" = %s AND V0.\"status\" = %s AND V0.\"turn_work_id\" IS NULL AND NOT (V0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) AND NOT (V0.\"semantic_type\" = %s) AND NOT EXISTS(SELECT %s AS \"a\" FROM \"agent_turnwork\" U0 INNER JOIN \"agent_conversation\" U2 ON (U0.\"conversation_id\" = U2.\"id\") WHERE (U0.\"is_active\" AND U2.\"organization_id\" = (U0.\"organization_id\") AND U2.\"ownership_epoch\" = (U0.\"ownership_epoch\") AND U0.\"lease_expires_at\" > (STATEMENT_TIMESTAMP()) AND U0.\"organization_id\" = (V0.\"organization_id\") AND U0.\"status\" = %s) LIMIT 1) AND ((SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) IS NULL OR (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (V0.\"organization_id\")) ORDER BY 1 DESC LIMIT 1) < (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1))) LIMIT 1))) ORDER BY (SELECT U0.\"claimed_at\" AS \"claimed_at\" FROM \"agent_turnwork\" U0 WHERE (U0.\"is_active\" AND U0.\"claimed_at\" IS NOT NULL AND U0.\"organization_id\" = (\"agent_conversation\".\"organization_id\")) ORDER BY 1 DESC LIMIT 1) ASC NULLS FIRST, \"agent_conversation\".\"last_activity_at\" ASC, 1 ASC ) \"qualify\" WHERE \"qual0\" = %s ) \"qualify_mask\" ORDER BY \"qual1\" ASC NULLS FIRST, \"qual2\" ASC, 1 ASC LIMIT 3",
+  "parameters": [
+    "PROCESSING",
+    "PENDING",
+    "PENDING",
+    "in",
+    "pending",
+    "2026-10-02 05:31:02.906602+00:00",
+    "1",
+    "PROCESSING",
+    "in",
+    "safety_signal",
+    "pending",
+    "1",
+    "2026-10-02 05:31:02.906602+00:00",
+    "2026-10-02 05:31:03.906602+00:00",
+    "in",
+    "pending",
+    "safety_signal",
+    "1",
+    "PROCESSING",
+    "1"
+  ]
+}

@@ -1,0 +1,57 @@
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "READY", "pid": 22268, "backend_pid": 22812}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "READY", "pid": 26572, "backend_pid": 21472}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "OBSERVED", "ids": [4, 3], "org_ids": [2, 1], "admissions": 0, "active": {"1": 0, "2": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "OBSERVED", "ids": [4, 3], "org_ids": [2, 1], "admissions": 0, "active": {"1": 0, "2": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "CLAIMED", "claimed": true, "members": [4], "admissions": 0, "active": {"2": 1, "1": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "CLAIMED", "claimed": false, "members": [], "admissions": 0, "active": {"2": 1, "1": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "CLAIMED", "claimed": true, "members": [3], "admissions": 0, "active": {"2": 1, "1": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "READY", "pid": 24128, "backend_pid": 25296}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "READY", "pid": 16412, "backend_pid": 24012}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "OBSERVED", "ids": [8, 7], "org_ids": [4, 3], "admissions": 0, "active": {"3": 0, "4": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "OBSERVED", "ids": [8, 7], "org_ids": [4, 3], "admissions": 0, "active": {"3": 0, "4": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "CLAIMED", "claimed": false, "members": [], "admissions": 0, "active": {"4": 1, "3": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "CLAIMED", "claimed": true, "members": [7], "admissions": 0, "active": {"4": 1, "3": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "FINALIZED", "outcome": null, "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "READY", "pid": 13240, "backend_pid": 25840}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "READY", "pid": 24364, "backend_pid": 20880}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "OBSERVED", "ids": [12, 11], "org_ids": [6, 5], "admissions": 0, "active": {"5": 0, "6": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "OBSERVED", "ids": [12, 11], "org_ids": [6, 5], "admissions": 0, "active": {"5": 0, "6": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "CLAIMED", "claimed": false, "members": [], "admissions": 0, "active": {"6": 0, "5": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "CLAIMED", "claimed": false, "members": [], "admissions": 0, "active": {"6": 0, "5": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "CLAIMED", "claimed": true, "members": [11], "admissions": 0, "active": {"6": 0, "5": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "CLAIMED", "claimed": false, "members": [], "admissions": 0, "active": {"6": 0, "5": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "FINALIZED", "outcome": null, "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "READY", "pid": 25904, "backend_pid": 868}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "READY", "pid": 23800, "backend_pid": 25072}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "OBSERVED", "ids": [], "org_ids": [], "admissions": 0, "active": {}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "OBSERVED", "ids": [], "org_ids": [], "admissions": 0, "active": {}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "OBSERVED", "ids": [15], "org_ids": [7], "admissions": 0, "active": {"7": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "CLAIMED", "claimed": true, "members": [15], "admissions": 0, "active": {"7": 1, "8": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "OBSERVED", "ids": [], "org_ids": [], "admissions": 0, "active": {}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "OBSERVED", "ids": [16], "org_ids": [8], "admissions": 0, "active": {"8": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "CLAIMED", "claimed": true, "members": [16], "admissions": 0, "active": {"7": 0, "8": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "FINALIZED", "outcome": null, "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "READY", "pid": 6944, "backend_pid": 26120}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "READY", "pid": 1780, "backend_pid": 24028}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "OBSERVED", "ids": [19], "org_ids": [9], "admissions": 0, "active": {"9": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "OBSERVED", "ids": [19], "org_ids": [9], "admissions": 0, "active": {"9": 0}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "CLAIMED", "claimed": true, "members": [19, 21], "admissions": 0, "active": {"10": 0, "9": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "CLAIMED", "claimed": false, "members": [], "admissions": 0, "active": {"10": 0, "9": 1}}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "FINALIZED", "outcome": "completed", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "RESULT", "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "FINALIZED", "outcome": null, "admissions": 0}
+{"test_id": "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership", "event": "RESULT", "admissions": 0}

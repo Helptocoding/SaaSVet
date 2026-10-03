@@ -1,0 +1,11 @@
+{
+  "port": 60185,
+  "paired": true,
+  "old_runtime": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+  "worker_sha256": "70e6edf059db72b1f85adc45a7887c584e94bad790275e614c851061d56a676b",
+  "samples": 30,
+  "warmup": 5,
+  "metric": "EXPLAIN ANALYZE Execution Time",
+  "no_os_cache_flush": true,
+  "order": "OLD then NEW, independent five warmups each"
+}

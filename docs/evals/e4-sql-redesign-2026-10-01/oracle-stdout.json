@@ -1,0 +1,694 @@
+{
+  "seed": 20261001,
+  "manual_states": 20,
+  "generated_states": 300,
+  "states_tested": 320,
+  "variant_evaluations": 640,
+  "decision_mismatches": 0,
+  "mismatches": [],
+  "candidate_limit": 3,
+  "query_count_min": 1,
+  "query_count_max": 2,
+  "manual": [
+    {
+      "case": "healthy_ready",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "healthy_ready",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "two_healthy_ready",
+      "variant": "A",
+      "old_conversation_ids": [
+        7,
+        5
+      ],
+      "new_conversation_ids": [
+        7,
+        5
+      ],
+      "old_org_ids": [
+        2,
+        1
+      ],
+      "new_org_ids": [
+        2,
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "two_healthy_ready",
+      "variant": "B",
+      "old_conversation_ids": [
+        7,
+        5
+      ],
+      "new_conversation_ids": [
+        7,
+        5
+      ],
+      "old_org_ids": [
+        2,
+        1
+      ],
+      "new_org_ids": [
+        2,
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "healthy_noisy_ready",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "healthy_noisy_ready",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    },
+    {
+      "case": "near_ready",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "near_ready",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    },
+    {
+      "case": "far_future",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "far_future",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "busy_upcoming",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "busy_upcoming",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "busy_current",
+      "variant": "A",
+      "old_conversation_ids": [
+        7
+      ],
+      "new_conversation_ids": [
+        7
+      ],
+      "old_org_ids": [
+        2
+      ],
+      "new_org_ids": [
+        2
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "busy_current",
+      "variant": "B",
+      "old_conversation_ids": [
+        7
+      ],
+      "new_conversation_ids": [
+        7
+      ],
+      "old_org_ids": [
+        2
+      ],
+      "new_org_ids": [
+        2
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "never_claimed",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "never_claimed",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    },
+    {
+      "case": "less_recent_claim",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "less_recent_claim",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    },
+    {
+      "case": "more_recent_claim",
+      "variant": "A",
+      "old_conversation_ids": [
+        7
+      ],
+      "new_conversation_ids": [
+        7
+      ],
+      "old_org_ids": [
+        2
+      ],
+      "new_org_ids": [
+        2
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "more_recent_claim",
+      "variant": "B",
+      "old_conversation_ids": [
+        7
+      ],
+      "new_conversation_ids": [
+        7
+      ],
+      "old_org_ids": [
+        2
+      ],
+      "new_org_ids": [
+        2
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "same_claim_boundary",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "same_claim_boundary",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "pending_safety",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "pending_safety",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "safety_after_w1",
+      "variant": "A",
+      "old_conversation_ids": [
+        9,
+        5
+      ],
+      "new_conversation_ids": [
+        9,
+        5
+      ],
+      "old_org_ids": [
+        3,
+        1
+      ],
+      "new_org_ids": [
+        3,
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "safety_after_w1",
+      "variant": "B",
+      "old_conversation_ids": [
+        9,
+        5
+      ],
+      "new_conversation_ids": [
+        9,
+        5
+      ],
+      "old_org_ids": [
+        3,
+        1
+      ],
+      "new_org_ids": [
+        3,
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "monotonic_ready_join",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "monotonic_ready_join",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    },
+    {
+      "case": "multiple_conversations_one_org",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "multiple_conversations_one_org",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "multiple_orgs",
+      "variant": "A",
+      "old_conversation_ids": [
+        9,
+        7,
+        5
+      ],
+      "new_conversation_ids": [
+        9,
+        7,
+        5
+      ],
+      "old_org_ids": [
+        3,
+        2,
+        1
+      ],
+      "new_org_ids": [
+        3,
+        2,
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "multiple_orgs",
+      "variant": "B",
+      "old_conversation_ids": [
+        9,
+        7,
+        5
+      ],
+      "new_conversation_ids": [
+        9,
+        7,
+        5
+      ],
+      "old_org_ids": [
+        3,
+        2,
+        1
+      ],
+      "new_org_ids": [
+        3,
+        2,
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "candidate_disappears",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "candidate_disappears",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "stale_observation",
+      "variant": "A",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "stale_observation",
+      "variant": "B",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 2
+    },
+    {
+      "case": "deadline_before",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "deadline_before",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    },
+    {
+      "case": "deadline_after",
+      "variant": "A",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "deadline_after",
+      "variant": "B",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 2
+    }
+  ]
+}

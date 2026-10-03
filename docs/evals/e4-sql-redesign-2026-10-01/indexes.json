@@ -1,0 +1,212 @@
+[
+  [
+    "agent_conversation",
+    "agent_conve_contact_b658a2_idx",
+    "CREATE INDEX agent_conve_contact_b658a2_idx ON public.agent_conversation USING btree (contact_id, created_at DESC)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conve_organiz_34081f_idx",
+    "CREATE INDEX agent_conve_organiz_34081f_idx ON public.agent_conversation USING btree (organization_id, state, last_activity_at DESC)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_channel_account_id_b929d3ce",
+    "CREATE INDEX agent_conversation_channel_account_id_b929d3ce ON public.agent_conversation USING btree (channel_account_id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_claimed_by_id_62f9da56",
+    "CREATE INDEX agent_conversation_claimed_by_id_62f9da56 ON public.agent_conversation USING btree (claimed_by_id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_contact_id_36ec89e7",
+    "CREATE INDEX agent_conversation_contact_id_36ec89e7 ON public.agent_conversation USING btree (contact_id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_created_by_id_4cf1b1e4",
+    "CREATE INDEX agent_conversation_created_by_id_4cf1b1e4 ON public.agent_conversation USING btree (created_by_id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_organization_id_1ef62d10",
+    "CREATE INDEX agent_conversation_organization_id_1ef62d10 ON public.agent_conversation USING btree (organization_id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_pkey",
+    "CREATE UNIQUE INDEX agent_conversation_pkey ON public.agent_conversation USING btree (id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_public_id_key",
+    "CREATE UNIQUE INDEX agent_conversation_public_id_key ON public.agent_conversation USING btree (public_id)"
+  ],
+  [
+    "agent_conversation",
+    "agent_conversation_updated_by_id_01e8413e",
+    "CREATE INDEX agent_conversation_updated_by_id_01e8413e ON public.agent_conversation USING btree (updated_by_id)"
+  ],
+  [
+    "agent_turnwork",
+    "agent_turnwork_anchor_message_id_3fcc70f5",
+    "CREATE INDEX agent_turnwork_anchor_message_id_3fcc70f5 ON public.agent_turnwork USING btree (anchor_message_id)"
+  ],
+  [
+    "agent_turnwork",
+    "agent_turnwork_conversation_id_e15ceb51",
+    "CREATE INDEX agent_turnwork_conversation_id_e15ceb51 ON public.agent_turnwork USING btree (conversation_id)"
+  ],
+  [
+    "agent_turnwork",
+    "agent_turnwork_created_by_id_3261ae87",
+    "CREATE INDEX agent_turnwork_created_by_id_3261ae87 ON public.agent_turnwork USING btree (created_by_id)"
+  ],
+  [
+    "agent_turnwork",
+    "agent_turnwork_organization_id_4c7f7bfe",
+    "CREATE INDEX agent_turnwork_organization_id_4c7f7bfe ON public.agent_turnwork USING btree (organization_id)"
+  ],
+  [
+    "agent_turnwork",
+    "agent_turnwork_pkey",
+    "CREATE UNIQUE INDEX agent_turnwork_pkey ON public.agent_turnwork USING btree (id)"
+  ],
+  [
+    "agent_turnwork",
+    "agent_turnwork_updated_by_id_5ed3892a",
+    "CREATE INDEX agent_turnwork_updated_by_id_5ed3892a ON public.agent_turnwork USING btree (updated_by_id)"
+  ],
+  [
+    "agent_turnwork",
+    "turnwork_one_nonterminal",
+    "CREATE UNIQUE INDEX turnwork_one_nonterminal ON public.agent_turnwork USING btree (conversation_id) WHERE ((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PROCESSING'::character varying])::text[]))"
+  ],
+  [
+    "agent_turnwork",
+    "turnwork_poll_lease",
+    "CREATE INDEX turnwork_poll_lease ON public.agent_turnwork USING btree (status, lease_expires_at)"
+  ],
+  [
+    "agent_turnwork",
+    "turnwork_poll_retry",
+    "CREATE INDEX turnwork_poll_retry ON public.agent_turnwork USING btree (status, next_attempt_at)"
+  ],
+  [
+    "agent_turnwork",
+    "turnwork_unique_anchor",
+    "CREATE UNIQUE INDEX turnwork_unique_anchor ON public.agent_turnwork USING btree (conversation_id, anchor_message_id)"
+  ],
+  [
+    "channels_message",
+    "channels_me_convers_c68da0_idx",
+    "CREATE INDEX channels_me_convers_c68da0_idx ON public.channels_message USING btree (conversation_id, semantic_type, created_at)"
+  ],
+  [
+    "channels_message",
+    "channels_me_directi_c93e59_idx",
+    "CREATE INDEX channels_me_directi_c93e59_idx ON public.channels_message USING btree (direction, status)"
+  ],
+  [
+    "channels_message",
+    "channels_me_organiz_7ba1d3_idx",
+    "CREATE INDEX channels_me_organiz_7ba1d3_idx ON public.channels_message USING btree (organization_id, conversation_id, created_at)"
+  ],
+  [
+    "channels_message",
+    "channels_me_organiz_c00b67_idx",
+    "CREATE INDEX channels_me_organiz_c00b67_idx ON public.channels_message USING btree (organization_id, contact_id, channel_account_id, created_at)"
+  ],
+  [
+    "channels_message",
+    "channels_message_channel_account_id_03bba5b5",
+    "CREATE INDEX channels_message_channel_account_id_03bba5b5 ON public.channels_message USING btree (channel_account_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_contact_id_f609c902",
+    "CREATE INDEX channels_message_contact_id_f609c902 ON public.channels_message USING btree (contact_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_conversation_id_af5ca503",
+    "CREATE INDEX channels_message_conversation_id_af5ca503 ON public.channels_message USING btree (conversation_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_created_by_id_094f21e0",
+    "CREATE INDEX channels_message_created_by_id_094f21e0 ON public.channels_message USING btree (created_by_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_human_author_id_51a3db10",
+    "CREATE INDEX channels_message_human_author_id_51a3db10 ON public.channels_message USING btree (human_author_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_organization_id_940b6f9e",
+    "CREATE INDEX channels_message_organization_id_940b6f9e ON public.channels_message USING btree (organization_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_pkey",
+    "CREATE UNIQUE INDEX channels_message_pkey ON public.channels_message USING btree (id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_supersedes_message_id_2e4376d0",
+    "CREATE INDEX channels_message_supersedes_message_id_2e4376d0 ON public.channels_message USING btree (supersedes_message_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_turn_work_id_20ce3041",
+    "CREATE INDEX channels_message_turn_work_id_20ce3041 ON public.channels_message USING btree (turn_work_id)"
+  ],
+  [
+    "channels_message",
+    "channels_message_updated_by_id_f72e1ea0",
+    "CREATE INDEX channels_message_updated_by_id_f72e1ea0 ON public.channels_message USING btree (updated_by_id)"
+  ],
+  [
+    "channels_message",
+    "message_send_expiry",
+    "CREATE INDEX message_send_expiry ON public.channels_message USING btree (send_lease_until) WHERE ((status)::text = 'sending'::text)"
+  ],
+  [
+    "channels_message",
+    "message_send_ready",
+    "CREATE INDEX message_send_ready ON public.channels_message USING btree (direction, status, next_attempt_at)"
+  ],
+  [
+    "channels_message",
+    "message_status_lookup",
+    "CREATE INDEX message_status_lookup ON public.channels_message USING btree (organization_id, channel_account_id, external_message_id) WHERE ((direction)::text = 'out'::text)"
+  ],
+  [
+    "channels_message",
+    "message_unique_idempotency_per_org",
+    "CREATE UNIQUE INDEX message_unique_idempotency_per_org ON public.channels_message USING btree (organization_id, idempotency_key) WHERE (((direction)::text = 'out'::text) AND ((author_type)::text = 'human_staff'::text) AND (idempotency_key IS NOT NULL))"
+  ],
+  [
+    "channels_message",
+    "message_unique_inbound_wamid",
+    "CREATE UNIQUE INDEX message_unique_inbound_wamid ON public.channels_message USING btree (channel_account_id, external_message_id) WHERE (((direction)::text = 'in'::text) AND (external_message_id IS NOT NULL))"
+  ],
+  [
+    "channels_message",
+    "message_unique_operation_receipt",
+    "CREATE UNIQUE INDEX message_unique_operation_receipt ON public.channels_message USING btree (conversation_id, operation_key) WHERE (((direction)::text = 'out'::text) AND ((semantic_type)::text = 'operation_receipt'::text) AND (NOT ((operation_key)::text = ''::text)))"
+  ],
+  [
+    "channels_message",
+    "message_unique_processing_failure_notice",
+    "CREATE UNIQUE INDEX message_unique_processing_failure_notice ON public.channels_message USING btree (conversation_id, semantic_type) WHERE (((direction)::text = 'out'::text) AND ((semantic_type)::text = 'processing_failure'::text))"
+  ],
+  [
+    "channels_message",
+    "message_unique_turn_output",
+    "CREATE UNIQUE INDEX message_unique_turn_output ON public.channels_message USING btree (turn_work_id, output_ordinal) WHERE (((direction)::text = 'out'::text) AND (output_ordinal IS NOT NULL) AND (turn_work_id IS NOT NULL))"
+  ]
+]

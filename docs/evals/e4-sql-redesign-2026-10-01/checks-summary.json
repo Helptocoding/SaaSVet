@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "commands": [
+    "migrate --noinput",
+    "check",
+    "makemigrations --check --dry-run",
+    "migrate --check"
+  ],
+  "system_check": "PASS",
+  "new_migrations": 0,
+  "pending_migrations": 0
+}

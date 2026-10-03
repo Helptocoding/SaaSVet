@@ -1,0 +1,47 @@
+{
+  "final_gate_failures": 0,
+  "final_gate_errors": 0,
+  "incidents": [
+    {
+      "stage": "full-initial",
+      "kind": "host_process_interruption",
+      "completed_matrix_points": 0,
+      "action": "Recovered the verified isolated migrated template"
+    },
+    {
+      "stage": "new",
+      "kind": "duplicate_discovery_from_imported_testcase_classes",
+      "selected": 35,
+      "partial_passed": 19,
+      "action": "Stopped only the verified own Python tree; used module aliases; excluded partial run from final gate"
+    },
+    {
+      "stage": "new-final",
+      "kind": "new_process_harness_API_error",
+      "failures": 4,
+      "errors": 1,
+      "failed_ids": [
+        "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_01_same_candidate_miss_and_distinct_org_fallback",
+        "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_03_candidate_disappears_after_observation",
+        "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_04_safety_arrival_and_deadline_crossing",
+        "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_05_ordinary_join_preserves_ready_and_claim_membership",
+        "apps.agent.tests.test_e4_sql_processes.E4SQLProcessTests.test_sql_proc_02_org_slot_occupied_after_observation"
+      ],
+      "error": "TypeError: claim_turn() got an unexpected keyword argument 'now'",
+      "action": "Corrected only new process harness to eligible_at; all five process tests rerun successfully"
+    },
+    {
+      "stage": "post-first-point",
+      "kind": "Windows_case_insensitive_artifact_filename_collision",
+      "completed_samples": 0,
+      "action": "Used sql-post-old/new; recloned only the incomplete point; preserved all successful receipts"
+    },
+    {
+      "stage": "regression",
+      "kind": "host_process_interruption",
+      "retained_source_verified_successes": 659,
+      "resumed_pending_ids": 116,
+      "action": "Retained successful per-ID journals; verified every source hash; reran only pending IDs on fresh isolated clones"
+    }
+  ]
+}

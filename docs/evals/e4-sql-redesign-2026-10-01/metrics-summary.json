@@ -1,0 +1,711 @@
+{
+  "points": [
+    {
+      "kind": "messages",
+      "x": 10,
+      "old": {
+        "n": 30,
+        "p50": 0.968,
+        "p95": 1.658,
+        "p99": 1.717,
+        "max": 1.717
+      },
+      "new": {
+        "n": 30,
+        "p50": 1.012,
+        "p95": 1.444,
+        "p99": 1.551,
+        "max": 1.551
+      },
+      "p95_ratio": 1.1481994459833795,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 71,
+      "new_hits": 80,
+      "old_planning_ms": 3.942,
+      "new_planning_ms": 4.778
+    },
+    {
+      "kind": "messages",
+      "x": 50,
+      "old": {
+        "n": 30,
+        "p50": 1.813,
+        "p95": 2.665,
+        "p99": 3.319,
+        "max": 3.319
+      },
+      "new": {
+        "n": 30,
+        "p50": 1.474,
+        "p95": 1.911,
+        "p99": 1.959,
+        "max": 1.959
+      },
+      "p95_ratio": 1.3945578231292517,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 112,
+      "new_hits": 83,
+      "old_planning_ms": 5.475,
+      "new_planning_ms": 5.258
+    },
+    {
+      "kind": "messages",
+      "x": 100,
+      "old": {
+        "n": 30,
+        "p50": 2.692,
+        "p95": 4.163,
+        "p99": 4.208,
+        "max": 4.208
+      },
+      "new": {
+        "n": 30,
+        "p50": 1.247,
+        "p95": 2.534,
+        "p99": 2.599,
+        "max": 2.599
+      },
+      "p95_ratio": 1.642857142857143,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 166,
+      "new_hits": 83,
+      "old_planning_ms": 5.425,
+      "new_planning_ms": 5.939
+    },
+    {
+      "kind": "messages",
+      "x": 250,
+      "old": {
+        "n": 30,
+        "p50": 4.409,
+        "p95": 5.75,
+        "p99": 6.527,
+        "max": 6.527
+      },
+      "new": {
+        "n": 30,
+        "p50": 1.319,
+        "p95": 2.139,
+        "p99": 2.238,
+        "max": 2.238
+      },
+      "p95_ratio": 2.688172043010753,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 350,
+      "new_hits": 92,
+      "old_planning_ms": 2.945,
+      "new_planning_ms": 3.173
+    },
+    {
+      "kind": "messages",
+      "x": 500,
+      "old": {
+        "n": 30,
+        "p50": 11.242,
+        "p95": 14.271,
+        "p99": 14.781,
+        "max": 14.781
+      },
+      "new": {
+        "n": 30,
+        "p50": 1.762,
+        "p95": 3.684,
+        "p99": 3.797,
+        "max": 3.797
+      },
+      "p95_ratio": 3.8737785016286646,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 656,
+      "new_hits": 107,
+      "old_planning_ms": 4.819,
+      "new_planning_ms": 3.27
+    },
+    {
+      "kind": "messages",
+      "x": 1000,
+      "old": {
+        "n": 30,
+        "p50": 19.397,
+        "p95": 29.954,
+        "p99": 31.213,
+        "max": 31.213
+      },
+      "new": {
+        "n": 30,
+        "p50": 2.348,
+        "p95": 4.859,
+        "p99": 7.347,
+        "max": 7.347
+      },
+      "p95_ratio": 6.164642930644166,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 1276,
+      "new_hits": 137,
+      "old_planning_ms": 5.279,
+      "new_planning_ms": 6.237
+    },
+    {
+      "kind": "messages",
+      "x": 2000,
+      "old": {
+        "n": 30,
+        "p50": 61.065,
+        "p95": 109.847,
+        "p99": 161.266,
+        "max": 161.266
+      },
+      "new": {
+        "n": 30,
+        "p50": 16.523,
+        "p95": 32.218,
+        "p99": 38.33,
+        "max": 38.33
+      },
+      "p95_ratio": 3.4094915885529824,
+      "old_max_message_loops": 11,
+      "new_max_message_loops": 1,
+      "old_hits": 2495,
+      "new_hits": 195,
+      "old_planning_ms": 11.125,
+      "new_planning_ms": 14.455
+    },
+    {
+      "kind": "conversations",
+      "x": 10,
+      "old": {
+        "n": 30,
+        "p50": 64.403,
+        "p95": 95.909,
+        "p99": 98.567,
+        "max": 98.567
+      },
+      "new": {
+        "n": 30,
+        "p50": 6.515,
+        "p95": 7.527,
+        "p99": 13.942,
+        "max": 13.942
+      },
+      "p95_ratio": 12.741995482928125,
+      "old_max_message_loops": 13,
+      "new_max_message_loops": 1,
+      "old_hits": 2944,
+      "new_hits": 181,
+      "old_planning_ms": 6.11,
+      "new_planning_ms": 5.382
+    },
+    {
+      "kind": "conversations",
+      "x": 25,
+      "old": {
+        "n": 30,
+        "p50": 142.398,
+        "p95": 170.353,
+        "p99": 191.462,
+        "max": 191.462
+      },
+      "new": {
+        "n": 30,
+        "p50": 13.005,
+        "p95": 35.029,
+        "p99": 44.083,
+        "max": 44.083
+      },
+      "p95_ratio": 4.863199063632989,
+      "old_max_message_loops": 28,
+      "new_max_message_loops": 1,
+      "old_hits": 6249,
+      "new_hits": 322,
+      "old_planning_ms": 4.851,
+      "new_planning_ms": 6.783
+    },
+    {
+      "kind": "conversations",
+      "x": 50,
+      "old": {
+        "n": 30,
+        "p50": 346.847,
+        "p95": 452.898,
+        "p99": 508.768,
+        "max": 508.768
+      },
+      "new": {
+        "n": 30,
+        "p50": 16.238,
+        "p95": 31.69,
+        "p99": 45.719,
+        "max": 45.719
+      },
+      "p95_ratio": 14.291511517828969,
+      "old_max_message_loops": 53,
+      "new_max_message_loops": 1,
+      "old_hits": 11556,
+      "new_hits": 497,
+      "old_planning_ms": 22.422,
+      "new_planning_ms": 7.508
+    },
+    {
+      "kind": "conversations",
+      "x": 100,
+      "old": {
+        "n": 30,
+        "p50": 532.825,
+        "p95": 639.611,
+        "p99": 698.929,
+        "max": 698.929
+      },
+      "new": {
+        "n": 30,
+        "p50": 16.801,
+        "p95": 25.905,
+        "p99": 26.366,
+        "max": 26.366
+      },
+      "p95_ratio": 24.690638872804477,
+      "old_max_message_loops": 103,
+      "new_max_message_loops": 1,
+      "old_hits": 22389,
+      "new_hits": 852,
+      "old_planning_ms": 4.279,
+      "new_planning_ms": 5.345
+    },
+    {
+      "kind": "conversations",
+      "x": 250,
+      "old": {
+        "n": 30,
+        "p50": 1062.549,
+        "p95": 2115.235,
+        "p99": 2198.859,
+        "max": 2198.859
+      },
+      "new": {
+        "n": 30,
+        "p50": 30.983,
+        "p95": 114.223,
+        "p99": 122.333,
+        "max": 122.333
+      },
+      "p95_ratio": 18.51846825945738,
+      "old_max_message_loops": 253,
+      "new_max_message_loops": 1,
+      "old_hits": 54856,
+      "new_hits": 1911,
+      "old_planning_ms": 5.081,
+      "new_planning_ms": 3.815
+    },
+    {
+      "kind": "conversations",
+      "x": 500,
+      "old": {
+        "n": 30,
+        "p50": 2794.719,
+        "p95": 3042.628,
+        "p99": 3087.395,
+        "max": 3087.395
+      },
+      "new": {
+        "n": 30,
+        "p50": 75.515,
+        "p95": 103.868,
+        "p99": 104.776,
+        "max": 104.776
+      },
+      "p95_ratio": 29.29321831555436,
+      "old_max_message_loops": 503,
+      "new_max_message_loops": 1,
+      "old_hits": 108778,
+      "new_hits": 4009,
+      "old_planning_ms": 7.137,
+      "new_planning_ms": 9.621
+    },
+    {
+      "kind": "conversations",
+      "x": 1000,
+      "old": {
+        "n": 30,
+        "p50": 5748.761,
+        "p95": 7113.485,
+        "p99": 7351.682,
+        "max": 7351.682
+      },
+      "new": {
+        "n": 30,
+        "p50": 152.606,
+        "p95": 269.216,
+        "p99": 338.031,
+        "max": 338.031
+      },
+      "p95_ratio": 26.422965202662542,
+      "old_max_message_loops": 1003,
+      "new_max_message_loops": 1,
+      "old_hits": 215477,
+      "new_hits": 7867,
+      "old_planning_ms": 5.818,
+      "new_planning_ms": 10.441
+    }
+  ],
+  "stress_old": {
+    "execution_ms": 5557.344,
+    "planning_ms": 5.818,
+    "hits": 215477,
+    "reads": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "message_nodes": [
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 2003,
+        "total_time_times_loops": 1.68
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 214332,
+        "reads": 0,
+        "removed_per_loop": 1737,
+        "total_time_times_loops": 5497.443
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 403,
+        "total_time_times_loops": 0.688
+      }
+    ],
+    "dominant_relation_by_time_times_loops": {
+      "relation": "agent_conversation",
+      "type": "Index Scan",
+      "loops": 1,
+      "hits": 215433,
+      "reads": 0,
+      "removed_per_loop": 668,
+      "total_time_times_loops": 5550.628
+    },
+    "nodes": [
+      {
+        "relation": "agent_conversation",
+        "type": "Index Scan",
+        "loops": 1,
+        "hits": 215433,
+        "reads": 0,
+        "removed_per_loop": 668,
+        "total_time_times_loops": 5550.628
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 2003,
+        "total_time_times_loops": 1.68
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 1003,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 5.015
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 1003,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 5.015
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 214332,
+        "reads": 0,
+        "removed_per_loop": 1737,
+        "total_time_times_loops": 5497.443
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 89778,
+        "hits": 89778,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 359.112
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 89778,
+        "hits": 89778,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 359.112
+      },
+      {
+        "relation": "agent_conversation",
+        "type": "Index Scan",
+        "loops": 1,
+        "hits": 3,
+        "reads": 0,
+        "removed_per_loop": 0,
+        "total_time_times_loops": 0.038
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 1,
+        "reads": 0,
+        "removed_per_loop": 3,
+        "total_time_times_loops": 0.02
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Index Scan",
+        "loops": 1,
+        "hits": 2,
+        "reads": 0,
+        "removed_per_loop": 3,
+        "total_time_times_loops": 0.019
+      },
+      {
+        "relation": "agent_conversation",
+        "type": "Index Scan",
+        "loops": 0,
+        "hits": 0,
+        "reads": 0,
+        "removed_per_loop": 0,
+        "total_time_times_loops": 0.0
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 1,
+        "reads": 0,
+        "removed_per_loop": 0,
+        "total_time_times_loops": 0.009
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 403,
+        "total_time_times_loops": 0.688
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 2,
+        "hits": 2,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 0.01
+      }
+    ]
+  },
+  "stress_new": {
+    "execution_ms": 115.546,
+    "planning_ms": 10.441,
+    "hits": 7867,
+    "reads": 0,
+    "temp_read": 0,
+    "temp_written": 0,
+    "message_nodes": [
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 2003,
+        "total_time_times_loops": 2.046
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 1603,
+        "total_time_times_loops": 1.617
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 403,
+        "total_time_times_loops": 2.692
+      }
+    ],
+    "dominant_relation_by_time_times_loops": {
+      "relation": "agent_conversation",
+      "type": "Index Scan",
+      "loops": 1,
+      "hits": 7823,
+      "reads": 0,
+      "removed_per_loop": 668,
+      "total_time_times_loops": 109.217
+    },
+    "nodes": [
+      {
+        "relation": "agent_conversation",
+        "type": "Index Scan",
+        "loops": 1,
+        "hits": 7823,
+        "reads": 0,
+        "removed_per_loop": 668,
+        "total_time_times_loops": 109.217
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 2003,
+        "total_time_times_loops": 2.046
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 1003,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 3.009
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 1003,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 4.0120000000000005
+      },
+      {
+        "relation": "organizations_organization",
+        "type": "Seq Scan",
+        "loops": 1003,
+        "hits": 4682,
+        "reads": 0,
+        "removed_per_loop": 1,
+        "total_time_times_loops": 64.19200000000001
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1338,
+        "hits": 1338,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 4.014
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1338,
+        "hits": 1338,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 4.014
+      },
+      {
+        "relation": "agent_conversation",
+        "type": "Index Scan",
+        "loops": 668,
+        "hits": 2004,
+        "reads": 0,
+        "removed_per_loop": 0,
+        "total_time_times_loops": 7.348
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 1,
+        "reads": 0,
+        "removed_per_loop": 3,
+        "total_time_times_loops": 0.015
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 1603,
+        "total_time_times_loops": 1.617
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Index Scan",
+        "loops": 1,
+        "hits": 2,
+        "reads": 0,
+        "removed_per_loop": 3,
+        "total_time_times_loops": 0.02
+      },
+      {
+        "relation": "agent_conversation",
+        "type": "Index Scan",
+        "loops": 0,
+        "hits": 0,
+        "reads": 0,
+        "removed_per_loop": 0,
+        "total_time_times_loops": 0.0
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 1,
+        "reads": 0,
+        "removed_per_loop": 0,
+        "total_time_times_loops": 0.017
+      },
+      {
+        "relation": "channels_message",
+        "type": "Seq Scan",
+        "loops": 1,
+        "hits": 39,
+        "reads": 0,
+        "removed_per_loop": 403,
+        "total_time_times_loops": 2.692
+      },
+      {
+        "relation": "agent_turnwork",
+        "type": "Seq Scan",
+        "loops": 2,
+        "hits": 2,
+        "reads": 0,
+        "removed_per_loop": 2,
+        "total_time_times_loops": 0.016
+      }
+    ]
+  }
+}

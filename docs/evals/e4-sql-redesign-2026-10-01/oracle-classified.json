@@ -1,0 +1,475 @@
+{
+  "seed": 20261001,
+  "manual_states": 21,
+  "generated_states": 300,
+  "states_tested": 321,
+  "variant_evaluations": 321,
+  "phase": "post",
+  "yield_definition": "Advisory ordered selection differs from the same selector with an empty future organization relation",
+  "decision_mismatches": 0,
+  "mismatches": [],
+  "candidate_limit": 3,
+  "query_count_min": 1,
+  "query_count_max": 1,
+  "manual": [
+    {
+      "case": "healthy_ready",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "two_healthy_ready",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        7,
+        5
+      ],
+      "new_conversation_ids": [
+        7,
+        5
+      ],
+      "old_org_ids": [
+        2,
+        1
+      ],
+      "new_org_ids": [
+        2,
+        1
+      ],
+      "selection_without_forecast": [
+        7,
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "healthy_noisy_ready",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "near_ready",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "far_future",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "busy_upcoming",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "busy_current",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        7
+      ],
+      "new_conversation_ids": [
+        7
+      ],
+      "old_org_ids": [
+        2
+      ],
+      "new_org_ids": [
+        2
+      ],
+      "selection_without_forecast": [
+        7
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "never_claimed",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "less_recent_claim",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "more_recent_claim",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        7
+      ],
+      "new_conversation_ids": [
+        7
+      ],
+      "old_org_ids": [
+        2
+      ],
+      "new_org_ids": [
+        2
+      ],
+      "selection_without_forecast": [
+        7
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "same_claim_boundary",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "pending_safety",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "safety_after_w1",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        9,
+        5
+      ],
+      "new_conversation_ids": [
+        9,
+        5
+      ],
+      "old_org_ids": [
+        3,
+        1
+      ],
+      "new_org_ids": [
+        3,
+        1
+      ],
+      "selection_without_forecast": [
+        9,
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "monotonic_ready_join",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "multiple_conversations_one_org",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "multiple_orgs",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        9,
+        7,
+        5
+      ],
+      "new_conversation_ids": [
+        9,
+        7,
+        5
+      ],
+      "old_org_ids": [
+        3,
+        2,
+        1
+      ],
+      "new_org_ids": [
+        3,
+        2,
+        1
+      ],
+      "selection_without_forecast": [
+        9,
+        7,
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "candidate_disappears",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "stale_observation",
+      "variant": "NEW",
+      "old_conversation_ids": [
+        5
+      ],
+      "new_conversation_ids": [
+        5
+      ],
+      "old_org_ids": [
+        1
+      ],
+      "new_org_ids": [
+        1
+      ],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": false,
+      "selection_empty_new": false,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    },
+    {
+      "case": "deadline_before",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "deadline_after",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [
+        7,
+        5
+      ],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": true,
+      "yield_new": true,
+      "query_count": 1
+    },
+    {
+      "case": "no_eligible_candidate",
+      "variant": "NEW",
+      "old_conversation_ids": [],
+      "new_conversation_ids": [],
+      "old_org_ids": [],
+      "new_org_ids": [],
+      "selection_without_forecast": [],
+      "selection_empty_old": true,
+      "selection_empty_new": true,
+      "yield_old": false,
+      "yield_new": false,
+      "query_count": 1
+    }
+  ]
+}
