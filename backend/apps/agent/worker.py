@@ -37,6 +37,7 @@ def _pending_conversation_candidates(now=None, excluded=()):
     """Advisory E4 selection; B3/B9C claim remains the sole authority."""
     from django.db.models import Exists, F, OuterRef, Subquery, Window
     from django.db.models.functions import Now, RowNumber
+    from apps.organizations.models import Organization
     from .models import TurnWork
     from . import durable
     due = (Q(turn_works__status=TurnWork.PROCESSING,
@@ -52,17 +53,22 @@ def _pending_conversation_candidates(now=None, excluded=()):
         semantic_type=Message.SEMANTIC_SAFETY_SIGNAL).values('conversation_id')
     latest = TurnWork.objects.filter(organization_id=OuterRef('organization_id'),
         claimed_at__isnull=False).order_by('-claimed_at').values('claimed_at')[:1]
+    latest_org = TurnWork.objects.filter(organization_id=OuterRef('pk'),
+        claimed_at__isnull=False).order_by('-claimed_at').values('claimed_at')[:1]
     # E4: yield one existing release poll before starting another turn for a
     # recently served org if an idle, less recently served org is about to be
     # eligible. This readonly observation reserves neither capacity nor budget;
     # the B3/B9C claim still revalidates every selected candidate.
     clock = now or Now()
-    upcoming = (Message.objects.filter(direction='in', status='pending', turn_work__isnull=True,
+    # Build the future Message relation once; correlate only organization rows.
+    upcoming_org_ids = (Message.objects.filter(direction='in', status='pending', turn_work__isnull=True,
         available_at__gt=clock, available_at__lte=clock + timedelta(seconds=1))
-        .exclude(organization_id=OuterRef('organization_id'))
         .exclude(semantic_type=Message.SEMANTIC_SAFETY_SIGNAL)
-        .alias(upcoming_busy=Exists(durable.active_org_work(OuterRef('organization_id'))),
-               upcoming_last_claim=Subquery(latest))
+        .order_by().values('organization_id').distinct())
+    upcoming = (Organization.objects.filter(pk__in=upcoming_org_ids)
+        .exclude(pk=OuterRef('organization_id'))
+        .alias(upcoming_busy=Exists(durable.active_org_work(OuterRef('pk'))),
+               upcoming_last_claim=Subquery(latest_org))
         .filter(upcoming_busy=False)
         .filter(Q(upcoming_last_claim__isnull=True) |
                 Q(upcoming_last_claim__lt=OuterRef('org_last_claim'))))
