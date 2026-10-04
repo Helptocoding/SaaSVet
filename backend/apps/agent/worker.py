@@ -29,6 +29,7 @@ from .durable import MAX_ATTEMPTS as MAX_PROCESS_ATTEMPTS
 from .durable import RETRY_DELAY as TURN_RETRY_DELAY
 from .durable import LEASE as PROCESSING_LEASE
 from .models import AgentSettings, Conversation
+from . import claim_diagnostics as claim_trace
 from .tier0 import render_first_reply
 
 logger = logging.getLogger('agent.events')
@@ -88,13 +89,14 @@ def _pending_conversation_candidates(now=None, excluded=()):
         .values_list('pk', flat=True)[:3])
 
 
+@claim_trace.observed('poll')
 def process_pending_conversations(batch=10, now=None):
     """Poll durable retries/recovery and unassigned inbound using existing loop."""
     from . import durable
     processed = 0
     attempted = set()
     while processed < batch:
-        for conv_id in list(_pending_conversation_candidates(now, attempted)):
+        for conv_id in claim_trace.select_candidates(_pending_conversation_candidates, now, attempted):
             attempted.add(conv_id)
             witness = _claim_turn(conv_id, now)
             if witness is None:
@@ -117,6 +119,7 @@ def _claim_turn(conv_id, now=None):
     return claim_turn(conv_id, eligible_at=now)
 
 
+@claim_trace.observed('turn')
 def _run_turn(witness):
     """Plan in memory, then publish under a fresh witness/CAS in one commit."""
     from . import durable, planner

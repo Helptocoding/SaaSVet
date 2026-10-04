@@ -1,0 +1,19 @@
+{
+  "tests": 3,
+  "test_ids": [
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission",
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection",
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses"
+  ],
+  "failures": 1,
+  "errors": 2,
+  "skips": 0,
+  "xfail": 0,
+  "failed_ids": [
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission",
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection",
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses"
+  ],
+  "seconds": 128.59462799999892,
+  "exit_code": 3
+}

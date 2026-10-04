@@ -16,6 +16,7 @@ from django.db.models.functions import Now
 from apps.channels.models import Message
 from .models import Conversation, TurnWork
 from .turn_context import build_turn_context, MessageCursor
+from . import claim_diagnostics as claim_trace
 
 logger = logging.getLogger('agent.events')
 MAX_ATTEMPTS = 3  # Existing worker policy.
@@ -40,6 +41,7 @@ class OwnershipWitness:
     ownership_epoch: int
 
 
+@claim_trace.database_clock
 def db_now():
     with connection.cursor() as cursor:
         cursor.execute('SELECT statement_timestamp()')
@@ -122,6 +124,7 @@ def _concurrency_event(outcome):
     transaction.on_commit(emit)
 
 
+@claim_trace.observed('claim')
 def claim_turn(conversation_id, *, eligible_at=None):
     """Create fixed membership or reclaim the same work with a fresh token.
 
@@ -158,6 +161,7 @@ def claim_turn(conversation_id, *, eligible_at=None):
         return witness
 
 
+@claim_trace.observed('claim_locked')
 def _claim_turn_locked(conv, *, eligible_at=None):
     """B3 primitive; caller holds Conversation in an atomic transaction.
 
@@ -172,6 +176,8 @@ def _claim_turn_locked(conv, *, eligible_at=None):
                 organization_id=conv.organization_id,
                 status__in=TurnWork.NON_TERMINAL).first())
     reclaimed = False
+    member_ids = None
+    claim_trace.existing_work(work)
     if work:
         if work.ownership_epoch != conv.ownership_epoch:
             _terminal_failure(work, conv, 'ownership_changed', now)
@@ -195,7 +201,9 @@ def _claim_turn_locked(conv, *, eligible_at=None):
             .order_by('created_at', 'id'))
         if not members:
             return None
+        claim_trace.members(members)
         context = build_turn_context(conv, members, now=now)
+        member_ids = context.inbound_ids
         work = TurnWork.objects.create(
             organization_id=conv.organization_id, conversation=conv,
             anchor_message=members[-1], anchor_created_at=context.anchor.created_at,
@@ -222,6 +230,7 @@ def _claim_turn_locked(conv, *, eligible_at=None):
         turn_work=work, direction='in').update(process_attempts=F('process_attempts') + 1)
     Conversation.objects.filter(pk=conv.pk).update(processing_until=now + LEASE)
     work.attempts += 1
+    claim_trace.bound(work, token, now, now + LEASE, member_ids)
     _event('reclaimed' if reclaimed else 'claimed', work)
     return OwnershipWitness(conv.organization_id, conv.pk, work.pk,
                             token, conv.ownership_epoch)

@@ -1,0 +1,131 @@
+{
+  "classification": "DIAGNOSTIC_ONLY",
+  "offline_reconstruction": "PASS",
+  "reporting_unit_tests": 5,
+  "evidence": [
+    {
+      "input_report": "artifacts\\equivalence-final\\blocked-llm-report.json",
+      "verification_run_passed": true,
+      "journals": 2,
+      "events": 433,
+      "claims": 2,
+      "query_count": 175,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\equivalence-final\\blocked-llm-0.jsonl": "60102ae74c103c6e26c37e4dbfc901162da65cba29b8e56ef5d0adc3ed88b85e",
+        "artifacts\\equivalence-final\\blocked-llm-1.jsonl": "9a1864d51121e42a99074fededdcc59bc62a2c45bfc0327ebb8cfeddc8470d52"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\equivalence-final\\concurrency-report.json",
+      "verification_run_passed": true,
+      "journals": 2,
+      "events": 100,
+      "claims": 1,
+      "query_count": 34,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\equivalence-final\\concurrency-0.jsonl": "f9beafa75dbba754d8be5224038d605eaf86441a908382b6d92de461b2cae025",
+        "artifacts\\equivalence-final\\concurrency-1.jsonl": "a9aad6fe8934e2f7c2a737f0942b9580deba258cb57c6ba02adda752e3e408eb"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\equivalence-final\\lock-wait-report.json",
+      "verification_run_passed": true,
+      "journals": 1,
+      "events": 88,
+      "claims": 1,
+      "query_count": 32,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\equivalence-final\\lock-wait-0.jsonl": "318120e05e5587916ffd2f053f70509b8e3a4a8b7a3dc365a11f69cc1d713003"
+      },
+      "lock_queries": 1
+    },
+    {
+      "input_report": "artifacts\\equivalence-process-final\\blocked-llm-report.json",
+      "verification_run_passed": false,
+      "journals": 2,
+      "events": 433,
+      "claims": 2,
+      "query_count": 175,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\equivalence-process-final\\blocked-llm-0.jsonl": "95ea2016931b1f731cd78e63ecf8370bc5aeb5696839259a9ed3c9b51d602538",
+        "artifacts\\equivalence-process-final\\blocked-llm-1.jsonl": "06e872b5ee17e83cf37ada43557c683d13bf51ee5adf126ab0284610c37d1a0d"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\equivalence-process-final\\lock-wait-report.json",
+      "verification_run_passed": false,
+      "journals": 1,
+      "events": 88,
+      "claims": 1,
+      "query_count": 32,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\equivalence-process-final\\lock-wait-0.jsonl": "04d8c66f0b9ab31c414ed5d8b9e73f39c1a33629eef1a961942366f432854206"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\targeted-3\\blocked-llm-report.json",
+      "verification_run_passed": true,
+      "journals": 2,
+      "events": 433,
+      "claims": 2,
+      "query_count": 175,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\targeted-3\\blocked-llm-0.jsonl": "c28f14c01ab77b4d68dc4f47670aedd1bcbe3d679156b8dbcf9860c5af8b1cdc",
+        "artifacts\\targeted-3\\blocked-llm-1.jsonl": "b2418ba16f2495c8a3b45e21a6adb1befb63728d3ab37c4131131ba64b98e68e"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\targeted-3\\concurrency-report.json",
+      "verification_run_passed": true,
+      "journals": 2,
+      "events": 100,
+      "claims": 1,
+      "query_count": 34,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\targeted-3\\concurrency-0.jsonl": "98757c91dbcf9a442186c5ada095b38a5d51c1b2f2a3be974f331e36ae674edd",
+        "artifacts\\targeted-3\\concurrency-1.jsonl": "e1184829fed97a90fd5acbb9039d2f3ff9237c2517c1121c1a08170137231c9c"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\targeted-3\\coverage-report.json",
+      "verification_run_passed": true,
+      "journals": 1,
+      "events": 256,
+      "claims": 1,
+      "query_count": 97,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\targeted-3\\coverage-0.jsonl": "594d630b9831e754197192e182cb6851c26d26ab3920f972d07f403881ac0431"
+      },
+      "lock_queries": 0
+    },
+    {
+      "input_report": "artifacts\\targeted-3\\lock-wait-report.json",
+      "verification_run_passed": true,
+      "journals": 1,
+      "events": 88,
+      "claims": 1,
+      "query_count": 32,
+      "failed_writes": 0,
+      "input_sha256": {
+        "artifacts\\targeted-3\\lock-wait-0.jsonl": "7bab910e10a34dc1d4e2b56f0e91b9cf1f0681765784b09bcd4d37cb99cad791"
+      },
+      "lock_queries": 1
+    }
+  ],
+  "historical_causality": "NOT_INFERRED",
+  "privacy_forbidden_patterns_found": 0
+}

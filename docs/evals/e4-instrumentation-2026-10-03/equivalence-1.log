@@ -1,0 +1,26 @@
+Found 1 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4trace_equivalence_1')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim (apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:04:52Z", "organization_id": 1, "conversation_id": 1, "request_id": "c0dfbdd8-d367-48cd-85c7-f368a96f7782"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:04:55Z", "oldest_pending_age_seconds": 2.482613, "turn_work_id": 900002, "conversation_id": 1, "organization_id": 1, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:04:55Z", "turn_work_id": 900002, "conversation_id": 1, "organization_id": 1, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:04:55Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_RETRY_SCHEDULED", "level": "INFO", "ts": "2026-10-03T12:04:56Z", "outcome_code": "turn_error", "turn_work_id": 900002, "conversation_id": 1, "organization_id": 1, "attempts": 1, "request_id": "-"}
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 48.068s
+
+OK
+Preserving test database for alias 'default' ('test_b8b_e4trace_equivalence_1')...
+{"suite": "targeted", "database": "test_b8b_e4trace_equivalence_1", "exit_code": 0, "seconds": 53.93895929999417}

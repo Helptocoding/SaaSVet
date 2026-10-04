@@ -1,0 +1,33 @@
+Found 4 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4trace_equivalence_final')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_01_competing_processes_correlate_single_admission (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:12:07Z", "organization_id": 2, "conversation_id": 1, "request_id": "3c891942-39b7-4bad-ab40-9d57b3c28a32"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:12:16Z", "organization_id": 3, "conversation_id": 2, "request_id": "d926b38d-3eb4-4ea5-98a5-f90a679baf6b"}
+ok
+test_02_controlled_message_lock_is_observed_by_separate_connection (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:12:51Z", "organization_id": 5, "conversation_id": 3, "request_id": "925deed6-c2d7-4759-90fd-d4b9a0652d5e"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:12:55Z", "organization_id": 6, "conversation_id": 4, "request_id": "03e8bcbd-6eef-4ec4-bd4a-8bb78caa3f13"}
+ok
+test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:13:19Z", "organization_id": 8, "conversation_id": 5, "request_id": "ccba49e2-a819-407e-a063-436866fa5153"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:13:23Z", "organization_id": 9, "conversation_id": 6, "request_id": "222914d5-fd33-4e8a-be87-7b12b814328b"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:13:29Z", "organization_id": 10, "conversation_id": 7, "request_id": "c57a8307-e1a8-4f50-831b-599149d96f69"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:13:33Z", "organization_id": 11, "conversation_id": 8, "request_id": "ab8f8943-0f4d-49ba-9d50-cafe0c6d16fa"}
+ok
+test_03_outer_rollback_and_savepoint_rollback_are_not_commits (apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_03_outer_rollback_and_savepoint_rollback_are_not_commits) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:13:58Z", "organization_id": 12, "conversation_id": 9, "request_id": "91ef6154-f3b7-47e7-beec-0500af83ba45"}
+ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 136.464s
+
+OK
+Preserving test database for alias 'default' ('test_b8b_e4trace_equivalence_final')...
+{"suite": "targeted", "database": "test_b8b_e4trace_equivalence_final", "exit_code": 0, "seconds": 138.77590220000275}

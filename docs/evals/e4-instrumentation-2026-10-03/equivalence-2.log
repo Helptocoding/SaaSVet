@@ -1,0 +1,28 @@
+Found 2 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4trace_equivalence_2')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_12_reconnect_and_on_off_ready_join_do_not_change_deadline_or_membership (apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_12_reconnect_and_on_off_ready_join_do_not_change_deadline_or_membership) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:17:26Z", "organization_id": 1, "conversation_id": 1, "request_id": "7bec0230-cc58-4e58-a61a-2f0ca6740f80"}
+ok
+test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim (apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:18:43Z", "organization_id": 2, "conversation_id": 2, "request_id": "d293c039-8ea9-4345-b091-c9036d446a50"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:18:46Z", "oldest_pending_age_seconds": 1.700863, "turn_work_id": 900002, "conversation_id": 2, "organization_id": 2, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:18:46Z", "turn_work_id": 900002, "conversation_id": 2, "organization_id": 2, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:18:46Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_RETRY_SCHEDULED", "level": "INFO", "ts": "2026-10-03T12:18:46Z", "outcome_code": "turn_error", "turn_work_id": 900002, "conversation_id": 2, "organization_id": 2, "attempts": 1, "request_id": "-"}
+ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 133.151s
+
+OK
+Preserving test database for alias 'default' ('test_b8b_e4trace_equivalence_2')...
+{"suite": "targeted", "database": "test_b8b_e4trace_equivalence_2", "exit_code": 0, "seconds": 137.69092719999026}

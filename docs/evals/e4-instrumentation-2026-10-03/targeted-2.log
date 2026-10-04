@@ -1,0 +1,19 @@
+Found 11 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4trace_suite')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_01_complete_phases_and_private_data_never_serialized (apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_01_complete_phases_and_private_data_never_serialized) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:02:11Z", "organization_id": 3, "conversation_id": 3, "request_id": "777a6f40-4344-42a8-9a62-9bab31eec8d5"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:02:12Z", "oldest_pending_age_seconds": 0.733843, "turn_work_id": 900001, "conversation_id": 3, "organization_id": 3, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:02:12Z", "turn_work_id": 900001, "conversation_id": 3, "organization_id": 3, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:02:12Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:02:13Z", "turn_work_id": 900001, "conversation_id": 3, "organization_id": 3, "attempts": 1, "request_id": "-"}
+ok

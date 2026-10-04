@@ -1,0 +1,936 @@
+Found 44 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4trace_regression_durable')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_cross_org_message_and_work_rejected_by_database (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_cross_org_message_and_work_rejected_by_database) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:35Z", "organization_id": 1, "contact_id": 1, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:35Z", "organization_id": 1, "conversation_id": 1, "request_id": "-"}
+ok
+test_database_clock_controls_lease_even_with_future_poll_time (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_database_clock_controls_lease_even_with_future_poll_time) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:36Z", "organization_id": 3, "contact_id": 2, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:36Z", "organization_id": 3, "conversation_id": 2, "request_id": "-"}
+ok
+test_deadline_stops_local_changes_without_heartbeat (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_deadline_stops_local_changes_without_heartbeat) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:37Z", "organization_id": 4, "contact_id": 3, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:37Z", "organization_id": 4, "conversation_id": 3, "request_id": "-"}
+ok
+test_dur_02_before_final_transaction_has_no_durable_changes (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_dur_02_before_final_transaction_has_no_durable_changes) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:38Z", "organization_id": 5, "contact_id": 4, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:38Z", "organization_id": 5, "conversation_id": 4, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:38Z", "organization_id": 5, "conversation_id": 4, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+ok
+test_dur_02_db_failure_rolls_back_completion_and_output (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_dur_02_db_failure_rolls_back_completion_and_output) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:38Z", "organization_id": 6, "contact_id": 5, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:38Z", "organization_id": 6, "conversation_id": 5, "request_id": "-"}
+ok
+test_dur_02_failure_after_local_flush_rolls_back_everything (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_dur_02_failure_after_local_flush_rolls_back_everything) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:39Z", "organization_id": 7, "contact_id": 6, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:39Z", "organization_id": 7, "conversation_id": 6, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:39Z", "organization_id": 7, "conversation_id": 6, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+{"event": "AGENT_B7A_PERMISSION_REQUIRES_IDENTITY", "level": "INFO", "ts": "2026-10-03T12:11:40Z", "count": 1, "schema": 1, "request_id": "-"}
+ok
+test_dur_02_success_commits_correlated_local_state_and_output (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_dur_02_success_commits_correlated_local_state_and_output) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:40Z", "organization_id": 8, "contact_id": 7, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:40Z", "organization_id": 8, "conversation_id": 7, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:40Z", "organization_id": 8, "conversation_id": 7, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+{"event": "AGENT_B7A_PERMISSION_REQUIRES_IDENTITY", "level": "INFO", "ts": "2026-10-03T12:11:41Z", "count": 1, "schema": 1, "request_id": "-"}
+ok
+test_epoch_is_monotonic_in_database (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_epoch_is_monotonic_in_database) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:41Z", "organization_id": 9, "contact_id": 8, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:41Z", "organization_id": 9, "conversation_id": 8, "request_id": "-"}
+ok
+test_existing_poll_recovers_expired_work_without_unassigned_input (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_existing_poll_recovers_expired_work_without_unassigned_input) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:42Z", "organization_id": 10, "contact_id": 9, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:42Z", "organization_id": 10, "conversation_id": 9, "request_id": "-"}
+ok
+test_expired_token_cannot_finalize_or_release_after_reclaim (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_expired_token_cannot_finalize_or_release_after_reclaim) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:43Z", "organization_id": 11, "contact_id": 10, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:43Z", "organization_id": 11, "conversation_id": 10, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:11:43Z", "turn_work_id": 9, "conversation_id": 10, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:11:43Z", "turn_work_id": 9, "conversation_id": 10, "request_id": "-"}
+ok
+test_human_reply_epoch_is_dispatchable_and_discards_pending_bot (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_human_reply_epoch_is_dispatchable_and_discards_pending_bot) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:44Z", "organization_id": 12, "contact_id": 11, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:44Z", "organization_id": 12, "conversation_id": 11, "request_id": "-"}
+C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:11:45Z", "request_id": "c4a334d3-8750-4ae7-b7a4-fe51304cc4fc", "user_id": 1, "organization_id": 12, "role": "ADMIN", "endpoint": "/api/inbox/conversations/1d95663b-2678-462f-8fb8-3bb6f31a933c/send/", "method": "POST", "required_permission": "agentinbox.send"}
+ok
+test_membership_and_cursor_immutable_in_database (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_membership_and_cursor_immutable_in_database) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:45Z", "organization_id": 13, "contact_id": 12, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:45Z", "organization_id": 13, "conversation_id": 12, "request_id": "-"}
+ok
+test_new_inbound_and_duplicate_webhook_during_real_planning (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_new_inbound_and_duplicate_webhook_during_real_planning) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:46Z", "organization_id": 14, "contact_id": 13, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:46Z", "organization_id": 14, "conversation_id": 13, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:11:47Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-03T12:11:47Z", "purpose": "planner", "request_id": "-"}
+ok
+test_older_unclaimed_input_cannot_join_already_claimed_membership (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_older_unclaimed_input_cannot_join_already_claimed_membership) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:48Z", "organization_id": 15, "contact_id": 14, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:48Z", "organization_id": 15, "conversation_id": 14, "request_id": "-"}
+ok
+test_ordinal_01_completion_cannot_publish_twice (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_ordinal_01_completion_cannot_publish_twice) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:49Z", "organization_id": 16, "contact_id": 15, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:49Z", "organization_id": 16, "conversation_id": 15, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:11:49Z", "turn_work_id": 15, "conversation_id": 15, "request_id": "-"}
+ok
+test_ordinal_unique_constraint_on_postgres (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_ordinal_unique_constraint_on_postgres) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:50Z", "organization_id": 17, "contact_id": 16, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:50Z", "organization_id": 17, "conversation_id": 16, "request_id": "-"}
+ok
+test_own_01_staged_state_rejected_after_takeover (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_own_01_staged_state_rejected_after_takeover) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:51Z", "organization_id": 18, "contact_id": 17, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:51Z", "organization_id": 18, "conversation_id": 17, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:51Z", "organization_id": 18, "conversation_id": 17, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:11:51Z", "turn_work_id": 17, "conversation_id": 17, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:11:51Z", "turn_work_id": 17, "conversation_id": 17, "request_id": "-"}
+ok
+test_own_01_takeover_rejects_publication_and_completion (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_own_01_takeover_rejects_publication_and_completion) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:52Z", "organization_id": 19, "contact_id": 18, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:52Z", "organization_id": 19, "conversation_id": 18, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:11:52Z", "turn_work_id": 18, "conversation_id": 18, "request_id": "-"}
+ok
+test_periodic_close_does_not_invalidate_an_active_work (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_periodic_close_does_not_invalidate_an_active_work) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:53Z", "organization_id": 20, "contact_id": 19, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:53Z", "organization_id": 20, "conversation_id": 19, "request_id": "-"}
+ok
+test_periodic_nudge_cannot_bypass_work_authority (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_periodic_nudge_cannot_bypass_work_authority) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:53Z", "organization_id": 21, "contact_id": 20, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:53Z", "organization_id": 21, "conversation_id": 20, "request_id": "-"}
+ok
+test_processed_01_real_worker_planning_sees_pending_members (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_processed_01_real_worker_planning_sees_pending_members) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:54Z", "organization_id": 22, "contact_id": 21, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:54Z", "organization_id": 22, "conversation_id": 21, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:11:54Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-03T12:11:54Z", "purpose": "planner", "request_id": "-"}
+ok
+test_processing_until_is_not_a_second_authority (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_processing_until_is_not_a_second_authority) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:55Z", "organization_id": 23, "contact_id": 22, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:55Z", "organization_id": 23, "conversation_id": 22, "request_id": "-"}
+ok
+test_real_postgres_error_after_outbound_insert_rolls_back_final_commit (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_real_postgres_error_after_outbound_insert_rolls_back_final_commit) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:56Z", "organization_id": 24, "contact_id": 23, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:56Z", "organization_id": 24, "conversation_id": 23, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:56Z", "organization_id": 24, "conversation_id": 23, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+{"event": "AGENT_B7A_PERMISSION_REQUIRES_IDENTITY", "level": "INFO", "ts": "2026-10-03T12:11:57Z", "count": 1, "schema": 1, "request_id": "-"}
+ok
+test_request_human_tool_case_and_receipt_are_one_commit (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_request_human_tool_case_and_receipt_are_one_commit) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:11:58Z", "organization_id": 25, "contact_id": 24, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:11:58Z", "organization_id": 25, "conversation_id": 24, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:11:58Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-03T12:11:58Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-03T12:11:59Z", "purpose": "planner", "request_id": "-"}
+ok
+test_reset_api_invalidates_work_and_next_inbound_opens_new_episode (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_reset_api_invalidates_work_and_next_inbound_opens_new_episode) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:00Z", "organization_id": 26, "contact_id": 25, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:00Z", "organization_id": 26, "conversation_id": 25, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:12:00Z", "request_id": "6d72a780-00df-4007-b696-4bb63d6ecacf", "user_id": 6, "organization_id": 26, "role": "ADMIN", "endpoint": "/api/inbox/conversations/7288cd60-f58f-42fc-9354-de6bafc4df00/reset-identity/", "method": "POST", "required_permission": "agentinbox.config"}
+{"event": "AGENT_CONTACT_IDENTITY_RESET", "level": "INFO", "ts": "2026-10-03T12:12:00Z", "organization_id": 26, "contact_id": 25, "previous_owner_id": null, "actor_id": 6, "request_id": "6d72a780-00df-4007-b696-4bb63d6ecacf"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:12:00Z", "turn_work_id": 25, "conversation_id": 25, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:00Z", "organization_id": 26, "conversation_id": 26, "request_id": "-"}
+ok
+test_retry_after_database_failure_does_not_duplicate_local_state (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_retry_after_database_failure_does_not_duplicate_local_state) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:01Z", "organization_id": 27, "contact_id": 26, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:01Z", "organization_id": 27, "conversation_id": 27, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:02Z", "organization_id": 27, "conversation_id": 27, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+{"event": "AGENT_B7A_PERMISSION_REQUIRES_IDENTITY", "level": "INFO", "ts": "2026-10-03T12:12:02Z", "count": 1, "schema": 1, "request_id": "-"}
+ok
+test_retry_limit_backoff_and_failed_never_processed (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_retry_limit_backoff_and_failed_never_processed) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:03Z", "organization_id": 28, "contact_id": 27, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:03Z", "organization_id": 28, "conversation_id": 28, "request_id": "-"}
+ok
+test_retry_pending_does_not_reopen_membership (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_retry_pending_does_not_reopen_membership) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:04Z", "organization_id": 29, "contact_id": 28, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:04Z", "organization_id": 29, "conversation_id": 29, "request_id": "-"}
+ok
+test_scoped_buffer_cannot_cross_witness (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_scoped_buffer_cannot_cross_witness) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:05Z", "organization_id": 30, "contact_id": 29, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:05Z", "organization_id": 30, "conversation_id": 30, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:05Z", "organization_id": 30, "conversation_id": 30, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+ok
+test_starve_01_repeated_new_input_finishes_each_fixed_work (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_starve_01_repeated_new_input_finishes_each_fixed_work) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:06Z", "organization_id": 31, "contact_id": 30, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:06Z", "organization_id": 31, "conversation_id": 31, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:06Z", "organization_id": 31, "conversation_id": 31, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+ok
+test_takeover_api_and_return_advance_epoch_and_fence_old_worker (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_takeover_api_and_return_advance_epoch_and_fence_old_worker) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:10Z", "organization_id": 32, "contact_id": 31, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:10Z", "organization_id": 32, "conversation_id": 32, "request_id": "-"}
+{"event": "AGENT_GOAL_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:10Z", "organization_id": 32, "conversation_id": 32, "goal": "schedule_appointment", "status": "active", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:12:10Z", "request_id": "b413f837-df4f-4bdc-89b9-f9995512c878", "user_id": 7, "organization_id": 32, "role": "ADMIN", "endpoint": "/api/inbox/conversations/179d988b-0905-4e8f-b6f7-26be15d099d0/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:12:10Z", "request_id": "a336d5a5-ddca-4d18-ab02-3ea77993577b", "user_id": 7, "organization_id": 32, "role": "ADMIN", "endpoint": "/api/inbox/conversations/179d988b-0905-4e8f-b6f7-26be15d099d0/claim/", "method": "POST", "required_permission": "agentinbox.claim"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:12:10Z", "turn_work_id": 36, "conversation_id": 32, "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:12:10Z", "request_id": "b9ad4d17-e1ff-4d99-83d6-c3f90b2abbb7", "user_id": 7, "organization_id": 32, "role": "ADMIN", "endpoint": "/api/inbox/conversations/179d988b-0905-4e8f-b6f7-26be15d099d0/release/", "method": "POST", "required_permission": "agentinbox.claim"}
+ok
+test_takeover_during_real_planning_fences_all_local_writes (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_takeover_during_real_planning_fences_all_local_writes) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:11Z", "organization_id": 33, "contact_id": 32, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:11Z", "organization_id": 33, "conversation_id": 33, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:12:11Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "llm_usage_unavailable", "level": "INFO", "ts": "2026-10-03T12:12:11Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:12:11Z", "turn_work_id": 37, "conversation_id": 33, "request_id": "-"}
+ok
+test_tenant_01_forged_witness_is_rejected (apps.agent.tests.test_b3_durable.B3LocalIntegrationTests.test_tenant_01_forged_witness_is_rejected) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:12Z", "organization_id": 34, "contact_id": 33, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:12Z", "organization_id": 34, "conversation_id": 34, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:12:13Z", "turn_work_id": 38, "conversation_id": 34, "request_id": "-"}
+ok
+test_legacy_01_sender_discards_ambiguous_without_fabricating_epoch (apps.agent.tests.test_b3_durable.B3SenderCompatibilityTests.test_legacy_01_sender_discards_ambiguous_without_fabricating_epoch) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:14Z", "organization_id": 36, "contact_id": 34, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:14Z", "organization_id": 36, "conversation_id": 35, "request_id": "-"}
+{"event": "AGENT_SEND_DISCARDED", "level": "INFO", "ts": "2026-10-03T12:12:14Z", "message_id": 60, "outcome_code": "legacy_unverified", "request_id": "-"}
+ok
+test_sender_dispatches_valid_b3_output (apps.agent.tests.test_b3_durable.B3SenderCompatibilityTests.test_sender_dispatches_valid_b3_output) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "organization_id": 37, "contact_id": 35, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "organization_id": 37, "conversation_id": 36, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "oldest_pending_age_seconds": 0.093478, "turn_work_id": 39, "conversation_id": 36, "organization_id": 37, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "turn_work_id": 39, "conversation_id": 36, "organization_id": 37, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "turn_work_id": 39, "conversation_id": 36, "organization_id": 37, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "message_id": 62, "attempts": 1, "outbound_pending_age_seconds": 0.070603, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:12:56Z", "message_id": 62, "dispatch_latency_seconds": 0.210493, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:12:57Z", "message_id": 62, "provider_acceptance_latency_seconds": 0.134645, "request_id": "-"}
+ok
+test_sender_rechecks_epoch_at_dispatch (apps.agent.tests.test_b3_durable.B3SenderCompatibilityTests.test_sender_rechecks_epoch_at_dispatch) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:13:58Z", "organization_id": 38, "contact_id": 36, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:13:58Z", "organization_id": 38, "conversation_id": 37, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:13:58Z", "oldest_pending_age_seconds": 0.106857, "turn_work_id": 40, "conversation_id": 37, "organization_id": 38, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:13:58Z", "turn_work_id": 40, "conversation_id": 37, "organization_id": 38, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:13:58Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:13:59Z", "turn_work_id": 40, "conversation_id": 37, "organization_id": 38, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_SEND_DISCARDED", "level": "INFO", "ts": "2026-10-03T12:13:59Z", "message_id": 64, "outcome_code": "ownership_invalidated", "request_id": "-"}
+ok
+test_dup_01_live_lease_and_partial_unique_constraint (apps.agent.tests.test_b3_durable.DurableTurnTests.test_dup_01_live_lease_and_partial_unique_constraint) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:14:55Z", "organization_id": 39, "contact_id": 37, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:14:55Z", "organization_id": 39, "conversation_id": 38, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:14:56Z", "oldest_pending_age_seconds": 0.085905, "turn_work_id": 41, "conversation_id": 38, "organization_id": 39, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:14:56Z", "turn_work_id": 41, "conversation_id": 38, "organization_id": 39, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:14:56Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_SATURATED", "level": "INFO", "ts": "2026-10-03T12:14:56Z", "scope": "organization", "limit": 1, "request_id": "-"}
+ok
+test_dur_01_reclaims_same_work_context_and_fences_old_token (apps.agent.tests.test_b3_durable.DurableTurnTests.test_dur_01_reclaims_same_work_context_and_fences_old_token) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:15:46Z", "organization_id": 40, "contact_id": 38, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "organization_id": 40, "conversation_id": 39, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "oldest_pending_age_seconds": 0.226257, "turn_work_id": 43, "conversation_id": 39, "organization_id": 40, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "turn_work_id": 43, "conversation_id": 39, "organization_id": 40, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_LEASE_EXPIRED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "turn_work_id": 43, "conversation_id": 39, "organization_id": 40, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_TURN_RECLAIMED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "turn_work_id": 43, "conversation_id": 39, "organization_id": 40, "attempts": 2, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_FENCING_REJECT", "level": "WARNING", "ts": "2026-10-03T12:15:47Z", "turn_work_id": 43, "conversation_id": 39, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:15:47Z", "turn_work_id": 43, "conversation_id": 39, "organization_id": 40, "attempts": 2, "request_id": "-"}
+ok
+test_input_01_members_fixed_and_defer_terminates_work (apps.agent.tests.test_b3_durable.DurableTurnTests.test_input_01_members_fixed_and_defer_terminates_work) ... {"event": "AGENT_CONTACT_CREATED", "level": "INFO", "ts": "2026-10-03T12:16:50Z", "organization_id": 41, "contact_id": 39, "verification_level": "unknown", "ambiguous": false, "request_id": "-"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:16:50Z", "organization_id": 41, "conversation_id": 40, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "oldest_pending_age_seconds": 0.239935, "turn_work_id": 44, "conversation_id": 40, "organization_id": 41, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "turn_work_id": 44, "conversation_id": 40, "organization_id": 41, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_TURN_DEFERRED_TO_NEW_INPUT", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "turn_work_id": 44, "conversation_id": 40, "organization_id": 41, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "oldest_pending_age_seconds": 0.162598, "turn_work_id": 45, "conversation_id": 40, "organization_id": 41, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "turn_work_id": 45, "conversation_id": 40, "organization_id": 41, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:16:51Z", "scope": "organization", "limit": 1, "request_id": "-"}
+ok
+test_e2e_write_create_complete_pipeline (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_create_complete_pipeline) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:18:00Z", "organization_id": 42, "conversation_id": 41, "request_id": "9cdaac0c-da9a-4f01-a7c5-a06db969021f"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:18:01Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:18:02Z", "oldest_pending_age_seconds": 0.922778, "turn_work_id": 46, "conversation_id": 41, "organization_id": 42, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:18:02Z", "turn_work_id": 46, "conversation_id": 41, "organization_id": 42, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:18:02Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:18:03Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_MATTER_STARTED", "level": "INFO", "ts": "2026-10-03T12:18:03Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-03T12:18:03Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:18:04Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:18:04Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:18:06Z", "request_id": "6928157b-d97b-4bd3-9659-8b5f3b9b8c6d", "user_id": 9, "organization_id": 42, "role": "AGENT", "endpoint": "/api/appointments/", "method": "GET", "required_permission": "appointment.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:18:07Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:18:07Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_B7A_OPERATION_CREATED", "level": "INFO", "ts": "2026-10-03T12:18:11Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_CREATED", "level": "INFO", "ts": "2026-10-03T12:18:11Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_PENDING", "level": "INFO", "ts": "2026-10-03T12:18:11Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:18:11Z", "turn_work_id": 46, "conversation_id": 41, "organization_id": 42, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:18:11Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:18:11Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:18:12Z", "message_id": 74, "attempts": 1, "outbound_pending_age_seconds": 1.480597, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:18:13Z", "message_id": 74, "dispatch_latency_seconds": 2.193122, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-03T12:18:13Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:18:13Z", "message_id": 74, "provider_acceptance_latency_seconds": 0.436217, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:18:13Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:18:14Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:18:15Z", "oldest_pending_age_seconds": 0.434142, "turn_work_id": 47, "conversation_id": 41, "organization_id": 42, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:18:15Z", "turn_work_id": 47, "conversation_id": 41, "organization_id": 42, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:18:15Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:18:15Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:18:16Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:18:18Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:18:19Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_CONSENT_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_execution_requested", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "execution_guard_allowed", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "execution_started", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_created", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_reconciled", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_reconciled", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "execution_succeeded", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:18:20Z", "turn_work_id": 47, "conversation_id": 41, "organization_id": 42, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:18:21Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:18:21Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:18:21Z", "message_id": 76, "attempts": 1, "outbound_pending_age_seconds": 0.96755, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:18:22Z", "message_id": 76, "dispatch_latency_seconds": 1.435327, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:18:22Z", "message_id": 76, "provider_acceptance_latency_seconds": 0.486196, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:18:22Z", "request_id": "-"}
+ok
+test_e2e_write_reschedule_complete_pipeline (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_reschedule_complete_pipeline) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:19:22Z", "organization_id": 43, "conversation_id": 42, "request_id": "3e5f9604-d573-4ad2-9ca8-66923a77c60a"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:22Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:19:23Z", "oldest_pending_age_seconds": 0.496658, "turn_work_id": 48, "conversation_id": 42, "organization_id": 43, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:19:23Z", "turn_work_id": 48, "conversation_id": 42, "organization_id": 43, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:19:23Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:19:23Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_MATTER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:23Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-03T12:19:24Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:19:24Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:19:24Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:19:25Z", "request_id": "ab4a8cdc-a5d4-429c-98f2-843bc8eb0fac", "user_id": 11, "organization_id": 43, "role": "AGENT", "endpoint": "/api/appointments/", "method": "GET", "required_permission": "appointment.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:19:26Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:19:26Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:19:28Z", "turn_work_id": 48, "conversation_id": 42, "organization_id": 43, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:19:28Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:28Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:19:29Z", "message_id": 78, "attempts": 1, "outbound_pending_age_seconds": 0.451728, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:19:29Z", "message_id": 78, "dispatch_latency_seconds": 0.830414, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:19:30Z", "message_id": 78, "provider_acceptance_latency_seconds": 0.332688, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:19:30Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:30Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:19:31Z", "oldest_pending_age_seconds": 0.435369, "turn_work_id": 49, "conversation_id": 42, "organization_id": 43, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:19:31Z", "turn_work_id": 49, "conversation_id": 42, "organization_id": 43, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:19:31Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:19:31Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-03T12:19:32Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:19:33Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:19:33Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:19:33Z", "request_id": "d982e2bd-4dc3-484b-a23d-ae5540f909b9", "user_id": 11, "organization_id": 43, "role": "AGENT", "endpoint": "/api/appointments/", "method": "GET", "required_permission": "appointment.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:19:34Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:19:34Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_B7A_OPERATION_CREATED", "level": "INFO", "ts": "2026-10-03T12:19:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_CREATED", "level": "INFO", "ts": "2026-10-03T12:19:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_PENDING", "level": "INFO", "ts": "2026-10-03T12:19:38Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:19:38Z", "turn_work_id": 49, "conversation_id": 42, "organization_id": 43, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:19:38Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:38Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:19:39Z", "message_id": 80, "attempts": 1, "outbound_pending_age_seconds": 1.517968, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:19:40Z", "message_id": 80, "dispatch_latency_seconds": 2.580252, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-03T12:19:41Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:19:41Z", "message_id": 80, "provider_acceptance_latency_seconds": 0.744817, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:19:41Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:42Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:19:43Z", "oldest_pending_age_seconds": 0.78767, "turn_work_id": 50, "conversation_id": 42, "organization_id": 43, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:19:43Z", "turn_work_id": 50, "conversation_id": 42, "organization_id": 43, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:19:43Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:19:43Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:19:43Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:19:45Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:19:46Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_CONSENT_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_reschedule_requested", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "execution_guard_allowed", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "execution_started", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_mutation_reconciled", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "appointment_mutation_reconciled", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "execution_succeeded", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_reschedule_succeeded", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "turn_work_id": 50, "conversation_id": 42, "organization_id": 43, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:19:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:19:48Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:19:48Z", "message_id": 82, "attempts": 1, "outbound_pending_age_seconds": 0.524688, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:19:49Z", "message_id": 82, "dispatch_latency_seconds": 0.965909, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:19:49Z", "message_id": 82, "provider_acceptance_latency_seconds": 0.528117, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:19:49Z", "request_id": "-"}
+ok
+test_e2e_write_cancel_complete_pipeline (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_cancel_complete_pipeline) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T12:20:35Z", "organization_id": 44, "conversation_id": 43, "request_id": "9d27112c-e776-4664-91bd-05427b05c035"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:35Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:20:36Z", "oldest_pending_age_seconds": 0.36376, "turn_work_id": 51, "conversation_id": 43, "organization_id": 44, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:20:36Z", "turn_work_id": 51, "conversation_id": 43, "organization_id": 44, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:20:36Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:20:36Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_MATTER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:36Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-03T12:20:36Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:20:37Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:20:37Z", "purpose": "planner", "request_id": "-"}
+{"event": "RBAC_ALLOWED_DB", "level": "INFO", "ts": "2026-10-03T12:20:37Z", "request_id": "18da08a2-f469-43f9-9e01-826cac4aba79", "user_id": 13, "organization_id": 44, "role": "AGENT", "endpoint": "/api/appointments/", "method": "GET", "required_permission": "appointment.list"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:20:37Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:20:37Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:20:39Z", "turn_work_id": 51, "conversation_id": 43, "organization_id": 44, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:20:39Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:39Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:20:39Z", "message_id": 84, "attempts": 1, "outbound_pending_age_seconds": 0.285576, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:20:39Z", "message_id": 84, "dispatch_latency_seconds": 0.516102, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:20:40Z", "message_id": 84, "provider_acceptance_latency_seconds": 0.247198, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:20:40Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:40Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:20:41Z", "oldest_pending_age_seconds": 0.369304, "turn_work_id": 52, "conversation_id": 43, "organization_id": 44, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:20:41Z", "turn_work_id": 52, "conversation_id": 43, "organization_id": 44, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:20:41Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:20:41Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B6_BINDING_CHANGED", "level": "INFO", "ts": "2026-10-03T12:20:41Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "llm_budget_admitted", "level": "INFO", "ts": "2026-10-03T12:20:42Z", "purpose": "planner", "request_id": "-"}
+{"event": "llm_usage_recorded", "level": "INFO", "ts": "2026-10-03T12:20:42Z", "purpose": "planner", "request_id": "-"}
+{"event": "AGENT_B7A_OPERATION_CREATED", "level": "INFO", "ts": "2026-10-03T12:20:45Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_CREATED", "level": "INFO", "ts": "2026-10-03T12:20:45Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_PENDING", "level": "INFO", "ts": "2026-10-03T12:20:45Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:20:45Z", "turn_work_id": 52, "conversation_id": 43, "organization_id": 44, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:20:45Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:45Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:20:46Z", "message_id": 86, "attempts": 1, "outbound_pending_age_seconds": 1.171777, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:20:46Z", "message_id": 86, "dispatch_latency_seconds": 1.78522, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-03T12:20:47Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:20:47Z", "message_id": 86, "provider_acceptance_latency_seconds": 0.257944, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:20:47Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:47Z", "once": true, "request_id": "-"}
+{"event": "AGENT_TURN_CREATED", "level": "INFO", "ts": "2026-10-03T12:20:48Z", "oldest_pending_age_seconds": 0.303458, "turn_work_id": 53, "conversation_id": 43, "organization_id": 44, "attempts": 0, "request_id": "-"}
+{"event": "AGENT_TURN_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:20:48Z", "turn_work_id": 53, "conversation_id": 43, "organization_id": 44, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_CONCURRENCY_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:20:48Z", "scope": "organization", "limit": 1, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:20:48Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:20:48Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:20:50Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_SAFETY_ASSESSMENT", "level": "INFO", "ts": "2026-10-03T12:20:50Z", "classification": "NO_SIGNAL", "catalog_version": "b5-safety-v1", "human_owned": false, "media_uninterpreted": false, "request_id": "-"}
+{"event": "AGENT_B7B_PROPOSAL_EMISSION_VERIFIED", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "AGENT_B7B_CONSENT_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_cancel_requested", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "execution_guard_allowed", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "execution_started", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_mutation_reconciled", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "appointment_mutation_reconciled", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "execution_succeeded", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "count": 1, "schema": 1, "request_id": "-"}
+{"event": "appointment_cancel_succeeded", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "schema": 1, "count": 1, "request_id": "-"}
+{"event": "AGENT_TURN_COMPLETED", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "turn_work_id": 53, "conversation_id": 43, "organization_id": 44, "attempts": 1, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "request_id": "-"}
+{"event": "AGENT_WORKER_STARTED", "level": "INFO", "ts": "2026-10-03T12:20:51Z", "once": true, "request_id": "-"}
+{"event": "AGENT_SEND_CLAIMED", "level": "INFO", "ts": "2026-10-03T12:20:52Z", "message_id": 88, "attempts": 1, "outbound_pending_age_seconds": 0.665819, "request_id": "-"}
+{"event": "AGENT_SEND_ADMITTED", "level": "INFO", "ts": "2026-10-03T12:20:52Z", "message_id": 88, "dispatch_latency_seconds": 1.168211, "request_id": "-"}
+{"event": "AGENT_SEND_ACCEPTED", "level": "INFO", "ts": "2026-10-03T12:20:53Z", "message_id": 88, "provider_acceptance_latency_seconds": 0.438079, "request_id": "-"}
+{"event": "AGENT_WORKER_STOPPED", "level": "INFO", "ts": "2026-10-03T12:20:53Z", "request_id": "-"}
+ok
+test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture) ... ERROR
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_b9a_e2e.py", line 51, in setUp
+    self.org, self.channel, self.owner, self.pet, self.contact, self.vet = seed_domain()
+                                                                           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 84, in inner
+    with self._recreate_cm():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\transaction.py", line 198, in __enter__
+    if not connection.get_autocommit():
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 454, in get_autocommit
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture) ... ERROR
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\__init__.py", line 195, in call_command
+    return command.execute(*args, **defaults)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\base.py", line 464, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\commands\flush.py", line 52, in handle
+    sql_list = sql_flush(
+        self.style,
+    ...<2 lines>...
+        allow_cascade=allow_cascade,
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\sql.py", line 11, in sql_flush
+    tables = connection.introspection.django_table_names(
+        only_existing=True, include_views=False
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 113, in django_table_names
+    existing_tables = set(self.table_names(include_views=include_views))
+                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 59, in table_names
+    with self.connection.cursor() as cursor:
+         ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 320, in cursor
+    return self._cursor()
+           ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 296, in _cursor
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture) ... ERROR
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_b9a_e2e.py", line 51, in setUp
+    self.org, self.channel, self.owner, self.pet, self.contact, self.vet = seed_domain()
+                                                                           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 84, in inner
+    with self._recreate_cm():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\transaction.py", line 198, in __enter__
+    if not connection.get_autocommit():
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 454, in get_autocommit
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture) ... ERROR
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\__init__.py", line 195, in call_command
+    return command.execute(*args, **defaults)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\base.py", line 464, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\commands\flush.py", line 52, in handle
+    sql_list = sql_flush(
+        self.style,
+    ...<2 lines>...
+        allow_cascade=allow_cascade,
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\sql.py", line 11, in sql_flush
+    tables = connection.introspection.django_table_names(
+        only_existing=True, include_views=False
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 113, in django_table_names
+    existing_tables = set(self.table_names(include_views=include_views))
+                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 59, in table_names
+    with self.connection.cursor() as cursor:
+         ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 320, in cursor
+    return self._cursor()
+           ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 296, in _cursor
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+
+======================================================================
+ERROR: test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_b9a_e2e.py", line 51, in setUp
+    self.org, self.channel, self.owner, self.pet, self.contact, self.vet = seed_domain()
+                                                                           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 84, in inner
+    with self._recreate_cm():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\transaction.py", line 198, in __enter__
+    if not connection.get_autocommit():
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 454, in get_autocommit
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+======================================================================
+ERROR: test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_attendance_complete_pipeline_with_existing_matter_fixture)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\__init__.py", line 195, in call_command
+    return command.execute(*args, **defaults)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\base.py", line 464, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\commands\flush.py", line 52, in handle
+    sql_list = sql_flush(
+        self.style,
+    ...<2 lines>...
+        allow_cascade=allow_cascade,
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\sql.py", line 11, in sql_flush
+    tables = connection.introspection.django_table_names(
+        only_existing=True, include_views=False
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 113, in django_table_names
+    existing_tables = set(self.table_names(include_views=include_views))
+                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 59, in table_names
+    with self.connection.cursor() as cursor:
+         ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 320, in cursor
+    return self._cursor()
+           ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 296, in _cursor
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+======================================================================
+ERROR: test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_b9a_e2e.py", line 51, in setUp
+    self.org, self.channel, self.owner, self.pet, self.contact, self.vet = seed_domain()
+                                                                           ~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 84, in inner
+    with self._recreate_cm():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\transaction.py", line 198, in __enter__
+    if not connection.get_autocommit():
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 454, in get_autocommit
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+======================================================================
+ERROR: test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture (apps.agent.tests.test_b9a_e2e.B9AE2ETests.test_e2e_write_register_complete_pipeline_with_explicit_b6_fixture)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+psycopg.errors.ConnectionTimeout: connection timeout expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\__init__.py", line 195, in call_command
+    return command.execute(*args, **defaults)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\base.py", line 464, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\commands\flush.py", line 52, in handle
+    sql_list = sql_flush(
+        self.style,
+    ...<2 lines>...
+        allow_cascade=allow_cascade,
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\management\sql.py", line 11, in sql_flush
+    tables = connection.introspection.django_table_names(
+        only_existing=True, include_views=False
+    )
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 113, in django_table_names
+    existing_tables = set(self.table_names(include_views=include_views))
+                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\introspection.py", line 59, in table_names
+    with self.connection.cursor() as cursor:
+         ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 320, in cursor
+    return self._cursor()
+           ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 296, in _cursor
+    self.ensure_connection()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\test\testcases.py", line 303, in patched_ensure_connection
+    real_ensure_connection(self, *args, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 278, in ensure_connection
+    with self.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 279, in ensure_connection
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\base\base.py", line 256, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\db\backends\postgresql\base.py", line 333, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+  File "C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\psycopg\connection.py", line 122, in connect
+    raise last_ex.with_traceback(None)
+django.db.utils.OperationalError: connection timeout expired
+
+----------------------------------------------------------------------
+Ran 44 tests in 1098.984s
+
+FAILED (errors=4)
+Preserving test database for alias 'default' ('test_b8b_e4trace_regression_durable')...
+{"suite": "targeted", "database": "test_b8b_e4trace_regression_durable", "exit_code": 1, "seconds": 1103.5627754000016}

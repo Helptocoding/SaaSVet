@@ -1,0 +1,16 @@
+{
+  "tests": 4,
+  "test_ids": [
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission",
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection",
+    "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses",
+    "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_03_outer_rollback_and_savepoint_rollback_are_not_commits"
+  ],
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "xfail": 0,
+  "failed_ids": [],
+  "seconds": 138.74421070000244,
+  "exit_code": 0
+}

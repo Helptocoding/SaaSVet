@@ -1,0 +1,87 @@
+Found 3 test(s).
+Using existing test database for alias 'default' ('test_b8b_e4trace_equivalence_process_final')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, platform, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, agent, analytics, appointments, auth, billing, cash, channels, contenttypes, core, imports, inventory, legal, medical_records, notifications, organizations, patients, prescriptions, sessions, token_blacklist, users
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+test_01_competing_processes_correlate_single_admission (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission) ... C:\Users\LAP\AppData\Local\Temp\vet-b8b-locked\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\LAP\Desktop\VeterinariaSaaS\backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:09:51Z", "organization_id": 2, "conversation_id": 1, "request_id": "cb4ce963-3616-4a5e-8dd6-b747f5e53d0d"}
+FAIL
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_claim_diagnostic_processes.py", line 107, in test_01_competing_processes_correlate_single_admission
+    self.assertTrue(self.event(first, 'COMMIT_HELD')['in_atomic'])
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+test_02_controlled_message_lock_is_observed_by_separate_connection (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:10:27Z", "organization_id": 4, "conversation_id": 2, "request_id": "15f4f6eb-9123-4bf0-919e-7e65d45a60ba"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:10:33Z", "organization_id": 5, "conversation_id": 3, "request_id": "7499dccb-7169-4edb-8865-22a9051777c5"}
+ERROR
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_claim_diagnostic_processes.py", line 172, in test_02_controlled_message_lock_is_observed_by_separate_connection
+    save_equivalence('lock-wait', outputs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\claim_diagnostic_evidence.py", line 31, in save_equivalence
+    root.mkdir(parents=True, exist_ok=True)
+                  ^^^^^^
+NameError: name 'report' is not defined. Did you mean: 'repr'?
+
+test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses) ... {"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:11:03Z", "organization_id": 7, "conversation_id": 4, "request_id": "0ddf1154-49ef-4035-b83b-9c26b8952b01"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:11:10Z", "organization_id": 8, "conversation_id": 5, "request_id": "e1d9eb72-7b1c-45f6-90e8-107b1e36d2bf"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:11:15Z", "organization_id": 9, "conversation_id": 6, "request_id": "42f9c957-7e0f-4397-a733-cf6928107f98"}
+{"event": "AGENT_CONVERSATION_OPENED", "level": "INFO", "ts": "2026-10-03T23:11:22Z", "organization_id": 10, "conversation_id": 7, "request_id": "ec127599-8e91-438e-91db-df4c583dab09"}
+ERROR
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_claim_diagnostic_processes.py", line 204, in test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses
+    save('blocked-llm', [noisy_rows, healthy_rows], report)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\claim_diagnostic_evidence.py", line 31, in save_equivalence
+    root.mkdir(parents=True, exist_ok=True)
+                  ^^^^^^
+NameError: name 'report' is not defined. Did you mean: 'repr'?
+
+
+======================================================================
+ERROR: test_02_controlled_message_lock_is_observed_by_separate_connection (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_claim_diagnostic_processes.py", line 172, in test_02_controlled_message_lock_is_observed_by_separate_connection
+    save_equivalence('lock-wait', outputs)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\claim_diagnostic_evidence.py", line 31, in save_equivalence
+    root.mkdir(parents=True, exist_ok=True)
+                  ^^^^^^
+NameError: name 'report' is not defined. Did you mean: 'repr'?
+
+======================================================================
+ERROR: test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_claim_diagnostic_processes.py", line 204, in test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses
+    save('blocked-llm', [noisy_rows, healthy_rows], report)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\claim_diagnostic_evidence.py", line 31, in save_equivalence
+    root.mkdir(parents=True, exist_ok=True)
+                  ^^^^^^
+NameError: name 'report' is not defined. Did you mean: 'repr'?
+
+======================================================================
+FAIL: test_01_competing_processes_correlate_single_admission (apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\LAP\Desktop\VeterinariaSaaS\backend\apps\agent\tests\test_claim_diagnostic_processes.py", line 107, in test_01_competing_processes_correlate_single_admission
+    self.assertTrue(self.event(first, 'COMMIT_HELD')['in_atomic'])
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 3 tests in 120.802s
+
+FAILED (failures=1, errors=2)
+Preserving test database for alias 'default' ('test_b8b_e4trace_equivalence_process_final')...
+{"suite": "targeted", "database": "test_b8b_e4trace_equivalence_process_final", "exit_code": 1, "seconds": 128.80643899999995}

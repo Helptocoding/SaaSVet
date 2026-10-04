@@ -25,6 +25,7 @@ from apps.patients.services import lookup_owner_by_phone
 from .models import ContactIdentity, Conversation
 
 from .durable import invalidate_ownership, db_now
+from . import claim_diagnostics as claim_trace
 from .models import TurnWork
 
 logger = logging.getLogger('agent.events')
@@ -324,6 +325,7 @@ def _resolve_duplicate_sessions(open_convs):
     return survivor
 
 
+@claim_trace.observed('ingest')
 def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
                            payload_type=Message.PAYLOAD_TEXT,
                            profile_name='', raw=None):
@@ -382,6 +384,7 @@ def ingest_inbound_message(channel_account, *, wamid, wa_id, body='',
                     message.conversation = conversation
                     message.available_at = now + QUIET_WINDOW
                     message.save()
+                    claim_trace.persisted(message)
                     conversation.last_inbound_at = now
                     conversation.last_activity_at = now
                     conversation.save(update_fields=['last_inbound_at', 'last_activity_at'])
@@ -434,7 +437,8 @@ def _extend_quiet_window(conversation, now):
     else:
         oldest = deadlines['first'] or now
         target = max(now, min(now + QUIET_WINDOW, oldest + MAX_WAIT))
-    pending.update(available_at=target)
+    affected = pending.update(available_at=target)
+    claim_trace.deadline(conversation, target, now, affected)
 
 
 # Orden forward-only de los acuses de entrega del proveedor.
