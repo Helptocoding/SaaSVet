@@ -1,0 +1,70 @@
+{
+  "schema": "d29-rector-delivery-v1",
+  "sealed_at_utc": "2026-10-10T18:56:48.909517+00:00",
+  "baseline": "825db75df68bf076929fa787e77beefe96803350",
+  "branch": "codex/e4-capacity-scheduling",
+  "protected_sources": 3409,
+  "previous_evidence_unchanged": true,
+  "attempts_sealed": 14,
+  "artifact_index": {
+    "path": "artifact-index.json",
+    "sha256": "16afaa84eaef2fe3c46fa7fdc4803f06c08c8be2be5a95f1364b580e970cb692",
+    "files": 601,
+    "bytes": 259329694,
+    "excludes": [
+      "artifact-index.json",
+      "final-phase-receipt.json",
+      "*.pyc"
+    ]
+  },
+  "execution_summary": {
+    "path": "execution-summary.json",
+    "sha256": "0c94de466c4876dee3a9bb0c70b4c6482faf757b76cb5d70fc3be4e5ae05dc60"
+  },
+  "scenarios": {
+    "R1-06": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r106-prospective-01/scenario-result.json"
+    },
+    "R2-09 uncertain_meta": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r209-uncertain-01/scenario-result.json"
+    },
+    "R2-09 slow_meta": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r209-slow-01/scenario-result.json"
+    },
+    "R1-04": {
+      "status": "PENDING",
+      "authoritative_result": "r104-passive-01/scenario-result.json"
+    },
+    "R2-04": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r204-intact-01/scenario-result.json"
+    }
+  },
+  "validation": {
+    "offline_controls": 97,
+    "native_postgresql_tests": 4,
+    "sequential_regression_tests": 192,
+    "skipped_regressions": 0
+  },
+  "private_lab_cleanup": {
+    "owned_temp_removed": true,
+    "port_closed": true,
+    "credentials_removed": true,
+    "private_databases_removed": true
+  },
+  "host_service_mutation": false,
+  "original_verifiers_unchanged": true,
+  "production_runtime_unchanged": true,
+  "confirmed_base_unchanged": true,
+  "commits_created": false,
+  "full_matrix": false,
+  "tuning": false,
+  "new_characterization": false,
+  "capacity_estimates": false,
+  "plan_closed": false,
+  "unresolved_decision": "R1-04_PHYSICAL_FORECAST_SEQUENCE_NOT_OBSERVED; ACCEPT_LIMITATION_OR_DECIDE_COMPATIBLE_FIXTURE",
+  "delivery": "ENTREGA.md"
+}

@@ -36,3 +36,28 @@ backend/apps/agent/tests/w1_mono*.py text eol=lf
 backend/apps/agent/tests/test_w1_mono*.py text eol=lf
 docs/evals/w1-mono/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/evals/w1-mono/*.log -diff
+
+# B9 consolidated evidence: recursively preserve the frozen source bytes.
+backend/apps/agent/tests/scheduling_characterization/** -text
+backend/apps/agent/tests/test_d29_frontiers.py -text
+backend/apps/agent/tests/test_d29_physical.py -text
+backend/apps/agent/tests/test_scheduling_characterization.py -text
+backend/apps/agent/tests/test_scheduling_controller.py -text
+docs/auditoria-agente-conversacional-veterinario-2026-09-10.md -text
+docs/discrepancia-encargo-b9-2026-09-26.md -text
+docs/decisions/2026-10-05-scheduling-* -text
+docs/decisions/2026-10-06-d29-physical-adapters.md -text
+docs/decisions/2026-10-06-scheduling-controller.md -text
+docs/decisions/2026-10-07-d29-* -text
+docs/evals/d29-*.md -text
+docs/evals/d29-*/** -text
+docs/evals/e4-causal-diagnosis-2026-10-03/** -text
+docs/evals/e4-causal-diagnostic-2026-10-03-dded711c/** -text
+docs/evals/e4-causal-diagnostic-2026-10-04-f1239f89/** -text
+docs/evals/e4-causal-diagnostic-2026-10-04-f1922430/** -text
+docs/evals/e4-preclaim-scheduling-2026-10-04/** -text
+docs/evals/e4-causal-diagnosis-results.json -text
+docs/evals/scheduling-*/** -text
+docs/evals/inbox-whatsapp-closure-review-2026-10-11/** -text
+docs/evals/b9-consolidation-2026-10-11/** -text
+docs/evals/b9-consolidation-2026-10-11/evidence-packages/* -text -diff

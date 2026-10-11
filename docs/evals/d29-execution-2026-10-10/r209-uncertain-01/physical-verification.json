@@ -1,0 +1,176 @@
+{
+  "status": "PENDING",
+  "case_id": "R2-09",
+  "variant": "uncertain_meta",
+  "errors": [
+    "PROCESS_ANCESTRY_CREATION_OR_READY_NOT_CORRELATED:planner_1",
+    "PROCESS_ANCESTRY_CREATION_OR_READY_NOT_CORRELATED:planner_2",
+    "PROCESS_ANCESTRY_CREATION_OR_READY_NOT_CORRELATED:sender"
+  ],
+  "clock_gate": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "r209-uncertain-01",
+          "ingress",
+          23612,
+          "303f768c3b75480fa3855dbeb4ffc786"
+        ],
+        "calibrations": 1117,
+        "offset_ns": [
+          1791646404003419500,
+          1791646404003912700
+        ],
+        "last_seq": 17200,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "r209-uncertain-01",
+          "planner_1",
+          24024,
+          "c5c5b9c0de804f8fac7b75dc38ab7e2a"
+        ],
+        "calibrations": 44,
+        "offset_ns": [
+          1791646404003355200,
+          1791646404004062800
+        ],
+        "last_seq": 10366,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "r209-uncertain-01",
+          "planner_2",
+          24996,
+          "a26a570dacdc441691195d3a12fac977"
+        ],
+        "calibrations": 44,
+        "offset_ns": [
+          1791646404003288700,
+          1791646404004046600
+        ],
+        "last_seq": 10336,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "r209-uncertain-01",
+          "sender",
+          18824,
+          "7bf73541b3644d61ac3cfb4815e1cd70"
+        ],
+        "calibrations": 114,
+        "offset_ns": [
+          1791646404003353000,
+          1791646404003997000
+        ],
+        "last_seq": 10593,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "physical_execution": true,
+  "source_kind": "PROSPECTIVE_PHYSICAL_POSTGRESQL",
+  "synthetic_evidence": [],
+  "full_followup_observed": false,
+  "gates": {
+    "demand": {
+      "missing": [],
+      "violations": [],
+      "planned_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "accepted_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "ready_episodes_by_org": {
+        "1": 14,
+        "2": 14
+      },
+      "ready_in_offer_window": 22,
+      "ready_after_offer_window": 0
+    },
+    "invariants": {
+      "missing": [],
+      "violations": [],
+      "witnesses": 84,
+      "checked": [
+        "tenant_membership",
+        "immutable_membership",
+        "outer_commit",
+        "durable_admission",
+        "N1_at_dispatch",
+        "no_HTTP_in_transaction",
+        "contained_destinations"
+      ]
+    },
+    "windows": {
+      "missing": [],
+      "violations": [],
+      "backlog": {
+        "1": "NO_GROWTH_OBSERVED",
+        "2": "NO_GROWTH_OBSERVED",
+        "global": "NO_GROWTH_OBSERVED"
+      }
+    },
+    "scenario": {
+      "missing": [],
+      "violations": [],
+      "required": [
+        "sender_admitted",
+        "meta_dispatch",
+        "meta_result",
+        "ordinary_progress",
+        "no_blind_resend"
+      ],
+      "observed": [
+        "sender_admitted",
+        "meta_dispatch",
+        "meta_result",
+        "ordinary_progress",
+        "no_blind_resend"
+      ],
+      "contract_coverage": "PENDING"
+    },
+    "initial_cohort": {
+      "errors": [],
+      "physical_accreditation": false
+    },
+    "provider": {
+      "errors": [],
+      "physical_accreditation": false
+    }
+  },
+  "counts": {
+    "inputs": 30,
+    "episodes": 28,
+    "works": 28,
+    "llm_calls": 56,
+    "outbound": 28,
+    "meta_calls": 28,
+    "accepted_outputs": 14,
+    "deferred_works": 0,
+    "demonstrated_successor_links": 0,
+    "uncertain_outputs": 14
+  },
+  "next_step": "STOP_AND_REVIEW"
+}

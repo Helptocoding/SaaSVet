@@ -1,0 +1,83 @@
+{
+  "status": "INVALID_RUN",
+  "case_id": "R2-04",
+  "run_id": "authorized-r204-postcommit-base-20261007-0004",
+  "confirmed_base_reference": {
+    "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\d29-r102-base-2026-10-07\\confirmed-base-receipt.json",
+    "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56"
+  },
+  "synthetic_evidence": [],
+  "physical_evidence": [],
+  "base_recalibrated": false,
+  "new_base_generated": false,
+  "characterization": false,
+  "clock": {
+    "status": "INVALID_RUN",
+    "gate_passed": false,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "error_class": "ClockInvalid",
+    "error": "HOST_CLOCK_OR_SLEEP_EVENT"
+  },
+  "errors": [
+    "CLOCK_OR_CAPTURE_INVALID"
+  ],
+  "execution": {
+    "status": "INVALID_RUN",
+    "error": {
+      "type": "ClockInvalid",
+      "message": "HOST_CLOCK_OR_SLEEP_EVENT"
+    },
+    "phase": "PRELUDE",
+    "base_reference": {
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\d29-r102-base-2026-10-07\\confirmed-base-receipt.json",
+      "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56"
+    },
+    "events": [
+      {
+        "event": "outer_commit",
+        "run_id": "authorized-r204-postcommit-base-20261007-0004",
+        "organization_index": 0,
+        "observed": true,
+        "db_ns": 1791434230923866000,
+        "source": "INDEPENDENT_DB_WITNESS",
+        "evidence": [
+          "db-000-committed-before-crash.json",
+          "crash.jsonl"
+        ]
+      },
+      {
+        "event": "postcommit_crash",
+        "run_id": "authorized-r204-postcommit-base-20261007-0004",
+        "organization_index": 0,
+        "observed": true,
+        "db_ns": 1791434232203188000,
+        "source": "PROCESS_EXIT",
+        "evidence": [
+          "crash-exit.json"
+        ]
+      }
+    ],
+    "checks": [
+      {
+        "name": "claim_commit_independently_visible",
+        "passed": true,
+        "evidence": [
+          "db-000-committed-before-crash.json",
+          "crash-barrier.json"
+        ],
+        "facts": {}
+      },
+      {
+        "name": "real_process_exit_crash",
+        "passed": true,
+        "evidence": [
+          "crash-exit.json"
+        ],
+        "facts": {}
+      }
+    ]
+  }
+}

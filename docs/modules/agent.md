@@ -1,5 +1,7 @@
 # Módulos: agent + channels (subsistema del agente conversacional)
 
+> **Estado consolidado — 2026-10-11:** [acta B9](../evals/b9-consolidation-2026-10-11/ACTA.md). B9A–D COMPLETED técnico; PROFILE 02-10 PASS para `0831046`; expediente B9E consolidado, sin inferir aceptación integral nueva del HEAD instrumentado. E4 CLOSED por límite confirmado; D29 cerrado con R1-04 PENDING aceptado y cero intentos adicionales. H16/H19 conservan límites de cobertura/carga; activación PENDING_ACTIVATION_REQUIREMENTS. Los cortes inferiores son históricos. Esta consolidación sólo organiza evidencia y Git; no cambia APIs, estados runtime, permisos, contratos ni el alcance UX de Inbox.
+
 > **Frontera vigente B4 (2026-09-16):** Message incorpora claim, admisión y
 > aceptación externa; HTTP fuera de transacción e incertidumbre sin replay.
 > Inbox expone todos los estados outbound. La sección B4 al final y el

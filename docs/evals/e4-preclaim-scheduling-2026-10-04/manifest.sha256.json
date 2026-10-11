@@ -1,0 +1,83 @@
+{
+  "analysis_id": "preclaim-analysis-f530e7f0cabb41c7be084045db3bcde8",
+  "head": "825db75df68bf076929fa787e77beefe96803350",
+  "classification": "OFFLINE_PRECLAIM_SCHEDULING_ANALYSIS",
+  "exit": "CAPACITY_LIMIT_CONFIRMED",
+  "self_excluded": true,
+  "files": {
+    "capacity-intervals.json": {
+      "sha256": "d8bf30eea1c99045f5b3d2c7e304de60da25332ab2ec7e0a398f037b80b0c4db",
+      "bytes": 405963
+    },
+    "close_analysis.py": {
+      "sha256": "05d98a758046efc1eee39d5f4c68ee8e4c8d1353e72273e60957c691f8f3aaf4",
+      "bytes": 12893
+    },
+    "closure.json": {
+      "sha256": "edcefa5f027ef4934ea389a1ac46416f13548bcd7d6ad71fd1a8572bfb673e5a",
+      "bytes": 36459
+    },
+    "contract-evidence.json": {
+      "sha256": "ace1036e526e6d7848bd0a78e6c549444f267141537313f5e74f0b817231de13",
+      "bytes": 4992
+    },
+    "derive.py": {
+      "sha256": "d4e9ff0feffbbb6b65b81ac787a0782953b84cf3fcbfffb701ae2344049b4f20",
+      "bytes": 26038
+    },
+    "input-integrity.json": {
+      "sha256": "797b5eaca956a89954ed2bcff3112ebd3717e6cc3fdf5df43c23c8d5effa6f72",
+      "bytes": 2503
+    },
+    "misses.json": {
+      "sha256": "700c3110af6c540be6eec9cbea1ce49ffb83e82ebcccc5567020b6b2a9ecf298",
+      "bytes": 39018
+    },
+    "output-summary.json": {
+      "sha256": "4efc6fd683b4c3a3fd4e86def79362de10626376b6e51e552ee6e228f407cdce",
+      "bytes": 19964
+    },
+    "per-attempt-scheduling.csv": {
+      "sha256": "ca20cac3c62e180b59c2d52cc2e373d9fac1896b6104e587e20367a9b79d3a33",
+      "bytes": 194971
+    },
+    "preclaim-analysis.json": {
+      "sha256": "a36dade16d256b72ff7da0fa4c672c579ed461d1bf40bc525ea40f83d0db90d6",
+      "bytes": 30879
+    },
+    "provider-proof.json": {
+      "sha256": "c2c330f4a80f6f452c9d359133c5d6e7fc3f08d19fbfeaa8b93510128c5716d5",
+      "bytes": 160893
+    },
+    "report.md": {
+      "sha256": "17cfa588a2bafb94e364a73a6eb7a255ea9ff476b020914ca7521acca37b2dc6",
+      "bytes": 37101
+    },
+    "scheduling-evidence.json": {
+      "sha256": "4e0aca146554d0002b120d4fe96929279b18dbbcc4f196f686e09327c894a0ef",
+      "bytes": 1121963
+    },
+    "selector-observations.json": {
+      "sha256": "0e975b6aa2f35acc25c9c0b8adccf0b442e4563be7d92ab7d6ac37d95a4b8abe",
+      "bytes": 668319
+    }
+  },
+  "final_state": {
+    "E4": "CLOSED",
+    "E4_DECISION": "CAPACITY_LIMIT_CONFIRMED",
+    "NEXT_ACTION": "STOP_BEFORE_TUNING",
+    "B9E": "FAIL",
+    "PROFILE-BETA-1": "FAIL",
+    "B9": "IN_PROGRESS",
+    "production_closed": true,
+    "clinics_activated": 0,
+    "deploy": false,
+    "threshold_seconds": 10,
+    "threshold_changed": false,
+    "runtime_changed": false,
+    "new_code_commits": [],
+    "scope": "Documentary closure of E4 preclaim scheduling analysis; historical acceptance receipts remain frozen."
+  },
+  "documentary_closure": true,
+  "previous_analysis_manifest_sha256": "3ed0be3b64eb714e85e655f9423a2dea647e0db1cf62bb847c7e3faf1bccee4c"
+}

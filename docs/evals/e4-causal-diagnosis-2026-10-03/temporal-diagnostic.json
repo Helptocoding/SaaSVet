@@ -1,0 +1,6810 @@
+{
+  "scenario": "base",
+  "window_utc": [
+    "2026-10-03T15:54:55.976760+00:00",
+    "2026-10-03T15:59:55.976760+00:00"
+  ],
+  "postgresql_process_ids": [
+    {
+      "pid": 62372,
+      "backend_pid": 64312,
+      "role": "planner-1",
+      "scenario": "base"
+    },
+    {
+      "pid": 72488,
+      "backend_pid": 60072,
+      "role": "planner-2",
+      "scenario": "base"
+    },
+    {
+      "pid": 65584,
+      "backend_pid": 67132,
+      "role": "sender",
+      "scenario": "base"
+    }
+  ],
+  "inbound_count": 360,
+  "outbound_count": 137,
+  "healthy_claim": {
+    "count": 60,
+    "p95_seconds": 9.394663,
+    "max_seconds": 9.539737,
+    "missing": 0
+  },
+  "safety_dispatch": {
+    "count": 20,
+    "p95_seconds": 3.488048,
+    "max_seconds": 3.488048
+  },
+  "outbox_dispatch": {
+    "count": 137,
+    "p95_seconds": 2.754453,
+    "max_seconds": 3.488048,
+    "missing": 0
+  },
+  "queue_samples": [
+    {
+      "second": 0,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 1,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 5,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 6,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 10,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 13,
+      "pending_outbound": 0,
+      "active_work": []
+    },
+    {
+      "second": 15,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 18,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 20,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 22,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 25,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 24,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 30,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 25,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 35,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 29,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 40,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 33,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 45,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 37,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 50,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 41,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 55,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 44,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 60,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 45,
+      "pending_outbound": 4,
+      "active_work": []
+    },
+    {
+      "second": 65,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 49,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 70,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 54,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 75,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 57,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 80,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 61,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 85,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 64,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 90,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 65,
+      "pending_outbound": 3,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 95,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 69,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 100,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 74,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 105,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 77,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 110,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 81,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 115,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 84,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 120,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 85,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 125,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 88,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 130,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 93,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 135,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 97,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 140,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 101,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 145,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 104,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 150,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 105,
+      "pending_outbound": 4,
+      "active_work": []
+    },
+    {
+      "second": 155,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 109,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 160,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 114,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 165,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 117,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 170,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 123,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 175,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 125,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 180,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 127,
+      "pending_outbound": 2,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 185,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 130,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 190,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 135,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 195,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 138,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 200,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 142,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 205,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 145,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 210,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 146,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 215,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 150,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 220,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 155,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 225,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 158,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 230,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 164,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 235,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 166,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 240,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 168,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 245,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 172,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 250,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 177,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 255,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 180,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 260,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 186,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 265,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 188,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 270,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 190,
+      "pending_outbound": 3,
+      "active_work": []
+    },
+    {
+      "second": 275,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 194,
+      "pending_outbound": 2,
+      "active_work": []
+    },
+    {
+      "second": 280,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 199,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 285,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 202,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 290,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 208,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 1,
+          "count": 1
+        },
+        {
+          "organization_id": 2,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 295,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 210,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 300,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 212,
+      "pending_outbound": 4,
+      "active_work": []
+    },
+    {
+      "second": 305,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 216,
+      "pending_outbound": 1,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 310,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 221,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "second": 315,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 224,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 320,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          3
+        ]
+      ],
+      "pending_inbound": 228,
+      "pending_outbound": 1,
+      "active_work": []
+    },
+    {
+      "second": 325,
+      "postgresql_wait_samples": [
+        [
+          "Client",
+          "ClientRead",
+          2
+        ],
+        [
+          null,
+          null,
+          1
+        ]
+      ],
+      "pending_inbound": 232,
+      "pending_outbound": 0,
+      "active_work": [
+        {
+          "organization_id": 3,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "generator_events": {
+    "sent": [
+      33,
+      33,
+      330
+    ],
+    "safety": 22,
+    "duplicates": 0,
+    "errors": []
+  },
+  "turnwork_status": [
+    {
+      "status": "PROCESSING",
+      "count": 1
+    },
+    {
+      "status": "COMPLETED",
+      "count": 169
+    }
+  ],
+  "outbound_status": [
+    {
+      "status": "sent",
+      "count": 154
+    }
+  ],
+  "max_active_per_org_observed": 1,
+  "max_pending_inbound_observed": 232,
+  "max_outbound_attempts": 1,
+  "gates": {
+    "healthy_claim_p95_le_10": true,
+    "safety_dispatch_p95_le_5": true,
+    "outbox_dispatch_p95_le_5": true
+  },
+  "technical_pass": true,
+  "diagnostic_only": true,
+  "acceptance_authority": false,
+  "historical_profile_replaced": false,
+  "messages": [
+    {
+      "id": 1,
+      "organization_id": 1,
+      "conversation_id": 1,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:54:28.351311+00:00",
+      "available_at": "2026-10-03 15:54:28.507459+00:00",
+      "turn_work_id": 1,
+      "turn_work__claimed_at": "2026-10-03 15:54:28.614251+00:00"
+    },
+    {
+      "id": 3,
+      "organization_id": 2,
+      "conversation_id": 2,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:54:29.265694+00:00",
+      "available_at": "2026-10-03 15:54:29.325673+00:00",
+      "turn_work_id": 2,
+      "turn_work__claimed_at": "2026-10-03 15:54:29.386738+00:00"
+    },
+    {
+      "id": 5,
+      "organization_id": 3,
+      "conversation_id": 3,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:29.902912+00:00",
+      "available_at": "2026-10-03 15:54:37.845494+00:00",
+      "turn_work_id": 3,
+      "turn_work__claimed_at": "2026-10-03 15:54:38.433700+00:00"
+    },
+    {
+      "id": 6,
+      "organization_id": 3,
+      "conversation_id": 4,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:30.134688+00:00",
+      "available_at": "2026-10-03 15:54:38.082914+00:00",
+      "turn_work_id": 4,
+      "turn_work__claimed_at": "2026-10-03 15:54:42.779776+00:00"
+    },
+    {
+      "id": 7,
+      "organization_id": 3,
+      "conversation_id": 5,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:30.347540+00:00",
+      "available_at": "2026-10-03 15:54:38.306949+00:00",
+      "turn_work_id": 7,
+      "turn_work__claimed_at": "2026-10-03 15:54:47.191924+00:00"
+    },
+    {
+      "id": 8,
+      "organization_id": 3,
+      "conversation_id": 6,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:30.537374+00:00",
+      "available_at": "2026-10-03 15:54:38.492033+00:00",
+      "turn_work_id": 8,
+      "turn_work__claimed_at": "2026-10-03 15:54:49.487426+00:00"
+    },
+    {
+      "id": 9,
+      "organization_id": 3,
+      "conversation_id": 7,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:30.761646+00:00",
+      "available_at": "2026-10-03 15:54:38.699929+00:00",
+      "turn_work_id": 9,
+      "turn_work__claimed_at": "2026-10-03 15:54:52.238247+00:00"
+    },
+    {
+      "id": 10,
+      "organization_id": 3,
+      "conversation_id": 8,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:31.115283+00:00",
+      "available_at": "2026-10-03 15:54:39.071353+00:00",
+      "turn_work_id": 11,
+      "turn_work__claimed_at": "2026-10-03 15:54:54.928819+00:00"
+    },
+    {
+      "id": 11,
+      "organization_id": 3,
+      "conversation_id": 9,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:32.091685+00:00",
+      "available_at": "2026-10-03 15:54:40.040414+00:00",
+      "turn_work_id": 14,
+      "turn_work__claimed_at": "2026-10-03 15:54:57.162224+00:00"
+    },
+    {
+      "id": 12,
+      "organization_id": 3,
+      "conversation_id": 10,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:33.110658+00:00",
+      "available_at": "2026-10-03 15:54:41.058108+00:00",
+      "turn_work_id": 15,
+      "turn_work__claimed_at": "2026-10-03 15:54:59.783779+00:00"
+    },
+    {
+      "id": 13,
+      "organization_id": 3,
+      "conversation_id": 11,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:34.134702+00:00",
+      "available_at": "2026-10-03 15:54:42.077659+00:00",
+      "turn_work_id": 16,
+      "turn_work__claimed_at": "2026-10-03 15:55:02.252943+00:00"
+    },
+    {
+      "id": 14,
+      "organization_id": 3,
+      "conversation_id": 12,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:35.127259+00:00",
+      "available_at": "2026-10-03 15:54:43.063564+00:00",
+      "turn_work_id": 17,
+      "turn_work__claimed_at": "2026-10-03 15:55:04.672959+00:00"
+    },
+    {
+      "id": 15,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:36.067246+00:00",
+      "available_at": "2026-10-03 15:54:44.020965+00:00",
+      "turn_work_id": 5,
+      "turn_work__claimed_at": "2026-10-03 15:54:44.322852+00:00"
+    },
+    {
+      "id": 16,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:36.225648+00:00",
+      "available_at": "2026-10-03 15:54:44.166172+00:00",
+      "turn_work_id": 6,
+      "turn_work__claimed_at": "2026-10-03 15:54:46.464370+00:00"
+    },
+    {
+      "id": 17,
+      "organization_id": 3,
+      "conversation_id": 15,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:36.409616+00:00",
+      "available_at": "2026-10-03 15:54:44.348350+00:00",
+      "turn_work_id": 18,
+      "turn_work__claimed_at": "2026-10-03 15:55:07.096327+00:00"
+    },
+    {
+      "id": 18,
+      "organization_id": 3,
+      "conversation_id": 16,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:37.078672+00:00",
+      "available_at": "2026-10-03 15:54:45.037468+00:00",
+      "turn_work_id": 19,
+      "turn_work__claimed_at": "2026-10-03 15:55:09.520767+00:00"
+    },
+    {
+      "id": 19,
+      "organization_id": 3,
+      "conversation_id": 17,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:38.094593+00:00",
+      "available_at": "2026-10-03 15:54:46.039205+00:00",
+      "turn_work_id": 20,
+      "turn_work__claimed_at": "2026-10-03 15:55:12.130842+00:00"
+    },
+    {
+      "id": 20,
+      "organization_id": 3,
+      "conversation_id": 18,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:39.162928+00:00",
+      "available_at": "2026-10-03 15:54:47.091238+00:00",
+      "turn_work_id": 23,
+      "turn_work__claimed_at": "2026-10-03 15:55:17.307205+00:00"
+    },
+    {
+      "id": 21,
+      "organization_id": 3,
+      "conversation_id": 19,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:40.092077+00:00",
+      "available_at": "2026-10-03 15:54:48.043073+00:00",
+      "turn_work_id": 24,
+      "turn_work__claimed_at": "2026-10-03 15:55:19.905157+00:00"
+    },
+    {
+      "id": 22,
+      "organization_id": 3,
+      "conversation_id": 20,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:41.151173+00:00",
+      "available_at": "2026-10-03 15:54:49.079533+00:00",
+      "turn_work_id": 25,
+      "turn_work__claimed_at": "2026-10-03 15:55:22.349806+00:00"
+    },
+    {
+      "id": 23,
+      "organization_id": 3,
+      "conversation_id": 21,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:42.091579+00:00",
+      "available_at": "2026-10-03 15:54:50.041537+00:00",
+      "turn_work_id": 30,
+      "turn_work__claimed_at": "2026-10-03 15:55:28.061343+00:00"
+    },
+    {
+      "id": 25,
+      "organization_id": 3,
+      "conversation_id": 22,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:43.106756+00:00",
+      "available_at": "2026-10-03 15:54:51.050603+00:00",
+      "turn_work_id": 31,
+      "turn_work__claimed_at": "2026-10-03 15:55:30.300499+00:00"
+    },
+    {
+      "id": 26,
+      "organization_id": 3,
+      "conversation_id": 23,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:44.095120+00:00",
+      "available_at": "2026-10-03 15:54:52.056948+00:00",
+      "turn_work_id": 32,
+      "turn_work__claimed_at": "2026-10-03 15:55:32.909322+00:00"
+    },
+    {
+      "id": 27,
+      "organization_id": 3,
+      "conversation_id": 24,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:45.098461+00:00",
+      "available_at": "2026-10-03 15:54:53.047196+00:00",
+      "turn_work_id": 33,
+      "turn_work__claimed_at": "2026-10-03 15:55:35.230153+00:00"
+    },
+    {
+      "id": 30,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:46.151464+00:00",
+      "available_at": "2026-10-03 15:54:54.100477+00:00",
+      "turn_work_id": 10,
+      "turn_work__claimed_at": "2026-10-03 15:54:54.436537+00:00"
+    },
+    {
+      "id": 31,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:46.310660+00:00",
+      "available_at": "2026-10-03 15:54:44.166172+00:00",
+      "turn_work_id": 6,
+      "turn_work__claimed_at": "2026-10-03 15:54:46.464370+00:00"
+    },
+    {
+      "id": 32,
+      "organization_id": 3,
+      "conversation_id": 25,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:46.468287+00:00",
+      "available_at": "2026-10-03 15:54:54.412171+00:00",
+      "turn_work_id": 34,
+      "turn_work__claimed_at": "2026-10-03 15:55:37.951227+00:00"
+    },
+    {
+      "id": 33,
+      "organization_id": 3,
+      "conversation_id": 26,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:47.122290+00:00",
+      "available_at": "2026-10-03 15:54:55.058181+00:00",
+      "turn_work_id": 35,
+      "turn_work__claimed_at": "2026-10-03 15:55:40.213049+00:00"
+    },
+    {
+      "id": 34,
+      "organization_id": 3,
+      "conversation_id": 27,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:48.136520+00:00",
+      "available_at": "2026-10-03 15:54:56.071691+00:00",
+      "turn_work_id": 36,
+      "turn_work__claimed_at": "2026-10-03 15:55:42.908738+00:00"
+    },
+    {
+      "id": 37,
+      "organization_id": 3,
+      "conversation_id": 28,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:49.112223+00:00",
+      "available_at": "2026-10-03 15:54:57.061007+00:00",
+      "turn_work_id": 39,
+      "turn_work__claimed_at": "2026-10-03 15:55:47.013413+00:00"
+    },
+    {
+      "id": 38,
+      "organization_id": 3,
+      "conversation_id": 29,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:50.131680+00:00",
+      "available_at": "2026-10-03 15:54:58.064286+00:00",
+      "turn_work_id": 40,
+      "turn_work__claimed_at": "2026-10-03 15:55:49.578407+00:00"
+    },
+    {
+      "id": 39,
+      "organization_id": 3,
+      "conversation_id": 30,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:51.131391+00:00",
+      "available_at": "2026-10-03 15:54:59.061973+00:00",
+      "turn_work_id": 41,
+      "turn_work__claimed_at": "2026-10-03 15:55:51.963084+00:00"
+    },
+    {
+      "id": 41,
+      "organization_id": 3,
+      "conversation_id": 31,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:52.135498+00:00",
+      "available_at": "2026-10-03 15:55:00.073087+00:00",
+      "turn_work_id": 46,
+      "turn_work__claimed_at": "2026-10-03 15:55:57.326334+00:00"
+    },
+    {
+      "id": 42,
+      "organization_id": 3,
+      "conversation_id": 32,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:53.094936+00:00",
+      "available_at": "2026-10-03 15:55:01.044285+00:00",
+      "turn_work_id": 47,
+      "turn_work__claimed_at": "2026-10-03 15:55:59.772967+00:00"
+    },
+    {
+      "id": 44,
+      "organization_id": 3,
+      "conversation_id": 33,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:54.088196+00:00",
+      "available_at": "2026-10-03 15:55:02.047126+00:00",
+      "turn_work_id": 48,
+      "turn_work__claimed_at": "2026-10-03 15:56:02.337035+00:00"
+    },
+    {
+      "id": 45,
+      "organization_id": 3,
+      "conversation_id": 34,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:55.081580+00:00",
+      "available_at": "2026-10-03 15:55:03.035488+00:00",
+      "turn_work_id": 49,
+      "turn_work__claimed_at": "2026-10-03 15:56:04.816033+00:00"
+    },
+    {
+      "id": 47,
+      "organization_id": 1,
+      "conversation_id": 35,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:54:56.098991+00:00",
+      "available_at": "2026-10-03 15:54:56.135264+00:00",
+      "turn_work_id": 12,
+      "turn_work__claimed_at": "2026-10-03 15:54:56.194472+00:00"
+    },
+    {
+      "id": 50,
+      "organization_id": 2,
+      "conversation_id": 36,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:54:56.577800+00:00",
+      "available_at": "2026-10-03 15:54:56.628418+00:00",
+      "turn_work_id": 13,
+      "turn_work__claimed_at": "2026-10-03 15:54:56.717670+00:00"
+    },
+    {
+      "id": 52,
+      "organization_id": 3,
+      "conversation_id": 37,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:57.190204+00:00",
+      "available_at": "2026-10-03 15:55:05.122434+00:00",
+      "turn_work_id": 50,
+      "turn_work__claimed_at": "2026-10-03 15:56:07.262402+00:00"
+    },
+    {
+      "id": 53,
+      "organization_id": 3,
+      "conversation_id": 38,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:57.469267+00:00",
+      "available_at": "2026-10-03 15:55:05.395407+00:00",
+      "turn_work_id": 51,
+      "turn_work__claimed_at": "2026-10-03 15:56:09.680333+00:00"
+    },
+    {
+      "id": 54,
+      "organization_id": 3,
+      "conversation_id": 39,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:58.167508+00:00",
+      "available_at": "2026-10-03 15:55:06.083592+00:00",
+      "turn_work_id": 52,
+      "turn_work__claimed_at": "2026-10-03 15:56:12.292823+00:00"
+    },
+    {
+      "id": 56,
+      "organization_id": 3,
+      "conversation_id": 40,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:54:59.147759+00:00",
+      "available_at": "2026-10-03 15:55:07.075889+00:00",
+      "turn_work_id": 55,
+      "turn_work__claimed_at": "2026-10-03 15:56:17.494750+00:00"
+    },
+    {
+      "id": 57,
+      "organization_id": 3,
+      "conversation_id": 41,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:00.143010+00:00",
+      "available_at": "2026-10-03 15:55:08.078180+00:00",
+      "turn_work_id": 56,
+      "turn_work__claimed_at": "2026-10-03 15:56:20.067164+00:00"
+    },
+    {
+      "id": 58,
+      "organization_id": 3,
+      "conversation_id": 42,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:01.082544+00:00",
+      "available_at": "2026-10-03 15:55:09.033758+00:00",
+      "turn_work_id": 57,
+      "turn_work__claimed_at": "2026-10-03 15:56:22.479540+00:00"
+    },
+    {
+      "id": 60,
+      "organization_id": 3,
+      "conversation_id": 43,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:02.104444+00:00",
+      "available_at": "2026-10-03 15:55:10.064191+00:00",
+      "turn_work_id": 62,
+      "turn_work__claimed_at": "2026-10-03 15:56:27.163792+00:00"
+    },
+    {
+      "id": 61,
+      "organization_id": 3,
+      "conversation_id": 44,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:03.126065+00:00",
+      "available_at": "2026-10-03 15:55:11.075611+00:00",
+      "turn_work_id": 63,
+      "turn_work__claimed_at": "2026-10-03 15:56:29.417470+00:00"
+    },
+    {
+      "id": 63,
+      "organization_id": 3,
+      "conversation_id": 45,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:04.096559+00:00",
+      "available_at": "2026-10-03 15:55:12.048231+00:00",
+      "turn_work_id": 64,
+      "turn_work__claimed_at": "2026-10-03 15:56:32.225160+00:00"
+    },
+    {
+      "id": 64,
+      "organization_id": 3,
+      "conversation_id": 46,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:05.112521+00:00",
+      "available_at": "2026-10-03 15:55:13.065441+00:00",
+      "turn_work_id": 65,
+      "turn_work__claimed_at": "2026-10-03 15:56:34.463678+00:00"
+    },
+    {
+      "id": 65,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:06.064928+00:00",
+      "available_at": "2026-10-03 15:55:14.015807+00:00",
+      "turn_work_id": 21,
+      "turn_work__claimed_at": "2026-10-03 15:55:14.434841+00:00"
+    },
+    {
+      "id": 66,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:06.192192+00:00",
+      "available_at": "2026-10-03 15:55:14.140044+00:00",
+      "turn_work_id": 22,
+      "turn_work__claimed_at": "2026-10-03 15:55:14.939858+00:00"
+    },
+    {
+      "id": 68,
+      "organization_id": 3,
+      "conversation_id": 47,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:06.318158+00:00",
+      "available_at": "2026-10-03 15:55:14.279445+00:00",
+      "turn_work_id": 66,
+      "turn_work__claimed_at": "2026-10-03 15:56:37.284178+00:00"
+    },
+    {
+      "id": 69,
+      "organization_id": 3,
+      "conversation_id": 48,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:07.077584+00:00",
+      "available_at": "2026-10-03 15:55:15.027961+00:00",
+      "turn_work_id": 67,
+      "turn_work__claimed_at": "2026-10-03 15:56:39.555535+00:00"
+    },
+    {
+      "id": 70,
+      "organization_id": 3,
+      "conversation_id": 49,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:08.099062+00:00",
+      "available_at": "2026-10-03 15:55:16.051803+00:00",
+      "turn_work_id": 68,
+      "turn_work__claimed_at": "2026-10-03 15:56:42.316203+00:00"
+    },
+    {
+      "id": 72,
+      "organization_id": 3,
+      "conversation_id": 50,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:09.148868+00:00",
+      "available_at": "2026-10-03 15:55:17.086034+00:00",
+      "turn_work_id": 71,
+      "turn_work__claimed_at": "2026-10-03 15:56:47.405152+00:00"
+    },
+    {
+      "id": 73,
+      "organization_id": 3,
+      "conversation_id": 51,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:10.099601+00:00",
+      "available_at": "2026-10-03 15:55:18.044868+00:00",
+      "turn_work_id": 72,
+      "turn_work__claimed_at": "2026-10-03 15:56:50.071026+00:00"
+    },
+    {
+      "id": 74,
+      "organization_id": 3,
+      "conversation_id": 52,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:11.150250+00:00",
+      "available_at": "2026-10-03 15:55:19.085629+00:00",
+      "turn_work_id": 73,
+      "turn_work__claimed_at": "2026-10-03 15:56:52.458119+00:00"
+    },
+    {
+      "id": 76,
+      "organization_id": 3,
+      "conversation_id": 53,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:12.145768+00:00",
+      "available_at": "2026-10-03 15:55:20.044853+00:00",
+      "turn_work_id": 78,
+      "turn_work__claimed_at": "2026-10-03 15:56:58.305041+00:00"
+    },
+    {
+      "id": 77,
+      "organization_id": 3,
+      "conversation_id": 54,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:13.138637+00:00",
+      "available_at": "2026-10-03 15:55:21.076885+00:00",
+      "turn_work_id": 79,
+      "turn_work__claimed_at": "2026-10-03 15:57:00.496794+00:00"
+    },
+    {
+      "id": 79,
+      "organization_id": 3,
+      "conversation_id": 55,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:14.140279+00:00",
+      "available_at": "2026-10-03 15:55:22.063499+00:00",
+      "turn_work_id": 80,
+      "turn_work__claimed_at": "2026-10-03 15:57:03.527721+00:00"
+    },
+    {
+      "id": 80,
+      "organization_id": 3,
+      "conversation_id": 56,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:15.140628+00:00",
+      "available_at": "2026-10-03 15:55:23.086496+00:00",
+      "turn_work_id": 81,
+      "turn_work__claimed_at": "2026-10-03 15:57:05.746973+00:00"
+    },
+    {
+      "id": 82,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:16.236940+00:00",
+      "available_at": "2026-10-03 15:55:24.194076+00:00",
+      "turn_work_id": 26,
+      "turn_work__claimed_at": "2026-10-03 15:55:24.845954+00:00"
+    },
+    {
+      "id": 83,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:16.371115+00:00",
+      "available_at": "2026-10-03 15:55:24.312716+00:00",
+      "turn_work_id": 27,
+      "turn_work__claimed_at": "2026-10-03 15:55:25.256770+00:00"
+    },
+    {
+      "id": 84,
+      "organization_id": 3,
+      "conversation_id": 57,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:16.530492+00:00",
+      "available_at": "2026-10-03 15:55:24.481557+00:00",
+      "turn_work_id": 82,
+      "turn_work__claimed_at": "2026-10-03 15:57:08.614810+00:00"
+    },
+    {
+      "id": 85,
+      "organization_id": 3,
+      "conversation_id": 58,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:17.134736+00:00",
+      "available_at": "2026-10-03 15:55:25.069084+00:00",
+      "turn_work_id": 83,
+      "turn_work__claimed_at": "2026-10-03 15:57:10.813381+00:00"
+    },
+    {
+      "id": 86,
+      "organization_id": 3,
+      "conversation_id": 59,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:18.180068+00:00",
+      "available_at": "2026-10-03 15:55:26.127928+00:00",
+      "turn_work_id": 86,
+      "turn_work__claimed_at": "2026-10-03 15:57:17.761015+00:00"
+    },
+    {
+      "id": 87,
+      "organization_id": 3,
+      "conversation_id": 60,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:19.088915+00:00",
+      "available_at": "2026-10-03 15:55:27.038638+00:00",
+      "turn_work_id": 87,
+      "turn_work__claimed_at": "2026-10-03 15:57:20.177154+00:00"
+    },
+    {
+      "id": 89,
+      "organization_id": 3,
+      "conversation_id": 61,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:20.108223+00:00",
+      "available_at": "2026-10-03 15:55:28.059027+00:00",
+      "turn_work_id": 88,
+      "turn_work__claimed_at": "2026-10-03 15:57:22.793255+00:00"
+    },
+    {
+      "id": 90,
+      "organization_id": 3,
+      "conversation_id": 62,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:21.108709+00:00",
+      "available_at": "2026-10-03 15:55:29.065666+00:00",
+      "turn_work_id": 93,
+      "turn_work__claimed_at": "2026-10-03 15:57:27.464560+00:00"
+    },
+    {
+      "id": 92,
+      "organization_id": 3,
+      "conversation_id": 63,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:22.084450+00:00",
+      "available_at": "2026-10-03 15:55:30.038039+00:00",
+      "turn_work_id": 94,
+      "turn_work__claimed_at": "2026-10-03 15:57:29.933758+00:00"
+    },
+    {
+      "id": 93,
+      "organization_id": 3,
+      "conversation_id": 64,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:23.135319+00:00",
+      "available_at": "2026-10-03 15:55:31.069283+00:00",
+      "turn_work_id": 95,
+      "turn_work__claimed_at": "2026-10-03 15:57:32.568405+00:00"
+    },
+    {
+      "id": 95,
+      "organization_id": 3,
+      "conversation_id": 65,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:24.102477+00:00",
+      "available_at": "2026-10-03 15:55:32.057461+00:00",
+      "turn_work_id": 96,
+      "turn_work__claimed_at": "2026-10-03 15:57:35.113735+00:00"
+    },
+    {
+      "id": 96,
+      "organization_id": 3,
+      "conversation_id": 66,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:25.147123+00:00",
+      "available_at": "2026-10-03 15:55:33.056034+00:00",
+      "turn_work_id": 97,
+      "turn_work__claimed_at": "2026-10-03 15:57:37.741276+00:00"
+    },
+    {
+      "id": 97,
+      "organization_id": 1,
+      "conversation_id": 67,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:55:26.119194+00:00",
+      "available_at": "2026-10-03 15:55:26.174846+00:00",
+      "turn_work_id": 28,
+      "turn_work__claimed_at": "2026-10-03 15:55:26.259095+00:00"
+    },
+    {
+      "id": 100,
+      "organization_id": 2,
+      "conversation_id": 68,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:55:26.932128+00:00",
+      "available_at": "2026-10-03 15:55:26.980767+00:00",
+      "turn_work_id": 29,
+      "turn_work__claimed_at": "2026-10-03 15:55:27.058122+00:00"
+    },
+    {
+      "id": 103,
+      "organization_id": 3,
+      "conversation_id": 69,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:27.518716+00:00",
+      "available_at": "2026-10-03 15:55:35.464252+00:00",
+      "turn_work_id": 98,
+      "turn_work__claimed_at": "2026-10-03 15:57:40.316681+00:00"
+    },
+    {
+      "id": 104,
+      "organization_id": 3,
+      "conversation_id": 70,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:27.775474+00:00",
+      "available_at": "2026-10-03 15:55:35.697597+00:00",
+      "turn_work_id": 99,
+      "turn_work__claimed_at": "2026-10-03 15:57:42.804933+00:00"
+    },
+    {
+      "id": 105,
+      "organization_id": 3,
+      "conversation_id": 71,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:28.134119+00:00",
+      "available_at": "2026-10-03 15:55:36.069525+00:00",
+      "turn_work_id": 102,
+      "turn_work__claimed_at": "2026-10-03 15:57:47.146918+00:00"
+    },
+    {
+      "id": 106,
+      "organization_id": 3,
+      "conversation_id": 72,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:29.094398+00:00",
+      "available_at": "2026-10-03 15:55:37.054281+00:00",
+      "turn_work_id": 103,
+      "turn_work__claimed_at": "2026-10-03 15:57:49.616600+00:00"
+    },
+    {
+      "id": 108,
+      "organization_id": 3,
+      "conversation_id": 73,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:30.092601+00:00",
+      "available_at": "2026-10-03 15:55:38.050781+00:00",
+      "turn_work_id": 104,
+      "turn_work__claimed_at": "2026-10-03 15:57:52.407381+00:00"
+    },
+    {
+      "id": 109,
+      "organization_id": 3,
+      "conversation_id": 74,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:31.093121+00:00",
+      "available_at": "2026-10-03 15:55:39.050128+00:00",
+      "turn_work_id": 109,
+      "turn_work__claimed_at": "2026-10-03 15:57:57.571682+00:00"
+    },
+    {
+      "id": 111,
+      "organization_id": 3,
+      "conversation_id": 75,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:32.130482+00:00",
+      "available_at": "2026-10-03 15:55:40.077291+00:00",
+      "turn_work_id": 110,
+      "turn_work__claimed_at": "2026-10-03 15:58:00.346193+00:00"
+    },
+    {
+      "id": 112,
+      "organization_id": 3,
+      "conversation_id": 76,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:33.120986+00:00",
+      "available_at": "2026-10-03 15:55:41.060863+00:00",
+      "turn_work_id": 111,
+      "turn_work__claimed_at": "2026-10-03 15:58:02.685505+00:00"
+    },
+    {
+      "id": 113,
+      "organization_id": 3,
+      "conversation_id": 77,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:34.166450+00:00",
+      "available_at": "2026-10-03 15:55:42.085915+00:00",
+      "turn_work_id": 112,
+      "turn_work__claimed_at": "2026-10-03 15:58:05.533238+00:00"
+    },
+    {
+      "id": 115,
+      "organization_id": 3,
+      "conversation_id": 78,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:35.100908+00:00",
+      "available_at": "2026-10-03 15:55:43.050419+00:00",
+      "turn_work_id": 113,
+      "turn_work__claimed_at": "2026-10-03 15:58:07.998785+00:00"
+    },
+    {
+      "id": 116,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:36.092551+00:00",
+      "available_at": "2026-10-03 15:55:44.017279+00:00",
+      "turn_work_id": 37,
+      "turn_work__claimed_at": "2026-10-03 15:55:44.153280+00:00"
+    },
+    {
+      "id": 117,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:36.255090+00:00",
+      "available_at": "2026-10-03 15:55:44.183538+00:00",
+      "turn_work_id": 38,
+      "turn_work__claimed_at": "2026-10-03 15:55:45.721367+00:00"
+    },
+    {
+      "id": 118,
+      "organization_id": 3,
+      "conversation_id": 79,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:36.406655+00:00",
+      "available_at": "2026-10-03 15:55:44.351322+00:00",
+      "turn_work_id": 114,
+      "turn_work__claimed_at": "2026-10-03 15:58:10.864002+00:00"
+    },
+    {
+      "id": 120,
+      "organization_id": 3,
+      "conversation_id": 80,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:37.087375+00:00",
+      "available_at": "2026-10-03 15:55:45.038560+00:00",
+      "turn_work_id": 117,
+      "turn_work__claimed_at": "2026-10-03 15:58:18.333969+00:00"
+    },
+    {
+      "id": 121,
+      "organization_id": 3,
+      "conversation_id": 81,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:38.134752+00:00",
+      "available_at": "2026-10-03 15:55:46.064368+00:00",
+      "turn_work_id": 118,
+      "turn_work__claimed_at": "2026-10-03 15:58:20.841629+00:00"
+    },
+    {
+      "id": 122,
+      "organization_id": 3,
+      "conversation_id": 82,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:39.087053+00:00",
+      "available_at": "2026-10-03 15:55:47.041870+00:00",
+      "turn_work_id": 123,
+      "turn_work__claimed_at": "2026-10-03 15:58:28.200884+00:00"
+    },
+    {
+      "id": 124,
+      "organization_id": 3,
+      "conversation_id": 83,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:40.103081+00:00",
+      "available_at": "2026-10-03 15:55:48.054984+00:00",
+      "turn_work_id": 124,
+      "turn_work__claimed_at": "2026-10-03 15:58:30.586694+00:00"
+    },
+    {
+      "id": 125,
+      "organization_id": 3,
+      "conversation_id": 84,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:41.100970+00:00",
+      "available_at": "2026-10-03 15:55:49.060269+00:00",
+      "turn_work_id": 125,
+      "turn_work__claimed_at": "2026-10-03 15:58:33.393253+00:00"
+    },
+    {
+      "id": 127,
+      "organization_id": 3,
+      "conversation_id": 85,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:42.119809+00:00",
+      "available_at": "2026-10-03 15:55:50.070087+00:00",
+      "turn_work_id": 126,
+      "turn_work__claimed_at": "2026-10-03 15:58:35.676840+00:00"
+    },
+    {
+      "id": 128,
+      "organization_id": 3,
+      "conversation_id": 86,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:43.126498+00:00",
+      "available_at": "2026-10-03 15:55:51.054555+00:00",
+      "turn_work_id": 127,
+      "turn_work__claimed_at": "2026-10-03 15:58:38.656535+00:00"
+    },
+    {
+      "id": 129,
+      "organization_id": 3,
+      "conversation_id": 87,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:44.097183+00:00",
+      "available_at": "2026-10-03 15:55:52.048012+00:00",
+      "turn_work_id": 128,
+      "turn_work__claimed_at": "2026-10-03 15:58:41.018962+00:00"
+    },
+    {
+      "id": 131,
+      "organization_id": 3,
+      "conversation_id": 88,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:45.121137+00:00",
+      "available_at": "2026-10-03 15:55:53.062017+00:00",
+      "turn_work_id": 131,
+      "turn_work__claimed_at": "2026-10-03 15:58:48.327265+00:00"
+    },
+    {
+      "id": 133,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:46.094347+00:00",
+      "available_at": "2026-10-03 15:55:54.036126+00:00",
+      "turn_work_id": 42,
+      "turn_work__claimed_at": "2026-10-03 15:55:54.481495+00:00"
+    },
+    {
+      "id": 134,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:46.240554+00:00",
+      "available_at": "2026-10-03 15:55:54.184115+00:00",
+      "turn_work_id": 43,
+      "turn_work__claimed_at": "2026-10-03 15:55:54.753145+00:00"
+    },
+    {
+      "id": 135,
+      "organization_id": 3,
+      "conversation_id": 89,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:46.423903+00:00",
+      "available_at": "2026-10-03 15:55:54.363349+00:00",
+      "turn_work_id": 132,
+      "turn_work__claimed_at": "2026-10-03 15:58:50.585924+00:00"
+    },
+    {
+      "id": 136,
+      "organization_id": 3,
+      "conversation_id": 90,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:47.142696+00:00",
+      "available_at": "2026-10-03 15:55:55.079786+00:00",
+      "turn_work_id": 137,
+      "turn_work__claimed_at": "2026-10-03 15:58:58.826924+00:00"
+    },
+    {
+      "id": 137,
+      "organization_id": 3,
+      "conversation_id": 91,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:48.139957+00:00",
+      "available_at": "2026-10-03 15:55:56.089763+00:00",
+      "turn_work_id": 138,
+      "turn_work__claimed_at": "2026-10-03 15:59:01.272663+00:00"
+    },
+    {
+      "id": 139,
+      "organization_id": 3,
+      "conversation_id": 92,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:49.114999+00:00",
+      "available_at": "2026-10-03 15:55:57.057332+00:00",
+      "turn_work_id": 139,
+      "turn_work__claimed_at": "2026-10-03 15:59:03.273448+00:00"
+    },
+    {
+      "id": 140,
+      "organization_id": 3,
+      "conversation_id": 93,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:50.091514+00:00",
+      "available_at": "2026-10-03 15:55:58.035700+00:00",
+      "turn_work_id": 140,
+      "turn_work__claimed_at": "2026-10-03 15:59:05.470389+00:00"
+    },
+    {
+      "id": 141,
+      "organization_id": 3,
+      "conversation_id": 94,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:51.117476+00:00",
+      "available_at": "2026-10-03 15:55:59.064066+00:00",
+      "turn_work_id": 141,
+      "turn_work__claimed_at": "2026-10-03 15:59:08.387606+00:00"
+    },
+    {
+      "id": 143,
+      "organization_id": 3,
+      "conversation_id": 95,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:52.092716+00:00",
+      "available_at": "2026-10-03 15:56:00.048427+00:00",
+      "turn_work_id": 142,
+      "turn_work__claimed_at": "2026-10-03 15:59:10.658819+00:00"
+    },
+    {
+      "id": 144,
+      "organization_id": 3,
+      "conversation_id": 96,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:53.109982+00:00",
+      "available_at": "2026-10-03 15:56:01.055711+00:00",
+      "turn_work_id": 145,
+      "turn_work__claimed_at": "2026-10-03 15:59:17.819063+00:00"
+    },
+    {
+      "id": 146,
+      "organization_id": 3,
+      "conversation_id": 97,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:54.095602+00:00",
+      "available_at": "2026-10-03 15:56:02.035800+00:00",
+      "turn_work_id": 146,
+      "turn_work__claimed_at": "2026-10-03 15:59:20.680920+00:00"
+    },
+    {
+      "id": 147,
+      "organization_id": 3,
+      "conversation_id": 98,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:55.119080+00:00",
+      "available_at": "2026-10-03 15:56:03.066103+00:00",
+      "turn_work_id": 151,
+      "turn_work__claimed_at": "2026-10-03 15:59:27.997118+00:00"
+    },
+    {
+      "id": 148,
+      "organization_id": 1,
+      "conversation_id": 99,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:55:56.116259+00:00",
+      "available_at": "2026-10-03 15:55:56.166171+00:00",
+      "turn_work_id": 44,
+      "turn_work__claimed_at": "2026-10-03 15:55:56.220821+00:00"
+    },
+    {
+      "id": 152,
+      "organization_id": 2,
+      "conversation_id": 100,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:55:56.737504+00:00",
+      "available_at": "2026-10-03 15:55:56.786209+00:00",
+      "turn_work_id": 45,
+      "turn_work__claimed_at": "2026-10-03 15:55:56.863488+00:00"
+    },
+    {
+      "id": 154,
+      "organization_id": 3,
+      "conversation_id": 101,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:57.337386+00:00",
+      "available_at": "2026-10-03 15:56:05.282328+00:00",
+      "turn_work_id": 152,
+      "turn_work__claimed_at": "2026-10-03 15:59:30.792774+00:00"
+    },
+    {
+      "id": 155,
+      "organization_id": 3,
+      "conversation_id": 102,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:57.582622+00:00",
+      "available_at": "2026-10-03 15:56:05.505553+00:00",
+      "turn_work_id": 153,
+      "turn_work__claimed_at": "2026-10-03 15:59:33.535062+00:00"
+    },
+    {
+      "id": 156,
+      "organization_id": 3,
+      "conversation_id": 103,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:58.123130+00:00",
+      "available_at": "2026-10-03 15:56:06.065302+00:00",
+      "turn_work_id": 154,
+      "turn_work__claimed_at": "2026-10-03 15:59:36.407289+00:00"
+    },
+    {
+      "id": 158,
+      "organization_id": 3,
+      "conversation_id": 104,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:55:59.122333+00:00",
+      "available_at": "2026-10-03 15:56:07.066854+00:00",
+      "turn_work_id": 155,
+      "turn_work__claimed_at": "2026-10-03 15:59:38.955351+00:00"
+    },
+    {
+      "id": 159,
+      "organization_id": 3,
+      "conversation_id": 105,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:00.122537+00:00",
+      "available_at": "2026-10-03 15:56:08.058302+00:00",
+      "turn_work_id": 156,
+      "turn_work__claimed_at": "2026-10-03 15:59:41.740307+00:00"
+    },
+    {
+      "id": 160,
+      "organization_id": 3,
+      "conversation_id": 106,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:01.120004+00:00",
+      "available_at": "2026-10-03 15:56:09.059801+00:00",
+      "turn_work_id": 159,
+      "turn_work__claimed_at": "2026-10-03 15:59:47.434854+00:00"
+    },
+    {
+      "id": 162,
+      "organization_id": 3,
+      "conversation_id": 107,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:02.114296+00:00",
+      "available_at": "2026-10-03 15:56:10.061985+00:00",
+      "turn_work_id": 160,
+      "turn_work__claimed_at": "2026-10-03 15:59:50.174369+00:00"
+    },
+    {
+      "id": 163,
+      "organization_id": 3,
+      "conversation_id": 108,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:03.100179+00:00",
+      "available_at": "2026-10-03 15:56:11.034433+00:00",
+      "turn_work_id": 161,
+      "turn_work__claimed_at": "2026-10-03 15:59:52.788213+00:00"
+    },
+    {
+      "id": 165,
+      "organization_id": 3,
+      "conversation_id": 109,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:04.139951+00:00",
+      "available_at": "2026-10-03 15:56:12.085343+00:00",
+      "turn_work_id": 164,
+      "turn_work__claimed_at": "2026-10-03 15:59:58.884966+00:00"
+    },
+    {
+      "id": 166,
+      "organization_id": 3,
+      "conversation_id": 110,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:05.086242+00:00",
+      "available_at": "2026-10-03 15:56:13.029521+00:00",
+      "turn_work_id": 165,
+      "turn_work__claimed_at": "2026-10-03 16:00:01.275935+00:00"
+    },
+    {
+      "id": 167,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:06.080948+00:00",
+      "available_at": "2026-10-03 15:56:14.038997+00:00",
+      "turn_work_id": 53,
+      "turn_work__claimed_at": "2026-10-03 15:56:14.680673+00:00"
+    },
+    {
+      "id": 168,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:06.184939+00:00",
+      "available_at": "2026-10-03 15:56:14.146882+00:00",
+      "turn_work_id": 54,
+      "turn_work__claimed_at": "2026-10-03 15:56:15.114412+00:00"
+    },
+    {
+      "id": 169,
+      "organization_id": 3,
+      "conversation_id": 111,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:06.317157+00:00",
+      "available_at": "2026-10-03 15:56:14.272187+00:00",
+      "turn_work_id": 166,
+      "turn_work__claimed_at": "2026-10-03 16:00:04.117793+00:00"
+    },
+    {
+      "id": 171,
+      "organization_id": 3,
+      "conversation_id": 112,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:07.081774+00:00",
+      "available_at": "2026-10-03 15:56:15.036293+00:00",
+      "turn_work_id": 167,
+      "turn_work__claimed_at": "2026-10-03 16:00:06.539750+00:00"
+    },
+    {
+      "id": 172,
+      "organization_id": 3,
+      "conversation_id": 113,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:08.066130+00:00",
+      "available_at": "2026-10-03 15:56:16.028668+00:00",
+      "turn_work_id": 168,
+      "turn_work__claimed_at": "2026-10-03 16:00:09.615299+00:00"
+    },
+    {
+      "id": 174,
+      "organization_id": 3,
+      "conversation_id": 114,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:09.129883+00:00",
+      "available_at": "2026-10-03 15:56:17.077888+00:00",
+      "turn_work_id": 169,
+      "turn_work__claimed_at": "2026-10-03 16:00:12.117566+00:00"
+    },
+    {
+      "id": 175,
+      "organization_id": 3,
+      "conversation_id": 115,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:10.099585+00:00",
+      "available_at": "2026-10-03 15:56:18.051581+00:00",
+      "turn_work_id": 170,
+      "turn_work__claimed_at": "2026-10-03 16:00:14.940124+00:00"
+    },
+    {
+      "id": 176,
+      "organization_id": 3,
+      "conversation_id": 116,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:11.096948+00:00",
+      "available_at": "2026-10-03 15:56:19.038488+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 178,
+      "organization_id": 3,
+      "conversation_id": 117,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:12.239514+00:00",
+      "available_at": "2026-10-03 15:56:20.083379+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 179,
+      "organization_id": 3,
+      "conversation_id": 118,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:13.085231+00:00",
+      "available_at": "2026-10-03 15:56:21.024446+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 181,
+      "organization_id": 3,
+      "conversation_id": 119,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:14.128539+00:00",
+      "available_at": "2026-10-03 15:56:22.059251+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 182,
+      "organization_id": 3,
+      "conversation_id": 120,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:15.124703+00:00",
+      "available_at": "2026-10-03 15:56:23.051763+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 183,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:16.084837+00:00",
+      "available_at": "2026-10-03 15:56:24.022277+00:00",
+      "turn_work_id": 58,
+      "turn_work__claimed_at": "2026-10-03 15:56:24.209319+00:00"
+    },
+    {
+      "id": 184,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:16.194348+00:00",
+      "available_at": "2026-10-03 15:56:24.154019+00:00",
+      "turn_work_id": 59,
+      "turn_work__claimed_at": "2026-10-03 15:56:25.410303+00:00"
+    },
+    {
+      "id": 185,
+      "organization_id": 3,
+      "conversation_id": 121,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:16.331395+00:00",
+      "available_at": "2026-10-03 15:56:24.282185+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 186,
+      "organization_id": 3,
+      "conversation_id": 122,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:17.085556+00:00",
+      "available_at": "2026-10-03 15:56:25.046800+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 187,
+      "organization_id": 3,
+      "conversation_id": 123,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:18.136928+00:00",
+      "available_at": "2026-10-03 15:56:26.088821+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 188,
+      "organization_id": 3,
+      "conversation_id": 124,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:19.098672+00:00",
+      "available_at": "2026-10-03 15:56:27.056039+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 190,
+      "organization_id": 3,
+      "conversation_id": 125,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:20.142693+00:00",
+      "available_at": "2026-10-03 15:56:28.084149+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 191,
+      "organization_id": 3,
+      "conversation_id": 126,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:21.121558+00:00",
+      "available_at": "2026-10-03 15:56:29.064364+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 193,
+      "organization_id": 3,
+      "conversation_id": 127,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:22.120903+00:00",
+      "available_at": "2026-10-03 15:56:30.068367+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 194,
+      "organization_id": 3,
+      "conversation_id": 128,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:23.119096+00:00",
+      "available_at": "2026-10-03 15:56:31.064146+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 195,
+      "organization_id": 3,
+      "conversation_id": 129,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:24.129603+00:00",
+      "available_at": "2026-10-03 15:56:32.049377+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 197,
+      "organization_id": 3,
+      "conversation_id": 130,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:25.109466+00:00",
+      "available_at": "2026-10-03 15:56:33.055616+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 199,
+      "organization_id": 1,
+      "conversation_id": 131,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:56:26.089833+00:00",
+      "available_at": "2026-10-03 15:56:26.132788+00:00",
+      "turn_work_id": 60,
+      "turn_work__claimed_at": "2026-10-03 15:56:26.186457+00:00"
+    },
+    {
+      "id": 201,
+      "organization_id": 2,
+      "conversation_id": 132,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:56:26.621591+00:00",
+      "available_at": "2026-10-03 15:56:26.667108+00:00",
+      "turn_work_id": 61,
+      "turn_work__claimed_at": "2026-10-03 15:56:26.727258+00:00"
+    },
+    {
+      "id": 204,
+      "organization_id": 3,
+      "conversation_id": 133,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:27.264722+00:00",
+      "available_at": "2026-10-03 15:56:35.200131+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 205,
+      "organization_id": 3,
+      "conversation_id": 134,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:27.506268+00:00",
+      "available_at": "2026-10-03 15:56:35.450695+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 206,
+      "organization_id": 3,
+      "conversation_id": 135,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:28.115324+00:00",
+      "available_at": "2026-10-03 15:56:36.065764+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 208,
+      "organization_id": 3,
+      "conversation_id": 136,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:29.075363+00:00",
+      "available_at": "2026-10-03 15:56:37.026512+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 209,
+      "organization_id": 3,
+      "conversation_id": 137,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:30.095286+00:00",
+      "available_at": "2026-10-03 15:56:38.040415+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 211,
+      "organization_id": 3,
+      "conversation_id": 138,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:31.131468+00:00",
+      "available_at": "2026-10-03 15:56:39.078750+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 212,
+      "organization_id": 3,
+      "conversation_id": 139,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:32.145436+00:00",
+      "available_at": "2026-10-03 15:56:40.070381+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 213,
+      "organization_id": 3,
+      "conversation_id": 140,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:33.093844+00:00",
+      "available_at": "2026-10-03 15:56:41.042431+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 215,
+      "organization_id": 3,
+      "conversation_id": 141,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:34.089787+00:00",
+      "available_at": "2026-10-03 15:56:42.035949+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 216,
+      "organization_id": 3,
+      "conversation_id": 142,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:35.164782+00:00",
+      "available_at": "2026-10-03 15:56:43.087613+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 217,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:36.084759+00:00",
+      "available_at": "2026-10-03 15:56:44.018038+00:00",
+      "turn_work_id": 69,
+      "turn_work__claimed_at": "2026-10-03 15:56:44.568925+00:00"
+    },
+    {
+      "id": 219,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:36.251145+00:00",
+      "available_at": "2026-10-03 15:56:44.201461+00:00",
+      "turn_work_id": 70,
+      "turn_work__claimed_at": "2026-10-03 15:56:45.084205+00:00"
+    },
+    {
+      "id": 220,
+      "organization_id": 3,
+      "conversation_id": 143,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:36.421052+00:00",
+      "available_at": "2026-10-03 15:56:44.368065+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 221,
+      "organization_id": 3,
+      "conversation_id": 144,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:37.100190+00:00",
+      "available_at": "2026-10-03 15:56:45.041011+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 222,
+      "organization_id": 3,
+      "conversation_id": 145,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:38.134884+00:00",
+      "available_at": "2026-10-03 15:56:46.077370+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 224,
+      "organization_id": 3,
+      "conversation_id": 146,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:39.119209+00:00",
+      "available_at": "2026-10-03 15:56:47.062612+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 225,
+      "organization_id": 3,
+      "conversation_id": 147,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:40.124213+00:00",
+      "available_at": "2026-10-03 15:56:48.064316+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 226,
+      "organization_id": 3,
+      "conversation_id": 148,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:41.118245+00:00",
+      "available_at": "2026-10-03 15:56:49.055914+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 228,
+      "organization_id": 3,
+      "conversation_id": 149,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:42.164835+00:00",
+      "available_at": "2026-10-03 15:56:50.099734+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 229,
+      "organization_id": 3,
+      "conversation_id": 150,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:43.097820+00:00",
+      "available_at": "2026-10-03 15:56:51.038607+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 231,
+      "organization_id": 3,
+      "conversation_id": 151,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:44.097351+00:00",
+      "available_at": "2026-10-03 15:56:52.051366+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 232,
+      "organization_id": 3,
+      "conversation_id": 152,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:45.124448+00:00",
+      "available_at": "2026-10-03 15:56:53.058372+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 233,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:46.089922+00:00",
+      "available_at": "2026-10-03 15:56:54.028664+00:00",
+      "turn_work_id": 74,
+      "turn_work__claimed_at": "2026-10-03 15:56:55.206808+00:00"
+    },
+    {
+      "id": 234,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:46.239210+00:00",
+      "available_at": "2026-10-03 15:56:54.178250+00:00",
+      "turn_work_id": 75,
+      "turn_work__claimed_at": "2026-10-03 15:56:55.233929+00:00"
+    },
+    {
+      "id": 235,
+      "organization_id": 3,
+      "conversation_id": 153,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:46.425345+00:00",
+      "available_at": "2026-10-03 15:56:54.362909+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 236,
+      "organization_id": 3,
+      "conversation_id": 154,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:47.117885+00:00",
+      "available_at": "2026-10-03 15:56:55.074197+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 237,
+      "organization_id": 3,
+      "conversation_id": 155,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:48.116657+00:00",
+      "available_at": "2026-10-03 15:56:56.050043+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 238,
+      "organization_id": 3,
+      "conversation_id": 156,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:49.106969+00:00",
+      "available_at": "2026-10-03 15:56:57.037760+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 240,
+      "organization_id": 3,
+      "conversation_id": 157,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:50.134658+00:00",
+      "available_at": "2026-10-03 15:56:58.078225+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 241,
+      "organization_id": 3,
+      "conversation_id": 158,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:51.104928+00:00",
+      "available_at": "2026-10-03 15:56:59.044990+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 243,
+      "organization_id": 3,
+      "conversation_id": 159,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:52.092341+00:00",
+      "available_at": "2026-10-03 15:57:00.043038+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 244,
+      "organization_id": 3,
+      "conversation_id": 160,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:53.103851+00:00",
+      "available_at": "2026-10-03 15:57:01.063578+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 246,
+      "organization_id": 3,
+      "conversation_id": 161,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:54.135119+00:00",
+      "available_at": "2026-10-03 15:57:02.080208+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 247,
+      "organization_id": 3,
+      "conversation_id": 162,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:55.081667+00:00",
+      "available_at": "2026-10-03 15:57:03.035955+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 248,
+      "organization_id": 1,
+      "conversation_id": 163,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:56:56.217289+00:00",
+      "available_at": "2026-10-03 15:56:56.265451+00:00",
+      "turn_work_id": 76,
+      "turn_work__claimed_at": "2026-10-03 15:56:56.323686+00:00"
+    },
+    {
+      "id": 250,
+      "organization_id": 2,
+      "conversation_id": 164,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:56:56.785726+00:00",
+      "available_at": "2026-10-03 15:56:56.838775+00:00",
+      "turn_work_id": 77,
+      "turn_work__claimed_at": "2026-10-03 15:56:56.986475+00:00"
+    },
+    {
+      "id": 254,
+      "organization_id": 3,
+      "conversation_id": 165,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:57.493247+00:00",
+      "available_at": "2026-10-03 15:57:05.430182+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 255,
+      "organization_id": 3,
+      "conversation_id": 166,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:57.771268+00:00",
+      "available_at": "2026-10-03 15:57:05.714571+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 256,
+      "organization_id": 3,
+      "conversation_id": 167,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:58.157683+00:00",
+      "available_at": "2026-10-03 15:57:06.048020+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 257,
+      "organization_id": 3,
+      "conversation_id": 168,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:56:59.135275+00:00",
+      "available_at": "2026-10-03 15:57:07.072028+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 259,
+      "organization_id": 3,
+      "conversation_id": 169,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:00.152256+00:00",
+      "available_at": "2026-10-03 15:57:08.089128+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 260,
+      "organization_id": 3,
+      "conversation_id": 170,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:01.103750+00:00",
+      "available_at": "2026-10-03 15:57:09.046038+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 261,
+      "organization_id": 3,
+      "conversation_id": 171,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:02.106315+00:00",
+      "available_at": "2026-10-03 15:57:10.044715+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 263,
+      "organization_id": 3,
+      "conversation_id": 172,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:03.105073+00:00",
+      "available_at": "2026-10-03 15:57:11.052366+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 264,
+      "organization_id": 3,
+      "conversation_id": 173,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:04.128220+00:00",
+      "available_at": "2026-10-03 15:57:12.077883+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 265,
+      "organization_id": 3,
+      "conversation_id": 174,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:05.110588+00:00",
+      "available_at": "2026-10-03 15:57:13.059569+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 267,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:06.068493+00:00",
+      "available_at": "2026-10-03 15:57:14.011368+00:00",
+      "turn_work_id": 84,
+      "turn_work__claimed_at": "2026-10-03 15:57:14.866178+00:00"
+    },
+    {
+      "id": 268,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:06.197387+00:00",
+      "available_at": "2026-10-03 15:57:14.148437+00:00",
+      "turn_work_id": 85,
+      "turn_work__claimed_at": "2026-10-03 15:57:15.082472+00:00"
+    },
+    {
+      "id": 269,
+      "organization_id": 3,
+      "conversation_id": 175,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:06.340417+00:00",
+      "available_at": "2026-10-03 15:57:14.288693+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 270,
+      "organization_id": 3,
+      "conversation_id": 176,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:07.121062+00:00",
+      "available_at": "2026-10-03 15:57:15.068589+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 272,
+      "organization_id": 3,
+      "conversation_id": 177,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:08.085000+00:00",
+      "available_at": "2026-10-03 15:57:16.033905+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 273,
+      "organization_id": 3,
+      "conversation_id": 178,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:09.133498+00:00",
+      "available_at": "2026-10-03 15:57:17.072452+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 274,
+      "organization_id": 3,
+      "conversation_id": 179,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:10.126813+00:00",
+      "available_at": "2026-10-03 15:57:18.067481+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 276,
+      "organization_id": 3,
+      "conversation_id": 180,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:11.173786+00:00",
+      "available_at": "2026-10-03 15:57:19.074828+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 277,
+      "organization_id": 3,
+      "conversation_id": 181,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:12.143679+00:00",
+      "available_at": "2026-10-03 15:57:20.074330+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 279,
+      "organization_id": 3,
+      "conversation_id": 182,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:13.127737+00:00",
+      "available_at": "2026-10-03 15:57:21.071894+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 280,
+      "organization_id": 3,
+      "conversation_id": 183,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:14.107418+00:00",
+      "available_at": "2026-10-03 15:57:22.064309+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 281,
+      "organization_id": 3,
+      "conversation_id": 184,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:15.139705+00:00",
+      "available_at": "2026-10-03 15:57:23.076215+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 282,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:16.097467+00:00",
+      "available_at": "2026-10-03 15:57:24.047100+00:00",
+      "turn_work_id": 89,
+      "turn_work__claimed_at": "2026-10-03 15:57:24.472699+00:00"
+    },
+    {
+      "id": 283,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:16.238118+00:00",
+      "available_at": "2026-10-03 15:57:24.184915+00:00",
+      "turn_work_id": 90,
+      "turn_work__claimed_at": "2026-10-03 15:57:25.777855+00:00"
+    },
+    {
+      "id": 284,
+      "organization_id": 3,
+      "conversation_id": 185,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:16.369011+00:00",
+      "available_at": "2026-10-03 15:57:24.331207+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 285,
+      "organization_id": 3,
+      "conversation_id": 186,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:17.124459+00:00",
+      "available_at": "2026-10-03 15:57:25.075389+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 286,
+      "organization_id": 3,
+      "conversation_id": 187,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:18.136715+00:00",
+      "available_at": "2026-10-03 15:57:26.085109+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 287,
+      "organization_id": 3,
+      "conversation_id": 188,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:19.115777+00:00",
+      "available_at": "2026-10-03 15:57:27.066696+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 289,
+      "organization_id": 3,
+      "conversation_id": 189,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:20.131285+00:00",
+      "available_at": "2026-10-03 15:57:28.066023+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 290,
+      "organization_id": 3,
+      "conversation_id": 190,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:21.178805+00:00",
+      "available_at": "2026-10-03 15:57:29.099073+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 291,
+      "organization_id": 3,
+      "conversation_id": 191,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:22.140721+00:00",
+      "available_at": "2026-10-03 15:57:30.068135+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 293,
+      "organization_id": 3,
+      "conversation_id": 192,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:23.155446+00:00",
+      "available_at": "2026-10-03 15:57:31.088400+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 294,
+      "organization_id": 3,
+      "conversation_id": 193,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:24.123374+00:00",
+      "available_at": "2026-10-03 15:57:32.065597+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 296,
+      "organization_id": 3,
+      "conversation_id": 194,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:25.145040+00:00",
+      "available_at": "2026-10-03 15:57:33.074006+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 297,
+      "organization_id": 1,
+      "conversation_id": 195,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:57:26.110541+00:00",
+      "available_at": "2026-10-03 15:57:26.161046+00:00",
+      "turn_work_id": 91,
+      "turn_work__claimed_at": "2026-10-03 15:57:26.249813+00:00"
+    },
+    {
+      "id": 300,
+      "organization_id": 2,
+      "conversation_id": 196,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:57:26.744634+00:00",
+      "available_at": "2026-10-03 15:57:26.803724+00:00",
+      "turn_work_id": 92,
+      "turn_work__claimed_at": "2026-10-03 15:57:26.889118+00:00"
+    },
+    {
+      "id": 302,
+      "organization_id": 3,
+      "conversation_id": 197,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:27.346588+00:00",
+      "available_at": "2026-10-03 15:57:35.289398+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 303,
+      "organization_id": 3,
+      "conversation_id": 198,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:27.609713+00:00",
+      "available_at": "2026-10-03 15:57:35.529680+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 305,
+      "organization_id": 3,
+      "conversation_id": 199,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:28.107795+00:00",
+      "available_at": "2026-10-03 15:57:36.041989+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 306,
+      "organization_id": 3,
+      "conversation_id": 200,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:29.085297+00:00",
+      "available_at": "2026-10-03 15:57:37.029373+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 308,
+      "organization_id": 3,
+      "conversation_id": 201,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:30.161898+00:00",
+      "available_at": "2026-10-03 15:57:38.069167+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 309,
+      "organization_id": 3,
+      "conversation_id": 202,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:31.094795+00:00",
+      "available_at": "2026-10-03 15:57:39.046372+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 311,
+      "organization_id": 3,
+      "conversation_id": 203,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:32.058228+00:00",
+      "available_at": "2026-10-03 15:57:40.021377+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 312,
+      "organization_id": 3,
+      "conversation_id": 204,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:33.111882+00:00",
+      "available_at": "2026-10-03 15:57:41.062146+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 313,
+      "organization_id": 3,
+      "conversation_id": 205,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:34.135079+00:00",
+      "available_at": "2026-10-03 15:57:42.072654+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 315,
+      "organization_id": 3,
+      "conversation_id": 206,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:35.195969+00:00",
+      "available_at": "2026-10-03 15:57:43.098039+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 316,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:36.113521+00:00",
+      "available_at": "2026-10-03 15:57:44.060729+00:00",
+      "turn_work_id": 100,
+      "turn_work__claimed_at": "2026-10-03 15:57:44.275253+00:00"
+    },
+    {
+      "id": 317,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:36.256405+00:00",
+      "available_at": "2026-10-03 15:57:44.201955+00:00",
+      "turn_work_id": 101,
+      "turn_work__claimed_at": "2026-10-03 15:57:45.651068+00:00"
+    },
+    {
+      "id": 318,
+      "organization_id": 3,
+      "conversation_id": 207,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:36.456728+00:00",
+      "available_at": "2026-10-03 15:57:44.396396+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 320,
+      "organization_id": 3,
+      "conversation_id": 208,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:37.113610+00:00",
+      "available_at": "2026-10-03 15:57:45.062704+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 321,
+      "organization_id": 3,
+      "conversation_id": 209,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:38.091927+00:00",
+      "available_at": "2026-10-03 15:57:46.042684+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 322,
+      "organization_id": 3,
+      "conversation_id": 210,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:39.112998+00:00",
+      "available_at": "2026-10-03 15:57:47.057285+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 324,
+      "organization_id": 3,
+      "conversation_id": 211,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:40.089221+00:00",
+      "available_at": "2026-10-03 15:57:48.027198+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 325,
+      "organization_id": 3,
+      "conversation_id": 212,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:41.099419+00:00",
+      "available_at": "2026-10-03 15:57:49.060692+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 327,
+      "organization_id": 3,
+      "conversation_id": 213,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:42.119988+00:00",
+      "available_at": "2026-10-03 15:57:50.038354+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 328,
+      "organization_id": 3,
+      "conversation_id": 214,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:43.134441+00:00",
+      "available_at": "2026-10-03 15:57:51.073615+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 329,
+      "organization_id": 3,
+      "conversation_id": 215,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:44.093123+00:00",
+      "available_at": "2026-10-03 15:57:52.044859+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 331,
+      "organization_id": 3,
+      "conversation_id": 216,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:45.102314+00:00",
+      "available_at": "2026-10-03 15:57:53.054136+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 333,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:46.138919+00:00",
+      "available_at": "2026-10-03 15:57:54.065741+00:00",
+      "turn_work_id": 105,
+      "turn_work__claimed_at": "2026-10-03 15:57:54.786578+00:00"
+    },
+    {
+      "id": 334,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:46.305559+00:00",
+      "available_at": "2026-10-03 15:57:54.252138+00:00",
+      "turn_work_id": 106,
+      "turn_work__claimed_at": "2026-10-03 15:57:55.242852+00:00"
+    },
+    {
+      "id": 335,
+      "organization_id": 3,
+      "conversation_id": 217,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:46.463171+00:00",
+      "available_at": "2026-10-03 15:57:54.410135+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 336,
+      "organization_id": 3,
+      "conversation_id": 218,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:47.141674+00:00",
+      "available_at": "2026-10-03 15:57:55.060630+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 337,
+      "organization_id": 3,
+      "conversation_id": 219,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:48.152300+00:00",
+      "available_at": "2026-10-03 15:57:56.077414+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 339,
+      "organization_id": 3,
+      "conversation_id": 220,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:49.161626+00:00",
+      "available_at": "2026-10-03 15:57:57.084716+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 340,
+      "organization_id": 3,
+      "conversation_id": 221,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:50.114307+00:00",
+      "available_at": "2026-10-03 15:57:58.038320+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 341,
+      "organization_id": 3,
+      "conversation_id": 222,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:51.134281+00:00",
+      "available_at": "2026-10-03 15:57:59.055384+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 343,
+      "organization_id": 3,
+      "conversation_id": 223,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:52.107160+00:00",
+      "available_at": "2026-10-03 15:58:00.046355+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 344,
+      "organization_id": 3,
+      "conversation_id": 224,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:53.078562+00:00",
+      "available_at": "2026-10-03 15:58:01.032277+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 345,
+      "organization_id": 3,
+      "conversation_id": 225,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:54.091738+00:00",
+      "available_at": "2026-10-03 15:58:02.042893+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 347,
+      "organization_id": 3,
+      "conversation_id": 226,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:55.098798+00:00",
+      "available_at": "2026-10-03 15:58:03.053724+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 348,
+      "organization_id": 1,
+      "conversation_id": 227,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:57:56.096843+00:00",
+      "available_at": "2026-10-03 15:57:56.132540+00:00",
+      "turn_work_id": 107,
+      "turn_work__claimed_at": "2026-10-03 15:57:56.183693+00:00"
+    },
+    {
+      "id": 351,
+      "organization_id": 2,
+      "conversation_id": 228,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:57:56.582981+00:00",
+      "available_at": "2026-10-03 15:57:56.621872+00:00",
+      "turn_work_id": 108,
+      "turn_work__claimed_at": "2026-10-03 15:57:56.673709+00:00"
+    },
+    {
+      "id": 354,
+      "organization_id": 3,
+      "conversation_id": 229,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:57.149543+00:00",
+      "available_at": "2026-10-03 15:58:05.097705+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 355,
+      "organization_id": 3,
+      "conversation_id": 230,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:57.363912+00:00",
+      "available_at": "2026-10-03 15:58:05.311420+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 356,
+      "organization_id": 3,
+      "conversation_id": 231,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:58.133338+00:00",
+      "available_at": "2026-10-03 15:58:06.073998+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 357,
+      "organization_id": 3,
+      "conversation_id": 232,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:57:59.121488+00:00",
+      "available_at": "2026-10-03 15:58:07.055060+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 359,
+      "organization_id": 3,
+      "conversation_id": 233,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:00.117743+00:00",
+      "available_at": "2026-10-03 15:58:08.069361+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 360,
+      "organization_id": 3,
+      "conversation_id": 234,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:01.117483+00:00",
+      "available_at": "2026-10-03 15:58:09.054607+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 361,
+      "organization_id": 3,
+      "conversation_id": 235,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:02.118626+00:00",
+      "available_at": "2026-10-03 15:58:10.065837+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 363,
+      "organization_id": 3,
+      "conversation_id": 236,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:03.144537+00:00",
+      "available_at": "2026-10-03 15:58:11.085246+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 364,
+      "organization_id": 3,
+      "conversation_id": 237,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:04.123233+00:00",
+      "available_at": "2026-10-03 15:58:12.069211+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 366,
+      "organization_id": 3,
+      "conversation_id": 238,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:05.118217+00:00",
+      "available_at": "2026-10-03 15:58:13.057280+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 367,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:06.075356+00:00",
+      "available_at": "2026-10-03 15:58:14.020110+00:00",
+      "turn_work_id": 115,
+      "turn_work__claimed_at": "2026-10-03 15:58:14.942485+00:00"
+    },
+    {
+      "id": 368,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:06.238948+00:00",
+      "available_at": "2026-10-03 15:58:14.172792+00:00",
+      "turn_work_id": 116,
+      "turn_work__claimed_at": "2026-10-03 15:58:15.378168+00:00"
+    },
+    {
+      "id": 369,
+      "organization_id": 3,
+      "conversation_id": 239,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:06.426300+00:00",
+      "available_at": "2026-10-03 15:58:14.358693+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 370,
+      "organization_id": 3,
+      "conversation_id": 240,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:07.123015+00:00",
+      "available_at": "2026-10-03 15:58:15.054402+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 372,
+      "organization_id": 3,
+      "conversation_id": 241,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:08.145297+00:00",
+      "available_at": "2026-10-03 15:58:16.069767+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 373,
+      "organization_id": 3,
+      "conversation_id": 242,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:09.113877+00:00",
+      "available_at": "2026-10-03 15:58:17.055111+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 375,
+      "organization_id": 3,
+      "conversation_id": 243,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:10.130646+00:00",
+      "available_at": "2026-10-03 15:58:18.060427+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 376,
+      "organization_id": 3,
+      "conversation_id": 244,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:11.200669+00:00",
+      "available_at": "2026-10-03 15:58:19.116512+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 377,
+      "organization_id": 3,
+      "conversation_id": 245,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:12.129708+00:00",
+      "available_at": "2026-10-03 15:58:20.069034+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 379,
+      "organization_id": 3,
+      "conversation_id": 246,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:13.207437+00:00",
+      "available_at": "2026-10-03 15:58:21.139554+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 380,
+      "organization_id": 3,
+      "conversation_id": 247,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:14.175588+00:00",
+      "available_at": "2026-10-03 15:58:22.100811+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 381,
+      "organization_id": 3,
+      "conversation_id": 248,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:15.198638+00:00",
+      "available_at": "2026-10-03 15:58:23.105936+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 382,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:16.102096+00:00",
+      "available_at": "2026-10-03 15:58:24.025524+00:00",
+      "turn_work_id": 119,
+      "turn_work__claimed_at": "2026-10-03 15:58:24.844421+00:00"
+    },
+    {
+      "id": 383,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:16.261387+00:00",
+      "available_at": "2026-10-03 15:58:24.197393+00:00",
+      "turn_work_id": 120,
+      "turn_work__claimed_at": "2026-10-03 15:58:24.986951+00:00"
+    },
+    {
+      "id": 384,
+      "organization_id": 3,
+      "conversation_id": 249,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:16.485780+00:00",
+      "available_at": "2026-10-03 15:58:24.409306+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 385,
+      "organization_id": 3,
+      "conversation_id": 250,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:17.119897+00:00",
+      "available_at": "2026-10-03 15:58:25.042684+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 386,
+      "organization_id": 3,
+      "conversation_id": 251,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:18.239088+00:00",
+      "available_at": "2026-10-03 15:58:26.142919+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 387,
+      "organization_id": 3,
+      "conversation_id": 252,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:19.129747+00:00",
+      "available_at": "2026-10-03 15:58:27.066357+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 388,
+      "organization_id": 3,
+      "conversation_id": 253,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:20.129415+00:00",
+      "available_at": "2026-10-03 15:58:28.069345+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 390,
+      "organization_id": 3,
+      "conversation_id": 254,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:21.098774+00:00",
+      "available_at": "2026-10-03 15:58:29.047223+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 391,
+      "organization_id": 3,
+      "conversation_id": 255,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:22.095127+00:00",
+      "available_at": "2026-10-03 15:58:30.037812+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 393,
+      "organization_id": 3,
+      "conversation_id": 256,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:23.140524+00:00",
+      "available_at": "2026-10-03 15:58:31.083977+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 394,
+      "organization_id": 3,
+      "conversation_id": 257,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:24.115810+00:00",
+      "available_at": "2026-10-03 15:58:32.061704+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 395,
+      "organization_id": 3,
+      "conversation_id": 258,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:25.196224+00:00",
+      "available_at": "2026-10-03 15:58:33.106826+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 396,
+      "organization_id": 1,
+      "conversation_id": 259,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:58:26.141878+00:00",
+      "available_at": "2026-10-03 15:58:26.194345+00:00",
+      "turn_work_id": 121,
+      "turn_work__claimed_at": "2026-10-03 15:58:26.242156+00:00"
+    },
+    {
+      "id": 398,
+      "organization_id": 2,
+      "conversation_id": 260,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:58:26.743916+00:00",
+      "available_at": "2026-10-03 15:58:26.809058+00:00",
+      "turn_work_id": 122,
+      "turn_work__claimed_at": "2026-10-03 15:58:26.893697+00:00"
+    },
+    {
+      "id": 402,
+      "organization_id": 3,
+      "conversation_id": 261,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:27.479547+00:00",
+      "available_at": "2026-10-03 15:58:35.426372+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 403,
+      "organization_id": 3,
+      "conversation_id": 262,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:27.710784+00:00",
+      "available_at": "2026-10-03 15:58:35.647514+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 404,
+      "organization_id": 3,
+      "conversation_id": 263,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:28.112192+00:00",
+      "available_at": "2026-10-03 15:58:36.036907+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 405,
+      "organization_id": 3,
+      "conversation_id": 264,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:29.124233+00:00",
+      "available_at": "2026-10-03 15:58:37.062176+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 407,
+      "organization_id": 3,
+      "conversation_id": 265,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:30.125491+00:00",
+      "available_at": "2026-10-03 15:58:38.069821+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 408,
+      "organization_id": 3,
+      "conversation_id": 266,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:31.091793+00:00",
+      "available_at": "2026-10-03 15:58:39.044430+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 409,
+      "organization_id": 3,
+      "conversation_id": 267,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:32.125352+00:00",
+      "available_at": "2026-10-03 15:58:40.073818+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 411,
+      "organization_id": 3,
+      "conversation_id": 268,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:33.084635+00:00",
+      "available_at": "2026-10-03 15:58:41.041835+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 412,
+      "organization_id": 3,
+      "conversation_id": 269,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:34.125667+00:00",
+      "available_at": "2026-10-03 15:58:42.072499+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 413,
+      "organization_id": 3,
+      "conversation_id": 270,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:35.130576+00:00",
+      "available_at": "2026-10-03 15:58:43.058305+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 415,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:36.156441+00:00",
+      "available_at": "2026-10-03 15:58:44.073314+00:00",
+      "turn_work_id": 129,
+      "turn_work__claimed_at": "2026-10-03 15:58:45.483051+00:00"
+    },
+    {
+      "id": 416,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:36.304031+00:00",
+      "available_at": "2026-10-03 15:58:44.244655+00:00",
+      "turn_work_id": 130,
+      "turn_work__claimed_at": "2026-10-03 15:58:45.510046+00:00"
+    },
+    {
+      "id": 417,
+      "organization_id": 3,
+      "conversation_id": 271,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:36.474700+00:00",
+      "available_at": "2026-10-03 15:58:44.425148+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 418,
+      "organization_id": 3,
+      "conversation_id": 272,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:37.082934+00:00",
+      "available_at": "2026-10-03 15:58:45.039004+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 420,
+      "organization_id": 3,
+      "conversation_id": 273,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:38.103425+00:00",
+      "available_at": "2026-10-03 15:58:46.056896+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 421,
+      "organization_id": 3,
+      "conversation_id": 274,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:39.144304+00:00",
+      "available_at": "2026-10-03 15:58:47.077749+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 422,
+      "organization_id": 3,
+      "conversation_id": 275,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:40.119047+00:00",
+      "available_at": "2026-10-03 15:58:48.072462+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 424,
+      "organization_id": 3,
+      "conversation_id": 276,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:41.103968+00:00",
+      "available_at": "2026-10-03 15:58:49.046376+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 425,
+      "organization_id": 3,
+      "conversation_id": 277,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:42.110310+00:00",
+      "available_at": "2026-10-03 15:58:50.051858+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 427,
+      "organization_id": 3,
+      "conversation_id": 278,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:43.114006+00:00",
+      "available_at": "2026-10-03 15:58:51.056962+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 428,
+      "organization_id": 3,
+      "conversation_id": 279,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:44.194343+00:00",
+      "available_at": "2026-10-03 15:58:52.101542+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 429,
+      "organization_id": 3,
+      "conversation_id": 280,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:45.173053+00:00",
+      "available_at": "2026-10-03 15:58:53.082562+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 430,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:46.098798+00:00",
+      "available_at": "2026-10-03 15:58:54.036824+00:00",
+      "turn_work_id": 133,
+      "turn_work__claimed_at": "2026-10-03 15:58:55.024224+00:00"
+    },
+    {
+      "id": 431,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:46.235971+00:00",
+      "available_at": "2026-10-03 15:58:54.184391+00:00",
+      "turn_work_id": 134,
+      "turn_work__claimed_at": "2026-10-03 15:58:55.138013+00:00"
+    },
+    {
+      "id": 432,
+      "organization_id": 3,
+      "conversation_id": 281,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:46.377614+00:00",
+      "available_at": "2026-10-03 15:58:54.334018+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 433,
+      "organization_id": 3,
+      "conversation_id": 282,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:47.117594+00:00",
+      "available_at": "2026-10-03 15:58:55.050903+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 434,
+      "organization_id": 3,
+      "conversation_id": 283,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:48.088804+00:00",
+      "available_at": "2026-10-03 15:58:56.042352+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 435,
+      "organization_id": 3,
+      "conversation_id": 284,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:49.082169+00:00",
+      "available_at": "2026-10-03 15:58:57.040544+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 437,
+      "organization_id": 3,
+      "conversation_id": 285,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:50.106992+00:00",
+      "available_at": "2026-10-03 15:58:58.052414+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 438,
+      "organization_id": 3,
+      "conversation_id": 286,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:51.086634+00:00",
+      "available_at": "2026-10-03 15:58:59.025987+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 439,
+      "organization_id": 3,
+      "conversation_id": 287,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:52.100702+00:00",
+      "available_at": "2026-10-03 15:59:00.042800+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 441,
+      "organization_id": 3,
+      "conversation_id": 288,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:53.121263+00:00",
+      "available_at": "2026-10-03 15:59:01.055353+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 442,
+      "organization_id": 3,
+      "conversation_id": 289,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:54.185262+00:00",
+      "available_at": "2026-10-03 15:59:02.117057+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 443,
+      "organization_id": 3,
+      "conversation_id": 290,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:55.185883+00:00",
+      "available_at": "2026-10-03 15:59:03.076864+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 444,
+      "organization_id": 1,
+      "conversation_id": 291,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:58:56.150919+00:00",
+      "available_at": "2026-10-03 15:58:56.201498+00:00",
+      "turn_work_id": 135,
+      "turn_work__claimed_at": "2026-10-03 15:58:56.342614+00:00"
+    },
+    {
+      "id": 446,
+      "organization_id": 2,
+      "conversation_id": 292,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:58:57.418196+00:00",
+      "available_at": "2026-10-03 15:58:57.540599+00:00",
+      "turn_work_id": 136,
+      "turn_work__claimed_at": "2026-10-03 15:58:57.644906+00:00"
+    },
+    {
+      "id": 450,
+      "organization_id": 3,
+      "conversation_id": 293,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:58.342981+00:00",
+      "available_at": "2026-10-03 15:59:06.249437+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 451,
+      "organization_id": 3,
+      "conversation_id": 294,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:58.624072+00:00",
+      "available_at": "2026-10-03 15:59:06.552025+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 452,
+      "organization_id": 3,
+      "conversation_id": 295,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:58.946895+00:00",
+      "available_at": "2026-10-03 15:59:06.849779+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 453,
+      "organization_id": 3,
+      "conversation_id": 296,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:58:59.278187+00:00",
+      "available_at": "2026-10-03 15:59:07.173969+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 454,
+      "organization_id": 3,
+      "conversation_id": 297,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:00.179629+00:00",
+      "available_at": "2026-10-03 15:59:08.083829+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 456,
+      "organization_id": 3,
+      "conversation_id": 298,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:01.133858+00:00",
+      "available_at": "2026-10-03 15:59:09.076932+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 457,
+      "organization_id": 3,
+      "conversation_id": 299,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:02.186791+00:00",
+      "available_at": "2026-10-03 15:59:10.113977+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 459,
+      "organization_id": 3,
+      "conversation_id": 300,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:03.139697+00:00",
+      "available_at": "2026-10-03 15:59:11.078182+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 460,
+      "organization_id": 3,
+      "conversation_id": 301,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:04.138553+00:00",
+      "available_at": "2026-10-03 15:59:12.081566+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 462,
+      "organization_id": 3,
+      "conversation_id": 302,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:05.103515+00:00",
+      "available_at": "2026-10-03 15:59:13.063668+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 463,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:06.091330+00:00",
+      "available_at": "2026-10-03 15:59:14.026890+00:00",
+      "turn_work_id": 143,
+      "turn_work__claimed_at": "2026-10-03 15:59:14.740485+00:00"
+    },
+    {
+      "id": 464,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:06.225200+00:00",
+      "available_at": "2026-10-03 15:59:14.173876+00:00",
+      "turn_work_id": 144,
+      "turn_work__claimed_at": "2026-10-03 15:59:14.868751+00:00"
+    },
+    {
+      "id": 465,
+      "organization_id": 3,
+      "conversation_id": 303,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:06.385822+00:00",
+      "available_at": "2026-10-03 15:59:14.333337+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 466,
+      "organization_id": 3,
+      "conversation_id": 304,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:07.120195+00:00",
+      "available_at": "2026-10-03 15:59:15.066565+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 468,
+      "organization_id": 3,
+      "conversation_id": 305,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:08.086482+00:00",
+      "available_at": "2026-10-03 15:59:16.047300+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 469,
+      "organization_id": 3,
+      "conversation_id": 306,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:09.117214+00:00",
+      "available_at": "2026-10-03 15:59:17.067865+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 471,
+      "organization_id": 3,
+      "conversation_id": 307,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:10.098595+00:00",
+      "available_at": "2026-10-03 15:59:18.041876+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 472,
+      "organization_id": 3,
+      "conversation_id": 308,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:11.114270+00:00",
+      "available_at": "2026-10-03 15:59:19.065453+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 473,
+      "organization_id": 3,
+      "conversation_id": 309,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:12.076912+00:00",
+      "available_at": "2026-10-03 15:59:20.036415+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 475,
+      "organization_id": 3,
+      "conversation_id": 310,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:13.130909+00:00",
+      "available_at": "2026-10-03 15:59:21.064907+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 476,
+      "organization_id": 3,
+      "conversation_id": 311,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:14.095327+00:00",
+      "available_at": "2026-10-03 15:59:22.055076+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 477,
+      "organization_id": 3,
+      "conversation_id": 312,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:15.173478+00:00",
+      "available_at": "2026-10-03 15:59:23.092100+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 478,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:16.068922+00:00",
+      "available_at": "2026-10-03 15:59:24.021529+00:00",
+      "turn_work_id": 147,
+      "turn_work__claimed_at": "2026-10-03 15:59:24.945100+00:00"
+    },
+    {
+      "id": 479,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:16.194338+00:00",
+      "available_at": "2026-10-03 15:59:24.143514+00:00",
+      "turn_work_id": 148,
+      "turn_work__claimed_at": "2026-10-03 15:59:25.224025+00:00"
+    },
+    {
+      "id": 480,
+      "organization_id": 3,
+      "conversation_id": 313,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:16.353225+00:00",
+      "available_at": "2026-10-03 15:59:24.301474+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 481,
+      "organization_id": 3,
+      "conversation_id": 314,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:17.126836+00:00",
+      "available_at": "2026-10-03 15:59:25.073356+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 482,
+      "organization_id": 3,
+      "conversation_id": 315,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:18.339842+00:00",
+      "available_at": "2026-10-03 15:59:26.265427+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 483,
+      "organization_id": 3,
+      "conversation_id": 316,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:19.175868+00:00",
+      "available_at": "2026-10-03 15:59:27.092810+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 485,
+      "organization_id": 3,
+      "conversation_id": 317,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:20.142453+00:00",
+      "available_at": "2026-10-03 15:59:28.087188+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 486,
+      "organization_id": 3,
+      "conversation_id": 318,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:21.152052+00:00",
+      "available_at": "2026-10-03 15:59:29.091882+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 487,
+      "organization_id": 3,
+      "conversation_id": 319,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:22.216103+00:00",
+      "available_at": "2026-10-03 15:59:30.146028+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 489,
+      "organization_id": 3,
+      "conversation_id": 320,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:23.137938+00:00",
+      "available_at": "2026-10-03 15:59:31.086649+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 490,
+      "organization_id": 3,
+      "conversation_id": 321,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:24.121075+00:00",
+      "available_at": "2026-10-03 15:59:32.068508+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 491,
+      "organization_id": 3,
+      "conversation_id": 322,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:25.116009+00:00",
+      "available_at": "2026-10-03 15:59:33.051960+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 492,
+      "organization_id": 1,
+      "conversation_id": 323,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:59:26.091190+00:00",
+      "available_at": "2026-10-03 15:59:26.141681+00:00",
+      "turn_work_id": 149,
+      "turn_work__claimed_at": "2026-10-03 15:59:26.211368+00:00"
+    },
+    {
+      "id": 494,
+      "organization_id": 2,
+      "conversation_id": 324,
+      "semantic_type": "safety_signal",
+      "created_at": "2026-10-03 15:59:26.640779+00:00",
+      "available_at": "2026-10-03 15:59:26.685458+00:00",
+      "turn_work_id": 150,
+      "turn_work__claimed_at": "2026-10-03 15:59:26.760275+00:00"
+    },
+    {
+      "id": 498,
+      "organization_id": 3,
+      "conversation_id": 325,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:27.210278+00:00",
+      "available_at": "2026-10-03 15:59:35.151401+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 499,
+      "organization_id": 3,
+      "conversation_id": 326,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:27.445638+00:00",
+      "available_at": "2026-10-03 15:59:35.393319+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 500,
+      "organization_id": 3,
+      "conversation_id": 327,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:28.174398+00:00",
+      "available_at": "2026-10-03 15:59:36.092401+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 501,
+      "organization_id": 3,
+      "conversation_id": 328,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:29.112726+00:00",
+      "available_at": "2026-10-03 15:59:37.061360+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 503,
+      "organization_id": 3,
+      "conversation_id": 329,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:30.110829+00:00",
+      "available_at": "2026-10-03 15:59:38.040446+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 504,
+      "organization_id": 3,
+      "conversation_id": 330,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:31.177383+00:00",
+      "available_at": "2026-10-03 15:59:39.087514+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 505,
+      "organization_id": 3,
+      "conversation_id": 331,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:32.143235+00:00",
+      "available_at": "2026-10-03 15:59:40.088527+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 507,
+      "organization_id": 3,
+      "conversation_id": 332,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:33.127475+00:00",
+      "available_at": "2026-10-03 15:59:41.077465+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 508,
+      "organization_id": 3,
+      "conversation_id": 333,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:34.126008+00:00",
+      "available_at": "2026-10-03 15:59:42.058522+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 509,
+      "organization_id": 3,
+      "conversation_id": 334,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:35.142289+00:00",
+      "available_at": "2026-10-03 15:59:43.067946+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 511,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:36.106172+00:00",
+      "available_at": "2026-10-03 15:59:44.051991+00:00",
+      "turn_work_id": 157,
+      "turn_work__claimed_at": "2026-10-03 15:59:44.425429+00:00"
+    },
+    {
+      "id": 512,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:36.271371+00:00",
+      "available_at": "2026-10-03 15:59:44.198610+00:00",
+      "turn_work_id": 158,
+      "turn_work__claimed_at": "2026-10-03 15:59:44.764135+00:00"
+    },
+    {
+      "id": 513,
+      "organization_id": 3,
+      "conversation_id": 335,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:36.503484+00:00",
+      "available_at": "2026-10-03 15:59:44.436442+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 514,
+      "organization_id": 3,
+      "conversation_id": 336,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:37.084697+00:00",
+      "available_at": "2026-10-03 15:59:45.033729+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 515,
+      "organization_id": 3,
+      "conversation_id": 337,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:38.111724+00:00",
+      "available_at": "2026-10-03 15:59:46.051717+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 517,
+      "organization_id": 3,
+      "conversation_id": 338,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:39.135231+00:00",
+      "available_at": "2026-10-03 15:59:47.049326+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 518,
+      "organization_id": 3,
+      "conversation_id": 339,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:40.097020+00:00",
+      "available_at": "2026-10-03 15:59:48.039743+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 520,
+      "organization_id": 3,
+      "conversation_id": 340,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:41.119345+00:00",
+      "available_at": "2026-10-03 15:59:49.063526+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 521,
+      "organization_id": 3,
+      "conversation_id": 341,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:42.118256+00:00",
+      "available_at": "2026-10-03 15:59:50.064210+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 522,
+      "organization_id": 3,
+      "conversation_id": 342,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:43.101032+00:00",
+      "available_at": "2026-10-03 15:59:51.040136+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 524,
+      "organization_id": 3,
+      "conversation_id": 343,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:44.132387+00:00",
+      "available_at": "2026-10-03 15:59:52.072715+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 525,
+      "organization_id": 3,
+      "conversation_id": 344,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:45.134289+00:00",
+      "available_at": "2026-10-03 15:59:53.075944+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 527,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:46.291509+00:00",
+      "available_at": "2026-10-03 15:59:54.229561+00:00",
+      "turn_work_id": 162,
+      "turn_work__claimed_at": "2026-10-03 15:59:55.609097+00:00"
+    },
+    {
+      "id": 529,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:46.644326+00:00",
+      "available_at": "2026-10-03 15:59:54.589169+00:00",
+      "turn_work_id": 163,
+      "turn_work__claimed_at": "2026-10-03 15:59:55.654418+00:00"
+    },
+    {
+      "id": 530,
+      "organization_id": 3,
+      "conversation_id": 345,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:46.876022+00:00",
+      "available_at": "2026-10-03 15:59:54.780997+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 531,
+      "organization_id": 3,
+      "conversation_id": 346,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:47.115298+00:00",
+      "available_at": "2026-10-03 15:59:55.054219+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 532,
+      "organization_id": 3,
+      "conversation_id": 347,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:48.136504+00:00",
+      "available_at": "2026-10-03 15:59:56.052517+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 533,
+      "organization_id": 3,
+      "conversation_id": 348,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:49.149521+00:00",
+      "available_at": "2026-10-03 15:59:57.070890+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 535,
+      "organization_id": 3,
+      "conversation_id": 349,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:50.146531+00:00",
+      "available_at": "2026-10-03 15:59:58.086410+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 536,
+      "organization_id": 3,
+      "conversation_id": 350,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:51.089238+00:00",
+      "available_at": "2026-10-03 15:59:59.038775+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 538,
+      "organization_id": 3,
+      "conversation_id": 351,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:52.103405+00:00",
+      "available_at": "2026-10-03 16:00:00.045509+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 539,
+      "organization_id": 3,
+      "conversation_id": 352,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:53.118147+00:00",
+      "available_at": "2026-10-03 16:00:01.065269+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 540,
+      "organization_id": 3,
+      "conversation_id": 353,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:54.084921+00:00",
+      "available_at": "2026-10-03 16:00:02.026473+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    },
+    {
+      "id": 542,
+      "organization_id": 3,
+      "conversation_id": 354,
+      "semantic_type": "",
+      "created_at": "2026-10-03 15:59:55.118425+00:00",
+      "available_at": "2026-10-03 16:00:03.054626+00:00",
+      "turn_work_id": null,
+      "turn_work__claimed_at": null
+    }
+  ],
+  "works": [
+    {
+      "id": 1,
+      "organization_id": 1,
+      "conversation_id": 1,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:28.614251+00:00",
+      "completed_at": "2026-10-03 15:54:28.961397+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 2,
+      "organization_id": 2,
+      "conversation_id": 2,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:29.386738+00:00",
+      "completed_at": "2026-10-03 15:54:29.599704+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 24,
+      "organization_id": 3,
+      "conversation_id": 19,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:19.905157+00:00",
+      "completed_at": "2026-10-03 15:55:21.588106+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 3,
+      "organization_id": 3,
+      "conversation_id": 3,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:38.433700+00:00",
+      "completed_at": "2026-10-03 15:54:42.133339+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 21,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:14.434841+00:00",
+      "completed_at": "2026-10-03 15:55:16.179302+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 9,
+      "organization_id": 3,
+      "conversation_id": 7,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:52.238247+00:00",
+      "completed_at": "2026-10-03 15:54:53.861401+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 4,
+      "organization_id": 3,
+      "conversation_id": 4,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:42.779776+00:00",
+      "completed_at": "2026-10-03 15:54:45.386030+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 5,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:44.322852+00:00",
+      "completed_at": "2026-10-03 15:54:46.077999+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 15,
+      "organization_id": 3,
+      "conversation_id": 10,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:59.783779+00:00",
+      "completed_at": "2026-10-03 15:55:01.524774+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 6,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:46.464370+00:00",
+      "completed_at": "2026-10-03 15:54:48.292460+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 7,
+      "organization_id": 3,
+      "conversation_id": 5,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:47.191924+00:00",
+      "completed_at": "2026-10-03 15:54:49.020620+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 19,
+      "organization_id": 3,
+      "conversation_id": 16,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:09.520767+00:00",
+      "completed_at": "2026-10-03 15:55:11.265825+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 8,
+      "organization_id": 3,
+      "conversation_id": 6,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:49.487426+00:00",
+      "completed_at": "2026-10-03 15:54:51.309961+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 10,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:54.436537+00:00",
+      "completed_at": "2026-10-03 15:54:56.075014+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 12,
+      "organization_id": 1,
+      "conversation_id": 35,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:56.194472+00:00",
+      "completed_at": "2026-10-03 15:54:56.369999+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 11,
+      "organization_id": 3,
+      "conversation_id": 8,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:54.928819+00:00",
+      "completed_at": "2026-10-03 15:54:56.556259+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 13,
+      "organization_id": 2,
+      "conversation_id": 36,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:56.717670+00:00",
+      "completed_at": "2026-10-03 15:54:56.934096+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 16,
+      "organization_id": 3,
+      "conversation_id": 11,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:02.252943+00:00",
+      "completed_at": "2026-10-03 15:55:03.942742+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 14,
+      "organization_id": 3,
+      "conversation_id": 9,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:54:57.162224+00:00",
+      "completed_at": "2026-10-03 15:54:58.992165+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 22,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:14.939858+00:00",
+      "completed_at": "2026-10-03 15:55:16.614092+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 17,
+      "organization_id": 3,
+      "conversation_id": 12,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:04.672959+00:00",
+      "completed_at": "2026-10-03 15:55:06.317954+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 20,
+      "organization_id": 3,
+      "conversation_id": 17,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:12.130842+00:00",
+      "completed_at": "2026-10-03 15:55:13.848204+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 18,
+      "organization_id": 3,
+      "conversation_id": 15,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:07.096327+00:00",
+      "completed_at": "2026-10-03 15:55:08.876212+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 27,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:25.256770+00:00",
+      "completed_at": "2026-10-03 15:55:27.066372+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 25,
+      "organization_id": 3,
+      "conversation_id": 20,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:22.349806+00:00",
+      "completed_at": "2026-10-03 15:55:24.103931+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 23,
+      "organization_id": 3,
+      "conversation_id": 18,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:17.307205+00:00",
+      "completed_at": "2026-10-03 15:55:19.153366+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 28,
+      "organization_id": 1,
+      "conversation_id": 67,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:26.259095+00:00",
+      "completed_at": "2026-10-03 15:55:26.523629+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 26,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:24.845954+00:00",
+      "completed_at": "2026-10-03 15:55:26.878623+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 29,
+      "organization_id": 2,
+      "conversation_id": 68,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:27.058122+00:00",
+      "completed_at": "2026-10-03 15:55:27.278941+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 30,
+      "organization_id": 3,
+      "conversation_id": 21,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:28.061343+00:00",
+      "completed_at": "2026-10-03 15:55:29.725488+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 31,
+      "organization_id": 3,
+      "conversation_id": 22,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:30.300499+00:00",
+      "completed_at": "2026-10-03 15:55:31.948013+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 32,
+      "organization_id": 3,
+      "conversation_id": 23,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:32.909322+00:00",
+      "completed_at": "2026-10-03 15:55:34.684974+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 33,
+      "organization_id": 3,
+      "conversation_id": 24,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:35.230153+00:00",
+      "completed_at": "2026-10-03 15:55:36.999858+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 34,
+      "organization_id": 3,
+      "conversation_id": 25,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:37.951227+00:00",
+      "completed_at": "2026-10-03 15:55:39.683774+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 35,
+      "organization_id": 3,
+      "conversation_id": 26,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:40.213049+00:00",
+      "completed_at": "2026-10-03 15:55:41.955263+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 36,
+      "organization_id": 3,
+      "conversation_id": 27,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:42.908738+00:00",
+      "completed_at": "2026-10-03 15:55:44.625237+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 67,
+      "organization_id": 3,
+      "conversation_id": 48,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:39.555535+00:00",
+      "completed_at": "2026-10-03 15:56:41.336556+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 53,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:14.680673+00:00",
+      "completed_at": "2026-10-03 15:56:16.340156+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 37,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:44.153280+00:00",
+      "completed_at": "2026-10-03 15:55:45.915936+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 90,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:25.777855+00:00",
+      "completed_at": "2026-10-03 15:57:27.690455+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 55,
+      "organization_id": 3,
+      "conversation_id": 40,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:17.494750+00:00",
+      "completed_at": "2026-10-03 15:56:19.167613+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 86,
+      "organization_id": 3,
+      "conversation_id": 59,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:17.761015+00:00",
+      "completed_at": "2026-10-03 15:57:19.457209+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 39,
+      "organization_id": 3,
+      "conversation_id": 28,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:47.013413+00:00",
+      "completed_at": "2026-10-03 15:55:48.763145+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 57,
+      "organization_id": 3,
+      "conversation_id": 42,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:22.479540+00:00",
+      "completed_at": "2026-10-03 15:56:24.293623+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 41,
+      "organization_id": 3,
+      "conversation_id": 30,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:51.963084+00:00",
+      "completed_at": "2026-10-03 15:55:53.644172+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 88,
+      "organization_id": 3,
+      "conversation_id": 61,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:22.793255+00:00",
+      "completed_at": "2026-10-03 15:57:24.632037+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 69,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:44.568925+00:00",
+      "completed_at": "2026-10-03 15:56:46.268174+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 59,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:25.410303+00:00",
+      "completed_at": "2026-10-03 15:56:27.265659+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 43,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:54.753145+00:00",
+      "completed_at": "2026-10-03 15:55:56.527571+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 96,
+      "organization_id": 3,
+      "conversation_id": 65,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:35.113735+00:00",
+      "completed_at": "2026-10-03 15:57:36.987665+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 47,
+      "organization_id": 3,
+      "conversation_id": 32,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:59.772967+00:00",
+      "completed_at": "2026-10-03 15:56:01.565966+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 63,
+      "organization_id": 3,
+      "conversation_id": 44,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:29.417470+00:00",
+      "completed_at": "2026-10-03 15:56:31.126573+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 94,
+      "organization_id": 3,
+      "conversation_id": 63,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:29.933758+00:00",
+      "completed_at": "2026-10-03 15:57:31.708342+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 49,
+      "organization_id": 3,
+      "conversation_id": 34,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:04.816033+00:00",
+      "completed_at": "2026-10-03 15:56:06.451663+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 65,
+      "organization_id": 3,
+      "conversation_id": 46,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:34.463678+00:00",
+      "completed_at": "2026-10-03 15:56:36.244724+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 51,
+      "organization_id": 3,
+      "conversation_id": 38,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:09.680333+00:00",
+      "completed_at": "2026-10-03 15:56:11.401736+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 79,
+      "organization_id": 3,
+      "conversation_id": 54,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:00.496794+00:00",
+      "completed_at": "2026-10-03 15:57:02.296376+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 71,
+      "organization_id": 3,
+      "conversation_id": 50,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:47.405152+00:00",
+      "completed_at": "2026-10-03 15:56:49.177283+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 98,
+      "organization_id": 3,
+      "conversation_id": 69,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:40.316681+00:00",
+      "completed_at": "2026-10-03 15:57:41.974307+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 100,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:44.275253+00:00",
+      "completed_at": "2026-10-03 15:57:45.939348+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 85,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:15.082472+00:00",
+      "completed_at": "2026-10-03 15:57:16.724782+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 73,
+      "organization_id": 3,
+      "conversation_id": 52,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:52.458119+00:00",
+      "completed_at": "2026-10-03 15:56:54.123515+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 102,
+      "organization_id": 3,
+      "conversation_id": 71,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:47.146918+00:00",
+      "completed_at": "2026-10-03 15:57:48.923822+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 75,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:55.233929+00:00",
+      "completed_at": "2026-10-03 15:56:57.143724+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 80,
+      "organization_id": 3,
+      "conversation_id": 55,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:03.527721+00:00",
+      "completed_at": "2026-10-03 15:57:05.260983+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 104,
+      "organization_id": 3,
+      "conversation_id": 73,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:52.407381+00:00",
+      "completed_at": "2026-10-03 15:57:54.120630+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 106,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:55.242852+00:00",
+      "completed_at": "2026-10-03 15:57:56.970439+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 83,
+      "organization_id": 3,
+      "conversation_id": 58,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:10.813381+00:00",
+      "completed_at": "2026-10-03 15:57:12.629766+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 110,
+      "organization_id": 3,
+      "conversation_id": 75,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:00.346193+00:00",
+      "completed_at": "2026-10-03 15:58:02.172324+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 113,
+      "organization_id": 3,
+      "conversation_id": 78,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:07.998785+00:00",
+      "completed_at": "2026-10-03 15:58:09.802897+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 115,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:14.942485+00:00",
+      "completed_at": "2026-10-03 15:58:16.891009+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 117,
+      "organization_id": 3,
+      "conversation_id": 80,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:18.333969+00:00",
+      "completed_at": "2026-10-03 15:58:20.198952+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 54,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:15.114412+00:00",
+      "completed_at": "2026-10-03 15:56:16.718949+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 38,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:45.721367+00:00",
+      "completed_at": "2026-10-03 15:55:47.417838+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 78,
+      "organization_id": 3,
+      "conversation_id": 53,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:58.305041+00:00",
+      "completed_at": "2026-10-03 15:57:00.149406+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 68,
+      "organization_id": 3,
+      "conversation_id": 49,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:42.316203+00:00",
+      "completed_at": "2026-10-03 15:56:43.961188+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 56,
+      "organization_id": 3,
+      "conversation_id": 41,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:20.067164+00:00",
+      "completed_at": "2026-10-03 15:56:21.919412+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 93,
+      "organization_id": 3,
+      "conversation_id": 62,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:27.464560+00:00",
+      "completed_at": "2026-10-03 15:57:29.235658+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 40,
+      "organization_id": 3,
+      "conversation_id": 29,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:49.578407+00:00",
+      "completed_at": "2026-10-03 15:55:51.275048+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 87,
+      "organization_id": 3,
+      "conversation_id": 60,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:20.177154+00:00",
+      "completed_at": "2026-10-03 15:57:22.176350+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 58,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:24.209319+00:00",
+      "completed_at": "2026-10-03 15:56:25.976439+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 42,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:54.481495+00:00",
+      "completed_at": "2026-10-03 15:55:56.230211+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 97,
+      "organization_id": 3,
+      "conversation_id": 66,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:37.741276+00:00",
+      "completed_at": "2026-10-03 15:57:39.481143+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 89,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:24.472699+00:00",
+      "completed_at": "2026-10-03 15:57:26.314678+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 46,
+      "organization_id": 3,
+      "conversation_id": 31,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:57.326334+00:00",
+      "completed_at": "2026-10-03 15:55:59.074496+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 62,
+      "organization_id": 3,
+      "conversation_id": 43,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:27.163792+00:00",
+      "completed_at": "2026-10-03 15:56:28.868049+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 70,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:45.084205+00:00",
+      "completed_at": "2026-10-03 15:56:46.736237+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 48,
+      "organization_id": 3,
+      "conversation_id": 33,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:02.337035+00:00",
+      "completed_at": "2026-10-03 15:56:04.057456+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 64,
+      "organization_id": 3,
+      "conversation_id": 45,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:32.225160+00:00",
+      "completed_at": "2026-10-03 15:56:33.954098+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 50,
+      "organization_id": 3,
+      "conversation_id": 37,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:07.262402+00:00",
+      "completed_at": "2026-10-03 15:56:08.879742+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 95,
+      "organization_id": 3,
+      "conversation_id": 64,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:32.568405+00:00",
+      "completed_at": "2026-10-03 15:57:34.252832+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 66,
+      "organization_id": 3,
+      "conversation_id": 47,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:37.284178+00:00",
+      "completed_at": "2026-10-03 15:56:38.997155+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 52,
+      "organization_id": 3,
+      "conversation_id": 39,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:12.292823+00:00",
+      "completed_at": "2026-10-03 15:56:13.990609+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 103,
+      "organization_id": 3,
+      "conversation_id": 72,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:49.616600+00:00",
+      "completed_at": "2026-10-03 15:57:51.396525+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 101,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:45.651068+00:00",
+      "completed_at": "2026-10-03 15:57:47.382867+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 81,
+      "organization_id": 3,
+      "conversation_id": 56,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:05.746973+00:00",
+      "completed_at": "2026-10-03 15:57:07.439591+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 72,
+      "organization_id": 3,
+      "conversation_id": 51,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:50.071026+00:00",
+      "completed_at": "2026-10-03 15:56:51.869098+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 99,
+      "organization_id": 3,
+      "conversation_id": 70,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:42.804933+00:00",
+      "completed_at": "2026-10-03 15:57:44.493338+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 74,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:55.206808+00:00",
+      "completed_at": "2026-10-03 15:56:57.115468+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 105,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:54.786578+00:00",
+      "completed_at": "2026-10-03 15:57:56.462757+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 82,
+      "organization_id": 3,
+      "conversation_id": 57,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:08.614810+00:00",
+      "completed_at": "2026-10-03 15:57:10.329501+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 109,
+      "organization_id": 3,
+      "conversation_id": 74,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:57.571682+00:00",
+      "completed_at": "2026-10-03 15:57:59.263493+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 84,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:14.866178+00:00",
+      "completed_at": "2026-10-03 15:57:16.574030+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 111,
+      "organization_id": 3,
+      "conversation_id": 76,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:02.685505+00:00",
+      "completed_at": "2026-10-03 15:58:04.381766+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 112,
+      "organization_id": 3,
+      "conversation_id": 77,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:05.533238+00:00",
+      "completed_at": "2026-10-03 15:58:07.295753+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 114,
+      "organization_id": 3,
+      "conversation_id": 79,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:10.864002+00:00",
+      "completed_at": "2026-10-03 15:58:12.804521+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 116,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:15.378168+00:00",
+      "completed_at": "2026-10-03 15:58:17.220517+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 118,
+      "organization_id": 3,
+      "conversation_id": 81,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:20.841629+00:00",
+      "completed_at": "2026-10-03 15:58:22.499268+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 44,
+      "organization_id": 1,
+      "conversation_id": 99,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:56.220821+00:00",
+      "completed_at": "2026-10-03 15:55:56.469038+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 60,
+      "organization_id": 1,
+      "conversation_id": 131,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:26.186457+00:00",
+      "completed_at": "2026-10-03 15:56:26.382682+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 45,
+      "organization_id": 2,
+      "conversation_id": 100,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:55:56.863488+00:00",
+      "completed_at": "2026-10-03 15:55:57.087036+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 91,
+      "organization_id": 1,
+      "conversation_id": 195,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:26.249813+00:00",
+      "completed_at": "2026-10-03 15:57:26.466816+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 61,
+      "organization_id": 2,
+      "conversation_id": 132,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:26.727258+00:00",
+      "completed_at": "2026-10-03 15:56:26.953795+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 92,
+      "organization_id": 2,
+      "conversation_id": 196,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:26.889118+00:00",
+      "completed_at": "2026-10-03 15:57:27.108513+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 76,
+      "organization_id": 1,
+      "conversation_id": 163,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:56.323686+00:00",
+      "completed_at": "2026-10-03 15:56:56.531282+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 77,
+      "organization_id": 2,
+      "conversation_id": 164,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:56:56.986475+00:00",
+      "completed_at": "2026-10-03 15:56:57.248870+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 107,
+      "organization_id": 1,
+      "conversation_id": 227,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:56.183693+00:00",
+      "completed_at": "2026-10-03 15:57:56.383495+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 108,
+      "organization_id": 2,
+      "conversation_id": 228,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:57:56.673709+00:00",
+      "completed_at": "2026-10-03 15:57:56.899213+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 124,
+      "organization_id": 3,
+      "conversation_id": 83,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:30.586694+00:00",
+      "completed_at": "2026-10-03 15:58:32.232453+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 121,
+      "organization_id": 1,
+      "conversation_id": 259,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:26.242156+00:00",
+      "completed_at": "2026-10-03 15:58:26.455446+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 119,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:24.844421+00:00",
+      "completed_at": "2026-10-03 15:58:26.912034+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 120,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:24.986951+00:00",
+      "completed_at": "2026-10-03 15:58:27.047085+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 122,
+      "organization_id": 2,
+      "conversation_id": 260,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:26.893697+00:00",
+      "completed_at": "2026-10-03 15:58:27.215032+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 133,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:55.024224+00:00",
+      "completed_at": "2026-10-03 15:58:57.532646+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 123,
+      "organization_id": 3,
+      "conversation_id": 82,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:28.200884+00:00",
+      "completed_at": "2026-10-03 15:58:29.954337+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 128,
+      "organization_id": 3,
+      "conversation_id": 87,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:41.018962+00:00",
+      "completed_at": "2026-10-03 15:58:42.822917+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 125,
+      "organization_id": 3,
+      "conversation_id": 84,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:33.393253+00:00",
+      "completed_at": "2026-10-03 15:58:35.167822+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 126,
+      "organization_id": 3,
+      "conversation_id": 85,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:35.676840+00:00",
+      "completed_at": "2026-10-03 15:58:37.509246+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 131,
+      "organization_id": 3,
+      "conversation_id": 88,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:48.327265+00:00",
+      "completed_at": "2026-10-03 15:58:49.971392+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 127,
+      "organization_id": 3,
+      "conversation_id": 86,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:38.656535+00:00",
+      "completed_at": "2026-10-03 15:58:40.364148+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 129,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:45.483051+00:00",
+      "completed_at": "2026-10-03 15:58:47.205462+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 130,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:45.510046+00:00",
+      "completed_at": "2026-10-03 15:58:47.216391+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 132,
+      "organization_id": 3,
+      "conversation_id": 89,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:50.585924+00:00",
+      "completed_at": "2026-10-03 15:58:52.337526+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 137,
+      "organization_id": 3,
+      "conversation_id": 90,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:58.826924+00:00",
+      "completed_at": "2026-10-03 15:59:00.829689+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 135,
+      "organization_id": 1,
+      "conversation_id": 291,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:56.342614+00:00",
+      "completed_at": "2026-10-03 15:58:56.652914+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 134,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:55.138013+00:00",
+      "completed_at": "2026-10-03 15:58:57.515280+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 136,
+      "organization_id": 2,
+      "conversation_id": 292,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:58:57.644906+00:00",
+      "completed_at": "2026-10-03 15:58:57.916368+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 138,
+      "organization_id": 3,
+      "conversation_id": 91,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:01.272663+00:00",
+      "completed_at": "2026-10-03 15:59:03.110312+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 139,
+      "organization_id": 3,
+      "conversation_id": 92,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:03.273448+00:00",
+      "completed_at": "2026-10-03 15:59:04.940843+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 140,
+      "organization_id": 3,
+      "conversation_id": 93,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:05.470389+00:00",
+      "completed_at": "2026-10-03 15:59:07.200074+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 141,
+      "organization_id": 3,
+      "conversation_id": 94,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:08.387606+00:00",
+      "completed_at": "2026-10-03 15:59:10.080151+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 142,
+      "organization_id": 3,
+      "conversation_id": 95,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:10.658819+00:00",
+      "completed_at": "2026-10-03 15:59:12.268929+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 143,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:14.740485+00:00",
+      "completed_at": "2026-10-03 15:59:16.470285+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 144,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:14.868751+00:00",
+      "completed_at": "2026-10-03 15:59:16.620017+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 145,
+      "organization_id": 3,
+      "conversation_id": 96,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:17.819063+00:00",
+      "completed_at": "2026-10-03 15:59:19.915575+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 147,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:24.945100+00:00",
+      "completed_at": "2026-10-03 15:59:26.716695+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 163,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:55.654418+00:00",
+      "completed_at": "2026-10-03 15:59:57.521546+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 151,
+      "organization_id": 3,
+      "conversation_id": 98,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:27.997118+00:00",
+      "completed_at": "2026-10-03 15:59:29.802125+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 153,
+      "organization_id": 3,
+      "conversation_id": 102,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:33.535062+00:00",
+      "completed_at": "2026-10-03 15:59:35.306953+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 155,
+      "organization_id": 3,
+      "conversation_id": 104,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:38.955351+00:00",
+      "completed_at": "2026-10-03 15:59:40.744641+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 164,
+      "organization_id": 3,
+      "conversation_id": 109,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:58.884966+00:00",
+      "completed_at": "2026-10-03 16:00:00.642628+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 157,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:44.425429+00:00",
+      "completed_at": "2026-10-03 15:59:46.209786+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 159,
+      "organization_id": 3,
+      "conversation_id": 106,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:47.434854+00:00",
+      "completed_at": "2026-10-03 15:59:49.204830+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 167,
+      "organization_id": 3,
+      "conversation_id": 112,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 16:00:06.539750+00:00",
+      "completed_at": "2026-10-03 16:00:08.371527+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 161,
+      "organization_id": 3,
+      "conversation_id": 108,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:52.788213+00:00",
+      "completed_at": "2026-10-03 15:59:54.430303+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 169,
+      "organization_id": 3,
+      "conversation_id": 114,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 16:00:12.117566+00:00",
+      "completed_at": "2026-10-03 16:00:13.825809+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 162,
+      "organization_id": 1,
+      "conversation_id": 13,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:55.609097+00:00",
+      "completed_at": "2026-10-03 15:59:57.478119+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 146,
+      "organization_id": 3,
+      "conversation_id": 97,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:20.680920+00:00",
+      "completed_at": "2026-10-03 15:59:22.673862+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 148,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:25.224025+00:00",
+      "completed_at": "2026-10-03 15:59:26.918785+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 152,
+      "organization_id": 3,
+      "conversation_id": 101,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:30.792774+00:00",
+      "completed_at": "2026-10-03 15:59:32.614810+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 165,
+      "organization_id": 3,
+      "conversation_id": 110,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 16:00:01.275935+00:00",
+      "completed_at": "2026-10-03 16:00:02.909232+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 154,
+      "organization_id": 3,
+      "conversation_id": 103,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:36.407289+00:00",
+      "completed_at": "2026-10-03 15:59:38.145019+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 156,
+      "organization_id": 3,
+      "conversation_id": 105,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:41.740307+00:00",
+      "completed_at": "2026-10-03 15:59:43.526538+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 166,
+      "organization_id": 3,
+      "conversation_id": 111,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 16:00:04.117793+00:00",
+      "completed_at": "2026-10-03 16:00:05.793096+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 158,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:44.764135+00:00",
+      "completed_at": "2026-10-03 15:59:46.570825+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 160,
+      "organization_id": 3,
+      "conversation_id": 107,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:50.174369+00:00",
+      "completed_at": "2026-10-03 15:59:51.923666+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 168,
+      "organization_id": 3,
+      "conversation_id": 113,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 16:00:09.615299+00:00",
+      "completed_at": "2026-10-03 16:00:11.351935+00:00",
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 170,
+      "organization_id": 3,
+      "conversation_id": 115,
+      "status": "PROCESSING",
+      "claimed_at": "2026-10-03 16:00:14.940124+00:00",
+      "completed_at": null,
+      "llm_calls_admitted": 2
+    },
+    {
+      "id": 149,
+      "organization_id": 1,
+      "conversation_id": 323,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:26.211368+00:00",
+      "completed_at": "2026-10-03 15:59:26.410020+00:00",
+      "llm_calls_admitted": 0
+    },
+    {
+      "id": 150,
+      "organization_id": 2,
+      "conversation_id": 324,
+      "status": "COMPLETED",
+      "claimed_at": "2026-10-03 15:59:26.760275+00:00",
+      "completed_at": "2026-10-03 15:59:26.964757+00:00",
+      "llm_calls_admitted": 0
+    }
+  ],
+  "e4_classification": "DIAGNOSTIC_ONLY",
+  "e4_overrides": {},
+  "fixture_organization_ids": [
+    1,
+    2,
+    3
+  ],
+  "profile_version": "profile-beta-1-v1",
+  "warmup_seconds": 30,
+  "measurement_seconds": 300,
+  "smoke_only": false
+}

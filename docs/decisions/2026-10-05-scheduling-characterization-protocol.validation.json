@@ -1,0 +1,200 @@
+{
+  "schema": "saaslyvet-d29-documentary-validation-v1",
+  "recorded_at_utc": "2026-10-06T05:27:20.272995+00:00",
+  "protocol_version": "D29-v1",
+  "scope": "STATIC_DOCUMENT_VALIDATION_AND_OFFLINE_EXISTING_SNAPSHOT_RECONCILIATION",
+  "checks": {
+    "manifest_schema": true,
+    "product_bound_unchanged_120_seconds": true,
+    "approved_parameters_preserved": true,
+    "proposed_parameters_separate_from_approved": true,
+    "execution_readiness_not_claimed": true,
+    "load_runtime_e4_not_authorized": true,
+    "full_population_no_claim_only_denominator": true,
+    "no_extra_sla_tolerance": true,
+    "no_retrospective_receipt_rewrite": true,
+    "17_unique_matrix_cases": true,
+    "all_acceptance_ids_mapped_or_explicitly_deferred": true,
+    "matrix_rows_match_manifest": true,
+    "draft_30_decisions_23_scenarios_9_metrics_preserved": true,
+    "draft_revision_and_protocol_link": true,
+    "protocol_local_links_resolve": true,
+    "offline_cut_includes_two_ready_groups_before_any_claim": true,
+    "offline_correction_three_messages_two_groups": true,
+    "offline_postclaim_obligation_retained_before_ready": true,
+    "offline_w2_ready_at_cut_and_later_assigned": true,
+    "protected_inventory_3091_paths_unchanged": true,
+    "protected_inventory_digest_matches": true,
+    "baseline_head_unchanged": true
+  },
+  "local_links": [
+    {
+      "target": "2026-10-05-scheduling-bounded-wait-contract-draftmd",
+      "exists": true
+    },
+    {
+      "target": "2026-10-05-scheduling-characterization-protocol.json",
+      "exists": true
+    }
+  ],
+  "matrix_coverage": {
+    "cases": 17,
+    "acceptance_ids_mapped": [
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A06",
+      "A07",
+      "A08",
+      "A09",
+      "A10",
+      "A12",
+      "A13",
+      "A14",
+      "A15",
+      "A16",
+      "A17",
+      "A18",
+      "A19",
+      "A20",
+      "A21",
+      "A22",
+      "A23"
+    ],
+    "deferred": [
+      "A11"
+    ]
+  },
+  "offline_existing_receipt": {
+    "source": "docs/evals/scheduling-preflight-2026-10-05/snapshots.json",
+    "source_sha256": "a01900c62e438fac6ceaaf0932e5ac720208030eb70c672e62543e92ca3fece7",
+    "cuts": [
+      {
+        "stage": "first_inbounds_committed",
+        "unassigned_pending_messages": 2,
+        "ready_messages": 0,
+        "unclaimed_ready_conversation_groups_at_cut": 0,
+        "groups": []
+      },
+      {
+        "stage": "initial_deadlines_reached",
+        "unassigned_pending_messages": 2,
+        "ready_messages": 2,
+        "unclaimed_ready_conversation_groups_at_cut": 2,
+        "groups": [
+          {
+            "organization_id": 1,
+            "conversation_id": 1,
+            "member_ids": [
+              1
+            ]
+          },
+          {
+            "organization_id": 2,
+            "conversation_id": 2,
+            "member_ids": [
+              2
+            ]
+          }
+        ]
+      },
+      {
+        "stage": "preclaim_correction_committed",
+        "unassigned_pending_messages": 3,
+        "ready_messages": 3,
+        "unclaimed_ready_conversation_groups_at_cut": 2,
+        "groups": [
+          {
+            "organization_id": 1,
+            "conversation_id": 1,
+            "member_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "organization_id": 2,
+            "conversation_id": 2,
+            "member_ids": [
+              2
+            ]
+          }
+        ]
+      },
+      {
+        "stage": "postclaim_input_committed_while_w1_processing",
+        "unassigned_pending_messages": 1,
+        "ready_messages": 0,
+        "unclaimed_ready_conversation_groups_at_cut": 0,
+        "groups": []
+      },
+      {
+        "stage": "w1_terminal_fixture_before_w2_due",
+        "unassigned_pending_messages": 1,
+        "ready_messages": 0,
+        "unclaimed_ready_conversation_groups_at_cut": 0,
+        "groups": []
+      },
+      {
+        "stage": "w2_deadline_reached",
+        "unassigned_pending_messages": 1,
+        "ready_messages": 1,
+        "unclaimed_ready_conversation_groups_at_cut": 1,
+        "groups": [
+          {
+            "organization_id": 1,
+            "conversation_id": 1,
+            "member_ids": [
+              4
+            ]
+          }
+        ]
+      },
+      {
+        "stage": "all_three_claims_committed",
+        "unassigned_pending_messages": 0,
+        "ready_messages": 0,
+        "unclaimed_ready_conversation_groups_at_cut": 0,
+        "groups": []
+      }
+    ],
+    "limits": [
+      "AS_OF_CUT_GROUPS_ONLY",
+      "NOT_COMPLETE_HISTORICAL_EPISODE_REGISTRY",
+      "NOT_NEW_LOAD_EXECUTION",
+      "NOT_CLOCK_OR_COMMIT_ACCURACY_ACCREDITATION",
+      "NO_TEMPORAL_TARGET_REEVALUATION",
+      "ORIGINAL_PREFLIGHT_DISPOSITION_UNCHANGED"
+    ]
+  },
+  "protected_integrity": {
+    "path_count": 3091,
+    "sha256": "9bd7a23ea51c20b73c35069afb1be288412a82079b22b293456d28583dc45933",
+    "changed_paths": [],
+    "serialization": "json.dumps(path_to_sha256_or_null, sort_keys=True), default separators, UTF-8",
+    "includes": "Tracked/nonignored files plus backend/.env and frontend/.env; includes all earlier preflight and E4 receipts",
+    "excludes": [
+      "docs/decisions/2026-10-05-scheduling-bounded-wait-contract-draftmd",
+      "docs/decisions/2026-10-05-scheduling-characterization-protocol.json",
+      "docs/decisions/2026-10-05-scheduling-characterization-protocol.md",
+      "docs/decisions/2026-10-05-scheduling-characterization-protocol.validation.json"
+    ],
+    "head": "825db75df68bf076929fa787e77beefe96803350"
+  },
+  "artifact_hashes": {
+    "docs/decisions/2026-10-05-scheduling-bounded-wait-contract-draftmd": "98ed113c8e00c55331f15f57c7f686402522b39a9b0b04bfc1d34ca12e9e3508",
+    "docs/decisions/2026-10-05-scheduling-characterization-protocol.md": "ef49fb4617a4a25afda21066a94e4eb7163aa894d1674e038bdefee8fa6cbb69",
+    "docs/decisions/2026-10-05-scheduling-characterization-protocol.json": "20a74ecae5bf5fc33d6dd17cb3d982891d41d3ff719f597b4eb19012293148ec"
+  },
+  "execution_status": {
+    "driver_required": true,
+    "matrix_executed": false,
+    "database_started": false,
+    "application_executed": false,
+    "benchmarks_executed": false,
+    "runtime_or_e4_modified": false
+  },
+  "result": "DOCUMENTS_CONSISTENT_WITH_DECLARED_LIMITS_NOT_EXECUTION_READY"
+}

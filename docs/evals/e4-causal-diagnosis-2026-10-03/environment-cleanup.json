@@ -1,0 +1,77 @@
+{
+  "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "postgresql": [
+    "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+    "C:/Users/LAP/AppData/Local/Temp/vet-e4-dhij2-6e59-pg",
+    "on",
+    "on"
+  ],
+  "settings": [
+    [
+      "autovacuum",
+      "on"
+    ],
+    [
+      "autovacuum_analyze_scale_factor",
+      "0.1"
+    ],
+    [
+      "autovacuum_analyze_threshold",
+      "50"
+    ],
+    [
+      "autovacuum_naptime",
+      "60"
+    ],
+    [
+      "effective_cache_size",
+      "524288"
+    ],
+    [
+      "fsync",
+      "on"
+    ],
+    [
+      "random_page_cost",
+      "4"
+    ],
+    [
+      "seq_page_cost",
+      "1"
+    ],
+    [
+      "shared_buffers",
+      "16384"
+    ],
+    [
+      "synchronous_commit",
+      "on"
+    ],
+    [
+      "track_io_timing",
+      "off"
+    ],
+    [
+      "work_mem",
+      "4096"
+    ]
+  ],
+  "cleanup": {
+    "clients": 0,
+    "waiting_locks": 0,
+    "prepared": 0,
+    "dropped": [
+      "test_e4_dhij2_template",
+      "test_e4_dhij2_seeded"
+    ],
+    "port": 35447,
+    "port_closed": true,
+    "server_stopped": true,
+    "data_directory_preserved": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-dhij2-6e59-pg"
+  },
+  "auto_explain_instrumentation": "all statements timed; only selector SQL/plans persisted; overhead cannot be assumed zero",
+  "manual_vacuum": false,
+  "manual_analyze": false,
+  "new_indexes": false,
+  "production_modified": false
+}

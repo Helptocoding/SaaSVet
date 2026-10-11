@@ -1,0 +1,70 @@
+{
+  "schema": "e4-causal-diagnosis-preflight-v2",
+  "primary": {
+    "root": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS",
+    "head": "66702168439b9841a2c988238638a42e6aaee43d",
+    "status_verbatim": " D DEPLOY_VPS_PLAN.md\n D DEPLOY_VPS_STATUS.md\n M skills-lock.json\n?? docs/auditoria-agente-conversacional-veterinario-2026-09-10.md\n?? docs/discrepancia-encargo-b9-2026-09-26.md\n?? docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md\n",
+    "entries": [
+      {
+        "git_status": " D",
+        "path": "DEPLOY_VPS_PLAN.md",
+        "exists": false,
+        "sha256": null
+      },
+      {
+        "git_status": " D",
+        "path": "DEPLOY_VPS_STATUS.md",
+        "exists": false,
+        "sha256": null
+      },
+      {
+        "git_status": " M",
+        "path": "skills-lock.json",
+        "exists": true,
+        "sha256": "88ead85c6f42b7c505a25f8299562c60b5f3fb3b47bca6b0f35e7642d1e0210d"
+      },
+      {
+        "git_status": "??",
+        "path": "docs/auditoria-agente-conversacional-veterinario-2026-09-10.md",
+        "exists": true,
+        "sha256": "f23f123b168ce596386e2104faf753518f7b1a94eb114a095f6e71f0b7d1652e"
+      },
+      {
+        "git_status": "??",
+        "path": "docs/discrepancia-encargo-b9-2026-09-26.md",
+        "exists": true,
+        "sha256": "c438fd28ec30a73f2b293acc55d692cf61e5896358bb253368e314d47b8db05a"
+      },
+      {
+        "git_status": "??",
+        "path": "docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md",
+        "exists": true,
+        "sha256": "f13035d29c6e0b0ff19b7e27b7016d5cf4aa7a75dac0f34033f879e1c1ee5d45"
+      }
+    ],
+    "excluded_reason": "Six authoritative preexisting entries in primary checkout; unrelated to D/H/I/J; preserve all; no association with historical four inferred."
+  },
+  "worktree": {
+    "path": "C:/Users/LAP/.codex/worktrees/e4-causal-audit-6e59/VeterinariaSaaS",
+    "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+    "status_before": "?? docs/evals/e4-causal-audit-2026-10-03/\n",
+    "tracked_diff": false
+  },
+  "runtime_identity": {
+    "runtime_sha": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+    "production_backend_diff": false,
+    "head_only_backend_paths": [
+      "backend/apps/agent/tests/e4_claim_candidate.py",
+      "backend/apps/agent/tests/e4_claim_diagnostic.py"
+    ]
+  },
+  "scope": "D/H/I/J diagnostic only; formal PROFILE forbidden; six primary entries excluded; previous four not inferred.",
+  "historical_profile": {
+    "path": "docs/evals/profile-beta-1-e4-2026-10-01/",
+    "p95_s": 10.015949,
+    "threshold_s": 10,
+    "samples": 60,
+    "status": "FAIL"
+  },
+  "user_authorized_documentary_commit": true
+}

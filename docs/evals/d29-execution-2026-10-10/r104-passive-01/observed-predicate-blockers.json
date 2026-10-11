@@ -1,0 +1,186 @@
+{
+  "status": "PENDING",
+  "source": "ACTUAL_PREQUERY_HISTORY_AND_NATIVE_SELECTION_RESULTS",
+  "physical_attempts": 1,
+  "cases": [
+    {
+      "witness": {
+        "role": "planner_1",
+        "seq": 71,
+        "poll_id": "f3d5b36a14934a04adb3ea1b7bf5d045",
+        "prequery_db_ns": 1791655539699394000,
+        "ready_input_ids": [
+          1
+        ],
+        "future_within_H_input_ids": [
+          2
+        ]
+      },
+      "waiter": 1,
+      "future": 2,
+      "waiter_last_claim_ns": null,
+      "future_last_claim_ns": null,
+      "native_selection_results": [
+        [
+          1
+        ]
+      ],
+      "missing_predicate": "WAITER_ORG_HAS_NO_PRIOR_CLAIM_NATIVE_YIELD_EXEMPT"
+    },
+    {
+      "witness": {
+        "role": "planner_1",
+        "seq": 745,
+        "poll_id": "cf6ae90a517048b4a96ee16e4d82090f",
+        "prequery_db_ns": 1791655570217715000,
+        "ready_input_ids": [
+          5
+        ],
+        "future_within_H_input_ids": [
+          6
+        ]
+      },
+      "waiter": 5,
+      "future": 6,
+      "waiter_last_claim_ns": 1791655539842466000,
+      "future_last_claim_ns": 1791655540064615000,
+      "native_selection_results": [
+        [
+          3,
+          4
+        ]
+      ],
+      "missing_predicate": "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED"
+    },
+    {
+      "witness": {
+        "role": "planner_1",
+        "seq": 2125,
+        "poll_id": "3e57e8c26dfa478e8161165f4c14d6e7",
+        "prequery_db_ns": 1791655631296656000,
+        "ready_input_ids": [
+          13
+        ],
+        "future_within_H_input_ids": [
+          14
+        ]
+      },
+      "waiter": 13,
+      "future": 14,
+      "waiter_last_claim_ns": 1791655600917542000,
+      "future_last_claim_ns": 1791655601890142000,
+      "native_selection_results": [
+        [
+          1
+        ]
+      ],
+      "missing_predicate": "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED"
+    },
+    {
+      "witness": {
+        "role": "planner_1",
+        "seq": 2815,
+        "poll_id": "e6d7f74a59c4436f8f4fb4eac8286baf",
+        "prequery_db_ns": 1791655661970037000,
+        "ready_input_ids": [
+          17
+        ],
+        "future_within_H_input_ids": [
+          18
+        ]
+      },
+      "waiter": 17,
+      "future": 18,
+      "waiter_last_claim_ns": 1791655631399943000,
+      "future_last_claim_ns": 1791655631663900000,
+      "native_selection_results": [
+        [
+          3
+        ]
+      ],
+      "missing_predicate": "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED"
+    },
+    {
+      "witness": {
+        "role": "planner_1",
+        "seq": 3505,
+        "poll_id": "7ef2b82d0574438cbe8591b6fb2c0e1d",
+        "prequery_db_ns": 1791655692564582000,
+        "ready_input_ids": [
+          21
+        ],
+        "future_within_H_input_ids": [
+          22
+        ]
+      },
+      "waiter": 21,
+      "future": 22,
+      "waiter_last_claim_ns": 1791655662022372000,
+      "future_last_claim_ns": 1791655662293144000,
+      "native_selection_results": [
+        [
+          5,
+          6
+        ]
+      ],
+      "missing_predicate": "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED"
+    },
+    {
+      "witness": {
+        "role": "planner_2",
+        "seq": 1445,
+        "poll_id": "18ddc352c32c44fd8692c9305b6c7467",
+        "prequery_db_ns": 1791655600815298000,
+        "ready_input_ids": [
+          9
+        ],
+        "future_within_H_input_ids": [
+          10
+        ]
+      },
+      "waiter": 9,
+      "future": 10,
+      "waiter_last_claim_ns": 1791655570317275000,
+      "future_last_claim_ns": 1791655570368172000,
+      "native_selection_results": [
+        [
+          5
+        ]
+      ],
+      "missing_predicate": "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED"
+    },
+    {
+      "witness": {
+        "role": "planner_2",
+        "seq": 6267,
+        "poll_id": "0dc5b5ebbded4ea4b3ca2597612c59db",
+        "prequery_db_ns": 1791655814951019000,
+        "ready_input_ids": [
+          37
+        ],
+        "future_within_H_input_ids": [
+          38
+        ]
+      },
+      "waiter": 37,
+      "future": 38,
+      "waiter_last_claim_ns": 1791655785218986000,
+      "future_last_claim_ns": 1791655785412080000,
+      "native_selection_results": [
+        [
+          1
+        ]
+      ],
+      "missing_predicate": "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED"
+    }
+  ],
+  "counts": {
+    "FUTURE_ORG_IS_NOT_LESS_RECENTLY_CLAIMED": 6,
+    "WAITER_ORG_HAS_NO_PRIOR_CLAIM_NATIVE_YIELD_EXEMPT": 1
+  },
+  "actual_min_same_conversation_acceptance_spacing_ns_lower": 91543014000,
+  "analysis_source_sha256": "475deab97cbf2d49ce163fc91843bff688c021c29485cf96194d065c32038da3",
+  "selector_replayed": false,
+  "new_database_reads": false,
+  "no_general_impossibility_claim": true
+}

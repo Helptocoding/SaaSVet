@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "scope": "Archive utility integrity only; no R1-04 fixture or application execution",
+  "checks": {
+    "valid_roundtrip_exact_bytes": true,
+    "identical_existing_file_allowed_without_overwrite": true,
+    "different_existing_file_rejected": true,
+    "different_existing_file_preserved": true,
+    "escaping_path_rejected": true,
+    "case_insensitive_duplicate_members_rejected": true,
+    "missing_member_rejected": true,
+    "wrong_member_hash_rejected": true,
+    "deep_windows_path_roundtrip": true,
+    "tampered_package_part_rejected_before_restore": true
+  },
+  "application_tests_executed": false,
+  "runtime_changed": false
+}

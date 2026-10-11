@@ -1,0 +1,534 @@
+{
+  "source": "docs/evals/profile-beta-1-e4-2026-10-01/base-diagnostics.json",
+  "event_attribution": "closing plan only; not TurnWork 86/66/115 execution",
+  "explain": {
+    "Planning Time": 8.601,
+    "Execution Time": 127.583,
+    "Plan": {
+      "Node Type": "Limit",
+      "Startup Cost": 510852.24,
+      "Total Cost": 510853.08,
+      "Plan Rows": 1,
+      "Actual Startup Time": 126.878,
+      "Actual Total Time": 126.888,
+      "Actual Rows": 1,
+      "Actual Loops": 1,
+      "Shared Hit Blocks": 12983,
+      "Shared Read Blocks": 0,
+      "Plans": [
+        {
+          "Node Type": "Subquery Scan",
+          "Startup Cost": 510852.24,
+          "Total Cost": 510853.08,
+          "Plan Rows": 1,
+          "Actual Startup Time": 126.877,
+          "Actual Total Time": 126.887,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 12983,
+          "Shared Read Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Startup Cost": 510852.24,
+              "Total Cost": 510852.38,
+              "Plan Rows": 56,
+              "Actual Startup Time": 126.87,
+              "Actual Total Time": 126.88,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 12983,
+              "Shared Read Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "WindowAgg",
+                  "Startup Cost": 170165.44,
+                  "Total Cost": 510850.61,
+                  "Plan Rows": 56,
+                  "Actual Startup Time": 126.61,
+                  "Actual Total Time": 126.778,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 12983,
+                  "Shared Read Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Incremental Sort",
+                      "Startup Cost": 170165.44,
+                      "Total Cost": 510327.15,
+                      "Plan Rows": 56,
+                      "Actual Startup Time": 126.489,
+                      "Actual Total Time": 126.515,
+                      "Actual Rows": 231,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 12969,
+                      "Shared Read Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Startup Cost": 84.96,
+                          "Total Cost": 510325.21,
+                          "Plan Rows": 56,
+                          "Actual Startup Time": 9.574,
+                          "Actual Total Time": 126.163,
+                          "Actual Rows": 231,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 12969,
+                          "Shared Read Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Nested Loop",
+                              "Startup Cost": 41.89,
+                              "Total Cost": 510245.24,
+                              "Plan Rows": 113,
+                              "Actual Startup Time": 0.964,
+                              "Actual Total Time": 122.861,
+                              "Actual Rows": 354,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 12452,
+                              "Shared Read Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Index Name": "agent_conversation_organization_id_1ef62d10",
+                                  "Relation Name": "agent_conversation",
+                                  "Startup Cost": 41.6,
+                                  "Total Cost": 510227.15,
+                                  "Plan Rows": 266,
+                                  "Actual Startup Time": 0.914,
+                                  "Actual Total Time": 122.363,
+                                  "Actual Rows": 354,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 12447,
+                                  "Shared Read Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Seq Scan",
+                                      "Relation Name": "channels_message",
+                                      "Startup Cost": 0.0,
+                                      "Total Cost": 41.43,
+                                      "Plan Rows": 7,
+                                      "Actual Startup Time": 0.389,
+                                      "Actual Total Time": 0.389,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 32,
+                                      "Shared Read Blocks": 0
+                                    },
+                                    {
+                                      "Node Type": "Limit",
+                                      "Startup Cost": 9.33,
+                                      "Total Cost": 9.33,
+                                      "Plan Rows": 1,
+                                      "Actual Startup Time": 0.13,
+                                      "Actual Total Time": 0.131,
+                                      "Actual Rows": 1,
+                                      "Actual Loops": 354,
+                                      "Shared Hit Blocks": 2478,
+                                      "Shared Read Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Sort",
+                                          "Startup Cost": 9.33,
+                                          "Total Cost": 9.46,
+                                          "Plan Rows": 55,
+                                          "Actual Startup Time": 0.129,
+                                          "Actual Total Time": 0.129,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 354,
+                                          "Shared Hit Blocks": 2478,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Relation Name": "agent_turnwork",
+                                              "Startup Cost": 0.0,
+                                              "Total Cost": 9.05,
+                                              "Plan Rows": 55,
+                                              "Actual Startup Time": 0.005,
+                                              "Actual Total Time": 0.102,
+                                              "Actual Rows": 94,
+                                              "Actual Loops": 354,
+                                              "Shared Hit Blocks": 2478,
+                                              "Shared Read Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Startup Cost": 21.6,
+                                      "Total Cost": 1431.79,
+                                      "Plan Rows": 1,
+                                      "Actual Startup Time": 0.209,
+                                      "Actual Total Time": 0.209,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 354,
+                                      "Shared Hit Blocks": 9912,
+                                      "Shared Read Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Limit",
+                                          "Startup Cost": 9.33,
+                                          "Total Cost": 9.33,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Sort",
+                                              "Startup Cost": 9.33,
+                                              "Total Cost": 9.46,
+                                              "Plan Rows": 55,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Seq Scan",
+                                                  "Relation Name": "agent_turnwork",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 9.05,
+                                                  "Plan Rows": 55,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Bitmap Heap Scan",
+                                          "Relation Name": "channels_message",
+                                          "Startup Cost": 11.98,
+                                          "Total Cost": 1408.35,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.193,
+                                          "Actual Total Time": 0.193,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 354,
+                                          "Shared Hit Blocks": 9912,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "BitmapAnd",
+                                              "Startup Cost": 11.98,
+                                              "Total Cost": 11.98,
+                                              "Plan Rows": 73,
+                                              "Actual Startup Time": 0.038,
+                                              "Actual Total Time": 0.038,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 354,
+                                              "Shared Hit Blocks": 708,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Bitmap Index Scan",
+                                                  "Index Name": "message_send_ready",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 5.85,
+                                                  "Plan Rows": 170,
+                                                  "Actual Startup Time": 0.022,
+                                                  "Actual Total Time": 0.022,
+                                                  "Actual Rows": 292,
+                                                  "Actual Loops": 354,
+                                                  "Shared Hit Blocks": 354,
+                                                  "Shared Read Blocks": 0
+                                                },
+                                                {
+                                                  "Node Type": "Bitmap Index Scan",
+                                                  "Index Name": "channels_message_turn_work_id_20ce3041",
+                                                  "Startup Cost": 0.0,
+                                                  "Total Cost": 5.88,
+                                                  "Plan Rows": 231,
+                                                  "Actual Startup Time": 0.013,
+                                                  "Actual Total Time": 0.013,
+                                                  "Actual Rows": 254,
+                                                  "Actual Loops": 354,
+                                                  "Shared Hit Blocks": 354,
+                                                  "Shared Read Blocks": 0
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Limit",
+                                              "Startup Cost": 9.33,
+                                              "Total Cost": 9.33,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Startup Cost": 9.33,
+                                                  "Total Cost": 9.46,
+                                                  "Plan Rows": 55,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 9.05,
+                                                      "Plan Rows": 55,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Limit",
+                                              "Startup Cost": 9.33,
+                                              "Total Cost": 9.33,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Sort",
+                                                  "Startup Cost": 9.33,
+                                                  "Total Cost": 9.46,
+                                                  "Plan Rows": 55,
+                                                  "Actual Startup Time": 0.0,
+                                                  "Actual Total Time": 0.0,
+                                                  "Actual Rows": 0,
+                                                  "Actual Loops": 0,
+                                                  "Shared Hit Blocks": 0,
+                                                  "Shared Read Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Seq Scan",
+                                                      "Relation Name": "agent_turnwork",
+                                                      "Startup Cost": 0.0,
+                                                      "Total Cost": 9.05,
+                                                      "Plan Rows": 55,
+                                                      "Actual Startup Time": 0.0,
+                                                      "Actual Total Time": 0.0,
+                                                      "Actual Rows": 0,
+                                                      "Actual Loops": 0,
+                                                      "Shared Hit Blocks": 0,
+                                                      "Shared Read Blocks": 0
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Nested Loop",
+                                          "Startup Cost": 0.29,
+                                          "Total Cost": 14.1,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Index Name": "turnwork_poll_retry",
+                                              "Relation Name": "agent_turnwork",
+                                              "Startup Cost": 0.14,
+                                              "Total Cost": 5.92,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0
+                                            },
+                                            {
+                                              "Node Type": "Index Scan",
+                                              "Index Name": "agent_conversation_pkey",
+                                              "Relation Name": "agent_conversation",
+                                              "Startup Cost": 0.15,
+                                              "Total Cost": 8.17,
+                                              "Plan Rows": 1,
+                                              "Actual Startup Time": 0.0,
+                                              "Actual Total Time": 0.0,
+                                              "Actual Rows": 0,
+                                              "Actual Loops": 0,
+                                              "Shared Hit Blocks": 0,
+                                              "Shared Read Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "Node Type": "Materialize",
+                                  "Startup Cost": 0.29,
+                                  "Total Cost": 14.1,
+                                  "Plan Rows": 1,
+                                  "Actual Startup Time": 0.001,
+                                  "Actual Total Time": 0.001,
+                                  "Actual Rows": 0,
+                                  "Actual Loops": 354,
+                                  "Shared Hit Blocks": 5,
+                                  "Shared Read Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Startup Cost": 0.29,
+                                      "Total Cost": 14.1,
+                                      "Plan Rows": 1,
+                                      "Actual Startup Time": 0.043,
+                                      "Actual Total Time": 0.043,
+                                      "Actual Rows": 0,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 5,
+                                      "Shared Read Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Index Name": "turnwork_poll_retry",
+                                          "Relation Name": "agent_turnwork",
+                                          "Startup Cost": 0.14,
+                                          "Total Cost": 5.92,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.042,
+                                          "Actual Total Time": 0.042,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 1,
+                                          "Shared Hit Blocks": 5,
+                                          "Shared Read Blocks": 0
+                                        },
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Index Name": "agent_conversation_pkey",
+                                          "Relation Name": "agent_conversation",
+                                          "Startup Cost": 0.15,
+                                          "Total Cost": 8.17,
+                                          "Plan Rows": 1,
+                                          "Actual Startup Time": 0.0,
+                                          "Actual Total Time": 0.0,
+                                          "Actual Rows": 0,
+                                          "Actual Loops": 0,
+                                          "Shared Hit Blocks": 0,
+                                          "Shared Read Blocks": 0
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Index Scan",
+                              "Index Name": "agent_turnwork_conversation_id_e15ceb51",
+                              "Relation Name": "agent_turnwork",
+                              "Startup Cost": 0.14,
+                              "Total Cost": 0.3,
+                              "Plan Rows": 1,
+                              "Actual Startup Time": 0.003,
+                              "Actual Total Time": 0.004,
+                              "Actual Rows": 0,
+                              "Actual Loops": 354,
+                              "Shared Hit Blocks": 485,
+                              "Shared Read Blocks": 0
+                            },
+                            {
+                              "Node Type": "Seq Scan",
+                              "Relation Name": "channels_message",
+                              "Startup Cost": 0.0,
+                              "Total Cost": 42.78,
+                              "Plan Rows": 59,
+                              "Actual Startup Time": 0.03,
+                              "Actual Total Time": 0.456,
+                              "Actual Rows": 231,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 32,
+                              "Shared Read Blocks": 0
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "Node Type": "Limit",
+                      "Startup Cost": 9.33,
+                      "Total Cost": 9.33,
+                      "Plan Rows": 1,
+                      "Actual Startup Time": 0.081,
+                      "Actual Total Time": 0.082,
+                      "Actual Rows": 1,
+                      "Actual Loops": 2,
+                      "Shared Hit Blocks": 14,
+                      "Shared Read Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Sort",
+                          "Startup Cost": 9.33,
+                          "Total Cost": 9.46,
+                          "Plan Rows": 55,
+                          "Actual Startup Time": 0.08,
+                          "Actual Total Time": 0.08,
+                          "Actual Rows": 1,
+                          "Actual Loops": 2,
+                          "Shared Hit Blocks": 14,
+                          "Shared Read Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Seq Scan",
+                              "Relation Name": "agent_turnwork",
+                              "Startup Cost": 0.0,
+                              "Total Cost": 9.05,
+                              "Plan Rows": 55,
+                              "Actual Startup Time": 0.008,
+                              "Actual Total Time": 0.062,
+                              "Actual Rows": 99,
+                              "Actual Loops": 2,
+                              "Shared Hit Blocks": 14,
+                              "Shared Read Blocks": 0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

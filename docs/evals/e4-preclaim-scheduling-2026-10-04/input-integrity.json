@@ -1,0 +1,45 @@
+{
+  "head": "825db75df68bf076929fa787e77beefe96803350",
+  "previous_runs": [
+    {
+      "run_directory": "docs/evals/e4-causal-diagnostic-2026-10-03-dded711c",
+      "manifest_sha256": "26c7b8ce61976f2f09c21f708239ff354904f3914226a3b32abbb6d16da2e3ca",
+      "verified_files": 74,
+      "mismatches": [],
+      "causal_report_sha256": "8e0783d562ec2bfbc1dfd21bba226d3f0b1e8eb6b2319bfcea2355a4f29a8acc"
+    },
+    {
+      "run_directory": "docs/evals/e4-causal-diagnostic-2026-10-04-f1239f89",
+      "manifest_sha256": "08046f0b422ee0b999522cddeefe76cbc070d97255f663026e8b9651e865120a",
+      "verified_files": 80,
+      "mismatches": [],
+      "causal_report_sha256": "1c52bc5bdbaef666b881c2f609816ee1666f63f9dc14f09da173da7cbca551ea"
+    },
+    {
+      "run_directory": "docs/evals/e4-causal-diagnostic-2026-10-04-f1922430",
+      "manifest_sha256": "ee610da2f018f31fb9150977ac3c8139588a77f17ce9d670aa7aac517889a4d7",
+      "verified_files": 89,
+      "mismatches": [],
+      "causal_report_sha256": "f9fbbf68fc1501df49d7acc02d62a6033f0066c44cfbd744b1a279eba49f85b9"
+    }
+  ],
+  "protected_head_files": 1239,
+  "changed_protected_files": [],
+  "preexisting_user_files": {
+    "DEPLOY_VPS_PLAN.md": null,
+    "DEPLOY_VPS_STATUS.md": null,
+    "skills-lock.json": "88ead85c6f42b7c505a25f8299562c60b5f3fb3b47bca6b0f35e7642d1e0210d",
+    "docs/auditoria-agente-conversacional-veterinario-2026-09-10.md": "f23f123b168ce596386e2104faf753518f7b1a94eb114a095f6e71f0b7d1652e",
+    "docs/discrepancia-encargo-b9-2026-09-26.md": "c438fd28ec30a73f2b293acc55d692cf61e5896358bb253368e314d47b8db05a",
+    "docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md": "f13035d29c6e0b0ff19b7e27b7016d5cf4aa7a75dac0f34033f879e1c1ee5d45"
+  },
+  "changed_preexisting_user_files": [],
+  "runtime_sha256": {
+    "backend/apps/agent/services.py": "f25b1944f6072232bc5ebb194c03750a169899a9955c4d1b13feb614fe9234e9",
+    "backend/apps/agent/worker.py": "4942405258d316a10d3bcca37190b862617c4ab651b2acde440cca113f75a17c",
+    "backend/apps/agent/durable.py": "e6ffc70f90b53dab5c52193f4d743af83d1166a33e9278b21bd5b7d7155e7844",
+    "backend/apps/agent/claim_diagnostics.py": "852a44966f90949e464dfe585e4a9f931af5f6c33edb0bc72ffb17640958adc6",
+    "backend/apps/agent/claim_diagnostic_report.py": "38445e19b3467d76b603a3aa3b4f2d5c895d7650447e6c1c96b5ba4c274cabd9",
+    "backend/apps/agent/claim_diagnostic_waits.py": "e7dd09e998cdd8568bd89c342dfb5c2c9398bc226d036ce0e3c86add73963c94"
+  }
+}

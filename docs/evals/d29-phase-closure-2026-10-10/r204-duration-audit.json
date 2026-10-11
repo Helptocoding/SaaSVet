@@ -1,0 +1,30 @@
+{
+  "schema": "d29-r204-duration-audit-v1",
+  "status": "CONSISTENT",
+  "scenario": "R2-04",
+  "run_id": "r204-intact-01",
+  "physical_status": "ACCREDITED",
+  "physical_errors": [],
+  "original_verifier_status": "PASS",
+  "original_verifier_errors": [],
+  "minimum_followup_seconds": 240,
+  "observed_follow_start_monotonic_ns": 11313036952700,
+  "observed_follow_end_monotonic_ns": 11553646879800,
+  "observed_follow_elapsed_ns": 240609927100,
+  "observed_follow_elapsed_seconds": 240.6099271,
+  "original_verifier_followup_monotonic_seconds": 240.6099271,
+  "authorization_receipt_followup_monotonic_seconds": 240.6099271,
+  "span_matches_verifier": true,
+  "satisfies_original_minimum": true,
+  "summary_display": "240,6099271 s",
+  "summary_decimal_comma_is_locale_format": true,
+  "sealed_attempt_files": {
+    "physical-verification.json": "26d426c71adc36be3d9a58e20edee48d443156e503285886feea0292b0a5563b",
+    "scenario-result.json": "a42b431707efc0d7d7c0880d86600f8c471e7d3198d6e992f9ab8644bd0d4372",
+    "capture/authorized-verification-v2.json": "7856e4daf693e6269b71205b6a1122066310e78449a3b30883dbb2bc0fb52961",
+    "capture/observed-window.json": "16a3a54697be76098da77af79b9052e1eb79e0c47049d1536d412c7b3a42dd0c",
+    "capture/fixed-anchor.json": "26728ac8812845f7ec6cda3b017a6ab12ed97065864c36eb8dc6a21c88b926d8"
+  },
+  "original_verifier_sha256": "cf5706edaf8b4d8e6dabf8871dd1cdf629527b84b0e81788192d3836ee0e1e3b",
+  "physical_retest_performed": false
+}

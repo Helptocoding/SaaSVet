@@ -1,0 +1,1962 @@
+{
+  "exact_event_snapshot": false,
+  "before": {
+    "wall_ns": 1791043061479566500,
+    "database": "test_e4_dhij2_temporal",
+    "relations": [
+      {
+        "relname": "agent_conversation",
+        "relpages": 5,
+        "reltuples": 186.0,
+        "relallvisible": 5,
+        "heap_bytes": 40960,
+        "total_bytes": 270336
+      },
+      {
+        "relname": "agent_turnwork",
+        "relpages": 4,
+        "reltuples": 85.0,
+        "relallvisible": 4,
+        "heap_bytes": 32768,
+        "total_bytes": 229376
+      },
+      {
+        "relname": "channels_message",
+        "relpages": 20,
+        "reltuples": 285.0,
+        "relallvisible": 20,
+        "heap_bytes": 163840,
+        "total_bytes": 638976
+      }
+    ],
+    "pg_stats": [
+      {
+        "tablename": "agent_conversation",
+        "attname": "claimed_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "id",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.6838402,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{1,2,4,6,8,10,12,13,15,17,19,21,23,25,26,28,30,32,34,36,38,39,41,43,45,47,49,50,52,54,56,58,60,62,63,65,67,69,71,73,75,76,78,80,82,84,86,87,89,91,93,95,97,99,100,102,104,106,108,110,112,113,115,117,119,121,123,124,126,128,130,132,134,136,137,139,141,143,145,147,149,150,152,154,156,158,160,161,163,165,167,169,171,173,174,176,178,180,182,184,186}"
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "last_activity_at",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.49690288,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{\"2026-10-03 09:54:28.290219-06\",\"2026-10-03 09:54:29.203276-06\",\"2026-10-03 09:54:45.393841-06\",\"2026-10-03 09:54:51.316581-06\",\"2026-10-03 09:54:56.041124-06\",\"2026-10-03 09:54:56.563655-06\",\"2026-10-03 09:55:01.533232-06\",\"2026-10-03 09:55:03.949079-06\",\"2026-10-03 09:55:08.885274-06\",\"2026-10-03 09:55:13.856969-06\",\"2026-10-03 09:55:19.038638-06\",\"2026-10-03 09:55:20.059027-06\",\"2026-10-03 09:55:21.597051-06\",\"2026-10-03 09:55:23.069283-06\",\"2026-10-03 09:55:24.057461-06\",\"2026-10-03 09:55:25.056034-06\",\"2026-10-03 09:55:26.846976-06\",\"2026-10-03 09:55:27.697597-06\",\"2026-10-03 09:55:29.054281-06\",\"2026-10-03 09:55:30.050781-06\",\"2026-10-03 09:55:31.954753-06\",\"2026-10-03 09:55:32.077291-06\",\"2026-10-03 09:55:34.085915-06\",\"2026-10-03 09:55:35.050419-06\",\"2026-10-03 09:55:37.008123-06\",\"2026-10-03 09:55:38.064368-06\",\"2026-10-03 09:55:39.693136-06\",\"2026-10-03 09:55:40.054984-06\",\"2026-10-03 09:55:41.961204-06\",\"2026-10-03 09:55:43.054555-06\",\"2026-10-03 09:55:44.632832-06\",\"2026-10-03 09:55:46.363349-06\",\"2026-10-03 09:55:48.089763-06\",\"2026-10-03 09:55:49.057332-06\",\"2026-10-03 09:55:50.0357-06\",\"2026-10-03 09:55:51.281514-06\",\"2026-10-03 09:55:53.055711-06\",\"2026-10-03 09:55:54.0358-06\",\"2026-10-03 09:55:56.050003-06\",\"2026-10-03 09:55:57.282328-06\",\"2026-10-03 09:55:58.065302-06\",\"2026-10-03 09:55:59.066854-06\",\"2026-10-03 09:56:00.058302-06\",\"2026-10-03 09:56:01.573622-06\",\"2026-10-03 09:56:03.034433-06\",\"2026-10-03 09:56:04.085343-06\",\"2026-10-03 09:56:06.272187-06\",\"2026-10-03 09:56:06.459448-06\",\"2026-10-03 09:56:08.028668-06\",\"2026-10-03 09:56:09.077888-06\",\"2026-10-03 09:56:11.038488-06\",\"2026-10-03 09:56:12.083379-06\",\"2026-10-03 09:56:13.997734-06\",\"2026-10-03 09:56:15.051763-06\",\"2026-10-03 09:56:16.282185-06\",\"2026-10-03 09:56:18.088821-06\",\"2026-10-03 09:56:19.172693-06\",\"2026-10-03 09:56:21.064364-06\",\"2026-10-03 09:56:22.068367-06\",\"2026-10-03 09:56:24.049377-06\",\"2026-10-03 09:56:25.055616-06\",\"2026-10-03 09:56:26.039457-06\",\"2026-10-03 09:56:27.200131-06\",\"2026-10-03 09:56:28.065764-06\",\"2026-10-03 09:56:29.026512-06\",\"2026-10-03 09:56:31.07875-06\",\"2026-10-03 09:56:32.070381-06\",\"2026-10-03 09:56:33.042431-06\",\"2026-10-03 09:56:34.035949-06\",\"2026-10-03 09:56:36.251444-06\",\"2026-10-03 09:56:37.041011-06\",\"2026-10-03 09:56:39.004304-06\",\"2026-10-03 09:56:40.064316-06\",\"2026-10-03 09:56:41.345284-06\",\"2026-10-03 09:56:42.099734-06\",\"2026-10-03 09:56:43.966672-06\",\"2026-10-03 09:56:45.058372-06\",\"2026-10-03 09:56:47.074197-06\",\"2026-10-03 09:56:49.03776-06\",\"2026-10-03 09:56:50.078225-06\",\"2026-10-03 09:56:51.87682-06\",\"2026-10-03 09:56:52.043038-06\",\"2026-10-03 09:56:54.080208-06\",\"2026-10-03 09:56:55.035955-06\",\"2026-10-03 09:56:56.722405-06\",\"2026-10-03 09:56:57.714571-06\",\"2026-10-03 09:56:59.072028-06\",\"2026-10-03 09:57:00.089128-06\",\"2026-10-03 09:57:01.046038-06\",\"2026-10-03 09:57:02.304557-06\",\"2026-10-03 09:57:04.077883-06\",\"2026-10-03 09:57:05.267972-06\",\"2026-10-03 09:57:07.068589-06\",\"2026-10-03 09:57:08.033905-06\",\"2026-10-03 09:57:09.072452-06\",\"2026-10-03 09:57:10.334734-06\",\"2026-10-03 09:57:12.07433-06\",\"2026-10-03 09:57:13.071894-06\",\"2026-10-03 09:57:15.076215-06\",\"2026-10-03 09:57:16.184915-06\",\"2026-10-03 09:57:17.075389-06\"}"
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "organization_id",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.88144475,
+        "most_common_vals": "{3,1,2}",
+        "most_common_freqs": [
+          0.9247312,
+          0.03763441,
+          0.03763441
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "ownership_epoch",
+        "null_frac": 0.0,
+        "n_distinct": 2.0,
+        "correlation": 0.84542423,
+        "most_common_vals": "{0,1}",
+        "most_common_freqs": [
+          0.9354839,
+          0.06451613
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "claimed_at",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.8467266,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{\"2026-10-03 09:54:28.614251-06\",\"2026-10-03 09:54:29.386738-06\",\"2026-10-03 09:54:38.4337-06\",\"2026-10-03 09:54:42.779776-06\",\"2026-10-03 09:54:44.322852-06\",\"2026-10-03 09:54:46.46437-06\",\"2026-10-03 09:54:47.191924-06\",\"2026-10-03 09:54:49.487426-06\",\"2026-10-03 09:54:52.238247-06\",\"2026-10-03 09:54:54.436537-06\",\"2026-10-03 09:54:54.928819-06\",\"2026-10-03 09:54:56.194472-06\",\"2026-10-03 09:54:56.71767-06\",\"2026-10-03 09:54:57.162224-06\",\"2026-10-03 09:54:59.783779-06\",\"2026-10-03 09:55:02.252943-06\",\"2026-10-03 09:55:04.672959-06\",\"2026-10-03 09:55:07.096327-06\",\"2026-10-03 09:55:09.520767-06\",\"2026-10-03 09:55:12.130842-06\",\"2026-10-03 09:55:14.434841-06\",\"2026-10-03 09:55:14.939858-06\",\"2026-10-03 09:55:17.307205-06\",\"2026-10-03 09:55:19.905157-06\",\"2026-10-03 09:55:22.349806-06\",\"2026-10-03 09:55:24.845954-06\",\"2026-10-03 09:55:25.25677-06\",\"2026-10-03 09:55:26.259095-06\",\"2026-10-03 09:55:27.058122-06\",\"2026-10-03 09:55:28.061343-06\",\"2026-10-03 09:55:30.300499-06\",\"2026-10-03 09:55:32.909322-06\",\"2026-10-03 09:55:35.230153-06\",\"2026-10-03 09:55:37.951227-06\",\"2026-10-03 09:55:40.213049-06\",\"2026-10-03 09:55:42.908738-06\",\"2026-10-03 09:55:44.15328-06\",\"2026-10-03 09:55:45.721367-06\",\"2026-10-03 09:55:47.013413-06\",\"2026-10-03 09:55:49.578407-06\",\"2026-10-03 09:55:51.963084-06\",\"2026-10-03 09:55:54.481495-06\",\"2026-10-03 09:55:54.753145-06\",\"2026-10-03 09:55:56.220821-06\",\"2026-10-03 09:55:56.863488-06\",\"2026-10-03 09:55:57.326334-06\",\"2026-10-03 09:55:59.772967-06\",\"2026-10-03 09:56:02.337035-06\",\"2026-10-03 09:56:04.816033-06\",\"2026-10-03 09:56:07.262402-06\",\"2026-10-03 09:56:09.680333-06\",\"2026-10-03 09:56:12.292823-06\",\"2026-10-03 09:56:14.680673-06\",\"2026-10-03 09:56:15.114412-06\",\"2026-10-03 09:56:17.49475-06\",\"2026-10-03 09:56:20.067164-06\",\"2026-10-03 09:56:22.47954-06\",\"2026-10-03 09:56:24.209319-06\",\"2026-10-03 09:56:25.410303-06\",\"2026-10-03 09:56:26.186457-06\",\"2026-10-03 09:56:26.727258-06\",\"2026-10-03 09:56:27.163792-06\",\"2026-10-03 09:56:29.41747-06\",\"2026-10-03 09:56:32.22516-06\",\"2026-10-03 09:56:34.463678-06\",\"2026-10-03 09:56:37.284178-06\",\"2026-10-03 09:56:39.555535-06\",\"2026-10-03 09:56:42.316203-06\",\"2026-10-03 09:56:44.568925-06\",\"2026-10-03 09:56:45.084205-06\",\"2026-10-03 09:56:47.405152-06\",\"2026-10-03 09:56:50.071026-06\",\"2026-10-03 09:56:52.458119-06\",\"2026-10-03 09:56:55.206808-06\",\"2026-10-03 09:56:55.233929-06\",\"2026-10-03 09:56:56.323686-06\",\"2026-10-03 09:56:56.986475-06\",\"2026-10-03 09:56:58.305041-06\",\"2026-10-03 09:57:00.496794-06\",\"2026-10-03 09:57:03.527721-06\",\"2026-10-03 09:57:05.746973-06\",\"2026-10-03 09:57:08.61481-06\",\"2026-10-03 09:57:10.813381-06\",\"2026-10-03 09:57:14.866178-06\",\"2026-10-03 09:57:15.082472-06\"}"
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "conversation_id",
+        "null_frac": 0.0,
+        "n_distinct": -0.7764706,
+        "correlation": 0.66695327,
+        "most_common_vals": "{13,14}",
+        "most_common_freqs": [
+          0.12941177,
+          0.11764706
+        ],
+        "histogram_bounds": "{1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,67,68,99,100,131,132,163,164}"
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "id",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.8467266,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85}"
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "lease_expires_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "next_attempt_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "organization_id",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.36699238,
+        "most_common_vals": "{3,1,2}",
+        "most_common_freqs": [
+          0.6117647,
+          0.2,
+          0.1882353
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "ownership_epoch",
+        "null_frac": 0.0,
+        "n_distinct": 1.0,
+        "correlation": 1.0,
+        "most_common_vals": "{0}",
+        "most_common_freqs": [
+          1.0
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "status",
+        "null_frac": 0.0,
+        "n_distinct": 1.0,
+        "correlation": 1.0,
+        "most_common_vals": "{COMPLETED}",
+        "most_common_freqs": [
+          1.0
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "available_at",
+        "null_frac": 0.27017543,
+        "n_distinct": -0.7263158,
+        "correlation": 0.898072,
+        "most_common_vals": "{\"2026-10-03 09:54:44.166172-06\"}",
+        "most_common_freqs": [
+          0.007017544
+        ],
+        "histogram_bounds": "{\"2026-10-03 09:54:28.507459-06\",\"2026-10-03 09:54:37.845494-06\",\"2026-10-03 09:54:38.306949-06\",\"2026-10-03 09:54:38.699929-06\",\"2026-10-03 09:54:40.040414-06\",\"2026-10-03 09:54:42.077659-06\",\"2026-10-03 09:54:44.020965-06\",\"2026-10-03 09:54:45.037468-06\",\"2026-10-03 09:54:47.091238-06\",\"2026-10-03 09:54:49.079533-06\",\"2026-10-03 09:54:51.050603-06\",\"2026-10-03 09:54:53.047196-06\",\"2026-10-03 09:54:54.412171-06\",\"2026-10-03 09:54:56.071691-06\",\"2026-10-03 09:54:56.628418-06\",\"2026-10-03 09:54:58.064286-06\",\"2026-10-03 09:55:00.073087-06\",\"2026-10-03 09:55:02.047126-06\",\"2026-10-03 09:55:05.122434-06\",\"2026-10-03 09:55:06.083592-06\",\"2026-10-03 09:55:09.033758-06\",\"2026-10-03 09:55:11.075611-06\",\"2026-10-03 09:55:13.065441-06\",\"2026-10-03 09:55:14.140044-06\",\"2026-10-03 09:55:15.027961-06\",\"2026-10-03 09:55:17.086034-06\",\"2026-10-03 09:55:19.085629-06\",\"2026-10-03 09:55:21.076885-06\",\"2026-10-03 09:55:23.086496-06\",\"2026-10-03 09:55:24.312716-06\",\"2026-10-03 09:55:25.069084-06\",\"2026-10-03 09:55:26.174846-06\",\"2026-10-03 09:55:27.038638-06\",\"2026-10-03 09:55:29.065666-06\",\"2026-10-03 09:55:31.069283-06\",\"2026-10-03 09:55:33.056034-06\",\"2026-10-03 09:55:35.697597-06\",\"2026-10-03 09:55:37.054281-06\",\"2026-10-03 09:55:39.050128-06\",\"2026-10-03 09:55:41.060863-06\",\"2026-10-03 09:55:44.017279-06\",\"2026-10-03 09:55:44.351322-06\",\"2026-10-03 09:55:46.064368-06\",\"2026-10-03 09:55:48.054984-06\",\"2026-10-03 09:55:50.070087-06\",\"2026-10-03 09:55:52.048012-06\",\"2026-10-03 09:55:54.036126-06\",\"2026-10-03 09:55:54.363349-06\",\"2026-10-03 09:55:56.089763-06\",\"2026-10-03 09:55:56.786209-06\",\"2026-10-03 09:55:58.0357-06\",\"2026-10-03 09:56:00.048427-06\",\"2026-10-03 09:56:02.0358-06\",\"2026-10-03 09:56:05.282328-06\",\"2026-10-03 09:56:06.065302-06\",\"2026-10-03 09:56:08.058302-06\",\"2026-10-03 09:56:10.061985-06\",\"2026-10-03 09:56:12.085343-06\",\"2026-10-03 09:56:14.038997-06\",\"2026-10-03 09:56:14.272187-06\",\"2026-10-03 09:56:17.077888-06\",\"2026-10-03 09:56:19.038488-06\",\"2026-10-03 09:56:21.024446-06\",\"2026-10-03 09:56:23.051763-06\",\"2026-10-03 09:56:24.154019-06\",\"2026-10-03 09:56:25.0468-06\",\"2026-10-03 09:56:26.132788-06\",\"2026-10-03 09:56:27.056039-06\",\"2026-10-03 09:56:29.064364-06\",\"2026-10-03 09:56:31.064146-06\",\"2026-10-03 09:56:33.055616-06\",\"2026-10-03 09:56:35.450695-06\",\"2026-10-03 09:56:37.026512-06\",\"2026-10-03 09:56:39.07875-06\",\"2026-10-03 09:56:41.042431-06\",\"2026-10-03 09:56:43.087613-06\",\"2026-10-03 09:56:44.201461-06\",\"2026-10-03 09:56:45.041011-06\",\"2026-10-03 09:56:47.062612-06\",\"2026-10-03 09:56:49.055914-06\",\"2026-10-03 09:56:52.051366-06\",\"2026-10-03 09:56:54.028664-06\",\"2026-10-03 09:56:54.362909-06\",\"2026-10-03 09:56:56.050043-06\",\"2026-10-03 09:56:56.838775-06\",\"2026-10-03 09:56:58.078225-06\",\"2026-10-03 09:57:00.043038-06\",\"2026-10-03 09:57:02.080208-06\",\"2026-10-03 09:57:05.430182-06\",\"2026-10-03 09:57:06.04802-06\",\"2026-10-03 09:57:08.089128-06\",\"2026-10-03 09:57:10.044715-06\",\"2026-10-03 09:57:12.077883-06\",\"2026-10-03 09:57:14.011368-06\",\"2026-10-03 09:57:14.288693-06\",\"2026-10-03 09:57:16.033905-06\",\"2026-10-03 09:57:18.067481-06\",\"2026-10-03 09:57:20.07433-06\",\"2026-10-03 09:57:22.064309-06\",\"2026-10-03 09:57:24.0471-06\",\"2026-10-03 09:57:25.075389-06\"}"
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "conversation_id",
+        "null_frac": 0.0,
+        "n_distinct": -0.6526316,
+        "correlation": 0.6629153,
+        "most_common_vals": "{13,14,1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,67,68,99,100,131,132,163,164}",
+        "most_common_freqs": [
+          0.07017544,
+          0.05964912,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544
+        ],
+        "histogram_bounds": "{59,60,61,62,63,64,66,69,70,71,72,74,75,76,77,78,80,81,82,83,84,85,87,88,89,90,91,93,94,95,96,97,101,102,103,104,105,107,108,109,110,111,112,114,115,116,117,118,120,121,122,123,124,126,127,128,129,130,134,135,136,137,138,139,141,142,143,144,145,147,148,149,150,151,153,154,155,156,157,159,160,161,162,165,166,168,169,170,171,172,174,175,176,177,178,180,181,182,183,184,186}"
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "direction",
+        "null_frac": 0.0,
+        "n_distinct": 2.0,
+        "correlation": 0.5347665,
+        "most_common_vals": "{in,out}",
+        "most_common_freqs": [
+          0.72982454,
+          0.27017543
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "id",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.8963361,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{1,3,6,9,12,15,18,20,23,26,29,32,35,37,40,43,46,49,52,54,57,60,63,66,69,72,74,77,80,83,86,89,91,94,97,100,103,106,108,111,114,117,120,123,125,128,131,134,137,140,143,145,148,151,154,157,160,162,165,168,171,174,177,179,182,185,188,191,194,196,199,202,205,208,211,214,216,219,222,225,228,231,233,236,239,242,245,248,250,253,256,259,262,265,267,270,273,276,279,282,285}"
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "next_attempt_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "organization_id",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.6527845,
+        "most_common_vals": "{3,1,2}",
+        "most_common_freqs": [
+          0.7859649,
+          0.112280704,
+          0.10175438
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "semantic_type",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.815452,
+        "most_common_vals": "{\"\",safety_guidance,safety_signal}",
+        "most_common_freqs": [
+          0.9157895,
+          0.042105265,
+          0.042105265
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "status",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": -0.004220168,
+        "most_common_vals": "{pending,processed,sent}",
+        "most_common_freqs": [
+          0.4280702,
+          0.3017544,
+          0.27017543
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "turn_work_id",
+        "null_frac": 0.4280702,
+        "n_distinct": -0.2982456,
+        "correlation": 0.7994746,
+        "most_common_vals": "{6,1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,55,56,57,58,59,60,61,62,63,64,65,66,67,68,71,72,73,74,75,76,77,78,79,80,81,82,83}",
+        "most_common_freqs": [
+          0.010526316,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544
+        ],
+        "histogram_bounds": "{22,38,53,54,69,70,84,85}"
+      }
+    ],
+    "table_stats": [
+      {
+        "relname": "agent_conversation",
+        "n_live_tup": 211,
+        "n_dead_tup": 53,
+        "n_mod_since_analyze": 108,
+        "last_vacuum": null,
+        "last_autovacuum": "2026-10-03 09:57:17.406583-06:00",
+        "last_analyze": null,
+        "last_autoanalyze": "2026-10-03 09:57:17.420433-06:00",
+        "analyze_count": 0,
+        "autoanalyze_count": 3
+      },
+      {
+        "relname": "agent_turnwork",
+        "n_live_tup": 97,
+        "n_dead_tup": 29,
+        "n_mod_since_analyze": 60,
+        "last_vacuum": null,
+        "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+        "last_analyze": null,
+        "last_autoanalyze": "2026-10-03 09:57:17.564792-06:00",
+        "analyze_count": 0,
+        "autoanalyze_count": 3
+      },
+      {
+        "relname": "channels_message",
+        "n_live_tup": 324,
+        "n_dead_tup": 71,
+        "n_mod_since_analyze": 142,
+        "last_vacuum": null,
+        "last_autovacuum": "2026-10-03 09:57:17.477320-06:00",
+        "last_analyze": null,
+        "last_autoanalyze": "2026-10-03 09:57:17.507415-06:00",
+        "analyze_count": 0,
+        "autoanalyze_count": 3
+      }
+    ],
+    "physical_messages": [
+      {
+        "status": "pending",
+        "rows": 138,
+        "blocks": 17,
+        "min_block": 2.0,
+        "max_block": 19.0
+      },
+      {
+        "status": "processed",
+        "rows": 98,
+        "blocks": 20,
+        "min_block": 0.0,
+        "max_block": 19.0
+      },
+      {
+        "status": "sent",
+        "rows": 89,
+        "blocks": 14,
+        "min_block": 0.0,
+        "max_block": 18.0
+      }
+    ],
+    "visibility": {
+      "agent_conversation": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "channels_message": {
+        "all_visible": 2,
+        "all_frozen": 1
+      },
+      "agent_turnwork": {
+        "all_visible": 0,
+        "all_frozen": 0
+      }
+    },
+    "cardinality": {
+      "agent_conversation": 212,
+      "channels_message": 325,
+      "agent_turnwork": 98
+    },
+    "turnworks": [
+      {
+        "status": "COMPLETED",
+        "n": 97,
+        "due": 0
+      },
+      {
+        "status": "PROCESSING",
+        "n": 1,
+        "due": 0
+      }
+    ],
+    "organizations": 3,
+    "connections": [
+      {
+        "pid": 59620,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "query_start": "2026-10-03 09:57:41.630026-06:00"
+      },
+      {
+        "pid": 60072,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "query_start": "2026-10-03 09:57:41.611723-06:00"
+      },
+      {
+        "pid": 64312,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "query_start": "2026-10-03 09:57:41.238647-06:00"
+      },
+      {
+        "pid": 67132,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "query_start": "2026-10-03 09:57:41.523436-06:00"
+      },
+      {
+        "pid": 73428,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "query_start": "2026-10-03 09:57:41.163058-06:00"
+      }
+    ],
+    "locks": [
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_authid",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_authid_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_authid_rolname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_database",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_database_datname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_database_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_locks",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "relation",
+        "relation": "pg_stat_activity",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 59620,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conve_contact_b658a2_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conve_organiz_34081f_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_channel_account_id_b929d3ce",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_claimed_by_id_62f9da56",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_contact_id_36ec89e7",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_created_by_id_4cf1b1e4",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_organization_id_1ef62d10",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_public_id_key",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_updated_by_id_01e8413e",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork_anchor_message_id_3fcc70f5",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork_conversation_id_e15ceb51",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork_created_by_id_3261ae87",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork_organization_id_4c7f7bfe",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_turnwork_updated_by_id_5ed3892a",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_me_convers_c68da0_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_me_directi_c93e59_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_me_organiz_7ba1d3_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_me_organiz_c00b67_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_channel_account_id_03bba5b5",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_contact_id_f609c902",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_conversation_id_af5ca503",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_created_by_id_094f21e0",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_human_author_id_51a3db10",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_organization_id_940b6f9e",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_supersedes_message_id_2e4376d0",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_turn_work_id_20ce3041",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_message_updated_by_id_f72e1ea0",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_send_expiry",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_send_ready",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_status_lookup",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_unique_idempotency_per_org",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_unique_inbound_wamid",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_unique_operation_receipt",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_unique_processing_failure_notice",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "message_unique_turn_output",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "turnwork_one_nonterminal",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "turnwork_poll_lease",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "turnwork_poll_retry",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "turnwork_unique_anchor",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      }
+    ]
+  },
+  "after": {
+    "wall_ns": 1791043082517347200,
+    "database": "test_e4_dhij2_temporal",
+    "relations": [
+      {
+        "relname": "agent_conversation",
+        "relpages": 5,
+        "reltuples": 186.0,
+        "relallvisible": 5,
+        "heap_bytes": 40960,
+        "total_bytes": 270336
+      },
+      {
+        "relname": "agent_turnwork",
+        "relpages": 4,
+        "reltuples": 85.0,
+        "relallvisible": 4,
+        "heap_bytes": 32768,
+        "total_bytes": 229376
+      },
+      {
+        "relname": "channels_message",
+        "relpages": 20,
+        "reltuples": 285.0,
+        "relallvisible": 20,
+        "heap_bytes": 180224,
+        "total_bytes": 655360
+      }
+    ],
+    "pg_stats": [
+      {
+        "tablename": "agent_conversation",
+        "attname": "claimed_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "id",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.6838402,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{1,2,4,6,8,10,12,13,15,17,19,21,23,25,26,28,30,32,34,36,38,39,41,43,45,47,49,50,52,54,56,58,60,62,63,65,67,69,71,73,75,76,78,80,82,84,86,87,89,91,93,95,97,99,100,102,104,106,108,110,112,113,115,117,119,121,123,124,126,128,130,132,134,136,137,139,141,143,145,147,149,150,152,154,156,158,160,161,163,165,167,169,171,173,174,176,178,180,182,184,186}"
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "last_activity_at",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.49690288,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{\"2026-10-03 09:54:28.290219-06\",\"2026-10-03 09:54:29.203276-06\",\"2026-10-03 09:54:45.393841-06\",\"2026-10-03 09:54:51.316581-06\",\"2026-10-03 09:54:56.041124-06\",\"2026-10-03 09:54:56.563655-06\",\"2026-10-03 09:55:01.533232-06\",\"2026-10-03 09:55:03.949079-06\",\"2026-10-03 09:55:08.885274-06\",\"2026-10-03 09:55:13.856969-06\",\"2026-10-03 09:55:19.038638-06\",\"2026-10-03 09:55:20.059027-06\",\"2026-10-03 09:55:21.597051-06\",\"2026-10-03 09:55:23.069283-06\",\"2026-10-03 09:55:24.057461-06\",\"2026-10-03 09:55:25.056034-06\",\"2026-10-03 09:55:26.846976-06\",\"2026-10-03 09:55:27.697597-06\",\"2026-10-03 09:55:29.054281-06\",\"2026-10-03 09:55:30.050781-06\",\"2026-10-03 09:55:31.954753-06\",\"2026-10-03 09:55:32.077291-06\",\"2026-10-03 09:55:34.085915-06\",\"2026-10-03 09:55:35.050419-06\",\"2026-10-03 09:55:37.008123-06\",\"2026-10-03 09:55:38.064368-06\",\"2026-10-03 09:55:39.693136-06\",\"2026-10-03 09:55:40.054984-06\",\"2026-10-03 09:55:41.961204-06\",\"2026-10-03 09:55:43.054555-06\",\"2026-10-03 09:55:44.632832-06\",\"2026-10-03 09:55:46.363349-06\",\"2026-10-03 09:55:48.089763-06\",\"2026-10-03 09:55:49.057332-06\",\"2026-10-03 09:55:50.0357-06\",\"2026-10-03 09:55:51.281514-06\",\"2026-10-03 09:55:53.055711-06\",\"2026-10-03 09:55:54.0358-06\",\"2026-10-03 09:55:56.050003-06\",\"2026-10-03 09:55:57.282328-06\",\"2026-10-03 09:55:58.065302-06\",\"2026-10-03 09:55:59.066854-06\",\"2026-10-03 09:56:00.058302-06\",\"2026-10-03 09:56:01.573622-06\",\"2026-10-03 09:56:03.034433-06\",\"2026-10-03 09:56:04.085343-06\",\"2026-10-03 09:56:06.272187-06\",\"2026-10-03 09:56:06.459448-06\",\"2026-10-03 09:56:08.028668-06\",\"2026-10-03 09:56:09.077888-06\",\"2026-10-03 09:56:11.038488-06\",\"2026-10-03 09:56:12.083379-06\",\"2026-10-03 09:56:13.997734-06\",\"2026-10-03 09:56:15.051763-06\",\"2026-10-03 09:56:16.282185-06\",\"2026-10-03 09:56:18.088821-06\",\"2026-10-03 09:56:19.172693-06\",\"2026-10-03 09:56:21.064364-06\",\"2026-10-03 09:56:22.068367-06\",\"2026-10-03 09:56:24.049377-06\",\"2026-10-03 09:56:25.055616-06\",\"2026-10-03 09:56:26.039457-06\",\"2026-10-03 09:56:27.200131-06\",\"2026-10-03 09:56:28.065764-06\",\"2026-10-03 09:56:29.026512-06\",\"2026-10-03 09:56:31.07875-06\",\"2026-10-03 09:56:32.070381-06\",\"2026-10-03 09:56:33.042431-06\",\"2026-10-03 09:56:34.035949-06\",\"2026-10-03 09:56:36.251444-06\",\"2026-10-03 09:56:37.041011-06\",\"2026-10-03 09:56:39.004304-06\",\"2026-10-03 09:56:40.064316-06\",\"2026-10-03 09:56:41.345284-06\",\"2026-10-03 09:56:42.099734-06\",\"2026-10-03 09:56:43.966672-06\",\"2026-10-03 09:56:45.058372-06\",\"2026-10-03 09:56:47.074197-06\",\"2026-10-03 09:56:49.03776-06\",\"2026-10-03 09:56:50.078225-06\",\"2026-10-03 09:56:51.87682-06\",\"2026-10-03 09:56:52.043038-06\",\"2026-10-03 09:56:54.080208-06\",\"2026-10-03 09:56:55.035955-06\",\"2026-10-03 09:56:56.722405-06\",\"2026-10-03 09:56:57.714571-06\",\"2026-10-03 09:56:59.072028-06\",\"2026-10-03 09:57:00.089128-06\",\"2026-10-03 09:57:01.046038-06\",\"2026-10-03 09:57:02.304557-06\",\"2026-10-03 09:57:04.077883-06\",\"2026-10-03 09:57:05.267972-06\",\"2026-10-03 09:57:07.068589-06\",\"2026-10-03 09:57:08.033905-06\",\"2026-10-03 09:57:09.072452-06\",\"2026-10-03 09:57:10.334734-06\",\"2026-10-03 09:57:12.07433-06\",\"2026-10-03 09:57:13.071894-06\",\"2026-10-03 09:57:15.076215-06\",\"2026-10-03 09:57:16.184915-06\",\"2026-10-03 09:57:17.075389-06\"}"
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "organization_id",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.88144475,
+        "most_common_vals": "{3,1,2}",
+        "most_common_freqs": [
+          0.9247312,
+          0.03763441,
+          0.03763441
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_conversation",
+        "attname": "ownership_epoch",
+        "null_frac": 0.0,
+        "n_distinct": 2.0,
+        "correlation": 0.84542423,
+        "most_common_vals": "{0,1}",
+        "most_common_freqs": [
+          0.9354839,
+          0.06451613
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "claimed_at",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.8467266,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{\"2026-10-03 09:54:28.614251-06\",\"2026-10-03 09:54:29.386738-06\",\"2026-10-03 09:54:38.4337-06\",\"2026-10-03 09:54:42.779776-06\",\"2026-10-03 09:54:44.322852-06\",\"2026-10-03 09:54:46.46437-06\",\"2026-10-03 09:54:47.191924-06\",\"2026-10-03 09:54:49.487426-06\",\"2026-10-03 09:54:52.238247-06\",\"2026-10-03 09:54:54.436537-06\",\"2026-10-03 09:54:54.928819-06\",\"2026-10-03 09:54:56.194472-06\",\"2026-10-03 09:54:56.71767-06\",\"2026-10-03 09:54:57.162224-06\",\"2026-10-03 09:54:59.783779-06\",\"2026-10-03 09:55:02.252943-06\",\"2026-10-03 09:55:04.672959-06\",\"2026-10-03 09:55:07.096327-06\",\"2026-10-03 09:55:09.520767-06\",\"2026-10-03 09:55:12.130842-06\",\"2026-10-03 09:55:14.434841-06\",\"2026-10-03 09:55:14.939858-06\",\"2026-10-03 09:55:17.307205-06\",\"2026-10-03 09:55:19.905157-06\",\"2026-10-03 09:55:22.349806-06\",\"2026-10-03 09:55:24.845954-06\",\"2026-10-03 09:55:25.25677-06\",\"2026-10-03 09:55:26.259095-06\",\"2026-10-03 09:55:27.058122-06\",\"2026-10-03 09:55:28.061343-06\",\"2026-10-03 09:55:30.300499-06\",\"2026-10-03 09:55:32.909322-06\",\"2026-10-03 09:55:35.230153-06\",\"2026-10-03 09:55:37.951227-06\",\"2026-10-03 09:55:40.213049-06\",\"2026-10-03 09:55:42.908738-06\",\"2026-10-03 09:55:44.15328-06\",\"2026-10-03 09:55:45.721367-06\",\"2026-10-03 09:55:47.013413-06\",\"2026-10-03 09:55:49.578407-06\",\"2026-10-03 09:55:51.963084-06\",\"2026-10-03 09:55:54.481495-06\",\"2026-10-03 09:55:54.753145-06\",\"2026-10-03 09:55:56.220821-06\",\"2026-10-03 09:55:56.863488-06\",\"2026-10-03 09:55:57.326334-06\",\"2026-10-03 09:55:59.772967-06\",\"2026-10-03 09:56:02.337035-06\",\"2026-10-03 09:56:04.816033-06\",\"2026-10-03 09:56:07.262402-06\",\"2026-10-03 09:56:09.680333-06\",\"2026-10-03 09:56:12.292823-06\",\"2026-10-03 09:56:14.680673-06\",\"2026-10-03 09:56:15.114412-06\",\"2026-10-03 09:56:17.49475-06\",\"2026-10-03 09:56:20.067164-06\",\"2026-10-03 09:56:22.47954-06\",\"2026-10-03 09:56:24.209319-06\",\"2026-10-03 09:56:25.410303-06\",\"2026-10-03 09:56:26.186457-06\",\"2026-10-03 09:56:26.727258-06\",\"2026-10-03 09:56:27.163792-06\",\"2026-10-03 09:56:29.41747-06\",\"2026-10-03 09:56:32.22516-06\",\"2026-10-03 09:56:34.463678-06\",\"2026-10-03 09:56:37.284178-06\",\"2026-10-03 09:56:39.555535-06\",\"2026-10-03 09:56:42.316203-06\",\"2026-10-03 09:56:44.568925-06\",\"2026-10-03 09:56:45.084205-06\",\"2026-10-03 09:56:47.405152-06\",\"2026-10-03 09:56:50.071026-06\",\"2026-10-03 09:56:52.458119-06\",\"2026-10-03 09:56:55.206808-06\",\"2026-10-03 09:56:55.233929-06\",\"2026-10-03 09:56:56.323686-06\",\"2026-10-03 09:56:56.986475-06\",\"2026-10-03 09:56:58.305041-06\",\"2026-10-03 09:57:00.496794-06\",\"2026-10-03 09:57:03.527721-06\",\"2026-10-03 09:57:05.746973-06\",\"2026-10-03 09:57:08.61481-06\",\"2026-10-03 09:57:10.813381-06\",\"2026-10-03 09:57:14.866178-06\",\"2026-10-03 09:57:15.082472-06\"}"
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "conversation_id",
+        "null_frac": 0.0,
+        "n_distinct": -0.7764706,
+        "correlation": 0.66695327,
+        "most_common_vals": "{13,14}",
+        "most_common_freqs": [
+          0.12941177,
+          0.11764706
+        ],
+        "histogram_bounds": "{1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,67,68,99,100,131,132,163,164}"
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "id",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.8467266,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85}"
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "lease_expires_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "next_attempt_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "organization_id",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.36699238,
+        "most_common_vals": "{3,1,2}",
+        "most_common_freqs": [
+          0.6117647,
+          0.2,
+          0.1882353
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "ownership_epoch",
+        "null_frac": 0.0,
+        "n_distinct": 1.0,
+        "correlation": 1.0,
+        "most_common_vals": "{0}",
+        "most_common_freqs": [
+          1.0
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "agent_turnwork",
+        "attname": "status",
+        "null_frac": 0.0,
+        "n_distinct": 1.0,
+        "correlation": 1.0,
+        "most_common_vals": "{COMPLETED}",
+        "most_common_freqs": [
+          1.0
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "available_at",
+        "null_frac": 0.27017543,
+        "n_distinct": -0.7263158,
+        "correlation": 0.898072,
+        "most_common_vals": "{\"2026-10-03 09:54:44.166172-06\"}",
+        "most_common_freqs": [
+          0.007017544
+        ],
+        "histogram_bounds": "{\"2026-10-03 09:54:28.507459-06\",\"2026-10-03 09:54:37.845494-06\",\"2026-10-03 09:54:38.306949-06\",\"2026-10-03 09:54:38.699929-06\",\"2026-10-03 09:54:40.040414-06\",\"2026-10-03 09:54:42.077659-06\",\"2026-10-03 09:54:44.020965-06\",\"2026-10-03 09:54:45.037468-06\",\"2026-10-03 09:54:47.091238-06\",\"2026-10-03 09:54:49.079533-06\",\"2026-10-03 09:54:51.050603-06\",\"2026-10-03 09:54:53.047196-06\",\"2026-10-03 09:54:54.412171-06\",\"2026-10-03 09:54:56.071691-06\",\"2026-10-03 09:54:56.628418-06\",\"2026-10-03 09:54:58.064286-06\",\"2026-10-03 09:55:00.073087-06\",\"2026-10-03 09:55:02.047126-06\",\"2026-10-03 09:55:05.122434-06\",\"2026-10-03 09:55:06.083592-06\",\"2026-10-03 09:55:09.033758-06\",\"2026-10-03 09:55:11.075611-06\",\"2026-10-03 09:55:13.065441-06\",\"2026-10-03 09:55:14.140044-06\",\"2026-10-03 09:55:15.027961-06\",\"2026-10-03 09:55:17.086034-06\",\"2026-10-03 09:55:19.085629-06\",\"2026-10-03 09:55:21.076885-06\",\"2026-10-03 09:55:23.086496-06\",\"2026-10-03 09:55:24.312716-06\",\"2026-10-03 09:55:25.069084-06\",\"2026-10-03 09:55:26.174846-06\",\"2026-10-03 09:55:27.038638-06\",\"2026-10-03 09:55:29.065666-06\",\"2026-10-03 09:55:31.069283-06\",\"2026-10-03 09:55:33.056034-06\",\"2026-10-03 09:55:35.697597-06\",\"2026-10-03 09:55:37.054281-06\",\"2026-10-03 09:55:39.050128-06\",\"2026-10-03 09:55:41.060863-06\",\"2026-10-03 09:55:44.017279-06\",\"2026-10-03 09:55:44.351322-06\",\"2026-10-03 09:55:46.064368-06\",\"2026-10-03 09:55:48.054984-06\",\"2026-10-03 09:55:50.070087-06\",\"2026-10-03 09:55:52.048012-06\",\"2026-10-03 09:55:54.036126-06\",\"2026-10-03 09:55:54.363349-06\",\"2026-10-03 09:55:56.089763-06\",\"2026-10-03 09:55:56.786209-06\",\"2026-10-03 09:55:58.0357-06\",\"2026-10-03 09:56:00.048427-06\",\"2026-10-03 09:56:02.0358-06\",\"2026-10-03 09:56:05.282328-06\",\"2026-10-03 09:56:06.065302-06\",\"2026-10-03 09:56:08.058302-06\",\"2026-10-03 09:56:10.061985-06\",\"2026-10-03 09:56:12.085343-06\",\"2026-10-03 09:56:14.038997-06\",\"2026-10-03 09:56:14.272187-06\",\"2026-10-03 09:56:17.077888-06\",\"2026-10-03 09:56:19.038488-06\",\"2026-10-03 09:56:21.024446-06\",\"2026-10-03 09:56:23.051763-06\",\"2026-10-03 09:56:24.154019-06\",\"2026-10-03 09:56:25.0468-06\",\"2026-10-03 09:56:26.132788-06\",\"2026-10-03 09:56:27.056039-06\",\"2026-10-03 09:56:29.064364-06\",\"2026-10-03 09:56:31.064146-06\",\"2026-10-03 09:56:33.055616-06\",\"2026-10-03 09:56:35.450695-06\",\"2026-10-03 09:56:37.026512-06\",\"2026-10-03 09:56:39.07875-06\",\"2026-10-03 09:56:41.042431-06\",\"2026-10-03 09:56:43.087613-06\",\"2026-10-03 09:56:44.201461-06\",\"2026-10-03 09:56:45.041011-06\",\"2026-10-03 09:56:47.062612-06\",\"2026-10-03 09:56:49.055914-06\",\"2026-10-03 09:56:52.051366-06\",\"2026-10-03 09:56:54.028664-06\",\"2026-10-03 09:56:54.362909-06\",\"2026-10-03 09:56:56.050043-06\",\"2026-10-03 09:56:56.838775-06\",\"2026-10-03 09:56:58.078225-06\",\"2026-10-03 09:57:00.043038-06\",\"2026-10-03 09:57:02.080208-06\",\"2026-10-03 09:57:05.430182-06\",\"2026-10-03 09:57:06.04802-06\",\"2026-10-03 09:57:08.089128-06\",\"2026-10-03 09:57:10.044715-06\",\"2026-10-03 09:57:12.077883-06\",\"2026-10-03 09:57:14.011368-06\",\"2026-10-03 09:57:14.288693-06\",\"2026-10-03 09:57:16.033905-06\",\"2026-10-03 09:57:18.067481-06\",\"2026-10-03 09:57:20.07433-06\",\"2026-10-03 09:57:22.064309-06\",\"2026-10-03 09:57:24.0471-06\",\"2026-10-03 09:57:25.075389-06\"}"
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "conversation_id",
+        "null_frac": 0.0,
+        "n_distinct": -0.6526316,
+        "correlation": 0.6629153,
+        "most_common_vals": "{13,14,1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,67,68,99,100,131,132,163,164}",
+        "most_common_freqs": [
+          0.07017544,
+          0.05964912,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544
+        ],
+        "histogram_bounds": "{59,60,61,62,63,64,66,69,70,71,72,74,75,76,77,78,80,81,82,83,84,85,87,88,89,90,91,93,94,95,96,97,101,102,103,104,105,107,108,109,110,111,112,114,115,116,117,118,120,121,122,123,124,126,127,128,129,130,134,135,136,137,138,139,141,142,143,144,145,147,148,149,150,151,153,154,155,156,157,159,160,161,162,165,166,168,169,170,171,172,174,175,176,177,178,180,181,182,183,184,186}"
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "direction",
+        "null_frac": 0.0,
+        "n_distinct": 2.0,
+        "correlation": 0.5347665,
+        "most_common_vals": "{in,out}",
+        "most_common_freqs": [
+          0.72982454,
+          0.27017543
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "id",
+        "null_frac": 0.0,
+        "n_distinct": -1.0,
+        "correlation": 0.8963361,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": "{1,3,6,9,12,15,18,20,23,26,29,32,35,37,40,43,46,49,52,54,57,60,63,66,69,72,74,77,80,83,86,89,91,94,97,100,103,106,108,111,114,117,120,123,125,128,131,134,137,140,143,145,148,151,154,157,160,162,165,168,171,174,177,179,182,185,188,191,194,196,199,202,205,208,211,214,216,219,222,225,228,231,233,236,239,242,245,248,250,253,256,259,262,265,267,270,273,276,279,282,285}"
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "next_attempt_at",
+        "null_frac": 1.0,
+        "n_distinct": 0.0,
+        "correlation": null,
+        "most_common_vals": null,
+        "most_common_freqs": null,
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "organization_id",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.6527845,
+        "most_common_vals": "{3,1,2}",
+        "most_common_freqs": [
+          0.7859649,
+          0.112280704,
+          0.10175438
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "semantic_type",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": 0.815452,
+        "most_common_vals": "{\"\",safety_guidance,safety_signal}",
+        "most_common_freqs": [
+          0.9157895,
+          0.042105265,
+          0.042105265
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "status",
+        "null_frac": 0.0,
+        "n_distinct": 3.0,
+        "correlation": -0.004220168,
+        "most_common_vals": "{pending,processed,sent}",
+        "most_common_freqs": [
+          0.4280702,
+          0.3017544,
+          0.27017543
+        ],
+        "histogram_bounds": null
+      },
+      {
+        "tablename": "channels_message",
+        "attname": "turn_work_id",
+        "null_frac": 0.4280702,
+        "n_distinct": -0.2982456,
+        "correlation": 0.7994746,
+        "most_common_vals": "{6,1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,55,56,57,58,59,60,61,62,63,64,65,66,67,68,71,72,73,74,75,76,77,78,79,80,81,82,83}",
+        "most_common_freqs": [
+          0.010526316,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544,
+          0.007017544
+        ],
+        "histogram_bounds": "{22,38,53,54,69,70,84,85}"
+      }
+    ],
+    "table_stats": [
+      {
+        "relname": "agent_conversation",
+        "n_live_tup": 235,
+        "n_dead_tup": 86,
+        "n_mod_since_analyze": 209,
+        "last_vacuum": null,
+        "last_autovacuum": "2026-10-03 09:57:17.406583-06:00",
+        "last_analyze": null,
+        "last_autoanalyze": "2026-10-03 09:57:17.420433-06:00",
+        "analyze_count": 0,
+        "autoanalyze_count": 3
+      },
+      {
+        "relname": "agent_turnwork",
+        "n_live_tup": 110,
+        "n_dead_tup": 52,
+        "n_mod_since_analyze": 119,
+        "last_vacuum": null,
+        "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+        "last_analyze": null,
+        "last_autoanalyze": "2026-10-03 09:57:17.564792-06:00",
+        "analyze_count": 0,
+        "autoanalyze_count": 3
+      },
+      {
+        "relname": "channels_message",
+        "n_live_tup": 361,
+        "n_dead_tup": 120,
+        "n_mod_since_analyze": 278,
+        "last_vacuum": null,
+        "last_autovacuum": "2026-10-03 09:57:17.477320-06:00",
+        "last_analyze": null,
+        "last_autoanalyze": "2026-10-03 09:57:17.507415-06:00",
+        "analyze_count": 0,
+        "autoanalyze_count": 3
+      }
+    ],
+    "physical_messages": [
+      {
+        "status": "pending",
+        "rows": 151,
+        "blocks": 19,
+        "min_block": 2.0,
+        "max_block": 20.0
+      },
+      {
+        "status": "processed",
+        "rows": 111,
+        "blocks": 22,
+        "min_block": 0.0,
+        "max_block": 21.0
+      },
+      {
+        "status": "sent",
+        "rows": 100,
+        "blocks": 16,
+        "min_block": 0.0,
+        "max_block": 21.0
+      }
+    ],
+    "visibility": {
+      "agent_conversation": {
+        "all_visible": 0,
+        "all_frozen": 0
+      },
+      "channels_message": {
+        "all_visible": 2,
+        "all_frozen": 1
+      },
+      "agent_turnwork": {
+        "all_visible": 0,
+        "all_frozen": 0
+      }
+    },
+    "cardinality": {
+      "agent_conversation": 235,
+      "channels_message": 362,
+      "agent_turnwork": 110
+    },
+    "turnworks": [
+      {
+        "status": "COMPLETED",
+        "n": 110,
+        "due": 0
+      }
+    ],
+    "organizations": 3,
+    "connections": [
+      {
+        "pid": 58692,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "query_start": "2026-10-03 09:58:02.666957-06:00"
+      },
+      {
+        "pid": 60072,
+        "backend_type": "client backend",
+        "state": "active",
+        "wait_event_type": null,
+        "wait_event": null,
+        "query_start": "2026-10-03 09:58:02.671677-06:00"
+      },
+      {
+        "pid": 64312,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "query_start": "2026-10-03 09:58:02.185352-06:00"
+      },
+      {
+        "pid": 67132,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "query_start": "2026-10-03 09:58:02.024540-06:00"
+      },
+      {
+        "pid": 73428,
+        "backend_type": "client backend",
+        "state": "idle",
+        "wait_event_type": "Client",
+        "wait_event": "ClientRead",
+        "query_start": "2026-10-03 09:58:02.196652-06:00"
+      }
+    ],
+    "locks": [
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_authid",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_authid_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_authid_rolname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_database",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_database_datname_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_database_oid_index",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_locks",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "relation",
+        "relation": "pg_stat_activity",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 58692,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conta_organiz_2c2a13_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_created_by_id_3c106bf7",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_organization_id_aad6ba51",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_owner_id_34a07699",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_public_id_01eaf02d",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_public_id_01eaf02d_uniq",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_contactidentity_updated_by_id_1637e9c6",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conve_contact_b658a2_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conve_contact_b658a2_idx",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conve_organiz_34081f_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conve_organiz_34081f_idx",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_channel_account_id_b929d3ce",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_channel_account_id_b929d3ce",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_claimed_by_id_62f9da56",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_claimed_by_id_62f9da56",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_contact_id_36ec89e7",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_contact_id_36ec89e7",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_created_by_id_4cf1b1e4",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_created_by_id_4cf1b1e4",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_organization_id_1ef62d10",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_organization_id_1ef62d10",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_pkey",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_public_id_key",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_public_id_key",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_updated_by_id_01e8413e",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "agent_conversation_updated_by_id_01e8413e",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_ch_organiz_4f3b5f_idx",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_created_by_id_9d8c61d2",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_external_account_id_57914bff_like",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_external_account_id_key",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_organization_id_d8813233",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_public_id_64c77385",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_public_id_64c77385_uniq",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "channels_channelaccount_updated_by_id_a7c96321",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "contactidentity_unique_per_org_channel",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_is_demo_a7a4b553",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_is_demo_a7a4b553",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_pkey",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_pkey",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_public_id_5bab8b36",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_public_id_5bab8b36",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_public_id_5bab8b36_uniq",
+        "mode": "AccessShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "relation",
+        "relation": "organizations_organization_public_id_5bab8b36_uniq",
+        "mode": "RowShareLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "transactionid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      },
+      {
+        "pid": 60072,
+        "locktype": "virtualxid",
+        "relation": null,
+        "mode": "ExclusiveLock",
+        "granted": true
+      }
+    ]
+  }
+}

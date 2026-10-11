@@ -1,0 +1,45 @@
+{
+  "group": "individual-ownership-correction-01",
+  "baseline": "825db75df68bf076929fa787e77beefe96803350",
+  "scope": "FINITE_PHYSICAL_BOUNDARIES_ONLY",
+  "characterization": false,
+  "benchmark": false,
+  "sustainable_envelope": null,
+  "jobs": [
+    {
+      "case": "R2-08",
+      "variant": "safety_before"
+    },
+    {
+      "case": "R2-08",
+      "variant": "safety_after"
+    },
+    {
+      "case": "R2-08",
+      "variant": "takeover_before"
+    },
+    {
+      "case": "R2-08",
+      "variant": "takeover_after"
+    },
+    {
+      "case": "R2-08",
+      "variant": "w1_w2"
+    }
+  ],
+  "sources": {
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\assessment.py": "c5a1172972db4659e51a68ab77c6b15c4f74fcc48f964e874c38b46afd677016",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\controller.py": "d4fff1fc92eac763980b32ef723a31c8f40d5393dfc9a68bfba2e4acde52d1e5",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\evidence.py": "ea068336804c38fe144980ce58b8c979fbc498eb513000cedbd64c0f6b13a3f3",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\execution.py": "3e969f21968d7a15f4a6a40b4d8f79ddb18c8520067bc3d33611777f725ffb0d",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical.py": "a4f2aabb62fa97b104fcd34e1cbad4827cc886f456f3cad255cba1241769797b",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical_cases.py": "c847792c5c7c310a597d3e3225769ef03a7e54f6d40dc4bff49cb522ce1273ce",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical_guards.py": "cc19d5738781977a7c76e2e0dee37ded692c8f04f7276c944e21bdf1fa49a9f8",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical_matrix.py": "a73f714ff9726c5922111e8226284a3af2d91d0e67984b5eca081079831f747c",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\recipes.py": "148c605bbe988c1f6a10d7248c087399544cd7971bb689286404ed85b69acd18",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\replay.py": "e35affd53c794676f967cd5477c06fd09edf4204c79fb0d43d38a20da4e11c3d",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\runner.py": "5527e915053a1ece7533041e8b4e450bd361381bf11efe8abce8046f951f5f47",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\scenario_observations.py": "23d44a772de80bd05e6c09b56aaf45faf8462606e42bec399efd2162efcedba5",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\__init__.py": "b431a0d8b32a8c92fb70d3e9a764f85b64886b3bc6a3260e318405ad800b79b6"
+  }
+}

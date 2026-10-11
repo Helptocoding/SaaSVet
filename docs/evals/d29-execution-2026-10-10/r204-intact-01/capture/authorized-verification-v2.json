@@ -1,0 +1,359 @@
+{
+  "status": "PASS",
+  "case_id": "R2-04",
+  "run_id": "r204-intact-01",
+  "confirmed_base_reference": {
+    "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\d29-r102-base-2026-10-07\\confirmed-base-receipt.json",
+    "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56"
+  },
+  "synthetic_evidence": [],
+  "physical_evidence": [
+    "check-001.json",
+    "check-002.json",
+    "check-003.json",
+    "crash-barrier.json",
+    "crash-exit.json",
+    "crash.jsonl",
+    "db-000-committed-before-crash.json",
+    "db-001-base-begin.json",
+    "db-002-natural-expiry.json",
+    "db-003-base-end.json",
+    "db-004-final.json",
+    "db-005-fencing.json",
+    "execution-receipt-v2.json",
+    "fixed-anchor.json",
+    "ingress.jsonl",
+    "observed-window.json",
+    "offers.jsonl",
+    "participant-plan.json",
+    "participants-cleanup.json",
+    "phase-observations.jsonl",
+    "planner_1-wire.jsonl",
+    "planner_1.jsonl",
+    "planner_2-wire.jsonl",
+    "planner_2.jsonl",
+    "population-slots.jsonl",
+    "prelude-history.json",
+    "reclaim-base-preparation.json",
+    "schedule-offers.jsonl",
+    "schedule.json",
+    "sealed-job.json",
+    "sender-wire.jsonl",
+    "sender.jsonl",
+    "snapshots.jsonl",
+    "source-manifest.json"
+  ],
+  "base_recalibrated": false,
+  "new_base_generated": false,
+  "characterization": false,
+  "clock": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "r204-intact-01",
+          "ingress",
+          10608,
+          "3d328ac64c784778b079c0b99113d3cb"
+        ],
+        "calibrations": 12295,
+        "offset_ns": [
+          1791646404003402100,
+          1791646404003967000
+        ],
+        "last_seq": 42841,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "r204-intact-01",
+          "planner_1",
+          26216,
+          "06e0be09b97945e59d64520f951f5eb7"
+        ],
+        "calibrations": 41,
+        "offset_ns": [
+          1791646404003309400,
+          1791646404004015100
+        ],
+        "last_seq": 15330,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "r204-intact-01",
+          "planner_2",
+          26508,
+          "8fcea252d0d8492693fb713766daaefe"
+        ],
+        "calibrations": 38,
+        "offset_ns": [
+          1791646404003324900,
+          1791646404004007200
+        ],
+        "last_seq": 14737,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "r204-intact-01",
+          "sender",
+          15996,
+          "acf7003f37e6416ba09e97d9a22765b2"
+        ],
+        "calibrations": 98,
+        "offset_ns": [
+          1791646404003388100,
+          1791646404003981700
+        ],
+        "last_seq": 12857,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "errors": [],
+  "population": {
+    "offered_attempts": 25,
+    "accepted_durable_inputs": 25,
+    "represented_inputs": 25,
+    "technical_duplicates": 0,
+    "unresolved_offers": 0
+  },
+  "episodes": 25,
+  "ordinary_episodes": 24,
+  "works": 25,
+  "claims": 26,
+  "commits": 51,
+  "ordinary_acceptances_by_org": {
+    "1": 12,
+    "2": 12
+  },
+  "conversations_by_org": {
+    "1": [
+      1,
+      3,
+      5
+    ],
+    "2": [
+      2,
+      4,
+      6
+    ]
+  },
+  "causal_reclaim": [
+    {
+      "commit": [
+        1791657387202834400,
+        1791657387224512300
+      ],
+      "event": {
+        "schema": "e4-causal-claim-v1",
+        "event": "claim_bound",
+        "run_id": "r204-intact-01",
+        "session_id": "8fcea252d0d8492693fb713766daaefe",
+        "worker": "planner_2",
+        "os_pid": 26508,
+        "thread_id": 8348,
+        "connection_id": "c345563a18554562af0ec5a2d6f1d425",
+        "backend_pid": 21172,
+        "savepoint_ids": [],
+        "autocommit": false,
+        "transaction_id": "6e11ec130baf47d0a48cc1c54f9611b5",
+        "seq": 5817,
+        "monotonic_ns": 10983198822400,
+        "utc_ns": 1791657387202542400,
+        "span_id": "3c5f28d833f3474f97f2041dbb0dd37f",
+        "parent_span_id": "0fa3c12e95c14ef78c27bd4872267798",
+        "poll_id": "4cc8fbd4792847e384a170a26028cdcf",
+        "selection_id": "3521fbd396984852ade988c9fddbdda8",
+        "attempt_id": "0fa3c12e95c14ef78c27bd4872267798",
+        "conversation_id": 1,
+        "organization_id": 1,
+        "epoch": 0,
+        "turn_work_id": 1,
+        "lease_fingerprint": "d9e629e500a28028612c67ccc3c94eb0f4cac879694d85bb6a712cc139450a77",
+        "member_ids": null,
+        "claimed_at": "2026-10-10T18:36:27.163382+00:00",
+        "lease_expires_at": "2026-10-10T18:51:27.163382+00:00",
+        "attempts": 2
+      }
+    }
+  ],
+  "overlap": {
+    "passed": true,
+    "issues": [],
+    "accreditation": false,
+    "scope": "ADDITIONAL_RECLAIM_BASE_OVERLAP_GATE",
+    "actual_base_acceptances": 24
+  },
+  "demand": {
+    "missing": [],
+    "violations": [],
+    "planned_attempts_by_org_index": {
+      "0": 12,
+      "1": 12
+    },
+    "accepted_attempts_by_org_index": {
+      "0": 12,
+      "1": 12
+    },
+    "ready_episodes_by_org": {
+      "1": 12,
+      "2": 12
+    },
+    "ready_in_offer_window": 24,
+    "ready_after_offer_window": 0
+  },
+  "invariants": {
+    "missing": [],
+    "violations": [],
+    "witnesses": 74,
+    "checked": [
+      "tenant_membership",
+      "immutable_membership",
+      "outer_commit",
+      "durable_admission",
+      "N1_at_dispatch",
+      "no_HTTP_in_transaction",
+      "contained_destinations"
+    ]
+  },
+  "provider": {
+    "passed": true,
+    "issues": [],
+    "missing_service_work_ids": [],
+    "calls": 74,
+    "accreditation": false,
+    "scope": "ADDITIONAL_PROVIDER_ISOLATION_GATE"
+  },
+  "queue_samples": [
+    {
+      "offset_seconds": 0,
+      "counts": {
+        "1": [
+          0,
+          0
+        ],
+        "2": [
+          0,
+          0
+        ],
+        "global": [
+          0,
+          0
+        ]
+      },
+      "correlated_clock": true,
+      "db_ns_bounds": [
+        1791657356141129681,
+        1791657356141694581
+      ]
+    },
+    {
+      "offset_seconds": 120,
+      "counts": {
+        "1": [
+          0,
+          0
+        ],
+        "2": [
+          0,
+          0
+        ],
+        "global": [
+          0,
+          0
+        ]
+      },
+      "correlated_clock": true,
+      "db_ns_bounds": [
+        1791657476141129681,
+        1791657476141694581
+      ]
+    },
+    {
+      "offset_seconds": 240,
+      "counts": {
+        "1": [
+          0,
+          0
+        ],
+        "2": [
+          0,
+          0
+        ],
+        "global": [
+          0,
+          0
+        ]
+      },
+      "correlated_clock": true,
+      "db_ns_bounds": [
+        1791657596141129681,
+        1791657596141694581
+      ]
+    },
+    {
+      "offset_seconds": 360,
+      "counts": {
+        "1": [
+          0,
+          0
+        ],
+        "2": [
+          0,
+          0
+        ],
+        "global": [
+          0,
+          0
+        ]
+      },
+      "correlated_clock": true,
+      "db_ns_bounds": [
+        1791657716141129681,
+        1791657716141694581
+      ]
+    }
+  ],
+  "window_gate": {
+    "missing": [],
+    "violations": [],
+    "backlog": {
+      "1": "NO_GROWTH_OBSERVED",
+      "2": "NO_GROWTH_OBSERVED",
+      "global": "NO_GROWTH_OBSERVED"
+    }
+  },
+  "followup_monotonic_seconds": 240.6099271,
+  "prelude_partial_journal": {
+    "expected": true,
+    "os_pid": 26312,
+    "calibrations": 2
+  },
+  "observed_anchor": {
+    "sample_db_ns": 1791656494288150000,
+    "sample_monotonic_ns_bounds": [
+      10090283913000,
+      10090284985600
+    ],
+    "target_db_ns": 1791657356140891981,
+    "start_monotonic_ns": 10952137727581,
+    "lease_expiry_db_ns": 1791657386741415000,
+    "cadence_ns": 30600523019
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "status": "ACCREDITED",
+  "case_id": "R2-09",
+  "variant": "slow_meta",
+  "errors": [],
+  "clock_gate": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "r209-slow-01",
+          "ingress",
+          19584,
+          "abf9323ee49a4a739cb8adc6ff8e2293"
+        ],
+        "calibrations": 1129,
+        "offset_ns": [
+          1791646404003415900,
+          1791646404003920000
+        ],
+        "last_seq": 17313,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "r209-slow-01",
+          "planner_1",
+          5820,
+          "2b3ba04569a746459d22a8f6043792c4"
+        ],
+        "calibrations": 44,
+        "offset_ns": [
+          1791646404003309600,
+          1791646404004031500
+        ],
+        "last_seq": 10318,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "r209-slow-01",
+          "planner_2",
+          368,
+          "c08fe3b965124a1c93788ffac0e982ce"
+        ],
+        "calibrations": 47,
+        "offset_ns": [
+          1791646404003335600,
+          1791646404003976300
+        ],
+        "last_seq": 10860,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "r209-slow-01",
+          "sender",
+          2192,
+          "bb18ae06f1cc49af967d8599bd888573"
+        ],
+        "calibrations": 114,
+        "offset_ns": [
+          1791646404003342300,
+          1791646404004021100
+        ],
+        "last_seq": 10745,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "physical_execution": true,
+  "source_kind": "PROSPECTIVE_PHYSICAL_POSTGRESQL",
+  "synthetic_evidence": [],
+  "full_followup_observed": true,
+  "gates": {
+    "demand": {
+      "missing": [],
+      "violations": [],
+      "planned_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "accepted_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "ready_episodes_by_org": {
+        "1": 15,
+        "2": 14
+      },
+      "ready_in_offer_window": 23,
+      "ready_after_offer_window": 0
+    },
+    "invariants": {
+      "missing": [],
+      "violations": [],
+      "witnesses": 86,
+      "checked": [
+        "tenant_membership",
+        "immutable_membership",
+        "outer_commit",
+        "durable_admission",
+        "N1_at_dispatch",
+        "no_HTTP_in_transaction",
+        "contained_destinations"
+      ]
+    },
+    "windows": {
+      "missing": [],
+      "violations": [],
+      "backlog": {
+        "1": "NO_GROWTH_OBSERVED",
+        "2": "NO_GROWTH_OBSERVED",
+        "global": "NO_GROWTH_OBSERVED"
+      }
+    },
+    "scenario": {
+      "missing": [],
+      "violations": [],
+      "required": [
+        "sender_admitted",
+        "meta_dispatch",
+        "meta_result",
+        "ordinary_progress",
+        "no_blind_resend"
+      ],
+      "observed": [
+        "sender_admitted",
+        "meta_dispatch",
+        "meta_result",
+        "ordinary_progress",
+        "no_blind_resend"
+      ],
+      "contract_coverage": "PENDING"
+    },
+    "initial_cohort": {
+      "errors": [],
+      "physical_accreditation": false
+    },
+    "provider": {
+      "errors": [],
+      "physical_accreditation": false
+    }
+  },
+  "counts": {
+    "inputs": 30,
+    "episodes": 29,
+    "works": 29,
+    "llm_calls": 58,
+    "outbound": 28,
+    "meta_calls": 28,
+    "accepted_outputs": 28,
+    "deferred_works": 1,
+    "demonstrated_successor_links": 1,
+    "uncertain_outputs": 0
+  },
+  "next_step": "NEXT_SEQUENTIAL_REGRESSION_SUITE"
+}

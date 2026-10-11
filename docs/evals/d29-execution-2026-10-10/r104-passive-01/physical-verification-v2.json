@@ -1,0 +1,190 @@
+{
+  "status": "PENDING",
+  "case_id": "R1-04",
+  "variant": "forecasts",
+  "errors": [
+    "NATIVE_FORECAST_YIELD_THEN_ORDINARY_CORRECTION_NOT_OBSERVED",
+    "OLD_FORECAST_MISS_AND_SECOND_NATIVE_YIELD_NOT_OBSERVED",
+    "SCENARIO_BOUNDARY_NOT_OBSERVED:forecast_miss",
+    "SCENARIO_BOUNDARY_NOT_OBSERVED:future_eligibility",
+    "SCENARIO_BOUNDARY_NOT_OBSERVED:future_eligibility_again",
+    "SCENARIO_BOUNDARY_NOT_OBSERVED:ready_waiter"
+  ],
+  "original_provisional_result": "physical-verification.json",
+  "physical_attempts": 1,
+  "execution_archive_verified": true,
+  "counts": {
+    "inputs": 24,
+    "episodes": 24,
+    "works": 24,
+    "llm_calls": 48,
+    "outbound": 24,
+    "meta_calls": 24,
+    "accepted_outputs": 24,
+    "deferred_works": 0,
+    "demonstrated_successor_links": 0
+  },
+  "clock_gate": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "r104-passive-01",
+          "ingress",
+          3024,
+          "c93c8d56f4f94cc4b7fdd4e93e3ae5e5"
+        ],
+        "calibrations": 957,
+        "offset_ns": [
+          1791646404003426900,
+          1791646404003918400
+        ],
+        "last_seq": 16012,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "r104-passive-01",
+          "planner_1",
+          21880,
+          "50f70917eedd48b5ab88ab61dcfd311c"
+        ],
+        "calibrations": 38,
+        "offset_ns": [
+          1791646404003339000,
+          1791646404004025400
+        ],
+        "last_seq": 10025,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "r104-passive-01",
+          "planner_2",
+          13912,
+          "d1a0ed50c23f4d118f1256331fb5ce29"
+        ],
+        "calibrations": 38,
+        "offset_ns": [
+          1791646404003292300,
+          1791646404004065300
+        ],
+        "last_seq": 10035,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "r104-passive-01",
+          "sender",
+          16420,
+          "251851291b0945aa8733f2755528d529"
+        ],
+        "calibrations": 98,
+        "offset_ns": [
+          1791646404003340400,
+          1791646404003982500
+        ],
+        "last_seq": 9545,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "original_base_gates": {
+    "demand": {
+      "missing": [],
+      "violations": [],
+      "planned_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "accepted_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "ready_episodes_by_org": {
+        "1": 12,
+        "2": 12
+      },
+      "ready_in_offer_window": 24,
+      "ready_after_offer_window": 0
+    },
+    "windows": {
+      "missing": [],
+      "violations": [],
+      "backlog": {
+        "1": "NO_GROWTH_OBSERVED",
+        "2": "NO_GROWTH_OBSERVED",
+        "global": "NO_GROWTH_OBSERVED"
+      }
+    },
+    "invariants": {
+      "missing": [],
+      "violations": [],
+      "witnesses": 72,
+      "checked": [
+        "tenant_membership",
+        "immutable_membership",
+        "outer_commit",
+        "durable_admission",
+        "N1_at_dispatch",
+        "no_HTTP_in_transaction",
+        "contained_destinations"
+      ]
+    },
+    "preparation": {
+      "missing": [],
+      "violations": []
+    },
+    "scenario": {
+      "missing": [
+        "SCENARIO_BOUNDARY_NOT_OBSERVED:forecast_miss",
+        "SCENARIO_BOUNDARY_NOT_OBSERVED:future_eligibility",
+        "SCENARIO_BOUNDARY_NOT_OBSERVED:future_eligibility_again",
+        "SCENARIO_BOUNDARY_NOT_OBSERVED:ready_waiter"
+      ],
+      "violations": [],
+      "required": [
+        "ready_waiter",
+        "future_eligibility",
+        "forecast_miss",
+        "future_eligibility_again"
+      ],
+      "observed": [],
+      "contract_coverage": "OBSERVATION_ONLY"
+    }
+  },
+  "prequeries": 1082,
+  "forecast_yields": 0,
+  "cleanup": {
+    "all_reaped": true,
+    "failures": [],
+    "native_worker_pids": [
+      21880,
+      13912,
+      16420
+    ],
+    "exit_receipt": "participant-exits.json",
+    "after_resource_samples": 1,
+    "source": "CONTEMPORANEOUS_NATIVE_EXIT_AND_PROCESS_SNAPSHOTS"
+  },
+  "verification_source_hashes": {
+    "reverify_r104.py": "eaa4842cf65f73cd8b4d98a6b0a56adcb73cbeb53f9b968ca32f3973a8c1d5d7",
+    "native_cleanup.py": "5f9893ae56b63f05da61b4e92c45aa1b31909a8812aec485bf832b98b8bc1db2",
+    "test_native_cleanup.py": "aeeaeab44a65e5c3ee207342e8e85bdabdac7342645b0dd4dd6de010098c66eb",
+    "r104_verification.py": "8f906b6feacb3c22e17fa99a84e83f9edd6ac09dd134e0bc485cca168440eb7a"
+  }
+}

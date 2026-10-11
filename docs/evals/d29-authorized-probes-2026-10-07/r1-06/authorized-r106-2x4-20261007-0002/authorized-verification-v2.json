@@ -1,0 +1,549 @@
+{
+  "schema": "d29-dependent-physical-verification-v1",
+  "run_id": "authorized-r106-2x4-20261007-0002",
+  "case_id": "R1-06",
+  "variant": "backlog",
+  "job_sha256": "6475d7d5b318f6f1ca52a4157e8ae85199b710f067145badefe2e113944d7ff0",
+  "confirmed_base_reference": {
+    "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\d29-r102-base-2026-10-07\\confirmed-base-receipt.json",
+    "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56"
+  },
+  "base_recalibrated": false,
+  "new_base_generated": false,
+  "sustainable_envelope": null,
+  "commercial_capacity": null,
+  "evidence_synthetic": [],
+  "physical_frontier": {
+    "status": "PHYSICALLY_ACCREDITED",
+    "recipe": {
+      "missing": [],
+      "violations": [],
+      "required": [
+        "captured_backlog",
+        "natural_ready",
+        "workers_start",
+        "drain_cut"
+      ],
+      "observed": [
+        "captured_backlog",
+        "natural_ready",
+        "workers_start",
+        "drain_cut"
+      ],
+      "contract_coverage": "OBSERVATION_ONLY"
+    }
+  },
+  "load_condition": {
+    "status": "NOT_ACCREDITED",
+    "gates": {
+      "demand": {
+        "missing": [],
+        "violations": [
+          "COALESCED_DEMAND_NOT_DECLARED_READY_EPISODE_LOAD"
+        ],
+        "planned_attempts_by_org_index": {
+          "0": 12,
+          "1": 12
+        },
+        "accepted_attempts_by_org_index": {
+          "0": 12,
+          "1": 12
+        },
+        "ready_episodes_by_org": {
+          "1": 16,
+          "2": 15
+        },
+        "ready_in_offer_window": 23,
+        "ready_after_offer_window": 0
+      },
+      "windows": {
+        "missing": [],
+        "violations": [],
+        "backlog": {
+          "1": "NO_GROWTH_OBSERVED",
+          "2": "NO_GROWTH_OBSERVED",
+          "global": "NO_GROWTH_OBSERVED"
+        }
+      },
+      "invariants": {
+        "missing": [],
+        "violations": [],
+        "witnesses": 92,
+        "checked": [
+          "tenant_membership",
+          "immutable_membership",
+          "outer_commit",
+          "durable_admission",
+          "N1_at_dispatch",
+          "no_HTTP_in_transaction",
+          "contained_destinations"
+        ]
+      },
+      "preparation": {
+        "missing": [],
+        "violations": []
+      },
+      "scenario": {
+        "missing": [],
+        "violations": [],
+        "required": [
+          "captured_backlog",
+          "natural_ready",
+          "workers_start",
+          "drain_cut"
+        ],
+        "observed": [
+          "captured_backlog",
+          "natural_ready",
+          "workers_start",
+          "drain_cut"
+        ],
+        "contract_coverage": "OBSERVATION_ONLY"
+      }
+    },
+    "rates": [
+      1.9607508002652434,
+      1.9607508002652434
+    ],
+    "offer_seconds": 360,
+    "actual_acceptances_by_org_index": {
+      "0": 16,
+      "1": 16
+    },
+    "conversations_by_org": {
+      "1": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "2": [
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    "obligations_resolved": true
+  },
+  "prerequisites": [
+    {
+      "name": "CONFIRMED_BASE",
+      "status": "ACCEPTED"
+    }
+  ],
+  "status": "NOT_ACCREDITED",
+  "errors": [
+    "BASE_META_COST_NOT_COMPLETELY_OBSERVED",
+    "INVALID_RUN",
+    "OBSERVATION_GATES_NOT_SATISFIED"
+  ],
+  "verifier_passed": false,
+  "population": {
+    "offered_attempts": 32,
+    "accepted_durable_inputs": 32,
+    "represented_inputs": 32,
+    "technical_duplicates": 0,
+    "unresolved_offers": 0
+  },
+  "summary": {
+    "OBSERVED_WITHIN_TARGET": 31,
+    "OBSERVED_EXCESS": 0,
+    "PENDING_CENSORED": 0,
+    "NOT_YET_READY": 0,
+    "INDETERMINATE": 0,
+    "INVALID_EVIDENCE": 0
+  },
+  "maximum_wait_upper_seconds": 43.660301,
+  "invariants": {
+    "missing": [],
+    "violations": [],
+    "witnesses": 92,
+    "checked": [
+      "tenant_membership",
+      "immutable_membership",
+      "outer_commit",
+      "durable_admission",
+      "N1_at_dispatch",
+      "no_HTTP_in_transaction",
+      "contained_destinations"
+    ]
+  },
+  "participant_pids": {
+    "ingress": 78416,
+    "planner_1": 83352,
+    "planner_2": 80012,
+    "sender": 84008
+  },
+  "planner_spans": {
+    "planner_1": [
+      31930016610300,
+      32292050101700
+    ],
+    "planner_2": [
+      31931001012000,
+      32291278742800
+    ]
+  },
+  "physical_evidence": [
+    "ingress.jsonl",
+    "offers.jsonl",
+    "planner_1-wire.jsonl",
+    "planner_1.jsonl",
+    "planner_2-wire.jsonl",
+    "planner_2.jsonl",
+    "population-slots.jsonl",
+    "schedule-offers.jsonl",
+    "sender-wire.jsonl",
+    "sender.jsonl",
+    "snapshots.jsonl"
+  ],
+  "executor_dispositions": [
+    "INVALID_RUN"
+  ],
+  "independent_dispositions": [
+    "INVALID_RUN"
+  ],
+  "receipt_sha256": "aaf8d593789c82b0c1d223c133bd6afd1e5824b27fc323fcac1e8b87f63ad981",
+  "actual_population_slots": [
+    {
+      "message_id": 1,
+      "slot": 0,
+      "phase": "BACKLOG",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": null
+    },
+    {
+      "message_id": 2,
+      "slot": 1,
+      "phase": "BACKLOG",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": null
+    },
+    {
+      "message_id": 3,
+      "slot": 2,
+      "phase": "BACKLOG",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": null
+    },
+    {
+      "message_id": 4,
+      "slot": 3,
+      "phase": "BACKLOG",
+      "organization_id": 1,
+      "scenario_only": true,
+      "schedule_id": null
+    },
+    {
+      "message_id": 5,
+      "slot": 0,
+      "phase": "BACKLOG",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": null
+    },
+    {
+      "message_id": 6,
+      "slot": 1,
+      "phase": "BACKLOG",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": null
+    },
+    {
+      "message_id": 7,
+      "slot": 2,
+      "phase": "BACKLOG",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": null
+    },
+    {
+      "message_id": 8,
+      "slot": 3,
+      "phase": "BACKLOG",
+      "organization_id": 2,
+      "scenario_only": true,
+      "schedule_id": null
+    },
+    {
+      "message_id": 9,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:0"
+    },
+    {
+      "message_id": 10,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:0"
+    },
+    {
+      "message_id": 19,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:1"
+    },
+    {
+      "message_id": 20,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:1"
+    },
+    {
+      "message_id": 23,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:2"
+    },
+    {
+      "message_id": 24,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:2"
+    },
+    {
+      "message_id": 27,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:3"
+    },
+    {
+      "message_id": 28,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:3"
+    },
+    {
+      "message_id": 31,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:4"
+    },
+    {
+      "message_id": 32,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:4"
+    },
+    {
+      "message_id": 35,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:5"
+    },
+    {
+      "message_id": 36,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:5"
+    },
+    {
+      "message_id": 39,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:6"
+    },
+    {
+      "message_id": 40,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:6"
+    },
+    {
+      "message_id": 43,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:7"
+    },
+    {
+      "message_id": 44,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:7"
+    },
+    {
+      "message_id": 47,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:8"
+    },
+    {
+      "message_id": 48,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:8"
+    },
+    {
+      "message_id": 51,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:9"
+    },
+    {
+      "message_id": 52,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:9"
+    },
+    {
+      "message_id": 55,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:10"
+    },
+    {
+      "message_id": 56,
+      "slot": 0,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:10"
+    },
+    {
+      "message_id": 59,
+      "slot": 1,
+      "phase": "ORDINARY",
+      "organization_id": 1,
+      "scenario_only": false,
+      "schedule_id": "0:11"
+    },
+    {
+      "message_id": 60,
+      "slot": 2,
+      "phase": "ORDINARY",
+      "organization_id": 2,
+      "scenario_only": false,
+      "schedule_id": "1:11"
+    }
+  ],
+  "full_final_sha256": "e77c6787138135d470236db20898ce5b33d3695f49b5bc476ecf59a1fa9e7c23",
+  "clock": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "authorized-r106-2x4-20261007-0002",
+          "ingress",
+          78416,
+          "00c932612e0e48b4bf82a438f3bc3e61"
+        ],
+        "calibrations": 255,
+        "offset_ns": [
+          1791401830891947700,
+          1791401830892599700
+        ],
+        "last_seq": 5408,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "authorized-r106-2x4-20261007-0002",
+          "planner_1",
+          83352,
+          "5e01a6c8f1a04ee4ae396e4693c21d16"
+        ],
+        "calibrations": 50,
+        "offset_ns": [
+          1791401830891813600,
+          1791401830892690600
+        ],
+        "last_seq": 9403,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "authorized-r106-2x4-20261007-0002",
+          "planner_2",
+          80012,
+          "90d923d9074c45ce97a04e1126a189f4"
+        ],
+        "calibrations": 47,
+        "offset_ns": [
+          1791401830891883800,
+          1791401830892660900
+        ],
+        "last_seq": 9073,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "authorized-r106-2x4-20261007-0002",
+          "sender",
+          84008,
+          "b5d4641a196e4351893f1fce577f43ef"
+        ],
+        "calibrations": 122,
+        "offset_ns": [
+          1791401830891986300,
+          1791401830892575200
+        ],
+        "last_seq": 10314,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "base_unchanged": true,
+  "source_kind": "PHYSICAL_POSTGRESQL",
+  "synthetic_evidence": []
+}

@@ -1,0 +1,2479 @@
+{
+  "state": "CONTROLLER_CORE_VALIDATED / FULL_LIVE_MATRIX_NOT_READY",
+  "base_state": "CONFIRMED_BASE_ESTABLISHED",
+  "baseline": "825db75df68bf076929fa787e77beefe96803350",
+  "commits_created": 0,
+  "full_matrix_executed": false,
+  "characterization": false,
+  "maximum_search": false,
+  "E": null,
+  "commercial_capacity": null,
+  "scenarios": [
+    {
+      "case_id": "R1-03",
+      "run_id": "authorized-r103-unequal-20261007-0002",
+      "status": "PASS",
+      "errors": [],
+      "receipt_path": "r1-03\\authorized-r103-unequal-20261007-0002\\evidence-audit-v2.json",
+      "receipt_sha256": "e98ee7aa24195df5aa8a5c76fc2d866d2855b852e7e9a9a0caed2d90f0ebc982",
+      "accepted_inputs": 24,
+      "ordinary_inputs": 24,
+      "backlog_inputs": 0,
+      "episodes": 24,
+      "works": 24,
+      "claim_bound_events_by_role": {
+        "ingress": 0,
+        "planner_1": 12,
+        "planner_2": 12,
+        "sender": 0
+      },
+      "successful_outer_commits_by_role": {
+        "ingress": 58,
+        "planner_1": 75,
+        "planner_2": 74,
+        "sender": 72
+      },
+      "successful_outer_commits_total": 279,
+      "population_by_org": {
+        "1": 16,
+        "2": 8
+      },
+      "base_receipt_sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+      "base_changed": false,
+      "database_cleanup": {
+        "database": "test_d29_auth_fc3d209a6b09559b36b4",
+        "removed": true,
+        "created_by_this_run": true
+      },
+      "database_cleanup_provenance": "Shared cleanup receipt from the last R1-03 run; first setup cleanup was not separately retained.",
+      "pacing_observation": {
+        "case": "R1-03",
+        "run_id": "authorized-r103-unequal-20261007-0002",
+        "status": "PASS",
+        "offer_seconds": 360,
+        "confirmed_base_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "declared_scenario_rates": [
+          2.6143344003536577,
+          1.3071672001768289
+        ],
+        "scheduled_slots": 24,
+        "observed_ordinary_attempts": 24,
+        "max_observed_slot_lateness_seconds": 0.52573348,
+        "observations": [
+          {
+            "slot_id": "0:0",
+            "organization_id": 1,
+            "message_id": 1,
+            "planned_start_ns": 25407143715300,
+            "planned_end_ns": 25437744238320,
+            "actual_start_ns": 25407158550900,
+            "actual_finish_ns": 25407614637400,
+            "committed_offer_db_ns_bounds": [
+              1791427238101304000,
+              1791427238500404000
+            ],
+            "lateness_seconds": 0.0148356,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:1",
+            "organization_id": 1,
+            "message_id": 2,
+            "planned_start_ns": 25407143715300,
+            "planned_end_ns": 25437744238320,
+            "actual_start_ns": 25407628689700,
+            "actual_finish_ns": 25407959459900,
+            "committed_offer_db_ns_bounds": [
+              1791427238532833000,
+              1791427238845455000
+            ],
+            "lateness_seconds": 0.4849744,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:0",
+            "organization_id": 2,
+            "message_id": 5,
+            "planned_start_ns": 25437744238320,
+            "planned_end_ns": 25468344761340,
+            "actual_start_ns": 25437744727100,
+            "actual_finish_ns": 25437995672500,
+            "committed_offer_db_ns_bounds": [
+              1791427268644559000,
+              1791427268880854000
+            ],
+            "lateness_seconds": 0.00048878,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:2",
+            "organization_id": 1,
+            "message_id": 6,
+            "planned_start_ns": 25437744238320,
+            "planned_end_ns": 25468344761340,
+            "actual_start_ns": 25438013141800,
+            "actual_finish_ns": 25438264788600,
+            "committed_offer_db_ns_bounds": [
+              1791427268915277000,
+              1791427269137837000
+            ],
+            "lateness_seconds": 0.26890348,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:3",
+            "organization_id": 1,
+            "message_id": 9,
+            "planned_start_ns": 25468344761340,
+            "planned_end_ns": 25498945284360,
+            "actual_start_ns": 25468345404100,
+            "actual_finish_ns": 25468659298800,
+            "committed_offer_db_ns_bounds": [
+              1791427299243361000,
+              1791427299543548000
+            ],
+            "lateness_seconds": 0.00064276,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:1",
+            "organization_id": 2,
+            "message_id": 10,
+            "planned_start_ns": 25468344761340,
+            "planned_end_ns": 25498945284360,
+            "actual_start_ns": 25468665119300,
+            "actual_finish_ns": 25468961123000,
+            "committed_offer_db_ns_bounds": [
+              1791427299565921000,
+              1791427299836391000
+            ],
+            "lateness_seconds": 0.32035796,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:4",
+            "organization_id": 1,
+            "message_id": 13,
+            "planned_start_ns": 25498945284360,
+            "planned_end_ns": 25529545807380,
+            "actual_start_ns": 25498945923100,
+            "actual_finish_ns": 25499141474200,
+            "committed_offer_db_ns_bounds": [
+              1791427329848709000,
+              1791427330026330000
+            ],
+            "lateness_seconds": 0.00063874,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:5",
+            "organization_id": 1,
+            "message_id": 14,
+            "planned_start_ns": 25498945284360,
+            "planned_end_ns": 25529545807380,
+            "actual_start_ns": 25499149516100,
+            "actual_finish_ns": 25499360588000,
+            "committed_offer_db_ns_bounds": [
+              1791427330051191000,
+              1791427330248966000
+            ],
+            "lateness_seconds": 0.20423174,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:2",
+            "organization_id": 2,
+            "message_id": 17,
+            "planned_start_ns": 25529545807380,
+            "planned_end_ns": 25560146330400,
+            "actual_start_ns": 25529549988900,
+            "actual_finish_ns": 25529986076700,
+            "committed_offer_db_ns_bounds": [
+              1791427360508614000,
+              1791427360850220000
+            ],
+            "lateness_seconds": 0.00418152,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:6",
+            "organization_id": 1,
+            "message_id": 18,
+            "planned_start_ns": 25529545807380,
+            "planned_end_ns": 25560146330400,
+            "actual_start_ns": 25530031465400,
+            "actual_finish_ns": 25530263118500,
+            "committed_offer_db_ns_bounds": [
+              1791427360936529000,
+              1791427361143221000
+            ],
+            "lateness_seconds": 0.48565802,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:7",
+            "organization_id": 1,
+            "message_id": 21,
+            "planned_start_ns": 25560146330400,
+            "planned_end_ns": 25590746853420,
+            "actual_start_ns": 25560146484100,
+            "actual_finish_ns": 25560367565900,
+            "committed_offer_db_ns_bounds": [
+              1791427391044872000,
+              1791427391255218000
+            ],
+            "lateness_seconds": 0.0001537,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:3",
+            "organization_id": 2,
+            "message_id": 22,
+            "planned_start_ns": 25560146330400,
+            "planned_end_ns": 25590746853420,
+            "actual_start_ns": 25560378848100,
+            "actual_finish_ns": 25560690893700,
+            "committed_offer_db_ns_bounds": [
+              1791427391283003000,
+              1791427391545314000
+            ],
+            "lateness_seconds": 0.2325177,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:8",
+            "organization_id": 1,
+            "message_id": 25,
+            "planned_start_ns": 25590746853420,
+            "planned_end_ns": 25621347376440,
+            "actual_start_ns": 25590747251200,
+            "actual_finish_ns": 25591246292500,
+            "committed_offer_db_ns_bounds": [
+              1791427421717935000,
+              1791427422090358000
+            ],
+            "lateness_seconds": 0.00039778,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:9",
+            "organization_id": 1,
+            "message_id": 26,
+            "planned_start_ns": 25590746853420,
+            "planned_end_ns": 25621347376440,
+            "actual_start_ns": 25591272586900,
+            "actual_finish_ns": 25591513513400,
+            "committed_offer_db_ns_bounds": [
+              1791427422189280000,
+              1791427422399646000
+            ],
+            "lateness_seconds": 0.52573348,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:4",
+            "organization_id": 2,
+            "message_id": 29,
+            "planned_start_ns": 25621347376440,
+            "planned_end_ns": 25651947899460,
+            "actual_start_ns": 25621347886600,
+            "actual_finish_ns": 25621698558100,
+            "committed_offer_db_ns_bounds": [
+              1791427452251756000,
+              1791427452572201000
+            ],
+            "lateness_seconds": 0.00051016,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:10",
+            "organization_id": 1,
+            "message_id": 30,
+            "planned_start_ns": 25621347376440,
+            "planned_end_ns": 25651947899460,
+            "actual_start_ns": 25621711336600,
+            "actual_finish_ns": 25621987902200,
+            "committed_offer_db_ns_bounds": [
+              1791427452610933000,
+              1791427452871202000
+            ],
+            "lateness_seconds": 0.36396016,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:11",
+            "organization_id": 1,
+            "message_id": 33,
+            "planned_start_ns": 25651947899460,
+            "planned_end_ns": 25682548422480,
+            "actual_start_ns": 25651951273500,
+            "actual_finish_ns": 25652181305400,
+            "committed_offer_db_ns_bounds": [
+              1791427482897266000,
+              1791427483065470000
+            ],
+            "lateness_seconds": 0.00337404,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:5",
+            "organization_id": 2,
+            "message_id": 34,
+            "planned_start_ns": 25651947899460,
+            "planned_end_ns": 25682548422480,
+            "actual_start_ns": 25652183503300,
+            "actual_finish_ns": 25652324763600,
+            "committed_offer_db_ns_bounds": [
+              1791427483080741000,
+              1791427483213334000
+            ],
+            "lateness_seconds": 0.23560384,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:12",
+            "organization_id": 1,
+            "message_id": 37,
+            "planned_start_ns": 25682548422480,
+            "planned_end_ns": 25713148945500,
+            "actual_start_ns": 25682566606300,
+            "actual_finish_ns": 25682937460000,
+            "committed_offer_db_ns_bounds": [
+              1791427513469403000,
+              1791427513818692000
+            ],
+            "lateness_seconds": 0.01818382,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:13",
+            "organization_id": 1,
+            "message_id": 38,
+            "planned_start_ns": 25682548422480,
+            "planned_end_ns": 25713148945500,
+            "actual_start_ns": 25682972443300,
+            "actual_finish_ns": 25683201688800,
+            "committed_offer_db_ns_bounds": [
+              1791427513877811000,
+              1791427514086103000
+            ],
+            "lateness_seconds": 0.42402082,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:6",
+            "organization_id": 2,
+            "message_id": 41,
+            "planned_start_ns": 25713148945500,
+            "planned_end_ns": 25743749468520,
+            "actual_start_ns": 25713149340500,
+            "actual_finish_ns": 25713462587800,
+            "committed_offer_db_ns_bounds": [
+              1791427544050714000,
+              1791427544345925000
+            ],
+            "lateness_seconds": 0.000395,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:14",
+            "organization_id": 1,
+            "message_id": 42,
+            "planned_start_ns": 25713148945500,
+            "planned_end_ns": 25743749468520,
+            "actual_start_ns": 25713478313300,
+            "actual_finish_ns": 25713672153900,
+            "committed_offer_db_ns_bounds": [
+              1791427544380797000,
+              1791427544561280000
+            ],
+            "lateness_seconds": 0.3293678,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:15",
+            "organization_id": 1,
+            "message_id": 45,
+            "planned_start_ns": 25743749468520,
+            "planned_end_ns": 25767143715300,
+            "actual_start_ns": 25743751224300,
+            "actual_finish_ns": 25743950147900,
+            "committed_offer_db_ns_bounds": [
+              1791427574650368000,
+              1791427574838624000
+            ],
+            "lateness_seconds": 0.00175578,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:7",
+            "organization_id": 2,
+            "message_id": 46,
+            "planned_start_ns": 25743749468520,
+            "planned_end_ns": 25767143715300,
+            "actual_start_ns": 25743953842700,
+            "actual_finish_ns": 25744131489900,
+            "committed_offer_db_ns_bounds": [
+              1791427574850900000,
+              1791427575013911000
+            ],
+            "lateness_seconds": 0.20437418,
+            "conforms": true
+          }
+        ],
+        "issues": [],
+        "schedule_sha256": "868774308f8e61bee35066badeb12f357bb61ccfb8b4a61eee8b2eb31c00f505",
+        "role": "Pacing conformance of preserved physical offers; no calculation of E or capacity."
+      },
+      "captured_source_integrity": {
+        "case": "R1-03",
+        "run_id": "authorized-r103-unequal-20261007-0002",
+        "expected_backend_sources": 809,
+        "captured_backend_sources": 809,
+        "backend_mismatches": [],
+        "unexpected_sources": [],
+        "revision2_prelaunch_seal_present": false,
+        "revision2_script_mismatches": [],
+        "source_manifest_sha256": "e4f2056d5e9dae0ccfaf2a75284e07603ea61771b6238df9f95af50c16adb33b",
+        "plan_sha256": "d705246f7da189760d43963fbd99cc5e1814d1038ab6878859362f3384f8aa56",
+        "source_integrity_passed": true
+      },
+      "evidence_separation": {
+        "physical_evidence": "r1-03\\authorized-r103-unequal-20261007-0002\\evidence-audit-v2.json",
+        "synthetic_or_replay_used_for_accreditation": false,
+        "confirmed_base": {
+          "state": "CONFIRMED_BASE_ESTABLISHED",
+          "receipt": "../d29-r102-base-2026-10-07/confirmed-base-receipt.json",
+          "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+          "changed": false
+        },
+        "physical_frontier": "PASS",
+        "complete_load_condition": "PASS",
+        "pending_requirement": null
+      }
+    },
+    {
+      "case_id": "R1-06",
+      "run_id": "authorized-r106-2x4-20261007-0002",
+      "status": "NOT_ACCREDITED",
+      "errors": [
+        "BASE_META_COST_NOT_COMPLETELY_OBSERVED",
+        "INVALID_RUN",
+        "OBSERVATION_GATES_NOT_SATISFIED"
+      ],
+      "receipt_path": "r1-06\\authorized-r106-2x4-20261007-0002\\authorized-verification-v2.json",
+      "receipt_sha256": "a773d020598349e4895af571a99f3deb663c829552e5d5df57ade237ea885341",
+      "accepted_inputs": 32,
+      "ordinary_inputs": 24,
+      "backlog_inputs": 8,
+      "episodes": 31,
+      "works": 31,
+      "claim_bound_events_by_role": {
+        "ingress": 0,
+        "planner_1": 16,
+        "planner_2": 15,
+        "sender": 0
+      },
+      "successful_outer_commits_by_role": {
+        "ingress": 77,
+        "planner_1": 98,
+        "planner_2": 96,
+        "sender": 90
+      },
+      "successful_outer_commits_total": 361,
+      "population_by_org": {
+        "1": 16,
+        "2": 15
+      },
+      "base_receipt_sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+      "base_changed": false,
+      "database_cleanup": {
+        "database": "test_d29_auth_e480a92bd3e9c3e5b8b1",
+        "removed": true,
+        "created_by_this_run": true
+      },
+      "physical_frontier": "PASS",
+      "pacing_observation": {
+        "case": "R1-06",
+        "run_id": "authorized-r106-2x4-20261007-0002",
+        "status": "PASS",
+        "offer_seconds": 360,
+        "confirmed_base_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "declared_scenario_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "scheduled_slots": 24,
+        "observed_ordinary_attempts": 24,
+        "max_observed_slot_lateness_seconds": 1.18460948,
+        "observations": [
+          {
+            "slot_id": "0:0",
+            "organization_id": 1,
+            "message_id": 9,
+            "planned_start_ns": 31931866467800,
+            "planned_end_ns": 31962466990820,
+            "actual_start_ns": 31931921312600,
+            "actual_finish_ns": 31932378306100,
+            "committed_offer_db_ns_bounds": [
+              1791433762843490000,
+              1791433763239659000
+            ],
+            "lateness_seconds": 0.0548448,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:0",
+            "organization_id": 2,
+            "message_id": 10,
+            "planned_start_ns": 31931866467800,
+            "planned_end_ns": 31962466990820,
+            "actual_start_ns": 31932438384100,
+            "actual_finish_ns": 31932813277300,
+            "committed_offer_db_ns_bounds": [
+              1791433763349674000,
+              1791433763693893000
+            ],
+            "lateness_seconds": 0.5719163,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:1",
+            "organization_id": 1,
+            "message_id": 19,
+            "planned_start_ns": 31962466990820,
+            "planned_end_ns": 31993067513840,
+            "actual_start_ns": 31962468394500,
+            "actual_finish_ns": 31963582138200,
+            "committed_offer_db_ns_bounds": [
+              1791433794048243000,
+              1791433794456325000
+            ],
+            "lateness_seconds": 0.00140368,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:1",
+            "organization_id": 2,
+            "message_id": 20,
+            "planned_start_ns": 31962466990820,
+            "planned_end_ns": 31993067513840,
+            "actual_start_ns": 31963651600300,
+            "actual_finish_ns": 31964212679300,
+            "committed_offer_db_ns_bounds": [
+              1791433794619527000,
+              1791433795089127000
+            ],
+            "lateness_seconds": 1.18460948,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:2",
+            "organization_id": 1,
+            "message_id": 23,
+            "planned_start_ns": 31993067513840,
+            "planned_end_ns": 32023668036860,
+            "actual_start_ns": 31993067773300,
+            "actual_finish_ns": 31993248028700,
+            "committed_offer_db_ns_bounds": [
+              1791433823965493000,
+              1791433824133025000
+            ],
+            "lateness_seconds": 0.00025946,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:2",
+            "organization_id": 2,
+            "message_id": 24,
+            "planned_start_ns": 31993067513840,
+            "planned_end_ns": 32023668036860,
+            "actual_start_ns": 31993258397300,
+            "actual_finish_ns": 31993484177700,
+            "committed_offer_db_ns_bounds": [
+              1791433824158001000,
+              1791433824368769000
+            ],
+            "lateness_seconds": 0.19088346,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:3",
+            "organization_id": 1,
+            "message_id": 27,
+            "planned_start_ns": 32023668036860,
+            "planned_end_ns": 32054268559880,
+            "actual_start_ns": 32023669900300,
+            "actual_finish_ns": 32024146404900,
+            "committed_offer_db_ns_bounds": [
+              1791433854726415000,
+              1791433855032629000
+            ],
+            "lateness_seconds": 0.00186344,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:3",
+            "organization_id": 2,
+            "message_id": 28,
+            "planned_start_ns": 32023668036860,
+            "planned_end_ns": 32054268559880,
+            "actual_start_ns": 32024162758400,
+            "actual_finish_ns": 32024497872400,
+            "committed_offer_db_ns_bounds": [
+              1791433855062863000,
+              1791433855350574000
+            ],
+            "lateness_seconds": 0.49472154,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:4",
+            "organization_id": 1,
+            "message_id": 31,
+            "planned_start_ns": 32054268559880,
+            "planned_end_ns": 32084869082900,
+            "actual_start_ns": 32054275032200,
+            "actual_finish_ns": 32054575254500,
+            "committed_offer_db_ns_bounds": [
+              1791433885176651000,
+              1791433885454488000
+            ],
+            "lateness_seconds": 0.00647232,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:4",
+            "organization_id": 2,
+            "message_id": 32,
+            "planned_start_ns": 32054268559880,
+            "planned_end_ns": 32084869082900,
+            "actual_start_ns": 32054652314100,
+            "actual_finish_ns": 32055104223500,
+            "committed_offer_db_ns_bounds": [
+              1791433885561490000,
+              1791433885920221000
+            ],
+            "lateness_seconds": 0.38375422,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:5",
+            "organization_id": 1,
+            "message_id": 35,
+            "planned_start_ns": 32084869082900,
+            "planned_end_ns": 32115469605920,
+            "actual_start_ns": 32084876025000,
+            "actual_finish_ns": 32085344896800,
+            "committed_offer_db_ns_bounds": [
+              1791433915816722000,
+              1791433916212999000
+            ],
+            "lateness_seconds": 0.0069421,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:5",
+            "organization_id": 2,
+            "message_id": 36,
+            "planned_start_ns": 32084869082900,
+            "planned_end_ns": 32115469605920,
+            "actual_start_ns": 32085435722200,
+            "actual_finish_ns": 32086014324900,
+            "committed_offer_db_ns_bounds": [
+              1791433916335561000,
+              1791433916851732000
+            ],
+            "lateness_seconds": 0.5666393,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:6",
+            "organization_id": 1,
+            "message_id": 39,
+            "planned_start_ns": 32115469605920,
+            "planned_end_ns": 32146070128940,
+            "actual_start_ns": 32115476164400,
+            "actual_finish_ns": 32115789392300,
+            "committed_offer_db_ns_bounds": [
+              1791433946384231000,
+              1791433946674088000
+            ],
+            "lateness_seconds": 0.00655848,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:6",
+            "organization_id": 2,
+            "message_id": 40,
+            "planned_start_ns": 32115469605920,
+            "planned_end_ns": 32146070128940,
+            "actual_start_ns": 32115817502900,
+            "actual_finish_ns": 32116105105600,
+            "committed_offer_db_ns_bounds": [
+              1791433946725316000,
+              1791433946989180000
+            ],
+            "lateness_seconds": 0.34789698,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:7",
+            "organization_id": 1,
+            "message_id": 43,
+            "planned_start_ns": 32146070128940,
+            "planned_end_ns": 32176670651960,
+            "actual_start_ns": 32146072398400,
+            "actual_finish_ns": 32146603730900,
+            "committed_offer_db_ns_bounds": [
+              1791433976979432000,
+              1791433977491006000
+            ],
+            "lateness_seconds": 0.00226946,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:7",
+            "organization_id": 2,
+            "message_id": 44,
+            "planned_start_ns": 32146070128940,
+            "planned_end_ns": 32176670651960,
+            "actual_start_ns": 32146640042800,
+            "actual_finish_ns": 32146963959200,
+            "committed_offer_db_ns_bounds": [
+              1791433977545517000,
+              1791433977851724000
+            ],
+            "lateness_seconds": 0.56991386,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:8",
+            "organization_id": 1,
+            "message_id": 47,
+            "planned_start_ns": 32176670651960,
+            "planned_end_ns": 32207271174980,
+            "actual_start_ns": 32176670848400,
+            "actual_finish_ns": 32176858667200,
+            "committed_offer_db_ns_bounds": [
+              1791434007567735000,
+              1791434007744895000
+            ],
+            "lateness_seconds": 0.00019644,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:8",
+            "organization_id": 2,
+            "message_id": 48,
+            "planned_start_ns": 32176670651960,
+            "planned_end_ns": 32207271174980,
+            "actual_start_ns": 32176882543700,
+            "actual_finish_ns": 32177107280400,
+            "committed_offer_db_ns_bounds": [
+              1791434007781649000,
+              1791434007987993000
+            ],
+            "lateness_seconds": 0.21189174,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:9",
+            "organization_id": 1,
+            "message_id": 51,
+            "planned_start_ns": 32207271174980,
+            "planned_end_ns": 32237871698000,
+            "actual_start_ns": 32207273221600,
+            "actual_finish_ns": 32207722044000,
+            "committed_offer_db_ns_bounds": [
+              1791434038238073000,
+              1791434038599812000
+            ],
+            "lateness_seconds": 0.00204662,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:9",
+            "organization_id": 2,
+            "message_id": 52,
+            "planned_start_ns": 32207271174980,
+            "planned_end_ns": 32237871698000,
+            "actual_start_ns": 32207752510900,
+            "actual_finish_ns": 32207986690800,
+            "committed_offer_db_ns_bounds": [
+              1791434038660113000,
+              1791434038873890000
+            ],
+            "lateness_seconds": 0.48133592,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:10",
+            "organization_id": 1,
+            "message_id": 55,
+            "planned_start_ns": 32237871698000,
+            "planned_end_ns": 32268472221020,
+            "actual_start_ns": 32237872297900,
+            "actual_finish_ns": 32238162307100,
+            "committed_offer_db_ns_bounds": [
+              1791434068770272000,
+              1791434069049392000
+            ],
+            "lateness_seconds": 0.0005999,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:10",
+            "organization_id": 2,
+            "message_id": 56,
+            "planned_start_ns": 32237871698000,
+            "planned_end_ns": 32268472221020,
+            "actual_start_ns": 32238195362500,
+            "actual_finish_ns": 32238483145300,
+            "committed_offer_db_ns_bounds": [
+              1791434069100049000,
+              1791434069364919000
+            ],
+            "lateness_seconds": 0.3236645,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:11",
+            "organization_id": 1,
+            "message_id": 59,
+            "planned_start_ns": 32268472221020,
+            "planned_end_ns": 32291866467800,
+            "actual_start_ns": 32268473165500,
+            "actual_finish_ns": 32268791651900,
+            "committed_offer_db_ns_bounds": [
+              1791434099403865000,
+              1791434099660063000
+            ],
+            "lateness_seconds": 0.00094448,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:11",
+            "organization_id": 2,
+            "message_id": 60,
+            "planned_start_ns": 32268472221020,
+            "planned_end_ns": 32291866467800,
+            "actual_start_ns": 32268853796100,
+            "actual_finish_ns": 32269231031300,
+            "committed_offer_db_ns_bounds": [
+              1791434099758016000,
+              1791434100082849000
+            ],
+            "lateness_seconds": 0.38157508,
+            "conforms": true
+          }
+        ],
+        "issues": [],
+        "schedule_sha256": "77e48b9d5f0f6bcb62ab351f3101f72921cfa18677616ba24109383a62912f2f",
+        "role": "Pacing conformance of preserved physical offers; no calculation of E or capacity."
+      },
+      "captured_source_integrity": {
+        "case": "R1-06",
+        "run_id": "authorized-r106-2x4-20261007-0002",
+        "expected_backend_sources": 809,
+        "captured_backend_sources": 809,
+        "backend_mismatches": [],
+        "unexpected_sources": [],
+        "revision2_prelaunch_seal_present": true,
+        "revision2_script_mismatches": [],
+        "source_manifest_sha256": "e4f2056d5e9dae0ccfaf2a75284e07603ea61771b6238df9f95af50c16adb33b",
+        "plan_sha256": "4511fdb5dc7b310b7db3a74e5e3f6accd6c2dbc3e67c535b1910a8db2aeca9a2",
+        "source_integrity_passed": true
+      },
+      "evidence_separation": {
+        "physical_evidence": "r1-06\\authorized-r106-2x4-20261007-0002\\authorized-verification-v2.json",
+        "synthetic_or_replay_used_for_accreditation": false,
+        "confirmed_base": {
+          "state": "CONFIRMED_BASE_ESTABLISHED",
+          "receipt": "../d29-r102-base-2026-10-07/confirmed-base-receipt.json",
+          "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+          "changed": false
+        },
+        "physical_frontier": "BACKLOG_FRONTIER_PASS",
+        "complete_load_condition": "NOT_ACCREDITED",
+        "pending_requirement": "Prospective R1-06 input/episode and deferred response gate reconciliation"
+      }
+    },
+    {
+      "case_id": "R2-02",
+      "run_id": "authorized-r202-blocked-20261007-0002",
+      "status": "PASS",
+      "errors": [],
+      "receipt_path": "r2-02\\authorized-r202-blocked-20261007-0002\\evidence-audit-v2.json",
+      "receipt_sha256": "6fdfe9ffb5539a2a2a7f535f52930f4e7bfcd6cb9e6f63c4fb8406cd1da01eb2",
+      "accepted_inputs": 24,
+      "ordinary_inputs": 24,
+      "backlog_inputs": 0,
+      "episodes": 23,
+      "works": 23,
+      "claim_bound_events_by_role": {
+        "ingress": 0,
+        "planner_1": 9,
+        "planner_2": 14,
+        "sender": 0
+      },
+      "successful_outer_commits_by_role": {
+        "ingress": 58,
+        "planner_1": 57,
+        "planner_2": 84,
+        "sender": 66
+      },
+      "successful_outer_commits_total": 265,
+      "population_by_org": {
+        "1": 11,
+        "2": 12
+      },
+      "base_receipt_sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+      "base_changed": false,
+      "database_cleanup": {
+        "database": "test_d29_auth_2e07e43af9f2c9bac684",
+        "removed": true,
+        "created_by_this_run": true
+      },
+      "pacing_observation": {
+        "case": "R2-02",
+        "run_id": "authorized-r202-blocked-20261007-0002",
+        "status": "PASS",
+        "offer_seconds": 360,
+        "confirmed_base_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "declared_scenario_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "scheduled_slots": 24,
+        "observed_ordinary_attempts": 24,
+        "max_observed_slot_lateness_seconds": 0.38955598,
+        "observations": [
+          {
+            "slot_id": "0:0",
+            "organization_id": 1,
+            "message_id": 1,
+            "planned_start_ns": 26410403251300,
+            "planned_end_ns": 26441003774320,
+            "actual_start_ns": 26410413979800,
+            "actual_finish_ns": 26410746822500,
+            "committed_offer_db_ns_bounds": [
+              1791428241351013000,
+              1791428241633906000
+            ],
+            "lateness_seconds": 0.0107285,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:0",
+            "organization_id": 2,
+            "message_id": 2,
+            "planned_start_ns": 26410403251300,
+            "planned_end_ns": 26441003774320,
+            "actual_start_ns": 26410754787400,
+            "actual_finish_ns": 26411001286400,
+            "committed_offer_db_ns_bounds": [
+              1791428241657724000,
+              1791428241886363000
+            ],
+            "lateness_seconds": 0.3515361,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:1",
+            "organization_id": 1,
+            "message_id": 4,
+            "planned_start_ns": 26441003774320,
+            "planned_end_ns": 26471604297340,
+            "actual_start_ns": 26441006319600,
+            "actual_finish_ns": 26441339041300,
+            "committed_offer_db_ns_bounds": [
+              1791428271911837000,
+              1791428272198246000
+            ],
+            "lateness_seconds": 0.00254528,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:1",
+            "organization_id": 2,
+            "message_id": 5,
+            "planned_start_ns": 26441003774320,
+            "planned_end_ns": 26471604297340,
+            "actual_start_ns": 26441393079100,
+            "actual_finish_ns": 26441674053600,
+            "committed_offer_db_ns_bounds": [
+              1791428272297405000,
+              1791428272557966000
+            ],
+            "lateness_seconds": 0.38930478,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:2",
+            "organization_id": 1,
+            "message_id": 7,
+            "planned_start_ns": 26471604297340,
+            "planned_end_ns": 26502204820360,
+            "actual_start_ns": 26471604467400,
+            "actual_finish_ns": 26471736157700,
+            "committed_offer_db_ns_bounds": [
+              1791428302501858000,
+              1791428302625728000
+            ],
+            "lateness_seconds": 0.00017006,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:2",
+            "organization_id": 2,
+            "message_id": 8,
+            "planned_start_ns": 26471604297340,
+            "planned_end_ns": 26502204820360,
+            "actual_start_ns": 26471739025600,
+            "actual_finish_ns": 26471907345800,
+            "committed_offer_db_ns_bounds": [
+              1791428302635608000,
+              1791428302795988000
+            ],
+            "lateness_seconds": 0.13472826,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:3",
+            "organization_id": 1,
+            "message_id": 10,
+            "planned_start_ns": 26502204820360,
+            "planned_end_ns": 26532805343380,
+            "actual_start_ns": 26502205151100,
+            "actual_finish_ns": 26502453436500,
+            "committed_offer_db_ns_bounds": [
+              1791428333102720000,
+              1791428333268724000
+            ],
+            "lateness_seconds": 0.00033074,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:3",
+            "organization_id": 2,
+            "message_id": 11,
+            "planned_start_ns": 26502204820360,
+            "planned_end_ns": 26532805343380,
+            "actual_start_ns": 26502519836400,
+            "actual_finish_ns": 26502888282700,
+            "committed_offer_db_ns_bounds": [
+              1791428333419698000,
+              1791428333765810000
+            ],
+            "lateness_seconds": 0.31501604,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:4",
+            "organization_id": 1,
+            "message_id": 13,
+            "planned_start_ns": 26532805343380,
+            "planned_end_ns": 26563405866400,
+            "actual_start_ns": 26532805489100,
+            "actual_finish_ns": 26532975902600,
+            "committed_offer_db_ns_bounds": [
+              1791428363702198000,
+              1791428363863010000
+            ],
+            "lateness_seconds": 0.00014572,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:4",
+            "organization_id": 2,
+            "message_id": 14,
+            "planned_start_ns": 26532805343380,
+            "planned_end_ns": 26563405866400,
+            "actual_start_ns": 26532990492200,
+            "actual_finish_ns": 26533159943600,
+            "committed_offer_db_ns_bounds": [
+              1791428363890921000,
+              1791428364044287000
+            ],
+            "lateness_seconds": 0.18514882,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:5",
+            "organization_id": 1,
+            "message_id": 19,
+            "planned_start_ns": 26563405866400,
+            "planned_end_ns": 26594006389420,
+            "actual_start_ns": 26563406347300,
+            "actual_finish_ns": 26563527359300,
+            "committed_offer_db_ns_bounds": [
+              1791428394303562000,
+              1791428394416225000
+            ],
+            "lateness_seconds": 0.0004809,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:5",
+            "organization_id": 2,
+            "message_id": 20,
+            "planned_start_ns": 26563405866400,
+            "planned_end_ns": 26594006389420,
+            "actual_start_ns": 26563529843200,
+            "actual_finish_ns": 26563652608700,
+            "committed_offer_db_ns_bounds": [
+              1791428394428292000,
+              1791428394540971000
+            ],
+            "lateness_seconds": 0.1239768,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:6",
+            "organization_id": 1,
+            "message_id": 23,
+            "planned_start_ns": 26594006389420,
+            "planned_end_ns": 26624606912440,
+            "actual_start_ns": 26594007148100,
+            "actual_finish_ns": 26594392352300,
+            "committed_offer_db_ns_bounds": [
+              1791428425096074000,
+              1791428425279585000
+            ],
+            "lateness_seconds": 0.00075868,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:6",
+            "organization_id": 2,
+            "message_id": 24,
+            "planned_start_ns": 26594006389420,
+            "planned_end_ns": 26624606912440,
+            "actual_start_ns": 26594395945400,
+            "actual_finish_ns": 26594544317100,
+            "committed_offer_db_ns_bounds": [
+              1791428425297434000,
+              1791428425433416000
+            ],
+            "lateness_seconds": 0.38955598,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:7",
+            "organization_id": 1,
+            "message_id": 27,
+            "planned_start_ns": 26624606912440,
+            "planned_end_ns": 26655207435460,
+            "actual_start_ns": 26624607156100,
+            "actual_finish_ns": 26624785182800,
+            "committed_offer_db_ns_bounds": [
+              1791428455505021000,
+              1791428455672561000
+            ],
+            "lateness_seconds": 0.00024366,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:7",
+            "organization_id": 2,
+            "message_id": 28,
+            "planned_start_ns": 26624606912440,
+            "planned_end_ns": 26655207435460,
+            "actual_start_ns": 26624792141000,
+            "actual_finish_ns": 26624959586000,
+            "committed_offer_db_ns_bounds": [
+              1791428455691031000,
+              1791428455845030000
+            ],
+            "lateness_seconds": 0.18522856,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:8",
+            "organization_id": 1,
+            "message_id": 31,
+            "planned_start_ns": 26655207435460,
+            "planned_end_ns": 26685807958480,
+            "actual_start_ns": 26655207579900,
+            "actual_finish_ns": 26655391863200,
+            "committed_offer_db_ns_bounds": [
+              1791428486137098000,
+              1791428486280003000
+            ],
+            "lateness_seconds": 0.00014444,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:8",
+            "organization_id": 2,
+            "message_id": 32,
+            "planned_start_ns": 26655207435460,
+            "planned_end_ns": 26685807958480,
+            "actual_start_ns": 26655394973300,
+            "actual_finish_ns": 26655515579500,
+            "committed_offer_db_ns_bounds": [
+              1791428486292192000,
+              1791428486404453000
+            ],
+            "lateness_seconds": 0.18753784,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:9",
+            "organization_id": 1,
+            "message_id": 35,
+            "planned_start_ns": 26685807958480,
+            "planned_end_ns": 26716408481500,
+            "actual_start_ns": 26685810260900,
+            "actual_finish_ns": 26685957737200,
+            "committed_offer_db_ns_bounds": [
+              1791428516708140000,
+              1791428516843348000
+            ],
+            "lateness_seconds": 0.00230242,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:9",
+            "organization_id": 2,
+            "message_id": 36,
+            "planned_start_ns": 26685807958480,
+            "planned_end_ns": 26716408481500,
+            "actual_start_ns": 26685961880100,
+            "actual_finish_ns": 26686098850300,
+            "committed_offer_db_ns_bounds": [
+              1791428516859548000,
+              1791428516985913000
+            ],
+            "lateness_seconds": 0.15392162,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:10",
+            "organization_id": 1,
+            "message_id": 39,
+            "planned_start_ns": 26716408481500,
+            "planned_end_ns": 26747009004520,
+            "actual_start_ns": 26716408784000,
+            "actual_finish_ns": 26716542543600,
+            "committed_offer_db_ns_bounds": [
+              1791428547323095000,
+              1791428547431042000
+            ],
+            "lateness_seconds": 0.0003025,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:10",
+            "organization_id": 2,
+            "message_id": 40,
+            "planned_start_ns": 26716408481500,
+            "planned_end_ns": 26747009004520,
+            "actual_start_ns": 26716545901700,
+            "actual_finish_ns": 26716660642100,
+            "committed_offer_db_ns_bounds": [
+              1791428547443334000,
+              1791428547550278000
+            ],
+            "lateness_seconds": 0.1374202,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:11",
+            "organization_id": 1,
+            "message_id": 43,
+            "planned_start_ns": 26747009004520,
+            "planned_end_ns": 26770403251300,
+            "actual_start_ns": 26747009309500,
+            "actual_finish_ns": 26747144971500,
+            "committed_offer_db_ns_bounds": [
+              1791428577907572000,
+              1791428578032285000
+            ],
+            "lateness_seconds": 0.00030498,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:11",
+            "organization_id": 2,
+            "message_id": 44,
+            "planned_start_ns": 26747009004520,
+            "planned_end_ns": 26770403251300,
+            "actual_start_ns": 26747147980800,
+            "actual_finish_ns": 26747307146000,
+            "committed_offer_db_ns_bounds": [
+              1791428578045804000,
+              1791428578193675000
+            ],
+            "lateness_seconds": 0.13897628,
+            "conforms": true
+          }
+        ],
+        "issues": [],
+        "schedule_sha256": "875205e1d23c0330d46a4aa66db3d8f755ded8f46c0cc54308ec38d99c7b2e9c",
+        "role": "Pacing conformance of preserved physical offers; no calculation of E or capacity."
+      },
+      "captured_source_integrity": {
+        "case": "R2-02",
+        "run_id": "authorized-r202-blocked-20261007-0002",
+        "expected_backend_sources": 809,
+        "captured_backend_sources": 809,
+        "backend_mismatches": [],
+        "unexpected_sources": [],
+        "revision2_prelaunch_seal_present": false,
+        "revision2_script_mismatches": [],
+        "source_manifest_sha256": "e4f2056d5e9dae0ccfaf2a75284e07603ea61771b6238df9f95af50c16adb33b",
+        "plan_sha256": "18991bf76911d898d32531f6d1911c8a37c5c33ab9c62357d539ee97cc6dbaa2",
+        "source_integrity_passed": true
+      },
+      "evidence_separation": {
+        "physical_evidence": "r2-02\\authorized-r202-blocked-20261007-0002\\evidence-audit-v2.json",
+        "synthetic_or_replay_used_for_accreditation": false,
+        "confirmed_base": {
+          "state": "CONFIRMED_BASE_ESTABLISHED",
+          "receipt": "../d29-r102-base-2026-10-07/confirmed-base-receipt.json",
+          "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+          "changed": false
+        },
+        "physical_frontier": "PASS",
+        "complete_load_condition": "PASS",
+        "pending_requirement": null
+      }
+    },
+    {
+      "case_id": "R2-04",
+      "run_id": "authorized-r204-postcommit-base-20261007-0004",
+      "status": "INVALID_RUN",
+      "errors": [
+        "CLOCK_OR_CAPTURE_INVALID"
+      ],
+      "receipt_path": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\authorized-verification-v2.json",
+      "receipt_sha256": "010ac7fe48ae84d6ec191135a7de7e9b66cb5954ef115ae190c69597630a1d5b",
+      "accepted_inputs": 1,
+      "ordinary_inputs": 0,
+      "backlog_inputs": 0,
+      "episodes": null,
+      "works": 1,
+      "claim_bound_events_by_role": {
+        "ingress": 0,
+        "planner_1": 0,
+        "planner_2": 0,
+        "sender": 0,
+        "crash": 1
+      },
+      "successful_outer_commits_by_role": {
+        "ingress": 5,
+        "planner_1": 0,
+        "planner_2": 0,
+        "sender": 0,
+        "crash": 2
+      },
+      "successful_outer_commits_total": 7,
+      "population_by_org": null,
+      "base_receipt_sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+      "base_changed": false,
+      "database_cleanup": {
+        "database": "test_d29_auth_885556f34cc043cebd37",
+        "removed": true,
+        "created_by_this_run": true
+      },
+      "pacing_observation": {
+        "case": "R2-04",
+        "run_id": "authorized-r204-postcommit-base-20261007-0004",
+        "status": "NOT_EXECUTED_CLOCK_INVALID",
+        "offer_seconds": 360,
+        "confirmed_base_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "declared_scenario_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "scheduled_slots": 24,
+        "observed_ordinary_attempts": 0,
+        "max_observed_slot_lateness_seconds": null,
+        "observations": [],
+        "issues": [
+          "MISSING_OR_DUPLICATE_SLOT:0:0",
+          "MISSING_OR_DUPLICATE_SLOT:1:0",
+          "MISSING_OR_DUPLICATE_SLOT:0:1",
+          "MISSING_OR_DUPLICATE_SLOT:1:1",
+          "MISSING_OR_DUPLICATE_SLOT:0:2",
+          "MISSING_OR_DUPLICATE_SLOT:1:2",
+          "MISSING_OR_DUPLICATE_SLOT:0:3",
+          "MISSING_OR_DUPLICATE_SLOT:1:3",
+          "MISSING_OR_DUPLICATE_SLOT:0:4",
+          "MISSING_OR_DUPLICATE_SLOT:1:4",
+          "MISSING_OR_DUPLICATE_SLOT:0:5",
+          "MISSING_OR_DUPLICATE_SLOT:1:5",
+          "MISSING_OR_DUPLICATE_SLOT:0:6",
+          "MISSING_OR_DUPLICATE_SLOT:1:6",
+          "MISSING_OR_DUPLICATE_SLOT:0:7",
+          "MISSING_OR_DUPLICATE_SLOT:1:7",
+          "MISSING_OR_DUPLICATE_SLOT:0:8",
+          "MISSING_OR_DUPLICATE_SLOT:1:8",
+          "MISSING_OR_DUPLICATE_SLOT:0:9",
+          "MISSING_OR_DUPLICATE_SLOT:1:9",
+          "MISSING_OR_DUPLICATE_SLOT:0:10",
+          "MISSING_OR_DUPLICATE_SLOT:1:10",
+          "MISSING_OR_DUPLICATE_SLOT:0:11",
+          "MISSING_OR_DUPLICATE_SLOT:1:11"
+        ],
+        "schedule_sha256": "676c1d6b1739ec0724cdd1b9ee695e12b7fd4f4ee51a1a3521a8412a3ad64b70",
+        "role": "Pacing conformance of preserved physical offers; no calculation of E or capacity."
+      },
+      "captured_source_integrity": {
+        "case": "R2-04",
+        "run_id": "authorized-r204-postcommit-base-20261007-0004",
+        "expected_backend_sources": 809,
+        "captured_backend_sources": 809,
+        "backend_mismatches": [],
+        "unexpected_sources": [],
+        "revision2_prelaunch_seal_present": true,
+        "revision2_script_mismatches": [],
+        "source_manifest_sha256": "e4f2056d5e9dae0ccfaf2a75284e07603ea61771b6238df9f95af50c16adb33b",
+        "plan_sha256": "4c9045ab83a369b714e8cf5b55dd1c338446ea9b13224e658cbb2b6b1232598f",
+        "source_integrity_passed": true
+      },
+      "evidence_separation": {
+        "physical_evidence": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\authorized-verification-v2.json",
+        "synthetic_or_replay_used_for_accreditation": false,
+        "confirmed_base": {
+          "state": "CONFIRMED_BASE_ESTABLISHED",
+          "receipt": "../d29-r102-base-2026-10-07/confirmed-base-receipt.json",
+          "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+          "changed": false
+        },
+        "physical_frontier": "PRELUDE_ONLY_INVALID_CLOCK",
+        "complete_load_condition": "INVALID_RUN",
+        "pending_requirement": "Clock-continuous individual run of the same recipe"
+      },
+      "clock_incident": {
+        "status": "INVALID_RUN",
+        "first_observed_clock_contradiction": {
+          "role": "ingress",
+          "error": "INVALID_CLOCK_RELATION",
+          "seq": 11081,
+          "monotonic_ns": 32967201237800,
+          "db_timestamp": "2026-10-08T04:46:40.228153+00:00",
+          "previous_intersection_ns": [
+            1791401830891965500,
+            1791401830892672400
+          ],
+          "new_offset_ns": [
+            1791401833026944000,
+            1791401833029214200
+          ],
+          "failed_intersection_ns": [
+            1791401833026944000,
+            1791401830892672400
+          ],
+          "journal": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\ingress.jsonl"
+        },
+        "all_participant_contradictions": [
+          {
+            "role": "ingress",
+            "error": "INVALID_CLOCK_RELATION",
+            "seq": 11081,
+            "monotonic_ns": 32967201237800,
+            "db_timestamp": "2026-10-08T04:46:40.228153+00:00",
+            "previous_intersection_ns": [
+              1791401830891965500,
+              1791401830892672400
+            ],
+            "new_offset_ns": [
+              1791401833026944000,
+              1791401833029214200
+            ],
+            "failed_intersection_ns": [
+              1791401833026944000,
+              1791401830892672400
+            ],
+            "journal": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\ingress.jsonl"
+          },
+          {
+            "role": "planner_1",
+            "error": "INVALID_CLOCK_RELATION",
+            "seq": 3521,
+            "monotonic_ns": 32967305865100,
+            "db_timestamp": "2026-10-08T04:46:40.332093+00:00",
+            "previous_intersection_ns": [
+              1791401830891581200,
+              1791401830893079500
+            ],
+            "new_offset_ns": [
+              1791401833026269100,
+              1791401833028506500
+            ],
+            "failed_intersection_ns": [
+              1791401833026269100,
+              1791401830893079500
+            ],
+            "journal": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\planner_1.jsonl"
+          },
+          {
+            "role": "planner_2",
+            "error": "INVALID_CLOCK_RELATION",
+            "seq": 3521,
+            "monotonic_ns": 32967544478600,
+            "db_timestamp": "2026-10-08T04:46:40.568534+00:00",
+            "previous_intersection_ns": [
+              1791401830891569000,
+              1791401830893434100
+            ],
+            "new_offset_ns": [
+              1791401833024093700,
+              1791401833028554000
+            ],
+            "failed_intersection_ns": [
+              1791401833024093700,
+              1791401830893434100
+            ],
+            "journal": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\planner_2.jsonl"
+          },
+          {
+            "role": "sender",
+            "error": "INVALID_CLOCK_RELATION",
+            "seq": 2151,
+            "monotonic_ns": 32967799183000,
+            "db_timestamp": "2026-10-08T04:46:40.824767+00:00",
+            "previous_intersection_ns": [
+              1791401830891497700,
+              1791401830911482000
+            ],
+            "new_offset_ns": [
+              1791401833027067400,
+              1791401833028629600
+            ],
+            "failed_intersection_ns": [
+              1791401833027067400,
+              1791401830911482000
+            ],
+            "journal": "r2-04\\authorized-r204-postcommit-base-20261007-0004\\sender.jsonl"
+          }
+        ],
+        "capture_completion": [
+          {
+            "role": "ingress",
+            "os_pid": 77160,
+            "total_rows": 11085,
+            "calibrations": 2860,
+            "footer_present": true
+          },
+          {
+            "role": "planner_1",
+            "os_pid": 66088,
+            "total_rows": 3522,
+            "calibrations": 2,
+            "footer_present": true
+          },
+          {
+            "role": "planner_2",
+            "os_pid": 81060,
+            "total_rows": 3522,
+            "calibrations": 2,
+            "footer_present": true
+          },
+          {
+            "role": "sender",
+            "os_pid": 84116,
+            "total_rows": 2152,
+            "calibrations": 2,
+            "footer_present": true
+          }
+        ],
+        "system_events": [
+          {
+            "provider": "Microsoft-Windows-Kernel-General",
+            "id": 1,
+            "record_id": 317257,
+            "data": {
+              "NewTime": "2026-10-08T04:46:40.1537010Z",
+              "OldTime": "2026-10-08T04:46:40.1531926Z",
+              "TimeDeltaInMs": "0",
+              "Reason": "1",
+              "ProcessName": "\\Device\\HarddiskVolume3\\Windows\\System32\\svchost.exe",
+              "ProcessID": "16108",
+              "CmosTime": "2026-10-07T22:46:40.1537010Z",
+              "TimeZoneBias": "360",
+              "RealTimeIsUniversal": "false",
+              "SystemInCmosMode": "false"
+            },
+            "observed_step_ns": 508400
+          },
+          {
+            "provider": "Microsoft-Windows-Kernel-General",
+            "id": 24,
+            "record_id": 317256,
+            "data": {
+              "ExitReason": "0",
+              "CurrentBias": "360",
+              "CurrentTimeZoneID": "0",
+              "TimeZoneInfoCacheUpdated": "0",
+              "FirstRefresh": "0"
+            }
+          },
+          {
+            "provider": "Microsoft-Windows-Time-Service",
+            "id": 35,
+            "record_id": 317255,
+            "data": {
+              "TimeSource": "time.windows.com,0x9 (ntp.m|0x9|0.0.0.0:123->168.61.215.74:123)",
+              "TimeSourceRefId": "1255620008",
+              "CurrentStratumNumber": "5"
+            }
+          },
+          {
+            "provider": "Microsoft-Windows-Kernel-General",
+            "id": 1,
+            "record_id": 317254,
+            "data": {
+              "NewTime": "2026-10-08T04:46:40.1523676Z",
+              "OldTime": "2026-10-08T04:46:38.0166177Z",
+              "TimeDeltaInMs": "2135",
+              "Reason": "1",
+              "ProcessName": "\\Device\\HarddiskVolume3\\Windows\\System32\\svchost.exe",
+              "ProcessID": "16108",
+              "CmosTime": "2026-10-07T22:46:40.1523676Z",
+              "TimeZoneBias": "360",
+              "RealTimeIsUniversal": "false",
+              "SystemInCmosMode": "false"
+            },
+            "observed_step_ns": 2135749900
+          },
+          {
+            "provider": "Microsoft-Windows-Kernel-General",
+            "id": 24,
+            "record_id": 317253,
+            "data": {
+              "ExitReason": "0",
+              "CurrentBias": "360",
+              "CurrentTimeZoneID": "0",
+              "TimeZoneInfoCacheUpdated": "0",
+              "FirstRefresh": "0"
+            }
+          },
+          {
+            "provider": "Microsoft-Windows-Time-Service",
+            "id": 37,
+            "record_id": 317252,
+            "data": {
+              "TimeSource": "time.windows.com,0x9 (ntp.m|0x9|0.0.0.0:123->168.61.215.74:123)"
+            }
+          }
+        ],
+        "source_conclusion": "Host clock adjustment is directly recorded by Kernel-General event 1 and Time-Service records. DB/monotonic intersections contradict it in raw journals. No independent PostgreSQL-only or timestamp-replay correction was injected.",
+        "observed_input_attempts": 1,
+        "ordinary_offer_window_opened": false,
+        "all_raw_samples_preserved": true,
+        "samples_excluded": 0,
+        "segments_created": 0,
+        "tolerance_added": false,
+        "timestamps_rewritten": false,
+        "base_changed": false,
+        "runtime_failure_inferred": false,
+        "next_requirement": "Authorize a controlled evaluation-host time procedure before a new R2-04 repetition, preserving the original clock gate and without changing application runtime.",
+        "idle_guard": "Acquired by conductor; restoration executes in context-manager finally. On the exception path the existing receipt omitted the success flag; do not manufacture it retroactively."
+      },
+      "counts_scope": "Prelude observations only; no ordinary offer window, expiry/reclaim or full followup accredited."
+    },
+    {
+      "case_id": "R2-09",
+      "run_id": "authorized-r209-uncertain-meta-20261007-0002",
+      "status": "NOT_ACCREDITED",
+      "errors": [
+        "PENDING_NATURAL_READY_QUEUE_OVERLAP"
+      ],
+      "receipt_path": "r2-09\\authorized-r209-uncertain-meta-20261007-0002\\evidence-audit-v2.json",
+      "receipt_sha256": "421da1461d7a2bec908670d19d8b012aab3242c0b77a7693c5572c915272d605",
+      "accepted_inputs": 24,
+      "ordinary_inputs": 24,
+      "backlog_inputs": 0,
+      "episodes": 24,
+      "works": 24,
+      "claim_bound_events_by_role": {
+        "ingress": 0,
+        "planner_1": 12,
+        "planner_2": 12,
+        "sender": 0
+      },
+      "successful_outer_commits_by_role": {
+        "ingress": 58,
+        "planner_1": 75,
+        "planner_2": 73,
+        "sender": 72
+      },
+      "successful_outer_commits_total": 278,
+      "population_by_org": {
+        "1": 12,
+        "2": 12
+      },
+      "base_receipt_sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+      "base_changed": false,
+      "database_cleanup": {
+        "database": "test_d29_auth_17b43242865ef26f8ff9",
+        "removed": true,
+        "created_by_this_run": true
+      },
+      "pacing_observation": {
+        "case": "R2-09",
+        "run_id": "authorized-r209-uncertain-meta-20261007-0002",
+        "status": "PASS",
+        "offer_seconds": 360,
+        "confirmed_base_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "declared_scenario_rates": [
+          1.9607508002652434,
+          1.9607508002652434
+        ],
+        "scheduled_slots": 24,
+        "observed_ordinary_attempts": 24,
+        "max_observed_slot_lateness_seconds": 0.3079861,
+        "observations": [
+          {
+            "slot_id": "0:0",
+            "organization_id": 1,
+            "message_id": 1,
+            "planned_start_ns": 27324629238600,
+            "planned_end_ns": 27355229761620,
+            "actual_start_ns": 27324642319200,
+            "actual_finish_ns": 27324929670600,
+            "committed_offer_db_ns_bounds": [
+              1791429155574153000,
+              1791429155817328000
+            ],
+            "lateness_seconds": 0.0130806,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:0",
+            "organization_id": 2,
+            "message_id": 2,
+            "planned_start_ns": 27324629238600,
+            "planned_end_ns": 27355229761620,
+            "actual_start_ns": 27324934928000,
+            "actual_finish_ns": 27325157530600,
+            "committed_offer_db_ns_bounds": [
+              1791429155835387000,
+              1791429156040176000
+            ],
+            "lateness_seconds": 0.3056894,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:1",
+            "organization_id": 1,
+            "message_id": 5,
+            "planned_start_ns": 27355229761620,
+            "planned_end_ns": 27385830284640,
+            "actual_start_ns": 27355230193600,
+            "actual_finish_ns": 27355371063200,
+            "committed_offer_db_ns_bounds": [
+              1791429186127698000,
+              1791429186260911000
+            ],
+            "lateness_seconds": 0.00043198,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:1",
+            "organization_id": 2,
+            "message_id": 6,
+            "planned_start_ns": 27355229761620,
+            "planned_end_ns": 27385830284640,
+            "actual_start_ns": 27355375506400,
+            "actual_finish_ns": 27355511578100,
+            "committed_offer_db_ns_bounds": [
+              1791429186272353000,
+              1791429186401005000
+            ],
+            "lateness_seconds": 0.14574478,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:2",
+            "organization_id": 1,
+            "message_id": 9,
+            "planned_start_ns": 27385830284640,
+            "planned_end_ns": 27416430807660,
+            "actual_start_ns": 27385830853100,
+            "actual_finish_ns": 27386044977500,
+            "committed_offer_db_ns_bounds": [
+              1791429216726778000,
+              1791429216933586000
+            ],
+            "lateness_seconds": 0.00056846,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:2",
+            "organization_id": 2,
+            "message_id": 10,
+            "planned_start_ns": 27385830284640,
+            "planned_end_ns": 27416430807660,
+            "actual_start_ns": 27386048020200,
+            "actual_finish_ns": 27386335518800,
+            "committed_offer_db_ns_bounds": [
+              1791429216944790000,
+              1791429217224534000
+            ],
+            "lateness_seconds": 0.21773556,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:3",
+            "organization_id": 1,
+            "message_id": 13,
+            "planned_start_ns": 27416430807660,
+            "planned_end_ns": 27447031330680,
+            "actual_start_ns": 27416431152100,
+            "actual_finish_ns": 27416574855400,
+            "committed_offer_db_ns_bounds": [
+              1791429247328724000,
+              1791429247462737000
+            ],
+            "lateness_seconds": 0.00034444,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:3",
+            "organization_id": 2,
+            "message_id": 14,
+            "planned_start_ns": 27416430807660,
+            "planned_end_ns": 27447031330680,
+            "actual_start_ns": 27416578215700,
+            "actual_finish_ns": 27416701943500,
+            "committed_offer_db_ns_bounds": [
+              1791429247475891000,
+              1791429247590887000
+            ],
+            "lateness_seconds": 0.14740804,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:4",
+            "organization_id": 1,
+            "message_id": 17,
+            "planned_start_ns": 27447031330680,
+            "planned_end_ns": 27477631853700,
+            "actual_start_ns": 27447031775400,
+            "actual_finish_ns": 27447189357500,
+            "committed_offer_db_ns_bounds": [
+              1791429277954094000,
+              1791429278077863000
+            ],
+            "lateness_seconds": 0.00044472,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:4",
+            "organization_id": 2,
+            "message_id": 18,
+            "planned_start_ns": 27447031330680,
+            "planned_end_ns": 27477631853700,
+            "actual_start_ns": 27447194882000,
+            "actual_finish_ns": 27447317527600,
+            "committed_offer_db_ns_bounds": [
+              1791429278091974000,
+              1791429278205575000
+            ],
+            "lateness_seconds": 0.16355132,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:5",
+            "organization_id": 1,
+            "message_id": 21,
+            "planned_start_ns": 27477631853700,
+            "planned_end_ns": 27508232376720,
+            "actual_start_ns": 27477632332500,
+            "actual_finish_ns": 27477755784500,
+            "committed_offer_db_ns_bounds": [
+              1791429308528777000,
+              1791429308645558000
+            ],
+            "lateness_seconds": 0.0004788,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:5",
+            "organization_id": 2,
+            "message_id": 22,
+            "planned_start_ns": 27477631853700,
+            "planned_end_ns": 27508232376720,
+            "actual_start_ns": 27477760719200,
+            "actual_finish_ns": 27477906289400,
+            "committed_offer_db_ns_bounds": [
+              1791429308660774000,
+              1791429308795542000
+            ],
+            "lateness_seconds": 0.1288655,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:6",
+            "organization_id": 1,
+            "message_id": 25,
+            "planned_start_ns": 27508232376720,
+            "planned_end_ns": 27538832899740,
+            "actual_start_ns": 27508232598000,
+            "actual_finish_ns": 27508417744200,
+            "committed_offer_db_ns_bounds": [
+              1791429339148072000,
+              1791429339306211000
+            ],
+            "lateness_seconds": 0.00022128,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:6",
+            "organization_id": 2,
+            "message_id": 26,
+            "planned_start_ns": 27508232376720,
+            "planned_end_ns": 27538832899740,
+            "actual_start_ns": 27508425158100,
+            "actual_finish_ns": 27508578910500,
+            "committed_offer_db_ns_bounds": [
+              1791429339326593000,
+              1791429339464351000
+            ],
+            "lateness_seconds": 0.19278138,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:7",
+            "organization_id": 1,
+            "message_id": 29,
+            "planned_start_ns": 27538832899740,
+            "planned_end_ns": 27569433422760,
+            "actual_start_ns": 27538833395100,
+            "actual_finish_ns": 27539002836300,
+            "committed_offer_db_ns_bounds": [
+              1791429369730950000,
+              1791429369887293000
+            ],
+            "lateness_seconds": 0.00049536,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:7",
+            "organization_id": 2,
+            "message_id": 30,
+            "planned_start_ns": 27538832899740,
+            "planned_end_ns": 27569433422760,
+            "actual_start_ns": 27539011195100,
+            "actual_finish_ns": 27539148123700,
+            "committed_offer_db_ns_bounds": [
+              1791429369910814000,
+              1791429370033866000
+            ],
+            "lateness_seconds": 0.17829536,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:8",
+            "organization_id": 1,
+            "message_id": 33,
+            "planned_start_ns": 27569433422760,
+            "planned_end_ns": 27600033945780,
+            "actual_start_ns": 27569433632900,
+            "actual_finish_ns": 27569584483700,
+            "committed_offer_db_ns_bounds": [
+              1791429400352129000,
+              1791429400472896000
+            ],
+            "lateness_seconds": 0.00021014,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:8",
+            "organization_id": 2,
+            "message_id": 34,
+            "planned_start_ns": 27569433422760,
+            "planned_end_ns": 27600033945780,
+            "actual_start_ns": 27569587947500,
+            "actual_finish_ns": 27569706903100,
+            "committed_offer_db_ns_bounds": [
+              1791429400485454000,
+              1791429400594852000
+            ],
+            "lateness_seconds": 0.15452474,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:9",
+            "organization_id": 1,
+            "message_id": 37,
+            "planned_start_ns": 27600033945780,
+            "planned_end_ns": 27630634468800,
+            "actual_start_ns": 27600034454600,
+            "actual_finish_ns": 27600240822400,
+            "committed_offer_db_ns_bounds": [
+              1791429430931949000,
+              1791429431130082000
+            ],
+            "lateness_seconds": 0.00050882,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:9",
+            "organization_id": 2,
+            "message_id": 38,
+            "planned_start_ns": 27600033945780,
+            "planned_end_ns": 27630634468800,
+            "actual_start_ns": 27600243705700,
+            "actual_finish_ns": 27600390505900,
+            "committed_offer_db_ns_bounds": [
+              1791429431142681000,
+              1791429431277353000
+            ],
+            "lateness_seconds": 0.20975992,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:10",
+            "organization_id": 1,
+            "message_id": 41,
+            "planned_start_ns": 27630634468800,
+            "planned_end_ns": 27661234991820,
+            "actual_start_ns": 27630635145100,
+            "actual_finish_ns": 27630919398800,
+            "committed_offer_db_ns_bounds": [
+              1791429461534304000,
+              1791429461777976000
+            ],
+            "lateness_seconds": 0.0006763,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:10",
+            "organization_id": 2,
+            "message_id": 42,
+            "planned_start_ns": 27630634468800,
+            "planned_end_ns": 27661234991820,
+            "actual_start_ns": 27630942454900,
+            "actual_finish_ns": 27631077400100,
+            "committed_offer_db_ns_bounds": [
+              1791429461841957000,
+              1791429461966375000
+            ],
+            "lateness_seconds": 0.3079861,
+            "conforms": true
+          },
+          {
+            "slot_id": "0:11",
+            "organization_id": 1,
+            "message_id": 45,
+            "planned_start_ns": 27661234991820,
+            "planned_end_ns": 27684629238600,
+            "actual_start_ns": 27661238934600,
+            "actual_finish_ns": 27661491460300,
+            "committed_offer_db_ns_bounds": [
+              1791429492137036000,
+              1791429492370521000
+            ],
+            "lateness_seconds": 0.00394278,
+            "conforms": true
+          },
+          {
+            "slot_id": "1:11",
+            "organization_id": 2,
+            "message_id": 46,
+            "planned_start_ns": 27661234991820,
+            "planned_end_ns": 27684629238600,
+            "actual_start_ns": 27661508745300,
+            "actual_finish_ns": 27661792809200,
+            "committed_offer_db_ns_bounds": [
+              1791429492411813000,
+              1791429492678919000
+            ],
+            "lateness_seconds": 0.27375348,
+            "conforms": true
+          }
+        ],
+        "issues": [],
+        "schedule_sha256": "58f947b5ecc6f31e94633ba85b86f685f65532587b770cff6c57897fc801cd0e",
+        "role": "Pacing conformance of preserved physical offers; no calculation of E or capacity."
+      },
+      "captured_source_integrity": {
+        "case": "R2-09",
+        "run_id": "authorized-r209-uncertain-meta-20261007-0002",
+        "expected_backend_sources": 809,
+        "captured_backend_sources": 809,
+        "backend_mismatches": [],
+        "unexpected_sources": [],
+        "revision2_prelaunch_seal_present": false,
+        "revision2_script_mismatches": [],
+        "source_manifest_sha256": "e4f2056d5e9dae0ccfaf2a75284e07603ea61771b6238df9f95af50c16adb33b",
+        "plan_sha256": "64f4c92835e9bb6731caea7fdca5cc4cd569804b1ee844ecfacb572f37934162",
+        "source_integrity_passed": true
+      },
+      "evidence_separation": {
+        "physical_evidence": "r2-09\\authorized-r209-uncertain-meta-20261007-0002\\evidence-audit-v2.json",
+        "synthetic_or_replay_used_for_accreditation": false,
+        "confirmed_base": {
+          "state": "CONFIRMED_BASE_ESTABLISHED",
+          "receipt": "../d29-r102-base-2026-10-07/confirmed-base-receipt.json",
+          "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+          "changed": false
+        },
+        "physical_frontier": "META_ISOLATION_OBSERVED_READY_OVERLAP_ABSENT",
+        "complete_load_condition": "NOT_ACCREDITED",
+        "pending_requirement": "Natural ordinary READY overlap during affected Meta service"
+      },
+      "natural_overlap": {
+        "definite": 0,
+        "possible": 0
+      }
+    }
+  ],
+  "attempt_inventory": [
+    {
+      "case_id": "R1-03",
+      "run_id": "authorized-r103-unequal-20261007-0001",
+      "path": "r1-03\\authorized-r103-unequal-20261007-0001",
+      "files": 4
+    },
+    {
+      "case_id": "R1-03",
+      "run_id": "authorized-r103-unequal-20261007-0002",
+      "path": "r1-03\\authorized-r103-unequal-20261007-0002",
+      "files": 25
+    },
+    {
+      "case_id": "R1-06",
+      "run_id": "authorized-r106-2x4-20261007-0001",
+      "path": "r1-06\\authorized-r106-2x4-20261007-0001",
+      "files": 24
+    },
+    {
+      "case_id": "R1-06",
+      "run_id": "authorized-r106-2x4-20261007-0002",
+      "path": "r1-06\\authorized-r106-2x4-20261007-0002",
+      "files": 29
+    },
+    {
+      "case_id": "R2-02",
+      "run_id": "authorized-r202-blocked-20261007-0001",
+      "path": "r2-02\\authorized-r202-blocked-20261007-0001",
+      "files": 10
+    },
+    {
+      "case_id": "R2-02",
+      "run_id": "authorized-r202-blocked-20261007-0002",
+      "path": "r2-02\\authorized-r202-blocked-20261007-0002",
+      "files": 27
+    },
+    {
+      "case_id": "R2-04",
+      "run_id": "authorized-r204-postcommit-base-20261007-0002",
+      "path": "r2-04\\authorized-r204-postcommit-base-20261007-0002",
+      "files": 13
+    },
+    {
+      "case_id": "R2-04",
+      "run_id": "authorized-r204-postcommit-base-20261007-0003",
+      "path": "r2-04\\authorized-r204-postcommit-base-20261007-0003",
+      "files": 38
+    },
+    {
+      "case_id": "R2-04",
+      "run_id": "authorized-r204-postcommit-base-20261007-0004",
+      "path": "r2-04\\authorized-r204-postcommit-base-20261007-0004",
+      "files": 32
+    },
+    {
+      "case_id": "R2-09",
+      "run_id": "authorized-r209-uncertain-meta-20261007-0001",
+      "path": "r2-09\\authorized-r209-uncertain-meta-20261007-0001",
+      "files": 23
+    },
+    {
+      "case_id": "R2-09",
+      "run_id": "authorized-r209-uncertain-meta-20261007-0002",
+      "path": "r2-09\\authorized-r209-uncertain-meta-20261007-0002",
+      "files": 26
+    }
+  ],
+  "integrity_receipt": {
+    "path": "integrity-audit-v4.json",
+    "sha256": "b400fe73ab387234d33765cc08cdd87e3d0f1c4e88e722f53b3a7392330911ee"
+  },
+  "final_integrity_receipt": {
+    "path": "final-integrity-v5.json",
+    "sha256": "59a93028fb9e39a3e517e341471fd3f038a9a951881839a296c542c901bee76e",
+    "status": "PASS"
+  },
+  "closure_integrity_receipt": {
+    "path": "closure-integrity-v6.json",
+    "sha256": "329f4990ab062824cc3a43d658286e4995c3225abd10266bc63e44abe1f66750",
+    "status": "PASS"
+  },
+  "cleanup_receipt": {
+    "path": "lab-cleanup-v2.json",
+    "sha256": "d05e2ceadfa01fb47940ce41a196d35781e5e0a24b812af2751289cc7295b47c"
+  },
+  "regression": {
+    "d29": {
+      "status": "PASS",
+      "distinct_tests": 78,
+      "distinct_tests_executed": 78,
+      "remaining_skips": 0,
+      "runs": [
+        {
+          "log": "unit-regression.log",
+          "tests_discovered": 78,
+          "tests_skipped": 9,
+          "tests_executed": 69
+        },
+        {
+          "log": "d29-preserved-receipt-regression.log",
+          "tests_discovered": 9,
+          "tests_skipped": 0,
+          "tests_executed": 9
+        }
+      ],
+      "scope": "D29_REGRESSION_AND_PRESERVED_RECEIPT_NEGATIVE_TESTS",
+      "new_physical_execution": false
+    },
+    "application": {
+      "status": "INCOMPLETE_INFRASTRUCTURE",
+      "tests": 81,
+      "tests_in_complete_receipts": 81,
+      "tests_in_passing_suites": 39,
+      "failures": [],
+      "errors": [
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_meta_failure_matrix_through_real_sender (index=3)",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_partial_safe_id_survives_uncertainty_for_later_webhook",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_partial_safe_id_survives_uncertainty_for_later_webhook",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_real_db_error_in_finalize_preserves_durable_sending",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_real_db_error_in_finalize_preserves_durable_sending",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_new_message_with_actor_reason_and_idempotency",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_new_message_with_actor_reason_and_idempotency",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_rejects_agent_and_other_org",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_rejects_agent_and_other_org",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_retryable_flag_without_approved_rejection_code_does_not_retry",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_retryable_flag_without_approved_rejection_code_does_not_retry",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_01_claim_crash_never_admitted_and_no_replay",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_01_claim_crash_never_admitted_and_no_replay",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_08_takeover_during_http_records_acceptance",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_08_takeover_during_http_records_acceptance",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_09_takeover_during_http_records_uncertainty",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_09_takeover_during_http_records_uncertainty",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_snapshot_makes_uncertainty_visible_without_pii",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_snapshot_makes_uncertainty_visible_without_pii",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_takeover_during_http_rejection_is_failed_not_retry",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_takeover_during_http_rejection_is_failed_not_retry",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission",
+        "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_correct_wamid_wrong_org_cannot_mutate",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_correct_wamid_wrong_org_cannot_mutate",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_duplicate_provider_id_is_ambiguous_not_first_match",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_duplicate_provider_id_is_ambiguous_not_first_match",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_legacy_sent_keeps_unknown_acceptance_timestamp",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_legacy_sent_keeps_unknown_acceptance_timestamp",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_11_read_before_delivered_never_degrades",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_11_read_before_delivered_never_degrades",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_uncertain_without_persisted_id_stays_unmatched",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_uncertain_without_persisted_id_stays_unmatched",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_unknown_status_unknown_id_and_wrong_account_do_nothing",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_unknown_status_unknown_id_and_wrong_account_do_nothing",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_cannot_resurrect_pending_or_discarded",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_cannot_resurrect_pending_or_discarded",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize",
+        "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize"
+      ],
+      "skipped": 0,
+      "labels": [
+        "apps.agent.tests.test_b3_durable",
+        "apps.agent.tests.test_b4_sender",
+        "apps.agent.tests.test_w1_monotonic",
+        "apps.agent.tests.test_b5_safety",
+        "apps.agent.tests.test_operation_execution",
+        "apps.agent.tests.test_b9b_budget",
+        "apps.agent.tests.test_b9c_concurrency",
+        "apps.agent.tests.test_b9c_processes"
+      ],
+      "suites": [
+        {
+          "label": "test_b3_durable",
+          "status": "PASS",
+          "receipt": {
+            "tests": 39,
+            "failures": [],
+            "errors": [],
+            "skipped": 0,
+            "status": "PASS",
+            "scope": "EXISTING_APPLICATION_REGRESSION_NOT_PHYSICAL_ACCREDITATION",
+            "benchmark": false,
+            "labels": [
+              "apps.agent.tests.test_b3_durable"
+            ],
+            "source_integrity": true
+          },
+          "log_path": "application-regression-v2\\test_b3_durable.log",
+          "log_sha256": "5692cb0cb5bb1f9cbbb3239b48747c8093a95e6db67ff84f8f533a98eb428001"
+        },
+        {
+          "label": "test_b4_sender",
+          "status": "FAIL",
+          "receipt": {
+            "tests": 42,
+            "failures": [],
+            "errors": [
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_meta_failure_matrix_through_real_sender (index=3)",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_partial_safe_id_survives_uncertainty_for_later_webhook",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_partial_safe_id_survives_uncertainty_for_later_webhook",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_pending_with_prior_external_evidence_is_quarantined",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_real_db_error_in_finalize_preserves_durable_sending",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_real_db_error_in_finalize_preserves_durable_sending",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_new_message_with_actor_reason_and_idempotency",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_new_message_with_actor_reason_and_idempotency",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_rejects_agent_and_other_org",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_reemission_rejects_agent_and_other_org",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_retryable_flag_without_approved_rejection_code_does_not_retry",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_retryable_flag_without_approved_rejection_code_does_not_retry",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_01_individual_durable_claim_and_single_admission",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_01_claim_crash_never_admitted_and_no_replay",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_01_claim_crash_never_admitted_and_no_replay",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_02_takeover_after_claim_before_http",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_03_post_acceptance_db_failure_is_uncertain_no_retry",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_08_takeover_during_http_records_acceptance",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_08_takeover_during_http_records_acceptance",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_09_takeover_during_http_records_uncertainty",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_send_fi_09_takeover_during_http_records_uncertainty",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_snapshot_makes_uncertainty_visible_without_pii",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_snapshot_makes_uncertainty_visible_without_pii",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_takeover_during_http_rejection_is_failed_not_retry",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_takeover_during_http_rejection_is_failed_not_retry",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission",
+              "apps.agent.tests.test_b4_sender.B4SenderTests.test_window_closed_after_claim_blocks_admission",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_correct_wamid_wrong_org_cannot_mutate",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_correct_wamid_wrong_org_cannot_mutate",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_duplicate_provider_id_is_ambiguous_not_first_match",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_duplicate_provider_id_is_ambiguous_not_first_match",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_failed_delivery_never_erases_acceptance_or_read",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_legacy_sent_keeps_unknown_acceptance_timestamp",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_legacy_sent_keeps_unknown_acceptance_timestamp",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_03_monotonic_sent_delivered_read_and_duplicate_timestamps",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_10_webhook_reconciles_uncertain_preserves_history",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_11_read_before_delivered_never_degrades",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_send_fi_11_read_before_delivered_never_degrades",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_uncertain_without_persisted_id_stays_unmatched",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_uncertain_without_persisted_id_stays_unmatched",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_unknown_status_unknown_id_and_wrong_account_do_nothing",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_unknown_status_unknown_id_and_wrong_account_do_nothing",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_cannot_resurrect_pending_or_discarded",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_cannot_resurrect_pending_or_discarded",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize",
+              "apps.agent.tests.test_b4_sender.B4StatusTests.test_webhook_wins_race_with_uncertain_finalize"
+            ],
+            "skipped": 0,
+            "status": "FAIL",
+            "scope": "EXISTING_APPLICATION_REGRESSION_NOT_PHYSICAL_ACCREDITATION",
+            "benchmark": false,
+            "labels": [
+              "apps.agent.tests.test_b4_sender"
+            ],
+            "source_integrity": true
+          },
+          "log_path": "application-regression-v2\\test_b4_sender.log",
+          "log_sha256": "17ec0674c43d8a58874d2bab368d20f83d9f966df4b45e37d62a764bfc09388e"
+        },
+        {
+          "label": "test_w1_monotonic",
+          "status": "INCOMPLETE_INTERRUPTED",
+          "receipt": null,
+          "log_path": "application-regression-v2\\test_w1_monotonic.log",
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "label": "test_b5_safety",
+          "status": "NOT_RUN",
+          "receipt": null,
+          "log_path": null,
+          "log_sha256": null
+        },
+        {
+          "label": "test_operation_execution",
+          "status": "NOT_RUN",
+          "receipt": null,
+          "log_path": null,
+          "log_sha256": null
+        },
+        {
+          "label": "test_b9b_budget",
+          "status": "NOT_RUN",
+          "receipt": null,
+          "log_path": null,
+          "log_sha256": null
+        },
+        {
+          "label": "test_b9c_concurrency",
+          "status": "NOT_RUN",
+          "receipt": null,
+          "log_path": null,
+          "log_sha256": null
+        },
+        {
+          "label": "test_b9c_processes",
+          "status": "NOT_RUN",
+          "receipt": null,
+          "log_path": null,
+          "log_sha256": null
+        }
+      ],
+      "first_observed_cause": "psycopg.errors.OutOfMemory in test_meta_failure_matrix_through_real_sender(index=3), followed by backend connection closure and cascading setup/teardown errors.",
+      "database_error_detail": "Failed on request of size 48 in memory context MessageContext.",
+      "out_of_memory_directly_recorded": true,
+      "runtime_regression_inferred": false,
+      "regression_not_demonstrated": true,
+      "tests_unmodified": true,
+      "scope": "EXISTING_APPLICATION_REGRESSION_NOT_PHYSICAL_ACCREDITATION",
+      "benchmark": false,
+      "source_integrity": true,
+      "stop_receipt": "regression-native-stop-receipt.json",
+      "next_requirement": "Repeat the incomplete/error application suites in an evaluation environment with available resources, without altering runtime, tests, durability, or CONFIRMED_BASE. No retry executed in this phase after OutOfMemory."
+    }
+  },
+  "provenance_limitations": "See INCIDENTES-Y-ALCANCE.md. Earlier orchestration pre-seal is empty; recovered files are closure evidence, not reconstructed prior seals.",
+  "deferred": [
+    "R1-04: no authorization for 17-conversation proposal",
+    "R2-09 slow_meta: not authorized",
+    "Complete 17-scenario matrix: not authorized"
+  ]
+}

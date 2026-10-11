@@ -1,0 +1,180 @@
+"""Analyze immutable D/H/I/J receipts; no runtime imports or database access."""
+import collections
+import gzip
+import hashlib
+import json
+import math
+import statistics
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT=Path(r'C:\Users\LAP\.codex\worktrees\e4-causal-audit-6e59\VeterinariaSaaS')
+OUT=ROOT/'docs/evals/e4-causal-diagnosis-2026-10-03'
+def read(name):
+    p=OUT/name
+    return json.load(gzip.open(p,'rt',encoding='utf-8')) if p.suffix=='.gz' else json.loads(p.read_text(encoding='utf-8'))
+def save(name,obj):
+    p=OUT/name
+    assert not p.exists(),p
+    with gzip.open(p,'wt',encoding='utf-8') as f: json.dump(obj,f,indent=2); f.write('\n')
+def ns(text):
+    value=datetime.fromisoformat(text)
+    return int(value.timestamp())*1_000_000_000+value.microsecond*1000
+def iso(value):
+    return datetime.fromtimestamp(value/1e9,timezone.utc).isoformat(timespec='microseconds')
+def stats(values):
+    values=sorted(values)
+    return {'n':len(values),'median':statistics.median(values),'p95':values[math.ceil(.95*len(values))-1],'max':max(values)} if values else None
+def nodes(node):
+    yield node
+    for child in node.get('Plans',[]): yield from nodes(child)
+def message_nodes(record):
+    return [{k:n.get(k) for k in ('Node Type','Alias','Subplan Name','Actual Loops','Actual Rows','Plan Rows','Actual Total Time','Shared Hit Blocks','Shared Read Blocks')}
+        for n in nodes(record['explain_event']['Plan']) if n.get('Relation Name')=='channels_message']
+def pairs(events,start,end,key=None):
+    active={}; result=[]
+    for event in events:
+        if event['event'] not in (start,end): continue
+        serial=event.get(key) if key else None
+        if event['event']==start:
+            assert serial not in active
+            active[serial]=event
+        else:
+            first=active.pop(serial)
+            result.append((first,event))
+    assert not active,(start,active)
+    return result
+def intersect(first,last,start,end): return max(0,min(last,end)-max(first,start))
+
+server=read('server-selectors.json.gz')
+assert not server['errors']
+plan_groups=collections.defaultdict(list); statement_groups=collections.defaultdict(list)
+for item in server['plans']: plan_groups[(item['database'],item['backend_pid'])].append(item)
+for item in server['statements']: statement_groups[(item['database'],item['backend_pid'])].append(item)
+for key in plan_groups:
+    assert len(plan_groups[key])==len(statement_groups[key])
+    for plan,statement in zip(plan_groups[key],statement_groups[key]):
+        # Actual server SQL is byte-for-byte the text associated with its plan.
+        assert plan['explain_event']['Query Text']==statement['exact_sql']
+
+trace_data={role:read('temporal-'+role+'.json.gz') for role in ('planner-1','planner-2','sender')}
+events_by_role={role:d['events'] for role,d in trace_data.items()}
+claim_by_work={}; selector_pairs={}; run_pairs={}; sleep_pairs={}; claim_pairs={}; matches=[]
+for role,events in events_by_role.items():
+    selectors=pairs(events,'selector_start','selector_end','selector_serial')
+    selector_pairs[role]={a['selector_serial']:(a,b) for a,b in selectors}
+    run_pairs[role]=pairs(events,'turn_start','turn_end')
+    sleep_pairs[role]=pairs(events,'poll_sleep_start','poll_sleep_end')
+    claim_pairs[role]=pairs(events,'claim_start','claim_return','claim_serial')
+    by_backend=collections.defaultdict(list)
+    for a,b in selectors: by_backend[a['backend_pid']].append((a,b))
+    for backend,client in by_backend.items():
+        key=('test_e4_dhij2_temporal',backend)
+        assert len(client)==len(plan_groups[key]),(key,len(client),len(plan_groups[key]))
+        for ordinal,((a,b),plan,statement) in enumerate(zip(client,plan_groups[key],statement_groups[key])):
+            log_ns=ns(plan['log_timestamp'].replace(' UTC','+00:00'))
+            # PostgreSQL log has millisecond precision, and auto_explain logs before return.
+            assert a['wall_ns']-1_000_000<=log_ns<=b['wall_ns']+1_000_000
+            match={'role':role,'selector_serial':a['selector_serial'],'backend_pid':backend,
+                'server_ordinal_zero_based':ordinal,'log_timestamp':plan['log_timestamp'],
+                'client_ms':(b['mono_ns']-a['mono_ns'])/1e6,
+                'auto_explain_execution_ms':plan['server_ms'],'statement_total_ms':statement['server_ms'],
+                'server_exact_sql_sha256':hashlib.sha256(statement['exact_sql'].encode()).hexdigest(),
+                'message_nodes':message_nodes(plan)}
+            matches.append(match)
+    for a,b in claim_pairs[role]:
+        if b['turnwork_id'] is not None:
+            assert b['turnwork_id'] not in claim_by_work
+            claim_by_work[b['turnwork_id']]=(role,a,b)
+match_index={(r['role'],r['selector_serial']):r for r in matches}
+
+receipt=read('temporal-diagnostic.json'); window=list(map(ns,receipt['window_utc']))
+all_rows=[]
+for message in receipt['messages']:
+    persisted=ns(message['created_at']); eligible=max(persisted,ns(message['available_at']))
+    claim=ns(message['turn_work__claimed_at']) if message['turn_work__claimed_at'] else None
+    row={**message,'in_measurement_window':window[0]<=persisted<window[1],
+        'healthy':message['organization_id'] in receipt['fixture_organization_ids'][:2],
+        'persisted_eligible_s':(eligible-persisted)/1e9,
+        'persisted_claim_s':(claim-persisted)/1e9 if claim else None,
+        'eligible_claim_s':(claim-eligible)/1e9 if claim else None,
+        'timeline_source':'unclaimed' if claim is None else 'inline_or_not_in_planner_trace'}
+    witness=claim_by_work.get(message['turn_work_id'])
+    if witness:
+        role,ca,cb=witness; selected=selector_pairs[role][ca['selector_serial']]
+        sa,sb=selected; selected_match=match_index[(role,sa['selector_serial'])]
+        events=events_by_role[role]
+        ce=next(e for e in events if e['event']=='claim_commit_end' and e['claim_serial']==ca['claim_serial'])
+        lock_queries=pairs([e for e in events if e['claim_serial']==ca['claim_serial'] and e['event'].startswith('claim_query_')],'claim_query_start','claim_query_end')
+        prior_runs=[(a,b) for a,b in run_pairs[role] if b['wall_ns']<=sa['wall_ns']]
+        prior_sleeps=[(a,b) for a,b in sleep_pairs[role] if b['wall_ns']<=sa['wall_ns']]
+        intervals=[]
+        for kind,spans in [('prior_turn',prior_runs),('poll_sleep',prior_sleeps),
+                           ('prior_claim',[p for p in claim_pairs[role] if p[1]['wall_ns']<=sa['wall_ns']]),
+                           ('prior_selector',[p for p in selector_pairs[role].values() if p[1]['wall_ns']<=sa['wall_ns']])]:
+            for a,b in spans:
+                elapsed=intersect(a['wall_ns'],b['wall_ns'],eligible,sa['wall_ns'])
+                if elapsed:
+                    intervals.append({'kind':kind,'start_ns':max(a['wall_ns'],eligible),'end_ns':min(b['wall_ns'],sa['wall_ns']),
+                        'seconds':elapsed/1e9,'turnwork_id':a.get('turnwork_id'),
+                        'requested_sleep_s':a.get('seconds')})
+        covered=sum(i['seconds'] for i in intervals)
+        pre=(sa['wall_ns']-eligible)/1e9
+        assert pre>=0 and pre-covered>=-.001,(message['id'],pre,covered,intervals)
+        row.update(timeline_source='instrumented_planner',role=role,python_pid=sa['pid'],backend_pid=sa['backend_pid'],
+            selector_serial=sa['selector_serial'],claim_serial=ca['claim_serial'],claim_query_count=cb['query_count'],
+            selector_query_count=1,pre_select_s=pre,selector_client_s=(sb['mono_ns']-sa['mono_ns'])/1e9,
+            selector_wall_s=(sb['wall_ns']-sa['wall_ns'])/1e9,post_select_to_claim_clock_s=(claim-sb['wall_ns'])/1e9,
+            post_select_to_commit_s=(ce['wall_ns']-sb['wall_ns'])/1e9,
+            claim_transaction_client_s=(ce['mono_ns']-ca['mono_ns'])/1e9,
+            previous_turn_end_utc=iso(prior_runs[-1][1]['wall_ns']) if prior_runs else None,
+            last_poll_sleep_start_utc=iso(prior_sleeps[-1][0]['wall_ns']) if prior_sleeps else None,
+            last_poll_sleep_end_utc=iso(prior_sleeps[-1][1]['wall_ns']) if prior_sleeps else None,
+            last_poll_sleep_elapsed_s=(prior_sleeps[-1][1]['mono_ns']-prior_sleeps[-1][0]['mono_ns'])/1e9 if prior_sleeps else None,
+            selector_start_utc=iso(sa['wall_ns']),selector_end_utc=iso(sb['wall_ns']),
+            claim_start_utc=iso(ca['wall_ns']),claim_commit_utc=iso(ce['wall_ns']),
+            pre_select_observed_intervals=intervals,pre_select_unclassified_s=pre-covered,
+            server_event=selected_match,
+            lock_query_execution=[{'sql':a['sql'],'skip_locked':a['skip_locked'],'start_utc':iso(a['wall_ns']),
+                'end_utc':iso(b['wall_ns']),'client_ms':(b['mono_ns']-a['mono_ns'])/1e6} for a,b in lock_queries if a['locked']],
+            duration_sum_error_ns=int((pre+row.get('selector_wall_s',0))*1e9))
+        row['duration_sum_error_s']=row['eligible_claim_s']-(row['pre_select_s']+row['selector_wall_s']+row['post_select_to_claim_clock_s'])
+        row.pop('duration_sum_error_ns',None)
+    all_rows.append(row)
+healthy=[r for r in all_rows if r['healthy'] and r['in_measurement_window']]
+assert len(healthy)==receipt['healthy_claim']['count']==60
+assert sum(r['persisted_claim_s'] is None for r in healthy)==receipt['healthy_claim']['missing']==0
+ranked=sorted(healthy,key=lambda r:r['persisted_claim_s'])
+assert abs(ranked[57]['persisted_claim_s']-receipt['healthy_claim']['p95_seconds'])<1e-9
+for rank,row in enumerate(ranked,1): row['diagnostic_rank_one_based']=rank
+planner_healthy=[r for r in healthy if r['timeline_source']=='instrumented_planner']
+pg=read('temporal-postgresql.json.gz')
+wait_counts=collections.Counter((r.get('wait_event_type'),r.get('wait_event')) for s in pg['activity_samples'] for r in s['activity'])
+summary={'classification':'D_CAUSA_NO_CONFIRMADA','acceptance_authority':False,
+    'historical_profile':'FAIL','historical_p95_s':10.015949,'threshold_s':10,
+    'diagnostic_healthy_count':len(healthy),'diagnostic_healthy_missing':0,
+    'diagnostic_healthy_p95_s':ranked[57]['persisted_claim_s'],
+    'diagnostic_healthy_ordinary_planner':len(planner_healthy),
+    'diagnostic_healthy_other_trace':collections.Counter(r['timeline_source'] for r in healthy if r not in planner_healthy),
+    'all_message_count':len(all_rows),'all_work_count':len(receipt['works']),
+    'selector_client_ms':stats([r['client_ms'] for r in matches]),
+    'selector_auto_explain_execution_ms':stats([r['auto_explain_execution_ms'] for r in matches]),
+    'selector_statement_total_ms':stats([r['statement_total_ms'] for r in matches]),
+    'query_count_ordinary_claims':dict(collections.Counter(r['claim_query_count'] for r in planner_healthy)),
+    'pre_select_s':stats([r['pre_select_s'] for r in planner_healthy]),
+    'post_select_to_commit_s':stats([r['post_select_to_commit_s'] for r in planner_healthy]),
+    'poll_sleep_s':stats([(b['mono_ns']-a['mono_ns'])/1e9 for role,spans in sleep_pairs.items() if role.startswith('planner') for a,b in spans]),
+    'wall_vs_monotonic_selector_max_difference_ms':max(abs((b['wall_ns']-a['wall_ns'])-(b['mono_ns']-a['mono_ns']))/1e6 for pairs_ in selector_pairs.values() for a,b in pairs_.values()),
+    'postgresql_samples':len(pg['activity_samples']),'waiting_lock_samples':sum(bool(s['waiting_locks']) for s in pg['activity_samples']),
+    'wait_counts':[{'type':k[0],'event':k[1],'n':v} for k,v in wait_counts.items()],
+    'server_parse_errors':0,'contemporaneous_selector_plans':len(matches),
+    'all_selector_plans_matrix_and_temporal':len(server['plans']),
+    'p95_neighbor_rows':ranked[-5:],
+    'snapshots':[{'wall_ns':s['wall_ns'],'cardinality':s['cardinality'],'pg_stats_rows':len(s['pg_stats']),
+        'table_stats':s['table_stats'],'physical_messages':s['physical_messages']} for s in pg['snapshots']]}
+save('temporal-analysis-all-messages.json.gz',{'rows':all_rows,'ranked_healthy_ids':[r['id'] for r in ranked],
+    'selectors':matches,'summary':summary,'server_mapping':'backend plus execution ordinal; equal counts, exact server SQL equality, log timestamp within client execution interval validated'})
+(OUT/'analysis-summary.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({k:v for k,v in summary.items() if k not in ('p95_neighbor_rows','snapshots')},indent=2))
+for r in ranked[-5:]:
+    print(json.dumps({k:r.get(k) for k in ('diagnostic_rank_one_based','id','turn_work_id','role','python_pid','backend_pid','persisted_eligible_s','eligible_claim_s','persisted_claim_s','pre_select_s','selector_client_s','post_select_to_claim_clock_s','post_select_to_commit_s','claim_query_count','previous_turn_end_utc','last_poll_sleep_elapsed_s','pre_select_observed_intervals','pre_select_unclassified_s','server_event')}))

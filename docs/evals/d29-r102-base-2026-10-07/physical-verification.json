@@ -1,0 +1,741 @@
+{
+  "schema": "saaslyvet-d29-base-physical-verification-v1",
+  "established": true,
+  "jobs": [
+    {
+      "run_id": "r102-initial-base-20261007-0001",
+      "phase": "CALIBRATE",
+      "repetition": null,
+      "job_sha256": "4fd5d84025f06606d6d4edf556391e4932eb4b0450c861ddaf403adb3de7efd2",
+      "verified": true,
+      "errors": [],
+      "physical_evidence": true,
+      "source_kind": "ISOLATED_LIVE",
+      "executor_dispositions": [
+        "CALIBRATION_REFERENCE_OBSERVED"
+      ],
+      "independent_dispositions": [
+        "CALIBRATION_REFERENCE_OBSERVED"
+      ],
+      "organization_ids": [
+        1,
+        2
+      ],
+      "population": {
+        "offered_attempts": 20,
+        "accepted_durable_inputs": 20,
+        "represented_inputs": 20,
+        "technical_duplicates": 0,
+        "unresolved_offers": 0
+      },
+      "summary": {
+        "OBSERVED_WITHIN_TARGET": 20,
+        "OBSERVED_EXCESS": 0,
+        "PENDING_CENSORED": 0,
+        "NOT_YET_READY": 0,
+        "INDETERMINATE": 0,
+        "INVALID_EVIDENCE": 0
+      },
+      "episodes_by_org": {
+        "1": 10,
+        "2": 10
+      },
+      "conversations_by_org": {
+        "1": [
+          1,
+          3,
+          5
+        ],
+        "2": [
+          2,
+          4,
+          6
+        ]
+      },
+      "max_wait_upper_seconds": 0.6304663,
+      "calibration_reference_by_org_index": [
+        3.921501600530487,
+        3.922839609536838
+      ],
+      "offered_rates_per_minute": null,
+      "offer_seconds": 360,
+      "participant_pids": {
+        "ingress": 24296,
+        "planner_1": 14000,
+        "planner_2": 24456,
+        "sender": 22608
+      },
+      "planner_poll_spans_monotonic_ns": {
+        "planner_1": [
+          2479803809800,
+          2652594187100
+        ],
+        "planner_2": [
+          2479826404100,
+          2652110592700
+        ]
+      },
+      "concurrent_planner_overlap": true,
+      "observed_llm_calls": 40,
+      "observed_meta_acceptances": 20,
+      "invariants": {
+        "missing": [],
+        "violations": [],
+        "witnesses": 60,
+        "checked": [
+          "tenant_membership",
+          "immutable_membership",
+          "outer_commit",
+          "durable_admission",
+          "N1_at_dispatch",
+          "no_HTTP_in_transaction",
+          "contained_destinations"
+        ]
+      },
+      "gates": null,
+      "receipt": "series\\r102-initial-base-20261007-0001-live\\job-result.json",
+      "receipt_sha256": "94e5c9018c87c78f1bf33f07cd66061840b396c989a35bfb1531b91667d80257",
+      "database_cleanup": {
+        "created_database": "test_d29_da5f216751b5254a02b856a5",
+        "removed": true
+      }
+    },
+    {
+      "run_id": "r102-initial-base-20261007-0002",
+      "phase": "SCREEN",
+      "repetition": null,
+      "job_sha256": "6407e83c1c542f636ce09a15820e9906920f25a62634c185798ccfc91b4571af",
+      "verified": true,
+      "errors": [],
+      "physical_evidence": true,
+      "source_kind": "ISOLATED_LIVE",
+      "executor_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "independent_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "organization_ids": [
+        1,
+        2
+      ],
+      "population": {
+        "offered_attempts": 24,
+        "accepted_durable_inputs": 24,
+        "represented_inputs": 24,
+        "technical_duplicates": 0,
+        "unresolved_offers": 0
+      },
+      "summary": {
+        "OBSERVED_WITHIN_TARGET": 24,
+        "OBSERVED_EXCESS": 0,
+        "PENDING_CENSORED": 0,
+        "NOT_YET_READY": 0,
+        "INDETERMINATE": 0,
+        "INVALID_EVIDENCE": 0
+      },
+      "episodes_by_org": {
+        "1": 12,
+        "2": 12
+      },
+      "conversations_by_org": {
+        "1": [
+          1,
+          3,
+          5
+        ],
+        "2": [
+          2,
+          4,
+          6
+        ]
+      },
+      "max_wait_upper_seconds": 0.9587191,
+      "calibration_reference_by_org_index": null,
+      "offered_rates_per_minute": [
+        1.9607508002652434,
+        1.9607508002652434
+      ],
+      "offer_seconds": 360,
+      "participant_pids": {
+        "ingress": 10348,
+        "planner_1": 21764,
+        "planner_2": 10192,
+        "sender": 10156
+      },
+      "planner_poll_spans_monotonic_ns": {
+        "planner_1": [
+          2706390740800,
+          3066749705400
+        ],
+        "planner_2": [
+          2706994820300,
+          3066698718800
+        ]
+      },
+      "concurrent_planner_overlap": true,
+      "observed_llm_calls": 48,
+      "observed_meta_acceptances": 24,
+      "invariants": {
+        "missing": [],
+        "violations": [],
+        "witnesses": 72,
+        "checked": [
+          "tenant_membership",
+          "immutable_membership",
+          "outer_commit",
+          "durable_admission",
+          "N1_at_dispatch",
+          "no_HTTP_in_transaction",
+          "contained_destinations"
+        ]
+      },
+      "gates": {
+        "demand": {
+          "missing": [],
+          "violations": [],
+          "planned_attempts_by_org_index": {
+            "0": 12,
+            "1": 12
+          },
+          "accepted_attempts_by_org_index": {
+            "0": 12,
+            "1": 12
+          },
+          "ready_episodes_by_org": {
+            "1": 12,
+            "2": 12
+          },
+          "ready_in_offer_window": 24,
+          "ready_after_offer_window": 0
+        },
+        "windows": {
+          "missing": [],
+          "violations": [],
+          "backlog": {
+            "1": "NO_GROWTH_OBSERVED",
+            "2": "NO_GROWTH_OBSERVED",
+            "global": "NO_GROWTH_OBSERVED"
+          }
+        },
+        "invariants": {
+          "missing": [],
+          "violations": [],
+          "witnesses": 72,
+          "checked": [
+            "tenant_membership",
+            "immutable_membership",
+            "outer_commit",
+            "durable_admission",
+            "N1_at_dispatch",
+            "no_HTTP_in_transaction",
+            "contained_destinations"
+          ]
+        },
+        "preparation": {
+          "missing": [],
+          "violations": []
+        },
+        "scenario": {
+          "missing": [],
+          "violations": [],
+          "required": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "observed": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "contract_coverage": "OBSERVATION_ONLY"
+        }
+      },
+      "receipt": "series\\r102-initial-base-20261007-0002-live\\job-result.json",
+      "receipt_sha256": "abd38a33216f331591c6b9029de8e774cd1071e3b9c8b95c7df56ccadbe74936",
+      "database_cleanup": {
+        "created_database": "test_d29_78c734b74db966faeb1f6f51",
+        "removed": true
+      }
+    },
+    {
+      "run_id": "r102-initial-base-20261007-0003",
+      "phase": "CONFIRM",
+      "repetition": 1,
+      "job_sha256": "2ca5b927b503200838d937eb9fc9eeb9a3a09ecf77cb520644f61bf17d9c843b",
+      "verified": true,
+      "errors": [],
+      "physical_evidence": true,
+      "source_kind": "ISOLATED_LIVE",
+      "executor_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "independent_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "organization_ids": [
+        1,
+        2
+      ],
+      "population": {
+        "offered_attempts": 60,
+        "accepted_durable_inputs": 60,
+        "represented_inputs": 60,
+        "technical_duplicates": 0,
+        "unresolved_offers": 0
+      },
+      "summary": {
+        "OBSERVED_WITHIN_TARGET": 60,
+        "OBSERVED_EXCESS": 0,
+        "PENDING_CENSORED": 0,
+        "NOT_YET_READY": 0,
+        "INDETERMINATE": 0,
+        "INVALID_EVIDENCE": 0
+      },
+      "episodes_by_org": {
+        "1": 30,
+        "2": 30
+      },
+      "conversations_by_org": {
+        "1": [
+          1,
+          3,
+          5
+        ],
+        "2": [
+          2,
+          4,
+          6
+        ]
+      },
+      "max_wait_upper_seconds": 1.1079011,
+      "calibration_reference_by_org_index": null,
+      "offered_rates_per_minute": [
+        1.9607508002652434,
+        1.9607508002652434
+      ],
+      "offer_seconds": 900,
+      "participant_pids": {
+        "ingress": 11344,
+        "planner_1": 17228,
+        "planner_2": 11936,
+        "sender": 18632
+      },
+      "planner_poll_spans_monotonic_ns": {
+        "planner_1": [
+          3115192564300,
+          4015107557400
+        ],
+        "planner_2": [
+          3115529325300,
+          4015859267600
+        ]
+      },
+      "concurrent_planner_overlap": true,
+      "observed_llm_calls": 120,
+      "observed_meta_acceptances": 60,
+      "invariants": {
+        "missing": [],
+        "violations": [],
+        "witnesses": 180,
+        "checked": [
+          "tenant_membership",
+          "immutable_membership",
+          "outer_commit",
+          "durable_admission",
+          "N1_at_dispatch",
+          "no_HTTP_in_transaction",
+          "contained_destinations"
+        ]
+      },
+      "gates": {
+        "demand": {
+          "missing": [],
+          "violations": [],
+          "planned_attempts_by_org_index": {
+            "0": 30,
+            "1": 30
+          },
+          "accepted_attempts_by_org_index": {
+            "0": 30,
+            "1": 30
+          },
+          "ready_episodes_by_org": {
+            "1": 30,
+            "2": 30
+          },
+          "ready_in_offer_window": 60,
+          "ready_after_offer_window": 0
+        },
+        "windows": {
+          "missing": [],
+          "violations": [],
+          "backlog": {
+            "1": "NO_GROWTH_OBSERVED",
+            "2": "NO_GROWTH_OBSERVED",
+            "global": "NO_GROWTH_OBSERVED"
+          }
+        },
+        "invariants": {
+          "missing": [],
+          "violations": [],
+          "witnesses": 180,
+          "checked": [
+            "tenant_membership",
+            "immutable_membership",
+            "outer_commit",
+            "durable_admission",
+            "N1_at_dispatch",
+            "no_HTTP_in_transaction",
+            "contained_destinations"
+          ]
+        },
+        "preparation": {
+          "missing": [],
+          "violations": []
+        },
+        "scenario": {
+          "missing": [],
+          "violations": [],
+          "required": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "observed": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "contract_coverage": "OBSERVATION_ONLY"
+        }
+      },
+      "receipt": "series\\r102-initial-base-20261007-0003-live\\job-result.json",
+      "receipt_sha256": "b947eed256de93ac3dec4944533238ca317c610f98e002f85eb963c8e12f72ab",
+      "database_cleanup": {
+        "created_database": "test_d29_969dbdbfdcf8c63629bddb82",
+        "removed": true
+      }
+    },
+    {
+      "run_id": "r102-initial-base-20261007-0004",
+      "phase": "CONFIRM",
+      "repetition": 2,
+      "job_sha256": "8608d4a50b06ff959a15e62824f78adc1916eb9bcb4563fa7eacc19f96d9bf85",
+      "verified": true,
+      "errors": [],
+      "physical_evidence": true,
+      "source_kind": "ISOLATED_LIVE",
+      "executor_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "independent_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "organization_ids": [
+        1,
+        2
+      ],
+      "population": {
+        "offered_attempts": 60,
+        "accepted_durable_inputs": 60,
+        "represented_inputs": 60,
+        "technical_duplicates": 0,
+        "unresolved_offers": 0
+      },
+      "summary": {
+        "OBSERVED_WITHIN_TARGET": 60,
+        "OBSERVED_EXCESS": 0,
+        "PENDING_CENSORED": 0,
+        "NOT_YET_READY": 0,
+        "INDETERMINATE": 0,
+        "INVALID_EVIDENCE": 0
+      },
+      "episodes_by_org": {
+        "1": 30,
+        "2": 30
+      },
+      "conversations_by_org": {
+        "1": [
+          1,
+          3,
+          5
+        ],
+        "2": [
+          2,
+          4,
+          6
+        ]
+      },
+      "max_wait_upper_seconds": 1.0057786,
+      "calibration_reference_by_org_index": null,
+      "offered_rates_per_minute": [
+        1.9607508002652434,
+        1.9607508002652434
+      ],
+      "offer_seconds": 900,
+      "participant_pids": {
+        "ingress": 1520,
+        "planner_1": 7072,
+        "planner_2": 22004,
+        "sender": 23680
+      },
+      "planner_poll_spans_monotonic_ns": {
+        "planner_1": [
+          4064022117800,
+          4964160450400
+        ],
+        "planner_2": [
+          4064689327600,
+          4964242096300
+        ]
+      },
+      "concurrent_planner_overlap": true,
+      "observed_llm_calls": 120,
+      "observed_meta_acceptances": 60,
+      "invariants": {
+        "missing": [],
+        "violations": [],
+        "witnesses": 180,
+        "checked": [
+          "tenant_membership",
+          "immutable_membership",
+          "outer_commit",
+          "durable_admission",
+          "N1_at_dispatch",
+          "no_HTTP_in_transaction",
+          "contained_destinations"
+        ]
+      },
+      "gates": {
+        "demand": {
+          "missing": [],
+          "violations": [],
+          "planned_attempts_by_org_index": {
+            "0": 30,
+            "1": 30
+          },
+          "accepted_attempts_by_org_index": {
+            "0": 30,
+            "1": 30
+          },
+          "ready_episodes_by_org": {
+            "1": 30,
+            "2": 30
+          },
+          "ready_in_offer_window": 60,
+          "ready_after_offer_window": 0
+        },
+        "windows": {
+          "missing": [],
+          "violations": [],
+          "backlog": {
+            "1": "NO_GROWTH_OBSERVED",
+            "2": "NO_GROWTH_OBSERVED",
+            "global": "NO_GROWTH_OBSERVED"
+          }
+        },
+        "invariants": {
+          "missing": [],
+          "violations": [],
+          "witnesses": 180,
+          "checked": [
+            "tenant_membership",
+            "immutable_membership",
+            "outer_commit",
+            "durable_admission",
+            "N1_at_dispatch",
+            "no_HTTP_in_transaction",
+            "contained_destinations"
+          ]
+        },
+        "preparation": {
+          "missing": [],
+          "violations": []
+        },
+        "scenario": {
+          "missing": [],
+          "violations": [],
+          "required": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "observed": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "contract_coverage": "OBSERVATION_ONLY"
+        }
+      },
+      "receipt": "series\\r102-initial-base-20261007-0004-live\\job-result.json",
+      "receipt_sha256": "0d80187f8ca1f34d1b2ec45990e197eefe91d4c39a3dd9aab3650dbd86b0af54",
+      "database_cleanup": {
+        "created_database": "test_d29_fdd41ce4014c6f3fdea188ff",
+        "removed": true
+      }
+    },
+    {
+      "run_id": "r102-initial-base-20261007-0005",
+      "phase": "CONFIRM",
+      "repetition": 3,
+      "job_sha256": "2eab09f9ee4b62cbe9c02b9c3f9b00d6115795e1290f11cb955d44a2dccf54d2",
+      "verified": true,
+      "errors": [],
+      "physical_evidence": true,
+      "source_kind": "ISOLATED_LIVE",
+      "executor_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "independent_dispositions": [
+        "OBSERVED_COMPATIBLE"
+      ],
+      "organization_ids": [
+        1,
+        2
+      ],
+      "population": {
+        "offered_attempts": 60,
+        "accepted_durable_inputs": 60,
+        "represented_inputs": 60,
+        "technical_duplicates": 0,
+        "unresolved_offers": 0
+      },
+      "summary": {
+        "OBSERVED_WITHIN_TARGET": 60,
+        "OBSERVED_EXCESS": 0,
+        "PENDING_CENSORED": 0,
+        "NOT_YET_READY": 0,
+        "INDETERMINATE": 0,
+        "INVALID_EVIDENCE": 0
+      },
+      "episodes_by_org": {
+        "1": 30,
+        "2": 30
+      },
+      "conversations_by_org": {
+        "1": [
+          1,
+          3,
+          5
+        ],
+        "2": [
+          2,
+          4,
+          6
+        ]
+      },
+      "max_wait_upper_seconds": 1.0499375,
+      "calibration_reference_by_org_index": null,
+      "offered_rates_per_minute": [
+        1.9607508002652434,
+        1.9607508002652434
+      ],
+      "offer_seconds": 900,
+      "participant_pids": {
+        "ingress": 22724,
+        "planner_1": 724,
+        "planner_2": 20408,
+        "sender": 1808
+      },
+      "planner_poll_spans_monotonic_ns": {
+        "planner_1": [
+          5010956303900,
+          5911237023200
+        ],
+        "planner_2": [
+          5011149973600,
+          5911239331700
+        ]
+      },
+      "concurrent_planner_overlap": true,
+      "observed_llm_calls": 120,
+      "observed_meta_acceptances": 60,
+      "invariants": {
+        "missing": [],
+        "violations": [],
+        "witnesses": 180,
+        "checked": [
+          "tenant_membership",
+          "immutable_membership",
+          "outer_commit",
+          "durable_admission",
+          "N1_at_dispatch",
+          "no_HTTP_in_transaction",
+          "contained_destinations"
+        ]
+      },
+      "gates": {
+        "demand": {
+          "missing": [],
+          "violations": [],
+          "planned_attempts_by_org_index": {
+            "0": 30,
+            "1": 30
+          },
+          "accepted_attempts_by_org_index": {
+            "0": 30,
+            "1": 30
+          },
+          "ready_episodes_by_org": {
+            "1": 30,
+            "2": 30
+          },
+          "ready_in_offer_window": 60,
+          "ready_after_offer_window": 0
+        },
+        "windows": {
+          "missing": [],
+          "violations": [],
+          "backlog": {
+            "1": "NO_GROWTH_OBSERVED",
+            "2": "NO_GROWTH_OBSERVED",
+            "global": "NO_GROWTH_OBSERVED"
+          }
+        },
+        "invariants": {
+          "missing": [],
+          "violations": [],
+          "witnesses": 180,
+          "checked": [
+            "tenant_membership",
+            "immutable_membership",
+            "outer_commit",
+            "durable_admission",
+            "N1_at_dispatch",
+            "no_HTTP_in_transaction",
+            "contained_destinations"
+          ]
+        },
+        "preparation": {
+          "missing": [],
+          "violations": []
+        },
+        "scenario": {
+          "missing": [],
+          "violations": [],
+          "required": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "observed": [
+            "concurrent_planners",
+            "balanced_offer"
+          ],
+          "contract_coverage": "OBSERVATION_ONLY"
+        }
+      },
+      "receipt": "series\\r102-initial-base-20261007-0005-live\\job-result.json",
+      "receipt_sha256": "c2a977d6453b63e18b99b544add275456129e5b42e54b39ee1f416acd762bb41",
+      "database_cleanup": {
+        "created_database": "test_d29_83703b1f960a8ca4f79afded",
+        "removed": true
+      }
+    }
+  ],
+  "series_status": "CONTROLLER_COMPLETE",
+  "series_reason": null,
+  "global_status": "CONTROLLER_CORE_VALIDATED / FULL_LIVE_MATRIX_NOT_READY",
+  "base_status": "CONFIRMED_BASE_ESTABLISHED",
+  "replay_used_for_confirmation": false,
+  "maximum_searched": false,
+  "sustainable_envelope": null,
+  "dependent_cases_executed": false,
+  "commits_created": 0
+}

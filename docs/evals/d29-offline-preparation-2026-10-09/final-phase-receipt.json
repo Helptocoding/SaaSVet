@@ -1,0 +1,72 @@
+{
+  "schema": "D29_OFFLINE_PREPARATION_FINAL_RECEIPT_V1",
+  "at_utc": "2026-10-09T07:06:10.859476+00:00",
+  "global_status": "CONTROLLER_CORE_VALIDATED / FULL_LIVE_MATRIX_NOT_READY",
+  "base_status": "CONFIRMED_BASE_ESTABLISHED",
+  "base_sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56",
+  "base_unchanged": true,
+  "scope": "PREPARATION_AND_OFFLINE_VALIDATION_ONLY",
+  "execution_authorized": false,
+  "P01": "VERIFIER_OFFLINE_VALIDATED_PROSPECTIVE_CAPTURE_INTEGRATION_PENDING",
+  "P02": "READ_ONLY_DIAGNOSIS_DONE_SERVICE_CONTROL_ACCESS_DENIED_RECOVERY_NOT_INSTALLED",
+  "P03": "PENDING_NO_DEMONSTRABLE_PHYSICAL_WINDOW",
+  "P04": {
+    "uncertain_meta": "OFFLINE_PREPARED_NOT_EXECUTED",
+    "slow_meta": "OFFLINE_PREPARED_NOT_EXECUTED"
+  },
+  "P05": "ROOT_CAUSE_UNDETERMINED_SEVEN_SEQUENTIAL_SUITES_PREPARED_NOT_EXECUTED",
+  "validation": {
+    "receipt": "preparation-tests-attempt-03.json",
+    "sha256": "76ce35ceed888abb4d5f4bae933a9ba14bfc575dd3deb0568710d0eebae29210",
+    "tests": 69,
+    "passed": true,
+    "source_kind": "OFFLINE_SYNTHETIC_VERIFIER_AND_PREPARATION_CONTROLS"
+  },
+  "evidence_separation": {
+    "physical_frontier": "NO_NEW_PHYSICAL_ACCREDITATION",
+    "load_condition": "NO_NEW_PHYSICAL_LOAD_EXECUTED",
+    "confirmed_base": "ESTABLISHED_UNCHANGED",
+    "pending_prerequisites": [
+      "R106 causal capture integration",
+      "R104 phase/latency bounds",
+      "W32Time safe restoration access and independent recovery",
+      "R209 launch bridge and complete physical gates"
+    ],
+    "synthetic": "ONLY_OFFLINE_NEGATIVE_CONTROLS_AND_CONDITIONAL_INTERVAL_MODELS",
+    "physical": "READ_ONLY_HOST_DIAGNOSTICS_AND_PRESERVED_RAW_CAPTURE_AUDIT_ONLY"
+  },
+  "original_invariants_and_bounds_unchanged": true,
+  "physical_probes_executed": 0,
+  "application_suites_executed": 0,
+  "matrices_executed": 0,
+  "W32Time_stop_calls": 0,
+  "provider_parameter_changes": false,
+  "production_changes": false,
+  "contract_changes": false,
+  "commits": 0,
+  "E": null,
+  "maximum_capacity": null,
+  "commercial_capacity": null,
+  "source_sha256": {
+    "clock_recovery_protocol.py": "facdb0f1d0e4152461ee4998df5ab96deed9bde6cbb095f481d89b05e07c786b",
+    "common.py": "2e47b1ebe85a14cfb84d4fa9a0f02bc534ba16c500187490db388a6eff95a601",
+    "finalize_artifacts.py": "a7a267a30e5813ddb19d8fe744335e8a3ea0d0d4490aa0db116ae5ed1a7f788e",
+    "inspect_preparation_sources.py": "ecfb4b146323a61a562a9832fedf66914917a0c9dc865b0202551b5e8050c22f",
+    "inspect_shapes.py": "5c70b67d82da410417001116d34fd2c100397e54a532d4f7ccf2578fab5b1345",
+    "offline_checks.py": "d59db0d12d242e10f710a57b95b11caa0ea7a876021b7a1231ffda9aaca53313",
+    "preparation_checks.py": "ef6576f09a46fd621dd007613b88cdeaac0c26e2255db4c4a9a0db5a2ee908ad",
+    "prepare_artifacts.py": "80fde29dbc052097a0ec01860387faa364b600b9b8445902a4a884f7b275e706",
+    "r104_temporal.py": "841356f5f70ab0d11d04d7f0103cec849731e1e1af10f369c6d26e8eec421a91",
+    "r106_verifier.py": "521b840ca0738b29a0d685c34a41b3bbb4d26fa6be3d2c95946d6cebbb5de707",
+    "r209_preparation.py": "cad6ba9fd71e1d738453ada0b7f0e1d332ea247d4365a60001b356cf29e3526f",
+    "read_only_diagnostic.py": "cfb2d4371c58a47d60b779826fd8b636bc56a8c4011bb598cba5446fde4ede98",
+    "source_extracts.py": "645ab132a3c0bc3ac3dabf4c3b9bdac018f3b50c3d21ab242b841424d814a496"
+  },
+  "integrity_receipt": "final-integrity.json",
+  "integrity_valid": true,
+  "preserved_earlier_offline_receipts": true,
+  "final_policy": "r106-prospective-policy-v2.json",
+  "final_temporal_analysis": "r104-temporal-analysis-v2.json",
+  "final_r209_plan_validation": "r209-plan-validation-v2.json",
+  "stop_after_review_delivery": true
+}

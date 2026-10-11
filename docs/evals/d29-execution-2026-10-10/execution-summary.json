@@ -1,0 +1,39 @@
+{
+  "scenarios": {
+    "R1-06": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r106-prospective-01/scenario-result.json"
+    },
+    "R2-09 uncertain_meta": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r209-uncertain-01/scenario-result.json"
+    },
+    "R2-09 slow_meta": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r209-slow-01/scenario-result.json"
+    },
+    "R1-04": {
+      "status": "PENDING",
+      "authoritative_result": "r104-passive-01/scenario-result.json"
+    },
+    "R2-04": {
+      "status": "ACCREDITED",
+      "authoritative_result": "r204-intact-01/scenario-result.json"
+    }
+  },
+  "offline_controls": {
+    "tests": 97,
+    "receipt": "offline-validation-10.json"
+  },
+  "native_postgresql_adapter_tests": 4,
+  "regression_tests": 192,
+  "regression_skipped": 0,
+  "all_attempt_databases_removed": true,
+  "host_service_mutation": false,
+  "commits": false,
+  "full_matrix": false,
+  "new_characterization": false,
+  "capacity_estimates": false,
+  "plan_closed": false,
+  "unresolved_decision": "R1-04_PHYSICAL_FORECAST_SEQUENCE_NOT_OBSERVED; ACCEPT_LIMITATION_OR_DECIDE_COMPATIBLE_FIXTURE"
+}

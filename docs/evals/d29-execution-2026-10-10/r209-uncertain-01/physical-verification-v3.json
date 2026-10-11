@@ -1,0 +1,251 @@
+{
+  "status": "ACCREDITED",
+  "case_id": "R2-09",
+  "variant": "uncertain_meta",
+  "errors": [],
+  "clock_gate": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "r209-uncertain-01",
+          "ingress",
+          23612,
+          "303f768c3b75480fa3855dbeb4ffc786"
+        ],
+        "calibrations": 1117,
+        "offset_ns": [
+          1791646404003419500,
+          1791646404003912700
+        ],
+        "last_seq": 17200,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "r209-uncertain-01",
+          "planner_1",
+          24024,
+          "c5c5b9c0de804f8fac7b75dc38ab7e2a"
+        ],
+        "calibrations": 44,
+        "offset_ns": [
+          1791646404003355200,
+          1791646404004062800
+        ],
+        "last_seq": 10366,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "r209-uncertain-01",
+          "planner_2",
+          24996,
+          "a26a570dacdc441691195d3a12fac977"
+        ],
+        "calibrations": 44,
+        "offset_ns": [
+          1791646404003288700,
+          1791646404004046600
+        ],
+        "last_seq": 10336,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "r209-uncertain-01",
+          "sender",
+          18824,
+          "7bf73541b3644d61ac3cfb4815e1cd70"
+        ],
+        "calibrations": 114,
+        "offset_ns": [
+          1791646404003353000,
+          1791646404003997000
+        ],
+        "last_seq": 10593,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "physical_execution": true,
+  "physical_run_repeated": false,
+  "gates": {
+    "demand": {
+      "missing": [],
+      "violations": [],
+      "planned_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "accepted_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "ready_episodes_by_org": {
+        "1": 14,
+        "2": 14
+      },
+      "ready_in_offer_window": 22,
+      "ready_after_offer_window": 0
+    },
+    "invariants": {
+      "missing": [],
+      "violations": [],
+      "witnesses": 84,
+      "checked": [
+        "tenant_membership",
+        "immutable_membership",
+        "outer_commit",
+        "durable_admission",
+        "N1_at_dispatch",
+        "no_HTTP_in_transaction",
+        "contained_destinations"
+      ]
+    },
+    "windows": {
+      "missing": [],
+      "violations": [],
+      "backlog": {
+        "1": "NO_GROWTH_OBSERVED",
+        "2": "NO_GROWTH_OBSERVED",
+        "global": "NO_GROWTH_OBSERVED"
+      }
+    },
+    "scenario": {
+      "missing": [],
+      "violations": [],
+      "required": [
+        "sender_admitted",
+        "meta_dispatch",
+        "meta_result",
+        "ordinary_progress",
+        "no_blind_resend"
+      ],
+      "observed": [
+        "sender_admitted",
+        "meta_dispatch",
+        "meta_result",
+        "ordinary_progress",
+        "no_blind_resend"
+      ],
+      "contract_coverage": "PENDING"
+    },
+    "initial_cohort": {
+      "errors": [],
+      "physical_accreditation": false
+    },
+    "provider": {
+      "errors": [],
+      "physical_accreditation": false
+    }
+  },
+  "counts": {
+    "inputs": 30,
+    "episodes": 28,
+    "works": 28,
+    "llm_calls": 56,
+    "outbound": 28,
+    "meta_calls": 28,
+    "accepted_outputs": 14,
+    "deferred_works": 0,
+    "demonstrated_successor_links": 0,
+    "uncertain_outputs": 14
+  },
+  "native_ancestry": {
+    "planner_1": {
+      "passed": true,
+      "errors": [],
+      "native_chain": [
+        {
+          "pid": 24024,
+          "parent": 16868,
+          "name": "python.exe"
+        },
+        {
+          "pid": 16868,
+          "parent": 16160,
+          "name": "python.exe"
+        }
+      ],
+      "samples": 251,
+      "monotonic_witness_bounds": [
+        7372948188500,
+        7970181284800
+      ],
+      "source": "WINDOWS_TOOLHELP_SNAPSHOTS_CAPTURED_DURING_PHYSICAL_ATTEMPT",
+      "physical_accreditation": false
+    },
+    "planner_2": {
+      "passed": true,
+      "errors": [],
+      "native_chain": [
+        {
+          "pid": 24996,
+          "parent": 6840,
+          "name": "python.exe"
+        },
+        {
+          "pid": 6840,
+          "parent": 22864,
+          "name": "python.exe"
+        }
+      ],
+      "samples": 252,
+      "monotonic_witness_bounds": [
+        7370632462500,
+        7970181284800
+      ],
+      "source": "WINDOWS_TOOLHELP_SNAPSHOTS_CAPTURED_DURING_PHYSICAL_ATTEMPT",
+      "physical_accreditation": false
+    },
+    "sender": {
+      "passed": true,
+      "errors": [],
+      "native_chain": [
+        {
+          "pid": 18824,
+          "parent": 7340,
+          "name": "python.exe"
+        },
+        {
+          "pid": 7340,
+          "parent": 6208,
+          "name": "python.exe"
+        }
+      ],
+      "samples": 254,
+      "monotonic_witness_bounds": [
+        7365816518800,
+        7970181284800
+      ],
+      "source": "WINDOWS_TOOLHELP_SNAPSHOTS_CAPTURED_DURING_PHYSICAL_ATTEMPT",
+      "physical_accreditation": false
+    }
+  },
+  "original_provisional_result": "physical-verification.json",
+  "execution_source_archive_verified": true,
+  "verification_source_hashes": {
+    "reverify_r209.py": "2dc4b58ca507a50378128d7b1e039995062f06925e5f08cc3334cf1257c3e5c6",
+    "r209_verification_v3.py": "43fe17005f30f212822d57e9c25099bf8e52b0ac25a2e8a861c1b996ddec5051",
+    "native_ancestry.py": "72aa6c76acbea760926e8831f0285c1e0c0cb73e9c5ef2c9e9cf9631ec4455dc",
+    "test_native_ancestry.py": "f9f2378c053d92d81dd72b9a8801ec890a0a310bc7bfca4aa33aa41e4ab196d1",
+    "native_verifier_bridge.py": "d8b7e4d19f4af760c2947da650d6eaff5f50ce616c3572e4e0781f81736bc304",
+    "sealed_census.py": "90afc6385f6cb37a40979dff38f1a3fb196943592c5f79b69220a4302b8c5242",
+    "test_sealed_census.py": "1ef2d3d9c751af0468e4add2cc10e9f701c9762d70de345c5e6ec329ddb196b5"
+  }
+}

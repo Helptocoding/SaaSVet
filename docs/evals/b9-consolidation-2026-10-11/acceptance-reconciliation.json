@@ -1,0 +1,395 @@
+{
+  "schema": "b9-acceptance-reconciliation-v1",
+  "date": "2026-10-11",
+  "scope": "Consolidation of existing receipts, no new acceptance execution",
+  "technical_delivery": "CONSOLIDATED",
+  "profile_candidate_result": "PROFILE_BETA_1_PASS",
+  "profile_candidate_sha": "08310461337a284386299ec47c54125f2139bf7f",
+  "current_head_reference": "825db75df68bf076929fa787e77beefe96803350",
+  "current_integral_candidate_acceptance": "PENDING_NOT_INFERRED_FROM_COMPOSITE_HISTORY",
+  "activation": "PENDING_ACTIVATION_REQUIREMENTS",
+  "profile_artifact_integrity": {
+    "count": 98,
+    "mismatches": []
+  },
+  "frozen_profile_inputs": {
+    "count": 6,
+    "mismatches": []
+  },
+  "instrumentation_runtime_integrity": {
+    "count": 6,
+    "mismatches": []
+  },
+  "profile_source_comparison": {
+    "count": 289,
+    "mismatches": [
+      "backend/apps/agent/durable.py",
+      "backend/apps/agent/services.py",
+      "backend/apps/agent/worker.py"
+    ]
+  },
+  "unexpected_profile_source_deltas": [],
+  "instrumentation_equivalence": {
+    "kind": "FUNCTIONAL_NOT_TEMPORAL",
+    "existing_receipt_unique_ids": 216,
+    "functional_ast_after_removing_named_hooks": {
+      "backend/apps/agent/durable.py": true,
+      "backend/apps/agent/services.py": true,
+      "backend/apps/agent/worker.py": true
+    },
+    "selector_ast_identical": true,
+    "no_fresh_profile_at_current_head": true
+  },
+  "profile_corpus": {
+    "selected_unique": 46,
+    "canonical_id_references": 47,
+    "status": "PASS",
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "xfail": 0
+  },
+  "profile_scenario_gates": {
+    "base": {
+      "healthy_claim_p95_le_10": true,
+      "safety_dispatch_p95_le_5": true,
+      "outbox_dispatch_p95_le_5": true
+    },
+    "blocked_llm": {
+      "healthy_claim_p95_le_10": true,
+      "safety_dispatch_p95_le_5": true
+    },
+    "meta_slow": {
+      "durable_outbound_state": true,
+      "bounded_concurrency": true,
+      "no_blind_retry": true
+    },
+    "duplicate": {
+      "duplicate_webhook_deduplicated": true
+    },
+    "saturation": {
+      "safety_admitted_under_saturation": true,
+      "bounded_concurrency": true,
+      "saturation_observed": true
+    }
+  },
+  "profile_base_claim_p95_seconds": 9.81954,
+  "profile_blocked_claim_p95_seconds": 9.717606,
+  "historical_b9d_accepted_unique": 2384,
+  "historical_b9d_negative_evidence": [
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_appointment_projection_limit_and_old_appointment",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_appointments_inherit_missing_pet_coverage",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_complete_empty_is_explicit_and_scoped",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_currency_and_multiple_services_stay_associated",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_diagnostics_are_versioned_without_personal_payload",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_each_selected_endpoint_rejects_malformed_collection",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_error_logs_never_include_provider_pii",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_foreign_owner_pet_reference_is_denied",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_foreign_scope_and_coincident_price_rejected",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_missing_null_and_invalid_price",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_overlap_is_not_available_even_if_start_differs",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_pagination_complete_truncated_unknown",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_partial_occupancy_cannot_prove_available_slot",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_personal_read_cannot_bypass_current_identity",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_pet_projection_limit_is_truncated",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_price_uses_field_not_coincident_id",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_public_reads_and_control_do_not_require_onboarding",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_query_never_mutates_even_forced_wrong_tool",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_cannot_emit_free_success_prose",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_error_cannot_be_rewritten_as_absence",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_label_cannot_issue_http_mutation",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_read_shapes_and_http_errors_never_become_empty",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2ApiResultsTests.test_real_appointment_endpoint_enforces_pet_date_and_tenant",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_already_done_requires_matching_fresh_read",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_compound_partial_only_proves_pet",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_confirm_malformed_conflict_and_timeout_never_claim_success",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_direct_commit_cannot_bypass_b0_at_executor",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_effect_response_must_match_entity_action_and_requested_state",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_replay_requires_compatible_entity_and_existing_key",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2EffectResultsTests.test_valid_effect_can_render_only_its_own_action",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_manifest_is_exhaustive_static_and_writes_contained",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_no_tool_does_not_prove_absence_or_availability",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_numbers_do_not_ground_free_price_or_success",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_numeric_strings_are_rejected_in_typed_price_projection",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2OutcomeContractTests.test_ok_is_derived_and_legacy_does_not_prove_effect",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2TransportTests.test_http_errors_are_distinct",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2TransportTests.test_invalid_json_and_empty_are_not_empty_data",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2TransportTests.test_network_failure_and_write_uncertainty",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b2_results.B2TransportTests.test_valid_http_preserves_body_and_parse",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b8d_attendance.B8DAttendanceTests.test_indirect_question_never_confirms",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    },
+    {
+      "test_id": "apps.agent.tests.test_b8d_attendance.B8DAttendanceTests.test_question_never_confirms",
+      "passed_in_b9d_historical_receipt": true,
+      "in_profile_46_selected_ids": false,
+      "current_execution_claimed": false
+    }
+  ],
+  "explicit_limits": [
+    "I04/I07 negative history is not represented as a fresh exact rerun of every negative on the current candidate.",
+    "The 2384 historical IDs, 216 composite instrumentation IDs and 192 D29 IDs are separate scopes, not a full current acceptance run.",
+    "PROFILE_PASS belongs to 0831046; functional hook equivalence does not transfer latency measurements to 825db75.",
+    "No real model/Meta promotion evaluation, human/clinical approval or privacy approval is created by this act.",
+    "D29 remains closed administratively with R1-04 PENDING; no new attempts or full matrix are authorized."
+  ],
+  "witnesses": [
+    {
+      "path": "docs/evals/b9a-acceptance-results.json",
+      "sha256": "ec92d95f2d224c5449f07ad767d2841007945a2975d8433923c38026316ab006"
+    },
+    {
+      "path": "docs/evals/b9b-acceptance-results.json",
+      "sha256": "59da2c62cfed0b6cb7f582330507b493e56830910a004122bdca2a659052ca98"
+    },
+    {
+      "path": "docs/evals/b9c-acceptance-results.json",
+      "sha256": "42dd1546b7f24688b214b4b33140182bd97abe21a37b54aeda6e870350404c6c"
+    },
+    {
+      "path": "docs/evals/b9d-acceptance-results.json",
+      "sha256": "1d4ecdf05bf60c68b0d69a0d89ec4d88d2372bb988303a3769525dfd867a6f3c"
+    },
+    {
+      "path": "docs/evals/profile-beta-1-requirements-matrix.md",
+      "sha256": "03acc61e5ca2fd12d641ad64be1c88964efbb97f820d3b657591d7f8eed25f7b"
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-sql-2026-10-02/evaluation-summary.json",
+      "sha256": "8e1b162873cb19aeed5b2397ee31dfe21b2b5303a8aa6f614f18abc1e085eb0d"
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-decision.json",
+      "sha256": "061c64c5414962f6bd23b9196eb6462371a73c8115b039b30dd450eda89fcd6f"
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-sql-2026-10-02/manifest.sha256.json",
+      "sha256": "c2d14ab4fdb2f269fda3e77a72b40749d2cc9ced2585446f9a8c4d3c640f7e92"
+    },
+    {
+      "path": "docs/evals/e4-instrumentation-2026-10-03/closure.json",
+      "sha256": "5463a3ecd6c424f483363bc0a659823334daa0da7967962deef77ece0ae86c23"
+    },
+    {
+      "path": "docs/evals/e4-preclaim-scheduling-2026-10-04/closure.json",
+      "sha256": "edcefa5f027ef4934ea389a1ac46416f13548bcd7d6ad71fd1a8572bfb673e5a"
+    },
+    {
+      "path": "docs/evals/d29-phase-closure-2026-10-10/CIERRE.md",
+      "sha256": "383e88e84ff4b5094c6fe6a3c8a77da4bf2f0693b92e92a63e4bad94a8dfcd64"
+    },
+    {
+      "path": "docs/evals/d29-phase-closure-2026-10-10/r204-duration-audit.json",
+      "sha256": "9628c27df84e4962cb1465f4d17ad4670afe0eff7def7247d72ccd5d64fcd297"
+    },
+    {
+      "path": "docs/evals/d29-r104-decision-2026-10-10.md",
+      "sha256": "84b8d9c10665bc8051d4d533cee20f4ed4f88cbc9a8305c03897127caf7c490e"
+    },
+    {
+      "path": "docs/evals/profile-beta-1-operational-readiness.md",
+      "sha256": "2f79382e274cc9475e7e4eb2ef85b9d9d9c1436dbccffee69a7dc215d40aaaf5"
+    }
+  ],
+  "application_tests_executed": false,
+  "runtime_changed": false,
+  "commit_created": false
+}

@@ -1,0 +1,505 @@
+"""DIAGNOSTIC_ONLY: frozen runtime, independent evidence, no optimization."""
+import argparse
+import ast
+import gzip
+import hashlib
+import importlib
+import inspect
+import json
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import threading
+import time
+from contextlib import ExitStack, contextmanager
+from datetime import datetime, timedelta, timezone as tz
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(r'C:\Users\LAP\.codex\worktrees\e4-causal-audit-6e59\VeterinariaSaaS')
+OUT = ROOT/'docs/evals/e4-causal-diagnosis-2026-10-03'
+OLD = ROOT/'docs/evals/e4-causal-audit-2026-10-03'
+TEMP = Path(r'C:\Users\LAP\AppData\Local\Temp')
+PY = TEMP/'vet-b8b-locked/Scripts/python.exe'
+PG = TEMP/'vet-b8b-pg16-bin/pgsql/bin'
+DATA = TEMP/'vet-e4-dhij2-6e59-pg'
+PORT = 35447
+PREFIX = 'test_e4_dhij2_'
+TEMPLATE = PREFIX+'template'
+SEEDED = PREFIX+'seeded'
+BASE = f'postgresql://b9e@127.0.0.1:{PORT}/postgres'
+SHA = '6e59f6c05514ad6eca0985796e538de4fd749560'
+TABLES = ('agent_conversation','channels_message','agent_turnwork')
+
+def dump(path, value):
+    assert not path.exists(), path
+    text = json.dumps(value, indent=2, default=str)+'\n'
+    if path.suffix == '.gz':
+        with gzip.open(path,'wt',encoding='utf-8') as f: f.write(text)
+    else: path.write_text(text,encoding='utf-8')
+
+def uri(name): return f'postgresql://b9e@127.0.0.1:{PORT}/{name}'
+
+def cmd(*args):
+    return subprocess.run(['rtk','proxy',*map(str,args)],check=True,
+        stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW)
+
+def connect(name='postgres', **kw):
+    import psycopg
+    return psycopg.connect(uri(name),connect_timeout=5,**kw)
+
+def setup(name):
+    os.environ.update(DATABASE_URL=uri(name),SECRET_KEY='isolated-diagnostic-only',DEBUG='False',
+        ENVIRONMENT='dev',DISABLE_SENTRY='True',SENTRY_DSN='',REDIS_URL='',DISCORD_WEBHOOK_URL='',
+        HEALTHCHECK_AGENT_WORKER_URL='',HEALTHCHECK_AGENT_SENDER_URL='',PYTHONIOENCODING='utf-8',
+        DJANGO_SETTINGS_MODULE='config.settings')
+    for key in list(os.environ):
+        if key.startswith('E4_'): os.environ.pop(key)
+    sys.path.insert(0,str(ROOT/'backend'))
+    import django
+    django.setup()
+
+def select_database(name):
+    from django.db import connections
+    connections.close_all()
+    connections['default'].settings_dict['NAME']=name
+    os.environ['DATABASE_URL']=uri(name)
+
+def clone(name, source=TEMPLATE):
+    from psycopg import sql
+    with connect(autocommit=True) as c:
+        c.execute(sql.SQL('CREATE DATABASE {} TEMPLATE {}').format(sql.Identifier(name),sql.Identifier(source)))
+
+def drop(name):
+    from django.db import connections
+    from psycopg import sql
+    connections.close_all()
+    with connect(autocommit=True) as c:
+        assert c.execute('SELECT count(*) FROM pg_stat_activity WHERE datname=%s',(name,)).fetchone()[0]==0
+        c.execute(sql.SQL('DROP DATABASE {}').format(sql.Identifier(name)))
+
+def snapshot(name):
+    import psycopg
+    with connect(name,autocommit=True,row_factory=psycopg.rows.dict_row) as c:
+        d={'wall_ns':time.time_ns(),'database':name}
+        d['relations']=c.execute("SELECT relname,relpages,reltuples,relallvisible,pg_relation_size(oid) AS heap_bytes,pg_total_relation_size(oid) AS total_bytes FROM pg_class WHERE relname=ANY(%s) ORDER BY relname",(list(TABLES),)).fetchall()
+        d['pg_stats']=c.execute("SELECT tablename,attname,null_frac,n_distinct,correlation,most_common_vals::text,most_common_freqs,histogram_bounds::text FROM pg_stats WHERE tablename=ANY(%s) AND attname IN ('id','organization_id','conversation_id','status','direction','semantic_type','available_at','turn_work_id','claimed_at','next_attempt_at','lease_expires_at','ownership_epoch','last_activity_at') ORDER BY tablename,attname",(list(TABLES),)).fetchall()
+        d['table_stats']=c.execute('SELECT relname,n_live_tup,n_dead_tup,n_mod_since_analyze,last_vacuum,last_autovacuum,last_analyze,last_autoanalyze,analyze_count,autoanalyze_count FROM pg_stat_user_tables WHERE relname=ANY(%s) ORDER BY relname',(list(TABLES),)).fetchall()
+        d['physical_messages']=c.execute("SELECT status,count(*) AS rows,count(DISTINCT (ctid::text::point)[0]) AS blocks,min((ctid::text::point)[0]) AS min_block,max((ctid::text::point)[0]) AS max_block FROM channels_message GROUP BY status ORDER BY status").fetchall()
+        d['visibility']={t:c.execute('SELECT * FROM pg_visibility_map_summary(%s::regclass)',(t,)).fetchone() for t in TABLES}
+        d['cardinality']={t:c.execute('SELECT count(*) AS rows FROM '+t).fetchone()['rows'] for t in TABLES}
+        d['turnworks']=c.execute("SELECT status,count(*) AS n,count(*) FILTER (WHERE (status='PROCESSING' AND lease_expires_at<=statement_timestamp()) OR (status='PENDING' AND (next_attempt_at IS NULL OR next_attempt_at<=statement_timestamp()))) AS due FROM agent_turnwork GROUP BY status ORDER BY status").fetchall()
+        d['organizations']=c.execute('SELECT count(*) AS n FROM organizations_organization').fetchone()['n']
+        d['connections']=c.execute('SELECT pid,backend_type,state,wait_event_type,wait_event,query_start FROM pg_stat_activity WHERE datname=current_database() ORDER BY pid').fetchall()
+        d['locks']=c.execute('SELECT pid,locktype,relation::regclass::text,mode,granted FROM pg_locks WHERE pid IN (SELECT pid FROM pg_stat_activity WHERE datname=current_database()) ORDER BY pid,locktype,relation,mode').fetchall()
+        return d
+
+class ServerObserver:
+    def __init__(self):
+        self.plans=[]; self.statements=[]; self.errors=[]; self.proc=None
+    def consume(self, row):
+        if not row: return
+        timestamp,pid,db,body=row
+        if 'ROW_NUMBER()' not in body or 'agent_conversation' not in body: return
+        if 'EXPLAIN' in body.split('ROW_NUMBER()',1)[0]: return
+        import re
+        duration=re.search(r'duration: ([0-9.]+) ms',body)
+        if not duration: return
+        record={'log_timestamp':timestamp,'backend_pid':int(pid),'database':db,'server_ms':float(duration.group(1))}
+        if 'plan:' in body:
+            try:
+                plan=json.loads(body[body.index('{'):])
+                query=plan.get('Query Text','')
+                if 'ROW_NUMBER()' in query and not query.startswith('EXPLAIN'):
+                    record['explain_event']=plan
+                    self.plans.append(record)
+            except (ValueError,json.JSONDecodeError): self.errors.append({'pid':pid,'kind':'selector_plan_parse'})
+        elif 'statement:' in body or 'execute ' in body:
+            record['exact_sql']=body.split('statement:',1)[-1].strip()
+            self.statements.append(record)
+    def reader(self):
+        previous=None
+        for line in self.proc.stdout:
+            if line.startswith('DIAG|'):
+                self.consume(previous)
+                previous=line.rstrip('\r\n').split('|',4)[1:]
+            elif previous: previous[3]+=line
+        self.consume(previous)
+    def start(self):
+        assert not DATA.exists()
+        with socket.socket() as s: assert s.connect_ex(('127.0.0.1',PORT))!=0
+        cmd(PG/'initdb.exe','-D',DATA,'-U','b9e','-A','trust','--encoding=UTF8','--locale=C')
+        args=['rtk','proxy',str(PG/'postgres.exe'),'-D',str(DATA),'-p',str(PORT),'-h','127.0.0.1',
+            '-c','fsync=on','-c','synchronous_commit=on','-c','logging_collector=off',
+            '-c','log_destination=stderr','-c','log_line_prefix=DIAG|%m|%p|%d| ',
+            '-c','log_timezone=UTC','-c','log_parameter_max_length=0','-c','log_parameter_max_length_on_error=0',
+            '-c','session_preload_libraries=auto_explain','-c','auto_explain.log_min_duration=0',
+            '-c','auto_explain.log_analyze=on','-c','auto_explain.log_buffers=on',
+            '-c','auto_explain.log_timing=on','-c','auto_explain.log_format=json',
+            '-c','auto_explain.log_verbose=on','-c','log_min_duration_statement=0']
+        self.proc=subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
+            text=True,encoding='utf-8',errors='replace',creationflags=subprocess.CREATE_NO_WINDOW)
+        self.thread=threading.Thread(target=self.reader); self.thread.start()
+        for retry in range(150):
+            try:
+                with connect(autocommit=True) as c:
+                    row=c.execute("SELECT version(),current_setting('data_directory'),current_setting('fsync'),current_setting('synchronous_commit')").fetchone()
+                    assert '16.15' in row[0] and Path(row[1]).resolve()==DATA.resolve() and row[2:]==('on','on')
+                    c.execute('CREATE DATABASE '+TEMPLATE)
+                return row
+            except __import__('psycopg').OperationalError: time.sleep(.2)
+        raise RuntimeError('STOP owned isolated PostgreSQL unavailable')
+    def close(self):
+        from django.db import connections
+        connections.close_all()
+        with connect(autocommit=True) as c:
+            clients=c.execute("SELECT pid,datname FROM pg_stat_activity WHERE backend_type='client backend' AND pid<>pg_backend_pid()").fetchall()
+            locks=c.execute('SELECT count(*) FROM pg_locks WHERE NOT granted').fetchone()[0]
+            prepared=c.execute('SELECT count(*) FROM pg_prepared_xacts').fetchone()[0]
+            assert not clients and locks==prepared==0
+            names=[r[0] for r in c.execute('SELECT datname FROM pg_database') if r[0].startswith(PREFIX)]
+            for name in names: c.execute('DROP DATABASE '+name)
+        cmd(PG/'pg_ctl.exe','-D',DATA,'-m','fast','-w','stop')
+        self.thread.join(timeout=20)
+        assert not self.thread.is_alive()
+        self.proc.wait(timeout=20)
+        with socket.socket() as s: assert s.connect_ex(('127.0.0.1',PORT))!=0
+        dump(OUT/'server-selectors.json.gz',{'plans':self.plans,'statements':self.statements,'errors':self.errors,
+            'historical':False,'raw_nonselector_sql_persisted':False,'contemporaneous_diagnostic_plans':True})
+        return {'clients':0,'waiting_locks':0,'prepared':0,'dropped':names,'port':PORT,'port_closed':True,
+            'server_stopped':True,'data_directory_preserved':str(DATA)}
+
+def builder():
+    source=(OLD/'harness.py').read_text()
+    tree=ast.parse(source)
+    node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='install_data')
+    source=ast.get_source_segment(source,node)
+    for t in TABLES: source=source.replace(f'        cursor.execute("ANALYZE {t}")\n','')
+    assert 'ANALYZE' not in source
+    space={'timedelta':timedelta}
+    exec(source,space)
+    return space['install_data'],source
+
+def objects():
+    from apps.organizations.models import Organization
+    from apps.channels.models import ChannelAccount
+    from apps.contacts.models import ContactIdentity
+    # Avoid assumptions about model app: use the previously returned fixtures
+    # through canonical seed_domain while constructing the seeded template.
+    raise RuntimeError('unused')
+
+class SQLTrace:
+    def __init__(self): self.rows=[]
+    def __call__(self,execute,query,params,many,context):
+        start_ns=time.perf_counter_ns(); wall=time.time_ns()
+        try: return execute(query,params,many,context)
+        finally: self.rows.append({'sql':query,'params':params,'wall_start_ns':wall,
+            'wall_end_ns':time.time_ns(),'elapsed_ns':time.perf_counter_ns()-start_ns})
+
+def measure_point(name,label,clock,counts):
+    from django.db import connection
+    from apps.agent.worker import _pending_conversation_candidates
+    with connection.cursor() as c:
+        c.execute('SELECT pg_backend_pid()'); pid=c.fetchone()[0]
+    before=snapshot(name)
+    runs=[]; ids=None
+    for repeat in range(20):
+        trace=SQLTrace(); start=time.perf_counter_ns()
+        with connection.execute_wrapper(trace): value=list(_pending_conversation_candidates(now=clock))
+        elapsed=time.perf_counter_ns()-start
+        if ids is None: ids=value
+        assert ids==value and len(trace.rows)==1
+        runs.append({'repeat':repeat,'ids':value,'wall_ns':elapsed,'queries':trace.rows})
+    query,params=_pending_conversation_candidates(now=clock).query.sql_with_params()
+    with connection.cursor() as c:
+        c.execute('EXPLAIN (FORMAT JSON) '+query,params); estimated=c.fetchone()[0]
+        c.execute('EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON) '+query,params); analyzed=c.fetchone()[0]
+    after=snapshot(name)
+    data={'label':label,'database':name,'python_pid':os.getpid(),'backend_pid':pid,'clock':clock,
+        'counts':counts,'before':before,'after':after,'oracle_ids':ids,'runs':runs,
+        'explain_estimate_separate_execution':estimated,'explain_analyze_separate_execution':analyzed}
+    dump(OUT/(label+'.json.gz'),data)
+    plan=analyzed[0]
+    def nodes(n):
+        yield n
+        for child in n.get('Plans',[]): yield from nodes(child)
+    message=[{k:n.get(k) for k in ('Node Type','Actual Loops','Actual Total Time','Shared Hit Blocks','Shared Read Blocks','Plan Rows','Actual Rows')}
+        for n in nodes(plan['Plan']) if n.get('Relation Name')=='channels_message']
+    summary={'label':label,'oracle_ids':ids,'backend_pid':pid,'wall_ms':[r['wall_ns']/1e6 for r in runs],
+        'query_count':1,'explain_execution_ms':plan['Execution Time'],'explain_planning_ms':plan['Planning Time'],
+        'message_nodes':message,'stats_before_rows':len(before['pg_stats']),'stats_after_rows':len(after['pg_stats']),
+        'physical_messages':before['physical_messages'],'snapshots_file':label+'.json.gz'}
+    print(json.dumps({'cohort':label,'execution_ms':summary['explain_execution_ms'],'pg_stats':summary['stats_before_rows']}),flush=True)
+    return summary
+
+def full_rows(name):
+    from psycopg import sql
+    result={}
+    with connect(name,autocommit=True) as c:
+        for t in TABLES:
+            attributes=c.execute('SELECT attname,atttypid FROM pg_attribute WHERE attrelid=%s::regclass AND attnum>0 AND NOT attisdropped ORDER BY attnum',(t,)).fetchall()
+            cols=[r[0] for r in attributes]
+            rows=c.execute(sql.SQL('SELECT {} FROM {} ORDER BY id').format(sql.SQL(',').join(map(sql.Identifier,cols)),sql.Identifier(t))).fetchall()
+            result[t]={'cols':cols,'oids':[r[1] for r in attributes],'rows':rows}
+    return result
+
+def logical_hash(rows):
+    return hashlib.sha256(json.dumps(rows,sort_keys=True,default=str,separators=(',',':')).encode()).hexdigest()
+
+def restore_physical(name, rows, layout):
+    from psycopg import sql
+    from psycopg.types.json import Json,Jsonb
+    memberships=[]
+    with connect(name) as c:
+        for t in TABLES:
+            cols=rows[t]['cols']; values=rows[t]['rows']
+            if t=='channels_message':
+                values=[list(r) for r in values]
+                fk=cols.index('turn_work_id'); status=cols.index('status'); pk=cols.index('id')
+                for r in values:
+                    if r[fk] is not None: memberships.append((r[fk],r[pk])); r[fk]=None
+                values.sort(key=lambda r:(r[status]!='pending',r[pk]) if layout=='clustered' else (r[pk],))
+            statement=sql.SQL('COPY {} ({}) FROM STDIN').format(sql.Identifier(t),sql.SQL(',').join(map(sql.Identifier,cols)))
+            with c.cursor() as cursor:
+                with cursor.copy(statement) as copy:
+                    for r in values:
+                        adapted=[(Jsonb(v) if oid==3802 else Json(v)) if v is not None and oid in (114,3802) else v
+                            for v,oid in zip(r,rows[t]['oids'])]
+                        copy.write_row(adapted)
+        for work,mid in memberships:
+            c.execute('UPDATE channels_message SET turn_work_id=%s WHERE id=%s',(work,mid))
+
+def matrix(fixture_ids):
+    from django.db import connections
+    from apps.organizations.models import Organization
+    from apps.channels.models import ChannelAccount
+    build,source=builder()
+    # The template retains the exact three canonical fixture objects.
+    from apps.agent.tests.test_b9a_e2e import seed_domain
+    points=[(f'A-c354-m{m}',354,m,0) for m in (354,708,3540,10000)]
+    points += [(f'B-c{c}-m3540',c,3540,0) for c in (100,354,708,1416)]
+    points += [(f'C-noise{n}',354,3540,n) for n in (0,30,100,200)]
+    summaries=[]
+    for serial,(label,c,m,noise) in enumerate(points):
+        name=PREFIX+'matrix_'+str(serial)
+        clone(name,SEEDED); select_database(name)
+        orgs,channels,contacts=fixture_ids
+        from apps.agent.models import Conversation
+        # Fetch by the exact type of each seeded object, not hard-coded app labels.
+        actual=[[kind.objects.get(pk=pk) for kind,pk in group] for group in fixture_ids]
+        clock,_=build(*actual,label,c,m,noise=noise,due_work=0,active_orgs=3,layout='clustered')
+        summaries.append(measure_point(name,label,clock,{'conversations':c,'messages':m,'noise':noise,'organizations':3,'due':0,'no_due':50}))
+        drop(name)
+    name=PREFIX+'g_source'; clone(name,SEEDED); select_database(name)
+    actual=[[kind.objects.get(pk=pk) for kind,pk in group] for group in fixture_ids]
+    clock,_=build(*actual,'G-source',354,10000,noise=200,due_work=0,active_orgs=3,layout='spread')
+    frozen=full_rows(name); source_hash=logical_hash(frozen)
+    drop(name)
+    for iteration in (1,2):
+        for layout in ('clustered','spread'):
+            label=f'G-{layout}-{iteration}'; name=PREFIX+'g_'+layout+'_'+str(iteration)
+            clone(name,SEEDED); restore_physical(name,frozen,layout); select_database(name)
+            assert logical_hash(full_rows(name))==source_hash
+            entry=measure_point(name,label,clock,{'conversations':354,'messages':10000,'noise':200,'organizations':3,'due':0,'no_due':50,'layout':layout})
+            entry['logical_full_rows_sha256']=source_hash
+            summaries.append(entry); drop(name)
+    dump(OUT/'matrix-summary.json',{'head':SHA,'diagnostic_only':True,'manual_analyze':False,'manual_vacuum':False,
+        'fixture_builder_without_manual_analyze':source,'points':summaries,'G_exact_logical_hash':source_hash})
+
+@contextmanager
+def instrument_worker(role,stop):
+    from django.db import connection,transaction
+    from apps.agent import worker,durable
+    from apps.agent.tests import b9e_profile
+    module=importlib.import_module('apps.agent.management.commands.run_agent_worker')
+    with connection.cursor() as c:
+        c.execute('SELECT pg_backend_pid(), statement_timestamp()'); backend,db_clock=c.fetchone()
+    events=[]; state={'selector_serial':0,'claim_serial':0,'poll_serial':0}
+    def stamp(event,**data):
+        events.append({'event':event,'wall_ns':time.time_ns(),'mono_ns':time.perf_counter_ns(),
+            'pid':os.getpid(),'backend_pid':state.get('backend_pid',backend),'role':role,'poll_serial':state['poll_serial'],
+            'selector_serial':state['selector_serial'],'claim_serial':state['claim_serial'],**data})
+    stamp('ready_clock',db_clock=db_clock)
+    original_poll=worker.process_pending_conversations
+    original_claim=worker._claim_turn
+    original_run=worker._run_turn
+    original_db_now=durable.db_now
+    original_enter=transaction.Atomic.__enter__
+    original_exit=transaction.Atomic.__exit__
+    original_time=b9e_profile.time
+    def poll(*a,**kw):
+        state['poll_serial']+=1; stamp('poll_start')
+        try: return original_poll(*a,**kw)
+        finally: stamp('poll_end')
+    def claim(conv,now=None):
+        state['claim_serial']+=1; state['claim']=conv; state['claim_queries']=0
+        stamp('claim_start',conversation_id=conv)
+        result=None
+        try:
+            result=original_claim(conv,now)
+            return result
+        finally:
+            stamp('claim_return',conversation_id=conv,turnwork_id=result.turn_work_id if result else None,
+                query_count=state['claim_queries'])
+            state.pop('claim',None)
+    def run(witness):
+        state['work']=witness.turn_work_id
+        stamp('turn_start',turnwork_id=witness.turn_work_id)
+        try: return original_run(witness)
+        finally:
+            stamp('turn_end',turnwork_id=witness.turn_work_id)
+            state.pop('work',None)
+    def db_now():
+        value=original_db_now()
+        if 'claim' in state: stamp('claim_db_clock',clock=value)
+        return value
+    def enter(atomic):
+        outer=not connection.in_atomic_block
+        result=original_enter(atomic)
+        if outer and 'claim' in state: stamp('claim_transaction_enter')
+        return result
+    def leave(atomic,*a):
+        outer=connection.in_atomic_block and not connection.savepoint_ids and 'claim' in state
+        if outer: stamp('claim_commit_start')
+        result=original_exit(atomic,*a)
+        if outer: stamp('claim_commit_end',exception=bool(a[0]))
+        return result
+    def sql(execute,query,params,many,context):
+        actual_backend=context['connection'].connection.info.backend_pid
+        if actual_backend!=state.get('backend_pid',backend):
+            old_backend=state.get('backend_pid',backend)
+            state['backend_pid']=actual_backend
+            stamp('backend_changed',previous_backend_pid=old_backend)
+        selector='ROW_NUMBER()' in query and 'agent_conversation' in query
+        is_claim='claim' in state
+        if selector:
+            state['selector_serial']+=1
+            stamp('selector_start',sql=query,params=params)
+        if is_claim:
+            state['claim_queries']+=1
+            stamp('claim_query_start',sql=query,locked=('FOR UPDATE' in query or 'FOR NO KEY UPDATE' in query or query.startswith('UPDATE')),
+                skip_locked='SKIP LOCKED' in query)
+        try: return execute(query,params,many,context)
+        finally:
+            if selector: stamp('selector_end')
+            if is_claim: stamp('claim_query_end')
+    class ClockProxy:
+        def __getattr__(self,name): return getattr(original_time,name)
+        def sleep(self,seconds):
+            caller=sys._getframe(1).f_code.co_name
+            event='poll_sleep' if caller=='worker' else 'fake_io_sleep'
+            stamp(event+'_start',seconds=seconds,turnwork_id=state.get('work'))
+            try: return original_time.sleep(seconds)
+            finally: stamp(event+'_end',seconds=seconds,turnwork_id=state.get('work'))
+    with ExitStack() as stack:
+        for obj,attr,value in ((worker,'process_pending_conversations',poll),(module,'process_pending_conversations',poll),
+            (worker,'_claim_turn',claim),(worker,'_run_turn',run),(durable,'db_now',db_now),
+            (transaction.Atomic,'__enter__',enter),(transaction.Atomic,'__exit__',leave),(b9e_profile,'time',ClockProxy())):
+            stack.enter_context(patch.object(obj,attr,value))
+        stack.enter_context(connection.execute_wrapper(sql))
+        try: yield
+        finally:
+            stamp('stop_clock')
+            dump(OUT/('temporal-'+role+'.json.gz'),{'diagnostic_only':True,'role':role,'python_pid':os.getpid(),
+                'backend_pid':backend,'clocks':{name:vars(time.get_clock_info(name)) for name in ('time','perf_counter')},'events':events})
+
+def temporal():
+    from django.db import connection
+    from apps.agent.tests import e4_profile
+    name=PREFIX+'temporal'; clone(name); select_database(name)
+    original_popen=e4_profile.subprocess.Popen
+    original_observe=e4_profile.observe
+    readers=[]; procs=[]; stop_monitor=threading.Event(); snapshots=[]; activities=[]
+    whitelist={'event','ts','level','turn_work_id','conversation_id','organization_id','attempts','once','outcome_code'}
+    def consume_stdout(proc,handle):
+        for line in proc.stdout:
+            if line.startswith(('B9E_READY ','B9E_RESULT ')):
+                handle.write(line); handle.flush()
+            elif line.startswith('{'):
+                try: row=json.loads(line)
+                except json.JSONDecodeError: continue
+                handle.write(json.dumps({k:v for k,v in row.items() if k in whitelist})+'\n'); handle.flush()
+    def launch(command,*a,**kw):
+        command=list(command); index=command.index('apps.agent.tests.e4_profile')
+        command[index-1:index+1]=[str(Path(__file__).resolve())]
+        command.append('--diagnostic-worker')
+        handle=kw['stdout']; kw['stdout']=subprocess.PIPE
+        kw.update(text=True,encoding='utf-8',errors='replace',creationflags=subprocess.CREATE_NO_WINDOW)
+        proc=original_popen(command,*a,**kw); procs.append(proc)
+        reader=threading.Thread(target=consume_stdout,args=(proc,handle)); reader.start(); readers.append(reader)
+        return proc
+    def observe(*a):
+        receipt=original_observe(*a)
+        from apps.channels.models import Message
+        from apps.agent.models import TurnWork
+        receipt.update(diagnostic_only=True,acceptance_authority=False,historical_profile_replaced=False,
+            messages=list(Message.objects.filter(direction='in',organization_id__in=a[3]).values('id','organization_id','conversation_id','semantic_type','created_at','available_at','turn_work_id','turn_work__claimed_at')),
+            works=list(TurnWork.objects.filter(organization_id__in=a[3]).values('id','organization_id','conversation_id','status','claimed_at','completed_at','llm_calls_admitted')))
+        return receipt
+    def monitor():
+        import psycopg
+        while not stop_monitor.is_set():
+            try:
+                with connect(name,autocommit=True,row_factory=psycopg.rows.dict_row) as c:
+                    rows=c.execute("SELECT pid,state,wait_event_type,wait_event,query_start FROM pg_stat_activity WHERE datname=current_database() AND pid<>pg_backend_pid()").fetchall()
+                    locks=c.execute('SELECT pid,locktype,mode,granted FROM pg_locks WHERE NOT granted AND pid IN (SELECT pid FROM pg_stat_activity WHERE datname=current_database())').fetchall()
+                    activities.append({'wall_ns':time.time_ns(),'activity':rows,'waiting_locks':locks})
+                if len(activities)%40==0: snapshots.append(snapshot(name))
+            except psycopg.OperationalError: pass
+            stop_monitor.wait(.25)
+    thread=threading.Thread(target=monitor); thread.start()
+    try:
+        print('TEMPORAL diagnostic full duration: warmup30 + observe300 + drain20; rates/topology frozen',flush=True)
+        with patch.object(e4_profile.subprocess,'Popen',launch),patch.object(e4_profile,'observe',observe):
+            e4_profile.orchestrate('base',OUT/'temporal-diagnostic.json')
+    finally:
+        stop_monitor.set(); thread.join()
+        for reader in readers: reader.join(timeout=10)
+        assert not any(reader.is_alive() for reader in readers)
+    snapshots.append(snapshot(name))
+    dump(OUT/'temporal-postgresql.json.gz',{'activity_samples':activities,'snapshots':snapshots,'historical':False})
+    drop(name)
+    print('TEMPORAL complete diagnostic only',flush=True)
+
+def main():
+    assert subprocess.check_output(['rtk','proxy','git','rev-parse','HEAD'],cwd=ROOT).decode().strip()==SHA
+    observer=ServerObserver()
+    database=observer.start()
+    setup(TEMPLATE)
+    from django.db import connection,connections
+    from django.core.management import call_command
+    from apps.agent.tests.test_b9a_e2e import seed_domain
+    print('ISOLATED migrate exact HEAD',flush=True)
+    call_command('migrate',interactive=False,verbosity=0)
+    with connection.cursor() as c:
+        c.execute('CREATE EXTENSION pg_visibility')
+        c.execute("SELECT name,setting FROM pg_settings WHERE name IN ('fsync','synchronous_commit','shared_buffers','effective_cache_size','work_mem','random_page_cost','seq_page_cost','autovacuum','autovacuum_analyze_threshold','autovacuum_analyze_scale_factor','autovacuum_naptime','track_io_timing') ORDER BY name")
+        settings=c.fetchall()
+    connections.close_all()
+    try:
+        clone(SEEDED); select_database(SEEDED)
+        fixtures=[seed_domain('CAUSAL'+str(i)) for i in range(3)]
+        fixture_ids=[[(type(row[index]),row[index].pk) for row in fixtures] for index in (0,1,4)]
+        connections.close_all()
+        matrix(fixture_ids)
+        temporal()
+    finally:
+        cleanup=observer.close()
+        dump(OUT/'environment-cleanup.json',{'head':SHA,'postgresql':database,'settings':settings,'cleanup':cleanup,
+            'auto_explain_instrumentation':'all statements timed; only selector SQL/plans persisted; overhead cannot be assumed zero',
+            'manual_vacuum':False,'manual_analyze':False,'new_indexes':False,'production_modified':False})
+    print('COMPLETE D/I/J diagnostic receipts; H historical reconstruction remains separate',flush=True)
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--diagnostic-worker',action='store_true')
+    parser.add_argument('--role'); parser.add_argument('--scenario'); parser.add_argument('--stop',type=Path)
+    args=parser.parse_args()
+    if args.diagnostic_worker:
+        database=os.environ['DATABASE_URL'].rsplit('/',1)[-1]
+        setup(database)
+        from apps.agent.tests import b9e_profile
+        with instrument_worker(args.role,args.stop): b9e_profile.worker(args.role,args.scenario,args.stop)
+    else: main()

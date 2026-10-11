@@ -1,5 +1,7 @@
 # Dossier de auditoría — Agente conversacional de WhatsApp (VetCare / SaaslyVet)
 
+> **Índice vigente — 2026-10-11:** consultar el [acta consolidada B9](evals/b9-consolidation-2026-10-11/ACTA.md) para la aceptación por versión. B9A–D completos; PROFILE 02-10 PASS sobre `0831046`, con aceptación integral actual pendiente. H16: evidencia consolidada/mitigación parcial. H19: mitigación en perfil medido y límite de capacidad documentado. E4 cerrado; D29 cerrado con R1-04 PENDING aceptado. Gates reales de activación/privacidad siguen pendientes. Este dossier conserva investigación, opiniones y resultados históricos; sus menciones anteriores de producción/readiness no autorizan tráfico actual.
+
 **Fecha:** 2026-07-20
 **Audiencia:** auditor externo (seguridad + arquitectura + readiness de producción)
 **Alcance del código auditado:** subsistema conversacional `apps/channels` + `apps/agent`, hasta la épica **É-F2** inclusive (rama `develop`, commit `cda2470`).

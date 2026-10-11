@@ -1,0 +1,850 @@
+{
+  "analysis_id": "preclaim-analysis-f530e7f0cabb41c7be084045db3bcde8",
+  "closed_at_utc": "2026-10-04T20:17:19.619393+00:00",
+  "classification": "OFFLINE_PRECLAIM_SCHEDULING_ANALYSIS",
+  "source_execution_classification": "DIAGNOSTIC_ONLY",
+  "exit": "CAPACITY_LIMIT_CONFIRMED",
+  "next_action": "STOP_BEFORE_TUNING",
+  "baseline_head": "825db75df68bf076929fa787e77beefe96803350",
+  "final_head": "825db75df68bf076929fa787e77beefe96803350",
+  "branch": "codex/e4-capacity-scheduling",
+  "new_commits": [],
+  "source_integrity": {
+    "head": "825db75df68bf076929fa787e77beefe96803350",
+    "previous_runs": [
+      {
+        "run_directory": "docs/evals/e4-causal-diagnostic-2026-10-03-dded711c",
+        "manifest_sha256": "26c7b8ce61976f2f09c21f708239ff354904f3914226a3b32abbb6d16da2e3ca",
+        "verified_files": 74,
+        "mismatches": [],
+        "causal_report_sha256": "8e0783d562ec2bfbc1dfd21bba226d3f0b1e8eb6b2319bfcea2355a4f29a8acc"
+      },
+      {
+        "run_directory": "docs/evals/e4-causal-diagnostic-2026-10-04-f1239f89",
+        "manifest_sha256": "08046f0b422ee0b999522cddeefe76cbc070d97255f663026e8b9651e865120a",
+        "verified_files": 80,
+        "mismatches": [],
+        "causal_report_sha256": "1c52bc5bdbaef666b881c2f609816ee1666f63f9dc14f09da173da7cbca551ea"
+      },
+      {
+        "run_directory": "docs/evals/e4-causal-diagnostic-2026-10-04-f1922430",
+        "manifest_sha256": "ee610da2f018f31fb9150977ac3c8139588a77f17ce9d670aa7aac517889a4d7",
+        "verified_files": 89,
+        "mismatches": [],
+        "causal_report_sha256": "f9fbbf68fc1501df49d7acc02d62a6033f0066c44cfbd744b1a279eba49f85b9"
+      }
+    ],
+    "protected_head_files": 1239,
+    "changed_protected_files": [],
+    "preexisting_user_files": {
+      "DEPLOY_VPS_PLAN.md": null,
+      "DEPLOY_VPS_STATUS.md": null,
+      "skills-lock.json": "88ead85c6f42b7c505a25f8299562c60b5f3fb3b47bca6b0f35e7642d1e0210d",
+      "docs/auditoria-agente-conversacional-veterinario-2026-09-10.md": "f23f123b168ce596386e2104faf753518f7b1a94eb114a095f6e71f0b7d1652e",
+      "docs/discrepancia-encargo-b9-2026-09-26.md": "c438fd28ec30a73f2b293acc55d692cf61e5896358bb253368e314d47b8db05a",
+      "docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md": "f13035d29c6e0b0ff19b7e27b7016d5cf4aa7a75dac0f34033f879e1c1ee5d45"
+    },
+    "changed_preexisting_user_files": [],
+    "runtime_sha256": {
+      "backend/apps/agent/services.py": "f25b1944f6072232bc5ebb194c03750a169899a9955c4d1b13feb614fe9234e9",
+      "backend/apps/agent/worker.py": "4942405258d316a10d3bcca37190b862617c4ab651b2acde440cca113f75a17c",
+      "backend/apps/agent/durable.py": "e6ffc70f90b53dab5c52193f4d743af83d1166a33e9278b21bd5b7d7155e7844",
+      "backend/apps/agent/claim_diagnostics.py": "852a44966f90949e464dfe585e4a9f931af5f6c33edb0bc72ffb17640958adc6",
+      "backend/apps/agent/claim_diagnostic_report.py": "38445e19b3467d76b603a3aa3b4f2d5c895d7650447e6c1c96b5ba4c274cabd9",
+      "backend/apps/agent/claim_diagnostic_waits.py": "e7dd09e998cdd8568bd89c342dfb5c2c9398bc226d036ce0e3c86add73963c94"
+    }
+  },
+  "existing_functional_comparison": [
+    {
+      "run_id": "causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "result": "EQUIVALENT",
+      "tests": {
+        "tests": 6,
+        "test_ids": [
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission",
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection",
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_03_outer_rollback_and_savepoint_rollback_are_not_commits",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_12_reconnect_and_on_off_ready_join_do_not_change_deadline_or_membership"
+        ],
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "xfail": 0,
+        "failed_ids": [],
+        "seconds": 173.30354040000384,
+        "exit_code": 0
+      },
+      "verified_contracts": [
+        "selector decisions",
+        "SQL order/count/lock clauses",
+        "normalized SQL parameters in new/retry/reclaim/busy/not-due test",
+        "membership",
+        "attempts",
+        "lease authority",
+        "epoch/fencing",
+        "B9B admitted/reserved budget",
+        "claim result",
+        "outer and savepoint rollback",
+        "READY join deadline",
+        "reconnection",
+        "controlled concurrent admissions",
+        "separate readonly observer sees controlled locks",
+        "blocked LLM preserves other organization progress"
+      ],
+      "scope": "Same HEAD, identical states and controlled barriers. No scheduling-equality assertion for independently timed concurrent full loads.",
+      "receipt_sha256": "a8f882e2f08ddebe2b44dcef82f0c81b44be02275781a9f01cdeb569fa7f7a7f"
+    },
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "result": "EQUIVALENT",
+      "tests": {
+        "tests": 6,
+        "test_ids": [
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission",
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection",
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_03_outer_rollback_and_savepoint_rollback_are_not_commits",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_12_reconnect_and_on_off_ready_join_do_not_change_deadline_or_membership"
+        ],
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "xfail": 0,
+        "failed_ids": [],
+        "seconds": 200.72200460000022,
+        "exit_code": 0
+      },
+      "verified_contracts": [
+        "selector decisions",
+        "SQL order/count/lock clauses",
+        "normalized SQL parameters in new/retry/reclaim/busy/not-due test",
+        "membership",
+        "attempts",
+        "lease authority",
+        "epoch/fencing",
+        "B9B admitted/reserved budget",
+        "claim result",
+        "outer and savepoint rollback",
+        "READY join deadline",
+        "reconnection",
+        "controlled concurrent admissions",
+        "separate readonly observer sees controlled locks",
+        "blocked LLM preserves other organization progress"
+      ],
+      "scope": "Same HEAD, identical states and controlled barriers. No scheduling-equality assertion for independently timed concurrent full loads.",
+      "receipt_sha256": "427a8e0ad296e413d2aa416698b0d91c731cd0b9708cb821a15e999da90f78c6"
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "result": "EQUIVALENT",
+      "tests": {
+        "tests": 6,
+        "test_ids": [
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_01_competing_processes_correlate_single_admission",
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_02_controlled_message_lock_is_observed_by_separate_connection",
+          "apps.agent.tests.test_claim_diagnostic_processes.ClaimDiagnosticProcessTests.test_03_journal_is_visible_during_blocked_llm_and_other_org_progresses",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_02_on_off_identical_sql_and_durable_state_new_retry_and_reclaim",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_03_outer_rollback_and_savepoint_rollback_are_not_commits",
+          "apps.agent.tests.test_claim_diagnostics.ClaimDiagnosticTests.test_12_reconnect_and_on_off_ready_join_do_not_change_deadline_or_membership"
+        ],
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "xfail": 0,
+        "failed_ids": [],
+        "seconds": 194.70097689999966,
+        "exit_code": 0
+      },
+      "verified_contracts": [
+        "selector decisions",
+        "SQL order/count/lock clauses",
+        "normalized SQL parameters in new/retry/reclaim/busy/not-due test",
+        "membership",
+        "attempts",
+        "lease authority",
+        "epoch/fencing",
+        "B9B admitted/reserved budget",
+        "claim result",
+        "outer and savepoint rollback",
+        "READY join deadline",
+        "reconnection",
+        "controlled concurrent admissions",
+        "separate readonly observer sees controlled locks",
+        "blocked LLM preserves other organization progress"
+      ],
+      "scope": "Same HEAD, identical states and controlled barriers. No scheduling-equality assertion for independently timed concurrent full loads.",
+      "receipt_sha256": "58ebe36d4cde46cec0fbf4924b00826ce6e9dcf9cfea1318d5fd0b00a2ef3254"
+    }
+  ],
+  "functional_journals_revalidated": [
+    {
+      "run_id": "causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-03-dded711c\\functional-artifacts\\blocked-llm-0.jsonl",
+      "events": 371,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "9eb1ddc2a4583e84264fd75112a56489a7a797735b7887cb23a7464085611441"
+    },
+    {
+      "run_id": "causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-03-dded711c\\functional-artifacts\\blocked-llm-1.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "e2afee55e82af02004fe5b203fe7b20817c1bef1814c20047c1daa19f6878781"
+    },
+    {
+      "run_id": "causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-03-dded711c\\functional-artifacts\\concurrency-0.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "db31cea47073c75f7fcf7247ad138a3aa9cac8fe5ef40c95d86ad061362a5bd5"
+    },
+    {
+      "run_id": "causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-03-dded711c\\functional-artifacts\\concurrency-1.jsonl",
+      "events": 12,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "d8b68334be679c5d3045d45f26f1abd1b6354fc6ac1bf8e56188b3e24be8c81e"
+    },
+    {
+      "run_id": "causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-03-dded711c\\functional-artifacts\\lock-wait-0.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "332bff093a6cc408b0807d837386fbbfc44eb6870c15577a5e5bbf5051b24592"
+    },
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1239f89\\functional-artifacts\\blocked-llm-0.jsonl",
+      "events": 371,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "ae54e22f0ffbd0ec9a677adf36b7af822c31b9b3b448316915df582aae3095f0"
+    },
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1239f89\\functional-artifacts\\blocked-llm-1.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "6624b81e593fab07314b91f39ec7036913ca24faa4814792c5fa0b33f36dbd10"
+    },
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1239f89\\functional-artifacts\\concurrency-0.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "a23a0dda63dd30a10a5b9c6b15d1b2c61f5e6e363ac92c99bd260404fbe88c5b"
+    },
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1239f89\\functional-artifacts\\concurrency-1.jsonl",
+      "events": 12,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "3de53360f6c8007e6003aab1c03162f41a14216b67de0139bbe6f9899e797bcf"
+    },
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1239f89\\functional-artifacts\\lock-wait-0.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "e0a93c9366a763dcea75d541a1f7066a65b88cc9541ecd96da489def79bd90e0"
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1922430\\functional-artifacts\\blocked-llm-0.jsonl",
+      "events": 371,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "749bbe7367b6d0c739f9e44b950be44daba7f86701fca638b6b8de0d95b3d8b8"
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1922430\\functional-artifacts\\blocked-llm-1.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "2ec23c525965ef01d2be43783116c70f3bea20f46b0763c92aeb9c5cd1963b3d"
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1922430\\functional-artifacts\\concurrency-0.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "605be99f68b8b5fecc2e4c0b4b98d85d24d423f1dbfb6945868a124e59cdfdf1"
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1922430\\functional-artifacts\\concurrency-1.jsonl",
+      "events": 12,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "be84828c74c29e19f6d1cdbe8937c728badd416c83147c7d13352dae2da63276"
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1922430\\functional-artifacts\\lock-wait-0.jsonl",
+      "events": 98,
+      "footer_complete": true,
+      "failed_writes": 0,
+      "sha256": "c02e58b42c6954e92586d83e1abe992737cd90f98f58b4dd6c40b61f7e19cf94"
+    }
+  ],
+  "cleanup": [
+    {
+      "source_run_id": "dded711c1ce04cfd8f01af5dc7d62da2",
+      "port": 35449,
+      "port_closed_now": true,
+      "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-causal-dded711c1ce04cfd8f01af5dc7d62da2",
+      "data_directory_absent_now": true,
+      "original_cleanup_sha256": "7cbaff1422d3bdc38c9e839d01e32990660b40addfd38943ed9934a9d0c58c31",
+      "original_cleanup": {
+        "status": "CLEANED",
+        "classification": "DIAGNOSTIC_ONLY",
+        "port_closed": true,
+        "clients": 0,
+        "waiting_locks": 0,
+        "prepared_transactions": 0,
+        "data_directory_absent": true,
+        "dropped_databases": [
+          "test_b8b_e4_causal_dded711c_load",
+          "test_b8b_e4_causal_dded711c_equiv",
+          "test_b8b_e4_causal_dded711c_template"
+        ]
+      },
+      "new_postgresql_or_workers_started_by_this_analysis": false
+    },
+    {
+      "source_run_id": "f1239f896754491c8998d56e43356aa1",
+      "port": 35451,
+      "port_closed_now": true,
+      "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-causal-f1239f896754491c8998d56e43356aa1",
+      "data_directory_absent_now": true,
+      "original_cleanup_sha256": "5c1b6391ba3fe115d14bcd77298475b0f1c710793d2ffcb3e17da12a5d4f32df",
+      "original_cleanup": {
+        "status": "CLEANED",
+        "classification": "DIAGNOSTIC_ONLY",
+        "port_closed": true,
+        "clients": 0,
+        "waiting_locks": 0,
+        "prepared_transactions": 0,
+        "data_directory_absent": true,
+        "dropped_databases": [
+          "test_b8b_e4_causal_f1239f89_load",
+          "test_b8b_e4_causal_f1239f89_equiv",
+          "test_b8b_e4_causal_f1239f89_template"
+        ]
+      },
+      "new_postgresql_or_workers_started_by_this_analysis": false
+    },
+    {
+      "source_run_id": "f1922430c60348e8adce24196c02bf5a",
+      "port": 35453,
+      "port_closed_now": true,
+      "data_directory": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-causal-f1922430c60348e8adce24196c02bf5a",
+      "data_directory_absent_now": true,
+      "original_cleanup_sha256": "0d2005622b3068495672f0d4220541c16722dc2319a4bff29395e1a42ae20a76",
+      "original_cleanup": {
+        "status": "CLEANED",
+        "classification": "DIAGNOSTIC_ONLY",
+        "port_closed": true,
+        "clients": 0,
+        "waiting_locks": 0,
+        "prepared_transactions": 0,
+        "data_directory_absent": true,
+        "dropped_databases": [
+          "test_b8b_e4_causal_f1922430_load",
+          "test_b8b_e4_causal_f1922430_equiv",
+          "test_b8b_e4_causal_f1922430_template"
+        ]
+      },
+      "new_postgresql_or_workers_started_by_this_analysis": false
+    }
+  ],
+  "per_attempt_rows": 490,
+  "misses": 79,
+  "misses_by_run_and_org": {
+    "('causal-dded711c1ce04cfd8f01af5dc7d62da2', 3)": 19,
+    "('causal-dded711c1ce04cfd8f01af5dc7d62da2', 1)": 1,
+    "('causal-f1239f896754491c8998d56e43356aa1', 1)": 8,
+    "('causal-f1239f896754491c8998d56e43356aa1', 3)": 25,
+    "('causal-f1922430c60348e8adce24196c02bf5a', 3)": 20,
+    "('causal-f1922430c60348e8adce24196c02bf5a', 1)": 6
+  },
+  "key_attempts": [
+    {
+      "run_id": "causal-f1239f896754491c8998d56e43356aa1",
+      "turn_work_id": 165,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "message_id": 529,
+      "worker": "planner-2",
+      "attempt_id": "d2f6ecfba0cd4554a55c7e945530500c",
+      "persisted_to_claimed_at_s": 10.288615,
+      "eligible_to_selection_s_bounds": [
+        2.1063966,
+        2.1072796
+      ],
+      "eligible_monotonic_ns_bounds": [
+        27225102717600,
+        27225103600600
+      ],
+      "eligibility_boundary_uncertainty_s": 0.000883,
+      "selection_start_ns": 27227209997200,
+      "observation_window_s": 2.1063966,
+      "disjoint_observed_states_s": {
+        "organization_free_one_planner_in_turn": 1.884087,
+        "organization_free_both_planners_in_turn": 0.2223096
+      },
+      "worker_observations": {
+        "planner-1": {
+          "turn_processing_s": 1.2261538,
+          "outside_turn_s": 0.8802428,
+          "between_poll_gaps_s": 0.5298242,
+          "configured_1s_pause_overlap_s_bounds": [
+            0.5265885,
+            0.5298242
+          ],
+          "complete_1s_pauses_within_window": 0
+        },
+        "planner-2": {
+          "turn_processing_s": 1.1025524,
+          "outside_turn_s": 1.0038442,
+          "between_poll_gaps_s": 1.0035921,
+          "configured_1s_pause_overlap_s_bounds": [
+            1.0,
+            1.0
+          ],
+          "complete_1s_pauses_within_window": 1
+        }
+      },
+      "prior_other_turns_admitted_same_org": 0,
+      "older_messages_admitted_same_org": 0,
+      "selector_evaluations_during_wait": 1,
+      "empty_selector_evaluations_during_wait": 0,
+      "target_conversation_in_candidates_during_wait": 1,
+      "selection_ms": 213.3003,
+      "selector_sql_ms": 182.9794,
+      "selection_to_claimed_at_ms_bounds": [
+        243.6964,
+        244.5794
+      ],
+      "interpretation": "Disjoint observed occupancy states; no attribution of all free time to polling or yield."
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "turn_work_id": 4,
+      "organization_id": 3,
+      "conversation_id": 4,
+      "message_id": 6,
+      "worker": "planner-2",
+      "attempt_id": "444c53c2d266491fb44e883e55444a5f",
+      "persisted_to_claimed_at_s": 12.339541,
+      "eligible_to_selection_s_bounds": [
+        4.3535974,
+        4.3540851
+      ],
+      "eligible_monotonic_ns_bounds": [
+        29545457402000,
+        29545457889700
+      ],
+      "eligibility_boundary_uncertainty_s": 0.0004877,
+      "selection_start_ns": 29549811487100,
+      "observation_window_s": 4.3535974,
+      "disjoint_observed_states_s": {
+        "organization_free_both_between_polls": 0.9439655,
+        "organization_free_neither_in_turn_at_least_one_polling_or_claiming": 0.2248328,
+        "organization_commit_visibility_uncertain": 0.0099086,
+        "organization_definitely_occupied": 3.1745061,
+        "organization_free_one_planner_in_turn": 0.0003844
+      },
+      "worker_observations": {
+        "planner-1": {
+          "turn_processing_s": 3.1786309,
+          "outside_turn_s": 1.1749665,
+          "between_poll_gaps_s": 0.9440753,
+          "configured_1s_pause_overlap_s_bounds": [
+            0.9376446,
+            0.9440753
+          ],
+          "complete_1s_pauses_within_window": 0
+        },
+        "planner-2": {
+          "turn_processing_s": 0.0,
+          "outside_turn_s": 4.3535974,
+          "between_poll_gaps_s": 4.1953818,
+          "configured_1s_pause_overlap_s_bounds": [
+            4.1778972,
+            4.1814237
+          ],
+          "complete_1s_pauses_within_window": 4
+        }
+      },
+      "prior_other_turns_admitted_same_org": 1,
+      "older_messages_admitted_same_org": 1,
+      "selector_evaluations_during_wait": 5,
+      "empty_selector_evaluations_during_wait": 3,
+      "target_conversation_in_candidates_during_wait": 0,
+      "selection_ms": 26.8258,
+      "selector_sql_ms": 4.7732,
+      "selection_to_claimed_at_ms_bounds": [
+        61.4759,
+        61.9636
+      ],
+      "interpretation": "Disjoint observed occupancy states; no attribution of all free time to polling or yield."
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "turn_work_id": 125,
+      "organization_id": 2,
+      "conversation_id": 14,
+      "message_id": 377,
+      "worker": "planner-2",
+      "attempt_id": "680ff40b7abe4bd0b242f55976f5e95a",
+      "persisted_to_claimed_at_s": 9.472716,
+      "eligible_to_selection_s_bounds": [
+        1.4125292,
+        1.4131895
+      ],
+      "eligible_monotonic_ns_bounds": [
+        29763455145200,
+        29763455805500
+      ],
+      "eligibility_boundary_uncertainty_s": 0.0006603,
+      "selection_start_ns": 29764868334700,
+      "observation_window_s": 1.4125292,
+      "disjoint_observed_states_s": {
+        "organization_free_one_planner_in_turn": 0.9256486,
+        "organization_free_neither_in_turn_at_least_one_polling_or_claiming": 0.1081441,
+        "organization_free_both_between_polls": 0.3787365
+      },
+      "worker_observations": {
+        "planner-1": {
+          "turn_processing_s": 0.5159136,
+          "outside_turn_s": 0.8966156,
+          "between_poll_gaps_s": 0.7885683,
+          "configured_1s_pause_overlap_s_bounds": [
+            0.7865446,
+            0.7885683
+          ],
+          "complete_1s_pauses_within_window": 0
+        },
+        "planner-2": {
+          "turn_processing_s": 0.409735,
+          "outside_turn_s": 1.0027942,
+          "between_poll_gaps_s": 1.002603,
+          "configured_1s_pause_overlap_s_bounds": [
+            1.0,
+            1.0
+          ],
+          "complete_1s_pauses_within_window": 1
+        }
+      },
+      "prior_other_turns_admitted_same_org": 0,
+      "older_messages_admitted_same_org": 0,
+      "selector_evaluations_during_wait": 1,
+      "empty_selector_evaluations_during_wait": 0,
+      "target_conversation_in_candidates_during_wait": 1,
+      "selection_ms": 79.7484,
+      "selector_sql_ms": 57.4221,
+      "selection_to_claimed_at_ms_bounds": [
+        94.1185,
+        94.7788
+      ],
+      "interpretation": "Disjoint observed occupancy states; no attribution of all free time to polling or yield."
+    },
+    {
+      "run_id": "causal-f1922430c60348e8adce24196c02bf5a",
+      "turn_work_id": 195,
+      "organization_id": 3,
+      "conversation_id": 141,
+      "message_id": 217,
+      "worker": "planner-2",
+      "attempt_id": "7b442945856244e2b4f92bdd31961306",
+      "persisted_to_claimed_at_s": 221.810544,
+      "eligible_to_selection_s_bounds": [
+        213.7624154,
+        213.7630212
+      ],
+      "eligible_monotonic_ns_bounds": [
+        29671391852700,
+        29671392458500
+      ],
+      "eligibility_boundary_uncertainty_s": 0.0006058,
+      "selection_start_ns": 29885154873900,
+      "observation_window_s": 213.7624154,
+      "disjoint_observed_states_s": {
+        "organization_definitely_occupied": 118.4581902,
+        "organization_commit_visibility_uncertain": 0.5197265,
+        "organization_free_one_planner_in_turn": 11.0715231,
+        "organization_free_neither_in_turn_at_least_one_polling_or_claiming": 12.4031445,
+        "organization_free_both_between_polls": 56.4514873,
+        "organization_free_both_planners_in_turn": 14.8583438
+      },
+      "worker_observations": {
+        "planner-1": {
+          "turn_processing_s": 81.1798744,
+          "outside_turn_s": 132.582541,
+          "between_poll_gaps_s": 121.3638925,
+          "configured_1s_pause_overlap_s_bounds": [
+            121.0664597,
+            121.071996
+          ],
+          "complete_1s_pauses_within_window": 120
+        },
+        "planner-2": {
+          "turn_processing_s": 78.3050139,
+          "outside_turn_s": 135.4574015,
+          "between_poll_gaps_s": 124.2980089,
+          "configured_1s_pause_overlap_s_bounds": [
+            124.0,
+            124.0
+          ],
+          "complete_1s_pauses_within_window": 124
+        }
+      },
+      "prior_other_turns_admitted_same_org": 82,
+      "older_messages_admitted_same_org": 82,
+      "selector_evaluations_during_wait": 244,
+      "empty_selector_evaluations_during_wait": 121,
+      "target_conversation_in_candidates_during_wait": 0,
+      "selection_ms": 70.1903,
+      "selector_sql_ms": 54.9091,
+      "selection_to_claimed_at_ms_bounds": [
+        80.9458,
+        81.5516
+      ],
+      "interpretation": "Disjoint observed occupancy states; no attribution of all free time to polling or yield."
+    }
+  ],
+  "historical_turnwork_86_root_cause": "ROOT_CAUSE_NOT_CONFIRMED",
+  "historical_b9e": "FAIL",
+  "historical_profile_beta_1": "FAIL",
+  "b9": "IN_PROGRESS",
+  "later_2026_10_02_evaluation": "PRESERVED_UNCHANGED; neither erases nor reclassifies historical FAIL",
+  "runtime_changes": false,
+  "selector_changes": false,
+  "new_instrumentation": false,
+  "new_load_or_synthetic_tests": false,
+  "profile_runner_invoked": false,
+  "deploy": false,
+  "activation": false,
+  "production_changes": false,
+  "minimal_runtime_fix_candidate": null,
+  "conclusion_scope": "Structural overload under the controlled workload plus observed occupancy/batch/cadence; exact yield share remains unmeasured.",
+  "missing_evidence": [
+    "Actual SELECT snapshot predicate values/reasons for excluded organizations to apportion free-capacity yield.",
+    "Explicit sleep entry/exit events to separate overhead inside observed inter-poll gaps.",
+    "Equivalent phase/worker evidence from the historical runtime/run to attribute TurnWork86."
+  ],
+  "git_status_after_analysis": "D DEPLOY_VPS_PLAN.md\n D DEPLOY_VPS_STATUS.md\n M skills-lock.json\n?? docs/auditoria-agente-conversacional-veterinario-2026-09-10.md\n?? docs/discrepancia-encargo-b9-2026-09-26.md\n?? docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md\n?? docs/evals/e4-causal-diagnostic-2026-10-03-dded711c/\n?? docs/evals/e4-causal-diagnostic-2026-10-04-f1239f89/\n?? docs/evals/e4-causal-diagnostic-2026-10-04-f1922430/\n?? docs/evals/e4-preclaim-scheduling-2026-10-04/",
+  "final_state": {
+    "E4": "CLOSED",
+    "E4_DECISION": "CAPACITY_LIMIT_CONFIRMED",
+    "NEXT_ACTION": "STOP_BEFORE_TUNING",
+    "B9E": "FAIL",
+    "PROFILE-BETA-1": "FAIL",
+    "B9": "IN_PROGRESS",
+    "production_closed": true,
+    "clinics_activated": 0,
+    "deploy": false,
+    "threshold_seconds": 10,
+    "threshold_changed": false,
+    "runtime_changed": false,
+    "new_code_commits": [],
+    "scope": "Documentary closure of E4 preclaim scheduling analysis; historical acceptance receipts remain frozen."
+  },
+  "formal_e4_closure": {
+    "closed_at_utc": "2026-10-04T20:43:11.848052+00:00",
+    "closure_type": "DOCUMENTARY_AND_STATE_ONLY",
+    "baseline_head": "825db75df68bf076929fa787e77beefe96803350",
+    "final_state": {
+      "E4": "CLOSED",
+      "E4_DECISION": "CAPACITY_LIMIT_CONFIRMED",
+      "NEXT_ACTION": "STOP_BEFORE_TUNING",
+      "B9E": "FAIL",
+      "PROFILE-BETA-1": "FAIL",
+      "B9": "IN_PROGRESS",
+      "production_closed": true,
+      "clinics_activated": 0,
+      "deploy": false,
+      "threshold_seconds": 10,
+      "threshold_changed": false,
+      "runtime_changed": false,
+      "new_code_commits": [],
+      "scope": "Documentary closure of E4 preclaim scheduling analysis; historical acceptance receipts remain frozen."
+    },
+    "contract_assessment": {
+      "CURRENT_CONTRACT": "NO_VIOLATION",
+      "scope": "No violation demonstrated by the existing analyzed evidence; no universal compliance claim.",
+      "violations_demonstrated": [],
+      "global_READY_to_claim_maximum_SLA_exists": false,
+      "POTENTIAL_PRODUCT_REQUIREMENT": "FAIRNESS / BOUNDED_WAIT",
+      "future_requirement_separate_from_E4": true,
+      "new_SLA_or_timeout_value_proposed": null,
+      "minimal_runtime_correction_justifiable_against_existing_contract": null
+    },
+    "historical_profile_b9e_separation": {
+      "historical": {
+        "runtime": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+        "turn_work_id": 86,
+        "p95_persisted_to_claim_seconds": 10.015949,
+        "B9E": "FAIL",
+        "PROFILE-BETA-1": "FAIL",
+        "root_cause": "ROOT_CAUSE_NOT_CONFIRMED",
+        "receipt": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\profile-beta-1-e4-2026-10-01\\final.json",
+        "receipt_sha256": "be2c09382ab9f57ad733ecc61de4c8f1ccd351083c2edc476d6718c38ff4d861"
+      },
+      "subsequent_diagnostic": {
+        "baseline": "825db75df68bf076929fa787e77beefe96803350",
+        "later_selector_present": true,
+        "classification": "DIAGNOSTIC_ONLY",
+        "conclusion": "CAPACITY_LIMIT_CONFIRMED"
+      },
+      "causality_transferred_to_historical_turn_work_86": false,
+      "later_2026_10_02_pass_evaluation_preserved": true
+    },
+    "previous_analysis_manifest_sha256": "3ed0be3b64eb714e85e655f9423a2dea647e0db1cf62bb847c7e3faf1bccee4c",
+    "verification": {
+      "analysis_manifest_sha256_before": "3ed0be3b64eb714e85e655f9423a2dea647e0db1cf62bb847c7e3faf1bccee4c",
+      "analysis_files_verified": 14,
+      "analysis_mismatches": [],
+      "protected_sources_verified": 1239,
+      "runtime_drift": [],
+      "preexisting_changes_drift": [],
+      "original_diagnostics": [
+        {
+          "directory": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-03-dded711c",
+          "verified_files": 74,
+          "manifest_sha256": "26c7b8ce61976f2f09c21f708239ff354904f3914226a3b32abbb6d16da2e3ca",
+          "mismatches": []
+        },
+        {
+          "directory": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1239f89",
+          "verified_files": 80,
+          "manifest_sha256": "08046f0b422ee0b999522cddeefe76cbc070d97255f663026e8b9651e865120a",
+          "mismatches": []
+        },
+        {
+          "directory": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\e4-causal-diagnostic-2026-10-04-f1922430",
+          "verified_files": 89,
+          "manifest_sha256": "ee610da2f018f31fb9150977ac3c8139588a77f17ce9d670aa7aac517889a4d7",
+          "mismatches": []
+        }
+      ],
+      "cleanup": [
+        {
+          "port": 35449,
+          "port_closed": true,
+          "data_directory_absent": true
+        },
+        {
+          "port": 35451,
+          "port_closed": true,
+          "data_directory_absent": true
+        },
+        {
+          "port": 35453,
+          "port_closed": true,
+          "data_directory_absent": true
+        }
+      ],
+      "unchanged_analysis_files": {
+        "capacity-intervals.json": {
+          "sha256": "d8bf30eea1c99045f5b3d2c7e304de60da25332ab2ec7e0a398f037b80b0c4db",
+          "bytes": 405963
+        },
+        "close_analysis.py": {
+          "sha256": "05d98a758046efc1eee39d5f4c68ee8e4c8d1353e72273e60957c691f8f3aaf4",
+          "bytes": 12893
+        },
+        "contract-evidence.json": {
+          "sha256": "ace1036e526e6d7848bd0a78e6c549444f267141537313f5e74f0b817231de13",
+          "bytes": 4992
+        },
+        "derive.py": {
+          "sha256": "d4e9ff0feffbbb6b65b81ac787a0782953b84cf3fcbfffb701ae2344049b4f20",
+          "bytes": 26038
+        },
+        "input-integrity.json": {
+          "sha256": "797b5eaca956a89954ed2bcff3112ebd3717e6cc3fdf5df43c23c8d5effa6f72",
+          "bytes": 2503
+        },
+        "misses.json": {
+          "sha256": "700c3110af6c540be6eec9cbea1ce49ffb83e82ebcccc5567020b6b2a9ecf298",
+          "bytes": 39018
+        },
+        "output-summary.json": {
+          "sha256": "4efc6fd683b4c3a3fd4e86def79362de10626376b6e51e552ee6e228f407cdce",
+          "bytes": 19964
+        },
+        "per-attempt-scheduling.csv": {
+          "sha256": "ca20cac3c62e180b59c2d52cc2e373d9fac1896b6104e587e20367a9b79d3a33",
+          "bytes": 194971
+        },
+        "provider-proof.json": {
+          "sha256": "c2c330f4a80f6f452c9d359133c5d6e7fc3f08d19fbfeaa8b93510128c5716d5",
+          "bytes": 160893
+        },
+        "scheduling-evidence.json": {
+          "sha256": "4e0aca146554d0002b120d4fe96929279b18dbbcc4f196f686e09327c894a0ef",
+          "bytes": 1121963
+        },
+        "selector-observations.json": {
+          "sha256": "0e975b6aa2f35acc25c9c0b8adccf0b442e4563be7d92ab7d6ac37d95a4b8abe",
+          "bytes": 668319
+        }
+      }
+    },
+    "no_new_load_diagnostic_profile_or_benchmark": true,
+    "original_diagnostic_or_historical_receipts_modified": false,
+    "permitted_updated_files": [
+      "report.md",
+      "closure.json",
+      "preclaim-analysis.json",
+      "manifest.sha256.json"
+    ],
+    "documentary_consistency_correction": "Report wording now includes both first and third diagnostics with healthy maxima below 10s; existing numeric evidence unchanged."
+  },
+  "historical_profile_b9e_separation": {
+    "historical": {
+      "runtime": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+      "turn_work_id": 86,
+      "p95_persisted_to_claim_seconds": 10.015949,
+      "B9E": "FAIL",
+      "PROFILE-BETA-1": "FAIL",
+      "root_cause": "ROOT_CAUSE_NOT_CONFIRMED",
+      "receipt": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\profile-beta-1-e4-2026-10-01\\final.json",
+      "receipt_sha256": "be2c09382ab9f57ad733ecc61de4c8f1ccd351083c2edc476d6718c38ff4d861"
+    },
+    "subsequent_diagnostic": {
+      "baseline": "825db75df68bf076929fa787e77beefe96803350",
+      "later_selector_present": true,
+      "classification": "DIAGNOSTIC_ONLY",
+      "conclusion": "CAPACITY_LIMIT_CONFIRMED"
+    },
+    "causality_transferred_to_historical_turn_work_86": false,
+    "later_2026_10_02_pass_evaluation_preserved": true
+  },
+  "contract_assessment": {
+    "CURRENT_CONTRACT": "NO_VIOLATION",
+    "scope": "No violation demonstrated by the existing analyzed evidence; no universal compliance claim.",
+    "violations_demonstrated": [],
+    "global_READY_to_claim_maximum_SLA_exists": false,
+    "POTENTIAL_PRODUCT_REQUIREMENT": "FAIRNESS / BOUNDED_WAIT",
+    "future_requirement_separate_from_E4": true,
+    "new_SLA_or_timeout_value_proposed": null,
+    "minimal_runtime_correction_justifiable_against_existing_contract": null
+  }
+}

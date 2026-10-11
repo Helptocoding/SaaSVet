@@ -1,0 +1,154 @@
+{
+  "schema": "saaslyvet-scheduling-characterization-plan-v1",
+  "protocol_version": "D29-v1",
+  "date_local": "2026-10-05",
+  "status": "SPECIFIED_NOT_EXECUTED",
+  "baseline": "825db75df68bf076929fa787e77beefe96803350",
+  "document": "2026-10-05-scheduling-characterization-protocol.md",
+  "execution": {
+    "ready": false,
+    "disposition": "MEASUREMENT_DRIVER_REQUIRED",
+    "verified_entrypoint": null,
+    "load_execution_authorized": false,
+    "runtime_changes_authorized": false,
+    "e4_changes_authorized": false,
+    "historical_profiles_may_substitute_new_protocol": false
+  },
+  "approved_product_target": {
+    "conversation_wait_seconds": 120,
+    "organization_wait_seconds": 120,
+    "organization_target_status": "PROVISIONAL_DERIVATION_PENDING_COVERAGE_RATIFICATION",
+    "bound_change_requires_explicit_product_decision": true,
+    "sustainable_envelope": null
+  },
+  "approved_adaptive_test_defaults": {
+    "initial_rate_fraction_of_calibration": 0.5,
+    "level_rate_multiplier": 1.5,
+    "refinement": "MIDPOINT",
+    "relative_bracket_limit_of_last_compatible": 0.25,
+    "screen_seconds": 360,
+    "confirmation_seconds": 900,
+    "confirmation_repetitions": 3,
+    "burst_rate_multiplier": 2,
+    "burst_seconds": 120,
+    "unequal_org_offered_rate_ratio": [2, 1]
+  },
+  "proposed_adaptive_operational_defaults": {
+    "calibration_episodes_per_org": 10,
+    "conversations_per_org": 3,
+    "max_levels_per_series": 8,
+    "backlog_window_seconds": 120,
+    "consecutive_increasing_backlog_windows": 3,
+    "ordinary_followup_seconds_after_offer_end": 240,
+    "slow_provider_duration_multiplier": 2,
+    "blocked_llm_hold_seconds": 120
+  },
+  "reference_fixture_conditions": {
+    "planners": 2,
+    "sender_processes": 1,
+    "planner_batch": 1,
+    "pause_between_cycles_seconds": 1,
+    "normal_service": {
+      "llm_calls_per_public_read_work": 2,
+      "llm_seconds_per_call": 0.5,
+      "domain_http_seconds": 0.1,
+      "meta_http_seconds": 0.2
+    },
+    "main_class": "ORDINARY_PUBLIC_READ",
+    "external_requests": "CONTAINED_SYNTHETIC_ONLY",
+    "deadlines_leases_backoffs_budgets_guards": "BASELINE_UNCHANGED",
+    "production_or_commercial_scope": false
+  },
+  "population": {
+    "origin": "ALL_OFFER_ATTEMPTS_AND_ALL_DURABLE_ACCEPTANCES",
+    "unit": "CONTINUOUS_ORDINARY_READY_EPISODE",
+    "identity": ["run", "organization", "conversation", "first_durable_inbound", "episode_ordinal"],
+    "pending_and_unknown_origin_retained": true,
+    "preclaim_messages_coalesce_without_age_reset": true,
+    "postclaim_input_opens_w2_with_own_ready_origin": true,
+    "technical_duplicates_excluded_from_new_obligations_only_when_confirmed": true,
+    "retry_reclaim_count_as_new_episode": false,
+    "completed_claims_only_denominator_allowed": false,
+    "snapshots_alone_prove_complete_history": false
+  },
+  "temporal_evidence": {
+    "start": "FIRST_READY_ON_COMMITTED_STATE",
+    "end": "NEW_CLAIM_OUTER_COMMIT_INCLUDING_EPISODE_MEMBERS",
+    "boundaries": "INTERVALS_WITH_CORRELATED_CLOCKS",
+    "wait_lower": "max(0, claim_lo - ready_hi)",
+    "wait_upper": "claim_hi - ready_lo",
+    "precision_rule": "DECISION_BY_INTERVAL_RELATION_TO_120_SECONDS",
+    "extra_sla_tolerance_seconds": null,
+    "within_requires": ["confirmed_outer_commit", "continuous_ready_evidence", "valid_clock_relation", "wait_upper <= 120"],
+    "excess_requires": "wait_lower > 120 OR pending_age_lower > 120",
+    "crossing_bound_or_missing_frontier": "INDETERMINATE",
+    "young_pending_without_claim": "PENDING_CENSORED_NEVER_SUCCESS",
+    "incomplete_journal_or_clock_contradiction": "INVALID_EVIDENCE",
+    "commit_ack_error": "RESOLVE_DURABLE_RESULT_AND_VISIBILITY_BOUNDS_OR_RETAIN_INDETERMINATE",
+    "claimed_at_or_first_poll_is_boundary": false
+  },
+  "backlog": {
+    "unit": "READY_EPISODES_WITHOUT_NEW_COMMITTED_CLAIM",
+    "separate_populations": ["NOT_YET_READY_OBLIGATIONS", "IN_SERVICE_WORK", "RECOVERY", "MESSAGES"],
+    "report_by": ["ORGANIZATION", "GLOBAL"],
+    "sustained_growth": "THREE_CONSECUTIVE_FULL_WINDOWS_WITH_PROVEN_POSITIVE_NET_CHANGE",
+    "higher_final_queue_without_sustained_pattern": "TREND_INDETERMINATE_NOT_COMPATIBLE",
+    "uncertain_queue_counts": "ONLY_ASSERT_INCREASE_WHEN_FINAL_LOWER_EXCEEDS_INITIAL_UPPER",
+    "partial_confirmation_window_included": true,
+    "finite_no_growth_is_universal_stability_proof": false
+  },
+  "level_dispositions": {
+    "OBSERVED_COMPATIBLE": "COMPLETE_COHORT_ALL_EPISODES_CLAIMED_WITHIN_BOUND_NO_UNRESOLVED_CASES_NO_OBSERVED_BACKLOG_GROWTH_VALID_EVIDENCE_AND_INVARIANTS",
+    "OBSERVED_INCOMPATIBLE_WITH_TARGET": "DEMONSTRATED_INDIVIDUAL_EXCESS",
+    "OBSERVED_BACKLOG_GROWTH": "PROVEN_GROWTH_BY_DECLARED_WINDOWS",
+    "INDETERMINATE": "PENDING_UNRESOLVED_FRONTIER_COVERAGE_CLOCK_OR_BACKLOG_TREND",
+    "INVARIANT_FAILURE": "STOP_SERIES",
+    "INVALID_RUN": "PLAN_OR_ISOLATION_OR_GENERATOR_CONFORMANCE_FAILURE"
+  },
+  "confirmation_failure_policy": {
+    "any_incompatible_repetition": "SELECT_LOWER_CANDIDATE_AND_CONFIRM_IN_NEW_RUNS",
+    "any_indeterminate_repetition": "RESOLVE_CAUSE_AND_REPEAT_WITH_NEW_DECLARED_PLAN",
+    "averaging_failures_into_pass_allowed": false
+  },
+  "matrix": [
+    {"id":"R1-01","scenario":"single_org_multiple_conversations","acceptance_ids":["A01","A05","A06","A07","A10"]},
+    {"id":"R1-02","scenario":"two_orgs_balanced","acceptance_ids":["A02","A08","A10","A23"]},
+    {"id":"R1-03","scenario":"two_orgs_ratio_2_to_1_same_global_rate","acceptance_ids":["A03","A10","A23"]},
+    {"id":"R1-04","scenario":"continuous_ready_with_repeated_forecasts","acceptance_ids":["A04","A05","A07"]},
+    {"id":"R1-05","scenario":"balanced_then_single_org_burst","acceptance_ids":["A09"]},
+    {"id":"R1-06","scenario":"captured_backlog_before_worker_start_without_age_reset","initial_backlog":"ceil(base_org_ready_rate_per_minute * 2 minutes)","acceptance_ids":["A06","A09","A10","A18"]},
+    {"id":"R1-07","scenario":"preclaim_correction_postclaim_w2_grouping_and_duplicate","boundary_cases":["READY_BEFORE_AT_AFTER_DEADLINE","NO_POLL_AT_DEADLINE","LEGACY_NULL_SEPARATE_FIXTURE","W1_W2_CUTS"],"acceptance_ids":["A01","A06","A07"]},
+    {"id":"R2-01","scenario":"slow_provider_at_confirmed_base_load","acceptance_ids":["A12","A06"]},
+    {"id":"R2-02","scenario":"blocked_llm_then_release_at_declared_hold","acceptance_ids":["A13","A05"]},
+    {"id":"R2-03","scenario":"crash_before_outer_commit","acceptance_ids":["A14","A08"]},
+    {"id":"R2-04","scenario":"crash_after_commit_natural_expiry_and_reclaim","acceptance_ids":["A15","A16"]},
+    {"id":"R2-05","scenario":"natural_retry_and_attempt_exhaustion","acceptance_ids":["A17"]},
+    {"id":"R2-06","scenario":"restart_preserving_episode_and_work_history","acceptance_ids":["A18"]},
+    {"id":"R2-07","scenario":"db_contention_outer_savepoint_rollback_and_uncertain_commit_ack","acceptance_ids":["A07","A08","A14","A15"],"variants":["ORG_CONVERSATION_LOCK_RELEASE_AFTER_FIRST_PROVEN_MISS","MESSAGE_LOCK_RELEASE_AFTER_PROVEN_TRANSACTION_WAIT","MEMBERSHIP_THEN_OUTER_ROLLBACK","SAVEPOINT_ROLLBACK_AND_RESOLVE_OUTER_TRANSACTION","LOST_ACK_RESOLVE_DURABILITY_AND_VISIBILITY_FROM_INDEPENDENT_CONNECTION"],"event_wait_cap_seconds":120,"missing_release_event":"RELEASE_FIXTURE_AND_RETAIN_INDETERMINATE","actual_hold_time_included_in_episode_age":true},
+    {"id":"R2-08","scenario":"safety_and_human_takeover_before_after_claim","acceptance_ids":["A19","A21"]},
+    {"id":"R2-09","scenario":"concurrent_sender_slow_or_uncertain_meta","acceptance_ids":["A20"]},
+    {"id":"R2-10","scenario":"expired_consent_authority_cross_tenant_and_closed_gates","acceptance_ids":["A22","A23"]}
+  ],
+  "deferred_contract_acceptance": {
+    "A11": "E_AND_OUTSIDE_E_POLICY_NOT_YET_APPROVED",
+    "fault_recovery_bounds": "OBSERVE_ONLY_UNTIL_PRODUCT_COVERAGE_APPROVAL",
+    "formal_sustainability_and_no_starvation": "ARGUMENT_REQUIRED_BEYOND_FINITE_TESTS"
+  },
+  "required_receipts": [
+    "sealed_plan_and_source_hashes",
+    "generator_offer_and_acceptance_reconciliation",
+    "complete_episode_registry_including_pending",
+    "participant_journals_and_clock_calibrations",
+    "outer_commit_resolution_and_membership",
+    "per_org_and_global_queue_cuts",
+    "recovery_and_exception_observations",
+    "errors_censoring_and_invariant_results",
+    "cleanup_and_source_e4_integrity"
+  ],
+  "prospective_changes": {
+    "new_plan_version_and_run_ids_required": true,
+    "reason_and_supporting_evidence_required": true,
+    "rewrite_old_parameters_cohorts_or_original_dispositions_allowed": false,
+    "test_parameter_change_implies_product_bound_or_runtime_change": false
+  }
+}

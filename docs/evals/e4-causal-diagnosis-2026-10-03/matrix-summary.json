@@ -1,0 +1,1326 @@
+{
+  "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "diagnostic_only": true,
+  "manual_analyze": false,
+  "manual_vacuum": false,
+  "fixture_builder_without_manual_analyze": "def install_data(orgs, channels, contacts, label, conversations, messages,\n                 noise=0, due_work=0, active_orgs=3, layout=\"clustered\"):\n    from django.db import connection, transaction\n    from django.utils import timezone\n    from apps.agent.models import Conversation, TurnWork\n    from apps.channels.models import Message\n\n    assert conversations >= 100 and messages >= conversations\n    assert 0 <= noise <= conversations - 60\n    assert 0 <= due_work <= 50\n    assert 1 <= active_orgs <= 3\n    assert layout in (\"clustered\", \"spread\")\n    fixed = timezone.now() - timedelta(minutes=3)\n    targets = [0, 1, 2] + list(range(3, 3 + noise)) + [conversations - 1]\n    max_stride = (messages - conversations) // conversations\n    positions = {}\n    for rank, conv_index in enumerate(targets):\n        stride = (round(rank * max_stride / (len(targets) - 1))\n                  if layout == \"spread\" else 0)\n        position = conv_index + stride * conversations\n        assert position < messages and position not in positions\n        positions[position] = conv_index\n    future_position = next(position for position, conv_index in positions.items()\n                           if conv_index == conversations - 1)\n    with transaction.atomic():\n        conversation_rows = []\n        for i in range(conversations):\n            if active_orgs == 3:\n                org_index = i if i < 2 else 2\n            else:\n                org_index = i % active_orgs\n            conversation_rows.append(Conversation(\n                organization=orgs[org_index], channel_account=channels[org_index],\n                contact=contacts[org_index],\n                last_activity_at=fixed - timedelta(seconds=conversations - i),\n            ))\n        created_conversations = Conversation.all_objects.bulk_create(conversation_rows, batch_size=500)\n        message_rows = []\n        for i in range(messages):\n            conv_index = i % conversations\n            conv = created_conversations[conv_index]\n            pending = i in positions\n            availability = (fixed + timedelta(milliseconds=500)\n                            if i == future_position\n                            else fixed - timedelta(seconds=2))\n            message_rows.append(Message(\n                organization_id=conv.organization_id, channel_account_id=conv.channel_account_id,\n                conversation_id=conv.pk, contact_id=conv.contact_id,\n                direction=\"in\", author_type=\"client\", body=\"synthetic\",\n                status=\"pending\" if pending else \"processed\", available_at=availability,\n            ))\n        created_messages = Message.all_objects.bulk_create(message_rows, batch_size=500)\n        # Three completed works establish a non-null last-claim ordering in each org.\n        completed_indices = [conversations - 54, conversations - 53, conversations - 52]\n        completed = []\n        for rank, idx in enumerate(completed_indices):\n            conv, anchor = created_conversations[idx], created_messages[idx]\n            completed.append(TurnWork(\n                organization_id=conv.organization_id, conversation_id=conv.pk,\n                anchor_message_id=anchor.pk, anchor_created_at=anchor.created_at,\n                cursor_message_id=anchor.pk, cursor_created_at=anchor.created_at,\n                context_at=fixed, clinic_timezone=\"UTC\", status=\"COMPLETED\",\n                claimed_at=fixed - timedelta(seconds=60 - rank * 10),\n                completed_at=fixed - timedelta(seconds=50 - rank * 10),\n                outcome_code=\"synthetic\",\n            ))\n        pending = []\n        for rank, idx in enumerate(range(conversations - 51, conversations - 1)):\n            conv, anchor = created_conversations[idx], created_messages[idx]\n            pending.append(TurnWork(\n                organization_id=conv.organization_id, conversation_id=conv.pk,\n                anchor_message_id=anchor.pk, anchor_created_at=anchor.created_at,\n                cursor_message_id=anchor.pk, cursor_created_at=anchor.created_at,\n                context_at=fixed, clinic_timezone=\"UTC\", status=\"PENDING\",\n                next_attempt_at=(fixed - timedelta(seconds=1) if rank < due_work\n                                 else fixed + timedelta(days=1)),\n            ))\n        works = TurnWork.all_objects.bulk_create(completed + pending, batch_size=500)\n        anchor_updates = []\n        for idx, work in zip(completed_indices + list(range(conversations - 51, conversations - 1)), works):\n            anchor = created_messages[idx]\n            anchor.turn_work_id = work.pk\n            anchor_updates.append(anchor)\n        Message.all_objects.bulk_update(anchor_updates, [\"turn_work\"], batch_size=500)\n    with connection.cursor() as cursor:\n        cursor.execute(\"SELECT count(*) FROM agent_conversation\")\n        assert cursor.fetchone()[0] == conversations\n        cursor.execute(\"SELECT count(*) FROM channels_message\")\n        assert cursor.fetchone()[0] == messages\n    return fixed, created_conversations[0].pk",
+  "points": [
+    {
+      "label": "A-c354-m354",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 64796,
+      "wall_ms": [
+        51.6138,
+        37.5832,
+        39.247,
+        45.2224,
+        33.4961,
+        45.8161,
+        38.2224,
+        36.8719,
+        37.2192,
+        35.9661,
+        37.766,
+        41.6704,
+        42.1691,
+        35.4377,
+        47.5114,
+        40.5384,
+        37.3453,
+        44.9133,
+        47.0138,
+        47.9448
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 13.051,
+      "explain_planning_ms": 5.027,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.021,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.005,
+          "Shared Hit Blocks": 1056,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.017,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 350,
+          "blocks": 9,
+          "min_block": 0.0,
+          "max_block": 8.0
+        }
+      ],
+      "snapshots_file": "A-c354-m354.json.gz"
+    },
+    {
+      "label": "A-c354-m708",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 59820,
+      "wall_ms": [
+        50.5207,
+        38.6605,
+        39.6431,
+        40.2104,
+        38.4023,
+        44.0999,
+        37.3875,
+        32.3063,
+        29.3213,
+        33.4646,
+        28.1038,
+        29.3229,
+        29.6471,
+        31.7433,
+        38.2158,
+        30.9061,
+        35.6256,
+        34.953,
+        46.2952,
+        33.1561
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 8.367,
+      "explain_planning_ms": 2.926,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.014,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.003,
+          "Shared Hit Blocks": 1056,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.009,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 704,
+          "blocks": 16,
+          "min_block": 0.0,
+          "max_block": 15.0
+        }
+      ],
+      "snapshots_file": "A-c354-m708.json.gz"
+    },
+    {
+      "label": "A-c354-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 61608,
+      "wall_ms": [
+        33.3467,
+        36.0204,
+        35.1326,
+        32.9141,
+        33.7094,
+        28.8228,
+        26.8424,
+        30.4921,
+        30.5776,
+        31.5624,
+        31.2699,
+        33.0126,
+        30.8082,
+        33.8786,
+        35.799,
+        27.836,
+        31.8398,
+        46.8905,
+        46.903,
+        49.7433
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 16.126,
+      "explain_planning_ms": 3.968,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.017,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.006,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.01,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "A-c354-m3540.json.gz"
+    },
+    {
+      "label": "A-c354-m10000",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 63680,
+      "wall_ms": [
+        50.6026,
+        48.1728,
+        46.1555,
+        49.3639,
+        56.203,
+        51.8677,
+        52.914,
+        34.5337,
+        48.6,
+        31.0959,
+        55.0514,
+        46.4361,
+        44.8105,
+        32.8027,
+        37.9098,
+        43.5938,
+        43.9001,
+        41.1151,
+        50.9143,
+        32.7364
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 13.88,
+      "explain_planning_ms": 3.167,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.035,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.005,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.019,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 9996,
+          "blocks": 206,
+          "min_block": 0.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "A-c354-m10000.json.gz"
+    },
+    {
+      "label": "B-c100-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 63028,
+      "wall_ms": [
+        40.4557,
+        36.7156,
+        33.111,
+        34.0745,
+        33.3068,
+        28.2354,
+        25.2823,
+        29.1879,
+        26.8049,
+        32.6488,
+        32.6471,
+        24.8881,
+        28.8467,
+        20.2446,
+        25.4696,
+        28.6663,
+        32.9572,
+        28.3923,
+        29.3454,
+        25.5881
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 3.785,
+      "explain_planning_ms": 3.216,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.017,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 98,
+          "Actual Total Time": 0.003,
+          "Shared Hit Blocks": 392,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.01,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 2.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 73,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c100-m3540.json.gz"
+    },
+    {
+      "label": "B-c354-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 72260,
+      "wall_ms": [
+        46.4987,
+        50.9708,
+        49.3727,
+        55.8584,
+        48.1413,
+        49.2821,
+        39.0288,
+        44.9149,
+        42.2913,
+        44.2624,
+        39.1308,
+        48.5508,
+        43.0498,
+        44.9164,
+        35.7368,
+        37.1598,
+        44.2819,
+        41.2646,
+        31.8501,
+        31.6348
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 16.069,
+      "explain_planning_ms": 2.807,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.015,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.006,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.009,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c354-m3540.json.gz"
+    },
+    {
+      "label": "B-c708-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 69368,
+      "wall_ms": [
+        42.0382,
+        40.9073,
+        51.3387,
+        44.5415,
+        54.1097,
+        52.4721,
+        39.6805,
+        39.2446,
+        42.3319,
+        39.8287,
+        46.2705,
+        52.3855,
+        37.0162,
+        40.47,
+        36.5214,
+        38.0546,
+        36.4771,
+        49.9727,
+        37.371,
+        44.8249
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 27.195,
+      "explain_planning_ms": 4.817,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.024,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 706,
+          "Actual Total Time": 0.005,
+          "Shared Hit Blocks": 2824,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.015,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 14.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c708-m3540.json.gz"
+    },
+    {
+      "label": "B-c1416-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 64224,
+      "wall_ms": [
+        58.9333,
+        83.1755,
+        57.0778,
+        54.3167,
+        76.7053,
+        69.4899,
+        58.9265,
+        64.9946,
+        76.5149,
+        49.5671,
+        74.9634,
+        61.5944,
+        52.8204,
+        75.2304,
+        82.444,
+        73.6003,
+        54.6549,
+        61.5973,
+        62.2109,
+        72.805
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 32.069,
+      "explain_planning_ms": 4.313,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.019,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1414,
+          "Actual Total Time": 0.003,
+          "Shared Hit Blocks": 5656,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.019,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 28.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c1416-m3540.json.gz"
+    },
+    {
+      "label": "C-noise0",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 71156,
+      "wall_ms": [
+        34.7425,
+        39.0112,
+        40.5678,
+        31.6965,
+        43.4807,
+        45.4401,
+        40.6066,
+        46.6482,
+        36.0602,
+        46.1582,
+        46.8509,
+        38.905,
+        43.3727,
+        44.7194,
+        36.3964,
+        42.0607,
+        51.5221,
+        46.5214,
+        53.2306,
+        68.4274
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 25.271,
+      "explain_planning_ms": 4.635,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.022,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.008,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.016,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise0.json.gz"
+    },
+    {
+      "label": "C-noise30",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 71600,
+      "wall_ms": [
+        40.3748,
+        42.9101,
+        49.6945,
+        43.3179,
+        42.2139,
+        46.3256,
+        32.368,
+        32.1399,
+        41.9342,
+        33.8609,
+        45.729,
+        41.4375,
+        29.7612,
+        38.0859,
+        38.4977,
+        44.6471,
+        31.1935,
+        28.7849,
+        31.6408,
+        36.3541
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 24.402,
+      "explain_planning_ms": 4.227,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.037,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.024,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.041,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 33
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 34,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3506,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise30.json.gz"
+    },
+    {
+      "label": "C-noise100",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 73440,
+      "wall_ms": [
+        71.5474,
+        50.831,
+        55.0851,
+        59.1612,
+        64.1356,
+        88.1107,
+        82.2029,
+        71.5843,
+        60.6477,
+        62.755,
+        67.1403,
+        77.1527,
+        57.2196,
+        74.7356,
+        60.4724,
+        63.4066,
+        58.2675,
+        69.0006,
+        50.2661,
+        61.2267
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 37.131,
+      "explain_planning_ms": 6.588,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.078,
+          "Shared Hit Blocks": 6,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.06,
+          "Shared Hit Blocks": 2112,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.104,
+          "Shared Hit Blocks": 6,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 103
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 104,
+          "blocks": 4,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3436,
+          "blocks": 72,
+          "min_block": 2.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise100.json.gz"
+    },
+    {
+      "label": "C-noise200",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 56092,
+      "wall_ms": [
+        71.145,
+        60.8603,
+        60.8009,
+        71.3175,
+        56.786,
+        58.1383,
+        80.2414,
+        66.9834,
+        67.6694,
+        67.7429,
+        85.4937,
+        76.8044,
+        77.1699,
+        70.3664,
+        59.7288,
+        69.5893,
+        66.4988,
+        63.5584,
+        73.8561,
+        60.064
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 55.363,
+      "explain_planning_ms": 3.196,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.074,
+          "Shared Hit Blocks": 8,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.117,
+          "Shared Hit Blocks": 2816,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.073,
+          "Shared Hit Blocks": 8,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 6,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3336,
+          "blocks": 70,
+          "min_block": 4.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise200.json.gz"
+    },
+    {
+      "label": "G-clustered-1",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 71848,
+      "wall_ms": [
+        80.0998,
+        58.7297,
+        50.7775,
+        64.5801,
+        78.1315,
+        64.2984,
+        52.2299,
+        59.0231,
+        55.8372,
+        57.7668,
+        57.4696,
+        51.913,
+        53.8436,
+        71.4727,
+        77.8865,
+        59.4383,
+        56.9662,
+        59.7064,
+        59.1393,
+        76.0399
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 54.584,
+      "explain_planning_ms": 3.991,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.079,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.11,
+          "Shared Hit Blocks": 2464,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.086,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 5,
+          "min_block": 0.0,
+          "max_block": 4.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 202,
+          "min_block": 4.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-clustered-1.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0"
+    },
+    {
+      "label": "G-spread-1",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 59092,
+      "wall_ms": [
+        117.032,
+        65.8791,
+        72.9251,
+        70.8721,
+        58.9653,
+        57.6148,
+        66.6896,
+        56.0455,
+        80.1808,
+        70.978,
+        67.3907,
+        68.0779,
+        63.1029,
+        58.0762,
+        62.0226,
+        63.3168,
+        56.8223,
+        62.1391,
+        54.7241,
+        55.6028
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 37.419,
+      "explain_planning_ms": 2.765,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.112,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.083,
+          "Shared Hit Blocks": 11968,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.095,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 32,
+          "min_block": 0.0,
+          "max_block": 202.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 206,
+          "min_block": 0.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-spread-1.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0"
+    },
+    {
+      "label": "G-clustered-2",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 72880,
+      "wall_ms": [
+        110.4756,
+        75.6963,
+        77.6914,
+        66.818,
+        63.2291,
+        54.6667,
+        60.5326,
+        55.3356,
+        54.3953,
+        51.4772,
+        56.5348,
+        60.2269,
+        50.2177,
+        56.2795,
+        54.503,
+        59.1705,
+        57.7513,
+        60.9685,
+        63.9021,
+        65.8252
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 40.944,
+      "explain_planning_ms": 3.407,
+      "message_nodes": [
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.071,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.074,
+          "Shared Hit Blocks": 2464,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.068,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 203,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 5,
+      "stats_after_rows": 22,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 5,
+          "min_block": 0.0,
+          "max_block": 4.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 202,
+          "min_block": 4.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-clustered-2.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0"
+    },
+    {
+      "label": "G-spread-2",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 72064,
+      "wall_ms": [
+        125.723,
+        73.5059,
+        69.2809,
+        94.1194,
+        67.79,
+        57.8412,
+        133.4323,
+        104.0433,
+        78.3042,
+        59.5501,
+        55.2089,
+        64.1238,
+        61.858,
+        53.5791,
+        61.389,
+        60.4565,
+        130.5147,
+        65.9453,
+        54.4597,
+        53.9331
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 50.633,
+      "explain_planning_ms": 2.942,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.214,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.111,
+          "Shared Hit Blocks": 11968,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.218,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 32,
+          "min_block": 0.0,
+          "max_block": 202.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 206,
+          "min_block": 0.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-spread-2.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0"
+    }
+  ],
+  "G_exact_logical_hash": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0"
+}

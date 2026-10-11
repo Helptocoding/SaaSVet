@@ -1,0 +1,17 @@
+{
+  "method": "Streaming high-confidence token/private-key patterns; no values emitted",
+  "rules": [
+    "aws_access_key",
+    "github_token",
+    "meta_token",
+    "openai_key",
+    "private_key",
+    "slack_token"
+  ],
+  "files": 5833,
+  "bytes": 2500713153,
+  "findings": [],
+  "limitation": "Pattern scan is not legal approval or proof of absence of all secrets/PII.",
+  "additional_direct_files_checked": 105,
+  "additional_direct_findings": []
+}

@@ -1,0 +1,4993 @@
+{
+  "schema": "e4-causal-diagnosis-v2",
+  "result": "D. CAUSA NO CONFIRMADA",
+  "decision": "ROOT_CAUSE_NOT_CONFIRMED → STOP",
+  "baseline_head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+  "runtime_sha": "83ee3b24c84b170e22e401cb09a34da5320ae0a3",
+  "historical_profile": {
+    "status": "FAIL",
+    "p95_seconds": 10.015949,
+    "threshold_seconds": 10,
+    "count": 60,
+    "missing": 0,
+    "rank_one_based": 58,
+    "turnwork_id": 86,
+    "unchanged": true
+  },
+  "new_formal_profile_executed": false,
+  "diagnostic_only": true,
+  "no_concrete_optimization_justified": true,
+  "historical_cause_confirmed": false,
+  "historical_selector_event_plan_available": false,
+  "diagnostic_summary": {
+    "classification": "D_CAUSA_NO_CONFIRMADA",
+    "acceptance_authority": false,
+    "historical_profile": "FAIL",
+    "historical_p95_s": 10.015949,
+    "threshold_s": 10,
+    "diagnostic_healthy_count": 60,
+    "diagnostic_healthy_missing": 0,
+    "diagnostic_healthy_p95_s": 9.394663,
+    "diagnostic_healthy_ordinary_planner": 40,
+    "diagnostic_healthy_other_trace": {
+      "inline_or_not_in_planner_trace": 20
+    },
+    "all_message_count": 396,
+    "all_work_count": 170,
+    "selector_client_ms": {
+      "n": 382,
+      "median": 67.4751,
+      "p95": 237.739,
+      "max": 496.663
+    },
+    "selector_auto_explain_execution_ms": {
+      "n": 382,
+      "median": 53.331,
+      "p95": 221.949,
+      "max": 471.657
+    },
+    "selector_statement_total_ms": {
+      "n": 382,
+      "median": 65.09,
+      "p95": 235.724,
+      "max": 495.413
+    },
+    "query_count_ordinary_claims": {
+      "31": 40
+    },
+    "pre_select_s": {
+      "n": 40,
+      "median": 0.76253695,
+      "p95": 1.3465699,
+      "max": 1.5112868
+    },
+    "post_select_to_commit_s": {
+      "n": 40,
+      "median": 0.10121664999999999,
+      "p95": 0.1513041,
+      "max": 0.2166815
+    },
+    "poll_sleep_s": {
+      "n": 382,
+      "median": 1.00036635,
+      "p95": 1.0012155,
+      "max": 1.0199985
+    },
+    "wall_vs_monotonic_selector_max_difference_ms": 0.2441,
+    "postgresql_samples": 692,
+    "waiting_lock_samples": 2,
+    "wait_counts": [
+      {
+        "type": "Client",
+        "event": "ClientRead",
+        "n": 2509
+      },
+      {
+        "type": null,
+        "event": null,
+        "n": 187
+      },
+      {
+        "type": "IO",
+        "event": "WALWrite",
+        "n": 6
+      },
+      {
+        "type": "Lock",
+        "event": "transactionid",
+        "n": 2
+      }
+    ],
+    "server_parse_errors": 0,
+    "contemporaneous_selector_plans": 382,
+    "all_selector_plans_matrix_and_temporal": 702,
+    "p95_neighbor_rows": [
+      {
+        "id": 527,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-03 15:59:46.291509+00:00",
+        "available_at": "2026-10-03 15:59:54.229561+00:00",
+        "turn_work_id": 162,
+        "turn_work__claimed_at": "2026-10-03 15:59:55.609097+00:00",
+        "in_measurement_window": true,
+        "healthy": true,
+        "persisted_eligible_s": 7.938052,
+        "persisted_claim_s": 9.317588,
+        "eligible_claim_s": 1.379536,
+        "timeline_source": "instrumented_planner",
+        "role": "planner-2",
+        "python_pid": 72488,
+        "backend_pid": 60072,
+        "selector_serial": 180,
+        "claim_serial": 91,
+        "claim_query_count": 31,
+        "selector_query_count": 1,
+        "pre_select_s": 1.2091582,
+        "selector_client_s": 0.1518108,
+        "selector_wall_s": 0.1518106,
+        "post_select_to_claim_clock_s": 0.0185672,
+        "post_select_to_commit_s": 0.093378,
+        "claim_transaction_client_s": 0.0930254,
+        "previous_turn_end_utc": "2026-10-03T15:59:51.937737+00:00",
+        "last_poll_sleep_start_utc": "2026-10-03T15:59:54.410195+00:00",
+        "last_poll_sleep_end_utc": "2026-10-03T15:59:55.410451+00:00",
+        "last_poll_sleep_elapsed_s": 1.0002575,
+        "selector_start_utc": "2026-10-03T15:59:55.438719+00:00",
+        "selector_end_utc": "2026-10-03T15:59:55.590530+00:00",
+        "claim_start_utc": "2026-10-03T15:59:55.590883+00:00",
+        "claim_commit_utc": "2026-10-03T15:59:55.683908+00:00",
+        "pre_select_observed_intervals": [
+          {
+            "kind": "poll_sleep",
+            "start_ns": 1791043194410194800,
+            "end_ns": 1791043195410451400,
+            "seconds": 1.0002566,
+            "turnwork_id": null,
+            "requested_sleep_s": 1
+          },
+          {
+            "kind": "prior_selector",
+            "start_ns": 1791043194229561000,
+            "end_ns": 1791043194409627200,
+            "seconds": 0.1800662,
+            "turnwork_id": null,
+            "requested_sleep_s": null
+          }
+        ],
+        "pre_select_unclassified_s": 0.028835400000000178,
+        "server_event": {
+          "role": "planner-2",
+          "selector_serial": 180,
+          "backend_pid": 60072,
+          "server_ordinal_zero_based": 179,
+          "log_timestamp": "2026-10-03 15:59:55.588 UTC",
+          "client_ms": 151.8108,
+          "auto_explain_execution_ms": 142.188,
+          "statement_total_ms": 150.52,
+          "server_exact_sql_sha256": "4d8847d967cd71ca8018ce29ec56da632b8d026ab49801784d3024aeb200047c",
+          "message_nodes": [
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_3",
+              "Subplan Name": "SubPlan 3",
+              "Actual Loops": 1,
+              "Actual Rows": 0,
+              "Plan Rows": 7,
+              "Actual Total Time": 0.389,
+              "Shared Hit Blocks": 31,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Alias": "v0",
+              "Subplan Name": null,
+              "Actual Loops": 354,
+              "Actual Rows": 0,
+              "Plan Rows": 1,
+              "Actual Total Time": 0.231,
+              "Shared Hit Blocks": 11124,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_2",
+              "Subplan Name": "SubPlan 2",
+              "Actual Loops": 1,
+              "Actual Rows": 226,
+              "Plan Rows": 56,
+              "Actual Total Time": 0.406,
+              "Shared Hit Blocks": 31,
+              "Shared Read Blocks": 0
+            }
+          ]
+        },
+        "lock_query_execution": [
+          {
+            "sql": "SELECT \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s ORDER BY \"organizations_organization\".\"id\" ASC LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:59:55.594351+00:00",
+            "end_utc": "2026-10-03T15:59:55.595614+00:00",
+            "client_ms": 1.2643
+          },
+          {
+            "sql": "SELECT \"agent_conversation\".\"id\", \"agent_conversation\".\"organization_id\", \"agent_conversation\".\"created_at\", \"agent_conversation\".\"updated_at\", \"agent_conversation\".\"created_by_id\", \"agent_conversation\".\"updated_by_id\", \"agent_conversation\".\"is_active\", \"agent_conversation\".\"public_id\", \"agent_conversation\".\"channel_account_id\", \"agent_conversation\".\"contact_id\", \"agent_conversation\".\"state\", \"agent_conversation\".\"closed_at\", \"agent_conversation\".\"close_reason\", \"agent_conversation\".\"last_inbound_at\", \"agent_conversation\".\"last_activity_at\", \"agent_conversation\".\"claimed_by_id\", \"agent_conversation\".\"claimed_at\", \"agent_conversation\".\"flow\", \"agent_conversation\".\"intake_path\", \"agent_conversation\".\"total_llm_calls\", \"agent_conversation\".\"processing_until\", \"agent_conversation\".\"ownership_epoch\", \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\", \"channels_channelaccount\".\"id\", \"channels_channelaccount\".\"organization_id\", \"channels_channelaccount\".\"created_at\", \"channels_channelaccount\".\"updated_at\", \"channels_channelaccount\".\"created_by_id\", \"channels_channelaccount\".\"updated_by_id\", \"channels_channelaccount\".\"is_active\", \"channels_channelaccount\".\"public_id\", \"channels_channelaccount\".\"channel_type\", \"channels_channelaccount\".\"external_account_id\", \"channels_channelaccount\".\"display_number\", \"channels_channelaccount\".\"provider_credentials_ref\", \"channels_channelaccount\".\"access_token_encrypted\", \"channels_channelaccount\".\"access_token_last4\", \"channels_channelaccount\".\"status\", \"agent_contactidentity\".\"id\", \"agent_contactidentity\".\"organization_id\", \"agent_contactidentity\".\"created_at\", \"agent_contactidentity\".\"updated_at\", \"agent_contactidentity\".\"created_by_id\", \"agent_contactidentity\".\"updated_by_id\", \"agent_contactidentity\".\"is_active\", \"agent_contactidentity\".\"public_id\", \"agent_contactidentity\".\"authorization_revision\", \"agent_contactidentity\".\"channel_type\", \"agent_contactidentity\".\"external_id\", \"agent_contactidentity\".\"phone_normalized\", \"agent_contactidentity\".\"owner_id\", \"agent_contactidentity\".\"verification_level\", \"agent_contactidentity\".\"verified_at\", \"agent_contactidentity\".\"display_name\", \"agent_contactidentity\".\"is_blocked\", \"agent_contactidentity\".\"proactive_opt_out\", \"agent_contactidentity\".\"is_ambiguous\", \"agent_contactidentity\".\"auto_rematch_blocked\", \"agent_contactidentity\".\"linked_via\", \"agent_contactidentity\".\"privacy_notice_sent_at\" FROM \"agent_conversation\" INNER JOIN \"organizations_organization\" ON (\"agent_conversation\".\"organization_id\" = \"organizations_organization\".\"id\") INNER JOIN \"channels_channelaccount\" ON (\"agent_conversation\".\"channel_account_id\" = \"channels_channelaccount\".\"id\") INNER JOIN \"agent_contactidentity\" ON (\"agent_conversation\".\"contact_id\" = \"agent_contactidentity\".\"id\") WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = %s AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1 FOR UPDATE OF \"agent_conversation\" SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:59:55.599176+00:00",
+            "end_utc": "2026-10-03T15:59:55.603779+00:00",
+            "client_ms": 4.6036
+          },
+          {
+            "sql": "SELECT \"agent_turnwork\".\"id\", \"agent_turnwork\".\"organization_id\", \"agent_turnwork\".\"created_at\", \"agent_turnwork\".\"updated_at\", \"agent_turnwork\".\"created_by_id\", \"agent_turnwork\".\"updated_by_id\", \"agent_turnwork\".\"is_active\", \"agent_turnwork\".\"conversation_id\", \"agent_turnwork\".\"anchor_message_id\", \"agent_turnwork\".\"anchor_created_at\", \"agent_turnwork\".\"cursor_message_id\", \"agent_turnwork\".\"cursor_created_at\", \"agent_turnwork\".\"context_at\", \"agent_turnwork\".\"clinic_timezone\", \"agent_turnwork\".\"status\", \"agent_turnwork\".\"lease_token\", \"agent_turnwork\".\"lease_expires_at\", \"agent_turnwork\".\"attempts\", \"agent_turnwork\".\"next_attempt_at\", \"agent_turnwork\".\"claimed_at\", \"agent_turnwork\".\"completed_at\", \"agent_turnwork\".\"outcome_code\", \"agent_turnwork\".\"ownership_epoch\", \"agent_turnwork\".\"llm_calls_admitted\", \"agent_turnwork\".\"llm_output_tokens_reserved\", \"agent_turnwork\".\"llm_call_limit\", \"agent_turnwork\".\"llm_output_token_limit\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"conversation_id\" = %s AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" IN (%s, %s)) ORDER BY \"agent_turnwork\".\"id\" ASC LIMIT 1 FOR UPDATE",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:59:55.611992+00:00",
+            "end_utc": "2026-10-03T15:59:55.614275+00:00",
+            "client_ms": 2.2843
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"turn_work_id\" = %s WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"id\" IN (%s) AND \"channels_message\".\"turn_work_id\" IS NULL)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:59:55.666345+00:00",
+            "end_utc": "2026-10-03T15:59:55.669499+00:00",
+            "client_ms": 3.154
+          },
+          {
+            "sql": "UPDATE \"agent_turnwork\" SET \"status\" = %s, \"lease_token\" = %s, \"lease_expires_at\" = %s, \"claimed_at\" = %s, \"attempts\" = (\"agent_turnwork\".\"attempts\" + %s), \"next_attempt_at\" = NULL WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"lease_token\" IS NULL AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"ownership_epoch\" = %s AND \"agent_turnwork\".\"id\" = %s AND \"agent_turnwork\".\"status\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:59:55.671318+00:00",
+            "end_utc": "2026-10-03T15:59:55.673686+00:00",
+            "client_ms": 2.3686
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"process_attempts\" = (\"channels_message\".\"process_attempts\" + %s) WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"turn_work_id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:59:55.675208+00:00",
+            "end_utc": "2026-10-03T15:59:55.677203+00:00",
+            "client_ms": 1.9954
+          },
+          {
+            "sql": "UPDATE \"agent_conversation\" SET \"processing_until\" = %s WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:59:55.678033+00:00",
+            "end_utc": "2026-10-03T15:59:55.679921+00:00",
+            "client_ms": 1.8882
+          }
+        ],
+        "duration_sum_error_s": 2.220446049250313e-16,
+        "diagnostic_rank_one_based": 56
+      },
+      {
+        "id": 415,
+        "organization_id": 1,
+        "conversation_id": 13,
+        "semantic_type": "",
+        "created_at": "2026-10-03 15:58:36.156441+00:00",
+        "available_at": "2026-10-03 15:58:44.073314+00:00",
+        "turn_work_id": 129,
+        "turn_work__claimed_at": "2026-10-03 15:58:45.483051+00:00",
+        "in_measurement_window": true,
+        "healthy": true,
+        "persisted_eligible_s": 7.916873,
+        "persisted_claim_s": 9.32661,
+        "eligible_claim_s": 1.409737,
+        "timeline_source": "instrumented_planner",
+        "role": "planner-2",
+        "python_pid": 72488,
+        "backend_pid": 60072,
+        "selector_serial": 144,
+        "claim_serial": 71,
+        "claim_query_count": 31,
+        "selector_query_count": 1,
+        "pre_select_s": 1.2696418,
+        "selector_client_s": 0.1168511,
+        "selector_wall_s": 0.116851,
+        "post_select_to_claim_clock_s": 0.0232442,
+        "post_select_to_commit_s": 0.1040016,
+        "claim_transaction_client_s": 0.1036109,
+        "previous_turn_end_utc": "2026-10-03T15:58:42.838965+00:00",
+        "last_poll_sleep_start_utc": "2026-10-03T15:58:44.304724+00:00",
+        "last_poll_sleep_end_utc": "2026-10-03T15:58:45.305136+00:00",
+        "last_poll_sleep_elapsed_s": 1.0004126,
+        "selector_start_utc": "2026-10-03T15:58:45.342956+00:00",
+        "selector_end_utc": "2026-10-03T15:58:45.459807+00:00",
+        "claim_start_utc": "2026-10-03T15:58:45.460198+00:00",
+        "claim_commit_utc": "2026-10-03T15:58:45.563808+00:00",
+        "pre_select_observed_intervals": [
+          {
+            "kind": "poll_sleep",
+            "start_ns": 1791043124304724100,
+            "end_ns": 1791043125305135800,
+            "seconds": 1.0004117,
+            "turnwork_id": null,
+            "requested_sleep_s": 1
+          },
+          {
+            "kind": "prior_selector",
+            "start_ns": 1791043124073314000,
+            "end_ns": 1791043124304085500,
+            "seconds": 0.2307715,
+            "turnwork_id": null,
+            "requested_sleep_s": null
+          }
+        ],
+        "pre_select_unclassified_s": 0.03845860000000023,
+        "server_event": {
+          "role": "planner-2",
+          "selector_serial": 144,
+          "backend_pid": 60072,
+          "server_ordinal_zero_based": 143,
+          "log_timestamp": "2026-10-03 15:58:45.457 UTC",
+          "client_ms": 116.8511,
+          "auto_explain_execution_ms": 103.181,
+          "statement_total_ms": 115.664,
+          "server_exact_sql_sha256": "4d8847d967cd71ca8018ce29ec56da632b8d026ab49801784d3024aeb200047c",
+          "message_nodes": [
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_3",
+              "Subplan Name": "SubPlan 3",
+              "Actual Loops": 1,
+              "Actual Rows": 0,
+              "Plan Rows": 5,
+              "Actual Total Time": 0.325,
+              "Shared Hit Blocks": 24,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Alias": "v0",
+              "Subplan Name": null,
+              "Actual Loops": 280,
+              "Actual Rows": 0,
+              "Plan Rows": 1,
+              "Actual Total Time": 0.203,
+              "Shared Hit Blocks": 7240,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_2",
+              "Subplan Name": "SubPlan 2",
+              "Actual Loops": 1,
+              "Actual Rows": 175,
+              "Plan Rows": 40,
+              "Actual Total Time": 0.315,
+              "Shared Hit Blocks": 24,
+              "Shared Read Blocks": 0
+            }
+          ]
+        },
+        "lock_query_execution": [
+          {
+            "sql": "SELECT \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s ORDER BY \"organizations_organization\".\"id\" ASC LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:58:45.464707+00:00",
+            "end_utc": "2026-10-03T15:58:45.466187+00:00",
+            "client_ms": 1.4799
+          },
+          {
+            "sql": "SELECT \"agent_conversation\".\"id\", \"agent_conversation\".\"organization_id\", \"agent_conversation\".\"created_at\", \"agent_conversation\".\"updated_at\", \"agent_conversation\".\"created_by_id\", \"agent_conversation\".\"updated_by_id\", \"agent_conversation\".\"is_active\", \"agent_conversation\".\"public_id\", \"agent_conversation\".\"channel_account_id\", \"agent_conversation\".\"contact_id\", \"agent_conversation\".\"state\", \"agent_conversation\".\"closed_at\", \"agent_conversation\".\"close_reason\", \"agent_conversation\".\"last_inbound_at\", \"agent_conversation\".\"last_activity_at\", \"agent_conversation\".\"claimed_by_id\", \"agent_conversation\".\"claimed_at\", \"agent_conversation\".\"flow\", \"agent_conversation\".\"intake_path\", \"agent_conversation\".\"total_llm_calls\", \"agent_conversation\".\"processing_until\", \"agent_conversation\".\"ownership_epoch\", \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\", \"channels_channelaccount\".\"id\", \"channels_channelaccount\".\"organization_id\", \"channels_channelaccount\".\"created_at\", \"channels_channelaccount\".\"updated_at\", \"channels_channelaccount\".\"created_by_id\", \"channels_channelaccount\".\"updated_by_id\", \"channels_channelaccount\".\"is_active\", \"channels_channelaccount\".\"public_id\", \"channels_channelaccount\".\"channel_type\", \"channels_channelaccount\".\"external_account_id\", \"channels_channelaccount\".\"display_number\", \"channels_channelaccount\".\"provider_credentials_ref\", \"channels_channelaccount\".\"access_token_encrypted\", \"channels_channelaccount\".\"access_token_last4\", \"channels_channelaccount\".\"status\", \"agent_contactidentity\".\"id\", \"agent_contactidentity\".\"organization_id\", \"agent_contactidentity\".\"created_at\", \"agent_contactidentity\".\"updated_at\", \"agent_contactidentity\".\"created_by_id\", \"agent_contactidentity\".\"updated_by_id\", \"agent_contactidentity\".\"is_active\", \"agent_contactidentity\".\"public_id\", \"agent_contactidentity\".\"authorization_revision\", \"agent_contactidentity\".\"channel_type\", \"agent_contactidentity\".\"external_id\", \"agent_contactidentity\".\"phone_normalized\", \"agent_contactidentity\".\"owner_id\", \"agent_contactidentity\".\"verification_level\", \"agent_contactidentity\".\"verified_at\", \"agent_contactidentity\".\"display_name\", \"agent_contactidentity\".\"is_blocked\", \"agent_contactidentity\".\"proactive_opt_out\", \"agent_contactidentity\".\"is_ambiguous\", \"agent_contactidentity\".\"auto_rematch_blocked\", \"agent_contactidentity\".\"linked_via\", \"agent_contactidentity\".\"privacy_notice_sent_at\" FROM \"agent_conversation\" INNER JOIN \"organizations_organization\" ON (\"agent_conversation\".\"organization_id\" = \"organizations_organization\".\"id\") INNER JOIN \"channels_channelaccount\" ON (\"agent_conversation\".\"channel_account_id\" = \"channels_channelaccount\".\"id\") INNER JOIN \"agent_contactidentity\" ON (\"agent_conversation\".\"contact_id\" = \"agent_contactidentity\".\"id\") WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = %s AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1 FOR UPDATE OF \"agent_conversation\" SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:58:45.470493+00:00",
+            "end_utc": "2026-10-03T15:58:45.476574+00:00",
+            "client_ms": 6.081
+          },
+          {
+            "sql": "SELECT \"agent_turnwork\".\"id\", \"agent_turnwork\".\"organization_id\", \"agent_turnwork\".\"created_at\", \"agent_turnwork\".\"updated_at\", \"agent_turnwork\".\"created_by_id\", \"agent_turnwork\".\"updated_by_id\", \"agent_turnwork\".\"is_active\", \"agent_turnwork\".\"conversation_id\", \"agent_turnwork\".\"anchor_message_id\", \"agent_turnwork\".\"anchor_created_at\", \"agent_turnwork\".\"cursor_message_id\", \"agent_turnwork\".\"cursor_created_at\", \"agent_turnwork\".\"context_at\", \"agent_turnwork\".\"clinic_timezone\", \"agent_turnwork\".\"status\", \"agent_turnwork\".\"lease_token\", \"agent_turnwork\".\"lease_expires_at\", \"agent_turnwork\".\"attempts\", \"agent_turnwork\".\"next_attempt_at\", \"agent_turnwork\".\"claimed_at\", \"agent_turnwork\".\"completed_at\", \"agent_turnwork\".\"outcome_code\", \"agent_turnwork\".\"ownership_epoch\", \"agent_turnwork\".\"llm_calls_admitted\", \"agent_turnwork\".\"llm_output_tokens_reserved\", \"agent_turnwork\".\"llm_call_limit\", \"agent_turnwork\".\"llm_output_token_limit\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"conversation_id\" = %s AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" IN (%s, %s)) ORDER BY \"agent_turnwork\".\"id\" ASC LIMIT 1 FOR UPDATE",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:58:45.486124+00:00",
+            "end_utc": "2026-10-03T15:58:45.488233+00:00",
+            "client_ms": 2.1089
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"turn_work_id\" = %s WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"id\" IN (%s) AND \"channels_message\".\"turn_work_id\" IS NULL)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:58:45.538171+00:00",
+            "end_utc": "2026-10-03T15:58:45.540302+00:00",
+            "client_ms": 2.1308
+          },
+          {
+            "sql": "UPDATE \"agent_turnwork\" SET \"status\" = %s, \"lease_token\" = %s, \"lease_expires_at\" = %s, \"claimed_at\" = %s, \"attempts\" = (\"agent_turnwork\".\"attempts\" + %s), \"next_attempt_at\" = NULL WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"lease_token\" IS NULL AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"ownership_epoch\" = %s AND \"agent_turnwork\".\"id\" = %s AND \"agent_turnwork\".\"status\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:58:45.542707+00:00",
+            "end_utc": "2026-10-03T15:58:45.546198+00:00",
+            "client_ms": 3.4903
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"process_attempts\" = (\"channels_message\".\"process_attempts\" + %s) WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"turn_work_id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:58:45.550469+00:00",
+            "end_utc": "2026-10-03T15:58:45.552972+00:00",
+            "client_ms": 2.5034
+          },
+          {
+            "sql": "UPDATE \"agent_conversation\" SET \"processing_until\" = %s WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:58:45.553869+00:00",
+            "end_utc": "2026-10-03T15:58:45.555296+00:00",
+            "client_ms": 1.4265
+          }
+        ],
+        "duration_sum_error_s": 0.0,
+        "diagnostic_rank_one_based": 57
+      },
+      {
+        "id": 317,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-03 15:57:36.256405+00:00",
+        "available_at": "2026-10-03 15:57:44.201955+00:00",
+        "turn_work_id": 101,
+        "turn_work__claimed_at": "2026-10-03 15:57:45.651068+00:00",
+        "in_measurement_window": true,
+        "healthy": true,
+        "persisted_eligible_s": 7.94555,
+        "persisted_claim_s": 9.394663,
+        "eligible_claim_s": 1.449113,
+        "timeline_source": "instrumented_planner",
+        "role": "planner-2",
+        "python_pid": 72488,
+        "backend_pid": 60072,
+        "selector_serial": 113,
+        "claim_serial": 51,
+        "claim_query_count": 31,
+        "selector_query_count": 1,
+        "pre_select_s": 1.3465699,
+        "selector_client_s": 0.080085,
+        "selector_wall_s": 0.0800851,
+        "post_select_to_claim_clock_s": 0.022458,
+        "post_select_to_commit_s": 0.0829238,
+        "claim_transaction_client_s": 0.082519,
+        "previous_turn_end_utc": "2026-10-03T15:57:44.505531+00:00",
+        "last_poll_sleep_start_utc": "2026-10-03T15:57:44.505710+00:00",
+        "last_poll_sleep_end_utc": "2026-10-03T15:57:45.505952+00:00",
+        "last_poll_sleep_elapsed_s": 1.0002423,
+        "selector_start_utc": "2026-10-03T15:57:45.548525+00:00",
+        "selector_end_utc": "2026-10-03T15:57:45.628610+00:00",
+        "claim_start_utc": "2026-10-03T15:57:45.629016+00:00",
+        "claim_commit_utc": "2026-10-03T15:57:45.711534+00:00",
+        "pre_select_observed_intervals": [
+          {
+            "kind": "prior_turn",
+            "start_ns": 1791043064201955000,
+            "end_ns": 1791043064505531400,
+            "seconds": 0.3035764,
+            "turnwork_id": 99,
+            "requested_sleep_s": null
+          },
+          {
+            "kind": "poll_sleep",
+            "start_ns": 1791043064505710200,
+            "end_ns": 1791043065505951800,
+            "seconds": 1.0002416,
+            "turnwork_id": null,
+            "requested_sleep_s": 1
+          }
+        ],
+        "pre_select_unclassified_s": 0.04275189999999984,
+        "server_event": {
+          "role": "planner-2",
+          "selector_serial": 113,
+          "backend_pid": 60072,
+          "server_ordinal_zero_based": 112,
+          "log_timestamp": "2026-10-03 15:57:45.626 UTC",
+          "client_ms": 80.085,
+          "auto_explain_execution_ms": 69.037,
+          "statement_total_ms": 78.666,
+          "server_exact_sql_sha256": "4d8847d967cd71ca8018ce29ec56da632b8d026ab49801784d3024aeb200047c",
+          "message_nodes": [
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_3",
+              "Subplan Name": "SubPlan 3",
+              "Actual Loops": 1,
+              "Actual Rows": 0,
+              "Plan Rows": 4,
+              "Actual Total Time": 0.224,
+              "Shared Hit Blocks": 20,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Alias": "v0",
+              "Subplan Name": null,
+              "Actual Loops": 216,
+              "Actual Rows": 0,
+              "Plan Rows": 1,
+              "Actual Total Time": 0.185,
+              "Shared Hit Blocks": 4296,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_2",
+              "Subplan Name": "SubPlan 2",
+              "Actual Loops": 1,
+              "Actual Rows": 131,
+              "Plan Rows": 31,
+              "Actual Total Time": 0.383,
+              "Shared Hit Blocks": 20,
+              "Shared Read Blocks": 0
+            }
+          ]
+        },
+        "lock_query_execution": [
+          {
+            "sql": "SELECT \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s ORDER BY \"organizations_organization\".\"id\" ASC LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:57:45.633907+00:00",
+            "end_utc": "2026-10-03T15:57:45.635399+00:00",
+            "client_ms": 1.4915
+          },
+          {
+            "sql": "SELECT \"agent_conversation\".\"id\", \"agent_conversation\".\"organization_id\", \"agent_conversation\".\"created_at\", \"agent_conversation\".\"updated_at\", \"agent_conversation\".\"created_by_id\", \"agent_conversation\".\"updated_by_id\", \"agent_conversation\".\"is_active\", \"agent_conversation\".\"public_id\", \"agent_conversation\".\"channel_account_id\", \"agent_conversation\".\"contact_id\", \"agent_conversation\".\"state\", \"agent_conversation\".\"closed_at\", \"agent_conversation\".\"close_reason\", \"agent_conversation\".\"last_inbound_at\", \"agent_conversation\".\"last_activity_at\", \"agent_conversation\".\"claimed_by_id\", \"agent_conversation\".\"claimed_at\", \"agent_conversation\".\"flow\", \"agent_conversation\".\"intake_path\", \"agent_conversation\".\"total_llm_calls\", \"agent_conversation\".\"processing_until\", \"agent_conversation\".\"ownership_epoch\", \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\", \"channels_channelaccount\".\"id\", \"channels_channelaccount\".\"organization_id\", \"channels_channelaccount\".\"created_at\", \"channels_channelaccount\".\"updated_at\", \"channels_channelaccount\".\"created_by_id\", \"channels_channelaccount\".\"updated_by_id\", \"channels_channelaccount\".\"is_active\", \"channels_channelaccount\".\"public_id\", \"channels_channelaccount\".\"channel_type\", \"channels_channelaccount\".\"external_account_id\", \"channels_channelaccount\".\"display_number\", \"channels_channelaccount\".\"provider_credentials_ref\", \"channels_channelaccount\".\"access_token_encrypted\", \"channels_channelaccount\".\"access_token_last4\", \"channels_channelaccount\".\"status\", \"agent_contactidentity\".\"id\", \"agent_contactidentity\".\"organization_id\", \"agent_contactidentity\".\"created_at\", \"agent_contactidentity\".\"updated_at\", \"agent_contactidentity\".\"created_by_id\", \"agent_contactidentity\".\"updated_by_id\", \"agent_contactidentity\".\"is_active\", \"agent_contactidentity\".\"public_id\", \"agent_contactidentity\".\"authorization_revision\", \"agent_contactidentity\".\"channel_type\", \"agent_contactidentity\".\"external_id\", \"agent_contactidentity\".\"phone_normalized\", \"agent_contactidentity\".\"owner_id\", \"agent_contactidentity\".\"verification_level\", \"agent_contactidentity\".\"verified_at\", \"agent_contactidentity\".\"display_name\", \"agent_contactidentity\".\"is_blocked\", \"agent_contactidentity\".\"proactive_opt_out\", \"agent_contactidentity\".\"is_ambiguous\", \"agent_contactidentity\".\"auto_rematch_blocked\", \"agent_contactidentity\".\"linked_via\", \"agent_contactidentity\".\"privacy_notice_sent_at\" FROM \"agent_conversation\" INNER JOIN \"organizations_organization\" ON (\"agent_conversation\".\"organization_id\" = \"organizations_organization\".\"id\") INNER JOIN \"channels_channelaccount\" ON (\"agent_conversation\".\"channel_account_id\" = \"channels_channelaccount\".\"id\") INNER JOIN \"agent_contactidentity\" ON (\"agent_conversation\".\"contact_id\" = \"agent_contactidentity\".\"id\") WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = %s AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1 FOR UPDATE OF \"agent_conversation\" SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:57:45.638324+00:00",
+            "end_utc": "2026-10-03T15:57:45.644392+00:00",
+            "client_ms": 6.0901
+          },
+          {
+            "sql": "SELECT \"agent_turnwork\".\"id\", \"agent_turnwork\".\"organization_id\", \"agent_turnwork\".\"created_at\", \"agent_turnwork\".\"updated_at\", \"agent_turnwork\".\"created_by_id\", \"agent_turnwork\".\"updated_by_id\", \"agent_turnwork\".\"is_active\", \"agent_turnwork\".\"conversation_id\", \"agent_turnwork\".\"anchor_message_id\", \"agent_turnwork\".\"anchor_created_at\", \"agent_turnwork\".\"cursor_message_id\", \"agent_turnwork\".\"cursor_created_at\", \"agent_turnwork\".\"context_at\", \"agent_turnwork\".\"clinic_timezone\", \"agent_turnwork\".\"status\", \"agent_turnwork\".\"lease_token\", \"agent_turnwork\".\"lease_expires_at\", \"agent_turnwork\".\"attempts\", \"agent_turnwork\".\"next_attempt_at\", \"agent_turnwork\".\"claimed_at\", \"agent_turnwork\".\"completed_at\", \"agent_turnwork\".\"outcome_code\", \"agent_turnwork\".\"ownership_epoch\", \"agent_turnwork\".\"llm_calls_admitted\", \"agent_turnwork\".\"llm_output_tokens_reserved\", \"agent_turnwork\".\"llm_call_limit\", \"agent_turnwork\".\"llm_output_token_limit\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"conversation_id\" = %s AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" IN (%s, %s)) ORDER BY \"agent_turnwork\".\"id\" ASC LIMIT 1 FOR UPDATE",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:45.653601+00:00",
+            "end_utc": "2026-10-03T15:57:45.655391+00:00",
+            "client_ms": 1.7904
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"turn_work_id\" = %s WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"id\" IN (%s) AND \"channels_message\".\"turn_work_id\" IS NULL)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:45.695514+00:00",
+            "end_utc": "2026-10-03T15:57:45.697339+00:00",
+            "client_ms": 1.8265
+          },
+          {
+            "sql": "UPDATE \"agent_turnwork\" SET \"status\" = %s, \"lease_token\" = %s, \"lease_expires_at\" = %s, \"claimed_at\" = %s, \"attempts\" = (\"agent_turnwork\".\"attempts\" + %s), \"next_attempt_at\" = NULL WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"lease_token\" IS NULL AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"ownership_epoch\" = %s AND \"agent_turnwork\".\"id\" = %s AND \"agent_turnwork\".\"status\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:45.699090+00:00",
+            "end_utc": "2026-10-03T15:57:45.700570+00:00",
+            "client_ms": 1.4809
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"process_attempts\" = (\"channels_message\".\"process_attempts\" + %s) WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"turn_work_id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:45.701533+00:00",
+            "end_utc": "2026-10-03T15:57:45.702872+00:00",
+            "client_ms": 1.3394
+          },
+          {
+            "sql": "UPDATE \"agent_conversation\" SET \"processing_until\" = %s WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:45.703410+00:00",
+            "end_utc": "2026-10-03T15:57:45.704419+00:00",
+            "client_ms": 1.0095
+          }
+        ],
+        "duration_sum_error_s": 0.0,
+        "diagnostic_rank_one_based": 58
+      },
+      {
+        "id": 117,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-03 15:55:36.255090+00:00",
+        "available_at": "2026-10-03 15:55:44.183538+00:00",
+        "turn_work_id": 38,
+        "turn_work__claimed_at": "2026-10-03 15:55:45.721367+00:00",
+        "in_measurement_window": true,
+        "healthy": true,
+        "persisted_eligible_s": 7.928448,
+        "persisted_claim_s": 9.466277,
+        "eligible_claim_s": 1.537829,
+        "timeline_source": "instrumented_planner",
+        "role": "planner-1",
+        "python_pid": 62372,
+        "backend_pid": 64312,
+        "selector_serial": 50,
+        "claim_serial": 17,
+        "claim_query_count": 31,
+        "selector_query_count": 1,
+        "pre_select_s": 1.4840956,
+        "selector_client_s": 0.0275728,
+        "selector_wall_s": 0.0275727,
+        "post_select_to_claim_clock_s": 0.0261607,
+        "post_select_to_commit_s": 0.1176574,
+        "claim_transaction_client_s": 0.1172859,
+        "previous_turn_end_utc": "2026-10-03T15:55:44.639118+00:00",
+        "last_poll_sleep_start_utc": "2026-10-03T15:55:44.639337+00:00",
+        "last_poll_sleep_end_utc": "2026-10-03T15:55:45.639686+00:00",
+        "last_poll_sleep_elapsed_s": 1.0003509,
+        "selector_start_utc": "2026-10-03T15:55:45.667634+00:00",
+        "selector_end_utc": "2026-10-03T15:55:45.695206+00:00",
+        "claim_start_utc": "2026-10-03T15:55:45.695578+00:00",
+        "claim_commit_utc": "2026-10-03T15:55:45.812864+00:00",
+        "pre_select_observed_intervals": [
+          {
+            "kind": "prior_turn",
+            "start_ns": 1791042944183538000,
+            "end_ns": 1791042944639117800,
+            "seconds": 0.4555798,
+            "turnwork_id": 36,
+            "requested_sleep_s": null
+          },
+          {
+            "kind": "poll_sleep",
+            "start_ns": 1791042944639337100,
+            "end_ns": 1791042945639686300,
+            "seconds": 1.0003492,
+            "turnwork_id": null,
+            "requested_sleep_s": 1
+          }
+        ],
+        "pre_select_unclassified_s": 0.02816660000000004,
+        "server_event": {
+          "role": "planner-1",
+          "selector_serial": 50,
+          "backend_pid": 64312,
+          "server_ordinal_zero_based": 49,
+          "log_timestamp": "2026-10-03 15:55:45.692 UTC",
+          "client_ms": 27.5728,
+          "auto_explain_execution_ms": 15.585,
+          "statement_total_ms": 26.445,
+          "server_exact_sql_sha256": "4d8847d967cd71ca8018ce29ec56da632b8d026ab49801784d3024aeb200047c",
+          "message_nodes": [
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_3",
+              "Subplan Name": "SubPlan 3",
+              "Actual Loops": 1,
+              "Actual Rows": 0,
+              "Plan Rows": 2,
+              "Actual Total Time": 0.156,
+              "Shared Hit Blocks": 9,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Alias": "v0",
+              "Subplan Name": null,
+              "Actual Loops": 88,
+              "Actual Rows": 0,
+              "Plan Rows": 1,
+              "Actual Total Time": 0.09,
+              "Shared Hit Blocks": 928,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_2",
+              "Subplan Name": "SubPlan 2",
+              "Actual Loops": 1,
+              "Actual Rows": 50,
+              "Plan Rows": 15,
+              "Actual Total Time": 0.13,
+              "Shared Hit Blocks": 9,
+              "Shared Read Blocks": 0
+            }
+          ]
+        },
+        "lock_query_execution": [
+          {
+            "sql": "SELECT \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s ORDER BY \"organizations_organization\".\"id\" ASC LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:55:45.699754+00:00",
+            "end_utc": "2026-10-03T15:55:45.701443+00:00",
+            "client_ms": 1.6894
+          },
+          {
+            "sql": "SELECT \"agent_conversation\".\"id\", \"agent_conversation\".\"organization_id\", \"agent_conversation\".\"created_at\", \"agent_conversation\".\"updated_at\", \"agent_conversation\".\"created_by_id\", \"agent_conversation\".\"updated_by_id\", \"agent_conversation\".\"is_active\", \"agent_conversation\".\"public_id\", \"agent_conversation\".\"channel_account_id\", \"agent_conversation\".\"contact_id\", \"agent_conversation\".\"state\", \"agent_conversation\".\"closed_at\", \"agent_conversation\".\"close_reason\", \"agent_conversation\".\"last_inbound_at\", \"agent_conversation\".\"last_activity_at\", \"agent_conversation\".\"claimed_by_id\", \"agent_conversation\".\"claimed_at\", \"agent_conversation\".\"flow\", \"agent_conversation\".\"intake_path\", \"agent_conversation\".\"total_llm_calls\", \"agent_conversation\".\"processing_until\", \"agent_conversation\".\"ownership_epoch\", \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\", \"channels_channelaccount\".\"id\", \"channels_channelaccount\".\"organization_id\", \"channels_channelaccount\".\"created_at\", \"channels_channelaccount\".\"updated_at\", \"channels_channelaccount\".\"created_by_id\", \"channels_channelaccount\".\"updated_by_id\", \"channels_channelaccount\".\"is_active\", \"channels_channelaccount\".\"public_id\", \"channels_channelaccount\".\"channel_type\", \"channels_channelaccount\".\"external_account_id\", \"channels_channelaccount\".\"display_number\", \"channels_channelaccount\".\"provider_credentials_ref\", \"channels_channelaccount\".\"access_token_encrypted\", \"channels_channelaccount\".\"access_token_last4\", \"channels_channelaccount\".\"status\", \"agent_contactidentity\".\"id\", \"agent_contactidentity\".\"organization_id\", \"agent_contactidentity\".\"created_at\", \"agent_contactidentity\".\"updated_at\", \"agent_contactidentity\".\"created_by_id\", \"agent_contactidentity\".\"updated_by_id\", \"agent_contactidentity\".\"is_active\", \"agent_contactidentity\".\"public_id\", \"agent_contactidentity\".\"authorization_revision\", \"agent_contactidentity\".\"channel_type\", \"agent_contactidentity\".\"external_id\", \"agent_contactidentity\".\"phone_normalized\", \"agent_contactidentity\".\"owner_id\", \"agent_contactidentity\".\"verification_level\", \"agent_contactidentity\".\"verified_at\", \"agent_contactidentity\".\"display_name\", \"agent_contactidentity\".\"is_blocked\", \"agent_contactidentity\".\"proactive_opt_out\", \"agent_contactidentity\".\"is_ambiguous\", \"agent_contactidentity\".\"auto_rematch_blocked\", \"agent_contactidentity\".\"linked_via\", \"agent_contactidentity\".\"privacy_notice_sent_at\" FROM \"agent_conversation\" INNER JOIN \"organizations_organization\" ON (\"agent_conversation\".\"organization_id\" = \"organizations_organization\".\"id\") INNER JOIN \"channels_channelaccount\" ON (\"agent_conversation\".\"channel_account_id\" = \"channels_channelaccount\".\"id\") INNER JOIN \"agent_contactidentity\" ON (\"agent_conversation\".\"contact_id\" = \"agent_contactidentity\".\"id\") WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = %s AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1 FOR UPDATE OF \"agent_conversation\" SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:55:45.706867+00:00",
+            "end_utc": "2026-10-03T15:55:45.713907+00:00",
+            "client_ms": 7.0401
+          },
+          {
+            "sql": "SELECT \"agent_turnwork\".\"id\", \"agent_turnwork\".\"organization_id\", \"agent_turnwork\".\"created_at\", \"agent_turnwork\".\"updated_at\", \"agent_turnwork\".\"created_by_id\", \"agent_turnwork\".\"updated_by_id\", \"agent_turnwork\".\"is_active\", \"agent_turnwork\".\"conversation_id\", \"agent_turnwork\".\"anchor_message_id\", \"agent_turnwork\".\"anchor_created_at\", \"agent_turnwork\".\"cursor_message_id\", \"agent_turnwork\".\"cursor_created_at\", \"agent_turnwork\".\"context_at\", \"agent_turnwork\".\"clinic_timezone\", \"agent_turnwork\".\"status\", \"agent_turnwork\".\"lease_token\", \"agent_turnwork\".\"lease_expires_at\", \"agent_turnwork\".\"attempts\", \"agent_turnwork\".\"next_attempt_at\", \"agent_turnwork\".\"claimed_at\", \"agent_turnwork\".\"completed_at\", \"agent_turnwork\".\"outcome_code\", \"agent_turnwork\".\"ownership_epoch\", \"agent_turnwork\".\"llm_calls_admitted\", \"agent_turnwork\".\"llm_output_tokens_reserved\", \"agent_turnwork\".\"llm_call_limit\", \"agent_turnwork\".\"llm_output_token_limit\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"conversation_id\" = %s AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" IN (%s, %s)) ORDER BY \"agent_turnwork\".\"id\" ASC LIMIT 1 FOR UPDATE",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:55:45.724206+00:00",
+            "end_utc": "2026-10-03T15:55:45.725993+00:00",
+            "client_ms": 1.7872
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"turn_work_id\" = %s WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"id\" IN (%s) AND \"channels_message\".\"turn_work_id\" IS NULL)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:55:45.779905+00:00",
+            "end_utc": "2026-10-03T15:55:45.781805+00:00",
+            "client_ms": 1.8996
+          },
+          {
+            "sql": "UPDATE \"agent_turnwork\" SET \"status\" = %s, \"lease_token\" = %s, \"lease_expires_at\" = %s, \"claimed_at\" = %s, \"attempts\" = (\"agent_turnwork\".\"attempts\" + %s), \"next_attempt_at\" = NULL WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"lease_token\" IS NULL AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"ownership_epoch\" = %s AND \"agent_turnwork\".\"id\" = %s AND \"agent_turnwork\".\"status\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:55:45.783706+00:00",
+            "end_utc": "2026-10-03T15:55:45.795224+00:00",
+            "client_ms": 11.5182
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"process_attempts\" = (\"channels_message\".\"process_attempts\" + %s) WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"turn_work_id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:55:45.797891+00:00",
+            "end_utc": "2026-10-03T15:55:45.799897+00:00",
+            "client_ms": 2.0065
+          },
+          {
+            "sql": "UPDATE \"agent_conversation\" SET \"processing_until\" = %s WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:55:45.800837+00:00",
+            "end_utc": "2026-10-03T15:55:45.802098+00:00",
+            "client_ms": 1.2609
+          }
+        ],
+        "duration_sum_error_s": 0.0,
+        "diagnostic_rank_one_based": 59
+      },
+      {
+        "id": 283,
+        "organization_id": 2,
+        "conversation_id": 14,
+        "semantic_type": "",
+        "created_at": "2026-10-03 15:57:16.238118+00:00",
+        "available_at": "2026-10-03 15:57:24.184915+00:00",
+        "turn_work_id": 90,
+        "turn_work__claimed_at": "2026-10-03 15:57:25.777855+00:00",
+        "in_measurement_window": true,
+        "healthy": true,
+        "persisted_eligible_s": 7.946797,
+        "persisted_claim_s": 9.539737,
+        "eligible_claim_s": 1.59294,
+        "timeline_source": "instrumented_planner",
+        "role": "planner-1",
+        "python_pid": 62372,
+        "backend_pid": 64312,
+        "selector_serial": 104,
+        "claim_serial": 41,
+        "claim_query_count": 31,
+        "selector_query_count": 1,
+        "pre_select_s": 1.5112868,
+        "selector_client_s": 0.05724,
+        "selector_wall_s": 0.05724,
+        "post_select_to_claim_clock_s": 0.0244132,
+        "post_select_to_commit_s": 0.1085686,
+        "claim_transaction_client_s": 0.1082637,
+        "previous_turn_end_utc": "2026-10-03T15:57:24.652485+00:00",
+        "last_poll_sleep_start_utc": "2026-10-03T15:57:24.652683+00:00",
+        "last_poll_sleep_end_utc": "2026-10-03T15:57:25.653010+00:00",
+        "last_poll_sleep_elapsed_s": 1.0003291,
+        "selector_start_utc": "2026-10-03T15:57:25.696202+00:00",
+        "selector_end_utc": "2026-10-03T15:57:25.753442+00:00",
+        "claim_start_utc": "2026-10-03T15:57:25.753748+00:00",
+        "claim_commit_utc": "2026-10-03T15:57:25.862010+00:00",
+        "pre_select_observed_intervals": [
+          {
+            "kind": "prior_turn",
+            "start_ns": 1791043044184915000,
+            "end_ns": 1791043044652485500,
+            "seconds": 0.4675705,
+            "turnwork_id": 88,
+            "requested_sleep_s": null
+          },
+          {
+            "kind": "poll_sleep",
+            "start_ns": 1791043044652682800,
+            "end_ns": 1791043045653010200,
+            "seconds": 1.0003274,
+            "turnwork_id": null,
+            "requested_sleep_s": 1
+          }
+        ],
+        "pre_select_unclassified_s": 0.04338889999999984,
+        "server_event": {
+          "role": "planner-1",
+          "selector_serial": 104,
+          "backend_pid": 64312,
+          "server_ordinal_zero_based": 103,
+          "log_timestamp": "2026-10-03 15:57:25.751 UTC",
+          "client_ms": 57.24,
+          "auto_explain_execution_ms": 46.577,
+          "statement_total_ms": 55.448,
+          "server_exact_sql_sha256": "4d8847d967cd71ca8018ce29ec56da632b8d026ab49801784d3024aeb200047c",
+          "message_nodes": [
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_3",
+              "Subplan Name": "SubPlan 3",
+              "Actual Loops": 1,
+              "Actual Rows": 0,
+              "Plan Rows": 4,
+              "Actual Total Time": 0.235,
+              "Shared Hit Blocks": 20,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Alias": "v0",
+              "Subplan Name": null,
+              "Actual Loops": 194,
+              "Actual Rows": 0,
+              "Plan Rows": 1,
+              "Actual Total Time": 0.133,
+              "Shared Hit Blocks": 3576,
+              "Shared Read Blocks": 0
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Alias": "u0_2",
+              "Subplan Name": "SubPlan 2",
+              "Actual Loops": 1,
+              "Actual Rows": 118,
+              "Plan Rows": 31,
+              "Actual Total Time": 0.245,
+              "Shared Hit Blocks": 20,
+              "Shared Read Blocks": 0
+            }
+          ]
+        },
+        "lock_query_execution": [
+          {
+            "sql": "SELECT \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\" FROM \"organizations_organization\" WHERE \"organizations_organization\".\"id\" = %s ORDER BY \"organizations_organization\".\"id\" ASC LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:57:25.758340+00:00",
+            "end_utc": "2026-10-03T15:57:25.761157+00:00",
+            "client_ms": 2.8164
+          },
+          {
+            "sql": "SELECT \"agent_conversation\".\"id\", \"agent_conversation\".\"organization_id\", \"agent_conversation\".\"created_at\", \"agent_conversation\".\"updated_at\", \"agent_conversation\".\"created_by_id\", \"agent_conversation\".\"updated_by_id\", \"agent_conversation\".\"is_active\", \"agent_conversation\".\"public_id\", \"agent_conversation\".\"channel_account_id\", \"agent_conversation\".\"contact_id\", \"agent_conversation\".\"state\", \"agent_conversation\".\"closed_at\", \"agent_conversation\".\"close_reason\", \"agent_conversation\".\"last_inbound_at\", \"agent_conversation\".\"last_activity_at\", \"agent_conversation\".\"claimed_by_id\", \"agent_conversation\".\"claimed_at\", \"agent_conversation\".\"flow\", \"agent_conversation\".\"intake_path\", \"agent_conversation\".\"total_llm_calls\", \"agent_conversation\".\"processing_until\", \"agent_conversation\".\"ownership_epoch\", \"organizations_organization\".\"id\", \"organizations_organization\".\"public_id\", \"organizations_organization\".\"name\", \"organizations_organization\".\"display_name\", \"organizations_organization\".\"timezone\", \"organizations_organization\".\"timezone_updated_at\", \"organizations_organization\".\"tax_rate\", \"organizations_organization\".\"phone\", \"organizations_organization\".\"whatsapp\", \"organizations_organization\".\"email\", \"organizations_organization\".\"website\", \"organizations_organization\".\"address_line1\", \"organizations_organization\".\"address_line2\", \"organizations_organization\".\"district\", \"organizations_organization\".\"city\", \"organizations_organization\".\"state\", \"organizations_organization\".\"postal_code\", \"organizations_organization\".\"country\", \"organizations_organization\".\"google_maps_url\", \"organizations_organization\".\"latitude\", \"organizations_organization\".\"longitude\", \"organizations_organization\".\"arrival_instructions\", \"organizations_organization\".\"is_demo\", \"organizations_organization\".\"created_at\", \"channels_channelaccount\".\"id\", \"channels_channelaccount\".\"organization_id\", \"channels_channelaccount\".\"created_at\", \"channels_channelaccount\".\"updated_at\", \"channels_channelaccount\".\"created_by_id\", \"channels_channelaccount\".\"updated_by_id\", \"channels_channelaccount\".\"is_active\", \"channels_channelaccount\".\"public_id\", \"channels_channelaccount\".\"channel_type\", \"channels_channelaccount\".\"external_account_id\", \"channels_channelaccount\".\"display_number\", \"channels_channelaccount\".\"provider_credentials_ref\", \"channels_channelaccount\".\"access_token_encrypted\", \"channels_channelaccount\".\"access_token_last4\", \"channels_channelaccount\".\"status\", \"agent_contactidentity\".\"id\", \"agent_contactidentity\".\"organization_id\", \"agent_contactidentity\".\"created_at\", \"agent_contactidentity\".\"updated_at\", \"agent_contactidentity\".\"created_by_id\", \"agent_contactidentity\".\"updated_by_id\", \"agent_contactidentity\".\"is_active\", \"agent_contactidentity\".\"public_id\", \"agent_contactidentity\".\"authorization_revision\", \"agent_contactidentity\".\"channel_type\", \"agent_contactidentity\".\"external_id\", \"agent_contactidentity\".\"phone_normalized\", \"agent_contactidentity\".\"owner_id\", \"agent_contactidentity\".\"verification_level\", \"agent_contactidentity\".\"verified_at\", \"agent_contactidentity\".\"display_name\", \"agent_contactidentity\".\"is_blocked\", \"agent_contactidentity\".\"proactive_opt_out\", \"agent_contactidentity\".\"is_ambiguous\", \"agent_contactidentity\".\"auto_rematch_blocked\", \"agent_contactidentity\".\"linked_via\", \"agent_contactidentity\".\"privacy_notice_sent_at\" FROM \"agent_conversation\" INNER JOIN \"organizations_organization\" ON (\"agent_conversation\".\"organization_id\" = \"organizations_organization\".\"id\") INNER JOIN \"channels_channelaccount\" ON (\"agent_conversation\".\"channel_account_id\" = \"channels_channelaccount\".\"id\") INNER JOIN \"agent_contactidentity\" ON (\"agent_conversation\".\"contact_id\" = \"agent_contactidentity\".\"id\") WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"organization_id\" = %s AND \"agent_conversation\".\"id\" = %s) ORDER BY \"agent_conversation\".\"id\" ASC LIMIT 1 FOR UPDATE OF \"agent_conversation\" SKIP LOCKED",
+            "skip_locked": true,
+            "start_utc": "2026-10-03T15:57:25.766184+00:00",
+            "end_utc": "2026-10-03T15:57:25.771717+00:00",
+            "client_ms": 5.5336
+          },
+          {
+            "sql": "SELECT \"agent_turnwork\".\"id\", \"agent_turnwork\".\"organization_id\", \"agent_turnwork\".\"created_at\", \"agent_turnwork\".\"updated_at\", \"agent_turnwork\".\"created_by_id\", \"agent_turnwork\".\"updated_by_id\", \"agent_turnwork\".\"is_active\", \"agent_turnwork\".\"conversation_id\", \"agent_turnwork\".\"anchor_message_id\", \"agent_turnwork\".\"anchor_created_at\", \"agent_turnwork\".\"cursor_message_id\", \"agent_turnwork\".\"cursor_created_at\", \"agent_turnwork\".\"context_at\", \"agent_turnwork\".\"clinic_timezone\", \"agent_turnwork\".\"status\", \"agent_turnwork\".\"lease_token\", \"agent_turnwork\".\"lease_expires_at\", \"agent_turnwork\".\"attempts\", \"agent_turnwork\".\"next_attempt_at\", \"agent_turnwork\".\"claimed_at\", \"agent_turnwork\".\"completed_at\", \"agent_turnwork\".\"outcome_code\", \"agent_turnwork\".\"ownership_epoch\", \"agent_turnwork\".\"llm_calls_admitted\", \"agent_turnwork\".\"llm_output_tokens_reserved\", \"agent_turnwork\".\"llm_call_limit\", \"agent_turnwork\".\"llm_output_token_limit\" FROM \"agent_turnwork\" WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"conversation_id\" = %s AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"status\" IN (%s, %s)) ORDER BY \"agent_turnwork\".\"id\" ASC LIMIT 1 FOR UPDATE",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:25.782108+00:00",
+            "end_utc": "2026-10-03T15:57:25.784171+00:00",
+            "client_ms": 2.063
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"turn_work_id\" = %s WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"conversation_id\" = %s AND \"channels_message\".\"id\" IN (%s) AND \"channels_message\".\"turn_work_id\" IS NULL)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:25.840351+00:00",
+            "end_utc": "2026-10-03T15:57:25.842630+00:00",
+            "client_ms": 2.2796
+          },
+          {
+            "sql": "UPDATE \"agent_turnwork\" SET \"status\" = %s, \"lease_token\" = %s, \"lease_expires_at\" = %s, \"claimed_at\" = %s, \"attempts\" = (\"agent_turnwork\".\"attempts\" + %s), \"next_attempt_at\" = NULL WHERE (\"agent_turnwork\".\"is_active\" AND \"agent_turnwork\".\"lease_token\" IS NULL AND \"agent_turnwork\".\"organization_id\" = %s AND \"agent_turnwork\".\"ownership_epoch\" = %s AND \"agent_turnwork\".\"id\" = %s AND \"agent_turnwork\".\"status\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:25.844426+00:00",
+            "end_utc": "2026-10-03T15:57:25.846279+00:00",
+            "client_ms": 1.8528
+          },
+          {
+            "sql": "UPDATE \"channels_message\" SET \"process_attempts\" = (\"channels_message\".\"process_attempts\" + %s) WHERE (\"channels_message\".\"is_active\" AND \"channels_message\".\"organization_id\" = %s AND \"channels_message\".\"direction\" = %s AND \"channels_message\".\"turn_work_id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:25.847993+00:00",
+            "end_utc": "2026-10-03T15:57:25.850031+00:00",
+            "client_ms": 2.0377
+          },
+          {
+            "sql": "UPDATE \"agent_conversation\" SET \"processing_until\" = %s WHERE (\"agent_conversation\".\"is_active\" AND \"agent_conversation\".\"id\" = %s)",
+            "skip_locked": false,
+            "start_utc": "2026-10-03T15:57:25.850830+00:00",
+            "end_utc": "2026-10-03T15:57:25.852031+00:00",
+            "client_ms": 1.2017
+          }
+        ],
+        "duration_sum_error_s": 2.220446049250313e-16,
+        "diagnostic_rank_one_based": 60
+      }
+    ],
+    "snapshots": [
+      {
+        "wall_ns": 1791042875657510400,
+        "cardinality": {
+          "agent_conversation": 12,
+          "channels_message": 14,
+          "agent_turnwork": 2
+        },
+        "pg_stats_rows": 0,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 11,
+            "n_dead_tup": 21,
+            "n_mod_since_analyze": 32,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 2,
+            "n_dead_tup": 4,
+            "n_mod_since_analyze": 6,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 13,
+            "n_dead_tup": 11,
+            "n_mod_since_analyze": 38,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 10,
+            "blocks": 1,
+            "min_block": 0.0,
+            "max_block": 0.0
+          },
+          {
+            "status": "processed",
+            "rows": 2,
+            "blocks": 1,
+            "min_block": 0.0,
+            "max_block": 0.0
+          },
+          {
+            "status": "sent",
+            "rows": 2,
+            "blocks": 1,
+            "min_block": 0.0,
+            "max_block": 0.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791042896012175400,
+        "cardinality": {
+          "agent_conversation": 35,
+          "channels_message": 46,
+          "agent_turnwork": 11
+        },
+        "pg_stats_rows": 0,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 34,
+            "n_dead_tup": 49,
+            "n_mod_since_analyze": 109,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 10,
+            "n_dead_tup": 23,
+            "n_mod_since_analyze": 45,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 45,
+            "n_dead_tup": 54,
+            "n_mod_since_analyze": 143,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 26,
+            "blocks": 4,
+            "min_block": 0.0,
+            "max_block": 3.0
+          },
+          {
+            "status": "processed",
+            "rows": 11,
+            "blocks": 3,
+            "min_block": 0.0,
+            "max_block": 3.0
+          },
+          {
+            "status": "sent",
+            "rows": 9,
+            "blocks": 3,
+            "min_block": 0.0,
+            "max_block": 3.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791042916850660500,
+        "cardinality": {
+          "agent_conversation": 57,
+          "channels_message": 84,
+          "agent_turnwork": 22
+        },
+        "pg_stats_rows": 0,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 56,
+            "n_dead_tup": 82,
+            "n_mod_since_analyze": 202,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 22,
+            "n_dead_tup": 43,
+            "n_mod_since_analyze": 99,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 80,
+            "n_dead_tup": 102,
+            "n_mod_since_analyze": 272,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": null,
+            "analyze_count": 0,
+            "autoanalyze_count": 0
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 40,
+            "blocks": 4,
+            "min_block": 1.0,
+            "max_block": 6.0
+          },
+          {
+            "status": "processed",
+            "rows": 23,
+            "blocks": 6,
+            "min_block": 0.0,
+            "max_block": 5.0
+          },
+          {
+            "status": "sending",
+            "rows": 1,
+            "blocks": 1,
+            "min_block": 4.0,
+            "max_block": 4.0
+          },
+          {
+            "status": "sent",
+            "rows": 20,
+            "blocks": 5,
+            "min_block": 0.0,
+            "max_block": 4.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791042937855603400,
+        "cardinality": {
+          "agent_conversation": 80,
+          "channels_message": 120,
+          "agent_turnwork": 33
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 79,
+            "n_dead_tup": 35,
+            "n_mod_since_analyze": 89,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:55:17.410557-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:55:17.430440-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 1
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 34,
+            "n_dead_tup": 68,
+            "n_mod_since_analyze": 51,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:55:17.619135-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 1
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 117,
+            "n_dead_tup": 54,
+            "n_mod_since_analyze": 122,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:55:17.501735-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:55:17.536721-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 1
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 54,
+            "blocks": 7,
+            "min_block": 0.0,
+            "max_block": 6.0
+          },
+          {
+            "status": "processed",
+            "rows": 34,
+            "blocks": 7,
+            "min_block": 0.0,
+            "max_block": 6.0
+          },
+          {
+            "status": "sent",
+            "rows": 32,
+            "blocks": 6,
+            "min_block": 0.0,
+            "max_block": 6.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791042958498842900,
+        "cardinality": {
+          "agent_conversation": 103,
+          "channels_message": 156,
+          "agent_turnwork": 46
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 103,
+            "n_dead_tup": 86,
+            "n_mod_since_analyze": 194,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:55:17.410557-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:55:17.430440-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 1
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 47,
+            "n_dead_tup": 110,
+            "n_mod_since_analyze": 113,
+            "last_vacuum": null,
+            "last_autovacuum": null,
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:55:17.619135-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 1
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 156,
+            "n_dead_tup": 112,
+            "n_mod_since_analyze": 256,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:55:17.501735-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:55:17.536721-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 1
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 68,
+            "blocks": 8,
+            "min_block": 0.0,
+            "max_block": 10.0
+          },
+          {
+            "status": "processed",
+            "rows": 46,
+            "blocks": 11,
+            "min_block": 0.0,
+            "max_block": 10.0
+          },
+          {
+            "status": "sending",
+            "rows": 1,
+            "blocks": 1,
+            "min_block": 10.0,
+            "max_block": 10.0
+          },
+          {
+            "status": "sent",
+            "rows": 41,
+            "blocks": 8,
+            "min_block": 0.0,
+            "max_block": 9.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791042978676655600,
+        "cardinality": {
+          "agent_conversation": 123,
+          "channels_message": 187,
+          "agent_turnwork": 55
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 124,
+            "n_dead_tup": 5,
+            "n_mod_since_analyze": 10,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.306504-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.333273-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 54,
+            "n_dead_tup": 1,
+            "n_mod_since_analyze": 1,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.454994-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.477261-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 188,
+            "n_dead_tup": 1,
+            "n_mod_since_analyze": 6,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.377578-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.412827-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 82,
+            "blocks": 9,
+            "min_block": 0.0,
+            "max_block": 11.0
+          },
+          {
+            "status": "processed",
+            "rows": 55,
+            "blocks": 12,
+            "min_block": 0.0,
+            "max_block": 11.0
+          },
+          {
+            "status": "sent",
+            "rows": 50,
+            "blocks": 9,
+            "min_block": 0.0,
+            "max_block": 10.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791042999339868200,
+        "cardinality": {
+          "agent_conversation": 146,
+          "channels_message": 224,
+          "agent_turnwork": 66
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 147,
+            "n_dead_tup": 41,
+            "n_mod_since_analyze": 105,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.306504-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.333273-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 66,
+            "n_dead_tup": 44,
+            "n_mod_since_analyze": 56,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.454994-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.477261-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 224,
+            "n_dead_tup": 59,
+            "n_mod_since_analyze": 137,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.377578-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.412827-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 96,
+            "blocks": 12,
+            "min_block": 0.0,
+            "max_block": 12.0
+          },
+          {
+            "status": "processed",
+            "rows": 67,
+            "blocks": 12,
+            "min_block": 0.0,
+            "max_block": 11.0
+          },
+          {
+            "status": "sent",
+            "rows": 61,
+            "blocks": 11,
+            "min_block": 0.0,
+            "max_block": 13.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043020107100800,
+        "cardinality": {
+          "agent_conversation": 169,
+          "channels_message": 259,
+          "agent_turnwork": 78
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 170,
+            "n_dead_tup": 78,
+            "n_mod_since_analyze": 203,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.306504-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.333273-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 78,
+            "n_dead_tup": 48,
+            "n_mod_since_analyze": 111,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.454994-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.477261-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 259,
+            "n_dead_tup": 105,
+            "n_mod_since_analyze": 259,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:56:17.377578-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:56:17.412827-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 2
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 110,
+            "blocks": 14,
+            "min_block": 0.0,
+            "max_block": 16.0
+          },
+          {
+            "status": "processed",
+            "rows": 79,
+            "blocks": 16,
+            "min_block": 0.0,
+            "max_block": 16.0
+          },
+          {
+            "status": "sending",
+            "rows": 1,
+            "blocks": 1,
+            "min_block": 15.0,
+            "max_block": 15.0
+          },
+          {
+            "status": "sent",
+            "rows": 69,
+            "blocks": 13,
+            "min_block": 0.0,
+            "max_block": 16.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043040847612200,
+        "cardinality": {
+          "agent_conversation": 189,
+          "channels_message": 289,
+          "agent_turnwork": 87
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 188,
+            "n_dead_tup": 6,
+            "n_mod_since_analyze": 14,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.406583-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.420433-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 86,
+            "n_dead_tup": 6,
+            "n_mod_since_analyze": 9,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.564792-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 288,
+            "n_dead_tup": 6,
+            "n_mod_since_analyze": 10,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.477320-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.507415-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 124,
+            "blocks": 15,
+            "min_block": 2.0,
+            "max_block": 19.0
+          },
+          {
+            "status": "processed",
+            "rows": 87,
+            "blocks": 18,
+            "min_block": 0.0,
+            "max_block": 18.0
+          },
+          {
+            "status": "sent",
+            "rows": 78,
+            "blocks": 14,
+            "min_block": 0.0,
+            "max_block": 18.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043061479566500,
+        "cardinality": {
+          "agent_conversation": 212,
+          "channels_message": 325,
+          "agent_turnwork": 98
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 211,
+            "n_dead_tup": 53,
+            "n_mod_since_analyze": 108,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.406583-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.420433-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 97,
+            "n_dead_tup": 29,
+            "n_mod_since_analyze": 60,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.564792-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 324,
+            "n_dead_tup": 71,
+            "n_mod_since_analyze": 142,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.477320-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.507415-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 138,
+            "blocks": 17,
+            "min_block": 2.0,
+            "max_block": 19.0
+          },
+          {
+            "status": "processed",
+            "rows": 98,
+            "blocks": 20,
+            "min_block": 0.0,
+            "max_block": 19.0
+          },
+          {
+            "status": "sent",
+            "rows": 89,
+            "blocks": 14,
+            "min_block": 0.0,
+            "max_block": 18.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043082517347200,
+        "cardinality": {
+          "agent_conversation": 235,
+          "channels_message": 362,
+          "agent_turnwork": 110
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 235,
+            "n_dead_tup": 86,
+            "n_mod_since_analyze": 209,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.406583-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.420433-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 110,
+            "n_dead_tup": 52,
+            "n_mod_since_analyze": 119,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.564792-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 361,
+            "n_dead_tup": 120,
+            "n_mod_since_analyze": 278,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.477320-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:57:17.507415-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 3
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 151,
+            "blocks": 19,
+            "min_block": 2.0,
+            "max_block": 20.0
+          },
+          {
+            "status": "processed",
+            "rows": 111,
+            "blocks": 22,
+            "min_block": 0.0,
+            "max_block": 21.0
+          },
+          {
+            "status": "sent",
+            "rows": 100,
+            "blocks": 16,
+            "min_block": 0.0,
+            "max_block": 21.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043104854684900,
+        "cardinality": {
+          "agent_conversation": 257,
+          "channels_message": 394,
+          "agent_turnwork": 119
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 257,
+            "n_dead_tup": 12,
+            "n_mod_since_analyze": 27,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:58:17.456806-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.488485-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 118,
+            "n_dead_tup": 69,
+            "n_mod_since_analyze": 14,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.673550-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 393,
+            "n_dead_tup": 13,
+            "n_mod_since_analyze": 25,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:58:17.571897-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.616828-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 168,
+            "blocks": 19,
+            "min_block": 2.0,
+            "max_block": 22.0
+          },
+          {
+            "status": "processed",
+            "rows": 119,
+            "blocks": 23,
+            "min_block": 0.0,
+            "max_block": 23.0
+          },
+          {
+            "status": "sent",
+            "rows": 107,
+            "blocks": 18,
+            "min_block": 0.0,
+            "max_block": 23.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043126012480700,
+        "cardinality": {
+          "agent_conversation": 280,
+          "channels_message": 430,
+          "agent_turnwork": 130
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 280,
+            "n_dead_tup": 52,
+            "n_mod_since_analyze": 118,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:58:17.456806-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.488485-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 128,
+            "n_dead_tup": 92,
+            "n_mod_since_analyze": 60,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.673550-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 429,
+            "n_dead_tup": 64,
+            "n_mod_since_analyze": 152,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:58:17.571897-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.616828-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 183,
+            "blocks": 23,
+            "min_block": 2.0,
+            "max_block": 25.0
+          },
+          {
+            "status": "processed",
+            "rows": 129,
+            "blocks": 24,
+            "min_block": 0.0,
+            "max_block": 23.0
+          },
+          {
+            "status": "sent",
+            "rows": 117,
+            "blocks": 19,
+            "min_block": 0.0,
+            "max_block": 23.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043149272986100,
+        "cardinality": {
+          "agent_conversation": 306,
+          "channels_message": 469,
+          "agent_turnwork": 141
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 305,
+            "n_dead_tup": 105,
+            "n_mod_since_analyze": 222,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:58:17.456806-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.488485-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 140,
+            "n_dead_tup": 114,
+            "n_mod_since_analyze": 116,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:57:17.541437-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.673550-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 468,
+            "n_dead_tup": 123,
+            "n_mod_since_analyze": 288,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:58:17.571897-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:58:17.616828-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 4
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 201,
+            "blocks": 24,
+            "min_block": 2.0,
+            "max_block": 27.0
+          },
+          {
+            "status": "processed",
+            "rows": 141,
+            "blocks": 28,
+            "min_block": 0.0,
+            "max_block": 27.0
+          },
+          {
+            "status": "sent",
+            "rows": 127,
+            "blocks": 22,
+            "min_block": 0.0,
+            "max_block": 27.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043170814254700,
+        "cardinality": {
+          "agent_conversation": 329,
+          "channels_message": 503,
+          "agent_turnwork": 152
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 331,
+            "n_dead_tup": 40,
+            "n_mod_since_analyze": 66,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.666282-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.693898-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 151,
+            "n_dead_tup": 23,
+            "n_mod_since_analyze": 31,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.879555-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.925491-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 503,
+            "n_dead_tup": 41,
+            "n_mod_since_analyze": 79,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.778426-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.827896-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 216,
+            "blocks": 26,
+            "min_block": 2.0,
+            "max_block": 28.0
+          },
+          {
+            "status": "processed",
+            "rows": 152,
+            "blocks": 29,
+            "min_block": 0.0,
+            "max_block": 28.0
+          },
+          {
+            "status": "sent",
+            "rows": 135,
+            "blocks": 23,
+            "min_block": 0.0,
+            "max_block": 27.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043191420034600,
+        "cardinality": {
+          "agent_conversation": 350,
+          "channels_message": 536,
+          "agent_turnwork": 160
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 352,
+            "n_dead_tup": 72,
+            "n_mod_since_analyze": 148,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.666282-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.693898-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 160,
+            "n_dead_tup": 59,
+            "n_mod_since_analyze": 76,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.879555-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.925491-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 537,
+            "n_dead_tup": 90,
+            "n_mod_since_analyze": 192,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.778426-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.827896-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 232,
+            "blocks": 27,
+            "min_block": 2.0,
+            "max_block": 29.0
+          },
+          {
+            "status": "processed",
+            "rows": 160,
+            "blocks": 29,
+            "min_block": 0.0,
+            "max_block": 28.0
+          },
+          {
+            "status": "sent",
+            "rows": 144,
+            "blocks": 24,
+            "min_block": 0.0,
+            "max_block": 30.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043211860129900,
+        "cardinality": {
+          "agent_conversation": 354,
+          "channels_message": 549,
+          "agent_turnwork": 168
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 356,
+            "n_dead_tup": 91,
+            "n_mod_since_analyze": 189,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.666282-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.693898-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 168,
+            "n_dead_tup": 64,
+            "n_mod_since_analyze": 117,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.879555-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.925491-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 550,
+            "n_dead_tup": 125,
+            "n_mod_since_analyze": 258,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.778426-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 09:59:17.827896-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 5
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 228,
+            "blocks": 27,
+            "min_block": 2.0,
+            "max_block": 31.0
+          },
+          {
+            "status": "processed",
+            "rows": 169,
+            "blocks": 31,
+            "min_block": 0.0,
+            "max_block": 31.0
+          },
+          {
+            "status": "sent",
+            "rows": 152,
+            "blocks": 25,
+            "min_block": 0.0,
+            "max_block": 31.0
+          }
+        ]
+      },
+      {
+        "wall_ns": 1791043218874913100,
+        "cardinality": {
+          "agent_conversation": 354,
+          "channels_message": 551,
+          "agent_turnwork": 170
+        },
+        "pg_stats_rows": 22,
+        "table_stats": [
+          {
+            "relname": "agent_conversation",
+            "n_live_tup": 354,
+            "n_dead_tup": 91,
+            "n_mod_since_analyze": 3,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.666282-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 10:00:17.560070-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 6
+          },
+          {
+            "relname": "agent_turnwork",
+            "n_live_tup": 170,
+            "n_dead_tup": 73,
+            "n_mod_since_analyze": 1,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.879555-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 10:00:17.738522-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 6
+          },
+          {
+            "relname": "channels_message",
+            "n_live_tup": 552,
+            "n_dead_tup": 135,
+            "n_mod_since_analyze": 2,
+            "last_vacuum": null,
+            "last_autovacuum": "2026-10-03 09:59:17.778426-06:00",
+            "last_analyze": null,
+            "last_autoanalyze": "2026-10-03 10:00:17.672489-06:00",
+            "analyze_count": 0,
+            "autoanalyze_count": 6
+          }
+        ],
+        "physical_messages": [
+          {
+            "status": "pending",
+            "rows": 226,
+            "blocks": 27,
+            "min_block": 2.0,
+            "max_block": 31.0
+          },
+          {
+            "status": "processed",
+            "rows": 171,
+            "blocks": 31,
+            "min_block": 0.0,
+            "max_block": 31.0
+          },
+          {
+            "status": "sent",
+            "rows": 154,
+            "blocks": 25,
+            "min_block": 0.0,
+            "max_block": 31.0
+          }
+        ]
+      }
+    ]
+  },
+  "matrix_points": [
+    {
+      "label": "A-c354-m354",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 64796,
+      "wall_ms": [
+        51.6138,
+        37.5832,
+        39.247,
+        45.2224,
+        33.4961,
+        45.8161,
+        38.2224,
+        36.8719,
+        37.2192,
+        35.9661,
+        37.766,
+        41.6704,
+        42.1691,
+        35.4377,
+        47.5114,
+        40.5384,
+        37.3453,
+        44.9133,
+        47.0138,
+        47.9448
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 13.051,
+      "explain_planning_ms": 5.027,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.021,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.005,
+          "Shared Hit Blocks": 1056,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.017,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 350,
+          "blocks": 9,
+          "min_block": 0.0,
+          "max_block": 8.0
+        }
+      ],
+      "snapshots_file": "A-c354-m354.json.gz",
+      "median_client_ms": 39.892700000000005,
+      "median_server_executor_ms": 9.8845,
+      "actual_heap_pages_message": 9,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 73728,
+          "total_bytes": 466944
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "A-c354-m708",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 59820,
+      "wall_ms": [
+        50.5207,
+        38.6605,
+        39.6431,
+        40.2104,
+        38.4023,
+        44.0999,
+        37.3875,
+        32.3063,
+        29.3213,
+        33.4646,
+        28.1038,
+        29.3229,
+        29.6471,
+        31.7433,
+        38.2158,
+        30.9061,
+        35.6256,
+        34.953,
+        46.2952,
+        33.1561
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 8.367,
+      "explain_planning_ms": 2.926,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.014,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.003,
+          "Shared Hit Blocks": 1056,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.009,
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 704,
+          "blocks": 16,
+          "min_block": 0.0,
+          "max_block": 15.0
+        }
+      ],
+      "snapshots_file": "A-c354-m708.json.gz",
+      "median_client_ms": 35.2893,
+      "median_server_executor_ms": 9.3315,
+      "actual_heap_pages_message": 16,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 131072,
+          "total_bytes": 655360
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "A-c354-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 61608,
+      "wall_ms": [
+        33.3467,
+        36.0204,
+        35.1326,
+        32.9141,
+        33.7094,
+        28.8228,
+        26.8424,
+        30.4921,
+        30.5776,
+        31.5624,
+        31.2699,
+        33.0126,
+        30.8082,
+        33.8786,
+        35.799,
+        27.836,
+        31.8398,
+        46.8905,
+        46.903,
+        49.7433
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 16.126,
+      "explain_planning_ms": 3.968,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.017,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.006,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.01,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "A-c354-m3540.json.gz",
+      "median_client_ms": 32.96335,
+      "median_server_executor_ms": 7.6615,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1949696
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "A-c354-m10000",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 63680,
+      "wall_ms": [
+        50.6026,
+        48.1728,
+        46.1555,
+        49.3639,
+        56.203,
+        51.8677,
+        52.914,
+        34.5337,
+        48.6,
+        31.0959,
+        55.0514,
+        46.4361,
+        44.8105,
+        32.8027,
+        37.9098,
+        43.5938,
+        43.9001,
+        41.1151,
+        50.9143,
+        32.7364
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 13.88,
+      "explain_planning_ms": 3.167,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.035,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.005,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.019,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 9996,
+          "blocks": 206,
+          "min_block": 0.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "A-c354-m10000.json.gz",
+      "median_client_ms": 46.2958,
+      "median_server_executor_ms": 13.8065,
+      "actual_heap_pages_message": 206,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 1687552,
+          "total_bytes": 4530176
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "B-c100-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 63028,
+      "wall_ms": [
+        40.4557,
+        36.7156,
+        33.111,
+        34.0745,
+        33.3068,
+        28.2354,
+        25.2823,
+        29.1879,
+        26.8049,
+        32.6488,
+        32.6471,
+        24.8881,
+        28.8467,
+        20.2446,
+        25.4696,
+        28.6663,
+        32.9572,
+        28.3923,
+        29.3454,
+        25.5881
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 3.785,
+      "explain_planning_ms": 3.216,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.017,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 98,
+          "Actual Total Time": 0.003,
+          "Shared Hit Blocks": 392,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.01,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 2.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 73,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c100-m3540.json.gz",
+      "median_client_ms": 29.0173,
+      "median_server_executor_ms": 2.3935,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 212992
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1908736
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "B-c354-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 72260,
+      "wall_ms": [
+        46.4987,
+        50.9708,
+        49.3727,
+        55.8584,
+        48.1413,
+        49.2821,
+        39.0288,
+        44.9149,
+        42.2913,
+        44.2624,
+        39.1308,
+        48.5508,
+        43.0498,
+        44.9164,
+        35.7368,
+        37.1598,
+        44.2819,
+        41.2646,
+        31.8501,
+        31.6348
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 16.069,
+      "explain_planning_ms": 2.807,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.015,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.006,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.009,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c354-m3540.json.gz",
+      "median_client_ms": 44.272149999999996,
+      "median_server_executor_ms": 11.024000000000001,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1949696
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "B-c708-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 69368,
+      "wall_ms": [
+        42.0382,
+        40.9073,
+        51.3387,
+        44.5415,
+        54.1097,
+        52.4721,
+        39.6805,
+        39.2446,
+        42.3319,
+        39.8287,
+        46.2705,
+        52.3855,
+        37.0162,
+        40.47,
+        36.5214,
+        38.0546,
+        36.4771,
+        49.9727,
+        37.371,
+        44.8249
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 27.195,
+      "explain_planning_ms": 4.817,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.024,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 706,
+          "Actual Total Time": 0.005,
+          "Shared Hit Blocks": 2824,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.015,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 14.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c708-m3540.json.gz",
+      "median_client_ms": 41.472750000000005,
+      "median_server_executor_ms": 16.144,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 106496,
+          "total_bytes": 458752
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1982464
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "B-c1416-m3540",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 64224,
+      "wall_ms": [
+        58.9333,
+        83.1755,
+        57.0778,
+        54.3167,
+        76.7053,
+        69.4899,
+        58.9265,
+        64.9946,
+        76.5149,
+        49.5671,
+        74.9634,
+        61.5944,
+        52.8204,
+        75.2304,
+        82.444,
+        73.6003,
+        54.6549,
+        61.5973,
+        62.2109,
+        72.805
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 32.069,
+      "explain_planning_ms": 4.313,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.019,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1414,
+          "Actual Total Time": 0.003,
+          "Shared Hit Blocks": 5656,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.019,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 28.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "B-c1416-m3540.json.gz",
+      "median_client_ms": 63.60275,
+      "median_server_executor_ms": 39.653499999999994,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 204800,
+          "total_bytes": 811008
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 2031616
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "C-noise0",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 71156,
+      "wall_ms": [
+        34.7425,
+        39.0112,
+        40.5678,
+        31.6965,
+        43.4807,
+        45.4401,
+        40.6066,
+        46.6482,
+        36.0602,
+        46.1582,
+        46.8509,
+        38.905,
+        43.3727,
+        44.7194,
+        36.3964,
+        42.0607,
+        51.5221,
+        46.5214,
+        53.2306,
+        68.4274
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 25.271,
+      "explain_planning_ms": 4.635,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.022,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.008,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.016,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 3
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 4,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3536,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise0.json.gz",
+      "median_client_ms": 43.4267,
+      "median_server_executor_ms": 11.793,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1949696
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "C-noise30",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 71600,
+      "wall_ms": [
+        40.3748,
+        42.9101,
+        49.6945,
+        43.3179,
+        42.2139,
+        46.3256,
+        32.368,
+        32.1399,
+        41.9342,
+        33.8609,
+        45.729,
+        41.4375,
+        29.7612,
+        38.0859,
+        38.4977,
+        44.6471,
+        31.1935,
+        28.7849,
+        31.6408,
+        36.3541
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 24.402,
+      "explain_planning_ms": 4.227,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.037,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.024,
+          "Shared Hit Blocks": 1408,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.041,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 33
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 34,
+          "blocks": 2,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3506,
+          "blocks": 74,
+          "min_block": 0.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise30.json.gz",
+      "median_client_ms": 39.43625,
+      "median_server_executor_ms": 13.312,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1949696
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "C-noise100",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 73440,
+      "wall_ms": [
+        71.5474,
+        50.831,
+        55.0851,
+        59.1612,
+        64.1356,
+        88.1107,
+        82.2029,
+        71.5843,
+        60.6477,
+        62.755,
+        67.1403,
+        77.1527,
+        57.2196,
+        74.7356,
+        60.4724,
+        63.4066,
+        58.2675,
+        69.0006,
+        50.2661,
+        61.2267
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 37.131,
+      "explain_planning_ms": 6.588,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.078,
+          "Shared Hit Blocks": 6,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.06,
+          "Shared Hit Blocks": 2112,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.104,
+          "Shared Hit Blocks": 6,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 103
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 104,
+          "blocks": 4,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3436,
+          "blocks": 72,
+          "min_block": 2.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise100.json.gz",
+      "median_client_ms": 63.080799999999996,
+      "median_server_executor_ms": 31.9495,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1949696
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "C-noise200",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 56092,
+      "wall_ms": [
+        71.145,
+        60.8603,
+        60.8009,
+        71.3175,
+        56.786,
+        58.1383,
+        80.2414,
+        66.9834,
+        67.6694,
+        67.7429,
+        85.4937,
+        76.8044,
+        77.1699,
+        70.3664,
+        59.7288,
+        69.5893,
+        66.4988,
+        63.5584,
+        73.8561,
+        60.064
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 55.363,
+      "explain_planning_ms": 3.196,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.074,
+          "Shared Hit Blocks": 8,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.117,
+          "Shared Hit Blocks": 2816,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.073,
+          "Shared Hit Blocks": 8,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 6,
+          "min_block": 0.0,
+          "max_block": 7.0
+        },
+        {
+          "status": "processed",
+          "rows": 3336,
+          "blocks": 70,
+          "min_block": 4.0,
+          "max_block": 73.0
+        }
+      ],
+      "snapshots_file": "C-noise200.json.gz",
+      "median_client_ms": 67.70615000000001,
+      "median_server_executor_ms": 40.766999999999996,
+      "actual_heap_pages_message": 74,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 606208,
+          "total_bytes": 1949696
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "G-clustered-1",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 71848,
+      "wall_ms": [
+        80.0998,
+        58.7297,
+        50.7775,
+        64.5801,
+        78.1315,
+        64.2984,
+        52.2299,
+        59.0231,
+        55.8372,
+        57.7668,
+        57.4696,
+        51.913,
+        53.8436,
+        71.4727,
+        77.8865,
+        59.4383,
+        56.9662,
+        59.7064,
+        59.1393,
+        76.0399
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 54.584,
+      "explain_planning_ms": 3.991,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.079,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.11,
+          "Shared Hit Blocks": 2464,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.086,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 5,
+          "min_block": 0.0,
+          "max_block": 4.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 202,
+          "min_block": 4.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-clustered-1.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0",
+      "median_client_ms": 59.081199999999995,
+      "median_server_executor_ms": 32.4725,
+      "actual_heap_pages_message": 256,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 2097152,
+          "total_bytes": 5447680
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "G-spread-1",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 59092,
+      "wall_ms": [
+        117.032,
+        65.8791,
+        72.9251,
+        70.8721,
+        58.9653,
+        57.6148,
+        66.6896,
+        56.0455,
+        80.1808,
+        70.978,
+        67.3907,
+        68.0779,
+        63.1029,
+        58.0762,
+        62.0226,
+        63.3168,
+        56.8223,
+        62.1391,
+        54.7241,
+        55.6028
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 37.419,
+      "explain_planning_ms": 2.765,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.112,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.083,
+          "Shared Hit Blocks": 11968,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.095,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 32,
+          "min_block": 0.0,
+          "max_block": 202.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 206,
+          "min_block": 0.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-spread-1.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0",
+      "median_client_ms": 63.20985,
+      "median_server_executor_ms": 36.991,
+      "actual_heap_pages_message": 256,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 2097152,
+          "total_bytes": 4939776
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "G-clustered-2",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 72880,
+      "wall_ms": [
+        110.4756,
+        75.6963,
+        77.6914,
+        66.818,
+        63.2291,
+        54.6667,
+        60.5326,
+        55.3356,
+        54.3953,
+        51.4772,
+        56.5348,
+        60.2269,
+        50.2177,
+        56.2795,
+        54.503,
+        59.1705,
+        57.7513,
+        60.9685,
+        63.9021,
+        65.8252
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 40.944,
+      "explain_planning_ms": 3.407,
+      "message_nodes": [
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.071,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.074,
+          "Shared Hit Blocks": 2464,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.068,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 203,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 5,
+      "stats_after_rows": 22,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 5,
+          "min_block": 0.0,
+          "max_block": 4.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 202,
+          "min_block": 4.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-clustered-2.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0",
+      "median_client_ms": 59.6987,
+      "median_server_executor_ms": 32.465,
+      "actual_heap_pages_message": 206,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 7,
+          "reltuples": 354.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 206,
+          "reltuples": 10000.0,
+          "relallvisible": 204,
+          "heap_bytes": 1687552,
+          "total_bytes": 5046272
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 204,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    },
+    {
+      "label": "G-spread-2",
+      "oracle_ids": [
+        1,
+        2,
+        3
+      ],
+      "backend_pid": 72064,
+      "wall_ms": [
+        125.723,
+        73.5059,
+        69.2809,
+        94.1194,
+        67.79,
+        57.8412,
+        133.4323,
+        104.0433,
+        78.3042,
+        59.5501,
+        55.2089,
+        64.1238,
+        61.858,
+        53.5791,
+        61.389,
+        60.4565,
+        130.5147,
+        65.9453,
+        54.4597,
+        53.9331
+      ],
+      "query_count": 1,
+      "explain_execution_ms": 50.633,
+      "explain_planning_ms": 2.942,
+      "message_nodes": [
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.214,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 352,
+          "Actual Total Time": 0.111,
+          "Shared Hit Blocks": 11968,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 0
+        },
+        {
+          "Node Type": "Index Scan",
+          "Actual Loops": 1,
+          "Actual Total Time": 0.218,
+          "Shared Hit Blocks": 34,
+          "Shared Read Blocks": 0,
+          "Plan Rows": 1,
+          "Actual Rows": 203
+        }
+      ],
+      "stats_before_rows": 0,
+      "stats_after_rows": 0,
+      "physical_messages": [
+        {
+          "status": "pending",
+          "rows": 204,
+          "blocks": 32,
+          "min_block": 0.0,
+          "max_block": 202.0
+        },
+        {
+          "status": "processed",
+          "rows": 9796,
+          "blocks": 206,
+          "min_block": 0.0,
+          "max_block": 205.0
+        }
+      ],
+      "snapshots_file": "G-spread-2.json.gz",
+      "logical_full_rows_sha256": "4ef73970f06dbc195105a9547d60578db70604ea9c2550e0de204310c78489b0",
+      "median_client_ms": 65.03455,
+      "median_server_executor_ms": 36.5475,
+      "actual_heap_pages_message": 256,
+      "before_relations": [
+        {
+          "relname": "agent_conversation",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 57344,
+          "total_bytes": 327680
+        },
+        {
+          "relname": "agent_turnwork",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 16384,
+          "total_bytes": 204800
+        },
+        {
+          "relname": "channels_message",
+          "relpages": 0,
+          "reltuples": -1.0,
+          "relallvisible": 0,
+          "heap_bytes": 2097152,
+          "total_bytes": 4939776
+        }
+      ],
+      "before_turnworks": [
+        {
+          "status": "COMPLETED",
+          "n": 3,
+          "due": 0
+        },
+        {
+          "status": "PENDING",
+          "n": 50,
+          "due": 0
+        }
+      ],
+      "before_visibility": {
+        "agent_conversation": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "channels_message": {
+          "all_visible": 0,
+          "all_frozen": 0
+        },
+        "agent_turnwork": {
+          "all_visible": 0,
+          "all_frozen": 0
+        }
+      },
+      "contemporaneous_event_count": 20,
+      "all_events_file": "e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz"
+    }
+  ],
+  "activity_sampling_gap_s": {
+    "median": 0.5019513,
+    "maximum": 1.0913103,
+    "minimum": 0.4269069
+  },
+  "critical_unrecoverable_variables": [
+    "historical selector plan for TurnWork 86/66/115",
+    "historical subsecond prior-turn/poll timestamps",
+    "historical pg_stats/visibility/physical pages at those claims",
+    "historical per-query claim trace and waits",
+    "observer overhead and OS scheduling history"
+  ],
+  "primary_six_entries": {
+    "head": "66702168439b9841a2c988238638a42e6aaee43d",
+    "status_verbatim": " D DEPLOY_VPS_PLAN.md\n D DEPLOY_VPS_STATUS.md\n M skills-lock.json\n?? docs/auditoria-agente-conversacional-veterinario-2026-09-10.md\n?? docs/discrepancia-encargo-b9-2026-09-26.md\n?? docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md\n",
+    "entries": [
+      {
+        "path": "DEPLOY_VPS_PLAN.md",
+        "exists": false,
+        "sha256": null
+      },
+      {
+        "path": "DEPLOY_VPS_STATUS.md",
+        "exists": false,
+        "sha256": null
+      },
+      {
+        "path": "skills-lock.json",
+        "exists": true,
+        "sha256": "88ead85c6f42b7c505a25f8299562c60b5f3fb3b47bca6b0f35e7642d1e0210d"
+      },
+      {
+        "path": "docs/auditoria-agente-conversacional-veterinario-2026-09-10.md",
+        "exists": true,
+        "sha256": "f23f123b168ce596386e2104faf753518f7b1a94eb114a095f6e71f0b7d1652e"
+      },
+      {
+        "path": "docs/discrepancia-encargo-b9-2026-09-26.md",
+        "exists": true,
+        "sha256": "c438fd28ec30a73f2b293acc55d692cf61e5896358bb253368e314d47b8db05a"
+      },
+      {
+        "path": "docs/evals/e4-bounded-yield-sql-audit-2026-10-01.md",
+        "exists": true,
+        "sha256": "f13035d29c6e0b0ff19b7e27b7016d5cf4aa7a75dac0f34033f879e1c1ee5d45"
+      }
+    ],
+    "six_entries_unchanged": true
+  },
+  "production_changes": 0,
+  "runtime_changes": 0,
+  "deploy": false,
+  "production_scope": {
+    "B0": "closed",
+    "AGENT_B7B_CONSENT_ENABLED": false,
+    "AGENT_OPERATION_EXECUTION_ENABLED": {},
+    "productive_grants": 0,
+    "activation_status": "PENDING_ACTIVATION_REQUIREMENTS",
+    "clinics_activated_by_this_task": 0,
+    "production_environment_inspected": false
+  },
+  "cleanup": {
+    "head": "6e59f6c05514ad6eca0985796e538de4fd749560",
+    "postgresql": [
+      "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+      "C:/Users/LAP/AppData/Local/Temp/vet-e4-dhij2-6e59-pg",
+      "on",
+      "on"
+    ],
+    "settings": [
+      [
+        "autovacuum",
+        "on"
+      ],
+      [
+        "autovacuum_analyze_scale_factor",
+        "0.1"
+      ],
+      [
+        "autovacuum_analyze_threshold",
+        "50"
+      ],
+      [
+        "autovacuum_naptime",
+        "60"
+      ],
+      [
+        "effective_cache_size",
+        "524288"
+      ],
+      [
+        "fsync",
+        "on"
+      ],
+      [
+        "random_page_cost",
+        "4"
+      ],
+      [
+        "seq_page_cost",
+        "1"
+      ],
+      [
+        "shared_buffers",
+        "16384"
+      ],
+      [
+        "synchronous_commit",
+        "on"
+      ],
+      [
+        "track_io_timing",
+        "off"
+      ],
+      [
+        "work_mem",
+        "4096"
+      ]
+    ],
+    "cleanup": {
+      "clients": 0,
+      "waiting_locks": 0,
+      "prepared": 0,
+      "dropped": [
+        "test_e4_dhij2_template",
+        "test_e4_dhij2_seeded"
+      ],
+      "port": 35447,
+      "port_closed": true,
+      "server_stopped": true,
+      "data_directory_preserved": "C:\\Users\\LAP\\AppData\\Local\\Temp\\vet-e4-dhij2-6e59-pg"
+    },
+    "auto_explain_instrumentation": "all statements timed; only selector SQL/plans persisted; overhead cannot be assumed zero",
+    "manual_vacuum": false,
+    "manual_analyze": false,
+    "new_indexes": false,
+    "production_modified": false
+  },
+  "historical_manifest": [
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/.gitattributes",
+      "sha256": "b68a64b7753e7f9aead22d13638a9e86462dd1874de2095b23de697722a9006c",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base-diagnostics.json",
+      "sha256": "c1c8f31ab1189254168421c7bb6f2cfe1db1a4c11aea887ffca261e9f5e625d3",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base-driver.log",
+      "sha256": "027aca245250122ee2e8ca8b187c33c6c10376c52dbac716a261c8569222ef57",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base-invocation.json",
+      "sha256": "24f72ccbe4e955bf283bb832bb0539a6a3fe21f0fa3706b6af2f2b49880bb325",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base-planner-1.log",
+      "sha256": "4856d8f6fb86d2c6879d06340122ff70659c5849c9b0fb5794e29fe0b955601f",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base-planner-2.log",
+      "sha256": "5c8cafe435407e166d408d8a2613563f959b216f7b7ea74806d757af33539673",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base-sender.log",
+      "sha256": "a3749250d13b09fa04812ed713a361519bffe7e888fd74327a6210fa294564d2",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/base.json",
+      "sha256": "d0120453e014bb2d9bb044e1e985c5388adfb615b72b2ad1b41a95e0106fa6d3",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/blocked_llm-not-run.json",
+      "sha256": "958e5955793676b0e249d9380a14c4e638744127dd9ea4a0a2fa10b8bb455d6a",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/bounded-yield-and-ready.json",
+      "sha256": "0dad7ea133f7734a8a58caebadeb4a1abe984d69ba0f953f521fe33687a619a3",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/checks.exit.json",
+      "sha256": "67669d7f9d2f6b945a873320a3a9f75f772c736dd54c9ed852f15f871918972f",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/checks.log",
+      "sha256": "e8ae05c4f47d92fbea8aecd5310cc61e2f9eb85fd0b3fe169525214dfdbe2e69",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/checks.selected.json",
+      "sha256": "7f453adc460934579ffb14719517cfa7a2fd343896334a2420696b45b34e02c9",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/cleanup.json",
+      "sha256": "68e27fa2fa94b5f56c3aad6c759c2903d13b814b5dc5b2cc7f8e9fee11a30f63",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus-decision.json",
+      "sha256": "7766a4c9f2410b7a0e8507fbc92771ba71e763c3fd9c41b3b1618e86f9893029",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.exit.json",
+      "sha256": "f23370694814c8f87c164faa37822acb31a278229c62ebb770f4894d46b19aab",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.log",
+      "sha256": "693487a41b82dfac3d48d54b97799e70c478484d924832527fdc13dc3f71d9d5",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.b9a-pipeline.jsonl",
+      "sha256": "c6b6c576600786e0f070389e748dcdf9a90a95525249dfe7a6474d9867e8dcd5",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.b9a-processes.jsonl",
+      "sha256": "f2b3027fd9c67a1323c4bdfb2a3d5a752cc87cda45d91710a932d11e8cda1679",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.b9b-corpus.jsonl",
+      "sha256": "03e75fc845a9b6b0149d084bfe3ebb8c665b8d27aed0ee6030a342c1a7151e98",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.b9c-corpus.jsonl",
+      "sha256": "5510d71edcfa43875b62be1cb4dc0d91e0903cca2c979b63974f5bbd09dbf9c1",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.b9c-processes.jsonl",
+      "sha256": "c08f8921988544024fb4d718ddd74910da7161e84a9d67c9ee2c2a1e315eff14",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.inventory.json",
+      "sha256": "bc1f81951d59e5b14c20aaf3df76c266b23ba8931648ee14133383841ebe82bf",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.json",
+      "sha256": "f178556d8f8e88ad3d5433f61cba26b999a6e75937afecc5b5e3165b4de1570c",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.passed.jsonl",
+      "sha256": "d8ba7cd6582a01ef421401e2358d3a65b8c232d65deeda54e4eefd0d69638fc1",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.results.sources.json",
+      "sha256": "c1b01b5219c72a13f236e931e586c40e36bb3de879ca52e1a7ce10516ec507da",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/corpus.selected.json",
+      "sha256": "bc1f81951d59e5b14c20aaf3df76c266b23ba8931648ee14133383841ebe82bf",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/critical-metrics.json",
+      "sha256": "852fa5e2542af5c5f18d40377f4c41a90f17ac67757bc6df68ff0af62aa87455",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/dimensions-and-pipeline.json",
+      "sha256": "0725e2ff5827f1bf3b8a89fe78d7a2b90aee05247365fa118c3fe4fddc97618c",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/duplicate-not-run.json",
+      "sha256": "04f6847deb470944468984223ef8f680831d9aa504a598c9a2877cd41280eadc",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/environment.json",
+      "sha256": "7214efc0a0fbf244e966909b6b33d3856d5c1ca56d6366d09ba6d1b0377759a5",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/final.json",
+      "sha256": "be2c09382ab9f57ad733ecc61de4c8f1ccd351083c2edc476d6718c38ff4d861",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/git-diff-check.json",
+      "sha256": "e608e525a7090a4b3f2ac1b4da88d08b2aca447a885f2cc1f1bad8d5c5fb7845",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/immutability-closure.json",
+      "sha256": "0fd5b9c88d44f1edf9595288ad2bbda692ff5c9f968b44dc63ad103b5f67fbab",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/infrastructure-observer-source.txt",
+      "sha256": "68da7ce7d2185e396ac31c15dd04842449a2802299245622ac6d15c64df9a622",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/infrastructure.json",
+      "sha256": "841cbb92879e9d629b84245971f0125c40c74c071cdc371e24700acc080c15e8",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/init-migrate.log",
+      "sha256": "a23e04d634271e3645b74ad4aaaf3180a3a29d062cf2ac4c60a26889ed695276",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/manifest.sha256.json",
+      "sha256": "d60150c5fece3924cfd213fbf4b89cd878411d50c2e174c2ea1458859200dd52",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/meta_slow-not-run.json",
+      "sha256": "3238b4776fe8c6d0fd8cb3ca71cd66efc25a9677c78f66f34e02b265b5d4de05",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/preflight.json",
+      "sha256": "7d7c25ae726cd03b9219357d637c1151238e7657445fd741d6af351c184c619a",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/preparation-incident.json",
+      "sha256": "97c5401bc74e7864e64c7caf0e8ec19f9a1714b763d56e35c6a07e869da0f5c3",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/privacy.json",
+      "sha256": "cf38f5b1ed3aa480f6f6010117ddec492ac92a18a714bb16513431e0778ceade",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/production-gates.json",
+      "sha256": "ac75ba839829951cdc9d7c6ba31b770504d6e9467e7184f703a55aa34e1580f2",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/report.md",
+      "sha256": "64a20841ceeb5a435dbfdb59d064cc368545934ae694293554fc0fb2cd307fda",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/saturation-not-run.json",
+      "sha256": "b6466865b5141fe59c34acfc63628237604d9d21af379af73fe5a70be6fc95f4",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/server-exit.json",
+      "sha256": "63831f17c106b7a6f5f2c07decc33d1ba4deffd4b9686fb7895922634fc5cdf5",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/server-owner.json",
+      "sha256": "ab56d173141ef3f844fcaad3516f51dd0c51b51f150a74bc2020ba0ded98dc80",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/sql-observations.jsonl",
+      "sha256": "d899bda2a6849dcb5137f18bc0433e6f54ec985e4b8519c3752f09ccf90c8c83",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/stop-decision.json",
+      "sha256": "8f4c8fba501c3e333c79869a35e39d70d6a4a3a4ae8b1c6e5ded40aad080109a",
+      "baseline_blob_unchanged": true
+    },
+    {
+      "path": "docs/evals/profile-beta-1-e4-2026-10-01/variant-gates.json",
+      "sha256": "3f642cef272ac0a613f65f6162f46a3ca175423804dfb1ce663a502b98af9b33",
+      "baseline_blob_unchanged": true
+    }
+  ],
+  "claim_commit_boundary": "return from Atomic.__exit__; includes commit callbacks; upper bound on effective server commit",
+  "evidence_files": [
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m10000.json.gz",
+      "bytes": 9779,
+      "sha256": "0819bba20148513ed3200daf8c2f259957872b2085586e8f00115513ea078eaa"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m354.json.gz",
+      "bytes": 9730,
+      "sha256": "28921782ee9bbea1878d50b413f81a2af265dbe5b95dfdfc928274d0648120d5"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m3540.json.gz",
+      "bytes": 9763,
+      "sha256": "0e26fa1de5b430cc5210d50148871356d4635ee18019bd3cf2357de577552f2d"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m708.json.gz",
+      "bytes": 9713,
+      "sha256": "ce9304d46f0dc93a4197944800b4771830727f448380f4aed78d23d19c3c38c3"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/analysis-source.txt",
+      "bytes": 12814,
+      "sha256": "3c35a9727600664e0677e32b59a2ba18a152fd18a577663d8424b7f817574271"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/analysis-summary.json",
+      "bytes": 105823,
+      "sha256": "4d7a4f05d183711ff77bf20f371298e2b5d2093b56c22c7954afcfea0f3c85fb"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c100-m3540.json.gz",
+      "bytes": 9741,
+      "sha256": "9c88d5c11484cee16df29aad1c769f5ea4d85938691fe0ac8ae1ab1e91b3ca05"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c1416-m3540.json.gz",
+      "bytes": 9850,
+      "sha256": "59f132e5e03fa8b1d873181bf4efc699e33d31db79fcc315b4a118392efa3542"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c354-m3540.json.gz",
+      "bytes": 9765,
+      "sha256": "0e06018de19aac0074d1d4bde371e4f149d2ea5aab76dc35ccc108cac14ac91d"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c708-m3540.json.gz",
+      "bytes": 9799,
+      "sha256": "0b8cdaece21d4e0247e46673184947073fad9ab3692cc25d70195249f5673198"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise0.json.gz",
+      "bytes": 9773,
+      "sha256": "8d3f0ac629f2266eb2814af5ca59ea24d07df695a0b73c2f36ed76c157e43d27"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise100.json.gz",
+      "bytes": 9830,
+      "sha256": "e991f9e521fb3d2eb00890be888a979123392b3aec3dce0e8cd64994d88a34a3"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise200.json.gz",
+      "bytes": 9829,
+      "sha256": "6cd3113d9526bceaf83b4aaacf4cb4f54491f93147ff430e73e4ce96784f4532"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise30.json.gz",
+      "bytes": 9776,
+      "sha256": "1fb9a3f7d728361eb7c12744079f49571b86ee525fbc85879939cbd9e4df9fbc"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-observer-source.txt",
+      "bytes": 29122,
+      "sha256": "cd938557251f27ca1c6929660796d7c8e5ce84f933caf7b3d555b9798e67e136"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-p95-nearby-snapshots.json",
+      "bytes": 75866,
+      "sha256": "5adb7bf2e1978b82d1945221ad1565f992ef5464a74e6b32598e62ddbda801e3"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-p95-selector-plan.json",
+      "bytes": 82569,
+      "sha256": "3b5b039eda47ad15d4668f85b2700fd987abdc9e6c76eea1eb5f23561adff9b7"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-p95-selector.sql",
+      "bytes": 3993,
+      "sha256": "d60b4cc5e3f4fb21a6049466e4b2ef0b35f6987c333fcee76ae145c813b761c7"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/environment-cleanup.json",
+      "bytes": 1502,
+      "sha256": "95a5df99553521d90eaa7280b31977df8380bf6d8529d0f5b943f2acb58196f8"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-clustered-1.json.gz",
+      "bytes": 9835,
+      "sha256": "af7d690c480ffd790b36f257b02ee2789bffb57d75de24ca04e849343b841a8b"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-clustered-2.json.gz",
+      "bytes": 12374,
+      "sha256": "135dc0a4c353d05b59f8f24351f48602630864c61b913678c2834f900e886478"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-spread-1.json.gz",
+      "bytes": 9851,
+      "sha256": "2853a1930137aad539ed24d4128638693008a8d58b3f3e3ac733991db3d46ac8"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-spread-2.json.gz",
+      "bytes": 9850,
+      "sha256": "75ccc0fe582c1831bcdd5b6945d6f2aafe400b1d48648881c045379c44677f2c"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/historical-closing-explain.json",
+      "bytes": 30306,
+      "sha256": "2c0c2d61e7895794e8f22018120373c30d827a2961d183db383bc3436627abc8"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/historical-reconstruction.json",
+      "bytes": 51807,
+      "sha256": "aec9582903e5fbf6cc0be13f20ff74c2d66aa0a744a9cad7f0050840ce75b603"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/immutability-before-documentary-commit.json",
+      "bytes": 12615,
+      "sha256": "a2e23f93cf50090643d7cc4249bf8275bd2bd8c473456c77bafe3071f0b483c5"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz",
+      "bytes": 10547,
+      "sha256": "68acf826658eed435c90595759f962fee2606fa8cecd218237cc320c6aa471a2"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/matrix-summary.json",
+      "bytes": 36481,
+      "sha256": "5b3ce4b2210ae7ae2fd7209d226ce313fcf680dc9ff1ab73b90f2596b2d99f5e"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/preflight.json",
+      "bytes": 2646,
+      "sha256": "139fda336eabb192b585d6fb9f04f0fec4b4e2aec9fa465f730265b7ae910838"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/previous-layout.json",
+      "bytes": 147718,
+      "sha256": "b5471e78e99a218de624eb3d030351e681a11cb83aadb15c36f7e05a0b7ff5c6"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/previous-matrix.json",
+      "bytes": 664682,
+      "sha256": "1ea6978ee70e612322688bb39df6aee43d84fb30a391ef1148cb197cfa32b5c1"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/server-selectors.json.gz",
+      "bytes": 3476981,
+      "sha256": "9ee25a5e8337aeb4537418ad50adb2a26672ba97c1162610c8ca7975ac61bc5f"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-analysis-all-messages.json.gz",
+      "bytes": 647189,
+      "sha256": "594029d4f8df8869fc56a2c2ca5ac5b047a8ad5f63f0dccb0e2e638b7c3d8f06"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic-planner-1.log",
+      "bytes": 121090,
+      "sha256": "ba746f2a0a9c542f5950155637118a4c8aca8bbabdc7cfdd4fdae7292fdca6d9"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic-planner-2.log",
+      "bytes": 123860,
+      "sha256": "b0243a8c17bddfc6e2f732195a177e140989b3142169b36f2ca19956fca9656e"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic-sender.log",
+      "bytes": 87840,
+      "sha256": "d7bdae96f59522b2909f095668d61fbde525ab1c57c61ebeb2a10cbabb507f41"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic.json",
+      "bytes": 194880,
+      "sha256": "d479c804e4d7b9a7d481f9a56739af9fb51007d75e8cf85d1dd1234a0d3301cb"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-planner-1.json.gz",
+      "bytes": 277639,
+      "sha256": "5e2e8e97169d1bcbd989b683b164ba3bb6709cc37f91b1b2a9a29af19f1081e5"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-planner-2.json.gz",
+      "bytes": 285221,
+      "sha256": "d09f7ead4400f2124e0083d0f0268a83a8820c1244681d4f0a7c97958d523498"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-postgresql.json.gz",
+      "bytes": 79450,
+      "sha256": "e4750318fbc0e677c26481a3145b63b769d8cc77cc70f21b1c1623d39cd0e802"
+    },
+    {
+      "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-sender.json.gz",
+      "bytes": 13111,
+      "sha256": "05b019a1f41acb29c739417fb87671329e2492228a17a3dacf18288fd68947ae"
+    }
+  ]
+}

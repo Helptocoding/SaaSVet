@@ -1,5 +1,7 @@
 # B9 — Mapa de implementación interno
 
+> **Seguimiento vigente 2026-10-11:** [acta consolidada B9](evals/b9-consolidation-2026-10-11/ACTA.md). A–D completos técnicamente; E consolida el PROFILE PASS del 02-10, procedencia y conservación. Aceptación integral actual y gates operativos siguen pendientes de manera explícita. La asignación R01–R15 no cambia; los seguimientos siguientes conservan sus cortes históricos. E4/D29 cerrados con sus límites, incluido R1-04 PENDING aceptado.
+
 Baseline: `55d122bcfb26f41b7f23ce0bb523b464017f3a4c`. Fecha: 2026-09-26.
 Autoridad: §7/B9 del [plan canónico](plan-implementacion-auditoria-agente-whatsapp-2026-09md).
 B9A–B9E son hitos internos, **no fases canónicas independientes**. Se interpreta

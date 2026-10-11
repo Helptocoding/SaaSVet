@@ -1,0 +1,79 @@
+{
+  "status": "OBSERVED_PENDING_INDEPENDENT_VERIFICATION",
+  "error": null,
+  "phase": "COMPLETE",
+  "base_reference": {
+    "path": "C:\\Users\\LAP\\Desktop\\VeterinariaSaaS\\docs\\evals\\d29-r102-base-2026-10-07\\confirmed-base-receipt.json",
+    "sha256": "71c3e58c34decfac1698f9517f39b4d7cbc936c0463e35a4bbfe00ee04920a56"
+  },
+  "expiry_observed": true,
+  "worker_exit_codes": [
+    0,
+    0,
+    0
+  ],
+  "events": [
+    {
+      "event": "outer_commit",
+      "run_id": "r204-intact-01",
+      "organization_index": 0,
+      "observed": true,
+      "db_ns": 1791656487367040000,
+      "source": "INDEPENDENT_DB_WITNESS",
+      "evidence": [
+        "db-000-committed-before-crash.json",
+        "crash.jsonl"
+      ]
+    },
+    {
+      "event": "postcommit_crash",
+      "run_id": "r204-intact-01",
+      "organization_index": 0,
+      "observed": true,
+      "db_ns": 1791656487752464000,
+      "source": "PROCESS_EXIT",
+      "evidence": [
+        "crash-exit.json"
+      ]
+    },
+    {
+      "event": "old_witness_fenced",
+      "run_id": "r204-intact-01",
+      "organization_index": 0,
+      "observed": true,
+      "db_ns": 1791657959957834000,
+      "source": "INDEPENDENT_DB_WITNESS",
+      "evidence": [
+        "db-005-fencing.json"
+      ],
+      "effect_published": false
+    }
+  ],
+  "checks": [
+    {
+      "name": "claim_commit_independently_visible",
+      "passed": true,
+      "evidence": [
+        "db-000-committed-before-crash.json",
+        "crash-barrier.json"
+      ],
+      "facts": {}
+    },
+    {
+      "name": "real_process_exit_crash",
+      "passed": true,
+      "evidence": [
+        "crash-exit.json"
+      ],
+      "facts": {}
+    },
+    {
+      "name": "stale_witness_has_no_effect",
+      "passed": true,
+      "evidence": [
+        "db-005-fencing.json"
+      ],
+      "facts": {}
+    }
+  ]
+}

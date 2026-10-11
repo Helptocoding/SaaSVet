@@ -1,0 +1,33 @@
+{
+  "group": "individual-retry-correction-01",
+  "baseline": "825db75df68bf076929fa787e77beefe96803350",
+  "scope": "FINITE_PHYSICAL_BOUNDARIES_ONLY",
+  "characterization": false,
+  "benchmark": false,
+  "sustainable_envelope": null,
+  "jobs": [
+    {
+      "case": "R2-05",
+      "variant": "retry"
+    },
+    {
+      "case": "R2-05",
+      "variant": "exhaustion"
+    }
+  ],
+  "sources": {
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\assessment.py": "c5a1172972db4659e51a68ab77c6b15c4f74fcc48f964e874c38b46afd677016",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\controller.py": "d4fff1fc92eac763980b32ef723a31c8f40d5393dfc9a68bfba2e4acde52d1e5",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\evidence.py": "ea068336804c38fe144980ce58b8c979fbc498eb513000cedbd64c0f6b13a3f3",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\execution.py": "3e969f21968d7a15f4a6a40b4d8f79ddb18c8520067bc3d33611777f725ffb0d",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical.py": "00c6166d54e568e2109699b22766bbc27208642739c1f65be21f76e8ab9a125b",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical_cases.py": "96e5abf5e381e1258a7ecbab77ef08ab8807ffb668ca6fe684e635ac7805a698",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical_guards.py": "8259a0ab72022746a570a4ab8a8cfe4c7efc9e41eaeb46dc5eb8909fed29bcb9",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\physical_matrix.py": "ec2d02c5fca8a4b879f512f9d981f355adba45864701a72b57ff649a09e06dd1",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\recipes.py": "148c605bbe988c1f6a10d7248c087399544cd7971bb689286404ed85b69acd18",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\replay.py": "e35affd53c794676f967cd5477c06fd09edf4204c79fb0d43d38a20da4e11c3d",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\runner.py": "5527e915053a1ece7533041e8b4e450bd361381bf11efe8abce8046f951f5f47",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\scenario_observations.py": "23d44a772de80bd05e6c09b56aaf45faf8462606e42bec399efd2162efcedba5",
+    "backend\\apps\\agent\\tests\\scheduling_characterization\\__init__.py": "b431a0d8b32a8c92fb70d3e9a764f85b64886b3bc6a3260e318405ad800b79b6"
+  }
+}

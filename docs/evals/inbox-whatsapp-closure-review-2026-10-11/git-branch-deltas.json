@@ -1,0 +1,474 @@
+{
+  "date": "2026-10-11",
+  "branches": [
+    {
+      "branch": "codex/e4-causal-diagnosis-2026-10-03",
+      "merge_base": "6e59f6c05514ad6eca0985796e538de4fd749560",
+      "unique_commits": "68a4a77 docs: close E4 causal diagnosis without confirmed root cause",
+      "patch_equivalence": "+ 68a4a77252060fc2d5eae66c2e48423f85406e8c",
+      "changes_since_merge_base": [
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03.md",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "794c606a23a349133872f97eede62f4f9c11e8163e47b6e2ea7e4c9732f4b1f6",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m10000.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "0819bba20148513ed3200daf8c2f259957872b2085586e8f00115513ea078eaa",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m354.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "28921782ee9bbea1878d50b413f81a2af265dbe5b95dfdfc928274d0648120d5",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m3540.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "0e26fa1de5b430cc5210d50148871356d4635ee18019bd3cf2357de577552f2d",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/A-c354-m708.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "ce9304d46f0dc93a4197944800b4771830727f448380f4aed78d23d19c3c38c3",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c100-m3540.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "9c88d5c11484cee16df29aad1c769f5ea4d85938691fe0ac8ae1ab1e91b3ca05",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c1416-m3540.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "59f132e5e03fa8b1d873181bf4efc699e33d31db79fcc315b4a118392efa3542",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c354-m3540.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "0e06018de19aac0074d1d4bde371e4f149d2ea5aab76dc35ccc108cac14ac91d",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/B-c708-m3540.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "0b8cdaece21d4e0247e46673184947073fad9ab3692cc25d70195249f5673198",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise0.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "8d3f0ac629f2266eb2814af5ca59ea24d07df695a0b73c2f36ed76c157e43d27",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise100.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "e991f9e521fb3d2eb00890be888a979123392b3aec3dce0e8cd64994d88a34a3",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise200.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "6cd3113d9526bceaf83b4aaacf4cb4f54491f93147ff430e73e4ce96784f4532",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/C-noise30.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "1fb9a3f7d728361eb7c12744079f49571b86ee525fbc85879939cbd9e4df9fbc",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-clustered-1.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "af7d690c480ffd790b36f257b02ee2789bffb57d75de24ca04e849343b841a8b",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-clustered-2.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "135dc0a4c353d05b59f8f24351f48602630864c61b913678c2834f900e886478",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-spread-1.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "2853a1930137aad539ed24d4128638693008a8d58b3f3e3ac733991db3d46ac8",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/G-spread-2.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "75ccc0fe582c1831bcdd5b6945d6f2aafe400b1d48648881c045379c44677f2c",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/analysis-source.txt",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "3c35a9727600664e0677e32b59a2ba18a152fd18a577663d8424b7f817574271",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/analysis-summary.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "180d93819c4bd5f149dcc1f95143e1aefb33d7caab8cefaa02d83aadbb303a94",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-observer-source.txt",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "cd938557251f27ca1c6929660796d7c8e5ce84f933caf7b3d555b9798e67e136",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-p95-nearby-snapshots.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "6d3120d61770aeec1b670494958833de57359f87efeec134ec94b8e01df2c45c",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-p95-selector-plan.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "8fd7a3f7b6d52a883b38e1b03b957b4122b7fd580d95922bff3af57c500f96fb",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/diagnostic-p95-selector.sql",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "c397f895c43d3e5c9197c48ee839f70a03baf38d085d874aeec6ee5ac5529592",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/environment-cleanup.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "51547fdf9c4e5e2d4958dbeefbe773b319a384365aa22fa2331f0da78afdc0d8",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/historical-closing-explain.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "571a3729e33631ccb43003cd753e5afddc9eec044d46c5a2cf50731afce4348b",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/historical-reconstruction.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "182401d4a125e05e58adf34be464c9f483da73b4b075c19bb50f0c06c49ff5f0",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/immutability-before-documentary-commit.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "ae517d17ec5651838526c8bcbaa58751fad3f9669705b95d486d7747418b368b",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/matrix-analysis.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "68acf826658eed435c90595759f962fee2606fa8cecd218237cc320c6aa471a2",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/matrix-summary.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "8dad28bd015336732dc966989156b11f53ab695d8e0c09a6d5329c608d8a3aa5",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/preflight.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "139fda336eabb192b585d6fb9f04f0fec4b4e2aec9fa465f730265b7ae910838",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/previous-layout.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "185e17bbe26089b436b0631df6abaa3374505d534a82c7b3f2bf32ba54e04e64",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/previous-matrix.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "d9a4cd360cc91c79f40983d4f0c9923880b0d74cdb4a4f8e240fbef885c2d8fb",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/server-selectors.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "9ee25a5e8337aeb4537418ad50adb2a26672ba97c1162610c8ca7975ac61bc5f",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-analysis-all-messages.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "594029d4f8df8869fc56a2c2ca5ac5b047a8ad5f63f0dccb0e2e638b7c3d8f06",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic-planner-1.log",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "df2e883e2224743c4fd7cfcc8651185ac9fba7742823abfb42265376b95fb1f6",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic-planner-2.log",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "c7ef3c28e336a460ea22bc85632265bc992b223338b170ab2960d1fcb16f9e45",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic-sender.log",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "ca5f7d40055fc679c60e1922e5cca2f58e2962741eee93bf05b05b1984ace23a",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-diagnostic.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "ee225bd99a3604b3aefcfcfb3ff2e0e06359ca9126b312d6d9f2375433e7495d",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-planner-1.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "5e2e8e97169d1bcbd989b683b164ba3bb6709cc37f91b1b2a9a29af19f1081e5",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-planner-2.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "d09f7ead4400f2124e0083d0f0268a83a8820c1244681d4f0a7c97958d523498",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-postgresql.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "e4750318fbc0e677c26481a3145b63b769d8cc77cc70f21b1c1623d39cd0e802",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-2026-10-03/temporal-sender.json.gz",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "05b019a1f41acb29c739417fb87671329e2492228a17a3dacf18288fd68947ae",
+          "current_sha256": null
+        },
+        {
+          "path": "docs/evals/e4-causal-diagnosis-results.json",
+          "exists_in_current_checkout": false,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "d5791e1a4908397963589267b553462b75fca3634668e25621e1303f24cdbb9b",
+          "current_sha256": null
+        }
+      ]
+    },
+    {
+      "branch": "task/7acc74fe-PlanWA-02-F0",
+      "merge_base": "a6ee978a84fa4ac958af4e6edcc384845d3c4214",
+      "unique_commits": "32bc0a5 fix(appointments): handle overlap constraint deadlocks\n706a007 fix(appointments): reject explicit null preconditions\n16e474f feat(appointments): enforce atomic appointment guarantees",
+      "patch_equivalence": "- 16e474f53520aa8ec6576f58250bd780b6955eaa\n- 706a0070ff2091b74b5787f853d5cd6b75225841\n- 32bc0a5b8f333f6dce3ac296314a3429591b18c3",
+      "changes_since_merge_base": [
+        {
+          "path": "backend/apps/appointments/management/__init__.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": true,
+          "branch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "current_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "backend/apps/appointments/management/commands/__init__.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": true,
+          "branch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "current_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "backend/apps/appointments/management/commands/audit_appointment_overlaps.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "3c6520f145b22e70bb611b3b591d453c7163b301301e3835d14cc551c8200671",
+          "current_sha256": "0c3372e421f0d06f7dbcc0ffe277bf07b644256ca8daf3c6dae3bc92b7f25363"
+        },
+        {
+          "path": "backend/apps/appointments/migrations/0014_appointment_no_overlap_per_vet.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "1b0b7f8bce6e8d3d7780c99f1b68b470221770f99e0b3c0c2f0bf4dddf867be9",
+          "current_sha256": "0f7aaa7496e13b50ad699eced08e0efa6c1adb5ed6b5901fe33337caeeb7f28b"
+        },
+        {
+          "path": "backend/apps/appointments/models.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "31c83999019386a9478ea37c7cd78d3aba185610e248f2f15155bfd5dd5e3ca1",
+          "current_sha256": "e22978ebb815ba7fa8e79e88ce47878e8b7583526fad4ca00342c6445fafc994"
+        },
+        {
+          "path": "backend/apps/appointments/serializers.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "4f7d448415d0fad256c997e53231e8ebe50309e52c24956c342ffa94085ce502",
+          "current_sha256": "7f8c9d7426da05561123596cf0b918c0f5638640382aadc9b8aa879a74d39214"
+        },
+        {
+          "path": "backend/apps/appointments/services.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "aaff6631543fd6244a7d1b801c293c6648939ca16379ddad54fb678d88e22ab6",
+          "current_sha256": "b24ce36c4fb6372f4794d30696a2d1ffbbb35fb6a9f434846c123d852c09849e"
+        },
+        {
+          "path": "backend/apps/appointments/tests/test_audit_overlaps.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "44befda52b48fed86a4a64d374fbe6a04bd28230971f519b52bf97101c25245f",
+          "current_sha256": "b0affa94dd003c12e73d575399fee8ca5b2add57cabf11f1d42b2278c5435855"
+        },
+        {
+          "path": "backend/apps/appointments/tests/test_no_overlap.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "3eaae947489abf097cbb005c45e76bf3d6b0eb88d09954dbe2a2f603cb65f722",
+          "current_sha256": "607bb1c0a35652b1cfcd01947e82cb511dfbc81b6f398cddbe19154f90d61863"
+        },
+        {
+          "path": "backend/apps/appointments/tests/test_preconditions.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "2f3fc5b929e08208e93b1e7600505513b449fb7a08930f200eabe5e1c45d4a62",
+          "current_sha256": "83811c7b5e731640d0aef68b600ed106804a8ff4eb131c996e903b658382694e"
+        },
+        {
+          "path": "backend/apps/appointments/tests/test_walkin.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "3a74d34af88e27d8c25ab5dfd7802b0cadd9a156835aa39ba2929c262564af6b",
+          "current_sha256": "ba455c96ac0da73fed3ed491fdb294284f76b10ca11145724cb30bb10267eb3a"
+        },
+        {
+          "path": "backend/apps/appointments/views.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "3fa26ed29809db9b6b7ecfc2d34e8b96eb62c0b001c3cc95ec46916a957bb928",
+          "current_sha256": "aa1f240b8db161482c5131346960e4aa4fdc4a97434c1c4a6c41fdc1f0a36209"
+        },
+        {
+          "path": "backend/apps/core/exceptions.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "ee4e5b79e3d6db765a642c32ff351e714304434787f1bdf4abae05cf10bfe22b",
+          "current_sha256": "d8a3c515265e1c83d13a6ec5533385745a12938ab583f8dba83457d341a0d834"
+        },
+        {
+          "path": "backend/apps/core/management/commands/seed_demo_clinic.py",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "459c3d8b8d1543a2321f433c9a9fe2e0ee60ad9dc202767ab657f2ef17b69265",
+          "current_sha256": "7b3e117aa689d59f66cc1196e61fd58422daa622bd25b5a1f8561d36ee79d627"
+        },
+        {
+          "path": "docs/decisions/2026-08-08-p57-garantias-de-agenda.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "96b7bc461d9891f5e9fbea4bfdadaaae1cfe6d2f384aea7c1f29420ffbc73cca",
+          "current_sha256": "c832fb65d348723507c3f11d843e08f7251a3083a7936b7f68a654f49b71854c"
+        },
+        {
+          "path": "docs/modules/appointments.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "4653bf6438e0fed0eeb27773070693b859d5db09b8c3fadcb475c52ae4c18776",
+          "current_sha256": "38470b88013eaf81a6689054b5f055d25feb5605951c5a2e79360cc416c856c8"
+        },
+        {
+          "path": "docs/modules/frontend.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "5b365e47703a76fe677df6fc4638d9c9feba10911848f2e01b6ba37a76f866c6",
+          "current_sha256": "34c7c9c2a8b477eb5b7b0c4283cbbba5cf4f518af7d9b27414b259f491635956"
+        },
+        {
+          "path": "docs/system-flows.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "2888dbff1af68028b34ea68975d0f70142ac3d7ed50fbf60823d76f2dbbffd35",
+          "current_sha256": "9fe05d575eeff357024b8d95edb8f3a2d6b02561b0384646ce350ff6e67aad81"
+        },
+        {
+          "path": "docs/system-module-operations.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "43fca0bf5d58c53d61718ed1d60fc15bc2f98a48a9e18482bf3b0b99ed2c6f99",
+          "current_sha256": "6687466a98a3efc8ad89d273a59056021b474c9d71d6ee4e7ebd3cd4d4159e5d"
+        },
+        {
+          "path": "docs/system-operational-flow.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "37adb38d3b11f462354ca1a2ae7e5fa5ecc0d0bddcad608300320216ffc8d827",
+          "current_sha256": "fd4933cbf7c4a9fd6a47d532a79996e8dcb16dfc6b6096ac581fe6fae48ed667"
+        },
+        {
+          "path": "docs/system-reference.md",
+          "exists_in_current_checkout": true,
+          "same_bytes_as_branch": false,
+          "branch_sha256": "c611399a69fec2ecce59075ae7b6120e3229e9e3f0dce3e649a78f1db69c620d",
+          "current_sha256": "6bdd0e2d050ae07a194352bc41d525e00e826ce5509570edb4a00b7bd7f9da4c"
+        }
+      ]
+    }
+  ],
+  "profile_to_head": {
+    "profile_sha": "08310461337a284386299ec47c54125f2139bf7f",
+    "all_changed_paths": "A\tbackend/apps/agent/claim_diagnostic_report.py\nA\tbackend/apps/agent/claim_diagnostic_waits.py\nA\tbackend/apps/agent/claim_diagnostics.py\nM\tbackend/apps/agent/durable.py\nM\tbackend/apps/agent/services.py\nA\tbackend/apps/agent/tests/claim_diagnostic_evidence.py\nA\tbackend/apps/agent/tests/claim_diagnostic_process.py\nA\tbackend/apps/agent/tests/test_claim_diagnostic_processes.py\nA\tbackend/apps/agent/tests/test_claim_diagnostic_reporting.py\nA\tbackend/apps/agent/tests/test_claim_diagnostics.py\nM\tbackend/apps/agent/worker.py\nA\tdocs/evals/e4-instrumentation-2026-10-03/.gitattributes\nA\tdocs/evals/e4-instrumentation-2026-10-03/README.md\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/blocked-llm-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/blocked-llm-1.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/blocked-llm-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/blocked-llm-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/blocked-llm-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/concurrency-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/concurrency-1.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/concurrency-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/concurrency-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/concurrency-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/lock-wait-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/lock-wait-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/lock-wait-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/lock-wait-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/lock-wait-waits.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-final/rollback-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/blocked-llm-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/blocked-llm-1.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/blocked-llm-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/blocked-llm-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/blocked-llm-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/lock-wait-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/lock-wait-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/lock-wait-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/equivalence-process-final/lock-wait-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/savepoint-final/rollback-equivalence.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/blocked-llm-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/blocked-llm-1.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/blocked-llm-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/blocked-llm-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/concurrency-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/concurrency-1.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/concurrency-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/concurrency-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/coverage-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/coverage-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/coverage-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/lock-wait-0.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/lock-wait-reconstructed.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/lock-wait-report.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/artifacts/targeted-3/lock-wait-waits.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/checks-1-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/checks-1.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/checks-1.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/checks-1.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/cleanup.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/close_verification.py\nA\tdocs/evals/e4-instrumentation-2026-10-03/closure.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/environment.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-1.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-2.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-final.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/equivalence-process-final.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/evidence-validation.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/init.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/migrate.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/recover_verification.py\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.b9a-pipeline.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.b9b-corpus.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.b9c-corpus.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.b9c-processes.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-regression.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/recovery-selection.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9.results.b9b-corpus.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-b9.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.results.b9a-pipeline.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-durable.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/regression-e4.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/reporting-unit.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/resume.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/resumed-environment.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/savepoint-final.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/source-integrity.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/source_integrity.py\nA\tdocs/evals/e4-instrumentation-2026-10-03/start.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/stop.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-1.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-2.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3-ids.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3-launch.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.exit.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.log\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.results.inventory.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.results.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.results.passed.jsonl\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.results.sources.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/targeted-3.selected.json\nA\tdocs/evals/e4-instrumentation-2026-10-03/validate_evidence.py\nA\tdocs/evals/e4-instrumentation-2026-10-03/verify.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/.gitattributes\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/audit.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base-diagnostics.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base-planner-1.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base-planner-2.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base-sender.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/base.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-diagnostics.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-dispatch-distributions.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-planner-1.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-planner-2.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm-sender.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/blocked_llm.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/checks-canonical-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/checks-canonical-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/checks-canonical.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/checks-canonical.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/checks-canonical.selected.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/cleanup.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.b9a-pipeline.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.b9a-processes.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.b9b-corpus.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.b9c-corpus.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.b9c-processes.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.inventory.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.passed.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.results.sources.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-canonical.selected.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-decision.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.results.b9a-pipeline.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.results.inventory.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.results.passed.jsonl\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.results.sources.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus-valid.selected.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus.selected.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/corpus_decision.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/critical-metrics.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/diagnostics.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/dispatch-distributions.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/django-check.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/django-check.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-diagnostics.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-dispatch-distributions.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-planner-1.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-planner-2.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate-sender.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/duplicate.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/evaluation-summary.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/execute.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/incidents.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/infra.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/init-migrate.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/init-migrate.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/makemigrations-check.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/makemigrations-check.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/manifest.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/manifest.sha256.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-diagnostics.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-dispatch-distributions.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-planner-1.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-planner-2.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow-sender.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/meta_slow.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/migrate-check.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/migrate-check.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/observer.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/preflight.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/preflight.py\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/privacy.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/production-gates.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/report.md\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-diagnostics.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-dispatch-distributions.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-driver.exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-driver.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-planner-1.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-planner-2.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation-sender.log\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/saturation.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/server-exit.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/server-owner.json\nA\tdocs/evals/profile-beta-1-e4-sql-2026-10-02/sql-observations.jsonl",
+    "runtime_scope_changed_paths": "A\tbackend/apps/agent/claim_diagnostic_report.py\nA\tbackend/apps/agent/claim_diagnostic_waits.py\nA\tbackend/apps/agent/claim_diagnostics.py\nM\tbackend/apps/agent/durable.py\nM\tbackend/apps/agent/services.py\nA\tbackend/apps/agent/tests/claim_diagnostic_evidence.py\nA\tbackend/apps/agent/tests/claim_diagnostic_process.py\nA\tbackend/apps/agent/tests/test_claim_diagnostic_processes.py\nA\tbackend/apps/agent/tests/test_claim_diagnostic_reporting.py\nA\tbackend/apps/agent/tests/test_claim_diagnostics.py\nM\tbackend/apps/agent/worker.py"
+  }
+}

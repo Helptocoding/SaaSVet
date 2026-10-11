@@ -1,0 +1,148 @@
+{
+  "status": "ACCREDITED",
+  "case_id": "R1-06",
+  "variant": "backlog",
+  "errors": [],
+  "clock_gate": {
+    "status": "CLOCK_CHECKS_PASSED",
+    "gate_passed": true,
+    "idle_guard": {
+      "previous_state": 2147483648,
+      "requested_state": 2147483649
+    },
+    "journals": {
+      "ingress": {
+        "identity": [
+          "r106-prospective-01",
+          "ingress",
+          10880,
+          "4d029bb57e6144ac811ba5ffc479aaa5"
+        ],
+        "calibrations": 1143,
+        "offset_ns": [
+          1791646404003431600,
+          1791646404003915900
+        ],
+        "last_seq": 17774,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_1": {
+        "identity": [
+          "r106-prospective-01",
+          "planner_1",
+          22404,
+          "133f832316964f65b8a3bf1d1ff26cb8"
+        ],
+        "calibrations": 50,
+        "offset_ns": [
+          1791646404003363400,
+          1791646404003963500
+        ],
+        "last_seq": 11300,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "planner_2": {
+        "identity": [
+          "r106-prospective-01",
+          "planner_2",
+          7792,
+          "bbafd0c5216a4f7bae4e2e6ca5c321c1"
+        ],
+        "calibrations": 47,
+        "offset_ns": [
+          1791646404003350100,
+          1791646404003967500
+        ],
+        "last_seq": 10981,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      },
+      "sender": {
+        "identity": [
+          "r106-prospective-01",
+          "sender",
+          3308,
+          "d5e77bde348a4df7ac77b1f54fbb46ff"
+        ],
+        "calibrations": 122,
+        "offset_ns": [
+          1791646404003421100,
+          1791646404003974000
+        ],
+        "last_seq": 11346,
+        "mathematical_relation_valid": true,
+        "physical_accreditation": false
+      }
+    },
+    "host": {
+      "host_event_window_valid": true,
+      "physical_accreditation": false
+    },
+    "idle_guard_restored": true
+  },
+  "physical_execution": true,
+  "source_kind": "PROSPECTIVE_PHYSICAL_POSTGRESQL",
+  "synthetic_evidence": [],
+  "full_followup_observed": true,
+  "gates": {
+    "demand": {
+      "missing": [],
+      "violations": [],
+      "planned_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "accepted_attempts_by_org_index": {
+        "0": 12,
+        "1": 12
+      },
+      "ready_episodes_by_org": {
+        "1": 16,
+        "2": 15
+      },
+      "ready_in_offer_window": 23,
+      "ready_after_offer_window": 0
+    },
+    "invariants": {
+      "missing": [],
+      "violations": [],
+      "witnesses": 92,
+      "checked": [
+        "tenant_membership",
+        "immutable_membership",
+        "outer_commit",
+        "durable_admission",
+        "N1_at_dispatch",
+        "no_HTTP_in_transaction",
+        "contained_destinations"
+      ]
+    },
+    "windows": {
+      "missing": [],
+      "violations": [],
+      "backlog": {
+        "1": "NO_GROWTH_OBSERVED",
+        "2": "NO_GROWTH_OBSERVED",
+        "global": "NO_GROWTH_OBSERVED"
+      }
+    }
+  },
+  "counts": {
+    "inputs": 32,
+    "episodes": 31,
+    "works": 31,
+    "llm_calls": 62,
+    "outbound": 30,
+    "meta_calls": 30,
+    "accepted_outputs": 30,
+    "deferred_works": 1,
+    "demonstrated_successor_links": 1
+  },
+  "next_step": "NEXT_SEQUENTIAL_REGRESSION_SUITE",
+  "original_execution_receipt": "execution-receipt.json",
+  "physical_verification": "physical-verification.json",
+  "execution_source_archive": "execution-source-archive.json",
+  "database_removed": true
+}

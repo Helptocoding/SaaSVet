@@ -1,5 +1,7 @@
 # Runbook: Agente WhatsApp + Inbox
 
+> **Referencia vigente — 2026-10-11:** [acta B9 y conservación de evidencia](../evals/b9-consolidation-2026-10-11/ACTA.md). PROFILE 02-10 aprobado para su candidato; aceptación integral actual y activación permanecen separadas y pendientes. E4 y fase D29 están cerrados en sus alcances; R1-04 PENDING es una limitación aceptada, sin ejecución adicional autorizada. No repetir cargas, iniciar matriz o activar capacidades por los comandos históricos de este runbook. La restauración offline de recibos se documenta en [conservación](../evals/b9-consolidation-2026-10-11/README.md) y no ejecuta la aplicación.
+
 ## B9A — evaluación aislada, sin activación
 
 El [harness B9A](../contrato-harness-b9a.md) compone webhook firmado, worker B3 y

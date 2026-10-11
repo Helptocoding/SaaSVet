@@ -72,3 +72,25 @@ frontend/standalone/
 # Estado local de agtx. La configuración de proyecto sí se comparte.
 .agtx/*
 !.agtx/config.toml
+
+# B9 2026-10-11: frozen raw evidence is preserved completely in the versioned
+# ZIP parts and SHA-256 manifest. Selected entry reports are explicitly tracked.
+# Exact historical directories only; future evidence folders stay visible.
+/docs/evals/d29-authorized-probes-2026-10-07/
+/docs/evals/d29-dependent-2026-10-07/
+/docs/evals/d29-execution-2026-10-10/
+/docs/evals/d29-frontiers-2026-10-07/
+/docs/evals/d29-gap-preparation-2026-10-07/
+/docs/evals/d29-methodology-provider-2026-10-07/
+/docs/evals/d29-offline-preparation-2026-10-09/
+/docs/evals/d29-phase-closure-2026-10-10/
+/docs/evals/d29-physical-2026-10-06/
+/docs/evals/d29-r102-base-2026-10-07/
+/docs/evals/e4-causal-diagnostic-2026-10-03-dded711c/
+/docs/evals/e4-causal-diagnostic-2026-10-04-f1239f89/
+/docs/evals/e4-causal-diagnostic-2026-10-04-f1922430/
+/docs/evals/e4-preclaim-scheduling-2026-10-04/
+/docs/evals/scheduling-controller-2026-10-06/
+/docs/evals/scheduling-driver-2026-10-05/
+/docs/evals/scheduling-preflight-2026-10-05/
+/docs/evals/b9-consolidation-2026-10-11/preservation-checkpoint.json*

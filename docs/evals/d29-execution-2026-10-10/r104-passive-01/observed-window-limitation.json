@@ -1,0 +1,897 @@
+{
+  "status": "PENDING",
+  "source_kind": "ACTUAL_NATIVE_PREQUERY_AND_INGRESS_SUMMARY",
+  "physical_attempts": 1,
+  "nominal_offsets_used_as_evidence": false,
+  "selector_replayed": false,
+  "new_database_reads": false,
+  "prequeries": 1082,
+  "reads_with_READY": 23,
+  "reads_with_future_within_native_H": 30,
+  "reads_with_READY_and_other_org_future_within_H": 7,
+  "native_empty_selections": 1058,
+  "native_forecast_yields": 0,
+  "max_observed_prequery_read_bracket_ns": 61179900,
+  "actual_same_conversation_acceptance_spacing": [
+    {
+      "conversation_id": 1,
+      "message_ids": [
+        1,
+        13
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91546529000,
+        91929638000
+      ]
+    },
+    {
+      "conversation_id": 1,
+      "message_ids": [
+        13,
+        25
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91636459000,
+        91941844000
+      ]
+    },
+    {
+      "conversation_id": 1,
+      "message_ids": [
+        25,
+        37
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91658215000,
+        91931711000
+      ]
+    },
+    {
+      "conversation_id": 2,
+      "message_ids": [
+        2,
+        14
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91571352000,
+        91831560000
+      ]
+    },
+    {
+      "conversation_id": 2,
+      "message_ids": [
+        14,
+        26
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91653907000,
+        91916360000
+      ]
+    },
+    {
+      "conversation_id": 2,
+      "message_ids": [
+        26,
+        38
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91655472000,
+        91921763000
+      ]
+    },
+    {
+      "conversation_id": 3,
+      "message_ids": [
+        5,
+        17
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91703227000,
+        91967776000
+      ]
+    },
+    {
+      "conversation_id": 3,
+      "message_ids": [
+        17,
+        29
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91638941000,
+        91912833000
+      ]
+    },
+    {
+      "conversation_id": 3,
+      "message_ids": [
+        29,
+        41
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91655004000,
+        92011847000
+      ]
+    },
+    {
+      "conversation_id": 4,
+      "message_ids": [
+        6,
+        18
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91630347000,
+        91943577000
+      ]
+    },
+    {
+      "conversation_id": 4,
+      "message_ids": [
+        18,
+        30
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91669095000,
+        91921252000
+      ]
+    },
+    {
+      "conversation_id": 4,
+      "message_ids": [
+        30,
+        42
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91765186000,
+        92059353000
+      ]
+    },
+    {
+      "conversation_id": 5,
+      "message_ids": [
+        9,
+        21
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91615972000,
+        91935729000
+      ]
+    },
+    {
+      "conversation_id": 5,
+      "message_ids": [
+        21,
+        33
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91701633000,
+        92000313000
+      ]
+    },
+    {
+      "conversation_id": 5,
+      "message_ids": [
+        33,
+        45
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91600204000,
+        91896017000
+      ]
+    },
+    {
+      "conversation_id": 6,
+      "message_ids": [
+        10,
+        22
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91543014000,
+        91877718000
+      ]
+    },
+    {
+      "conversation_id": 6,
+      "message_ids": [
+        22,
+        34
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91738310000,
+        92018445000
+      ]
+    },
+    {
+      "conversation_id": 6,
+      "message_ids": [
+        34,
+        46
+      ],
+      "actual_acceptance_spacing_ns_bounds": [
+        91582362000,
+        91867019000
+      ]
+    }
+  ],
+  "ready_witnesses": [
+    {
+      "role": "planner_1",
+      "seq": 71,
+      "poll_id": "f3d5b36a14934a04adb3ea1b7bf5d045",
+      "prequery_db_ns": 1791655539699394000,
+      "ready_input_ids": [
+        1
+      ],
+      "future_within_H_input_ids": [
+        2
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 745,
+      "poll_id": "cf6ae90a517048b4a96ee16e4d82090f",
+      "prequery_db_ns": 1791655570217715000,
+      "ready_input_ids": [
+        5
+      ],
+      "future_within_H_input_ids": [
+        6
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 1443,
+      "poll_id": "a9f77720e2504538b4b83849c5be2166",
+      "prequery_db_ns": 1791655601699869000,
+      "ready_input_ids": [
+        10
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_1",
+      "seq": 2125,
+      "poll_id": "3e57e8c26dfa478e8161165f4c14d6e7",
+      "prequery_db_ns": 1791655631296656000,
+      "ready_input_ids": [
+        13
+      ],
+      "future_within_H_input_ids": [
+        14
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 2815,
+      "poll_id": "e6d7f74a59c4436f8f4fb4eac8286baf",
+      "prequery_db_ns": 1791655661970037000,
+      "ready_input_ids": [
+        17
+      ],
+      "future_within_H_input_ids": [
+        18
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 3505,
+      "poll_id": "7ef2b82d0574438cbe8591b6fb2c0e1d",
+      "prequery_db_ns": 1791655692564582000,
+      "ready_input_ids": [
+        21
+      ],
+      "future_within_H_input_ids": [
+        22
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 4195,
+      "poll_id": "c5b3a24d75524dfca8dd076be2828e64",
+      "prequery_db_ns": 1791655723352807000,
+      "ready_input_ids": [
+        25,
+        26
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_1",
+      "seq": 4885,
+      "poll_id": "04301321d74e4b77a6ef31c254494217",
+      "prequery_db_ns": 1791655754126870000,
+      "ready_input_ids": [
+        29,
+        30
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_1",
+      "seq": 5575,
+      "poll_id": "cea9f06ea474410a9bc70f76fda9c33b",
+      "prequery_db_ns": 1791655785152624000,
+      "ready_input_ids": [
+        33,
+        34
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_1",
+      "seq": 6265,
+      "poll_id": "d3989e3802494a17a15d8761e66ac1aa",
+      "prequery_db_ns": 1791655815852914000,
+      "ready_input_ids": [
+        38
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_1",
+      "seq": 6955,
+      "poll_id": "4da16afb88244088a0f4c34250a78c4a",
+      "prequery_db_ns": 1791655846429937000,
+      "ready_input_ids": [
+        42
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_1",
+      "seq": 7645,
+      "poll_id": "bbeb87770db1404db816dac4f9dfc621",
+      "prequery_db_ns": 1791655876917628000,
+      "ready_input_ids": [
+        45,
+        46
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 71,
+      "poll_id": "230127d92879465197070cca09af3821",
+      "prequery_db_ns": 1791655539978200000,
+      "ready_input_ids": [
+        2
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 745,
+      "poll_id": "6284c32f0b284472a5cf75ebf3ca5f30",
+      "prequery_db_ns": 1791655570270257000,
+      "ready_input_ids": [
+        5,
+        6
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 1445,
+      "poll_id": "18ddc352c32c44fd8692c9305b6c7467",
+      "prequery_db_ns": 1791655600815298000,
+      "ready_input_ids": [
+        9
+      ],
+      "future_within_H_input_ids": [
+        10
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 2135,
+      "poll_id": "4f63067429e74a5d91844f513d882f29",
+      "prequery_db_ns": 1791655631557197000,
+      "ready_input_ids": [
+        14
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 2825,
+      "poll_id": "60f5383f3b9749f88d270194520b395c",
+      "prequery_db_ns": 1791655662215127000,
+      "ready_input_ids": [
+        18
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 3515,
+      "poll_id": "eb9e667a38414c16921663c5b3fc8a30",
+      "prequery_db_ns": 1791655692905304000,
+      "ready_input_ids": [
+        22
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 4205,
+      "poll_id": "27e0ef42dcae45398dbdcaf90ff2413e",
+      "prequery_db_ns": 1791655723828899000,
+      "ready_input_ids": [
+        26
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 4895,
+      "poll_id": "002acbb214ec41ff9284e5dfc51b6ef8",
+      "prequery_db_ns": 1791655754306491000,
+      "ready_input_ids": [
+        29,
+        30
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 5585,
+      "poll_id": "a57934368747451ba98f3aac5c046411",
+      "prequery_db_ns": 1791655785306088000,
+      "ready_input_ids": [
+        33,
+        34
+      ],
+      "future_within_H_input_ids": []
+    },
+    {
+      "role": "planner_2",
+      "seq": 6267,
+      "poll_id": "0dc5b5ebbded4ea4b3ca2597612c59db",
+      "prequery_db_ns": 1791655814951019000,
+      "ready_input_ids": [
+        37
+      ],
+      "future_within_H_input_ids": [
+        38
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 7655,
+      "poll_id": "a07620415eb54707b8f3136a6e32f3d8",
+      "prequery_db_ns": 1791655877033462000,
+      "ready_input_ids": [
+        45,
+        46
+      ],
+      "future_within_H_input_ids": []
+    }
+  ],
+  "future_within_H_witnesses": [
+    {
+      "role": "planner_1",
+      "seq": 63,
+      "poll_id": "0308913681734d809873ff7df03edcbb",
+      "prequery_db_ns": 1791655538622698000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        1
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 71,
+      "poll_id": "f3d5b36a14934a04adb3ea1b7bf5d045",
+      "prequery_db_ns": 1791655539699394000,
+      "ready_input_ids": [
+        1
+      ],
+      "future_within_H_input_ids": [
+        2
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 737,
+      "poll_id": "5168069ef83540808b07c9ed26acfce2",
+      "prequery_db_ns": 1791655569158073000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        5
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 745,
+      "poll_id": "cf6ae90a517048b4a96ee16e4d82090f",
+      "prequery_db_ns": 1791655570217715000,
+      "ready_input_ids": [
+        5
+      ],
+      "future_within_H_input_ids": [
+        6
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 1435,
+      "poll_id": "6bb782df386645829598728330fc9d1c",
+      "prequery_db_ns": 1791655600640150000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        9,
+        10
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 2125,
+      "poll_id": "3e57e8c26dfa478e8161165f4c14d6e7",
+      "prequery_db_ns": 1791655631296656000,
+      "ready_input_ids": [
+        13
+      ],
+      "future_within_H_input_ids": [
+        14
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 2807,
+      "poll_id": "a1703956d4034cf49483b2bbcce72a4a",
+      "prequery_db_ns": 1791655660927641000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        17
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 2815,
+      "poll_id": "e6d7f74a59c4436f8f4fb4eac8286baf",
+      "prequery_db_ns": 1791655661970037000,
+      "ready_input_ids": [
+        17
+      ],
+      "future_within_H_input_ids": [
+        18
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 3497,
+      "poll_id": "cbf6c00e84314c369b4b84ea5f826abc",
+      "prequery_db_ns": 1791655691481671000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        21
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 3505,
+      "poll_id": "7ef2b82d0574438cbe8591b6fb2c0e1d",
+      "prequery_db_ns": 1791655692564582000,
+      "ready_input_ids": [
+        21
+      ],
+      "future_within_H_input_ids": [
+        22
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 4187,
+      "poll_id": "11e2c3f0044e491091ee80bf2a362358",
+      "prequery_db_ns": 1791655722319741000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        25,
+        26
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 4877,
+      "poll_id": "e072887ffeec49f3af53aa221b4facdd",
+      "prequery_db_ns": 1791655753044935000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        29,
+        30
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 5567,
+      "poll_id": "d037f94f084c44a9b094a783e2e5a35c",
+      "prequery_db_ns": 1791655784088341000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        33,
+        34
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 6257,
+      "poll_id": "a4784e2e69e7487d80bb781802d81caf",
+      "prequery_db_ns": 1791655814806282000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        37,
+        38
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 6947,
+      "poll_id": "6533753e17504100807ffc86f323134b",
+      "prequery_db_ns": 1791655845390087000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        41,
+        42
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 7637,
+      "poll_id": "43670d3e6efd4ae281d37bb07842c718",
+      "prequery_db_ns": 1791655875862566000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        45,
+        46
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 63,
+      "poll_id": "4c7efb3971f74e1c94036b75a61eb0b1",
+      "prequery_db_ns": 1791655538931458000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        1,
+        2
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 737,
+      "poll_id": "c78ff9b4420b489baad3ccad58a6dbf0",
+      "prequery_db_ns": 1791655569203167000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        5
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 1437,
+      "poll_id": "920cc4d7a7654d849cfeca5ffb0499bd",
+      "prequery_db_ns": 1791655599723932000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        9
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 1445,
+      "poll_id": "18ddc352c32c44fd8692c9305b6c7467",
+      "prequery_db_ns": 1791655600815298000,
+      "ready_input_ids": [
+        9
+      ],
+      "future_within_H_input_ids": [
+        10
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 2127,
+      "poll_id": "3eb989342e3c446ca8c3ef4363ca9f70",
+      "prequery_db_ns": 1791655630468649000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        13,
+        14
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 2817,
+      "poll_id": "5f4a8214347b4e958c1a97c98ad6f3d3",
+      "prequery_db_ns": 1791655661165338000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        17,
+        18
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 3507,
+      "poll_id": "5be3daa62d1a4a8bb8e2f60745c24f73",
+      "prequery_db_ns": 1791655691837629000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        21,
+        22
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 4197,
+      "poll_id": "9ee7ef5271974ccebbedb2812bcd3c7c",
+      "prequery_db_ns": 1791655722786372000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        25,
+        26
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 4887,
+      "poll_id": "18f4d0a628f04455899449e4da1dda88",
+      "prequery_db_ns": 1791655753251238000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        29,
+        30
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 5577,
+      "poll_id": "8bbcede475f64f6ea191c2d2713808ca",
+      "prequery_db_ns": 1791655784223178000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        33,
+        34
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 6259,
+      "poll_id": "a74273bf4ad74e46adefdc7da59ebe9a",
+      "prequery_db_ns": 1791655813882708000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        37
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 6267,
+      "poll_id": "0dc5b5ebbded4ea4b3ca2597612c59db",
+      "prequery_db_ns": 1791655814951019000,
+      "ready_input_ids": [
+        37
+      ],
+      "future_within_H_input_ids": [
+        38
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 6957,
+      "poll_id": "3193dfb444de40afb742d84cde04c59f",
+      "prequery_db_ns": 1791655845452810000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        41,
+        42
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 7647,
+      "poll_id": "4caa56a94ac44a1187fbec1ce6f0f7f5",
+      "prequery_db_ns": 1791655875948836000,
+      "ready_input_ids": [],
+      "future_within_H_input_ids": [
+        45,
+        46
+      ]
+    }
+  ],
+  "coexistence_witnesses": [
+    {
+      "role": "planner_1",
+      "seq": 71,
+      "poll_id": "f3d5b36a14934a04adb3ea1b7bf5d045",
+      "prequery_db_ns": 1791655539699394000,
+      "ready_input_ids": [
+        1
+      ],
+      "future_within_H_input_ids": [
+        2
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 745,
+      "poll_id": "cf6ae90a517048b4a96ee16e4d82090f",
+      "prequery_db_ns": 1791655570217715000,
+      "ready_input_ids": [
+        5
+      ],
+      "future_within_H_input_ids": [
+        6
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 2125,
+      "poll_id": "3e57e8c26dfa478e8161165f4c14d6e7",
+      "prequery_db_ns": 1791655631296656000,
+      "ready_input_ids": [
+        13
+      ],
+      "future_within_H_input_ids": [
+        14
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 2815,
+      "poll_id": "e6d7f74a59c4436f8f4fb4eac8286baf",
+      "prequery_db_ns": 1791655661970037000,
+      "ready_input_ids": [
+        17
+      ],
+      "future_within_H_input_ids": [
+        18
+      ]
+    },
+    {
+      "role": "planner_1",
+      "seq": 3505,
+      "poll_id": "7ef2b82d0574438cbe8591b6fb2c0e1d",
+      "prequery_db_ns": 1791655692564582000,
+      "ready_input_ids": [
+        21
+      ],
+      "future_within_H_input_ids": [
+        22
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 1445,
+      "poll_id": "18ddc352c32c44fd8692c9305b6c7467",
+      "prequery_db_ns": 1791655600815298000,
+      "ready_input_ids": [
+        9
+      ],
+      "future_within_H_input_ids": [
+        10
+      ]
+    },
+    {
+      "role": "planner_2",
+      "seq": 6267,
+      "poll_id": "0dc5b5ebbded4ea4b3ca2597612c59db",
+      "prequery_db_ns": 1791655814951019000,
+      "ready_input_ids": [
+        37
+      ],
+      "future_within_H_input_ids": [
+        38
+      ]
+    }
+  ],
+  "finding": "See captured coexistence witnesses; no sequence is inferred.",
+  "no_general_impossibility_claim": true,
+  "no_automatic_repeat": true,
+  "raw_source_hashes": {
+    "planner_1.jsonl": "d9fba46bd2105b0707e6dbf83ea75e46dd7cf5b8dcbdf9aede1403e6594915f5",
+    "planner_2.jsonl": "851305065bec8b113d1a9bd2dbbc57a22857670caadbfd73b3e767a536cdc136",
+    "schedule-offers.jsonl": "8269e3bb167f3c95775d4016efa77fe278f7e25fca14dd354f0f83cac40b8eee",
+    "full-durable-final.json": "7b56c4d484d457e76ecb448b9f406577fdc70062079791e7dffd9d73fb4f9f34"
+  },
+  "analysis_source_sha256": "f095a7902a03a6963f84684ad6fc0b3b65b7cbaaa9e1bd1c12081eb76bb4f9ac"
+}
